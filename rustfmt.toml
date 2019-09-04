@@ -1,0 +1,11 @@
+max_width = 200
+reorder_imports = true
+control_brace_style = "ClosingNextLine"
+fn_args_layout = "Compressed"
+empty_item_single_line = false
+hard_tabs = true
+merge_imports = true
+merge_derives = true
+reorder_modules = true
+space_before_colon = true
+tab_spaces = 4

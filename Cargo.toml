@@ -1,0 +1,10 @@
+[package]
+name = "rusttop"
+version = "0.1.0"
+authors = ["ClementTsang <clementjhtsang@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sysinfo = "0.9.2"
