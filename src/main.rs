@@ -12,9 +12,10 @@ enum ProcessSorting {
 fn main() {
 	let mut system = System::new();
 	system.refresh_all();
-	draw_sorted_processes(ProcessSorting::CPU, &system);
+	draw_sorted_processes(ProcessSorting::CPU, true, &system);
 }
 
+// Possible process info struct?
 #[derive(Debug)]
 struct ProcessInfo<'a> {
 	pid: u32,
@@ -22,7 +23,7 @@ struct ProcessInfo<'a> {
 	mem_usage: u64,
 	uptime: u64,
 	command: &'a str,
-	status: &'a str,
+	//status: &'a str,
 	// TODO: Env?
 }
 
@@ -38,41 +39,53 @@ fn get_status(status: ProcessStatus) -> &'static str {
 	}
 }
 
-fn draw_sorted_processes(sorting_method: ProcessSorting, sys: &System) {
+fn draw_sorted_processes(sorting_method: ProcessSorting, reverse_order: bool, sys: &System) {
 	let process_hashmap = sys.get_process_list();
 
 	// Read into a btreemap, based on sorting type.
 	// TODO: Evaluate whether this is too slow!
 
-	let mut process_tree: BTreeMap<String, ProcessInfo> = BTreeMap::new();
+	let mut process_vector: Vec<sysinfo::Process> = process_hashmap.iter().map(|(_, process)| process.clone()).collect();
 
-	for (pid, process) in process_hashmap {
-		let new_process_info = ProcessInfo {
-			pid: *pid as u32,
-			cpu_usage: process.cpu_usage(),
-			mem_usage: process.memory(),
-			uptime: process.start_time(), // TODO: This is not correct rn
-			command: process.name(),
-			status: get_status(process.status()),
-		};
-		match sorting_method {
-			ProcessSorting::CPU => {
-				process_tree.insert(process.cpu_usage().to_string(), new_process_info);
-			}
-			ProcessSorting::MEM => {
-				process_tree.insert(process.memory().to_string(), new_process_info);
-			}
-			ProcessSorting::PID => {
-				process_tree.insert(pid.to_string(), new_process_info);
-			}
-			ProcessSorting::Status => {
-				process_tree.insert(get_status(process.status()).to_string(), new_process_info);
-			}
+	match sorting_method {
+			ProcessSorting::CPU => process_vector.sort_by(|a, b| {
+				let a_usage = a.cpu_usage();
+				let b_usage = b.cpu_usage();
+
+				if a_usage > b_usage {
+					if reverse_order {
+						std::cmp::Ordering::Less
+					} else {
+						std::cmp::Ordering::Greater
+					}
+				} else if a_usage < b_usage {
+					if reverse_order {
+						std::cmp::Ordering::Greater
+					} else {
+						std::cmp::Ordering::Less
+					}
+				} else {
+					std::cmp::Ordering::Equal
+				}
+			}),
+			ProcessSorting::MEM => {}
+			ProcessSorting::PID => {}
+			ProcessSorting::Status => {}
 		}
+
+	let mut formatted_vector : Vec<ProcessInfo> = Vec::new();
+	for process in &mut process_vector {
+		formatted_vector.push(ProcessInfo {
+			cpu_usage: process.cpu_usage(),
+			command: process.name(),
+			mem_usage: process.memory(),
+			uptime: process.start_time(),
+			pid: process.pid() as u32,
+		});
 	}
 
-	for (k, v) in process_tree {
-		println!("Key: {}, Val: {:?}", k, v);
+	for process in formatted_vector {
+		println!("{:?}", process);
 	}
 }
 
