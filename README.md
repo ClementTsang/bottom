@@ -6,7 +6,7 @@ A gotop clone, written in Rust.  Mostly done in an effort to learn Rust, while a
 
 * CPU usage monitor
 
-* Disk usage (both total and I guess active?)
+* Total disk usage
 
 * Memory usage
 
@@ -18,7 +18,7 @@ A gotop clone, written in Rust.  Mostly done in an effort to learn Rust, while a
 
 ## Other possible features
 
-* Potentially package managing?
+* Potentially process managing?
 
 * Theming
 
@@ -27,6 +27,8 @@ A gotop clone, written in Rust.  Mostly done in an effort to learn Rust, while a
 * Definitely keybinds
 
 * Filtering in processing
+
+* See if current disk activity is possible to do/graph?
 
 ## Thanks
 
