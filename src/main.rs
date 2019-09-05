@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use sysinfo::{ProcessExt, ProcessStatus, RefreshKind, System, SystemExt};
 
 // TODO: Fix this - CPU Up, and CPU Down!
@@ -48,32 +47,32 @@ fn draw_sorted_processes(sorting_method: ProcessSorting, reverse_order: bool, sy
 	let mut process_vector: Vec<sysinfo::Process> = process_hashmap.iter().map(|(_, process)| process.clone()).collect();
 
 	match sorting_method {
-			ProcessSorting::CPU => process_vector.sort_by(|a, b| {
-				let a_usage = a.cpu_usage();
-				let b_usage = b.cpu_usage();
+		ProcessSorting::CPU => process_vector.sort_by(|a, b| {
+			let a_usage = a.cpu_usage();
+			let b_usage = b.cpu_usage();
 
-				if a_usage > b_usage {
-					if reverse_order {
-						std::cmp::Ordering::Less
-					} else {
-						std::cmp::Ordering::Greater
-					}
-				} else if a_usage < b_usage {
-					if reverse_order {
-						std::cmp::Ordering::Greater
-					} else {
-						std::cmp::Ordering::Less
-					}
+			if a_usage > b_usage {
+				if reverse_order {
+					std::cmp::Ordering::Less
 				} else {
-					std::cmp::Ordering::Equal
+					std::cmp::Ordering::Greater
 				}
-			}),
-			ProcessSorting::MEM => {}
-			ProcessSorting::PID => {}
-			ProcessSorting::Status => {}
-		}
+			} else if a_usage < b_usage {
+				if reverse_order {
+					std::cmp::Ordering::Greater
+				} else {
+					std::cmp::Ordering::Less
+				}
+			} else {
+				std::cmp::Ordering::Equal
+			}
+		}),
+		ProcessSorting::MEM => {}
+		ProcessSorting::PID => {}
+		ProcessSorting::Status => {}
+	}
 
-	let mut formatted_vector : Vec<ProcessInfo> = Vec::new();
+	let mut formatted_vector: Vec<ProcessInfo> = Vec::new();
 	for process in &mut process_vector {
 		formatted_vector.push(ProcessInfo {
 			cpu_usage: process.cpu_usage(),
