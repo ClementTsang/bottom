@@ -50,7 +50,7 @@ fn get_ordering<T: std::cmp::PartialOrd>(a_val: T, b_val: T, reverse_order: bool
 	}
 }
 
-pub fn draw_sorted_processes(sorting_method: ProcessSorting, reverse_order: bool, sys: &System) {
+pub fn get_sorted_processes_list(sorting_method: ProcessSorting, reverse_order: bool, sys: &System) {
 	let process_hashmap = sys.get_process_list();
 
 	// TODO: Evaluate whether this is too slow!

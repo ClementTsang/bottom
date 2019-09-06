@@ -1,11 +1,24 @@
-use sysinfo::{System, SystemExt, DiskExt};
+use sysinfo::{System, SystemExt, Disk, DiskExt};
 
-fn get_timestamped_disk_data() {}
+pub struct DiskInfo<'a> {
+	pub name: &'a str,
+	pub mount_point: &'a str,
+	pub avail_space: u64,
+	pub total_space: u64,
+}
 
-pub fn draw_disk_usage_data(sys: &System) {
-	let list_of_disks = sys.get_disks();
+pub fn get_disk_usage_list(sys: &System) -> Vec<DiskInfo> {
+	let result_disks = sys.get_disks();
+	let mut vec_disks : Vec<DiskInfo> = Vec::new();
 
-	for disk in list_of_disks {
-		println!("Disk: Total size: {}, used: {}, disk: {}, mount: {}", disk.get_total_space(), disk.get_total_space() - disk.get_available_space(), disk.get_name().to_str().unwrap(), disk.get_mount_point().to_str().unwrap());
+	for disk in result_disks {
+		vec_disks.push(DiskInfo {
+			name: disk.get_name().to_str().unwrap(),
+			mount_point: disk.get_mount_point().to_str().unwrap(),
+			avail_space: disk.get_available_space(),
+			total_space: disk.get_total_space(),
+		});
 	}
+
+	vec_disks
 }
