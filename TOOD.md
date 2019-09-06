@@ -8,8 +8,10 @@
 
 * Write cursive display
 
+* Charting?
+
 * Keybindings
 
 * Theming
 
-* Efficiency!!!  Reuse hashmaps for example.
+* Efficiency!!!  Make sure no wasted hashmaps, use references, etc.

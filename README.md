@@ -26,7 +26,7 @@ A gotop clone, written in Rust.  Mostly done in an effort to learn Rust, while a
 
 * Definitely keybinds
 
-* Filtering in processing
+* Filtering in processes along with sorting
 
 * See if current disk activity is possible to do/graph?
 
