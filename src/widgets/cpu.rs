@@ -5,12 +5,12 @@ pub struct CPUData {
 	pub cpu_usage : u32,
 }
 
-pub struct TimedCPUPackagesStruct {
+pub struct TimedCPUPackages {
 	pub processor_list : Vec<CPUData>,
 	pub time : std::time::SystemTime,
 }
 
-pub fn get_cpu_data_list(sys : &System) -> TimedCPUPackagesStruct {
+pub fn get_cpu_data_list(sys : &System) -> TimedCPUPackages {
 	let cpu_data = sys.get_processor_list();
 	let mut cpu_vec = Vec::new();
 
@@ -21,12 +21,12 @@ pub fn get_cpu_data_list(sys : &System) -> TimedCPUPackagesStruct {
 		})
 	}
 
-	TimedCPUPackagesStruct {
+	TimedCPUPackages {
 		processor_list : cpu_vec,
 		time : std::time::SystemTime::now(),
 	}
 }
 
-pub fn clear_old_cpu_data() -> bool {
+pub fn is_cpu_data_old() -> bool {
 	true
 }
