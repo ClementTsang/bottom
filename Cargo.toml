@@ -7,6 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cursive = "0.13"
+futures-preview = "0.3.0-alpha.18"
 heim = "0.0.7"
+heim-common = "0.0.7"
+sysinfo = "0.9.4"
+tokio = "0.2.0-alpha.4"
 tui = "0.6.2"
