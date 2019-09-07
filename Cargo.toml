@@ -1,5 +1,5 @@
 [package]
-name = "rusttop"
+name = "rustop"
 version = "0.1.0"
 authors = ["ClementTsang <clementjhtsang@gmail.com>"]
 edition = "2018"

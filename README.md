@@ -1,4 +1,4 @@
-# rusttop
+# rustop
 
 A gotop clone, written in Rust.  Mostly done in an effort to learn Rust, while also potentially making a tool that people might want to use.
 
