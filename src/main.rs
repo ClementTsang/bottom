@@ -9,19 +9,20 @@ mod window;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// Initialize
 	let refresh_interval = 1; // TODO: Make changing this possible!
-	let get_physical_io = false;
 	let mut sys = System::new();
 
 	let mut list_of_timed_cpu_packages : Vec<cpu::TimedCPUPackages> = Vec::new();
 	let mut list_of_timed_io : Vec<Vec<disks::TimedIOInfo>> = Vec::new();
 	let mut list_of_timed_physical_io : Vec<Vec<disks::TimedIOInfo>> = Vec::new();
+	let mut list_of_timed_memory : Vec<mem::MemData> = Vec::new();
+	let mut list_of_timed_swap : Vec<mem::MemData> = Vec::new();
 
 	loop {
 		println!("Start data loop...");
 		sys.refresh_system();
 
 		// TODO: Get data, potentially store?  Use a result to check!
-		let list_of_processes = processes::get_sorted_processes_list(processes::ProcessSorting::NAME, true).await;
+		let list_of_processes = processes::get_sorted_processes_list(processes::ProcessSorting::CPU, true).await;
 		for process in list_of_processes {
 			println!("Process: {} with PID {}, CPU: {}, MEM: {}", process.command, process.pid, process.cpu_usage, process.mem_usage,);
 		}
@@ -54,6 +55,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 			for cpu in &list_of_timed_cpu_packages.last().unwrap().processor_list {
 				println!("CPU {} has {}% usage at timestamp {:?}!", &cpu.cpu_name, cpu.cpu_usage, current_cpu_time);
 			}
+		}
+
+		list_of_timed_memory.push(mem::get_mem_data_list().await?);
+		list_of_timed_swap.push(mem::get_swap_data_list().await?);
+
+		if !list_of_timed_memory.is_empty() {
+			let current_mem = list_of_timed_memory.last().unwrap();
+			println!("Memory usage: {} out of {} is used, at {:?}", current_mem.mem_used, current_mem.mem_total, current_mem.time);
+		}
+
+		if !list_of_timed_swap.is_empty() {
+			let current_mem = list_of_timed_swap.last().unwrap();
+			println!("Memory usage: {} out of {} is used, at {:?}", current_mem.mem_used, current_mem.mem_total, current_mem.time);
 		}
 
 		// Send to drawing module
