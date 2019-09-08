@@ -14,8 +14,8 @@ pub enum ProcessSorting {
 #[derive(Debug)]
 pub struct ProcessInfo {
 	pub pid : u32,
-	pub cpu_usage : f32,
-	pub mem_usage : u64,
+	pub cpu_usage_percent : f32,
+	pub mem_usage_in_mb : u64,
 	pub command : String,
 }
 
@@ -52,7 +52,6 @@ async fn cpu_usage(process : heim::process::Process) -> heim::process::ProcessRe
 pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_order : bool) -> Vec<ProcessInfo> {
 	let mut process_stream = heim::process::processes().map_ok(cpu_usage).try_buffer_unordered(std::usize::MAX);
 
-	// TODO: Evaluate whether this is too slow!
 	// TODO: Group together processes
 
 	let mut process_vector : Vec<ProcessInfo> = Vec::new();
@@ -64,15 +63,15 @@ pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_
 				process_vector.push(ProcessInfo {
 					command : process.name().await.unwrap_or_else(|_| "".to_string()),
 					pid : process.pid() as u32,
-					cpu_usage : cpu_usage.get::<units::ratio::percent>(),
-					mem_usage : mem_measurement.rss().get::<units::information::megabyte>(),
+					cpu_usage_percent : cpu_usage.get::<units::ratio::percent>(),
+					mem_usage_in_mb : mem_measurement.rss().get::<units::information::megabyte>(),
 				});
 			}
 		}
 	}
 	match sorting_method {
-		ProcessSorting::CPU => process_vector.sort_by(|a, b| get_ordering(a.cpu_usage, b.cpu_usage, reverse_order)),
-		ProcessSorting::MEM => process_vector.sort_by(|a, b| get_ordering(a.mem_usage, b.mem_usage, reverse_order)),
+		ProcessSorting::CPU => process_vector.sort_by(|a, b| get_ordering(a.cpu_usage_percent, b.cpu_usage_percent, reverse_order)),
+		ProcessSorting::MEM => process_vector.sort_by(|a, b| get_ordering(a.mem_usage_in_mb, b.mem_usage_in_mb, reverse_order)),
 		ProcessSorting::PID => process_vector.sort_by(|a, b| get_ordering(a.pid, b.pid, reverse_order)),
 		ProcessSorting::NAME => process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, reverse_order)),
 	}
