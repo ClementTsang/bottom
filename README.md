@@ -2,34 +2,15 @@
 
 A gotop clone, written in Rust.  Mostly done in an effort to learn Rust, while also potentially making a tool that people might want to use.
 
-## Planned features: (copy of gotop)
-
-* CPU usage monitor
-
-* Total disk usage
-
-* Memory usage
-
-* Temperature
-
-* Processes
-
-* Network usage
-
-## Other possible features
-
-* Potentially process managing?
-
-* Theming
-
-* Rearranging?
-
-* Definitely keybinds
-
-* Filtering in processes along with sorting
-
-* See if current disk activity is possible to do/graph?
+## Features
 
 ## Thanks
 
-* As mentioned, this project is most definitely inspired by [gotop](https://github.com/cjbassi/gotop)
+* As mentioned, this project is most definitely inspired by [gotop](https://github.com/cjbassi/gotop).
+
+* This application was written with the following libraries:
+  * [heim](https://github.com/heim-rs/heim)
+  * [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
+  * [termion](https://github.com/redox-os/termion)
+  * [tokio](https://github.com/tokio-rs/tokio)
+  * [tui-rs](https://github.com/fdehau/tui-rs)
