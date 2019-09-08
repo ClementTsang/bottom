@@ -13,7 +13,7 @@ pub enum ProcessSorting {
 
 // Possible process info struct?
 #[derive(Clone, Default)]
-pub struct ProcessInfo {
+pub struct ProcessData {
 	pub pid : u32,
 	pub cpu_usage_percent : f32,
 	pub mem_usage_in_mb : u64,
@@ -50,10 +50,10 @@ async fn cpu_usage(process : heim::process::Process) -> heim::process::ProcessRe
 	Ok((process, usage_2 - usage_1))
 }
 
-pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_order : bool) -> Result<Vec<ProcessInfo>, heim::Error> {
+pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_order : bool) -> Result<Vec<ProcessData>, heim::Error> {
 	let mut process_stream = heim::process::processes().map_ok(cpu_usage).try_buffer_unordered(std::usize::MAX);
 
-	let mut process_vector : Vec<ProcessInfo> = Vec::new();
+	let mut process_vector : Vec<ProcessData> = Vec::new();
 	while let Some(process) = process_stream.next().await {
 		if let Ok(process) = process {
 			let (process, cpu_usage) = process;
@@ -69,7 +69,7 @@ pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_
 				});
 				*/
 
-				process_vector.push(ProcessInfo {
+				process_vector.push(ProcessData {
 					command : process.name().await.unwrap_or_else(|_| "".to_string()),
 					pid : process.pid() as u32,
 					cpu_usage_percent : cpu_usage.get::<units::ratio::percent>(),
@@ -83,7 +83,7 @@ pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_
 	Ok(process_vector)
 }
 
-pub fn sort_processes(sorting_method : ProcessSorting, process_vector : &mut Vec<ProcessInfo>, reverse_order : bool) {
+pub fn sort_processes(sorting_method : ProcessSorting, process_vector : &mut Vec<ProcessData>, reverse_order : bool) {
 	match sorting_method {
 		ProcessSorting::CPU => process_vector.sort_by(|a, b| get_ordering(a.cpu_usage_percent, b.cpu_usage_percent, reverse_order)),
 		ProcessSorting::MEM => process_vector.sort_by(|a, b| get_ordering(a.mem_usage_in_mb, b.mem_usage_in_mb, reverse_order)),
