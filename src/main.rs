@@ -1,7 +1,3 @@
-use futures::{
-	future::{err, join_all, ok},
-	prelude::*,
-};
 use sysinfo::{System, SystemExt};
 
 mod widgets;
@@ -37,6 +33,7 @@ async fn main() {
 		sys.refresh_network();
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
+		// TODO: Joining all would be better...
 		list_of_timed_network.push(network::get_network_data(&sys));
 
 		if let Ok(process_vec) = processes::get_sorted_processes_list(processes::ProcessSorting::CPU, true).await {
@@ -66,7 +63,7 @@ async fn main() {
 			);
 		}
 		for disk in &list_of_disks {
-			println!("{} is mounted on {}: {}/{} free.", disk.name, disk.mount_point, disk.avail_space as f64, disk.total_space as f64);
+			println!("{} is mounted on {}: {} used.", disk.name, disk.mount_point, disk.used_space as f64 / disk.total_space as f64);
 			// TODO: Check if this is valid
 		}
 

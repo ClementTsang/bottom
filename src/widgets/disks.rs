@@ -4,7 +4,8 @@ use heim_common::prelude::StreamExt;
 pub struct DiskInfo {
 	pub name : Box<str>,
 	pub mount_point : Box<str>,
-	pub avail_space : u64,
+	pub free_space : u64,
+	pub used_space : u64,
 	pub total_space : u64,
 }
 
@@ -59,7 +60,8 @@ pub async fn get_disk_usage_list() -> Result<Vec<DiskInfo>, heim::Error> {
 		let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
 
 		vec_disks.push(DiskInfo {
-			avail_space : usage.free().get::<heim_common::units::information::megabyte>(),
+			free_space : usage.free().get::<heim_common::units::information::megabyte>(),
+			used_space : usage.used().get::<heim_common::units::information::megabyte>(),
 			total_space : usage.total().get::<heim_common::units::information::megabyte>(),
 			mount_point : Box::from(partition.mount_point().to_str().unwrap_or("Name Unavailable")),
 			name : Box::from(partition.device().unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable")).to_str().unwrap_or("Name Unavailable")),
