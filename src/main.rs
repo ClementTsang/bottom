@@ -12,7 +12,7 @@ fn set_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, value_t
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), std::io::Error> {
 	// Initialize
 	let refresh_interval = 1; // TODO: Make changing this possible!
 	let mut sys = System::new();
@@ -27,29 +27,26 @@ async fn main() {
 	let mut list_of_processes = Vec::new();
 	let mut list_of_disks = Vec::new();
 
+	window::create_terminal()?;
+
 	loop {
-		println!("Start data loop...");
 		sys.refresh_system();
 		sys.refresh_network();
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
-		// TODO: Joining all would be better...
 		set_if_valid(&network::get_network_data(&sys), &mut network);
+		set_if_valid(&cpu::get_cpu_data_list(&sys), &mut list_of_cpu_packages);
 
+		// TODO: Joining all futures would be better...
 		set_if_valid(&processes::get_sorted_processes_list(processes::ProcessSorting::NAME, false).await, &mut list_of_processes);
 		set_if_valid(&disks::get_disk_usage_list().await, &mut list_of_disks);
-
 		set_if_valid(&disks::get_io_usage_list(false).await, &mut list_of_io);
 		set_if_valid(&disks::get_io_usage_list(true).await, &mut list_of_physical_io);
-
 		set_if_valid(&mem::get_mem_data_list().await, &mut memory);
 		set_if_valid(&mem::get_swap_data_list().await, &mut swap);
 		set_if_valid(&temperature::get_temperature_data().await, &mut list_of_temperature);
 
-		set_if_valid(&cpu::get_cpu_data_list(&sys), &mut list_of_cpu_packages);
-
-		println!("End data loop...");
-
+		/*
 		// DEBUG - output results
 		for process in &list_of_processes {
 			println!(
@@ -83,9 +80,9 @@ async fn main() {
 		}
 
 		println!("Network: {} rx, {} tx", network.rx, network.tx);
+		*/
 
-		// Send to drawing module
-		window::draw_terminal();
+		// TODO: Send to drawing module
 
 		// Repeat on interval
 		std::thread::sleep(std::time::Duration::from_secs(refresh_interval));
