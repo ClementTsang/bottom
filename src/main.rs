@@ -1,92 +1,120 @@
-use sysinfo::{System, SystemExt};
+use crossterm::{input, AlternateScreen, InputEvent, KeyEvent};
+use std::{
+	io::{self, stdin, stdout, Write},
+	sync::mpsc,
+	thread,
+	time::Duration,
+};
+use tui::{
+	backend::CrosstermBackend,
+	layout::{Constraint, Direction, Layout},
+	widgets::{Block, Borders, Widget},
+	Terminal,
+};
 
 mod widgets;
-use widgets::{cpu, disks, mem, network, processes, temperature};
 
-mod window;
-
-fn set_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, value_to_set : &mut T) {
-	if let Ok(result) = result {
-		*value_to_set = (*result).clone();
-	}
+enum Event<I> {
+	Input(I),
+	Tick,
 }
 
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error> {
-	// Initialize
-	let refresh_interval = 1; // TODO: Make changing this possible!
-	let mut sys = System::new();
-
-	let mut list_of_cpu_packages : Vec<cpu::CPUData> = Vec::new();
-	let mut list_of_io : Vec<disks::IOInfo> = Vec::new();
-	let mut list_of_physical_io : Vec<disks::IOInfo> = Vec::new();
-	let mut memory : mem::MemData = mem::MemData::default();
-	let mut swap : mem::MemData = mem::MemData::default();
-	let mut list_of_temperature : Vec<temperature::TempData> = Vec::new();
-	let mut network : network::NetworkData = network::NetworkData::default();
-	let mut list_of_processes = Vec::new();
-	let mut list_of_disks = Vec::new();
-
-	window::create_terminal()?;
-
-	loop {
-		sys.refresh_system();
-		sys.refresh_network();
-
-		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
-		set_if_valid(&network::get_network_data(&sys), &mut network);
-		set_if_valid(&cpu::get_cpu_data_list(&sys), &mut list_of_cpu_packages);
-
-		// TODO: Joining all futures would be better...
-		set_if_valid(&processes::get_sorted_processes_list(processes::ProcessSorting::NAME, false).await, &mut list_of_processes);
-		set_if_valid(&disks::get_disk_usage_list().await, &mut list_of_disks);
-		set_if_valid(&disks::get_io_usage_list(false).await, &mut list_of_io);
-		set_if_valid(&disks::get_io_usage_list(true).await, &mut list_of_physical_io);
-		set_if_valid(&mem::get_mem_data_list().await, &mut memory);
-		set_if_valid(&mem::get_swap_data_list().await, &mut swap);
-		set_if_valid(&temperature::get_temperature_data().await, &mut list_of_temperature);
-
-		/*
-		// DEBUG - output results
-		for process in &list_of_processes {
-			println!(
-				"Process: {} with PID {}, CPU: {}%, MEM: {} MB",
-				process.command, process.pid, process.cpu_usage_percent, process.mem_usage_in_mb,
-			);
-		}
-		for disk in &list_of_disks {
-			println!("{} is mounted on {}: {} used.", disk.name, disk.mount_point, disk.used_space as f64 / disk.total_space as f64);
-			// TODO: Check if this is valid
-		}
-
-		for io in &list_of_io {
-			println!("IO counter for {}: {} writes, {} reads.", &io.mount_point, io.write_bytes, io.read_bytes);
-		}
-
-		for io in &list_of_physical_io {
-			println!("Physical IO counter for {}: {} writes, {} reads.", &io.mount_point, io.write_bytes, io.read_bytes);
-		}
-
-		for cpu in &list_of_cpu_packages {
-			println!("CPU {} has {}% usage!", &cpu.cpu_name, cpu.cpu_usage);
-		}
-
-		println!("Memory usage: {} out of {} is used", memory.mem_used, memory.mem_total);
-
-		println!("Memory usage: {} out of {} is used", swap.mem_used, swap.mem_total);
-
-		for sensor in &list_of_temperature {
-			println!("Sensor for {} is at {} degrees Celsius", sensor.component_name, sensor.temperature);
-		}
-
-		println!("Network: {} rx, {} tx", network.rx, network.tx);
-		*/
-
-		// TODO: Send to drawing module
-
-		// Repeat on interval
-		std::thread::sleep(std::time::Duration::from_secs(refresh_interval));
+async fn main() -> Result<(), io::Error> {
+	let screen = AlternateScreen::to_alternate(true)?;
+	let backend = CrosstermBackend::with_alternate_screen(screen)?;
+	let mut terminal = Terminal::new(backend)?;
+	terminal.hide_cursor()?;
+	// Setup input handling
+	let (tx, rx) = mpsc::channel();
+	{
+		let tx = tx.clone();
+		thread::spawn(move || {
+			let input = input();
+			let reader = input.read_sync();
+			for event in reader {
+				if let InputEvent::Keyboard(key) = event {
+					if tx.send(Event::Input(key.clone())).is_err() {
+						return;
+					}
+				}
+			}
+		});
+	}
+	{
+		let tx = tx.clone();
+		thread::spawn(move || {
+			let tx = tx.clone();
+			loop {
+				tx.send(Event::Tick).unwrap();
+				thread::sleep(Duration::from_millis(250));
+			}
+		});
 	}
 
-	// TODO: Exit on quit command/ctrl-c
+	let mut app : widgets::App = widgets::App::new("rustop");
+	terminal.clear()?;
+
+	loop {
+		terminal.draw(|mut f| {
+			let vertical_chunks = Layout::default()
+				.direction(Direction::Vertical)
+				.margin(1)
+				.constraints([Constraint::Percentage(33), Constraint::Percentage(34), Constraint::Percentage(33)].as_ref())
+				.split(f.size());
+			let top_chunks = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+				.split(vertical_chunks[0]);
+			let middle_chunks = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+				.split(vertical_chunks[1]);
+			let middle_divided_chunk = Layout::default()
+				.direction(Direction::Vertical)
+				.margin(0)
+				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+				.split(middle_chunks[0]);
+			let bottom_chunks = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+				.split(vertical_chunks[2]);
+
+			Block::default().title("CPU Usage").borders(Borders::ALL).render(&mut f, top_chunks[0]);
+			Block::default().title("Memory Usage").borders(Borders::ALL).render(&mut f, top_chunks[1]);
+
+			Block::default().title("Temperatures").borders(Borders::ALL).render(&mut f, middle_divided_chunk[0]);
+			Block::default().title("Disk Usage").borders(Borders::ALL).render(&mut f, middle_divided_chunk[1]);
+			Block::default().title("IO Usage").borders(Borders::ALL).render(&mut f, middle_chunks[1]);
+
+			Block::default().title("Network").borders(Borders::ALL).render(&mut f, bottom_chunks[0]);
+			Block::default().title("Processes").borders(Borders::ALL).render(&mut f, bottom_chunks[1]);
+		})?;
+
+		// TODO: Ctrl-C?
+		if let Ok(recv) = rx.recv() {
+			match recv {
+				Event::Input(event) => match event {
+					KeyEvent::Char(c) => app.on_key(c),
+					KeyEvent::Left => {}
+					KeyEvent::Right => {}
+					KeyEvent::Up => {}
+					KeyEvent::Down => {}
+					KeyEvent::Ctrl('c') => break,
+					_ => {}
+				},
+				Event::Tick => {
+					app.update_data();
+				}
+			}
+			if app.should_quit {
+				break;
+			}
+		}
+	}
+
+	Ok(())
 }
