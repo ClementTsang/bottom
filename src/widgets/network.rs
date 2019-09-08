@@ -1,13 +1,16 @@
+use sysinfo::{NetworkExt, System, SystemExt};
+
 pub struct TimedNetworkData {
-	pub rx : u32,
-	pub tx : u32,
+	pub rx : u64,
+	pub tx : u64,
 	pub time : std::time::SystemTime,
 }
 
-pub fn get_network_data() -> TimedNetworkData {
+pub fn get_network_data(sys : &System) -> TimedNetworkData {
+	let network_data = sys.get_network();
 	TimedNetworkData {
-		rx : 0,
-		tx : 0,
+		rx : network_data.get_income(),
+		tx : network_data.get_outcome(),
 		time : std::time::SystemTime::now(),
 	}
 }

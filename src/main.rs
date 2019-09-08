@@ -17,10 +17,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let mut list_of_timed_memory : Vec<mem::MemData> = Vec::new();
 	let mut list_of_timed_swap : Vec<mem::MemData> = Vec::new();
 	let mut list_of_timed_temperature : Vec<temperature::TimedTempData> = Vec::new();
+	let mut list_of_timed_network : Vec<network::TimedNetworkData> = Vec::new();
 
 	loop {
 		println!("Start data loop...");
 		sys.refresh_system();
+		sys.refresh_network();
 
 		// TODO: Get data, potentially store?  Use a result to check!
 		let list_of_processes = processes::get_sorted_processes_list(processes::ProcessSorting::CPU, true).await;
@@ -80,6 +82,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 			for sensor in &list_of_timed_temperature.last().unwrap().temperature_vec {
 				println!("Sensor for {} is at {} degrees Celsius at timestamp {:?}!", sensor.component_name, sensor.temperature, current_time);
 			}
+		}
+
+		list_of_timed_network.push(network::get_network_data(&sys));
+		if !list_of_timed_network.is_empty() {
+			let current_network = list_of_timed_network.last().unwrap();
+			println!("Network: {} rx, {} tx at {:?}", current_network.rx, current_network.tx, current_network.time);
 		}
 
 		// Send to drawing module
