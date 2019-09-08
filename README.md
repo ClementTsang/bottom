@@ -4,6 +4,8 @@ A gotop clone, written in Rust.  Mostly done in an effort to learn Rust, while a
 
 ## Features
 
+* Support for Linux.
+
 ## Thanks
 
 * As mentioned, this project is most definitely inspired by [gotop](https://github.com/cjbassi/gotop).
