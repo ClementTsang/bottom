@@ -1,12 +1,12 @@
 # To-Do List
 
-* Get each function working as a POC
+* ~~Get each function working as a POC~~
 
-* Separate each component for readability, finalize project structure
+* ~~Separate each component for readability, finalize project structure~~
 
-* Refreshing - how are we doing that?  Are we allowing individual refresh periods per component?
+* ~~Refreshing - how are we doing that?  Are we allowing individual refresh periods per component?~~
 
-* Write cursive display
+* Write tui display
 
 * Charting?
 
@@ -15,3 +15,31 @@
 * Theming
 
 * Efficiency!!!  Make sure no wasted hashmaps, use references, etc.
+
+## Planned features: (copy of gotop)
+
+* CPU usage monitor
+
+* Total disk usage
+
+* Memory usage
+
+* Temperature
+
+* Processes
+
+* Network usage
+
+## Other possible features
+
+* Potentially process managing?
+
+* Theming
+
+* Rearranging?
+
+* Definitely keybinds
+
+* Filtering in processes along with sorting
+
+* See if current disk activity is possible to do/graph?
