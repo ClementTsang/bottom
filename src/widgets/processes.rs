@@ -11,7 +11,7 @@ pub enum ProcessSorting {
 }
 
 // Possible process info struct?
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ProcessInfo {
 	pub pid : u32,
 	pub cpu_usage_percent : f32,
@@ -49,7 +49,7 @@ async fn cpu_usage(process : heim::process::Process) -> heim::process::ProcessRe
 	Ok((process, usage_2 - usage_1))
 }
 
-pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_order : bool) -> Vec<ProcessInfo> {
+pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_order : bool) -> Result<Vec<ProcessInfo>, heim::Error> {
 	let mut process_stream = heim::process::processes().map_ok(cpu_usage).try_buffer_unordered(std::usize::MAX);
 
 	// TODO: Group together processes
@@ -76,5 +76,5 @@ pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_
 		ProcessSorting::NAME => process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, reverse_order)),
 	}
 
-	process_vector
+	Ok(process_vector)
 }

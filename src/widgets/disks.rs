@@ -1,5 +1,6 @@
 use heim_common::prelude::StreamExt;
 
+#[derive(Clone)]
 pub struct DiskInfo {
 	pub name : Box<str>,
 	pub mount_point : Box<str>,
@@ -7,6 +8,7 @@ pub struct DiskInfo {
 	pub total_space : u64,
 }
 
+#[derive(Clone)]
 pub struct TimedIOInfo {
 	pub mount_point : Box<str>,
 	pub read_bytes : u64,
