@@ -6,13 +6,11 @@
 
 * ~~Refreshing - how are we doing that?  Are we allowing individual refresh periods per component?~~
 
-* Write tui display
-
-* Charting?
+* Write tui display, charting
 
 * Keybindings
 
-* Theming
+* Test for Windows support
 
 * Efficiency!!!  Make sure no wasted hashmaps, use references, etc.
 
@@ -32,14 +30,8 @@
 
 ## Other possible features
 
-* Potentially process managing?
-
-* Theming
+* Potentially process managing?  Depends on the libraries...
 
 * Rearranging?
 
-* Definitely keybinds
-
 * Filtering in processes along with sorting
-
-* See if current disk activity is possible to do/graph?
