@@ -1,18 +1,12 @@
 use heim_common::{prelude::StreamExt, units::thermodynamic_temperature};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct TempData {
 	pub component_name : Box<str>,
 	pub temperature : f32,
 }
 
-#[derive(Clone)]
-pub struct TimedTempData {
-	pub temperature_vec : Vec<TempData>,
-	pub time : std::time::SystemTime,
-}
-
-pub async fn get_temperature_data() -> Result<TimedTempData, heim::Error> {
+pub async fn get_temperature_data() -> Result<Vec<TempData>, heim::Error> {
 	let mut temperature_vec : Vec<TempData> = Vec::new();
 
 	let mut sensor_data = heim::sensors::temperatures();
@@ -52,8 +46,5 @@ pub async fn get_temperature_data() -> Result<TimedTempData, heim::Error> {
 		}
 	});
 
-	Ok(TimedTempData {
-		temperature_vec,
-		time : std::time::SystemTime::now(),
-	})
+	Ok(temperature_vec)
 }

@@ -1,18 +1,12 @@
 use sysinfo::{ProcessorExt, System, SystemExt};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CPUData {
 	pub cpu_name : Box<str>,
 	pub cpu_usage : u32,
 }
 
-#[derive(Clone)]
-pub struct TimedCPUPackages {
-	pub processor_list : Vec<CPUData>,
-	pub time : std::time::SystemTime,
-}
-
-pub fn get_cpu_data_list(sys : &System) -> Result<TimedCPUPackages, heim::Error> {
+pub fn get_cpu_data_list(sys : &System) -> Result<Vec<CPUData>, heim::Error> {
 	let cpu_data = sys.get_processor_list();
 	let mut cpu_vec = Vec::new();
 
@@ -23,12 +17,5 @@ pub fn get_cpu_data_list(sys : &System) -> Result<TimedCPUPackages, heim::Error>
 		})
 	}
 
-	Ok(TimedCPUPackages {
-		processor_list : cpu_vec,
-		time : std::time::SystemTime::now(),
-	})
-}
-
-pub fn is_cpu_data_old() -> bool {
-	true
+	Ok(cpu_vec)
 }
