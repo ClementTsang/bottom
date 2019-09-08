@@ -5,9 +5,9 @@ use widgets::{cpu, disks, mem, network, processes, temperature};
 
 mod window;
 
-fn push_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, vector_to_push_to : &mut Vec<T>) {
+fn set_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, value_to_set : &mut T) {
 	if let Ok(result) = result {
-		vector_to_push_to.push(result.clone());
+		*value_to_set = (*result).clone();
 	}
 }
 
@@ -17,13 +17,13 @@ async fn main() {
 	let refresh_interval = 1; // TODO: Make changing this possible!
 	let mut sys = System::new();
 
-	let mut list_of_timed_cpu_packages : Vec<cpu::TimedCPUPackages> = Vec::new();
-	let mut list_of_timed_io : Vec<Vec<disks::TimedIOInfo>> = Vec::new();
-	let mut list_of_timed_physical_io : Vec<Vec<disks::TimedIOInfo>> = Vec::new();
-	let mut list_of_timed_memory : Vec<mem::MemData> = Vec::new();
-	let mut list_of_timed_swap : Vec<mem::MemData> = Vec::new();
-	let mut list_of_timed_temperature : Vec<temperature::TimedTempData> = Vec::new();
-	let mut list_of_timed_network : Vec<network::TimedNetworkData> = Vec::new();
+	let mut list_of_cpu_packages : Vec<cpu::CPUData> = Vec::new();
+	let mut list_of_io : Vec<disks::IOInfo> = Vec::new();
+	let mut list_of_physical_io : Vec<disks::IOInfo> = Vec::new();
+	let mut memory : mem::MemData = mem::MemData::default();
+	let mut swap : mem::MemData = mem::MemData::default();
+	let mut list_of_temperature : Vec<temperature::TempData> = Vec::new();
+	let mut network : network::NetworkData = network::NetworkData::default();
 	let mut list_of_processes = Vec::new();
 	let mut list_of_disks = Vec::new();
 
@@ -34,24 +34,19 @@ async fn main() {
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		// TODO: Joining all would be better...
-		list_of_timed_network.push(network::get_network_data(&sys));
+		set_if_valid(&network::get_network_data(&sys), &mut network);
 
-		if let Ok(process_vec) = processes::get_sorted_processes_list(processes::ProcessSorting::CPU, true).await {
-			list_of_processes = process_vec;
-		}
+		set_if_valid(&processes::get_sorted_processes_list(processes::ProcessSorting::NAME, false).await, &mut list_of_processes);
+		set_if_valid(&disks::get_disk_usage_list().await, &mut list_of_disks);
 
-		if let Ok(disks) = disks::get_disk_usage_list().await {
-			list_of_disks = disks;
-		}
+		set_if_valid(&disks::get_io_usage_list(false).await, &mut list_of_io);
+		set_if_valid(&disks::get_io_usage_list(true).await, &mut list_of_physical_io);
 
-		push_if_valid(&disks::get_io_usage_list(false).await, &mut list_of_timed_io);
-		push_if_valid(&disks::get_io_usage_list(true).await, &mut list_of_timed_physical_io);
+		set_if_valid(&mem::get_mem_data_list().await, &mut memory);
+		set_if_valid(&mem::get_swap_data_list().await, &mut swap);
+		set_if_valid(&temperature::get_temperature_data().await, &mut list_of_temperature);
 
-		push_if_valid(&mem::get_mem_data_list().await, &mut list_of_timed_memory);
-		push_if_valid(&mem::get_swap_data_list().await, &mut list_of_timed_swap);
-		push_if_valid(&temperature::get_temperature_data().await, &mut list_of_timed_temperature);
-
-		push_if_valid(&cpu::get_cpu_data_list(&sys), &mut list_of_timed_cpu_packages);
+		set_if_valid(&cpu::get_cpu_data_list(&sys), &mut list_of_cpu_packages);
 
 		println!("End data loop...");
 
@@ -67,45 +62,27 @@ async fn main() {
 			// TODO: Check if this is valid
 		}
 
-		if !list_of_timed_io.is_empty() {
-			for io in list_of_timed_io.last().unwrap() {
-				println!("IO counter for {} at {:?}: {} writes, {} reads.", &io.mount_point, io.time, io.write_bytes, io.read_bytes);
-			}
-		}
-		if !list_of_timed_physical_io.is_empty() {
-			for io in list_of_timed_physical_io.last().unwrap() {
-				println!("Physical IO counter for {} at {:?}: {} writes, {} reads.", &io.mount_point, io.time, io.write_bytes, io.read_bytes);
-			}
+		for io in &list_of_io {
+			println!("IO counter for {}: {} writes, {} reads.", &io.mount_point, io.write_bytes, io.read_bytes);
 		}
 
-		if !list_of_timed_cpu_packages.is_empty() {
-			let current_cpu_time = list_of_timed_cpu_packages.last().unwrap().time;
-			for cpu in &list_of_timed_cpu_packages.last().unwrap().processor_list {
-				println!("CPU {} has {}% usage at timestamp {:?}!", &cpu.cpu_name, cpu.cpu_usage, current_cpu_time);
-			}
+		for io in &list_of_physical_io {
+			println!("Physical IO counter for {}: {} writes, {} reads.", &io.mount_point, io.write_bytes, io.read_bytes);
 		}
 
-		if !list_of_timed_memory.is_empty() {
-			let current_mem = list_of_timed_memory.last().unwrap();
-			println!("Memory usage: {} out of {} is used, at {:?}", current_mem.mem_used, current_mem.mem_total, current_mem.time);
+		for cpu in &list_of_cpu_packages {
+			println!("CPU {} has {}% usage!", &cpu.cpu_name, cpu.cpu_usage);
 		}
 
-		if !list_of_timed_swap.is_empty() {
-			let current_mem = list_of_timed_swap.last().unwrap();
-			println!("Memory usage: {} out of {} is used, at {:?}", current_mem.mem_used, current_mem.mem_total, current_mem.time);
+		println!("Memory usage: {} out of {} is used", memory.mem_used, memory.mem_total);
+
+		println!("Memory usage: {} out of {} is used", swap.mem_used, swap.mem_total);
+
+		for sensor in &list_of_temperature {
+			println!("Sensor for {} is at {} degrees Celsius", sensor.component_name, sensor.temperature);
 		}
 
-		if !list_of_timed_temperature.is_empty() {
-			let current_time = list_of_timed_temperature.last().unwrap().time;
-			for sensor in &list_of_timed_temperature.last().unwrap().temperature_vec {
-				println!("Sensor for {} is at {} degrees Celsius at timestamp {:?}!", sensor.component_name, sensor.temperature, current_time);
-			}
-		}
-
-		if !list_of_timed_network.is_empty() {
-			let current_network = list_of_timed_network.last().unwrap();
-			println!("Network: {} rx, {} tx at {:?}", current_network.rx, current_network.tx, current_network.time);
-		}
+		println!("Network: {} rx, {} tx", network.rx, network.tx);
 
 		// Send to drawing module
 		window::draw_terminal();

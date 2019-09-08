@@ -1,6 +1,6 @@
 use heim_common::prelude::StreamExt;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DiskInfo {
 	pub name : Box<str>,
 	pub mount_point : Box<str>,
@@ -9,25 +9,23 @@ pub struct DiskInfo {
 	pub total_space : u64,
 }
 
-#[derive(Clone)]
-pub struct TimedIOInfo {
+#[derive(Clone, Default)]
+pub struct IOInfo {
 	pub mount_point : Box<str>,
 	pub read_bytes : u64,
 	pub write_bytes : u64,
-	pub time : std::time::SystemTime,
 }
 
-pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<TimedIOInfo>, heim::Error> {
-	let mut io_list : Vec<TimedIOInfo> = Vec::new();
+pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<IOInfo>, heim::Error> {
+	let mut io_list : Vec<IOInfo> = Vec::new();
 	if get_physical {
 		let mut physical_counter_stream = heim::disk::io_counters_physical();
 		while let Some(io) = physical_counter_stream.next().await {
 			let io = io?;
-			io_list.push(TimedIOInfo {
+			io_list.push(IOInfo {
 				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
 				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
 				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
-				time : std::time::SystemTime::now(),
 			})
 		}
 	}
@@ -35,20 +33,15 @@ pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<TimedIOInfo>, 
 		let mut counter_stream = heim::disk::io_counters();
 		while let Some(io) = counter_stream.next().await {
 			let io = io?;
-			io_list.push(TimedIOInfo {
+			io_list.push(IOInfo {
 				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
 				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
 				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
-				time : std::time::SystemTime::now(),
 			})
 		}
 	}
 
 	Ok(io_list)
-}
-
-pub fn is_io_data_old() -> bool {
-	true
 }
 
 pub async fn get_disk_usage_list() -> Result<Vec<DiskInfo>, heim::Error> {

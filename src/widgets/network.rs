@@ -1,17 +1,15 @@
 use sysinfo::{NetworkExt, System, SystemExt};
 
-#[derive(Clone)]
-pub struct TimedNetworkData {
+#[derive(Clone, Default)]
+pub struct NetworkData {
 	pub rx : u64,
 	pub tx : u64,
-	pub time : std::time::SystemTime,
 }
 
-pub fn get_network_data(sys : &System) -> TimedNetworkData {
+pub fn get_network_data(sys : &System) -> Result<NetworkData, heim::Error> {
 	let network_data = sys.get_network();
-	TimedNetworkData {
+	Ok(NetworkData {
 		rx : network_data.get_income(),
 		tx : network_data.get_outcome(),
-		time : std::time::SystemTime::now(),
-	}
+	})
 }
