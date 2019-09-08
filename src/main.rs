@@ -16,6 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let mut list_of_timed_physical_io : Vec<Vec<disks::TimedIOInfo>> = Vec::new();
 	let mut list_of_timed_memory : Vec<mem::MemData> = Vec::new();
 	let mut list_of_timed_swap : Vec<mem::MemData> = Vec::new();
+	let mut list_of_timed_temperature : Vec<temperature::TimedTempData> = Vec::new();
 
 	loop {
 		println!("Start data loop...");
@@ -24,7 +25,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		// TODO: Get data, potentially store?  Use a result to check!
 		let list_of_processes = processes::get_sorted_processes_list(processes::ProcessSorting::CPU, true).await;
 		for process in list_of_processes {
-			println!("Process: {} with PID {}, CPU: {}, MEM: {}", process.command, process.pid, process.cpu_usage, process.mem_usage,);
+			println!(
+				"Process: {} with PID {}, CPU: {}%, MEM: {} MB",
+				process.command, process.pid, process.cpu_usage_percent, process.mem_usage_in_mb,
+			);
 		}
 
 		let list_of_disks = disks::get_disk_usage_list().await?;
@@ -68,6 +72,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		if !list_of_timed_swap.is_empty() {
 			let current_mem = list_of_timed_swap.last().unwrap();
 			println!("Memory usage: {} out of {} is used, at {:?}", current_mem.mem_used, current_mem.mem_total, current_mem.time);
+		}
+
+		list_of_timed_temperature.push(temperature::get_temperature_data().await?);
+		if !list_of_timed_temperature.is_empty() {
+			let current_time = list_of_timed_temperature.last().unwrap().time;
+			for sensor in &list_of_timed_temperature.last().unwrap().temperature_vec {
+				println!("Sensor for {} is at {} degrees Celsius at timestamp {:?}!", sensor.component_name, sensor.temperature, current_time);
+			}
 		}
 
 		// Send to drawing module

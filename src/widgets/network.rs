@@ -1,3 +1,13 @@
-fn get_timestamped_network_data() {}
+pub struct TimedNetworkData {
+	pub rx : u32,
+	pub tx : u32,
+	pub time : std::time::SystemTime,
+}
 
-fn get_network_data_list() {}
+pub fn get_network_data() -> TimedNetworkData {
+	TimedNetworkData {
+		rx : 0,
+		tx : 0,
+		time : std::time::SystemTime::now(),
+	}
+}
