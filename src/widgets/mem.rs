@@ -1,5 +1,6 @@
 use heim_common::units::information;
 
+#[derive(Clone)]
 pub struct MemData {
 	pub mem_total : u64,
 	pub mem_used : u64,

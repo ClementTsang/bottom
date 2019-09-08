@@ -1,10 +1,12 @@
 use heim_common::{prelude::StreamExt, units::thermodynamic_temperature};
 
+#[derive(Clone)]
 pub struct TempData {
 	pub component_name : Box<str>,
 	pub temperature : f32,
 }
 
+#[derive(Clone)]
 pub struct TimedTempData {
 	pub temperature_vec : Vec<TempData>,
 	pub time : std::time::SystemTime,

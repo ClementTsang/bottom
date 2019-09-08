@@ -1,5 +1,6 @@
 use sysinfo::{NetworkExt, System, SystemExt};
 
+#[derive(Clone)]
 pub struct TimedNetworkData {
 	pub rx : u64,
 	pub tx : u64,
