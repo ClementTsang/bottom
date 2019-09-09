@@ -14,7 +14,7 @@ pub async fn get_temperature_data() -> Result<Vec<TempData>, heim::Error> {
 		if let Ok(sensor) = sensor {
 			temperature_vec.push(TempData {
 				component_name : Box::from(sensor.unit()),
-				temperature : sensor.current().get::<thermodynamic_temperature::degree_celsius>(),
+				temperature : sensor.current().get::<thermodynamic_temperature::degree_celsius>(), // TODO: Allow for toggling this!
 			});
 		}
 	}

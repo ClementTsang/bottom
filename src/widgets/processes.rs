@@ -15,7 +15,7 @@ pub enum ProcessSorting {
 #[derive(Clone, Default)]
 pub struct ProcessData {
 	pub pid : u32,
-	pub cpu_usage_percent : f32,
+	pub cpu_usage_percent : f64,
 	pub mem_usage_in_mb : u64,
 	pub command : String,
 }
@@ -44,13 +44,13 @@ fn get_ordering<T : std::cmp::PartialOrd>(a_val : T, b_val : T, reverse_order : 
 
 async fn cpu_usage(process : heim::process::Process) -> heim::process::ProcessResult<(heim::process::Process, heim_common::units::Ratio)> {
 	let usage_1 = process.cpu_usage().await?;
-	futures_timer::Delay::new(std::time::Duration::from_millis(100)).await?;
+	futures_timer::Delay::new(std::time::Duration::from_millis(100)).await?; // TODO: This is causing MASSIVE PROBLEMS WITH THE EVENT LOOP!
 	let usage_2 = process.cpu_usage().await?;
 
 	Ok((process, usage_2 - usage_1))
 }
 
-pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_order : bool) -> Result<Vec<ProcessData>, heim::Error> {
+pub async fn get_sorted_processes_list(sorting_method : &ProcessSorting, reverse_order : bool) -> Result<Vec<ProcessData>, heim::Error> {
 	let mut process_stream = heim::process::processes().map_ok(cpu_usage).try_buffer_unordered(std::usize::MAX);
 
 	let mut process_vector : Vec<ProcessData> = Vec::new();
@@ -72,18 +72,18 @@ pub async fn get_sorted_processes_list(sorting_method : ProcessSorting, reverse_
 				process_vector.push(ProcessData {
 					command : process.name().await.unwrap_or_else(|_| "".to_string()),
 					pid : process.pid() as u32,
-					cpu_usage_percent : cpu_usage.get::<units::ratio::percent>(),
+					cpu_usage_percent : f64::from(cpu_usage.get::<units::ratio::percent>()),
 					mem_usage_in_mb : mem_measurement.rss().get::<units::information::megabyte>(),
 				});
 			}
 		}
 	}
-	sort_processes(sorting_method, &mut process_vector, reverse_order);
+	sort_processes(&sorting_method, &mut process_vector, reverse_order);
 
 	Ok(process_vector)
 }
 
-pub fn sort_processes(sorting_method : ProcessSorting, process_vector : &mut Vec<ProcessData>, reverse_order : bool) {
+pub fn sort_processes(sorting_method : &ProcessSorting, process_vector : &mut Vec<ProcessData>, reverse_order : bool) {
 	match sorting_method {
 		ProcessSorting::CPU => process_vector.sort_by(|a, b| get_ordering(a.cpu_usage_percent, b.cpu_usage_percent, reverse_order)),
 		ProcessSorting::MEM => process_vector.sort_by(|a, b| get_ordering(a.mem_usage_in_mb, b.mem_usage_in_mb, reverse_order)),
