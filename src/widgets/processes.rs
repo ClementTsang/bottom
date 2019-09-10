@@ -74,10 +74,9 @@ fn get_cpu_use_val() -> std::io::Result<f64> {
 	Ok(val[0].parse::<f64>().unwrap_or(0_f64) + val[1].parse::<f64>().unwrap_or(0_f64) + val[2].parse::<f64>().unwrap_or(0_f64) + val[3].parse::<f64>().unwrap_or(0_f64))
 }
 
-async fn linux_cpu_usage(pid : u32) -> std::io::Result<f64> {
+async fn linux_cpu_usage(pid : u32, before_cpu_val : f64) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
 	let before_proc_val = get_process_cpu_stats(pid)?;
-	let before_cpu_val = get_cpu_use_val()?;
 	futures_timer::Delay::new(std::time::Duration::from_millis(1000)).await.unwrap();
 	let after_proc_val = get_process_cpu_stats(pid)?;
 	let after_cpu_val = get_cpu_use_val()?;
@@ -86,13 +85,27 @@ async fn linux_cpu_usage(pid : u32) -> std::io::Result<f64> {
 }
 
 async fn convert_ps(process : &str) -> std::io::Result<ProcessData> {
-	let mut result = process.split_whitespace();
-	let pid = result.next().unwrap_or("").parse::<u32>().unwrap_or(0);
+	let before_cpu_val = get_cpu_use_val()?;
+
+	debug!("Process: |{}|", process);
+	if process.trim().to_string().is_empty() {
+		return Ok(ProcessData {
+			pid : 0,
+			command : "".to_string(),
+			mem_usage_percent : 0_f64,
+			cpu_usage_percent : 0_f64,
+		});
+	}
+
+	let pid = (&process[..11]).trim().to_string().parse::<u32>().unwrap_or(0);
+	let command = (&process[11..61]).trim().to_string();
+	let mem_usage_percent = (&process[62..]).trim().to_string().parse::<f64>().unwrap_or(0_f64);
+
 	Ok(ProcessData {
 		pid,
-		command : result.next().unwrap_or("").to_string(),
-		mem_usage_percent : result.next().unwrap_or("").parse::<f64>().unwrap_or(0_f64),
-		cpu_usage_percent : linux_cpu_usage(pid).await?,
+		command,
+		mem_usage_percent,
+		cpu_usage_percent : linux_cpu_usage(pid, before_cpu_val).await?,
 	})
 }
 
@@ -101,14 +114,16 @@ pub async fn get_sorted_processes_list(total_mem : u64) -> Result<Vec<ProcessDat
 
 	if cfg!(target_os = "linux") {
 		// Linux specific - this is a massive pain... ugh.
-		let ps_result = Command::new("ps").args(&["-axo", "pid,comm,%mem", "--noheader"]).output().expect("Failed to execute.");
+		let ps_result = Command::new("ps").args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"]).output().expect("Failed to execute.");
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
 		let mut process_stream = futures::stream::iter::<_>(split_string.collect::<Vec<&str>>()).map(convert_ps).buffer_unordered(std::usize::MAX);
 
 		while let Some(process) = process_stream.next().await {
 			if let Ok(process) = process {
-				process_vector.push(process);
+				if !process.command.is_empty() {
+					process_vector.push(process);
+				}
 			}
 		}
 	}
