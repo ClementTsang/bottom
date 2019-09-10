@@ -25,7 +25,7 @@ async fn main() -> Result<(), io::Error> {
 	let backend = CrosstermBackend::with_alternate_screen(screen)?;
 	let mut terminal = Terminal::new(backend)?;
 
-	let tick_rate_in_milliseconds : u64 = 220;
+	let tick_rate_in_milliseconds : u64 = 250;
 	let update_rate_in_milliseconds : u64 = 1000;
 
 	let log = init_logger();
@@ -129,14 +129,13 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 		)
 	});
 
-	let mem_total_mb = app_data.memory.mem_total_in_mb as f64;
 	let process_rows = app_data.list_of_processes.iter().map(|process| {
 		Row::StyledData(
 			vec![
 				process.pid.to_string(),
 				process.command.to_string(),
 				format!("{:.2}%", process.cpu_usage_percent),
-				format!("{:.2}%", process.mem_usage_in_mb as f64 / mem_total_mb * 100_f64),
+				format!("{:.2}%", process.mem_usage_percent),
 			]
 			.into_iter(),
 			Style::default().fg(Color::LightGreen),
@@ -198,14 +197,14 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 		Table::new(["Sensor", "Temperature"].iter(), temperature_rows)
 			.block(Block::default().title("Temperatures").borders(Borders::ALL))
 			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[25, 25])
+			.widths(&[15, 5])
 			.render(&mut f, middle_divided_chunk[0]);
 
 		// Disk usage table
 		Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
 			.block(Block::default().title("Disk Usage").borders(Borders::ALL))
 			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[25, 25, 10, 10, 10])
+			.widths(&[15, 10, 5, 5, 5])
 			.render(&mut f, middle_divided_chunk[1]);
 
 		// IO graph
@@ -215,7 +214,7 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 		Block::default().title("Network").borders(Borders::ALL).render(&mut f, bottom_chunks[0]);
 
 		// Processes table
-		Table::new(["PID", "Command", "CPU%", "Mem%"].iter(), process_rows)
+		Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)
 			.block(Block::default().title("Processes").borders(Borders::ALL))
 			.header_style(Style::default().fg(Color::LightBlue))
 			.widths(&[5, 15, 10, 10])
@@ -226,25 +225,27 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 }
 
 fn init_logger() -> Result<(), fern::InitError> {
-	fern::Dispatch::new()
-		.format(|out, message, record| {
-			out.finish(format_args!(
-				"{}[{}][{}] {}",
-				chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-				record.target(),
-				record.level(),
-				message
-			))
-		})
-		.level(log::LevelFilter::Debug)
-		.chain(fern::log_file("debug.log")?)
-		.apply()?;
+	if cfg!(debug_assertions) {
+		fern::Dispatch::new()
+			.format(|out, message, record| {
+				out.finish(format_args!(
+					"{}[{}][{}] {}",
+					chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+					record.target(),
+					record.level(),
+					message
+				))
+			})
+			.level(log::LevelFilter::Debug)
+			.chain(fern::log_file("debug.log")?)
+			.apply()?;
+	}
 
 	Ok(())
 }
 
 fn try_debug(result_log : &Result<(), fern::InitError>, message : &str) {
-	if result_log.is_ok() {
+	if cfg!(debug_assertions) && result_log.is_ok() {
 		debug!("{}", message);
 	}
 }

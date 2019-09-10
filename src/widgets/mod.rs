@@ -51,6 +51,7 @@ impl Default for DataState {
 
 impl DataState {
 	pub async fn update_data(&mut self) {
+		debug!("Start updating...");
 		self.sys.refresh_system();
 		self.sys.refresh_network();
 
@@ -59,13 +60,15 @@ impl DataState {
 		set_if_valid(&cpu::get_cpu_data_list(&self.sys), &mut self.data.list_of_cpu_packages);
 
 		// TODO: We can convert this to a multi-threaded task...
-		set_if_valid(&processes::get_sorted_processes_list().await, &mut self.data.list_of_processes);
+		set_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
+		set_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
+		set_if_valid(&processes::get_sorted_processes_list(self.data.memory.mem_total_in_mb).await, &mut self.data.list_of_processes);
+
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
 		set_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
 		set_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
-		set_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
-		set_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
 		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature);
+		debug!("End updating...");
 	}
 }
 
@@ -73,9 +76,9 @@ impl<'a> App<'a> {
 	pub fn new(title : &str) -> App {
 		App {
 			title,
-			process_sorting_type : processes::ProcessSorting::NAME, // TODO: Change this based on input args...
+			process_sorting_type : processes::ProcessSorting::CPU, // TODO: Change this based on input args... basically set this on app creation
 			should_quit : false,
-			process_sorting_reverse : false,
+			process_sorting_reverse : true,
 			to_be_resorted : false,
 		}
 	}
@@ -83,24 +86,48 @@ impl<'a> App<'a> {
 	pub fn on_key(&mut self, c : char) {
 		match c {
 			'q' => self.should_quit = true,
+			'h' => self.on_right(),
+			'j' => self.on_down(),
+			'k' => self.on_up(),
+			'l' => self.on_left(),
 			'c' => {
-				self.process_sorting_type = processes::ProcessSorting::CPU; // TODO: Change this such that reversing can be done by just hitting "c" twice...
+				match self.process_sorting_type {
+					processes::ProcessSorting::CPU => self.process_sorting_reverse = !self.process_sorting_reverse,
+					_ => {
+						self.process_sorting_type = processes::ProcessSorting::CPU;
+						self.process_sorting_reverse = true;
+					}
+				}
 				self.to_be_resorted = true;
 			}
 			'm' => {
-				self.process_sorting_type = processes::ProcessSorting::MEM;
+				match self.process_sorting_type {
+					processes::ProcessSorting::MEM => self.process_sorting_reverse = !self.process_sorting_reverse,
+					_ => {
+						self.process_sorting_type = processes::ProcessSorting::MEM;
+						self.process_sorting_reverse = true;
+					}
+				}
 				self.to_be_resorted = true;
 			}
 			'p' => {
-				self.process_sorting_type = processes::ProcessSorting::PID;
+				match self.process_sorting_type {
+					processes::ProcessSorting::PID => self.process_sorting_reverse = !self.process_sorting_reverse,
+					_ => {
+						self.process_sorting_type = processes::ProcessSorting::PID;
+						self.process_sorting_reverse = false;
+					}
+				}
 				self.to_be_resorted = true;
 			}
 			'n' => {
-				self.process_sorting_type = processes::ProcessSorting::NAME;
-				self.to_be_resorted = true;
-			}
-			'r' => {
-				self.process_sorting_reverse = !self.process_sorting_reverse;
+				match self.process_sorting_type {
+					processes::ProcessSorting::NAME => self.process_sorting_reverse = !self.process_sorting_reverse,
+					_ => {
+						self.process_sorting_type = processes::ProcessSorting::NAME;
+						self.process_sorting_reverse = false;
+					}
+				}
 				self.to_be_resorted = true;
 			}
 			_ => {}
