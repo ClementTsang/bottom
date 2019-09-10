@@ -26,7 +26,9 @@ async fn main() -> Result<(), io::Error> {
 	let mut terminal = Terminal::new(backend)?;
 
 	let tick_rate_in_milliseconds : u64 = 250;
-	let update_rate_in_milliseconds : u64 = 1000;
+	let update_rate_in_milliseconds : u64 = 1000; // TODO: Must set a check to prevent this from going into negatives!
+
+	let mut app = widgets::App::new("rustop");
 
 	let log = init_logger();
 
@@ -57,12 +59,11 @@ async fn main() -> Result<(), io::Error> {
 			loop {
 				futures::executor::block_on(data_state.update_data()); // TODO: Fix
 				tx.send(Event::Update(data_state.data.clone())).unwrap();
-				thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
+				thread::sleep(Duration::from_millis(update_rate_in_milliseconds - 1000));
 			}
 		});
 	}
 
-	let mut app = widgets::App::new("rustop");
 	terminal.clear()?;
 
 	let mut app_data = widgets::Data::default();
