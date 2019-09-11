@@ -1,4 +1,5 @@
 use heim_common::prelude::StreamExt;
+use std::time::Instant;
 
 #[derive(Clone, Default)]
 pub struct DiskData {
@@ -9,11 +10,12 @@ pub struct DiskData {
 	pub total_space : u64,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct IOData {
 	pub mount_point : Box<str>,
 	pub read_bytes : u64,
 	pub write_bytes : u64,
+	pub instant : Instant,
 }
 
 pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<IOData>, heim::Error> {
@@ -26,6 +28,7 @@ pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<IOData>, heim:
 				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
 				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
 				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
+				instant : Instant::now(),
 			})
 		}
 	}
@@ -37,6 +40,7 @@ pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<IOData>, heim:
 				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
 				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
 				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
+				instant : Instant::now(),
 			})
 		}
 	}
