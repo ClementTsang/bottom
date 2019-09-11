@@ -15,10 +15,15 @@ pub struct IOData {
 	pub mount_point : Box<str>,
 	pub read_bytes : u64,
 	pub write_bytes : u64,
+}
+
+#[derive(Clone)]
+pub struct IOPackage {
+	pub io_list : Vec<IOData>,
 	pub instant : Instant,
 }
 
-pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<IOData>, heim::Error> {
+pub async fn get_io_usage_list(get_physical : bool) -> Result<IOPackage, heim::Error> {
 	let mut io_list : Vec<IOData> = Vec::new();
 	if get_physical {
 		let mut physical_counter_stream = heim::disk::io_counters_physical();
@@ -28,7 +33,6 @@ pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<IOData>, heim:
 				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
 				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
 				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
-				instant : Instant::now(),
 			})
 		}
 	}
@@ -40,12 +44,11 @@ pub async fn get_io_usage_list(get_physical : bool) -> Result<Vec<IOData>, heim:
 				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
 				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
 				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
-				instant : Instant::now(),
 			})
 		}
 	}
 
-	Ok(io_list)
+	Ok(IOPackage { io_list, instant : Instant::now() })
 }
 
 pub async fn get_disk_usage_list() -> Result<Vec<DiskData>, heim::Error> {

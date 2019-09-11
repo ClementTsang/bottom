@@ -238,27 +238,25 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 }
 
 fn init_logger() -> Result<(), fern::InitError> {
-	if cfg!(debug_assertions) {
-		fern::Dispatch::new()
-			.format(|out, message, record| {
-				out.finish(format_args!(
-					"{}[{}][{}] {}",
-					chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-					record.target(),
-					record.level(),
-					message
-				))
-			})
-			.level(log::LevelFilter::Debug)
-			.chain(fern::log_file("debug.log")?)
-			.apply()?;
-	}
+	fern::Dispatch::new()
+		.format(|out, message, record| {
+			out.finish(format_args!(
+				"{}[{}][{}] {}",
+				chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+				record.target(),
+				record.level(),
+				message
+			))
+		})
+		.level(if cfg!(debug_assertions) { log::LevelFilter::Debug } else { log::LevelFilter::Info })
+		.chain(fern::log_file("debug.log")?)
+		.apply()?;
 
 	Ok(())
 }
 
 fn try_debug(result_log : &Result<(), fern::InitError>, message : &str) {
-	if cfg!(debug_assertions) && result_log.is_ok() {
+	if result_log.is_ok() {
 		debug!("{}", message);
 	}
 }
