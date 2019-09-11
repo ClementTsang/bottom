@@ -1,9 +1,11 @@
 use heim_common::units::information;
+use std::time::Instant;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct MemData {
 	pub mem_total_in_mb : u64,
 	pub mem_used_in_mb : u64,
+	pub instant : Instant,
 }
 
 pub async fn get_mem_data_list() -> Result<MemData, heim::Error> {
@@ -12,6 +14,7 @@ pub async fn get_mem_data_list() -> Result<MemData, heim::Error> {
 	Ok(MemData {
 		mem_total_in_mb : memory.total().get::<information::megabyte>(),
 		mem_used_in_mb : memory.total().get::<information::megabyte>() - memory.available().get::<information::megabyte>(),
+		instant : Instant::now(),
 	})
 }
 
@@ -21,5 +24,6 @@ pub async fn get_swap_data_list() -> Result<MemData, heim::Error> {
 	Ok(MemData {
 		mem_total_in_mb : memory.total().get::<information::megabyte>(),
 		mem_used_in_mb : memory.used().get::<information::megabyte>(),
+		instant : Instant::now(),
 	})
 }

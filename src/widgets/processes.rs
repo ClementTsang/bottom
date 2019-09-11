@@ -18,7 +18,8 @@ pub enum ProcessSorting {
 pub struct ProcessData {
 	pub pid : u32,
 	pub cpu_usage_percent : f64,
-	pub mem_usage_percent : f64,
+	pub mem_usage_percent : Option<f64>,
+	pub mem_usage_mb : Option<u64>,
 	pub command : String,
 }
 
@@ -74,9 +75,11 @@ fn get_cpu_use_val() -> std::io::Result<f64> {
 	Ok(val[0].parse::<f64>().unwrap_or(0_f64) + val[1].parse::<f64>().unwrap_or(0_f64) + val[2].parse::<f64>().unwrap_or(0_f64) + val[3].parse::<f64>().unwrap_or(0_f64))
 }
 
-async fn linux_cpu_usage(pid : u32, before_cpu_val : f64) -> std::io::Result<f64> {
+async fn linux_cpu_usage(pid : u32) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
 	let before_proc_val = get_process_cpu_stats(pid)?;
+	let before_cpu_val = get_cpu_use_val()?;
+
 	futures_timer::Delay::new(std::time::Duration::from_millis(1000)).await.unwrap();
 	let after_proc_val = get_process_cpu_stats(pid)?;
 	let after_cpu_val = get_cpu_use_val()?;
@@ -85,31 +88,30 @@ async fn linux_cpu_usage(pid : u32, before_cpu_val : f64) -> std::io::Result<f64
 }
 
 async fn convert_ps(process : &str) -> std::io::Result<ProcessData> {
-	let before_cpu_val = get_cpu_use_val()?;
-
-	debug!("Process: |{}|", process);
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessData {
 			pid : 0,
 			command : "".to_string(),
-			mem_usage_percent : 0_f64,
+			mem_usage_percent : None,
+			mem_usage_mb : None,
 			cpu_usage_percent : 0_f64,
 		});
 	}
 
 	let pid = (&process[..11]).trim().to_string().parse::<u32>().unwrap_or(0);
 	let command = (&process[11..61]).trim().to_string();
-	let mem_usage_percent = (&process[62..]).trim().to_string().parse::<f64>().unwrap_or(0_f64);
+	let mem_usage_percent = Some((&process[62..]).trim().to_string().parse::<f64>().unwrap_or(0_f64));
 
 	Ok(ProcessData {
 		pid,
 		command,
 		mem_usage_percent,
-		cpu_usage_percent : linux_cpu_usage(pid, before_cpu_val).await?,
+		mem_usage_mb : None,
+		cpu_usage_percent : linux_cpu_usage(pid).await?,
 	})
 }
 
-pub async fn get_sorted_processes_list(total_mem : u64) -> Result<Vec<ProcessData>, heim::Error> {
+pub async fn get_sorted_processes_list() -> Result<Vec<ProcessData>, heim::Error> {
 	let mut process_vector : Vec<ProcessData> = Vec::new();
 
 	if cfg!(target_os = "linux") {
@@ -141,7 +143,8 @@ pub async fn get_sorted_processes_list(total_mem : u64) -> Result<Vec<ProcessDat
 						command : process.name().await.unwrap_or_else(|_| "".to_string()),
 						pid : process.pid() as u32,
 						cpu_usage_percent : f64::from(cpu_usage.get::<units::ratio::percent>()),
-						mem_usage_percent : mem_measurement.rss().get::<units::information::megabyte>() as f64 / total_mem as f64 * 100_f64,
+						mem_usage_percent : None,
+						mem_usage_mb : Some(mem_measurement.rss().get::<units::information::megabyte>()),
 					});
 				}
 			}

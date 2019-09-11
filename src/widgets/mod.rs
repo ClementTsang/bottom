@@ -22,17 +22,23 @@ fn set_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, value_t
 	}
 }
 
+fn push_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, vector_to_push : &mut Vec<T>) {
+	if let Ok(result) = result {
+		vector_to_push.push(result.clone());
+	}
+}
+
 #[derive(Default, Clone)]
 pub struct Data {
-	pub list_of_cpu_packages : Vec<cpu::CPUData>,
-	pub list_of_io : Vec<disks::IOData>,
-	pub list_of_physical_io : Vec<disks::IOData>,
-	pub memory : mem::MemData,
-	pub swap : mem::MemData,
+	pub list_of_cpu_packages : Vec<Vec<cpu::CPUData>>,
+	pub list_of_io : Vec<Vec<disks::IOData>>,
+	pub list_of_physical_io : Vec<Vec<disks::IOData>>,
+	pub memory : Vec<mem::MemData>,
+	pub swap : Vec<mem::MemData>,
 	pub list_of_temperature : Vec<temperature::TempData>,
-	pub network : network::NetworkData,
-	pub list_of_processes : Vec<processes::ProcessData>,
-	pub list_of_disks : Vec<disks::DiskData>,
+	pub network : Vec<network::NetworkData>,
+	pub list_of_processes : Vec<processes::ProcessData>, // Only need to keep a list of processes...
+	pub list_of_disks : Vec<disks::DiskData>,            // Only need to keep a list of disks and their data
 }
 
 pub struct DataState {
@@ -56,17 +62,17 @@ impl DataState {
 		self.sys.refresh_network();
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
-		set_if_valid(&network::get_network_data(&self.sys), &mut self.data.network);
-		set_if_valid(&cpu::get_cpu_data_list(&self.sys), &mut self.data.list_of_cpu_packages);
+		push_if_valid(&network::get_network_data(&self.sys), &mut self.data.network);
+		push_if_valid(&cpu::get_cpu_data_list(&self.sys), &mut self.data.list_of_cpu_packages);
 
 		// TODO: We can convert this to a multi-threaded task...
-		set_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
-		set_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
-		set_if_valid(&processes::get_sorted_processes_list(self.data.memory.mem_total_in_mb).await, &mut self.data.list_of_processes);
+		push_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
+		push_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
+		set_if_valid(&processes::get_sorted_processes_list().await, &mut self.data.list_of_processes);
 
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
-		set_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
-		set_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
+		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
+		push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
 		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature);
 		debug!("End updating...");
 	}

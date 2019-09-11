@@ -16,7 +16,7 @@ extern crate log;
 
 enum Event<I> {
 	Input(I),
-	Update(widgets::Data),
+	Update(Box<widgets::Data>),
 }
 
 #[tokio::main]
@@ -58,8 +58,8 @@ async fn main() -> Result<(), io::Error> {
 			let tx = tx.clone();
 			loop {
 				futures::executor::block_on(data_state.update_data()); // TODO: Fix
-				tx.send(Event::Update(data_state.data.clone())).unwrap();
-				thread::sleep(Duration::from_millis(update_rate_in_milliseconds - 1000));
+				tx.send(Event::Update(Box::from(data_state.data.clone()))).unwrap();
+				thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
 			}
 		});
 	}
@@ -90,7 +90,7 @@ async fn main() -> Result<(), io::Error> {
 				}
 				Event::Update(data) => {
 					try_debug(&log, "Update event fired!");
-					app_data = data;
+					app_data = *data;
 					widgets::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
 					try_debug(&log, "Update event complete.");
 				}
@@ -121,7 +121,7 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 			vec![
 				disk.name.to_string(),
 				disk.mount_point.to_string(),
-				format!("{:.2}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
+				format!("{:.1}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
 				(disk.free_space / 1024).to_string() + "GB",
 				(disk.total_space / 1024).to_string() + "GB",
 			]
@@ -135,14 +135,31 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 			vec![
 				process.pid.to_string(),
 				process.command.to_string(),
-				format!("{:.2}%", process.cpu_usage_percent),
-				format!("{:.2}%", process.mem_usage_percent),
+				format!("{:.1}%", process.cpu_usage_percent),
+				format!(
+					"{:.1}%",
+					if let Some(mem_usage) = process.mem_usage_percent {
+						mem_usage
+					}
+					else if let Some(mem_usage_in_mb) = process.mem_usage_mb {
+						if let Some(mem_data) = app_data.memory.last() {
+							mem_usage_in_mb as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
+						}
+						else {
+							0_f64
+						}
+					}
+					else {
+						0_f64
+					}
+				),
 			]
 			.into_iter(),
 			Style::default().fg(Color::LightGreen),
 		)
 	});
 
+	// TODO: Convert this into a separate func!
 	terminal.draw(|mut f| {
 		let vertical_chunks = Layout::default()
 			.direction(Direction::Vertical)
@@ -173,22 +190,17 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 		// Set up blocks and their components
 
 		// CPU usage graph
+		let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 10.0]);
+		let y_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 10.0]);
 		Chart::default()
 			.block(Block::default().title("CPU Usage").borders(Borders::ALL))
-			.x_axis(Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 10.0]).labels(&["0.0", "10.0"]))
-			.y_axis(Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 10.0]).labels(&["0.0", "10.0"]))
-			.datasets(&[
-				Dataset::default()
-					.name("data1")
-					.marker(Marker::Dot)
-					.style(Style::default().fg(Color::Cyan))
-					.data(&[(0.0, 5.0), (1.0, 6.0), (1.5, 6.434)]),
-				Dataset::default()
-					.name("data2")
-					.marker(Marker::Braille)
-					.style(Style::default().fg(Color::Magenta))
-					.data(&[(4.0, 5.0), (5.0, 8.0), (7.66, 13.5)]),
-			])
+			.x_axis(x_axis)
+			.y_axis(y_axis)
+			.datasets(&[Dataset::default()
+				.name("data1")
+				.marker(Marker::Dot)
+				.style(Style::default().fg(Color::Cyan))
+				.data(&[(0.0, 5.0), (1.0, 6.0), (1.5, 6.434)])])
 			.render(&mut f, top_chunks[0]);
 
 		//Memory usage graph
