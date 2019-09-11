@@ -5,10 +5,15 @@ use sysinfo::{ProcessorExt, System, SystemExt};
 pub struct CPUData {
 	pub cpu_name : Box<str>,
 	pub cpu_usage : u32,
+}
+
+#[derive(Clone)]
+pub struct CPUPackage {
+	pub cpu_vec : Vec<CPUData>,
 	pub instant : Instant,
 }
 
-pub fn get_cpu_data_list(sys : &System) -> Result<Vec<CPUData>, heim::Error> {
+pub fn get_cpu_data_list(sys : &System) -> Result<CPUPackage, heim::Error> {
 	let cpu_data = sys.get_processor_list();
 	let mut cpu_vec = Vec::new();
 
@@ -16,9 +21,8 @@ pub fn get_cpu_data_list(sys : &System) -> Result<Vec<CPUData>, heim::Error> {
 		cpu_vec.push(CPUData {
 			cpu_name : Box::from(cpu.get_name()),
 			cpu_usage : (cpu.get_cpu_usage() * 100_f32).ceil() as u32,
-			instant : Instant::now(),
 		})
 	}
 
-	Ok(cpu_vec)
+	Ok(CPUPackage { cpu_vec, instant : Instant::now() })
 }

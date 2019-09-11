@@ -30,9 +30,9 @@ fn push_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, vector
 
 #[derive(Default, Clone)]
 pub struct Data {
-	pub list_of_cpu_packages : Vec<Vec<cpu::CPUData>>,
-	pub list_of_io : Vec<Vec<disks::IOData>>,
-	pub list_of_physical_io : Vec<Vec<disks::IOData>>,
+	pub list_of_cpu_packages : Vec<cpu::CPUPackage>,
+	pub list_of_io : Vec<disks::IOPackage>,
+	pub list_of_physical_io : Vec<disks::IOPackage>,
 	pub memory : Vec<mem::MemData>,
 	pub swap : Vec<mem::MemData>,
 	pub list_of_temperature : Vec<temperature::TempData>,
@@ -61,6 +61,8 @@ impl DataState {
 		self.sys.refresh_system();
 		self.sys.refresh_network();
 
+		const STALE_MAX_SECONDS : u64 = 60;
+
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		push_if_valid(&network::get_network_data(&self.sys), &mut self.data.network);
 		push_if_valid(&cpu::get_cpu_data_list(&self.sys), &mut self.data.list_of_cpu_packages);
@@ -74,6 +76,57 @@ impl DataState {
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
 		push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
 		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature);
+
+		// Filter out stale timed entries...
+		let current_instant = std::time::Instant::now();
+		self.data.list_of_cpu_packages = self
+			.data
+			.list_of_cpu_packages
+			.iter()
+			.cloned()
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.collect::<Vec<_>>();
+
+		self.data.memory = self
+			.data
+			.memory
+			.iter()
+			.cloned()
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.collect::<Vec<_>>();
+
+		self.data.swap = self
+			.data
+			.swap
+			.iter()
+			.cloned()
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.collect::<Vec<_>>();
+
+		self.data.network = self
+			.data
+			.network
+			.iter()
+			.cloned()
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.collect::<Vec<_>>();
+
+		self.data.list_of_io = self
+			.data
+			.list_of_io
+			.iter()
+			.cloned()
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.collect::<Vec<_>>();
+
+		self.data.list_of_physical_io = self
+			.data
+			.list_of_physical_io
+			.iter()
+			.cloned()
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.collect::<Vec<_>>();
+
 		debug!("End updating...");
 	}
 }
