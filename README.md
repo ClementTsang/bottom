@@ -1,6 +1,6 @@
 # rustop
 
-A [gotop](https://github.com/cjbassi/gotop) clone, written in Rust.
+A top clone, written in Rust.  Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop)
 
 ## Installation
 
@@ -18,7 +18,7 @@ Currently, I'm unable to test on MacOS, so I'm not sure how well this will work,
 
 ## Thanks
 
-* As mentioned, this project is most definitely inspired by [gotop](https://github.com/cjbassi/gotop).
+* As mentioned, this project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop) .
 
 * This application was written with the following libraries:
   * [crossterm](https://github.com/TimonPost/crossterm)

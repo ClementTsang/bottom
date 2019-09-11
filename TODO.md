@@ -12,6 +12,10 @@
 
 * Keybindings
 
+* FIX PROCESSES AHHHHHH
+
+* Refactor everything because it's a mess
+
 * Test for Windows support, mac support
 
 * Efficiency!!!  Make sure no wasted hashmaps, use references, etc.
