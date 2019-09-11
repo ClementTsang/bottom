@@ -5,6 +5,7 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
+use std::collections::HashMap;
 use sysinfo::{System, SystemExt};
 
 #[allow(dead_code)]
@@ -45,6 +46,9 @@ pub struct DataState {
 	pub data : Data,
 	sys : System,
 	stale_max_seconds : u64,
+	prev_pid_stats : HashMap<String, f64>,
+	prev_idle : f64,
+	prev_non_idle : f64,
 }
 
 impl Default for DataState {
@@ -53,6 +57,9 @@ impl Default for DataState {
 			data : Data::default(),
 			sys : System::new(),
 			stale_max_seconds : 60,
+			prev_pid_stats : HashMap::new(),
+			prev_idle : 0_f64,
+			prev_non_idle : 0_f64,
 		}
 	}
 }
@@ -61,6 +68,12 @@ impl DataState {
 	pub fn set_stale_max_seconds(&mut self, stale_max_seconds : u64) {
 		self.stale_max_seconds = stale_max_seconds;
 	}
+
+	pub fn init(&mut self) {
+		self.sys.refresh_system();
+		self.sys.refresh_network();
+	}
+
 	pub async fn update_data(&mut self) {
 		debug!("Start updating...");
 		self.sys.refresh_system();
@@ -73,7 +86,10 @@ impl DataState {
 		// TODO: We can convert this to a multi-threaded task...
 		push_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
 		push_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
-		set_if_valid(&processes::get_sorted_processes_list().await, &mut self.data.list_of_processes);
+		set_if_valid(
+			&processes::get_sorted_processes_list(&mut self.prev_idle, &mut self.prev_non_idle, &mut self.prev_pid_stats).await,
+			&mut self.data.list_of_processes,
+		);
 
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);

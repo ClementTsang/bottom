@@ -2,7 +2,7 @@ use heim_common::{
 	prelude::{StreamExt, TryStreamExt},
 	units,
 };
-use std::process::Command;
+use std::{collections::HashMap, process::Command};
 
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -21,6 +21,41 @@ pub struct ProcessData {
 	pub mem_usage_percent : Option<f64>,
 	pub mem_usage_mb : Option<u64>,
 	pub command : String,
+}
+
+fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64) -> std::io::Result<f64> {
+	// Named after this SO answer: https://stackoverflow.com/a/23376195
+	let mut path = std::path::PathBuf::new();
+	path.push("/proc");
+	path.push("stat");
+
+	let stat_results = std::fs::read_to_string(path)?;
+	let first_line = stat_results.split('\n').collect::<Vec<&str>>()[0];
+	let val = first_line.split_whitespace().collect::<Vec<&str>>();
+
+	let user : f64 = val[1].parse::<_>().unwrap_or(-1_f64); // TODO: Better checking
+	let nice : f64 = val[2].parse::<_>().unwrap_or(-1_f64);
+	let system : f64 = val[3].parse::<_>().unwrap_or(-1_f64);
+	let idle : f64 = val[4].parse::<_>().unwrap_or(-1_f64);
+	let iowait : f64 = val[5].parse::<_>().unwrap_or(-1_f64);
+	let irq : f64 = val[6].parse::<_>().unwrap_or(-1_f64);
+	let softirq : f64 = val[7].parse::<_>().unwrap_or(-1_f64);
+	let steal : f64 = val[8].parse::<_>().unwrap_or(-1_f64);
+	let guest : f64 = val[9].parse::<_>().unwrap_or(-1_f64);
+
+	let idle = idle + iowait;
+	let non_idle = user + nice + system + irq + softirq + steal + guest;
+
+	let total = idle + non_idle;
+	let prev_total = *prev_idle + *prev_non_idle;
+
+	let total_delta : f64 = total - prev_total;
+	let idle_delta : f64 = idle - *prev_idle;
+
+	*prev_idle = idle;
+	*prev_non_idle = non_idle;
+
+	Ok(total_delta - idle_delta)
 }
 
 fn get_ordering<T : std::cmp::PartialOrd>(a_val : T, b_val : T, reverse_order : bool) -> std::cmp::Ordering {
@@ -61,33 +96,37 @@ fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 
 	let stat_results = std::fs::read_to_string(path)?;
 	let val = stat_results.split_whitespace().collect::<Vec<&str>>();
-	Ok(val[13].parse::<f64>().unwrap_or(0_f64) + val[14].parse::<f64>().unwrap_or(0_f64))
+	let utime = val[13].parse::<f64>().unwrap_or(-1_f64);
+	let stime = val[14].parse::<f64>().unwrap_or(-1_f64);
+
+	Ok(utime + stime)
 }
 
-fn get_cpu_use_val() -> std::io::Result<f64> {
-	let mut path = std::path::PathBuf::new();
-	path.push("/proc");
-	path.push("stat");
-
-	let stat_results = std::fs::read_to_string(path)?;
-	let first_line = stat_results.split('\n').collect::<Vec<&str>>()[0];
-	let val = first_line.split_whitespace().collect::<Vec<&str>>();
-	Ok(val[0].parse::<f64>().unwrap_or(0_f64) + val[1].parse::<f64>().unwrap_or(0_f64) + val[2].parse::<f64>().unwrap_or(0_f64) + val[3].parse::<f64>().unwrap_or(0_f64))
-}
-
-async fn linux_cpu_usage(pid : u32) -> std::io::Result<f64> {
+fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap<String, f64>) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
-	let before_proc_val = get_process_cpu_stats(pid)?;
-	let before_cpu_val = get_cpu_use_val()?;
-
-	futures_timer::Delay::new(std::time::Duration::from_millis(1000)).await.unwrap();
+	let before_proc_val : f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
+		*previous_pid_stats.get(&pid.to_string()).unwrap_or(&-1_f64)
+	}
+	else {
+		0_f64
+	};
 	let after_proc_val = get_process_cpu_stats(pid)?;
-	let after_cpu_val = get_cpu_use_val()?;
 
-	Ok((after_proc_val - before_proc_val) / (after_cpu_val - before_cpu_val) * 100_f64)
+	debug!(
+		"PID - {} - Before: {}, After: {}, CPU: {}, Percentage: {}",
+		pid,
+		before_proc_val,
+		after_proc_val,
+		cpu_usage,
+		(after_proc_val - before_proc_val) / cpu_usage * 100_f64
+	);
+
+	let entry = previous_pid_stats.entry(pid.to_string()).or_insert(after_proc_val);
+	*entry = after_proc_val;
+	Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
 }
 
-async fn convert_ps(process : &str) -> std::io::Result<ProcessData> {
+fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut HashMap<String, f64>) -> std::io::Result<ProcessData> {
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessData {
 			pid : 0,
@@ -107,24 +146,26 @@ async fn convert_ps(process : &str) -> std::io::Result<ProcessData> {
 		command,
 		mem_usage_percent,
 		mem_usage_mb : None,
-		cpu_usage_percent : linux_cpu_usage(pid).await?,
+		cpu_usage_percent : linux_cpu_usage(pid, cpu_usage_percentage, prev_pid_stats)?,
 	})
 }
 
-pub async fn get_sorted_processes_list() -> Result<Vec<ProcessData>, heim::Error> {
+pub async fn get_sorted_processes_list(prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut HashMap<String, f64>) -> Result<Vec<ProcessData>, heim::Error> {
 	let mut process_vector : Vec<ProcessData> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		// Linux specific - this is a massive pain... ugh.
+
 		let ps_result = Command::new("ps").args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"]).output().expect("Failed to execute.");
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
-		let mut process_stream = futures::stream::iter::<_>(split_string.collect::<Vec<&str>>()).map(convert_ps).buffer_unordered(std::usize::MAX);
+		let cpu_usage = vangelis_cpu_usage_calculation(prev_idle, prev_non_idle).unwrap(); // TODO: FIX THIS ERROR CHECKING
+		let process_stream = split_string.collect::<Vec<&str>>();
 
-		while let Some(process) = process_stream.next().await {
-			if let Ok(process) = process {
-				if !process.command.is_empty() {
-					process_vector.push(process);
+		for process in process_stream {
+			if let Ok(process_object) = convert_ps(process, cpu_usage, prev_pid_stats) {
+				if !process_object.command.is_empty() {
+					process_vector.push(process_object);
 				}
 			}
 		}
@@ -156,6 +197,7 @@ pub async fn get_sorted_processes_list() -> Result<Vec<ProcessData>, heim::Error
 	}
 	else {
 		dbg!("Else"); // TODO: Remove
+		      // Solaris: https://stackoverflow.com/a/4453581
 	}
 
 	Ok(process_vector)

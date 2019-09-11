@@ -54,6 +54,7 @@ async fn main() -> Result<(), io::Error> {
 
 	// Event loop
 	let mut data_state = widgets::DataState::default();
+	data_state.init();
 	data_state.set_stale_max_seconds(STALE_MAX_SECONDS);
 	{
 		let tx = tx.clone();
