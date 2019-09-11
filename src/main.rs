@@ -19,6 +19,8 @@ enum Event<I> {
 	Update(Box<widgets::Data>),
 }
 
+const STALE_MAX_SECONDS : u64 = 60;
+
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
 	let screen = AlternateScreen::to_alternate(true)?;
@@ -52,6 +54,7 @@ async fn main() -> Result<(), io::Error> {
 
 	// Event loop
 	let mut data_state = widgets::DataState::default();
+	data_state.set_stale_max_seconds(STALE_MAX_SECONDS);
 	{
 		let tx = tx.clone();
 		thread::spawn(move || {
@@ -176,11 +179,16 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 			.margin(0)
 			.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
 			.split(vertical_chunks[1]);
-		let middle_divided_chunk = Layout::default()
+		let middle_divided_chunk_1 = Layout::default()
 			.direction(Direction::Vertical)
 			.margin(0)
 			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
 			.split(middle_chunks[0]);
+		let middle_divided_chunk_2 = Layout::default()
+			.direction(Direction::Vertical)
+			.margin(0)
+			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+			.split(middle_chunks[1]);
 		let bottom_chunks = Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(0)
@@ -190,38 +198,70 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 		// Set up blocks and their components
 
 		// CPU usage graph
-		let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 10.0]);
-		let y_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 10.0]);
-		Chart::default()
-			.block(Block::default().title("CPU Usage").borders(Borders::ALL))
-			.x_axis(x_axis)
-			.y_axis(y_axis)
-			.datasets(&[Dataset::default()
-				.name("data1")
-				.marker(Marker::Dot)
-				.style(Style::default().fg(Color::Cyan))
-				.data(&[(0.0, 5.0), (1.0, 6.0), (1.5, 6.434)])])
-			.render(&mut f, top_chunks[0]);
+		{
+			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 60.0]);
+			let y_axis = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
+			Chart::default()
+				.block(Block::default().title("CPU Usage").borders(Borders::ALL))
+				.x_axis(x_axis)
+				.y_axis(y_axis)
+				.datasets(&[
+					Dataset::default()
+						.name("CPU0")
+						.marker(Marker::Braille)
+						.style(Style::default().fg(Color::Cyan))
+						.data(&convert_cpu_data(0, &app_data.list_of_cpu_packages)),
+					Dataset::default()
+						.name("CPU1")
+						.marker(Marker::Braille)
+						.style(Style::default().fg(Color::LightMagenta))
+						.data(&convert_cpu_data(1, &app_data.list_of_cpu_packages)),
+				])
+				.render(&mut f, top_chunks[0]);
+		}
 
 		//Memory usage graph
-		Block::default().title("Memory Usage").borders(Borders::ALL).render(&mut f, top_chunks[1]);
+		{
+			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 60.0]);
+			let y_axis = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
+			Chart::default()
+				.block(Block::default().title("Memory Usage").borders(Borders::ALL))
+				.x_axis(x_axis)
+				.y_axis(y_axis)
+				.datasets(&[
+					Dataset::default()
+						.name("MEM")
+						.marker(Marker::Braille)
+						.style(Style::default().fg(Color::Cyan))
+						.data(&convert_mem_data(&app_data.memory)),
+					Dataset::default()
+						.name("SWAP")
+						.marker(Marker::Braille)
+						.style(Style::default().fg(Color::LightGreen))
+						.data(&convert_mem_data(&app_data.swap)),
+				])
+				.render(&mut f, top_chunks[1]);
+		}
 
 		// Temperature table
 		Table::new(["Sensor", "Temperature"].iter(), temperature_rows)
 			.block(Block::default().title("Temperatures").borders(Borders::ALL))
 			.header_style(Style::default().fg(Color::LightBlue))
 			.widths(&[15, 5])
-			.render(&mut f, middle_divided_chunk[0]);
+			.render(&mut f, middle_divided_chunk_1[0]);
 
 		// Disk usage table
 		Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
 			.block(Block::default().title("Disk Usage").borders(Borders::ALL))
 			.header_style(Style::default().fg(Color::LightBlue))
 			.widths(&[15, 10, 5, 5, 5])
-			.render(&mut f, middle_divided_chunk[1]);
+			.render(&mut f, middle_divided_chunk_1[1]);
+
+		// Temp graph
+		Block::default().title("Temperatures").borders(Borders::ALL).render(&mut f, middle_divided_chunk_2[0]);
 
 		// IO graph
-		Block::default().title("IO Usage").borders(Borders::ALL).render(&mut f, middle_chunks[1]);
+		Block::default().title("IO Usage").borders(Borders::ALL).render(&mut f, middle_divided_chunk_2[1]);
 
 		// Network graph
 		Block::default().title("Network").borders(Borders::ALL).render(&mut f, bottom_chunks[0]);
@@ -235,6 +275,35 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 	})?;
 
 	Ok(())
+}
+
+// TODO: Remove this count, this is for testing, lol
+fn convert_cpu_data(count : usize, cpu_data : &[widgets::cpu::CPUPackage]) -> Vec<(f64, f64)> {
+	let mut result : Vec<(f64, f64)> = Vec::new();
+	let current_time = std::time::Instant::now();
+
+	for data in cpu_data {
+		result.push((
+			STALE_MAX_SECONDS as f64 - current_time.duration_since(data.instant).as_secs() as f64,
+			f64::from(data.cpu_vec[count + 1].cpu_usage),
+		));
+	}
+
+	result
+}
+
+fn convert_mem_data(mem_data : &[widgets::mem::MemData]) -> Vec<(f64, f64)> {
+	let mut result : Vec<(f64, f64)> = Vec::new();
+	let current_time = std::time::Instant::now();
+
+	for data in mem_data {
+		result.push((
+			STALE_MAX_SECONDS as f64 - current_time.duration_since(data.instant).as_secs() as f64,
+			data.mem_used_in_mb as f64 / data.mem_total_in_mb as f64 * 100_f64,
+		));
+	}
+
+	result
 }
 
 fn init_logger() -> Result<(), fern::InitError> {

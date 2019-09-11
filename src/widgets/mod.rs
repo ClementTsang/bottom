@@ -44,6 +44,7 @@ pub struct Data {
 pub struct DataState {
 	pub data : Data,
 	sys : System,
+	stale_max_seconds : u64,
 }
 
 impl Default for DataState {
@@ -51,17 +52,19 @@ impl Default for DataState {
 		DataState {
 			data : Data::default(),
 			sys : System::new(),
+			stale_max_seconds : 60,
 		}
 	}
 }
 
 impl DataState {
+	pub fn set_stale_max_seconds(&mut self, stale_max_seconds : u64) {
+		self.stale_max_seconds = stale_max_seconds;
+	}
 	pub async fn update_data(&mut self) {
 		debug!("Start updating...");
 		self.sys.refresh_system();
 		self.sys.refresh_network();
-
-		const STALE_MAX_SECONDS : u64 = 60;
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		push_if_valid(&network::get_network_data(&self.sys), &mut self.data.network);
@@ -77,14 +80,15 @@ impl DataState {
 		push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
 		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature);
 
-		// Filter out stale timed entries...
+		// Filter out stale timed entries
+		// TODO: ideally make this a generic function!
 		let current_instant = std::time::Instant::now();
 		self.data.list_of_cpu_packages = self
 			.data
 			.list_of_cpu_packages
 			.iter()
 			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
 			.collect::<Vec<_>>();
 
 		self.data.memory = self
@@ -92,7 +96,7 @@ impl DataState {
 			.memory
 			.iter()
 			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
 			.collect::<Vec<_>>();
 
 		self.data.swap = self
@@ -100,7 +104,7 @@ impl DataState {
 			.swap
 			.iter()
 			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
 			.collect::<Vec<_>>();
 
 		self.data.network = self
@@ -108,7 +112,7 @@ impl DataState {
 			.network
 			.iter()
 			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
 			.collect::<Vec<_>>();
 
 		self.data.list_of_io = self
@@ -116,7 +120,7 @@ impl DataState {
 			.list_of_io
 			.iter()
 			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
 			.collect::<Vec<_>>();
 
 		self.data.list_of_physical_io = self
@@ -124,7 +128,7 @@ impl DataState {
 			.list_of_physical_io
 			.iter()
 			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= STALE_MAX_SECONDS)
+			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
 			.collect::<Vec<_>>();
 
 		debug!("End updating...");
