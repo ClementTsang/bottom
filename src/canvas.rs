@@ -6,7 +6,8 @@ use tui::{
 	Terminal,
 };
 
-const COLOUR_LIST : [Color; 6] = [Color::LightCyan, Color::LightMagenta, Color::LightRed, Color::LightGreen, Color::LightYellow, Color::LightBlue];
+const COLOUR_LIST : [Color; 6] = [Color::LightRed, Color::LightGreen, Color::LightYellow, Color::LightBlue, Color::LightCyan, Color::LightMagenta];
+const TEXT_COLOUR : Color = Color::Green;
 
 #[derive(Default)]
 pub struct CanvasData {
@@ -20,21 +21,11 @@ pub struct CanvasData {
 
 // TODO: Change the error
 pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_data : &CanvasData) -> Result<(), io::Error> {
-	let temperature_rows = canvas_data.temp_sensor_data.iter().map(|sensor| {
-		Row::StyledData(
-			sensor.iter(), // TODO: Change this based on temperature type
-			Style::default().fg(Color::White),
-		)
-	});
+	let temperature_rows = canvas_data.temp_sensor_data.iter().map(|sensor| Row::StyledData(sensor.iter(), Style::default().fg(TEXT_COLOUR)));
 
-	let disk_rows = canvas_data.disk_data.iter().map(|disk| {
-		Row::StyledData(
-			disk.iter(), // TODO: Change this based on temperature type
-			Style::default().fg(Color::White),
-		)
-	});
+	let disk_rows = canvas_data.disk_data.iter().map(|disk| Row::StyledData(disk.iter(), Style::default().fg(TEXT_COLOUR)));
 
-	let process_rows = canvas_data.process_data.iter().map(|process| Row::StyledData(process.iter(), Style::default().fg(Color::White)));
+	let process_rows = canvas_data.process_data.iter().map(|process| Row::StyledData(process.iter(), Style::default().fg(TEXT_COLOUR)));
 
 	// TODO: Convert this into a separate func!
 	terminal.draw(|mut f| {

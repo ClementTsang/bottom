@@ -53,6 +53,7 @@ async fn main() -> Result<(), io::Error> {
 	let mut data_state = app::DataState::default();
 	data_state.init();
 	data_state.set_stale_max_seconds(STALE_MAX_SECONDS);
+	data_state.set_temperature_type(app.temperature_type.clone());
 	{
 		let tx = tx.clone();
 		thread::spawn(move || {
@@ -101,7 +102,7 @@ async fn main() -> Result<(), io::Error> {
 
 					// Convert all data into tui components
 					canvas_data.disk_data = update_disk_row(&app_data);
-					canvas_data.temp_sensor_data = update_temp_row(&app_data);
+					canvas_data.temp_sensor_data = update_temp_row(&app_data, &app.temperature_type);
 					canvas_data.process_data = update_process_row(&app_data);
 					canvas_data.mem_data = update_mem_data_points(&app_data);
 					canvas_data.swap_data = update_swap_data_points(&app_data);
@@ -121,11 +122,19 @@ async fn main() -> Result<(), io::Error> {
 	Ok(())
 }
 
-fn update_temp_row(app_data : &app::Data) -> Vec<Vec<String>> {
+fn update_temp_row(app_data : &app::Data, temp_type : &app::TemperatureType) -> Vec<Vec<String>> {
 	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
 
 	for sensor in &app_data.list_of_temperature_sensor {
-		sensor_vector.push(vec![sensor.component_name.to_string(), sensor.temperature.to_string() + "C"]);
+		sensor_vector.push(vec![
+			sensor.component_name.to_string(),
+			sensor.temperature.to_string()
+				+ match temp_type {
+					app::TemperatureType::Celsius => "C",
+					app::TemperatureType::Kelvin => "K",
+					app::TemperatureType::Fahrenheit => "F",
+				},
+		]);
 	}
 
 	sensor_vector
