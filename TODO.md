@@ -10,9 +10,11 @@
 
 * Add custom error because it's really messy
 
+* Scrolling event
+
 * Keybindings
 
-* FIX PROCESSES AHHHHHH
+~~* FIX PROCESSES AHHHHHH~~
 
 * Refactor everything because it's a mess
 

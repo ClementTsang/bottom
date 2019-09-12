@@ -4,19 +4,20 @@ use std::{io, sync::mpsc, thread, time::Duration};
 use tui::{
 	backend::CrosstermBackend,
 	layout::{Constraint, Direction, Layout},
-	style::{Color, Style},
+	style::{Color, Modifier, Style},
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 	Terminal,
 };
 
-mod widgets;
+mod app;
+use app::data_collection;
 
 #[macro_use]
 extern crate log;
 
 enum Event<I> {
 	Input(I),
-	Update(Box<widgets::Data>),
+	Update(Box<app::Data>),
 }
 
 const STALE_MAX_SECONDS : u64 = 60;
@@ -30,7 +31,7 @@ async fn main() -> Result<(), io::Error> {
 	let tick_rate_in_milliseconds : u64 = 250;
 	let update_rate_in_milliseconds : u64 = 1000; // TODO: Must set a check to prevent this from going into negatives!
 
-	let mut app = widgets::App::new("rustop");
+	let mut app = app::App::new("rustop");
 
 	let log = init_logger();
 
@@ -53,7 +54,7 @@ async fn main() -> Result<(), io::Error> {
 	}
 
 	// Event loop
-	let mut data_state = widgets::DataState::default();
+	let mut data_state = app::DataState::default();
 	data_state.init();
 	data_state.set_stale_max_seconds(STALE_MAX_SECONDS);
 	{
@@ -70,7 +71,10 @@ async fn main() -> Result<(), io::Error> {
 
 	terminal.clear()?;
 
-	let mut app_data = widgets::Data::default();
+	let mut app_data = app::Data::default();
+	let mut swap_data : Vec<(f64, f64)> = Vec::new();
+	let mut mem_data : Vec<(f64, f64)> = Vec::new();
+
 	loop {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(tick_rate_in_milliseconds)) {
 			match recv {
@@ -87,16 +91,22 @@ async fn main() -> Result<(), io::Error> {
 					}
 
 					if app.to_be_resorted {
-						widgets::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
+						data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
 						app.to_be_resorted = false;
 					}
 					try_debug(&log, "Input event complete.");
+
+					// Only update processes
 				}
 				Event::Update(data) => {
 					try_debug(&log, "Update event fired!");
 					app_data = *data;
-					widgets::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
+					data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
 					try_debug(&log, "Update event complete.");
+
+					// Convert all data into tui components
+					mem_data = update_mem_data_points(&app_data);
+					swap_data = update_swap_data_points(&app_data);
 				}
 			}
 			if app.should_quit {
@@ -105,14 +115,33 @@ async fn main() -> Result<(), io::Error> {
 		}
 
 		// Draw!
-		draw_data(&mut terminal, &app_data)?;
+		// TODO: We should change this btw! It should not redraw everything on every tick!
+		draw_data(&mut terminal, &app_data, &mem_data, &swap_data)?;
 	}
 
 	Ok(())
 }
 
-fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : &widgets::Data) -> Result<(), io::Error> {
-	// Convert data into tui components
+fn update_temp_row(app_data : &app::Data) {
+}
+
+fn update_process_row(app_data : &app::Data) {
+}
+
+fn update_cpu_data_points(app_data : &app::Data) {
+}
+
+fn update_mem_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
+	convert_mem_data(&app_data.memory)
+}
+
+fn update_swap_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
+	convert_mem_data(&app_data.swap)
+}
+
+fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : &app::Data, mem_data : &[(f64, f64)], swap_data : &[(f64, f64)]) -> Result<(), io::Error> {
+	const COLOUR_LIST : [Color; 6] = [Color::LightCyan, Color::LightMagenta, Color::LightRed, Color::LightGreen, Color::LightYellow, Color::LightBlue];
+
 	let temperature_rows = app_data.list_of_temperature.iter().map(|sensor| {
 		Row::StyledData(
 			vec![sensor.component_name.to_string(), sensor.temperature.to_string() + "C"].into_iter(), // TODO: Change this based on temperature type
@@ -133,6 +162,32 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 			Style::default().fg(Color::LightGreen),
 		)
 	});
+
+	let mut dataset_vector : Vec<Dataset> = Vec::new();
+	let mut data_vector : Vec<Vec<(f64, f64)>> = Vec::new();
+
+	if !app_data.list_of_cpu_packages.is_empty() {
+		for cpu_num in 0..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
+			let mut this_cpu_data : Vec<(f64, f64)> = Vec::new();
+			let current_time = std::time::Instant::now();
+
+			for cpu in &app_data.list_of_cpu_packages {
+				this_cpu_data.push((STALE_MAX_SECONDS as f64 - current_time.duration_since(cpu.instant).as_secs_f64(), cpu.cpu_vec[cpu_num].cpu_usage));
+			}
+
+			data_vector.push(this_cpu_data);
+		}
+
+		for (i, data) in data_vector.iter().enumerate() {
+			dataset_vector.push(
+				Dataset::default()
+					.name(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i].cpu_name))
+					.marker(Marker::Braille)
+					.style(Style::default().fg(COLOUR_LIST[i % COLOUR_LIST.len()]))
+					.data(&data),
+			)
+		}
+	}
 
 	let process_rows = app_data.list_of_processes.iter().map(|process| {
 		Row::StyledData(
@@ -200,24 +255,15 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 
 		// CPU usage graph
 		{
+			debug!("Drawing CPU...");
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 60.0]);
 			let y_axis = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
+
 			Chart::default()
 				.block(Block::default().title("CPU Usage").borders(Borders::ALL))
 				.x_axis(x_axis)
 				.y_axis(y_axis)
-				.datasets(&[
-					Dataset::default()
-						.name("CPU0")
-						.marker(Marker::Braille)
-						.style(Style::default().fg(Color::Cyan))
-						.data(&convert_cpu_data(0, &app_data.list_of_cpu_packages)),
-					Dataset::default()
-						.name("CPU1")
-						.marker(Marker::Braille)
-						.style(Style::default().fg(Color::LightMagenta))
-						.data(&convert_cpu_data(1, &app_data.list_of_cpu_packages)),
-				])
+				.datasets(&dataset_vector)
 				.render(&mut f, top_chunks[0]);
 		}
 
@@ -230,16 +276,8 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 				.x_axis(x_axis)
 				.y_axis(y_axis)
 				.datasets(&[
-					Dataset::default()
-						.name("MEM")
-						.marker(Marker::Braille)
-						.style(Style::default().fg(Color::Cyan))
-						.data(&convert_mem_data(&app_data.memory)),
-					Dataset::default()
-						.name("SWAP")
-						.marker(Marker::Braille)
-						.style(Style::default().fg(Color::LightGreen))
-						.data(&convert_mem_data(&app_data.swap)),
+					Dataset::default().name("MEM").marker(Marker::Braille).style(Style::default().fg(Color::Cyan)).data(&mem_data),
+					Dataset::default().name("SWAP").marker(Marker::Braille).style(Style::default().fg(Color::LightGreen)).data(&swap_data),
 				])
 				.render(&mut f, top_chunks[1]);
 		}
@@ -278,22 +316,7 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 	Ok(())
 }
 
-// TODO: Remove this count, this is for testing, lol
-fn convert_cpu_data(count : usize, cpu_data : &[widgets::cpu::CPUPackage]) -> Vec<(f64, f64)> {
-	let mut result : Vec<(f64, f64)> = Vec::new();
-	let current_time = std::time::Instant::now();
-
-	for data in cpu_data {
-		result.push((
-			STALE_MAX_SECONDS as f64 - current_time.duration_since(data.instant).as_secs() as f64,
-			f64::from(data.cpu_vec[count + 1].cpu_usage),
-		));
-	}
-
-	result
-}
-
-fn convert_mem_data(mem_data : &[widgets::mem::MemData]) -> Vec<(f64, f64)> {
+fn convert_mem_data(mem_data : &[app::data_collection::mem::MemData]) -> Vec<(f64, f64)> {
 	let mut result : Vec<(f64, f64)> = Vec::new();
 	let current_time = std::time::Instant::now();
 
