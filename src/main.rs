@@ -1,16 +1,12 @@
 #![feature(async_closure)]
 use crossterm::{input, AlternateScreen, InputEvent, KeyEvent};
 use std::{io, sync::mpsc, thread, time::Duration};
-use tui::{
-	backend::CrosstermBackend,
-	layout::{Constraint, Direction, Layout},
-	style::{Color, Modifier, Style},
-	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
-	Terminal,
-};
+use tui::{backend::CrosstermBackend, Terminal};
 
 mod app;
 use app::data_collection;
+
+mod canvas;
 
 #[macro_use]
 extern crate log;
@@ -72,8 +68,7 @@ async fn main() -> Result<(), io::Error> {
 	terminal.clear()?;
 
 	let mut app_data = app::Data::default();
-	let mut swap_data : Vec<(f64, f64)> = Vec::new();
-	let mut mem_data : Vec<(f64, f64)> = Vec::new();
+	let mut canvas_data = canvas::CanvasData::default();
 
 	loop {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(tick_rate_in_milliseconds)) {
@@ -105,8 +100,12 @@ async fn main() -> Result<(), io::Error> {
 					try_debug(&log, "Update event complete.");
 
 					// Convert all data into tui components
-					mem_data = update_mem_data_points(&app_data);
-					swap_data = update_swap_data_points(&app_data);
+					canvas_data.disk_data = update_disk_row(&app_data);
+					canvas_data.temp_sensor_data = update_temp_row(&app_data);
+					canvas_data.process_data = update_process_row(&app_data);
+					canvas_data.mem_data = update_mem_data_points(&app_data);
+					canvas_data.swap_data = update_swap_data_points(&app_data);
+					canvas_data.cpu_data = update_cpu_data_points(&app_data);
 				}
 			}
 			if app.should_quit {
@@ -116,54 +115,70 @@ async fn main() -> Result<(), io::Error> {
 
 		// Draw!
 		// TODO: We should change this btw! It should not redraw everything on every tick!
-		draw_data(&mut terminal, &app_data, &mem_data, &swap_data)?;
+		canvas::draw_data(&mut terminal, &canvas_data)?;
 	}
 
 	Ok(())
 }
 
-fn update_temp_row(app_data : &app::Data) {
+fn update_temp_row(app_data : &app::Data) -> Vec<Vec<String>> {
+	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
+
+	for sensor in &app_data.list_of_temperature_sensor {
+		sensor_vector.push(vec![sensor.component_name.to_string(), sensor.temperature.to_string() + "C"]);
+	}
+
+	sensor_vector
 }
 
-fn update_process_row(app_data : &app::Data) {
+fn update_disk_row(app_data : &app::Data) -> Vec<Vec<String>> {
+	let mut disk_vector : Vec<Vec<String>> = Vec::new();
+	for disk in &app_data.list_of_disks {
+		disk_vector.push(vec![
+			disk.name.to_string(),
+			disk.mount_point.to_string(),
+			format!("{:.1}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
+			(disk.free_space / 1024).to_string() + "GB",
+			(disk.total_space / 1024).to_string() + "GB",
+		]);
+	}
+
+	disk_vector
 }
 
-fn update_cpu_data_points(app_data : &app::Data) {
+fn update_process_row(app_data : &app::Data) -> Vec<Vec<String>> {
+	let mut process_vector : Vec<Vec<String>> = Vec::new();
+
+	for process in &app_data.list_of_processes {
+		process_vector.push(vec![
+			process.pid.to_string(),
+			process.command.to_string(),
+			format!("{:.1}%", process.cpu_usage_percent),
+			format!(
+				"{:.1}%",
+				if let Some(mem_usage) = process.mem_usage_percent {
+					mem_usage
+				}
+				else if let Some(mem_usage_in_mb) = process.mem_usage_mb {
+					if let Some(mem_data) = app_data.memory.last() {
+						mem_usage_in_mb as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
+					}
+					else {
+						0_f64
+					}
+				}
+				else {
+					0_f64
+				}
+			),
+		]);
+	}
+
+	process_vector
 }
 
-fn update_mem_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
-	convert_mem_data(&app_data.memory)
-}
-
-fn update_swap_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
-	convert_mem_data(&app_data.swap)
-}
-
-fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : &app::Data, mem_data : &[(f64, f64)], swap_data : &[(f64, f64)]) -> Result<(), io::Error> {
-	const COLOUR_LIST : [Color; 6] = [Color::LightCyan, Color::LightMagenta, Color::LightRed, Color::LightGreen, Color::LightYellow, Color::LightBlue];
-
-	let temperature_rows = app_data.list_of_temperature.iter().map(|sensor| {
-		Row::StyledData(
-			vec![sensor.component_name.to_string(), sensor.temperature.to_string() + "C"].into_iter(), // TODO: Change this based on temperature type
-			Style::default().fg(Color::LightGreen),
-		)
-	});
-
-	let disk_rows = app_data.list_of_disks.iter().map(|disk| {
-		Row::StyledData(
-			vec![
-				disk.name.to_string(),
-				disk.mount_point.to_string(),
-				format!("{:.1}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
-				(disk.free_space / 1024).to_string() + "GB",
-				(disk.total_space / 1024).to_string() + "GB",
-			]
-			.into_iter(), // TODO: Change this based on temperature type
-			Style::default().fg(Color::LightGreen),
-		)
-	});
-
-	let mut dataset_vector : Vec<Dataset> = Vec::new();
+fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>)> {
+	let mut cpu_vector : Vec<(String, Vec<(f64, f64)>)> = Vec::new();
 	let mut data_vector : Vec<Vec<(f64, f64)>> = Vec::new();
 
 	if !app_data.list_of_cpu_packages.is_empty() {
@@ -179,141 +194,22 @@ fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : 
 		}
 
 		for (i, data) in data_vector.iter().enumerate() {
-			dataset_vector.push(
-				Dataset::default()
-					.name(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i].cpu_name))
-					.marker(Marker::Braille)
-					.style(Style::default().fg(COLOUR_LIST[i % COLOUR_LIST.len()]))
-					.data(&data),
-			)
+			cpu_vector.push((
+				(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i].cpu_name)).to_string() + " " + &format!("{:.2}", data.last().unwrap_or(&(0_f64, 0_f64)).1.to_string()),
+				data.clone(),
+			))
 		}
 	}
 
-	let process_rows = app_data.list_of_processes.iter().map(|process| {
-		Row::StyledData(
-			vec![
-				process.pid.to_string(),
-				process.command.to_string(),
-				format!("{:.1}%", process.cpu_usage_percent),
-				format!(
-					"{:.1}%",
-					if let Some(mem_usage) = process.mem_usage_percent {
-						mem_usage
-					}
-					else if let Some(mem_usage_in_mb) = process.mem_usage_mb {
-						if let Some(mem_data) = app_data.memory.last() {
-							mem_usage_in_mb as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
-						}
-						else {
-							0_f64
-						}
-					}
-					else {
-						0_f64
-					}
-				),
-			]
-			.into_iter(),
-			Style::default().fg(Color::LightGreen),
-		)
-	});
+	cpu_vector
+}
 
-	// TODO: Convert this into a separate func!
-	terminal.draw(|mut f| {
-		let vertical_chunks = Layout::default()
-			.direction(Direction::Vertical)
-			.margin(1)
-			.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
-			.split(f.size());
-		let top_chunks = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(0)
-			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-			.split(vertical_chunks[0]);
-		let middle_chunks = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(0)
-			.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
-			.split(vertical_chunks[1]);
-		let middle_divided_chunk_1 = Layout::default()
-			.direction(Direction::Vertical)
-			.margin(0)
-			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-			.split(middle_chunks[0]);
-		let middle_divided_chunk_2 = Layout::default()
-			.direction(Direction::Vertical)
-			.margin(0)
-			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-			.split(middle_chunks[1]);
-		let bottom_chunks = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(0)
-			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-			.split(vertical_chunks[2]);
+fn update_mem_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
+	convert_mem_data(&app_data.memory)
+}
 
-		// Set up blocks and their components
-
-		// CPU usage graph
-		{
-			debug!("Drawing CPU...");
-			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 60.0]);
-			let y_axis = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
-
-			Chart::default()
-				.block(Block::default().title("CPU Usage").borders(Borders::ALL))
-				.x_axis(x_axis)
-				.y_axis(y_axis)
-				.datasets(&dataset_vector)
-				.render(&mut f, top_chunks[0]);
-		}
-
-		//Memory usage graph
-		{
-			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 60.0]);
-			let y_axis = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
-			Chart::default()
-				.block(Block::default().title("Memory Usage").borders(Borders::ALL))
-				.x_axis(x_axis)
-				.y_axis(y_axis)
-				.datasets(&[
-					Dataset::default().name("MEM").marker(Marker::Braille).style(Style::default().fg(Color::Cyan)).data(&mem_data),
-					Dataset::default().name("SWAP").marker(Marker::Braille).style(Style::default().fg(Color::LightGreen)).data(&swap_data),
-				])
-				.render(&mut f, top_chunks[1]);
-		}
-
-		// Temperature table
-		Table::new(["Sensor", "Temperature"].iter(), temperature_rows)
-			.block(Block::default().title("Temperatures").borders(Borders::ALL))
-			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[15, 5])
-			.render(&mut f, middle_divided_chunk_1[0]);
-
-		// Disk usage table
-		Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
-			.block(Block::default().title("Disk Usage").borders(Borders::ALL))
-			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[15, 10, 5, 5, 5])
-			.render(&mut f, middle_divided_chunk_1[1]);
-
-		// Temp graph
-		Block::default().title("Temperatures").borders(Borders::ALL).render(&mut f, middle_divided_chunk_2[0]);
-
-		// IO graph
-		Block::default().title("IO Usage").borders(Borders::ALL).render(&mut f, middle_divided_chunk_2[1]);
-
-		// Network graph
-		Block::default().title("Network").borders(Borders::ALL).render(&mut f, bottom_chunks[0]);
-
-		// Processes table
-		Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)
-			.block(Block::default().title("Processes").borders(Borders::ALL))
-			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[5, 15, 10, 10])
-			.render(&mut f, bottom_chunks[1]);
-	})?;
-
-	Ok(())
+fn update_swap_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
+	convert_mem_data(&app_data.swap)
 }
 
 fn convert_mem_data(mem_data : &[app::data_collection::mem::MemData]) -> Vec<(f64, f64)> {

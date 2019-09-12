@@ -11,6 +11,7 @@ pub struct App<'a> {
 	pub process_sorting_type : processes::ProcessSorting,
 	pub process_sorting_reverse : bool,
 	pub to_be_resorted : bool,
+	pub current_selected_process_position : u64,
 }
 
 fn set_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, value_to_set : &mut T) {
@@ -32,7 +33,7 @@ pub struct Data {
 	pub list_of_physical_io : Vec<disks::IOPackage>,
 	pub memory : Vec<mem::MemData>,
 	pub swap : Vec<mem::MemData>,
-	pub list_of_temperature : Vec<temperature::TempData>,
+	pub list_of_temperature_sensor : Vec<temperature::TempData>,
 	pub network : Vec<network::NetworkData>,
 	pub list_of_processes : Vec<processes::ProcessData>, // Only need to keep a list of processes...
 	pub list_of_disks : Vec<disks::DiskData>,            // Only need to keep a list of disks and their data
@@ -90,7 +91,7 @@ impl DataState {
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
 		push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
-		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature);
+		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature_sensor);
 
 		// Filter out stale timed entries
 		// TODO: ideally make this a generic function!
@@ -155,6 +156,7 @@ impl<'a> App<'a> {
 			should_quit : false,
 			process_sorting_reverse : true,
 			to_be_resorted : false,
+			current_selected_process_position : 0,
 		}
 	}
 
