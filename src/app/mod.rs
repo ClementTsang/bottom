@@ -1,9 +1,5 @@
-pub mod cpu;
-pub mod disks;
-pub mod mem;
-pub mod network;
-pub mod processes;
-pub mod temperature;
+pub mod data_collection;
+use data_collection::{cpu, disks, mem, network, processes, temperature};
 
 use std::collections::HashMap;
 use sysinfo::{System, SystemExt};
@@ -46,7 +42,7 @@ pub struct DataState {
 	pub data : Data,
 	sys : System,
 	stale_max_seconds : u64,
-	prev_pid_stats : HashMap<String, f64>,
+	prev_pid_stats : HashMap<String, f64>, // TODO: Purge list?
 	prev_idle : f64,
 	prev_non_idle : f64,
 }

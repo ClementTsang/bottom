@@ -4,7 +4,7 @@ use sysinfo::{ProcessorExt, System, SystemExt};
 #[derive(Clone)]
 pub struct CPUData {
 	pub cpu_name : Box<str>,
-	pub cpu_usage : u32,
+	pub cpu_usage : f64,
 }
 
 #[derive(Clone)]
@@ -20,7 +20,7 @@ pub fn get_cpu_data_list(sys : &System) -> Result<CPUPackage, heim::Error> {
 	for cpu in cpu_data {
 		cpu_vec.push(CPUData {
 			cpu_name : Box::from(cpu.get_name()),
-			cpu_usage : (cpu.get_cpu_usage() * 100_f32).ceil() as u32,
+			cpu_usage : f64::from(cpu.get_cpu_usage()) * 100_f64,
 		})
 	}
 

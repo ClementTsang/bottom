@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 chrono = "0.4.9"
+clap = "2.33.0"
 crossterm = "0.10.2"
 futures-preview = "0.3.0-alpha.18"
 fern = "0.5"

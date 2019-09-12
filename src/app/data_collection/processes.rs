@@ -52,10 +52,14 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 	let total_delta : f64 = total - prev_total;
 	let idle_delta : f64 = idle - *prev_idle;
 
+	debug!("Vangelis function: CPU PERCENT: {}", (total_delta - idle_delta) / total_delta * 100_f64);
+
 	*prev_idle = idle;
 	*prev_non_idle = non_idle;
 
-	Ok(total_delta - idle_delta)
+	let result = if total_delta - idle_delta != 0_f64 { total_delta - idle_delta } else { 1_f64 };
+
+	Ok(result) // This works, REALLY damn well.  The percentage check is within like 2% of the sysinfo one.
 }
 
 fn get_ordering<T : std::cmp::PartialOrd>(a_val : T, b_val : T, reverse_order : bool) -> std::cmp::Ordering {
@@ -96,16 +100,18 @@ fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 
 	let stat_results = std::fs::read_to_string(path)?;
 	let val = stat_results.split_whitespace().collect::<Vec<&str>>();
-	let utime = val[13].parse::<f64>().unwrap_or(-1_f64);
-	let stime = val[14].parse::<f64>().unwrap_or(-1_f64);
+	let utime = val[13].parse::<f64>().unwrap_or(0_f64);
+	let stime = val[14].parse::<f64>().unwrap_or(0_f64);
 
-	Ok(utime + stime)
+	debug!("PID: {}, utime: {}, stime: {}", pid, utime, stime);
+
+	Ok(utime + stime) // This seems to match top...
 }
 
 fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap<String, f64>) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
 	let before_proc_val : f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
-		*previous_pid_stats.get(&pid.to_string()).unwrap_or(&-1_f64)
+		*previous_pid_stats.get(&pid.to_string()).unwrap_or(&0_f64)
 	}
 	else {
 		0_f64
