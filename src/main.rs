@@ -6,6 +6,11 @@ use tui::{backend::CrosstermBackend, Terminal};
 mod app;
 use app::data_collection;
 
+mod utils {
+	pub mod error;
+	pub mod logging;
+}
+
 mod canvas;
 
 #[macro_use]
@@ -29,7 +34,7 @@ async fn main() -> Result<(), io::Error> {
 
 	let mut app = app::App::new("rustop");
 
-	let log = init_logger();
+	let _log = utils::logging::init_logger();
 
 	terminal.hide_cursor()?;
 	// Setup input handling
@@ -75,7 +80,7 @@ async fn main() -> Result<(), io::Error> {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(tick_rate_in_milliseconds)) {
 			match recv {
 				Event::Input(event) => {
-					try_debug(&log, "Input event fired!");
+					debug!("Input event fired!");
 					match event {
 						KeyEvent::Char(c) => app.on_key(c),
 						KeyEvent::Left => app.on_left(),
@@ -91,10 +96,10 @@ async fn main() -> Result<(), io::Error> {
 						canvas_data.process_data = update_process_row(&app_data);
 						app.to_be_resorted = false;
 					}
-					try_debug(&log, "Input event complete.");
+					debug!("Input event complete.");
 				}
 				Event::Update(data) => {
-					try_debug(&log, "Update event fired!");
+					debug!("Update event fired!");
 					app_data = *data;
 					data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
 
@@ -106,7 +111,7 @@ async fn main() -> Result<(), io::Error> {
 					canvas_data.swap_data = update_swap_data_points(&app_data);
 					canvas_data.cpu_data = update_cpu_data_points(&app_data);
 
-					try_debug(&log, "Update event complete.");
+					debug!("Update event complete.");
 				}
 			}
 			if app.should_quit {
@@ -236,28 +241,4 @@ fn convert_mem_data(mem_data : &[app::data_collection::mem::MemData]) -> Vec<(f6
 	}
 
 	result
-}
-
-fn init_logger() -> Result<(), fern::InitError> {
-	fern::Dispatch::new()
-		.format(|out, message, record| {
-			out.finish(format_args!(
-				"{}[{}][{}] {}",
-				chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-				record.target(),
-				record.level(),
-				message
-			))
-		})
-		.level(if cfg!(debug_assertions) { log::LevelFilter::Debug } else { log::LevelFilter::Info })
-		.chain(fern::log_file("debug.log")?)
-		.apply()?;
-
-	Ok(())
-}
-
-fn try_debug(result_log : &Result<(), fern::InitError>, message : &str) {
-	if result_log.is_ok() {
-		debug!("{}", message);
-	}
 }
