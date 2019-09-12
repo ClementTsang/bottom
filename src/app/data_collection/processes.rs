@@ -52,7 +52,7 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 	let total_delta : f64 = total - prev_total;
 	let idle_delta : f64 = idle - *prev_idle;
 
-	debug!("Vangelis function: CPU PERCENT: {}", (total_delta - idle_delta) / total_delta * 100_f64);
+	//debug!("Vangelis function: CPU PERCENT: {}", (total_delta - idle_delta) / total_delta * 100_f64);
 
 	*prev_idle = idle;
 	*prev_non_idle = non_idle;
@@ -103,7 +103,7 @@ fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 	let utime = val[13].parse::<f64>().unwrap_or(0_f64);
 	let stime = val[14].parse::<f64>().unwrap_or(0_f64);
 
-	debug!("PID: {}, utime: {}, stime: {}", pid, utime, stime);
+	//debug!("PID: {}, utime: {}, stime: {}", pid, utime, stime);
 
 	Ok(utime + stime) // This seems to match top...
 }
@@ -118,14 +118,14 @@ fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap
 	};
 	let after_proc_val = get_process_cpu_stats(pid)?;
 
-	debug!(
+	/*debug!(
 		"PID - {} - Before: {}, After: {}, CPU: {}, Percentage: {}",
 		pid,
 		before_proc_val,
 		after_proc_val,
 		cpu_usage,
 		(after_proc_val - before_proc_val) / cpu_usage * 100_f64
-	);
+	);*/
 
 	let entry = previous_pid_stats.entry(pid.to_string()).or_insert(after_proc_val);
 	*entry = after_proc_val;
