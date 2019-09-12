@@ -197,16 +197,7 @@ fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>
 			let mut this_cpu_data : Vec<(f64, f64)> = Vec::new();
 
 			for cpu in &app_data.list_of_cpu_packages {
-				// To make it look better...
 				let current_cpu_usage = cpu.cpu_vec[cpu_num].cpu_usage;
-
-				if !this_cpu_data.is_empty() {
-					let previous_entry_cpu_usage = this_cpu_data.last().unwrap().1;
-					let middling_cpu_usage = (previous_entry_cpu_usage + current_cpu_usage) / 2_f64;
-
-					this_cpu_data.push((STALE_MAX_SECONDS as f64 - current_time.duration_since(cpu.instant).as_secs_f64().floor() - 0.5_f64, middling_cpu_usage));
-				}
-
 				this_cpu_data.push((STALE_MAX_SECONDS as f64 - current_time.duration_since(cpu.instant).as_secs_f64().floor(), current_cpu_usage));
 			}
 
