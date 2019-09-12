@@ -7,7 +7,7 @@ use tui::{
 };
 
 const COLOUR_LIST : [Color; 6] = [Color::LightRed, Color::LightGreen, Color::LightYellow, Color::LightBlue, Color::LightCyan, Color::LightMagenta];
-const TEXT_COLOUR : Color = Color::Green;
+const TEXT_COLOUR : Color = Color::Gray;
 
 #[derive(Default)]
 pub struct CanvasData {
@@ -22,49 +22,64 @@ pub struct CanvasData {
 // TODO: Change the error
 pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_data : &CanvasData) -> Result<(), io::Error> {
 	let temperature_rows = canvas_data.temp_sensor_data.iter().map(|sensor| Row::StyledData(sensor.iter(), Style::default().fg(TEXT_COLOUR)));
-
 	let disk_rows = canvas_data.disk_data.iter().map(|disk| Row::StyledData(disk.iter(), Style::default().fg(TEXT_COLOUR)));
-
 	let process_rows = canvas_data.process_data.iter().map(|process| Row::StyledData(process.iter(), Style::default().fg(TEXT_COLOUR)));
 
 	// TODO: Convert this into a separate func!
 	terminal.draw(|mut f| {
+		debug!("Drawing!");
 		let vertical_chunks = Layout::default()
 			.direction(Direction::Vertical)
 			.margin(1)
-			.constraints([Constraint::Percentage(35), Constraint::Percentage(30), Constraint::Percentage(35)].as_ref())
+			.constraints([Constraint::Percentage(34), Constraint::Percentage(34), Constraint::Percentage(32)].as_ref())
 			.split(f.size());
-		let top_chunks = Layout::default()
+		let _top_chunks = Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(0)
 			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
 			.split(vertical_chunks[0]);
+
 		let middle_chunks = Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(0)
-			.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+			.constraints([Constraint::Percentage(70), Constraint::Percentage(30)].as_ref())
 			.split(vertical_chunks[1]);
-		let middle_divided_chunk_1 = Layout::default()
+		let _middle_divided_chunk_1 = Layout::default()
 			.direction(Direction::Vertical)
 			.margin(0)
 			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
 			.split(middle_chunks[0]);
-		let middle_divided_chunk_2 = Layout::default()
+		let _middle_divided_chunk_2 = Layout::default()
 			.direction(Direction::Vertical)
 			.margin(0)
 			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
 			.split(middle_chunks[1]);
+
 		let bottom_chunks = Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(0)
 			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
 			.split(vertical_chunks[2]);
+		let bottom_divided_chunk_1 = Layout::default()
+			.direction(Direction::Vertical)
+			.margin(0)
+			.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+			.split(bottom_chunks[0]);
+		let bottom_divided_chunk_1_1 = Layout::default()
+			.direction(Direction::Horizontal)
+			.margin(0)
+			.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+			.split(bottom_divided_chunk_1[0]);
+		let bottom_divided_chunk_1_2 = Layout::default()
+			.direction(Direction::Horizontal)
+			.margin(0)
+			.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+			.split(bottom_divided_chunk_1[1]);
 
 		// Set up blocks and their components
 
 		// CPU usage graph
 		{
-			debug!("Drawing CPU...");
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 60.0]);
 			let y_axis = Axis::default().style(Style::default().fg(Color::White)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
 
@@ -84,7 +99,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 				.x_axis(x_axis)
 				.y_axis(y_axis)
 				.datasets(&dataset_vector)
-				.render(&mut f, top_chunks[0]);
+				.render(&mut f, vertical_chunks[0]);
 		}
 
 		//Memory usage graph
@@ -99,7 +114,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 					Dataset::default()
 						.name(&("MEM :".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
 						.marker(Marker::Braille)
-						.style(Style::default().fg(Color::Cyan))
+						.style(Style::default().fg(Color::LightRed))
 						.data(&canvas_data.mem_data),
 					Dataset::default()
 						.name(&("SWAP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
@@ -107,31 +122,31 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 						.style(Style::default().fg(Color::LightGreen))
 						.data(&canvas_data.swap_data),
 				])
-				.render(&mut f, top_chunks[1]);
+				.render(&mut f, middle_chunks[0]);
 		}
+
+		// Network graph
+		Block::default().title("Network").borders(Borders::ALL).render(&mut f, middle_chunks[1]);
 
 		// Temperature table
 		Table::new(["Sensor", "Temperature"].iter(), temperature_rows)
 			.block(Block::default().title("Temperatures").borders(Borders::ALL))
 			.header_style(Style::default().fg(Color::LightBlue))
 			.widths(&[15, 5])
-			.render(&mut f, middle_divided_chunk_1[0]);
+			.render(&mut f, bottom_divided_chunk_1_1[0]);
 
 		// Disk usage table
 		Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
 			.block(Block::default().title("Disk Usage").borders(Borders::ALL))
 			.header_style(Style::default().fg(Color::LightBlue))
 			.widths(&[15, 10, 5, 5, 5])
-			.render(&mut f, middle_divided_chunk_1[1]);
+			.render(&mut f, bottom_divided_chunk_1_2[0]);
 
 		// Temp graph
-		Block::default().title("Temperatures").borders(Borders::ALL).render(&mut f, middle_divided_chunk_2[0]);
+		Block::default().title("Temperatures").borders(Borders::ALL).render(&mut f, bottom_divided_chunk_1_1[1]);
 
 		// IO graph
-		Block::default().title("IO Usage").borders(Borders::ALL).render(&mut f, middle_divided_chunk_2[1]);
-
-		// Network graph
-		Block::default().title("Network").borders(Borders::ALL).render(&mut f, bottom_chunks[0]);
+		Block::default().title("IO Usage").borders(Borders::ALL).render(&mut f, bottom_divided_chunk_1_2[1]);
 
 		// Processes table
 		Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)

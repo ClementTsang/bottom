@@ -88,17 +88,15 @@ async fn main() -> Result<(), io::Error> {
 
 					if app.to_be_resorted {
 						data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
+						canvas_data.process_data = update_process_row(&app_data);
 						app.to_be_resorted = false;
 					}
 					try_debug(&log, "Input event complete.");
-
-					// Only update processes
 				}
 				Event::Update(data) => {
 					try_debug(&log, "Update event fired!");
 					app_data = *data;
 					data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
-					try_debug(&log, "Update event complete.");
 
 					// Convert all data into tui components
 					canvas_data.disk_data = update_disk_row(&app_data);
@@ -107,15 +105,15 @@ async fn main() -> Result<(), io::Error> {
 					canvas_data.mem_data = update_mem_data_points(&app_data);
 					canvas_data.swap_data = update_swap_data_points(&app_data);
 					canvas_data.cpu_data = update_cpu_data_points(&app_data);
+
+					try_debug(&log, "Update event complete.");
 				}
 			}
 			if app.should_quit {
 				break;
 			}
 		}
-
 		// Draw!
-		// TODO: We should change this btw! It should not redraw everything on every tick!
 		canvas::draw_data(&mut terminal, &canvas_data)?;
 	}
 
@@ -187,30 +185,44 @@ fn update_process_row(app_data : &app::Data) -> Vec<Vec<String>> {
 }
 
 fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>)> {
-	let mut cpu_vector : Vec<(String, Vec<(f64, f64)>)> = Vec::new();
-	let mut data_vector : Vec<Vec<(f64, f64)>> = Vec::new();
+	let mut cpu_data_vector : Vec<(String, Vec<(f64, f64)>)> = Vec::new();
+	let mut cpu_collection : Vec<Vec<(f64, f64)>> = Vec::new();
 
 	if !app_data.list_of_cpu_packages.is_empty() {
-		for cpu_num in 0..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
+		// Initially, populate the cpu_collection.  We want to inject elements in between if possible.
+		let current_time = std::time::Instant::now();
+
+		for cpu_num in 1..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
+			// 1 to skip total cpu
 			let mut this_cpu_data : Vec<(f64, f64)> = Vec::new();
-			let current_time = std::time::Instant::now();
 
 			for cpu in &app_data.list_of_cpu_packages {
-				this_cpu_data.push((STALE_MAX_SECONDS as f64 - current_time.duration_since(cpu.instant).as_secs_f64(), cpu.cpu_vec[cpu_num].cpu_usage));
+				// To make it look better...
+				let current_cpu_usage = cpu.cpu_vec[cpu_num].cpu_usage;
+
+				if !this_cpu_data.is_empty() {
+					let previous_entry_cpu_usage = this_cpu_data.last().unwrap().1;
+					let middling_cpu_usage = (previous_entry_cpu_usage + current_cpu_usage) / 2_f64;
+
+					this_cpu_data.push((STALE_MAX_SECONDS as f64 - current_time.duration_since(cpu.instant).as_secs_f64().floor() - 0.5_f64, middling_cpu_usage));
+				}
+
+				this_cpu_data.push((STALE_MAX_SECONDS as f64 - current_time.duration_since(cpu.instant).as_secs_f64().floor(), current_cpu_usage));
 			}
 
-			data_vector.push(this_cpu_data);
+			cpu_collection.push(this_cpu_data);
 		}
 
-		for (i, data) in data_vector.iter().enumerate() {
-			cpu_vector.push((
+		// Finally, add it all onto the end
+		for (i, data) in cpu_collection.iter().enumerate() {
+			cpu_data_vector.push((
 				(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i].cpu_name)).to_string() + " " + &format!("{:.2}", data.last().unwrap_or(&(0_f64, 0_f64)).1.to_string()),
 				data.clone(),
 			))
 		}
 	}
 
-	cpu_vector
+	cpu_data_vector
 }
 
 fn update_mem_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
