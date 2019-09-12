@@ -5,6 +5,14 @@ use std::collections::HashMap;
 use sysinfo::{System, SystemExt};
 
 #[allow(dead_code)]
+#[derive(Clone)]
+pub enum TemperatureType {
+	Celsius,
+	Kelvin,
+	Fahrenheit,
+}
+
+#[allow(dead_code)]
 pub struct App<'a> {
 	title : &'a str,
 	pub should_quit : bool,
@@ -12,6 +20,7 @@ pub struct App<'a> {
 	pub process_sorting_reverse : bool,
 	pub to_be_resorted : bool,
 	pub current_selected_process_position : u64,
+	pub temperature_type : TemperatureType,
 }
 
 fn set_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, value_to_set : &mut T) {
@@ -46,6 +55,7 @@ pub struct DataState {
 	prev_pid_stats : HashMap<String, f64>, // TODO: Purge list?
 	prev_idle : f64,
 	prev_non_idle : f64,
+	temperature_type : TemperatureType,
 }
 
 impl Default for DataState {
@@ -57,6 +67,7 @@ impl Default for DataState {
 			prev_pid_stats : HashMap::new(),
 			prev_idle : 0_f64,
 			prev_non_idle : 0_f64,
+			temperature_type : TemperatureType::Celsius,
 		}
 	}
 }
@@ -64,6 +75,10 @@ impl Default for DataState {
 impl DataState {
 	pub fn set_stale_max_seconds(&mut self, stale_max_seconds : u64) {
 		self.stale_max_seconds = stale_max_seconds;
+	}
+
+	pub fn set_temperature_type(&mut self, temperature_type : TemperatureType) {
+		self.temperature_type = temperature_type;
 	}
 
 	pub fn init(&mut self) {
@@ -157,6 +172,7 @@ impl<'a> App<'a> {
 			process_sorting_reverse : true,
 			to_be_resorted : false,
 			current_selected_process_position : 0,
+			temperature_type : TemperatureType::Celsius,
 		}
 	}
 
