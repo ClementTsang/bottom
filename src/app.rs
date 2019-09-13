@@ -50,6 +50,7 @@ pub struct Data {
 
 pub struct DataState {
 	pub data : Data,
+	first_run : bool,
 	sys : System,
 	stale_max_seconds : u64,
 	prev_pid_stats : HashMap<String, f64>, // TODO: Purge list?
@@ -62,6 +63,7 @@ impl Default for DataState {
 	fn default() -> Self {
 		DataState {
 			data : Data::default(),
+			first_run : true,
 			sys : System::new(),
 			stale_max_seconds : 60,
 			prev_pid_stats : HashMap::new(),
@@ -107,6 +109,11 @@ impl DataState {
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
 		push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
 		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature_sensor);
+
+		if self.first_run {
+			self.data = Data::default();
+			self.first_run = false;
+		}
 
 		// Filter out stale timed entries
 		// TODO: ideally make this a generic function!

@@ -21,7 +21,7 @@ enum Event<I> {
 	Update(Box<app::Data>),
 }
 
-const STALE_MAX_SECONDS : u64 = 60;
+const STALE_MAX_MILLISECONDS : u64 = 60 * 1000;
 
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
@@ -30,7 +30,7 @@ async fn main() -> Result<(), io::Error> {
 	let mut terminal = Terminal::new(backend)?;
 
 	let tick_rate_in_milliseconds : u64 = 250;
-	let update_rate_in_milliseconds : u64 = 1000; // TODO: Must set a check to prevent this from going into negatives!
+	let update_rate_in_milliseconds : u64 = 500; // TODO: Must set a check to prevent this from going into negatives!
 
 	let mut app = app::App::new("rustop");
 
@@ -57,7 +57,7 @@ async fn main() -> Result<(), io::Error> {
 	// Event loop
 	let mut data_state = app::DataState::default();
 	data_state.init();
-	data_state.set_stale_max_seconds(STALE_MAX_SECONDS);
+	data_state.set_stale_max_seconds(STALE_MAX_MILLISECONDS);
 	data_state.set_temperature_type(app.temperature_type.clone());
 	{
 		let tx = tx.clone();
@@ -195,15 +195,18 @@ fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>
 
 	if !app_data.list_of_cpu_packages.is_empty() {
 		// Initially, populate the cpu_collection.  We want to inject elements in between if possible.
-		let current_time = std::time::Instant::now();
 
 		for cpu_num in 1..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
-			// 1 to skip total cpu
+			// TODO: 1 to skip total cpu?  Or no?
 			let mut this_cpu_data : Vec<(f64, f64)> = Vec::new();
 
-			for cpu in &app_data.list_of_cpu_packages {
-				let current_cpu_usage = cpu.cpu_vec[cpu_num].cpu_usage;
-				this_cpu_data.push((STALE_MAX_SECONDS as f64 - current_time.duration_since(cpu.instant).as_secs_f64().floor(), current_cpu_usage));
+			for data in &app_data.list_of_cpu_packages {
+				let current_time = std::time::Instant::now();
+				let current_cpu_usage = data.cpu_vec[cpu_num].cpu_usage;
+				this_cpu_data.push((
+					((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+					current_cpu_usage,
+				));
 			}
 
 			cpu_collection.push(this_cpu_data);
@@ -212,7 +215,8 @@ fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>
 		// Finally, add it all onto the end
 		for (i, data) in cpu_collection.iter().enumerate() {
 			cpu_data_vector.push((
-				(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i].cpu_name)).to_string() + " " + &format!("{:.2}", data.last().unwrap_or(&(0_f64, 0_f64)).1.to_string()),
+				// + 1 to skip total CPU...
+				(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + 1].cpu_name)).to_string() + " " + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
 				data.clone(),
 			))
 		}
@@ -231,13 +235,15 @@ fn update_swap_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
 
 fn convert_mem_data(mem_data : &[app::data_collection::mem::MemData]) -> Vec<(f64, f64)> {
 	let mut result : Vec<(f64, f64)> = Vec::new();
-	let current_time = std::time::Instant::now();
 
 	for data in mem_data {
+		let current_time = std::time::Instant::now();
+
 		result.push((
-			STALE_MAX_SECONDS as f64 - current_time.duration_since(data.instant).as_secs() as f64,
+			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			data.mem_used_in_mb as f64 / data.mem_total_in_mb as f64 * 100_f64,
 		));
+		debug!("Pushed: ({}, {})", result.last().unwrap().0, result.last().unwrap().1);
 	}
 
 	result

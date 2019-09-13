@@ -1,7 +1,7 @@
 use std::io;
 use tui::{
 	layout::{Constraint, Direction, Layout},
-	style::{Color, Style},
+	style::{Color, Modifier, Style},
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 	Terminal,
 };
@@ -46,7 +46,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 		let middle_chunks = Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(0)
-			.constraints([Constraint::Percentage(70), Constraint::Percentage(30)].as_ref())
+			.constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
 			.split(vertical_chunks[1]);
 		let _middle_divided_chunk_1 = Layout::default()
 			.direction(Direction::Vertical)
@@ -84,7 +84,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 
 		// CPU usage graph
 		{
-			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 60.0]);
+			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
 
 			let mut dataset_vector : Vec<Dataset> = Vec::new();
@@ -92,7 +92,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 				dataset_vector.push(
 					Dataset::default()
 						.name(&cpu.0)
-						.marker(Marker::Braille)
+						.marker(Marker::Dot)
 						.style(Style::default().fg(COLOUR_LIST[i % COLOUR_LIST.len()]))
 						.data(&(cpu.1)),
 				);
@@ -108,8 +108,8 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 
 		//Memory usage graph
 		{
-			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 60.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 100.0]).labels(&["0.0", "50.0", "100.0"]);
+			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
+			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 100.0]).labels(&["0", "50", "100"]);
 			Chart::default()
 				.block(Block::default().title("Memory Usage").borders(Borders::ALL).border_style(border_style))
 				.x_axis(x_axis)
@@ -117,12 +117,12 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 				.datasets(&[
 					Dataset::default()
 						.name(&("MEM :".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(Marker::Braille)
+						.marker(Marker::Dot)
 						.style(Style::default().fg(Color::LightRed))
 						.data(&canvas_data.mem_data),
 					Dataset::default()
 						.name(&("SWAP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(Marker::Braille)
+						.marker(Marker::Dot)
 						.style(Style::default().fg(Color::LightGreen))
 						.data(&canvas_data.swap_data),
 				])
@@ -142,7 +142,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 		// Disk usage table
 		Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
 			.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
-			.header_style(Style::default().fg(Color::LightBlue))
+			.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
 			.widths(&[15, 10, 5, 5, 5])
 			.render(&mut f, bottom_divided_chunk_1_2[0]);
 
