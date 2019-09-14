@@ -13,6 +13,12 @@ pub enum TemperatureType {
 	Fahrenheit,
 }
 
+impl Default for TemperatureType {
+	fn default() -> Self {
+		TemperatureType::Celsius
+	}
+}
+
 pub async fn get_temperature_data(temp_type : &TemperatureType) -> Result<Vec<TempData>, heim::Error> {
 	let mut temperature_vec : Vec<TempData> = Vec::new();
 

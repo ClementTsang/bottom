@@ -21,7 +21,7 @@ extern crate clap;
 
 enum Event<I> {
 	Input(I),
-	Update(Box<app::Data>),
+	Update(Box<app::data_collection::Data>),
 }
 
 const STALE_MAX_MILLISECONDS : u64 = 60 * 1000;
@@ -37,11 +37,11 @@ async fn main() -> Result<(), io::Error> {
 	(author: "Clement Tsang <clementjhtsang@gmail.com>")
 	(about: "A graphical top clone.")
 	(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
+	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
 	(@group TEMPERATURE_TYPE =>
 		(@arg celsius : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
 		(@arg fahrenheit : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
 		(@arg kelvin : -k --kelvin "Sets the temperature type to Kelvin.")
-
 	)
 	(@arg RATE: -r --rate +takes_value "Sets a refresh rate in milliseconds, min is 250ms, defaults to 1000ms.  Higher values may take more resources.")
 	)
@@ -62,10 +62,9 @@ async fn main() -> Result<(), io::Error> {
 	else {
 		app::data_collection::temperature::TemperatureType::Celsius
 	};
+	let show_average_cpu = matches.is_present("AVG_CPU");
 
-	info!("Temperature type: {:?}", temperature_type);
-
-	let mut app = app::App::new(temperature_type, if update_rate_in_milliseconds < 250 { 250 } else { update_rate_in_milliseconds });
+	let mut app = app::App::new(show_average_cpu, temperature_type, if update_rate_in_milliseconds < 250 { 250 } else { update_rate_in_milliseconds });
 
 	terminal.hide_cursor()?;
 	// Setup input handling
@@ -86,7 +85,7 @@ async fn main() -> Result<(), io::Error> {
 	}
 
 	// Event loop
-	let mut data_state = app::DataState::default();
+	let mut data_state = app::data_collection::DataState::default();
 	data_state.init();
 	data_state.set_stale_max_seconds(STALE_MAX_MILLISECONDS);
 	data_state.set_temperature_type(app.temperature_type.clone());
@@ -104,7 +103,7 @@ async fn main() -> Result<(), io::Error> {
 
 	terminal.clear()?;
 
-	let mut app_data = app::Data::default();
+	let mut app_data = app::data_collection::Data::default();
 	let mut canvas_data = canvas::CanvasData::default();
 
 	loop {
@@ -140,7 +139,7 @@ async fn main() -> Result<(), io::Error> {
 					canvas_data.process_data = update_process_row(&app_data);
 					canvas_data.mem_data = update_mem_data_points(&app_data);
 					canvas_data.swap_data = update_swap_data_points(&app_data);
-					canvas_data.cpu_data = update_cpu_data_points(&app_data);
+					canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app_data);
 
 					debug!("Update event complete.");
 				}
@@ -156,7 +155,7 @@ async fn main() -> Result<(), io::Error> {
 	Ok(())
 }
 
-fn update_temp_row(app_data : &app::Data, temp_type : &app::data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
+fn update_temp_row(app_data : &app::data_collection::Data, temp_type : &app::data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
 	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
 
 	for sensor in &app_data.list_of_temperature_sensor {
@@ -174,7 +173,7 @@ fn update_temp_row(app_data : &app::Data, temp_type : &app::data_collection::tem
 	sensor_vector
 }
 
-fn update_disk_row(app_data : &app::Data) -> Vec<Vec<String>> {
+fn update_disk_row(app_data : &app::data_collection::Data) -> Vec<Vec<String>> {
 	let mut disk_vector : Vec<Vec<String>> = Vec::new();
 	for disk in &app_data.list_of_disks {
 		disk_vector.push(vec![
@@ -189,7 +188,7 @@ fn update_disk_row(app_data : &app::Data) -> Vec<Vec<String>> {
 	disk_vector
 }
 
-fn update_process_row(app_data : &app::Data) -> Vec<Vec<String>> {
+fn update_process_row(app_data : &app::data_collection::Data) -> Vec<Vec<String>> {
 	let mut process_vector : Vec<Vec<String>> = Vec::new();
 
 	for process in &app_data.list_of_processes {
@@ -220,15 +219,15 @@ fn update_process_row(app_data : &app::Data) -> Vec<Vec<String>> {
 	process_vector
 }
 
-fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>)> {
+fn update_cpu_data_points(show_avg_cpu : bool, app_data : &app::data_collection::Data) -> Vec<(String, Vec<(f64, f64)>)> {
 	let mut cpu_data_vector : Vec<(String, Vec<(f64, f64)>)> = Vec::new();
 	let mut cpu_collection : Vec<Vec<(f64, f64)>> = Vec::new();
 
 	if !app_data.list_of_cpu_packages.is_empty() {
 		// Initially, populate the cpu_collection.  We want to inject elements in between if possible.
 
-		for cpu_num in 1..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
-			// TODO: 1 to skip total cpu?  Or no?
+		// I'm sorry for the if statement but I couldn't be bothered here...
+		for cpu_num in (if show_avg_cpu { 0 } else { 1 })..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
 			let mut this_cpu_data : Vec<(f64, f64)> = Vec::new();
 
 			for data in &app_data.list_of_cpu_packages {
@@ -246,8 +245,9 @@ fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>
 		// Finally, add it all onto the end
 		for (i, data) in cpu_collection.iter().enumerate() {
 			cpu_data_vector.push((
-				// + 1 to skip total CPU...
-				(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + 1].cpu_name)).to_string() + " " + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
+				// + 1 to skip total CPU if show_avg_cpu is false
+				(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)).to_string()
+					+ " " + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
 				data.clone(),
 			))
 		}
@@ -256,11 +256,11 @@ fn update_cpu_data_points(app_data : &app::Data) -> Vec<(String, Vec<(f64, f64)>
 	cpu_data_vector
 }
 
-fn update_mem_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
+fn update_mem_data_points(app_data : &app::data_collection::Data) -> Vec<(f64, f64)> {
 	convert_mem_data(&app_data.memory)
 }
 
-fn update_swap_data_points(app_data : &app::Data) -> Vec<(f64, f64)> {
+fn update_swap_data_points(app_data : &app::data_collection::Data) -> Vec<(f64, f64)> {
 	convert_mem_data(&app_data.swap)
 }
 
