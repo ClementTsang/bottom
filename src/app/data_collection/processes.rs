@@ -13,6 +13,12 @@ pub enum ProcessSorting {
 	NAME,
 }
 
+impl Default for ProcessSorting {
+	fn default() -> Self {
+		ProcessSorting::CPU
+	}
+}
+
 // Possible process info struct?
 #[derive(Clone, Default)]
 pub struct ProcessData {
