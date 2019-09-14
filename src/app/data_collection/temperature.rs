@@ -6,7 +6,14 @@ pub struct TempData {
 	pub temperature : f32,
 }
 
-pub async fn get_temperature_data() -> Result<Vec<TempData>, heim::Error> {
+#[derive(Clone, Debug)]
+pub enum TemperatureType {
+	Celsius,
+	Kelvin,
+	Fahrenheit,
+}
+
+pub async fn get_temperature_data(temp_type : &TemperatureType) -> Result<Vec<TempData>, heim::Error> {
 	let mut temperature_vec : Vec<TempData> = Vec::new();
 
 	let mut sensor_data = heim::sensors::temperatures();
@@ -14,7 +21,11 @@ pub async fn get_temperature_data() -> Result<Vec<TempData>, heim::Error> {
 		if let Ok(sensor) = sensor {
 			temperature_vec.push(TempData {
 				component_name : Box::from(sensor.unit()),
-				temperature : sensor.current().get::<thermodynamic_temperature::degree_celsius>(), // TODO: Allow for toggling this!
+				temperature : match temp_type {
+					TemperatureType::Celsius => sensor.current().get::<thermodynamic_temperature::degree_celsius>(),
+					TemperatureType::Kelvin => sensor.current().get::<thermodynamic_temperature::kelvin>(),
+					TemperatureType::Fahrenheit => sensor.current().get::<thermodynamic_temperature::degree_fahrenheit>(),
+				},
 			});
 		}
 	}

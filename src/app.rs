@@ -5,22 +5,14 @@ use std::collections::HashMap;
 use sysinfo::{System, SystemExt};
 
 #[allow(dead_code)]
-#[derive(Clone)]
-pub enum TemperatureType {
-	Celsius,
-	Kelvin,
-	Fahrenheit,
-}
-
-#[allow(dead_code)]
-pub struct App<'a> {
-	title : &'a str,
+pub struct App {
 	pub should_quit : bool,
 	pub process_sorting_type : processes::ProcessSorting,
 	pub process_sorting_reverse : bool,
 	pub to_be_resorted : bool,
 	pub current_selected_process_position : u64,
-	pub temperature_type : TemperatureType,
+	pub temperature_type : data_collection::temperature::TemperatureType,
+	pub update_rate_in_milliseconds : u64,
 }
 
 fn set_if_valid<T : std::clone::Clone>(result : &Result<T, heim::Error>, value_to_set : &mut T) {
@@ -56,7 +48,7 @@ pub struct DataState {
 	prev_pid_stats : HashMap<String, f64>, // TODO: Purge list?
 	prev_idle : f64,
 	prev_non_idle : f64,
-	temperature_type : TemperatureType,
+	temperature_type : data_collection::temperature::TemperatureType,
 }
 
 impl Default for DataState {
@@ -69,7 +61,7 @@ impl Default for DataState {
 			prev_pid_stats : HashMap::new(),
 			prev_idle : 0_f64,
 			prev_non_idle : 0_f64,
-			temperature_type : TemperatureType::Celsius,
+			temperature_type : data_collection::temperature::TemperatureType::Celsius,
 		}
 	}
 }
@@ -79,7 +71,7 @@ impl DataState {
 		self.stale_max_seconds = stale_max_seconds;
 	}
 
-	pub fn set_temperature_type(&mut self, temperature_type : TemperatureType) {
+	pub fn set_temperature_type(&mut self, temperature_type : data_collection::temperature::TemperatureType) {
 		self.temperature_type = temperature_type;
 	}
 
@@ -108,7 +100,7 @@ impl DataState {
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
 		push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
-		set_if_valid(&temperature::get_temperature_data().await, &mut self.data.list_of_temperature_sensor);
+		set_if_valid(&temperature::get_temperature_data(&self.temperature_type).await, &mut self.data.list_of_temperature_sensor);
 
 		if self.first_run {
 			self.data = Data::default();
@@ -170,16 +162,16 @@ impl DataState {
 	}
 }
 
-impl<'a> App<'a> {
-	pub fn new(title : &str) -> App {
+impl App {
+	pub fn new(temperature_type : data_collection::temperature::TemperatureType, update_rate_in_milliseconds : u64) -> App {
 		App {
-			title,
 			process_sorting_type : processes::ProcessSorting::CPU, // TODO: Change this based on input args... basically set this on app creation
 			should_quit : false,
 			process_sorting_reverse : true,
 			to_be_resorted : false,
 			current_selected_process_position : 0,
-			temperature_type : TemperatureType::Celsius,
+			temperature_type,
+			update_rate_in_milliseconds,
 		}
 	}
 
