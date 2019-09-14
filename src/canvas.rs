@@ -74,11 +74,6 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 			.margin(0)
 			.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
 			.split(bottom_divided_chunk_1[0]);
-		let bottom_divided_chunk_1_2 = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(0)
-			.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
-			.split(bottom_divided_chunk_1[1]);
 
 		// Set up blocks and their components
 
@@ -133,18 +128,14 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 		Block::default().title("Network").borders(Borders::ALL).border_style(border_style).render(&mut f, middle_chunks[1]);
 
 		// Temperature table
-		Table::new(["Sensor", "Temperature"].iter(), temperature_rows)
-			.block(Block::default().title("Temperatures").borders(Borders::ALL).border_style(border_style))
-			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[15, 5])
-			.render(&mut f, bottom_divided_chunk_1_1[0]);
-
-		// Disk usage table
-		Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
-			.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
-			.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
-			.widths(&[15, 10, 5, 5, 5])
-			.render(&mut f, bottom_divided_chunk_1_2[0]);
+		{
+			let width = f64::from(bottom_divided_chunk_1_1[0].width);
+			Table::new(["Sensor", "Temp"].iter(), temperature_rows)
+				.block(Block::default().title("Temperatures").borders(Borders::ALL).border_style(border_style))
+				.header_style(Style::default().fg(Color::LightBlue))
+				.widths(&[(width * 0.45) as u16, (width * 0.4) as u16])
+				.render(&mut f, bottom_divided_chunk_1_1[0]);
+		}
 
 		// Temp graph
 		Block::default()
@@ -153,19 +144,25 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 			.border_style(border_style)
 			.render(&mut f, bottom_divided_chunk_1_1[1]);
 
-		// IO graph
-		Block::default()
-			.title("IO Usage")
-			.borders(Borders::ALL)
-			.border_style(border_style)
-			.render(&mut f, bottom_divided_chunk_1_2[1]);
+		// Disk usage table
+		{
+			let width = f64::from(bottom_divided_chunk_1[1].width);
+			Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
+				.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
+				.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
+				.widths(&[(width * 0.25) as u16, (width * 0.2) as u16, (width * 0.15) as u16, (width * 0.15) as u16, (width * 0.15) as u16])
+				.render(&mut f, bottom_divided_chunk_1[1]);
+		}
 
 		// Processes table
-		Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)
-			.block(Block::default().title("Processes").borders(Borders::ALL).border_style(border_style))
-			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[5, 15, 10, 10])
-			.render(&mut f, bottom_chunks[1]);
+		{
+			let width = f64::from(bottom_chunks[1].width);
+			Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)
+				.block(Block::default().title("Processes").borders(Borders::ALL).border_style(border_style))
+				.header_style(Style::default().fg(Color::LightBlue))
+				.widths(&[(width * 0.2) as u16, (width * 0.35) as u16, (width * 0.2) as u16, (width * 0.2) as u16])
+				.render(&mut f, bottom_chunks[1]);
+		}
 	})?;
 
 	Ok(())

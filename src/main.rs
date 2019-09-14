@@ -16,25 +16,56 @@ mod canvas;
 #[macro_use]
 extern crate log;
 
+#[macro_use]
+extern crate clap;
+
 enum Event<I> {
 	Input(I),
 	Update(Box<app::Data>),
 }
 
 const STALE_MAX_MILLISECONDS : u64 = 60 * 1000;
+const TICK_RATE_IN_MILLISECONDS : u64 = 250;
 
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
+	let _log = utils::logging::init_logger(); // TODO: Error handling
+
+	let matches = clap_app!(app =>
+	(name: "rustop")
+	(version: crate_version!())
+	(author: "Clement Tsang <clementjhtsang@gmail.com>")
+	(about: "A graphical top clone.")
+	(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
+	(@group TEMPERATURE_TYPE =>
+		(@arg celsius : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
+		(@arg fahrenheit : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
+		(@arg kelvin : -k --kelvin "Sets the temperature type to Kelvin.")
+
+	)
+	(@arg RATE: -r --rate +takes_value "Sets a refresh rate in milliseconds, min is 250ms, defaults to 1000ms.  Higher values may take more resources.")
+	)
+	.after_help("Themes:")
+	.get_matches();
+
 	let screen = AlternateScreen::to_alternate(true)?;
 	let backend = CrosstermBackend::with_alternate_screen(screen)?;
 	let mut terminal = Terminal::new(backend)?;
 
-	let tick_rate_in_milliseconds : u64 = 250;
-	let update_rate_in_milliseconds : u64 = 500; // TODO: Must set a check to prevent this from going into negatives!
+	let update_rate_in_milliseconds : u64 = matches.value_of("rate").unwrap_or("1000").parse::<u64>().unwrap_or(1000);
+	let temperature_type = if matches.is_present("fahrenheit") {
+		app::data_collection::temperature::TemperatureType::Fahrenheit
+	}
+	else if matches.is_present("kelvin") {
+		app::data_collection::temperature::TemperatureType::Kelvin
+	}
+	else {
+		app::data_collection::temperature::TemperatureType::Celsius
+	};
 
-	let mut app = app::App::new("rustop");
+	info!("Temperature type: {:?}", temperature_type);
 
-	let _log = utils::logging::init_logger();
+	let mut app = app::App::new(temperature_type, if update_rate_in_milliseconds < 250 { 250 } else { update_rate_in_milliseconds });
 
 	terminal.hide_cursor()?;
 	// Setup input handling
@@ -77,7 +108,7 @@ async fn main() -> Result<(), io::Error> {
 	let mut canvas_data = canvas::CanvasData::default();
 
 	loop {
-		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(tick_rate_in_milliseconds)) {
+		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::Input(event) => {
 					debug!("Input event fired!");
@@ -125,17 +156,17 @@ async fn main() -> Result<(), io::Error> {
 	Ok(())
 }
 
-fn update_temp_row(app_data : &app::Data, temp_type : &app::TemperatureType) -> Vec<Vec<String>> {
+fn update_temp_row(app_data : &app::Data, temp_type : &app::data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
 	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
 
 	for sensor in &app_data.list_of_temperature_sensor {
 		sensor_vector.push(vec![
 			sensor.component_name.to_string(),
-			sensor.temperature.to_string()
+			(sensor.temperature.ceil() as u64).to_string()
 				+ match temp_type {
-					app::TemperatureType::Celsius => "C",
-					app::TemperatureType::Kelvin => "K",
-					app::TemperatureType::Fahrenheit => "F",
+					app::data_collection::temperature::TemperatureType::Celsius => "C",
+					app::data_collection::temperature::TemperatureType::Kelvin => "K",
+					app::data_collection::temperature::TemperatureType::Fahrenheit => "F",
 				},
 		]);
 	}
