@@ -1,6 +1,6 @@
 [package]
 name = "rustop"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 authors = ["ClementTsang <clementjhtsang@gmail.com>"]
 edition = "2018"
 
@@ -10,6 +10,7 @@ edition = "2018"
 chrono = "0.4.9"
 clap = "2.33.0"
 crossterm = "0.10.2"
+failure = "0.1.5"
 futures-preview = "0.3.0-alpha.18"
 fern = "0.5"
 futures-timer = "0.3"
@@ -20,8 +21,11 @@ log = "0.4"
 sysinfo = "0.9.4"
 tokio = "0.2.0-alpha.4"
 
-
 [dependencies.tui]
 version = "0.6.2"
 default-features = false
 features = ['crossterm']
+
+[dev-dependencies]
+assert_cmd = "0.10"
+predicates = "1"
