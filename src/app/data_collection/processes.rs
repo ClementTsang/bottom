@@ -4,7 +4,6 @@ use heim_common::{
 };
 use std::{collections::HashMap, process::Command};
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub enum ProcessSorting {
 	CPU,
@@ -37,6 +36,9 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 
 	let stat_results = std::fs::read_to_string(path)?;
 	let first_line = stat_results.split('\n').collect::<Vec<&str>>()[0];
+
+	// TODO: Consider grabbing by number of threads instead, and summing the total?
+	// ie: 4 threads, so: (prev - curr) / cpu_0 + ... + (prev - curr) / cpu_n instead?  This might be how top does it?
 	let val = first_line.split_whitespace().collect::<Vec<&str>>();
 
 	// SC in case that the parsing will fail due to length:
@@ -167,7 +169,9 @@ fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut 
 	})
 }
 
-pub async fn get_sorted_processes_list(prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut HashMap<String, f64>) -> Result<Vec<ProcessData>, heim::Error> {
+pub async fn get_sorted_processes_list(
+	prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut std::collections::HashMap<String, f64>,
+) -> Result<Vec<ProcessData>, heim::Error> {
 	let mut process_vector : Vec<ProcessData> = Vec::new();
 
 	if cfg!(target_os = "linux") {
