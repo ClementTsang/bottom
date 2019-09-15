@@ -1,7 +1,6 @@
 pub mod data_collection;
 use data_collection::{processes, temperature};
 
-#[allow(dead_code)]
 pub struct App {
 	pub should_quit : bool,
 	pub process_sorting_type : processes::ProcessSorting,
@@ -35,6 +34,7 @@ impl App {
 			'k' => self.on_up(),
 			'l' => self.on_left(),
 			'c' => {
+				// TODO: This should depend on what tile you're on!
 				match self.process_sorting_type {
 					processes::ProcessSorting::CPU => self.process_sorting_reverse = !self.process_sorting_reverse,
 					_ => {

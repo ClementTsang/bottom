@@ -1,3 +1,5 @@
+//! This is the main file to house data collection functions.
+
 use std::collections::HashMap;
 use sysinfo::{System, SystemExt};
 

@@ -21,7 +21,7 @@ Currently, I'm unable to test on MacOS, so I'm not sure how well this will work,
 * As mentioned, this project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop) .
 
 * This application was written with the following libraries:
-  * clap
+  * [clap](https://github.com/clap-rs/clap)
   * [crossterm](https://github.com/TimonPost/crossterm)
   * [heim](https://github.com/heim-rs/heim)
   * [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
