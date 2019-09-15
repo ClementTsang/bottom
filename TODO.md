@@ -1,5 +1,7 @@
 # To-Do List
 
+## Pre-release (bare minimum)
+
 * ~~Get each function working as a POC~~
 
 * ~~Separate each component for readability, finalize project structure~~
@@ -8,24 +10,36 @@
 
 * ~~Write tui display, charting~~
 
-* Scaling in and out
+* ~~FIX PROCESSES AHHHHHH~~
 
-* Add custom error because it's really messy
-
-* Remove any ``unwrap()``.
-
-* Scrolling event
+* Scrolling in at least processes
 
 * Keybindings
 
-~~* FIX PROCESSES AHHHHHH~~
+## After making public
+
+* Scaling in and out (zoom), may need to show zoom levels
+
+* It would be maybe a good idea to see if we can run the process calculation across ALL cpus...?
+
+* ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
+
+* Remove any ``unwrap()``, ensure no crashing!
+
+* Scrolling event in lists
+
+* Switching between panels
+
+* Truncate columns if needed for tables
 
 * Refactor everything because it's a mess
 
-* Test for Windows support, mac support
+* Test for Windows support, mac support, other.  May be doable, depends on sysinfo and how much I know about other OSes probably.
 
 * Efficiency!!!
 
-* Potentially process managing?  Depends on the libraries...
+* Filtering in processes (that is, allow searching)
 
-* Filtering in processes (ie: search)
+* Help screen
+
+* Potentially process managing?  Depends on the libraries...

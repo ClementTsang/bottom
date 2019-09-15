@@ -1,15 +1,30 @@
 pub mod data_collection;
 use data_collection::{processes, temperature};
 
+#[allow(dead_code)]
+// Probably only use the list elements...
+pub enum ApplicationPosition {
+	CPU,
+	MEM,
+	DISK,
+	TEMP,
+	NETWORK,
+	PROCESS,
+}
+
 pub struct App {
 	pub should_quit : bool,
 	pub process_sorting_type : processes::ProcessSorting,
 	pub process_sorting_reverse : bool,
 	pub to_be_resorted : bool,
-	pub current_selected_process_position : u64,
+	pub currently_selected_process_position : u64,
+	pub currently_selected_disk_position : u64,
+	pub currently_selected_temperature_position : u64,
 	pub temperature_type : temperature::TemperatureType,
 	pub update_rate_in_milliseconds : u64,
 	pub show_average_cpu : bool,
+	pub current_application_position : ApplicationPosition,
+	pub current_zoom_level_percent : f64, // Make at most 200, least 50?
 }
 
 impl App {
@@ -19,10 +34,14 @@ impl App {
 			should_quit : false,
 			process_sorting_reverse : true,
 			to_be_resorted : false,
-			current_selected_process_position : 0,
+			currently_selected_process_position : 0,
+			currently_selected_disk_position : 0,
+			currently_selected_temperature_position : 0,
 			temperature_type,
 			update_rate_in_milliseconds,
 			show_average_cpu,
+			current_application_position : ApplicationPosition::PROCESS,
+			current_zoom_level_percent : 100.0,
 		}
 	}
 
@@ -88,5 +107,44 @@ impl App {
 	}
 
 	pub fn on_down(&mut self) {
+	}
+
+	pub fn decrement_position_count(&mut self) {
+		match self.current_application_position {
+			ApplicationPosition::PROCESS => self.change_process_position(1),
+			ApplicationPosition::TEMP => self.change_temp_position(1),
+			ApplicationPosition::DISK => self.change_disk_position(1),
+			_ => {}
+		}
+	}
+
+	pub fn increment_position_count(&mut self) {
+		match self.current_application_position {
+			ApplicationPosition::PROCESS => self.change_process_position(-1),
+			ApplicationPosition::TEMP => self.change_temp_position(-1),
+			ApplicationPosition::DISK => self.change_disk_position(-1),
+			_ => {}
+		}
+	}
+
+	fn change_process_position(&mut self, num_to_change_by : i32) {
+		if self.currently_selected_process_position + num_to_change_by as u64 > 0 {
+			self.currently_selected_process_position += num_to_change_by as u64;
+		}
+		// else if self.currently_selected_process_position < // TODO: Need to finish this!  This should never go PAST the number of elements
+	}
+
+	fn change_temp_position(&mut self, num_to_change_by : i32) {
+		if self.currently_selected_temperature_position + num_to_change_by as u64 > 0 {
+			self.currently_selected_temperature_position += num_to_change_by as u64;
+		}
+		// else if self.currently_selected_temperature_position < // TODO: Need to finish this!  This should never go PAST the number of elements
+	}
+
+	fn change_disk_position(&mut self, num_to_change_by : i32) {
+		if self.currently_selected_disk_position + num_to_change_by as u64 > 0 {
+			self.currently_selected_disk_position += num_to_change_by as u64;
+		}
+		// else if self.currently_selected_disk_position < // TODO: Need to finish this!  This should never go PAST the number of elements
 	}
 }

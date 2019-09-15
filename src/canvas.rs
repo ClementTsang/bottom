@@ -70,7 +70,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 		// CPU usage graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.0]).labels(&["0%", "100%"]);
+			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.5]).labels(&["0%", "100%"]);
 
 			let mut dataset_vector : Vec<Dataset> = Vec::new();
 
@@ -116,7 +116,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 		//Memory usage graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.0]).labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
+			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.5]).labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
 			Chart::default()
 				.block(Block::default().title("Memory Usage").borders(Borders::ALL).border_style(border_style))
 				.x_axis(x_axis)
@@ -148,16 +148,20 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 
 		// Disk usage table
 		{
+			// TODO: We have to dynamically remove some of these table elements based on size...
 			let width = f64::from(middle_divided_chunk_2[1].width);
-			Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
+			Table::new(["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(), disk_rows)
 				.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
 				.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
 				.widths(&[
-					(width * 0.25) as u16,
-					(width * 0.2) as u16,
-					(width * 0.15) as u16,
-					(width * 0.15) as u16,
-					(width * 0.15) as u16,
+					// Must make sure these are NEVER zero!  It will fail to display!  Seems to only be this...
+					(width * 0.2) as u16 + 1,
+					(width * 0.2) as u16 + 1,
+					(width * 0.1) as u16 + 1,
+					(width * 0.1) as u16 + 1,
+					(width * 0.1) as u16 + 1,
+					(width * 0.1) as u16 + 1,
+					(width * 0.1) as u16 + 1,
 				])
 				.render(&mut f, middle_divided_chunk_2[1]);
 		}
@@ -165,7 +169,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 		// Network graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 1_000_000.0]).labels(&["0GB", "1GB"]);
+			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 1_000_000.5]).labels(&["0GB", "1GB"]);
 			Chart::default()
 				.block(Block::default().title("Network").borders(Borders::ALL).border_style(border_style))
 				.x_axis(x_axis)
