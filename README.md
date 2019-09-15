@@ -1,5 +1,7 @@
 # rustop
 
+[![Build Status](https://travis-ci.com/ClementTsang/rustop.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/rustop)
+
 A top clone, written in Rust.  Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop)
 
 ## Installation
@@ -31,5 +33,3 @@ Currently, I'm unable to test on MacOS, so I'm not sure how well this will work,
 ## Why
 
 I was looking to try writing more things in Rust, and I love the gotop tool.  And thus, this project was born.
-
-Also, yes, I realize that gotop has a Rust rewrite branch... I found out about that when I was nearly ready to release the first version.
