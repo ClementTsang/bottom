@@ -24,5 +24,8 @@ pub fn get_cpu_data_list(sys : &System) -> Result<CPUPackage, heim::Error> {
 		})
 	}
 
-	Ok(CPUPackage { cpu_vec, instant : Instant::now() })
+	Ok(CPUPackage {
+		cpu_vec,
+		instant : Instant::now(),
+	})
 }

@@ -302,8 +302,11 @@ fn update_cpu_data_points(show_avg_cpu : bool, app_data : &data_collection::Data
 		for (i, data) in cpu_collection.iter().enumerate() {
 			cpu_data_vector.push((
 				// + 1 to skip total CPU if show_avg_cpu is false
-				format!("{:4}: ", &*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)).to_uppercase()
-					+ &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
+				format!(
+					"{:4}: ",
+					&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)
+				)
+				.to_uppercase() + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
 				data.clone(),
 			))
 		}
