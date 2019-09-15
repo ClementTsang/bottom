@@ -10,6 +10,8 @@
 
 * Add custom error because it's really messy
 
+* Remove any ``unwrap()``.
+
 * Scrolling event
 
 * Keybindings

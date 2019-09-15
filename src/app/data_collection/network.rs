@@ -2,6 +2,7 @@ use std::time::Instant;
 use sysinfo::{NetworkExt, System, SystemExt};
 
 #[derive(Clone)]
+/// Note all values are in bytes...
 pub struct NetworkData {
 	pub rx : u64,
 	pub tx : u64,

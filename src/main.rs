@@ -1,36 +1,39 @@
 #![feature(async_closure)]
+
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate clap;
+#[macro_use]
+extern crate failure;
+
 use crossterm::{input, AlternateScreen, InputEvent, KeyEvent};
-use std::{io, sync::mpsc, thread, time::Duration};
+use std::{sync::mpsc, thread, time::Duration};
 use tui::{backend::CrosstermBackend, Terminal};
 
 mod app;
 use app::data_collection;
-
 mod utils {
 	pub mod error;
 	pub mod logging;
 }
-
+use utils::error::{self, RustopError};
 mod canvas;
 
-#[macro_use]
-extern crate log;
-
-#[macro_use]
-extern crate clap;
+// End imports
 
 enum Event<I> {
 	Input(I),
-	Update(Box<app::data_collection::Data>),
+	Update(Box<data_collection::Data>),
 }
 
-const STALE_MAX_MILLISECONDS : u64 = 60 * 1000;
-const TICK_RATE_IN_MILLISECONDS : u64 = 250;
+const STALE_MAX_MILLISECONDS : u64 = 60 * 1000; // We wish to store at most 60 seconds worth of data.  This may change in the future, or be configurable.
+const TICK_RATE_IN_MILLISECONDS : u64 = 200; // We use this as it's a good value to work with.
 
-#[tokio::main]
-async fn main() -> Result<(), io::Error> {
+fn main() -> error::Result<()> {
 	let _log = utils::logging::init_logger(); // TODO: Error handling
 
+	// Parse command line options
 	let matches = clap_app!(app =>
 	(name: "rustop")
 	(version: crate_version!())
@@ -38,36 +41,41 @@ async fn main() -> Result<(), io::Error> {
 	(about: "A graphical top clone.")
 	(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
 	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
+	(@arg DEBUG: -d --debug "Enables debug mode.")
 	(@group TEMPERATURE_TYPE =>
-		(@arg celsius : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
-		(@arg fahrenheit : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
-		(@arg kelvin : -k --kelvin "Sets the temperature type to Kelvin.")
+		(@arg CELSIUS : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
+		(@arg FAHRENHEIT : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
+		(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
 	)
 	(@arg RATE: -r --rate +takes_value "Sets a refresh rate in milliseconds, min is 250ms, defaults to 1000ms.  Higher values may take more resources.")
 	)
 	.after_help("Themes:")
 	.get_matches();
 
-	let screen = AlternateScreen::to_alternate(true)?;
-	let backend = CrosstermBackend::with_alternate_screen(screen)?;
-	let mut terminal = Terminal::new(backend)?;
+	let update_rate_in_milliseconds : u64 = matches.value_of("RATE").unwrap_or("1000").parse::<u64>()?;
 
-	let update_rate_in_milliseconds : u64 = matches.value_of("rate").unwrap_or("1000").parse::<u64>().unwrap_or(1000);
-	let temperature_type = if matches.is_present("fahrenheit") {
-		app::data_collection::temperature::TemperatureType::Fahrenheit
+	if update_rate_in_milliseconds < 250 {
+		return Err(RustopError::InvalidArg {
+			message : "Please set your rate to be greater than 250 milliseconds.".to_string(),
+		});
 	}
-	else if matches.is_present("kelvin") {
-		app::data_collection::temperature::TemperatureType::Kelvin
+
+	let temperature_type = if matches.is_present("FAHRENHEIT") {
+		data_collection::temperature::TemperatureType::Fahrenheit
+	}
+	else if matches.is_present("KELVIN") {
+		data_collection::temperature::TemperatureType::Kelvin
 	}
 	else {
-		app::data_collection::temperature::TemperatureType::Celsius
+		data_collection::temperature::TemperatureType::Celsius
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
 
-	let mut app = app::App::new(show_average_cpu, temperature_type, if update_rate_in_milliseconds < 250 { 250 } else { update_rate_in_milliseconds });
+	// Create "app" struct, which will control most of the program and store settings/state
+	// TODO: Error handling here because users may be stupid and pass INT_MAX.
+	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds);
 
-	terminal.hide_cursor()?;
-	// Setup input handling
+	// Set up input handling
 	let (tx, rx) = mpsc::channel();
 	{
 		let tx = tx.clone();
@@ -85,7 +93,7 @@ async fn main() -> Result<(), io::Error> {
 	}
 
 	// Event loop
-	let mut data_state = app::data_collection::DataState::default();
+	let mut data_state = data_collection::DataState::default();
 	data_state.init();
 	data_state.set_stale_max_seconds(STALE_MAX_MILLISECONDS);
 	data_state.set_temperature_type(app.temperature_type.clone());
@@ -94,16 +102,21 @@ async fn main() -> Result<(), io::Error> {
 		thread::spawn(move || {
 			let tx = tx.clone();
 			loop {
-				futures::executor::block_on(data_state.update_data()); // TODO: Fix
+				futures::executor::block_on(data_state.update_data());
 				tx.send(Event::Update(Box::from(data_state.data.clone()))).unwrap();
 				thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
 			}
 		});
 	}
 
+	// Set up up tui and crossterm
+	let screen = AlternateScreen::to_alternate(true)?;
+	let backend = CrosstermBackend::with_alternate_screen(screen)?;
+	let mut terminal = Terminal::new(backend)?;
+	terminal.hide_cursor()?;
 	terminal.clear()?;
 
-	let mut app_data = app::data_collection::Data::default();
+	let mut app_data = data_collection::Data::default();
 	let mut canvas_data = canvas::CanvasData::default();
 
 	loop {
@@ -118,6 +131,7 @@ async fn main() -> Result<(), io::Error> {
 						KeyEvent::Up => app.on_up(),
 						KeyEvent::Down => app.on_down(),
 						KeyEvent::Ctrl('c') => break,
+						KeyEvent::Esc => break,
 						_ => {}
 					}
 
@@ -134,6 +148,9 @@ async fn main() -> Result<(), io::Error> {
 					data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
 
 					// Convert all data into tui components
+					let network_data = update_network_data_points(&app_data);
+					canvas_data.network_data_rx = network_data.rx;
+					canvas_data.network_data_tx = network_data.tx;
 					canvas_data.disk_data = update_disk_row(&app_data);
 					canvas_data.temp_sensor_data = update_temp_row(&app_data, &app.temperature_type);
 					canvas_data.process_data = update_process_row(&app_data);
@@ -152,10 +169,11 @@ async fn main() -> Result<(), io::Error> {
 		canvas::draw_data(&mut terminal, &canvas_data)?;
 	}
 
+	debug!("Terminating.");
 	Ok(())
 }
 
-fn update_temp_row(app_data : &app::data_collection::Data, temp_type : &app::data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
+fn update_temp_row(app_data : &data_collection::Data, temp_type : &data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
 	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
 
 	for sensor in &app_data.list_of_temperature_sensor {
@@ -163,9 +181,9 @@ fn update_temp_row(app_data : &app::data_collection::Data, temp_type : &app::dat
 			sensor.component_name.to_string(),
 			(sensor.temperature.ceil() as u64).to_string()
 				+ match temp_type {
-					app::data_collection::temperature::TemperatureType::Celsius => "C",
-					app::data_collection::temperature::TemperatureType::Kelvin => "K",
-					app::data_collection::temperature::TemperatureType::Fahrenheit => "F",
+					data_collection::temperature::TemperatureType::Celsius => "C",
+					data_collection::temperature::TemperatureType::Kelvin => "K",
+					data_collection::temperature::TemperatureType::Fahrenheit => "F",
 				},
 		]);
 	}
@@ -173,22 +191,33 @@ fn update_temp_row(app_data : &app::data_collection::Data, temp_type : &app::dat
 	sensor_vector
 }
 
-fn update_disk_row(app_data : &app::data_collection::Data) -> Vec<Vec<String>> {
+// TODO: IO count
+fn update_disk_row(app_data : &data_collection::Data) -> Vec<Vec<String>> {
 	let mut disk_vector : Vec<Vec<String>> = Vec::new();
 	for disk in &app_data.list_of_disks {
 		disk_vector.push(vec![
 			disk.name.to_string(),
 			disk.mount_point.to_string(),
 			format!("{:.1}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
-			(disk.free_space / 1024).to_string() + "GB",
-			(disk.total_space / 1024).to_string() + "GB",
+			if disk.free_space < 1024 {
+				disk.free_space.to_string() + "MB"
+			}
+			else {
+				(disk.free_space / 1024).to_string() + "GB"
+			},
+			if disk.total_space < 1024 {
+				disk.total_space.to_string() + "MB"
+			}
+			else {
+				(disk.total_space / 1024).to_string() + "GB"
+			},
 		]);
 	}
 
 	disk_vector
 }
 
-fn update_process_row(app_data : &app::data_collection::Data) -> Vec<Vec<String>> {
+fn update_process_row(app_data : &data_collection::Data) -> Vec<Vec<String>> {
 	let mut process_vector : Vec<Vec<String>> = Vec::new();
 
 	for process in &app_data.list_of_processes {
@@ -219,7 +248,7 @@ fn update_process_row(app_data : &app::data_collection::Data) -> Vec<Vec<String>
 	process_vector
 }
 
-fn update_cpu_data_points(show_avg_cpu : bool, app_data : &app::data_collection::Data) -> Vec<(String, Vec<(f64, f64)>)> {
+fn update_cpu_data_points(show_avg_cpu : bool, app_data : &data_collection::Data) -> Vec<(String, Vec<(f64, f64)>)> {
 	let mut cpu_data_vector : Vec<(String, Vec<(f64, f64)>)> = Vec::new();
 	let mut cpu_collection : Vec<Vec<(f64, f64)>> = Vec::new();
 
@@ -256,15 +285,15 @@ fn update_cpu_data_points(show_avg_cpu : bool, app_data : &app::data_collection:
 	cpu_data_vector
 }
 
-fn update_mem_data_points(app_data : &app::data_collection::Data) -> Vec<(f64, f64)> {
+fn update_mem_data_points(app_data : &data_collection::Data) -> Vec<(f64, f64)> {
 	convert_mem_data(&app_data.memory)
 }
 
-fn update_swap_data_points(app_data : &app::data_collection::Data) -> Vec<(f64, f64)> {
+fn update_swap_data_points(app_data : &data_collection::Data) -> Vec<(f64, f64)> {
 	convert_mem_data(&app_data.swap)
 }
 
-fn convert_mem_data(mem_data : &[app::data_collection::mem::MemData]) -> Vec<(f64, f64)> {
+fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64, f64)> {
 	let mut result : Vec<(f64, f64)> = Vec::new();
 
 	for data in mem_data {
@@ -274,8 +303,41 @@ fn convert_mem_data(mem_data : &[app::data_collection::mem::MemData]) -> Vec<(f6
 			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			data.mem_used_in_mb as f64 / data.mem_total_in_mb as f64 * 100_f64,
 		));
-		debug!("Pushed: ({}, {})", result.last().unwrap().0, result.last().unwrap().1);
+		//debug!("Pushed: ({}, {})", result.last().unwrap().0, result.last().unwrap().1);
 	}
 
 	result
+}
+
+struct ConvertedNetworkData {
+	rx : Vec<(f64, f64)>,
+	tx : Vec<(f64, f64)>,
+}
+
+fn update_network_data_points(app_data : &data_collection::Data) -> ConvertedNetworkData {
+	convert_network_data_points(&app_data.network)
+}
+
+fn convert_network_data_points(network_data : &[data_collection::network::NetworkData]) -> ConvertedNetworkData {
+	let mut rx : Vec<(f64, f64)> = Vec::new();
+	let mut tx : Vec<(f64, f64)> = Vec::new();
+
+	for data in network_data {
+		let current_time = std::time::Instant::now();
+
+		rx.push((
+			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+			data.rx as f64 / 1024.0,
+		));
+
+		tx.push((
+			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+			data.tx as f64 / 1024.0,
+		));
+
+		debug!("Pushed rx: ({}, {})", rx.last().unwrap().0, rx.last().unwrap().1);
+		debug!("Pushed tx: ({}, {})", tx.last().unwrap().0, tx.last().unwrap().1);
+	}
+
+	ConvertedNetworkData { rx, tx }
 }
