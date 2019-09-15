@@ -39,15 +39,20 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 	let first_line = stat_results.split('\n').collect::<Vec<&str>>()[0];
 	let val = first_line.split_whitespace().collect::<Vec<&str>>();
 
-	let user : f64 = val[1].parse::<_>().unwrap_or(-1_f64); // TODO: Better checking
-	let nice : f64 = val[2].parse::<_>().unwrap_or(-1_f64);
-	let system : f64 = val[3].parse::<_>().unwrap_or(-1_f64);
-	let idle : f64 = val[4].parse::<_>().unwrap_or(-1_f64);
-	let iowait : f64 = val[5].parse::<_>().unwrap_or(-1_f64);
-	let irq : f64 = val[6].parse::<_>().unwrap_or(-1_f64);
-	let softirq : f64 = val[7].parse::<_>().unwrap_or(-1_f64);
-	let steal : f64 = val[8].parse::<_>().unwrap_or(-1_f64);
-	let guest : f64 = val[9].parse::<_>().unwrap_or(-1_f64);
+	// SC in case that the parsing will fail due to length:
+	if val.len() <= 10 {
+		return Ok(1.0); // TODO: This is not the greatest...
+	}
+
+	let user : f64 = val[1].parse::<_>().unwrap_or(0_f64);
+	let nice : f64 = val[2].parse::<_>().unwrap_or(0_f64);
+	let system : f64 = val[3].parse::<_>().unwrap_or(0_f64);
+	let idle : f64 = val[4].parse::<_>().unwrap_or(0_f64);
+	let iowait : f64 = val[5].parse::<_>().unwrap_or(0_f64);
+	let irq : f64 = val[6].parse::<_>().unwrap_or(0_f64);
+	let softirq : f64 = val[7].parse::<_>().unwrap_or(0_f64);
+	let steal : f64 = val[8].parse::<_>().unwrap_or(0_f64);
+	let guest : f64 = val[9].parse::<_>().unwrap_or(0_f64);
 
 	let idle = idle + iowait;
 	let non_idle = user + nice + system + irq + softirq + steal + guest;
@@ -204,12 +209,13 @@ pub async fn get_sorted_processes_list(prev_idle : &mut f64, prev_non_idle : &mu
 		}
 	}
 	else if cfg!(target_os = "macos") {
-		// macOS
-		dbg!("Mac"); // TODO: Remove
+		// TODO: macOS
+		debug!("Mac");
 	}
 	else {
-		dbg!("Else"); // TODO: Remove
-		      // Solaris: https://stackoverflow.com/a/4453581
+		// TODO: Others?
+		debug!("Else");
+		// Solaris: https://stackoverflow.com/a/4453581
 	}
 
 	Ok(process_vector)

@@ -56,16 +56,18 @@ pub async fn get_disk_usage_list() -> Result<Vec<DiskData>, heim::Error> {
 	let mut partitions_stream = heim::disk::partitions_physical();
 
 	while let Some(part) = partitions_stream.next().await {
-		let partition = part?; // TODO: Change this?  We don't want to error out immediately...
-		let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
+		if let Ok(part) = part {
+			let partition = part;
+			let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
 
-		vec_disks.push(DiskData {
-			free_space : usage.free().get::<heim_common::units::information::megabyte>(),
-			used_space : usage.used().get::<heim_common::units::information::megabyte>(),
-			total_space : usage.total().get::<heim_common::units::information::megabyte>(),
-			mount_point : Box::from(partition.mount_point().to_str().unwrap_or("Name Unavailable")),
-			name : Box::from(partition.device().unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable")).to_str().unwrap_or("Name Unavailable")),
-		});
+			vec_disks.push(DiskData {
+				free_space : usage.free().get::<heim_common::units::information::megabyte>(),
+				used_space : usage.used().get::<heim_common::units::information::megabyte>(),
+				total_space : usage.total().get::<heim_common::units::information::megabyte>(),
+				mount_point : Box::from(partition.mount_point().to_str().unwrap_or("Name Unavailable")),
+				name : Box::from(partition.device().unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable")).to_str().unwrap_or("Name Unavailable")),
+			});
+		}
 	}
 
 	vec_disks.sort_by(|a, b| {

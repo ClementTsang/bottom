@@ -6,7 +6,9 @@
 
 * ~~Refreshing - how are we doing that?  Are we allowing individual refresh periods per component?~~
 
-* Write tui display, charting
+* ~~Write tui display, charting~~
+
+* Scaling in and out
 
 * Add custom error because it's really messy
 
@@ -22,7 +24,7 @@
 
 * Test for Windows support, mac support
 
-* Efficiency!!!  Make sure no wasted hashmaps, use references, etc.
+* Efficiency!!!
 
 * Potentially process managing?  Depends on the libraries...
 
