@@ -103,19 +103,28 @@ fn main() -> error::Result<()> {
 	data_state.set_temperature_type(app.temperature_type.clone());
 	{
 		let tx = tx.clone();
+		let mut first_run = true;
 		thread::spawn(move || {
 			let tx = tx.clone();
 			loop {
 				futures::executor::block_on(data_state.update_data());
 				tx.send(Event::Update(Box::from(data_state.data.clone()))).unwrap();
-				thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
+				if first_run {
+					// Fix for if you set a really long time for update periods (and just gives a faster first value)
+					thread::sleep(Duration::from_millis(250));
+					first_run = false;
+				}
+				else {
+					thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
+				}
 			}
 		});
 	}
 
 	// Set up up tui and crossterm
 	let screen = AlternateScreen::to_alternate(true)?;
-	let backend = CrosstermBackend::with_alternate_screen(screen)?;
+	let stdout = std::io::stdout();
+	let backend = CrosstermBackend::with_alternate_screen(stdout, screen)?;
 	let mut terminal = Terminal::new(backend)?;
 	terminal.hide_cursor()?;
 	terminal.clear()?;
@@ -172,7 +181,7 @@ fn main() -> error::Result<()> {
 			}
 		}
 		// Draw!
-		canvas::draw_data(&mut terminal, &canvas_data)?;
+		canvas::draw_data(&mut terminal, &app, &canvas_data)?;
 	}
 
 	debug!("Terminating.");
@@ -293,8 +302,8 @@ fn update_cpu_data_points(show_avg_cpu : bool, app_data : &data_collection::Data
 		for (i, data) in cpu_collection.iter().enumerate() {
 			cpu_data_vector.push((
 				// + 1 to skip total CPU if show_avg_cpu is false
-				(&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)).to_string()
-					+ " " + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
+				format!("{:4}: ", &*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)).to_uppercase()
+					+ &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
 				data.clone(),
 			))
 		}

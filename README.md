@@ -28,7 +28,7 @@ Currently, I'm unable to test on MacOS, so I'm not sure how well this will work,
   * [heim](https://github.com/heim-rs/heim)
   * [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
   * [tokio](https://github.com/tokio-rs/tokio)
-  * [tui-rs](https://github.com/fdehau/tui-rs)
+  * [tui-rs](https://github.com/fdehau/tui-rs) (note I used a fork due to some issues I faced, you can find that [here](https://github.com/ClementTsang/tui-rs))
 
 ## Why
 

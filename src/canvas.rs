@@ -5,7 +5,7 @@ use tui::{
 	Terminal,
 };
 
-use crate::utils::error;
+use crate::{app, utils::error};
 
 const COLOUR_LIST : [Color; 6] = [Color::Red, Color::Green, Color::LightYellow, Color::LightBlue, Color::LightCyan, Color::LightMagenta];
 const TEXT_COLOUR : Color = Color::Gray;
@@ -27,7 +27,7 @@ pub struct CanvasData {
 	pub cpu_data : Vec<(String, Vec<(f64, f64)>)>,
 }
 
-pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_data : &CanvasData) -> error::Result<()> {
+pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : &app::App, canvas_data : &CanvasData) -> error::Result<()> {
 	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
 
 	let temperature_rows = canvas_data.temp_sensor_data.iter().map(|sensor| Row::StyledData(sensor.iter(), Style::default().fg(TEXT_COLOUR)));
@@ -39,7 +39,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 		let vertical_chunks = Layout::default()
 			.direction(Direction::Vertical)
 			.margin(1)
-			.constraints([Constraint::Percentage(32), Constraint::Percentage(34), Constraint::Percentage(34)].as_ref())
+			.constraints([Constraint::Percentage(34), Constraint::Percentage(34), Constraint::Percentage(33)].as_ref())
 			.split(f.size());
 
 		let middle_chunks = Layout::default()
@@ -67,13 +67,35 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.0]).labels(&["0%", "100%"]);
 
 			let mut dataset_vector : Vec<Dataset> = Vec::new();
+
 			for (i, cpu) in canvas_data.cpu_data.iter().enumerate() {
+				let mut avg_cpu_exist_offset = 0;
+				if app_data.show_average_cpu {
+					if i == 0 {
+						// Skip, we want to render the average cpu last!
+						continue;
+					}
+					else {
+						avg_cpu_exist_offset = 1;
+					}
+				}
+
 				dataset_vector.push(
 					Dataset::default()
 						.name(&cpu.0)
 						.marker(GRAPH_MARKER)
-						.style(Style::default().fg(COLOUR_LIST[i % COLOUR_LIST.len()]))
+						.style(Style::default().fg(COLOUR_LIST[i - avg_cpu_exist_offset % COLOUR_LIST.len()]))
 						.data(&(cpu.1)),
+				);
+			}
+
+			if !canvas_data.cpu_data.is_empty() && app_data.show_average_cpu {
+				dataset_vector.push(
+					Dataset::default()
+						.name(&canvas_data.cpu_data[0].0)
+						.marker(GRAPH_MARKER)
+						.style(Style::default().fg(COLOUR_LIST[canvas_data.cpu_data.len() - 1 % COLOUR_LIST.len()]))
+						.data(&(canvas_data.cpu_data[0].1)),
 				);
 			}
 
