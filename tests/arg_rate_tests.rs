@@ -2,6 +2,7 @@ use assert_cmd::prelude::*; // Add methods on commands
 use predicates::prelude::*;
 use std::process::Command; // Run programs // Used for writing assertions
 
+//======================RATES======================//
 #[test]
 fn valid_rate_argument() {
 }
@@ -14,6 +15,17 @@ fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
 		.assert()
 		.failure()
 		.stderr(predicate::str::contains("rate to be greater than 250"));
+	Ok(())
+}
+
+#[test]
+fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
+	Command::new("./target/debug/rustop")
+		.arg("-r")
+		.arg("18446744073709551616")
+		.assert()
+		.failure()
+		.stderr(predicate::str::contains("rate to be less than unsigned INT_MAX."));
 	Ok(())
 }
 

@@ -103,7 +103,6 @@ impl DataState {
 		}
 
 		// Filter out stale timed entries
-		// TODO: ideally make this a generic function!
 		let current_instant = std::time::Instant::now();
 		self.data.list_of_cpu_packages = self
 			.data

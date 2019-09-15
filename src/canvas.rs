@@ -7,13 +7,16 @@ use tui::{
 
 use crate::utils::error;
 
-const COLOUR_LIST : [Color; 6] = [Color::LightRed, Color::LightGreen, Color::LightYellow, Color::LightBlue, Color::LightCyan, Color::LightMagenta];
+const COLOUR_LIST : [Color; 6] = [Color::Red, Color::Green, Color::LightYellow, Color::LightBlue, Color::LightCyan, Color::LightMagenta];
 const TEXT_COLOUR : Color = Color::Gray;
 const GRAPH_COLOUR : Color = Color::Gray;
 const BORDER_STYLE_COLOUR : Color = Color::Gray;
+const GRAPH_MARKER : Marker = Marker::Braille;
 
 #[derive(Default)]
 pub struct CanvasData {
+	pub rx_display : String,
+	pub tx_display : String,
 	pub network_data_rx : Vec<(f64, f64)>,
 	pub network_data_tx : Vec<(f64, f64)>,
 	pub disk_data : Vec<Vec<String>>,
@@ -61,14 +64,14 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 		// CPU usage graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 100.0]).labels(&["0%", "50%", "100%"]);
+			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.0]).labels(&["0%", "100%"]);
 
 			let mut dataset_vector : Vec<Dataset> = Vec::new();
 			for (i, cpu) in canvas_data.cpu_data.iter().enumerate() {
 				dataset_vector.push(
 					Dataset::default()
 						.name(&cpu.0)
-						.marker(Marker::Dot)
+						.marker(GRAPH_MARKER)
 						.style(Style::default().fg(COLOUR_LIST[i % COLOUR_LIST.len()]))
 						.data(&(cpu.1)),
 				);
@@ -85,20 +88,20 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 		//Memory usage graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 100.0]).labels(&["0%", "50%", "100%"]);
+			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.0]).labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
 			Chart::default()
 				.block(Block::default().title("Memory Usage").borders(Borders::ALL).border_style(border_style))
 				.x_axis(x_axis)
 				.y_axis(y_axis)
 				.datasets(&[
 					Dataset::default()
-						.name(&("MEM :".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(Marker::Dot)
+						.name(&("RAM:".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
+						.marker(GRAPH_MARKER)
 						.style(Style::default().fg(Color::LightBlue))
 						.data(&canvas_data.mem_data),
 					Dataset::default()
-						.name(&("SWAP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(Marker::Dot)
+						.name(&("SWP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
+						.marker(GRAPH_MARKER)
 						.style(Style::default().fg(Color::LightYellow))
 						.data(&canvas_data.swap_data),
 				])
@@ -128,20 +131,20 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, canvas_
 		// Network graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 1000.0]).labels(&["0Kb", "1000Kb"]);
+			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 1_000_000.0]).labels(&["0GB", "1GB"]);
 			Chart::default()
 				.block(Block::default().title("Network").borders(Borders::ALL).border_style(border_style))
 				.x_axis(x_axis)
 				.y_axis(y_axis)
 				.datasets(&[
 					Dataset::default()
-						.name(&("RX:".to_string() + &format!("{:3}%", (canvas_data.network_data_rx.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(Marker::Dot)
+						.name(&(canvas_data.rx_display))
+						.marker(GRAPH_MARKER)
 						.style(Style::default().fg(Color::LightBlue))
 						.data(&canvas_data.network_data_rx),
 					Dataset::default()
-						.name(&("TX:".to_string() + &format!("{:3}%", (canvas_data.network_data_tx.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(Marker::Dot)
+						.name(&(canvas_data.tx_display))
+						.marker(GRAPH_MARKER)
 						.style(Style::default().fg(Color::LightYellow))
 						.data(&canvas_data.network_data_tx),
 				])

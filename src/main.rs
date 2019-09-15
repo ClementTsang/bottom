@@ -41,7 +41,7 @@ fn main() -> error::Result<()> {
 	(about: "A graphical top clone.")
 	(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
 	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
-	(@arg DEBUG: -d --debug "Enables debug mode.")
+	(@arg DEBUG: -d --debug "Enables debug mode.") // TODO: This isn't done yet!
 	(@group TEMPERATURE_TYPE =>
 		(@arg CELSIUS : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
 		(@arg FAHRENHEIT : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
@@ -52,11 +52,16 @@ fn main() -> error::Result<()> {
 	.after_help("Themes:")
 	.get_matches();
 
-	let update_rate_in_milliseconds : u64 = matches.value_of("RATE").unwrap_or("1000").parse::<u64>()?;
+	let update_rate_in_milliseconds : u128 = matches.value_of("RATE").unwrap_or("1000").parse::<u128>()?;
 
 	if update_rate_in_milliseconds < 250 {
 		return Err(RustopError::InvalidArg {
-			message : "Please set your rate to be greater than 250 milliseconds.".to_string(),
+			message : "Please set your update rate to be greater than 250 milliseconds.".to_string(),
+		});
+	}
+	else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
+		return Err(RustopError::InvalidArg {
+			message : "Please set your update rate to be less than unsigned INT_MAX.".to_string(),
 		});
 	}
 
@@ -72,8 +77,7 @@ fn main() -> error::Result<()> {
 	let show_average_cpu = matches.is_present("AVG_CPU");
 
 	// Create "app" struct, which will control most of the program and store settings/state
-	// TODO: Error handling here because users may be stupid and pass INT_MAX.
-	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds);
+	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds as u64);
 
 	// Set up input handling
 	let (tx, rx) = mpsc::channel();
@@ -104,7 +108,7 @@ fn main() -> error::Result<()> {
 			loop {
 				futures::executor::block_on(data_state.update_data());
 				tx.send(Event::Update(Box::from(data_state.data.clone()))).unwrap();
-				thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
+				thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
 			}
 		});
 	}
@@ -151,6 +155,8 @@ fn main() -> error::Result<()> {
 					let network_data = update_network_data_points(&app_data);
 					canvas_data.network_data_rx = network_data.rx;
 					canvas_data.network_data_tx = network_data.tx;
+					canvas_data.rx_display = network_data.rx_display;
+					canvas_data.tx_display = network_data.tx_display;
 					canvas_data.disk_data = update_disk_row(&app_data);
 					canvas_data.temp_sensor_data = update_temp_row(&app_data, &app.temperature_type);
 					canvas_data.process_data = update_process_row(&app_data);
@@ -253,8 +259,6 @@ fn update_cpu_data_points(show_avg_cpu : bool, app_data : &data_collection::Data
 	let mut cpu_collection : Vec<Vec<(f64, f64)>> = Vec::new();
 
 	if !app_data.list_of_cpu_packages.is_empty() {
-		// Initially, populate the cpu_collection.  We want to inject elements in between if possible.
-
 		// I'm sorry for the if statement but I couldn't be bothered here...
 		for cpu_num in (if show_avg_cpu { 0 } else { 1 })..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
 			let mut this_cpu_data : Vec<(f64, f64)> = Vec::new();
@@ -262,10 +266,24 @@ fn update_cpu_data_points(show_avg_cpu : bool, app_data : &data_collection::Data
 			for data in &app_data.list_of_cpu_packages {
 				let current_time = std::time::Instant::now();
 				let current_cpu_usage = data.cpu_vec[cpu_num].cpu_usage;
-				this_cpu_data.push((
+
+				let new_entry = (
 					((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 					current_cpu_usage,
-				));
+				);
+
+				// Now, inject our joining points...
+				if !this_cpu_data.is_empty() {
+					let previous_element_data = *(this_cpu_data.last().unwrap());
+					for idx in 0..100 {
+						this_cpu_data.push((
+							previous_element_data.0 + ((new_entry.0 - previous_element_data.0) / 100.0 * f64::from(idx)),
+							previous_element_data.1 + ((new_entry.1 - previous_element_data.1) / 100.0 * f64::from(idx)),
+						));
+					}
+				}
+
+				this_cpu_data.push(new_entry);
 			}
 
 			cpu_collection.push(this_cpu_data);
@@ -298,11 +316,23 @@ fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64, f6
 
 	for data in mem_data {
 		let current_time = std::time::Instant::now();
-
-		result.push((
+		let new_entry = (
 			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			data.mem_used_in_mb as f64 / data.mem_total_in_mb as f64 * 100_f64,
-		));
+		);
+
+		// Now, inject our joining points...
+		if !result.is_empty() {
+			let previous_element_data = *(result.last().unwrap());
+			for idx in 0..100 {
+				result.push((
+					previous_element_data.0 + ((new_entry.0 - previous_element_data.0) / 100.0 * f64::from(idx)),
+					previous_element_data.1 + ((new_entry.1 - previous_element_data.1) / 100.0 * f64::from(idx)),
+				));
+			}
+		}
+
+		result.push(new_entry);
 		//debug!("Pushed: ({}, {})", result.last().unwrap().0, result.last().unwrap().1);
 	}
 
@@ -312,6 +342,8 @@ fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64, f6
 struct ConvertedNetworkData {
 	rx : Vec<(f64, f64)>,
 	tx : Vec<(f64, f64)>,
+	rx_display : String,
+	tx_display : String,
 }
 
 fn update_network_data_points(app_data : &data_collection::Data) -> ConvertedNetworkData {
@@ -324,20 +356,80 @@ fn convert_network_data_points(network_data : &[data_collection::network::Networ
 
 	for data in network_data {
 		let current_time = std::time::Instant::now();
-
-		rx.push((
+		let rx_data = (
 			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			data.rx as f64 / 1024.0,
-		));
-
-		tx.push((
+		);
+		let tx_data = (
 			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			data.tx as f64 / 1024.0,
-		));
+		);
+
+		// Now, inject our joining points...
+		if !rx.is_empty() {
+			let previous_element_data = *(rx.last().unwrap());
+			for idx in 0..100 {
+				rx.push((
+					previous_element_data.0 + ((rx_data.0 - previous_element_data.0) / 100.0 * f64::from(idx)),
+					previous_element_data.1 + ((rx_data.1 - previous_element_data.1) / 100.0 * f64::from(idx)),
+				));
+			}
+		}
+
+		// Now, inject our joining points...
+		if !tx.is_empty() {
+			let previous_element_data = *(tx.last().unwrap());
+			for idx in 0..100 {
+				tx.push((
+					previous_element_data.0 + ((tx_data.0 - previous_element_data.0) / 100.0 * f64::from(idx)),
+					previous_element_data.1 + ((tx_data.1 - previous_element_data.1) / 100.0 * f64::from(idx)),
+				));
+			}
+		}
+
+		rx.push(rx_data);
+		tx.push(tx_data);
 
 		debug!("Pushed rx: ({}, {})", rx.last().unwrap().0, rx.last().unwrap().1);
 		debug!("Pushed tx: ({}, {})", tx.last().unwrap().0, tx.last().unwrap().1);
 	}
 
-	ConvertedNetworkData { rx, tx }
+	let rx_display = if network_data.is_empty() {
+		"0B".to_string()
+	}
+	else {
+		let num_bytes = network_data.last().unwrap().rx;
+		if num_bytes < 1024 {
+			format!("RX: {:4} B", num_bytes).to_string()
+		}
+		else if num_bytes < (1024 * 1024) {
+			format!("RX: {:4}KB", num_bytes / 1024).to_string()
+		}
+		else if num_bytes < (1024 * 1024 * 1024) {
+			format!("RX: {:4}MB", num_bytes / 1024 / 1024).to_string()
+		}
+		else {
+			format!("RX: {:4}GB", num_bytes / 1024 / 1024 / 1024).to_string()
+		}
+	};
+	let tx_display = if network_data.is_empty() {
+		"0B".to_string()
+	}
+	else {
+		let num_bytes = network_data.last().unwrap().tx;
+		if num_bytes < 1024 {
+			format!("TX: {:4} B", num_bytes).to_string()
+		}
+		else if num_bytes < (1024 * 1024) {
+			format!("TX: {:4}KB", num_bytes / 1024).to_string()
+		}
+		else if num_bytes < (1024 * 1024 * 1024) {
+			format!("TX: {:4}MB", num_bytes / 1024 / 1024).to_string()
+		}
+		else {
+			format!("TX: {:4}GB", num_bytes / 1024 / 1024 / 1024).to_string()
+		}
+	};
+
+	ConvertedNetworkData { rx, tx, rx_display, tx_display }
 }
