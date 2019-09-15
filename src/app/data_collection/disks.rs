@@ -48,7 +48,10 @@ pub async fn get_io_usage_list(get_physical : bool) -> Result<IOPackage, heim::E
 		}
 	}
 
-	Ok(IOPackage { io_list, instant : Instant::now() })
+	Ok(IOPackage {
+		io_list,
+		instant : Instant::now(),
+	})
 }
 
 pub async fn get_disk_usage_list() -> Result<Vec<DiskData>, heim::Error> {
@@ -65,7 +68,13 @@ pub async fn get_disk_usage_list() -> Result<Vec<DiskData>, heim::Error> {
 				used_space : usage.used().get::<heim_common::units::information::megabyte>(),
 				total_space : usage.total().get::<heim_common::units::information::megabyte>(),
 				mount_point : Box::from(partition.mount_point().to_str().unwrap_or("Name Unavailable")),
-				name : Box::from(partition.device().unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable")).to_str().unwrap_or("Name Unavailable")),
+				name : Box::from(
+					partition
+						.device()
+						.unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable"))
+						.to_str()
+						.unwrap_or("Name Unavailable"),
+				),
 			});
 		}
 	}

@@ -30,9 +30,15 @@ pub struct CanvasData {
 pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : &app::App, canvas_data : &CanvasData) -> error::Result<()> {
 	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
 
-	let temperature_rows = canvas_data.temp_sensor_data.iter().map(|sensor| Row::StyledData(sensor.iter(), Style::default().fg(TEXT_COLOUR)));
+	let temperature_rows = canvas_data
+		.temp_sensor_data
+		.iter()
+		.map(|sensor| Row::StyledData(sensor.iter(), Style::default().fg(TEXT_COLOUR)));
 	let disk_rows = canvas_data.disk_data.iter().map(|disk| Row::StyledData(disk.iter(), Style::default().fg(TEXT_COLOUR)));
-	let process_rows = canvas_data.process_data.iter().map(|process| Row::StyledData(process.iter(), Style::default().fg(TEXT_COLOUR)));
+	let process_rows = canvas_data
+		.process_data
+		.iter()
+		.map(|process| Row::StyledData(process.iter(), Style::default().fg(TEXT_COLOUR)));
 
 	terminal.draw(|mut f| {
 		debug!("Drawing!");
@@ -146,7 +152,13 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 			Table::new(["Disk", "Mount", "Used", "Total", "Free"].iter(), disk_rows)
 				.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
 				.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
-				.widths(&[(width * 0.25) as u16, (width * 0.2) as u16, (width * 0.15) as u16, (width * 0.15) as u16, (width * 0.15) as u16])
+				.widths(&[
+					(width * 0.25) as u16,
+					(width * 0.2) as u16,
+					(width * 0.15) as u16,
+					(width * 0.15) as u16,
+					(width * 0.15) as u16,
+				])
 				.render(&mut f, middle_divided_chunk_2[1]);
 		}
 
