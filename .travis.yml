@@ -3,3 +3,7 @@ rust:
   - nightly
 matrix:
   fast_finish: true
+os:
+  - windows
+  - linux
+  - osx
