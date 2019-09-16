@@ -197,34 +197,38 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 			let mut process_counter = 0;
 
 			//TODO: Fix this!
-			let start_position = if num_rows <= app_state.currently_selected_process_position {
-				match app_state.scroll_direction {
-					app::ScrollDirection::UP => {
-						if app_state.previous_process_position - app_state.currently_selected_process_position <= num_rows {
-							// We don't need to scroll up yet...
-							debug!("No need to scroll up yet...");
-							app_state.previous_process_position
-						}
-						else {
-							// We need to scroll up!
-							debug!("Scroll up!  Scroll up!");
-							app_state.previous_process_position = app_state.currently_selected_process_position;
-							app_state.currently_selected_process_position
-						}
+			let start_position = match app_state.scroll_direction {
+				app::ScrollDirection::DOWN => {
+					if app_state.currently_selected_process_position < num_rows {
+						0
 					}
-					app::ScrollDirection::DOWN => {
+					else if app_state.currently_selected_process_position - num_rows < app_state.previous_process_position {
+						app_state.previous_process_position
+					}
+					else {
 						app_state.previous_process_position = app_state.currently_selected_process_position - num_rows + 1;
-						(app_state.currently_selected_process_position - num_rows + 1)
+						app_state.previous_process_position
 					}
 				}
-			}
-			else {
-				0
+				app::ScrollDirection::UP => {
+					if app_state.currently_selected_process_position == app_state.previous_process_position - 1 {
+						app_state.previous_process_position = if app_state.previous_process_position > 0 {
+							app_state.previous_process_position - 1
+						}
+						else {
+							0
+						};
+						app_state.previous_process_position
+					}
+					else {
+						app_state.previous_process_position
+					}
+				}
 			};
 
 			debug!(
-				"START POSN: {}, CURRENT SELECTED POSN: {}, NUM ROWS: {}",
-				start_position, app_state.currently_selected_process_position, num_rows
+				"START POSN: {}, PREV POSN: {}, CURRENT SELECTED POSN: {}, NUM ROWS: {}",
+				start_position, app_state.previous_process_position, app_state.currently_selected_process_position, num_rows
 			);
 
 			let sliced_vec : Vec<Vec<String>> = (&canvas_data.process_data[start_position as usize..]).to_vec();

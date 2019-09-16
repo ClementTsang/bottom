@@ -18,6 +18,8 @@
 
 ## After making public
 
+* Mouse + key events conflict?  Make it so that some events don't clog up the loop if they are not valid keys!
+
 * Header should be clear on current sorting direction!
 
 * Scaling in and out (zoom), may need to show zoom levels
