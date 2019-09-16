@@ -13,7 +13,7 @@ pub struct CPUPackage {
 	pub instant : Instant,
 }
 
-pub fn get_cpu_data_list(sys : &System) -> Result<CPUPackage, heim::Error> {
+pub fn get_cpu_data_list(sys : &System) -> crate::utils::error::Result<CPUPackage> {
 	let cpu_data = sys.get_processor_list();
 	let mut cpu_vec = Vec::new();
 

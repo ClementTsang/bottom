@@ -11,7 +11,7 @@ pub struct NetworkData {
 	pub instant : Instant,
 }
 
-pub fn get_network_data(sys : &System) -> Result<NetworkData, heim::Error> {
+pub fn get_network_data(sys : &System) -> crate::utils::error::Result<NetworkData> {
 	let network_data = sys.get_network();
 	Ok(NetworkData {
 		rx : network_data.get_income(),

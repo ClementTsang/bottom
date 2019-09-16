@@ -1,6 +1,8 @@
 pub mod data_collection;
 use data_collection::{processes, temperature};
 
+mod process_killer;
+
 #[allow(dead_code)]
 // Probably only use the list elements...
 pub enum ApplicationPosition {

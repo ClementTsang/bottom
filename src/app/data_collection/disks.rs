@@ -23,8 +23,7 @@ pub struct IOPackage {
 	pub instant : Instant,
 }
 
-// TODO: This is total --- we have to change the calculation to PER SECOND!
-pub async fn get_io_usage_list(get_physical : bool) -> Result<IOPackage, heim::Error> {
+pub async fn get_io_usage_list(get_physical : bool) -> crate::utils::error::Result<IOPackage> {
 	let mut io_hash : std::collections::HashMap<String, IOData> = std::collections::HashMap::new();
 	if get_physical {
 		let mut physical_counter_stream = heim::disk::io_counters_physical();
@@ -63,7 +62,7 @@ pub async fn get_io_usage_list(get_physical : bool) -> Result<IOPackage, heim::E
 	})
 }
 
-pub async fn get_disk_usage_list() -> Result<Vec<DiskData>, heim::Error> {
+pub async fn get_disk_usage_list() -> crate::utils::error::Result<Vec<DiskData>> {
 	let mut vec_disks : Vec<DiskData> = Vec::new();
 	let mut partitions_stream = heim::disk::partitions_physical();
 

@@ -226,10 +226,10 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 				}
 			};
 
-			debug!(
+			/*debug!(
 				"START POSN: {}, PREV POSN: {}, CURRENT SELECTED POSN: {}, NUM ROWS: {}",
 				start_position, app_state.previous_process_position, app_state.currently_selected_process_position, num_rows
-			);
+			);*/
 
 			let sliced_vec : Vec<Vec<String>> = (&canvas_data.process_data[start_position as usize..]).to_vec();
 
