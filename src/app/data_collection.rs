@@ -80,6 +80,11 @@ impl DataState {
 		self.sys.refresh_system();
 		self.sys.refresh_network();
 
+		if !cfg!(target_os = "linux") {
+			// For now, might be just windows tbh
+			self.sys.refresh_processes();
+		}
+
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		push_if_valid(&network::get_network_data(&self.sys), &mut self.data.network);
 		push_if_valid(&cpu::get_cpu_data_list(&self.sys), &mut self.data.list_of_cpu_packages);
@@ -94,7 +99,7 @@ impl DataState {
 
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
-		push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
+		//push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io);
 		set_if_valid(&temperature::get_temperature_data(&self.temperature_type).await, &mut self.data.list_of_temperature_sensor);
 
 		if self.first_run {
@@ -144,13 +149,13 @@ impl DataState {
 			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
 			.collect::<Vec<_>>();
 
-		self.data.list_of_physical_io = self
-			.data
-			.list_of_physical_io
-			.iter()
-			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
-			.collect::<Vec<_>>();
+		// self.data.list_of_physical_io = self
+		// 	.data
+		// 	.list_of_physical_io
+		// 	.iter()
+		// 	.cloned()
+		// 	.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+		// 	.collect::<Vec<_>>();
 
 		debug!("End updating...");
 	}

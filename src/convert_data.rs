@@ -19,10 +19,51 @@ pub fn update_temp_row(app_data : &data_collection::Data, temp_type : &data_coll
 	sensor_vector
 }
 
-// TODO: IO count NEEDS TO BE DONE!!!!!
 pub fn update_disk_row(app_data : &data_collection::Data) -> Vec<Vec<String>> {
 	let mut disk_vector : Vec<Vec<String>> = Vec::new();
 	for disk in &app_data.list_of_disks {
+		let io_activity = if app_data.list_of_io.len() > 2 {
+			let io_package = &app_data.list_of_io.last().unwrap();
+			let prev_io_package = &app_data.list_of_io[app_data.list_of_io.len() - 2];
+
+			let io_hashmap = &io_package.io_hash;
+			let prev_io_hashmap = &prev_io_package.io_hash;
+			let trimmed_mount = &disk.name.to_string().split('/').last().unwrap().to_string();
+			let time_difference = io_package.instant.duration_since(prev_io_package.instant).as_secs_f64();
+			if io_hashmap.contains_key(trimmed_mount) && prev_io_hashmap.contains_key(trimmed_mount) {
+				// Ideally change this...
+				let ele = &io_hashmap[trimmed_mount];
+				let prev = &prev_io_hashmap[trimmed_mount];
+				let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
+				let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
+				(
+					if read_bytes_per_sec < 1024 {
+						format!("{}B", read_bytes_per_sec)
+					}
+					else if read_bytes_per_sec < 1024 * 1024 {
+						format!("{}KB", read_bytes_per_sec / 1024)
+					}
+					else {
+						format!("{}MB", read_bytes_per_sec / 1024 / 1024)
+					},
+					if write_bytes_per_sec < 1024 {
+						format!("{}B", write_bytes_per_sec)
+					}
+					else if write_bytes_per_sec < 1024 * 1024 {
+						format!("{}KB", write_bytes_per_sec / 1024)
+					}
+					else {
+						format!("{}MB", write_bytes_per_sec / 1024 / 1024)
+					},
+				)
+			}
+			else {
+				("0B".to_string(), "0B".to_string())
+			}
+		}
+		else {
+			("0B".to_string(), "0B".to_string())
+		};
 		disk_vector.push(vec![
 			disk.name.to_string(),
 			disk.mount_point.to_string(),
@@ -39,6 +80,8 @@ pub fn update_disk_row(app_data : &data_collection::Data) -> Vec<Vec<String>> {
 			else {
 				(disk.total_space / 1024).to_string() + "GB"
 			},
+			io_activity.0,
+			io_activity.1,
 		]);
 	}
 
@@ -215,8 +258,8 @@ pub fn convert_network_data_points(network_data : &[data_collection::network::Ne
 		rx.push(rx_data);
 		tx.push(tx_data);
 
-		debug!("Pushed rx: ({}, {})", rx.last().unwrap().0, rx.last().unwrap().1);
-		debug!("Pushed tx: ({}, {})", tx.last().unwrap().0, tx.last().unwrap().1);
+		//debug!("Pushed rx: ({}, {})", rx.last().unwrap().0, rx.last().unwrap().1);
+		//debug!("Pushed tx: ({}, {})", tx.last().unwrap().0, tx.last().unwrap().1);
 	}
 
 	let rx_display = if network_data.is_empty() {

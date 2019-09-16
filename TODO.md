@@ -18,6 +18,8 @@
 
 ## After making public
 
+* Header should be clear on current sorting direction!
+
 * Scaling in and out (zoom), may need to show zoom levels
 
 * It would be maybe a good idea to see if we can run the process calculation across ALL cpus...?
@@ -41,5 +43,7 @@
 * Filtering in processes (that is, allow searching)
 
 * Help screen
+
+* Modularity
 
 * Potentially process managing?  Depends on the libraries...

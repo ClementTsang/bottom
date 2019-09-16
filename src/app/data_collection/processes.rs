@@ -196,6 +196,8 @@ pub async fn get_sorted_processes_list(
 	}
 	else if cfg!(target_os = "windows") {
 		// Windows
+
+		// TODO: DO NOT USE HEIM!
 		let mut process_stream = heim::process::processes().map_ok(non_linux_cpu_usage).try_buffer_unordered(std::usize::MAX);
 
 		let mut process_vector : Vec<ProcessData> = Vec::new();

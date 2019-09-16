@@ -113,7 +113,6 @@ fn main() -> error::Result<()> {
 					_ => {}
 				}
 			}
-			input.disable_mouse_mode().unwrap();
 		});
 	}
 
@@ -142,14 +141,12 @@ fn main() -> error::Result<()> {
 		});
 	}
 
-	let mut app_data = data_collection::Data::default();
 	let mut canvas_data = canvas::CanvasData::default();
-
 	loop {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
-					debug!("Keyboard event fired!");
+					// debug!("Keyboard event fired!");
 					match event {
 						KeyEvent::Ctrl('c') | KeyEvent::Esc => break,
 						KeyEvent::Char(c) => app.on_key(c), // TODO: We can remove the 'q' event and just move it to the quit?
@@ -161,55 +158,46 @@ fn main() -> error::Result<()> {
 					}
 
 					if app.to_be_resorted {
-						data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
-						canvas_data.process_data = update_process_row(&app_data);
+						data_collection::processes::sort_processes(&mut app.data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
+						canvas_data.process_data = update_process_row(&app.data);
 						app.to_be_resorted = false;
 					}
-					debug!("Input event complete.");
+					// debug!("Input event complete.");
 				}
 				Event::MouseInput(event) => {
-					debug!("Mouse event fired!");
+					// debug!("Mouse event fired!");
 					match event {
-						MouseEvent::Press(e, _x, _y) => {
-							debug!("Mouse press!");
-							match e {
-								MouseButton::WheelUp => {
-									debug!("Wheel up!");
-								}
-								MouseButton::WheelDown => {
-									debug!("Wheel down!");
-								}
-								_ => {}
+						MouseEvent::Press(e, _x, _y) => match e {
+							MouseButton::WheelUp => {
+								app.decrement_position_count();
 							}
-						}
-						MouseEvent::Hold(_x, _y) => {
-							debug!("Mouse hold!");
-						}
-						MouseEvent::Release(_x, _y) => {
-							debug!("Mouse release!");
-						}
-						_ => {
-							debug!("Mouse unknown event...");
-						}
+							MouseButton::WheelDown => {
+								app.increment_position_count();
+							}
+							_ => {}
+						},
+						MouseEvent::Hold(_x, _y) => {}
+						MouseEvent::Release(_x, _y) => {}
+						_ => {}
 					}
 				}
 				Event::Update(data) => {
-					debug!("Update event fired!");
-					app_data = *data;
-					data_collection::processes::sort_processes(&mut app_data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
+					// debug!("Update event fired!");
+					app.data = *data;
+					data_collection::processes::sort_processes(&mut app.data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
 
 					// Convert all data into tui components
-					let network_data = update_network_data_points(&app_data);
+					let network_data = update_network_data_points(&app.data);
 					canvas_data.network_data_rx = network_data.rx;
 					canvas_data.network_data_tx = network_data.tx;
 					canvas_data.rx_display = network_data.rx_display;
 					canvas_data.tx_display = network_data.tx_display;
-					canvas_data.disk_data = update_disk_row(&app_data);
-					canvas_data.temp_sensor_data = update_temp_row(&app_data, &app.temperature_type);
-					canvas_data.process_data = update_process_row(&app_data);
-					canvas_data.mem_data = update_mem_data_points(&app_data);
-					canvas_data.swap_data = update_swap_data_points(&app_data);
-					canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app_data);
+					canvas_data.disk_data = update_disk_row(&app.data);
+					canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
+					canvas_data.process_data = update_process_row(&app.data);
+					canvas_data.mem_data = update_mem_data_points(&app.data);
+					canvas_data.swap_data = update_swap_data_points(&app.data);
+					canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
 
 					debug!("Update event complete.");
 				}
@@ -219,9 +207,14 @@ fn main() -> error::Result<()> {
 			}
 		}
 		// Draw!
-		canvas::draw_data(&mut terminal, &app, &canvas_data)?;
+		if let Err(err) = canvas::draw_data(&mut terminal, &mut app, &canvas_data) {
+			input().disable_mouse_mode().unwrap();
+			error!("{}", err);
+			return Err(err);
+		}
 	}
 
+	input().disable_mouse_mode().unwrap();
 	debug!("Terminating.");
 	Ok(())
 }
