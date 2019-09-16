@@ -8,7 +8,7 @@ pub struct MemData {
 	pub instant : Instant,
 }
 
-pub async fn get_mem_data_list() -> Result<MemData, heim::Error> {
+pub async fn get_mem_data_list() -> crate::utils::error::Result<MemData> {
 	let memory = heim::memory::memory().await?;
 
 	Ok(MemData {
@@ -18,7 +18,7 @@ pub async fn get_mem_data_list() -> Result<MemData, heim::Error> {
 	})
 }
 
-pub async fn get_swap_data_list() -> Result<MemData, heim::Error> {
+pub async fn get_swap_data_list() -> crate::utils::error::Result<MemData> {
 	let memory = heim::memory::swap().await?;
 
 	Ok(MemData {

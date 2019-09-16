@@ -171,16 +171,13 @@ fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut 
 
 pub async fn get_sorted_processes_list(
 	prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut std::collections::HashMap<String, f64>,
-) -> Result<Vec<ProcessData>, heim::Error> {
+) -> crate::utils::error::Result<Vec<ProcessData>> {
 	let mut process_vector : Vec<ProcessData> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		// Linux specific - this is a massive pain... ugh.
 
-		let ps_result = Command::new("ps")
-			.args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"])
-			.output()
-			.expect("Failed to execute.");
+		let ps_result = Command::new("ps").args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"]).output()?;
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
 		let cpu_usage = vangelis_cpu_usage_calculation(prev_idle, prev_non_idle).unwrap(); // TODO: FIX THIS ERROR CHECKING

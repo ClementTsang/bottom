@@ -19,7 +19,7 @@ impl Default for TemperatureType {
 	}
 }
 
-pub async fn get_temperature_data(temp_type : &TemperatureType) -> Result<Vec<TempData>, heim::Error> {
+pub async fn get_temperature_data(temp_type : &TemperatureType) -> crate::utils::error::Result<Vec<TempData>> {
 	let mut temperature_vec : Vec<TempData> = Vec::new();
 
 	let mut sensor_data = heim::sensors::temperatures();

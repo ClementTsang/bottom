@@ -12,11 +12,13 @@
 
 * ~~FIX PROCESSES AHHHHHH~~
 
-* Scrolling in at least processes
+~~* Scrolling in at least processes~~
 
 * Keybindings
 
 ## After making public
+
+* Tests
 
 * Mouse + key events conflict?  Make it so that some events don't clog up the loop if they are not valid keys!
 
@@ -28,7 +30,7 @@
 
 * ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
 
-* Remove any ``unwrap()``, ensure no crashing!
+* Remove any ``unwrap()``, ensure no crashing!  Might have to use this: <https://doc.rust-lang.org/std/panic/fn.catch_unwind.html>
 
 * Scrolling event in lists
 
