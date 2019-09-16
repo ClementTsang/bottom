@@ -10,7 +10,7 @@ pub struct DiskData {
 	pub total_space : u64,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct IOData {
 	pub mount_point : Box<str>,
 	pub read_bytes : u64,
@@ -19,37 +19,46 @@ pub struct IOData {
 
 #[derive(Clone)]
 pub struct IOPackage {
-	pub io_list : Vec<IOData>,
+	pub io_hash : std::collections::HashMap<String, IOData>,
 	pub instant : Instant,
 }
 
+// TODO: This is total --- we have to change the calculation to PER SECOND!
 pub async fn get_io_usage_list(get_physical : bool) -> Result<IOPackage, heim::Error> {
-	let mut io_list : Vec<IOData> = Vec::new();
+	let mut io_hash : std::collections::HashMap<String, IOData> = std::collections::HashMap::new();
 	if get_physical {
 		let mut physical_counter_stream = heim::disk::io_counters_physical();
 		while let Some(io) = physical_counter_stream.next().await {
 			let io = io?;
-			io_list.push(IOData {
-				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
-				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
-				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
-			})
+			let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
+			io_hash.insert(
+				mount_point.to_string(),
+				IOData {
+					mount_point : Box::from(mount_point),
+					read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
+					write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
+				},
+			);
 		}
 	}
 	else {
 		let mut counter_stream = heim::disk::io_counters();
 		while let Some(io) = counter_stream.next().await {
 			let io = io?;
-			io_list.push(IOData {
-				mount_point : Box::from(io.device_name().to_str().unwrap_or("Name Unavailable")),
-				read_bytes : io.read_bytes().get::<heim_common::units::information::megabyte>(),
-				write_bytes : io.write_bytes().get::<heim_common::units::information::megabyte>(),
-			})
+			let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
+			io_hash.insert(
+				mount_point.to_string(),
+				IOData {
+					mount_point : Box::from(mount_point),
+					read_bytes : io.read_bytes().get::<heim_common::units::information::byte>(),
+					write_bytes : io.write_bytes().get::<heim_common::units::information::byte>(),
+				},
+			);
 		}
 	}
 
 	Ok(IOPackage {
-		io_list,
+		io_hash,
 		instant : Instant::now(),
 	})
 }

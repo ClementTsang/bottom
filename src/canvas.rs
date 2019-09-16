@@ -27,7 +27,7 @@ pub struct CanvasData {
 	pub cpu_data : Vec<(String, Vec<(f64, f64)>)>,
 }
 
-pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_data : &app::App, canvas_data : &CanvasData) -> error::Result<()> {
+pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_state : &mut app::App, canvas_data : &CanvasData) -> error::Result<()> {
 	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
 
 	let temperature_rows = canvas_data
@@ -35,13 +35,9 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 		.iter()
 		.map(|sensor| Row::StyledData(sensor.iter(), Style::default().fg(TEXT_COLOUR)));
 	let disk_rows = canvas_data.disk_data.iter().map(|disk| Row::StyledData(disk.iter(), Style::default().fg(TEXT_COLOUR)));
-	let process_rows = canvas_data
-		.process_data
-		.iter()
-		.map(|process| Row::StyledData(process.iter(), Style::default().fg(TEXT_COLOUR)));
 
 	terminal.draw(|mut f| {
-		debug!("Drawing!");
+		//debug!("Drawing!");
 		let vertical_chunks = Layout::default()
 			.direction(Direction::Vertical)
 			.margin(1)
@@ -51,7 +47,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 		let middle_chunks = Layout::default()
 			.direction(Direction::Horizontal)
 			.margin(0)
-			.constraints([Constraint::Percentage(65), Constraint::Percentage(35)].as_ref())
+			.constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
 			.split(vertical_chunks[1]);
 
 		let middle_divided_chunk_2 = Layout::default()
@@ -76,7 +72,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 
 			for (i, cpu) in canvas_data.cpu_data.iter().enumerate() {
 				let mut avg_cpu_exist_offset = 0;
-				if app_data.show_average_cpu {
+				if app_state.show_average_cpu {
 					if i == 0 {
 						// Skip, we want to render the average cpu last!
 						continue;
@@ -95,7 +91,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 				);
 			}
 
-			if !canvas_data.cpu_data.is_empty() && app_data.show_average_cpu {
+			if !canvas_data.cpu_data.is_empty() && app_state.show_average_cpu {
 				dataset_vector.push(
 					Dataset::default()
 						.name(&canvas_data.cpu_data[0].0)
@@ -154,14 +150,13 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 				.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
 				.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
 				.widths(&[
-					// Must make sure these are NEVER zero!  It will fail to display!  Seems to only be this...
-					(width * 0.2) as u16 + 1,
-					(width * 0.2) as u16 + 1,
-					(width * 0.1) as u16 + 1,
-					(width * 0.1) as u16 + 1,
-					(width * 0.1) as u16 + 1,
-					(width * 0.1) as u16 + 1,
-					(width * 0.1) as u16 + 1,
+					(width * 0.18) as u16,
+					(width * 0.14) as u16,
+					(width * 0.13) as u16,
+					(width * 0.13) as u16,
+					(width * 0.13) as u16,
+					(width * 0.13) as u16,
+					(width * 0.13) as u16,
 				])
 				.render(&mut f, middle_divided_chunk_2[1]);
 		}
@@ -192,6 +187,65 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 		// Processes table
 		{
 			let width = f64::from(bottom_chunks[1].width);
+
+			// Admittedly this is kinda a hack... but we need to:
+			// * Scroll
+			// * Show/hide elements based on scroll position
+			// As such, we use a process_counter to know when we've hit the process we've currently scrolled to.  We also need to move the list - we can
+			// do so by hiding some elements!
+			let num_rows = i64::from(bottom_chunks[1].height) - 3;
+			let mut process_counter = 0;
+
+			//TODO: Fix this!
+			let start_position = if num_rows <= app_state.currently_selected_process_position {
+				match app_state.scroll_direction {
+					app::ScrollDirection::UP => {
+						if app_state.previous_process_position - app_state.currently_selected_process_position <= num_rows {
+							// We don't need to scroll up yet...
+							debug!("No need to scroll up yet...");
+							app_state.previous_process_position
+						}
+						else {
+							// We need to scroll up!
+							debug!("Scroll up!  Scroll up!");
+							app_state.previous_process_position = app_state.currently_selected_process_position;
+							app_state.currently_selected_process_position
+						}
+					}
+					app::ScrollDirection::DOWN => {
+						app_state.previous_process_position = app_state.currently_selected_process_position - num_rows + 1;
+						(app_state.currently_selected_process_position - num_rows + 1)
+					}
+				}
+			}
+			else {
+				0
+			};
+
+			debug!(
+				"START POSN: {}, CURRENT SELECTED POSN: {}, NUM ROWS: {}",
+				start_position, app_state.currently_selected_process_position, num_rows
+			);
+
+			let sliced_vec : Vec<Vec<String>> = (&canvas_data.process_data[start_position as usize..]).to_vec();
+
+			let process_rows = sliced_vec.iter().map(|process| {
+				Row::StyledData(
+					process.iter(),
+					if process_counter == app_state.currently_selected_process_position - start_position {
+						// TODO: This is what controls the highlighting!
+						process_counter = -1;
+						Style::default().fg(Color::Black).bg(Color::Cyan)
+					}
+					else {
+						if process_counter >= 0 {
+							process_counter += 1;
+						}
+						Style::default().fg(TEXT_COLOUR)
+					},
+				)
+			});
+
 			Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)
 				.block(Block::default().title("Processes").borders(Borders::ALL).border_style(border_style))
 				.header_style(Style::default().fg(Color::LightBlue))
@@ -199,6 +253,8 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_dat
 				.render(&mut f, bottom_chunks[1]);
 		}
 	})?;
+
+	//debug!("Finished drawing.");
 
 	Ok(())
 }
