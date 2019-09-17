@@ -1,6 +1,6 @@
 # bottom
 
-[![Build Status](https://travis-ci.com/ClementTsang/rustop.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/rustop)
+[![Build Status](https://travis-ci.com/ClementTsang/rustop.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/rustop) [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 
 A top clone, written in Rust.  Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop)
 

@@ -46,8 +46,6 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 * Truncate columns if needed for tables
 
-* Refactor everything because it's a mess
-
 * Test for Windows support, mac support, other.  May be doable, depends on sysinfo and how much I know about other OSes probably.
 
 * Efficiency!!!

@@ -93,7 +93,7 @@ impl DataState {
 		push_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
 		push_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
 		set_if_valid(
-			&processes::get_sorted_processes_list(&mut self.prev_idle, &mut self.prev_non_idle, &mut self.prev_pid_stats).await,
+			&processes::get_sorted_processes_list(&self.sys, &mut self.prev_idle, &mut self.prev_non_idle, &mut self.prev_pid_stats).await,
 			&mut self.data.list_of_processes,
 		);
 

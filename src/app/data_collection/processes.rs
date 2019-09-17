@@ -1,8 +1,5 @@
-use heim_common::{
-	prelude::{StreamExt, TryStreamExt},
-	units,
-};
 use std::{collections::HashMap, process::Command};
+use sysinfo::{ProcessExt, System, SystemExt};
 
 #[derive(Clone)]
 pub enum ProcessSorting {
@@ -24,7 +21,7 @@ pub struct ProcessData {
 	pub pid : u32,
 	pub cpu_usage_percent : f64,
 	pub mem_usage_percent : Option<f64>,
-	pub mem_usage_mb : Option<u64>,
+	pub mem_usage_kb : Option<u64>,
 	pub command : String,
 }
 
@@ -97,14 +94,6 @@ fn get_ordering<T : std::cmp::PartialOrd>(a_val : T, b_val : T, reverse_order : 
 	}
 }
 
-async fn non_linux_cpu_usage(process : heim::process::Process) -> heim::process::ProcessResult<(heim::process::Process, heim_common::units::Ratio)> {
-	let usage_1 = process.cpu_usage().await?;
-	futures_timer::Delay::new(std::time::Duration::from_millis(100)).await?; // TODO: For windows, make it like the linux check
-	let usage_2 = process.cpu_usage().await?;
-
-	Ok((process, usage_2 - usage_1))
-}
-
 fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
@@ -151,7 +140,7 @@ fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut 
 			pid : 0,
 			command : "".to_string(),
 			mem_usage_percent : None,
-			mem_usage_mb : None,
+			mem_usage_kb : None,
 			cpu_usage_percent : 0_f64,
 		});
 	}
@@ -164,13 +153,13 @@ fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut 
 		pid,
 		command,
 		mem_usage_percent,
-		mem_usage_mb : None,
+		mem_usage_kb : None,
 		cpu_usage_percent : linux_cpu_usage(pid, cpu_usage_percentage, prev_pid_stats)?,
 	})
 }
 
 pub async fn get_sorted_processes_list(
-	prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut std::collections::HashMap<String, f64>,
+	sys : &System, prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut std::collections::HashMap<String, f64>,
 ) -> crate::utils::error::Result<Vec<ProcessData>> {
 	let mut process_vector : Vec<ProcessData> = Vec::new();
 
@@ -194,24 +183,15 @@ pub async fn get_sorted_processes_list(
 	else if cfg!(target_os = "windows") {
 		// Windows
 
-		// TODO: DO NOT USE HEIM!
-		let mut process_stream = heim::process::processes().map_ok(non_linux_cpu_usage).try_buffer_unordered(std::usize::MAX);
-
-		let mut process_vector : Vec<ProcessData> = Vec::new();
-		while let Some(process) = process_stream.next().await {
-			if let Ok(process) = process {
-				let (process, cpu_usage) = process;
-				let mem_measurement = process.memory().await;
-				if let Ok(mem_measurement) = mem_measurement {
-					process_vector.push(ProcessData {
-						command : process.name().await.unwrap_or_else(|_| "".to_string()),
-						pid : process.pid() as u32,
-						cpu_usage_percent : f64::from(cpu_usage.get::<units::ratio::percent>()),
-						mem_usage_percent : None,
-						mem_usage_mb : Some(mem_measurement.rss().get::<units::information::megabyte>()),
-					});
-				}
-			}
+		let process_hashmap = sys.get_process_list();
+		for process_val in process_hashmap.values() {
+			process_vector.push(ProcessData {
+				pid : process_val.pid() as u32,
+				command : process_val.name().to_string(),
+				mem_usage_percent : None,
+				mem_usage_kb : Some(process_val.memory()),
+				cpu_usage_percent : f64::from(process_val.cpu_usage()),
+			});
 		}
 	}
 	else if cfg!(target_os = "macos") {
