@@ -8,6 +8,7 @@ keywords = ["cli", "monitoring-tool", "process", "system", "top"]
 license = "MIT"
 categories = ["command-line-utilities"]
 description = "A graphical top clone."
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

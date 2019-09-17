@@ -9,10 +9,12 @@ pub fn kill_process_given_pid(pid : u64) -> crate::utils::error::Result<()> {
 	}
 	else if cfg!(target_os = "windows") {
 		// Windows
+		// See how sysinfo does it... https://docs.rs/sysinfo/0.9.5/sysinfo/trait.ProcessExt.html
 		debug!("Sorry, Windows support is not implemented yet!");
 	}
 	else if cfg!(target_os = "macos") {
 		// TODO: macOS
+		// See how sysinfo does it... https://docs.rs/sysinfo/0.9.5/sysinfo/trait.ProcessExt.html
 		debug!("Sorry, macOS support is not implemented yet!");
 	}
 	else {

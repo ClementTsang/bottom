@@ -101,9 +101,9 @@ pub fn update_process_row(app_data : &data_collection::Data) -> Vec<Vec<String>>
 				if let Some(mem_usage) = process.mem_usage_percent {
 					mem_usage
 				}
-				else if let Some(mem_usage_in_mb) = process.mem_usage_mb {
+				else if let Some(mem_usage_kb) = process.mem_usage_kb {
 					if let Some(mem_data) = app_data.memory.last() {
-						mem_usage_in_mb as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
+						(mem_usage_kb / 1024) as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
 					}
 					else {
 						0_f64
