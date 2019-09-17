@@ -37,6 +37,7 @@ pub struct App {
 	pub data : data_collection::Data,
 	pub scroll_direction : ScrollDirection,
 	pub previous_process_position : i64,
+	awaiting_d : bool,
 }
 
 impl App {
@@ -57,12 +58,22 @@ impl App {
 			data : data_collection::Data::default(),
 			scroll_direction : ScrollDirection::DOWN,
 			previous_process_position : 0,
+			awaiting_d : false,
 		}
 	}
 
 	pub fn on_key(&mut self, c : char) {
 		match c {
 			'q' => self.should_quit = true,
+			'd' => {
+				if self.awaiting_d {
+					self.awaiting_d = false;
+					self.kill_highlighted_process().unwrap_or(()); // TODO: Should this be handled?
+				}
+				else {
+					self.awaiting_d = true;
+				}
+			}
 			'h' => self.on_right(),
 			'j' => self.on_down(),
 			'k' => self.on_up(),
@@ -114,6 +125,16 @@ impl App {
 			}
 			_ => {}
 		}
+
+		if self.awaiting_d && c != 'd' {
+			self.awaiting_d = false;
+		}
+	}
+
+	fn kill_highlighted_process(&self) -> crate::utils::error::Result<()> {
+		let current_pid = u64::from(self.data.list_of_processes[self.currently_selected_process_position as usize].pid);
+		process_killer::kill_process_given_pid(current_pid)?;
+		Ok(())
 	}
 
 	pub fn on_left(&mut self) {

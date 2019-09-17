@@ -2,7 +2,7 @@
 use std::process::Command;
 
 /// Kills a process, given a PID.
-pub fn kill_process_given_pid(pid : i64) -> crate::utils::error::Result<()> {
+pub fn kill_process_given_pid(pid : u64) -> crate::utils::error::Result<()> {
 	if cfg!(target_os = "linux") {
 		// Linux
 		Command::new("kill").arg(pid.to_string()).output()?;
