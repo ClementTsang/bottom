@@ -4,9 +4,10 @@ version = "0.1.0-alpha.1"
 authors = ["ClementTsang <clementjhtsang@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
-keywords = ["cli", "monitor", "process", "system"]
+keywords = ["cli", "monitoring-tool", "process", "system", "top"]
 license = "MIT"
 categories = ["command-line-utilities"]
+description = "A graphical top clone."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

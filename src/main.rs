@@ -41,7 +41,7 @@ fn main() -> error::Result<()> {
 	(name: crate_name!())
 	(version: crate_version!())
 	(author: crate_authors!())
-	(about: "A graphical top clone.")
+	(about: crate_description!())
 	//(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
 	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
 	//(@arg DEBUG: -d --debug "Enables debug mode.") // TODO: This isn't done yet!
