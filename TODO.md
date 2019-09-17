@@ -48,6 +48,10 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 * Test for Windows support, mac support, other.  May be doable, depends on sysinfo and how much I know about other OSes probably.
 
+* Seems like the braille symbols are borked on windows.
+
+* Issue with typing after windows version runs!
+
 * Efficiency!!!
 
 * Filtering in processes (that is, allow searching)
