@@ -16,6 +16,8 @@
 
 * Keybindings
 
+* Legend gets in the way at too small of a height... maybe modify tui a bit more to fix this.
+
 ## After making public
 
 * Tests

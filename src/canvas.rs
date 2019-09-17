@@ -150,13 +150,13 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 				.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
 				.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
 				.widths(&[
-					(width * 0.18) as u16,
-					(width * 0.14) as u16,
-					(width * 0.13) as u16,
-					(width * 0.13) as u16,
-					(width * 0.13) as u16,
-					(width * 0.13) as u16,
-					(width * 0.13) as u16,
+					(width * 0.18).floor() as u16,
+					(width * 0.14).floor() as u16,
+					(width * 0.11).floor() as u16,
+					(width * 0.11).floor() as u16,
+					(width * 0.11).floor() as u16,
+					(width * 0.11).floor() as u16,
+					(width * 0.11).floor() as u16,
 				])
 				.render(&mut f, middle_divided_chunk_2[1]);
 		}
@@ -202,7 +202,7 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 					if app_state.currently_selected_process_position < num_rows {
 						0
 					}
-					else if app_state.currently_selected_process_position - num_rows < app_state.previous_process_position {
+					else if app_state.currently_selected_process_position - num_rows <= app_state.previous_process_position {
 						app_state.previous_process_position
 					}
 					else {
