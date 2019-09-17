@@ -1,4 +1,5 @@
-use tui::{
+use tui_temp_fork::{
+	backend,
 	layout::{Constraint, Direction, Layout},
 	style::{Color, Modifier, Style},
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
@@ -28,7 +29,7 @@ pub struct CanvasData {
 	pub cpu_data : Vec<(String, Vec<(f64, f64)>)>,
 }
 
-pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_state : &mut app::App, canvas_data : &CanvasData) -> error::Result<()> {
+pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : &mut app::App, canvas_data : &CanvasData) -> error::Result<()> {
 	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
 	let highlighted_border_style : Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
 
