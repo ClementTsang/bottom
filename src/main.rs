@@ -9,7 +9,7 @@ extern crate failure;
 
 use crossterm::{input, AlternateScreen, InputEvent, KeyEvent, MouseButton, MouseEvent};
 use std::{sync::mpsc, thread, time::Duration};
-use tui::{backend::CrosstermBackend, Terminal};
+use tui_temp_fork::{backend::CrosstermBackend, Terminal};
 
 pub mod app;
 mod utils {
