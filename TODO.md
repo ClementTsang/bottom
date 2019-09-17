@@ -1,5 +1,7 @@
 # To-Do List
 
+Note this will probably migrate to GitHub's native Issues; this was mostly for personal use during early stages.
+
 ## Pre-release (bare minimum)
 
 * ~~Get each function working as a POC~~
@@ -14,11 +16,15 @@
 
 ~~* Scrolling in at least processes~~
 
-* Keybindings
+* Keybindings - I want to do at least arrow keys and dd.
 
 ~~* Legend gets in the way at too small of a height... maybe modify tui a bit more to fix this.~~
 
 ## After making public
+
+* Scaling in and out (zoom), may need to show zoom levels
+
+* More keybinds
 
 * Tests
 
@@ -26,9 +32,7 @@
 
 * Header should be clear on current sorting direction!
 
-* Scaling in and out (zoom), may need to show zoom levels
-
-* It would be maybe a good idea to see if we can run the process calculation across ALL cpus...?
+* It would be maybe a good idea to see if we can run the process calculation across ALL cpus...?  Might be more accurate.
 
 * ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
 
@@ -52,4 +56,6 @@
 
 * Modularity
 
-*~~Potentially process managing?  Depends on the libraries...~~ Done on Linux!
+* ~~Potentially process managing?  Depends on the libraries...~~ Done on Linux!
+
+* Probably good to add a "are you sure" to dd-ing...
