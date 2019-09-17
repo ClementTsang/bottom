@@ -67,7 +67,7 @@ pub fn update_disk_row(app_data : &data_collection::Data) -> Vec<Vec<String>> {
 		disk_vector.push(vec![
 			disk.name.to_string(),
 			disk.mount_point.to_string(),
-			format!("{:.1}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
+			format!("{:.0}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
 			if disk.free_space < 1024 {
 				disk.free_space.to_string() + "MB"
 			}
