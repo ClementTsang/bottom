@@ -22,6 +22,8 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 ## After making public
 
+* Travis
+
 * Scaling in and out (zoom), may need to show zoom levels
 
 * More keybinds

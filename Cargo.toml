@@ -1,9 +1,9 @@
 [package]
-name = "rustop"
+name = "bottom"
 version = "0.1.0-alpha.1"
 authors = ["ClementTsang <clementjhtsang@gmail.com>"]
 edition = "2018"
-repository = "https://github.com/ClementTsang/rustop"
+repository = "https://github.com/ClementTsang/bottom"
 keywords = ["cli", "monitor", "process", "system"]
 license = "MIT"
 categories = ["command-line-utilities"]

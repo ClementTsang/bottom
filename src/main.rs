@@ -38,9 +38,9 @@ fn main() -> error::Result<()> {
 
 	// Parse command line options
 	let matches = clap_app!(app =>
-	(name: "rustop")
+	(name: crate_name!())
 	(version: crate_version!())
-	(author: "Clement Tsang <clementjhtsang@gmail.com>")
+	(author: crate_authors!())
 	(about: "A graphical top clone.")
 	//(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
 	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
