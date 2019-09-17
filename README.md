@@ -1,4 +1,4 @@
-# rustop
+# bottom
 
 [![Build Status](https://travis-ci.com/ClementTsang/rustop.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/rustop)
 
@@ -11,11 +11,11 @@ A top clone, written in Rust.  Inspired by both [gtop](https://github.com/aksaka
 
 ### Linux
 
-TODO: Write
+You can install by cloning and using ``cargo build --release``, use ``cargo install rustop``, or download the pre-compiled binary in Releases.
 
 ### Windows
 
-TODO: Test
+This is still in development.
 
 ### MacOS
 
