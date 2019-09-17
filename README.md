@@ -11,7 +11,7 @@ A top clone, written in Rust.  Inspired by both [gtop](https://github.com/aksaka
 
 ### Linux
 
-You can install by cloning and using ``cargo build --release``, use ``cargo install rustop``, or download the pre-compiled binary in Releases.
+You can install by cloning and using ``cargo build --release``, or download the pre-compiled binary in Releases.  Note this needs the nightly toolchain if you are building.
 
 ### Windows
 
