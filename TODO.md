@@ -14,11 +14,11 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 * ~~FIX PROCESSES AHHHHHH~~
 
-~~* Scrolling in at least processes~~
+* ~~Scrolling in at least processes~~
 
 * Keybindings - I want to do at least arrow keys and dd.
 
-~~* Legend gets in the way at too small of a height... maybe modify tui a bit more to fix this.~~
+* ~~Legend gets in the way at too small of a height... maybe modify tui a bit more to fix this.~~
 
 ## After making public
 

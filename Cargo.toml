@@ -28,11 +28,9 @@ tokio = "0.2.0-alpha.4"
 
 [dependencies.tui]
 version = "0.6.2"
+git = "https://github.com/ClementTsang/tui-rs"
 default-features = false
 features = ['crossterm']
-
-[patch.crates-io]
-tui = {git = "https://github.com/ClementTsang/tui-rs"}
 
 [dev-dependencies]
 assert_cmd = "0.10"
