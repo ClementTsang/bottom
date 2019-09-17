@@ -11,6 +11,7 @@ const COLOUR_LIST : [Color; 6] = [Color::Red, Color::Green, Color::LightYellow, 
 const TEXT_COLOUR : Color = Color::Gray;
 const GRAPH_COLOUR : Color = Color::Gray;
 const BORDER_STYLE_COLOUR : Color = Color::Gray;
+const HIGHLIGHTED_BORDER_STYLE_COLOUR : Color = Color::LightBlue;
 const GRAPH_MARKER : Marker = Marker::Braille;
 
 #[derive(Default)]
@@ -29,6 +30,7 @@ pub struct CanvasData {
 
 pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_state : &mut app::App, canvas_data : &CanvasData) -> error::Result<()> {
 	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
+	let highlighted_border_style : Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
 
 	let temperature_rows = canvas_data
 		.temp_sensor_data
@@ -102,7 +104,15 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 			}
 
 			Chart::default()
-				.block(Block::default().title("CPU Usage").borders(Borders::ALL).border_style(border_style))
+				.block(
+					Block::default()
+						.title("CPU Usage")
+						.borders(Borders::ALL)
+						.border_style(match app_state.current_application_position {
+							app::ApplicationPosition::CPU => highlighted_border_style,
+							_ => border_style,
+						}),
+				)
 				.x_axis(x_axis)
 				.y_axis(y_axis)
 				.datasets(&dataset_vector)
@@ -114,7 +124,15 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.5]).labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
 			Chart::default()
-				.block(Block::default().title("Memory Usage").borders(Borders::ALL).border_style(border_style))
+				.block(
+					Block::default()
+						.title("Memory Usage")
+						.borders(Borders::ALL)
+						.border_style(match app_state.current_application_position {
+							app::ApplicationPosition::MEM => highlighted_border_style,
+							_ => border_style,
+						}),
+				)
 				.x_axis(x_axis)
 				.y_axis(y_axis)
 				.datasets(&[
@@ -136,7 +154,15 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 		{
 			let width = f64::from(middle_divided_chunk_2[0].width);
 			Table::new(["Sensor", "Temp"].iter(), temperature_rows)
-				.block(Block::default().title("Temperatures").borders(Borders::ALL).border_style(border_style))
+				.block(
+					Block::default()
+						.title("Temperatures")
+						.borders(Borders::ALL)
+						.border_style(match app_state.current_application_position {
+							app::ApplicationPosition::TEMP => highlighted_border_style,
+							_ => border_style,
+						}),
+				)
 				.header_style(Style::default().fg(Color::LightBlue))
 				.widths(&[(width * 0.45) as u16, (width * 0.4) as u16])
 				.render(&mut f, middle_divided_chunk_2[0]);
@@ -144,10 +170,18 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 
 		// Disk usage table
 		{
-			// TODO: We have to dynamically remove some of these table elements based on size...
+			// TODO: We may have to dynamically remove some of these table elements based on size...
 			let width = f64::from(middle_divided_chunk_2[1].width);
 			Table::new(["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(), disk_rows)
-				.block(Block::default().title("Disk Usage").borders(Borders::ALL).border_style(border_style))
+				.block(
+					Block::default()
+						.title("Disk Usage")
+						.borders(Borders::ALL)
+						.border_style(match app_state.current_application_position {
+							app::ApplicationPosition::DISK => highlighted_border_style,
+							_ => border_style,
+						}),
+				)
 				.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
 				.widths(&[
 					(width * 0.18).floor() as u16,
@@ -166,7 +200,15 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 1_000_000.5]).labels(&["0GB", "1GB"]);
 			Chart::default()
-				.block(Block::default().title("Network").borders(Borders::ALL).border_style(border_style))
+				.block(
+					Block::default()
+						.title("Network")
+						.borders(Borders::ALL)
+						.border_style(match app_state.current_application_position {
+							app::ApplicationPosition::NETWORK => highlighted_border_style,
+							_ => border_style,
+						}),
+				)
 				.x_axis(x_axis)
 				.y_axis(y_axis)
 				.datasets(&[
@@ -196,7 +238,6 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 			let num_rows = i64::from(bottom_chunks[1].height) - 3;
 			let mut process_counter = 0;
 
-			//TODO: Fix this!
 			let start_position = match app_state.scroll_direction {
 				app::ScrollDirection::DOWN => {
 					if app_state.currently_selected_process_position < num_rows {
@@ -251,7 +292,15 @@ pub fn draw_data<B : tui::backend::Backend>(terminal : &mut Terminal<B>, app_sta
 			});
 
 			Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)
-				.block(Block::default().title("Processes").borders(Borders::ALL).border_style(border_style))
+				.block(
+					Block::default()
+						.title("Processes")
+						.borders(Borders::ALL)
+						.border_style(match app_state.current_application_position {
+							app::ApplicationPosition::PROCESS => highlighted_border_style,
+							_ => border_style,
+						}),
+				)
 				.header_style(Style::default().fg(Color::LightBlue))
 				.widths(&[(width * 0.2) as u16, (width * 0.35) as u16, (width * 0.2) as u16, (width * 0.2) as u16])
 				.render(&mut f, bottom_chunks[1]);

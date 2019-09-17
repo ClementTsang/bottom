@@ -1,11 +1,8 @@
-use assert_cmd::prelude::*; // Add methods on commands
+use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command; // Run programs // Used for writing assertions
+use std::process::Command;
 
 //======================RATES======================//
-#[test]
-fn valid_rate_argument() {
-}
 
 #[test]
 fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {

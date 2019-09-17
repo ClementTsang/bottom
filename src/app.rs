@@ -3,8 +3,7 @@ use data_collection::{processes, temperature};
 
 mod process_killer;
 
-#[allow(dead_code)]
-// Probably only use the list elements...
+#[derive(Clone, Copy)]
 pub enum ApplicationPosition {
 	CPU,
 	MEM,
@@ -74,10 +73,6 @@ impl App {
 					self.awaiting_d = true;
 				}
 			}
-			'h' => self.on_right(),
-			'j' => self.on_down(),
-			'k' => self.on_up(),
-			'l' => self.on_left(),
 			'c' => {
 				// TODO: This should depend on what tile you're on!
 				match self.process_sorting_type {
@@ -137,16 +132,51 @@ impl App {
 		Ok(())
 	}
 
+	// For now, these are hard coded --- in the future, they shouldn't be!
+	//
+	// General idea for now:
+	// CPU -(down)> MEM
+	// MEM -(down)> Network, -(right)> TEMP
+	// TEMP -(down)> Disk, -(left)> MEM, -(up)> CPU
+	// Disk -(down)> Processes, -(left)> MEM, -(up)> TEMP
+	// Network -(up)> MEM, -(right)> PROC
+	// PROC -(up)> Disk, -(left)> Network
 	pub fn on_left(&mut self) {
+		self.current_application_position = match self.current_application_position {
+			ApplicationPosition::PROCESS => ApplicationPosition::NETWORK,
+			ApplicationPosition::DISK => ApplicationPosition::MEM,
+			ApplicationPosition::TEMP => ApplicationPosition::MEM,
+			_ => self.current_application_position,
+		};
 	}
 
 	pub fn on_right(&mut self) {
+		self.current_application_position = match self.current_application_position {
+			ApplicationPosition::MEM => ApplicationPosition::TEMP,
+			ApplicationPosition::NETWORK => ApplicationPosition::PROCESS,
+			_ => self.current_application_position,
+		};
 	}
 
 	pub fn on_up(&mut self) {
+		self.current_application_position = match self.current_application_position {
+			ApplicationPosition::MEM => ApplicationPosition::CPU,
+			ApplicationPosition::NETWORK => ApplicationPosition::MEM,
+			ApplicationPosition::PROCESS => ApplicationPosition::DISK,
+			ApplicationPosition::TEMP => ApplicationPosition::CPU,
+			ApplicationPosition::DISK => ApplicationPosition::TEMP,
+			_ => self.current_application_position,
+		};
 	}
 
 	pub fn on_down(&mut self) {
+		self.current_application_position = match self.current_application_position {
+			ApplicationPosition::CPU => ApplicationPosition::MEM,
+			ApplicationPosition::MEM => ApplicationPosition::NETWORK,
+			ApplicationPosition::TEMP => ApplicationPosition::DISK,
+			ApplicationPosition::DISK => ApplicationPosition::PROCESS,
+			_ => self.current_application_position,
+		};
 	}
 
 	pub fn decrement_position_count(&mut self) {
