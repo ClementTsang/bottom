@@ -96,9 +96,7 @@ fn main() -> error::Result<()> {
 		let tx = tx.clone();
 		thread::spawn(move || {
 			let input = input();
-			if cfg!(target_os = "linux") {
-				input.enable_mouse_mode().unwrap();
-			}
+			input.enable_mouse_mode().unwrap();
 			let reader = input.read_sync();
 			for event in reader {
 				match event {
