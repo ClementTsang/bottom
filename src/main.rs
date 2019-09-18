@@ -50,12 +50,12 @@ fn main() -> error::Result<()> {
 		(@arg FAHRENHEIT : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
 		(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
 	)
-	(@arg RATE: -r --rate +takes_value "Sets a refresh rate in milliseconds, min is 250ms, defaults to 1000ms.  Higher values may take more resources.")
+	(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
 	)
 	//.after_help("Themes:") // TODO: This and others disabled for now
 	.get_matches();
 
-	let update_rate_in_milliseconds : u128 = matches.value_of("RATE").unwrap_or("1000").parse::<u128>()?;
+	let update_rate_in_milliseconds : u128 = matches.value_of("RATE_MILLIS").unwrap_or("1000").parse::<u128>()?;
 
 	if update_rate_in_milliseconds < 250 {
 		return Err(RustopError::InvalidArg {
