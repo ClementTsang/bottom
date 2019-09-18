@@ -5,7 +5,7 @@
 A top clone, written in Rust.  Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop)
 
 ![Quick demo recording](assets/recording_1.gif)
-*Note that the background you see is not part of the app, that's just because I use a slightly transparent background*
+*Note that the background you see is not part of the app, that's just because I use a slightly transparent terminal.*
 
 ## Installation
 
@@ -15,11 +15,11 @@ You can install by cloning and using ``cargo build --release``, or download the 
 
 ### Windows
 
-This is still in development.
+This is still in development, but will be done (hopefully) soon.
 
 ### MacOS
 
-Currently, I'm unable to test on MacOS, so I'm not sure how well this will work, if at all.  I'll try to source MacOS hardware to test this application.
+Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well this will work, if at all.  I'll try to source MacOS hardware to test this application.
 
 ## Usage
 
@@ -113,3 +113,4 @@ Any suggestions on more accurate data is welcome!  Note all other fields should 
 ## Why
 
 I was looking to try writing more things in Rust, and I love the gotop tool.  And thus, this project was born.
+
