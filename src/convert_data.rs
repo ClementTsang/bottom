@@ -309,5 +309,10 @@ pub fn convert_network_data_points(network_data : &[data_collection::network::Ne
 		}
 	};
 
-	ConvertedNetworkData { rx, tx, rx_display, tx_display }
+	ConvertedNetworkData {
+		rx,
+		tx,
+		rx_display,
+		tx_display,
+	}
 }

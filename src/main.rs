@@ -195,7 +195,11 @@ fn main() -> error::Result<()> {
 					}
 
 					if app.to_be_resorted {
-						data_collection::processes::sort_processes(&mut app.data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
+						data_collection::processes::sort_processes(
+							&mut app.data.list_of_processes,
+							&app.process_sorting_type,
+							app.process_sorting_reverse,
+						);
 						canvas_data.process_data = update_process_row(&app.data);
 						app.to_be_resorted = false;
 					}
@@ -221,7 +225,11 @@ fn main() -> error::Result<()> {
 				Event::Update(data) => {
 					// debug!("Update event fired!");
 					app.data = *data;
-					data_collection::processes::sort_processes(&mut app.data.list_of_processes, &app.process_sorting_type, app.process_sorting_reverse);
+					data_collection::processes::sort_processes(
+						&mut app.data.list_of_processes,
+						&app.process_sorting_type,
+						app.process_sorting_reverse,
+					);
 
 					// Convert all data into tui components
 					let network_data = update_network_data_points(&app.data);

@@ -47,7 +47,9 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 - `q`, `Esc`, or `Ctrl-C` to quit.
 
-- `Up/k`, `Down/j`, `Left/h`, `Right/l` to navigate between panels. This currently doesn't have much functionality but will change in the future.
+- `Up/k`, `Down/j`, `Left/h`, `Right/l` to navigate between panels.
+
+- `Shift+Up` and `Shift+Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes)
 
 #### Processes Panel
 

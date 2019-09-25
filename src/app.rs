@@ -35,6 +35,8 @@ pub struct App {
 	pub current_zoom_level_percent : f64, // Make at most 200, least 50?
 	pub data : data_collection::Data,
 	pub scroll_direction : ScrollDirection,
+	pub previous_disk_position : i64,
+	pub previous_temp_position : i64,
 	pub previous_process_position : i64,
 	awaiting_second_d : bool,
 	pub use_dot : bool,
@@ -58,6 +60,8 @@ impl App {
 			data : data_collection::Data::default(),
 			scroll_direction : ScrollDirection::DOWN,
 			previous_process_position : 0,
+			previous_disk_position : 0,
+			previous_temp_position : 0,
 			awaiting_second_d : false,
 			use_dot,
 		}
@@ -210,16 +214,18 @@ impl App {
 	}
 
 	fn change_temp_position(&mut self, num_to_change_by : i64) {
-		if self.currently_selected_temperature_position + num_to_change_by >= 0 {
+		if self.currently_selected_temperature_position + num_to_change_by >= 0
+			&& self.currently_selected_temperature_position + num_to_change_by < self.data.list_of_temperature_sensor.len() as i64
+		{
 			self.currently_selected_temperature_position += num_to_change_by;
 		}
-		// else if self.currently_selected_temperature_position < // TODO: Need to finish this!  This should never go PAST the number of elements
 	}
 
 	fn change_disk_position(&mut self, num_to_change_by : i64) {
-		if self.currently_selected_disk_position + num_to_change_by >= 0 {
+		if self.currently_selected_disk_position + num_to_change_by >= 0
+			&& self.currently_selected_disk_position + num_to_change_by < self.data.list_of_disks.len() as i64
+		{
 			self.currently_selected_disk_position += num_to_change_by;
 		}
-		// else if self.currently_selected_disk_position < // TODO: Need to finish this!  This should never go PAST the number of elements
 	}
 }

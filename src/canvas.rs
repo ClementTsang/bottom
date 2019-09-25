@@ -8,7 +8,14 @@ use tui_temp_fork::{
 
 use crate::{app, utils::error};
 
-const COLOUR_LIST : [Color; 6] = [Color::Red, Color::Green, Color::LightYellow, Color::LightBlue, Color::LightCyan, Color::LightMagenta];
+const COLOUR_LIST : [Color; 6] = [
+	Color::Red,
+	Color::Green,
+	Color::LightYellow,
+	Color::LightBlue,
+	Color::LightCyan,
+	Color::LightMagenta,
+];
 const TEXT_COLOUR : Color = Color::Gray;
 const GRAPH_COLOUR : Color = Color::Gray;
 const BORDER_STYLE_COLOUR : Color = Color::Gray;
@@ -31,12 +38,6 @@ pub struct CanvasData {
 pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : &mut app::App, canvas_data : &CanvasData) -> error::Result<()> {
 	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
 	let highlighted_border_style : Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
-
-	let temperature_rows = canvas_data
-		.temp_sensor_data
-		.iter()
-		.map(|sensor| Row::StyledData(sensor.iter(), Style::default().fg(TEXT_COLOUR)));
-	let disk_rows = canvas_data.disk_data.iter().map(|disk| Row::StyledData(disk.iter(), Style::default().fg(TEXT_COLOUR)));
 
 	terminal.draw(|mut f| {
 		//debug!("Drawing!");
@@ -68,7 +69,10 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 		// CPU usage graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.5]).labels(&["0%", "100%"]);
+			let y_axis = Axis::default()
+				.style(Style::default().fg(GRAPH_COLOUR))
+				.bounds([-0.5, 100.5])
+				.labels(&["0%", "100%"]);
 
 			let mut dataset_vector : Vec<Dataset> = Vec::new();
 
@@ -122,7 +126,10 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 		//Memory usage graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.5]).labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
+			let y_axis = Axis::default()
+				.style(Style::default().fg(GRAPH_COLOUR))
+				.bounds([-0.5, 100.5])
+				.labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
 			let mem_name = "RAM:".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64));
 			let swap_name = "SWP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64));
 
@@ -160,6 +167,34 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 		// Temperature table
 		{
+			let num_rows = i64::from(middle_divided_chunk_2[0].height) - 3;
+			let start_position = get_start_position(
+				num_rows,
+				&(app_state.scroll_direction),
+				&mut app_state.previous_temp_position,
+				&mut app_state.currently_selected_temperature_position,
+			);
+
+			let sliced_vec : Vec<Vec<String>> = (&canvas_data.temp_sensor_data[start_position as usize..]).to_vec();
+			let mut disk_counter = 0;
+
+			let temperature_rows = sliced_vec.iter().map(|disk| {
+				Row::StyledData(
+					disk.iter(),
+					if disk_counter == app_state.currently_selected_temperature_position - start_position {
+						// TODO: This is what controls the highlighting!
+						disk_counter = -1;
+						Style::default().fg(Color::Black).bg(Color::Cyan)
+					}
+					else {
+						if disk_counter >= 0 {
+							disk_counter += 1;
+						}
+						Style::default().fg(TEXT_COLOUR)
+					},
+				)
+			});
+
 			let width = f64::from(middle_divided_chunk_2[0].width);
 			Table::new(["Sensor", "Temp"].iter(), temperature_rows)
 				.block(
@@ -178,6 +213,34 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 		// Disk usage table
 		{
+			let num_rows = i64::from(middle_divided_chunk_2[1].height) - 3;
+			let start_position = get_start_position(
+				num_rows,
+				&(app_state.scroll_direction),
+				&mut app_state.previous_disk_position,
+				&mut app_state.currently_selected_disk_position,
+			);
+
+			let sliced_vec : Vec<Vec<String>> = (&canvas_data.disk_data[start_position as usize..]).to_vec();
+			let mut disk_counter = 0;
+
+			let disk_rows = sliced_vec.iter().map(|disk| {
+				Row::StyledData(
+					disk.iter(),
+					if disk_counter == app_state.currently_selected_disk_position - start_position {
+						// TODO: This is what controls the highlighting!
+						disk_counter = -1;
+						Style::default().fg(Color::Black).bg(Color::Cyan)
+					}
+					else {
+						if disk_counter >= 0 {
+							disk_counter += 1;
+						}
+						Style::default().fg(TEXT_COLOUR)
+					},
+				)
+			});
+
 			// TODO: We may have to dynamically remove some of these table elements based on size...
 			let width = f64::from(middle_divided_chunk_2[1].width);
 			Table::new(["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(), disk_rows)
@@ -206,7 +269,10 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 		// Network graph
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
-			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 1_000_000.5]).labels(&["0GB", "1GB"]);
+			let y_axis = Axis::default()
+				.style(Style::default().fg(GRAPH_COLOUR))
+				.bounds([-0.5, 1_000_000.5])
+				.labels(&["0GB", "1GB"]);
 			Chart::default()
 				.block(
 					Block::default()
@@ -244,36 +310,13 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 			// As such, we use a process_counter to know when we've hit the process we've currently scrolled to.  We also need to move the list - we can
 			// do so by hiding some elements!
 			let num_rows = i64::from(bottom_chunks[1].height) - 3;
-			let mut process_counter = 0;
 
-			let start_position = match app_state.scroll_direction {
-				app::ScrollDirection::DOWN => {
-					if app_state.currently_selected_process_position < num_rows {
-						0
-					}
-					else if app_state.currently_selected_process_position - num_rows < app_state.previous_process_position {
-						app_state.previous_process_position
-					}
-					else {
-						app_state.previous_process_position = app_state.currently_selected_process_position - num_rows + 1;
-						app_state.previous_process_position
-					}
-				}
-				app::ScrollDirection::UP => {
-					if app_state.currently_selected_process_position == app_state.previous_process_position - 1 {
-						app_state.previous_process_position = if app_state.previous_process_position > 0 {
-							app_state.previous_process_position - 1
-						}
-						else {
-							0
-						};
-						app_state.previous_process_position
-					}
-					else {
-						app_state.previous_process_position
-					}
-				}
-			};
+			let start_position = get_start_position(
+				num_rows,
+				&(app_state.scroll_direction),
+				&mut app_state.previous_process_position,
+				&mut app_state.currently_selected_process_position,
+			);
 
 			/*debug!(
 				"START POSN: {}, PREV POSN: {}, CURRENT SELECTED POSN: {}, NUM ROWS: {}",
@@ -281,6 +324,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 			);*/
 
 			let sliced_vec : Vec<Vec<String>> = (&canvas_data.process_data[start_position as usize..]).to_vec();
+			let mut process_counter = 0;
 
 			let process_rows = sliced_vec.iter().map(|process| {
 				Row::StyledData(
@@ -318,4 +362,32 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 	//debug!("Finished drawing.");
 
 	Ok(())
+}
+
+fn get_start_position(
+	num_rows : i64, scroll_direction : &app::ScrollDirection, previous_position : &mut i64, currently_selected_position : &mut i64,
+) -> i64 {
+	match scroll_direction {
+		app::ScrollDirection::DOWN => {
+			if *currently_selected_position < num_rows {
+				0
+			}
+			else if *currently_selected_position - num_rows < *previous_position {
+				*previous_position
+			}
+			else {
+				*previous_position = *currently_selected_position - num_rows + 1;
+				*previous_position
+			}
+		}
+		app::ScrollDirection::UP => {
+			if *currently_selected_position == *previous_position - 1 {
+				*previous_position = if *previous_position > 0 { *previous_position - 1 } else { 0 };
+				*previous_position
+			}
+			else {
+				*previous_position
+			}
+		}
+	}
 }
