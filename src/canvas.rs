@@ -123,6 +123,25 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 		{
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 			let y_axis = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([-0.5, 100.5]).labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
+			let mem_name = "RAM:".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64));
+			let swap_name = "SWP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64));
+
+			let mut mem_canvas_vec : Vec<Dataset> = vec![Dataset::default()
+				.name(&mem_name)
+				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+				.style(Style::default().fg(Color::LightBlue))
+				.data(&canvas_data.mem_data)];
+
+			if !(&canvas_data.swap_data).is_empty() {
+				mem_canvas_vec.push(
+					Dataset::default()
+						.name(&swap_name)
+						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+						.style(Style::default().fg(Color::LightYellow))
+						.data(&canvas_data.swap_data),
+				);
+			}
+
 			Chart::default()
 				.block(
 					Block::default()
@@ -135,18 +154,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				)
 				.x_axis(x_axis)
 				.y_axis(y_axis)
-				.datasets(&[
-					Dataset::default()
-						.name(&("RAM:".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-						.style(Style::default().fg(Color::LightBlue))
-						.data(&canvas_data.mem_data),
-					Dataset::default()
-						.name(&("SWP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-						.style(Style::default().fg(Color::LightYellow))
-						.data(&canvas_data.swap_data),
-				])
+				.datasets(&mem_canvas_vec)
 				.render(&mut f, middle_chunks[0]);
 		}
 
