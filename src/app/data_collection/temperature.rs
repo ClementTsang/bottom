@@ -40,7 +40,6 @@ pub async fn get_temperature_data(sys : &System, temp_type : &TemperatureType) -
 	}
 	else if cfg!(target_os = "windows") {
 		let sensor_data = sys.get_components_list();
-		debug!("TEMPS: {:?}", sensor_data);
 		for component in sensor_data {
 			temperature_vec.push(TempData {
 				component_name : Box::from(component.get_label()),

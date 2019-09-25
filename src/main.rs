@@ -93,8 +93,8 @@ fn main() -> error::Result<()> {
 
 	if cfg!(target_os = "windows") {
 		screen.to_main()?;
+		crossterm::RawScreen::into_raw_mode()?;
 		queue!(stdout, crossterm::Clear(crossterm::ClearType::All), crossterm::BlinkOff)?;
-
 		stdout.flush()?;
 	}
 
@@ -110,25 +110,26 @@ fn main() -> error::Result<()> {
 		let tx = tx.clone();
 		thread::spawn(move || {
 			let input = input();
-			// TODO: Temp!
-			if !(cfg!(target_os = "windows")) {
-				input.enable_mouse_mode().unwrap(); // TODO: I think this is broken on windows...
-			}
-			let reader = input.read_sync();
-			for event in reader {
-				match event {
-					InputEvent::Keyboard(key) => {
-						if tx.send(Event::KeyInput(key.clone())).is_err() {
-							return;
+			input.enable_mouse_mode().unwrap(); // TODO: I think this is broken on windows...
+
+			let mut reader = input.read_async();
+			loop {
+				if let Some(event) = reader.next() {
+					match event {
+						InputEvent::Keyboard(key) => {
+							if tx.send(Event::KeyInput(key.clone())).is_err() {
+								return;
+							}
 						}
-					}
-					InputEvent::Mouse(mouse) => {
-						if tx.send(Event::MouseInput(mouse)).is_err() {
-							return;
+						InputEvent::Mouse(mouse) => {
+							if tx.send(Event::MouseInput(mouse)).is_err() {
+								return;
+							}
 						}
+						_ => {}
 					}
-					_ => {}
 				}
+				thread::sleep(Duration::from_millis(50));
 			}
 		});
 	}
