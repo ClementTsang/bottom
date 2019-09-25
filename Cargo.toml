@@ -27,6 +27,7 @@ log = "0.4"
 rayon = "1.2"
 sysinfo = "0.9.4"
 tokio = "0.2.0-alpha.4"
+winapi = "0.3.8"
 
 [dependencies.tui-temp-fork]
 #git = "https://github.com/ClementTsang/tui-rs"

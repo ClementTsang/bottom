@@ -27,6 +27,11 @@ pub enum RustopError {
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid error due to Crossterm: {}", message)]
 	CrosstermError { message : String },
+	/// An error to represent generic errors
+	///
+	/// The data provided is the error found.
+	#[fail(display = "ERROR: Invalid generic error: {}", message)]
+	GenericError { message : String },
 }
 
 impl From<std::io::Error> for RustopError {
@@ -50,5 +55,11 @@ impl From<crossterm::ErrorKind> for RustopError {
 impl From<std::num::ParseIntError> for RustopError {
 	fn from(err : std::num::ParseIntError) -> Self {
 		RustopError::InvalidArg { message : err.to_string() }
+	}
+}
+
+impl From<std::string::String> for RustopError {
+	fn from(err : std::string::String) -> Self {
+		RustopError::GenericError { message : err.to_string() }
 	}
 }
