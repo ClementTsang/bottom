@@ -101,6 +101,7 @@ fn main() -> error::Result<()> {
 			let input = input();
 			input.enable_mouse_mode().unwrap();
 
+			// TODO: I don't like this... seems odd async doesn't work on linux (then again, sync didn't work on windows)
 			if cfg!(target_os = "linux") {
 				let reader = input.read_sync();
 				for event in reader {
