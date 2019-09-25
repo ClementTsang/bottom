@@ -4,66 +4,68 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 ## Pre-release (bare minimum)
 
-* ~~Get each function working as a POC~~
+- ~~Get each function working as a POC~~
 
-* ~~Separate each component for readability, finalize project structure~~
+- ~~Separate each component for readability, finalize project structure~~
 
-* ~~Refreshing - how are we doing that?  Are we allowing individual refresh periods per component?~~
+- ~~Refreshing - how are we doing that? Are we allowing individual refresh periods per component?~~
 
-* ~~Write tui display, charting~~
+- ~~Write tui display, charting~~
 
-* ~~FIX PROCESSES AHHHHHH~~
+- ~~FIX PROCESSES AHHHHHH~~
 
-* ~~Scrolling in at least processes~~
+- ~~Scrolling in at least processes~~
 
-* Keybindings - I want to do at least arrow keys and dd.
+- Keybindings - I want to do at least arrow keys and dd.
 
-* ~~Legend gets in the way at too small of a height... maybe modify tui a bit more to fix this.~~
+- ~~Legend gets in the way at too small of a height... maybe modify tui a bit more to fix this.~~
 
 ## After making public
 
-* Arrow keys for lists.  This is a priority!
+- Consider bumping up the refresh rate to 3000?
 
-* Travis
+- Arrow keys for lists. This is a priority!
 
-* Refactoring!  Please.
+- Travis
 
-* Scaling in and out (zoom), may need to show zoom levels
+- Refactoring! Please.
 
-* More keybinds
+- Scaling in and out (zoom), may need to show zoom levels
 
-* Tests
+- More keybinds
 
-* Mouse + key events conflict?  Make it so that some events don't clog up the loop if they are not valid keys!
+- Tests
 
-* Header should be clear on current sorting direction!
+- Mouse + key events conflict? Make it so that some events don't clog up the loop if they are not valid keys!
 
-* It would be maybe a good idea to see if we can run the process calculation across ALL cpus...?  Might be more accurate.
+- Header should be clear on current sorting direction!
 
-* ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
+- It would be maybe a good idea to see if we can run the process calculation across ALL cpus...? Might be more accurate.
 
-* Remove any ``unwrap()``, ensure no crashing!  Might have to use this: <https://doc.rust-lang.org/std/panic/fn.catch_unwind.html>
+- ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
 
-* Scrolling event in lists
+- Remove any `unwrap()`, ensure no crashing! Might have to use this: <https://doc.rust-lang.org/std/panic/fn.catch_unwind.html>
 
-* Switching between panels
+- Scrolling event in lists
 
-* Truncate columns if needed for tables
+- Switching between panels
 
-* Test for Windows support, mac support, other.  May be doable, depends on sysinfo and how much I know about other OSes probably.
+- Truncate columns if needed for tables
 
-* Seems like the braille symbols are borked on windows.
+- Test for Windows support, mac support, other. May be doable, depends on sysinfo and how much I know about other OSes probably.
 
-* Issue with typing after windows version runs!
+- Seems like the braille symbols are borked on windows.
 
-* Efficiency!!!
+- Issue with typing after windows version runs!
 
-* Filtering in processes (that is, allow searching)
+- Efficiency!!!
 
-* Help screen
+- Filtering in processes (that is, allow searching)
 
-* Modularity
+- Help screen
 
-* ~~Potentially process managing?  Depends on the libraries...~~ Done on Linux!
+- Modularity
 
-* Probably good to add a "are you sure" to dd-ing...
+- ~~Potentially process managing? Depends on the libraries...~~ Done on Linux!
+
+- Probably good to add a "are you sure" to dd-ing...

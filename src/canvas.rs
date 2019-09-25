@@ -132,7 +132,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				.style(Style::default().fg(Color::LightBlue))
 				.data(&canvas_data.mem_data)];
 
-			if !(&canvas_data.swap_data).is_empty() {
+			if !(&canvas_data.swap_data).is_empty() && (&canvas_data.swap_data).last().unwrap().1 >= 0.0 {
 				mem_canvas_vec.push(
 					Dataset::default()
 						.name(&swap_name)
