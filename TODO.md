@@ -24,6 +24,8 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 * Travis
 
+* Refactoring!  Please.
+
 * Scaling in and out (zoom), may need to show zoom levels
 
 * More keybinds
