@@ -56,7 +56,15 @@ fn main() -> error::Result<()> {
 	//.after_help("Themes:") // TODO: This and others disabled for now
 	.get_matches();
 
-	let update_rate_in_milliseconds : u128 = matches.value_of("RATE_MILLIS").unwrap_or("1000").parse::<u128>()?;
+	let update_rate_in_milliseconds : u128 = if matches.is_present("RATE_MILLIS") {
+		matches
+			.value_of("RATE_MILLIS")
+			.unwrap_or(&constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS.to_string())
+			.parse::<u128>()?
+	}
+	else {
+		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+	};
 
 	if update_rate_in_milliseconds < 250 {
 		return Err(RustopError::InvalidArg {

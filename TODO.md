@@ -22,9 +22,7 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 ## After making public
 
-- Consider bumping up the refresh rate to 3000?
-
-- Arrow keys for lists. This is a priority!
+- Scrolling support for temp/disk
 
 - Travis
 
@@ -46,17 +44,7 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 - Remove any `unwrap()`, ensure no crashing! Might have to use this: <https://doc.rust-lang.org/std/panic/fn.catch_unwind.html>
 
-- Scrolling event in lists
-
-- Switching between panels
-
 - Truncate columns if needed for tables
-
-- Test for Windows support, mac support, other. May be doable, depends on sysinfo and how much I know about other OSes probably.
-
-- Seems like the braille symbols are borked on windows.
-
-- Issue with typing after windows version runs!
 
 - Efficiency!!!
 
@@ -65,7 +53,5 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 - Help screen
 
 - Modularity
-
-- ~~Potentially process managing? Depends on the libraries...~~ Done on Linux!
 
 - Probably good to add a "are you sure" to dd-ing...
