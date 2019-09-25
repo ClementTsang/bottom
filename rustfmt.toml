@@ -1,4 +1,4 @@
-max_width = 175
+max_width = 150
 reorder_imports = true
 control_brace_style = "ClosingNextLine"
 fn_args_layout = "Compressed"

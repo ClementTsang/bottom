@@ -2,26 +2,6 @@
 
 Note this will probably migrate to GitHub's native Issues; this was mostly for personal use during early stages.
 
-## Pre-release (bare minimum)
-
-- ~~Get each function working as a POC~~
-
-- ~~Separate each component for readability, finalize project structure~~
-
-- ~~Refreshing - how are we doing that? Are we allowing individual refresh periods per component?~~
-
-- ~~Write tui display, charting~~
-
-- ~~FIX PROCESSES AHHHHHH~~
-
-- ~~Scrolling in at least processes~~
-
-- Keybindings - I want to do at least arrow keys and dd.
-
-- ~~Legend gets in the way at too small of a height... maybe modify tui a bit more to fix this.~~
-
-## After making public
-
 - Scrolling support for temp/disk
 
 - Travis
