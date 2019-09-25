@@ -87,7 +87,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				dataset_vector.push(
 					Dataset::default()
 						.name(&cpu.0)
-						.marker(if (&app_state).use_dot { Marker::Dot } else { Marker::Braille })
+						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 						.style(Style::default().fg(COLOUR_LIST[i - avg_cpu_exist_offset % COLOUR_LIST.len()]))
 						.data(&(cpu.1)),
 				);
@@ -97,7 +97,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				dataset_vector.push(
 					Dataset::default()
 						.name(&canvas_data.cpu_data[0].0)
-						.marker(if (&app_state).use_dot { Marker::Dot } else { Marker::Braille })
+						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 						.style(Style::default().fg(COLOUR_LIST[canvas_data.cpu_data.len() - 1 % COLOUR_LIST.len()]))
 						.data(&(canvas_data.cpu_data[0].1)),
 				);
@@ -138,12 +138,12 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				.datasets(&[
 					Dataset::default()
 						.name(&("RAM:".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(if (&app_state).use_dot { Marker::Dot } else { Marker::Braille })
+						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 						.style(Style::default().fg(Color::LightBlue))
 						.data(&canvas_data.mem_data),
 					Dataset::default()
 						.name(&("SWP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))))
-						.marker(if (&app_state).use_dot { Marker::Dot } else { Marker::Braille })
+						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 						.style(Style::default().fg(Color::LightYellow))
 						.data(&canvas_data.swap_data),
 				])
@@ -214,12 +214,12 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				.datasets(&[
 					Dataset::default()
 						.name(&(canvas_data.rx_display))
-						.marker(if (&app_state).use_dot { Marker::Dot } else { Marker::Braille })
+						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 						.style(Style::default().fg(Color::LightBlue))
 						.data(&canvas_data.network_data_rx),
 					Dataset::default()
 						.name(&(canvas_data.tx_display))
-						.marker(if (&app_state).use_dot { Marker::Dot } else { Marker::Braille })
+						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 						.style(Style::default().fg(Color::LightYellow))
 						.data(&canvas_data.network_data_tx),
 				])
