@@ -6,4 +6,3 @@ matrix:
 os:
   - windows
   - linux
-  - osx
