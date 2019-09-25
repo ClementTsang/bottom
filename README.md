@@ -27,7 +27,9 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 - `-h`, `--help` to show the help screen and exit (basically has all of the below CLI option info).
 
-- `-a`, `--avgcpu` enables showing the average CPU usage on rustop
+- `-a`, `--avgcpu` enables showing the average CPU usage on rustop.
+
+- `-m`, `--dot-marker` uses a dot marker instead of the default braille marker. This is useful for things like Powershell which display braille markers incorrectly.
 
 - `-c`, `--celsius` displays the temperature type in Celsius. This is the default.
 

@@ -1,6 +1,9 @@
 /// This file is meant to house (OS specific) implementations on how to kill processes.
 use std::process::Command;
+
+#[cfg(target_os = "windows")]
 use std::ptr::null_mut;
+#[cfg(target_os = "windows")]
 use winapi::{
 	shared::{minwindef::DWORD, ntdef::HANDLE},
 	um::{
@@ -10,7 +13,10 @@ use winapi::{
 };
 
 // Copied from SO: https://stackoverflow.com/a/55231715
+#[cfg(target_os = "windows")]
 struct Process(HANDLE);
+
+#[cfg(target_os = "windows")]
 impl Process {
 	fn open(pid : DWORD) -> Result<Process, String> {
 		let pc = unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, 0, pid) };
@@ -25,11 +31,6 @@ impl Process {
 		Ok(())
 	}
 }
-impl Drop for Process {
-	fn drop(&mut self) {
-		unsafe { winapi::um::handleapi::CloseHandle(self.0) };
-	}
-}
 
 /// Kills a process, given a PID.
 pub fn kill_process_given_pid(pid : u64) -> crate::utils::error::Result<()> {
@@ -38,7 +39,9 @@ pub fn kill_process_given_pid(pid : u64) -> crate::utils::error::Result<()> {
 		Command::new("kill").arg(pid.to_string()).output()?;
 	}
 	else if cfg!(target_os = "windows") {
+		#[cfg(target_os = "windows")]
 		let process = Process::open(pid as DWORD)?;
+		#[cfg(target_os = "windows")]
 		process.kill()?;
 	}
 	else if cfg!(target_os = "macos") {

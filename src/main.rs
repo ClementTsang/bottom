@@ -90,7 +90,6 @@ fn main() -> error::Result<()> {
 
 	let backend = CrosstermBackend::with_alternate_screen(stdout, screen)?;
 	let mut terminal = Terminal::new(backend)?;
-	terminal.set_cursor(0, 0)?;
 	terminal.hide_cursor()?;
 	terminal.clear()?;
 
@@ -100,11 +99,11 @@ fn main() -> error::Result<()> {
 		let tx = tx.clone();
 		thread::spawn(move || {
 			let input = input();
-			input.enable_mouse_mode().unwrap(); // TODO: I think this is broken on windows...
+			input.enable_mouse_mode().unwrap();
 
-			let mut reader = input.read_async();
-			loop {
-				if let Some(event) = reader.next() {
+			if cfg!(target_os = "linux") {
+				let reader = input.read_sync();
+				for event in reader {
 					match event {
 						InputEvent::Keyboard(key) => {
 							if tx.send(Event::KeyInput(key.clone())).is_err() {
@@ -117,6 +116,26 @@ fn main() -> error::Result<()> {
 							}
 						}
 						_ => {}
+					}
+				}
+			}
+			else {
+				let mut reader = input.read_async();
+				loop {
+					if let Some(event) = reader.next() {
+						match event {
+							InputEvent::Keyboard(key) => {
+								if tx.send(Event::KeyInput(key.clone())).is_err() {
+									return;
+								}
+							}
+							InputEvent::Mouse(mouse) => {
+								if tx.send(Event::MouseInput(mouse)).is_err() {
+									return;
+								}
+							}
+							_ => {}
+						}
 					}
 				}
 			}
