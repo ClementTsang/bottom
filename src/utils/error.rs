@@ -22,6 +22,11 @@ pub enum RustopError {
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid error during data collection due to Heim: {}", message)]
 	InvalidHeim { message : String },
+	/// An error when the Crossterm library encounters a problem.
+	///
+	/// The data provided is the error found.
+	#[fail(display = "ERROR: Invalid error due to Crossterm: {}", message)]
+	CrosstermError { message : String },
 }
 
 impl From<std::io::Error> for RustopError {
@@ -33,6 +38,12 @@ impl From<std::io::Error> for RustopError {
 impl From<heim::Error> for RustopError {
 	fn from(err : heim::Error) -> Self {
 		RustopError::InvalidHeim { message : err.to_string() }
+	}
+}
+
+impl From<crossterm::ErrorKind> for RustopError {
+	fn from(err : crossterm::ErrorKind) -> Self {
+		RustopError::CrosstermError { message : err.to_string() }
 	}
 }
 
