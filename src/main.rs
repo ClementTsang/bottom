@@ -7,8 +7,13 @@ extern crate clap;
 #[macro_use]
 extern crate failure;
 
-use crossterm::{input, AlternateScreen, InputEvent, KeyEvent, MouseButton, MouseEvent};
-use std::{sync::mpsc, thread, time::Duration};
+use crossterm::{input, queue, AlternateScreen, InputEvent, KeyEvent, MouseButton, MouseEvent};
+use std::{
+	io::{stdout, Write},
+	sync::mpsc,
+	thread,
+	time::Duration,
+};
 use tui_temp_fork::{backend::CrosstermBackend, Terminal};
 
 pub mod app;
@@ -84,9 +89,18 @@ fn main() -> error::Result<()> {
 
 	// Set up up tui and crossterm
 	let screen = AlternateScreen::to_alternate(true)?;
-	let stdout = std::io::stdout();
+	let mut stdout = stdout();
+
+	if cfg!(target_os = "windows") {
+		screen.to_main()?;
+		queue!(stdout, crossterm::Clear(crossterm::ClearType::All), crossterm::BlinkOff)?;
+
+		stdout.flush()?;
+	}
+
 	let backend = CrosstermBackend::with_alternate_screen(stdout, screen)?;
 	let mut terminal = Terminal::new(backend)?;
+	terminal.set_cursor(0, 0)?;
 	terminal.hide_cursor()?;
 	terminal.clear()?;
 
@@ -96,7 +110,10 @@ fn main() -> error::Result<()> {
 		let tx = tx.clone();
 		thread::spawn(move || {
 			let input = input();
-			input.enable_mouse_mode().unwrap();
+			// TODO: Temp!
+			if !(cfg!(target_os = "windows")) {
+				input.enable_mouse_mode().unwrap(); // TODO: I think this is broken on windows...
+			}
 			let reader = input.read_sync();
 			for event in reader {
 				match event {

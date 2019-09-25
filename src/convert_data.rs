@@ -4,16 +4,21 @@ use constants::*;
 pub fn update_temp_row(app_data : &data_collection::Data, temp_type : &data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
 	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
 
-	for sensor in &app_data.list_of_temperature_sensor {
-		sensor_vector.push(vec![
-			sensor.component_name.to_string(),
-			(sensor.temperature.ceil() as u64).to_string()
-				+ match temp_type {
-					data_collection::temperature::TemperatureType::Celsius => "C",
-					data_collection::temperature::TemperatureType::Kelvin => "K",
-					data_collection::temperature::TemperatureType::Fahrenheit => "F",
-				},
-		]);
+	if (&app_data.list_of_temperature_sensor).is_empty() {
+		sensor_vector.push(vec!["None Found".to_string(), "".to_string()])
+	}
+	else {
+		for sensor in &app_data.list_of_temperature_sensor {
+			sensor_vector.push(vec![
+				sensor.component_name.to_string(),
+				(sensor.temperature.ceil() as u64).to_string()
+					+ match temp_type {
+						data_collection::temperature::TemperatureType::Celsius => "C",
+						data_collection::temperature::TemperatureType::Kelvin => "K",
+						data_collection::temperature::TemperatureType::Fahrenheit => "F",
+					},
+			]);
+		}
 	}
 
 	sensor_vector

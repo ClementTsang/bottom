@@ -1,4 +1,5 @@
 use heim_common::{prelude::StreamExt, units::thermodynamic_temperature};
+use sysinfo::{ComponentExt, System, SystemExt};
 
 #[derive(Clone)]
 pub struct TempData {
@@ -19,18 +20,34 @@ impl Default for TemperatureType {
 	}
 }
 
-pub async fn get_temperature_data(temp_type : &TemperatureType) -> crate::utils::error::Result<Vec<TempData>> {
+pub async fn get_temperature_data(sys : &System, temp_type : &TemperatureType) -> crate::utils::error::Result<Vec<TempData>> {
 	let mut temperature_vec : Vec<TempData> = Vec::new();
 
-	let mut sensor_data = heim::sensors::temperatures();
-	while let Some(sensor) = sensor_data.next().await {
-		if let Ok(sensor) = sensor {
+	if cfg!(target_os = "linux") {
+		let mut sensor_data = heim::sensors::temperatures();
+		while let Some(sensor) = sensor_data.next().await {
+			if let Ok(sensor) = sensor {
+				temperature_vec.push(TempData {
+					component_name : Box::from(sensor.unit()),
+					temperature : match temp_type {
+						TemperatureType::Celsius => sensor.current().get::<thermodynamic_temperature::degree_celsius>(),
+						TemperatureType::Kelvin => sensor.current().get::<thermodynamic_temperature::kelvin>(),
+						TemperatureType::Fahrenheit => sensor.current().get::<thermodynamic_temperature::degree_fahrenheit>(),
+					},
+				});
+			}
+		}
+	}
+	else if cfg!(target_os = "windows") {
+		let sensor_data = sys.get_components_list();
+		debug!("TEMPS: {:?}", sensor_data);
+		for component in sensor_data {
 			temperature_vec.push(TempData {
-				component_name : Box::from(sensor.unit()),
+				component_name : Box::from(component.get_label()),
 				temperature : match temp_type {
-					TemperatureType::Celsius => sensor.current().get::<thermodynamic_temperature::degree_celsius>(),
-					TemperatureType::Kelvin => sensor.current().get::<thermodynamic_temperature::kelvin>(),
-					TemperatureType::Fahrenheit => sensor.current().get::<thermodynamic_temperature::degree_fahrenheit>(),
+					TemperatureType::Celsius => component.get_temperature(),
+					TemperatureType::Kelvin => component.get_temperature() + 273.15,
+					TemperatureType::Fahrenheit => (component.get_temperature() * (9.0 / 5.0)) + 32.0,
 				},
 			});
 		}

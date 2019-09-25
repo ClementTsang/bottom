@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.1.0-alpha.2"
+version = "0.1.0-alpha.3"
 authors = ["Clement Tsang <clementjhtsang@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
@@ -24,6 +24,7 @@ futures-util = "0.2.1"
 heim = "0.0.7"
 heim-common = "0.0.7"
 log = "0.4"
+rayon = "1.2"
 sysinfo = "0.9.4"
 tokio = "0.2.0-alpha.4"
 
