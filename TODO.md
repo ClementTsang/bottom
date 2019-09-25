@@ -22,6 +22,8 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 ## After making public
 
+* Arrow keys for lists.  This is a priority!
+
 * Travis
 
 * Refactoring!  Please.
