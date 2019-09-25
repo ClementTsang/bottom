@@ -188,6 +188,11 @@ pub fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64
 	let mut result : Vec<(f64, f64)> = Vec::new();
 
 	for data in mem_data {
+		if data.mem_total_in_mb == 0 {
+			// Assume none (usually in the case of swap)!  Also catches div by zero.
+			return result;
+		}
+
 		let current_time = std::time::Instant::now();
 		let new_entry = (
 			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
