@@ -100,7 +100,10 @@ impl DataState {
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
 		//push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io); // Removed, seems irrelevant for now...
-		set_if_valid(&temperature::get_temperature_data(&self.temperature_type).await, &mut self.data.list_of_temperature_sensor);
+		set_if_valid(
+			&temperature::get_temperature_data(&self.sys, &self.temperature_type).await,
+			&mut self.data.list_of_temperature_sensor,
+		);
 
 		if self.first_run {
 			self.data = Data::default();
