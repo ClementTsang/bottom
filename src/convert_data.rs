@@ -5,7 +5,7 @@ pub fn update_temp_row(app_data : &data_collection::Data, temp_type : &data_coll
 	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
 
 	if (&app_data.list_of_temperature_sensor).is_empty() {
-		sensor_vector.push(vec!["None Found".to_string(), "".to_string()])
+		sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()])
 	}
 	else {
 		for sensor in &app_data.list_of_temperature_sensor {

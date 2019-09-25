@@ -251,7 +251,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 					if app_state.currently_selected_process_position < num_rows {
 						0
 					}
-					else if app_state.currently_selected_process_position - num_rows <= app_state.previous_process_position {
+					else if app_state.currently_selected_process_position - num_rows < app_state.previous_process_position {
 						app_state.previous_process_position
 					}
 					else {
