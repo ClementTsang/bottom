@@ -180,6 +180,8 @@ fn main() -> error::Result<()> {
 						KeyEvent::Char('l') | KeyEvent::Right => app.on_right(),
 						KeyEvent::Char('k') | KeyEvent::Up => app.on_up(),
 						KeyEvent::Char('j') | KeyEvent::Down => app.on_down(),
+						KeyEvent::ShiftUp => app.decrement_position_count(),
+						KeyEvent::ShiftDown => app.increment_position_count(),
 						KeyEvent::Char(c) => app.on_key(c), // TODO: We can remove the 'q' event and just move it to the quit?
 						_ => {}
 					}
