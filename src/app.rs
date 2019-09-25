@@ -36,11 +36,12 @@ pub struct App {
 	pub data : data_collection::Data,
 	pub scroll_direction : ScrollDirection,
 	pub previous_process_position : i64,
-	awaiting_d : bool,
+	awaiting_second_d : bool,
+	pub use_dot : bool,
 }
 
 impl App {
-	pub fn new(show_average_cpu : bool, temperature_type : temperature::TemperatureType, update_rate_in_milliseconds : u64) -> App {
+	pub fn new(show_average_cpu : bool, temperature_type : temperature::TemperatureType, update_rate_in_milliseconds : u64, use_dot : bool) -> App {
 		App {
 			process_sorting_type : processes::ProcessSorting::CPU,
 			should_quit : false,
@@ -57,7 +58,8 @@ impl App {
 			data : data_collection::Data::default(),
 			scroll_direction : ScrollDirection::DOWN,
 			previous_process_position : 0,
-			awaiting_d : false,
+			awaiting_second_d : false,
+			use_dot,
 		}
 	}
 
@@ -65,12 +67,12 @@ impl App {
 		match c {
 			'q' => self.should_quit = true,
 			'd' => {
-				if self.awaiting_d {
-					self.awaiting_d = false;
+				if self.awaiting_second_d {
+					self.awaiting_second_d = false;
 					self.kill_highlighted_process().unwrap_or(()); // TODO: Should this be handled?
 				}
 				else {
-					self.awaiting_d = true;
+					self.awaiting_second_d = true;
 				}
 			}
 			'c' => {
@@ -121,8 +123,8 @@ impl App {
 			_ => {}
 		}
 
-		if self.awaiting_d && c != 'd' {
-			self.awaiting_d = false;
+		if self.awaiting_second_d && c != 'd' {
+			self.awaiting_second_d = false;
 		}
 	}
 
