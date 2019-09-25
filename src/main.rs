@@ -7,13 +7,8 @@ extern crate clap;
 #[macro_use]
 extern crate failure;
 
-use crossterm::{input, queue, AlternateScreen, InputEvent, KeyEvent, MouseButton, MouseEvent};
-use std::{
-	io::{stdout, Write},
-	sync::mpsc,
-	thread,
-	time::Duration,
-};
+use crossterm::{input, AlternateScreen, InputEvent, KeyEvent, MouseButton, MouseEvent};
+use std::{io::stdout, sync::mpsc, thread, time::Duration};
 use tui_temp_fork::{backend::CrosstermBackend, Terminal};
 
 pub mod app;
@@ -49,6 +44,7 @@ fn main() -> error::Result<()> {
 	(about: crate_description!())
 	//(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
 	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
+	(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.  May be needed in things like Powershell.")
 	//(@arg DEBUG: -d --debug "Enables debug mode.") // TODO: This isn't done yet!
 	(@group TEMPERATURE_TYPE =>
 		(@arg CELSIUS : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
@@ -83,20 +79,14 @@ fn main() -> error::Result<()> {
 		data_collection::temperature::TemperatureType::Celsius
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
+	let use_dot = matches.is_present("DOT_MARKER");
 
 	// Create "app" struct, which will control most of the program and store settings/state
-	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds as u64);
+	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds as u64, use_dot);
 
 	// Set up up tui and crossterm
 	let screen = AlternateScreen::to_alternate(true)?;
-	let mut stdout = stdout();
-
-	if cfg!(target_os = "windows") {
-		screen.to_main()?;
-		crossterm::RawScreen::into_raw_mode()?;
-		queue!(stdout, crossterm::Clear(crossterm::ClearType::All), crossterm::BlinkOff)?;
-		stdout.flush()?;
-	}
+	let stdout = stdout();
 
 	let backend = CrosstermBackend::with_alternate_screen(stdout, screen)?;
 	let mut terminal = Terminal::new(backend)?;
@@ -129,7 +119,6 @@ fn main() -> error::Result<()> {
 						_ => {}
 					}
 				}
-				thread::sleep(Duration::from_millis(50));
 			}
 		});
 	}
