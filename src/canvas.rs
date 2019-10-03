@@ -31,6 +31,7 @@ pub struct CanvasData {
 	pub temp_sensor_data : Vec<Vec<String>>,
 	pub process_data : Vec<Vec<String>>,
 	pub mem_data : Vec<(f64, f64)>,
+	pub mem_values : Vec<(u64, u64)>,
 	pub swap_data : Vec<(f64, f64)>,
 	pub cpu_data : Vec<(String, Vec<(f64, f64)>)>,
 }
@@ -130,8 +131,15 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				.style(Style::default().fg(GRAPH_COLOUR))
 				.bounds([-0.5, 100.5])
 				.labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
-			let mem_name = "RAM:".to_string() + &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64));
-			let swap_name = "SWP:".to_string() + &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64));
+
+			let mem_name = "RAM:".to_string()
+				+ &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
+				+ &format!(
+					"   {:.1}GB/{:.1}GB",
+					canvas_data.mem_values[0].0 as f64 / 1024.0,
+					canvas_data.mem_values[0].1 as f64 / 1024.0
+				);
+			let swap_name;
 
 			let mut mem_canvas_vec : Vec<Dataset> = vec![Dataset::default()
 				.name(&mem_name)
@@ -140,6 +148,13 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				.data(&canvas_data.mem_data)];
 
 			if !(&canvas_data.swap_data).is_empty() && (&canvas_data.swap_data).last().unwrap().1 >= 0.0 {
+				swap_name = "SWP:".to_string()
+					+ &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
+					+ &format!(
+						"   {:.1}GB/{:.1}GB",
+						canvas_data.mem_values[1].0 as f64 / 1024.0,
+						canvas_data.mem_values[1].1 as f64 / 1024.0
+					);
 				mem_canvas_vec.push(
 					Dataset::default()
 						.name(&swap_name)

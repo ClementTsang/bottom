@@ -241,6 +241,7 @@ fn main() -> error::Result<()> {
 					canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
 					canvas_data.process_data = update_process_row(&app.data);
 					canvas_data.mem_data = update_mem_data_points(&app.data);
+					canvas_data.mem_values = update_mem_data_values(&app.data);
 					canvas_data.swap_data = update_swap_data_points(&app.data);
 					canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
 
