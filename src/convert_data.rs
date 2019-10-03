@@ -184,7 +184,28 @@ pub fn update_swap_data_points(app_data : &data_collection::Data) -> Vec<(f64, f
 	convert_mem_data(&app_data.swap)
 }
 
-pub fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64, f64)> {
+pub fn update_mem_data_values(app_data : &data_collection::Data) -> Vec<(u64, u64)> {
+	let mut result : Vec<(u64, u64)> = Vec::new();
+	result.push(get_most_recent_mem_values(&app_data.memory));
+	result.push(get_most_recent_mem_values(&app_data.swap));
+
+	result
+}
+
+fn get_most_recent_mem_values(mem_data : &[data_collection::mem::MemData]) -> (u64, u64) {
+	let mut result : (u64, u64) = (0, 0);
+
+	if !mem_data.is_empty() {
+		if let Some(most_recent) = mem_data.last() {
+			result.0 = most_recent.mem_used_in_mb;
+			result.1 = most_recent.mem_total_in_mb;
+		}
+	}
+
+	result
+}
+
+fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64, f64)> {
 	let mut result : Vec<(f64, f64)> = Vec::new();
 
 	for data in mem_data {
@@ -211,7 +232,6 @@ pub fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64
 		}
 
 		result.push(new_entry);
-		//debug!("Pushed: ({}, {})", result.last().unwrap().0, result.last().unwrap().1);
 	}
 
 	result
