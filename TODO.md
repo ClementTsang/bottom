@@ -2,6 +2,8 @@
 
 Note this will probably migrate to GitHub's native Issues; this was mostly for personal use during early stages.
 
+- Rebalance cpu usage in process by using current value (it's currently just summing to 100%)
+
 - Scrolling support for temp/disk
 
 - Travis
