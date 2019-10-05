@@ -30,7 +30,7 @@ tokio = "0.2.0-alpha.4"
 winapi = "0.3.8"
 
 [dependencies.tui-temp-fork]
-#git = "https://github.com/ClementTsang/tui-rs"
+git = "https://github.com/ClementTsang/tui-rs"
 #path = "../tui-rs"
 version = "0.6.4"
 default-features = false
