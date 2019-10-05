@@ -2,34 +2,40 @@
 
 Note this will probably migrate to GitHub's native Issues; this was mostly for personal use during early stages.
 
+## Want to do really badly
+
 - Rebalance cpu usage in process by using current value (it's currently just summing to 100%)
 
-- Travis
+- Travis to automate building
 
-- Refactoring! Please.
+- Refactoring!
 
 - Scaling in and out (zoom), may need to show zoom levels
 
-- More keybinds
+- More keybinds (jumping, scaling, help)
 
 - Tests
-
-- Mouse + key events conflict? Make it so that some events don't clog up the loop if they are not valid keys!
-
-- It would be maybe a good idea to see if we can run the process calculation across ALL cpus...? Might be more accurate.
 
 - ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
 
 - Remove any `unwrap()`, ensure no crashing! Might have to use this: <https://doc.rust-lang.org/std/panic/fn.catch_unwind.html>
 
-- Truncate columns if needed for tables
-
-- Efficiency!!!
+- Efficiency... for example, reduce some redraw logic if possible (ie: no changes to dir sorting)
 
 - Filtering in processes (that is, allow searching)
 
 - Help screen
 
+- Probably good to add a "are you sure" to dd-ing...
+
+## Less important
+
+- Mouse + key events conflict? Make it so that some events don't clog up the loop if they are not valid keys!
+
 - Modularity
 
-- Probably good to add a "are you sure" to dd-ing...
+- Mouse support if possible for clicking
+
+- Truncate columns if needed for tables
+
+- Grouping by process
