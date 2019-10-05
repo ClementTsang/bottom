@@ -358,19 +358,41 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				)
 			});
 
-			Table::new(["PID", "Name", "CPU%", "Mem%"].iter(), process_rows)
-				.block(
-					Block::default()
-						.title("Processes")
-						.borders(Borders::ALL)
-						.border_style(match app_state.current_application_position {
-							app::ApplicationPosition::PROCESS => highlighted_border_style,
-							_ => border_style,
-						}),
-				)
-				.header_style(Style::default().fg(Color::LightBlue))
-				.widths(&[(width * 0.2) as u16, (width * 0.35) as u16, (width * 0.2) as u16, (width * 0.2) as u16])
-				.render(&mut f, bottom_chunks[1]);
+			{
+				use app::data_collection::processes::ProcessSorting;
+				let mut pid = "PID".to_string();
+				let mut name = "Name".to_string();
+				let mut cpu = "CPU%".to_string();
+				let mut mem = "Mem%".to_string();
+
+				let direction_val = if app_state.process_sorting_reverse {
+					" ⯆".to_string()
+				}
+				else {
+					" ⯅".to_string()
+				};
+
+				match app_state.process_sorting_type {
+					ProcessSorting::CPU => cpu += &direction_val,
+					ProcessSorting::MEM => mem += &direction_val,
+					ProcessSorting::PID => pid += &direction_val,
+					ProcessSorting::NAME => name += &direction_val,
+				};
+
+				Table::new([pid, name, cpu, mem].iter(), process_rows)
+					.block(
+						Block::default()
+							.title("Processes")
+							.borders(Borders::ALL)
+							.border_style(match app_state.current_application_position {
+								app::ApplicationPosition::PROCESS => highlighted_border_style,
+								_ => border_style,
+							}),
+					)
+					.header_style(Style::default().fg(Color::LightBlue))
+					.widths(&[(width * 0.2) as u16, (width * 0.35) as u16, (width * 0.2) as u16, (width * 0.2) as u16])
+					.render(&mut f, bottom_chunks[1]);
+			}
 		}
 	})?;
 
