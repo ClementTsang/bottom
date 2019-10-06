@@ -28,39 +28,47 @@ pub fn update_disk_row(app_data : &data_collection::Data) -> Vec<Vec<String>> {
 	let mut disk_vector : Vec<Vec<String>> = Vec::new();
 	for disk in &app_data.list_of_disks {
 		let io_activity = if app_data.list_of_io.len() > 2 {
-			let io_package = &app_data.list_of_io.last().unwrap();
-			let prev_io_package = &app_data.list_of_io[app_data.list_of_io.len() - 2];
+			if let Some(io_package) = &app_data.list_of_io.last() {
+				if let Some(trimmed_mount) = disk.name.to_string().split('/').last() {
+					let prev_io_package = &app_data.list_of_io[app_data.list_of_io.len() - 2];
 
-			let io_hashmap = &io_package.io_hash;
-			let prev_io_hashmap = &prev_io_package.io_hash;
-			let trimmed_mount = &disk.name.to_string().split('/').last().unwrap().to_string();
-			let time_difference = io_package.instant.duration_since(prev_io_package.instant).as_secs_f64();
-			if io_hashmap.contains_key(trimmed_mount) && prev_io_hashmap.contains_key(trimmed_mount) {
-				// Ideally change this...
-				let ele = &io_hashmap[trimmed_mount];
-				let prev = &prev_io_hashmap[trimmed_mount];
-				let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
-				let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
-				(
-					if read_bytes_per_sec < 1024 {
-						format!("{}B", read_bytes_per_sec)
-					}
-					else if read_bytes_per_sec < 1024 * 1024 {
-						format!("{}KB", read_bytes_per_sec / 1024)
+					let io_hashmap = &io_package.io_hash;
+					let prev_io_hashmap = &prev_io_package.io_hash;
+					let time_difference = io_package.instant.duration_since(prev_io_package.instant).as_secs_f64();
+					if io_hashmap.contains_key(trimmed_mount) && prev_io_hashmap.contains_key(trimmed_mount) {
+						// Ideally change this...
+						let ele = &io_hashmap[trimmed_mount];
+						let prev = &prev_io_hashmap[trimmed_mount];
+						let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
+						let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
+						(
+							if read_bytes_per_sec < 1024 {
+								format!("{}B", read_bytes_per_sec)
+							}
+							else if read_bytes_per_sec < 1024 * 1024 {
+								format!("{}KB", read_bytes_per_sec / 1024)
+							}
+							else {
+								format!("{}MB", read_bytes_per_sec / 1024 / 1024)
+							},
+							if write_bytes_per_sec < 1024 {
+								format!("{}B", write_bytes_per_sec)
+							}
+							else if write_bytes_per_sec < 1024 * 1024 {
+								format!("{}KB", write_bytes_per_sec / 1024)
+							}
+							else {
+								format!("{}MB", write_bytes_per_sec / 1024 / 1024)
+							},
+						)
 					}
 					else {
-						format!("{}MB", read_bytes_per_sec / 1024 / 1024)
-					},
-					if write_bytes_per_sec < 1024 {
-						format!("{}B", write_bytes_per_sec)
+						("0B".to_string(), "0B".to_string())
 					}
-					else if write_bytes_per_sec < 1024 * 1024 {
-						format!("{}KB", write_bytes_per_sec / 1024)
-					}
-					else {
-						format!("{}MB", write_bytes_per_sec / 1024 / 1024)
-					},
-				)
+				}
+				else {
+					("0B".to_string(), "0B".to_string())
+				}
 			}
 			else {
 				("0B".to_string(), "0B".to_string())
@@ -161,15 +169,17 @@ pub fn update_cpu_data_points(show_avg_cpu : bool, app_data : &data_collection::
 
 		// Finally, add it all onto the end
 		for (i, data) in cpu_collection.iter().enumerate() {
-			cpu_data_vector.push((
-				// + 1 to skip total CPU if show_avg_cpu is false
-				format!(
-					"{:4}: ",
-					&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)
-				)
-				.to_uppercase() + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
-				data.clone(),
-			))
+			if !app_data.list_of_cpu_packages.is_empty() {
+				cpu_data_vector.push((
+					// + 1 to skip total CPU if show_avg_cpu is false
+					format!(
+						"{:4}: ",
+						&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)
+					)
+					.to_uppercase() + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
+					data.clone(),
+				))
+			}
 		}
 	}
 
@@ -287,16 +297,10 @@ pub fn convert_network_data_points(network_data : &[data_collection::network::Ne
 
 		rx.push(rx_data);
 		tx.push(tx_data);
-
-		//debug!("Pushed rx: ({}, {})", rx.last().unwrap().0, rx.last().unwrap().1);
-		//debug!("Pushed tx: ({}, {})", tx.last().unwrap().0, tx.last().unwrap().1);
 	}
 
-	let rx_display = if network_data.is_empty() {
-		"0B".to_string()
-	}
-	else {
-		let num_bytes = network_data.last().unwrap().rx;
+	let rx_display = if let Some(last_num_bytes_entry) = network_data.last() {
+		let num_bytes = last_num_bytes_entry.rx;
 		if num_bytes < 1024 {
 			format!("RX: {:4} B", num_bytes).to_string()
 		}
@@ -309,12 +313,13 @@ pub fn convert_network_data_points(network_data : &[data_collection::network::Ne
 		else {
 			format!("RX: {:4}GB", num_bytes / 1024 / 1024 / 1024).to_string()
 		}
-	};
-	let tx_display = if network_data.is_empty() {
-		"0B".to_string()
 	}
 	else {
-		let num_bytes = network_data.last().unwrap().tx;
+		"0B".to_string()
+	};
+
+	let tx_display = if let Some(last_num_bytes_entry) = network_data.last() {
+		let num_bytes = last_num_bytes_entry.tx;
 		if num_bytes < 1024 {
 			format!("TX: {:4} B", num_bytes).to_string()
 		}
@@ -327,6 +332,9 @@ pub fn convert_network_data_points(network_data : &[data_collection::network::Ne
 		else {
 			format!("TX: {:4}GB", num_bytes / 1024 / 1024 / 1024).to_string()
 		}
+	}
+	else {
+		"0B".to_string()
 	};
 
 	ConvertedNetworkData {
