@@ -147,21 +147,25 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				.style(Style::default().fg(Color::LightBlue))
 				.data(&canvas_data.mem_data)];
 
-			if !(&canvas_data.swap_data).is_empty() && (&canvas_data.swap_data).last().unwrap().1 >= 0.0 {
-				swap_name = "SWP:".to_string()
-					+ &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
-					+ &format!(
-						"   {:.1}GB/{:.1}GB",
-						canvas_data.mem_values[1].0 as f64 / 1024.0,
-						canvas_data.mem_values[1].1 as f64 / 1024.0
-					);
-				mem_canvas_vec.push(
-					Dataset::default()
-						.name(&swap_name)
-						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-						.style(Style::default().fg(Color::LightYellow))
-						.data(&canvas_data.swap_data),
-				);
+			if !(&canvas_data.swap_data).is_empty() {
+				if let Some(last_canvas_result) = (&canvas_data.swap_data).last() {
+					if last_canvas_result.1 >= 0.0 {
+						swap_name = "SWP:".to_string()
+							+ &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
+							+ &format!(
+								"   {:.1}GB/{:.1}GB",
+								canvas_data.mem_values[1].0 as f64 / 1024.0,
+								canvas_data.mem_values[1].1 as f64 / 1024.0
+							);
+						mem_canvas_vec.push(
+							Dataset::default()
+								.name(&swap_name)
+								.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+								.style(Style::default().fg(Color::LightYellow))
+								.data(&canvas_data.swap_data),
+						);
+					}
+				}
 			}
 
 			Chart::default()

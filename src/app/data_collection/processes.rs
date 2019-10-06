@@ -67,7 +67,12 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 	*prev_idle = idle;
 	*prev_non_idle = non_idle;
 
-	let result = if total_delta - idle_delta != 0_f64 { total_delta - idle_delta } else { 1_f64 };
+	let result = if total_delta - idle_delta != 0_f64 {
+		total_delta - idle_delta
+	}
+	else {
+		1_f64
+	};
 
 	Ok(result) // This works, REALLY damn well.  The percentage check is within like 2% of the sysinfo one.
 }
@@ -169,13 +174,14 @@ pub async fn get_sorted_processes_list(
 		let ps_result = Command::new("ps").args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"]).output()?;
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
-		let cpu_usage = vangelis_cpu_usage_calculation(prev_idle, prev_non_idle).unwrap(); // TODO: FIX THIS ERROR CHECKING
-		let process_stream = split_string.collect::<Vec<&str>>();
+		if let Ok(cpu_usage) = vangelis_cpu_usage_calculation(prev_idle, prev_non_idle) {
+			let process_stream = split_string.collect::<Vec<&str>>();
 
-		for process in process_stream {
-			if let Ok(process_object) = convert_ps(process, cpu_usage, prev_pid_stats) {
-				if !process_object.command.is_empty() {
-					process_vector.push(process_object);
+			for process in process_stream {
+				if let Ok(process_object) = convert_ps(process, cpu_usage, prev_pid_stats) {
+					if !process_object.command.is_empty() {
+						process_vector.push(process_object);
+					}
 				}
 			}
 		}

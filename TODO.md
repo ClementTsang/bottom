@@ -2,23 +2,15 @@
 
 Note this will probably migrate to GitHub's native Issues; this was mostly for personal use during early stages.
 
-## Want to do really badly
-
-- Rebalance cpu usage in process by using current value (it's currently just summing to 100%)
+## Want to do
 
 - Travis to automate building
-
-- Refactoring!
 
 - Scaling in and out (zoom), may need to show zoom levels
 
 - More keybinds (jumping, scaling, help)
 
-- Tests
-
 - ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
-
-- Remove any `unwrap()`, ensure no crashing! Might have to use this: <https://doc.rust-lang.org/std/panic/fn.catch_unwind.html>
 
 - Efficiency... for example, reduce some redraw logic if possible (ie: no changes to dir sorting)
 
@@ -30,6 +22,12 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 ## Less important
 
+- Rebalance cpu usage in process by using current value (it's currently just summing to 100%)
+
+- Tests
+
+- Refactoring!
+
 - Mouse + key events conflict? Make it so that some events don't clog up the loop if they are not valid keys!
 
 - Modularity
@@ -39,3 +37,5 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 - Truncate columns if needed for tables
 
 - Grouping by process
+
+- Deal with async and stuff (remove if not needed)
