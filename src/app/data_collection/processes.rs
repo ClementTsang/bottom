@@ -1,4 +1,4 @@
-use std::{collections::HashMap, process::Command};
+use std::{collections::HashMap, process::Command, time::Instant};
 use sysinfo::{ProcessExt, System, SystemExt};
 
 #[derive(Clone)]
@@ -115,10 +115,10 @@ fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 	Ok(utime + stime) // This seems to match top...
 }
 
-fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap<String, f64>) -> std::io::Result<f64> {
+fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap<String, (f64, Instant)>) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
 	let before_proc_val : f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
-		*previous_pid_stats.get(&pid.to_string()).unwrap_or(&0_f64)
+		previous_pid_stats.get(&pid.to_string()).unwrap_or(&(0_f64, Instant::now())).0
 	}
 	else {
 		0_f64
@@ -134,12 +134,12 @@ fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap
 		(after_proc_val - before_proc_val) / cpu_usage * 100_f64
 	);*/
 
-	let entry = previous_pid_stats.entry(pid.to_string()).or_insert(after_proc_val);
-	*entry = after_proc_val;
+	let entry = previous_pid_stats.entry(pid.to_string()).or_insert((after_proc_val, Instant::now()));
+	*entry = (after_proc_val, Instant::now());
 	Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
 }
 
-fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut HashMap<String, f64>) -> std::io::Result<ProcessData> {
+fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut HashMap<String, (f64, Instant)>) -> std::io::Result<ProcessData> {
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessData {
 			pid : 0,
@@ -164,7 +164,7 @@ fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut 
 }
 
 pub async fn get_sorted_processes_list(
-	sys : &System, prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut std::collections::HashMap<String, f64>,
+	sys : &System, prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut std::collections::HashMap<String, (f64, Instant)>,
 ) -> crate::utils::error::Result<Vec<ProcessData>> {
 	let mut process_vector : Vec<ProcessData> = Vec::new();
 

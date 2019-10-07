@@ -1,6 +1,6 @@
 //! This is the main file to house data collection functions.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 use sysinfo::{System, SystemExt};
 
 pub mod cpu;
@@ -40,7 +40,7 @@ pub struct DataState {
 	first_run : bool,
 	sys : System,
 	stale_max_seconds : u64,
-	prev_pid_stats : HashMap<String, f64>, // TODO: Purge list?
+	prev_pid_stats : HashMap<String, (f64, Instant)>,
 	prev_idle : f64,
 	prev_non_idle : f64,
 	temperature_type : temperature::TemperatureType,
@@ -112,6 +112,18 @@ impl DataState {
 
 		// Filter out stale timed entries
 		let current_instant = std::time::Instant::now();
+
+		let stale_list : Vec<_> = self
+			.prev_pid_stats
+			.iter()
+			.filter(|&(_, &v)| current_instant.duration_since(v.1).as_secs() > self.stale_max_seconds)
+			.map(|(k, _)| k.clone())
+			.collect();
+		for stale in stale_list {
+			debug!("Removing: {:?}", self.prev_pid_stats[&stale]);
+			self.prev_pid_stats.remove(&stale);
+		}
+
 		self.data.list_of_cpu_packages = self
 			.data
 			.list_of_cpu_packages
