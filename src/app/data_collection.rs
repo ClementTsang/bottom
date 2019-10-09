@@ -44,6 +44,7 @@ pub struct DataState {
 	prev_idle : f64,
 	prev_non_idle : f64,
 	temperature_type : temperature::TemperatureType,
+	last_clean : Instant, // Last time stale data was cleared
 }
 
 impl Default for DataState {
@@ -57,6 +58,7 @@ impl Default for DataState {
 			prev_idle : 0_f64,
 			prev_non_idle : 0_f64,
 			temperature_type : temperature::TemperatureType::Celsius,
+			last_clean : Instant::now(),
 		}
 	}
 }
@@ -113,64 +115,59 @@ impl DataState {
 		// Filter out stale timed entries
 		let current_instant = std::time::Instant::now();
 
-		let stale_list : Vec<_> = self
-			.prev_pid_stats
-			.iter()
-			.filter(|&(_, &v)| current_instant.duration_since(v.1).as_secs() > self.stale_max_seconds)
-			.map(|(k, _)| k.clone())
-			.collect();
-		for stale in stale_list {
-			debug!("Removing: {:?}", self.prev_pid_stats[&stale]);
-			self.prev_pid_stats.remove(&stale);
+		if current_instant.duration_since(self.last_clean).as_secs() > self.stale_max_seconds {
+			let stale_list : Vec<_> = self
+				.prev_pid_stats
+				.iter()
+				.filter(|&(_, &v)| current_instant.duration_since(v.1).as_secs() > self.stale_max_seconds)
+				.map(|(k, _)| k.clone())
+				.collect();
+			for stale in stale_list {
+				self.prev_pid_stats.remove(&stale);
+			}
+
+			self.data.list_of_cpu_packages = self
+				.data
+				.list_of_cpu_packages
+				.iter()
+				.cloned()
+				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.collect::<Vec<_>>();
+
+			self.data.memory = self
+				.data
+				.memory
+				.iter()
+				.cloned()
+				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.collect::<Vec<_>>();
+
+			self.data.swap = self
+				.data
+				.swap
+				.iter()
+				.cloned()
+				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.collect::<Vec<_>>();
+
+			self.data.network = self
+				.data
+				.network
+				.iter()
+				.cloned()
+				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.collect::<Vec<_>>();
+
+			self.data.list_of_io = self
+				.data
+				.list_of_io
+				.iter()
+				.cloned()
+				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.collect::<Vec<_>>();
+
+			self.last_clean = current_instant;
 		}
-
-		self.data.list_of_cpu_packages = self
-			.data
-			.list_of_cpu_packages
-			.iter()
-			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
-			.collect::<Vec<_>>();
-
-		self.data.memory = self
-			.data
-			.memory
-			.iter()
-			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
-			.collect::<Vec<_>>();
-
-		self.data.swap = self
-			.data
-			.swap
-			.iter()
-			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
-			.collect::<Vec<_>>();
-
-		self.data.network = self
-			.data
-			.network
-			.iter()
-			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
-			.collect::<Vec<_>>();
-
-		self.data.list_of_io = self
-			.data
-			.list_of_io
-			.iter()
-			.cloned()
-			.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
-			.collect::<Vec<_>>();
-
-		// self.data.list_of_physical_io = self
-		// 	.data
-		// 	.list_of_physical_io
-		// 	.iter()
-		// 	.cloned()
-		// 	.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
-		// 	.collect::<Vec<_>>();
 
 		debug!("End updating...");
 	}

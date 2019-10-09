@@ -22,6 +22,8 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 ## Less important
 
+- Ellipsis
+
 - Rebalance cpu usage in process by using current value (it's currently just summing to 100%)
 
 - Tests
