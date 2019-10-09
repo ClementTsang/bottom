@@ -40,6 +40,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
 	let highlighted_border_style : Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
 
+	terminal.autoresize()?;
 	terminal.draw(|mut f| {
 		//debug!("Drawing!");
 		let vertical_chunks = Layout::default()
@@ -129,8 +130,8 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 			let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 			let y_axis = Axis::default()
 				.style(Style::default().fg(GRAPH_COLOUR))
-				.bounds([-0.5, 100.5])
-				.labels(&["0%", "100%"]); // Offset as the zero value isn't drawn otherwise...
+				.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
+				.labels(&["0%", "100%"]);
 
 			let mem_name = "RAM:".to_string()
 				+ &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
@@ -139,7 +140,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 					canvas_data.mem_values[0].0 as f64 / 1024.0,
 					canvas_data.mem_values[0].1 as f64 / 1024.0
 				);
-			let swap_name;
+			let swap_name : String;
 
 			let mut mem_canvas_vec : Vec<Dataset> = vec![Dataset::default()
 				.name(&mem_name)

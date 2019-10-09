@@ -154,7 +154,7 @@ fn main() -> error::Result<()> {
 	// Event loop
 	let mut data_state = data_collection::DataState::default();
 	data_state.init();
-	data_state.set_stale_max_seconds(STALE_MAX_MILLISECONDS);
+	data_state.set_stale_max_seconds(STALE_MAX_MILLISECONDS / 1000);
 	data_state.set_temperature_type(app.temperature_type.clone());
 	{
 		let tx = tx.clone();
