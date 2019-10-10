@@ -23,7 +23,7 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 ## Usage
 
-Note that all options on GitHub may reflect the current development build, and not that of the current releases. For now, refer to the [crate](https://crates.io/crates/bottom) README for documentation as of time of release.
+Note that all options and keybinds on GitHub may reflect the current development build, and not that of the current releases. For now, refer to the [crate](https://crates.io/crates/bottom) README for documentation as of time of release.
 
 ### Command line options
 
