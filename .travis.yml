@@ -44,7 +44,7 @@ matrix:
       <<: *DEPLOY_TO_GITHUB
 
     - name: Windows Binary
-      env: TARGET=stable-x86_64-pc-windows-msvc
+      env: TARGET=x86_64-pc-windows-msvc
       os: windows
       rust: nightly
       before_script: rustup target add $TARGET
