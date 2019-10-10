@@ -21,7 +21,6 @@ pub enum ScrollDirection {
 }
 
 pub struct App {
-	pub should_quit : bool,
 	pub process_sorting_type : processes::ProcessSorting,
 	pub process_sorting_reverse : bool,
 	pub to_be_resorted : bool,
@@ -40,13 +39,13 @@ pub struct App {
 	pub previous_process_position : i64,
 	awaiting_second_d : bool,
 	pub use_dot : bool,
+	pub show_help : bool,
 }
 
 impl App {
 	pub fn new(show_average_cpu : bool, temperature_type : temperature::TemperatureType, update_rate_in_milliseconds : u64, use_dot : bool) -> App {
 		App {
 			process_sorting_type : processes::ProcessSorting::CPU,
-			should_quit : false,
 			process_sorting_reverse : true,
 			to_be_resorted : false,
 			currently_selected_process_position : 0,
@@ -64,71 +63,86 @@ impl App {
 			previous_temp_position : 0,
 			awaiting_second_d : false,
 			use_dot,
+			show_help : false,
 		}
 	}
 
-	pub fn on_key(&mut self, c : char) {
-		match c {
-			'q' => self.should_quit = true,
-			'd' => {
-				if self.awaiting_second_d {
-					self.awaiting_second_d = false;
-					self.kill_highlighted_process().unwrap_or(()); // TODO: Should this be handled?
-				}
-				else {
-					self.awaiting_second_d = true;
-				}
-			}
-			'c' => {
-				// TODO: This should depend on what tile you're on!
-				match self.process_sorting_type {
-					processes::ProcessSorting::CPU => self.process_sorting_reverse = !self.process_sorting_reverse,
-					_ => {
-						self.process_sorting_type = processes::ProcessSorting::CPU;
-						self.process_sorting_reverse = true;
-					}
-				}
-				self.to_be_resorted = true;
-				self.currently_selected_process_position = 0;
-			}
-			'm' => {
-				match self.process_sorting_type {
-					processes::ProcessSorting::MEM => self.process_sorting_reverse = !self.process_sorting_reverse,
-					_ => {
-						self.process_sorting_type = processes::ProcessSorting::MEM;
-						self.process_sorting_reverse = true;
-					}
-				}
-				self.to_be_resorted = true;
-				self.currently_selected_process_position = 0;
-			}
-			'p' => {
-				match self.process_sorting_type {
-					processes::ProcessSorting::PID => self.process_sorting_reverse = !self.process_sorting_reverse,
-					_ => {
-						self.process_sorting_type = processes::ProcessSorting::PID;
-						self.process_sorting_reverse = false;
-					}
-				}
-				self.to_be_resorted = true;
-				self.currently_selected_process_position = 0;
-			}
-			'n' => {
-				match self.process_sorting_type {
-					processes::ProcessSorting::NAME => self.process_sorting_reverse = !self.process_sorting_reverse,
-					_ => {
-						self.process_sorting_type = processes::ProcessSorting::NAME;
-						self.process_sorting_reverse = false;
-					}
-				}
-				self.to_be_resorted = true;
-				self.currently_selected_process_position = 0;
-			}
-			_ => {}
-		}
+	pub fn on_enter(&mut self) {
+	}
 
-		if self.awaiting_second_d && c != 'd' {
-			self.awaiting_second_d = false;
+	pub fn on_esc(&mut self) {
+		if self.show_help {
+			self.show_help = false;
+		}
+	}
+
+	// TODO: How should we make it for process panel specific hotkeys?  Only if we're on process panel?  Or what?
+	pub fn on_key(&mut self, c : char) {
+		if !self.show_help {
+			match c {
+				'd' => {
+					if self.awaiting_second_d {
+						self.awaiting_second_d = false;
+						self.kill_highlighted_process().unwrap_or(()); // TODO: Should this be handled?
+					}
+					else {
+						self.awaiting_second_d = true;
+					}
+				}
+				'c' => {
+					// TODO: This should depend on what tile you're on!
+					match self.process_sorting_type {
+						processes::ProcessSorting::CPU => self.process_sorting_reverse = !self.process_sorting_reverse,
+						_ => {
+							self.process_sorting_type = processes::ProcessSorting::CPU;
+							self.process_sorting_reverse = true;
+						}
+					}
+					self.to_be_resorted = true;
+					self.currently_selected_process_position = 0;
+				}
+				'm' => {
+					match self.process_sorting_type {
+						processes::ProcessSorting::MEM => self.process_sorting_reverse = !self.process_sorting_reverse,
+						_ => {
+							self.process_sorting_type = processes::ProcessSorting::MEM;
+							self.process_sorting_reverse = true;
+						}
+					}
+					self.to_be_resorted = true;
+					self.currently_selected_process_position = 0;
+				}
+				'p' => {
+					match self.process_sorting_type {
+						processes::ProcessSorting::PID => self.process_sorting_reverse = !self.process_sorting_reverse,
+						_ => {
+							self.process_sorting_type = processes::ProcessSorting::PID;
+							self.process_sorting_reverse = false;
+						}
+					}
+					self.to_be_resorted = true;
+					self.currently_selected_process_position = 0;
+				}
+				'n' => {
+					match self.process_sorting_type {
+						processes::ProcessSorting::NAME => self.process_sorting_reverse = !self.process_sorting_reverse,
+						_ => {
+							self.process_sorting_type = processes::ProcessSorting::NAME;
+							self.process_sorting_reverse = false;
+						}
+					}
+					self.to_be_resorted = true;
+					self.currently_selected_process_position = 0;
+				}
+				'?' => {
+					self.show_help = true;
+				}
+				_ => {}
+			}
+
+			if self.awaiting_second_d && c != 'd' {
+				self.awaiting_second_d = false;
+			}
 		}
 	}
 
