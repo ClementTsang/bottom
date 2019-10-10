@@ -47,7 +47,7 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 - `q`, `Ctrl-C` to quit.
 
-- `f` to freeze updating. Press `f` again to unfreeze. Note updating will still continue in the background.
+- `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
 - `Up/k`, `Down/j`, `Left/h`, `Right/l` to navigate between panels.
 
@@ -55,7 +55,7 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 - `Esc` to close a dialog window.
 
-- `?` to get a help screen explaining the controls.
+- `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
 
 #### Processes Panel
 
