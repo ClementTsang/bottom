@@ -32,6 +32,11 @@ pub enum RustopError {
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid generic error: {}", message)]
 	GenericError { message : String },
+	/// An error to represent errors with fern
+	///
+	/// The data provided is the error found.
+	#[fail(display = "ERROR: Invalid fern error: {}", message)]
+	FernError { message : String },
 }
 
 impl From<std::io::Error> for RustopError {
@@ -61,5 +66,11 @@ impl From<std::num::ParseIntError> for RustopError {
 impl From<std::string::String> for RustopError {
 	fn from(err : std::string::String) -> Self {
 		RustopError::GenericError { message : err.to_string() }
+	}
+}
+
+impl From<fern::InitError> for RustopError {
+	fn from(err : fern::InitError) -> Self {
+		RustopError::FernError { message : err.to_string() }
 	}
 }
