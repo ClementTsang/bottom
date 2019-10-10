@@ -66,7 +66,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				Text::raw("Shift+Up and Shift+Down scrolls through the list.\n"),
 				Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
 				Text::raw("? to get this help screen.\n"),
-				Text::raw("\nProcess Panel Keybinds\n"),
+				Text::raw("\n Process Panel Keybinds\n"),
 				Text::raw("dd to kill the selected process.\n"),
 				Text::raw("c to sort by CPU usage.\n"),
 				Text::raw("m to sort by memory usage.\n"),
@@ -75,7 +75,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 			];
 
 			Paragraph::new(text.iter())
-				.block(Block::default().title("Help").borders(Borders::ALL))
+				.block(Block::default().title("Help (Press Esc to close)").borders(Borders::ALL))
 				.style(Style::default().fg(Color::Gray))
 				.alignment(Alignment::Left)
 				.wrap(true)
