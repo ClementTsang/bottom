@@ -25,7 +25,7 @@ pub struct ProcessData {
 	pub command : String,
 }
 
-fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64) -> std::io::Result<f64> {
+fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64) -> std::io::Result<(f64, f64)> {
 	// Named after this SO answer: https://stackoverflow.com/a/23376195
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
@@ -40,7 +40,7 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 
 	// SC in case that the parsing will fail due to length:
 	if val.len() <= 10 {
-		return Ok(1.0); // TODO: This is not the greatest...
+		return Ok((1.0, 0.0)); // TODO: This is not the greatest...
 	}
 
 	let user : f64 = val[1].parse::<_>().unwrap_or(0_f64);
@@ -74,7 +74,9 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 		1_f64
 	};
 
-	Ok(result) // This works, REALLY damn well.  The percentage check is within like 2% of the sysinfo one.
+	let cpu_percentage = if total_delta != 0_f64 { result / total_delta } else { 0_f64 };
+
+	Ok((result, cpu_percentage)) // This works, REALLY damn well.  The percentage check is within like 2% of the sysinfo one.
 }
 
 fn get_ordering<T : std::cmp::PartialOrd>(a_val : T, b_val : T, reverse_order : bool) -> std::cmp::Ordering {
@@ -115,7 +117,10 @@ fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 	Ok(utime + stime) // This seems to match top...
 }
 
-fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap<String, (f64, Instant)>) -> std::io::Result<f64> {
+/// Note that cpu_percentage should be represented WITHOUT the \times 100 factor!
+fn linux_cpu_usage(
+	pid : u32, cpu_usage : f64, cpu_percentage : f64, previous_pid_stats : &mut HashMap<String, (f64, Instant)>,
+) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
 	let before_proc_val : f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
 		previous_pid_stats.get(&pid.to_string()).unwrap_or(&(0_f64, Instant::now())).0
@@ -136,10 +141,12 @@ fn linux_cpu_usage(pid : u32, cpu_usage : f64, previous_pid_stats : &mut HashMap
 
 	let entry = previous_pid_stats.entry(pid.to_string()).or_insert((after_proc_val, Instant::now()));
 	*entry = (after_proc_val, Instant::now());
-	Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
+	Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64 * cpu_percentage)
 }
 
-fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut HashMap<String, (f64, Instant)>) -> std::io::Result<ProcessData> {
+fn convert_ps(
+	process : &str, cpu_usage : f64, cpu_percentage : f64, prev_pid_stats : &mut HashMap<String, (f64, Instant)>,
+) -> std::io::Result<ProcessData> {
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessData {
 			pid : 0,
@@ -159,7 +166,7 @@ fn convert_ps(process : &str, cpu_usage_percentage : f64, prev_pid_stats : &mut 
 		command,
 		mem_usage_percent,
 		mem_usage_kb : None,
-		cpu_usage_percent : linux_cpu_usage(pid, cpu_usage_percentage, prev_pid_stats)?,
+		cpu_usage_percent : linux_cpu_usage(pid, cpu_usage, cpu_percentage, prev_pid_stats)?,
 	})
 }
 
@@ -174,11 +181,11 @@ pub async fn get_sorted_processes_list(
 		let ps_result = Command::new("ps").args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"]).output()?;
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
-		if let Ok(cpu_usage) = vangelis_cpu_usage_calculation(prev_idle, prev_non_idle) {
+		if let Ok((cpu_usage, cpu_percentage)) = vangelis_cpu_usage_calculation(prev_idle, prev_non_idle) {
 			let process_stream = split_string.collect::<Vec<&str>>();
 
 			for process in process_stream {
-				if let Ok(process_object) = convert_ps(process, cpu_usage, prev_pid_stats) {
+				if let Ok(process_object) = convert_ps(process, cpu_usage, cpu_percentage, prev_pid_stats) {
 					if !process_object.command.is_empty() {
 						process_vector.push(process_object);
 					}

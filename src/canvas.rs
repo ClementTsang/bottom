@@ -401,16 +401,16 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 				{
 					use app::data_collection::processes::ProcessSorting;
-					let mut pid = "PID (p)".to_string();
-					let mut name = "Name (n)".to_string();
-					let mut cpu = "CPU% (c)".to_string();
-					let mut mem = "Mem% (m)".to_string();
+					let mut pid = "PID(p)".to_string();
+					let mut name = "Name(n)".to_string();
+					let mut cpu = "CPU%(c)".to_string();
+					let mut mem = "Mem%(m)".to_string();
 
 					let direction_val = if app_state.process_sorting_reverse {
-						" ⯆".to_string()
+						"⯆".to_string()
 					}
 					else {
-						" ⯅".to_string()
+						"⯅".to_string()
 					};
 
 					match app_state.process_sorting_type {
