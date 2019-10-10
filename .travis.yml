@@ -36,7 +36,7 @@ matrix:
       os: linux
       rust: nightly
       before_script: rustup target add $TARGET
-      script: cargo build --release --target $TARGET --locked
+      script: cargo build --release --target $TARGET
       addons:
         apt:
           packages:
@@ -48,7 +48,7 @@ matrix:
       os: windows
       rust: nightly
       before_script: rustup target add $TARGET
-      script: cargo build --release --target $TARGET --locked
+      script: cargo build --release --target $TARGET
       <<: *DEPLOY_TO_GITHUB
 
 notifications:
