@@ -4,8 +4,6 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 ## Want to do
 
-- Travis to automate building
-
 - Scaling in and out (zoom), may need to show zoom levels
 
 - More keybinds (jumping, scaling)
@@ -19,6 +17,8 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 - Probably good to add a "are you sure" to dd-ing...
 
 ## Less important
+
+- Minimalist mode
 
 - Ellipsis
 
