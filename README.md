@@ -47,6 +47,8 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 - `q`, `Ctrl-C` to quit.
 
+- `f` to freeze updating. Press `f` again to unfreeze. Note updating will still continue in the background.
+
 - `Up/k`, `Down/j`, `Left/h`, `Right/l` to navigate between panels.
 
 - `Shift+Up` and `Shift+Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
