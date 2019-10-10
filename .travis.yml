@@ -2,6 +2,8 @@ language: rust
 rust:
   - nightly
 os:
+  - windows
+  - osx
   - linux
 
 GH_TOKEN: &GH_TOKEN
