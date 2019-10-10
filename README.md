@@ -53,7 +53,7 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 - `Shift+Up` and `Shift+Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
 
-- `Esc` to close a dialog window (help or dd confirmation).
+- `Esc` to close a dialog window.
 
 - `?` to get a help screen explaining the controls.
 
