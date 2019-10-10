@@ -226,28 +226,30 @@ fn main() -> error::Result<()> {
 				}
 				Event::Update(data) => {
 					// debug!("Update event fired!");
-					app.data = *data;
-					data_collection::processes::sort_processes(
-						&mut app.data.list_of_processes,
-						&app.process_sorting_type,
-						app.process_sorting_reverse,
-					);
+					if !app.is_frozen {
+						app.data = *data;
+						data_collection::processes::sort_processes(
+							&mut app.data.list_of_processes,
+							&app.process_sorting_type,
+							app.process_sorting_reverse,
+						);
 
-					// Convert all data into tui components
-					let network_data = update_network_data_points(&app.data);
-					canvas_data.network_data_rx = network_data.rx;
-					canvas_data.network_data_tx = network_data.tx;
-					canvas_data.rx_display = network_data.rx_display;
-					canvas_data.tx_display = network_data.tx_display;
-					canvas_data.disk_data = update_disk_row(&app.data);
-					canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
-					canvas_data.process_data = update_process_row(&app.data);
-					canvas_data.mem_data = update_mem_data_points(&app.data);
-					canvas_data.mem_values = update_mem_data_values(&app.data);
-					canvas_data.swap_data = update_swap_data_points(&app.data);
-					canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
+						// Convert all data into tui components
+						let network_data = update_network_data_points(&app.data);
+						canvas_data.network_data_rx = network_data.rx;
+						canvas_data.network_data_tx = network_data.tx;
+						canvas_data.rx_display = network_data.rx_display;
+						canvas_data.tx_display = network_data.tx_display;
+						canvas_data.disk_data = update_disk_row(&app.data);
+						canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
+						canvas_data.process_data = update_process_row(&app.data);
+						canvas_data.mem_data = update_mem_data_points(&app.data);
+						canvas_data.mem_values = update_mem_data_values(&app.data);
+						canvas_data.swap_data = update_swap_data_points(&app.data);
+						canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
 
-					debug!("Update event complete.");
+						debug!("Update event complete.");
+					}
 				}
 			}
 		}

@@ -61,6 +61,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 			let text = [
 				Text::raw("\nGeneral Keybinds\n"),
 				Text::raw("q, Ctrl-C to quit.\n"),
+				Text::raw("f to toggle freezing and unfreezing the display.\n"),
 				Text::raw("Up/k, Down/j, Left/h, Right/l to navigate between panels.\n"),
 				Text::raw("Shift+Up and Shift+Down scrolls through the list.\n"),
 				Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
@@ -400,10 +401,10 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 				{
 					use app::data_collection::processes::ProcessSorting;
-					let mut pid = "PID".to_string();
-					let mut name = "Name".to_string();
-					let mut cpu = "CPU%".to_string();
-					let mut mem = "Mem%".to_string();
+					let mut pid = "PID (p)".to_string();
+					let mut name = "Name (n)".to_string();
+					let mut cpu = "CPU% (c)".to_string();
+					let mut mem = "Mem% (m)".to_string();
 
 					let direction_val = if app_state.process_sorting_reverse {
 						" ⯆".to_string()

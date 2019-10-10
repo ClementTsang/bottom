@@ -8,15 +8,13 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 - Scaling in and out (zoom), may need to show zoom levels
 
-- More keybinds (jumping, scaling, help)
+- More keybinds (jumping, scaling)
 
 - ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
 
 - Efficiency... for example, reduce some redraw logic if possible (ie: no changes to dir sorting)
 
 - Filtering in processes (that is, allow searching)
-
-- Help screen
 
 - Probably good to add a "are you sure" to dd-ing...
 

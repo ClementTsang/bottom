@@ -40,6 +40,7 @@ pub struct App {
 	awaiting_second_d : bool,
 	pub use_dot : bool,
 	pub show_help : bool,
+	pub is_frozen : bool,
 }
 
 impl App {
@@ -64,6 +65,7 @@ impl App {
 			awaiting_second_d : false,
 			use_dot,
 			show_help : false,
+			is_frozen : false,
 		}
 	}
 
@@ -83,14 +85,16 @@ impl App {
 				'd' => {
 					if self.awaiting_second_d {
 						self.awaiting_second_d = false;
-						self.kill_highlighted_process().unwrap_or(()); // TODO: Should this be handled?
+						self.kill_highlighted_process().unwrap_or(());
 					}
 					else {
 						self.awaiting_second_d = true;
 					}
 				}
+				'f' => {
+					self.is_frozen = !self.is_frozen;
+				}
 				'c' => {
-					// TODO: This should depend on what tile you're on!
 					match self.process_sorting_type {
 						processes::ProcessSorting::CPU => self.process_sorting_reverse = !self.process_sorting_reverse,
 						_ => {
