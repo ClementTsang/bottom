@@ -33,6 +33,10 @@ enum Event<I, J> {
 	Update(Box<data_collection::Data>),
 }
 
+enum ResetEvent {
+	Reset,
+}
+
 fn main() -> error::Result<()> {
 	utils::logging::init_logger()?;
 
@@ -156,12 +160,22 @@ fn main() -> error::Result<()> {
 	data_state.init();
 	data_state.set_stale_max_seconds(STALE_MAX_MILLISECONDS / 1000);
 	data_state.set_temperature_type(app.temperature_type.clone());
+	let (rtx, rrx) = mpsc::channel();
 	{
 		let tx = tx.clone();
 		let mut first_run = true;
 		thread::spawn(move || {
 			let tx = tx.clone();
 			loop {
+				if let Ok(message) = rrx.try_recv() {
+					match message {
+						ResetEvent::Reset => {
+							debug!("Received reset message");
+							first_run = true;
+							data_state.data = app::data_collection::Data::default();
+						}
+					}
+				}
 				futures::executor::block_on(data_state.update_data());
 				tx.send(Event::Update(Box::from(data_state.data.clone()))).unwrap();
 				if first_run {
@@ -188,6 +202,12 @@ fn main() -> error::Result<()> {
 						KeyEvent::Char('l') | KeyEvent::Right => app.on_right(),
 						KeyEvent::Char('k') | KeyEvent::Up => app.on_up(),
 						KeyEvent::Char('j') | KeyEvent::Down => app.on_down(),
+						KeyEvent::Ctrl('r') => {
+							while rtx.send(ResetEvent::Reset).is_err() {
+								debug!("Sent reset message.");
+							}
+							debug!("Resetting begins...");
+						}
 						KeyEvent::ShiftUp => app.decrement_position_count(),
 						KeyEvent::ShiftDown => app.increment_position_count(),
 						KeyEvent::Char(c) => app.on_key(c),
@@ -228,6 +248,7 @@ fn main() -> error::Result<()> {
 					// debug!("Update event fired!");
 					if !app.is_frozen {
 						app.data = *data;
+
 						data_collection::processes::sort_processes(
 							&mut app.data.list_of_processes,
 							&app.process_sorting_type,
