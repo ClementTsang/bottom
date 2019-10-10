@@ -183,14 +183,16 @@ fn main() -> error::Result<()> {
 				Event::KeyInput(event) => {
 					// debug!("Keyboard event fired!");
 					match event {
-						KeyEvent::Ctrl('c') | KeyEvent::Esc => break,
+						KeyEvent::Ctrl('c') | KeyEvent::Char('q') => break,
 						KeyEvent::Char('h') | KeyEvent::Left => app.on_left(),
 						KeyEvent::Char('l') | KeyEvent::Right => app.on_right(),
 						KeyEvent::Char('k') | KeyEvent::Up => app.on_up(),
 						KeyEvent::Char('j') | KeyEvent::Down => app.on_down(),
 						KeyEvent::ShiftUp => app.decrement_position_count(),
 						KeyEvent::ShiftDown => app.increment_position_count(),
-						KeyEvent::Char(c) => app.on_key(c), // TODO: We can remove the 'q' event and just move it to the quit?
+						KeyEvent::Char(c) => app.on_key(c),
+						KeyEvent::Enter => app.on_enter(),
+						KeyEvent::Esc => app.on_esc(),
 						_ => {}
 					}
 
@@ -247,9 +249,6 @@ fn main() -> error::Result<()> {
 
 					debug!("Update event complete.");
 				}
-			}
-			if app.should_quit {
-				break;
 			}
 		}
 		// Draw!

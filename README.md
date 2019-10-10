@@ -45,15 +45,19 @@ Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well t
 
 #### General
 
-- `q`, `Esc`, or `Ctrl-C` to quit.
+- `q`, `Ctrl-C` to quit.
 
 - `Up/k`, `Down/j`, `Left/h`, `Right/l` to navigate between panels.
 
-- `Shift+Up` and `Shift+Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes)
+- `Shift+Up` and `Shift+Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
+
+- `Esc` to close a dialog window (help or dd confirmation).
+
+- `?` to get a help screen explaining the controls.
 
 #### Processes Panel
 
-- `dd` to kill the selected process (currently only on Linux) - **I would highly recommend you to be careful using this, lest you accidentally kill the wrong process**.
+- `dd` to kill the selected process - **I would highly recommend you to be careful using this, lest you accidentally kill the wrong process**.
 
 - `c` to sort by CPU usage. Sorts in descending order by default. Press again to reverse sorting order.
 
