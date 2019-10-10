@@ -60,7 +60,8 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 		if app_state.show_help {
 			let text = [
 				Text::raw("\nGeneral Keybinds\n"),
-				Text::raw("q, Ctrl-C to quit.\n"),
+				Text::raw("q, Ctrl-c to quit.\n"),
+				Text::raw("Ctrl-r to reset all data.\n"),
 				Text::raw("f to toggle freezing and unfreezing the display.\n"),
 				Text::raw("Up/k, Down/j, Left/h, Right/l to navigate between panels.\n"),
 				Text::raw("Shift+Up and Shift+Down scrolls through the list.\n"),
