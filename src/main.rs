@@ -34,7 +34,7 @@ enum Event<I, J> {
 }
 
 fn main() -> error::Result<()> {
-	let _log = utils::logging::init_logger(); // TODO: Note this could fail and we wouldn't know... consider whether it is worth dealing with
+	utils::logging::init_logger()?;
 
 	// Parse command line options
 	let matches = clap_app!(app =>
