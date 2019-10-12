@@ -146,7 +146,7 @@ pub fn update_cpu_data_points(show_avg_cpu : bool, app_data : &data_collection::
 				let current_cpu_usage = data.cpu_vec[cpu_num].cpu_usage;
 
 				let new_entry = (
-					((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+					((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 					current_cpu_usage,
 				);
 
@@ -221,7 +221,7 @@ fn convert_mem_data(mem_data : &[data_collection::mem::MemData]) -> Vec<(f64, f6
 	for data in mem_data {
 		let current_time = std::time::Instant::now();
 		let new_entry = (
-			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+			((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			if data.mem_total_in_mb == 0 {
 				-1000.0
 			}
@@ -265,11 +265,11 @@ pub fn convert_network_data_points(network_data : &[data_collection::network::Ne
 	for data in network_data {
 		let current_time = std::time::Instant::now();
 		let rx_data = (
-			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+			((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			data.rx as f64 / 1024.0,
 		);
 		let tx_data = (
-			((STALE_MAX_MILLISECONDS as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+			((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
 			data.tx as f64 / 1024.0,
 		);
 

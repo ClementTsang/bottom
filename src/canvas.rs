@@ -1,3 +1,4 @@
+use crate::{app, constants, utils::error};
 use tui_temp_fork::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout},
@@ -5,8 +6,6 @@ use tui_temp_fork::{
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
 	Terminal,
 };
-
-use crate::{app, utils::error};
 
 const COLOUR_LIST : [Color; 6] = [
 	Color::Red,
@@ -110,7 +109,9 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 			// Set up blocks and their components
 			// CPU usage graph
 			{
-				let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
+				let x_axis : Axis<String> = Axis::default()
+					.style(Style::default().fg(GRAPH_COLOUR))
+					.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
 				let y_axis = Axis::default()
 					.style(Style::default().fg(GRAPH_COLOUR))
 					.bounds([-0.5, 100.5])
@@ -167,7 +168,9 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 			//Memory usage graph
 			{
-				let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
+				let x_axis : Axis<String> = Axis::default()
+					.style(Style::default().fg(GRAPH_COLOUR))
+					.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
 				let y_axis = Axis::default()
 					.style(Style::default().fg(GRAPH_COLOUR))
 					.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
