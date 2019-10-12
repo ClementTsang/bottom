@@ -1,5 +1,6 @@
 //! This is the main file to house data collection functions.
 
+use crate::constants;
 use std::{collections::HashMap, time::Instant};
 use sysinfo::{System, SystemExt};
 
@@ -53,7 +54,7 @@ impl Default for DataState {
 			data : Data::default(),
 			first_run : true,
 			sys : System::new(),
-			stale_max_seconds : 60,
+			stale_max_seconds : constants::STALE_MAX_MILLISECONDS / 1000,
 			prev_pid_stats : HashMap::new(),
 			prev_idle : 0_f64,
 			prev_non_idle : 0_f64,
@@ -64,10 +65,6 @@ impl Default for DataState {
 }
 
 impl DataState {
-	pub fn set_stale_max_seconds(&mut self, stale_max_seconds : u64) {
-		self.stale_max_seconds = stale_max_seconds;
-	}
-
 	pub fn set_temperature_type(&mut self, temperature_type : temperature::TemperatureType) {
 		self.temperature_type = temperature_type;
 	}
