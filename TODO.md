@@ -26,7 +26,7 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 - Refactoring!
 
-- Mouse + key events conflict? Make it so that some events don't clog up the loop if they are not valid keys!
+- Ensure there's a max number of inputs you can send at once --- for example, sending MANY scroll events clogs up the system
 
 - Modularity
 
