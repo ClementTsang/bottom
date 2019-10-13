@@ -8,7 +8,12 @@ extern crate clap;
 extern crate failure;
 
 use crossterm::{input, AlternateScreen, InputEvent, KeyEvent, MouseButton, MouseEvent};
-use std::{io::stdout, sync::mpsc, thread, time::Duration};
+use std::{
+	io::stdout,
+	sync::mpsc,
+	thread,
+	time::{Duration, Instant},
+};
 use tui_temp_fork::{backend::CrosstermBackend, Terminal};
 
 pub mod app;
@@ -112,6 +117,7 @@ fn main() -> error::Result<()> {
 		thread::spawn(move || {
 			let input = input();
 			input.enable_mouse_mode().unwrap();
+			let mut input_timer = Instant::now();
 
 			// TODO: I don't like this... seems odd async doesn't work on linux (then again, sync didn't work on windows)
 			if cfg!(target_os = "linux") {
@@ -119,13 +125,16 @@ fn main() -> error::Result<()> {
 				for event in reader {
 					match event {
 						InputEvent::Keyboard(key) => {
-							if tx.send(Event::KeyInput(key.clone())).is_err() {
+							if tx.send(Event::KeyInput(key)).is_err() {
 								return;
 							}
 						}
 						InputEvent::Mouse(mouse) => {
-							if tx.send(Event::MouseInput(mouse)).is_err() {
-								return;
+							if Instant::now().duration_since(input_timer).as_millis() >= 40 {
+								if tx.send(Event::MouseInput(mouse)).is_err() {
+									return;
+								}
+								input_timer = Instant::now();
 							}
 						}
 						_ => {}
@@ -138,13 +147,16 @@ fn main() -> error::Result<()> {
 					if let Some(event) = reader.next() {
 						match event {
 							InputEvent::Keyboard(key) => {
-								if tx.send(Event::KeyInput(key.clone())).is_err() {
+								if tx.send(Event::KeyInput(key)).is_err() {
 									return;
 								}
 							}
 							InputEvent::Mouse(mouse) => {
-								if tx.send(Event::MouseInput(mouse)).is_err() {
-									return;
+								if Instant::now().duration_since(input_timer).as_millis() >= 40 {
+									if tx.send(Event::MouseInput(mouse)).is_err() {
+										return;
+									}
+									input_timer = Instant::now();
 								}
 							}
 							_ => {}
