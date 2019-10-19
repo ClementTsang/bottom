@@ -10,7 +10,9 @@ categories = ["command-line-utilities"]
 description = "A graphical top clone."
 readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "btm"
+path = "src/main.rs"
 
 [dependencies]
 chrono = "0.4.9"
