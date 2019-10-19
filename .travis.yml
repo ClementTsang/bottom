@@ -17,7 +17,7 @@ DEPLOY_TO_GITHUB: &DEPLOY_TO_GITHUB
     - git config --local user.email "clementjhtsang@gmail.com"
     - name="bottom-$TRAVIS_TAG-$TARGET"
     - mkdir $name
-    - cp target/$TARGET/release/bottom $name/
+    - cp target/$TARGET/release/btm $name/
     - cp README.md LICENSE-MIT LICENSE-APACHE $name/
     - tar czvf $name.tar.gz $name
   deploy:
