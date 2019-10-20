@@ -6,7 +6,7 @@ use std::process::Command;
 
 #[test]
 fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
-	Command::new("./target/debug/bottom")
+	Command::new("./target/debug/btm")
 		.arg("-r")
 		.arg("249")
 		.assert()
@@ -17,7 +17,7 @@ fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
-	Command::new("./target/debug/bottom")
+	Command::new("./target/debug/btm")
 		.arg("-r")
 		.arg("18446744073709551616")
 		.assert()
@@ -29,7 +29,7 @@ fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn test_negative_rate() -> Result<(), Box<dyn std::error::Error>> {
 	// This test should auto fail due to how clap works
-	Command::new("./target/debug/bottom")
+	Command::new("./target/debug/btm")
 		.arg("-r")
 		.arg("-1000")
 		.assert()
@@ -41,7 +41,7 @@ fn test_negative_rate() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn test_invalid_rate() -> Result<(), Box<dyn std::error::Error>> {
-	Command::new("./target/debug/bottom")
+	Command::new("./target/debug/btm")
 		.arg("-r")
 		.arg("100-1000")
 		.assert()
