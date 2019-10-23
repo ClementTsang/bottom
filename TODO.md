@@ -26,8 +26,6 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 
 - Refactoring!
 
-- Ensure there's a max number of inputs you can send at once --- for example, sending MANY scroll events clogs up the system
-
 - Modularity
 
 - Mouse support if possible for clicking
