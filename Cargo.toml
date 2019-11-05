@@ -17,7 +17,7 @@ path = "src/main.rs"
 [dependencies]
 chrono = "0.4.9"
 clap = "2.33.0"
-crossterm = "0.11.0"
+crossterm = "^0.10"
 failure = "0.1.5"
 futures-preview = "0.3.0-alpha.18"
 fern = "0.5"
@@ -34,8 +34,8 @@ winapi = "0.3.8"
 
 [dependencies.tui-temp-fork]
 #git = "https://github.com/ClementTsang/tui-rs"
-#path = "../tui-rs"
-version = "0.6.4"
+path = "../tui-rs"
+version = "0.6"
 default-features = false
 features = ['crossterm']
 

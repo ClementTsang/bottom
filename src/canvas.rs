@@ -269,7 +269,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 							}),
 					)
 					.header_style(Style::default().fg(Color::LightBlue))
-					.widths(&[(width * 0.45) as u16, (width * 0.4) as u16])
+					.widths(&[Constraint::Length((width * 0.45) as u16), Constraint::Length((width * 0.4) as u16)])
 					.render(&mut f, middle_divided_chunk_2[0]);
 			}
 
@@ -316,13 +316,13 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 					)
 					.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
 					.widths(&[
-						(width * 0.18).floor() as u16,
-						(width * 0.14).floor() as u16,
-						(width * 0.11).floor() as u16,
-						(width * 0.11).floor() as u16,
-						(width * 0.11).floor() as u16,
-						(width * 0.11).floor() as u16,
-						(width * 0.11).floor() as u16,
+						Constraint::Length((width * 0.18).floor() as u16),
+						Constraint::Length((width * 0.14).floor() as u16),
+						Constraint::Length((width * 0.11).floor() as u16),
+						Constraint::Length((width * 0.11).floor() as u16),
+						Constraint::Length((width * 0.11).floor() as u16),
+						Constraint::Length((width * 0.11).floor() as u16),
+						Constraint::Length((width * 0.11).floor() as u16),
 					])
 					.render(&mut f, middle_divided_chunk_2[1]);
 			}
@@ -435,7 +435,12 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 								}),
 						)
 						.header_style(Style::default().fg(Color::LightBlue))
-						.widths(&[(width * 0.2) as u16, (width * 0.35) as u16, (width * 0.2) as u16, (width * 0.2) as u16])
+						.widths(&[
+							Constraint::Length((width * 0.2) as u16),
+							Constraint::Length((width * 0.35) as u16),
+							Constraint::Length((width * 0.2) as u16),
+							Constraint::Length((width * 0.2) as u16),
+						])
 						.render(&mut f, bottom_chunks[1]);
 				}
 			}

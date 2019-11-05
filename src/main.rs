@@ -229,7 +229,7 @@ fn main() -> error::Result<()> {
 						KeyEvent::ShiftUp => app.decrement_position_count(),
 						KeyEvent::ShiftDown => app.increment_position_count(),
 						KeyEvent::Char(c) => app.on_key(c),
-						KeyEvent::Enter => app.on_enter(),
+						//KeyEvent::Enter => app.on_enter(),
 						KeyEvent::Esc => app.on_esc(),
 						_ => {}
 					}
