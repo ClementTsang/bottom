@@ -1,20 +1,18 @@
 # To-Do List
 
-Note this will probably migrate to GitHub's native Issues; this was mostly for personal use during early stages.
-
 ## Want to do
+
+- Bug for too small windows --- probably a TUI bug?
 
 - Scaling in and out (zoom), may need to show zoom levels
 
-- More keybinds (jumping, scaling)
+- Filtering in processes (that is, allow searching)
+
+- More keybinds (jumping in scrolling (vim bindings?), scaling)
 
 - ~~Add custom error because it's really messy~~ Done, but need to implement across rest of app!
 
 - Efficiency... for example, reduce some redraw logic if possible (ie: no changes to dir sorting)
-
-- Filtering in processes (that is, allow searching)
-
-- Probably good to add a "are you sure" to dd-ing...
 
 ## Less important
 
@@ -35,3 +33,5 @@ Note this will probably migrate to GitHub's native Issues; this was mostly for p
 - Grouping by process
 
 - Deal with async and stuff (remove if not needed)
+
+- Perhaps switch libraries...?
