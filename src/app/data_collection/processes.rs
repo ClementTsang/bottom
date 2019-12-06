@@ -18,14 +18,14 @@ impl Default for ProcessSorting {
 // Possible process info struct?
 #[derive(Clone, Default)]
 pub struct ProcessData {
-	pub pid : u32,
-	pub cpu_usage_percent : f64,
-	pub mem_usage_percent : Option<f64>,
-	pub mem_usage_kb : Option<u64>,
-	pub command : String,
+	pub pid: u32,
+	pub cpu_usage_percent: f64,
+	pub mem_usage_percent: Option<f64>,
+	pub mem_usage_kb: Option<u64>,
+	pub command: String,
 }
 
-fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64) -> std::io::Result<(f64, f64)> {
+fn vangelis_cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> std::io::Result<(f64, f64)> {
 	// Named after this SO answer: https://stackoverflow.com/a/23376195
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
@@ -43,15 +43,15 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 		return Ok((1.0, 0.0)); // TODO: This is not the greatest...
 	}
 
-	let user : f64 = val[1].parse::<_>().unwrap_or(0_f64);
-	let nice : f64 = val[2].parse::<_>().unwrap_or(0_f64);
-	let system : f64 = val[3].parse::<_>().unwrap_or(0_f64);
-	let idle : f64 = val[4].parse::<_>().unwrap_or(0_f64);
-	let iowait : f64 = val[5].parse::<_>().unwrap_or(0_f64);
-	let irq : f64 = val[6].parse::<_>().unwrap_or(0_f64);
-	let softirq : f64 = val[7].parse::<_>().unwrap_or(0_f64);
-	let steal : f64 = val[8].parse::<_>().unwrap_or(0_f64);
-	let guest : f64 = val[9].parse::<_>().unwrap_or(0_f64);
+	let user: f64 = val[1].parse::<_>().unwrap_or(0_f64);
+	let nice: f64 = val[2].parse::<_>().unwrap_or(0_f64);
+	let system: f64 = val[3].parse::<_>().unwrap_or(0_f64);
+	let idle: f64 = val[4].parse::<_>().unwrap_or(0_f64);
+	let iowait: f64 = val[5].parse::<_>().unwrap_or(0_f64);
+	let irq: f64 = val[6].parse::<_>().unwrap_or(0_f64);
+	let softirq: f64 = val[7].parse::<_>().unwrap_or(0_f64);
+	let steal: f64 = val[8].parse::<_>().unwrap_or(0_f64);
+	let guest: f64 = val[9].parse::<_>().unwrap_or(0_f64);
 
 	let idle = idle + iowait;
 	let non_idle = user + nice + system + irq + softirq + steal + guest;
@@ -59,8 +59,8 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 	let total = idle + non_idle;
 	let prev_total = *prev_idle + *prev_non_idle;
 
-	let total_delta : f64 = total - prev_total;
-	let idle_delta : f64 = idle - *prev_idle;
+	let total_delta: f64 = total - prev_total;
+	let idle_delta: f64 = idle - *prev_idle;
 
 	//debug!("Vangelis function: CPU PERCENT: {}", (total_delta - idle_delta) / total_delta * 100_f64);
 
@@ -69,8 +69,7 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 
 	let result = if total_delta - idle_delta != 0_f64 {
 		total_delta - idle_delta
-	}
-	else {
+	} else {
 		1_f64
 	};
 
@@ -79,29 +78,25 @@ fn vangelis_cpu_usage_calculation(prev_idle : &mut f64, prev_non_idle : &mut f64
 	Ok((result, cpu_percentage)) // This works, REALLY damn well.  The percentage check is within like 2% of the sysinfo one.
 }
 
-fn get_ordering<T : std::cmp::PartialOrd>(a_val : T, b_val : T, reverse_order : bool) -> std::cmp::Ordering {
+fn get_ordering<T: std::cmp::PartialOrd>(a_val: T, b_val: T, reverse_order: bool) -> std::cmp::Ordering {
 	if a_val > b_val {
 		if reverse_order {
 			std::cmp::Ordering::Less
-		}
-		else {
+		} else {
 			std::cmp::Ordering::Greater
 		}
-	}
-	else if a_val < b_val {
+	} else if a_val < b_val {
 		if reverse_order {
 			std::cmp::Ordering::Greater
-		}
-		else {
+		} else {
 			std::cmp::Ordering::Less
 		}
-	}
-	else {
+	} else {
 		std::cmp::Ordering::Equal
 	}
 }
 
-fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
+fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
 	path.push(&pid.to_string());
@@ -118,14 +113,11 @@ fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 }
 
 /// Note that cpu_percentage should be represented WITHOUT the \times 100 factor!
-fn linux_cpu_usage(
-	pid : u32, cpu_usage : f64, cpu_percentage : f64, previous_pid_stats : &mut HashMap<String, (f64, Instant)>,
-) -> std::io::Result<f64> {
+fn linux_cpu_usage(pid: u32, cpu_usage: f64, cpu_percentage: f64, previous_pid_stats: &mut HashMap<String, (f64, Instant)>) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
-	let before_proc_val : f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
+	let before_proc_val: f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
 		previous_pid_stats.get(&pid.to_string()).unwrap_or(&(0_f64, Instant::now())).0
-	}
-	else {
+	} else {
 		0_f64
 	};
 	let after_proc_val = get_process_cpu_stats(pid)?;
@@ -145,15 +137,15 @@ fn linux_cpu_usage(
 }
 
 fn convert_ps(
-	process : &str, cpu_usage : f64, cpu_percentage : f64, prev_pid_stats : &mut HashMap<String, (f64, Instant)>,
+	process: &str, cpu_usage: f64, cpu_percentage: f64, prev_pid_stats: &mut HashMap<String, (f64, Instant)>,
 ) -> std::io::Result<ProcessData> {
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessData {
-			pid : 0,
-			command : "".to_string(),
-			mem_usage_percent : None,
-			mem_usage_kb : None,
-			cpu_usage_percent : 0_f64,
+			pid: 0,
+			command: "".to_string(),
+			mem_usage_percent: None,
+			mem_usage_kb: None,
+			cpu_usage_percent: 0_f64,
 		});
 	}
 
@@ -165,15 +157,15 @@ fn convert_ps(
 		pid,
 		command,
 		mem_usage_percent,
-		mem_usage_kb : None,
-		cpu_usage_percent : linux_cpu_usage(pid, cpu_usage, cpu_percentage, prev_pid_stats)?,
+		mem_usage_kb: None,
+		cpu_usage_percent: linux_cpu_usage(pid, cpu_usage, cpu_percentage, prev_pid_stats)?,
 	})
 }
 
 pub async fn get_sorted_processes_list(
-	sys : &System, prev_idle : &mut f64, prev_non_idle : &mut f64, prev_pid_stats : &mut std::collections::HashMap<String, (f64, Instant)>,
+	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64, prev_pid_stats: &mut std::collections::HashMap<String, (f64, Instant)>,
 ) -> crate::utils::error::Result<Vec<ProcessData>> {
-	let mut process_vector : Vec<ProcessData> = Vec::new();
+	let mut process_vector: Vec<ProcessData> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		// Linux specific - this is a massive pain... ugh.
@@ -192,26 +184,23 @@ pub async fn get_sorted_processes_list(
 				}
 			}
 		}
-	}
-	else if cfg!(target_os = "windows") {
+	} else if cfg!(target_os = "windows") {
 		// Windows
 
 		let process_hashmap = sys.get_process_list();
 		for process_val in process_hashmap.values() {
 			process_vector.push(ProcessData {
-				pid : process_val.pid() as u32,
-				command : process_val.name().to_string(),
-				mem_usage_percent : None,
-				mem_usage_kb : Some(process_val.memory()),
-				cpu_usage_percent : f64::from(process_val.cpu_usage()),
+				pid: process_val.pid() as u32,
+				command: process_val.name().to_string(),
+				mem_usage_percent: None,
+				mem_usage_kb: Some(process_val.memory()),
+				cpu_usage_percent: f64::from(process_val.cpu_usage()),
 			});
 		}
-	}
-	else if cfg!(target_os = "macos") {
+	} else if cfg!(target_os = "macos") {
 		// TODO: macOS
 		debug!("Mac");
-	}
-	else {
+	} else {
 		// TODO: Others?
 		debug!("Else");
 		// Solaris: https://stackoverflow.com/a/4453581
@@ -220,7 +209,7 @@ pub async fn get_sorted_processes_list(
 	Ok(process_vector)
 }
 
-pub fn sort_processes(process_vector : &mut Vec<ProcessData>, sorting_method : &ProcessSorting, reverse_order : bool) {
+pub fn sort_processes(process_vector: &mut Vec<ProcessData>, sorting_method: &ProcessSorting, reverse_order: bool) {
 	match sorting_method {
 		// Always sort alphabetically first!
 		ProcessSorting::CPU => {
