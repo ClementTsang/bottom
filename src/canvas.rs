@@ -1,5 +1,5 @@
 use crate::{app, constants, utils::error};
-use tui_temp_fork::{
+use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout},
 	style::{Color, Modifier, Style},
@@ -7,7 +7,7 @@ use tui_temp_fork::{
 	Terminal,
 };
 
-const COLOUR_LIST : [Color; 6] = [
+const COLOUR_LIST: [Color; 6] = [
 	Color::Red,
 	Color::Green,
 	Color::LightYellow,
@@ -15,29 +15,29 @@ const COLOUR_LIST : [Color; 6] = [
 	Color::LightCyan,
 	Color::LightMagenta,
 ];
-const TEXT_COLOUR : Color = Color::Gray;
-const GRAPH_COLOUR : Color = Color::Gray;
-const BORDER_STYLE_COLOUR : Color = Color::Gray;
-const HIGHLIGHTED_BORDER_STYLE_COLOUR : Color = Color::LightBlue;
+const TEXT_COLOUR: Color = Color::Gray;
+const GRAPH_COLOUR: Color = Color::Gray;
+const BORDER_STYLE_COLOUR: Color = Color::Gray;
+const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
 
 #[derive(Default)]
 pub struct CanvasData {
-	pub rx_display : String,
-	pub tx_display : String,
-	pub network_data_rx : Vec<(f64, f64)>,
-	pub network_data_tx : Vec<(f64, f64)>,
-	pub disk_data : Vec<Vec<String>>,
-	pub temp_sensor_data : Vec<Vec<String>>,
-	pub process_data : Vec<Vec<String>>,
-	pub mem_data : Vec<(f64, f64)>,
-	pub mem_values : Vec<(u64, u64)>,
-	pub swap_data : Vec<(f64, f64)>,
-	pub cpu_data : Vec<(String, Vec<(f64, f64)>)>,
+	pub rx_display: String,
+	pub tx_display: String,
+	pub network_data_rx: Vec<(f64, f64)>,
+	pub network_data_tx: Vec<(f64, f64)>,
+	pub disk_data: Vec<Vec<String>>,
+	pub temp_sensor_data: Vec<Vec<String>>,
+	pub process_data: Vec<Vec<String>>,
+	pub mem_data: Vec<(f64, f64)>,
+	pub mem_values: Vec<(u64, u64)>,
+	pub swap_data: Vec<(f64, f64)>,
+	pub cpu_data: Vec<(String, Vec<(f64, f64)>)>,
 }
 
-pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : &mut app::App, canvas_data : &CanvasData) -> error::Result<()> {
-	let border_style : Style = Style::default().fg(BORDER_STYLE_COLOUR);
-	let highlighted_border_style : Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
+pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mut app::App, canvas_data: &CanvasData) -> error::Result<()> {
+	let border_style: Style = Style::default().fg(BORDER_STYLE_COLOUR);
+	let highlighted_border_style: Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
 
 	terminal.autoresize()?;
 	terminal.draw(|mut f| {
@@ -80,8 +80,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 				.alignment(Alignment::Left)
 				.wrap(true)
 				.render(&mut f, middle_dialog_chunk[1]);
-		}
-		else {
+		} else {
 			let vertical_chunks = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(1)
@@ -109,7 +108,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 			// Set up blocks and their components
 			// CPU usage graph
 			{
-				let x_axis : Axis<String> = Axis::default()
+				let x_axis: Axis<String> = Axis::default()
 					.style(Style::default().fg(GRAPH_COLOUR))
 					.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
 				let y_axis = Axis::default()
@@ -117,7 +116,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 					.bounds([-0.5, 100.5])
 					.labels(&["0%", "100%"]);
 
-				let mut dataset_vector : Vec<Dataset> = Vec::new();
+				let mut dataset_vector: Vec<Dataset> = Vec::new();
 
 				for (i, cpu) in canvas_data.cpu_data.iter().enumerate() {
 					let mut avg_cpu_exist_offset = 0;
@@ -125,8 +124,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 						if i == 0 {
 							// Skip, we want to render the average cpu last!
 							continue;
-						}
-						else {
+						} else {
 							avg_cpu_exist_offset = 1;
 						}
 					}
@@ -168,7 +166,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 			//Memory usage graph
 			{
-				let x_axis : Axis<String> = Axis::default()
+				let x_axis: Axis<String> = Axis::default()
 					.style(Style::default().fg(GRAPH_COLOUR))
 					.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
 				let y_axis = Axis::default()
@@ -183,9 +181,9 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 						canvas_data.mem_values[0].0 as f64 / 1024.0,
 						canvas_data.mem_values[0].1 as f64 / 1024.0
 					);
-				let swap_name : String;
+				let swap_name: String;
 
-				let mut mem_canvas_vec : Vec<Dataset> = vec![Dataset::default()
+				let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
 					.name(&mem_name)
 					.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 					.style(Style::default().fg(Color::LightBlue))
@@ -238,7 +236,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 					&mut app_state.currently_selected_temperature_position,
 				);
 
-				let sliced_vec : Vec<Vec<String>> = (&canvas_data.temp_sensor_data[start_position as usize..]).to_vec();
+				let sliced_vec: Vec<Vec<String>> = (&canvas_data.temp_sensor_data[start_position as usize..]).to_vec();
 				let mut disk_counter = 0;
 
 				let temperature_rows = sliced_vec.iter().map(|disk| {
@@ -247,8 +245,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 						if disk_counter == app_state.currently_selected_temperature_position - start_position {
 							disk_counter = -1;
 							Style::default().fg(Color::Black).bg(Color::Cyan)
-						}
-						else {
+						} else {
 							if disk_counter >= 0 {
 								disk_counter += 1;
 							}
@@ -283,7 +280,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 					&mut app_state.currently_selected_disk_position,
 				);
 
-				let sliced_vec : Vec<Vec<String>> = (&canvas_data.disk_data[start_position as usize..]).to_vec();
+				let sliced_vec: Vec<Vec<String>> = (&canvas_data.disk_data[start_position as usize..]).to_vec();
 				let mut disk_counter = 0;
 
 				let disk_rows = sliced_vec.iter().map(|disk| {
@@ -292,8 +289,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 						if disk_counter == app_state.currently_selected_disk_position - start_position {
 							disk_counter = -1;
 							Style::default().fg(Color::Black).bg(Color::Cyan)
-						}
-						else {
+						} else {
 							if disk_counter >= 0 {
 								disk_counter += 1;
 							}
@@ -329,7 +325,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 			// Network graph
 			{
-				let x_axis : Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
+				let x_axis: Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 				let y_axis = Axis::default()
 					.style(Style::default().fg(GRAPH_COLOUR))
 					.bounds([-0.5, 1_000_000.5])
@@ -384,7 +380,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 					start_position, app_state.previous_process_position, app_state.currently_selected_process_position, num_rows
 				);*/
 
-				let sliced_vec : Vec<Vec<String>> = (&canvas_data.process_data[start_position as usize..]).to_vec();
+				let sliced_vec: Vec<Vec<String>> = (&canvas_data.process_data[start_position as usize..]).to_vec();
 				let mut process_counter = 0;
 
 				let process_rows = sliced_vec.iter().map(|process| {
@@ -393,8 +389,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 						if process_counter == app_state.currently_selected_process_position - start_position {
 							process_counter = -1;
 							Style::default().fg(Color::Black).bg(Color::Cyan)
-						}
-						else {
+						} else {
 							if process_counter >= 0 {
 								process_counter += 1;
 							}
@@ -412,8 +407,7 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 
 					let direction_val = if app_state.process_sorting_reverse {
 						"⯆".to_string()
-					}
-					else {
+					} else {
 						"⯅".to_string()
 					};
 
@@ -453,17 +447,15 @@ pub fn draw_data<B : backend::Backend>(terminal : &mut Terminal<B>, app_state : 
 }
 
 fn get_start_position(
-	num_rows : i64, scroll_direction : &app::ScrollDirection, previous_position : &mut i64, currently_selected_position : &mut i64,
+	num_rows: i64, scroll_direction: &app::ScrollDirection, previous_position: &mut i64, currently_selected_position: &mut i64,
 ) -> i64 {
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
 			if *currently_selected_position < num_rows {
 				0
-			}
-			else if *currently_selected_position - num_rows < *previous_position {
+			} else if *currently_selected_position - num_rows < *previous_position {
 				*previous_position
-			}
-			else {
+			} else {
 				*previous_position = *currently_selected_position - num_rows + 1;
 				*previous_position
 			}
@@ -472,8 +464,7 @@ fn get_start_position(
 			if *currently_selected_position == *previous_position - 1 {
 				*previous_position = if *previous_position > 0 { *previous_position - 1 } else { 0 };
 				*previous_position
-			}
-			else {
+			} else {
 				*previous_position
 			}
 		}

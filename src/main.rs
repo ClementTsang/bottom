@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -7,14 +5,17 @@ extern crate clap;
 #[macro_use]
 extern crate failure;
 
-use crossterm::{input, AlternateScreen, InputEvent, KeyEvent, MouseButton, MouseEvent};
+use crossterm::{
+	input::{input, InputEvent, KeyEvent, MouseButton, MouseEvent},
+	screen::AlternateScreen,
+};
 use std::{
 	io::stdout,
 	sync::mpsc,
 	thread,
 	time::{Duration, Instant},
 };
-use tui_temp_fork::{backend::CrosstermBackend, Terminal};
+use tui::{backend::CrosstermBackend, Terminal};
 
 pub mod app;
 mod utils {
@@ -65,34 +66,30 @@ fn main() -> error::Result<()> {
 	//.after_help("Themes:") // TODO: This and others disabled for now
 	.get_matches();
 
-	let update_rate_in_milliseconds : u128 = if matches.is_present("RATE_MILLIS") {
+	let update_rate_in_milliseconds: u128 = if matches.is_present("RATE_MILLIS") {
 		matches
 			.value_of("RATE_MILLIS")
 			.unwrap_or(&constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS.to_string())
 			.parse::<u128>()?
-	}
-	else {
+	} else {
 		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
 	};
 
 	if update_rate_in_milliseconds < 250 {
 		return Err(RustopError::InvalidArg {
-			message : "Please set your update rate to be greater than 250 milliseconds.".to_string(),
+			message: "Please set your update rate to be greater than 250 milliseconds.".to_string(),
 		});
-	}
-	else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
+	} else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
 		return Err(RustopError::InvalidArg {
-			message : "Please set your update rate to be less than unsigned INT_MAX.".to_string(),
+			message: "Please set your update rate to be less than unsigned INT_MAX.".to_string(),
 		});
 	}
 
 	let temperature_type = if matches.is_present("FAHRENHEIT") {
 		data_collection::temperature::TemperatureType::Fahrenheit
-	}
-	else if matches.is_present("KELVIN") {
+	} else if matches.is_present("KELVIN") {
 		data_collection::temperature::TemperatureType::Kelvin
-	}
-	else {
+	} else {
 		data_collection::temperature::TemperatureType::Celsius
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
@@ -144,8 +141,7 @@ fn main() -> error::Result<()> {
 						_ => {}
 					}
 				}
-			}
-			else {
+			} else {
 				let mut reader = input.read_async();
 				loop {
 					if let Some(event) = reader.next() {
@@ -200,8 +196,7 @@ fn main() -> error::Result<()> {
 					// Fix for if you set a really long time for update periods (and just gives a faster first value)
 					thread::sleep(Duration::from_millis(250));
 					first_run = false;
-				}
-				else {
+				} else {
 					thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
 				}
 			}

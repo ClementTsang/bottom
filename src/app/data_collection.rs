@@ -11,13 +11,13 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
-fn set_if_valid<T : std::clone::Clone>(result : &Result<T, crate::utils::error::RustopError>, value_to_set : &mut T) {
+fn set_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::RustopError>, value_to_set: &mut T) {
 	if let Ok(result) = result {
 		*value_to_set = (*result).clone();
 	}
 }
 
-fn push_if_valid<T : std::clone::Clone>(result : &Result<T, crate::utils::error::RustopError>, vector_to_push : &mut Vec<T>) {
+fn push_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::RustopError>, vector_to_push: &mut Vec<T>) {
 	if let Ok(result) = result {
 		vector_to_push.push(result.clone());
 	}
@@ -25,47 +25,47 @@ fn push_if_valid<T : std::clone::Clone>(result : &Result<T, crate::utils::error:
 
 #[derive(Default, Clone)]
 pub struct Data {
-	pub list_of_cpu_packages : Vec<cpu::CPUPackage>,
-	pub list_of_io : Vec<disks::IOPackage>,
-	pub list_of_physical_io : Vec<disks::IOPackage>,
-	pub memory : Vec<mem::MemData>,
-	pub swap : Vec<mem::MemData>,
-	pub list_of_temperature_sensor : Vec<temperature::TempData>,
-	pub network : Vec<network::NetworkData>,
-	pub list_of_processes : Vec<processes::ProcessData>, // Only need to keep a list of processes...
-	pub list_of_disks : Vec<disks::DiskData>,            // Only need to keep a list of disks and their data
+	pub list_of_cpu_packages: Vec<cpu::CPUPackage>,
+	pub list_of_io: Vec<disks::IOPackage>,
+	pub list_of_physical_io: Vec<disks::IOPackage>,
+	pub memory: Vec<mem::MemData>,
+	pub swap: Vec<mem::MemData>,
+	pub list_of_temperature_sensor: Vec<temperature::TempData>,
+	pub network: Vec<network::NetworkData>,
+	pub list_of_processes: Vec<processes::ProcessData>, // Only need to keep a list of processes...
+	pub list_of_disks: Vec<disks::DiskData>,            // Only need to keep a list of disks and their data
 }
 
 pub struct DataState {
-	pub data : Data,
-	first_run : bool,
-	sys : System,
-	stale_max_seconds : u64,
-	prev_pid_stats : HashMap<String, (f64, Instant)>,
-	prev_idle : f64,
-	prev_non_idle : f64,
-	temperature_type : temperature::TemperatureType,
-	last_clean : Instant, // Last time stale data was cleared
+	pub data: Data,
+	first_run: bool,
+	sys: System,
+	stale_max_seconds: u64,
+	prev_pid_stats: HashMap<String, (f64, Instant)>,
+	prev_idle: f64,
+	prev_non_idle: f64,
+	temperature_type: temperature::TemperatureType,
+	last_clean: Instant, // Last time stale data was cleared
 }
 
 impl Default for DataState {
 	fn default() -> Self {
 		DataState {
-			data : Data::default(),
-			first_run : true,
-			sys : System::new(),
-			stale_max_seconds : constants::STALE_MAX_MILLISECONDS / 1000,
-			prev_pid_stats : HashMap::new(),
-			prev_idle : 0_f64,
-			prev_non_idle : 0_f64,
-			temperature_type : temperature::TemperatureType::Celsius,
-			last_clean : Instant::now(),
+			data: Data::default(),
+			first_run: true,
+			sys: System::new(),
+			stale_max_seconds: constants::STALE_MAX_MILLISECONDS / 1000,
+			prev_pid_stats: HashMap::new(),
+			prev_idle: 0_f64,
+			prev_non_idle: 0_f64,
+			temperature_type: temperature::TemperatureType::Celsius,
+			last_clean: Instant::now(),
 		}
 	}
 }
 
 impl DataState {
-	pub fn set_temperature_type(&mut self, temperature_type : temperature::TemperatureType) {
+	pub fn set_temperature_type(&mut self, temperature_type: temperature::TemperatureType) {
 		self.temperature_type = temperature_type;
 	}
 
@@ -113,7 +113,7 @@ impl DataState {
 		let current_instant = std::time::Instant::now();
 
 		if current_instant.duration_since(self.last_clean).as_secs() > self.stale_max_seconds {
-			let stale_list : Vec<_> = self
+			let stale_list: Vec<_> = self
 				.prev_pid_stats
 				.iter()
 				.filter(|&(_, &v)| current_instant.duration_since(v.1).as_secs() > self.stale_max_seconds)
