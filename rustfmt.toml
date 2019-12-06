@@ -1,4 +1,5 @@
 max_width = 150
+newline_style = "Unix"
 reorder_imports = true
 control_brace_style = "ClosingNextLine"
 fn_args_layout = "Compressed"
