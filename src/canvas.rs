@@ -41,22 +41,20 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 
 	terminal.autoresize()?;
 	terminal.draw(|mut f| {
-		//debug!("Drawing!");
-
-		// Only for the "help" and "are you sure" menus
-		let vertical_dialog_chunk = Layout::default()
-			.direction(Direction::Vertical)
-			.margin(1)
-			.constraints([Constraint::Percentage(32), Constraint::Percentage(40), Constraint::Percentage(28)].as_ref())
-			.split(f.size());
-
-		let middle_dialog_chunk = Layout::default()
-			.direction(Direction::Horizontal)
-			.margin(0)
-			.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
-			.split(vertical_dialog_chunk[1]);
-
 		if app_state.show_help {
+			// Only for the "help" and "are you sure" menus
+			let vertical_dialog_chunk = Layout::default()
+				.direction(Direction::Vertical)
+				.margin(1)
+				.constraints([Constraint::Percentage(32), Constraint::Percentage(40), Constraint::Percentage(28)].as_ref())
+				.split(f.size());
+
+			let middle_dialog_chunk = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
+				.split(vertical_dialog_chunk[1]);
+
 			let text = [
 				Text::raw("\nGeneral Keybinds\n"),
 				Text::raw("q, Ctrl-c to quit.\n"),
@@ -375,11 +373,6 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 					&mut app_state.currently_selected_process_position,
 				);
 
-				/*debug!(
-					"START POSN: {}, PREV POSN: {}, CURRENT SELECTED POSN: {}, NUM ROWS: {}",
-					start_position, app_state.previous_process_position, app_state.currently_selected_process_position, num_rows
-				);*/
-
 				let sliced_vec: Vec<Vec<String>> = (&canvas_data.process_data[start_position as usize..]).to_vec();
 				let mut process_counter = 0;
 
@@ -440,8 +433,6 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			}
 		}
 	})?;
-
-	//debug!("Finished drawing.");
 
 	Ok(())
 }
