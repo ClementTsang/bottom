@@ -44,8 +44,6 @@ enum ResetEvent {
 }
 
 fn main() -> error::Result<()> {
-	utils::logging::init_logger()?;
-
 	// Parse command line options
 	let matches = clap_app!(app =>
 	(name: crate_name!())
@@ -55,7 +53,7 @@ fn main() -> error::Result<()> {
 	//(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
 	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
 	(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.  May be needed in things like Powershell.")
-	//(@arg DEBUG: -d --debug "Enables debug mode.") // TODO: This isn't done yet!
+	(@arg DEBUG: -d --debug "Enables debug mode.") 
 	(@group TEMPERATURE_TYPE =>
 		(@arg CELSIUS : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
 		(@arg FAHRENHEIT : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
@@ -94,6 +92,12 @@ fn main() -> error::Result<()> {
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
 	let use_dot = matches.is_present("DOT_MARKER");
+	let enable_debugging = matches.is_present("DEBUG");
+
+	// Attempt to create debugging...
+	if enable_debugging {
+		utils::logging::init_logger()?;
+	}
 
 	// Create "app" struct, which will control most of the program and store settings/state
 	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds as u64, use_dot);
@@ -208,7 +212,6 @@ fn main() -> error::Result<()> {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
-					// debug!("Keyboard event fired!");
 					match event {
 						KeyEvent::Ctrl('c') | KeyEvent::Char('q') => break,
 						KeyEvent::Char('h') | KeyEvent::Left => app.on_left(),
@@ -238,27 +241,22 @@ fn main() -> error::Result<()> {
 						canvas_data.process_data = update_process_row(&app.data);
 						app.to_be_resorted = false;
 					}
-					// debug!("Input event complete.");
 				}
-				Event::MouseInput(event) => {
-					// debug!("Mouse event fired!");
-					match event {
-						MouseEvent::Press(e, _x, _y) => match e {
-							MouseButton::WheelUp => {
-								app.decrement_position_count();
-							}
-							MouseButton::WheelDown => {
-								app.increment_position_count();
-							}
-							_ => {}
-						},
-						MouseEvent::Hold(_x, _y) => {}
-						MouseEvent::Release(_x, _y) => {}
+				Event::MouseInput(event) => match event {
+					MouseEvent::Press(e, _x, _y) => match e {
+						MouseButton::WheelUp => {
+							app.decrement_position_count();
+						}
+						MouseButton::WheelDown => {
+							app.increment_position_count();
+						}
 						_ => {}
-					}
-				}
+					},
+					MouseEvent::Hold(_x, _y) => {}
+					MouseEvent::Release(_x, _y) => {}
+					_ => {}
+				},
 				Event::Update(data) => {
-					// debug!("Update event fired!");
 					if !app.is_frozen {
 						app.data = *data;
 
@@ -296,6 +294,5 @@ fn main() -> error::Result<()> {
 	}
 
 	input().disable_mouse_mode().unwrap();
-	debug!("Terminating.");
 	Ok(())
 }

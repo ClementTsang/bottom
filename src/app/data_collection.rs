@@ -75,7 +75,6 @@ impl DataState {
 	}
 
 	pub async fn update_data(&mut self) {
-		//debug!("Start updating...");
 		self.sys.refresh_system();
 		self.sys.refresh_network();
 
@@ -165,7 +164,5 @@ impl DataState {
 
 			self.last_clean = current_instant;
 		}
-
-		//debug!("End updating...");
 	}
 }
