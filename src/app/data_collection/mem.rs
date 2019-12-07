@@ -1,4 +1,4 @@
-use heim_common::units::information;
+use heim::units::information;
 use std::time::Instant;
 
 #[derive(Clone)]
