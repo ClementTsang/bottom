@@ -5,17 +5,16 @@
 A top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop)
 
 ![Quick demo recording](assets/recording_1.gif)
-_Note that the background you see is not part of the app, that's just because I use a slightly transparent terminal._
 
 ## Installation
 
 ### Linux
 
-You can install by cloning and using `cargo build --release`, or download the pre-compiled binary in Releases. Note this needs the nightly toolchain if you are building.
+You can install by cloning and using `cargo build --release`, or download the pre-compiled binary in Releases.
 
 ### Windows
 
-You can currently install by cloning and building yourself. Note this needs the nightly toolchain if you are building.
+You can currently install by cloning and building yourself. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) for font support to work properly, unfortunately.
 
 ### MacOS
 
