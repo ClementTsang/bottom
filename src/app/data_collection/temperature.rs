@@ -1,10 +1,11 @@
-use heim_common::{prelude::StreamExt, units::thermodynamic_temperature};
+use futures::StreamExt;
+use heim::units::thermodynamic_temperature;
 use sysinfo::{ComponentExt, System, SystemExt};
 
 #[derive(Clone)]
 pub struct TempData {
-	pub component_name : Box<str>,
-	pub temperature : f32,
+	pub component_name: Box<str>,
+	pub temperature: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -20,16 +21,16 @@ impl Default for TemperatureType {
 	}
 }
 
-pub async fn get_temperature_data(sys : &System, temp_type : &TemperatureType) -> crate::utils::error::Result<Vec<TempData>> {
-	let mut temperature_vec : Vec<TempData> = Vec::new();
+pub async fn get_temperature_data(sys: &System, temp_type: &TemperatureType) -> crate::utils::error::Result<Vec<TempData>> {
+	let mut temperature_vec: Vec<TempData> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		let mut sensor_data = heim::sensors::temperatures();
 		while let Some(sensor) = sensor_data.next().await {
 			if let Ok(sensor) = sensor {
 				temperature_vec.push(TempData {
-					component_name : Box::from(sensor.unit()),
-					temperature : match temp_type {
+					component_name: Box::from(sensor.unit()),
+					temperature: match temp_type {
 						TemperatureType::Celsius => sensor.current().get::<thermodynamic_temperature::degree_celsius>(),
 						TemperatureType::Kelvin => sensor.current().get::<thermodynamic_temperature::kelvin>(),
 						TemperatureType::Fahrenheit => sensor.current().get::<thermodynamic_temperature::degree_fahrenheit>(),
@@ -37,13 +38,12 @@ pub async fn get_temperature_data(sys : &System, temp_type : &TemperatureType) -
 				});
 			}
 		}
-	}
-	else if cfg!(target_os = "windows") {
+	} else if cfg!(target_os = "windows") {
 		let sensor_data = sys.get_components_list();
 		for component in sensor_data {
 			temperature_vec.push(TempData {
-				component_name : Box::from(component.get_label()),
-				temperature : match temp_type {
+				component_name: Box::from(component.get_label()),
+				temperature: match temp_type {
 					TemperatureType::Celsius => component.get_temperature(),
 					TemperatureType::Kelvin => component.get_temperature() + 273.15,
 					TemperatureType::Fahrenheit => (component.get_temperature() * (9.0 / 5.0)) + 32.0,
@@ -58,11 +58,9 @@ pub async fn get_temperature_data(sys : &System, temp_type : &TemperatureType) -
 	temperature_vec.sort_by(|a, b| {
 		if a.temperature > b.temperature {
 			std::cmp::Ordering::Less
-		}
-		else if a.temperature < b.temperature {
+		} else if a.temperature < b.temperature {
 			std::cmp::Ordering::Greater
-		}
-		else {
+		} else {
 			std::cmp::Ordering::Equal
 		}
 	});
@@ -70,11 +68,9 @@ pub async fn get_temperature_data(sys : &System, temp_type : &TemperatureType) -
 	temperature_vec.sort_by(|a, b| {
 		if a.component_name > b.component_name {
 			std::cmp::Ordering::Greater
-		}
-		else if a.component_name < b.component_name {
+		} else if a.component_name < b.component_name {
 			std::cmp::Ordering::Less
-		}
-		else {
+		} else {
 			std::cmp::Ordering::Equal
 		}
 	});
