@@ -11,66 +11,66 @@ pub enum RustopError {
 	///
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Encountered an IO exception: {}", message)]
-	InvalidIO { message : String },
+	InvalidIO { message: String },
 	/// An error when there is an invalid argument passed in.
 	///
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid argument: {}", message)]
-	InvalidArg { message : String },
+	InvalidArg { message: String },
 	/// An error when the heim library encounters a problem.
 	///
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid error during data collection due to Heim: {}", message)]
-	InvalidHeim { message : String },
+	InvalidHeim { message: String },
 	/// An error when the Crossterm library encounters a problem.
 	///
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid error due to Crossterm: {}", message)]
-	CrosstermError { message : String },
+	CrosstermError { message: String },
 	/// An error to represent generic errors
 	///
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid generic error: {}", message)]
-	GenericError { message : String },
+	GenericError { message: String },
 	/// An error to represent errors with fern
 	///
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid fern error: {}", message)]
-	FernError { message : String },
+	FernError { message: String },
 }
 
 impl From<std::io::Error> for RustopError {
-	fn from(err : std::io::Error) -> Self {
-		RustopError::InvalidIO { message : err.to_string() }
+	fn from(err: std::io::Error) -> Self {
+		RustopError::InvalidIO { message: err.to_string() }
 	}
 }
 
 impl From<heim::Error> for RustopError {
-	fn from(err : heim::Error) -> Self {
-		RustopError::InvalidHeim { message : err.to_string() }
+	fn from(err: heim::Error) -> Self {
+		RustopError::InvalidHeim { message: err.to_string() }
 	}
 }
 
 impl From<crossterm::ErrorKind> for RustopError {
-	fn from(err : crossterm::ErrorKind) -> Self {
-		RustopError::CrosstermError { message : err.to_string() }
+	fn from(err: crossterm::ErrorKind) -> Self {
+		RustopError::CrosstermError { message: err.to_string() }
 	}
 }
 
 impl From<std::num::ParseIntError> for RustopError {
-	fn from(err : std::num::ParseIntError) -> Self {
-		RustopError::InvalidArg { message : err.to_string() }
+	fn from(err: std::num::ParseIntError) -> Self {
+		RustopError::InvalidArg { message: err.to_string() }
 	}
 }
 
 impl From<std::string::String> for RustopError {
-	fn from(err : std::string::String) -> Self {
-		RustopError::GenericError { message : err.to_string() }
+	fn from(err: std::string::String) -> Self {
+		RustopError::GenericError { message: err.to_string() }
 	}
 }
 
 impl From<fern::InitError> for RustopError {
-	fn from(err : fern::InitError) -> Self {
-		RustopError::FernError { message : err.to_string() }
+	fn from(err: fern::InitError) -> Self {
+		RustopError::FernError { message: err.to_string() }
 	}
 }

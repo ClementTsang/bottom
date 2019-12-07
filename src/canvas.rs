@@ -84,7 +84,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			let vertical_chunks = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(1)
-				.constraints([Constraint::Percentage(34), Constraint::Percentage(34), Constraint::Percentage(33)].as_ref())
+				.constraints([Constraint::Percentage(33), Constraint::Percentage(34), Constraint::Percentage(34)].as_ref())
 				.split(f.size());
 
 			let middle_chunks = Layout::default()
