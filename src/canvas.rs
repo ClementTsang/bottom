@@ -103,6 +103,25 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
 				.split(vertical_chunks[2]);
 
+			// Component specific chunks
+			let cpu_chunk = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
+				.split(vertical_chunks[0]);
+
+			let mem_chunk = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
+				.split(middle_chunks[0]);
+
+			let network_chunk = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
+				.split(bottom_chunks[0]);
+
 			// Set up blocks and their components
 			// CPU usage graph
 			{
@@ -226,7 +245,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 
 			// Temperature table
 			{
-				let num_rows = i64::from(middle_divided_chunk_2[0].height) - 3;
+				let num_rows = i64::from(middle_divided_chunk_2[0].height) - 4;
 				let start_position = get_start_position(
 					num_rows,
 					&(app_state.scroll_direction),
@@ -270,7 +289,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 
 			// Disk usage table
 			{
-				let num_rows = i64::from(middle_divided_chunk_2[1].height) - 3;
+				let num_rows = i64::from(middle_divided_chunk_2[1].height) - 4;
 				let start_position = get_start_position(
 					num_rows,
 					&(app_state.scroll_direction),
@@ -364,7 +383,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				// * Show/hide elements based on scroll position
 				// As such, we use a process_counter to know when we've hit the process we've currently scrolled to.  We also need to move the list - we can
 				// do so by hiding some elements!
-				let num_rows = i64::from(bottom_chunks[1].height) - 3;
+				let num_rows = i64::from(bottom_chunks[1].height) - 4;
 
 				let start_position = get_start_position(
 					num_rows,
