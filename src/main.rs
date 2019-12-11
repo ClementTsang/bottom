@@ -135,7 +135,7 @@ fn main() -> error::Result<()> {
 							}
 						}
 						InputEvent::Mouse(mouse) => {
-							if Instant::now().duration_since(mouse_timer).as_millis() >= 40 {
+							if Instant::now().duration_since(mouse_timer).as_millis() >= 30 {
 								if tx.send(Event::MouseInput(mouse)).is_err() {
 									return;
 								}
