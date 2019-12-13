@@ -83,6 +83,12 @@ fn main() -> error::Result<()> {
 		});
 	}
 
+	// Attempt to create debugging...
+	let enable_debugging = matches.is_present("DEBUG");
+	if enable_debugging || cfg!(debug_assertions) {
+		utils::logging::init_logger()?;
+	}
+
 	let temperature_type = if matches.is_present("FAHRENHEIT") {
 		data_collection::temperature::TemperatureType::Fahrenheit
 	} else if matches.is_present("KELVIN") {
@@ -92,12 +98,6 @@ fn main() -> error::Result<()> {
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
 	let use_dot = matches.is_present("DOT_MARKER");
-	let enable_debugging = matches.is_present("DEBUG");
-
-	// Attempt to create debugging...
-	if enable_debugging {
-		utils::logging::init_logger()?;
-	}
 
 	// Create "app" struct, which will control most of the program and store settings/state
 	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds as u64, use_dot);
@@ -175,15 +175,17 @@ fn main() -> error::Result<()> {
 	}
 
 	// Event loop
-	let mut data_state = data_collection::DataState::default();
-	data_state.init();
-	data_state.set_temperature_type(app.temperature_type.clone());
+
 	let (rtx, rrx) = mpsc::channel();
 	{
 		let tx = tx.clone();
+		let temp_type = app.temperature_type.clone();
 		let mut first_run = true;
 		thread::spawn(move || {
 			let tx = tx.clone();
+			let mut data_state = data_collection::DataState::default();
+			data_state.init();
+			data_state.set_temperature_type(temp_type);
 			loop {
 				if let Ok(message) = rrx.try_recv() {
 					match message {
