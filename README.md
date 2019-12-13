@@ -40,6 +40,8 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 - `-v`, `--version` displays the version number and exits.
 
+- `-d`, `--debug` enables debug logging.
+
 - `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Pick a range from 250ms to `UINT_MAX`. Defaults to 1000ms, and higher values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
 
 ### Keybinds
@@ -94,7 +96,7 @@ Note that all options and keybinds on GitHub may reflect the current development
   - [log](https://github.com/rust-lang-nursery/log)
   - [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
   - [tokio](https://github.com/tokio-rs/tokio)
-  - [tui-rs](https://github.com/fdehau/tui-rs) (note I used a fork due to some issues I faced, you can find that [here](https://github.com/ClementTsang/tui-rs))
+  - [tui-rs](https://github.com/fdehau/tui-rs)
   - [winapi](https://github.com/retep998/winapi-rs)
 
 ## Why
