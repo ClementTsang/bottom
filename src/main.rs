@@ -29,7 +29,7 @@ mod data_conversion;
 use app::data_collection;
 use constants::TICK_RATE_IN_MILLISECONDS;
 use data_conversion::*;
-use utils::error::{self, RustopError};
+use utils::error::{self, BottomError};
 
 // End imports
 
@@ -74,11 +74,11 @@ fn main() -> error::Result<()> {
 	};
 
 	if update_rate_in_milliseconds < 250 {
-		return Err(RustopError::InvalidArg {
+		return Err(BottomError::InvalidArg {
 			message: "Please set your update rate to be greater than 250 milliseconds.".to_string(),
 		});
 	} else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
-		return Err(RustopError::InvalidArg {
+		return Err(BottomError::InvalidArg {
 			message: "Please set your update rate to be less than unsigned INT_MAX.".to_string(),
 		});
 	}
