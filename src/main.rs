@@ -127,7 +127,7 @@ fn main() -> error::Result<()> {
 				for event in reader {
 					match event {
 						InputEvent::Keyboard(key) => {
-							if Instant::now().duration_since(keyboard_timer).as_millis() >= 10 {
+							if Instant::now().duration_since(keyboard_timer).as_millis() >= 30 {
 								if tx.send(Event::KeyInput(key)).is_err() {
 									return;
 								}
@@ -151,7 +151,7 @@ fn main() -> error::Result<()> {
 					if let Some(event) = reader.next() {
 						match event {
 							InputEvent::Keyboard(key) => {
-								if Instant::now().duration_since(keyboard_timer).as_millis() >= 10 {
+								if Instant::now().duration_since(keyboard_timer).as_millis() >= 30 {
 									if tx.send(Event::KeyInput(key)).is_err() {
 										return;
 									}
@@ -159,7 +159,7 @@ fn main() -> error::Result<()> {
 								}
 							}
 							InputEvent::Mouse(mouse) => {
-								if Instant::now().duration_since(mouse_timer).as_millis() >= 40 {
+								if Instant::now().duration_since(mouse_timer).as_millis() >= 30 {
 									if tx.send(Event::MouseInput(mouse)).is_err() {
 										return;
 									}
