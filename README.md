@@ -14,7 +14,7 @@ You can install by cloning and using `cargo build --release`, or download the pr
 
 ### Windows
 
-You can currently install by cloning and building yourself. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) for font support to work properly, unfortunately.
+You can currently install by cloning and building yourself. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
 
 ### MacOS
 
