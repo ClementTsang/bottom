@@ -11,13 +11,13 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
-fn set_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::RustopError>, value_to_set: &mut T) {
+fn set_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::BottomError>, value_to_set: &mut T) {
 	if let Ok(result) = result {
 		*value_to_set = (*result).clone();
 	}
 }
 
-fn push_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::RustopError>, vector_to_push: &mut Vec<T>) {
+fn push_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::BottomError>, vector_to_push: &mut Vec<T>) {
 	if let Ok(result) = result {
 		vector_to_push.push(result.clone());
 	}
