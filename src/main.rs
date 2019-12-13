@@ -175,15 +175,16 @@ fn main() -> error::Result<()> {
 	}
 
 	// Event loop
-	let mut data_state = data_collection::DataState::default();
-	data_state.init();
-	data_state.set_temperature_type(app.temperature_type.clone());
 	let (rtx, rrx) = mpsc::channel();
 	{
 		let tx = tx.clone();
 		let mut first_run = true;
+		let temp_type = app.temperature_type.clone();
 		thread::spawn(move || {
 			let tx = tx.clone();
+			let mut data_state = data_collection::DataState::default();
+			data_state.init();
+			data_state.set_temperature_type(temp_type);
 			loop {
 				if let Ok(message) = rrx.try_recv() {
 					match message {
