@@ -24,11 +24,11 @@ mod utils {
 }
 mod canvas;
 mod constants;
-mod convert_data;
+mod data_conversion;
 
 use app::data_collection;
 use constants::TICK_RATE_IN_MILLISECONDS;
-use convert_data::*;
+use data_conversion::*;
 use utils::error::{self, RustopError};
 
 // End imports
@@ -175,17 +175,15 @@ fn main() -> error::Result<()> {
 	}
 
 	// Event loop
-
+	let mut data_state = data_collection::DataState::default();
+	data_state.init();
+	data_state.set_temperature_type(app.temperature_type.clone());
 	let (rtx, rrx) = mpsc::channel();
 	{
 		let tx = tx.clone();
-		let temp_type = app.temperature_type.clone();
 		let mut first_run = true;
 		thread::spawn(move || {
 			let tx = tx.clone();
-			let mut data_state = data_collection::DataState::default();
-			data_state.init();
-			data_state.set_temperature_type(temp_type);
 			loop {
 				if let Ok(message) = rrx.try_recv() {
 					match message {
@@ -282,19 +280,19 @@ fn main() -> error::Result<()> {
 						canvas_data.swap_data = update_swap_data_points(&app.data);
 						canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
 
-						debug!("Update event complete.");
+						//debug!("Update event complete.");
 					}
 				}
 			}
 		}
 		// Draw!
 		if let Err(err) = canvas::draw_data(&mut terminal, &mut app, &canvas_data) {
-			input().disable_mouse_mode().unwrap();
+			input().disable_mouse_mode()?;
 			error!("{}", err);
 			return Err(err);
 		}
 	}
 
-	input().disable_mouse_mode().unwrap();
+	input().disable_mouse_mode()?;
 	Ok(())
 }

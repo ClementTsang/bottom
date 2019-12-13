@@ -104,19 +104,19 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				.split(vertical_chunks[2]);
 
 			// Component specific chunks
-			let cpu_chunk = Layout::default()
+			let _cpu_chunk = Layout::default()
 				.direction(Direction::Horizontal)
 				.margin(0)
 				.constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
 				.split(vertical_chunks[0]);
 
-			let mem_chunk = Layout::default()
+			let _mem_chunk = Layout::default()
 				.direction(Direction::Horizontal)
 				.margin(0)
 				.constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
 				.split(middle_chunks[0]);
 
-			let network_chunk = Layout::default()
+			let _network_chunk = Layout::default()
 				.direction(Direction::Horizontal)
 				.margin(0)
 				.constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
@@ -156,12 +156,13 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				}
 
 				if !canvas_data.cpu_data.is_empty() && app_state.show_average_cpu {
+					// Unwrap should be safe here, this assumes that the cpu_data vector is populated...
 					dataset_vector.push(
 						Dataset::default()
-							.name(&canvas_data.cpu_data[0].0)
+							.name(&canvas_data.cpu_data.first().unwrap().0)
 							.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 							.style(Style::default().fg(COLOUR_LIST[canvas_data.cpu_data.len() - 1 % COLOUR_LIST.len()]))
-							.data(&(canvas_data.cpu_data[0].1)),
+							.data(&(canvas_data.cpu_data.first().unwrap().1)),
 					);
 				}
 
@@ -195,8 +196,8 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 					+ &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
 					+ &format!(
 						"   {:.1}GB/{:.1}GB",
-						canvas_data.mem_values[0].0 as f64 / 1024.0,
-						canvas_data.mem_values[0].1 as f64 / 1024.0
+						canvas_data.mem_values.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
+						canvas_data.mem_values.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
 					);
 				let swap_name: String;
 

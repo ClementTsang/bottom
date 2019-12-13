@@ -72,6 +72,10 @@ impl DataState {
 	pub fn init(&mut self) {
 		self.sys.refresh_system();
 		self.sys.refresh_network();
+		if !cfg!(target_os = "linux") {
+			// For now, might be just windows tbh
+			self.sys.refresh_processes();
+		}
 	}
 
 	pub async fn update_data(&mut self) {
