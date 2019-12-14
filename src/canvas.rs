@@ -346,8 +346,8 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				let x_axis: Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 				let y_axis = Axis::default()
 					.style(Style::default().fg(GRAPH_COLOUR))
-					.bounds([-0.5, 1_000_000.5])
-					.labels(&["0GB", "1GB"]);
+					.bounds([-0.5, 30_f64])
+					.labels(&["0B", "1KiB", "1MiB", "1GiB"]);
 				Chart::default()
 					.block(
 						Block::default()

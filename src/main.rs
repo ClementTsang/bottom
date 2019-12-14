@@ -50,7 +50,6 @@ fn main() -> error::Result<()> {
 	(version: crate_version!())
 	(author: crate_authors!())
 	(about: crate_description!())
-	//(@arg THEME: -t --theme +takes_value "Sets a colour theme.")
 	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
 	(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.  May be needed in things like Powershell.")
 	(@arg DEBUG: -d --debug "Enables debug mode.") 
@@ -61,7 +60,6 @@ fn main() -> error::Result<()> {
 	)
 	(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
 	)
-	//.after_help("Themes:") // TODO: This and others disabled for now
 	.get_matches();
 
 	let update_rate_in_milliseconds: u128 = if matches.is_present("RATE_MILLIS") {
