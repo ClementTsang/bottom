@@ -251,12 +251,14 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 		let current_time = std::time::Instant::now();
 		let rx_data = (
 			((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
-			data.rx as f64 / 1024.0,
+			if data.rx > 0 { (data.rx as f64).log(2.0) } else { 0.0 },
 		);
 		let tx_data = (
 			((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
-			data.tx as f64 / 1024.0,
+			if data.tx > 0 { (data.tx as f64).log(2.0) } else { 0.0 },
 		);
+
+		//debug!("Plotting: {:?} bytes rx, {:?} bytes tx", rx_data, tx_data);
 
 		// Now, inject our joining points...
 		if !rx.is_empty() {
