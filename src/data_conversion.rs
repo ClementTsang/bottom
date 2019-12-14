@@ -289,13 +289,13 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 	let rx_display = if let Some(last_num_bytes_entry) = network_data.last() {
 		let num_bytes = last_num_bytes_entry.rx;
 		if num_bytes < 1024 {
-			format!("RX: {:5.*} B/s", 1, num_bytes as f64).to_string()
+			format!("RX: {:5.*}  B/s", 1, num_bytes as f64).to_string()
 		} else if num_bytes < (1024 * 1024) {
-			format!("RX: {:5.*}KB/s", 1, num_bytes as f64 / 1024.0).to_string()
+			format!("RX: {:5.*}KiB/s", 1, num_bytes as f64 / 1024.0).to_string()
 		} else if num_bytes < (1024 * 1024 * 1024) {
-			format!("RX: {:5.*}MB/s", 1, num_bytes as f64 / 1024.0 / 1024.0).to_string()
+			format!("RX: {:5.*}MiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0).to_string()
 		} else {
-			format!("RX: {:5.*}GB/s", 1, num_bytes as f64 / 1024.0 / 1024.0 / 1024.0).to_string()
+			format!("RX: {:5.*}GiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0 / 1024.0).to_string()
 		}
 	} else {
 		"0.0B/s".to_string()
@@ -304,13 +304,13 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 	let tx_display = if let Some(last_num_bytes_entry) = network_data.last() {
 		let num_bytes = last_num_bytes_entry.tx;
 		if num_bytes < 1024 {
-			format!("TX: {:5.*} B/s", 1, num_bytes as f64).to_string()
+			format!("TX: {:5.*}  B/s", 1, num_bytes as f64).to_string()
 		} else if num_bytes < (1024 * 1024) {
-			format!("TX: {:5.*}KB/s", 1, num_bytes as f64 / 1024.0).to_string()
+			format!("TX: {:5.*}KiB/s", 1, num_bytes as f64 / 1024.0).to_string()
 		} else if num_bytes < (1024 * 1024 * 1024) {
-			format!("TX: {:5.*}MB/s", 1, num_bytes as f64 / 1024.0 / 1024.0).to_string()
+			format!("TX: {:5.*}MiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0).to_string()
 		} else {
-			format!("TX: {:5.*}GB/s", 1, num_bytes as f64 / 1024.0 / 1024.0 / 1024.0).to_string()
+			format!("TX: {:5.*}GiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0 / 1024.0).to_string()
 		}
 	} else {
 		"0B.0/s".to_string()
