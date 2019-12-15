@@ -41,19 +41,19 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 						let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
 						let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
 						(
-							if read_bytes_per_sec < 1024 {
+							if read_bytes_per_sec < 1000 {
 								format!("{}B", read_bytes_per_sec)
-							} else if read_bytes_per_sec < 1024 * 1024 {
-								format!("{}KB", read_bytes_per_sec / 1024)
+							} else if read_bytes_per_sec < 1000 * 1000 {
+								format!("{}KB", read_bytes_per_sec / 1000)
 							} else {
-								format!("{}MB", read_bytes_per_sec / 1024 / 1024)
+								format!("{}MB", read_bytes_per_sec / 1000 / 1000)
 							},
-							if write_bytes_per_sec < 1024 {
+							if write_bytes_per_sec < 1000 {
 								format!("{}B", write_bytes_per_sec)
-							} else if write_bytes_per_sec < 1024 * 1024 {
-								format!("{}KB", write_bytes_per_sec / 1024)
+							} else if write_bytes_per_sec < 1000 * 1000 {
+								format!("{}KB", write_bytes_per_sec / 1000)
 							} else {
-								format!("{}MB", write_bytes_per_sec / 1024 / 1024)
+								format!("{}MB", write_bytes_per_sec / 1000 / 1000)
 							},
 						)
 					} else {
@@ -72,15 +72,15 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 			disk.name.to_string(),
 			disk.mount_point.to_string(),
 			format!("{:.0}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
-			if disk.free_space < 1024 {
+			if disk.free_space < 1000 {
 				disk.free_space.to_string() + "MB"
 			} else {
-				(disk.free_space / 1024).to_string() + "GB"
+				(disk.free_space / 1000).to_string() + "GB"
 			},
-			if disk.total_space < 1024 {
+			if disk.total_space < 1000 {
 				disk.total_space.to_string() + "MB"
 			} else {
-				(disk.total_space / 1024).to_string() + "GB"
+				(disk.total_space / 1000).to_string() + "GB"
 			},
 			io_activity.0,
 			io_activity.1,
@@ -104,7 +104,7 @@ pub fn update_process_row(app_data: &data_collection::Data) -> Vec<Vec<String>> 
 					mem_usage
 				} else if let Some(mem_usage_kb) = process.mem_usage_kb {
 					if let Some(mem_data) = app_data.memory.last() {
-						(mem_usage_kb / 1024) as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
+						(mem_usage_kb / 1000) as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
 					} else {
 						0_f64
 					}

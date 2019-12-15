@@ -14,7 +14,7 @@ You can install by cloning and using `cargo build --release`, or download the pr
 
 ### Windows
 
-You can currently install by cloning and building yourself. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+You can currently install by cloning and building yourself using `cargo build --release`. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
 
 ### MacOS
 
@@ -54,9 +54,9 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Up/k`, `Down/j`, `Left/h`, `Right/l` to navigate between panels.
+- `Ctrl+Up/k`, `Ctrl+Down/j`, `Ctrl+Left/h`, `Ctrl+Right/l` to navigate between panels.
 
-- `Shift+Up` and `Shift+Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
+- `Up` and `Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
 
 - `Esc` to close a dialog window.
 
@@ -98,7 +98,3 @@ Note that all options and keybinds on GitHub may reflect the current development
   - [tokio](https://github.com/tokio-rs/tokio)
   - [tui-rs](https://github.com/fdehau/tui-rs)
   - [winapi](https://github.com/retep998/winapi-rs)
-
-## Why
-
-I was looking to try writing more things in Rust, and I love the gotop tool. And thus, this project was born.
