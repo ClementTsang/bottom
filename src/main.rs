@@ -46,19 +46,20 @@ enum ResetEvent {
 fn main() -> error::Result<()> {
 	// Parse command line options
 	let matches = clap_app!(app =>
-	(name: crate_name!())
-	(version: crate_version!())
-	(author: crate_authors!())
-	(about: crate_description!())
-	(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
-	(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.  May be needed in things like Powershell.")
-	(@arg DEBUG: -d --debug "Enables debug mode.") 
-	(@group TEMPERATURE_TYPE =>
-		(@arg CELSIUS : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
-		(@arg FAHRENHEIT : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
-		(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
-	)
-	(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
+		(name: crate_name!())
+		(version: crate_version!())
+		(author: crate_authors!())
+		(about: crate_description!())
+		(@arg AVG_CPU: -a --avgcpu "Enables showing the average CPU usage.")
+		(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.")
+		(@arg DEBUG: -d --debug "Enables debug mode, which will output a log file.")
+		(@group TEMPERATURE_TYPE =>
+			(@arg CELSIUS : -c --celsius "Sets the temperature type to Celsius.  This is the default option.")
+			(@arg FAHRENHEIT : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
+			(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
+		)
+		(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
+		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 	)
 	.get_matches();
 
@@ -213,18 +214,18 @@ fn main() -> error::Result<()> {
 				Event::KeyInput(event) => {
 					match event {
 						KeyEvent::Ctrl('c') | KeyEvent::Char('q') => break,
-						KeyEvent::Char('h') | KeyEvent::Left => app.on_left(),
-						KeyEvent::Char('l') | KeyEvent::Right => app.on_right(),
-						KeyEvent::Char('k') | KeyEvent::Up => app.on_up(),
-						KeyEvent::Char('j') | KeyEvent::Down => app.on_down(),
+						KeyEvent::Char('h') | KeyEvent::CtrlLeft => app.on_left(),
+						KeyEvent::Char('l') | KeyEvent::CtrlRight => app.on_right(),
+						KeyEvent::Char('k') | KeyEvent::CtrlUp => app.on_up(),
+						KeyEvent::Char('j') | KeyEvent::CtrlDown => app.on_down(),
 						KeyEvent::Ctrl('r') => {
 							while rtx.send(ResetEvent::Reset).is_err() {
 								debug!("Sent reset message.");
 							}
 							debug!("Resetting begins...");
 						}
-						KeyEvent::ShiftUp => app.decrement_position_count(),
-						KeyEvent::ShiftDown => app.increment_position_count(),
+						KeyEvent::Up => app.decrement_position_count(),
+						KeyEvent::Down => app.increment_position_count(),
 						KeyEvent::Char(c) => app.on_key(c),
 						//KeyEvent::Enter => app.on_enter(),
 						KeyEvent::Esc => app.on_esc(),

@@ -55,13 +55,13 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
 				.split(vertical_dialog_chunk[1]);
 
-			let text = [
+			let help_text = [
 				Text::raw("\nGeneral Keybinds\n"),
 				Text::raw("q, Ctrl-c to quit.\n"),
 				Text::raw("Ctrl-r to reset all data.\n"),
 				Text::raw("f to toggle freezing and unfreezing the display.\n"),
-				Text::raw("Up/k, Down/j, Left/h, Right/l to navigate between panels.\n"),
-				Text::raw("Shift+Up and Shift+Down scrolls through the list.\n"),
+				Text::raw("Ctrl+Up/k, Ctrl+Down/j, Ctrl+Left/h, Ctrl+Right/l to navigate between panels.\n"),
+				Text::raw("Up and Down scrolls through a list.\n"),
 				Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
 				Text::raw("? to get this help screen.\n"),
 				Text::raw("\n Process Panel Keybinds\n"),
@@ -72,7 +72,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				Text::raw("n to sort by process name.\n"),
 			];
 
-			Paragraph::new(text.iter())
+			Paragraph::new(help_text.iter())
 				.block(Block::default().title("Help (Press Esc to close)").borders(Borders::ALL))
 				.style(Style::default().fg(Color::Gray))
 				.alignment(Alignment::Left)
@@ -193,7 +193,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 					.labels(&["0%", "100%"]);
 
 				let mem_name = "RAM:".to_string()
-					+ &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
+					+ &format!("{:3}%", (canvas_data.mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.floor() as u64))
 					+ &format!(
 						"   {:.1}GB/{:.1}GB",
 						canvas_data.mem_values.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
@@ -211,7 +211,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 					if let Some(last_canvas_result) = (&canvas_data.swap_data).last() {
 						if last_canvas_result.1 >= 0.0 {
 							swap_name = "SWP:".to_string()
-								+ &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
+								+ &format!("{:3}%", (canvas_data.swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.floor() as u64))
 								+ &format!(
 									"   {:.1}GB/{:.1}GB",
 									canvas_data.mem_values[1].0 as f64 / 1024.0,
