@@ -26,23 +26,23 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 ### Command line options
 
-- `-h`, `--help` to show the help screen and exit (basically has all of the below CLI option info).
+- `-h`, `--help` shows the help screen and exits.
 
-- `-a`, `--avgcpu` enables showing the average CPU usage on rustop.
+- `-a`, `--avgcpu` enables also showing the average CPU usage in addition to per-core CPU usage.
 
-- `-m`, `--dot-marker` uses a dot marker instead of the default braille marker. This is useful for things like Powershell which display braille markers incorrectly.
+- `-m`, `--dot-marker` uses a dot marker instead of the default braille marker.
 
 - `-c`, `--celsius` displays the temperature type in Celsius. This is the default.
 
-- `-f`, `--fahrenheit` displays the temperature type in Fahrenheit. This is the default.
+- `-f`, `--fahrenheit` displays the temperature type in Fahrenheit.
 
-- `-k`, `--kelvin` displays the temperature type in Kelvin. This is the default.
+- `-k`, `--kelvin` displays the temperature type in Kelvin.
 
 - `-v`, `--version` displays the version number and exits.
 
 - `-d`, `--debug` enables debug logging.
 
-- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Pick a range from 250ms to `UINT_MAX`. Defaults to 1000ms, and higher values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
+- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Pick a range from 250ms to `UINT_MAX`. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
 
 ### Keybinds
 
