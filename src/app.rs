@@ -1,5 +1,8 @@
 pub mod data_collection;
 use data_collection::{processes, temperature};
+use std::time::Instant;
+
+use crate::constants;
 
 mod process_killer;
 
@@ -41,6 +44,7 @@ pub struct App {
 	pub use_dot: bool,
 	pub show_help: bool,
 	pub is_frozen: bool,
+	last_key_press: Instant,
 }
 
 impl App {
@@ -66,7 +70,16 @@ impl App {
 			use_dot,
 			show_help: false,
 			is_frozen: false,
+			last_key_press: Instant::now(),
 		}
+	}
+
+	pub fn reset(&mut self) {
+		self.reset_multi_tap_keys();
+	}
+
+	fn reset_multi_tap_keys(&mut self) {
+		self.awaiting_second_d = false;
 	}
 
 	pub fn on_enter(&mut self) {}
@@ -75,11 +88,18 @@ impl App {
 		if self.show_help {
 			self.show_help = false;
 		}
+		self.awaiting_second_d = false;
 	}
 
 	// TODO: How should we make it for process panel specific hotkeys?  Only if we're on process panel?  Or what?
 	pub fn on_key(&mut self, c: char) {
 		if !self.show_help {
+			let current_key_press_inst = Instant::now();
+			if current_key_press_inst.duration_since(self.last_key_press).as_millis() > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS {
+				self.reset_multi_tap_keys();
+			}
+			self.last_key_press = current_key_press_inst;
+
 			match c {
 				'd' => {
 					if self.awaiting_second_d {
@@ -170,6 +190,7 @@ impl App {
 			ApplicationPosition::TEMP => ApplicationPosition::MEM,
 			_ => self.current_application_position,
 		};
+		self.awaiting_second_d = false;
 	}
 
 	pub fn on_right(&mut self) {
@@ -178,6 +199,7 @@ impl App {
 			ApplicationPosition::NETWORK => ApplicationPosition::PROCESS,
 			_ => self.current_application_position,
 		};
+		self.awaiting_second_d = false;
 	}
 
 	pub fn on_up(&mut self) {
@@ -189,6 +211,7 @@ impl App {
 			ApplicationPosition::DISK => ApplicationPosition::TEMP,
 			_ => self.current_application_position,
 		};
+		self.awaiting_second_d = false;
 	}
 
 	pub fn on_down(&mut self) {
@@ -199,6 +222,7 @@ impl App {
 			ApplicationPosition::DISK => ApplicationPosition::PROCESS,
 			_ => self.current_application_position,
 		};
+		self.awaiting_second_d = false;
 	}
 
 	pub fn decrement_position_count(&mut self) {
@@ -209,6 +233,7 @@ impl App {
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::UP;
+		self.awaiting_second_d = false;
 	}
 
 	pub fn increment_position_count(&mut self) {
@@ -219,6 +244,7 @@ impl App {
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::DOWN;
+		self.awaiting_second_d = false;
 	}
 
 	fn change_process_position(&mut self, num_to_change_by: i64) {
