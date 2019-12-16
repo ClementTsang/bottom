@@ -60,6 +60,7 @@ fn main() -> error::Result<()> {
 		)
 		(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
+		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 	)
 	.get_matches();
 
@@ -223,6 +224,7 @@ fn main() -> error::Result<()> {
 								debug!("Sent reset message.");
 							}
 							debug!("Resetting begins...");
+							app.reset();
 						}
 						KeyEvent::Up => app.decrement_position_count(),
 						KeyEvent::Down => app.increment_position_count(),
