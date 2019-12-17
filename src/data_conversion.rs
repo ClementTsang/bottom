@@ -211,7 +211,7 @@ fn convert_mem_data(mem_data: &[data_collection::mem::MemData]) -> Vec<(f64, f64
 			if data.mem_total_in_mb == 0 {
 				-1000.0
 			} else {
-				data.mem_used_in_mb as f64 / data.mem_total_in_mb as f64 * 100_f64
+				(data.mem_used_in_mb as f64 * 100_f64) / data.mem_total_in_mb as f64
 			},
 		);
 
