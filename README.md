@@ -16,9 +16,9 @@ You can install by cloning and using `cargo build --release`, or download the pr
 
 You can currently install by cloning and building yourself using `cargo build --release`. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
 
-### MacOS
+### macOS
 
-Currently, I'm unable to really dev or test on MacOS, so I'm not sure how well this will work, if at all. I'll try to source MacOS hardware to test this application.
+macOS support will hopefully come soon<sup>TM</sup>.
 
 ## Usage
 
@@ -42,7 +42,7 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 - `-d`, `--debug` enables debug logging.
 
-- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Pick a range from 250ms to `UINT_MAX`. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
+- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>128 - 1</sup>. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
 
 ### Keybinds
 
@@ -62,7 +62,7 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 - `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
 
-#### Processes Panel
+#### Processes panel
 
 - `dd` to kill the selected process - **I would highly recommend you to be careful using this, lest you accidentally kill the wrong process**.
 
@@ -74,13 +74,13 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 - `n` to sort by process name. Sorts in ascending order by default. Press again to reverse sorting order.
 
-### Mouse Actions
+### Mouse actions
 
 [* Scrolling either scrolls through the list if the panel is a table (Temperature, Disks, Processes), or zooms in and out if it is a chart.]: <>
 
 - Scrolling currently only scrolls through the list if you are on the Processes panel. This will change in the future.
 
-## Thanks
+## Thanks, kudos, and all the like
 
 - As mentioned, this project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop) .
 
