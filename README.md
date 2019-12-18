@@ -78,7 +78,7 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 [* Scrolling either scrolls through the list if the panel is a table (Temperature, Disks, Processes), or zooms in and out if it is a chart.]: <>
 
-- Scrolling currently only scrolls through the list if you are on the Processes panel. This will change in the future.
+- Scrolling currently only scrolls through the list if the panel is a table (Temperature, Disks, Processes). This will change in the future.
 
 ## Thanks, kudos, and all the like
 
