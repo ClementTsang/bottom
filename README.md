@@ -22,7 +22,7 @@ macOS support will hopefully come soon<sup>TM</sup>.
 
 ## Usage
 
-Note that all options and keybinds on GitHub may reflect the current development build, and not that of the current releases. For now, refer to the [crate](https://crates.io/crates/bottom) README for documentation as of time of release.
+Note that all options and keybindings on GitHub may reflect the current development build, and not that of the current releases. For now, refer to the [crate](https://crates.io/crates/bottom) README for documentation as of time of release.
 
 ### Command line options
 
@@ -44,7 +44,7 @@ Note that all options and keybinds on GitHub may reflect the current development
 
 - `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>128 - 1</sup>. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
 
-### Keybinds
+### Keybindings
 
 #### General
 

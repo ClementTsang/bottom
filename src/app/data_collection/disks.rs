@@ -87,15 +87,7 @@ pub async fn get_disk_usage_list() -> crate::utils::error::Result<Vec<DiskData>>
 		}
 	}
 
-	vec_disks.sort_by(|a, b| {
-		if a.name < b.name {
-			std::cmp::Ordering::Less
-		} else if a.name > b.name {
-			std::cmp::Ordering::Greater
-		} else {
-			std::cmp::Ordering::Equal
-		}
-	});
+	vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
 
 	Ok(vec_disks)
 }

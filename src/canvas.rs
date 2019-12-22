@@ -56,7 +56,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				.split(vertical_dialog_chunk[1]);
 
 			let help_text = [
-				Text::raw("\nGeneral Keybinds\n"),
+				Text::raw("\nGeneral Keybindings\n"),
 				Text::raw("q, Ctrl-c to quit.\n"),
 				Text::raw("Ctrl-r to reset all data.\n"),
 				Text::raw("f to toggle freezing and unfreezing the display.\n"),
@@ -64,7 +64,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				Text::raw("Up and Down scrolls through a list.\n"),
 				Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
 				Text::raw("? to get this help screen.\n"),
-				Text::raw("\n Process Panel Keybinds\n"),
+				Text::raw("\n Process Panel Keybindings\n"),
 				Text::raw("dd to kill the selected process.\n"),
 				Text::raw("c to sort by CPU usage.\n"),
 				Text::raw("m to sort by memory usage.\n"),
