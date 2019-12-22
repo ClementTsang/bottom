@@ -3,8 +3,6 @@ use std::process::Command;
 
 // Copied from SO: https://stackoverflow.com/a/55231715
 #[cfg(target_os = "windows")]
-use std::ptr::null_mut;
-#[cfg(target_os = "windows")]
 use winapi::{
 	shared::{minwindef::DWORD, ntdef::HANDLE},
 	um::{
@@ -20,7 +18,7 @@ struct Process(HANDLE);
 impl Process {
 	fn open(pid: DWORD) -> Result<Process, String> {
 		let pc = unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, 0, pid) };
-		if pc == null_mut() {
+		if pc.is_null() {
 			return Err("!OpenProcess".to_string());
 		}
 		Ok(Process(pc))

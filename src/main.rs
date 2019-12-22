@@ -177,7 +177,7 @@ fn main() -> error::Result<()> {
 	// Event loop
 	let (rtx, rrx) = mpsc::channel();
 	{
-		let tx = tx.clone();
+		let tx = tx;
 		let mut first_run = true;
 		let temp_type = app.temperature_type.clone();
 		thread::spawn(move || {
