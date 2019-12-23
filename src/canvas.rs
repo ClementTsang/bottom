@@ -150,7 +150,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 						Dataset::default()
 							.name(&cpu.0)
 							.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-							.style(Style::default().fg(COLOUR_LIST[i - avg_cpu_exist_offset % COLOUR_LIST.len()]))
+							.style(Style::default().fg(COLOUR_LIST[(i - avg_cpu_exist_offset) % COLOUR_LIST.len()]))
 							.data(&(cpu.1)),
 					);
 				}
@@ -161,7 +161,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 						Dataset::default()
 							.name(&canvas_data.cpu_data.first().unwrap().0)
 							.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-							.style(Style::default().fg(COLOUR_LIST[canvas_data.cpu_data.len() - 1 % COLOUR_LIST.len()]))
+							.style(Style::default().fg(COLOUR_LIST[(canvas_data.cpu_data.len() - 1) % COLOUR_LIST.len()]))
 							.data(&(canvas_data.cpu_data.first().unwrap().1)),
 					);
 				}
