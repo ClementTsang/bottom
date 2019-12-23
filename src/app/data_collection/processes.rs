@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::{collections::HashMap, process::Command, time::Instant};
 use sysinfo::{ProcessExt, System, SystemExt};
 
@@ -79,20 +80,25 @@ fn vangelis_cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) 
 }
 
 fn get_ordering<T: std::cmp::PartialOrd>(a_val: T, b_val: T, reverse_order: bool) -> std::cmp::Ordering {
-	if a_val > b_val {
-		if reverse_order {
-			std::cmp::Ordering::Less
-		} else {
-			std::cmp::Ordering::Greater
-		}
-	} else if a_val < b_val {
-		if reverse_order {
-			std::cmp::Ordering::Greater
-		} else {
-			std::cmp::Ordering::Less
-		}
-	} else {
-		std::cmp::Ordering::Equal
+	match a_val.partial_cmp(&b_val) {
+		Some(x) => match x {
+			Ordering::Greater => {
+				if reverse_order {
+					std::cmp::Ordering::Less
+				} else {
+					std::cmp::Ordering::Greater
+				}
+			}
+			Ordering::Less => {
+				if reverse_order {
+					std::cmp::Ordering::Greater
+				} else {
+					std::cmp::Ordering::Less
+				}
+			}
+			Ordering::Equal => Ordering::Equal,
+		},
+		None => Ordering::Equal, // I don't really like this but I think it's fine...
 	}
 }
 
@@ -184,8 +190,8 @@ pub async fn get_sorted_processes_list(
 				}
 			}
 		}
-	} else if cfg!(target_os = "windows") {
-		// Windows
+	} else {
+		// Windows et al.
 
 		let process_hashmap = sys.get_process_list();
 		for process_val in process_hashmap.values() {
@@ -197,13 +203,6 @@ pub async fn get_sorted_processes_list(
 				cpu_usage_percent: f64::from(process_val.cpu_usage()),
 			});
 		}
-	} else if cfg!(target_os = "macos") {
-		// TODO: macOS
-		debug!("Mac");
-	} else {
-		// TODO: Others?
-		debug!("Else");
-		// Solaris: https://stackoverflow.com/a/4453581
 	}
 
 	Ok(process_vector)
