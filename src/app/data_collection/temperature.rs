@@ -1,5 +1,6 @@
 use futures::StreamExt;
 use heim::units::thermodynamic_temperature;
+use std::cmp::Ordering;
 use sysinfo::{ComponentExt, System, SystemExt};
 
 #[derive(Clone)]
@@ -55,25 +56,16 @@ pub async fn get_temperature_data(sys: &System, temp_type: &TemperatureType) -> 
 	// By default, sort temperature, then by alphabetically!  Allow for configuring this...
 
 	// Note we sort in reverse here; we want greater temps to be higher priority.
-	temperature_vec.sort_by(|a, b| {
-		if a.temperature > b.temperature {
-			std::cmp::Ordering::Less
-		} else if a.temperature < b.temperature {
-			std::cmp::Ordering::Greater
-		} else {
-			std::cmp::Ordering::Equal
-		}
+	temperature_vec.sort_by(|a, b| match a.temperature.partial_cmp(&b.temperature) {
+		Some(x) => match x {
+			Ordering::Less => Ordering::Greater,
+			Ordering::Greater => Ordering::Less,
+			Ordering::Equal => Ordering::Equal,
+		},
+		None => Ordering::Equal,
 	});
 
-	temperature_vec.sort_by(|a, b| {
-		if a.component_name > b.component_name {
-			std::cmp::Ordering::Greater
-		} else if a.component_name < b.component_name {
-			std::cmp::Ordering::Less
-		} else {
-			std::cmp::Ordering::Equal
-		}
-	});
+	temperature_vec.sort_by(|a, b| a.component_name.partial_cmp(&b.component_name).unwrap_or(Ordering::Equal));
 
 	Ok(temperature_vec)
 }
