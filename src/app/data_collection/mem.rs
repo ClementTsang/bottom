@@ -1,7 +1,7 @@
 use heim::units::information;
 use std::time::Instant;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct MemData {
 	pub mem_total_in_mb: u64,
 	pub mem_used_in_mb: u64,

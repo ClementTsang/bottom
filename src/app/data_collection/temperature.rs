@@ -3,7 +3,7 @@ use heim::units::thermodynamic_temperature;
 use std::cmp::Ordering;
 use sysinfo::{ComponentExt, System, SystemExt};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TempData {
 	pub component_name: Box<str>,
 	pub temperature: f32,

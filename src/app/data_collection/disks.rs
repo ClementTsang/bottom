@@ -2,7 +2,7 @@ use futures::stream::StreamExt;
 use heim::units::information;
 use std::time::Instant;
 
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct DiskData {
 	pub name: Box<str>,
 	pub mount_point: Box<str>,
@@ -18,7 +18,7 @@ pub struct IOData {
 	pub write_bytes: u64,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IOPackage {
 	pub io_hash: std::collections::HashMap<String, IOData>,
 	pub instant: Instant,

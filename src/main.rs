@@ -169,6 +169,7 @@ fn main() -> error::Result<()> {
 				}
 				futures::executor::block_on(data_state.update_data());
 				tx.send(Event::Update(Box::from(data_state.data.clone()))).unwrap();
+
 				if first_run {
 					// Fix for if you set a really long time for update periods (and just gives a faster first value)
 					thread::sleep(Duration::from_millis(250));
