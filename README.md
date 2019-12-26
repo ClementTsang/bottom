@@ -62,9 +62,9 @@ Note that all options and keybindings on GitHub may reflect the current developm
 
 - `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
 
-#### Processes panel
+#### Processes, temperature, and disk panels
 
-- `dd` to kill the selected process - **I would highly recommend you to be careful using this, lest you accidentally kill the wrong process**.
+- ~~`dd` to kill the selected process~~ Currently disabled in repo
 
 - `c` to sort by CPU usage. Sorts in descending order by default. Press again to reverse sorting order.
 
@@ -74,11 +74,15 @@ Note that all options and keybindings on GitHub may reflect the current developm
 
 - `n` to sort by process name. Sorts in ascending order by default. Press again to reverse sorting order.
 
+- `gg` to jump to the first entry of the current table.
+
+- `G` (`Shift+g`) to jump to the last entry of the current table.
+
 ### Mouse actions
 
 [* Scrolling either scrolls through the list if the panel is a table (Temperature, Disks, Processes), or zooms in and out if it is a chart.]: <>
 
-- Scrolling currently only scrolls through the list if the panel is a table (Temperature, Disks, Processes). This will change in the future.
+- Scrolling currently only scrolls through the list if the panel is a table (Temperature, Disks, Processes).
 
 ## Thanks, kudos, and all the like
 
