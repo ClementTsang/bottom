@@ -190,6 +190,7 @@ fn main() -> error::Result<()> {
 						// If only a code, and no modifiers, don't bother...
 						match event.code {
 							KeyCode::Char('q') => break,
+							KeyCode::Char('G') => app.skip_to_last(),
 							KeyCode::Char('h') => app.on_left(),
 							KeyCode::Char('l') => app.on_right(),
 							KeyCode::Char('k') => app.on_up(),

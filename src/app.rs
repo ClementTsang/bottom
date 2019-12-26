@@ -40,7 +40,8 @@ pub struct App {
 	pub previous_disk_position: i64,
 	pub previous_temp_position: i64,
 	pub previous_process_position: i64,
-	awaiting_second_d: bool,
+	awaiting_second_char: bool,
+	second_char: char,
 	pub use_dot: bool,
 	pub show_help: bool,
 	pub is_frozen: bool,
@@ -66,7 +67,8 @@ impl App {
 			previous_process_position: 0,
 			previous_disk_position: 0,
 			previous_temp_position: 0,
-			awaiting_second_d: false,
+			awaiting_second_char: false,
+			second_char: ' ',
 			use_dot,
 			show_help: false,
 			is_frozen: false,
@@ -79,7 +81,8 @@ impl App {
 	}
 
 	fn reset_multi_tap_keys(&mut self) {
-		self.awaiting_second_d = false;
+		self.awaiting_second_char = false;
+		self.second_char = ' ';
 	}
 
 	pub fn on_enter(&mut self) {}
@@ -88,11 +91,11 @@ impl App {
 		if self.show_help {
 			self.show_help = false;
 		}
-		self.awaiting_second_d = false;
+		self.reset_multi_tap_keys();
 	}
 
 	// TODO: How should we make it for process panel specific hotkeys?  Only if we're on process panel?  Or what?
-	pub fn on_key(&mut self, c: char) {
+	pub fn on_key(&mut self, caught_char: char) {
 		if !self.show_help {
 			let current_key_press_inst = Instant::now();
 			if current_key_press_inst.duration_since(self.last_key_press).as_millis() > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS {
@@ -100,13 +103,26 @@ impl App {
 			}
 			self.last_key_press = current_key_press_inst;
 
-			match c {
+			match caught_char {
 				'd' => {
-					if self.awaiting_second_d {
-						self.awaiting_second_d = false;
-						self.kill_highlighted_process().unwrap_or(());
+					if self.awaiting_second_char && self.second_char == 'd' {
+						self.awaiting_second_char = false;
+						self.second_char = ' ';
+					// TODO: Redo this in DD rewrite!
+					//self.kill_highlighted_process().unwrap_or(());
 					} else {
-						self.awaiting_second_d = true;
+						self.awaiting_second_char = true;
+						self.second_char = 'd';
+					}
+				}
+				'g' => {
+					if self.awaiting_second_char && self.second_char == 'g' {
+						self.awaiting_second_char = false;
+						self.second_char = ' ';
+						self.skip_to_first();
+					} else {
+						self.awaiting_second_char = true;
+						self.second_char = 'g';
 					}
 				}
 				'f' => {
@@ -162,15 +178,15 @@ impl App {
 				_ => {}
 			}
 
-			if self.awaiting_second_d && c != 'd' {
-				self.awaiting_second_d = false;
+			if self.awaiting_second_char && caught_char != self.second_char {
+				self.awaiting_second_char = false;
 			}
 		}
 	}
 
-	fn kill_highlighted_process(&self) -> crate::utils::error::Result<()> {
+	fn _kill_highlighted_process(&self) -> crate::utils::error::Result<()> {
 		let current_pid = u64::from(self.data.list_of_processes[self.currently_selected_process_position as usize].pid);
-		process_killer::kill_process_given_pid(current_pid)?;
+		process_killer::_kill_process_given_pid(current_pid)?;
 		Ok(())
 	}
 
@@ -190,7 +206,7 @@ impl App {
 			ApplicationPosition::TEMP => ApplicationPosition::MEM,
 			_ => self.current_application_position,
 		};
-		self.awaiting_second_d = false;
+		self.reset_multi_tap_keys();
 	}
 
 	pub fn on_right(&mut self) {
@@ -199,7 +215,7 @@ impl App {
 			ApplicationPosition::NETWORK => ApplicationPosition::PROCESS,
 			_ => self.current_application_position,
 		};
-		self.awaiting_second_d = false;
+		self.reset_multi_tap_keys();
 	}
 
 	pub fn on_up(&mut self) {
@@ -211,7 +227,7 @@ impl App {
 			ApplicationPosition::DISK => ApplicationPosition::TEMP,
 			_ => self.current_application_position,
 		};
-		self.awaiting_second_d = false;
+		self.reset_multi_tap_keys();
 	}
 
 	pub fn on_down(&mut self) {
@@ -222,7 +238,29 @@ impl App {
 			ApplicationPosition::DISK => ApplicationPosition::PROCESS,
 			_ => self.current_application_position,
 		};
-		self.awaiting_second_d = false;
+		self.reset_multi_tap_keys();
+	}
+
+	pub fn skip_to_first(&mut self) {
+		match self.current_application_position {
+			ApplicationPosition::PROCESS => self.currently_selected_process_position = 0,
+			ApplicationPosition::TEMP => self.currently_selected_temperature_position = 0,
+			ApplicationPosition::DISK => self.currently_selected_disk_position = 0,
+			_ => {}
+		}
+		self.scroll_direction = ScrollDirection::DOWN;
+		self.reset_multi_tap_keys();
+	}
+
+	pub fn skip_to_last(&mut self) {
+		match self.current_application_position {
+			ApplicationPosition::PROCESS => self.currently_selected_process_position = self.data.list_of_processes.len() as i64 - 1,
+			ApplicationPosition::TEMP => self.currently_selected_temperature_position = self.data.list_of_temperature_sensor.len() as i64 - 1,
+			ApplicationPosition::DISK => self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1,
+			_ => {}
+		}
+		self.scroll_direction = ScrollDirection::DOWN;
+		self.reset_multi_tap_keys();
 	}
 
 	pub fn decrement_position_count(&mut self) {
@@ -233,7 +271,7 @@ impl App {
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::UP;
-		self.awaiting_second_d = false;
+		self.reset_multi_tap_keys();
 	}
 
 	pub fn increment_position_count(&mut self) {
@@ -244,7 +282,7 @@ impl App {
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::DOWN;
-		self.awaiting_second_d = false;
+		self.reset_multi_tap_keys();
 	}
 
 	fn change_process_position(&mut self, num_to_change_by: i64) {
