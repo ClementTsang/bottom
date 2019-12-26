@@ -1,13 +1,13 @@
 use std::time::Instant;
 use sysinfo::{ProcessorExt, System, SystemExt};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct CPUData {
 	pub cpu_name: Box<str>,
 	pub cpu_usage: f64,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct CPUPackage {
 	pub cpu_vec: Vec<CPUData>,
 	pub instant: Instant,
@@ -21,7 +21,7 @@ pub fn get_cpu_data_list(sys: &System) -> crate::utils::error::Result<CPUPackage
 		cpu_vec.push(CPUData {
 			cpu_name: Box::from(cpu.get_name()),
 			cpu_usage: f64::from(cpu.get_cpu_usage()) * 100_f64,
-		})
+		});
 	}
 
 	Ok(CPUPackage {

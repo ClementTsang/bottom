@@ -1,6 +1,8 @@
 /// This file is meant to house (OS specific) implementations on how to kill processes.
 use std::process::Command;
 
+// TODO: Redo this, also make it update process list on freeze.
+
 // Copied from SO: https://stackoverflow.com/a/55231715
 #[cfg(target_os = "windows")]
 use winapi::{

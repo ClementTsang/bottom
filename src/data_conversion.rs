@@ -123,7 +123,7 @@ pub fn update_cpu_data_points(show_avg_cpu: bool, app_data: &data_collection::Da
 	let mut cpu_collection: Vec<Vec<(f64, f64)>> = Vec::new();
 
 	if !app_data.list_of_cpu_packages.is_empty() {
-		// I'm sorry for the if statement but I couldn't be bothered here...
+		// I'm sorry for the following if statement but I couldn't be bothered here...
 		for cpu_num in (if show_avg_cpu { 0 } else { 1 })..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
 			let mut this_cpu_data: Vec<(f64, f64)> = Vec::new();
 
@@ -313,7 +313,7 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 			format!("TX: {:5.*}GiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0 / 1024.0)
 		}
 	} else {
-		"0B.0/s".to_string()
+		"0.0B/s".to_string()
 	};
 
 	ConvertedNetworkData {

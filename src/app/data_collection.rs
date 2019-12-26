@@ -1,6 +1,6 @@
 //! This is the main file to house data collection functions.
 
-use crate::constants;
+use crate::{constants, utils::error::Result};
 use std::{collections::HashMap, time::Instant};
 use sysinfo::{System, SystemExt};
 
@@ -11,19 +11,19 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
-fn set_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::BottomError>, value_to_set: &mut T) {
+fn set_if_valid<T: std::clone::Clone>(result: &Result<T>, value_to_set: &mut T) {
 	if let Ok(result) = result {
 		*value_to_set = (*result).clone();
 	}
 }
 
-fn push_if_valid<T: std::clone::Clone>(result: &Result<T, crate::utils::error::BottomError>, vector_to_push: &mut Vec<T>) {
+fn push_if_valid<T: std::clone::Clone>(result: &Result<T>, vector_to_push: &mut Vec<T>) {
 	if let Ok(result) = result {
 		vector_to_push.push(result.clone());
 	}
 }
 
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Data {
 	pub list_of_cpu_packages: Vec<cpu::CPUPackage>,
 	pub list_of_io: Vec<disks::IOPackage>,
@@ -44,6 +44,9 @@ pub struct DataState {
 	prev_pid_stats: HashMap<String, (f64, Instant)>,
 	prev_idle: f64,
 	prev_non_idle: f64,
+	prev_net_rx_bytes: u64,
+	prev_net_tx_bytes: u64,
+	prev_net_access_time: Instant,
 	temperature_type: temperature::TemperatureType,
 	last_clean: Instant, // Last time stale data was cleared
 }
@@ -58,6 +61,9 @@ impl Default for DataState {
 			prev_pid_stats: HashMap::new(),
 			prev_idle: 0_f64,
 			prev_non_idle: 0_f64,
+			prev_net_rx_bytes: 0,
+			prev_net_tx_bytes: 0,
+			prev_net_access_time: Instant::now(),
 			temperature_type: temperature::TemperatureType::Celsius,
 			last_clean: Instant::now(),
 		}
@@ -70,38 +76,40 @@ impl DataState {
 	}
 
 	pub fn init(&mut self) {
-		self.sys.refresh_system();
-		self.sys.refresh_network();
-		if !cfg!(target_os = "linux") {
-			// For now, might be just windows tbh
-			self.sys.refresh_processes();
-		}
+		self.sys.refresh_all();
 	}
 
 	pub async fn update_data(&mut self) {
 		self.sys.refresh_system();
-		self.sys.refresh_network();
 
 		if !cfg!(target_os = "linux") {
 			// For now, might be just windows tbh
 			self.sys.refresh_processes();
+			self.sys.refresh_network();
 		}
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
-		push_if_valid(&network::get_network_data(&self.sys), &mut self.data.network);
+		push_if_valid(
+			&network::get_network_data(
+				&self.sys,
+				&mut self.prev_net_rx_bytes,
+				&mut self.prev_net_tx_bytes,
+				&mut self.prev_net_access_time,
+			)
+			.await,
+			&mut self.data.network,
+		);
 		push_if_valid(&cpu::get_cpu_data_list(&self.sys), &mut self.data.list_of_cpu_packages);
 
-		// TODO: We can convert this to a multi-threaded task...
 		push_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
 		push_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
 		set_if_valid(
-			&processes::get_sorted_processes_list(&self.sys, &mut self.prev_idle, &mut self.prev_non_idle, &mut self.prev_pid_stats).await,
+			&processes::get_sorted_processes_list(&self.sys, &mut self.prev_idle, &mut self.prev_non_idle, &mut self.prev_pid_stats),
 			&mut self.data.list_of_processes,
 		);
 
 		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
 		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
-		//push_if_valid(&disks::get_io_usage_list(true).await, &mut self.data.list_of_physical_io); // Removed, seems irrelevant for now...
 		set_if_valid(
 			&temperature::get_temperature_data(&self.sys, &self.temperature_type).await,
 			&mut self.data.list_of_temperature_sensor,

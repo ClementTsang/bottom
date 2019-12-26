@@ -26,7 +26,7 @@ heim = "0.0.9"
 log = "0.4"
 rayon = "1.3"
 regex = "1.3.1"
-sysinfo = "0.10"
+sysinfo = "0.9" #0.9 seems to be the last working version for my Ryzen PC...
 tokio = "0.2.6"
 winapi = "0.3"
 tui = {version = "0.8", features = ["crossterm"], default-features = false }

@@ -17,7 +17,7 @@ impl Default for ProcessSorting {
 }
 
 // Possible process info struct?
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct ProcessData {
 	pub pid: u32,
 	pub cpu_usage_percent: f64,
@@ -168,7 +168,7 @@ fn convert_ps(
 	})
 }
 
-pub async fn get_sorted_processes_list(
+pub fn get_sorted_processes_list(
 	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64, prev_pid_stats: &mut std::collections::HashMap<String, (f64, Instant)>,
 ) -> crate::utils::error::Result<Vec<ProcessData>> {
 	let mut process_vector: Vec<ProcessData> = Vec::new();
@@ -179,6 +179,7 @@ pub async fn get_sorted_processes_list(
 		let ps_result = Command::new("ps").args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"]).output()?;
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
+		//debug!("{:?}", split_string);
 		if let Ok((cpu_usage, cpu_percentage)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
 			let process_stream = split_string.collect::<Vec<&str>>();
 
