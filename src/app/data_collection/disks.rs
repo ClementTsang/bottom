@@ -1,4 +1,4 @@
-use futures::StreamExt;
+use futures::stream::StreamExt;
 use heim::units::information;
 use std::time::Instant;
 
