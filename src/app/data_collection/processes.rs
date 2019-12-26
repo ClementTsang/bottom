@@ -26,8 +26,8 @@ pub struct ProcessData {
 	pub command: String,
 }
 
-fn vangelis_cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> std::io::Result<(f64, f64)> {
-	// Named after this SO answer: https://stackoverflow.com/a/23376195
+fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> std::io::Result<(f64, f64)> {
+	// From SO answer: https://stackoverflow.com/a/23376195
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
 	path.push("stat");
@@ -36,7 +36,7 @@ fn vangelis_cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) 
 	let first_line = stat_results.split('\n').collect::<Vec<&str>>()[0];
 
 	// TODO: Consider grabbing by number of threads instead, and summing the total?
-	// ie: 4 threads, so: (prev - curr) / cpu_0 + ... + (prev - curr) / cpu_n instead?  This might be how top does it?
+	// ie: 4 threads, so: (prev - cur) / cpu_0 + ... + (prev - cur) / cpu_n instead?  This might be how top does it?
 	let val = first_line.split_whitespace().collect::<Vec<&str>>();
 
 	// SC in case that the parsing will fail due to length:
@@ -179,7 +179,7 @@ pub async fn get_sorted_processes_list(
 		let ps_result = Command::new("ps").args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"]).output()?;
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
-		if let Ok((cpu_usage, cpu_percentage)) = vangelis_cpu_usage_calculation(prev_idle, prev_non_idle) {
+		if let Ok((cpu_usage, cpu_percentage)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
 			let process_stream = split_string.collect::<Vec<&str>>();
 
 			for process in process_stream {
