@@ -17,19 +17,19 @@ path = "src/main.rs"
 [dependencies]
 chrono = "0.4.10"
 clap = "2.33.0"
-crossterm = "0.13"
+crossterm = "0.14"
 failure = "0.1.6"
 fern = "0.5"
 futures-timer = "0.3"
 futures-preview = "0.3.0-alpha.18"
 heim = "0.0.8"
 log = "0.4"
-rayon = "1.2"
+rayon = "1.3"
 regex = "1.3.1"
 sysinfo = "0.10"
-tokio = "0.2.4"
+tokio = "0.2.6"
 winapi = "0.3"
-tui = {version = "0.7", features = ["crossterm"], default-features = false }
+tui = {version = "0.8", features = ["crossterm"], default-features = false }
 
 [dev-dependencies]
 assert_cmd = "0.10"

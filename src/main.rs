@@ -6,11 +6,14 @@ extern crate clap;
 extern crate failure;
 
 use crossterm::{
-	input::{input, InputEvent, KeyEvent, MouseButton, MouseEvent},
-	screen::AlternateScreen,
+	event::{self, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
+	execute,
+	terminal::LeaveAlternateScreen,
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 };
+
 use std::{
-	io::stdout,
+	io::{stdout, Write},
 	sync::mpsc,
 	thread,
 	time::{Duration, Instant},
@@ -103,10 +106,12 @@ fn main() -> error::Result<()> {
 	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds as u64, use_dot);
 
 	// Set up up tui and crossterm
-	let screen = AlternateScreen::to_alternate(true)?;
-	let stdout = stdout();
+	let mut stdout = stdout();
+	enable_raw_mode()?;
+	execute!(stdout, EnterAlternateScreen)?;
 
-	let backend = CrosstermBackend::with_alternate_screen(stdout, screen)?;
+	let backend = CrosstermBackend::new(stdout);
+
 	let mut terminal = Terminal::new(backend)?;
 	terminal.hide_cursor()?;
 	terminal.clear()?;
@@ -116,57 +121,24 @@ fn main() -> error::Result<()> {
 	{
 		let tx = tx.clone();
 		thread::spawn(move || {
-			let input = input();
-			input.enable_mouse_mode().unwrap();
 			let mut mouse_timer = Instant::now();
 			let mut keyboard_timer = Instant::now();
 
-			// TODO: I don't like this... seems odd async doesn't work on linux (then again, sync didn't work on windows)
-			if cfg!(target_os = "linux") {
-				let reader = input.read_sync();
-				for event in reader {
-					match event {
-						InputEvent::Keyboard(key) => {
-							if Instant::now().duration_since(keyboard_timer).as_millis() >= 30 {
-								if tx.send(Event::KeyInput(key)).is_err() {
-									return;
-								}
-								keyboard_timer = Instant::now();
+			loop {
+				if let Ok(event) = event::read() {
+					if let CEvent::Key(key) = event {
+						if Instant::now().duration_since(keyboard_timer).as_millis() >= 30 {
+							if tx.send(Event::KeyInput(key)).is_err() {
+								return;
 							}
+							keyboard_timer = Instant::now();
 						}
-						InputEvent::Mouse(mouse) => {
-							if Instant::now().duration_since(mouse_timer).as_millis() >= 30 {
-								if tx.send(Event::MouseInput(mouse)).is_err() {
-									return;
-								}
-								mouse_timer = Instant::now();
+					} else if let CEvent::Mouse(mouse) = event {
+						if Instant::now().duration_since(mouse_timer).as_millis() >= 30 {
+							if tx.send(Event::MouseInput(mouse)).is_err() {
+								return;
 							}
-						}
-						_ => {}
-					}
-				}
-			} else {
-				let mut reader = input.read_async();
-				loop {
-					if let Some(event) = reader.next() {
-						match event {
-							InputEvent::Keyboard(key) => {
-								if Instant::now().duration_since(keyboard_timer).as_millis() >= 30 {
-									if tx.send(Event::KeyInput(key)).is_err() {
-										return;
-									}
-									keyboard_timer = Instant::now();
-								}
-							}
-							InputEvent::Mouse(mouse) => {
-								if Instant::now().duration_since(mouse_timer).as_millis() >= 30 {
-									if tx.send(Event::MouseInput(mouse)).is_err() {
-										return;
-									}
-									mouse_timer = Instant::now();
-								}
-							}
-							_ => {}
+							mouse_timer = Instant::now();
 						}
 					}
 				}
@@ -213,25 +185,55 @@ fn main() -> error::Result<()> {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
-					match event {
-						KeyEvent::Ctrl('c') | KeyEvent::Char('q') => break,
-						KeyEvent::Char('h') | KeyEvent::CtrlLeft => app.on_left(),
-						KeyEvent::Char('l') | KeyEvent::CtrlRight => app.on_right(),
-						KeyEvent::Char('k') | KeyEvent::CtrlUp => app.on_up(),
-						KeyEvent::Char('j') | KeyEvent::CtrlDown => app.on_down(),
-						KeyEvent::Ctrl('r') => {
-							while rtx.send(ResetEvent::Reset).is_err() {
-								debug!("Sent reset message.");
-							}
-							debug!("Resetting begins...");
-							app.reset();
+					if event.modifiers.is_empty() {
+						// If only a code, and no modifiers, don't bother...
+						match event.code {
+							KeyCode::Char('q') => break,
+							KeyCode::Char('h') => app.on_left(),
+							KeyCode::Char('l') => app.on_right(),
+							KeyCode::Char('k') => app.on_up(),
+							KeyCode::Char('j') => app.on_down(),
+							KeyCode::Up => app.decrement_position_count(),
+							KeyCode::Down => app.increment_position_count(),
+							KeyCode::Char(uncaught_char) => app.on_key(uncaught_char),
+							KeyCode::Esc => app.on_esc(),
+							_ => {}
 						}
-						KeyEvent::Up => app.decrement_position_count(),
-						KeyEvent::Down => app.increment_position_count(),
-						KeyEvent::Char(c) => app.on_key(c),
-						//KeyEvent::Enter => app.on_enter(),
-						KeyEvent::Esc => app.on_esc(),
-						_ => {}
+					} else {
+						// Otherwise, track the modifier as well...
+						match event {
+							KeyEvent {
+								modifiers: KeyModifiers::CONTROL,
+								code: KeyCode::Char('c'),
+							} => break,
+							KeyEvent {
+								modifiers: KeyModifiers::CONTROL,
+								code: KeyCode::Left,
+							} => app.on_left(),
+							KeyEvent {
+								modifiers: KeyModifiers::CONTROL,
+								code: KeyCode::Right,
+							} => app.on_right(),
+							KeyEvent {
+								modifiers: KeyModifiers::CONTROL,
+								code: KeyCode::Up,
+							} => app.on_up(),
+							KeyEvent {
+								modifiers: KeyModifiers::CONTROL,
+								code: KeyCode::Down,
+							} => app.on_down(),
+							KeyEvent {
+								modifiers: KeyModifiers::CONTROL,
+								code: KeyCode::Char('r'),
+							} => {
+								while rtx.send(ResetEvent::Reset).is_err() {
+									debug!("Sent reset message.");
+								}
+								debug!("Resetting begins...");
+								app.reset();
+							}
+							_ => {}
+						}
 					}
 
 					if app.to_be_resorted {
@@ -245,17 +247,8 @@ fn main() -> error::Result<()> {
 					}
 				}
 				Event::MouseInput(event) => match event {
-					MouseEvent::Press(e, _x, _y) => match e {
-						MouseButton::WheelUp => {
-							app.decrement_position_count();
-						}
-						MouseButton::WheelDown => {
-							app.increment_position_count();
-						}
-						_ => {}
-					},
-					MouseEvent::Hold(_x, _y) => {}
-					MouseEvent::Release(_x, _y) => {}
+					MouseEvent::ScrollUp(_x, _y, _modifiers) => app.decrement_position_count(),
+					MouseEvent::ScrollDown(_x, _y, _modifiers) => app.increment_position_count(),
 					_ => {}
 				},
 				Event::Update(data) => {
@@ -289,12 +282,16 @@ fn main() -> error::Result<()> {
 		}
 		// Draw!
 		if let Err(err) = canvas::draw_data(&mut terminal, &mut app, &canvas_data) {
-			input().disable_mouse_mode()?;
+			disable_raw_mode()?;
+			execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+			terminal.show_cursor()?;
 			error!("{}", err);
 			return Err(err);
 		}
 	}
 
-	input().disable_mouse_mode()?;
+	disable_raw_mode()?;
+	execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+	terminal.show_cursor()?;
 	Ok(())
 }
