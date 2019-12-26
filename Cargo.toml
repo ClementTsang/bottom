@@ -32,5 +32,5 @@ winapi = "0.3"
 tui = {version = "0.8", features = ["crossterm"], default-features = false }
 
 [dev-dependencies]
-assert_cmd = "0.10"
+assert_cmd = "0.12"
 predicates = "1"
