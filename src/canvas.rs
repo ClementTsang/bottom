@@ -37,6 +37,8 @@ lazy_static! {
 pub struct CanvasData {
 	pub rx_display: String,
 	pub tx_display: String,
+	pub total_rx_display: String,
+	pub total_tx_display: String,
 	pub network_data_rx: Vec<(f64, f64)>,
 	pub network_data_tx: Vec<(f64, f64)>,
 	pub disk_data: Vec<Vec<String>>,
@@ -414,6 +416,8 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 							.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 							.style(Style::default().fg(COLOUR_LIST[1]))
 							.data(&canvas_data.network_data_tx),
+						Dataset::default().name(&(canvas_data.total_rx_display)),
+						Dataset::default().name(&(canvas_data.total_tx_display)),
 					])
 					.render(&mut f, bottom_chunks[0]);
 			}

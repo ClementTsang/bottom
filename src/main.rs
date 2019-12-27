@@ -272,6 +272,8 @@ fn main() -> error::Result<()> {
 						canvas_data.network_data_tx = network_data.tx;
 						canvas_data.rx_display = network_data.rx_display;
 						canvas_data.tx_display = network_data.tx_display;
+						canvas_data.total_rx_display = network_data.total_rx_display;
+						canvas_data.total_tx_display = network_data.total_tx_display;
 						canvas_data.disk_data = update_disk_row(&app.data);
 						canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
 						canvas_data.process_data = update_process_row(&app.data);
