@@ -25,6 +25,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 pub mod app;
 mod utils {
 	pub mod error;
+	pub mod gen_util;
 	pub mod logging;
 }
 mod canvas;
