@@ -52,7 +52,14 @@ pub struct CanvasData {
 /// Generates random colours.
 /// Strategy found from https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
 fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
-	let mut colour_vec: Vec<Color> = Vec::new();
+	let mut colour_vec: Vec<Color> = vec![
+		Color::LightBlue,
+		Color::LightYellow,
+		Color::Red,
+		Color::Green,
+		Color::LightCyan,
+		Color::LightMagenta,
+	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
 	for _i in 0..num_to_gen {
