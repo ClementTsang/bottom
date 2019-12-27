@@ -39,7 +39,7 @@ pub async fn get_temperature_data(sys: &System, temp_type: &TemperatureType) -> 
 				});
 			}
 		}
-	} else if cfg!(target_os = "windows") {
+	} else {
 		let sensor_data = sys.get_components_list();
 		for component in sensor_data {
 			temperature_vec.push(TempData {

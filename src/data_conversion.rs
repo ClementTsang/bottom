@@ -1,4 +1,8 @@
-use crate::{app::data_collection, constants};
+use crate::{
+	app::data_collection,
+	constants,
+	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
+};
 use constants::*;
 
 pub fn update_temp_row(app_data: &data_collection::Data, temp_type: &data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
@@ -40,48 +44,33 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 						let prev = &prev_io_hashmap[trimmed_mount];
 						let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
 						let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
+						let converted_read = get_simple_byte_values(read_bytes_per_sec);
+						let converted_write = get_simple_byte_values(write_bytes_per_sec);
 						(
-							if read_bytes_per_sec < 1000 {
-								format!("{}B", read_bytes_per_sec)
-							} else if read_bytes_per_sec < 1000 * 1000 {
-								format!("{}KB", read_bytes_per_sec / 1000)
-							} else {
-								format!("{}MB", read_bytes_per_sec / 1000 / 1000)
-							},
-							if write_bytes_per_sec < 1000 {
-								format!("{}B", write_bytes_per_sec)
-							} else if write_bytes_per_sec < 1000 * 1000 {
-								format!("{}KB", write_bytes_per_sec / 1000)
-							} else {
-								format!("{}MB", write_bytes_per_sec / 1000 / 1000)
-							},
+							format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
+							format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
 						)
 					} else {
-						("0B".to_string(), "0B".to_string())
+						("0B/s".to_string(), "0B/s".to_string())
 					}
 				} else {
-					("0B".to_string(), "0B".to_string())
+					("0B/s".to_string(), "0B/s".to_string())
 				}
 			} else {
-				("0B".to_string(), "0B".to_string())
+				("0B/s".to_string(), "0B/s".to_string())
 			}
 		} else {
-			("0B".to_string(), "0B".to_string())
+			("0B/s".to_string(), "0B/s".to_string())
 		};
+
+		let converted_free_space = get_simple_byte_values(disk.free_space);
+		let converted_total_space = get_simple_byte_values(disk.total_space);
 		disk_vector.push(vec![
 			disk.name.to_string(),
 			disk.mount_point.to_string(),
 			format!("{:.0}%", disk.used_space as f64 / disk.total_space as f64 * 100_f64),
-			if disk.free_space < 1000 {
-				disk.free_space.to_string() + "MB"
-			} else {
-				(disk.free_space / 1000).to_string() + "GB"
-			},
-			if disk.total_space < 1000 {
-				disk.total_space.to_string() + "MB"
-			} else {
-				(disk.total_space / 1000).to_string() + "GB"
-			},
+			format!("{:4.*}{}", 0, converted_free_space.0, converted_free_space.1),
+			format!("{:4.*}{}", 0, converted_total_space.0, converted_total_space.1),
 			io_activity.0,
 			io_activity.1,
 		]);
@@ -237,6 +226,8 @@ pub struct ConvertedNetworkData {
 	pub tx: Vec<(f64, f64)>,
 	pub rx_display: String,
 	pub tx_display: String,
+	pub total_rx_display: String,
+	pub total_tx_display: String,
 }
 
 pub fn update_network_data_points(app_data: &data_collection::Data) -> ConvertedNetworkData {
@@ -286,40 +277,37 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 		tx.push(tx_data);
 	}
 
-	let rx_display = if let Some(last_num_bytes_entry) = network_data.last() {
-		let num_bytes = last_num_bytes_entry.rx;
-		if num_bytes < 1024 {
-			format!("RX: {:5.*}  B/s", 1, num_bytes as f64)
-		} else if num_bytes < (1024 * 1024) {
-			format!("RX: {:5.*}KiB/s", 1, num_bytes as f64 / 1024.0)
-		} else if num_bytes < (1024 * 1024 * 1024) {
-			format!("RX: {:5.*}MiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0)
-		} else {
-			format!("RX: {:5.*}GiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0 / 1024.0)
-		}
-	} else {
-		"0.0B/s".to_string()
-	};
+	let total_rx_converted_result: (f64, String);
+	let rx_converted_result: (f64, String);
+	let total_tx_converted_result: (f64, String);
+	let tx_converted_result: (f64, String);
 
-	let tx_display = if let Some(last_num_bytes_entry) = network_data.last() {
-		let num_bytes = last_num_bytes_entry.tx;
-		if num_bytes < 1024 {
-			format!("TX: {:5.*}  B/s", 1, num_bytes as f64)
-		} else if num_bytes < (1024 * 1024) {
-			format!("TX: {:5.*}KiB/s", 1, num_bytes as f64 / 1024.0)
-		} else if num_bytes < (1024 * 1024 * 1024) {
-			format!("TX: {:5.*}MiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0)
-		} else {
-			format!("TX: {:5.*}GiB/s", 1, num_bytes as f64 / 1024.0 / 1024.0 / 1024.0)
-		}
+	if let Some(last_num_bytes_entry) = network_data.last() {
+		rx_converted_result = get_exact_byte_values(last_num_bytes_entry.rx);
+		total_rx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_rx);
 	} else {
-		"0.0B/s".to_string()
-	};
+		rx_converted_result = get_exact_byte_values(0);
+		total_rx_converted_result = get_exact_byte_values(0);
+	}
+	let rx_display = format!("RX: {:5.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
+	let total_rx_display = format!("Total RX: {:5.*}{}", 1, total_rx_converted_result.0, total_rx_converted_result.1);
+
+	if let Some(last_num_bytes_entry) = network_data.last() {
+		tx_converted_result = get_exact_byte_values(last_num_bytes_entry.tx);
+		total_tx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_tx);
+	} else {
+		tx_converted_result = get_exact_byte_values(0);
+		total_tx_converted_result = get_exact_byte_values(0);
+	}
+	let tx_display = format!("TX: {:5.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
+	let total_tx_display = format!("Total TX: {:5.*}{}", 1, total_tx_converted_result.0, total_tx_converted_result.1);
 
 	ConvertedNetworkData {
 		rx,
 		tx,
 		rx_display,
 		tx_display,
+		total_rx_display,
+		total_tx_display,
 	}
 }

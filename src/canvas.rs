@@ -1,5 +1,4 @@
-use crate::{app, constants, utils::error};
-use std::cmp::Ordering;
+use crate::{app, constants, utils::error, utils::gen_util::*};
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout},
@@ -12,7 +11,7 @@ const TEXT_COLOUR: Color = Color::Gray;
 const GRAPH_COLOUR: Color = Color::Gray;
 const BORDER_STYLE_COLOUR: Color = Color::Gray;
 const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
-const GOLDEN_RATIO: f32 = 0.618_034;
+const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 
 lazy_static! {
 	static ref HELP_TEXT: [Text<'static>; 14] = [
@@ -58,26 +57,6 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 			new_val.fract()
 		} else {
 			new_val
-		}
-	}
-	fn float_min(a: f32, b: f32) -> f32 {
-		match a.partial_cmp(&b) {
-			Some(x) => match x {
-				Ordering::Greater => b,
-				Ordering::Less => a,
-				Ordering::Equal => a,
-			},
-			None => a,
-		}
-	}
-	fn float_max(a: f32, b: f32) -> f32 {
-		match a.partial_cmp(&b) {
-			Some(x) => match x {
-				Ordering::Greater => a,
-				Ordering::Less => b,
-				Ordering::Equal => a,
-			},
-			None => a,
 		}
 	}
 	/// This takes in an h, s, and v value of range [0, 1]

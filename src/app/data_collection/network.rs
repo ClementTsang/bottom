@@ -40,10 +40,10 @@ pub async fn get_network_data(
 			}
 		}
 		let cur_time = Instant::now();
-		let elapsed_time = cur_time.duration_since(*prev_net_access_time).as_millis();
+		let elapsed_time = cur_time.duration_since(*prev_net_access_time).as_secs_f64();
 
-		let rx = (((net_rx - *prev_net_rx_bytes) * 1000) as u128 / elapsed_time) as u64;
-		let tx = (((net_tx - *prev_net_tx_bytes) * 1000) as u128 / elapsed_time) as u64;
+		let rx = ((net_rx - *prev_net_rx_bytes) as f64 / elapsed_time) as u64;
+		let tx = ((net_tx - *prev_net_tx_bytes) as f64 / elapsed_time) as u64;
 
 		*prev_net_rx_bytes = net_rx;
 		*prev_net_tx_bytes = net_tx;
