@@ -52,6 +52,51 @@ pub struct CanvasData {
 /// Generates random colours.
 /// Strategy found from https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
 fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
+	fn gen_hsv(h: f32) -> f32 {
+		let new_val = h + GOLDEN_RATIO;
+		if new_val > 1.0 {
+			new_val.fract()
+		} else {
+			new_val
+		}
+	}
+	fn float_min(a: f32, b: f32) -> f32 {
+		match a.partial_cmp(&b) {
+			Some(x) => match x {
+				Ordering::Greater => b,
+				Ordering::Less => a,
+				Ordering::Equal => a,
+			},
+			None => a,
+		}
+	}
+	fn float_max(a: f32, b: f32) -> f32 {
+		match a.partial_cmp(&b) {
+			Some(x) => match x {
+				Ordering::Greater => a,
+				Ordering::Less => b,
+				Ordering::Equal => a,
+			},
+			None => a,
+		}
+	}
+	/// This takes in an h, s, and v value of range [0, 1]
+	/// For explanation of what this does, see
+	/// https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB_alternative
+	fn hsv_to_rgb(hue: f32, saturation: f32, value: f32) -> (u8, u8, u8) {
+		fn hsv_helper(num: u32, hu: f32, sat: f32, val: f32) -> f32 {
+			let k = (num as f32 + hu * 6.0) % 6.0;
+			val - val * sat * float_max(float_min(k, float_min(4.1 - k, 1.1)), 0.0)
+		}
+
+		(
+			(hsv_helper(5, hue, saturation, value) * 255.0) as u8,
+			(hsv_helper(3, hue, saturation, value) * 255.0) as u8,
+			(hsv_helper(1, hue, saturation, value) * 255.0) as u8,
+		)
+	}
+
+	// Generate colours
 	let mut colour_vec: Vec<Color> = vec![
 		Color::LightBlue,
 		Color::LightYellow,
@@ -69,54 +114,6 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	}
 
 	colour_vec
-}
-
-fn gen_hsv(h: f32) -> f32 {
-	let new_val = h + GOLDEN_RATIO;
-
-	if new_val > 1.0 {
-		new_val.fract()
-	} else {
-		new_val
-	}
-}
-
-fn float_min(a: f32, b: f32) -> f32 {
-	match a.partial_cmp(&b) {
-		Some(x) => match x {
-			Ordering::Greater => b,
-			Ordering::Less => a,
-			Ordering::Equal => a,
-		},
-		None => a,
-	}
-}
-
-fn float_max(a: f32, b: f32) -> f32 {
-	match a.partial_cmp(&b) {
-		Some(x) => match x {
-			Ordering::Greater => a,
-			Ordering::Less => b,
-			Ordering::Equal => a,
-		},
-		None => a,
-	}
-}
-
-/// This takes in an h, s, and v value of range [0, 1]
-/// For explanation of what this does, see
-/// https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB_alternative
-fn hsv_to_rgb(hue: f32, saturation: f32, value: f32) -> (u8, u8, u8) {
-	fn hsv_helper(num: u32, hu: f32, sat: f32, val: f32) -> f32 {
-		let k = (num as f32 + hu * 6.0) % 6.0;
-		val - val * sat * float_max(float_min(k, float_min(4.1 - k, 1.1)), 0.0)
-	}
-
-	(
-		(hsv_helper(5, hue, saturation, value) * 255.0) as u8,
-		(hsv_helper(3, hue, saturation, value) * 255.0) as u8,
-		(hsv_helper(1, hue, saturation, value) * 255.0) as u8,
-	)
 }
 
 pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mut app::App, canvas_data: &CanvasData) -> error::Result<()> {
