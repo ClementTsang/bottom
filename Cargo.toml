@@ -30,6 +30,7 @@ sysinfo = "0.9" #0.9 seems to be the last working version for my Ryzen PC...
 tokio = "0.2.6"
 winapi = "0.3"
 tui = {version = "0.8", features = ["crossterm"], default-features = false }
+lazy_static = "1.4"
 
 [dev-dependencies]
 assert_cmd = "0.12"

@@ -4,6 +4,8 @@ extern crate log;
 extern crate clap;
 #[macro_use]
 extern crate failure;
+#[macro_use]
+extern crate lazy_static;
 
 use crossterm::{
 	event::{self, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent},

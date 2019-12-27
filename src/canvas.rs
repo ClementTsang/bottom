@@ -1,4 +1,5 @@
 use crate::{app, constants, utils::error};
+use std::cmp::Ordering;
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout},
@@ -7,18 +8,31 @@ use tui::{
 	Terminal,
 };
 
-const COLOUR_LIST: [Color; 6] = [
-	Color::Red,
-	Color::Green,
-	Color::LightYellow,
-	Color::LightBlue,
-	Color::LightCyan,
-	Color::LightMagenta,
-];
 const TEXT_COLOUR: Color = Color::Gray;
 const GRAPH_COLOUR: Color = Color::Gray;
 const BORDER_STYLE_COLOUR: Color = Color::Gray;
 const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
+const GOLDEN_RATIO: f32 = 0.618_034;
+
+lazy_static! {
+	static ref HELP_TEXT: [Text<'static>; 14] = [
+		Text::raw("\nGeneral Keybindings\n"),
+		Text::raw("q, Ctrl-c to quit.\n"),
+		Text::raw("Ctrl-r to reset all data.\n"),
+		Text::raw("f to toggle freezing and unfreezing the display.\n"),
+		Text::raw("Ctrl+Up/k, Ctrl+Down/j, Ctrl+Left/h, Ctrl+Right/l to navigate between panels.\n"),
+		Text::raw("Up and Down scrolls through a list.\n"),
+		Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
+		Text::raw("? to get this help screen.\n"),
+		Text::raw("\n Process Panel Keybindings\n"),
+		Text::raw("dd to kill the selected process.\n"),
+		Text::raw("c to sort by CPU usage.\n"),
+		Text::raw("m to sort by memory usage.\n"),
+		Text::raw("p to sort by PID.\n"),
+		Text::raw("n to sort by process name.\n"),
+	];
+	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
+}
 
 #[derive(Default)]
 pub struct CanvasData {
@@ -35,6 +49,69 @@ pub struct CanvasData {
 	pub cpu_data: Vec<(String, Vec<(f64, f64)>)>,
 }
 
+/// Generates random colours.
+/// Strategy found from https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
+fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
+	let mut colour_vec: Vec<Color> = Vec::new();
+
+	let mut h: f32 = 0.4; // We don't need random colours... right?
+	for _i in 0..num_to_gen {
+		h = gen_hsv(h);
+		let result = hsv_to_rgb(h, 0.5, 0.95);
+		colour_vec.push(Color::Rgb(result.0, result.1, result.2));
+	}
+
+	colour_vec
+}
+
+fn gen_hsv(h: f32) -> f32 {
+	let new_val = h + GOLDEN_RATIO;
+
+	if new_val > 1.0 {
+		new_val.fract()
+	} else {
+		new_val
+	}
+}
+
+fn float_min(a: f32, b: f32) -> f32 {
+	match a.partial_cmp(&b) {
+		Some(x) => match x {
+			Ordering::Greater => b,
+			Ordering::Less => a,
+			Ordering::Equal => a,
+		},
+		None => a,
+	}
+}
+
+fn float_max(a: f32, b: f32) -> f32 {
+	match a.partial_cmp(&b) {
+		Some(x) => match x {
+			Ordering::Greater => a,
+			Ordering::Less => b,
+			Ordering::Equal => a,
+		},
+		None => a,
+	}
+}
+
+/// This takes in an h, s, and v value of range [0, 1]
+/// For explanation of what this does, see
+/// https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB_alternative
+fn hsv_to_rgb(hue: f32, saturation: f32, value: f32) -> (u8, u8, u8) {
+	fn hsv_helper(num: u32, hu: f32, sat: f32, val: f32) -> f32 {
+		let k = (num as f32 + hu * 6.0) % 6.0;
+		val - val * sat * float_max(float_min(k, float_min(4.1 - k, 1.1)), 0.0)
+	}
+
+	(
+		(hsv_helper(5, hue, saturation, value) * 255.0) as u8,
+		(hsv_helper(3, hue, saturation, value) * 255.0) as u8,
+		(hsv_helper(1, hue, saturation, value) * 255.0) as u8,
+	)
+}
+
 pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mut app::App, canvas_data: &CanvasData) -> error::Result<()> {
 	let border_style: Style = Style::default().fg(BORDER_STYLE_COLOUR);
 	let highlighted_border_style: Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
@@ -42,7 +119,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 	terminal.autoresize()?;
 	terminal.draw(|mut f| {
 		if app_state.show_help {
-			// Only for the "help" and "are you sure" menus
+			// Only for the dialog (help, dd) menus
 			let vertical_dialog_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(1)
@@ -55,24 +132,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
 				.split(vertical_dialog_chunk[1]);
 
-			let help_text = [
-				Text::raw("\nGeneral Keybindings\n"),
-				Text::raw("q, Ctrl-c to quit.\n"),
-				Text::raw("Ctrl-r to reset all data.\n"),
-				Text::raw("f to toggle freezing and unfreezing the display.\n"),
-				Text::raw("Ctrl+Up/k, Ctrl+Down/j, Ctrl+Left/h, Ctrl+Right/l to navigate between panels.\n"),
-				Text::raw("Up and Down scrolls through a list.\n"),
-				Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
-				Text::raw("? to get this help screen.\n"),
-				Text::raw("\n Process Panel Keybindings\n"),
-				Text::raw("dd to kill the selected process.\n"),
-				Text::raw("c to sort by CPU usage.\n"),
-				Text::raw("m to sort by memory usage.\n"),
-				Text::raw("p to sort by PID.\n"),
-				Text::raw("n to sort by process name.\n"),
-			];
-
-			Paragraph::new(help_text.iter())
+			Paragraph::new(HELP_TEXT.iter())
 				.block(Block::default().title("Help (Press Esc to close)").borders(Borders::ALL))
 				.style(Style::default().fg(Color::Gray))
 				.alignment(Alignment::Left)
@@ -204,7 +264,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
 					.name(&mem_name)
 					.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-					.style(Style::default().fg(Color::LightBlue))
+					.style(Style::default().fg(COLOUR_LIST[0]))
 					.data(&canvas_data.mem_data)];
 
 				if !(&canvas_data.swap_data).is_empty() {
@@ -221,7 +281,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 								Dataset::default()
 									.name(&swap_name)
 									.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-									.style(Style::default().fg(Color::LightYellow))
+									.style(Style::default().fg(COLOUR_LIST[1]))
 									.data(&canvas_data.swap_data),
 							);
 						}
@@ -364,12 +424,12 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 						Dataset::default()
 							.name(&(canvas_data.rx_display))
 							.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-							.style(Style::default().fg(Color::LightBlue))
+							.style(Style::default().fg(COLOUR_LIST[0]))
 							.data(&canvas_data.network_data_rx),
 						Dataset::default()
 							.name(&(canvas_data.tx_display))
 							.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-							.style(Style::default().fg(Color::LightYellow))
+							.style(Style::default().fg(COLOUR_LIST[1]))
 							.data(&canvas_data.network_data_tx),
 					])
 					.render(&mut f, bottom_chunks[0]);
