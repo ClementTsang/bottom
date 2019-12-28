@@ -65,7 +65,7 @@ fn main() -> error::Result<()> {
 			(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
 		)
 		(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
-		(@arg LEFT_LEGEND: -l --left_legend "Puts table legends on the left side rather than the default right side.")
+		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 	)
