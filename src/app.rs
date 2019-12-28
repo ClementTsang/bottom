@@ -8,12 +8,12 @@ mod process_killer;
 
 #[derive(Clone, Copy)]
 pub enum ApplicationPosition {
-	CPU,
-	MEM,
-	DISK,
-	TEMP,
-	NETWORK,
-	PROCESS,
+	Cpu,
+	Mem,
+	Disk,
+	Temp,
+	Network,
+	Process,
 }
 
 pub enum ScrollDirection {
@@ -24,22 +24,23 @@ pub enum ScrollDirection {
 }
 
 pub struct App {
+	// Sorting
 	pub process_sorting_type: processes::ProcessSorting,
 	pub process_sorting_reverse: bool,
 	pub to_be_resorted: bool,
+	// Positioning
 	pub currently_selected_process_position: i64,
 	pub currently_selected_disk_position: i64,
 	pub currently_selected_temperature_position: i64,
-	pub temperature_type: temperature::TemperatureType,
-	pub update_rate_in_milliseconds: u64,
-	pub show_average_cpu: bool,
-	pub current_application_position: ApplicationPosition,
-	pub current_zoom_level_percent: f64, // Make at most 200, least 50?
-	pub data: data_collection::Data,
 	pub scroll_direction: ScrollDirection,
 	pub previous_disk_position: i64,
 	pub previous_temp_position: i64,
 	pub previous_process_position: i64,
+	pub temperature_type: temperature::TemperatureType,
+	pub update_rate_in_milliseconds: u64,
+	pub show_average_cpu: bool,
+	pub current_application_position: ApplicationPosition,
+	pub data: data_collection::Data,
 	awaiting_second_char: bool,
 	second_char: char,
 	pub use_dot: bool,
@@ -63,13 +64,12 @@ impl App {
 			temperature_type,
 			update_rate_in_milliseconds,
 			show_average_cpu,
-			current_application_position: ApplicationPosition::PROCESS,
-			current_zoom_level_percent: 100.0,
-			data: data_collection::Data::default(),
+			current_application_position: ApplicationPosition::Process,
 			scroll_direction: ScrollDirection::DOWN,
 			previous_process_position: 0,
 			previous_disk_position: 0,
 			previous_temp_position: 0,
+			data: data_collection::Data::default(),
 			awaiting_second_char: false,
 			second_char: ' ',
 			use_dot,
@@ -205,9 +205,9 @@ impl App {
 	// PROC -(up)> Disk, -(left)> Network
 	pub fn on_left(&mut self) {
 		self.current_application_position = match self.current_application_position {
-			ApplicationPosition::PROCESS => ApplicationPosition::NETWORK,
-			ApplicationPosition::DISK => ApplicationPosition::MEM,
-			ApplicationPosition::TEMP => ApplicationPosition::MEM,
+			ApplicationPosition::Process => ApplicationPosition::Network,
+			ApplicationPosition::Disk => ApplicationPosition::Mem,
+			ApplicationPosition::Temp => ApplicationPosition::Mem,
 			_ => self.current_application_position,
 		};
 		self.reset_multi_tap_keys();
@@ -215,8 +215,8 @@ impl App {
 
 	pub fn on_right(&mut self) {
 		self.current_application_position = match self.current_application_position {
-			ApplicationPosition::MEM => ApplicationPosition::TEMP,
-			ApplicationPosition::NETWORK => ApplicationPosition::PROCESS,
+			ApplicationPosition::Mem => ApplicationPosition::Temp,
+			ApplicationPosition::Network => ApplicationPosition::Process,
 			_ => self.current_application_position,
 		};
 		self.reset_multi_tap_keys();
@@ -224,11 +224,11 @@ impl App {
 
 	pub fn on_up(&mut self) {
 		self.current_application_position = match self.current_application_position {
-			ApplicationPosition::MEM => ApplicationPosition::CPU,
-			ApplicationPosition::NETWORK => ApplicationPosition::MEM,
-			ApplicationPosition::PROCESS => ApplicationPosition::DISK,
-			ApplicationPosition::TEMP => ApplicationPosition::CPU,
-			ApplicationPosition::DISK => ApplicationPosition::TEMP,
+			ApplicationPosition::Mem => ApplicationPosition::Cpu,
+			ApplicationPosition::Network => ApplicationPosition::Mem,
+			ApplicationPosition::Process => ApplicationPosition::Disk,
+			ApplicationPosition::Temp => ApplicationPosition::Cpu,
+			ApplicationPosition::Disk => ApplicationPosition::Temp,
 			_ => self.current_application_position,
 		};
 		self.reset_multi_tap_keys();
@@ -236,10 +236,10 @@ impl App {
 
 	pub fn on_down(&mut self) {
 		self.current_application_position = match self.current_application_position {
-			ApplicationPosition::CPU => ApplicationPosition::MEM,
-			ApplicationPosition::MEM => ApplicationPosition::NETWORK,
-			ApplicationPosition::TEMP => ApplicationPosition::DISK,
-			ApplicationPosition::DISK => ApplicationPosition::PROCESS,
+			ApplicationPosition::Cpu => ApplicationPosition::Mem,
+			ApplicationPosition::Mem => ApplicationPosition::Network,
+			ApplicationPosition::Temp => ApplicationPosition::Disk,
+			ApplicationPosition::Disk => ApplicationPosition::Process,
 			_ => self.current_application_position,
 		};
 		self.reset_multi_tap_keys();
@@ -247,20 +247,20 @@ impl App {
 
 	pub fn skip_to_first(&mut self) {
 		match self.current_application_position {
-			ApplicationPosition::PROCESS => self.currently_selected_process_position = 0,
-			ApplicationPosition::TEMP => self.currently_selected_temperature_position = 0,
-			ApplicationPosition::DISK => self.currently_selected_disk_position = 0,
+			ApplicationPosition::Process => self.currently_selected_process_position = 0,
+			ApplicationPosition::Temp => self.currently_selected_temperature_position = 0,
+			ApplicationPosition::Disk => self.currently_selected_disk_position = 0,
 			_ => {}
 		}
-		self.scroll_direction = ScrollDirection::DOWN;
+		self.scroll_direction = ScrollDirection::UP;
 		self.reset_multi_tap_keys();
 	}
 
 	pub fn skip_to_last(&mut self) {
 		match self.current_application_position {
-			ApplicationPosition::PROCESS => self.currently_selected_process_position = self.data.list_of_processes.len() as i64 - 1,
-			ApplicationPosition::TEMP => self.currently_selected_temperature_position = self.data.list_of_temperature_sensor.len() as i64 - 1,
-			ApplicationPosition::DISK => self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1,
+			ApplicationPosition::Process => self.currently_selected_process_position = self.data.list_of_processes.len() as i64 - 1,
+			ApplicationPosition::Temp => self.currently_selected_temperature_position = self.data.list_of_temperature_sensor.len() as i64 - 1,
+			ApplicationPosition::Disk => self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1,
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::DOWN;
@@ -269,9 +269,9 @@ impl App {
 
 	pub fn decrement_position_count(&mut self) {
 		match self.current_application_position {
-			ApplicationPosition::PROCESS => self.change_process_position(-1),
-			ApplicationPosition::TEMP => self.change_temp_position(-1),
-			ApplicationPosition::DISK => self.change_disk_position(-1),
+			ApplicationPosition::Process => self.change_process_position(-1),
+			ApplicationPosition::Temp => self.change_temp_position(-1),
+			ApplicationPosition::Disk => self.change_disk_position(-1),
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::UP;
@@ -280,9 +280,9 @@ impl App {
 
 	pub fn increment_position_count(&mut self) {
 		match self.current_application_position {
-			ApplicationPosition::PROCESS => self.change_process_position(1),
-			ApplicationPosition::TEMP => self.change_temp_position(1),
-			ApplicationPosition::DISK => self.change_disk_position(1),
+			ApplicationPosition::Process => self.change_process_position(1),
+			ApplicationPosition::Temp => self.change_temp_position(1),
+			ApplicationPosition::Disk => self.change_disk_position(1),
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::DOWN;

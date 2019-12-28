@@ -44,8 +44,8 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 						let prev = &prev_io_hashmap[trimmed_mount];
 						let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
 						let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
-						let converted_read = get_simple_byte_values(read_bytes_per_sec);
-						let converted_write = get_simple_byte_values(write_bytes_per_sec);
+						let converted_read = get_simple_byte_values(read_bytes_per_sec, false);
+						let converted_write = get_simple_byte_values(write_bytes_per_sec, false);
 						(
 							format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
 							format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
@@ -63,8 +63,8 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 			("0B/s".to_string(), "0B/s".to_string())
 		};
 
-		let converted_free_space = get_simple_byte_values(disk.free_space);
-		let converted_total_space = get_simple_byte_values(disk.total_space);
+		let converted_free_space = get_simple_byte_values(disk.free_space, false);
+		let converted_total_space = get_simple_byte_values(disk.total_space, false);
 		disk_vector.push(vec![
 			disk.name.to_string(),
 			disk.mount_point.to_string(),
@@ -283,24 +283,24 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 	let tx_converted_result: (f64, String);
 
 	if let Some(last_num_bytes_entry) = network_data.last() {
-		rx_converted_result = get_exact_byte_values(last_num_bytes_entry.rx);
-		total_rx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_rx);
+		rx_converted_result = get_exact_byte_values(last_num_bytes_entry.rx, true);
+		total_rx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_rx, truefalse
 	} else {
-		rx_converted_result = get_exact_byte_values(0);
-		total_rx_converted_result = get_exact_byte_values(0);
+		rx_converted_result = get_exact_byte_values(0, true);
+		total_rx_converted_result = get_exact_byte_values(0, false);
 	}
 	let rx_display = format!("RX: {:5.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
-	let total_rx_display = format!("Total RX: {:5.*}{}", 1, total_rx_converted_result.0, total_rx_converted_result.1);
+	let total_rx_display = format!("{:.*}{}", 1, total_rx_converted_result.0, total_rx_converted_result.1);
 
 	if let Some(last_num_bytes_entry) = network_data.last() {
-		tx_converted_result = get_exact_byte_values(last_num_bytes_entry.tx);
-		total_tx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_tx);
+		tx_converted_result = get_exact_byte_values(last_num_bytes_entry.tx, true);
+		total_tx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_tx, false);
 	} else {
-		tx_converted_result = get_exact_byte_values(0);
-		total_tx_converted_result = get_exact_byte_values(0);
+		tx_converted_result = get_exact_byte_values(0, true);
+		total_tx_converted_result = get_exact_byte_values(0, false);
 	}
 	let tx_display = format!("TX: {:5.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
-	let total_tx_display = format!("Total TX: {:5.*}{}", 1, total_tx_converted_result.0, total_tx_converted_result.1);
+	let total_tx_display = format!("{:.*}{}", 1, total_tx_converted_result.0, total_tx_converted_result.1);
 
 	ConvertedNetworkData {
 		rx,
