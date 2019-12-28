@@ -24,9 +24,9 @@ pub fn float_max(a: f32, b: f32) -> f32 {
 
 /// Returns a tuple containing the value and the unit.  In units of 1024.
 /// This only supports up to a tebibyte.
-pub fn get_exact_byte_values(bytes: u64) -> (f64, String) {
+pub fn get_exact_byte_values(bytes: u64, spacing: bool) -> (f64, String) {
 	match bytes {
-		b if b < 1024 => (bytes as f64, "B".to_string()),
+		b if b < 1024 => (bytes as f64, if spacing { "  B".to_string() } else { "B".to_string() }),
 		b if b < 1_048_576 => (bytes as f64 / 1024.0, "KiB".to_string()),
 		b if b < 1_073_741_824 => (bytes as f64 / 1_048_576.0, "MiB".to_string()),
 		b if b < 1_099_511_627_776 => (bytes as f64 / 1_073_741_824.0, "GiB".to_string()),
@@ -36,9 +36,9 @@ pub fn get_exact_byte_values(bytes: u64) -> (f64, String) {
 
 /// Returns a tuple containing the value and the unit.  In units of 1000.
 /// This only supports up to a terabyte.  Note the "byte" unit will have a space appended to match the others.
-pub fn get_simple_byte_values(bytes: u64) -> (f64, String) {
+pub fn get_simple_byte_values(bytes: u64, spacing: bool) -> (f64, String) {
 	match bytes {
-		b if b < 1000 => (bytes as f64, "B".to_string()),
+		b if b < 1000 => (bytes as f64, if spacing { " B".to_string() } else { "B".to_string() }),
 		b if b < 1_000_000 => (bytes as f64 / 1000.0, "KB".to_string()),
 		b if b < 1_000_000_000 => (bytes as f64 / 1_000_000.0, "MB".to_string()),
 		b if b < 1_000_000_000_000 => (bytes as f64 / 1_000_000_000.0, "GB".to_string()),

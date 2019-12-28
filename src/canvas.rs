@@ -1,10 +1,10 @@
 use crate::{app, constants, utils::error, utils::gen_util::*};
 use tui::{
 	backend,
-	layout::{Alignment, Constraint, Direction, Layout, Rect},
+	layout::{Alignment, Constraint, Corner, Direction, Layout, Rect},
 	style::{Color, Modifier, Style},
 	terminal::Frame,
-	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
+	widgets::{Axis, Block, Borders, Chart, Dataset, List, Marker, Paragraph, Row, Table, Text, Widget},
 	Terminal,
 };
 
@@ -162,27 +162,14 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				)
 				.split(vertical_chunks[0]);
 
-			let mem_chunk = Layout::default()
-				.direction(Direction::Horizontal)
-				.margin(0)
-				.constraints(
-					if app_state.left_legend {
-						[Constraint::Percentage(10), Constraint::Percentage(90)]
-					} else {
-						[Constraint::Percentage(90), Constraint::Percentage(10)]
-					}
-					.as_ref(),
-				)
-				.split(middle_chunks[0]);
-
 			let network_chunk = Layout::default()
-				.direction(Direction::Horizontal)
+				.direction(Direction::Vertical)
 				.margin(0)
 				.constraints(
 					if app_state.left_legend {
 						[Constraint::Percentage(10), Constraint::Percentage(90)]
 					} else {
-						[Constraint::Percentage(90), Constraint::Percentage(10)]
+						[Constraint::Percentage(75), Constraint::Percentage(10)]
 					}
 					.as_ref(),
 				)
@@ -197,17 +184,17 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			draw_cpu_graph(&mut f, &app_state, &canvas_data.cpu_data, cpu_chunk[graph_index]);
 
 			// CPU label
+			draw_cpu_legend(&mut f, &app_state, &canvas_data.cpu_data, cpu_chunk[legend_index]);
 
 			//Memory usage graph
-			draw_memory_graph(&mut f, &app_state, &canvas_data.mem_data, &canvas_data.swap_data, mem_chunk[graph_index]);
-
-			// Memory label
-
-			// Temperature table
-			draw_temp_table(&mut f, app_state, &canvas_data.temp_sensor_data, middle_divided_chunk_2[0]);
-
-			// Disk usage table
-			draw_disk_table(&mut f, app_state, &canvas_data.disk_data, middle_divided_chunk_2[1]);
+			draw_memory_graph(
+				&mut f,
+				&app_state,
+				&canvas_data.memory_labels,
+				&canvas_data.mem_data,
+				&canvas_data.swap_data,
+				middle_chunks[0],
+			);
 
 			// Network graph
 			draw_network_graph(
@@ -215,10 +202,24 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				&app_state,
 				&canvas_data.network_data_rx,
 				&canvas_data.network_data_tx,
-				network_chunk[graph_index],
+				canvas_data.rx_display.clone(),
+				canvas_data.tx_display.clone(),
+				network_chunk[0],
 			);
 
-			// Network label
+			draw_network_labels(
+				&mut f,
+				app_state,
+				canvas_data.total_rx_display.clone(),
+				canvas_data.total_tx_display.clone(),
+				network_chunk[1],
+			);
+
+			// Temperature table
+			draw_temp_table(&mut f, app_state, &canvas_data.temp_sensor_data, middle_divided_chunk_2[0]);
+
+			// Disk usage table
+			draw_disk_table(&mut f, app_state, &canvas_data.disk_data, middle_divided_chunk_2[1]);
 
 			// Processes table
 			draw_processes_table(&mut f, app_state, &canvas_data.process_data, bottom_chunks[1]);
@@ -254,7 +255,6 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, c
 
 		dataset_vector.push(
 			Dataset::default()
-				.name(&cpu.0)
 				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 				.style(Style::default().fg(COLOUR_LIST[(i - avg_cpu_exist_offset) % COLOUR_LIST.len()]))
 				.data(&(cpu.1)),
@@ -265,7 +265,6 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, c
 		// Unwrap should be safe here, this assumes that the cpu_data vector is populated...
 		dataset_vector.push(
 			Dataset::default()
-				//.name(&cpu_data.first().unwrap().0)
 				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 				.style(Style::default().fg(COLOUR_LIST[(cpu_data.len() - 1) % COLOUR_LIST.len()]))
 				.data(&(cpu_data.first().unwrap().1)),
@@ -275,10 +274,10 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, c
 	Chart::default()
 		.block(
 			Block::default()
-				.title("CPU Usage")
+				.title("CPU")
 				.borders(Borders::ALL)
 				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::CPU => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					app::ApplicationPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -288,9 +287,29 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, c
 		.render(f, draw_loc);
 }
 
-fn draw_cpu_legend() {}
+fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, cpu_data: &[(String, Vec<(f64, f64)>)], draw_loc: Rect) {
+	let mut itx = 0;
+	let label_map = cpu_data.iter().map(|cpu| {
+		itx += 1;
+		Text::styled(&cpu.0, Style::default().fg(COLOUR_LIST[(itx - 1) % COLOUR_LIST.len()]))
+	});
 
-fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, swap_data: &[(f64, f64)], mem_data: &[(f64, f64)], draw_loc: Rect) {
+	List::new(label_map)
+		.block(
+			Block::default()
+				.borders(Borders::ALL)
+				.border_style(match app_state.current_application_position {
+					app::ApplicationPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					_ => *CANVAS_BORDER_STYLE,
+				}),
+		)
+		.start_corner(Corner::TopLeft)
+		.render(f, draw_loc);
+}
+
+fn draw_memory_graph<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &app::App, memory_labels: &[(u64, u64)], mem_data: &[(f64, f64)], swap_data: &[(f64, f64)], draw_loc: Rect,
+) {
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
@@ -299,8 +318,17 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
 		.labels(&["0%", "100%"]);
 
+	let mem_name = "RAM:".to_string()
+		+ &format!("{:3}%", (mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
+		+ &format!(
+			"   {:.1}GB/{:.1}GB",
+			memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
+			memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
+		);
+	let swap_name: String;
+
 	let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
-		//.name(&mem_name)
+		.name(&mem_name)
 		.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 		.style(Style::default().fg(COLOUR_LIST[0]))
 		.data(&mem_data)];
@@ -308,9 +336,16 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 	if !(&swap_data).is_empty() {
 		if let Some(last_canvas_result) = (&swap_data).last() {
 			if last_canvas_result.1 >= 0.0 {
+				swap_name = "SWP:".to_string()
+					+ &format!("{:3}%", (swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
+					+ &format!(
+						"   {:.1}GB/{:.1}GB",
+						memory_labels[1].0 as f64 / 1024.0,
+						memory_labels[1].1 as f64 / 1024.0
+					);
 				mem_canvas_vec.push(
 					Dataset::default()
-						//.name(&swap_name)
+						.name(&swap_name)
 						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 						.style(Style::default().fg(COLOUR_LIST[1]))
 						.data(&swap_data),
@@ -322,10 +357,10 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 	Chart::default()
 		.block(
 			Block::default()
-				.title("Memory Usage")
+				.title("Memory")
 				.borders(Borders::ALL)
 				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::MEM => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					app::ApplicationPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -335,10 +370,9 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		.render(f, draw_loc);
 }
 
-fn draw_memory_legend() {}
-
 fn draw_network_graph<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &app::App, network_data_rx: &[(f64, f64)], network_data_tx: &[(f64, f64)], draw_loc: Rect,
+	f: &mut Frame<B>, app_state: &app::App, network_data_rx: &[(f64, f64)], network_data_tx: &[(f64, f64)], rx_display: String, tx_display: String,
+	draw_loc: Rect,
 ) {
 	let x_axis: Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 	let y_axis = Axis::default()
@@ -351,7 +385,7 @@ fn draw_network_graph<B: backend::Backend>(
 				.title("Network")
 				.borders(Borders::ALL)
 				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::NETWORK => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -359,10 +393,12 @@ fn draw_network_graph<B: backend::Backend>(
 		.y_axis(y_axis)
 		.datasets(&[
 			Dataset::default()
+				.name(&(rx_display))
 				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 				.style(Style::default().fg(COLOUR_LIST[0]))
 				.data(&network_data_rx),
 			Dataset::default()
+				.name(&(tx_display))
 				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 				.style(Style::default().fg(COLOUR_LIST[1]))
 				.data(&network_data_tx),
@@ -370,7 +406,26 @@ fn draw_network_graph<B: backend::Backend>(
 		.render(f, draw_loc);
 }
 
-fn draw_network_legend() {}
+fn draw_network_labels<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, total_rx_display: String, total_tx_display: String, draw_loc: Rect,
+) {
+	// Gross but I need it to work...
+	let total_network = vec![vec![total_rx_display, total_tx_display]];
+	let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
+
+	Table::new(["Total RX", "Total TX"].iter(), mapped_network)
+		.block(
+			Block::default()
+				.borders(Borders::ALL)
+				.border_style(match app_state.current_application_position {
+					app::ApplicationPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					_ => *CANVAS_BORDER_STYLE,
+				}),
+		)
+		.header_style(Style::default().fg(Color::LightBlue))
+		.widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
+		.render(f, draw_loc);
+}
 
 fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, temp_sensor_data: &[Vec<String>], draw_loc: Rect) {
 	let num_rows = i64::from(draw_loc.height) - 4;
@@ -406,7 +461,7 @@ fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 				.title("Temperatures")
 				.borders(Borders::ALL)
 				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::TEMP => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					app::ApplicationPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -447,10 +502,10 @@ fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 	Table::new(["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(), disk_rows)
 		.block(
 			Block::default()
-				.title("Disk Usage")
+				.title("Disk")
 				.borders(Borders::ALL)
 				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::DISK => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					app::ApplicationPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -528,7 +583,7 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 					.title("Processes")
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_application_position {
-						app::ApplicationPosition::PROCESS => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						app::ApplicationPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 						_ => *CANVAS_BORDER_STYLE,
 					}),
 			)
@@ -558,6 +613,11 @@ fn get_start_position(
 			}
 		}
 		app::ScrollDirection::UP => {
+			if *currently_selected_position == 0 {
+				*previous_position = 0;
+				return *previous_position;
+			}
+
 			if *currently_selected_position == *previous_position - 1 {
 				*previous_position = if *previous_position > 0 { *previous_position - 1 } else { 0 };
 				*previous_position
