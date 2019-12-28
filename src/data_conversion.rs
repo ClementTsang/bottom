@@ -284,7 +284,7 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 
 	if let Some(last_num_bytes_entry) = network_data.last() {
 		rx_converted_result = get_exact_byte_values(last_num_bytes_entry.rx, true);
-		total_rx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_rx, truefalse
+		total_rx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_rx, false)
 	} else {
 		rx_converted_result = get_exact_byte_values(0, true);
 		total_rx_converted_result = get_exact_byte_values(0, false);
