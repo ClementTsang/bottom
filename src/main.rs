@@ -65,6 +65,7 @@ fn main() -> error::Result<()> {
 			(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
 		)
 		(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
+		(@arg LEFT_LEGEND: -l --left_legend "Puts table legends on the left side rather than the default right side.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 	)
@@ -95,6 +96,7 @@ fn main() -> error::Result<()> {
 		utils::logging::init_logger()?;
 	}
 
+	// Set other settings
 	let temperature_type = if matches.is_present("FAHRENHEIT") {
 		data_collection::temperature::TemperatureType::Fahrenheit
 	} else if matches.is_present("KELVIN") {
@@ -104,9 +106,16 @@ fn main() -> error::Result<()> {
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
 	let use_dot = matches.is_present("DOT_MARKER");
+	let left_legend = matches.is_present("LEFT_LEGEND");
 
 	// Create "app" struct, which will control most of the program and store settings/state
-	let mut app = app::App::new(show_average_cpu, temperature_type, update_rate_in_milliseconds as u64, use_dot);
+	let mut app = app::App::new(
+		show_average_cpu,
+		temperature_type,
+		update_rate_in_milliseconds as u64,
+		use_dot,
+		left_legend,
+	);
 
 	// Set up up tui and crossterm
 	let mut stdout = stdout();
@@ -278,7 +287,7 @@ fn main() -> error::Result<()> {
 						canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
 						canvas_data.process_data = update_process_row(&app.data);
 						canvas_data.mem_data = update_mem_data_points(&app.data);
-						canvas_data.mem_values = update_mem_data_values(&app.data);
+						canvas_data.memory_labels = update_mem_data_values(&app.data);
 						canvas_data.swap_data = update_swap_data_points(&app.data);
 						canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
 
