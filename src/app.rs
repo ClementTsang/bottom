@@ -112,8 +112,8 @@ impl App {
 					if self.awaiting_second_char && self.second_char == 'd' {
 						self.awaiting_second_char = false;
 						self.second_char = ' ';
-					// TODO: Redo this in DD rewrite!
-					//self.kill_highlighted_process().unwrap_or(());
+						// TODO: Redo this in DD rewrite!
+						self.kill_highlighted_process().unwrap_or(());
 					} else {
 						self.awaiting_second_char = true;
 						self.second_char = 'd';
@@ -188,9 +188,9 @@ impl App {
 		}
 	}
 
-	fn _kill_highlighted_process(&self) -> crate::utils::error::Result<()> {
+	fn kill_highlighted_process(&self) -> crate::utils::error::Result<()> {
 		let current_pid = u64::from(self.data.list_of_processes[self.currently_selected_process_position as usize].pid);
-		process_killer::_kill_process_given_pid(current_pid)?;
+		process_killer::kill_process_given_pid(current_pid)?;
 		Ok(())
 	}
 
