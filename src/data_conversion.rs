@@ -30,37 +30,33 @@ pub fn update_temp_row(app_data: &data_collection::Data, temp_type: &data_collec
 pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 	let mut disk_vector: Vec<Vec<String>> = Vec::new();
 	for disk in &app_data.list_of_disks {
-		let io_activity = if app_data.list_of_io.len() > 2 {
-			if let Some(io_package) = &app_data.list_of_io.last() {
-				if let Some(trimmed_mount) = disk.name.to_string().split('/').last() {
-					let prev_io_package = &app_data.list_of_io[app_data.list_of_io.len() - 2];
+		let io_activity = {
+			let mut final_result = ("0B/s".to_string(), "0B/s".to_string());
+			if app_data.list_of_io.len() > 2 {
+				if let Some(io_package) = &app_data.list_of_io.last() {
+					if let Some(trimmed_mount) = disk.name.to_string().split('/').last() {
+						let prev_io_package = &app_data.list_of_io[app_data.list_of_io.len() - 2];
 
-					let io_hashmap = &io_package.io_hash;
-					let prev_io_hashmap = &prev_io_package.io_hash;
-					let time_difference = io_package.instant.duration_since(prev_io_package.instant).as_secs_f64();
-					if io_hashmap.contains_key(trimmed_mount) && prev_io_hashmap.contains_key(trimmed_mount) {
-						// Ideally change this...
-						let ele = &io_hashmap[trimmed_mount];
-						let prev = &prev_io_hashmap[trimmed_mount];
-						let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
-						let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
-						let converted_read = get_simple_byte_values(read_bytes_per_sec, false);
-						let converted_write = get_simple_byte_values(write_bytes_per_sec, false);
-						(
-							format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
-							format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
-						)
-					} else {
-						("0B/s".to_string(), "0B/s".to_string())
+						let io_hashmap = &io_package.io_hash;
+						let prev_io_hashmap = &prev_io_package.io_hash;
+						let time_difference = io_package.instant.duration_since(prev_io_package.instant).as_secs_f64();
+						if io_hashmap.contains_key(trimmed_mount) && prev_io_hashmap.contains_key(trimmed_mount) {
+							// Ideally change this...
+							let ele = &io_hashmap[trimmed_mount];
+							let prev = &prev_io_hashmap[trimmed_mount];
+							let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64 / time_difference) as u64;
+							let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64 / time_difference) as u64;
+							let converted_read = get_simple_byte_values(read_bytes_per_sec, false);
+							let converted_write = get_simple_byte_values(write_bytes_per_sec, false);
+							final_result = (
+								format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
+								format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
+							);
+						}
 					}
-				} else {
-					("0B/s".to_string(), "0B/s".to_string())
 				}
-			} else {
-				("0B/s".to_string(), "0B/s".to_string())
 			}
-		} else {
-			("0B/s".to_string(), "0B/s".to_string())
+			final_result
 		};
 
 		let converted_free_space = get_simple_byte_values(disk.free_space, false);

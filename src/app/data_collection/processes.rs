@@ -192,13 +192,32 @@ pub fn get_sorted_processes_list(
 			}
 		}
 	} else {
-		// Windows et al.
-
 		let process_hashmap = sys.get_process_list();
 		for process_val in process_hashmap.values() {
+			let command_name = if process_val.name().is_empty() {
+				let process_cmd = process_val.cmd();
+				if process_cmd.len() > 1 {
+					process_cmd[0].clone()
+				} else {
+					let process_exe = process_val.exe().file_stem();
+					if let Some(exe) = process_exe {
+						let process_exe_opt = exe.to_str();
+						if let Some(exe_name) = process_exe_opt {
+							exe_name.to_string()
+						} else {
+							"".to_string()
+						}
+					} else {
+						"".to_string()
+					}
+				}
+			} else {
+				process_val.name().to_string()
+			};
+
 			process_vector.push(ProcessData {
 				pid: process_val.pid() as u32,
-				command: process_val.name().to_string(),
+				command: command_name,
 				mem_usage_percent: None,
 				mem_usage_kb: Some(process_val.memory()),
 				cpu_usage_percent: f64::from(process_val.cpu_usage()),
