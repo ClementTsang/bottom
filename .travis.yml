@@ -9,25 +9,23 @@ os:
   - linux
 env:
   - RUST_BACKTRACE=1
+  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then TARGET=x86_64-pc-windows-msvc; fi
 jobs:
   allow_failures:
     - rust: nightly
 script:
-  - cargo build --verbose --all
-  #- cargo test --verbose --all
+  - cargo build --verbose
+  - cargo test --verbose
 
-# Need to cache the whole `.cargo` directory to keep .crates.toml for
-# cargo-update to work
+# Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work
 cache:
   directories:
     - /home/travis/.cargo
 
-# But don't cache the cargo registry
-# and remove wasm-pack binary to avoid the installer asking confirmation for overwriting it.
+# But don't cache the cargo registry.
 before_cache:
   - rm -rf /home/travis/.cargo/git
   - rm -rf /home/travis/.cargo/registry
-  - rm -rf /home/travis/.cargo/bin/wasm-pack
 
 notifications:
   email:
