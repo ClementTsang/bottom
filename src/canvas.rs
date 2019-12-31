@@ -204,16 +204,22 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				&canvas_data.network_data_tx,
 				canvas_data.rx_display.clone(),
 				canvas_data.tx_display.clone(),
-				network_chunk[0],
+				if cfg!(not(target_os = "windows")) {
+					network_chunk[0]
+				} else {
+					bottom_chunks[0]
+				},
 			);
 
-			draw_network_labels(
-				&mut f,
-				app_state,
-				canvas_data.total_rx_display.clone(),
-				canvas_data.total_tx_display.clone(),
-				network_chunk[1],
-			);
+			if cfg!(not(target_os = "windows")) {
+				draw_network_labels(
+					&mut f,
+					app_state,
+					canvas_data.total_rx_display.clone(),
+					canvas_data.total_tx_display.clone(),
+					network_chunk[1],
+				);
+			}
 
 			// Temperature table
 			draw_temp_table(&mut f, app_state, &canvas_data.temp_sensor_data, middle_divided_chunk_2[0]);
