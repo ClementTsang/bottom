@@ -29,15 +29,22 @@ matrix:
   fast_finish: true
   include:
     - name: Windows
-      env: RUST_BACKTRACE=1,TARGET=x86_64-pc-windows-msvc
+      language: rust
+      env:
+        - RUST_BACKTRACE=1
+        - TARGET=x86_64-pc-windows-msvc
       os: windows
       rust:
         - stable
         - beta
         - nightly
       before_script: rustup target add $TARGET
-      script: -cargo build --release --target $TARGET
+      script:
+        - cargo build --release --target $TARGET
         - cargo test --verbose
+      jobs:
+        allow_failures:
+          - rust: nightly
 
 notifications:
   email:
