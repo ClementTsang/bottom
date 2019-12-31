@@ -3,17 +3,32 @@ rust:
   - stable
   - beta
   - nightly
-os:
-  - osx
-  - linux
-env:
-  - RUST_BACKTRACE=1
 jobs:
   allow_failures:
     - rust: nightly
+    - env: TARGET=x86_64-pc-windows-gnu # Seems to cause problems
+  include:
+    - os: linux
+      env:
+        - RUST_BACKTRACE=1
+        - TARGET=x86_64-unknown-linux-gnu
+    - os: osx
+      env:
+        - RUST_BACKTRACE=1
+        - TARGET=x86_64-apple-darwin
+    - os: windows
+      env:
+        - RUST_BACKTRACE=1
+        - TARGET=x86_64-pc-windows-msvc
+    - os: windows
+      env:
+        - RUST_BACKTRACE=1
+        - TARGET=x86_64-pc-windows-gnu
+
+before_script: rustup target add $TARGET
 script:
-  - cargo build --verbose
-  - cargo test --verbose
+  - cargo build --release --target $TARGET
+  - cargo test --verbose --target $TARGET
 
 # Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work
 cache:
@@ -24,20 +39,6 @@ cache:
 before_cache:
   - rm -rf /home/travis/.cargo/git
   - rm -rf /home/travis/.cargo/registry
-
-matrix:
-  fast_finish: true
-  include:
-    - name: Windows
-      env: RUST_BACKTRACE=1,TARGET=x86_64-pc-windows-msvc
-      os: windows
-      rust:
-        - stable
-        - beta
-        - nightly
-      before_script: rustup target add $TARGET
-      script: -cargo build --release --target $TARGET
-        - cargo test --verbose
 
 notifications:
   email:
