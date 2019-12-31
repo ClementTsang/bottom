@@ -15,11 +15,11 @@ jobs:
 before_install:
   - export RUST_BACKTRACE=1
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-    export TARGET=x86_64-unknown-linux-gnu
+    export TARGET=x86_64-unknown-linux-gnu;
     elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
-    export TARGET=x86_64-pc-windows-msvc
+    export TARGET=x86_64-pc-windows-msvc;
     elif [[ $TRAVIS_OS_NAME == "osx" ]] then
-    export TARGET=x86_64-apple-darwin
+    export TARGET=x86_64-apple-darwin;
     fi
 before_script: rustup target add $TARGET
 script:
