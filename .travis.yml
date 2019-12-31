@@ -12,14 +12,22 @@ env:
 jobs:
   allow_failures:
     - rust: nightly
+script:
+  - cargo build --verbose --all
+  #- cargo test --verbose --all
 
-#From https://levans.fr/rust_travis_cache.html
+# Need to cache the whole `.cargo` directory to keep .crates.toml for
+# cargo-update to work
 cache:
   directories:
     - /home/travis/.cargo
 
+# But don't cache the cargo registry
+# and remove wasm-pack binary to avoid the installer asking confirmation for overwriting it.
 before_cache:
+  - rm -rf /home/travis/.cargo/git
   - rm -rf /home/travis/.cargo/registry
+  - rm -rf /home/travis/.cargo/bin/wasm-pack
 
 notifications:
   email:
