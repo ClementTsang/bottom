@@ -66,7 +66,7 @@ Note that all options and keybindings on GitHub may reflect the current developm
 
 #### Processes, temperature, and disk panels
 
-- ~~`dd` to kill the selected process~~ Currently disabled in repo
+- `dd` to kill the selected process
 
 - `c` to sort by CPU usage. Sorts in descending order by default. Press again to reverse sorting order.
 
@@ -85,6 +85,20 @@ Note that all options and keybindings on GitHub may reflect the current developm
 [* Scrolling either scrolls through the list if the panel is a table (Temperature, Disks, Processes), or zooms in and out if it is a chart.]: <>
 
 - Scrolling currently only scrolls through the list if the panel is a table (Temperature, Disks, Processes).
+
+## Widget Functionality
+
+### CPU
+
+### Memory
+
+### Sensors
+
+### Disk
+
+### Network
+
+### Processes
 
 ## Thanks, kudos, and all the like
 
