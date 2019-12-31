@@ -4,12 +4,10 @@ rust:
   - beta
   - nightly
 os:
-  - windows
   - osx
   - linux
 env:
   - RUST_BACKTRACE=1
-  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then TARGET=x86_64-pc-windows-msvc; fi
 jobs:
   allow_failures:
     - rust: nightly
@@ -26,6 +24,20 @@ cache:
 before_cache:
   - rm -rf /home/travis/.cargo/git
   - rm -rf /home/travis/.cargo/registry
+
+matrix:
+  fast_finish: true
+  include:
+    - name: Windows
+      env: RUST_BACKTRACE=1,TARGET=x86_64-pc-windows-msvc
+      os: windows
+      rust:
+        - stable
+        - beta
+        - nightly
+      before_script: rustup target add $TARGET
+      script: -cargo build --release --target $TARGET
+        - cargo test --verbose
 
 notifications:
   email:
