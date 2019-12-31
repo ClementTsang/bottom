@@ -6,9 +6,21 @@ use std::process::Command;
 
 //======================RATES======================//
 
+fn get_os_binary_loc() -> String {
+	if cfg!(target_os = "linux") {
+		"./target/x86_64-unknown-linux-gnu/debug/btm".to_string()
+	} else if cfg!(target_os = "windows") {
+		"./target/x86_64-pc-windows-msvc/debug/btm".to_string()
+	} else if cfg!(target_os = "macos") {
+		"./target/x86_64-apple-darwin/debug/btm".to_string()
+	} else {
+		"".to_string()
+	}
+}
+
 #[test]
 fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
-	Command::new("./target/debug/btm")
+	Command::new(get_os_binary_loc())
 		.arg("-r")
 		.arg("249")
 		.assert()
@@ -19,7 +31,7 @@ fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
-	Command::new("./target/debug/btm")
+	Command::new(get_os_binary_loc())
 		.arg("-r")
 		.arg("18446744073709551616")
 		.assert()
@@ -31,7 +43,7 @@ fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn test_negative_rate() -> Result<(), Box<dyn std::error::Error>> {
 	// This test should auto fail due to how clap works
-	Command::new("./target/debug/btm")
+	Command::new(get_os_binary_loc())
 		.arg("-r")
 		.arg("-1000")
 		.assert()
@@ -43,7 +55,7 @@ fn test_negative_rate() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn test_invalid_rate() -> Result<(), Box<dyn std::error::Error>> {
-	Command::new("./target/debug/btm")
+	Command::new(get_os_binary_loc())
 		.arg("-r")
 		.arg("100-1000")
 		.assert()
