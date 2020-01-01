@@ -5,6 +5,15 @@ use crate::{
 };
 use constants::*;
 
+pub struct ConvertedNetworkData {
+	pub rx: Vec<(f64, f64)>,
+	pub tx: Vec<(f64, f64)>,
+	pub rx_display: String,
+	pub tx_display: String,
+	pub total_rx_display: String,
+	pub total_tx_display: String,
+}
+
 pub fn update_temp_row(app_data: &data_collection::Data, temp_type: &data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
 	let mut sensor_vector: Vec<Vec<String>> = Vec::new();
 
@@ -103,6 +112,7 @@ pub fn update_process_row(app_data: &data_collection::Data) -> Vec<Vec<String>> 
 	process_vector
 }
 
+// TODO: You should really make this a struct...
 pub fn update_cpu_data_points(show_avg_cpu: bool, app_data: &data_collection::Data) -> Vec<(String, Vec<(f64, f64)>)> {
 	let mut cpu_data_vector: Vec<(String, Vec<(f64, f64)>)> = Vec::new();
 	let mut cpu_collection: Vec<Vec<(f64, f64)>> = Vec::new();
@@ -141,15 +151,28 @@ pub fn update_cpu_data_points(show_avg_cpu: bool, app_data: &data_collection::Da
 		// Finally, add it all onto the end
 		for (i, data) in cpu_collection.iter().enumerate() {
 			if !app_data.list_of_cpu_packages.is_empty() {
+				// Commented out: this version includes the percentage in the label...
+				// cpu_data_vector.push((
+				// 	// + 1 to skip total CPU if show_avg_cpu is false
+				// 	format!(
+				// 		"{:4}: ",
+				// 		&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)
+				// 	)
+				// 	.to_uppercase() + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
+				// 	data.clone(),
+				// ))
 				cpu_data_vector.push((
-					// + 1 to skip total CPU if show_avg_cpu is false
 					format!(
-						"{:4}: ",
-						&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)
+						"{} ",
+						if show_avg_cpu && i == 0 {
+							"AVG"
+						} else {
+							&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)
+						}
 					)
-					.to_uppercase() + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
+					.to_uppercase(),
 					data.clone(),
-				))
+				));
 			}
 		}
 	}
@@ -215,15 +238,6 @@ fn convert_mem_data(mem_data: &[data_collection::mem::MemData]) -> Vec<(f64, f64
 	}
 
 	result
-}
-
-pub struct ConvertedNetworkData {
-	pub rx: Vec<(f64, f64)>,
-	pub tx: Vec<(f64, f64)>,
-	pub rx_display: String,
-	pub tx_display: String,
-	pub total_rx_display: String,
-	pub total_tx_display: String,
 }
 
 pub fn update_network_data_points(app_data: &data_collection::Data) -> ConvertedNetworkData {

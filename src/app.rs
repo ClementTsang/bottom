@@ -29,13 +29,15 @@ pub struct App {
 	pub process_sorting_reverse: bool,
 	pub to_be_resorted: bool,
 	// Positioning
+	pub scroll_direction: ScrollDirection,
 	pub currently_selected_process_position: i64,
 	pub currently_selected_disk_position: i64,
 	pub currently_selected_temperature_position: i64,
-	pub scroll_direction: ScrollDirection,
+	pub currently_selected_cpu_table_position: i64,
 	pub previous_disk_position: i64,
 	pub previous_temp_position: i64,
 	pub previous_process_position: i64,
+	pub previous_cpu_table_position: i64,
 	pub temperature_type: temperature::TemperatureType,
 	pub update_rate_in_milliseconds: u64,
 	pub show_average_cpu: bool,
@@ -60,17 +62,19 @@ impl App {
 			process_sorting_type: processes::ProcessSorting::CPU,
 			process_sorting_reverse: true,
 			to_be_resorted: false,
-			currently_selected_process_position: 0,
-			currently_selected_disk_position: 0,
-			currently_selected_temperature_position: 0,
 			temperature_type,
 			update_rate_in_milliseconds,
 			show_average_cpu,
 			current_application_position: ApplicationPosition::Process,
 			scroll_direction: ScrollDirection::DOWN,
+			currently_selected_process_position: 0,
+			currently_selected_disk_position: 0,
+			currently_selected_temperature_position: 0,
+			currently_selected_cpu_table_position: 0,
 			previous_process_position: 0,
 			previous_disk_position: 0,
 			previous_temp_position: 0,
+			previous_cpu_table_position: 0,
 			data: data_collection::Data::default(),
 			awaiting_second_char: false,
 			second_char: ' ',
@@ -274,6 +278,7 @@ impl App {
 			ApplicationPosition::Process => self.change_process_position(-1),
 			ApplicationPosition::Temp => self.change_temp_position(-1),
 			ApplicationPosition::Disk => self.change_disk_position(-1),
+			ApplicationPosition::Cpu => self.change_cpu_table_position(-1), // TODO: Temporary
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::UP;
@@ -285,10 +290,26 @@ impl App {
 			ApplicationPosition::Process => self.change_process_position(1),
 			ApplicationPosition::Temp => self.change_temp_position(1),
 			ApplicationPosition::Disk => self.change_disk_position(1),
+			ApplicationPosition::Cpu => self.change_cpu_table_position(1), // TODO: Temporary
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::DOWN;
 		self.reset_multi_tap_keys();
+	}
+
+	fn change_cpu_table_position(&mut self, num_to_change_by: i64) {
+		if let Some(cpu_package) = self.data.list_of_cpu_packages.last() {
+			if self.currently_selected_cpu_table_position + num_to_change_by >= 0
+				&& self.currently_selected_cpu_table_position + num_to_change_by
+					< if self.show_average_cpu {
+						cpu_package.cpu_vec.len()
+					} else {
+						cpu_package.cpu_vec.len() - 1
+					} as i64
+			{
+				self.currently_selected_cpu_table_position += num_to_change_by;
+			}
+		}
 	}
 
 	fn change_process_position(&mut self, num_to_change_by: i64) {
