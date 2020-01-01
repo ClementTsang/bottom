@@ -147,9 +147,9 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				.margin(0)
 				.constraints(
 					if app_state.left_legend {
-						[Constraint::Percentage(10), Constraint::Percentage(90)]
+						[Constraint::Percentage(15), Constraint::Percentage(85)]
 					} else {
-						[Constraint::Percentage(90), Constraint::Percentage(10)]
+						[Constraint::Percentage(85), Constraint::Percentage(15)]
 					}
 					.as_ref(),
 				)
