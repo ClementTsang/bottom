@@ -46,6 +46,8 @@ Note that all options and keybindings on GitHub may reflect the current developm
 
 - `-l`, `--left_legend` will move external table legends to the left side rather than the right side. Right side is default.
 
+- `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage. Only affects Linux.
+
 ### Keybindings
 
 #### General

@@ -66,6 +66,7 @@ fn main() -> error::Result<()> {
 		)
 		(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
+		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 	)
@@ -107,6 +108,7 @@ fn main() -> error::Result<()> {
 	let show_average_cpu = matches.is_present("AVG_CPU");
 	let use_dot = matches.is_present("DOT_MARKER");
 	let left_legend = matches.is_present("LEFT_LEGEND");
+	let use_current_cpu_total = matches.is_present("USE_CURR_USAGE");
 
 	// Create "app" struct, which will control most of the program and store settings/state
 	let mut app = app::App::new(
@@ -115,6 +117,7 @@ fn main() -> error::Result<()> {
 		update_rate_in_milliseconds as u64,
 		use_dot,
 		left_legend,
+		use_current_cpu_total,
 	);
 
 	// Set up up tui and crossterm
@@ -169,6 +172,7 @@ fn main() -> error::Result<()> {
 			let mut data_state = data_collection::DataState::default();
 			data_state.init();
 			data_state.set_temperature_type(temp_type);
+			data_state.set_use_current_cpu_total(use_current_cpu_total);
 			loop {
 				if let Ok(message) = rrx.try_recv() {
 					match message {
