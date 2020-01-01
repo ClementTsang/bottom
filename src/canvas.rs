@@ -1,10 +1,10 @@
 use crate::{app, constants, utils::error, utils::gen_util::*};
 use tui::{
 	backend,
-	layout::{Alignment, Constraint, Corner, Direction, Layout, Rect},
+	layout::{Alignment, Constraint, Direction, Layout, Rect},
 	style::{Color, Modifier, Style},
 	terminal::Frame,
-	widgets::{Axis, Block, Borders, Chart, Dataset, List, Marker, Paragraph, Row, Table, Text, Widget},
+	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
 	Terminal,
 };
 
@@ -81,14 +81,7 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	}
 
 	// Generate colours
-	let mut colour_vec: Vec<Color> = vec![
-		Color::LightBlue,
-		Color::LightYellow,
-		Color::Red,
-		Color::Green,
-		Color::LightCyan,
-		Color::LightMagenta,
-	];
+	let mut colour_vec: Vec<Color> = vec![Color::LightCyan, Color::LightYellow, Color::Red, Color::Green, Color::LightMagenta];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
 	for _i in 0..num_to_gen {
@@ -183,8 +176,8 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			// CPU graph
 			draw_cpu_graph(&mut f, &app_state, &canvas_data.cpu_data, cpu_chunk[graph_index]);
 
-			// CPU label
-			draw_cpu_legend(&mut f, &app_state, &canvas_data.cpu_data, cpu_chunk[legend_index]);
+			// CPU legend
+			draw_cpu_legend(&mut f, app_state, &canvas_data.cpu_data, cpu_chunk[legend_index]);
 
 			//Memory usage graph
 			draw_memory_graph(
@@ -217,6 +210,16 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 					canvas_data.tx_display.clone(),
 					canvas_data.total_rx_display.clone(),
 					canvas_data.total_tx_display.clone(),
+					network_chunk[1],
+				);
+			} else {
+				draw_network_labels(
+					&mut f,
+					app_state,
+					canvas_data.rx_display.clone(),
+					canvas_data.tx_display.clone(),
+					"N/A".to_string(),
+					"N/A".to_string(),
 					network_chunk[1],
 				);
 			}
@@ -293,14 +296,42 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, c
 		.render(f, draw_loc);
 }
 
-fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, cpu_data: &[(String, Vec<(f64, f64)>)], draw_loc: Rect) {
-	let mut itx = 0;
-	let label_map = cpu_data.iter().map(|cpu| {
-		itx += 1;
-		Text::styled(&cpu.0, Style::default().fg(COLOUR_LIST[(itx - 1) % COLOUR_LIST.len()]))
+fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, cpu_data: &[(String, Vec<(f64, f64)>)], draw_loc: Rect) {
+	let num_rows = i64::from(draw_loc.height) - 4;
+	let start_position = get_start_position(
+		num_rows,
+		&(app_state.scroll_direction),
+		&mut app_state.previous_cpu_table_position,
+		&mut app_state.currently_selected_cpu_table_position,
+	);
+
+	let sliced_cpu_data = (&cpu_data[start_position as usize..]).to_vec();
+	let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
+
+	for cpu in sliced_cpu_data {
+		if let Some(cpu_data) = cpu.1.last() {
+			stringified_cpu_data.push(vec![cpu.0.clone(), format!("{:.0}%", cpu_data.1.round())]);
+		}
+	}
+
+	let mut cpu_row_counter = 0;
+
+	let cpu_rows = stringified_cpu_data.iter().enumerate().map(|(itx, cpu_string_row)| {
+		Row::StyledData(
+			cpu_string_row.iter(),
+			if cpu_row_counter == app_state.currently_selected_cpu_table_position - start_position {
+				cpu_row_counter = -1;
+				Style::default().fg(Color::Black).bg(Color::Cyan)
+			} else {
+				if cpu_row_counter >= 0 {
+					cpu_row_counter += 1;
+				}
+				Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
+			},
+		)
 	});
 
-	List::new(label_map)
+	Table::new(["CPU", "Use%"].iter(), cpu_rows)
 		.block(
 			Block::default()
 				.borders(Borders::ALL)
@@ -309,7 +340,8 @@ fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, 
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
-		.start_corner(Corner::TopLeft)
+		.header_style(Style::default().fg(Color::LightBlue))
+		.widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
 		.render(f, draw_loc);
 }
 
@@ -446,17 +478,17 @@ fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 	);
 
 	let sliced_vec: Vec<Vec<String>> = (&temp_sensor_data[start_position as usize..]).to_vec();
-	let mut disk_counter = 0;
+	let mut temp_row_counter = 0;
 
-	let temperature_rows = sliced_vec.iter().map(|disk| {
+	let temperature_rows = sliced_vec.iter().map(|temp_row| {
 		Row::StyledData(
-			disk.iter(),
-			if disk_counter == app_state.currently_selected_temperature_position - start_position {
-				disk_counter = -1;
+			temp_row.iter(),
+			if temp_row_counter == app_state.currently_selected_temperature_position - start_position {
+				temp_row_counter = -1;
 				Style::default().fg(Color::Black).bg(Color::Cyan)
 			} else {
-				if disk_counter >= 0 {
-					disk_counter += 1;
+				if temp_row_counter >= 0 {
+					temp_row_counter += 1;
 				}
 				Style::default().fg(TEXT_COLOUR)
 			},
