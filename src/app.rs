@@ -115,8 +115,7 @@ impl App {
 					if self.awaiting_second_char && self.second_char == 'd' {
 						self.awaiting_second_char = false;
 						self.second_char = ' ';
-						// TODO: Redo this in DD rewrite!
-						self.kill_highlighted_process().unwrap_or(());
+						self.kill_highlighted_process().unwrap_or(()); // TODO: Return error to user?  We have a dialog box...
 					} else {
 						self.awaiting_second_char = true;
 						self.second_char = 'd';

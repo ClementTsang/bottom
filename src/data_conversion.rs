@@ -279,23 +279,23 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 	let tx_converted_result: (f64, String);
 
 	if let Some(last_num_bytes_entry) = network_data.last() {
-		rx_converted_result = get_exact_byte_values(last_num_bytes_entry.rx, true);
+		rx_converted_result = get_exact_byte_values(last_num_bytes_entry.rx, false);
 		total_rx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_rx, false)
 	} else {
-		rx_converted_result = get_exact_byte_values(0, true);
+		rx_converted_result = get_exact_byte_values(0, false);
 		total_rx_converted_result = get_exact_byte_values(0, false);
 	}
-	let rx_display = format!("RX: {:5.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
+	let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
 	let total_rx_display = format!("{:.*}{}", 1, total_rx_converted_result.0, total_rx_converted_result.1);
 
 	if let Some(last_num_bytes_entry) = network_data.last() {
-		tx_converted_result = get_exact_byte_values(last_num_bytes_entry.tx, true);
+		tx_converted_result = get_exact_byte_values(last_num_bytes_entry.tx, false);
 		total_tx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_tx, false);
 	} else {
-		tx_converted_result = get_exact_byte_values(0, true);
+		tx_converted_result = get_exact_byte_values(0, false);
 		total_tx_converted_result = get_exact_byte_values(0, false);
 	}
-	let tx_display = format!("TX: {:5.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
+	let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
 	let total_tx_display = format!("{:.*}{}", 1, total_tx_converted_result.0, total_tx_converted_result.1);
 
 	ConvertedNetworkData {
