@@ -116,13 +116,15 @@ impl App {
 
 			match caught_char {
 				'd' => {
-					if self.awaiting_second_char && self.second_char == 'd' {
-						self.awaiting_second_char = false;
-						self.second_char = ' ';
-						self.kill_highlighted_process().unwrap_or(()); // TODO: Return error to user?  We have a dialog box...
-					} else {
-						self.awaiting_second_char = true;
-						self.second_char = 'd';
+					if let ApplicationPosition::Process = self.current_application_position {
+						if self.awaiting_second_char && self.second_char == 'd' {
+							self.awaiting_second_char = false;
+							self.second_char = ' ';
+							self.kill_highlighted_process().unwrap_or(()); // TODO: Return error to user?  We have a dialog box...
+						} else {
+							self.awaiting_second_char = true;
+							self.second_char = 'd';
+						}
 					}
 				}
 				'g' => {
@@ -278,7 +280,7 @@ impl App {
 			ApplicationPosition::Process => self.change_process_position(-1),
 			ApplicationPosition::Temp => self.change_temp_position(-1),
 			ApplicationPosition::Disk => self.change_disk_position(-1),
-			ApplicationPosition::Cpu => self.change_cpu_table_position(-1), // TODO: Temporary
+			ApplicationPosition::Cpu => self.change_cpu_table_position(-1), // TODO: Temporary, may change if we add scaling
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::UP;
@@ -290,7 +292,7 @@ impl App {
 			ApplicationPosition::Process => self.change_process_position(1),
 			ApplicationPosition::Temp => self.change_temp_position(1),
 			ApplicationPosition::Disk => self.change_disk_position(1),
-			ApplicationPosition::Cpu => self.change_cpu_table_position(1), // TODO: Temporary
+			ApplicationPosition::Cpu => self.change_cpu_table_position(1), // TODO: Temporary, may change if we add scaling
 			_ => {}
 		}
 		self.scroll_direction = ScrollDirection::DOWN;
