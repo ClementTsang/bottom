@@ -202,8 +202,6 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				&app_state,
 				&canvas_data.network_data_rx,
 				&canvas_data.network_data_tx,
-				canvas_data.rx_display.clone(),
-				canvas_data.tx_display.clone(),
 				if cfg!(not(target_os = "windows")) {
 					network_chunk[0]
 				} else {
@@ -215,6 +213,8 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				draw_network_labels(
 					&mut f,
 					app_state,
+					canvas_data.rx_display.clone(),
+					canvas_data.tx_display.clone(),
 					canvas_data.total_rx_display.clone(),
 					canvas_data.total_tx_display.clone(),
 					network_chunk[1],
@@ -377,8 +377,7 @@ fn draw_memory_graph<B: backend::Backend>(
 }
 
 fn draw_network_graph<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &app::App, network_data_rx: &[(f64, f64)], network_data_tx: &[(f64, f64)], rx_display: String, tx_display: String,
-	draw_loc: Rect,
+	f: &mut Frame<B>, app_state: &app::App, network_data_rx: &[(f64, f64)], network_data_tx: &[(f64, f64)], draw_loc: Rect,
 ) {
 	let x_axis: Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 	let y_axis = Axis::default()
@@ -399,12 +398,10 @@ fn draw_network_graph<B: backend::Backend>(
 		.y_axis(y_axis)
 		.datasets(&[
 			Dataset::default()
-				.name(&(rx_display))
 				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 				.style(Style::default().fg(COLOUR_LIST[0]))
 				.data(&network_data_rx),
 			Dataset::default()
-				.name(&(tx_display))
 				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
 				.style(Style::default().fg(COLOUR_LIST[1]))
 				.data(&network_data_tx),
@@ -413,23 +410,29 @@ fn draw_network_graph<B: backend::Backend>(
 }
 
 fn draw_network_labels<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, total_rx_display: String, total_tx_display: String, draw_loc: Rect,
+	f: &mut Frame<B>, app_state: &mut app::App, rx_display: String, tx_display: String, total_rx_display: String, total_tx_display: String,
+	draw_loc: Rect,
 ) {
 	// Gross but I need it to work...
-	let total_network = vec![vec![total_rx_display, total_tx_display]];
+	let total_network = vec![vec![rx_display, tx_display, total_rx_display, total_tx_display]];
 	let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
 
-	Table::new(["Total RX", "Total TX"].iter(), mapped_network)
+	Table::new(["RX", "TX", "Total RX", "Total TX"].iter(), mapped_network)
 		.block(
 			Block::default()
 				.borders(Borders::ALL)
 				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
 		.header_style(Style::default().fg(Color::LightBlue))
-		.widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
+		.widths(&[
+			Constraint::Percentage(25),
+			Constraint::Percentage(25),
+			Constraint::Percentage(25),
+			Constraint::Percentage(25),
+		])
 		.render(f, draw_loc);
 }
 
