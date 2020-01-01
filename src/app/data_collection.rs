@@ -49,6 +49,7 @@ pub struct DataState {
 	prev_net_access_time: Instant,
 	temperature_type: temperature::TemperatureType,
 	last_clean: Instant, // Last time stale data was cleared
+	use_current_cpu_total: bool,
 }
 
 impl Default for DataState {
@@ -66,6 +67,7 @@ impl Default for DataState {
 			prev_net_access_time: Instant::now(),
 			temperature_type: temperature::TemperatureType::Celsius,
 			last_clean: Instant::now(),
+			use_current_cpu_total: false,
 		}
 	}
 }
@@ -73,6 +75,10 @@ impl Default for DataState {
 impl DataState {
 	pub fn set_temperature_type(&mut self, temperature_type: temperature::TemperatureType) {
 		self.temperature_type = temperature_type;
+	}
+
+	pub fn set_use_current_cpu_total(&mut self, use_current_cpu_total: bool) {
+		self.use_current_cpu_total = use_current_cpu_total;
 	}
 
 	pub fn init(&mut self) {
@@ -104,7 +110,13 @@ impl DataState {
 		push_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
 		push_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
 		set_if_valid(
-			&processes::get_sorted_processes_list(&self.sys, &mut self.prev_idle, &mut self.prev_non_idle, &mut self.prev_pid_stats),
+			&processes::get_sorted_processes_list(
+				&self.sys,
+				&mut self.prev_idle,
+				&mut self.prev_non_idle,
+				&mut self.prev_pid_stats,
+				self.use_current_cpu_total,
+			),
 			&mut self.data.list_of_processes,
 		);
 

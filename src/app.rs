@@ -47,12 +47,14 @@ pub struct App {
 	pub show_help: bool,
 	pub is_frozen: bool,
 	pub left_legend: bool,
+	pub use_current_cpu_total: bool,
 	last_key_press: Instant,
 }
 
 impl App {
 	pub fn new(
 		show_average_cpu: bool, temperature_type: temperature::TemperatureType, update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
+		use_current_cpu_total: bool,
 	) -> App {
 		App {
 			process_sorting_type: processes::ProcessSorting::CPU,
@@ -76,6 +78,7 @@ impl App {
 			show_help: false,
 			is_frozen: false,
 			left_legend,
+			use_current_cpu_total,
 			last_key_press: Instant::now(),
 		}
 	}
