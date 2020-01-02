@@ -177,7 +177,7 @@ fn main() -> error::Result<()> {
 				if let Ok(message) = rrx.try_recv() {
 					match message {
 						ResetEvent::Reset => {
-							debug!("Received reset message");
+							//debug!("Received reset message");
 							first_run = true;
 							data_state.data = app::data_collection::Data::default();
 						}
@@ -197,7 +197,6 @@ fn main() -> error::Result<()> {
 		});
 	}
 
-	let mut canvas_data = canvas::CanvasData::default();
 	loop {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
@@ -213,8 +212,9 @@ fn main() -> error::Result<()> {
 							KeyCode::Char('j') => app.on_down(),
 							KeyCode::Up => app.decrement_position_count(),
 							KeyCode::Down => app.increment_position_count(),
-							KeyCode::Char(uncaught_char) => app.on_key(uncaught_char),
-							KeyCode::Esc => app.on_esc(),
+							KeyCode::Char(uncaught_char) => app.on_char_key(uncaught_char),
+							KeyCode::Esc => app.reset(),
+							KeyCode::Enter => app.on_enter(),
 							_ => {}
 						}
 					} else {
@@ -260,7 +260,7 @@ fn main() -> error::Result<()> {
 							&app.process_sorting_type,
 							app.process_sorting_reverse,
 						);
-						canvas_data.process_data = update_process_row(&app.data);
+						app.canvas_data.process_data = update_process_row(&app.data);
 						app.to_be_resorted = false;
 					}
 				}
@@ -270,6 +270,8 @@ fn main() -> error::Result<()> {
 					_ => {}
 				},
 				Event::Update(data) => {
+					// NOTE TO SELF - data is refreshed into app state HERE!  That means, if it is
+					// frozen, then, app.data is never refreshed, until unfrozen!
 					if !app.is_frozen {
 						app.data = *data;
 
@@ -280,28 +282,28 @@ fn main() -> error::Result<()> {
 						);
 
 						// Convert all data into tui components
+						// TODO: Note that we might want to move this the canvas' side... consider.
 						let network_data = update_network_data_points(&app.data);
-						canvas_data.network_data_rx = network_data.rx;
-						canvas_data.network_data_tx = network_data.tx;
-						canvas_data.rx_display = network_data.rx_display;
-						canvas_data.tx_display = network_data.tx_display;
-						canvas_data.total_rx_display = network_data.total_rx_display;
-						canvas_data.total_tx_display = network_data.total_tx_display;
-						canvas_data.disk_data = update_disk_row(&app.data);
-						canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
-						canvas_data.process_data = update_process_row(&app.data);
-						canvas_data.mem_data = update_mem_data_points(&app.data);
-						canvas_data.memory_labels = update_mem_data_values(&app.data);
-						canvas_data.swap_data = update_swap_data_points(&app.data);
-						canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
-
+						app.canvas_data.network_data_rx = network_data.rx;
+						app.canvas_data.network_data_tx = network_data.tx;
+						app.canvas_data.rx_display = network_data.rx_display;
+						app.canvas_data.tx_display = network_data.tx_display;
+						app.canvas_data.total_rx_display = network_data.total_rx_display;
+						app.canvas_data.total_tx_display = network_data.total_tx_display;
+						app.canvas_data.disk_data = update_disk_row(&app.data);
+						app.canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
+						app.canvas_data.process_data = update_process_row(&app.data);
+						app.canvas_data.mem_data = update_mem_data_points(&app.data);
+						app.canvas_data.memory_labels = update_mem_data_values(&app.data);
+						app.canvas_data.swap_data = update_swap_data_points(&app.data);
+						app.canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
 						//debug!("Update event complete.");
 					}
 				}
 			}
 		}
 		// Draw!
-		if let Err(err) = canvas::draw_data(&mut terminal, &mut app, &canvas_data) {
+		if let Err(err) = canvas::draw_data(&mut terminal, &mut app) {
 			disable_raw_mode()?;
 			execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 			terminal.show_cursor()?;
