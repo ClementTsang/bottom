@@ -5,6 +5,7 @@ use crate::{
 };
 use constants::*;
 
+#[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
 	pub rx: Vec<(f64, f64)>,
 	pub tx: Vec<(f64, f64)>,
@@ -12,6 +13,14 @@ pub struct ConvertedNetworkData {
 	pub tx_display: String,
 	pub total_rx_display: String,
 	pub total_tx_display: String,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct ConvertedProcessData {
+	pub pid: u32,
+	pub name: String,
+	pub cpu_usage: String,
+	pub mem_usage: String,
 }
 
 pub fn update_temp_row(app_data: &data_collection::Data, temp_type: &data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
@@ -84,15 +93,15 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 	disk_vector
 }
 
-pub fn update_process_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
-	let mut process_vector: Vec<Vec<String>> = Vec::new();
+pub fn update_process_row(app_data: &data_collection::Data) -> Vec<ConvertedProcessData> {
+	let mut process_vector: Vec<ConvertedProcessData> = Vec::new();
 
 	for process in &app_data.list_of_processes {
-		process_vector.push(vec![
-			process.pid.to_string(),
-			process.command.to_string(),
-			format!("{:.1}%", process.cpu_usage_percent),
-			format!(
+		process_vector.push(ConvertedProcessData {
+			pid: process.pid,
+			name: process.command.to_string(),
+			cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
+			mem_usage: format!(
 				"{:.1}%",
 				if let Some(mem_usage) = process.mem_usage_percent {
 					mem_usage
@@ -106,7 +115,7 @@ pub fn update_process_row(app_data: &data_collection::Data) -> Vec<Vec<String>> 
 					0_f64
 				}
 			),
-		]);
+		});
 	}
 
 	process_vector
@@ -300,7 +309,11 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 		total_rx_converted_result = get_exact_byte_values(0, false);
 	}
 	let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
-	let total_rx_display = format!("{:.*}{}", 1, total_rx_converted_result.0, total_rx_converted_result.1);
+	let total_rx_display = if cfg!(not(target_os = "windows")) {
+		format!("{:.*}{}", 1, total_rx_converted_result.0, total_rx_converted_result.1)
+	} else {
+		"N/A".to_string()
+	};
 
 	if let Some(last_num_bytes_entry) = network_data.last() {
 		tx_converted_result = get_exact_byte_values(last_num_bytes_entry.tx, false);
@@ -310,7 +323,11 @@ pub fn convert_network_data_points(network_data: &[data_collection::network::Net
 		total_tx_converted_result = get_exact_byte_values(0, false);
 	}
 	let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
-	let total_tx_display = format!("{:.*}{}", 1, total_tx_converted_result.0, total_tx_converted_result.1);
+	let total_tx_display = if cfg!(not(target_os = "windows")) {
+		format!("{:.*}{}", 1, total_tx_converted_result.0, total_tx_converted_result.1)
+	} else {
+		"N/A".to_string()
+	};
 
 	ConvertedNetworkData {
 		rx,

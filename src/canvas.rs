@@ -1,4 +1,4 @@
-use crate::{app, constants, utils::error, utils::gen_util::*};
+use crate::{app, constants, data_conversion::ConvertedProcessData, utils::error, utils::gen_util::*};
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -46,7 +46,7 @@ pub struct CanvasData {
 	pub network_data_tx: Vec<(f64, f64)>,
 	pub disk_data: Vec<Vec<String>>,
 	pub temp_sensor_data: Vec<Vec<String>>,
-	pub process_data: Vec<Vec<String>>,
+	pub process_data: Vec<ConvertedProcessData>,
 	pub memory_labels: Vec<(u64, u64)>,
 	pub mem_data: Vec<(f64, f64)>,
 	pub swap_data: Vec<(f64, f64)>,
@@ -93,11 +93,11 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	colour_vec
 }
 
-pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mut app::App, canvas_data: &CanvasData) -> error::Result<()> {
+pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mut app::App) -> error::Result<()> {
 	terminal.autoresize()?;
 	terminal.draw(|mut f| {
 		if app_state.show_help {
-			// Only for the dialog (help, dd) menus
+			// Only for the help
 			let vertical_dialog_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(1)
@@ -116,6 +116,52 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				.alignment(Alignment::Left)
 				.wrap(true)
 				.render(&mut f, middle_dialog_chunk[1]);
+		} else if app_state.show_dd {
+			let vertical_dialog_chunk = Layout::default()
+				.direction(Direction::Vertical)
+				.margin(1)
+				.constraints([Constraint::Percentage(40), Constraint::Percentage(20), Constraint::Percentage(40)].as_ref())
+				.split(f.size());
+
+			let middle_dialog_chunk = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
+				.split(vertical_dialog_chunk[1]);
+
+			if let Some(dd_err) = app_state.dd_err.clone() {
+				let dd_text = [Text::raw(format!("\nFailure to properly kill the process - {}", dd_err))];
+
+				Paragraph::new(dd_text.iter())
+					.block(Block::default().title("Kill Process Error (Press Esc to close)").borders(Borders::ALL))
+					.style(Style::default().fg(Color::Gray))
+					.alignment(Alignment::Center)
+					.wrap(true)
+					.render(&mut f, middle_dialog_chunk[1]);
+			} else if let Some(process) = app_state.get_current_highlighted_process() {
+				let dd_text = [
+					Text::raw(format!(
+						"\nAre you sure you want to kill process {} with PID {}?",
+						process.name, process.pid
+					)),
+					Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
+					Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
+				];
+
+				Paragraph::new(dd_text.iter())
+					.block(
+						Block::default()
+							.title("Kill Process Confirmation (Press Esc to close)")
+							.borders(Borders::ALL),
+					)
+					.style(Style::default().fg(Color::Gray))
+					.alignment(Alignment::Center)
+					.wrap(true)
+					.render(&mut f, middle_dialog_chunk[1]);
+			} else {
+				// This is a bit nasty, but it works well... I guess.
+				app_state.show_dd = false;
+			}
 		} else {
 			let vertical_chunks = Layout::default()
 				.direction(Direction::Vertical)
@@ -174,27 +220,18 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 
 			// Set up blocks and their components
 			// CPU graph
-			draw_cpu_graph(&mut f, &app_state, &canvas_data.cpu_data, cpu_chunk[graph_index]);
+			draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
 
 			// CPU legend
-			draw_cpu_legend(&mut f, app_state, &canvas_data.cpu_data, cpu_chunk[legend_index]);
+			draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
 
 			//Memory usage graph
-			draw_memory_graph(
-				&mut f,
-				&app_state,
-				&canvas_data.memory_labels,
-				&canvas_data.mem_data,
-				&canvas_data.swap_data,
-				middle_chunks[0],
-			);
+			draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
 
 			// Network graph
 			draw_network_graph(
 				&mut f,
 				&app_state,
-				&canvas_data.network_data_rx,
-				&canvas_data.network_data_tx,
 				if cfg!(not(target_os = "windows")) {
 					network_chunk[0]
 				} else {
@@ -202,45 +239,26 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 				},
 			);
 
-			if cfg!(not(target_os = "windows")) {
-				draw_network_labels(
-					&mut f,
-					app_state,
-					canvas_data.rx_display.clone(),
-					canvas_data.tx_display.clone(),
-					canvas_data.total_rx_display.clone(),
-					canvas_data.total_tx_display.clone(),
-					network_chunk[1],
-				);
-			} else {
-				draw_network_labels(
-					&mut f,
-					app_state,
-					canvas_data.rx_display.clone(),
-					canvas_data.tx_display.clone(),
-					"N/A".to_string(),
-					"N/A".to_string(),
-					network_chunk[1],
-				);
-			}
+			draw_network_labels(&mut f, app_state, network_chunk[1]);
 
 			// Temperature table
-			draw_temp_table(&mut f, app_state, &canvas_data.temp_sensor_data, middle_divided_chunk_2[0]);
+			draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0]);
 
 			// Disk usage table
-			draw_disk_table(&mut f, app_state, &canvas_data.disk_data, middle_divided_chunk_2[1]);
+			draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
 
 			// Processes table
-			draw_processes_table(&mut f, app_state, &canvas_data.process_data, bottom_chunks[1]);
+			draw_processes_table(&mut f, app_state, bottom_chunks[1]);
 		}
 	})?;
 
 	Ok(())
 }
 
-fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, cpu_data: &[(String, Vec<(f64, f64)>)], draw_loc: Rect) {
-	// CPU usage graph
+fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
+	let cpu_data: &[(String, Vec<(f64, f64)>)] = &app_state.canvas_data.cpu_data;
 
+	// CPU usage graph
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
@@ -296,7 +314,9 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, c
 		.render(f, draw_loc);
 }
 
-fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, cpu_data: &[(String, Vec<(f64, f64)>)], draw_loc: Rect) {
+fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+	let cpu_data: &[(String, Vec<(f64, f64)>)] = &(app_state.canvas_data.cpu_data);
+
 	let num_rows = i64::from(draw_loc.height) - 4;
 	let start_position = get_start_position(
 		num_rows,
@@ -345,9 +365,11 @@ fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		.render(f, draw_loc);
 }
 
-fn draw_memory_graph<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &app::App, memory_labels: &[(u64, u64)], mem_data: &[(f64, f64)], swap_data: &[(f64, f64)], draw_loc: Rect,
-) {
+fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
+	let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
+	let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
+	let memory_labels: &[(u64, u64)] = &(app_state.canvas_data.memory_labels);
+
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
@@ -408,9 +430,10 @@ fn draw_memory_graph<B: backend::Backend>(
 		.render(f, draw_loc);
 }
 
-fn draw_network_graph<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &app::App, network_data_rx: &[(f64, f64)], network_data_tx: &[(f64, f64)], draw_loc: Rect,
-) {
+fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
+	let network_data_rx: &[(f64, f64)] = &(app_state.canvas_data.network_data_rx);
+	let network_data_tx: &[(f64, f64)] = &(app_state.canvas_data.network_data_tx);
+
 	let x_axis: Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
 	let y_axis = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
@@ -441,10 +464,12 @@ fn draw_network_graph<B: backend::Backend>(
 		.render(f, draw_loc);
 }
 
-fn draw_network_labels<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, rx_display: String, tx_display: String, total_rx_display: String, total_tx_display: String,
-	draw_loc: Rect,
-) {
+fn draw_network_labels<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+	let rx_display: String = app_state.canvas_data.rx_display.clone();
+	let tx_display: String = app_state.canvas_data.tx_display.clone();
+	let total_rx_display: String = app_state.canvas_data.total_rx_display.clone();
+	let total_tx_display: String = app_state.canvas_data.total_tx_display.clone();
+
 	// Gross but I need it to work...
 	let total_network = vec![vec![rx_display, tx_display, total_rx_display, total_tx_display]];
 	let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
@@ -468,7 +493,9 @@ fn draw_network_labels<B: backend::Backend>(
 		.render(f, draw_loc);
 }
 
-fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, temp_sensor_data: &[Vec<String>], draw_loc: Rect) {
+fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+	let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
+
 	let num_rows = i64::from(draw_loc.height) - 4;
 	let start_position = get_start_position(
 		num_rows,
@@ -511,7 +538,8 @@ fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		.render(f, draw_loc);
 }
 
-fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, disk_data: &[Vec<String>], draw_loc: Rect) {
+fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+	let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
 	let num_rows = i64::from(draw_loc.height) - 4;
 	let start_position = get_start_position(
 		num_rows,
@@ -563,7 +591,8 @@ fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		.render(f, draw_loc);
 }
 
-fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, process_data: &[Vec<String>], draw_loc: Rect) {
+fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+	let process_data: &[ConvertedProcessData] = &(app_state.canvas_data.process_data);
 	let width = f64::from(draw_loc.width);
 
 	// Admittedly this is kinda a hack... but we need to:
@@ -580,12 +609,18 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 		&mut app_state.currently_selected_process_position,
 	);
 
-	let sliced_vec: Vec<Vec<String>> = (&process_data[start_position as usize..]).to_vec();
+	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
 	let mut process_counter = 0;
 
 	let process_rows = sliced_vec.iter().map(|process| {
+		let stringified_process_vec: Vec<String> = vec![
+			process.pid.to_string(),
+			process.name.clone(),
+			process.cpu_usage.clone(),
+			process.mem_usage.clone(),
+		];
 		Row::StyledData(
-			process.iter(),
+			stringified_process_vec.into_iter(),
 			if process_counter == app_state.currently_selected_process_position - start_position {
 				process_counter = -1;
 				Style::default().fg(Color::Black).bg(Color::Cyan)

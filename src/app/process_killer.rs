@@ -1,7 +1,6 @@
 /// This file is meant to house (OS specific) implementations on how to kill processes.
+use crate::utils::error::{BottomError, Result};
 use std::process::Command;
-
-// TODO: Make it update process list on freeze.
 
 // Copied from SO: https://stackoverflow.com/a/55231715
 #[cfg(target_os = "windows")]
@@ -33,7 +32,7 @@ impl Process {
 }
 
 /// Kills a process, given a PID.
-pub fn kill_process_given_pid(pid: u64) -> crate::utils::error::Result<()> {
+pub fn kill_process_given_pid(pid: u32) -> Result<()> {
 	if cfg!(target_os = "linux") {
 		// Linux
 		Command::new("kill").arg(pid.to_string()).output()?;
@@ -45,10 +44,14 @@ pub fn kill_process_given_pid(pid: u64) -> crate::utils::error::Result<()> {
 	} else if cfg!(target_os = "macos") {
 		// TODO: macOS
 		// See how sysinfo does it... https://docs.rs/sysinfo/0.9.5/sysinfo/trait.ProcessExt.html
-		debug!("Sorry, macOS support is not implemented yet!");
+		return Err(BottomError::GenericError {
+			message: "Sorry, macOS support is not implemented yet!".to_string(),
+		});
 	} else {
 		// TODO: Others?
-		debug!("Sorry, other support this is not implemented yet!");
+		return Err(BottomError::GenericError {
+			message: "Sorry, support operating systems outside the main three is not implemented yet!".to_string(),
+		});
 	}
 
 	Ok(())
