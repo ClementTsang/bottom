@@ -1,5 +1,5 @@
 /// This file is meant to house (OS specific) implementations on how to kill processes.
-use crate::utils::error::{BottomError, Result};
+use crate::utils::error::BottomError;
 use std::process::Command;
 
 // Copied from SO: https://stackoverflow.com/a/55231715
@@ -32,7 +32,7 @@ impl Process {
 }
 
 /// Kills a process, given a PID.
-pub fn kill_process_given_pid(pid: u32) -> Result<()> {
+pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
 	if cfg!(target_os = "linux") {
 		// Linux
 		Command::new("kill").arg(pid.to_string()).output()?;
