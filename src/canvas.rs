@@ -229,15 +229,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
 
 			// Network graph
-			draw_network_graph(
-				&mut f,
-				&app_state,
-				if cfg!(not(target_os = "windows")) {
-					network_chunk[0]
-				} else {
-					bottom_chunks[0]
-				},
-			);
+			draw_network_graph(&mut f, &app_state, network_chunk[0]);
 
 			draw_network_labels(&mut f, app_state, network_chunk[1]);
 
@@ -471,26 +463,42 @@ fn draw_network_labels<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut ap
 	let total_tx_display: String = app_state.canvas_data.total_tx_display.clone();
 
 	// Gross but I need it to work...
-	let total_network = vec![vec![rx_display, tx_display, total_rx_display, total_tx_display]];
+	let total_network = if cfg!(not(target_os = "windows")) {
+		vec![vec![rx_display, tx_display, total_rx_display, total_tx_display]]
+	} else {
+		vec![vec![rx_display, tx_display]]
+	};
 	let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
 
-	Table::new(["RX", "TX", "Total RX", "Total TX"].iter(), mapped_network)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.header_style(Style::default().fg(Color::LightBlue))
-		.widths(&[
+	Table::new(
+		if cfg!(not(target_os = "windows")) {
+			vec!["RX", "TX", "Total RX", "Total TX"]
+		} else {
+			vec!["RX", "TX"]
+		}
+		.iter(),
+		mapped_network,
+	)
+	.block(
+		Block::default()
+			.borders(Borders::ALL)
+			.border_style(match app_state.current_application_position {
+				app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				_ => *CANVAS_BORDER_STYLE,
+			}),
+	)
+	.header_style(Style::default().fg(Color::LightBlue))
+	.widths(&if cfg!(not(target_os = "windows")) {
+		vec![
 			Constraint::Percentage(25),
 			Constraint::Percentage(25),
 			Constraint::Percentage(25),
 			Constraint::Percentage(25),
-		])
-		.render(f, draw_loc);
+		]
+	} else {
+		vec![Constraint::Percentage(50), Constraint::Percentage(50)]
+	})
+	.render(f, draw_loc);
 }
 
 fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
