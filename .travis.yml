@@ -11,6 +11,7 @@ jobs:
   allow_failures:
     - rust: nightly
     - env: TARGET=x86_64-pc-windows-gnu # Seems to cause problems.  TODO: Add test for it, but keep allow fail.
+  fast_finish: true
 
 before_install:
   - export RUST_BACKTRACE=1
@@ -24,7 +25,7 @@ before_install:
     fi
 before_script: rustup target add $TARGET
 script:
-  - cargo build --release --target $TARGET
+  - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
 
 # Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work
