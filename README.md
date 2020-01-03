@@ -10,11 +10,12 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 ### Linux
 
-You can install by cloning and using `cargo build --release`, or download the pre-compiled binary in Releases.
+You can install by cloning and using `cargo build --release`, or use `cargo install bottom`.
 
 ### Windows
 
-You can currently install by cloning and building yourself using `cargo build --release`. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+You can currently install by cloning and building yourself using `cargo build --release`, or use `cargo install bottom`
+. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
 
 ### macOS
 
