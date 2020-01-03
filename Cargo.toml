@@ -4,10 +4,10 @@ version = "0.1.0"
 authors = ["Clement Tsang <clementjhtsang@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
-keywords = ["cli", "monitoring-tool", "process", "system", "top", "temperature", "cpu", "memory", "bottom", "graphical"]
+keywords = ["cli", "monitoring-tool", "process", "system", "top", "temperature", "cpu", "memory", "network", "bottom", "graphical"]
 license = "MIT"
 categories = ["command-line-utilities"]
-description = "A graphical top clone."
+description = "A graphical top clone, written in Rust. Inspired by both gtop and gotop."
 readme = "README.md"
 
 [[bin]]

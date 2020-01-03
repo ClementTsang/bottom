@@ -37,8 +37,6 @@ use constants::TICK_RATE_IN_MILLISECONDS;
 use data_conversion::*;
 use utils::error::{self, BottomError};
 
-// End imports
-
 enum Event<I, J> {
 	KeyInput(I),
 	MouseInput(J),
