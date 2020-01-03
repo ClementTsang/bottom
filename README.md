@@ -20,7 +20,7 @@ You can currently install by cloning and building yourself using `cargo build --
 
 macOS support will hopefully come soon<sup>TM</sup>.
 
-## Compatibility
+## Support
 
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
@@ -68,13 +68,19 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 - `Ctrl+Up/k`, `Ctrl+Down/j`, `Ctrl+Left/h`, `Ctrl+Right/l` to navigate between panels.
 
-- `Up` and `Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
-
 - `Esc` to close a dialog window.
 
 - `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
 
-#### Processes, temperature, and disk panels
+#### Scrollable Tables
+
+- `Up` and `Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
+
+- `gg` to jump to the first entry of the current table.
+
+- `G` (`Shift+g`) to jump to the last entry of the current table.
+
+#### Processes
 
 - `dd` to kill the selected process
 
@@ -86,13 +92,9 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 - `n` to sort by process name. Sorts in ascending order by default. Press again to reverse sorting order.
 
-- `gg` to jump to the first entry of the current table.
-
-- `G` (`Shift+g`) to jump to the last entry of the current table.
-
 ### Mouse actions
 
-- Scrolling with the mouse will go through lists/tables right now, similar to using the up/down arrow keys.
+- Scrolling with the mouse will scroll through the currently selected list, similar to using the up/down arrow keys.
 
 ## Thanks, kudos, and all the like
 
