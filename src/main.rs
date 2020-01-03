@@ -8,7 +8,7 @@ extern crate failure;
 extern crate lazy_static;
 
 use crossterm::{
-	event::{self, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
+	event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
 	execute,
 	terminal::LeaveAlternateScreen,
 	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
@@ -124,10 +124,9 @@ fn main() -> error::Result<()> {
 	let mut stdout = stdout();
 	enable_raw_mode()?;
 	execute!(stdout, EnterAlternateScreen)?;
+	execute!(stdout, EnableMouseCapture)?;
 
-	let backend = CrosstermBackend::new(stdout);
-
-	let mut terminal = Terminal::new(backend)?;
+	let mut terminal = Terminal::new(CrosstermBackend::new(stdout))?;
 	terminal.hide_cursor()?;
 	terminal.clear()?;
 
@@ -304,16 +303,21 @@ fn main() -> error::Result<()> {
 		}
 		// Draw!
 		if let Err(err) = canvas::draw_data(&mut terminal, &mut app) {
-			disable_raw_mode()?;
-			execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-			terminal.show_cursor()?;
+			cleanup(&mut terminal)?;
 			error!("{}", err);
 			return Err(err);
 		}
 	}
 
+	cleanup(&mut terminal)?;
+	Ok(())
+}
+
+fn cleanup(terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>) -> error::Result<()> {
 	disable_raw_mode()?;
+	execute!(terminal.backend_mut(), DisableMouseCapture)?;
 	execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 	terminal.show_cursor()?;
+
 	Ok(())
 }
