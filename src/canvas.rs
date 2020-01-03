@@ -331,14 +331,19 @@ fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 	let cpu_rows = stringified_cpu_data.iter().enumerate().map(|(itx, cpu_string_row)| {
 		Row::StyledData(
 			cpu_string_row.iter(),
-			if cpu_row_counter == app_state.currently_selected_cpu_table_position - start_position {
-				cpu_row_counter = -1;
-				Style::default().fg(Color::Black).bg(Color::Cyan)
-			} else {
-				if cpu_row_counter >= 0 {
-					cpu_row_counter += 1;
+			match app_state.current_application_position {
+				app::ApplicationPosition::Cpu => {
+					if cpu_row_counter == app_state.currently_selected_cpu_table_position - start_position {
+						cpu_row_counter = -1;
+						Style::default().fg(Color::Black).bg(Color::Cyan)
+					} else {
+						if cpu_row_counter >= 0 {
+							cpu_row_counter += 1;
+						}
+						Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
+					}
 				}
-				Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
+				_ => Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
 			},
 		)
 	});
@@ -518,19 +523,22 @@ fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 	let temperature_rows = sliced_vec.iter().map(|temp_row| {
 		Row::StyledData(
 			temp_row.iter(),
-			if temp_row_counter == app_state.currently_selected_temperature_position - start_position {
-				temp_row_counter = -1;
-				Style::default().fg(Color::Black).bg(Color::Cyan)
-			} else {
-				if temp_row_counter >= 0 {
-					temp_row_counter += 1;
+			match app_state.current_application_position {
+				app::ApplicationPosition::Temp => {
+					if temp_row_counter == app_state.currently_selected_temperature_position - start_position {
+						temp_row_counter = -1;
+						Style::default().fg(Color::Black).bg(Color::Cyan)
+					} else {
+						if temp_row_counter >= 0 {
+							temp_row_counter += 1;
+						}
+						Style::default().fg(TEXT_COLOUR)
+					}
 				}
-				Style::default().fg(TEXT_COLOUR)
+				_ => Style::default().fg(TEXT_COLOUR),
 			},
 		)
 	});
-
-	let width = f64::from(draw_loc.width);
 	Table::new(["Sensor", "Temp"].iter(), temperature_rows)
 		.block(
 			Block::default()
@@ -542,7 +550,7 @@ fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 				}),
 		)
 		.header_style(Style::default().fg(Color::LightBlue))
-		.widths(&[Constraint::Length((width * 0.45) as u16), Constraint::Length((width * 0.4) as u16)])
+		.widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
 		.render(f, draw_loc);
 }
 
@@ -562,20 +570,24 @@ fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 	let disk_rows = sliced_vec.iter().map(|disk| {
 		Row::StyledData(
 			disk.iter(),
-			if disk_counter == app_state.currently_selected_disk_position - start_position {
-				disk_counter = -1;
-				Style::default().fg(Color::Black).bg(Color::Cyan)
-			} else {
-				if disk_counter >= 0 {
-					disk_counter += 1;
+			match app_state.current_application_position {
+				app::ApplicationPosition::Disk => {
+					if disk_counter == app_state.currently_selected_disk_position - start_position {
+						disk_counter = -1;
+						Style::default().fg(Color::Black).bg(Color::Cyan)
+					} else {
+						if disk_counter >= 0 {
+							disk_counter += 1;
+						}
+						Style::default().fg(TEXT_COLOUR)
+					}
 				}
-				Style::default().fg(TEXT_COLOUR)
+				_ => Style::default().fg(TEXT_COLOUR),
 			},
 		)
 	});
 
 	// TODO: We may have to dynamically remove some of these table elements based on size...
-	let width = f64::from(draw_loc.width);
 	Table::new(["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(), disk_rows)
 		.block(
 			Block::default()
@@ -588,20 +600,20 @@ fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		)
 		.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
 		.widths(&[
-			Constraint::Length((width * 0.18).floor() as u16),
-			Constraint::Length((width * 0.14).floor() as u16),
-			Constraint::Length((width * 0.11).floor() as u16),
-			Constraint::Length((width * 0.11).floor() as u16),
-			Constraint::Length((width * 0.11).floor() as u16),
-			Constraint::Length((width * 0.11).floor() as u16),
-			Constraint::Length((width * 0.11).floor() as u16),
+			Constraint::Percentage(18),
+			Constraint::Percentage(14),
+			Constraint::Percentage(11),
+			Constraint::Percentage(11),
+			Constraint::Percentage(11),
+			Constraint::Percentage(11),
+			Constraint::Percentage(11),
+			Constraint::Percentage(11),
 		])
 		.render(f, draw_loc);
 }
 
 fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
 	let process_data: &[ConvertedProcessData] = &(app_state.canvas_data.process_data);
-	let width = f64::from(draw_loc.width);
 
 	// Admittedly this is kinda a hack... but we need to:
 	// * Scroll
@@ -629,14 +641,19 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 		];
 		Row::StyledData(
 			stringified_process_vec.into_iter(),
-			if process_counter == app_state.currently_selected_process_position - start_position {
-				process_counter = -1;
-				Style::default().fg(Color::Black).bg(Color::Cyan)
-			} else {
-				if process_counter >= 0 {
-					process_counter += 1;
+			match app_state.current_application_position {
+				app::ApplicationPosition::Process => {
+					if process_counter == app_state.currently_selected_process_position - start_position {
+						process_counter = -1;
+						Style::default().fg(Color::Black).bg(Color::Cyan)
+					} else {
+						if process_counter >= 0 {
+							process_counter += 1;
+						}
+						Style::default().fg(TEXT_COLOUR)
+					}
 				}
-				Style::default().fg(TEXT_COLOUR)
+				_ => Style::default().fg(TEXT_COLOUR),
 			},
 		)
 	});
@@ -673,10 +690,10 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 			)
 			.header_style(Style::default().fg(Color::LightBlue))
 			.widths(&[
-				Constraint::Length((width * 0.2) as u16),
-				Constraint::Length((width * 0.35) as u16),
-				Constraint::Length((width * 0.2) as u16),
-				Constraint::Length((width * 0.2) as u16),
+				Constraint::Percentage(20),
+				Constraint::Percentage(35),
+				Constraint::Percentage(20),
+				Constraint::Percentage(20),
 			])
 			.render(f, draw_loc);
 	}
