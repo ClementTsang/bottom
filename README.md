@@ -20,9 +20,15 @@ You can currently install by cloning and building yourself using `cargo build --
 
 macOS support will hopefully come soon<sup>TM</sup>.
 
-## Usage
+The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
-Note that all options and keybindings on GitHub may reflect the current development build, and not that of the current releases. For now, refer to the [crate](https://crates.io/crates/bottom) README for documentation as of time of release.
+| OS/Widget | CPU      | Memory   | Disks    | Temperature           | Processes | Networks                                      |
+| --------- | -------- | -------- | -------- | --------------------- | --------- | --------------------------------------------- |
+| Linux     | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
+| Windows   | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
+| macOS     | Untested | Untested | Untested | Untested              | Untested  | Untested                                      |
+
+## Usage
 
 ### Command line options
 
@@ -84,23 +90,7 @@ Note that all options and keybindings on GitHub may reflect the current developm
 
 ### Mouse actions
 
-[* Scrolling either scrolls through the list if the panel is a table (Temperature, Disks, Processes), or zooms in and out if it is a chart.]: <>
-
-- Scrolling currently only scrolls through the list if the panel is a table (Temperature, Disks, Processes).
-
-## Widget Functionality
-
-### CPU
-
-### Memory
-
-### Sensors
-
-### Disk
-
-### Network
-
-### Processes
+- Scrolling with the mouse will go through lists/tables right now, similar to using the up/down arrow keys.
 
 ## Thanks, kudos, and all the like
 
