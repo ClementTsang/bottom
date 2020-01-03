@@ -34,16 +34,15 @@ impl Process {
 /// Kills a process, given a PID.
 pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
 	if cfg!(target_os = "linux") {
-		// Linux
 		Command::new("kill").arg(pid.to_string()).output()?;
 	} else if cfg!(target_os = "windows") {
 		#[cfg(target_os = "windows")]
-		let process = Process::open(pid as DWORD)?;
-		#[cfg(target_os = "windows")]
-		process.kill()?;
+		{
+			let process = Process::open(pid as DWORD)?;
+			process.kill()?;
+		}
 	} else if cfg!(target_os = "macos") {
 		// TODO: macOS
-		// See how sysinfo does it... https://docs.rs/sysinfo/0.9.5/sysinfo/trait.ProcessExt.html
 		return Err(BottomError::GenericError {
 			message: "Sorry, macOS support is not implemented yet!".to_string(),
 		});

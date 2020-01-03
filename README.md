@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom) [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 
-A top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop)
+A graphical top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop)
 
 ![Quick demo recording](assets/recording_1.gif)
 
@@ -54,7 +54,7 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 - `-l`, `--left_legend` will move external table legends to the left side rather than the right side. Right side is default.
 
-- `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage. Only affects Linux.
+- `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage. Only affects Linux for now.
 
 ### Keybindings
 
@@ -96,7 +96,7 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 ## Thanks, kudos, and all the like
 
-- As mentioned, this project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop) .
+- This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop) .
 
 - This application was written with the following libraries:
   - [chrono](https://github.com/chronotope/chrono)
