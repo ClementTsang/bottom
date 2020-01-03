@@ -20,6 +20,8 @@ You can currently install by cloning and building yourself using `cargo build --
 
 macOS support will hopefully come soon<sup>TM</sup>.
 
+## Compatibility
+
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
 | OS/Widget | CPU      | Memory   | Disks    | Temperature           | Processes | Networks                                      |
@@ -110,3 +112,4 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
   - [tokio](https://github.com/tokio-rs/tokio)
   - [tui-rs](https://github.com/fdehau/tui-rs)
   - [winapi](https://github.com/retep998/winapi-rs)
+  - [lazy_static](https://github.com/rust-lang-nursery/lazy-static.rs)
