@@ -279,7 +279,6 @@ fn main() -> error::Result<()> {
 						);
 
 						// Convert all data into tui components
-						// TODO: Note that we might want to move this the canvas' side... consider.
 						let network_data = update_network_data_points(&app.data);
 						app.canvas_data.network_data_rx = network_data.rx;
 						app.canvas_data.network_data_tx = network_data.tx;
