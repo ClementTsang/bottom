@@ -23,6 +23,32 @@ pub struct ConvertedProcessData {
 	pub mem_usage: String,
 }
 
+#[derive(Clone, Default, Debug)]
+pub struct ConvertedCpuData {
+	pub cpu_name: String,
+	pub cpu_data: Vec<CpuPoint>,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct CpuPoint {
+	pub time: f64,
+	pub usage: f64,
+}
+
+impl From<CpuPoint> for (f64, f64) {
+	fn from(c: CpuPoint) -> (f64, f64) {
+		let CpuPoint { time, usage } = c;
+		(time, usage)
+	}
+}
+
+impl From<&CpuPoint> for (f64, f64) {
+	fn from(c: &CpuPoint) -> (f64, f64) {
+		let CpuPoint { time, usage } = c;
+		(*time, *usage)
+	}
+}
+
 pub fn update_temp_row(app_data: &data_collection::Data, temp_type: &data_collection::temperature::TemperatureType) -> Vec<Vec<String>> {
 	let mut sensor_vector: Vec<Vec<String>> = Vec::new();
 
@@ -121,33 +147,31 @@ pub fn update_process_row(app_data: &data_collection::Data) -> Vec<ConvertedProc
 	process_vector
 }
 
-// TODO: You should really make this a struct...
-pub fn update_cpu_data_points(show_avg_cpu: bool, app_data: &data_collection::Data) -> Vec<(String, Vec<(f64, f64)>)> {
-	let mut cpu_data_vector: Vec<(String, Vec<(f64, f64)>)> = Vec::new();
-	let mut cpu_collection: Vec<Vec<(f64, f64)>> = Vec::new();
+pub fn update_cpu_data_points(show_avg_cpu: bool, app_data: &data_collection::Data) -> Vec<ConvertedCpuData> {
+	let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
+	let mut cpu_collection: Vec<Vec<CpuPoint>> = Vec::new();
 
 	if !app_data.list_of_cpu_packages.is_empty() {
 		// I'm sorry for the following if statement but I couldn't be bothered here...
 		for cpu_num in (if show_avg_cpu { 0 } else { 1 })..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len() {
-			let mut this_cpu_data: Vec<(f64, f64)> = Vec::new();
+			let mut this_cpu_data: Vec<CpuPoint> = Vec::new();
 
 			for data in &app_data.list_of_cpu_packages {
 				let current_time = std::time::Instant::now();
 				let current_cpu_usage = data.cpu_vec[cpu_num].cpu_usage;
 
-				let new_entry = (
-					((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
-					current_cpu_usage,
-				);
+				let new_entry = CpuPoint {
+					time: ((TIME_STARTS_FROM as f64 - current_time.duration_since(data.instant).as_millis() as f64) * 10_f64).floor(),
+					usage: current_cpu_usage,
+				};
 
 				// Now, inject our joining points...
-				if !this_cpu_data.is_empty() {
-					let previous_element_data = *(this_cpu_data.last().unwrap());
+				if let Some(previous_element_data) = this_cpu_data.last().cloned() {
 					for idx in 0..50 {
-						this_cpu_data.push((
-							previous_element_data.0 + ((new_entry.0 - previous_element_data.0) / 50.0 * f64::from(idx)),
-							previous_element_data.1 + ((new_entry.1 - previous_element_data.1) / 50.0 * f64::from(idx)),
-						));
+						this_cpu_data.push(CpuPoint {
+							time: previous_element_data.time + ((new_entry.time - previous_element_data.time) / 50.0 * f64::from(idx)),
+							usage: previous_element_data.usage + ((new_entry.usage - previous_element_data.usage) / 50.0 * f64::from(idx)),
+						});
 					}
 				}
 
@@ -170,8 +194,8 @@ pub fn update_cpu_data_points(show_avg_cpu: bool, app_data: &data_collection::Da
 				// 	.to_uppercase() + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
 				// 	data.clone(),
 				// ))
-				cpu_data_vector.push((
-					format!(
+				cpu_data_vector.push(ConvertedCpuData {
+					cpu_name: format!(
 						"{} ",
 						if show_avg_cpu && i == 0 {
 							"AVG"
@@ -180,8 +204,8 @@ pub fn update_cpu_data_points(show_avg_cpu: bool, app_data: &data_collection::Da
 						}
 					)
 					.to_uppercase(),
-					data.clone(),
-				));
+					cpu_data: data.clone(),
+				});
 			}
 		}
 	}

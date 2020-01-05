@@ -1,4 +1,8 @@
-use crate::{app, constants, data_conversion::ConvertedProcessData, utils::error, utils::gen_util::*};
+use crate::{
+	app, constants,
+	data_conversion::{ConvertedCpuData, ConvertedProcessData},
+	utils::{error, gen_util::*},
+};
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -50,7 +54,7 @@ pub struct CanvasData {
 	pub memory_labels: Vec<(u64, u64)>,
 	pub mem_data: Vec<(f64, f64)>,
 	pub swap_data: Vec<(f64, f64)>,
-	pub cpu_data: Vec<(String, Vec<(f64, f64)>)>,
+	pub cpu_data: Vec<ConvertedCpuData>,
 }
 
 /// Generates random colours.
@@ -248,7 +252,7 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 }
 
 fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
-	let cpu_data: &[(String, Vec<(f64, f64)>)] = &app_state.canvas_data.cpu_data;
+	let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
 	// CPU usage graph
 	let x_axis: Axis<String> = Axis::default()
@@ -260,6 +264,7 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 		.labels(&["0%", "100%"]);
 
 	let mut dataset_vector: Vec<Dataset> = Vec::new();
+	let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
 
 	for (i, cpu) in cpu_data.iter().enumerate() {
 		let mut avg_cpu_exist_offset = 0;
@@ -272,21 +277,27 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 			}
 		}
 
-		dataset_vector.push(
-			Dataset::default()
-				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-				.style(Style::default().fg(COLOUR_LIST[(i - avg_cpu_exist_offset) % COLOUR_LIST.len()]))
-				.data(&(cpu.1)),
-		);
+		cpu_entries_vec.push((
+			Style::default().fg(COLOUR_LIST[(i - avg_cpu_exist_offset) % COLOUR_LIST.len()]),
+			cpu.cpu_data.iter().map(<(f64, f64)>::from).collect::<Vec<_>>(),
+		));
 	}
 
-	if !cpu_data.is_empty() && app_state.show_average_cpu {
-		// Unwrap should be safe here, this assumes that the cpu_data vector is populated...
+	if app_state.show_average_cpu {
+		if let Some(avg_cpu_entry) = cpu_data.first() {
+			cpu_entries_vec.push((
+				Style::default().fg(COLOUR_LIST[(cpu_data.len() - 1) % COLOUR_LIST.len()]),
+				avg_cpu_entry.cpu_data.iter().map(<(f64, f64)>::from).collect::<Vec<_>>(),
+			));
+		}
+	}
+
+	for cpu_entry in &cpu_entries_vec {
 		dataset_vector.push(
 			Dataset::default()
 				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
-				.style(Style::default().fg(COLOUR_LIST[(cpu_data.len() - 1) % COLOUR_LIST.len()]))
-				.data(&(cpu_data.first().unwrap().1)),
+				.style(cpu_entry.0)
+				.data(&(cpu_entry.1)),
 		);
 	}
 
@@ -307,7 +318,7 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 }
 
 fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
-	let cpu_data: &[(String, Vec<(f64, f64)>)] = &(app_state.canvas_data.cpu_data);
+	let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
 
 	let num_rows = i64::from(draw_loc.height) - 4;
 	let start_position = get_start_position(
@@ -321,8 +332,8 @@ fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 	let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
 
 	for cpu in sliced_cpu_data {
-		if let Some(cpu_data) = cpu.1.last() {
-			stringified_cpu_data.push(vec![cpu.0.clone(), format!("{:.0}%", cpu_data.1.round())]);
+		if let Some(cpu_data) = cpu.cpu_data.last() {
+			stringified_cpu_data.push(vec![cpu.cpu_name.clone(), format!("{:.0}%", cpu_data.usage.round())]);
 		}
 	}
 
