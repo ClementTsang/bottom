@@ -10,11 +10,11 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 ### Linux
 
-You can install by cloning and using `cargo build --release`, or use `cargo install bottom`.
+You can install by cloning and using `cargo build --release`, or use `cargo install bottom`. Other installation methods based on distros are as follows:
 
 #### Arch Linux
 
-You can get it from the AUR.
+You can get it from the AUR by installing `bottom` from the AUR.
 
 ### Windows
 
@@ -81,9 +81,9 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 - `Up` and `Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
 
-- `gg` to jump to the first entry of the current table.
+- `gg` or `Home` to jump to the first entry of the current table.
 
-- `G` (`Shift+g`) to jump to the last entry of the current table.
+- `G` (`Shift+g`) or `End` to jump to the last entry of the current table.
 
 #### Processes
 
