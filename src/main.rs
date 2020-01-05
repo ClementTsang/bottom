@@ -66,7 +66,7 @@ fn main() -> error::Result<()> {
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
-		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
+		(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 	)
 	.get_matches();
 
@@ -202,7 +202,8 @@ fn main() -> error::Result<()> {
 						// If only a code, and no modifiers, don't bother...
 						match event.code {
 							KeyCode::Char('q') => break,
-							KeyCode::Char('G') => app.skip_to_last(),
+							KeyCode::Char('G') | KeyCode::End => app.skip_to_last(),
+							KeyCode::Home => app.skip_to_first(),
 							KeyCode::Char('h') => app.on_left(),
 							KeyCode::Char('l') => app.on_right(),
 							KeyCode::Char('k') => app.on_up(),
@@ -212,6 +213,7 @@ fn main() -> error::Result<()> {
 							KeyCode::Char(uncaught_char) => app.on_char_key(uncaught_char),
 							KeyCode::Esc => app.reset(),
 							KeyCode::Enter => app.on_enter(),
+							KeyCode::Tab => {}
 							_ => {}
 						}
 					} else {
