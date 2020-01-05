@@ -12,6 +12,10 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 You can install by cloning and using `cargo build --release`, or use `cargo install bottom`.
 
+#### Arch Linux
+
+You can get it from the AUR.
+
 ### Windows
 
 You can currently install by cloning and building yourself using `cargo build --release`, or use `cargo install bottom`
