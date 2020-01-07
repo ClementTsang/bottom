@@ -47,9 +47,8 @@ pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
 			message: "Sorry, macOS support is not implemented yet!".to_string(),
 		});
 	} else {
-		// TODO: Others?
 		return Err(BottomError::GenericError {
-			message: "Sorry, support operating systems outside the main three is not implemented yet!".to_string(),
+			message: "Sorry, support operating systems outside the main three are not implemented yet!".to_string(),
 		});
 	}
 
