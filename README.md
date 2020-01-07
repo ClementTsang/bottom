@@ -10,11 +10,7 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 ### Linux
 
-You can install by cloning and using `cargo build --release`, or use `cargo install bottom`. Other installation methods based on distros are as follows:
-
-#### Arch Linux
-
-You can get it from the AUR by installing `bottom` from the AUR.
+You can install by cloning and using `cargo build --release`, or use `cargo install bottom`.
 
 ### Windows
 
