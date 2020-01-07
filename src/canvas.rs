@@ -373,6 +373,10 @@ fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		.render(f, draw_loc);
 }
 
+fn _draw_memory_table<B: backend::Backend>(_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect) {
+	todo!("Not implemented yet..."); // TODO: For basic mode
+}
+
 fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
 	let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
 	let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
@@ -598,7 +602,6 @@ fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		)
 	});
 
-	// TODO: We may have to dynamically remove some of these table elements based on size...
 	Table::new(["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(), disk_rows)
 		.block(
 			Block::default()

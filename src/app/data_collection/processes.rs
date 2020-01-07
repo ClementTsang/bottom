@@ -34,10 +34,20 @@ fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error:
 	path.push("stat");
 
 	let stat_results = std::fs::read_to_string(path)?;
-	let first_line = stat_results.split('\n').collect::<Vec<&str>>()[0];
+	let first_line: &str;
 
-	// TODO: Consider grabbing by number of threads instead, and summing the total?
-	// ie: 4 threads, so: (prev - cur) / cpu_0 + ... + (prev - cur) / cpu_n instead?  This might be how top does it?
+	let split_results = stat_results.split('\n').collect::<Vec<&str>>();
+	if split_results.is_empty() {
+		return Err(error::BottomError::InvalidIO {
+			message: format!(
+				"Unable to properly split the stat results; saw {} values, expected at least 1 value.",
+				split_results.len()
+			),
+		});
+	} else {
+		first_line = split_results[0];
+	}
+
 	let val = first_line.split_whitespace().collect::<Vec<&str>>();
 
 	// SC in case that the parsing will fail due to length:
