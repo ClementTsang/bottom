@@ -15,7 +15,8 @@ pub struct NetworkData {
 }
 
 pub async fn get_network_data(
-	sys: &System, prev_net_rx_bytes: &mut u64, prev_net_tx_bytes: &mut u64, prev_net_access_time: &mut std::time::Instant,
+	sys: &System, prev_net_rx_bytes: &mut u64, prev_net_tx_bytes: &mut u64,
+	prev_net_access_time: &mut std::time::Instant,
 ) -> crate::utils::error::Result<NetworkData> {
 	if cfg!(target_os = "windows") {
 		let network_data = sys.get_network();

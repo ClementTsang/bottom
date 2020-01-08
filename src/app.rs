@@ -60,7 +60,8 @@ pub struct App {
 
 impl App {
 	pub fn new(
-		show_average_cpu: bool, temperature_type: temperature::TemperatureType, update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
+		show_average_cpu: bool, temperature_type: temperature::TemperatureType,
+		update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
 		use_current_cpu_total: bool,
 	) -> App {
 		App {
@@ -151,7 +152,10 @@ impl App {
 		// Forbid any char key presses when showing a dialog box...
 		if !self.is_in_dialog() {
 			let current_key_press_inst = Instant::now();
-			if current_key_press_inst.duration_since(self.last_key_press).as_millis() > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS {
+			if current_key_press_inst
+				.duration_since(self.last_key_press)
+				.as_millis() > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS
+			{
 				self.reset_multi_tap_keys();
 			}
 			self.last_key_press = current_key_press_inst;
@@ -163,7 +167,8 @@ impl App {
 							self.awaiting_second_char = false;
 							self.second_char = ' ';
 
-							let current_process = &self.canvas_data.process_data[self.currently_selected_process_position as usize];
+							let current_process = &self.canvas_data.process_data
+								[self.currently_selected_process_position as usize];
 							self.to_delete_process = Some(current_process.clone());
 							self.show_dd = true;
 							self.reset_multi_tap_keys();
@@ -188,7 +193,9 @@ impl App {
 				}
 				'c' => {
 					match self.process_sorting_type {
-						processes::ProcessSorting::CPU => self.process_sorting_reverse = !self.process_sorting_reverse,
+						processes::ProcessSorting::CPU => {
+							self.process_sorting_reverse = !self.process_sorting_reverse
+						}
 						_ => {
 							self.process_sorting_type = processes::ProcessSorting::CPU;
 							self.process_sorting_reverse = true;
@@ -199,7 +206,9 @@ impl App {
 				}
 				'm' => {
 					match self.process_sorting_type {
-						processes::ProcessSorting::MEM => self.process_sorting_reverse = !self.process_sorting_reverse,
+						processes::ProcessSorting::MEM => {
+							self.process_sorting_reverse = !self.process_sorting_reverse
+						}
 						_ => {
 							self.process_sorting_type = processes::ProcessSorting::MEM;
 							self.process_sorting_reverse = true;
@@ -212,7 +221,9 @@ impl App {
 					// Disable if grouping
 					if !self.enable_grouping {
 						match self.process_sorting_type {
-							processes::ProcessSorting::PID => self.process_sorting_reverse = !self.process_sorting_reverse,
+							processes::ProcessSorting::PID => {
+								self.process_sorting_reverse = !self.process_sorting_reverse
+							}
 							_ => {
 								self.process_sorting_type = processes::ProcessSorting::PID;
 								self.process_sorting_reverse = false;
@@ -224,7 +235,9 @@ impl App {
 				}
 				'n' => {
 					match self.process_sorting_type {
-						processes::ProcessSorting::NAME => self.process_sorting_reverse = !self.process_sorting_reverse,
+						processes::ProcessSorting::NAME => {
+							self.process_sorting_reverse = !self.process_sorting_reverse
+						}
 						_ => {
 							self.process_sorting_type = processes::ProcessSorting::NAME;
 							self.process_sorting_reverse = false;
@@ -339,15 +352,25 @@ impl App {
 	pub fn skip_to_last(&mut self) {
 		if !self.is_in_dialog() {
 			match self.current_application_position {
-				ApplicationPosition::Process => self.currently_selected_process_position = self.data.list_of_processes.len() as i64 - 1,
-				ApplicationPosition::Temp => self.currently_selected_temperature_position = self.data.list_of_temperature_sensor.len() as i64 - 1,
-				ApplicationPosition::Disk => self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1,
+				ApplicationPosition::Process => {
+					self.currently_selected_process_position =
+						self.data.list_of_processes.len() as i64 - 1
+				}
+				ApplicationPosition::Temp => {
+					self.currently_selected_temperature_position =
+						self.data.list_of_temperature_sensor.len() as i64 - 1
+				}
+				ApplicationPosition::Disk => {
+					self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1
+				}
 				ApplicationPosition::Cpu => {
 					if let Some(cpu_package) = self.data.list_of_cpu_packages.last() {
 						if self.show_average_cpu {
-							self.currently_selected_cpu_table_position = cpu_package.cpu_vec.len() as i64;
+							self.currently_selected_cpu_table_position =
+								cpu_package.cpu_vec.len() as i64;
 						} else {
-							self.currently_selected_cpu_table_position = cpu_package.cpu_vec.len() as i64 - 1;
+							self.currently_selected_cpu_table_position =
+								cpu_package.cpu_vec.len() as i64 - 1;
 						}
 					}
 				}
@@ -403,7 +426,8 @@ impl App {
 
 	fn change_process_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_process_position + num_to_change_by >= 0
-			&& self.currently_selected_process_position + num_to_change_by < self.data.list_of_processes.len() as i64
+			&& self.currently_selected_process_position + num_to_change_by
+				< self.data.list_of_processes.len() as i64
 		{
 			self.currently_selected_process_position += num_to_change_by;
 		}
@@ -411,7 +435,8 @@ impl App {
 
 	fn change_temp_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_temperature_position + num_to_change_by >= 0
-			&& self.currently_selected_temperature_position + num_to_change_by < self.data.list_of_temperature_sensor.len() as i64
+			&& self.currently_selected_temperature_position + num_to_change_by
+				< self.data.list_of_temperature_sensor.len() as i64
 		{
 			self.currently_selected_temperature_position += num_to_change_by;
 		}
@@ -419,7 +444,8 @@ impl App {
 
 	fn change_disk_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_disk_position + num_to_change_by >= 0
-			&& self.currently_selected_disk_position + num_to_change_by < self.data.list_of_disks.len() as i64
+			&& self.currently_selected_disk_position + num_to_change_by
+				< self.data.list_of_disks.len() as i64
 		{
 			self.currently_selected_disk_position += num_to_change_by;
 		}

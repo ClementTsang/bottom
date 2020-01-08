@@ -75,7 +75,12 @@ pub async fn get_disk_usage_list() -> crate::utils::error::Result<Vec<DiskData>>
 				free_space: usage.free().get::<information::megabyte>(),
 				used_space: usage.used().get::<information::megabyte>(),
 				total_space: usage.total().get::<information::megabyte>(),
-				mount_point: Box::from(partition.mount_point().to_str().unwrap_or("Name Unavailable")),
+				mount_point: Box::from(
+					partition
+						.mount_point()
+						.to_str()
+						.unwrap_or("Name Unavailable"),
+				),
 				name: Box::from(
 					partition
 						.device()
