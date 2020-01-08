@@ -21,6 +21,7 @@ pub struct ConvertedProcessData {
 	pub name: String,
 	pub cpu_usage: String,
 	pub mem_usage: String,
+	pub group_count: u32,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -141,6 +142,7 @@ pub fn update_process_row(app_data: &data_collection::Data) -> Vec<ConvertedProc
 					0_f64
 				}
 			),
+			group_count: if let Some(pid_vec) = &process.pid_vec { pid_vec.len() as u32 } else { 0 },
 		});
 	}
 

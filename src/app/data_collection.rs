@@ -33,7 +33,7 @@ pub struct Data {
 	pub list_of_temperature_sensor: Vec<temperature::TempData>,
 	pub network: Vec<network::NetworkData>,
 	pub list_of_processes: Vec<processes::ProcessData>, // Only need to keep a list of processes...
-	pub list_of_disks: Vec<disks::DiskData>,            // Only need to keep a list of disks and their data
+	pub list_of_disks: Vec<disks::DiskData>, // Only need to keep a list of disks and their data
 }
 
 pub struct DataState {
@@ -105,7 +105,10 @@ impl DataState {
 			.await,
 			&mut self.data.network,
 		);
-		push_if_valid(&cpu::get_cpu_data_list(&self.sys), &mut self.data.list_of_cpu_packages);
+		push_if_valid(
+			&cpu::get_cpu_data_list(&self.sys),
+			&mut self.data.list_of_cpu_packages,
+		);
 
 		push_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
 		push_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
@@ -120,8 +123,14 @@ impl DataState {
 			&mut self.data.list_of_processes,
 		);
 
-		set_if_valid(&disks::get_disk_usage_list().await, &mut self.data.list_of_disks);
-		push_if_valid(&disks::get_io_usage_list(false).await, &mut self.data.list_of_io);
+		set_if_valid(
+			&disks::get_disk_usage_list().await,
+			&mut self.data.list_of_disks,
+		);
+		push_if_valid(
+			&disks::get_io_usage_list(false).await,
+			&mut self.data.list_of_io,
+		);
 		set_if_valid(
 			&temperature::get_temperature_data(&self.sys, &self.temperature_type).await,
 			&mut self.data.list_of_temperature_sensor,
@@ -139,7 +148,9 @@ impl DataState {
 			let stale_list: Vec<_> = self
 				.prev_pid_stats
 				.iter()
-				.filter(|&(_, &v)| current_instant.duration_since(v.1).as_secs() > self.stale_max_seconds)
+				.filter(|&(_, &v)| {
+					current_instant.duration_since(v.1).as_secs() > self.stale_max_seconds
+				})
 				.map(|(k, _)| k.clone())
 				.collect();
 			for stale in stale_list {
@@ -151,7 +162,10 @@ impl DataState {
 				.list_of_cpu_packages
 				.iter()
 				.cloned()
-				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.filter(|entry| {
+					current_instant.duration_since(entry.instant).as_secs()
+						<= self.stale_max_seconds
+				})
 				.collect::<Vec<_>>();
 
 			self.data.memory = self
@@ -159,7 +173,10 @@ impl DataState {
 				.memory
 				.iter()
 				.cloned()
-				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.filter(|entry| {
+					current_instant.duration_since(entry.instant).as_secs()
+						<= self.stale_max_seconds
+				})
 				.collect::<Vec<_>>();
 
 			self.data.swap = self
@@ -167,7 +184,10 @@ impl DataState {
 				.swap
 				.iter()
 				.cloned()
-				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.filter(|entry| {
+					current_instant.duration_since(entry.instant).as_secs()
+						<= self.stale_max_seconds
+				})
 				.collect::<Vec<_>>();
 
 			self.data.network = self
@@ -175,7 +195,10 @@ impl DataState {
 				.network
 				.iter()
 				.cloned()
-				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.filter(|entry| {
+					current_instant.duration_since(entry.instant).as_secs()
+						<= self.stale_max_seconds
+				})
 				.collect::<Vec<_>>();
 
 			self.data.list_of_io = self
@@ -183,7 +206,10 @@ impl DataState {
 				.list_of_io
 				.iter()
 				.cloned()
-				.filter(|entry| current_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds)
+				.filter(|entry| {
+					current_instant.duration_since(entry.instant).as_secs()
+						<= self.stale_max_seconds
+				})
 				.collect::<Vec<_>>();
 
 			self.last_clean = current_instant;

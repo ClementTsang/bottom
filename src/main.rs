@@ -33,8 +33,10 @@ mod constants;
 mod data_conversion;
 
 use app::data_collection;
+use app::data_collection::processes::ProcessData;
 use constants::TICK_RATE_IN_MILLISECONDS;
 use data_conversion::*;
+use std::collections::BTreeMap;
 use utils::error::{self, BottomError};
 
 enum Event<I, J> {
@@ -213,7 +215,7 @@ fn main() -> error::Result<()> {
 							KeyCode::Char(uncaught_char) => app.on_char_key(uncaught_char),
 							KeyCode::Esc => app.reset(),
 							KeyCode::Enter => app.on_enter(),
-							KeyCode::Tab => {}
+							KeyCode::Tab => app.toggle_grouping(),
 							_ => {}
 						}
 					} else {
@@ -273,6 +275,42 @@ fn main() -> error::Result<()> {
 					// frozen, then, app.data is never refreshed, until unfrozen!
 					if !app.is_frozen {
 						app.data = *data;
+
+						if app.is_grouped() {
+							// Handle combining multi-pid processes to form one entry in table.
+							// This was done this way to save time and avoid code
+							// duplication... sorry future me.  Really.
+
+							// First, convert this all into a BTreeMap.  The key is by name.  This
+							// pulls double duty by allowing us to combine entries AND it sorts!
+
+							// Fields for tuple: CPU%, MEM%, PID_VEC
+							let mut process_map: BTreeMap<String, (f64, f64, Vec<u32>)> = BTreeMap::new();
+							for process in &app.data.list_of_processes {
+								if let Some(mem_usage) = process.mem_usage_percent {
+									let entry_val = process_map.entry(process.command.clone()).or_insert((0.0, 0.0, vec![]));
+
+									entry_val.0 += process.cpu_usage_percent;
+									entry_val.1 += mem_usage;
+									entry_val.2.push(process.pid);
+								}
+							}
+
+							// Now... turn this back into the exact same vector... but now with merged processes!
+							app.data.list_of_processes = process_map
+								.iter()
+								.map(|(name, data)| {
+									ProcessData {
+										pid: 0, // Irrelevant
+										cpu_usage_percent: data.0,
+										mem_usage_percent: Some(data.1),
+										mem_usage_kb: None,
+										command: name.clone(),
+										pid_vec: Some(data.2.clone()),
+									}
+								})
+								.collect::<Vec<_>>();
+						}
 
 						data_collection::processes::sort_processes(
 							&mut app.data.list_of_processes,
