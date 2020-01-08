@@ -25,6 +25,7 @@ pub struct ProcessData {
 	pub mem_usage_percent: Option<f64>,
 	pub mem_usage_kb: Option<u64>,
 	pub command: String,
+	pub pid_vec: Option<Vec<u32>>, // Note that this is literally never unless we are in grouping mode.  This is to save rewriting time.
 }
 
 fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<(f64, f64)> {
@@ -174,6 +175,7 @@ fn convert_ps(
 			mem_usage_percent: None,
 			mem_usage_kb: None,
 			cpu_usage_percent: 0_f64,
+			pid_vec: None,
 		});
 	}
 
@@ -187,6 +189,7 @@ fn convert_ps(
 		mem_usage_percent,
 		mem_usage_kb: None,
 		cpu_usage_percent: linux_cpu_usage(pid, cpu_usage, cpu_percentage, prev_pid_stats, use_current_cpu_total)?,
+		pid_vec: None,
 	})
 }
 
@@ -248,6 +251,7 @@ pub fn get_sorted_processes_list(
 				mem_usage_percent: None,
 				mem_usage_kb: Some(process_val.memory()),
 				cpu_usage_percent: f64::from(process_val.cpu_usage()),
+				pid_vec: None,
 			});
 		}
 	}
@@ -256,18 +260,17 @@ pub fn get_sorted_processes_list(
 }
 
 pub fn sort_processes(process_vector: &mut Vec<ProcessData>, sorting_method: &ProcessSorting, reverse_order: bool) {
+	// Always sort alphabetically first!
+	process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, false));
+
 	match sorting_method {
-		// Always sort alphabetically first!
 		ProcessSorting::CPU => {
-			process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, false));
 			process_vector.sort_by(|a, b| get_ordering(a.cpu_usage_percent, b.cpu_usage_percent, reverse_order));
 		}
 		ProcessSorting::MEM => {
-			process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, false));
 			process_vector.sort_by(|a, b| get_ordering(a.mem_usage_percent, b.mem_usage_percent, reverse_order));
 		}
 		ProcessSorting::PID => {
-			process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, false));
 			process_vector.sort_by(|a, b| get_ordering(a.pid, b.pid, reverse_order));
 		}
 		ProcessSorting::NAME => process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, reverse_order)),

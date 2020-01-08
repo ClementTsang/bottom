@@ -648,7 +648,11 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 
 	let process_rows = sliced_vec.iter().map(|process| {
 		let stringified_process_vec: Vec<String> = vec![
-			process.pid.to_string(),
+			if app_state.is_grouped() {
+				process.group_count.to_string()
+			} else {
+				process.pid.to_string()
+			},
 			process.name.clone(),
 			process.cpu_usage.clone(),
 			process.mem_usage.clone(),
@@ -674,7 +678,7 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 
 	{
 		use app::data_collection::processes::ProcessSorting;
-		let mut pid = "PID(p)".to_string();
+		let mut pid_or_name = if app_state.is_grouped() { "Count" } else { "PID(p)" }.to_string();
 		let mut name = "Name(n)".to_string();
 		let mut cpu = "CPU%(c)".to_string();
 		let mut mem = "Mem%(m)".to_string();
@@ -688,11 +692,11 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 		match app_state.process_sorting_type {
 			ProcessSorting::CPU => cpu += &direction_val,
 			ProcessSorting::MEM => mem += &direction_val,
-			ProcessSorting::PID => pid += &direction_val,
+			ProcessSorting::PID => pid_or_name += &direction_val,
 			ProcessSorting::NAME => name += &direction_val,
 		};
 
-		Table::new([pid, name, cpu, mem].iter(), process_rows)
+		Table::new([pid_or_name, name, cpu, mem].iter(), process_rows)
 			.block(
 				Block::default()
 					.title("Processes")

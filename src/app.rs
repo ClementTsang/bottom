@@ -55,6 +55,7 @@ pub struct App {
 	pub use_current_cpu_total: bool,
 	last_key_press: Instant,
 	pub canvas_data: canvas::CanvasData,
+	enable_grouping: bool,
 }
 
 impl App {
@@ -92,6 +93,7 @@ impl App {
 			use_current_cpu_total,
 			last_key_press: Instant::now(),
 			canvas_data: canvas::CanvasData::default(),
+			enable_grouping: false,
 		}
 	}
 
@@ -110,6 +112,22 @@ impl App {
 
 	fn is_in_dialog(&self) -> bool {
 		self.show_help || self.show_dd
+	}
+
+	pub fn toggle_grouping(&mut self) {
+		// Disallow usage whilst in a dialog and only in processes
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::Process = self.current_application_position {
+				self.enable_grouping = !(self.enable_grouping);
+			}
+		}
+
+		// TODO: Note that we have to handle this in a way such that it will only update
+		// with the correct formatted vectors... that is, only update the canvas after...?
+	}
+
+	pub fn is_grouped(&self) -> bool {
+		self.enable_grouping
 	}
 
 	/// One of two functions allowed to run while in a dialog...
@@ -191,15 +209,18 @@ impl App {
 					self.currently_selected_process_position = 0;
 				}
 				'p' => {
-					match self.process_sorting_type {
-						processes::ProcessSorting::PID => self.process_sorting_reverse = !self.process_sorting_reverse,
-						_ => {
-							self.process_sorting_type = processes::ProcessSorting::PID;
-							self.process_sorting_reverse = false;
+					// Disable if grouping
+					if !self.enable_grouping {
+						match self.process_sorting_type {
+							processes::ProcessSorting::PID => self.process_sorting_reverse = !self.process_sorting_reverse,
+							_ => {
+								self.process_sorting_type = processes::ProcessSorting::PID;
+								self.process_sorting_reverse = false;
+							}
 						}
+						self.to_be_resorted = true;
+						self.currently_selected_process_position = 0;
 					}
-					self.to_be_resorted = true;
-					self.currently_selected_process_position = 0;
 				}
 				'n' => {
 					match self.process_sorting_type {
@@ -227,7 +248,9 @@ impl App {
 	pub fn kill_highlighted_process(&mut self) -> Result<()> {
 		// Technically unnecessary but this is a good check...
 		if let ApplicationPosition::Process = self.current_application_position {
-			if let Some(current_selected_process) = &(self.to_delete_process) {
+			if self.enable_grouping {
+				// TODO: Enable grouping pid deletion
+			} else if let Some(current_selected_process) = &(self.to_delete_process) {
 				process_killer::kill_process_given_pid(current_selected_process.pid)?;
 			}
 			self.to_delete_process = None;
