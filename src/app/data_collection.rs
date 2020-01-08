@@ -32,7 +32,8 @@ pub struct Data {
 	pub swap: Vec<mem::MemData>,
 	pub list_of_temperature_sensor: Vec<temperature::TempData>,
 	pub network: Vec<network::NetworkData>,
-	pub list_of_processes: Vec<processes::ProcessData>, // Only need to keep a list of processes...
+	pub list_of_processes: Vec<processes::ProcessData>,
+	pub grouped_list_of_processes: Option<Vec<processes::ProcessData>>,
 	pub list_of_disks: Vec<disks::DiskData>, // Only need to keep a list of disks and their data
 }
 

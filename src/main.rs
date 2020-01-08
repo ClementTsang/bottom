@@ -260,12 +260,7 @@ fn main() -> error::Result<()> {
 					}
 
 					if app.to_be_resorted {
-						data_collection::processes::sort_processes(
-							&mut app.data.list_of_processes,
-							&app.process_sorting_type,
-							app.process_sorting_reverse,
-						);
-						app.canvas_data.process_data = update_process_row(&app.data);
+						handle_process_sorting(&mut app);
 						app.to_be_resorted = false;
 					}
 				}
@@ -280,50 +275,7 @@ fn main() -> error::Result<()> {
 					if !app.is_frozen {
 						app.data = *data;
 
-						if app.is_grouped() {
-							// Handle combining multi-pid processes to form one entry in table.
-							// This was done this way to save time and avoid code
-							// duplication... sorry future me.  Really.
-
-							// First, convert this all into a BTreeMap.  The key is by name.  This
-							// pulls double duty by allowing us to combine entries AND it sorts!
-
-							// Fields for tuple: CPU%, MEM%, PID_VEC
-							let mut process_map: BTreeMap<String, (f64, f64, Vec<u32>)> =
-								BTreeMap::new();
-							for process in &app.data.list_of_processes {
-								if let Some(mem_usage) = process.mem_usage_percent {
-									let entry_val = process_map
-										.entry(process.command.clone())
-										.or_insert((0.0, 0.0, vec![]));
-
-									entry_val.0 += process.cpu_usage_percent;
-									entry_val.1 += mem_usage;
-									entry_val.2.push(process.pid);
-								}
-							}
-
-							// Now... turn this back into the exact same vector... but now with merged processes!
-							app.data.list_of_processes = process_map
-								.iter()
-								.map(|(name, data)| {
-									ProcessData {
-										pid: 0, // Irrelevant
-										cpu_usage_percent: data.0,
-										mem_usage_percent: Some(data.1),
-										mem_usage_kb: None,
-										command: name.clone(),
-										pid_vec: Some(data.2.clone()),
-									}
-								})
-								.collect::<Vec<_>>();
-						}
-
-						data_collection::processes::sort_processes(
-							&mut app.data.list_of_processes,
-							&app.process_sorting_type,
-							app.process_sorting_reverse,
-						);
+						handle_process_sorting(&mut app);
 
 						// Convert all data into tui components
 						let network_data = update_network_data_points(&app.data);
@@ -336,12 +288,12 @@ fn main() -> error::Result<()> {
 						app.canvas_data.disk_data = update_disk_row(&app.data);
 						app.canvas_data.temp_sensor_data =
 							update_temp_row(&app.data, &app.temperature_type);
-						app.canvas_data.process_data = update_process_row(&app.data);
 						app.canvas_data.mem_data = update_mem_data_points(&app.data);
 						app.canvas_data.memory_labels = update_mem_data_values(&app.data);
 						app.canvas_data.swap_data = update_swap_data_points(&app.data);
 						app.canvas_data.cpu_data =
 							update_cpu_data_points(app.show_average_cpu, &app.data);
+
 						//debug!("Update event complete.");
 					}
 				}
@@ -357,6 +309,78 @@ fn main() -> error::Result<()> {
 
 	cleanup(&mut terminal)?;
 	Ok(())
+}
+
+type TempProcess = (f64, Option<f64>, Option<u64>, Vec<u32>);
+
+fn handle_process_sorting(app: &mut app::App) {
+	// Handle combining multi-pid processes to form one entry in table.
+	// This was done this way to save time and avoid code
+	// duplication... sorry future me.  Really.
+
+	// First, convert this all into a BTreeMap.  The key is by name.  This
+	// pulls double duty by allowing us to combine entries AND it sorts!
+
+	// Fields for tuple: CPU%, MEM%, MEM_KB, PID_VEC
+	let mut process_map: BTreeMap<String, TempProcess> = BTreeMap::new();
+	for process in &app.data.list_of_processes {
+		let entry_val =
+			process_map
+				.entry(process.command.clone())
+				.or_insert((0.0, None, None, vec![]));
+		if let Some(mem_usage) = process.mem_usage_percent {
+			entry_val.0 += process.cpu_usage_percent;
+			if let Some(m) = &mut entry_val.1 {
+				*m += mem_usage;
+			}
+			entry_val.3.push(process.pid);
+		} else if let Some(mem_usage_kb) = process.mem_usage_kb {
+			entry_val.0 += process.cpu_usage_percent;
+			if let Some(m) = &mut entry_val.2 {
+				*m += mem_usage_kb;
+			}
+			entry_val.3.push(process.pid);
+		}
+	}
+
+	// Now... turn this back into the exact same vector... but now with merged processes!
+	app.data.grouped_list_of_processes = Some(
+		process_map
+			.iter()
+			.map(|(name, data)| {
+				ProcessData {
+					pid: 0, // Irrelevant
+					cpu_usage_percent: data.0,
+					mem_usage_percent: data.1,
+					mem_usage_kb: data.2,
+					command: name.clone(),
+					pid_vec: Some(data.3.clone()),
+				}
+			})
+			.collect::<Vec<_>>(),
+	);
+
+	if let Some(grouped_list_of_processes) = &mut app.data.grouped_list_of_processes {
+		data_collection::processes::sort_processes(
+			grouped_list_of_processes,
+			if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
+				&data_collection::processes::ProcessSorting::CPU // Go back to default, negate PID for group
+			} else {
+				&app.process_sorting_type
+			},
+			app.process_sorting_reverse,
+		);
+	}
+
+	data_collection::processes::sort_processes(
+		&mut app.data.list_of_processes,
+		&app.process_sorting_type,
+		app.process_sorting_reverse,
+	);
+
+	let tuple_results = update_process_row(&app.data);
+	app.canvas_data.process_data = tuple_results.0;
+	app.canvas_data.grouped_process_data = tuple_results.1;
 }
 
 fn cleanup(

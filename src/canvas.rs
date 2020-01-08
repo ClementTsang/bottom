@@ -54,6 +54,7 @@ pub struct CanvasData {
 	pub disk_data: Vec<Vec<String>>,
 	pub temp_sensor_data: Vec<Vec<String>>,
 	pub process_data: Vec<ConvertedProcessData>,
+	pub grouped_process_data: Vec<ConvertedProcessData>,
 	pub memory_labels: Vec<(u64, u64)>,
 	pub mem_data: Vec<(f64, f64)>,
 	pub swap_data: Vec<(f64, f64)>,
@@ -747,7 +748,11 @@ fn draw_disk_table<B: backend::Backend>(
 fn draw_processes_table<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	let process_data: &[ConvertedProcessData] = &(app_state.canvas_data.process_data);
+	let process_data: &[ConvertedProcessData] = if app_state.is_grouped() {
+		&app_state.canvas_data.grouped_process_data
+	} else {
+		&app_state.canvas_data.process_data
+	};
 
 	// Admittedly this is kinda a hack... but we need to:
 	// * Scroll
