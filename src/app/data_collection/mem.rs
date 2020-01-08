@@ -13,7 +13,8 @@ pub async fn get_mem_data_list() -> crate::utils::error::Result<MemData> {
 
 	Ok(MemData {
 		mem_total_in_mb: memory.total().get::<information::megabyte>(),
-		mem_used_in_mb: memory.total().get::<information::megabyte>() - memory.available().get::<information::megabyte>(),
+		mem_used_in_mb: memory.total().get::<information::megabyte>()
+			- memory.available().get::<information::megabyte>(),
 		instant: Instant::now(),
 	})
 }

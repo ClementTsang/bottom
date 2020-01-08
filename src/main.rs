@@ -8,7 +8,10 @@ extern crate failure;
 extern crate lazy_static;
 
 use crossterm::{
-	event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
+	event::{
+		self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
+		KeyModifiers, MouseEvent,
+	},
 	execute,
 	terminal::LeaveAlternateScreen,
 	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
@@ -183,7 +186,8 @@ fn main() -> error::Result<()> {
 					}
 				}
 				futures::executor::block_on(data_state.update_data());
-				tx.send(Event::Update(Box::from(data_state.data.clone()))).unwrap();
+				tx.send(Event::Update(Box::from(data_state.data.clone())))
+					.unwrap();
 
 				if first_run {
 					// Fix for if you set a really long time for update periods (and just gives a faster first value)
@@ -285,10 +289,13 @@ fn main() -> error::Result<()> {
 							// pulls double duty by allowing us to combine entries AND it sorts!
 
 							// Fields for tuple: CPU%, MEM%, PID_VEC
-							let mut process_map: BTreeMap<String, (f64, f64, Vec<u32>)> = BTreeMap::new();
+							let mut process_map: BTreeMap<String, (f64, f64, Vec<u32>)> =
+								BTreeMap::new();
 							for process in &app.data.list_of_processes {
 								if let Some(mem_usage) = process.mem_usage_percent {
-									let entry_val = process_map.entry(process.command.clone()).or_insert((0.0, 0.0, vec![]));
+									let entry_val = process_map
+										.entry(process.command.clone())
+										.or_insert((0.0, 0.0, vec![]));
 
 									entry_val.0 += process.cpu_usage_percent;
 									entry_val.1 += mem_usage;
@@ -327,12 +334,14 @@ fn main() -> error::Result<()> {
 						app.canvas_data.total_rx_display = network_data.total_rx_display;
 						app.canvas_data.total_tx_display = network_data.total_tx_display;
 						app.canvas_data.disk_data = update_disk_row(&app.data);
-						app.canvas_data.temp_sensor_data = update_temp_row(&app.data, &app.temperature_type);
+						app.canvas_data.temp_sensor_data =
+							update_temp_row(&app.data, &app.temperature_type);
 						app.canvas_data.process_data = update_process_row(&app.data);
 						app.canvas_data.mem_data = update_mem_data_points(&app.data);
 						app.canvas_data.memory_labels = update_mem_data_values(&app.data);
 						app.canvas_data.swap_data = update_swap_data_points(&app.data);
-						app.canvas_data.cpu_data = update_cpu_data_points(app.show_average_cpu, &app.data);
+						app.canvas_data.cpu_data =
+							update_cpu_data_points(app.show_average_cpu, &app.data);
 						//debug!("Update event complete.");
 					}
 				}
@@ -350,7 +359,9 @@ fn main() -> error::Result<()> {
 	Ok(())
 }
 
-fn cleanup(terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>) -> error::Result<()> {
+fn cleanup(
+	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
+) -> error::Result<()> {
 	disable_raw_mode()?;
 	execute!(terminal.backend_mut(), DisableMouseCapture)?;
 	execute!(terminal.backend_mut(), LeaveAlternateScreen)?;

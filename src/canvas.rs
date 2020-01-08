@@ -24,7 +24,9 @@ lazy_static! {
 		Text::raw("q, Ctrl-c to quit.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
 		Text::raw("f to toggle freezing and unfreezing the display.\n"),
-		Text::raw("Ctrl+Up/k, Ctrl+Down/j, Ctrl+Left/h, Ctrl+Right/l to navigate between panels.\n"),
+		Text::raw(
+			"Ctrl+Up/k, Ctrl+Down/j, Ctrl+Left/h, Ctrl+Right/l to navigate between panels.\n"
+		),
 		Text::raw("Up and Down scrolls through a list.\n"),
 		Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
 		Text::raw("? to get this help screen.\n"),
@@ -37,7 +39,8 @@ lazy_static! {
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
 	static ref CANVAS_BORDER_STYLE: Style = Style::default().fg(BORDER_STYLE_COLOUR);
-	static ref CANVAS_HIGHLIGHTED_BORDER_STYLE: Style = Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
+	static ref CANVAS_HIGHLIGHTED_BORDER_STYLE: Style =
+		Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
 }
 
 #[derive(Default)]
@@ -85,7 +88,13 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	}
 
 	// Generate colours
-	let mut colour_vec: Vec<Color> = vec![Color::LightCyan, Color::LightYellow, Color::Red, Color::Green, Color::LightMagenta];
+	let mut colour_vec: Vec<Color> = vec![
+		Color::LightCyan,
+		Color::LightYellow,
+		Color::Red,
+		Color::Green,
+		Color::LightMagenta,
+	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
 	for _i in 0..num_to_gen {
@@ -97,7 +106,9 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	colour_vec
 }
 
-pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mut app::App) -> error::Result<()> {
+pub fn draw_data<B: backend::Backend>(
+	terminal: &mut Terminal<B>, app_state: &mut app::App,
+) -> error::Result<()> {
 	terminal.autoresize()?;
 	terminal.draw(|mut f| {
 		if app_state.show_help {
@@ -105,17 +116,35 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			let vertical_dialog_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(1)
-				.constraints([Constraint::Percentage(32), Constraint::Percentage(40), Constraint::Percentage(28)].as_ref())
+				.constraints(
+					[
+						Constraint::Percentage(32),
+						Constraint::Percentage(40),
+						Constraint::Percentage(28),
+					]
+					.as_ref(),
+				)
 				.split(f.size());
 
 			let middle_dialog_chunk = Layout::default()
 				.direction(Direction::Horizontal)
 				.margin(0)
-				.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
+				.constraints(
+					[
+						Constraint::Percentage(30),
+						Constraint::Percentage(40),
+						Constraint::Percentage(30),
+					]
+					.as_ref(),
+				)
 				.split(vertical_dialog_chunk[1]);
 
 			Paragraph::new(HELP_TEXT.iter())
-				.block(Block::default().title("Help (Press Esc to close)").borders(Borders::ALL))
+				.block(
+					Block::default()
+						.title("Help (Press Esc to close)")
+						.borders(Borders::ALL),
+				)
 				.style(Style::default().fg(Color::Gray))
 				.alignment(Alignment::Left)
 				.wrap(true)
@@ -124,20 +153,41 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			let vertical_dialog_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(1)
-				.constraints([Constraint::Percentage(40), Constraint::Percentage(20), Constraint::Percentage(40)].as_ref())
+				.constraints(
+					[
+						Constraint::Percentage(40),
+						Constraint::Percentage(20),
+						Constraint::Percentage(40),
+					]
+					.as_ref(),
+				)
 				.split(f.size());
 
 			let middle_dialog_chunk = Layout::default()
 				.direction(Direction::Horizontal)
 				.margin(0)
-				.constraints([Constraint::Percentage(30), Constraint::Percentage(40), Constraint::Percentage(30)].as_ref())
+				.constraints(
+					[
+						Constraint::Percentage(30),
+						Constraint::Percentage(40),
+						Constraint::Percentage(30),
+					]
+					.as_ref(),
+				)
 				.split(vertical_dialog_chunk[1]);
 
 			if let Some(dd_err) = app_state.dd_err.clone() {
-				let dd_text = [Text::raw(format!("\nFailure to properly kill the process - {}", dd_err))];
+				let dd_text = [Text::raw(format!(
+					"\nFailure to properly kill the process - {}",
+					dd_err
+				))];
 
 				Paragraph::new(dd_text.iter())
-					.block(Block::default().title("Kill Process Error (Press Esc to close)").borders(Borders::ALL))
+					.block(
+						Block::default()
+							.title("Kill Process Error (Press Esc to close)")
+							.borders(Borders::ALL),
+					)
 					.style(Style::default().fg(Color::Gray))
 					.alignment(Alignment::Center)
 					.wrap(true)
@@ -170,7 +220,14 @@ pub fn draw_data<B: backend::Backend>(terminal: &mut Terminal<B>, app_state: &mu
 			let vertical_chunks = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(1)
-				.constraints([Constraint::Percentage(33), Constraint::Percentage(34), Constraint::Percentage(34)].as_ref())
+				.constraints(
+					[
+						Constraint::Percentage(33),
+						Constraint::Percentage(34),
+						Constraint::Percentage(34),
+					]
+					.as_ref(),
+				)
 				.split(f.size());
 
 			let middle_chunks = Layout::default()
@@ -279,7 +336,10 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 
 		cpu_entries_vec.push((
 			Style::default().fg(COLOUR_LIST[(i - avg_cpu_exist_offset) % COLOUR_LIST.len()]),
-			cpu.cpu_data.iter().map(<(f64, f64)>::from).collect::<Vec<_>>(),
+			cpu.cpu_data
+				.iter()
+				.map(<(f64, f64)>::from)
+				.collect::<Vec<_>>(),
 		));
 	}
 
@@ -287,7 +347,11 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 		if let Some(avg_cpu_entry) = cpu_data.first() {
 			cpu_entries_vec.push((
 				Style::default().fg(COLOUR_LIST[(cpu_data.len() - 1) % COLOUR_LIST.len()]),
-				avg_cpu_entry.cpu_data.iter().map(<(f64, f64)>::from).collect::<Vec<_>>(),
+				avg_cpu_entry
+					.cpu_data
+					.iter()
+					.map(<(f64, f64)>::from)
+					.collect::<Vec<_>>(),
 			));
 		}
 	}
@@ -295,7 +359,11 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 	for cpu_entry in &cpu_entries_vec {
 		dataset_vector.push(
 			Dataset::default()
-				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+				.marker(if app_state.use_dot {
+					Marker::Dot
+				} else {
+					Marker::Braille
+				})
 				.style(cpu_entry.0)
 				.data(&(cpu_entry.1)),
 		);
@@ -317,7 +385,9 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 		.render(f, draw_loc);
 }
 
-fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+fn draw_cpu_legend<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+) {
 	let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
 
 	let num_rows = i64::from(draw_loc.height) - 4;
@@ -333,47 +403,55 @@ fn draw_cpu_legend<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 
 	for cpu in sliced_cpu_data {
 		if let Some(cpu_data) = cpu.cpu_data.last() {
-			stringified_cpu_data.push(vec![cpu.cpu_name.clone(), format!("{:.0}%", cpu_data.usage.round())]);
+			stringified_cpu_data.push(vec![
+				cpu.cpu_name.clone(),
+				format!("{:.0}%", cpu_data.usage.round()),
+			]);
 		}
 	}
 
 	let mut cpu_row_counter = 0;
 
-	let cpu_rows = stringified_cpu_data.iter().enumerate().map(|(itx, cpu_string_row)| {
-		Row::StyledData(
-			cpu_string_row.iter(),
-			match app_state.current_application_position {
-				app::ApplicationPosition::Cpu => {
-					if cpu_row_counter == app_state.currently_selected_cpu_table_position - start_position {
-						cpu_row_counter = -1;
-						Style::default().fg(Color::Black).bg(Color::Cyan)
-					} else {
-						if cpu_row_counter >= 0 {
-							cpu_row_counter += 1;
+	let cpu_rows = stringified_cpu_data
+		.iter()
+		.enumerate()
+		.map(|(itx, cpu_string_row)| {
+			Row::StyledData(
+				cpu_string_row.iter(),
+				match app_state.current_application_position {
+					app::ApplicationPosition::Cpu => {
+						if cpu_row_counter
+							== app_state.currently_selected_cpu_table_position - start_position
+						{
+							cpu_row_counter = -1;
+							Style::default().fg(Color::Black).bg(Color::Cyan)
+						} else {
+							if cpu_row_counter >= 0 {
+								cpu_row_counter += 1;
+							}
+							Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
 						}
-						Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
 					}
-				}
-				_ => Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
-			},
-		)
-	});
+					_ => Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
+				},
+			)
+		});
 
 	Table::new(["CPU", "Use%"].iter(), cpu_rows)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
+		.block(Block::default().borders(Borders::ALL).border_style(
+			match app_state.current_application_position {
+				app::ApplicationPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				_ => *CANVAS_BORDER_STYLE,
+			},
+		))
 		.header_style(Style::default().fg(Color::LightBlue))
 		.widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
 		.render(f, draw_loc);
 }
 
-fn _draw_memory_table<B: backend::Backend>(_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect) {
+fn _draw_memory_table<B: backend::Backend>(
+	_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect,
+) {
 	todo!("Not implemented yet..."); // TODO: For basic mode
 }
 
@@ -391,17 +469,23 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		.labels(&["0%", "100%"]);
 
 	let mem_name = "RAM:".to_string()
-		+ &format!("{:3}%", (mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
 		+ &format!(
-			"   {:.1}GB/{:.1}GB",
-			memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
-			memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
-		);
+			"{:3}%",
+			(mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
+		) + &format!(
+		"   {:.1}GB/{:.1}GB",
+		memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
+		memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
+	);
 	let swap_name: String;
 
 	let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
 		.name(&mem_name)
-		.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+		.marker(if app_state.use_dot {
+			Marker::Dot
+		} else {
+			Marker::Braille
+		})
 		.style(Style::default().fg(COLOUR_LIST[0]))
 		.data(&mem_data)];
 
@@ -409,16 +493,22 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		if let Some(last_canvas_result) = (&swap_data).last() {
 			if last_canvas_result.1 >= 0.0 {
 				swap_name = "SWP:".to_string()
-					+ &format!("{:3}%", (swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64))
 					+ &format!(
-						"   {:.1}GB/{:.1}GB",
-						memory_labels[1].0 as f64 / 1024.0,
-						memory_labels[1].1 as f64 / 1024.0
-					);
+						"{:3}%",
+						(swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
+					) + &format!(
+					"   {:.1}GB/{:.1}GB",
+					memory_labels[1].0 as f64 / 1024.0,
+					memory_labels[1].1 as f64 / 1024.0
+				);
 				mem_canvas_vec.push(
 					Dataset::default()
 						.name(&swap_name)
-						.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+						.marker(if app_state.use_dot {
+							Marker::Dot
+						} else {
+							Marker::Braille
+						})
 						.style(Style::default().fg(COLOUR_LIST[1]))
 						.data(&swap_data),
 				);
@@ -446,7 +536,9 @@ fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::Ap
 	let network_data_rx: &[(f64, f64)] = &(app_state.canvas_data.network_data_rx);
 	let network_data_tx: &[(f64, f64)] = &(app_state.canvas_data.network_data_tx);
 
-	let x_axis: Axis<String> = Axis::default().style(Style::default().fg(GRAPH_COLOUR)).bounds([0.0, 600_000.0]);
+	let x_axis: Axis<String> = Axis::default()
+		.style(Style::default().fg(GRAPH_COLOUR))
+		.bounds([0.0, 600_000.0]);
 	let y_axis = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([-0.5, 30_f64])
@@ -465,18 +557,28 @@ fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::Ap
 		.y_axis(y_axis)
 		.datasets(&[
 			Dataset::default()
-				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+				.marker(if app_state.use_dot {
+					Marker::Dot
+				} else {
+					Marker::Braille
+				})
 				.style(Style::default().fg(COLOUR_LIST[0]))
 				.data(&network_data_rx),
 			Dataset::default()
-				.marker(if app_state.use_dot { Marker::Dot } else { Marker::Braille })
+				.marker(if app_state.use_dot {
+					Marker::Dot
+				} else {
+					Marker::Braille
+				})
 				.style(Style::default().fg(COLOUR_LIST[1]))
 				.data(&network_data_tx),
 		])
 		.render(f, draw_loc);
 }
 
-fn draw_network_labels<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+fn draw_network_labels<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+) {
 	let rx_display: String = app_state.canvas_data.rx_display.clone();
 	let tx_display: String = app_state.canvas_data.tx_display.clone();
 	let total_rx_display: String = app_state.canvas_data.total_rx_display.clone();
@@ -484,7 +586,12 @@ fn draw_network_labels<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut ap
 
 	// Gross but I need it to work...
 	let total_network = if cfg!(not(target_os = "windows")) {
-		vec![vec![rx_display, tx_display, total_rx_display, total_tx_display]]
+		vec![vec![
+			rx_display,
+			tx_display,
+			total_rx_display,
+			total_tx_display,
+		]]
 	} else {
 		vec![vec![rx_display, tx_display]]
 	};
@@ -499,14 +606,12 @@ fn draw_network_labels<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut ap
 		.iter(),
 		mapped_network,
 	)
-	.block(
-		Block::default()
-			.borders(Borders::ALL)
-			.border_style(match app_state.current_application_position {
-				app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-				_ => *CANVAS_BORDER_STYLE,
-			}),
-	)
+	.block(Block::default().borders(Borders::ALL).border_style(
+		match app_state.current_application_position {
+			app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+			_ => *CANVAS_BORDER_STYLE,
+		},
+	))
 	.header_style(Style::default().fg(Color::LightBlue))
 	.widths(&if cfg!(not(target_os = "windows")) {
 		vec![
@@ -521,7 +626,9 @@ fn draw_network_labels<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut ap
 	.render(f, draw_loc);
 }
 
-fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+fn draw_temp_table<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+) {
 	let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
 
 	let num_rows = i64::from(draw_loc.height) - 4;
@@ -540,7 +647,9 @@ fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 			temp_row.iter(),
 			match app_state.current_application_position {
 				app::ApplicationPosition::Temp => {
-					if temp_row_counter == app_state.currently_selected_temperature_position - start_position {
+					if temp_row_counter
+						== app_state.currently_selected_temperature_position - start_position
+					{
 						temp_row_counter = -1;
 						Style::default().fg(Color::Black).bg(Color::Cyan)
 					} else {
@@ -569,7 +678,9 @@ fn draw_temp_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		.render(f, draw_loc);
 }
 
-fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+fn draw_disk_table<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+) {
 	let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
 	let num_rows = i64::from(draw_loc.height) - 4;
 	let start_position = get_start_position(
@@ -602,31 +713,40 @@ fn draw_disk_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::A
 		)
 	});
 
-	Table::new(["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(), disk_rows)
-		.block(
-			Block::default()
-				.title("Disk")
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.header_style(Style::default().fg(Color::LightBlue).modifier(Modifier::BOLD))
-		.widths(&[
-			Constraint::Percentage(18),
-			Constraint::Percentage(14),
-			Constraint::Percentage(11),
-			Constraint::Percentage(11),
-			Constraint::Percentage(11),
-			Constraint::Percentage(11),
-			Constraint::Percentage(11),
-			Constraint::Percentage(11),
-		])
-		.render(f, draw_loc);
+	Table::new(
+		["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(),
+		disk_rows,
+	)
+	.block(
+		Block::default()
+			.title("Disk")
+			.borders(Borders::ALL)
+			.border_style(match app_state.current_application_position {
+				app::ApplicationPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				_ => *CANVAS_BORDER_STYLE,
+			}),
+	)
+	.header_style(
+		Style::default()
+			.fg(Color::LightBlue)
+			.modifier(Modifier::BOLD),
+	)
+	.widths(&[
+		Constraint::Percentage(18),
+		Constraint::Percentage(14),
+		Constraint::Percentage(11),
+		Constraint::Percentage(11),
+		Constraint::Percentage(11),
+		Constraint::Percentage(11),
+		Constraint::Percentage(11),
+		Constraint::Percentage(11),
+	])
+	.render(f, draw_loc);
 }
 
-fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect) {
+fn draw_processes_table<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+) {
 	let process_data: &[ConvertedProcessData] = &(app_state.canvas_data.process_data);
 
 	// Admittedly this is kinda a hack... but we need to:
@@ -661,7 +781,9 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 			stringified_process_vec.into_iter(),
 			match app_state.current_application_position {
 				app::ApplicationPosition::Process => {
-					if process_counter == app_state.currently_selected_process_position - start_position {
+					if process_counter
+						== app_state.currently_selected_process_position - start_position
+					{
 						process_counter = -1;
 						Style::default().fg(Color::Black).bg(Color::Cyan)
 					} else {
@@ -678,7 +800,12 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 
 	{
 		use app::data_collection::processes::ProcessSorting;
-		let mut pid_or_name = if app_state.is_grouped() { "Count" } else { "PID(p)" }.to_string();
+		let mut pid_or_name = if app_state.is_grouped() {
+			"Count"
+		} else {
+			"PID(p)"
+		}
+		.to_string();
 		let mut name = "Name(n)".to_string();
 		let mut cpu = "CPU%(c)".to_string();
 		let mut mem = "Mem%(m)".to_string();
@@ -718,7 +845,8 @@ fn draw_processes_table<B: backend::Backend>(f: &mut Frame<B>, app_state: &mut a
 }
 
 fn get_start_position(
-	num_rows: i64, scroll_direction: &app::ScrollDirection, previous_position: &mut i64, currently_selected_position: &mut i64,
+	num_rows: i64, scroll_direction: &app::ScrollDirection, previous_position: &mut i64,
+	currently_selected_position: &mut i64,
 ) -> i64 {
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
@@ -738,7 +866,11 @@ fn get_start_position(
 			}
 
 			if *currently_selected_position == *previous_position - 1 {
-				*previous_position = if *previous_position > 0 { *previous_position - 1 } else { 0 };
+				*previous_position = if *previous_position > 0 {
+					*previous_position - 1
+				} else {
+					0
+				};
 				*previous_position
 			} else {
 				*previous_position

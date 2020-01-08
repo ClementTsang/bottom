@@ -22,7 +22,9 @@ impl Default for TemperatureType {
 	}
 }
 
-pub async fn get_temperature_data(sys: &System, temp_type: &TemperatureType) -> crate::utils::error::Result<Vec<TempData>> {
+pub async fn get_temperature_data(
+	sys: &System, temp_type: &TemperatureType,
+) -> crate::utils::error::Result<Vec<TempData>> {
 	let mut temperature_vec: Vec<TempData> = Vec::new();
 
 	if cfg!(target_os = "linux") {
@@ -32,9 +34,17 @@ pub async fn get_temperature_data(sys: &System, temp_type: &TemperatureType) -> 
 				temperature_vec.push(TempData {
 					component_name: Box::from(sensor.unit()),
 					temperature: match temp_type {
-						TemperatureType::Celsius => sensor.current().get::<thermodynamic_temperature::degree_celsius>(),
-						TemperatureType::Kelvin => sensor.current().get::<thermodynamic_temperature::kelvin>(),
-						TemperatureType::Fahrenheit => sensor.current().get::<thermodynamic_temperature::degree_fahrenheit>(),
+						TemperatureType::Celsius => sensor
+							.current()
+							.get::<thermodynamic_temperature::degree_celsius>(
+						),
+						TemperatureType::Kelvin => {
+							sensor.current().get::<thermodynamic_temperature::kelvin>()
+						}
+						TemperatureType::Fahrenheit => sensor
+							.current()
+							.get::<thermodynamic_temperature::degree_fahrenheit>(
+						),
 					},
 				});
 			}
@@ -47,7 +57,9 @@ pub async fn get_temperature_data(sys: &System, temp_type: &TemperatureType) -> 
 				temperature: match temp_type {
 					TemperatureType::Celsius => component.get_temperature(),
 					TemperatureType::Kelvin => component.get_temperature() + 273.15,
-					TemperatureType::Fahrenheit => (component.get_temperature() * (9.0 / 5.0)) + 32.0,
+					TemperatureType::Fahrenheit => {
+						(component.get_temperature() * (9.0 / 5.0)) + 32.0
+					}
 				},
 			});
 		}
@@ -65,7 +77,11 @@ pub async fn get_temperature_data(sys: &System, temp_type: &TemperatureType) -> 
 		None => Ordering::Equal,
 	});
 
-	temperature_vec.sort_by(|a, b| a.component_name.partial_cmp(&b.component_name).unwrap_or(Ordering::Equal));
+	temperature_vec.sort_by(|a, b| {
+		a.component_name
+			.partial_cmp(&b.component_name)
+			.unwrap_or(Ordering::Equal)
+	});
 
 	Ok(temperature_vec)
 }
