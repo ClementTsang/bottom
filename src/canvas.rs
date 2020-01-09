@@ -19,7 +19,7 @@ const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 
 lazy_static! {
-	static ref HELP_TEXT: [Text<'static>; 14] = [
+	static ref HELP_TEXT: [Text<'static>; 15] = [
 		Text::raw("\nGeneral Keybindings\n"),
 		Text::raw("q, Ctrl-c to quit.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
@@ -36,6 +36,7 @@ lazy_static! {
 		Text::raw("m to sort by memory usage.\n"),
 		Text::raw("p to sort by PID.\n"),
 		Text::raw("n to sort by process name.\n"),
+		Text::raw("`Tab` to group together processes with the same name.\n")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
 	static ref CANVAS_BORDER_STYLE: Style = Style::default().fg(BORDER_STYLE_COLOUR);

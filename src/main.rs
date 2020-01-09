@@ -72,6 +72,7 @@ fn main() -> error::Result<()> {
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 		(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
+		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
 	)
 	.get_matches();
 
@@ -122,6 +123,11 @@ fn main() -> error::Result<()> {
 		left_legend,
 		use_current_cpu_total,
 	);
+
+	// Enable grouping immediately if set.
+	if matches.is_present("GROUP_PROCESSES") {
+		app.toggle_grouping();
+	}
 
 	// Set up up tui and crossterm
 	let mut stdout = stdout();
@@ -219,7 +225,7 @@ fn main() -> error::Result<()> {
 							KeyCode::Char(uncaught_char) => app.on_char_key(uncaught_char),
 							KeyCode::Esc => app.reset(),
 							KeyCode::Enter => app.on_enter(),
-							KeyCode::Tab => app.toggle_grouping(),
+							KeyCode::Tab => app.on_tab(),
 							_ => {}
 						}
 					} else {
@@ -299,6 +305,15 @@ fn main() -> error::Result<()> {
 				}
 			}
 		}
+
+		// Quick fix for tab updating the table headers
+		if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
+			if app.is_grouped() {
+				app.process_sorting_type = data_collection::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
+				app.process_sorting_reverse = true;
+			}
+		}
+
 		// Draw!
 		if let Err(err) = canvas::draw_data(&mut terminal, &mut app) {
 			cleanup(&mut terminal)?;
@@ -361,15 +376,19 @@ fn handle_process_sorting(app: &mut app::App) {
 	);
 
 	if let Some(grouped_list_of_processes) = &mut app.data.grouped_list_of_processes {
-		data_collection::processes::sort_processes(
-			grouped_list_of_processes,
-			if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
-				&data_collection::processes::ProcessSorting::CPU // Go back to default, negate PID for group
-			} else {
-				&app.process_sorting_type
-			},
-			app.process_sorting_reverse,
-		);
+		if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
+			data_collection::processes::sort_processes(
+				grouped_list_of_processes,
+				&data_collection::processes::ProcessSorting::CPU, // Go back to default, negate PID for group
+				true,
+			);
+		} else {
+			data_collection::processes::sort_processes(
+				grouped_list_of_processes,
+				&app.process_sorting_type,
+				app.process_sorting_reverse,
+			);
+		}
 	}
 
 	data_collection::processes::sort_processes(

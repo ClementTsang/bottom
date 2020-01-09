@@ -57,6 +57,8 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 - `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage. Only affects Linux for now.
 
+- `g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
+
 ### Keybindings
 
 #### General
@@ -92,6 +94,8 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 - `p` to sort by PID. Sorts in ascending order by default. Press again to reverse sorting order.
 
 - `n` to sort by process name. Sorts in ascending order by default. Press again to reverse sorting order.
+
+- `Tab` to group together processes with the same name. Disables PID sorting. `dd` will now kill all processes covered by that name.
 
 ### Mouse actions
 
