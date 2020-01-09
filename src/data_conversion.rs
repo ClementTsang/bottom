@@ -21,7 +21,7 @@ pub struct ConvertedProcessData {
 	pub name: String,
 	pub cpu_usage: String,
 	pub mem_usage: String,
-	pub group_count: u32,
+	pub group: Vec<u32>,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -144,7 +144,7 @@ pub fn update_process_row(
 		.iter()
 		.map(|process| ConvertedProcessData {
 			pid: process.pid,
-			name: process.command.to_string(),
+			name: process.name.to_string(),
 			cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
 			mem_usage: format!(
 				"{:.1}%",
@@ -160,11 +160,7 @@ pub fn update_process_row(
 					0_f64
 				}
 			),
-			group_count: if let Some(pid_vec) = &process.pid_vec {
-				pid_vec.len() as u32
-			} else {
-				0
-			},
+			group: vec![],
 		})
 		.collect::<Vec<_>>();
 
@@ -174,7 +170,7 @@ pub fn update_process_row(
 			.iter()
 			.map(|process| ConvertedProcessData {
 				pid: process.pid,
-				name: process.command.to_string(),
+				name: process.name.to_string(),
 				cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
 				mem_usage: format!(
 					"{:.1}%",
@@ -190,10 +186,10 @@ pub fn update_process_row(
 						0_f64
 					}
 				),
-				group_count: if let Some(pid_vec) = &process.pid_vec {
-					pid_vec.len() as u32
+				group: if let Some(pid_vec) = &process.pid_vec {
+					pid_vec.to_vec()
 				} else {
-					0
+					vec![]
 				},
 			})
 			.collect::<Vec<_>>();

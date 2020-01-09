@@ -326,7 +326,7 @@ fn handle_process_sorting(app: &mut app::App) {
 	for process in &app.data.list_of_processes {
 		let entry_val =
 			process_map
-				.entry(process.command.clone())
+				.entry(process.name.clone())
 				.or_insert((0.0, None, None, vec![]));
 		if let Some(mem_usage) = process.mem_usage_percent {
 			entry_val.0 += process.cpu_usage_percent;
@@ -353,7 +353,7 @@ fn handle_process_sorting(app: &mut app::App) {
 					cpu_usage_percent: data.0,
 					mem_usage_percent: data.1,
 					mem_usage_kb: data.2,
-					command: name.clone(),
+					name: name.clone(),
 					pid_vec: Some(data.3.clone()),
 				}
 			})

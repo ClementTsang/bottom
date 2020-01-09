@@ -49,7 +49,7 @@ pub struct App {
 	pub show_help: bool,
 	pub show_dd: bool,
 	pub dd_err: Option<String>,
-	to_delete_process: Option<ConvertedProcessData>,
+	to_delete_process_list: Option<Vec<ConvertedProcessData>>,
 	pub is_frozen: bool,
 	pub left_legend: bool,
 	pub use_current_cpu_total: bool,
@@ -88,7 +88,7 @@ impl App {
 			show_help: false,
 			show_dd: false,
 			dd_err: None,
-			to_delete_process: None,
+			to_delete_process_list: None,
 			is_frozen: false,
 			left_legend,
 			use_current_cpu_total,
@@ -102,7 +102,7 @@ impl App {
 		self.reset_multi_tap_keys();
 		self.show_help = false;
 		self.show_dd = false;
-		self.to_delete_process = None;
+		self.to_delete_process_list = None;
 		self.dd_err = None;
 	}
 
@@ -122,9 +122,6 @@ impl App {
 				self.enable_grouping = !(self.enable_grouping);
 			}
 		}
-
-		// TODO: Note that we have to handle this in a way such that it will only update
-		// with the correct formatted vectors... that is, only update the canvas after...?
 	}
 
 	pub fn is_grouped(&self) -> bool {
@@ -167,9 +164,29 @@ impl App {
 							self.awaiting_second_char = false;
 							self.second_char = ' ';
 
-							let current_process = &self.canvas_data.process_data
-								[self.currently_selected_process_position as usize];
-							self.to_delete_process = Some(current_process.clone());
+							let current_process = if self.is_grouped() {
+								let mut res: Vec<ConvertedProcessData> = Vec::new();
+								for pid in &self.canvas_data.grouped_process_data
+									[self.currently_selected_process_position as usize]
+									.group
+								{
+									let result = self
+										.canvas_data
+										.process_data
+										.iter()
+										.find(|p| p.pid == *pid);
+
+									if let Some(process) = result {
+										res.push((*process).clone());
+									}
+								}
+								res
+							} else {
+								vec![self.canvas_data.process_data
+									[self.currently_selected_process_position as usize]
+									.clone()]
+							};
+							self.to_delete_process_list = Some(current_process);
 							self.show_dd = true;
 							self.reset_multi_tap_keys();
 						} else {
@@ -261,18 +278,18 @@ impl App {
 	pub fn kill_highlighted_process(&mut self) -> Result<()> {
 		// Technically unnecessary but this is a good check...
 		if let ApplicationPosition::Process = self.current_application_position {
-			if self.enable_grouping {
-				// TODO: Enable grouping pid deletion
-			} else if let Some(current_selected_process) = &(self.to_delete_process) {
-				process_killer::kill_process_given_pid(current_selected_process.pid)?;
+			if let Some(current_selected_processes) = &(self.to_delete_process_list) {
+				for current_selected_process in current_selected_processes {
+					process_killer::kill_process_given_pid(current_selected_process.pid)?;
+				}
 			}
-			self.to_delete_process = None;
+			self.to_delete_process_list = None;
 		}
 		Ok(())
 	}
 
-	pub fn get_current_highlighted_process(&self) -> Option<ConvertedProcessData> {
-		self.to_delete_process.clone()
+	pub fn get_current_highlighted_process_list(&self) -> Option<Vec<ConvertedProcessData>> {
+		self.to_delete_process_list.clone()
 	}
 
 	// For now, these are hard coded --- in the future, they shouldn't be!
