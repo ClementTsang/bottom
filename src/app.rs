@@ -124,6 +124,14 @@ impl App {
 		}
 	}
 
+	pub fn on_tab(&mut self) {
+		match self.current_application_position {
+			ApplicationPosition::Process => self.toggle_grouping(),
+			ApplicationPosition::Disk => {}
+			_ => {}
+		}
+	}
+
 	pub fn is_grouped(&self) -> bool {
 		self.enable_grouping
 	}
