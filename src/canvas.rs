@@ -193,26 +193,37 @@ pub fn draw_data<B: backend::Backend>(
 					.alignment(Alignment::Center)
 					.wrap(true)
 					.render(&mut f, middle_dialog_chunk[1]);
-			} else if let Some(process) = app_state.get_current_highlighted_process() {
-				let dd_text = [
-					Text::raw(format!(
-						"\nAre you sure you want to kill process {} with PID {}?",
-						process.name, process.pid
-					)),
+			} else if let Some(process_list) = app_state.get_current_highlighted_process_list() {
+				if let Some(process) = process_list.first() {
+					let dd_text = [
+					if app_state.is_grouped() {
+						Text::raw(format!(
+							"\nAre you sure you want to kill {} process(es) with name {}?",
+							process_list.len(), process.name
+						))
+					} else {
+						Text::raw(format!(
+							"\nAre you sure you want to kill process {} with PID {}?",
+							process.name, process.pid
+						))
+					},
 					Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
 					Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
 				];
 
-				Paragraph::new(dd_text.iter())
-					.block(
-						Block::default()
-							.title("Kill Process Confirmation (Press Esc to close)")
-							.borders(Borders::ALL),
-					)
-					.style(Style::default().fg(Color::Gray))
-					.alignment(Alignment::Center)
-					.wrap(true)
-					.render(&mut f, middle_dialog_chunk[1]);
+					Paragraph::new(dd_text.iter())
+						.block(
+							Block::default()
+								.title("Kill Process Confirmation (Press Esc to close)")
+								.borders(Borders::ALL),
+						)
+						.style(Style::default().fg(Color::Gray))
+						.alignment(Alignment::Center)
+						.wrap(true)
+						.render(&mut f, middle_dialog_chunk[1]);
+				} else {
+					app_state.show_dd = false;
+				}
 			} else {
 				// This is a bit nasty, but it works well... I guess.
 				app_state.show_dd = false;
@@ -774,7 +785,7 @@ fn draw_processes_table<B: backend::Backend>(
 	let process_rows = sliced_vec.iter().map(|process| {
 		let stringified_process_vec: Vec<String> = vec![
 			if app_state.is_grouped() {
-				process.group_count.to_string()
+				process.group.len().to_string()
 			} else {
 				process.pid.to_string()
 			},

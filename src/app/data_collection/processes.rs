@@ -24,8 +24,8 @@ pub struct ProcessData {
 	pub cpu_usage_percent: f64,
 	pub mem_usage_percent: Option<f64>,
 	pub mem_usage_kb: Option<u64>,
-	pub command: String,
-	pub pid_vec: Option<Vec<u32>>, // Note that this is literally never unless we are in grouping mode.  This is to save rewriting time.
+	pub name: String,
+	pub pid_vec: Option<Vec<u32>>,
 }
 
 fn cpu_usage_calculation(
@@ -186,7 +186,7 @@ fn convert_ps(
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessData {
 			pid: 0,
-			command: "".to_string(),
+			name: "".to_string(),
 			mem_usage_percent: None,
 			mem_usage_kb: None,
 			cpu_usage_percent: 0_f64,
@@ -199,7 +199,7 @@ fn convert_ps(
 		.to_string()
 		.parse::<u32>()
 		.unwrap_or(0);
-	let command = (&process[11..61]).trim().to_string();
+	let name = (&process[11..61]).trim().to_string();
 	let mem_usage_percent = Some(
 		(&process[62..])
 			.trim()
@@ -210,7 +210,7 @@ fn convert_ps(
 
 	Ok(ProcessData {
 		pid,
-		command,
+		name,
 		mem_usage_percent,
 		mem_usage_kb: None,
 		cpu_usage_percent: linux_cpu_usage(
@@ -252,7 +252,7 @@ pub fn get_sorted_processes_list(
 					prev_pid_stats,
 					use_current_cpu_total,
 				) {
-					if !process_object.command.is_empty() {
+					if !process_object.name.is_empty() {
 						process_vector.push(process_object);
 					}
 				}
@@ -264,7 +264,7 @@ pub fn get_sorted_processes_list(
 	} else {
 		let process_hashmap = sys.get_process_list();
 		for process_val in process_hashmap.values() {
-			let command_name = if process_val.name().is_empty() {
+			let name = if process_val.name().is_empty() {
 				let process_cmd = process_val.cmd();
 				if process_cmd.len() > 1 {
 					process_cmd[0].clone()
@@ -287,7 +287,7 @@ pub fn get_sorted_processes_list(
 
 			process_vector.push(ProcessData {
 				pid: process_val.pid() as u32,
-				command: command_name,
+				name,
 				mem_usage_percent: None,
 				mem_usage_kb: Some(process_val.memory()),
 				cpu_usage_percent: f64::from(process_val.cpu_usage()),
@@ -303,7 +303,7 @@ pub fn sort_processes(
 	process_vector: &mut Vec<ProcessData>, sorting_method: &ProcessSorting, reverse_order: bool,
 ) {
 	// Always sort alphabetically first!
-	process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, false));
+	process_vector.sort_by(|a, b| get_ordering(&a.name, &b.name, false));
 
 	match sorting_method {
 		ProcessSorting::CPU => {
@@ -320,7 +320,7 @@ pub fn sort_processes(
 			process_vector.sort_by(|a, b| get_ordering(a.pid, b.pid, reverse_order));
 		}
 		ProcessSorting::NAME => {
-			process_vector.sort_by(|a, b| get_ordering(&a.command, &b.command, reverse_order))
+			process_vector.sort_by(|a, b| get_ordering(&a.name, &b.name, reverse_order))
 		}
 	}
 }
