@@ -13,7 +13,9 @@ pub struct CPUPackage {
 	pub instant: Instant,
 }
 
-pub fn get_cpu_data_list(sys: &System) -> crate::utils::error::Result<CPUPackage> {
+pub fn get_cpu_data_list(
+	sys: &System, curr_time: &Instant,
+) -> crate::utils::error::Result<CPUPackage> {
 	let cpu_data = sys.get_processor_list();
 	let mut cpu_vec = Vec::new();
 
@@ -26,6 +28,6 @@ pub fn get_cpu_data_list(sys: &System) -> crate::utils::error::Result<CPUPackage
 
 	Ok(CPUPackage {
 		cpu_vec,
-		instant: Instant::now(),
+		instant: *curr_time,
 	})
 }

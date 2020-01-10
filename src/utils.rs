@@ -1,3 +1,3 @@
 pub mod error;
-pub mod general_utility;
+pub mod gen_util;
 pub mod logging;

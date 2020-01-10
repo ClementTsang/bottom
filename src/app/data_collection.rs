@@ -95,6 +95,9 @@ impl DataState {
 			self.sys.refresh_network();
 		}
 
+		// Filter out stale timed entries
+		let current_instant = std::time::Instant::now();
+
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		push_if_valid(
 			&network::get_network_data(
@@ -102,17 +105,24 @@ impl DataState {
 				&mut self.prev_net_rx_bytes,
 				&mut self.prev_net_tx_bytes,
 				&mut self.prev_net_access_time,
+				&current_instant,
 			)
 			.await,
 			&mut self.data.network,
 		);
 		push_if_valid(
-			&cpu::get_cpu_data_list(&self.sys),
+			&cpu::get_cpu_data_list(&self.sys, &current_instant),
 			&mut self.data.list_of_cpu_packages,
 		);
 
-		push_if_valid(&mem::get_mem_data_list().await, &mut self.data.memory);
-		push_if_valid(&mem::get_swap_data_list().await, &mut self.data.swap);
+		push_if_valid(
+			&mem::get_mem_data_list(&current_instant).await,
+			&mut self.data.memory,
+		);
+		push_if_valid(
+			&mem::get_swap_data_list(&current_instant).await,
+			&mut self.data.swap,
+		);
 		set_if_valid(
 			&processes::get_sorted_processes_list(
 				&self.sys,
@@ -120,6 +130,7 @@ impl DataState {
 				&mut self.prev_non_idle,
 				&mut self.prev_pid_stats,
 				self.use_current_cpu_total,
+				&current_instant,
 			),
 			&mut self.data.list_of_processes,
 		);
@@ -141,9 +152,6 @@ impl DataState {
 			self.data = Data::default();
 			self.first_run = false;
 		}
-
-		// Filter out stale timed entries
-		let current_instant = std::time::Instant::now();
 
 		if current_instant.duration_since(self.last_clean).as_secs() > self.stale_max_seconds {
 			let stale_list: Vec<_> = self

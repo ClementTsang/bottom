@@ -8,23 +8,23 @@ pub struct MemData {
 	pub instant: Instant,
 }
 
-pub async fn get_mem_data_list() -> crate::utils::error::Result<MemData> {
+pub async fn get_mem_data_list(curr_time: &Instant) -> crate::utils::error::Result<MemData> {
 	let memory = heim::memory::memory().await?;
 
 	Ok(MemData {
 		mem_total_in_mb: memory.total().get::<information::megabyte>(),
 		mem_used_in_mb: memory.total().get::<information::megabyte>()
 			- memory.available().get::<information::megabyte>(),
-		instant: Instant::now(),
+		instant: *curr_time,
 	})
 }
 
-pub async fn get_swap_data_list() -> crate::utils::error::Result<MemData> {
+pub async fn get_swap_data_list(curr_time: &Instant) -> crate::utils::error::Result<MemData> {
 	let memory = heim::memory::swap().await?;
 
 	Ok(MemData {
 		mem_total_in_mb: memory.total().get::<information::megabyte>(),
 		mem_used_in_mb: memory.used().get::<information::megabyte>(),
-		instant: Instant::now(),
+		instant: *curr_time,
 	})
 }

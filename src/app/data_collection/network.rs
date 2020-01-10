@@ -16,12 +16,12 @@ pub struct NetworkData {
 
 pub async fn get_network_data(
 	sys: &System, prev_net_rx_bytes: &mut u64, prev_net_tx_bytes: &mut u64,
-	prev_net_access_time: &mut std::time::Instant,
+	prev_net_access_time: &mut Instant, curr_time: &Instant,
 ) -> crate::utils::error::Result<NetworkData> {
 	if cfg!(target_os = "windows") {
 		let network_data = sys.get_network();
 
-		*prev_net_access_time = Instant::now();
+		*prev_net_access_time = *curr_time;
 		Ok(NetworkData {
 			rx: network_data.get_income(),
 			tx: network_data.get_outcome(),
