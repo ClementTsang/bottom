@@ -37,6 +37,8 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 ## Usage
 
+Run using `btm`.
+
 ### Command line options
 
 - `-h`, `--help` shows the help screen and exits.
