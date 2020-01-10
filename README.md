@@ -14,7 +14,7 @@ You can install by cloning and using `cargo build --release`, or use `cargo inst
 
 #### Arch Linux
 
-You can get it from the AUR by installing `bottom` from the AUR.
+You can get it from the AUR by installing `bottom`.
 
 ### Windows
 
