@@ -72,9 +72,9 @@ pub async fn get_disk_usage_list() -> crate::utils::error::Result<Vec<DiskData>>
 			let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
 
 			vec_disks.push(DiskData {
-				free_space: usage.free().get::<information::megabyte>(),
-				used_space: usage.used().get::<information::megabyte>(),
-				total_space: usage.total().get::<information::megabyte>(),
+				free_space: usage.free().get::<information::byte>(),
+				used_space: usage.used().get::<information::byte>(),
+				total_space: usage.total().get::<information::byte>(),
 				mount_point: Box::from(
 					partition
 						.mount_point()

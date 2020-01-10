@@ -727,7 +727,7 @@ fn draw_disk_table<B: backend::Backend>(
 	});
 
 	Table::new(
-		["Disk", "Mount", "Used", "Total", "Free", "R/s", "W/s"].iter(),
+		["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"].iter(),
 		disk_rows,
 	)
 	.block(
