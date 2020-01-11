@@ -75,7 +75,7 @@ Run using `btm`.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl+Up/k`, `Ctrl+Down/j`, `Ctrl+Left/h`, `Ctrl+Right/l` to navigate between panels.
+- `Ctrl+Up/k`, `Ctrl+Down/j`, `Ctrl+Left/h`, `Ctrl+Right/l` to navigate between widgets.
 
 - `Esc` to close a dialog window.
 
@@ -83,7 +83,7 @@ Run using `btm`.
 
 #### Scrollable Tables
 
-- `Up` and `Down` scrolls through the list if the panel is a table (Temperature, Disks, Processes).
+- `Up` and `Down` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
 
 - `gg` or `Home` to jump to the first entry of the current table.
 
