@@ -726,6 +726,7 @@ fn draw_disk_table<B: backend::Backend>(
 		)
 	});
 
+	let width = f64::from(draw_loc.width);
 	Table::new(
 		["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"].iter(),
 		disk_rows,
@@ -745,14 +746,14 @@ fn draw_disk_table<B: backend::Backend>(
 			.modifier(Modifier::BOLD),
 	)
 	.widths(&[
-		Constraint::Percentage(18),
-		Constraint::Percentage(14),
-		Constraint::Percentage(11),
-		Constraint::Percentage(11),
-		Constraint::Percentage(11),
-		Constraint::Percentage(11),
-		Constraint::Percentage(11),
-		Constraint::Percentage(11),
+		Constraint::Length((width * 0.18) as u16),
+		Constraint::Length((width * 0.14) as u16),
+		Constraint::Length((width * 0.11) as u16),
+		Constraint::Length((width * 0.11) as u16),
+		Constraint::Length((width * 0.11) as u16),
+		Constraint::Length((width * 0.11) as u16),
+		Constraint::Length((width * 0.11) as u16),
+		Constraint::Length((width * 0.11) as u16),
 	])
 	.render(f, draw_loc);
 }
