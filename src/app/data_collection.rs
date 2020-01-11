@@ -95,7 +95,6 @@ impl DataState {
 			self.sys.refresh_network();
 		}
 
-		// Filter out stale timed entries
 		let current_instant = std::time::Instant::now();
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
@@ -153,12 +152,14 @@ impl DataState {
 			self.first_run = false;
 		}
 
-		if current_instant.duration_since(self.last_clean).as_secs() > self.stale_max_seconds {
+		// Filter out stale timed entries
+		let clean_instant = Instant::now();
+		if clean_instant.duration_since(self.last_clean).as_secs() > self.stale_max_seconds {
 			let stale_list: Vec<_> = self
 				.prev_pid_stats
 				.iter()
 				.filter(|&(_, &v)| {
-					current_instant.duration_since(v.1).as_secs() > self.stale_max_seconds
+					clean_instant.duration_since(v.1).as_secs() > self.stale_max_seconds
 				})
 				.map(|(k, _)| k.clone())
 				.collect();
@@ -172,8 +173,7 @@ impl DataState {
 				.iter()
 				.cloned()
 				.filter(|entry| {
-					current_instant.duration_since(entry.instant).as_secs()
-						<= self.stale_max_seconds
+					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
 				})
 				.collect::<Vec<_>>();
 
@@ -183,8 +183,7 @@ impl DataState {
 				.iter()
 				.cloned()
 				.filter(|entry| {
-					current_instant.duration_since(entry.instant).as_secs()
-						<= self.stale_max_seconds
+					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
 				})
 				.collect::<Vec<_>>();
 
@@ -194,8 +193,7 @@ impl DataState {
 				.iter()
 				.cloned()
 				.filter(|entry| {
-					current_instant.duration_since(entry.instant).as_secs()
-						<= self.stale_max_seconds
+					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
 				})
 				.collect::<Vec<_>>();
 
@@ -205,8 +203,7 @@ impl DataState {
 				.iter()
 				.cloned()
 				.filter(|entry| {
-					current_instant.duration_since(entry.instant).as_secs()
-						<= self.stale_max_seconds
+					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
 				})
 				.collect::<Vec<_>>();
 
@@ -216,12 +213,11 @@ impl DataState {
 				.iter()
 				.cloned()
 				.filter(|entry| {
-					current_instant.duration_since(entry.instant).as_secs()
-						<= self.stale_max_seconds
+					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
 				})
 				.collect::<Vec<_>>();
 
-			self.last_clean = current_instant;
+			self.last_clean = clean_instant;
 		}
 	}
 }
