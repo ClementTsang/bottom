@@ -10,4 +10,4 @@ Cargo.lock
 **/*.rs.bk
 
 *.log
-
+.vscode

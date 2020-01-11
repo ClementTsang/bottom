@@ -450,6 +450,14 @@ fn draw_cpu_legend<B: backend::Backend>(
 			)
 		});
 
+	// Calculate widths
+	let width = f64::from(draw_loc.width);
+	let width_ratios = vec![0.5, 0.5];
+	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 4);
+	let intrinsic_widths: Vec<u16> =
+		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+	// Draw
 	Table::new(["CPU", "Use%"].iter(), cpu_rows)
 		.block(Block::default().borders(Borders::ALL).border_style(
 			match app_state.current_application_position {
@@ -458,7 +466,12 @@ fn draw_cpu_legend<B: backend::Backend>(
 			},
 		))
 		.header_style(Style::default().fg(Color::LightBlue))
-		.widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
+		.widths(
+			&(intrinsic_widths
+				.into_iter()
+				.map(|calculated_width| Constraint::Length(calculated_width as u16))
+				.collect::<Vec<_>>()),
+		)
 		.render(f, draw_loc);
 }
 
@@ -610,6 +623,18 @@ fn draw_network_labels<B: backend::Backend>(
 	};
 	let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
 
+	// Calculate widths
+	let width = f64::from(draw_loc.width);
+	let width_ratios = if cfg!(not(target_os = "windows")) {
+		vec![0.25, 0.25, 0.25, 0.25]
+	} else {
+		vec![0.25, 0.25]
+	};
+	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 8);
+	let intrinsic_widths: Vec<u16> =
+		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+	// Draw
 	Table::new(
 		if cfg!(not(target_os = "windows")) {
 			vec!["RX", "TX", "Total RX", "Total TX"]
@@ -626,16 +651,12 @@ fn draw_network_labels<B: backend::Backend>(
 		},
 	))
 	.header_style(Style::default().fg(Color::LightBlue))
-	.widths(&if cfg!(not(target_os = "windows")) {
-		vec![
-			Constraint::Percentage(25),
-			Constraint::Percentage(25),
-			Constraint::Percentage(25),
-			Constraint::Percentage(25),
-		]
-	} else {
-		vec![Constraint::Percentage(50), Constraint::Percentage(50)]
-	})
+	.widths(
+		&(intrinsic_widths
+			.into_iter()
+			.map(|calculated_width| Constraint::Length(calculated_width as u16))
+			.collect::<Vec<_>>()),
+	)
 	.render(f, draw_loc);
 }
 
@@ -676,6 +697,15 @@ fn draw_temp_table<B: backend::Backend>(
 			},
 		)
 	});
+
+	// Calculate widths
+	let width = f64::from(draw_loc.width);
+	let width_ratios = [0.5, 0.5];
+	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 6);
+	let intrinsic_widths: Vec<u16> =
+		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+	// Draw
 	Table::new(["Sensor", "Temp"].iter(), temperature_rows)
 		.block(
 			Block::default()
@@ -687,7 +717,12 @@ fn draw_temp_table<B: backend::Backend>(
 				}),
 		)
 		.header_style(Style::default().fg(Color::LightBlue))
-		.widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
+		.widths(
+			&(intrinsic_widths
+				.into_iter()
+				.map(|calculated_width| Constraint::Length(calculated_width as u16))
+				.collect::<Vec<_>>()),
+		)
 		.render(f, draw_loc);
 }
 
@@ -726,36 +761,40 @@ fn draw_disk_table<B: backend::Backend>(
 		)
 	});
 
+	// Calculate widths
+	// FIXME: I don't like how this is hard coded for the threshold but it might be fine?  If you change this, make sure to change the others too!
+	// FIXME: It would also make more sense to instead pass in the lengths of each HEADER... that way we know for each what the max thresh is.
+	// TODO: We can also add double-scanning to allow reducing of smaller elements...
 	let width = f64::from(draw_loc.width);
-	Table::new(
-		["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"].iter(),
-		disk_rows,
-	)
-	.block(
-		Block::default()
-			.title("Disk")
-			.borders(Borders::ALL)
-			.border_style(match app_state.current_application_position {
-				app::ApplicationPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-				_ => *CANVAS_BORDER_STYLE,
-			}),
-	)
-	.header_style(
-		Style::default()
-			.fg(Color::LightBlue)
-			.modifier(Modifier::BOLD),
-	)
-	.widths(&[
-		Constraint::Length((width * 0.18) as u16),
-		Constraint::Length((width * 0.14) as u16),
-		Constraint::Length((width * 0.11) as u16),
-		Constraint::Length((width * 0.11) as u16),
-		Constraint::Length((width * 0.11) as u16),
-		Constraint::Length((width * 0.11) as u16),
-		Constraint::Length((width * 0.11) as u16),
-		Constraint::Length((width * 0.11) as u16),
-	])
-	.render(f, draw_loc);
+	let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13];
+	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 5);
+	let intrinsic_widths: Vec<u16> =
+		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+	// Draw!
+	let headers = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
+	Table::new(headers.iter(), disk_rows)
+		.block(
+			Block::default()
+				.title("Disk")
+				.borders(Borders::ALL)
+				.border_style(match app_state.current_application_position {
+					app::ApplicationPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					_ => *CANVAS_BORDER_STYLE,
+				}),
+		)
+		.header_style(
+			Style::default()
+				.fg(Color::LightBlue)
+				.modifier(Modifier::BOLD),
+		)
+		.widths(
+			&(intrinsic_widths
+				.into_iter()
+				.map(|calculated_width| Constraint::Length(calculated_width as u16))
+				.collect::<Vec<_>>()),
+		)
+		.render(f, draw_loc);
 }
 
 fn draw_processes_table<B: backend::Backend>(
@@ -784,6 +823,14 @@ fn draw_processes_table<B: backend::Backend>(
 	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
 	let mut process_counter = 0;
 
+	// Calculate widths
+	let width = f64::from(draw_loc.width);
+	let width_ratios = [0.2, 0.4, 0.2, 0.2];
+	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 7);
+	let intrinsic_widths: Vec<u16> =
+		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+	// Draw!
 	let process_rows = sliced_vec.iter().map(|process| {
 		let stringified_process_vec: Vec<String> = vec![
 			if app_state.is_grouped() {
@@ -852,14 +899,75 @@ fn draw_processes_table<B: backend::Backend>(
 					}),
 			)
 			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(&[
-				Constraint::Percentage(20),
-				Constraint::Percentage(35),
-				Constraint::Percentage(20),
-				Constraint::Percentage(20),
-			])
+			.widths(
+				&(intrinsic_widths
+					.into_iter()
+					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.collect::<Vec<_>>()),
+			)
 			.render(f, draw_loc);
 	}
+}
+
+/// A somewhat jury-rigged solution to simulate a variable intrinsic layout for
+/// table widths.  Note that this will do one main pass to try to properly
+/// allocate widths.  This will thus potentially cut off latter elements
+/// (return size of 0) if it is too small (threshold), but will try its best.
+///
+/// The width threshold should be a u16 in which anything less than that is invalid.
+fn get_variable_intrinsic_widths(
+	total_width: u16, desired_widths_ratio: &[f64], width_threshold: u16,
+) -> (Vec<u16>, usize) {
+	let num_widths = desired_widths_ratio.len();
+	let width_threshold_i32: i32 = width_threshold as i32;
+	let mut resulting_widths: Vec<u16> = vec![0; num_widths];
+	let mut last_index = 0;
+
+	let mut remaining_width = (total_width - (num_widths as u16 - 1)) as i32; // Required for spaces...
+	let desired_widths = desired_widths_ratio
+		.iter()
+		.map(|&desired_width_ratio| (desired_width_ratio * total_width as f64) as i32)
+		.collect::<Vec<_>>();
+
+	for (itx, desired_width) in desired_widths.into_iter().enumerate() {
+		resulting_widths[itx] = if desired_width < width_threshold_i32 {
+			// Try to take threshold, else, 0
+			if remaining_width < width_threshold_i32 {
+				0
+			} else {
+				remaining_width -= width_threshold_i32;
+				width_threshold
+			}
+		} else {
+			// Take as large as possible
+			if (remaining_width - desired_width) < 0 {
+				// Check the biggest chunk possible
+				if remaining_width < width_threshold_i32 {
+					0
+				} else {
+					let temp_width = remaining_width;
+					remaining_width = 0;
+					temp_width as u16
+				}
+			} else {
+				remaining_width -= desired_width;
+				desired_width as u16
+			}
+		};
+
+		if resulting_widths[itx] == 0 {
+			break;
+		} else {
+			last_index += 1;
+		}
+	}
+
+	// debug!(
+	// 	"resulting widths: {:?}, last index: {}, size: {}",
+	// 	resulting_widths, last_index, total_width
+	// );
+
+	(resulting_widths, last_index)
 }
 
 fn get_start_position(
