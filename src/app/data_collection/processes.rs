@@ -17,7 +17,6 @@ impl Default for ProcessSorting {
 	}
 }
 
-// Possible process info struct?
 #[derive(Debug, Clone, Default)]
 pub struct ProcessData {
 	pub pid: u32,

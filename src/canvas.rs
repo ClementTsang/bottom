@@ -763,10 +763,10 @@ fn draw_disk_table<B: backend::Backend>(
 
 	// Calculate widths
 	// FIXME: I don't like how this is hard coded for the threshold but it might be fine?  If you change this, make sure to change the others too!
-	// FIXME: It would also make more sense to instead pass in the lengths of each HEADER... that way we know for each what the max thresh is.
+	// FIXME: It would also make more sense to instead pass in the lengths of each HEADER (or instead their max potential data)... that way we know for each what the max thresh is.
 	// TODO: We can also add double-scanning to allow reducing of smaller elements...
 	let width = f64::from(draw_loc.width);
-	let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13];
+	let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13];
 	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 5);
 	let intrinsic_widths: Vec<u16> =
 		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
@@ -940,7 +940,7 @@ fn get_variable_intrinsic_widths(
 			}
 		} else {
 			// Take as large as possible
-			if (remaining_width - desired_width) < 0 {
+			if remaining_width < desired_width {
 				// Check the biggest chunk possible
 				if remaining_width < width_threshold_i32 {
 					0
