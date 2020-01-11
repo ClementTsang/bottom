@@ -3,6 +3,7 @@ use crate::{
 	data_conversion::{ConvertedCpuData, ConvertedProcessData},
 	utils::{error, gen_util::*},
 };
+use std::cmp::max;
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -17,6 +18,14 @@ const GRAPH_COLOUR: Color = Color::Gray;
 const BORDER_STYLE_COLOUR: Color = Color::Gray;
 const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
+
+// Headers
+const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
+const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
+const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
+const NON_WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
+const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
+const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
 	static ref HELP_TEXT: [Text<'static>; 15] = [
@@ -42,6 +51,26 @@ lazy_static! {
 	static ref CANVAS_BORDER_STYLE: Style = Style::default().fg(BORDER_STYLE_COLOUR);
 	static ref CANVAS_HIGHLIGHTED_BORDER_STYLE: Style =
 		Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
+	static ref DISK_HEADERS_LENS: Vec<usize> = DISK_HEADERS
+		.iter()
+		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+		.collect::<Vec<_>>();
+	static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
+		.iter()
+		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+		.collect::<Vec<_>>();
+	static ref TEMP_HEADERS_LENS: Vec<usize> = TEMP_HEADERS
+		.iter()
+		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+		.collect::<Vec<_>>();
+	static ref NON_WINDOWS_NETWORK_HEADERS_LENS: Vec<usize> = NON_WINDOWS_NETWORK_HEADERS
+		.iter()
+		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+		.collect::<Vec<_>>();
+	static ref WINDOWS_NETWORK_HEADERS_LENS: Vec<usize> = WINDOWS_NETWORK_HEADERS
+		.iter()
+		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+		.collect::<Vec<_>>();
 }
 
 #[derive(Default)]
@@ -453,12 +482,13 @@ fn draw_cpu_legend<B: backend::Backend>(
 	// Calculate widths
 	let width = f64::from(draw_loc.width);
 	let width_ratios = vec![0.5, 0.5];
-	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 4);
+	let variable_intrinsic_results =
+		get_variable_intrinsic_widths(width as u16, &width_ratios, &CPU_LEGEND_HEADER_LENS);
 	let intrinsic_widths: Vec<u16> =
 		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
 
 	// Draw
-	Table::new(["CPU", "Use%"].iter(), cpu_rows)
+	Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
 		.block(Block::default().borders(Borders::ALL).border_style(
 			match app_state.current_application_position {
 				app::ApplicationPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
@@ -478,7 +508,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 fn _draw_memory_table<B: backend::Backend>(
 	_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect,
 ) {
-	todo!("Not implemented yet..."); // TODO: For basic mode
+	todo!("Not implemented yet..."); // TODO: Memory table to be made for basic mode
 }
 
 fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
@@ -624,22 +654,29 @@ fn draw_network_labels<B: backend::Backend>(
 	let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
 
 	// Calculate widths
+	let width_ratios: Vec<f64>;
+	let lens: &Vec<usize>;
 	let width = f64::from(draw_loc.width);
-	let width_ratios = if cfg!(not(target_os = "windows")) {
-		vec![0.25, 0.25, 0.25, 0.25]
+
+	if cfg!(not(target_os = "windows")) {
+		width_ratios = vec![0.25, 0.25, 0.25, 0.25];
+		lens = &NON_WINDOWS_NETWORK_HEADERS_LENS;
 	} else {
-		vec![0.25, 0.25]
-	};
-	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 8);
+		width_ratios = vec![0.25, 0.25];
+		lens = &WINDOWS_NETWORK_HEADERS_LENS;
+	}
+	let variable_intrinsic_results =
+		get_variable_intrinsic_widths(width as u16, &width_ratios, lens);
 	let intrinsic_widths: Vec<u16> =
 		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
 
 	// Draw
 	Table::new(
+		// TODO: [OPT] Feels like I can optimize this and avoid multiple to_vec calls?
 		if cfg!(not(target_os = "windows")) {
-			vec!["RX", "TX", "Total RX", "Total TX"]
+			NON_WINDOWS_NETWORK_HEADERS.to_vec()
 		} else {
-			vec!["RX", "TX"]
+			WINDOWS_NETWORK_HEADERS.to_vec()
 		}
 		.iter(),
 		mapped_network,
@@ -701,12 +738,13 @@ fn draw_temp_table<B: backend::Backend>(
 	// Calculate widths
 	let width = f64::from(draw_loc.width);
 	let width_ratios = [0.5, 0.5];
-	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 6);
+	let variable_intrinsic_results =
+		get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
 	let intrinsic_widths: Vec<u16> =
 		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
 
 	// Draw
-	Table::new(["Sensor", "Temp"].iter(), temperature_rows)
+	Table::new(TEMP_HEADERS.iter(), temperature_rows)
 		.block(
 			Block::default()
 				.title("Temperatures")
@@ -762,18 +800,16 @@ fn draw_disk_table<B: backend::Backend>(
 	});
 
 	// Calculate widths
-	// FIXME: I don't like how this is hard coded for the threshold but it might be fine?  If you change this, make sure to change the others too!
-	// FIXME: It would also make more sense to instead pass in the lengths of each HEADER (or instead their max potential data)... that way we know for each what the max thresh is.
-	// TODO: We can also add double-scanning to allow reducing of smaller elements...
+	// TODO: Ellipsis on strings?
 	let width = f64::from(draw_loc.width);
 	let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13];
-	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 5);
+	let variable_intrinsic_results =
+		get_variable_intrinsic_widths(width as u16, &width_ratios, &DISK_HEADERS_LENS);
 	let intrinsic_widths: Vec<u16> =
 		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
 
 	// Draw!
-	let headers = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
-	Table::new(headers.iter(), disk_rows)
+	Table::new(DISK_HEADERS.iter(), disk_rows)
 		.block(
 			Block::default()
 				.title("Disk")
@@ -823,13 +859,6 @@ fn draw_processes_table<B: backend::Backend>(
 	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
 	let mut process_counter = 0;
 
-	// Calculate widths
-	let width = f64::from(draw_loc.width);
-	let width_ratios = [0.2, 0.4, 0.2, 0.2];
-	let variable_intrinsic_results = get_variable_intrinsic_widths(width as u16, &width_ratios, 7);
-	let intrinsic_widths: Vec<u16> =
-		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
-
 	// Draw!
 	let process_rows = sliced_vec.iter().map(|process| {
 		let stringified_process_vec: Vec<String> = vec![
@@ -863,50 +892,63 @@ fn draw_processes_table<B: backend::Backend>(
 		)
 	});
 
-	{
-		use app::data_collection::processes::ProcessSorting;
-		let mut pid_or_name = if app_state.is_grouped() {
-			"Count"
-		} else {
-			"PID(p)"
-		}
-		.to_string();
-		let mut name = "Name(n)".to_string();
-		let mut cpu = "CPU%(c)".to_string();
-		let mut mem = "Mem%(m)".to_string();
-
-		let direction_val = if app_state.process_sorting_reverse {
-			"⯆".to_string()
-		} else {
-			"⯅".to_string()
-		};
-
-		match app_state.process_sorting_type {
-			ProcessSorting::CPU => cpu += &direction_val,
-			ProcessSorting::MEM => mem += &direction_val,
-			ProcessSorting::PID => pid_or_name += &direction_val,
-			ProcessSorting::NAME => name += &direction_val,
-		};
-
-		Table::new([pid_or_name, name, cpu, mem].iter(), process_rows)
-			.block(
-				Block::default()
-					.title("Processes")
-					.borders(Borders::ALL)
-					.border_style(match app_state.current_application_position {
-						app::ApplicationPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
-					}),
-			)
-			.header_style(Style::default().fg(Color::LightBlue))
-			.widths(
-				&(intrinsic_widths
-					.into_iter()
-					.map(|calculated_width| Constraint::Length(calculated_width as u16))
-					.collect::<Vec<_>>()),
-			)
-			.render(f, draw_loc);
+	use app::data_collection::processes::ProcessSorting;
+	let mut pid_or_name = if app_state.is_grouped() {
+		"Count"
+	} else {
+		"PID(p)"
 	}
+	.to_string();
+	let mut name = "Name(n)".to_string();
+	let mut cpu = "CPU%(c)".to_string();
+	let mut mem = "Mem%(m)".to_string();
+
+	let direction_val = if app_state.process_sorting_reverse {
+		"⯆".to_string()
+	} else {
+		"⯅".to_string()
+	};
+
+	match app_state.process_sorting_type {
+		ProcessSorting::CPU => cpu += &direction_val,
+		ProcessSorting::MEM => mem += &direction_val,
+		ProcessSorting::PID => pid_or_name += &direction_val,
+		ProcessSorting::NAME => name += &direction_val,
+	};
+
+	// TODO: [OPT] Reuse calculation to save time?
+	let process_headers = [pid_or_name, name, cpu, mem];
+	let process_headers_lens: Vec<usize> = process_headers
+		.iter()
+		.map(|entry| entry.len())
+		.collect::<Vec<_>>();
+
+	// Calculate widths
+	let width = f64::from(draw_loc.width);
+	let width_ratios = [0.2, 0.4, 0.2, 0.2];
+	let variable_intrinsic_results =
+		get_variable_intrinsic_widths(width as u16, &width_ratios, &process_headers_lens);
+	let intrinsic_widths: Vec<u16> =
+		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+	Table::new(process_headers.iter(), process_rows)
+		.block(
+			Block::default()
+				.title("Processes")
+				.borders(Borders::ALL)
+				.border_style(match app_state.current_application_position {
+					app::ApplicationPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					_ => *CANVAS_BORDER_STYLE,
+				}),
+		)
+		.header_style(Style::default().fg(Color::LightBlue))
+		.widths(
+			&(intrinsic_widths
+				.into_iter()
+				.map(|calculated_width| Constraint::Length(calculated_width as u16))
+				.collect::<Vec<_>>()),
+		)
+		.render(f, draw_loc);
 }
 
 /// A somewhat jury-rigged solution to simulate a variable intrinsic layout for
@@ -914,12 +956,12 @@ fn draw_processes_table<B: backend::Backend>(
 /// allocate widths.  This will thus potentially cut off latter elements
 /// (return size of 0) if it is too small (threshold), but will try its best.
 ///
-/// The width threshold should be a u16 in which anything less than that is invalid.
+/// `width thresholds` and `desired_widths_ratio` should be the same length.
+/// Otherwise bad things happen.
 fn get_variable_intrinsic_widths(
-	total_width: u16, desired_widths_ratio: &[f64], width_threshold: u16,
+	total_width: u16, desired_widths_ratio: &[f64], width_thresholds: &[usize],
 ) -> (Vec<u16>, usize) {
 	let num_widths = desired_widths_ratio.len();
-	let width_threshold_i32: i32 = width_threshold as i32;
 	let mut resulting_widths: Vec<u16> = vec![0; num_widths];
 	let mut last_index = 0;
 
@@ -930,19 +972,19 @@ fn get_variable_intrinsic_widths(
 		.collect::<Vec<_>>();
 
 	for (itx, desired_width) in desired_widths.into_iter().enumerate() {
-		resulting_widths[itx] = if desired_width < width_threshold_i32 {
+		resulting_widths[itx] = if desired_width < width_thresholds[itx] as i32 {
 			// Try to take threshold, else, 0
-			if remaining_width < width_threshold_i32 {
+			if remaining_width < width_thresholds[itx] as i32 {
 				0
 			} else {
-				remaining_width -= width_threshold_i32;
-				width_threshold
+				remaining_width -= width_thresholds[itx] as i32;
+				width_thresholds[itx] as u16
 			}
 		} else {
 			// Take as large as possible
 			if remaining_width < desired_width {
 				// Check the biggest chunk possible
-				if remaining_width < width_threshold_i32 {
+				if remaining_width < width_thresholds[itx] as i32 {
 					0
 				} else {
 					let temp_width = remaining_width;
@@ -962,10 +1004,19 @@ fn get_variable_intrinsic_widths(
 		}
 	}
 
-	// debug!(
-	// 	"resulting widths: {:?}, last index: {}, size: {}",
-	// 	resulting_widths, last_index, total_width
-	// );
+	// Simple redistribution tactic - if there's any space left, split it evenly amongst all members
+	if last_index < num_widths {
+		let for_all_widths = (remaining_width / last_index as i32) as u16;
+		let mut remainder = remaining_width % last_index as i32;
+
+		for resulting_width in &mut resulting_widths {
+			*resulting_width += for_all_widths;
+			if remainder > 0 {
+				*resulting_width += 1;
+				remainder -= 1;
+			}
+		}
+	}
 
 	(resulting_widths, last_index)
 }
@@ -976,32 +1027,27 @@ fn get_start_position(
 ) -> i64 {
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
-			// If, using previous_scrolled_position, we can see the element (so within that and + num_rows)
-			// just reuse the current previously scrolled position
-
-			// Else if the current position past the last element visible in the list, omit
-			// until we can see that element
-
-			// Else, if it is not past the last element visible, do not omit anything
-
 			if currently_selected_position < *previously_scrolled_position + num_rows {
+				// If, using previous_scrolled_position, we can see the element
+				// (so within that and + num_rows) just reuse the current previously scrolled position
 				*previously_scrolled_position
 			} else if currently_selected_position >= num_rows {
+				// Else if the current position past the last element visible in the list, omit
+				// until we can see that element
 				*previously_scrolled_position = currently_selected_position - num_rows;
 				currently_selected_position - num_rows
 			} else {
+				// Else, if it is not past the last element visible, do not omit anything
 				0
 			}
 		}
 		app::ScrollDirection::UP => {
-			// If it's past the first element, then show from that element downwards
-
-			// Else, don't change what our start position is from whatever it is set to!
-
 			if currently_selected_position <= *previously_scrolled_position {
+				// If it's past the first element, then show from that element downwards
 				*previously_scrolled_position = currently_selected_position;
 				currently_selected_position
 			} else {
+				// Else, don't change what our start position is from whatever it is set to!
 				*previously_scrolled_position
 			}
 		}
