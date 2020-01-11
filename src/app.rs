@@ -16,10 +16,11 @@ pub enum ApplicationPosition {
 	Process,
 }
 
+#[derive(Debug)]
 pub enum ScrollDirection {
-	/// UP means scrolling up --- this usually DECREMENTS
+	// UP means scrolling up --- this usually DECREMENTS
 	UP,
-	/// DOWN means scrolling down --- this usually INCREMENTS
+	// DOWN means scrolling down --- this usually INCREMENTS
 	DOWN,
 }
 

@@ -974,6 +974,11 @@ fn get_start_position(
 	num_rows: i64, scroll_direction: &app::ScrollDirection, previous_position: &mut i64,
 	currently_selected_position: &mut i64,
 ) -> i64 {
+	debug!("Scroll direction: {:?}", scroll_direction);
+	debug!(
+		"Prev: {}, curr: {}",
+		*previous_position, *currently_selected_position
+	);
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
 			if *currently_selected_position < num_rows {

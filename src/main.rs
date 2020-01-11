@@ -150,14 +150,14 @@ fn main() -> error::Result<()> {
 			loop {
 				if let Ok(event) = event::read() {
 					if let CEvent::Key(key) = event {
-						if Instant::now().duration_since(keyboard_timer).as_millis() >= 30 {
+						if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
 							if tx.send(Event::KeyInput(key)).is_err() {
 								return;
 							}
 							keyboard_timer = Instant::now();
 						}
 					} else if let CEvent::Mouse(mouse) = event {
-						if Instant::now().duration_since(mouse_timer).as_millis() >= 30 {
+						if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
 							if tx.send(Event::MouseInput(mouse)).is_err() {
 								return;
 							}
