@@ -403,12 +403,12 @@ fn draw_cpu_legend<B: backend::Backend>(
 ) {
 	let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
 
-	let num_rows = i64::from(draw_loc.height) - 4;
+	let num_rows = i64::from(draw_loc.height) - 5;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
 		&mut app_state.previous_cpu_table_position,
-		&mut app_state.currently_selected_cpu_table_position,
+		app_state.currently_selected_cpu_table_position,
 	);
 
 	let sliced_cpu_data = (&cpu_data[start_position as usize..]).to_vec();
@@ -665,12 +665,12 @@ fn draw_temp_table<B: backend::Backend>(
 ) {
 	let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
 
-	let num_rows = i64::from(draw_loc.height) - 4;
+	let num_rows = i64::from(draw_loc.height) - 5;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
 		&mut app_state.previous_temp_position,
-		&mut app_state.currently_selected_temperature_position,
+		app_state.currently_selected_temperature_position,
 	);
 
 	let sliced_vec: Vec<Vec<String>> = (&temp_sensor_data[start_position as usize..]).to_vec();
@@ -730,12 +730,12 @@ fn draw_disk_table<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
 	let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
-	let num_rows = i64::from(draw_loc.height) - 4;
+	let num_rows = i64::from(draw_loc.height) - 5;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
 		&mut app_state.previous_disk_position,
-		&mut app_state.currently_selected_disk_position,
+		app_state.currently_selected_disk_position,
 	);
 
 	let sliced_vec: Vec<Vec<String>> = (&disk_data[start_position as usize..]).to_vec();
@@ -811,13 +811,13 @@ fn draw_processes_table<B: backend::Backend>(
 	// * Show/hide elements based on scroll position
 	// As such, we use a process_counter to know when we've hit the process we've currently scrolled to.  We also need to move the list - we can
 	// do so by hiding some elements!
-	let num_rows = i64::from(draw_loc.height) - 4;
+	let num_rows = i64::from(draw_loc.height) - 5;
 
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
 		&mut app_state.previous_process_position,
-		&mut app_state.currently_selected_process_position,
+		app_state.currently_selected_process_position,
 	);
 
 	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
@@ -971,40 +971,38 @@ fn get_variable_intrinsic_widths(
 }
 
 fn get_start_position(
-	num_rows: i64, scroll_direction: &app::ScrollDirection, previous_position: &mut i64,
-	currently_selected_position: &mut i64,
+	num_rows: i64, scroll_direction: &app::ScrollDirection, previously_scrolled_position: &mut i64,
+	currently_selected_position: i64,
 ) -> i64 {
-	debug!("Scroll direction: {:?}", scroll_direction);
-	debug!(
-		"Prev: {}, curr: {}",
-		*previous_position, *currently_selected_position
-	);
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
-			if *currently_selected_position < num_rows {
-				0
-			} else if *currently_selected_position - num_rows < *previous_position {
-				*previous_position
+			// If, using previous_scrolled_position, we can see the element (so within that and + num_rows)
+			// just reuse the current previously scrolled position
+
+			// Else if the current position past the last element visible in the list, omit
+			// until we can see that element
+
+			// Else, if it is not past the last element visible, do not omit anything
+
+			if currently_selected_position < *previously_scrolled_position + num_rows {
+				*previously_scrolled_position
+			} else if currently_selected_position >= num_rows {
+				*previously_scrolled_position = currently_selected_position - num_rows;
+				currently_selected_position - num_rows
 			} else {
-				*previous_position = *currently_selected_position - num_rows + 1;
-				*previous_position
+				0
 			}
 		}
 		app::ScrollDirection::UP => {
-			if *currently_selected_position == 0 {
-				*previous_position = 0;
-				return *previous_position;
-			}
+			// If it's past the first element, then show from that element downwards
 
-			if *currently_selected_position == *previous_position - 1 {
-				*previous_position = if *previous_position > 0 {
-					*previous_position - 1
-				} else {
-					0
-				};
-				*previous_position
+			// Else, don't change what our start position is from whatever it is set to!
+
+			if currently_selected_position <= *previously_scrolled_position {
+				*previously_scrolled_position = currently_selected_position;
+				currently_selected_position
 			} else {
-				*previous_position
+				*previously_scrolled_position
 			}
 		}
 	}
