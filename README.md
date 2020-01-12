@@ -6,6 +6,30 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 ![Quick demo recording](assets/recording_1.gif)
 
+## Features
+
+Features of bottom include:
+
+- CPU widget to show a visual representation of per-core usage. Average CPU display also exists.
+
+- Memory widget to show a visual representation of both RAM and SWAP usage.
+
+- Networks widget to show a log-based visual representation of network usage.
+
+- Sortable and searchable process widget. Searching supports regex, and you can search by PID and process name.
+
+- Disks widget to display usage and I/O per second.
+
+- Temperature widget to monitor detected sensors in your system.
+
+The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
+
+| OS/Widget | CPU      | Memory   | Disks    | Temperature           | Processes | Networks                                      |
+| --------- | -------- | -------- | -------- | --------------------- | --------- | --------------------------------------------- |
+| Linux     | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
+| Windows   | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
+| macOS     | Untested | Untested | Untested | Untested              | Untested  | Untested                                      |
+
 ## Installation
 
 ### Linux
@@ -23,16 +47,6 @@ You can install the in-development version by cloning and using `cargo build --r
 ### macOS
 
 macOS support will hopefully come soon<sup>TM</sup>.
-
-## Support
-
-The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
-
-| OS/Widget | CPU      | Memory   | Disks    | Temperature           | Processes | Networks                                      |
-| --------- | -------- | -------- | -------- | --------------------- | --------- | --------------------------------------------- |
-| Linux     | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
-| Windows   | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
-| macOS     | Untested | Untested | Untested | Untested              | Untested  | Untested                                      |
 
 ## Usage
 
@@ -102,11 +116,19 @@ Run using `btm`.
 
 - `Tab` to group together processes with the same name. Disables PID sorting. `dd` will now kill all processes covered by that name.
 
-- `Ctrl-f` or `/` to toggle a search box for finding a process. Press `Ctrl-p` or `Ctrl-n` within the search bar widget to switch between searching for PID and name respectively. Press `Esc` or `Ctrl-f` to close it.
+- `Ctrl-f` or `/` to open the search widget.
+
+#### Search Widget
+
+- `Ctrl-p` or `Ctrl-n` to switch between searching for PID and name respectively.
+
+- `Esc` or `Ctrl-f` to close.
+
+Note that `q` is disabled while in the search widget.
 
 ### Mouse actions
 
-- Scrolling with the mouse will scroll through the currently selected list, similar to using the up/down arrow keys.
+- Scrolling with the mouse will scroll through the currently selected list.
 
 ## Thanks, kudos, and all the like
 
