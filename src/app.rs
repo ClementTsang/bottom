@@ -58,6 +58,7 @@ pub struct App {
 	pub canvas_data: canvas::CanvasData,
 	enable_grouping: bool,
 	enable_searching: bool,
+	current_search_phrase: String,
 }
 
 impl App {
@@ -98,6 +99,7 @@ impl App {
 			canvas_data: canvas::CanvasData::default(),
 			enable_grouping: false,
 			enable_searching: false,
+			current_search_phrase: String::default(),
 		}
 	}
 

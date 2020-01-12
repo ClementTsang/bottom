@@ -28,15 +28,15 @@ const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
-	static ref HELP_TEXT: [Text<'static>; 15] = [
+	static ref HELP_TEXT: [Text<'static>; 17] = [
 		Text::raw("\nGeneral Keybindings\n"),
 		Text::raw("Ctrl-q, Ctrl-c to quit.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
 		Text::raw("f to toggle freezing and unfreezing the display.\n"),
 		Text::raw(
-			"Ctrl-Up/Ctrl-k, Ctrl-Down/Ctrl-j, Ctrl-Left/Ctrl-h, Ctrl-Right/Ctrl-l to navigate between widgets.\n"
+			"Ctrl-Up or Ctrl-k, Ctrl-Down or Ctrl-j, Ctrl-Left or Ctrl-h, Ctrl-Right or Ctrl-l to navigate between widgets.\n"
 		),
-		Text::raw("Up/k and Down/j scrolls through a list.\n"),
+		Text::raw("Up or k and Down or j scrolls through a list.\n"),
 		Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
 		Text::raw("? to get this help screen.\n"),
 		Text::raw("\n Process Widget Keybindings\n"),
@@ -45,7 +45,9 @@ lazy_static! {
 		Text::raw("m to sort by memory usage.\n"),
 		Text::raw("p to sort by PID.\n"),
 		Text::raw("n to sort by process name.\n"),
-		Text::raw("`Tab` to group together processes with the same name.\n")
+		Text::raw("Tab to group together processes with the same name.\n"),
+		Text::raw("Ctrl-f or / to toggle searching for a process.  Use p and n to toggle between searching for PID and name.\n"),
+		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
 	static ref CANVAS_BORDER_STYLE: Style = Style::default().fg(BORDER_STYLE_COLOUR);
@@ -149,9 +151,9 @@ pub fn draw_data<B: backend::Backend>(
 				.margin(1)
 				.constraints(
 					[
-						Constraint::Percentage(32),
-						Constraint::Percentage(40),
-						Constraint::Percentage(28),
+						Constraint::Percentage(27),
+						Constraint::Percentage(50),
+						Constraint::Percentage(23),
 					]
 					.as_ref(),
 				)
@@ -307,14 +309,7 @@ pub fn draw_data<B: backend::Backend>(
 			let network_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(0)
-				.constraints(
-					if app_state.left_legend {
-						[Constraint::Percentage(10), Constraint::Percentage(90)]
-					} else {
-						[Constraint::Percentage(75), Constraint::Percentage(10)]
-					}
-					.as_ref(),
-				)
+				.constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
 				.split(bottom_chunks[0]);
 
 			// Default chunk index based on left or right legend setting
@@ -343,7 +338,17 @@ pub fn draw_data<B: backend::Backend>(
 			draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
 
 			// Processes table
-			draw_processes_table(&mut f, app_state, bottom_chunks[1]);
+			if app_state.is_searching() {
+				let processes_chunk = Layout::default()
+					.direction(Direction::Vertical)
+					.margin(0)
+					.constraints([Constraint::Percentage(25), Constraint::Percentage(75)].as_ref())
+					.split(bottom_chunks[1]);
+				draw_search_field(&mut f, app_state, processes_chunk[0]);
+				draw_processes_table(&mut f, app_state, processes_chunk[1]);
+			} else {
+				draw_processes_table(&mut f, app_state, bottom_chunks[1]);
+			}
 		}
 	})?;
 
@@ -831,6 +836,12 @@ fn draw_disk_table<B: backend::Backend>(
 				.collect::<Vec<_>>()),
 		)
 		.render(f, draw_loc);
+}
+
+fn draw_search_field<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+) {
+	// TODO: Search field
 }
 
 fn draw_processes_table<B: backend::Backend>(

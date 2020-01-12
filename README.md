@@ -10,16 +10,15 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 ### Linux
 
-You can install by cloning and using `cargo build --release`, or use `cargo install bottom`. Other installation methods based on distros are as follows:
+You can install the in-development version by cloning and using `cargo build --release`. You can get release versions using `cargo install bottom`, or manually building from the Releases page. Other installation methods based on distros are as follows:
 
 #### Arch Linux
 
-You can get it from the AUR by installing `bottom`.
+You can get the release versions from the AUR by installing `bottom`.
 
 ### Windows
 
-You can currently install by cloning and building yourself using `cargo build --release`, or use `cargo install bottom`
-. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+You can install the in-development version by cloning and using `cargo build --release`. You can get release versions using `cargo install bottom`, or manually building from the Releases page. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
 
 ### macOS
 
@@ -75,7 +74,7 @@ Run using `btm`.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl-Up/Ctrl-k`, `Ctrl-Down/Ctrl-j`, `Ctrl-Left/Ctrl-h`, `Ctrl-Right/Ctrl-l` to navigate between widgets.
+- `Ctrl-Up` or `Ctrl-k`, `Ctrl-Down` or `Ctrl-j`, `Ctrl-Left` or `Ctrl-h`, `Ctrl-Right` or `Ctrl-l` to navigate between widgets.
 
 - `Esc` to close a dialog window.
 
@@ -83,7 +82,7 @@ Run using `btm`.
 
 #### Scrollable Tables
 
-- `Up/k` and `Down/j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
+- `Up` or `k` and `Down` or `j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
 
 - `gg` or `Home` to jump to the first entry of the current table.
 
@@ -102,6 +101,8 @@ Run using `btm`.
 - `n` to sort by process name. Sorts in ascending order by default. Press again to reverse sorting order.
 
 - `Tab` to group together processes with the same name. Disables PID sorting. `dd` will now kill all processes covered by that name.
+
+- `Ctrl-f` or `/` to toggle a search box for finding a process. By default this searches for process name, press `p` or `n` within the search bar to switch between searching for PID and name respectively.
 
 ### Mouse actions
 
