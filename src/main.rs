@@ -9,8 +9,8 @@ extern crate lazy_static;
 
 use crossterm::{
 	event::{
-		self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
-		KeyModifiers, MouseEvent,
+		self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyModifiers,
+		MouseEvent,
 	},
 	execute,
 	terminal::LeaveAlternateScreen,
@@ -213,16 +213,11 @@ fn main() -> error::Result<()> {
 					if event.modifiers.is_empty() {
 						// If only a code, and no modifiers, don't bother...
 						match event.code {
-							KeyCode::Char('q') => break,
-							KeyCode::Char('G') | KeyCode::End => app.skip_to_last(),
+							KeyCode::End => app.skip_to_last(),
 							KeyCode::Home => app.skip_to_first(),
-							KeyCode::Char('h') => app.on_left(),
-							KeyCode::Char('l') => app.on_right(),
-							KeyCode::Char('k') => app.on_up(),
-							KeyCode::Char('j') => app.on_down(),
 							KeyCode::Up => app.decrement_position_count(),
 							KeyCode::Down => app.increment_position_count(),
-							KeyCode::Char(uncaught_char) => app.on_char_key(uncaught_char),
+							KeyCode::Char(character) => app.on_char_key(character),
 							KeyCode::Esc => app.reset(),
 							KeyCode::Enter => app.on_enter(),
 							KeyCode::Tab => app.on_tab(),
@@ -230,38 +225,21 @@ fn main() -> error::Result<()> {
 						}
 					} else {
 						// Otherwise, track the modifier as well...
-						match event {
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Char('c'),
-							} => break,
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Left,
-							} => app.on_left(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Right,
-							} => app.on_right(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Up,
-							} => app.on_up(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Down,
-							} => app.on_down(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Char('r'),
-							} => {
-								while rtx.send(ResetEvent::Reset).is_err() {
-									debug!("Sent reset message.");
+						if let KeyModifiers::CONTROL = event.modifiers {
+							match event.code {
+								KeyCode::Char('c') | KeyCode::Char('q') => break,
+								KeyCode::Char('f') => app.on_char_key('/'), // Note that this is fine for now, assuming '/' does not do anything other than search.
+								KeyCode::Left | KeyCode::Char('h') => app.on_left(),
+								KeyCode::Right | KeyCode::Char('l') => app.on_right(),
+								KeyCode::Up | KeyCode::Char('k') => app.on_up(),
+								KeyCode::Down | KeyCode::Char('j') => app.on_down(),
+								KeyCode::Char('r') => {
+									if rtx.send(ResetEvent::Reset).is_ok() {
+										app.reset();
+									}
 								}
-								debug!("Resetting begins...");
-								app.reset();
+								_ => {}
 							}
-							_ => {}
 						}
 					}
 

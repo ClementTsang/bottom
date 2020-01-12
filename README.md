@@ -69,13 +69,13 @@ Run using `btm`.
 
 #### General
 
-- `q`, `Ctrl-c` to quit.
+- `Ctrl-q`, `Ctrl-c` to quit.
 
 - `Ctrl-r` to reset the screen and reset all collected data.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl+Up/k`, `Ctrl+Down/j`, `Ctrl+Left/h`, `Ctrl+Right/l` to navigate between widgets.
+- `Ctrl-Up/Ctrl-k`, `Ctrl-Down/Ctrl-j`, `Ctrl-Left/Ctrl-h`, `Ctrl-Right/Ctrl-l` to navigate between widgets.
 
 - `Esc` to close a dialog window.
 
@@ -83,11 +83,11 @@ Run using `btm`.
 
 #### Scrollable Tables
 
-- `Up` and `Down` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
+- `Up/k` and `Down/j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
 
 - `gg` or `Home` to jump to the first entry of the current table.
 
-- `G` (`Shift+g`) or `End` to jump to the last entry of the current table.
+- `G` (`Shift-g`) or `End` to jump to the last entry of the current table.
 
 #### Processes
 
