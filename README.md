@@ -68,7 +68,7 @@ Run using `btm`.
 
 #### General
 
-- `Ctrl-q`, `Ctrl-c` to quit.
+- `q`, `Ctrl-c` to quit. Note if you are currently in the search widget, `q` will not work so you can still type.
 
 - `Ctrl-r` to reset the screen and reset all collected data.
 
@@ -102,7 +102,7 @@ Run using `btm`.
 
 - `Tab` to group together processes with the same name. Disables PID sorting. `dd` will now kill all processes covered by that name.
 
-- `Ctrl-f` or `/` to toggle a search box for finding a process. By default this searches for process name, press `p` or `n` within the search bar to switch between searching for PID and name respectively.
+- `Ctrl-f` or `/` to toggle a search box for finding a process. Press `Ctrl-p` or `Ctrl-n` within the search bar widget to switch between searching for PID and name respectively. Press `Esc` or `Ctrl-f` to close it.
 
 ### Mouse actions
 

@@ -7,7 +7,7 @@ use std::cmp::max;
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
-	style::{Color, Modifier, Style},
+	style::{Color, Style},
 	terminal::Frame,
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
 	Terminal,
@@ -17,6 +17,7 @@ const TEXT_COLOUR: Color = Color::Gray;
 const GRAPH_COLOUR: Color = Color::Gray;
 const BORDER_STYLE_COLOUR: Color = Color::Gray;
 const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
+const TABLE_HEADER_COLOUR: Color = Color::LightBlue;
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 
 // Headers
@@ -30,7 +31,7 @@ const FORCE_MIN_THRESHOLD: usize = 5;
 lazy_static! {
 	static ref HELP_TEXT: [Text<'static>; 17] = [
 		Text::raw("\nGeneral Keybindings\n"),
-		Text::raw("Ctrl-q, Ctrl-c to quit.\n"),
+		Text::raw("q, Ctrl-c to quit.  Note if you are currently in the search widget, `q` will not work.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
 		Text::raw("f to toggle freezing and unfreezing the display.\n"),
 		Text::raw(
@@ -46,7 +47,7 @@ lazy_static! {
 		Text::raw("p to sort by PID.\n"),
 		Text::raw("n to sort by process name.\n"),
 		Text::raw("Tab to group together processes with the same name.\n"),
-		Text::raw("Ctrl-f or / to toggle searching for a process.  Use p and n to toggle between searching for PID and name.\n"),
+		Text::raw("Ctrl-f or / to toggle searching for a process.  Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
 		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
@@ -500,7 +501,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 				_ => *CANVAS_BORDER_STYLE,
 			},
 		))
-		.header_style(Style::default().fg(Color::LightBlue))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
@@ -692,7 +693,7 @@ fn draw_network_labels<B: backend::Backend>(
 			_ => *CANVAS_BORDER_STYLE,
 		},
 	))
-	.header_style(Style::default().fg(Color::LightBlue))
+	.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 	.widths(
 		&(intrinsic_widths
 			.into_iter()
@@ -759,7 +760,7 @@ fn draw_temp_table<B: backend::Backend>(
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
-		.header_style(Style::default().fg(Color::LightBlue))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
@@ -824,11 +825,7 @@ fn draw_disk_table<B: backend::Backend>(
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
-		.header_style(
-			Style::default()
-				.fg(Color::LightBlue)
-				.modifier(Modifier::BOLD),
-		)
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
@@ -841,7 +838,28 @@ fn draw_disk_table<B: backend::Backend>(
 fn draw_search_field<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	// TODO: Search field
+	let search_text = [
+		if app_state.is_searching_with_pid() {
+			Text::styled("\nPID: ", Style::default().fg(TABLE_HEADER_COLOUR))
+		} else {
+			Text::styled("\nName: ", Style::default().fg(TABLE_HEADER_COLOUR))
+		},
+		Text::raw(app_state.get_current_search_phrase()),
+	];
+	Paragraph::new(search_text.iter())
+		.block(
+			Block::default()
+				.title("Search (Ctrl-p and Ctrl-n to switch search types, Esc or Ctrl-f to close)")
+				.borders(Borders::ALL)
+				.border_style(match app_state.current_application_position {
+					app::ApplicationPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					_ => *CANVAS_BORDER_STYLE,
+				}),
+		)
+		.style(Style::default().fg(Color::Gray))
+		.alignment(Alignment::Left)
+		.wrap(true) // TODO: We want this to keep going right... slicing?
+		.render(f, draw_loc);
 }
 
 fn draw_processes_table<B: backend::Backend>(
@@ -952,7 +970,7 @@ fn draw_processes_table<B: backend::Backend>(
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
-		.header_style(Style::default().fg(Color::LightBlue))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()

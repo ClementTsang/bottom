@@ -14,6 +14,7 @@ pub enum ApplicationPosition {
 	Temp,
 	Network,
 	Process,
+	ProcessSearch,
 }
 
 #[derive(Debug)]
@@ -58,7 +59,8 @@ pub struct App {
 	pub canvas_data: canvas::CanvasData,
 	enable_grouping: bool,
 	enable_searching: bool,
-	current_search_phrase: String,
+	current_search_query: String,
+	searching_pid: bool,
 }
 
 impl App {
@@ -99,7 +101,8 @@ impl App {
 			canvas_data: canvas::CanvasData::default(),
 			enable_grouping: false,
 			enable_searching: false,
-			current_search_phrase: String::default(),
+			current_search_query: String::default(),
+			searching_pid: false,
 		}
 	}
 
@@ -107,9 +110,27 @@ impl App {
 		self.reset_multi_tap_keys();
 		self.show_help = false;
 		self.show_dd = false;
-		self.enable_searching = false;
+		if self.enable_searching {
+			self.current_application_position = ApplicationPosition::Process;
+			self.enable_searching = false;
+		}
+		self.current_search_query = String::new();
+		self.searching_pid = false;
 		self.to_delete_process_list = None;
 		self.dd_err = None;
+	}
+
+	pub fn on_esc(&mut self) {
+		self.reset_multi_tap_keys();
+		if self.is_in_dialog() {
+			self.show_help = false;
+			self.show_dd = false;
+			self.to_delete_process_list = None;
+			self.dd_err = None;
+		} else if self.enable_searching {
+			self.current_application_position = ApplicationPosition::Process;
+			self.enable_searching = false;
+		}
 	}
 
 	fn reset_multi_tap_keys(&mut self) {
@@ -144,14 +165,57 @@ impl App {
 
 	pub fn toggle_searching(&mut self) {
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::Process = self.current_application_position {
-				self.enable_searching = !(self.enable_searching);
+			match self.current_application_position {
+				ApplicationPosition::Process | ApplicationPosition::ProcessSearch => {
+					if self.enable_searching {
+						// Toggle off
+						self.enable_searching = false;
+						self.current_application_position = ApplicationPosition::Process;
+					} else {
+						// Toggle on
+						self.enable_searching = true;
+						self.current_application_position = ApplicationPosition::ProcessSearch;
+					}
+				}
+				_ => {}
 			}
 		}
 	}
 
 	pub fn is_searching(&self) -> bool {
 		self.enable_searching
+	}
+
+	pub fn is_in_search_widget(&self) -> bool {
+		if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			true
+		} else {
+			false
+		}
+	}
+
+	pub fn search_with_pid(&mut self) {
+		if !self.is_in_dialog() && self.is_searching() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				self.searching_pid = true;
+			}
+		}
+	}
+
+	pub fn search_with_name(&mut self) {
+		if !self.is_in_dialog() && self.is_searching() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				self.searching_pid = false;
+			}
+		}
+	}
+
+	pub fn is_searching_with_pid(&self) -> bool {
+		self.searching_pid
+	}
+
+	pub fn get_current_search_phrase(&self) -> &String {
+		&self.current_search_query
 	}
 
 	/// One of two functions allowed to run while in a dialog...
@@ -171,6 +235,12 @@ impl App {
 		}
 	}
 
+	pub fn on_backspace(&mut self) {
+		if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			self.current_search_query.pop();
+		}
+	}
+
 	pub fn on_char_key(&mut self, caught_char: char) {
 		// Forbid any char key presses when showing a dialog box...
 		if !self.is_in_dialog() {
@@ -183,128 +253,127 @@ impl App {
 			}
 			self.last_key_press = current_key_press_inst;
 
-			match caught_char {
-				'/' => {
-					if let ApplicationPosition::Process = self.current_application_position {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				self.current_search_query.push(caught_char);
+			} else {
+				match caught_char {
+					'/' => {
 						self.toggle_searching();
 					}
-				}
-				'd' => {
-					if let ApplicationPosition::Process = self.current_application_position {
-						if self.awaiting_second_char && self.second_char == 'd' {
+					'd' => {
+						if let ApplicationPosition::Process = self.current_application_position {
+							if self.awaiting_second_char && self.second_char == 'd' {
+								self.awaiting_second_char = false;
+								self.second_char = ' ';
+								let current_process = if self.is_grouped() {
+									let mut res: Vec<ConvertedProcessData> = Vec::new();
+									for pid in &self.canvas_data.grouped_process_data
+										[self.currently_selected_process_position as usize]
+										.group
+									{
+										let result = self
+											.canvas_data
+											.process_data
+											.iter()
+											.find(|p| p.pid == *pid);
+										if let Some(process) = result {
+											res.push((*process).clone());
+										}
+									}
+									res
+								} else {
+									vec![self.canvas_data.process_data
+										[self.currently_selected_process_position as usize]
+										.clone()]
+								};
+								self.to_delete_process_list = Some(current_process);
+								self.show_dd = true;
+								self.reset_multi_tap_keys();
+							} else {
+								self.awaiting_second_char = true;
+								self.second_char = 'd';
+							}
+						}
+					}
+					'g' => {
+						if self.awaiting_second_char && self.second_char == 'g' {
 							self.awaiting_second_char = false;
 							self.second_char = ' ';
-
-							let current_process = if self.is_grouped() {
-								let mut res: Vec<ConvertedProcessData> = Vec::new();
-								for pid in &self.canvas_data.grouped_process_data
-									[self.currently_selected_process_position as usize]
-									.group
-								{
-									let result = self
-										.canvas_data
-										.process_data
-										.iter()
-										.find(|p| p.pid == *pid);
-
-									if let Some(process) = result {
-										res.push((*process).clone());
-									}
-								}
-								res
-							} else {
-								vec![self.canvas_data.process_data
-									[self.currently_selected_process_position as usize]
-									.clone()]
-							};
-							self.to_delete_process_list = Some(current_process);
-							self.show_dd = true;
-							self.reset_multi_tap_keys();
+							self.skip_to_first();
 						} else {
 							self.awaiting_second_char = true;
-							self.second_char = 'd';
+							self.second_char = 'g';
 						}
 					}
-				}
-				'g' => {
-					if self.awaiting_second_char && self.second_char == 'g' {
-						self.awaiting_second_char = false;
-						self.second_char = ' ';
-						self.skip_to_first();
-					} else {
-						self.awaiting_second_char = true;
-						self.second_char = 'g';
+					'G' => self.skip_to_last(),
+					'k' => self.decrement_position_count(),
+					'j' => self.increment_position_count(),
+					'f' => {
+						self.is_frozen = !self.is_frozen;
 					}
-				}
-				'G' => self.skip_to_last(),
-				'k' => self.decrement_position_count(),
-				'j' => self.increment_position_count(),
-				'f' => {
-					self.is_frozen = !self.is_frozen;
-				}
-				'c' => {
-					match self.process_sorting_type {
-						processes::ProcessSorting::CPU => {
-							self.process_sorting_reverse = !self.process_sorting_reverse
-						}
-						_ => {
-							self.process_sorting_type = processes::ProcessSorting::CPU;
-							self.process_sorting_reverse = true;
-						}
-					}
-					self.to_be_resorted = true;
-					self.currently_selected_process_position = 0;
-				}
-				'm' => {
-					match self.process_sorting_type {
-						processes::ProcessSorting::MEM => {
-							self.process_sorting_reverse = !self.process_sorting_reverse
-						}
-						_ => {
-							self.process_sorting_type = processes::ProcessSorting::MEM;
-							self.process_sorting_reverse = true;
-						}
-					}
-					self.to_be_resorted = true;
-					self.currently_selected_process_position = 0;
-				}
-				'p' => {
-					// Disable if grouping
-					if !self.enable_grouping {
+					'c' => {
 						match self.process_sorting_type {
-							processes::ProcessSorting::PID => {
+							processes::ProcessSorting::CPU => {
 								self.process_sorting_reverse = !self.process_sorting_reverse
 							}
 							_ => {
-								self.process_sorting_type = processes::ProcessSorting::PID;
+								self.process_sorting_type = processes::ProcessSorting::CPU;
+								self.process_sorting_reverse = true;
+							}
+						}
+						self.to_be_resorted = true;
+						self.currently_selected_process_position = 0;
+					}
+					'm' => {
+						match self.process_sorting_type {
+							processes::ProcessSorting::MEM => {
+								self.process_sorting_reverse = !self.process_sorting_reverse
+							}
+							_ => {
+								self.process_sorting_type = processes::ProcessSorting::MEM;
+								self.process_sorting_reverse = true;
+							}
+						}
+						self.to_be_resorted = true;
+						self.currently_selected_process_position = 0;
+					}
+					'p' => {
+						// Disable if grouping
+						if !self.enable_grouping {
+							match self.process_sorting_type {
+								processes::ProcessSorting::PID => {
+									self.process_sorting_reverse = !self.process_sorting_reverse
+								}
+								_ => {
+									self.process_sorting_type = processes::ProcessSorting::PID;
+									self.process_sorting_reverse = false;
+								}
+							}
+							self.to_be_resorted = true;
+							self.currently_selected_process_position = 0;
+						}
+					}
+					'n' => {
+						match self.process_sorting_type {
+							processes::ProcessSorting::NAME => {
+								self.process_sorting_reverse = !self.process_sorting_reverse
+							}
+							_ => {
+								self.process_sorting_type = processes::ProcessSorting::NAME;
 								self.process_sorting_reverse = false;
 							}
 						}
 						self.to_be_resorted = true;
 						self.currently_selected_process_position = 0;
 					}
-				}
-				'n' => {
-					match self.process_sorting_type {
-						processes::ProcessSorting::NAME => {
-							self.process_sorting_reverse = !self.process_sorting_reverse
-						}
-						_ => {
-							self.process_sorting_type = processes::ProcessSorting::NAME;
-							self.process_sorting_reverse = false;
-						}
+					'?' => {
+						self.show_help = true;
 					}
-					self.to_be_resorted = true;
-					self.currently_selected_process_position = 0;
+					_ => {}
 				}
-				'?' => {
-					self.show_help = true;
+				if self.awaiting_second_char && caught_char != self.second_char {
+					self.awaiting_second_char = false;
 				}
-				_ => {}
-			}
-
-			if self.awaiting_second_char && caught_char != self.second_char {
-				self.awaiting_second_char = false;
 			}
 		}
 	}
@@ -332,13 +401,15 @@ impl App {
 	// CPU -(down)> MEM
 	// MEM -(down)> Network, -(right)> TEMP
 	// TEMP -(down)> Disk, -(left)> MEM, -(up)> CPU
-	// Disk -(down)> Processes, -(left)> MEM, -(up)> TEMP
+	// Disk -(down)> Processes OR PROC_SEARCH, -(left)> MEM, -(up)> TEMP
 	// Network -(up)> MEM, -(right)> PROC
-	// PROC -(up)> Disk, -(left)> Network
+	// PROC -(up)> Disk OR PROC_SEARCH if enabled, -(left)> Network
+	// PROC_SEARCH -(up)> Disk, -(down)> PROC, -(left)> Network
 	pub fn on_left(&mut self) {
 		if !self.is_in_dialog() {
 			self.current_application_position = match self.current_application_position {
 				ApplicationPosition::Process => ApplicationPosition::Network,
+				ApplicationPosition::ProcessSearch => ApplicationPosition::Network,
 				ApplicationPosition::Disk => ApplicationPosition::Mem,
 				ApplicationPosition::Temp => ApplicationPosition::Mem,
 				_ => self.current_application_position,
@@ -363,7 +434,14 @@ impl App {
 			self.current_application_position = match self.current_application_position {
 				ApplicationPosition::Mem => ApplicationPosition::Cpu,
 				ApplicationPosition::Network => ApplicationPosition::Mem,
-				ApplicationPosition::Process => ApplicationPosition::Disk,
+				ApplicationPosition::Process => {
+					if self.is_searching() {
+						ApplicationPosition::ProcessSearch
+					} else {
+						ApplicationPosition::Disk
+					}
+				}
+				ApplicationPosition::ProcessSearch => ApplicationPosition::Disk,
 				ApplicationPosition::Temp => ApplicationPosition::Cpu,
 				ApplicationPosition::Disk => ApplicationPosition::Temp,
 				_ => self.current_application_position,
@@ -378,7 +456,14 @@ impl App {
 				ApplicationPosition::Cpu => ApplicationPosition::Mem,
 				ApplicationPosition::Mem => ApplicationPosition::Network,
 				ApplicationPosition::Temp => ApplicationPosition::Disk,
-				ApplicationPosition::Disk => ApplicationPosition::Process,
+				ApplicationPosition::Disk => {
+					if self.is_searching() {
+						ApplicationPosition::ProcessSearch
+					} else {
+						ApplicationPosition::Process
+					}
+				}
+				ApplicationPosition::ProcessSearch => ApplicationPosition::Process,
 				_ => self.current_application_position,
 			};
 			self.reset_multi_tap_keys();
