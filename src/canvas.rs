@@ -47,7 +47,7 @@ lazy_static! {
 		Text::raw("p to sort by PID.\n"),
 		Text::raw("n to sort by process name.\n"),
 		Text::raw("Tab to group together processes with the same name.\n"),
-		Text::raw("Ctrl-f or / to toggle searching for a process.  Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
+		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.  Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
 		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
@@ -838,27 +838,39 @@ fn draw_disk_table<B: backend::Backend>(
 fn draw_search_field<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
+	let width = draw_loc.width - 10;
+	let query = app_state.get_current_search_query();
+	let shrunk_query = if query.len() < width as usize {
+		query
+	} else {
+		&query[(query.len() - width as usize)..]
+	};
+
 	let search_text = [
 		if app_state.is_searching_with_pid() {
-			Text::styled("\nPID: ", Style::default().fg(TABLE_HEADER_COLOUR))
+			Text::styled("\nPID : ", Style::default().fg(TABLE_HEADER_COLOUR))
 		} else {
 			Text::styled("\nName: ", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
-		Text::raw(app_state.get_current_search_phrase()),
+		Text::raw(shrunk_query),
 	];
 	Paragraph::new(search_text.iter())
 		.block(
 			Block::default()
-				.title("Search (Ctrl-p and Ctrl-n to switch search types, Esc or Ctrl-f to close)")
+				.title("Search (Ctrl-p and Ctrl-n to switch search types, Esc or Ctrl-f to close, Enter to search)")
 				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
+				.border_style(if app_state.get_current_regex_matcher().is_err() {
+					Style::default().fg(Color::Red)
+				} else {
+					match app_state.current_application_position {
+						app::ApplicationPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}
 				}),
 		)
 		.style(Style::default().fg(Color::Gray))
 		.alignment(Alignment::Left)
-		.wrap(true) // TODO: We want this to keep going right... slicing?
+		.wrap(false)
 		.render(f, draw_loc);
 }
 

@@ -384,7 +384,11 @@ fn handle_process_sorting(app: &mut app::App) {
 		app.process_sorting_reverse,
 	);
 
-	let tuple_results = update_process_row(&app.data);
+	let tuple_results = update_process_row(
+		&app.data,
+		app.get_current_regex_matcher(),
+		app.is_searching_with_pid(),
+	);
 	app.canvas_data.process_data = tuple_results.0;
 	app.canvas_data.grouped_process_data = tuple_results.1;
 }

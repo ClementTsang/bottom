@@ -25,6 +25,11 @@ pub enum ScrollDirection {
 	DOWN,
 }
 
+lazy_static! {
+	static ref BASE_REGEX: std::result::Result<regex::Regex, regex::Error> =
+		regex::Regex::new(".*");
+}
+
 pub struct App {
 	// Sorting
 	pub process_sorting_type: processes::ProcessSorting,
@@ -61,6 +66,7 @@ pub struct App {
 	enable_searching: bool,
 	current_search_query: String,
 	searching_pid: bool,
+	current_regex: std::result::Result<regex::Regex, regex::Error>,
 }
 
 impl App {
@@ -103,6 +109,7 @@ impl App {
 			enable_searching: false,
 			current_search_query: String::default(),
 			searching_pid: false,
+			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lt for if not fast
 		}
 	}
 
@@ -214,7 +221,7 @@ impl App {
 		self.searching_pid
 	}
 
-	pub fn get_current_search_phrase(&self) -> &String {
+	pub fn get_current_search_query(&self) -> &String {
 		&self.current_search_query
 	}
 
@@ -232,6 +239,18 @@ impl App {
 					self.show_dd = false;
 				}
 			}
+		} else if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			// Generate regex.
+
+			// TODO: [OPT] if we can get this to work WITHOUT pressing enter that would be good.
+			// However, this will be a bit hard without a thorough look at optimization to avoid
+			// wasteful regex generation.
+
+			self.current_regex = if self.current_search_query.is_empty() {
+				BASE_REGEX.clone()
+			} else {
+				regex::Regex::new(&(self.current_search_query))
+			};
 		}
 	}
 
@@ -239,6 +258,10 @@ impl App {
 		if let ApplicationPosition::ProcessSearch = self.current_application_position {
 			self.current_search_query.pop();
 		}
+	}
+
+	pub fn get_current_regex_matcher(&self) -> &std::result::Result<regex::Regex, regex::Error> {
+		&self.current_regex
 	}
 
 	pub fn on_char_key(&mut self, caught_char: char) {
