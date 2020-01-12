@@ -1,9 +1,13 @@
+//! This mainly concerns converting collected data into things that the canvas
+//! can actually handle.
+
 use crate::{
 	app::data_collection,
 	constants,
 	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
 use constants::*;
+use regex::Regex;
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
@@ -137,11 +141,23 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 }
 
 pub fn update_process_row(
-	app_data: &data_collection::Data,
+	app_data: &data_collection::Data, regex_matcher: &std::result::Result<Regex, regex::Error>,
+	use_pid: bool,
 ) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
 	let process_vector: Vec<ConvertedProcessData> = app_data
 		.list_of_processes
 		.iter()
+		.filter(|process| {
+			if let Ok(matcher) = regex_matcher {
+				if use_pid {
+					matcher.is_match(&process.pid.to_string())
+				} else {
+					matcher.is_match(&process.name)
+				}
+			} else {
+				true
+			}
+		})
 		.map(|process| ConvertedProcessData {
 			pid: process.pid,
 			name: process.name.to_string(),
@@ -168,6 +184,17 @@ pub fn update_process_row(
 	if let Some(grouped_list_of_processes) = &app_data.grouped_list_of_processes {
 		grouped_process_vector = grouped_list_of_processes
 			.iter()
+			.filter(|process| {
+				if let Ok(matcher) = regex_matcher {
+					if use_pid {
+						matcher.is_match(&process.pid.to_string())
+					} else {
+						matcher.is_match(&process.name)
+					}
+				} else {
+					true
+				}
+			})
 			.map(|process| ConvertedProcessData {
 				pid: process.pid,
 				name: process.name.to_string(),

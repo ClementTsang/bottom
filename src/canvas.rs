@@ -7,7 +7,7 @@ use std::cmp::max;
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
-	style::{Color, Modifier, Style},
+	style::{Color, Style},
 	terminal::Frame,
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
 	Terminal,
@@ -17,6 +17,7 @@ const TEXT_COLOUR: Color = Color::Gray;
 const GRAPH_COLOUR: Color = Color::Gray;
 const BORDER_STYLE_COLOUR: Color = Color::Gray;
 const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
+const TABLE_HEADER_COLOUR: Color = Color::LightBlue;
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 
 // Headers
@@ -28,24 +29,26 @@ const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
-	static ref HELP_TEXT: [Text<'static>; 15] = [
+	static ref HELP_TEXT: [Text<'static>; 17] = [
 		Text::raw("\nGeneral Keybindings\n"),
-		Text::raw("q, Ctrl-c to quit.\n"),
+		Text::raw("q, Ctrl-c to quit.  Note if you are currently in the search widget, `q` will not work.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
 		Text::raw("f to toggle freezing and unfreezing the display.\n"),
 		Text::raw(
-			"Ctrl+Up/k, Ctrl+Down/j, Ctrl+Left/h, Ctrl+Right/l to navigate between panels.\n"
+			"Ctrl-Up or Ctrl-k, Ctrl-Down or Ctrl-j, Ctrl-Left or Ctrl-h, Ctrl-Right or Ctrl-l to navigate between widgets.\n"
 		),
-		Text::raw("Up and Down scrolls through a list.\n"),
+		Text::raw("Up or k and Down or j scrolls through a list.\n"),
 		Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
 		Text::raw("? to get this help screen.\n"),
-		Text::raw("\n Process Panel Keybindings\n"),
+		Text::raw("\n Process Widget Keybindings\n"),
 		Text::raw("dd to kill the selected process.\n"),
 		Text::raw("c to sort by CPU usage.\n"),
 		Text::raw("m to sort by memory usage.\n"),
 		Text::raw("p to sort by PID.\n"),
 		Text::raw("n to sort by process name.\n"),
-		Text::raw("`Tab` to group together processes with the same name.\n")
+		Text::raw("Tab to group together processes with the same name.\n"),
+		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.  Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
+		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
 	static ref CANVAS_BORDER_STYLE: Style = Style::default().fg(BORDER_STYLE_COLOUR);
@@ -149,9 +152,9 @@ pub fn draw_data<B: backend::Backend>(
 				.margin(1)
 				.constraints(
 					[
-						Constraint::Percentage(32),
-						Constraint::Percentage(40),
-						Constraint::Percentage(28),
+						Constraint::Percentage(27),
+						Constraint::Percentage(50),
+						Constraint::Percentage(23),
 					]
 					.as_ref(),
 				)
@@ -307,14 +310,7 @@ pub fn draw_data<B: backend::Backend>(
 			let network_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(0)
-				.constraints(
-					if app_state.left_legend {
-						[Constraint::Percentage(10), Constraint::Percentage(90)]
-					} else {
-						[Constraint::Percentage(75), Constraint::Percentage(10)]
-					}
-					.as_ref(),
-				)
+				.constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
 				.split(bottom_chunks[0]);
 
 			// Default chunk index based on left or right legend setting
@@ -343,7 +339,17 @@ pub fn draw_data<B: backend::Backend>(
 			draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
 
 			// Processes table
-			draw_processes_table(&mut f, app_state, bottom_chunks[1]);
+			if app_state.is_searching() {
+				let processes_chunk = Layout::default()
+					.direction(Direction::Vertical)
+					.margin(0)
+					.constraints([Constraint::Percentage(25), Constraint::Percentage(75)].as_ref())
+					.split(bottom_chunks[1]);
+				draw_search_field(&mut f, app_state, processes_chunk[0]);
+				draw_processes_table(&mut f, app_state, processes_chunk[1]);
+			} else {
+				draw_processes_table(&mut f, app_state, bottom_chunks[1]);
+			}
 		}
 	})?;
 
@@ -495,7 +501,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 				_ => *CANVAS_BORDER_STYLE,
 			},
 		))
-		.header_style(Style::default().fg(Color::LightBlue))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
@@ -508,7 +514,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 fn _draw_memory_table<B: backend::Backend>(
 	_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect,
 ) {
-        // TODO: Memory table to be made for basic mode
+	// TODO: Memory table to be made for basic mode
 }
 
 fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
@@ -687,7 +693,7 @@ fn draw_network_labels<B: backend::Backend>(
 			_ => *CANVAS_BORDER_STYLE,
 		},
 	))
-	.header_style(Style::default().fg(Color::LightBlue))
+	.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 	.widths(
 		&(intrinsic_widths
 			.into_iter()
@@ -754,7 +760,7 @@ fn draw_temp_table<B: backend::Backend>(
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
-		.header_style(Style::default().fg(Color::LightBlue))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
@@ -819,17 +825,52 @@ fn draw_disk_table<B: backend::Backend>(
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
-		.header_style(
-			Style::default()
-				.fg(Color::LightBlue)
-				.modifier(Modifier::BOLD),
-		)
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
 				.map(|calculated_width| Constraint::Length(calculated_width as u16))
 				.collect::<Vec<_>>()),
 		)
+		.render(f, draw_loc);
+}
+
+fn draw_search_field<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+) {
+	let width = draw_loc.width - 10;
+	let query = app_state.get_current_search_query();
+	let shrunk_query = if query.len() < width as usize {
+		query
+	} else {
+		&query[(query.len() - width as usize)..]
+	};
+
+	let search_text = [
+		if app_state.is_searching_with_pid() {
+			Text::styled("\nPID : ", Style::default().fg(TABLE_HEADER_COLOUR))
+		} else {
+			Text::styled("\nName: ", Style::default().fg(TABLE_HEADER_COLOUR))
+		},
+		Text::raw(shrunk_query),
+	];
+	Paragraph::new(search_text.iter())
+		.block(
+			Block::default()
+				.title("Search (Ctrl-p and Ctrl-n to switch search types, Esc or Ctrl-f to close, Enter to search)")
+				.borders(Borders::ALL)
+				.border_style(if app_state.get_current_regex_matcher().is_err() {
+					Style::default().fg(Color::Red)
+				} else {
+					match app_state.current_application_position {
+						app::ApplicationPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}
+				}),
+		)
+		.style(Style::default().fg(Color::Gray))
+		.alignment(Alignment::Left)
+		.wrap(false)
 		.render(f, draw_loc);
 }
 
@@ -941,7 +982,7 @@ fn draw_processes_table<B: backend::Backend>(
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
-		.header_style(Style::default().fg(Color::LightBlue))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()

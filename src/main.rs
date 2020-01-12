@@ -9,8 +9,8 @@ extern crate lazy_static;
 
 use crossterm::{
 	event::{
-		self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
-		KeyModifiers, MouseEvent,
+		self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyModifiers,
+		MouseEvent,
 	},
 	execute,
 	terminal::LeaveAlternateScreen,
@@ -212,56 +212,43 @@ fn main() -> error::Result<()> {
 				Event::KeyInput(event) => {
 					if event.modifiers.is_empty() {
 						// If only a code, and no modifiers, don't bother...
+
+						// Required to catch for while typing
+						if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
+							break;
+						}
+
 						match event.code {
-							KeyCode::Char('q') => break,
-							KeyCode::Char('G') | KeyCode::End => app.skip_to_last(),
+							KeyCode::End => app.skip_to_last(),
 							KeyCode::Home => app.skip_to_first(),
-							KeyCode::Char('h') => app.on_left(),
-							KeyCode::Char('l') => app.on_right(),
-							KeyCode::Char('k') => app.on_up(),
-							KeyCode::Char('j') => app.on_down(),
 							KeyCode::Up => app.decrement_position_count(),
 							KeyCode::Down => app.increment_position_count(),
-							KeyCode::Char(uncaught_char) => app.on_char_key(uncaught_char),
-							KeyCode::Esc => app.reset(),
+							KeyCode::Char(character) => app.on_char_key(character),
+							KeyCode::Esc => app.on_esc(),
 							KeyCode::Enter => app.on_enter(),
 							KeyCode::Tab => app.on_tab(),
+							KeyCode::Backspace => app.on_backspace(),
 							_ => {}
 						}
 					} else {
 						// Otherwise, track the modifier as well...
-						match event {
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Char('c'),
-							} => break,
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Left,
-							} => app.on_left(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Right,
-							} => app.on_right(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Up,
-							} => app.on_up(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Down,
-							} => app.on_down(),
-							KeyEvent {
-								modifiers: KeyModifiers::CONTROL,
-								code: KeyCode::Char('r'),
-							} => {
-								while rtx.send(ResetEvent::Reset).is_err() {
-									debug!("Sent reset message.");
+						if let KeyModifiers::CONTROL = event.modifiers {
+							match event.code {
+								KeyCode::Char('c') => break,
+								KeyCode::Char('f') => app.toggle_searching(), // Note that this is fine for now, assuming '/' does not do anything other than search.
+								KeyCode::Left | KeyCode::Char('h') => app.on_left(),
+								KeyCode::Right | KeyCode::Char('l') => app.on_right(),
+								KeyCode::Up | KeyCode::Char('k') => app.on_up(),
+								KeyCode::Down | KeyCode::Char('j') => app.on_down(),
+								KeyCode::Char('p') => app.search_with_pid(),
+								KeyCode::Char('n') => app.search_with_name(),
+								KeyCode::Char('r') => {
+									if rtx.send(ResetEvent::Reset).is_ok() {
+										app.reset();
+									}
 								}
-								debug!("Resetting begins...");
-								app.reset();
+								_ => {}
 							}
-							_ => {}
 						}
 					}
 
@@ -397,7 +384,11 @@ fn handle_process_sorting(app: &mut app::App) {
 		app.process_sorting_reverse,
 	);
 
-	let tuple_results = update_process_row(&app.data);
+	let tuple_results = update_process_row(
+		&app.data,
+		app.get_current_regex_matcher(),
+		app.is_searching_with_pid(),
+	);
 	app.canvas_data.process_data = tuple_results.0;
 	app.canvas_data.grouped_process_data = tuple_results.1;
 }

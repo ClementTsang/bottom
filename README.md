@@ -6,26 +6,21 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 ![Quick demo recording](assets/recording_1.gif)
 
-## Installation
+## Features
 
-### Linux
+Features of bottom include:
 
-You can install by cloning and using `cargo build --release`, or use `cargo install bottom`. Other installation methods based on distros are as follows:
+- CPU widget to show a visual representation of per-core usage. Average CPU display also exists.
 
-#### Arch Linux
+- Memory widget to show a visual representation of both RAM and SWAP usage.
 
-You can get it from the AUR by installing `bottom`.
+- Networks widget to show a log-based visual representation of network usage.
 
-### Windows
+- Sortable and searchable process widget. Searching supports regex, and you can search by PID and process name.
 
-You can currently install by cloning and building yourself using `cargo build --release`, or use `cargo install bottom`
-. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+- Disks widget to display usage and I/O per second.
 
-### macOS
-
-macOS support will hopefully come soon<sup>TM</sup>.
-
-## Support
+- Temperature widget to monitor detected sensors in your system.
 
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
@@ -34,6 +29,24 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 | Linux     | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
 | Windows   | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
 | macOS     | Untested | Untested | Untested | Untested              | Untested  | Untested                                      |
+
+## Installation
+
+### Linux
+
+You can install the in-development version by cloning and using `cargo build --release`. You can get release versions using `cargo install bottom`, or manually building from the Releases page. Other installation methods based on distros are as follows:
+
+#### Arch Linux
+
+You can get the release versions from the AUR by installing `bottom`.
+
+### Windows
+
+You can install the in-development version by cloning and using `cargo build --release`. You can get release versions using `cargo install bottom`, or manually building from the Releases page. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+
+### macOS
+
+macOS support will hopefully come soon<sup>TM</sup>.
 
 ## Usage
 
@@ -69,13 +82,13 @@ Run using `btm`.
 
 #### General
 
-- `q`, `Ctrl-c` to quit.
+- `q`, `Ctrl-c` to quit. Note if you are currently in the search widget, `q` will not work so you can still type.
 
 - `Ctrl-r` to reset the screen and reset all collected data.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl+Up/k`, `Ctrl+Down/j`, `Ctrl+Left/h`, `Ctrl+Right/l` to navigate between widgets.
+- `Ctrl-Up` or `Ctrl-k`, `Ctrl-Down` or `Ctrl-j`, `Ctrl-Left` or `Ctrl-h`, `Ctrl-Right` or `Ctrl-l` to navigate between widgets.
 
 - `Esc` to close a dialog window.
 
@@ -83,11 +96,11 @@ Run using `btm`.
 
 #### Scrollable Tables
 
-- `Up` and `Down` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
+- `Up` or `k` and `Down` or `j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
 
 - `gg` or `Home` to jump to the first entry of the current table.
 
-- `G` (`Shift+g`) or `End` to jump to the last entry of the current table.
+- `G` (`Shift-g`) or `End` to jump to the last entry of the current table.
 
 #### Processes
 
@@ -103,9 +116,19 @@ Run using `btm`.
 
 - `Tab` to group together processes with the same name. Disables PID sorting. `dd` will now kill all processes covered by that name.
 
+- `Ctrl-f` or `/` to open the search widget.
+
+#### Search Widget
+
+- `Ctrl-p` or `Ctrl-n` to switch between searching for PID and name respectively.
+
+- `Esc` or `Ctrl-f` to close.
+
+Note that `q` is disabled while in the search widget.
+
 ### Mouse actions
 
-- Scrolling with the mouse will scroll through the currently selected list, similar to using the up/down arrow keys.
+- Scrolling with the mouse will scroll through the currently selected list.
 
 ## Thanks, kudos, and all the like
 
