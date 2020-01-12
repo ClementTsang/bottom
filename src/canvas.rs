@@ -30,16 +30,16 @@ const FORCE_MIN_THRESHOLD: usize = 5;
 lazy_static! {
 	static ref HELP_TEXT: [Text<'static>; 15] = [
 		Text::raw("\nGeneral Keybindings\n"),
-		Text::raw("q, Ctrl-c to quit.\n"),
+		Text::raw("Ctrl-q, Ctrl-c to quit.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
 		Text::raw("f to toggle freezing and unfreezing the display.\n"),
 		Text::raw(
-			"Ctrl+Up/k, Ctrl+Down/j, Ctrl+Left/h, Ctrl+Right/l to navigate between panels.\n"
+			"Ctrl-Up/Ctrl-k, Ctrl-Down/Ctrl-j, Ctrl-Left/Ctrl-h, Ctrl-Right/Ctrl-l to navigate between widgets.\n"
 		),
-		Text::raw("Up and Down scrolls through a list.\n"),
+		Text::raw("Up/k and Down/j scrolls through a list.\n"),
 		Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
 		Text::raw("? to get this help screen.\n"),
-		Text::raw("\n Process Panel Keybindings\n"),
+		Text::raw("\n Process Widget Keybindings\n"),
 		Text::raw("dd to kill the selected process.\n"),
 		Text::raw("c to sort by CPU usage.\n"),
 		Text::raw("m to sort by memory usage.\n"),
@@ -508,7 +508,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 fn _draw_memory_table<B: backend::Backend>(
 	_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect,
 ) {
-        // TODO: Memory table to be made for basic mode
+	// TODO: Memory table to be made for basic mode
 }
 
 fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
