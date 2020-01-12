@@ -57,6 +57,7 @@ pub struct App {
 	last_key_press: Instant,
 	pub canvas_data: canvas::CanvasData,
 	enable_grouping: bool,
+	enable_searching: bool,
 }
 
 impl App {
@@ -96,6 +97,7 @@ impl App {
 			last_key_press: Instant::now(),
 			canvas_data: canvas::CanvasData::default(),
 			enable_grouping: false,
+			enable_searching: false,
 		}
 	}
 
@@ -103,6 +105,7 @@ impl App {
 		self.reset_multi_tap_keys();
 		self.show_help = false;
 		self.show_dd = false;
+		self.enable_searching = false;
 		self.to_delete_process_list = None;
 		self.dd_err = None;
 	}
@@ -137,6 +140,18 @@ impl App {
 		self.enable_grouping
 	}
 
+	pub fn toggle_searching(&mut self) {
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::Process = self.current_application_position {
+				self.enable_searching = !(self.enable_searching);
+			}
+		}
+	}
+
+	pub fn is_searching(&self) -> bool {
+		self.enable_searching
+	}
+
 	/// One of two functions allowed to run while in a dialog...
 	pub fn on_enter(&mut self) {
 		if self.show_dd {
@@ -167,6 +182,11 @@ impl App {
 			self.last_key_press = current_key_press_inst;
 
 			match caught_char {
+				'/' => {
+					if let ApplicationPosition::Process = self.current_application_position {
+						self.toggle_searching();
+					}
+				}
 				'd' => {
 					if let ApplicationPosition::Process = self.current_application_position {
 						if self.awaiting_second_char && self.second_char == 'd' {
@@ -214,6 +234,9 @@ impl App {
 						self.second_char = 'g';
 					}
 				}
+				'G' => self.skip_to_last(),
+				'k' => self.decrement_position_count(),
+				'j' => self.increment_position_count(),
 				'f' => {
 					self.is_frozen = !self.is_frozen;
 				}
