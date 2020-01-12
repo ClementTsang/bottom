@@ -508,7 +508,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 fn _draw_memory_table<B: backend::Backend>(
 	_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect,
 ) {
-	todo!("Not implemented yet..."); // TODO: Memory table to be made for basic mode
+        // TODO: Memory table to be made for basic mode
 }
 
 fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
