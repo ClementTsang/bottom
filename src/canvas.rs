@@ -24,6 +24,7 @@ const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
+const MEM_HEADERS: [&str; 3] = ["Type", "Usage", "Usage%"];
 const NON_WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
@@ -63,6 +64,10 @@ lazy_static! {
 		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
 		.collect::<Vec<_>>();
 	static ref TEMP_HEADERS_LENS: Vec<usize> = TEMP_HEADERS
+		.iter()
+		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+		.collect::<Vec<_>>();
+	static ref MEM_HEADERS_LENS: Vec<usize> = MEM_HEADERS
 		.iter()
 		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
 		.collect::<Vec<_>>();
@@ -287,6 +292,12 @@ pub fn draw_data<B: backend::Backend>(
 				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
 				.split(middle_chunks[1]);
 
+			let middle_divide_chunk_3 = Layout::default()
+				.direction(Direction::Horizontal)
+				.margin(0)
+				.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+				.split(middle_divided_chunk_2[0]);
+
 			let bottom_chunks = Layout::default()
 				.direction(Direction::Horizontal)
 				.margin(0)
@@ -325,7 +336,12 @@ pub fn draw_data<B: backend::Backend>(
 			draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
 
 			//Memory usage graph
-			draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
+			draw_memory_graph(
+				&mut f,
+				&app_state,
+				middle_chunks[0],
+				middle_divide_chunk_3[0],
+			);
 
 			// Network graph
 			draw_network_graph(&mut f, &app_state, network_chunk[0]);
@@ -333,7 +349,7 @@ pub fn draw_data<B: backend::Backend>(
 			draw_network_labels(&mut f, app_state, network_chunk[1]);
 
 			// Temperature table
-			draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0]);
+			draw_temp_table(&mut f, app_state, middle_divide_chunk_3[1]);
 
 			// Disk usage table
 			draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
@@ -511,13 +527,47 @@ fn draw_cpu_legend<B: backend::Backend>(
 		.render(f, draw_loc);
 }
 
-fn _draw_memory_table<B: backend::Backend>(
-	_f: &mut Frame<B>, _app_state: &app::App, _draw_loc: Rect,
+fn draw_memory_table<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &app::App, memory_entry: Vec<String>, swap_entry: Vec<String>,
+	draw_loc: Rect,
 ) {
-	// TODO: Memory table to be made for basic mode
+	// Calculate widths
+	let width = f64::from(draw_loc.width);
+	let width_ratios = [0.25, 0.5, 0.25];
+	let variable_intrinsic_results =
+		get_variable_intrinsic_widths(width as u16, &width_ratios, &MEM_HEADERS_LENS);
+	let intrinsic_widths: Vec<u16> =
+		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+	let mem_rows = vec![memory_entry, swap_entry];
+	let mapped_mem_rows = mem_rows.iter().enumerate().map(|(itx, val)| {
+		Row::StyledData(
+			val.iter(),
+			Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
+		)
+	});
+
+	// Draw
+	Table::new(MEM_HEADERS.iter(), mapped_mem_rows)
+		.block(Block::default().borders(Borders::ALL).border_style(
+			match app_state.current_application_position {
+				app::ApplicationPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				_ => *CANVAS_BORDER_STYLE,
+			},
+		))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+		.widths(
+			&(intrinsic_widths
+				.into_iter()
+				.map(|calculated_width| Constraint::Length(calculated_width as u16))
+				.collect::<Vec<_>>()),
+		)
+		.render(f, draw_loc);
 }
 
-fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
+fn draw_memory_graph<B: backend::Backend>(
+	f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect, label_loc: Rect,
+) {
 	let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
 	let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
 	let memory_labels: &[(u64, u64)] = &(app_state.canvas_data.memory_labels);
@@ -530,19 +580,21 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
 		.labels(&["0%", "100%"]);
 
-	let mem_name = "RAM:".to_string()
-		+ &format!(
-			"{:3}%",
-			(mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
-		) + &format!(
-		"   {:.1}GB/{:.1}GB",
-		memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
-		memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
-	);
-	let swap_name: String;
+	let mem_labels = vec![
+		"RAM:".to_string(),
+		format!(
+			"{:.1}GB/{:.1}GB",
+			memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
+			memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
+		),
+		format!(
+			"{}%",
+			(mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64) // TODO: [REFACTOR] pretty nasty here
+		),
+	];
+	let mut swap_labels: Vec<String> = Vec::new();
 
 	let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
-		.name(&mem_name)
 		.marker(if app_state.use_dot {
 			Marker::Dot
 		} else {
@@ -554,18 +606,20 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 	if !(&swap_data).is_empty() {
 		if let Some(last_canvas_result) = (&swap_data).last() {
 			if last_canvas_result.1 >= 0.0 {
-				swap_name = "SWP:".to_string()
-					+ &format!(
-						"{:3}%",
+				swap_labels = vec![
+					"SWP:".to_string(),
+					format!(
+						"{:.1}GB/{:.1}GB",
+						memory_labels[1].0 as f64 / 1024.0,
+						memory_labels[1].1 as f64 / 1024.0
+					),
+					format!(
+						"{}%",
 						(swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
-					) + &format!(
-					"   {:.1}GB/{:.1}GB",
-					memory_labels[1].0 as f64 / 1024.0,
-					memory_labels[1].1 as f64 / 1024.0
-				);
+					),
+				];
 				mem_canvas_vec.push(
 					Dataset::default()
-						.name(&swap_name)
 						.marker(if app_state.use_dot {
 							Marker::Dot
 						} else {
@@ -577,6 +631,9 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 			}
 		}
 	}
+
+	// Memory usage table
+	draw_memory_table(f, &app_state, mem_labels, swap_labels, label_loc);
 
 	Chart::default()
 		.block(
