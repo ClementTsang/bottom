@@ -24,7 +24,7 @@ const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
-const MEM_HEADERS: [&str; 3] = ["Type", "Usage", "Usage%"];
+const MEM_HEADERS: [&str; 3] = ["Mem", "Usage", "Usage%"];
 const NON_WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
@@ -533,7 +533,7 @@ fn draw_memory_table<B: backend::Backend>(
 ) {
 	// Calculate widths
 	let width = f64::from(draw_loc.width);
-	let width_ratios = [0.25, 0.5, 0.25];
+	let width_ratios = [0.2, 0.4, 0.4];
 	let variable_intrinsic_results =
 		get_variable_intrinsic_widths(width as u16, &width_ratios, &MEM_HEADERS_LENS);
 	let intrinsic_widths: Vec<u16> =
