@@ -319,10 +319,25 @@ pub fn draw_data<B: backend::Backend>(
 				)
 				.split(vertical_chunks[0]);
 
+			debug!("Height: {}", bottom_chunks[0].height);
 			let network_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(0)
-				.constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
+				.constraints(
+					if (bottom_chunks[0].height as f64 * 0.25) as u16 >= 4 {
+						[Constraint::Percentage(75), Constraint::Percentage(25)]
+					} else {
+						let required = if bottom_chunks[0].height < 10 {
+							bottom_chunks[0].height / 2
+						} else {
+							5
+						};
+						debug!("Req: {}", required);
+						let remaining = bottom_chunks[0].height - required;
+						[Constraint::Length(remaining), Constraint::Length(required)]
+					}
+					.as_ref(),
+				)
 				.split(bottom_chunks[0]);
 
 			// Default chunk index based on left or right legend setting
