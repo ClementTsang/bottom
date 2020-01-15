@@ -145,6 +145,7 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	colour_vec
 }
 
+#[allow(unused_variables)]
 pub fn draw_data<B: backend::Backend>(
 	terminal: &mut Terminal<B>, app_state: &mut app::App,
 ) -> error::Result<()> {
@@ -336,12 +337,7 @@ pub fn draw_data<B: backend::Backend>(
 			draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
 
 			//Memory usage graph
-			draw_memory_graph(
-				&mut f,
-				&app_state,
-				middle_chunks[0],
-				middle_divide_chunk_3[0],
-			);
+			draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
 
 			// Network graph
 			draw_network_graph(&mut f, &app_state, network_chunk[0]);
@@ -349,7 +345,7 @@ pub fn draw_data<B: backend::Backend>(
 			draw_network_labels(&mut f, app_state, network_chunk[1]);
 
 			// Temperature table
-			draw_temp_table(&mut f, app_state, middle_divide_chunk_3[1]);
+			draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0]);
 
 			// Disk usage table
 			draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
@@ -527,6 +523,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 		.render(f, draw_loc);
 }
 
+#[allow(dead_code)]
 fn draw_memory_table<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &app::App, memory_entry: Vec<String>, swap_entry: Vec<String>,
 	draw_loc: Rect,
@@ -565,9 +562,7 @@ fn draw_memory_table<B: backend::Backend>(
 		.render(f, draw_loc);
 }
 
-fn draw_memory_graph<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect, label_loc: Rect,
-) {
+fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
 	let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
 	let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
 	let memory_labels: &[(u64, u64)] = &(app_state.canvas_data.memory_labels);
@@ -580,21 +575,19 @@ fn draw_memory_graph<B: backend::Backend>(
 		.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
 		.labels(&["0%", "100%"]);
 
-	let mem_labels = vec![
-		"RAM:".to_string(),
-		format!(
-			"{:.1}GB/{:.1}GB",
-			memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
-			memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
-		),
-		format!(
-			"{}%",
-			(mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64) // TODO: [REFACTOR] pretty nasty here
-		),
-	];
-	let mut swap_labels: Vec<String> = Vec::new();
+	let mem_name = "RAM:".to_string()
+		+ &format!(
+			"{:3}%",
+			(mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
+		) + &format!(
+		"   {:.1}GB/{:.1}GB",
+		memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
+		memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
+	);
+	let swap_name: String;
 
 	let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
+		.name(&mem_name)
 		.marker(if app_state.use_dot {
 			Marker::Dot
 		} else {
@@ -606,20 +599,18 @@ fn draw_memory_graph<B: backend::Backend>(
 	if !(&swap_data).is_empty() {
 		if let Some(last_canvas_result) = (&swap_data).last() {
 			if last_canvas_result.1 >= 0.0 {
-				swap_labels = vec![
-					"SWP:".to_string(),
-					format!(
-						"{:.1}GB/{:.1}GB",
-						memory_labels[1].0 as f64 / 1024.0,
-						memory_labels[1].1 as f64 / 1024.0
-					),
-					format!(
-						"{}%",
+				swap_name = "SWP:".to_string()
+					+ &format!(
+						"{:3}%",
 						(swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
-					),
-				];
+					) + &format!(
+					"   {:.1}GB/{:.1}GB",
+					memory_labels[1].0 as f64 / 1024.0,
+					memory_labels[1].1 as f64 / 1024.0
+				);
 				mem_canvas_vec.push(
 					Dataset::default()
+						.name(&swap_name)
 						.marker(if app_state.use_dot {
 							Marker::Dot
 						} else {
@@ -633,7 +624,7 @@ fn draw_memory_graph<B: backend::Backend>(
 	}
 
 	// Memory usage table
-	draw_memory_table(f, &app_state, mem_labels, swap_labels, label_loc);
+	// draw_memory_table(f, &app_state, mem_labels, swap_labels, label_loc);
 
 	Chart::default()
 		.block(
