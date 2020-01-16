@@ -900,7 +900,7 @@ fn draw_disk_table<B: backend::Backend>(
 fn draw_search_field<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	let width = draw_loc.width - 10;
+	let width = draw_loc.width - 18; // TODO [SEARCH] this is hardcoded... ew
 	let query = app_state.get_current_search_query();
 	let shrunk_query = if query.len() < width as usize {
 		query
@@ -910,16 +910,22 @@ fn draw_search_field<B: backend::Backend>(
 
 	let search_text = [
 		if app_state.is_searching_with_pid() {
-			Text::styled("\nPID : ", Style::default().fg(TABLE_HEADER_COLOUR))
+			Text::styled("\nPID", Style::default().fg(TABLE_HEADER_COLOUR))
 		} else {
-			Text::styled("\nName: ", Style::default().fg(TABLE_HEADER_COLOUR))
+			Text::styled("\nName", Style::default().fg(TABLE_HEADER_COLOUR))
+		},
+		if app_state.use_simple {
+			Text::styled(" (Simple): ", Style::default().fg(TABLE_HEADER_COLOUR))
+		} else {
+			Text::styled(" (Regex): ", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
 		Text::raw(shrunk_query),
 	];
+	// TODO: [SEARCH] Gotta make this easier to understand... it's pretty ugly cramming controls like this
 	Paragraph::new(search_text.iter())
 		.block(
 			Block::default()
-				.title("Search (Ctrl-p and Ctrl-n to switch search types, Esc or Ctrl-f to close, Enter to search)")
+				.title("Search (Esc or Ctrl-f to close)")
 				.borders(Borders::ALL)
 				.border_style(if app_state.get_current_regex_matcher().is_err() {
 					Style::default().fg(Color::Red)
