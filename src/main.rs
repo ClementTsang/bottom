@@ -73,6 +73,7 @@ fn main() -> error::Result<()> {
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 		(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
+		(@arg SEARCH_DEFAULT_USE_SIMPLE: -s --simple_search "Uses a simple case-insensitive string comparison to search processes by default.")
 	)
 	.get_matches();
 
@@ -127,6 +128,11 @@ fn main() -> error::Result<()> {
 	// Enable grouping immediately if set.
 	if matches.is_present("GROUP_PROCESSES") {
 		app.toggle_grouping();
+	}
+
+	// Set default search method
+	if matches.is_present("SEARCH_DEFAULT_USE_SIMPLE") {
+		app.use_simple = true;
 	}
 
 	// Set up up tui and crossterm
@@ -286,8 +292,6 @@ fn main() -> error::Result<()> {
 						app.canvas_data.swap_data = update_swap_data_points(&app.data);
 						app.canvas_data.cpu_data =
 							update_cpu_data_points(app.show_average_cpu, &app.data);
-
-						//debug!("Update event complete.");
 					}
 				}
 			}
@@ -384,11 +388,19 @@ fn handle_process_sorting(app: &mut app::App) {
 		app.process_sorting_reverse,
 	);
 
-	let tuple_results = update_process_row(
-		&app.data,
-		app.get_current_regex_matcher(),
-		app.is_searching_with_pid(),
-	);
+	let tuple_results = if app.use_simple {
+		simple_update_process_row(
+			&app.data,
+			&(app.get_current_search_query().to_ascii_lowercase()),
+			app.is_searching_with_pid(),
+		)
+	} else {
+		regex_update_process_row(
+			&app.data,
+			app.get_current_regex_matcher(),
+			app.is_searching_with_pid(),
+		)
+	};
 	app.canvas_data.process_data = tuple_results.0;
 	app.canvas_data.grouped_process_data = tuple_results.1;
 }

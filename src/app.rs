@@ -63,9 +63,10 @@ pub struct App {
 	last_key_press: Instant,
 	pub canvas_data: canvas::CanvasData,
 	enable_grouping: bool,
-	enable_searching: bool,
+	enable_searching: bool, // TODO: [OPT] group together?
 	current_search_query: String,
 	searching_pid: bool,
+	pub use_simple: bool,
 	current_regex: std::result::Result<regex::Regex, regex::Error>,
 }
 
@@ -109,7 +110,8 @@ impl App {
 			enable_searching: false,
 			current_search_query: String::default(),
 			searching_pid: false,
-			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lt for if not fast
+			use_simple: false,
+			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lifetimes to avoid cloning
 		}
 	}
 

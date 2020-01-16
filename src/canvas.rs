@@ -319,7 +319,6 @@ pub fn draw_data<B: backend::Backend>(
 				)
 				.split(vertical_chunks[0]);
 
-			debug!("Height: {}", bottom_chunks[0].height);
 			let network_chunk = Layout::default()
 				.direction(Direction::Vertical)
 				.margin(0)

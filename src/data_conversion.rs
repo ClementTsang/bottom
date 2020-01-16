@@ -140,7 +140,49 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 	disk_vector
 }
 
-pub fn update_process_row(
+pub fn simple_update_process_row(
+	app_data: &data_collection::Data, matching_string: &str, use_pid: bool,
+) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
+	let process_vector: Vec<ConvertedProcessData> = app_data
+		.list_of_processes
+		.iter()
+		.filter(|process| {
+			if use_pid {
+				process
+					.pid
+					.to_string()
+					.to_ascii_lowercase()
+					.contains(matching_string)
+			} else {
+				process.name.to_ascii_lowercase().contains(matching_string)
+			}
+		})
+		.map(|process| return_mapped_process(process, app_data))
+		.collect::<Vec<_>>();
+
+	let mut grouped_process_vector: Vec<ConvertedProcessData> = Vec::new();
+	if let Some(grouped_list_of_processes) = &app_data.grouped_list_of_processes {
+		grouped_process_vector = grouped_list_of_processes
+			.iter()
+			.filter(|process| {
+				if use_pid {
+					process
+						.pid
+						.to_string()
+						.to_ascii_lowercase()
+						.contains(matching_string)
+				} else {
+					process.name.to_ascii_lowercase().contains(matching_string)
+				}
+			})
+			.map(|process| return_mapped_process(process, app_data))
+			.collect::<Vec<_>>();
+	}
+
+	(process_vector, grouped_process_vector)
+}
+
+pub fn regex_update_process_row(
 	app_data: &data_collection::Data, regex_matcher: &std::result::Result<Regex, regex::Error>,
 	use_pid: bool,
 ) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
@@ -158,26 +200,7 @@ pub fn update_process_row(
 				true
 			}
 		})
-		.map(|process| ConvertedProcessData {
-			pid: process.pid,
-			name: process.name.to_string(),
-			cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
-			mem_usage: format!(
-				"{:.1}%",
-				if let Some(mem_usage) = process.mem_usage_percent {
-					mem_usage
-				} else if let Some(mem_usage_kb) = process.mem_usage_kb {
-					if let Some(mem_data) = app_data.memory.last() {
-						(mem_usage_kb / 1000) as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
-					} else {
-						0_f64
-					}
-				} else {
-					0_f64
-				}
-			),
-			group: vec![],
-		})
+		.map(|process| return_mapped_process(process, app_data))
 		.collect::<Vec<_>>();
 
 	let mut grouped_process_vector: Vec<ConvertedProcessData> = Vec::new();
@@ -195,34 +218,36 @@ pub fn update_process_row(
 					true
 				}
 			})
-			.map(|process| ConvertedProcessData {
-				pid: process.pid,
-				name: process.name.to_string(),
-				cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
-				mem_usage: format!(
-					"{:.1}%",
-					if let Some(mem_usage) = process.mem_usage_percent {
-						mem_usage
-					} else if let Some(mem_usage_kb) = process.mem_usage_kb {
-						if let Some(mem_data) = app_data.memory.last() {
-							(mem_usage_kb / 1000) as f64 / mem_data.mem_total_in_mb as f64 * 100_f64
-						} else {
-							0_f64
-						}
-					} else {
-						0_f64
-					}
-				),
-				group: if let Some(pid_vec) = &process.pid_vec {
-					pid_vec.to_vec()
-				} else {
-					vec![]
-				},
-			})
+			.map(|process| return_mapped_process(process, app_data))
 			.collect::<Vec<_>>();
 	}
 
 	(process_vector, grouped_process_vector)
+}
+
+fn return_mapped_process(
+	process: &data_collection::processes::ProcessData, app_data: &data_collection::Data,
+) -> ConvertedProcessData {
+	ConvertedProcessData {
+		pid: process.pid,
+		name: process.name.to_string(),
+		cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
+		mem_usage: format!(
+			"{:.1}%",
+			if let Some(mem_usage) = process.mem_usage_percent {
+				mem_usage
+			} else if let Some(mem_usage_kb) = process.mem_usage_kb {
+				if let Some(mem_data) = app_data.memory.last() {
+					(mem_usage_kb / 1000) as f64 / mem_data.mem_total_in_mb as f64 * 100_f64 // TODO: [OPT] Get rid of this
+				} else {
+					0_f64
+				}
+			} else {
+				0_f64
+			}
+		),
+		group: vec![],
+	}
 }
 
 pub fn update_cpu_data_points(
