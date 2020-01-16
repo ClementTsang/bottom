@@ -253,6 +253,7 @@ fn main() -> error::Result<()> {
 										app.reset();
 									}
 								}
+								KeyCode::Char('s') => app.toggle_simple_search(),
 								_ => {}
 							}
 						}

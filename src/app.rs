@@ -227,6 +227,14 @@ impl App {
 		&self.current_search_query
 	}
 
+	pub fn toggle_simple_search(&mut self) {
+		if !self.is_in_dialog() && self.is_searching() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				self.use_simple = !self.use_simple;
+			}
+		}
+	}
+
 	/// One of two functions allowed to run while in a dialog...
 	pub fn on_enter(&mut self) {
 		if self.show_dd {
@@ -241,18 +249,6 @@ impl App {
 					self.show_dd = false;
 				}
 			}
-		} else if let ApplicationPosition::ProcessSearch = self.current_application_position {
-			// Generate regex.
-
-			// TODO: [OPT] if we can get this to work WITHOUT pressing enter that would be good.
-			// However, this will be a bit hard without a thorough look at optimization to avoid
-			// wasteful regex generation.
-
-			self.current_regex = if self.current_search_query.is_empty() {
-				BASE_REGEX.clone()
-			} else {
-				regex::Regex::new(&(self.current_search_query))
-			};
 		}
 	}
 
@@ -280,6 +276,12 @@ impl App {
 
 			if let ApplicationPosition::ProcessSearch = self.current_application_position {
 				self.current_search_query.push(caught_char);
+
+				self.current_regex = if self.current_search_query.is_empty() {
+					BASE_REGEX.clone()
+				} else {
+					regex::Regex::new(&(self.current_search_query))
+				};
 			} else {
 				match caught_char {
 					'/' => {
