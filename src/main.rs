@@ -227,8 +227,10 @@ fn main() -> error::Result<()> {
 						match event.code {
 							KeyCode::End => app.skip_to_last(),
 							KeyCode::Home => app.skip_to_first(),
-							KeyCode::Up => app.decrement_position_count(),
-							KeyCode::Down => app.increment_position_count(),
+							KeyCode::Up => app.on_up_key(),
+							KeyCode::Down => app.on_down_key(),
+							KeyCode::Left => app.on_left_key(),
+							KeyCode::Right => app.on_right_key(),
 							KeyCode::Char(character) => app.on_char_key(character),
 							KeyCode::Esc => app.on_esc(),
 							KeyCode::Enter => app.on_enter(),
@@ -242,10 +244,10 @@ fn main() -> error::Result<()> {
 							match event.code {
 								KeyCode::Char('c') => break,
 								KeyCode::Char('f') => app.toggle_searching(), // Note that this is fine for now, assuming '/' does not do anything other than search.
-								KeyCode::Left | KeyCode::Char('h') => app.on_left(),
-								KeyCode::Right | KeyCode::Char('l') => app.on_right(),
-								KeyCode::Up | KeyCode::Char('k') => app.on_up(),
-								KeyCode::Down | KeyCode::Char('j') => app.on_down(),
+								KeyCode::Left | KeyCode::Char('h') => app.move_left(),
+								KeyCode::Right | KeyCode::Char('l') => app.move_right(),
+								KeyCode::Up | KeyCode::Char('k') => app.move_up(),
+								KeyCode::Down | KeyCode::Char('j') => app.move_down(),
 								KeyCode::Char('p') => app.search_with_pid(),
 								KeyCode::Char('n') => app.search_with_name(),
 								KeyCode::Char('r') => {

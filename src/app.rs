@@ -68,6 +68,7 @@ pub struct App {
 	searching_pid: bool,
 	pub use_simple: bool,
 	current_regex: std::result::Result<regex::Regex, regex::Error>,
+	current_cursor_position: usize,
 }
 
 impl App {
@@ -112,6 +113,7 @@ impl App {
 			searching_pid: false,
 			use_simple: false,
 			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lifetimes to avoid cloning
+			current_cursor_position: 0,
 		}
 	}
 
@@ -235,6 +237,10 @@ impl App {
 		}
 	}
 
+	pub fn get_cursor_position(&self) -> usize {
+		self.current_cursor_position
+	}
+
 	/// One of two functions allowed to run while in a dialog...
 	pub fn on_enter(&mut self) {
 		if self.show_dd {
@@ -254,12 +260,61 @@ impl App {
 
 	pub fn on_backspace(&mut self) {
 		if let ApplicationPosition::ProcessSearch = self.current_application_position {
-			self.current_search_query.pop();
+			if self.current_cursor_position > 0 {
+				self.current_cursor_position -= 1;
+				self.current_search_query
+					.remove(self.current_cursor_position);
+
+				// TODO: [OPT] this runs even while in simple... consider making this only run if they toggle back to regex!
+				self.current_regex = if self.current_search_query.is_empty() {
+					BASE_REGEX.clone()
+				} else {
+					regex::Regex::new(&(self.current_search_query))
+				};
+			}
 		}
 	}
 
 	pub fn get_current_regex_matcher(&self) -> &std::result::Result<regex::Regex, regex::Error> {
 		&self.current_regex
+	}
+
+	pub fn on_up_key(&mut self) {
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			} else {
+				self.decrement_position_count();
+			}
+		}
+	}
+
+	pub fn on_down_key(&mut self) {
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			} else {
+				self.increment_position_count();
+			}
+		}
+	}
+
+	pub fn on_left_key(&mut self) {
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				if self.current_cursor_position > 0 {
+					self.current_cursor_position -= 1;
+				}
+			}
+		}
+	}
+
+	pub fn on_right_key(&mut self) {
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				if self.current_cursor_position < self.current_search_query.len() {
+					self.current_cursor_position += 1;
+				}
+			}
+		}
 	}
 
 	pub fn on_char_key(&mut self, caught_char: char) {
@@ -275,8 +330,11 @@ impl App {
 			self.last_key_press = current_key_press_inst;
 
 			if let ApplicationPosition::ProcessSearch = self.current_application_position {
-				self.current_search_query.push(caught_char);
+				self.current_search_query
+					.insert(self.current_cursor_position, caught_char);
+				self.current_cursor_position += 1;
 
+				// TODO: [OPT] this runs even while in simple... consider making this only run if they toggle back to regex!
 				self.current_regex = if self.current_search_query.is_empty() {
 					BASE_REGEX.clone()
 				} else {
@@ -432,7 +490,7 @@ impl App {
 	// Network -(up)> MEM, -(right)> PROC
 	// PROC -(up)> Disk OR PROC_SEARCH if enabled, -(left)> Network
 	// PROC_SEARCH -(up)> Disk, -(down)> PROC, -(left)> Network
-	pub fn on_left(&mut self) {
+	pub fn move_left(&mut self) {
 		if !self.is_in_dialog() {
 			self.current_application_position = match self.current_application_position {
 				ApplicationPosition::Process => ApplicationPosition::Network,
@@ -445,7 +503,7 @@ impl App {
 		}
 	}
 
-	pub fn on_right(&mut self) {
+	pub fn move_right(&mut self) {
 		if !self.is_in_dialog() {
 			self.current_application_position = match self.current_application_position {
 				ApplicationPosition::Mem => ApplicationPosition::Temp,
@@ -456,7 +514,7 @@ impl App {
 		}
 	}
 
-	pub fn on_up(&mut self) {
+	pub fn move_up(&mut self) {
 		if !self.is_in_dialog() {
 			self.current_application_position = match self.current_application_position {
 				ApplicationPosition::Mem => ApplicationPosition::Cpu,
@@ -477,7 +535,7 @@ impl App {
 		}
 	}
 
-	pub fn on_down(&mut self) {
+	pub fn move_down(&mut self) {
 		if !self.is_in_dialog() {
 			self.current_application_position = match self.current_application_position {
 				ApplicationPosition::Cpu => ApplicationPosition::Mem,

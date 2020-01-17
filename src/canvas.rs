@@ -900,7 +900,7 @@ fn draw_disk_table<B: backend::Backend>(
 fn draw_search_field<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	let width = draw_loc.width - 18; // TODO [SEARCH] this is hardcoded... ew
+	let width = draw_loc.width - 18; // TODO [SEARCH] this is hard-coded... ew
 	let query = app_state.get_current_search_query();
 	let shrunk_query = if query.len() < width as usize {
 		query
@@ -908,7 +908,32 @@ fn draw_search_field<B: backend::Backend>(
 		&query[(query.len() - width as usize)..]
 	};
 
-	let search_text = [
+	// TODO: [SEARCH] Consider making this look prettier
+	let cursor_position = app_state.get_cursor_position();
+
+	// TODO: [SEARCH] This can be optimized...
+	let mut query_with_cursor: Vec<Text> = shrunk_query
+		.chars()
+		.enumerate()
+		.map(|(itx, c)| {
+			if itx == cursor_position {
+				Text::styled(
+					c.to_string(),
+					Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
+				)
+			} else {
+				Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
+			}
+		})
+		.collect::<Vec<_>>();
+	if cursor_position >= query.len() {
+		query_with_cursor.push(Text::styled(
+			" ".to_string(),
+			Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
+		))
+	}
+
+	let mut search_text = vec![
 		if app_state.is_searching_with_pid() {
 			Text::styled("\nPID", Style::default().fg(TABLE_HEADER_COLOUR))
 		} else {
@@ -919,8 +944,10 @@ fn draw_search_field<B: backend::Backend>(
 		} else {
 			Text::styled(" (Regex): ", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
-		Text::raw(shrunk_query),
 	];
+
+	search_text.extend(query_with_cursor);
+
 	// TODO: [SEARCH] Gotta make this easier to understand... it's pretty ugly cramming controls like this
 	Paragraph::new(search_text.iter())
 		.block(
