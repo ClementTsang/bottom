@@ -76,7 +76,9 @@ Run using `btm`.
 
 - `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage. Only affects Linux for now.
 
-- `g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
+- `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
+
+- `-s`, `--simple_search` will default the search to simple search rather than regex search.
 
 ### Keybindings
 
@@ -121,6 +123,10 @@ Run using `btm`.
 #### Search Widget
 
 - `Ctrl-p` or `Ctrl-n` to switch between searching for PID and name respectively.
+
+- `Ctrl-s` to toggle between a simple search and a regex search.
+
+- `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
 
 - `Esc` or `Ctrl-f` to close.
 

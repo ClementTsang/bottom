@@ -30,7 +30,7 @@ const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
-	static ref HELP_TEXT: [Text<'static>; 17] = [
+	static ref HELP_TEXT: [Text<'static>; 20] = [
 		Text::raw("\nGeneral Keybindings\n"),
 		Text::raw("q, Ctrl-c to quit.  Note if you are currently in the search widget, `q` will not work.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
@@ -48,7 +48,10 @@ lazy_static! {
 		Text::raw("p to sort by PID.\n"),
 		Text::raw("n to sort by process name.\n"),
 		Text::raw("Tab to group together processes with the same name.\n"),
-		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.  Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
+		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.\n"),
+		Text::raw("Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
+		Text::raw("Use Ctrl-a and Ctrl-e to set the cursor to the start and end of the bar respectively.\n"),
+		Text::raw("Use Ctrl-s to toggle between simple and regex search.\n"),
 		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
@@ -158,9 +161,9 @@ pub fn draw_data<B: backend::Backend>(
 				.margin(1)
 				.constraints(
 					[
-						Constraint::Percentage(27),
-						Constraint::Percentage(50),
-						Constraint::Percentage(23),
+						Constraint::Percentage(22),
+						Constraint::Percentage(60),
+						Constraint::Percentage(18),
 					]
 					.as_ref(),
 				)
@@ -171,9 +174,9 @@ pub fn draw_data<B: backend::Backend>(
 				.margin(0)
 				.constraints(
 					[
-						Constraint::Percentage(30),
-						Constraint::Percentage(40),
-						Constraint::Percentage(30),
+						Constraint::Percentage(20),
+						Constraint::Percentage(60),
+						Constraint::Percentage(20),
 					]
 					.as_ref(),
 				)
