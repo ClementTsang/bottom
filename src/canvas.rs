@@ -914,26 +914,30 @@ fn draw_search_field<B: backend::Backend>(
 	// TODO: [SEARCH] Consider making this look prettier
 	let cursor_position = app_state.get_cursor_position();
 
-	// TODO: [SEARCH] This can be optimized...
+	// TODO: [SEARCH] This can be optimized... if the cursor is at the very end or not focused we can skip this
 	let mut query_with_cursor: Vec<Text> = shrunk_query
 		.chars()
 		.enumerate()
 		.map(|(itx, c)| {
-			if itx == cursor_position {
-				Text::styled(
-					c.to_string(),
-					Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-				)
-			} else {
-				Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
+			if let app::ApplicationPosition::ProcessSearch = app_state.current_application_position
+			{
+				if itx == cursor_position {
+					return Text::styled(
+						c.to_string(),
+						Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
+					);
+				}
 			}
+			Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
 		})
 		.collect::<Vec<_>>();
-	if cursor_position >= query.len() {
-		query_with_cursor.push(Text::styled(
-			" ".to_string(),
-			Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-		))
+	if let app::ApplicationPosition::ProcessSearch = app_state.current_application_position {
+		if cursor_position >= query.len() {
+			query_with_cursor.push(Text::styled(
+				" ".to_string(),
+				Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
+			))
+		}
 	}
 
 	let mut search_text = vec![
