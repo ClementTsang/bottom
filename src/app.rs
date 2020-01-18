@@ -34,7 +34,7 @@ pub struct App {
 	// Sorting
 	pub process_sorting_type: processes::ProcessSorting,
 	pub process_sorting_reverse: bool,
-	pub to_be_resorted: bool,
+	pub update_process_gui: bool,
 	// Positioning
 	pub scroll_direction: ScrollDirection,
 	pub currently_selected_process_position: i64,
@@ -80,7 +80,7 @@ impl App {
 		App {
 			process_sorting_type: processes::ProcessSorting::CPU,
 			process_sorting_reverse: true,
-			to_be_resorted: false,
+			update_process_gui: false,
 			temperature_type,
 			update_rate_in_milliseconds,
 			show_average_cpu,
@@ -233,6 +233,7 @@ impl App {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let ApplicationPosition::ProcessSearch = self.current_application_position {
 				self.use_simple = !self.use_simple;
+				self.update_process_gui = true;
 			}
 		}
 	}
@@ -271,6 +272,7 @@ impl App {
 				} else {
 					regex::Regex::new(&(self.current_search_query))
 				};
+				self.update_process_gui = true;
 			}
 		}
 	}
@@ -340,6 +342,7 @@ impl App {
 				} else {
 					regex::Regex::new(&(self.current_search_query))
 				};
+				self.update_process_gui = true;
 			} else {
 				match caught_char {
 					'/' => {
@@ -406,7 +409,7 @@ impl App {
 								self.process_sorting_reverse = true;
 							}
 						}
-						self.to_be_resorted = true;
+						self.update_process_gui = true;
 						self.currently_selected_process_position = 0;
 					}
 					'm' => {
@@ -419,7 +422,7 @@ impl App {
 								self.process_sorting_reverse = true;
 							}
 						}
-						self.to_be_resorted = true;
+						self.update_process_gui = true;
 						self.currently_selected_process_position = 0;
 					}
 					'p' => {
@@ -434,7 +437,7 @@ impl App {
 									self.process_sorting_reverse = false;
 								}
 							}
-							self.to_be_resorted = true;
+							self.update_process_gui = true;
 							self.currently_selected_process_position = 0;
 						}
 					}
@@ -448,7 +451,7 @@ impl App {
 								self.process_sorting_reverse = false;
 							}
 						}
-						self.to_be_resorted = true;
+						self.update_process_gui = true;
 						self.currently_selected_process_position = 0;
 					}
 					'?' => {

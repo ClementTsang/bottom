@@ -261,9 +261,9 @@ fn main() -> error::Result<()> {
 						}
 					}
 
-					if app.to_be_resorted {
+					if app.update_process_gui {
 						handle_process_sorting(&mut app);
-						app.to_be_resorted = false;
+						app.update_process_gui = false;
 					}
 				}
 				Event::MouseInput(event) => match event {
