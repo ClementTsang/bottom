@@ -256,6 +256,8 @@ fn main() -> error::Result<()> {
 									}
 								}
 								KeyCode::Char('s') => app.toggle_simple_search(),
+								KeyCode::Char('a') => app.skip_cursor_beginning(),
+								KeyCode::Char('e') => app.skip_cursor_end(),
 								_ => {}
 							}
 						}

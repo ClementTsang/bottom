@@ -319,6 +319,22 @@ impl App {
 		}
 	}
 
+	pub fn skip_cursor_beginning(&mut self) {
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				self.current_cursor_position = 0;
+			}
+		}
+	}
+
+	pub fn skip_cursor_end(&mut self) {
+		if !self.is_in_dialog() {
+			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+				self.current_cursor_position = self.current_search_query.len();
+			}
+		}
+	}
+
 	pub fn on_char_key(&mut self, caught_char: char) {
 		// Forbid any char key presses when showing a dialog box...
 		if !self.is_in_dialog() {
