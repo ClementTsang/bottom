@@ -24,17 +24,19 @@ Features of bottom include:
 
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
-| OS/Widget | CPU      | Memory   | Disks    | Temperature           | Processes | Networks                                      |
-| --------- | -------- | -------- | -------- | --------------------- | --------- | --------------------------------------------- |
-| Linux     | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
-| Windows   | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
-| macOS     | Untested | Untested | Untested | Untested              | Untested  | Untested                                      |
+| OS/Widget                      | CPU      | Memory   | Disks    | Temperature           | Processes | Networks                                      |
+| ------------------------------ | -------- | -------- | -------- | --------------------- | --------- | --------------------------------------------- |
+| Linux (tested on Arch Linux)   | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
+| Windows (tested on Windows 10) | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
+| macOS                          | Untested | Untested | Untested | Untested              | Untested  | Untested                                      |
 
 ## Installation
 
+In all cases you can install the in-development version by cloning and using `cargo build --release`. Note this is built and tested with Rust Stable (1.40.0 as of writing). You can also get release versions using `cargo install bottom`, or manually building from the Releases page by downloading and building.
+
 ### Linux
 
-You can install the in-development version by cloning and using `cargo build --release`. You can get release versions using `cargo install bottom`, or manually building from the Releases page. Other installation methods based on distros are as follows:
+Other installation methods based on distros are as follows:
 
 #### Arch Linux
 
@@ -42,11 +44,11 @@ You can get the release versions from the AUR by installing `bottom`.
 
 ### Windows
 
-You can install the in-development version by cloning and using `cargo build --release`. You can get release versions using `cargo install bottom`, or manually building from the Releases page. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
 
 ### macOS
 
-macOS support will hopefully come soon<sup>TM</sup>.
+macOS support will hopefully come soon<sup>TM</sup>. I've had reports of it working already, but I cannot personally confirm whether things are working until then.
 
 ## Usage
 
