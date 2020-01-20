@@ -199,7 +199,7 @@ fn main() -> error::Result<()> {
 				}
 				futures::executor::block_on(data_state.update_data());
 				tx.send(Event::Update(Box::from(data_state.data.clone())))
-					.unwrap();
+					.unwrap(); // TODO: [UNWRAP] Might be required, it's in a closure and idk how to deal with it
 
 				if first_run {
 					// Fix for if you set a really long time for update periods (and just gives a faster first value)

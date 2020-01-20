@@ -399,63 +399,59 @@ pub fn update_network_data_points(app_data: &data_collection::Data) -> Converted
 }
 
 pub fn convert_network_data_points(
-	network_data: &[data_collection::network::NetworkData],
+	network_data: &data_collection::network::NetworkStorage,
 ) -> ConvertedNetworkData {
 	let mut rx: Vec<(f64, f64)> = Vec::new();
 	let mut tx: Vec<(f64, f64)> = Vec::new();
 
-	for data in network_data {
-		let current_time = std::time::Instant::now();
+	let current_time = network_data.last_collection_time;
+	for (time, data) in &network_data.data_points {
+		let time_from_start: f64 = ((TIME_STARTS_FROM as f64
+			- current_time.duration_since(*time).as_millis() as f64)
+			* 10_f64)
+			.floor();
+
+		// Insert in joiner points
+		if let Some(joiners) = &data.1 {
+			for joiner in joiners {
+				let offset_time = time_from_start - joiner.time_offset_milliseconds as f64 * 10_f64;
+				rx.push((
+					offset_time,
+					if joiner.rx > 0.0 {
+						(joiner.rx).log(2.0)
+					} else {
+						0.0
+					},
+				));
+
+				tx.push((
+					offset_time,
+					if joiner.tx > 0.0 {
+						(joiner.tx).log(2.0)
+					} else {
+						0.0
+					},
+				));
+			}
+		}
+
+		// Insert in main points
 		let rx_data = (
-			((TIME_STARTS_FROM as f64
-				- current_time.duration_since(data.instant).as_millis() as f64)
-				* 10_f64)
-				.floor(),
-			if data.rx > 0 {
-				(data.rx as f64).log(2.0)
+			time_from_start,
+			if data.0.rx > 0 {
+				(data.0.rx as f64).log(2.0)
 			} else {
 				0.0
 			},
 		);
 		let tx_data = (
-			((TIME_STARTS_FROM as f64
-				- current_time.duration_since(data.instant).as_millis() as f64)
-				* 10_f64)
-				.floor(),
-			if data.tx > 0 {
-				(data.tx as f64).log(2.0)
+			time_from_start,
+			if data.0.tx > 0 {
+				(data.0.tx as f64).log(2.0)
 			} else {
 				0.0
 			},
 		);
-
-		//debug!("Plotting: {:?} bytes rx, {:?} bytes tx", rx_data, tx_data);
-
-		// Now, inject our joining points...
-		if !rx.is_empty() {
-			let previous_element_data = *(rx.last().unwrap());
-			for idx in 0..50 {
-				rx.push((
-					previous_element_data.0
-						+ ((rx_data.0 - previous_element_data.0) / 50.0 * f64::from(idx)),
-					previous_element_data.1
-						+ ((rx_data.1 - previous_element_data.1) / 50.0 * f64::from(idx)),
-				));
-			}
-		}
-
-		// Now, inject our joining points...
-		if !tx.is_empty() {
-			let previous_element_data = *(tx.last().unwrap());
-			for idx in 0..50 {
-				tx.push((
-					previous_element_data.0
-						+ ((tx_data.0 - previous_element_data.0) / 50.0 * f64::from(idx)),
-					previous_element_data.1
-						+ ((tx_data.1 - previous_element_data.1) / 50.0 * f64::from(idx)),
-				));
-			}
-		}
 
 		rx.push(rx_data);
 		tx.push(tx_data);
@@ -466,13 +462,8 @@ pub fn convert_network_data_points(
 	let total_tx_converted_result: (f64, String);
 	let tx_converted_result: (f64, String);
 
-	if let Some(last_num_bytes_entry) = network_data.last() {
-		rx_converted_result = get_exact_byte_values(last_num_bytes_entry.rx, false);
-		total_rx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_rx, false)
-	} else {
-		rx_converted_result = get_exact_byte_values(0, false);
-		total_rx_converted_result = get_exact_byte_values(0, false);
-	}
+	rx_converted_result = get_exact_byte_values(network_data.rx, false);
+	total_rx_converted_result = get_exact_byte_values(network_data.total_rx, false);
 	let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
 	let total_rx_display = if cfg!(not(target_os = "windows")) {
 		format!(
@@ -483,13 +474,8 @@ pub fn convert_network_data_points(
 		"N/A".to_string()
 	};
 
-	if let Some(last_num_bytes_entry) = network_data.last() {
-		tx_converted_result = get_exact_byte_values(last_num_bytes_entry.tx, false);
-		total_tx_converted_result = get_exact_byte_values(last_num_bytes_entry.total_tx, false);
-	} else {
-		tx_converted_result = get_exact_byte_values(0, false);
-		total_tx_converted_result = get_exact_byte_values(0, false);
-	}
+	tx_converted_result = get_exact_byte_values(network_data.tx, false);
+	total_tx_converted_result = get_exact_byte_values(network_data.total_tx, false);
 	let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
 	let total_tx_display = if cfg!(not(target_os = "windows")) {
 		format!(
