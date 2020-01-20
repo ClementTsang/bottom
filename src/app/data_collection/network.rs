@@ -1,34 +1,58 @@
 use futures::StreamExt;
 use heim::net;
 use heim::units::information::byte;
+use std::collections::BTreeMap;
 use std::time::Instant;
 use sysinfo::{NetworkExt, System, SystemExt};
 
-#[derive(Debug, Clone)]
-/// Note all values are in bytes...
-pub struct NetworkData {
+#[derive(Clone, Debug)]
+pub struct NetworkJoinPoint {
+	pub rx: f64,
+	pub tx: f64,
+	pub time_offset_milliseconds: f64,
+}
+
+#[derive(Clone, Debug)]
+pub struct NetworkStorage {
+	pub data_points: BTreeMap<Instant, (NetworkData, Option<Vec<NetworkJoinPoint>>)>,
 	pub rx: u64,
 	pub tx: u64,
 	pub total_rx: u64,
 	pub total_tx: u64,
-	pub instant: Instant,
+	pub last_collection_time: Instant,
+}
+
+impl Default for NetworkStorage {
+	fn default() -> Self {
+		NetworkStorage {
+			data_points: BTreeMap::default(),
+			rx: 0,
+			tx: 0,
+			total_rx: 0,
+			total_tx: 0,
+			last_collection_time: Instant::now(),
+		}
+	}
+}
+
+#[derive(Clone, Debug)]
+/// Note all values are in bytes...
+pub struct NetworkData {
+	pub rx: u64,
+	pub tx: u64,
 }
 
 pub async fn get_network_data(
-	sys: &System, prev_net_rx_bytes: &mut u64, prev_net_tx_bytes: &mut u64,
-	prev_net_access_time: &mut Instant, curr_time: &Instant,
-) -> crate::utils::error::Result<NetworkData> {
+	sys: &System, prev_net_access_time: &Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
+	curr_time: &Instant,
+) -> NetworkData {
+	// FIXME: [WIN] Track current total bytes... also is this accurate?
 	if cfg!(target_os = "windows") {
 		let network_data = sys.get_network();
-
-		*prev_net_access_time = *curr_time;
-		Ok(NetworkData {
+		NetworkData {
 			rx: network_data.get_income(),
 			tx: network_data.get_outcome(),
-			total_rx: 0,
-			total_tx: 0,
-			instant: *prev_net_access_time,
-		})
+		}
 	} else {
 		let mut io_data = net::io_counters();
 		let mut net_rx: u64 = 0;
@@ -40,21 +64,23 @@ pub async fn get_network_data(
 				net_tx += io.bytes_sent().get::<byte>();
 			}
 		}
-		let cur_time = Instant::now();
-		let elapsed_time = cur_time.duration_since(*prev_net_access_time).as_secs_f64();
+		let elapsed_time = curr_time
+			.duration_since(*prev_net_access_time)
+			.as_secs_f64();
 
-		let rx = ((net_rx - *prev_net_rx_bytes) as f64 / elapsed_time) as u64;
-		let tx = ((net_tx - *prev_net_tx_bytes) as f64 / elapsed_time) as u64;
+		if *prev_net_rx == 0 {
+			*prev_net_rx = net_rx;
+		}
 
-		*prev_net_rx_bytes = net_rx;
-		*prev_net_tx_bytes = net_tx;
-		*prev_net_access_time = cur_time;
-		Ok(NetworkData {
-			rx,
-			tx,
-			total_rx: *prev_net_rx_bytes,
-			total_tx: *prev_net_tx_bytes,
-			instant: *prev_net_access_time,
-		})
+		if *prev_net_tx == 0 {
+			*prev_net_tx = net_tx;
+		}
+
+		let rx = ((net_rx - *prev_net_rx) as f64 / elapsed_time) as u64;
+		let tx = ((net_tx - *prev_net_tx) as f64 / elapsed_time) as u64;
+
+		*prev_net_rx = net_rx;
+		*prev_net_tx = net_tx;
+		NetworkData { rx, tx }
 	}
 }

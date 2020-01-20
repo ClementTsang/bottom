@@ -23,7 +23,7 @@ fn push_if_valid<T: std::clone::Clone>(result: &Result<T>, vector_to_push: &mut 
 	}
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Clone, Debug, Default)]
 pub struct Data {
 	pub list_of_cpu_packages: Vec<cpu::CPUPackage>,
 	pub list_of_io: Vec<disks::IOPackage>,
@@ -31,10 +31,10 @@ pub struct Data {
 	pub memory: Vec<mem::MemData>,
 	pub swap: Vec<mem::MemData>,
 	pub list_of_temperature_sensor: Vec<temperature::TempData>,
-	pub network: Vec<network::NetworkData>,
+	pub network: network::NetworkStorage,
 	pub list_of_processes: Vec<processes::ProcessData>,
 	pub grouped_list_of_processes: Option<Vec<processes::ProcessData>>,
-	pub list_of_disks: Vec<disks::DiskData>, // Only need to keep a list of disks and their data
+	pub list_of_disks: Vec<disks::DiskData>,
 }
 
 pub struct DataState {
@@ -45,9 +45,6 @@ pub struct DataState {
 	prev_pid_stats: HashMap<String, (f64, Instant)>,
 	prev_idle: f64,
 	prev_non_idle: f64,
-	prev_net_rx_bytes: u64,
-	prev_net_tx_bytes: u64,
-	prev_net_access_time: Instant,
 	temperature_type: temperature::TemperatureType,
 	last_clean: Instant, // Last time stale data was cleared
 	use_current_cpu_total: bool,
@@ -63,9 +60,6 @@ impl Default for DataState {
 			prev_pid_stats: HashMap::new(),
 			prev_idle: 0_f64,
 			prev_non_idle: 0_f64,
-			prev_net_rx_bytes: 0,
-			prev_net_tx_bytes: 0,
-			prev_net_access_time: Instant::now(),
 			temperature_type: temperature::TemperatureType::Celsius,
 			last_clean: Instant::now(),
 			use_current_cpu_total: false,
@@ -97,18 +91,61 @@ impl DataState {
 
 		let current_instant = std::time::Instant::now();
 
+		// Network
+		let new_network_data = network::get_network_data(
+			&self.sys,
+			&self.data.network.last_collection_time,
+			&mut self.data.network.total_rx,
+			&mut self.data.network.total_tx,
+			&current_instant,
+		)
+		.await;
+
+		let joining_points: Option<Vec<network::NetworkJoinPoint>> =
+			if !self.data.network.data_points.is_empty() {
+				if let Some(prev_data) = self
+					.data
+					.network
+					.data_points
+					.get(&self.data.network.last_collection_time)
+				{
+					// If not empty, inject joining points
+
+					let rx_diff = new_network_data.rx as f64 - prev_data.0.rx as f64;
+					let tx_diff = new_network_data.tx as f64 - prev_data.0.tx as f64;
+					let time_gap = current_instant
+						.duration_since(self.data.network.last_collection_time)
+						.as_millis() as f64;
+
+					let mut new_joining_points = Vec::new();
+
+					for idx in 0..100 {
+						new_joining_points.push(network::NetworkJoinPoint {
+							rx: prev_data.0.rx as f64 + rx_diff / 100.0 * idx as f64,
+							tx: prev_data.0.tx as f64 + tx_diff / 100.0 * idx as f64,
+							time_offset_milliseconds: time_gap / 100.0 * (100 - idx) as f64,
+						});
+					}
+					Some(new_joining_points)
+				} else {
+					None
+				}
+			} else {
+				None
+			};
+
+		// Set values
+		self.data.network.rx = new_network_data.rx;
+		self.data.network.tx = new_network_data.tx;
+		self.data.network.last_collection_time = current_instant;
+
+		// Add new point
+		self.data
+			.network
+			.data_points
+			.insert(current_instant, (new_network_data, joining_points));
+
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
-		push_if_valid(
-			&network::get_network_data(
-				&self.sys,
-				&mut self.prev_net_rx_bytes,
-				&mut self.prev_net_tx_bytes,
-				&mut self.prev_net_access_time,
-				&current_instant,
-			)
-			.await,
-			&mut self.data.network,
-		);
 		push_if_valid(
 			&cpu::get_cpu_data_list(&self.sys, &current_instant),
 			&mut self.data.list_of_cpu_packages,
@@ -167,6 +204,8 @@ impl DataState {
 				self.prev_pid_stats.remove(&stale);
 			}
 
+			// TODO: [OPT] cleaning stale network
+
 			self.data.list_of_cpu_packages = self
 				.data
 				.list_of_cpu_packages
@@ -190,16 +229,6 @@ impl DataState {
 			self.data.swap = self
 				.data
 				.swap
-				.iter()
-				.cloned()
-				.filter(|entry| {
-					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
-				})
-				.collect::<Vec<_>>();
-
-			self.data.network = self
-				.data
-				.network
 				.iter()
 				.cloned()
 				.filter(|entry| {
