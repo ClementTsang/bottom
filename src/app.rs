@@ -233,6 +233,17 @@ impl App {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let ApplicationPosition::ProcessSearch = self.current_application_position {
 				self.use_simple = !self.use_simple;
+
+				// Update to latest (when simple is on this is not updated)
+				if !self.use_simple {
+					self.current_regex = if self.current_search_query.is_empty() {
+						BASE_REGEX.clone()
+					} else {
+						regex::Regex::new(&(self.current_search_query))
+					};
+				}
+
+				// Force update to process display in GUI
 				self.update_process_gui = true;
 			}
 		}
@@ -266,12 +277,13 @@ impl App {
 				self.current_search_query
 					.remove(self.current_cursor_position);
 
-				// TODO: [OPT] this runs even while in simple... consider making this only run if they toggle back to regex!
-				self.current_regex = if self.current_search_query.is_empty() {
-					BASE_REGEX.clone()
-				} else {
-					regex::Regex::new(&(self.current_search_query))
-				};
+				if !self.use_simple {
+					self.current_regex = if self.current_search_query.is_empty() {
+						BASE_REGEX.clone()
+					} else {
+						regex::Regex::new(&(self.current_search_query))
+					};
+				}
 				self.update_process_gui = true;
 			}
 		}
@@ -352,12 +364,13 @@ impl App {
 					.insert(self.current_cursor_position, caught_char);
 				self.current_cursor_position += 1;
 
-				// TODO: [OPT] this runs even while in simple... consider making this only run if they toggle back to regex!
-				self.current_regex = if self.current_search_query.is_empty() {
-					BASE_REGEX.clone()
-				} else {
-					regex::Regex::new(&(self.current_search_query))
-				};
+				if !self.use_simple {
+					self.current_regex = if self.current_search_query.is_empty() {
+						BASE_REGEX.clone()
+					} else {
+						regex::Regex::new(&(self.current_search_query))
+					};
+				}
 				self.update_process_gui = true;
 			} else {
 				match caught_char {
