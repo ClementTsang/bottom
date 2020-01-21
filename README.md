@@ -32,7 +32,7 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 
 ## Installation
 
-In all cases you can install the in-development version by cloning and using `cargo build --release`. Note this is built and tested with Rust Stable (1.40.0 as of writing). You can also get release versions using `cargo install bottom`, or manually building from the Releases page by downloading and building.
+In all cases you can install the in-development version by cloning and using `cargo build --release`. Note this is built and tested with Rust Stable (1.40.0 as of writing). You can also get release versions using `cargo install bottom`, or manually building from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
 
 ### Linux
 
