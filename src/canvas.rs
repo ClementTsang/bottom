@@ -131,11 +131,11 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 
 	// Generate colours
 	let mut colour_vec: Vec<Color> = vec![
-		Color::LightCyan,
-		Color::LightYellow,
 		Color::Red,
-		Color::Green,
+		Color::LightYellow,
 		Color::LightMagenta,
+		Color::LightCyan,
+		Color::Green,
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?

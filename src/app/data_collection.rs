@@ -119,11 +119,14 @@ impl DataState {
 
 					let mut new_joining_points = Vec::new();
 
-					for idx in 0..100 {
+					let num_points = 50;
+					for idx in (0..num_points).rev() {
 						new_joining_points.push(network::NetworkJoinPoint {
-							rx: prev_data.0.rx as f64 + rx_diff / 100.0 * idx as f64,
-							tx: prev_data.0.tx as f64 + tx_diff / 100.0 * idx as f64,
-							time_offset_milliseconds: time_gap / 100.0 * (100 - idx) as f64,
+							rx: prev_data.0.rx as f64
+								+ rx_diff / num_points as f64 * (num_points - idx) as f64,
+							tx: prev_data.0.tx as f64
+								+ tx_diff / num_points as f64 * (num_points - idx) as f64,
+							time_offset_milliseconds: time_gap / num_points as f64 * idx as f64,
 						});
 					}
 					Some(new_joining_points)
