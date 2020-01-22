@@ -1,7 +1,6 @@
 use futures::StreamExt;
 use heim::net;
 use heim::units::information::byte;
-use std::collections::BTreeMap;
 use std::time::Instant;
 use sysinfo::{NetworkExt, System, SystemExt};
 
@@ -12,9 +11,10 @@ pub struct NetworkJoinPoint {
 	pub time_offset_milliseconds: f64,
 }
 
+type NetworkDataGroup = (Instant, (NetworkData, Option<Vec<NetworkJoinPoint>>));
 #[derive(Clone, Debug)]
 pub struct NetworkStorage {
-	pub data_points: BTreeMap<Instant, (NetworkData, Option<Vec<NetworkJoinPoint>>)>,
+	pub data_points: Vec<NetworkDataGroup>,
 	pub rx: u64,
 	pub tx: u64,
 	pub total_rx: u64,
@@ -25,7 +25,7 @@ pub struct NetworkStorage {
 impl Default for NetworkStorage {
 	fn default() -> Self {
 		NetworkStorage {
-			data_points: BTreeMap::default(),
+			data_points: Vec::default(),
 			rx: 0,
 			tx: 0,
 			total_rx: 0,
@@ -37,7 +37,7 @@ impl Default for NetworkStorage {
 
 impl NetworkStorage {
 	pub fn first_run(&mut self) {
-		self.data_points = BTreeMap::default();
+		self.data_points = Vec::default();
 		self.rx = 0;
 		self.tx = 0;
 	}
@@ -75,11 +75,6 @@ pub async fn get_network_data(
 		let elapsed_time = curr_time
 			.duration_since(*prev_net_access_time)
 			.as_secs_f64();
-
-		debug!(
-			"net rx: {}, net tx: {}, net prev rx: {}, net prev tx: {}",
-			net_rx, net_tx, *prev_net_rx, *prev_net_tx
-		);
 
 		let rx = ((net_rx - *prev_net_rx) as f64 / elapsed_time) as u64;
 		let tx = ((net_tx - *prev_net_tx) as f64 / elapsed_time) as u64;

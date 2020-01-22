@@ -119,13 +119,9 @@ impl DataState {
 
 		let joining_points: Option<Vec<network::NetworkJoinPoint>> =
 			if !self.data.network.data_points.is_empty() {
-				if let Some(prev_data) = self
-					.data
-					.network
-					.data_points
-					.get(&self.data.network.last_collection_time)
-				{
+				if let Some(last_entry) = self.data.network.data_points.last() {
 					// If not empty, inject joining points
+					let prev_data = &last_entry.1;
 					let rx_diff = new_network_data.rx as f64 - prev_data.0.rx as f64;
 					let tx_diff = new_network_data.tx as f64 - prev_data.0.tx as f64;
 					let time_gap = current_instant
@@ -161,7 +157,7 @@ impl DataState {
 		self.data
 			.network
 			.data_points
-			.insert(current_instant, (new_network_data, joining_points));
+			.push((current_instant, (new_network_data, joining_points)));
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		push_if_valid(
