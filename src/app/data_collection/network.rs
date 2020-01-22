@@ -35,6 +35,14 @@ impl Default for NetworkStorage {
 	}
 }
 
+impl NetworkStorage {
+	pub fn first_run(&mut self) {
+		self.data_points = BTreeMap::default();
+		self.rx = 0;
+		self.tx = 0;
+	}
+}
+
 #[derive(Clone, Debug)]
 /// Note all values are in bytes...
 pub struct NetworkData {
@@ -68,13 +76,10 @@ pub async fn get_network_data(
 			.duration_since(*prev_net_access_time)
 			.as_secs_f64();
 
-		if *prev_net_rx == 0 {
-			*prev_net_rx = net_rx;
-		}
-
-		if *prev_net_tx == 0 {
-			*prev_net_tx = net_tx;
-		}
+		debug!(
+			"net rx: {}, net tx: {}, net prev rx: {}, net prev tx: {}",
+			net_rx, net_tx, *prev_net_rx, *prev_net_tx
+		);
 
 		let rx = ((net_rx - *prev_net_rx) as f64 / elapsed_time) as u64;
 		let tx = ((net_tx - *prev_net_tx) as f64 / elapsed_time) as u64;

@@ -37,6 +37,22 @@ pub struct Data {
 	pub list_of_disks: Vec<disks::DiskData>,
 }
 
+impl Data {
+	pub fn first_run_cleanup(&mut self) {
+		self.list_of_cpu_packages = Vec::new();
+		self.list_of_io = Vec::new();
+		self.list_of_physical_io = Vec::new();
+		self.memory = Vec::new();
+		self.swap = Vec::new();
+		self.list_of_temperature_sensor = Vec::new();
+		self.list_of_processes = Vec::new();
+		self.grouped_list_of_processes = None;
+		self.list_of_disks = Vec::new();
+
+		self.network.first_run();
+	}
+}
+
 pub struct DataState {
 	pub data: Data,
 	first_run: bool,
@@ -110,7 +126,6 @@ impl DataState {
 					.get(&self.data.network.last_collection_time)
 				{
 					// If not empty, inject joining points
-
 					let rx_diff = new_network_data.rx as f64 - prev_data.0.rx as f64;
 					let tx_diff = new_network_data.tx as f64 - prev_data.0.tx as f64;
 					let time_gap = current_instant
@@ -188,7 +203,7 @@ impl DataState {
 		);
 
 		if self.first_run {
-			self.data = Data::default();
+			self.data.first_run_cleanup();
 			self.first_run = false;
 		}
 
