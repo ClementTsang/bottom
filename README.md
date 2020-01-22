@@ -132,15 +132,17 @@ Run using `btm`.
 
 - `Esc` or `Ctrl-f` to close.
 
+- `Left` and `Right` arrow keys to move the cursor within the search bar.
+
 Note that `q` is disabled while in the search widget.
 
 ### Mouse actions
 
-- Scrolling with the mouse will scroll through the currently selected list.
+- Scrolling with the mouse will scroll through the currently selected list if the widget is a scrollable table.
 
 ## Thanks, kudos, and all the like
 
-- This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop) .
+- This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
 
 - This application was written with the following libraries:
   - [chrono](https://github.com/chronotope/chrono)
