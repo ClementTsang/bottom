@@ -334,7 +334,6 @@ pub fn draw_data<B: backend::Backend>(
 						} else {
 							5
 						};
-						debug!("Req: {}", required);
 						let remaining = bottom_chunks[0].height - required;
 						[Constraint::Length(remaining), Constraint::Length(required)]
 					}
@@ -665,7 +664,7 @@ fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::Ap
 
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, 600_000.0]);
+		.bounds([0.0, 60_000.0]);
 	let y_axis = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([-0.5, 30_f64])
@@ -1035,7 +1034,7 @@ fn draw_processes_table<B: backend::Backend>(
 		)
 	});
 
-	use app::data_collection::processes::ProcessSorting;
+	use app::data_harvester::processes::ProcessSorting;
 	let mut pid_or_name = if app_state.is_grouped() {
 		"Count"
 	} else {

@@ -23,39 +23,52 @@ fn push_if_valid<T: std::clone::Clone>(result: &Result<T>, vector_to_push: &mut 
 	}
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Data {
 	pub list_of_cpu_packages: Vec<cpu::CPUPackage>,
 	pub list_of_io: Vec<disks::IOPackage>,
-	pub list_of_physical_io: Vec<disks::IOPackage>,
 	pub memory: Vec<mem::MemData>,
 	pub swap: Vec<mem::MemData>,
 	pub list_of_temperature_sensor: Vec<temperature::TempData>,
-	pub network: network::NetworkStorage,
+	pub network: network::NetworkHarvest,
 	pub list_of_processes: Vec<processes::ProcessData>,
 	pub grouped_list_of_processes: Option<Vec<processes::ProcessData>>,
 	pub list_of_disks: Vec<disks::DiskData>,
+	pub last_collection_time: Instant,
+}
+
+impl Default for Data {
+	fn default() -> Self {
+		Data {
+			list_of_cpu_packages: Vec::default(),
+			list_of_io: Vec::default(),
+			memory: Vec::default(),
+			swap: Vec::default(),
+			list_of_temperature_sensor: Vec::default(),
+			list_of_processes: Vec::default(),
+			grouped_list_of_processes: None,
+			list_of_disks: Vec::default(),
+			network: network::NetworkHarvest::default(),
+			last_collection_time: Instant::now(),
+		}
+	}
 }
 
 impl Data {
 	pub fn first_run_cleanup(&mut self) {
 		self.list_of_cpu_packages = Vec::new();
 		self.list_of_io = Vec::new();
-		self.list_of_physical_io = Vec::new();
 		self.memory = Vec::new();
 		self.swap = Vec::new();
 		self.list_of_temperature_sensor = Vec::new();
 		self.list_of_processes = Vec::new();
 		self.grouped_list_of_processes = None;
 		self.list_of_disks = Vec::new();
-
-		self.network.first_run();
 	}
 }
 
 pub struct DataState {
 	pub data: Data,
-	first_run: bool,
 	sys: System,
 	stale_max_seconds: u64,
 	prev_pid_stats: HashMap<String, (f64, Instant)>,
@@ -70,7 +83,6 @@ impl Default for DataState {
 	fn default() -> Self {
 		DataState {
 			data: Data::default(),
-			first_run: true,
 			sys: System::new(),
 			stale_max_seconds: constants::STALE_MAX_MILLISECONDS / 1000,
 			prev_pid_stats: HashMap::new(),
@@ -108,56 +120,14 @@ impl DataState {
 		let current_instant = std::time::Instant::now();
 
 		// Network
-		let new_network_data = network::get_network_data(
+		self.data.network = network::get_network_data(
 			&self.sys,
-			&self.data.network.last_collection_time,
+			&self.data.last_collection_time,
 			&mut self.data.network.total_rx,
 			&mut self.data.network.total_tx,
 			&current_instant,
 		)
 		.await;
-
-		let joining_points: Option<Vec<network::NetworkJoinPoint>> =
-			if !self.data.network.data_points.is_empty() {
-				if let Some(last_entry) = self.data.network.data_points.last() {
-					// If not empty, inject joining points
-					let prev_data = &last_entry.1;
-					let rx_diff = new_network_data.rx as f64 - prev_data.0.rx as f64;
-					let tx_diff = new_network_data.tx as f64 - prev_data.0.tx as f64;
-					let time_gap = current_instant
-						.duration_since(self.data.network.last_collection_time)
-						.as_millis() as f64;
-
-					let mut new_joining_points = Vec::new();
-
-					let num_points = 50;
-					for idx in (0..num_points).rev() {
-						new_joining_points.push(network::NetworkJoinPoint {
-							rx: prev_data.0.rx as f64
-								+ rx_diff / num_points as f64 * (num_points - idx) as f64,
-							tx: prev_data.0.tx as f64
-								+ tx_diff / num_points as f64 * (num_points - idx) as f64,
-							time_offset_milliseconds: time_gap / num_points as f64 * idx as f64,
-						});
-					}
-					Some(new_joining_points)
-				} else {
-					None
-				}
-			} else {
-				None
-			};
-
-		// Set values
-		self.data.network.rx = new_network_data.rx;
-		self.data.network.tx = new_network_data.tx;
-		self.data.network.last_collection_time = current_instant;
-
-		// Add new point
-		self.data
-			.network
-			.data_points
-			.push((current_instant, (new_network_data, joining_points)));
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		push_if_valid(
@@ -198,10 +168,7 @@ impl DataState {
 			&mut self.data.list_of_temperature_sensor,
 		);
 
-		if self.first_run {
-			self.data.first_run_cleanup();
-			self.first_run = false;
-		}
+		self.data.last_collection_time = current_instant;
 
 		// Filter out stale timed entries
 		let clean_instant = Instant::now();

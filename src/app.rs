@@ -1,6 +1,9 @@
-pub mod data_collection;
-use data_collection::{processes, temperature};
+pub mod data_harvester;
+use data_harvester::{processes, temperature};
 use std::time::Instant;
+
+pub mod data_janitor;
+use data_janitor::*;
 
 use crate::{canvas, constants, data_conversion::ConvertedProcessData, utils::error::Result};
 
@@ -30,6 +33,23 @@ lazy_static! {
 		regex::Regex::new(".*");
 }
 
+/// AppConfigFields is meant to cover basic fields that would normally be set
+/// by config files or launch options.  Don't need to be mutable (set and forget).
+pub struct AppConfigFields {
+	pub update_rate_in_milliseconds: u64,
+	pub temperature_type: temperature::TemperatureType,
+	pub use_dot: bool,
+}
+
+/// AppScrollWidgetState deals with fields for a scrollable app's current state.
+pub struct AppScrollWidgetState {
+	pub widget_scroll_position: i64,
+}
+
+/// AppSearchState only deals with the search's state.
+pub struct AppSearchState {}
+
+// TODO: [OPT] Group like fields together... this is kinda gross to step through
 pub struct App {
 	// Sorting
 	pub process_sorting_type: processes::ProcessSorting,
@@ -49,7 +69,7 @@ pub struct App {
 	pub update_rate_in_milliseconds: u64,
 	pub show_average_cpu: bool,
 	pub current_application_position: ApplicationPosition,
-	pub data: data_collection::Data,
+	pub data: data_harvester::Data,
 	awaiting_second_char: bool,
 	second_char: char,
 	pub use_dot: bool,
@@ -63,12 +83,13 @@ pub struct App {
 	last_key_press: Instant,
 	pub canvas_data: canvas::CanvasData,
 	enable_grouping: bool,
-	enable_searching: bool, // TODO: [OPT] group together?
+	enable_searching: bool,
 	current_search_query: String,
 	searching_pid: bool,
 	pub use_simple: bool,
 	current_regex: std::result::Result<regex::Regex, regex::Error>,
 	current_cursor_position: usize,
+	pub data_collection: DataCollection,
 }
 
 impl App {
@@ -94,7 +115,7 @@ impl App {
 			previous_disk_position: 0,
 			previous_temp_position: 0,
 			previous_cpu_table_position: 0,
-			data: data_collection::Data::default(),
+			data: data_harvester::Data::default(),
 			awaiting_second_char: false,
 			second_char: ' ',
 			use_dot,
@@ -114,6 +135,7 @@ impl App {
 			use_simple: false,
 			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lifetimes to avoid cloning
 			current_cursor_position: 0,
+			data_collection: DataCollection::default(),
 		}
 	}
 

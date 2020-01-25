@@ -2,12 +2,14 @@
 //! can actually handle.
 
 use crate::{
-	app::data_collection,
+	app::data_harvester,
+	app::data_janitor,
 	constants,
 	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
 use constants::*;
 use regex::Regex;
+use std::time::Instant;
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
@@ -55,7 +57,7 @@ impl From<&CpuPoint> for (f64, f64) {
 }
 
 pub fn update_temp_row(
-	app_data: &data_collection::Data, temp_type: &data_collection::temperature::TemperatureType,
+	app_data: &data_harvester::Data, temp_type: &data_harvester::temperature::TemperatureType,
 ) -> Vec<Vec<String>> {
 	let mut sensor_vector: Vec<Vec<String>> = Vec::new();
 
@@ -67,9 +69,9 @@ pub fn update_temp_row(
 				sensor.component_name.to_string(),
 				(sensor.temperature.ceil() as u64).to_string()
 					+ match temp_type {
-						data_collection::temperature::TemperatureType::Celsius => "C",
-						data_collection::temperature::TemperatureType::Kelvin => "K",
-						data_collection::temperature::TemperatureType::Fahrenheit => "F",
+						data_harvester::temperature::TemperatureType::Celsius => "C",
+						data_harvester::temperature::TemperatureType::Kelvin => "K",
+						data_harvester::temperature::TemperatureType::Fahrenheit => "F",
 					},
 			]);
 		}
@@ -78,7 +80,7 @@ pub fn update_temp_row(
 	sensor_vector
 }
 
-pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
+pub fn update_disk_row(app_data: &data_harvester::Data) -> Vec<Vec<String>> {
 	let mut disk_vector: Vec<Vec<String>> = Vec::new();
 	for disk in &app_data.list_of_disks {
 		let io_activity = {
@@ -141,7 +143,7 @@ pub fn update_disk_row(app_data: &data_collection::Data) -> Vec<Vec<String>> {
 }
 
 pub fn simple_update_process_row(
-	app_data: &data_collection::Data, matching_string: &str, use_pid: bool,
+	app_data: &data_harvester::Data, matching_string: &str, use_pid: bool,
 ) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
 	let process_vector: Vec<ConvertedProcessData> = app_data
 		.list_of_processes
@@ -183,7 +185,7 @@ pub fn simple_update_process_row(
 }
 
 pub fn regex_update_process_row(
-	app_data: &data_collection::Data, regex_matcher: &std::result::Result<Regex, regex::Error>,
+	app_data: &data_harvester::Data, regex_matcher: &std::result::Result<Regex, regex::Error>,
 	use_pid: bool,
 ) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
 	let process_vector: Vec<ConvertedProcessData> = app_data
@@ -226,7 +228,7 @@ pub fn regex_update_process_row(
 }
 
 fn return_mapped_process(
-	process: &data_collection::processes::ProcessData, app_data: &data_collection::Data,
+	process: &data_harvester::processes::ProcessData, app_data: &data_harvester::Data,
 ) -> ConvertedProcessData {
 	ConvertedProcessData {
 		pid: process.pid,
@@ -251,7 +253,7 @@ fn return_mapped_process(
 }
 
 pub fn update_cpu_data_points(
-	show_avg_cpu: bool, app_data: &data_collection::Data,
+	show_avg_cpu: bool, app_data: &data_harvester::Data,
 ) -> Vec<ConvertedCpuData> {
 	let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
 	let mut cpu_collection: Vec<Vec<CpuPoint>> = Vec::new();
@@ -264,7 +266,7 @@ pub fn update_cpu_data_points(
 			let mut this_cpu_data: Vec<CpuPoint> = Vec::new();
 
 			for data in &app_data.list_of_cpu_packages {
-				let current_time = std::time::Instant::now();
+				let current_time = Instant::now();
 				let current_cpu_usage = data.cpu_vec[cpu_num].cpu_usage;
 
 				let new_entry = CpuPoint {
@@ -329,15 +331,15 @@ pub fn update_cpu_data_points(
 	cpu_data_vector
 }
 
-pub fn update_mem_data_points(app_data: &data_collection::Data) -> Vec<(f64, f64)> {
+pub fn update_mem_data_points(app_data: &data_harvester::Data) -> Vec<(f64, f64)> {
 	convert_mem_data(&app_data.memory)
 }
 
-pub fn update_swap_data_points(app_data: &data_collection::Data) -> Vec<(f64, f64)> {
+pub fn update_swap_data_points(app_data: &data_harvester::Data) -> Vec<(f64, f64)> {
 	convert_mem_data(&app_data.swap)
 }
 
-pub fn update_mem_data_values(app_data: &data_collection::Data) -> Vec<(u64, u64)> {
+pub fn update_mem_data_values(app_data: &data_harvester::Data) -> Vec<(u64, u64)> {
 	let mut result: Vec<(u64, u64)> = Vec::new();
 	result.push(get_most_recent_mem_values(&app_data.memory));
 	result.push(get_most_recent_mem_values(&app_data.swap));
@@ -345,7 +347,7 @@ pub fn update_mem_data_values(app_data: &data_collection::Data) -> Vec<(u64, u64
 	result
 }
 
-fn get_most_recent_mem_values(mem_data: &[data_collection::mem::MemData]) -> (u64, u64) {
+fn get_most_recent_mem_values(mem_data: &[data_harvester::mem::MemData]) -> (u64, u64) {
 	let mut result: (u64, u64) = (0, 0);
 
 	if !mem_data.is_empty() {
@@ -358,7 +360,7 @@ fn get_most_recent_mem_values(mem_data: &[data_collection::mem::MemData]) -> (u6
 	result
 }
 
-fn convert_mem_data(mem_data: &[data_collection::mem::MemData]) -> Vec<(f64, f64)> {
+fn convert_mem_data(mem_data: &[data_harvester::mem::MemData]) -> Vec<(f64, f64)> {
 	let mut result: Vec<(f64, f64)> = Vec::new();
 
 	for data in mem_data {
@@ -394,67 +396,45 @@ fn convert_mem_data(mem_data: &[data_collection::mem::MemData]) -> Vec<(f64, f64
 	result
 }
 
-pub fn update_network_data_points(app_data: &data_collection::Data) -> ConvertedNetworkData {
-	convert_network_data_points(&app_data.network)
-}
-
 pub fn convert_network_data_points(
-	network_data: &data_collection::network::NetworkStorage,
+	current_data: &data_janitor::DataCollection,
 ) -> ConvertedNetworkData {
 	let mut rx: Vec<(f64, f64)> = Vec::new();
 	let mut tx: Vec<(f64, f64)> = Vec::new();
 
-	let current_time = network_data.last_collection_time;
-	for (time, data) in &network_data.data_points {
-		let time_from_start: f64 = ((TIME_STARTS_FROM as f64
+	let current_time = current_data.current_instant;
+	for (time, data) in &current_data.timed_data_vec {
+		let time_from_start: f64 = (TIME_STARTS_FROM as f64
 			- current_time.duration_since(*time).as_millis() as f64)
-			* 10_f64)
 			.floor();
 
-		// Insert in joiner points
-		if let Some(joiners) = &data.1 {
-			for joiner in joiners {
-				let offset_time = time_from_start - joiner.time_offset_milliseconds as f64 * 10_f64;
-				rx.push((
-					offset_time,
-					if joiner.rx > 0.0 {
-						(joiner.rx).log(2.0)
-					} else {
-						0.0
-					},
-				));
-
-				tx.push((
-					offset_time,
-					if joiner.tx > 0.0 {
-						(joiner.tx).log(2.0)
-					} else {
-						0.0
-					},
-				));
-			}
+		//Insert joiner points
+		for &(joiner_offset, joiner_val) in &data.rx_data.1 {
+			let offset_time = time_from_start - joiner_offset as f64;
+			rx.push((
+				offset_time,
+				if joiner_val > 0.0 {
+					(joiner_val).log(2.0)
+				} else {
+					0.0
+				},
+			));
 		}
 
-		// Insert in main points
-		let rx_data = (
-			time_from_start,
-			if data.0.rx > 0 {
-				(data.0.rx as f64).log(2.0)
-			} else {
-				0.0
-			},
-		);
-		let tx_data = (
-			time_from_start,
-			if data.0.tx > 0 {
-				(data.0.tx as f64).log(2.0)
-			} else {
-				0.0
-			},
-		);
+		for &(joiner_offset, joiner_val) in &data.tx_data.1 {
+			let offset_time = time_from_start - joiner_offset as f64;
+			tx.push((
+				offset_time,
+				if joiner_val > 0.0 {
+					(joiner_val).log(2.0)
+				} else {
+					0.0
+				},
+			));
+		}
 
-		rx.push(rx_data);
-		tx.push(tx_data);
+		rx.push((time_from_start, data.rx_data.0));
+		tx.push((time_from_start, data.tx_data.0));
 	}
 
 	let total_rx_converted_result: (f64, String);
@@ -462,8 +442,8 @@ pub fn convert_network_data_points(
 	let total_tx_converted_result: (f64, String);
 	let tx_converted_result: (f64, String);
 
-	rx_converted_result = get_exact_byte_values(network_data.rx, false);
-	total_rx_converted_result = get_exact_byte_values(network_data.total_rx, false);
+	rx_converted_result = get_exact_byte_values(current_data.network_harvest.rx, false);
+	total_rx_converted_result = get_exact_byte_values(current_data.network_harvest.total_rx, false);
 	let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
 	let total_rx_display = if cfg!(not(target_os = "windows")) {
 		format!(
@@ -474,8 +454,8 @@ pub fn convert_network_data_points(
 		"N/A".to_string()
 	};
 
-	tx_converted_result = get_exact_byte_values(network_data.tx, false);
-	total_tx_converted_result = get_exact_byte_values(network_data.total_tx, false);
+	tx_converted_result = get_exact_byte_values(current_data.network_harvest.tx, false);
+	total_tx_converted_result = get_exact_byte_values(current_data.network_harvest.total_tx, false);
 	let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
 	let total_tx_display = if cfg!(not(target_os = "windows")) {
 		format!(

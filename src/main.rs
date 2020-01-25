@@ -35,8 +35,8 @@ mod canvas;
 mod constants;
 mod data_conversion;
 
-use app::data_collection;
-use app::data_collection::processes::ProcessData;
+use app::data_harvester;
+use app::data_harvester::processes::ProcessData;
 use constants::TICK_RATE_IN_MILLISECONDS;
 use data_conversion::*;
 use std::collections::BTreeMap;
@@ -45,7 +45,7 @@ use utils::error::{self, BottomError};
 enum Event<I, J> {
 	KeyInput(I),
 	MouseInput(J),
-	Update(Box<data_collection::Data>),
+	Update(Box<data_harvester::Data>),
 }
 
 enum ResetEvent {
@@ -104,11 +104,11 @@ fn main() -> error::Result<()> {
 
 	// Set other settings
 	let temperature_type = if matches.is_present("FAHRENHEIT") {
-		data_collection::temperature::TemperatureType::Fahrenheit
+		data_harvester::temperature::TemperatureType::Fahrenheit
 	} else if matches.is_present("KELVIN") {
-		data_collection::temperature::TemperatureType::Kelvin
+		data_harvester::temperature::TemperatureType::Kelvin
 	} else {
-		data_collection::temperature::TemperatureType::Celsius
+		data_harvester::temperature::TemperatureType::Celsius
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
 	let use_dot = matches.is_present("DOT_MARKER");
@@ -183,7 +183,7 @@ fn main() -> error::Result<()> {
 		let temp_type = app.temperature_type.clone();
 		thread::spawn(move || {
 			let tx = tx.clone();
-			let mut data_state = data_collection::DataState::default();
+			let mut data_state = data_harvester::DataState::default();
 			data_state.init();
 			data_state.set_temperature_type(temp_type);
 			data_state.set_use_current_cpu_total(use_current_cpu_total);
@@ -193,21 +193,22 @@ fn main() -> error::Result<()> {
 						ResetEvent::Reset => {
 							//debug!("Received reset message");
 							first_run = true;
-							data_state.data = app::data_collection::Data::default();
+							data_state.data = app::data_harvester::Data::default();
 						}
 					}
 				}
 				futures::executor::block_on(data_state.update_data());
-				tx.send(Event::Update(Box::from(data_state.data.clone())))
-					.unwrap(); // TODO: [UNWRAP] Might be required, it's in a closure and idk how to deal with it
 
 				if first_run {
 					// Fix for if you set a really long time for update periods (and just gives a faster first value)
+					data_state.data.first_run_cleanup(); // TODO: [OPT] we can remove this later.
 					thread::sleep(Duration::from_millis(250));
+					futures::executor::block_on(data_state.update_data());
 					first_run = false;
-				} else {
-					thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
 				}
+				tx.send(Event::Update(Box::from(data_state.data.clone())))
+					.unwrap(); // TODO: [UNWRAP] Might be required, it's in a closure and idk how to deal with it
+				thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
 			}
 		});
 	}
@@ -277,12 +278,14 @@ fn main() -> error::Result<()> {
 					// NOTE TO SELF - data is refreshed into app state HERE!  That means, if it is
 					// frozen, then, app.data is never refreshed, until unfrozen!
 					if !app.is_frozen {
+						app.data_collection.eat_data(&data);
+
 						app.data = *data;
 
 						handle_process_sorting(&mut app);
 
 						// Convert all data into tui components
-						let network_data = update_network_data_points(&app.data);
+						let network_data = convert_network_data_points(&app.data_collection);
 						app.canvas_data.network_data_rx = network_data.rx;
 						app.canvas_data.network_data_tx = network_data.tx;
 						app.canvas_data.rx_display = network_data.rx_display;
@@ -303,9 +306,9 @@ fn main() -> error::Result<()> {
 		}
 
 		// Quick fix for tab updating the table headers
-		if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
+		if let data_harvester::processes::ProcessSorting::PID = &app.process_sorting_type {
 			if app.is_grouped() {
-				app.process_sorting_type = data_collection::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
+				app.process_sorting_type = data_harvester::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
 				app.process_sorting_reverse = true;
 			}
 		}
@@ -372,14 +375,14 @@ fn handle_process_sorting(app: &mut app::App) {
 	);
 
 	if let Some(grouped_list_of_processes) = &mut app.data.grouped_list_of_processes {
-		if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
-			data_collection::processes::sort_processes(
+		if let data_harvester::processes::ProcessSorting::PID = &app.process_sorting_type {
+			data_harvester::processes::sort_processes(
 				grouped_list_of_processes,
-				&data_collection::processes::ProcessSorting::CPU, // Go back to default, negate PID for group
+				&data_harvester::processes::ProcessSorting::CPU, // Go back to default, negate PID for group
 				true,
 			);
 		} else {
-			data_collection::processes::sort_processes(
+			data_harvester::processes::sort_processes(
 				grouped_list_of_processes,
 				&app.process_sorting_type,
 				app.process_sorting_reverse,
@@ -387,7 +390,7 @@ fn handle_process_sorting(app: &mut app::App) {
 		}
 	}
 
-	data_collection::processes::sort_processes(
+	data_harvester::processes::sort_processes(
 		&mut app.data.list_of_processes,
 		&app.process_sorting_type,
 		app.process_sorting_reverse,
