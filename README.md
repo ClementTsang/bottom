@@ -130,7 +130,7 @@ Run using `btm`.
 
 - `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
 
-- `Esc` or `Ctrl-f` to close.
+- `Esc` to close.
 
 - `Left` and `Right` arrow keys to move the cursor within the search bar.
 
