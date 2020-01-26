@@ -12,6 +12,13 @@ pub struct NetworkHarvest {
 	pub total_tx: u64,
 }
 
+impl NetworkHarvest {
+	pub fn first_run_cleanup(&mut self) {
+		self.rx = 0;
+		self.tx = 0;
+	}
+}
+
 pub async fn get_network_data(
 	sys: &System, prev_net_access_time: &Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
 	curr_time: &Instant,

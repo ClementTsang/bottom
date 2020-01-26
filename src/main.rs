@@ -179,7 +179,6 @@ fn main() -> error::Result<()> {
 	let (rtx, rrx) = mpsc::channel();
 	{
 		let tx = tx;
-		let mut first_run = true;
 		let temp_type = app.temperature_type.clone();
 		thread::spawn(move || {
 			let tx = tx.clone();
@@ -191,21 +190,11 @@ fn main() -> error::Result<()> {
 				if let Ok(message) = rrx.try_recv() {
 					match message {
 						ResetEvent::Reset => {
-							//debug!("Received reset message");
-							first_run = true;
-							data_state.data = app::data_harvester::Data::default();
+							data_state.data.first_run_cleanup();
 						}
 					}
 				}
 				futures::executor::block_on(data_state.update_data());
-
-				if first_run {
-					// Fix for if you set a really long time for update periods (and just gives a faster first value)
-					data_state.data.first_run_cleanup(); // TODO: [OPT] we can remove this later.
-					thread::sleep(Duration::from_millis(250));
-					futures::executor::block_on(data_state.update_data());
-					first_run = false;
-				}
 				tx.send(Event::Update(Box::from(data_state.data.clone())))
 					.unwrap(); // TODO: [UNWRAP] Might be required, it's in a closure and idk how to deal with it
 				thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
@@ -295,9 +284,9 @@ fn main() -> error::Result<()> {
 						app.canvas_data.disk_data = update_disk_row(&app.data);
 						app.canvas_data.temp_sensor_data =
 							update_temp_row(&app.data, &app.temperature_type);
-						app.canvas_data.mem_data = update_mem_data_points(&app.data);
-						app.canvas_data.memory_labels = update_mem_data_values(&app.data);
-						app.canvas_data.swap_data = update_swap_data_points(&app.data);
+						app.canvas_data.mem_data = update_mem_data_points(&app.data_collection);
+						app.canvas_data.swap_data = update_swap_data_points(&app.data_collection);
+						app.canvas_data.memory_labels = update_mem_labels(&app.data_collection);
 						app.canvas_data.cpu_data =
 							update_cpu_data_points(app.show_average_cpu, &app.data);
 					}
@@ -325,7 +314,7 @@ fn main() -> error::Result<()> {
 	Ok(())
 }
 
-type TempProcess = (f64, Option<f64>, Option<u64>, Vec<u32>);
+type TempProcess = (f64, f64, Vec<u32>);
 
 fn handle_process_sorting(app: &mut app::App) {
 	// Handle combining multi-pid processes to form one entry in table.
@@ -338,23 +327,12 @@ fn handle_process_sorting(app: &mut app::App) {
 	// Fields for tuple: CPU%, MEM%, MEM_KB, PID_VEC
 	let mut process_map: BTreeMap<String, TempProcess> = BTreeMap::new();
 	for process in &app.data.list_of_processes {
-		let entry_val =
-			process_map
-				.entry(process.name.clone())
-				.or_insert((0.0, None, None, vec![]));
-		if let Some(mem_usage) = process.mem_usage_percent {
-			entry_val.0 += process.cpu_usage_percent;
-			if let Some(m) = &mut entry_val.1 {
-				*m += mem_usage;
-			}
-			entry_val.3.push(process.pid);
-		} else if let Some(mem_usage_kb) = process.mem_usage_kb {
-			entry_val.0 += process.cpu_usage_percent;
-			if let Some(m) = &mut entry_val.2 {
-				*m += mem_usage_kb;
-			}
-			entry_val.3.push(process.pid);
-		}
+		let entry_val = process_map
+			.entry(process.name.clone())
+			.or_insert((0.0, 0.0, vec![]));
+		entry_val.0 += process.cpu_usage_percent;
+		entry_val.1 += process.mem_usage_percent;
+		entry_val.2.push(process.pid);
 	}
 
 	// Now... turn this back into the exact same vector... but now with merged processes!
@@ -366,9 +344,8 @@ fn handle_process_sorting(app: &mut app::App) {
 					pid: 0, // Irrelevant
 					cpu_usage_percent: data.0,
 					mem_usage_percent: data.1,
-					mem_usage_kb: data.2,
 					name: name.clone(),
-					pid_vec: Some(data.3.clone()),
+					pid_vec: Some(data.2.clone()),
 				}
 			})
 			.collect::<Vec<_>>(),

@@ -21,8 +21,7 @@ impl Default for ProcessSorting {
 pub struct ProcessData {
 	pub pid: u32,
 	pub cpu_usage_percent: f64,
-	pub mem_usage_percent: Option<f64>,
-	pub mem_usage_kb: Option<u64>,
+	pub mem_usage_percent: f64,
 	pub name: String,
 	pub pid_vec: Option<Vec<u32>>,
 }
@@ -188,9 +187,8 @@ fn convert_ps(
 		return Ok(ProcessData {
 			pid: 0,
 			name: "".to_string(),
-			mem_usage_percent: None,
-			mem_usage_kb: None,
-			cpu_usage_percent: 0_f64,
+			mem_usage_percent: 0.0,
+			cpu_usage_percent: 0.0,
 			pid_vec: None,
 		});
 	}
@@ -201,19 +199,16 @@ fn convert_ps(
 		.parse::<u32>()
 		.unwrap_or(0);
 	let name = (&process[11..61]).trim().to_string();
-	let mem_usage_percent = Some(
-		(&process[62..])
-			.trim()
-			.to_string()
-			.parse::<f64>()
-			.unwrap_or(0_f64),
-	);
+	let mem_usage_percent = (&process[62..])
+		.trim()
+		.to_string()
+		.parse::<f64>()
+		.unwrap_or(0_f64);
 
 	Ok(ProcessData {
 		pid,
 		name,
 		mem_usage_percent,
-		mem_usage_kb: None,
 		cpu_usage_percent: linux_cpu_usage(
 			pid,
 			cpu_usage,
@@ -229,7 +224,7 @@ fn convert_ps(
 pub fn get_sorted_processes_list(
 	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64,
 	prev_pid_stats: &mut std::collections::HashMap<String, (f64, Instant)>,
-	use_current_cpu_total: bool, curr_time: &Instant,
+	use_current_cpu_total: bool, mem_total_kb: u64, curr_time: &Instant,
 ) -> crate::utils::error::Result<Vec<ProcessData>> {
 	let mut process_vector: Vec<ProcessData> = Vec::new();
 
@@ -241,7 +236,6 @@ pub fn get_sorted_processes_list(
 			.output()?;
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
-		//debug!("{:?}", split_string);
 		let cpu_calc = cpu_usage_calculation(prev_idle, prev_non_idle);
 		if let Ok((cpu_usage, cpu_percentage)) = cpu_calc {
 			let process_stream = split_string.collect::<Vec<&str>>();
@@ -291,8 +285,7 @@ pub fn get_sorted_processes_list(
 			process_vector.push(ProcessData {
 				pid: process_val.pid() as u32,
 				name,
-				mem_usage_percent: None,
-				mem_usage_kb: Some(process_val.memory()),
+				mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
 				cpu_usage_percent: f64::from(process_val.cpu_usage()),
 				pid_vec: None,
 			});

@@ -159,7 +159,7 @@ pub fn simple_update_process_row(
 				process.name.to_ascii_lowercase().contains(matching_string)
 			}
 		})
-		.map(|process| return_mapped_process(process, app_data))
+		.map(|process| return_mapped_process(process))
 		.collect::<Vec<_>>();
 
 	let mut grouped_process_vector: Vec<ConvertedProcessData> = Vec::new();
@@ -177,7 +177,7 @@ pub fn simple_update_process_row(
 					process.name.to_ascii_lowercase().contains(matching_string)
 				}
 			})
-			.map(|process| return_mapped_process(process, app_data))
+			.map(|process| return_mapped_process(process))
 			.collect::<Vec<_>>();
 	}
 
@@ -202,7 +202,7 @@ pub fn regex_update_process_row(
 				true
 			}
 		})
-		.map(|process| return_mapped_process(process, app_data))
+		.map(|process| return_mapped_process(process))
 		.collect::<Vec<_>>();
 
 	let mut grouped_process_vector: Vec<ConvertedProcessData> = Vec::new();
@@ -220,34 +220,19 @@ pub fn regex_update_process_row(
 					true
 				}
 			})
-			.map(|process| return_mapped_process(process, app_data))
+			.map(|process| return_mapped_process(process))
 			.collect::<Vec<_>>();
 	}
 
 	(process_vector, grouped_process_vector)
 }
 
-fn return_mapped_process(
-	process: &data_harvester::processes::ProcessData, app_data: &data_harvester::Data,
-) -> ConvertedProcessData {
+fn return_mapped_process(process: &data_harvester::processes::ProcessData) -> ConvertedProcessData {
 	ConvertedProcessData {
 		pid: process.pid,
 		name: process.name.to_string(),
 		cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
-		mem_usage: format!(
-			"{:.1}%",
-			if let Some(mem_usage) = process.mem_usage_percent {
-				mem_usage
-			} else if let Some(mem_usage_kb) = process.mem_usage_kb {
-				if let Some(mem_data) = app_data.memory.last() {
-					(mem_usage_kb / 1000) as f64 / mem_data.mem_total_in_mb as f64 * 100_f64 // TODO: [OPT] Get rid of this
-				} else {
-					0_f64
-				}
-			} else {
-				0_f64
-			}
-		),
+		mem_usage: format!("{:.1}%", process.mem_usage_percent),
 		group: vec![],
 	}
 }
@@ -331,67 +316,61 @@ pub fn update_cpu_data_points(
 	cpu_data_vector
 }
 
-pub fn update_mem_data_points(app_data: &data_harvester::Data) -> Vec<(f64, f64)> {
-	convert_mem_data(&app_data.memory)
-}
-
-pub fn update_swap_data_points(app_data: &data_harvester::Data) -> Vec<(f64, f64)> {
-	convert_mem_data(&app_data.swap)
-}
-
-pub fn update_mem_data_values(app_data: &data_harvester::Data) -> Vec<(u64, u64)> {
-	let mut result: Vec<(u64, u64)> = Vec::new();
-	result.push(get_most_recent_mem_values(&app_data.memory));
-	result.push(get_most_recent_mem_values(&app_data.swap));
-
-	result
-}
-
-fn get_most_recent_mem_values(mem_data: &[data_harvester::mem::MemData]) -> (u64, u64) {
-	let mut result: (u64, u64) = (0, 0);
-
-	if !mem_data.is_empty() {
-		if let Some(most_recent) = mem_data.last() {
-			result.0 = most_recent.mem_used_in_mb;
-			result.1 = most_recent.mem_total_in_mb;
-		}
-	}
-
-	result
-}
-
-fn convert_mem_data(mem_data: &[data_harvester::mem::MemData]) -> Vec<(f64, f64)> {
+pub fn update_mem_data_points(current_data: &data_janitor::DataCollection) -> Vec<(f64, f64)> {
 	let mut result: Vec<(f64, f64)> = Vec::new();
+	let current_time = current_data.current_instant;
 
-	for data in mem_data {
-		let current_time = std::time::Instant::now();
-		let new_entry = (
-			((TIME_STARTS_FROM as f64
-				- current_time.duration_since(data.instant).as_millis() as f64)
-				* 10_f64)
-				.floor(),
-			if data.mem_total_in_mb == 0 {
-				-1000.0
-			} else {
-				(data.mem_used_in_mb as f64 * 100_f64) / data.mem_total_in_mb as f64
-			},
-		);
+	for (time, data) in &current_data.timed_data_vec {
+		let time_from_start: f64 = (TIME_STARTS_FROM as f64
+			- current_time.duration_since(*time).as_millis() as f64)
+			.floor();
 
-		// Now, inject our joining points...
-		if !result.is_empty() {
-			let previous_element_data = *(result.last().unwrap());
-			for idx in 0..50 {
-				result.push((
-					previous_element_data.0
-						+ ((new_entry.0 - previous_element_data.0) / 50.0 * f64::from(idx)),
-					previous_element_data.1
-						+ ((new_entry.1 - previous_element_data.1) / 50.0 * f64::from(idx)),
-				));
-			}
+		//Insert joiner points
+		for &(joiner_offset, joiner_val) in &data.mem_data.1 {
+			let offset_time = time_from_start - joiner_offset as f64;
+			result.push((offset_time, joiner_val));
 		}
 
-		result.push(new_entry);
+		result.push((time_from_start, data.mem_data.0));
 	}
+
+	result
+}
+
+pub fn update_swap_data_points(current_data: &data_janitor::DataCollection) -> Vec<(f64, f64)> {
+	let mut result: Vec<(f64, f64)> = Vec::new();
+	let current_time = current_data.current_instant;
+
+	for (time, data) in &current_data.timed_data_vec {
+		let time_from_start: f64 = (TIME_STARTS_FROM as f64
+			- current_time.duration_since(*time).as_millis() as f64)
+			.floor();
+
+		//Insert joiner points
+		for &(joiner_offset, joiner_val) in &data.swap_data.1 {
+			let offset_time = time_from_start - joiner_offset as f64;
+			result.push((offset_time, joiner_val));
+		}
+
+		result.push((time_from_start, data.swap_data.0));
+	}
+
+	result
+}
+
+pub fn update_mem_labels(current_data: &data_janitor::DataCollection) -> Vec<(u64, u64)> {
+	let mut result: Vec<(u64, u64)> = Vec::new();
+
+	// This wants (u64, u64) values - left is usage in MB, right is total in MB
+	result.push((
+		current_data.memory_harvest.mem_used_in_mb,
+		current_data.memory_harvest.mem_total_in_mb,
+	));
+
+	result.push((
+		current_data.swap_harvest.mem_used_in_mb,
+		current_data.swap_harvest.mem_total_in_mb,
+	));
 
 	result
 }
@@ -433,8 +412,22 @@ pub fn convert_network_data_points(
 			));
 		}
 
-		rx.push((time_from_start, data.rx_data.0));
-		tx.push((time_from_start, data.tx_data.0));
+		rx.push((
+			time_from_start,
+			if data.rx_data.0 > 0.0 {
+				(data.rx_data.0).log(2.0)
+			} else {
+				0.0
+			},
+		));
+		tx.push((
+			time_from_start,
+			if data.rx_data.0 > 0.0 {
+				(data.rx_data.0).log(2.0)
+			} else {
+				0.0
+			},
+		));
 	}
 
 	let total_rx_converted_result: (f64, String);

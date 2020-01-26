@@ -585,12 +585,13 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
+		.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
 	let y_axis = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
 		.labels(&["0%", "100%"]);
 
+	// TODO: [OPT] Move this
 	let mem_name = "RAM:".to_string()
 		+ &format!(
 			"{:3}%",

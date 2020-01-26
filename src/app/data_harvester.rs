@@ -27,8 +27,8 @@ fn push_if_valid<T: std::clone::Clone>(result: &Result<T>, vector_to_push: &mut 
 pub struct Data {
 	pub list_of_cpu_packages: Vec<cpu::CPUPackage>,
 	pub list_of_io: Vec<disks::IOPackage>,
-	pub memory: Vec<mem::MemData>,
-	pub swap: Vec<mem::MemData>,
+	pub memory: mem::MemHarvest,
+	pub swap: mem::MemHarvest,
 	pub list_of_temperature_sensor: Vec<temperature::TempData>,
 	pub network: network::NetworkHarvest,
 	pub list_of_processes: Vec<processes::ProcessData>,
@@ -42,8 +42,8 @@ impl Default for Data {
 		Data {
 			list_of_cpu_packages: Vec::default(),
 			list_of_io: Vec::default(),
-			memory: Vec::default(),
-			swap: Vec::default(),
+			memory: mem::MemHarvest::default(),
+			swap: mem::MemHarvest::default(),
 			list_of_temperature_sensor: Vec::default(),
 			list_of_processes: Vec::default(),
 			grouped_list_of_processes: None,
@@ -58,12 +58,14 @@ impl Data {
 	pub fn first_run_cleanup(&mut self) {
 		self.list_of_cpu_packages = Vec::new();
 		self.list_of_io = Vec::new();
-		self.memory = Vec::new();
-		self.swap = Vec::new();
 		self.list_of_temperature_sensor = Vec::new();
 		self.list_of_processes = Vec::new();
 		self.grouped_list_of_processes = None;
 		self.list_of_disks = Vec::new();
+
+		self.network.first_run_cleanup();
+		self.memory = mem::MemHarvest::default();
+		self.swap = mem::MemHarvest::default();
 	}
 }
 
@@ -74,6 +76,7 @@ pub struct DataState {
 	prev_pid_stats: HashMap<String, (f64, Instant)>,
 	prev_idle: f64,
 	prev_non_idle: f64,
+	mem_total_kb: u64,
 	temperature_type: temperature::TemperatureType,
 	last_clean: Instant, // Last time stale data was cleared
 	use_current_cpu_total: bool,
@@ -88,6 +91,7 @@ impl Default for DataState {
 			prev_pid_stats: HashMap::new(),
 			prev_idle: 0_f64,
 			prev_non_idle: 0_f64,
+			mem_total_kb: 0,
 			temperature_type: temperature::TemperatureType::Celsius,
 			last_clean: Instant::now(),
 			use_current_cpu_total: false,
@@ -106,6 +110,9 @@ impl DataState {
 
 	pub fn init(&mut self) {
 		self.sys.refresh_all();
+		self.mem_total_kb = self.sys.get_total_memory();
+		futures::executor::block_on(self.update_data());
+		self.data.first_run_cleanup();
 	}
 
 	pub async fn update_data(&mut self) {
@@ -129,19 +136,19 @@ impl DataState {
 		)
 		.await;
 
+		// Mem and swap
+		if let Ok(memory) = mem::get_mem_data_list().await {
+			self.data.memory = memory;
+		}
+
+		if let Ok(swap) = mem::get_swap_data_list().await {
+			self.data.swap = swap;
+		}
+
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		push_if_valid(
 			&cpu::get_cpu_data_list(&self.sys, &current_instant),
 			&mut self.data.list_of_cpu_packages,
-		);
-
-		push_if_valid(
-			&mem::get_mem_data_list(&current_instant).await,
-			&mut self.data.memory,
-		);
-		push_if_valid(
-			&mem::get_swap_data_list(&current_instant).await,
-			&mut self.data.swap,
 		);
 		set_if_valid(
 			&processes::get_sorted_processes_list(
@@ -150,6 +157,7 @@ impl DataState {
 				&mut self.prev_non_idle,
 				&mut self.prev_pid_stats,
 				self.use_current_cpu_total,
+				self.mem_total_kb,
 				&current_instant,
 			),
 			&mut self.data.list_of_processes,
@@ -185,31 +193,9 @@ impl DataState {
 				self.prev_pid_stats.remove(&stale);
 			}
 
-			// TODO: [OPT] cleaning stale network
-
 			self.data.list_of_cpu_packages = self
 				.data
 				.list_of_cpu_packages
-				.iter()
-				.cloned()
-				.filter(|entry| {
-					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
-				})
-				.collect::<Vec<_>>();
-
-			self.data.memory = self
-				.data
-				.memory
-				.iter()
-				.cloned()
-				.filter(|entry| {
-					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
-				})
-				.collect::<Vec<_>>();
-
-			self.data.swap = self
-				.data
-				.swap
 				.iter()
 				.cloned()
 				.filter(|entry| {
