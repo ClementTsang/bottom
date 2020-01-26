@@ -286,7 +286,9 @@ fn main() -> error::Result<()> {
 							update_temp_row(&app.data, &app.temperature_type);
 						app.canvas_data.mem_data = update_mem_data_points(&app.data_collection);
 						app.canvas_data.swap_data = update_swap_data_points(&app.data_collection);
-						app.canvas_data.memory_labels = update_mem_labels(&app.data_collection);
+						let memory_and_swap_labels = update_mem_labels(&app.data_collection);
+						app.canvas_data.mem_label = memory_and_swap_labels.0;
+						app.canvas_data.swap_label = memory_and_swap_labels.1;
 						app.canvas_data.cpu_data =
 							update_cpu_data_points(app.show_average_cpu, &app.data);
 					}

@@ -96,7 +96,8 @@ pub struct CanvasData {
 	pub temp_sensor_data: Vec<Vec<String>>,
 	pub process_data: Vec<ConvertedProcessData>,
 	pub grouped_process_data: Vec<ConvertedProcessData>,
-	pub memory_labels: Vec<(u64, u64)>,
+	pub mem_label: String,
+	pub swap_label: String,
 	pub mem_data: Vec<(f64, f64)>,
 	pub swap_data: Vec<(f64, f64)>,
 	pub cpu_data: Vec<ConvertedCpuData>,
@@ -581,7 +582,6 @@ fn draw_memory_table<B: backend::Backend>(
 fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
 	let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
 	let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
-	let memory_labels: &[(u64, u64)] = &(app_state.canvas_data.memory_labels);
 
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
@@ -591,20 +591,8 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
 		.labels(&["0%", "100%"]);
 
-	// TODO: [OPT] Move this
-	let mem_name = "RAM:".to_string()
-		+ &format!(
-			"{:3}%",
-			(mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
-		) + &format!(
-		"   {:.1}GB/{:.1}GB",
-		memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
-		memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
-	);
-	let swap_name: String;
-
 	let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
-		.name(&mem_name)
+		.name(&app_state.canvas_data.mem_label)
 		.marker(if app_state.use_dot {
 			Marker::Dot
 		} else {
@@ -614,34 +602,18 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		.data(&mem_data)];
 
 	if !(&swap_data).is_empty() {
-		if let Some(last_canvas_result) = (&swap_data).last() {
-			if last_canvas_result.1 >= 0.0 {
-				swap_name = "SWP:".to_string()
-					+ &format!(
-						"{:3}%",
-						(swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
-					) + &format!(
-					"   {:.1}GB/{:.1}GB",
-					memory_labels[1].0 as f64 / 1024.0,
-					memory_labels[1].1 as f64 / 1024.0
-				);
-				mem_canvas_vec.push(
-					Dataset::default()
-						.name(&swap_name)
-						.marker(if app_state.use_dot {
-							Marker::Dot
-						} else {
-							Marker::Braille
-						})
-						.style(Style::default().fg(COLOUR_LIST[1]))
-						.data(&swap_data),
-				);
-			}
-		}
+		mem_canvas_vec.push(
+			Dataset::default()
+				.name(&app_state.canvas_data.swap_label)
+				.marker(if app_state.use_dot {
+					Marker::Dot
+				} else {
+					Marker::Braille
+				})
+				.style(Style::default().fg(COLOUR_LIST[1]))
+				.data(&swap_data),
+		);
 	}
-
-	// Memory usage table
-	// draw_memory_table(f, &app_state, mem_labels, swap_labels, label_loc);
 
 	Chart::default()
 		.block(

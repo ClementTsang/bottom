@@ -85,16 +85,18 @@ impl DataCollection {
 		new_entry.mem_data = mem_pt;
 
 		// Swap
-		let swap_percent = harvested_data.swap.mem_used_in_mb as f64
-			/ harvested_data.swap.mem_total_in_mb as f64
-			* 100.0;
-		let swap_joining_pt = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-			generate_joining_points(&time, last_pt.swap_data.0, &harvested_time, swap_percent)
-		} else {
-			Vec::new()
-		};
-		let swap_pt = (swap_percent, swap_joining_pt);
-		new_entry.swap_data = swap_pt;
+		if harvested_data.swap.mem_total_in_mb > 0 {
+			let swap_percent = harvested_data.swap.mem_used_in_mb as f64
+				/ harvested_data.swap.mem_total_in_mb as f64
+				* 100.0;
+			let swap_joining_pt = if let Some((time, last_pt)) = self.timed_data_vec.last() {
+				generate_joining_points(&time, last_pt.swap_data.0, &harvested_time, swap_percent)
+			} else {
+				Vec::new()
+			};
+			let swap_pt = (swap_percent, swap_joining_pt);
+			new_entry.swap_data = swap_pt;
+		}
 
 		// In addition copy over latest data for easy reference
 		self.memory_harvest = harvested_data.memory.clone();

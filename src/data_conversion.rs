@@ -358,21 +358,42 @@ pub fn update_swap_data_points(current_data: &data_janitor::DataCollection) -> V
 	result
 }
 
-pub fn update_mem_labels(current_data: &data_janitor::DataCollection) -> Vec<(u64, u64)> {
-	let mut result: Vec<(u64, u64)> = Vec::new();
+pub fn update_mem_labels(current_data: &data_janitor::DataCollection) -> (String, String) {
+	let mem_label = if current_data.memory_harvest.mem_total_in_mb == 0 {
+		"".to_string()
+	} else {
+		"RAM:".to_string()
+			+ &format!(
+				"{:3.0}%",
+				(current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
+					/ current_data.memory_harvest.mem_total_in_mb as f64)
+					.round()
+			) + &format!(
+			"   {:.1}GB/{:.1}GB",
+			current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
+			current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0
+		)
+	};
 
-	// This wants (u64, u64) values - left is usage in MB, right is total in MB
-	result.push((
-		current_data.memory_harvest.mem_used_in_mb,
-		current_data.memory_harvest.mem_total_in_mb,
-	));
+	let swap_label = if current_data.swap_harvest.mem_total_in_mb == 0 {
+		"".to_string()
+	} else {
+		"SWP:".to_string()
+			+ &format!(
+				"{:3.0}%",
+				(current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
+					/ current_data.swap_harvest.mem_total_in_mb as f64)
+					.round()
+			) + &format!(
+			"   {:.1}GB/{:.1}GB",
+			current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
+			current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0
+		)
+	};
 
-	result.push((
-		current_data.swap_harvest.mem_used_in_mb,
-		current_data.swap_harvest.mem_total_in_mb,
-	));
+	debug!("{:?}", mem_label);
 
-	result
+	(mem_label, swap_label)
 }
 
 pub fn convert_network_data_points(
