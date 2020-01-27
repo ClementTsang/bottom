@@ -1,4 +1,4 @@
-use crate::data_harvester::{mem, network, Data};
+use crate::data_harvester::{cpu, mem, network, Data};
 /// In charge of cleaning and managing data.  I couldn't think of a better
 /// name for the file.
 use std::time::Instant;
@@ -12,7 +12,7 @@ pub type JoinedDataPoints = (Value, Vec<(TimeOffset, Value)>);
 pub struct TimedData {
 	pub rx_data: JoinedDataPoints,
 	pub tx_data: JoinedDataPoints,
-	pub cpu_data: JoinedDataPoints,
+	pub cpu_data: Vec<JoinedDataPoints>,
 	pub mem_data: JoinedDataPoints,
 	pub swap_data: JoinedDataPoints,
 	pub temp_data: JoinedDataPoints,
@@ -35,7 +35,7 @@ pub struct DataCollection {
 	pub network_harvest: network::NetworkHarvest,
 	pub memory_harvest: mem::MemHarvest,
 	pub swap_harvest: mem::MemHarvest,
-	// pub process_data: ProcessData,
+	pub cpu_harvest: cpu::CPUHarvest,
 }
 
 impl Default for DataCollection {
@@ -46,7 +46,7 @@ impl Default for DataCollection {
 			network_harvest: network::NetworkHarvest::default(),
 			memory_harvest: mem::MemHarvest::default(),
 			swap_harvest: mem::MemHarvest::default(),
-			// process_data: ProcessData::default(),
+			cpu_harvest: cpu::CPUHarvest::default(),
 		}
 	}
 }
@@ -63,6 +63,9 @@ impl DataCollection {
 
 		// Memory and Swap
 		self.eat_memory_and_swap(&harvested_data, &harvested_time, &mut new_entry);
+
+		// CPU
+		self.eat_cpu(&harvested_data, &harvested_time, &mut new_entry);
 
 		// And we're done eating.
 		self.current_instant = harvested_time;
@@ -137,6 +140,31 @@ impl DataCollection {
 		// In addition copy over latest data for easy reference
 		self.network_harvest = harvested_data.network.clone();
 	}
+
+	fn eat_cpu(
+		&mut self, harvested_data: &Data, harvested_time: &Instant, new_entry: &mut TimedData,
+	) {
+		// Note this only pre-calculates the data points - the names will be
+		// within the local copy of cpu_harvest.  Since it's all sequential
+		// it probably doesn't matter anyways.
+		for (itx, cpu) in harvested_data.cpu.cpu_vec.iter().enumerate() {
+			let cpu_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
+				generate_joining_points(
+					&time,
+					last_pt.cpu_data[itx].0,
+					&harvested_time,
+					cpu.cpu_usage,
+				)
+			} else {
+				Vec::new()
+			};
+
+			let cpu_pt = (cpu.cpu_usage, cpu_joining_pts);
+			new_entry.cpu_data.push(cpu_pt);
+		}
+
+		self.cpu_harvest = harvested_data.cpu.clone();
+	}
 }
 
 pub fn generate_joining_points(
@@ -151,13 +179,13 @@ pub fn generate_joining_points(
 	// Let's generate... about this many points!
 	let num_points = std::cmp::min(
 		std::cmp::max(
-			(value_difference.abs() / (time_difference + 0.0001) * 1000.0) as u64,
+			(value_difference.abs() / (time_difference + 0.0001) * 500.0) as u64,
 			100,
 		),
-		1000,
+		500,
 	);
 
-	for itx in 0..num_points {
+	for itx in (0..num_points).step_by(1) {
 		points.push((
 			time_difference - (itx as f64 / num_points as f64 * time_difference),
 			start_y + (itx as f64 / num_points as f64 * value_difference),

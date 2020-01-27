@@ -264,16 +264,13 @@ fn main() -> error::Result<()> {
 					_ => {}
 				},
 				Event::Update(data) => {
-					// NOTE TO SELF - data is refreshed into app state HERE!  That means, if it is
-					// frozen, then, app.data is never refreshed, until unfrozen!
 					if !app.is_frozen {
 						app.data_collection.eat_data(&data);
+						app.data = *data; // TODO: [OPT] remove this
 
-						app.data = *data;
+						// Convert all data into tui-compliant components
 
-						handle_process_sorting(&mut app);
-
-						// Convert all data into tui components
+						// Network
 						let network_data = convert_network_data_points(&app.data_collection);
 						app.canvas_data.network_data_rx = network_data.rx;
 						app.canvas_data.network_data_tx = network_data.tx;
@@ -281,16 +278,26 @@ fn main() -> error::Result<()> {
 						app.canvas_data.tx_display = network_data.tx_display;
 						app.canvas_data.total_rx_display = network_data.total_rx_display;
 						app.canvas_data.total_tx_display = network_data.total_tx_display;
+
+						// Disk
 						app.canvas_data.disk_data = update_disk_row(&app.data);
+
+						// Temperatures
 						app.canvas_data.temp_sensor_data =
 							update_temp_row(&app.data, &app.temperature_type);
+						// Memory
 						app.canvas_data.mem_data = update_mem_data_points(&app.data_collection);
 						app.canvas_data.swap_data = update_swap_data_points(&app.data_collection);
 						let memory_and_swap_labels = update_mem_labels(&app.data_collection);
 						app.canvas_data.mem_label = memory_and_swap_labels.0;
 						app.canvas_data.swap_label = memory_and_swap_labels.1;
+
+						// CPU
 						app.canvas_data.cpu_data =
-							update_cpu_data_points(app.show_average_cpu, &app.data);
+							update_cpu_data_points(app.show_average_cpu, &app.data_collection);
+
+						// Processes
+						handle_process_sorting(&mut app);
 					}
 				}
 			}

@@ -639,15 +639,8 @@ impl App {
 					self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1
 				}
 				ApplicationPosition::Cpu => {
-					if let Some(cpu_package) = self.data.list_of_cpu_packages.last() {
-						if self.show_average_cpu {
-							self.currently_selected_cpu_table_position =
-								cpu_package.cpu_vec.len() as i64;
-						} else {
-							self.currently_selected_cpu_table_position =
-								cpu_package.cpu_vec.len() as i64 - 1;
-						}
-					}
+					self.currently_selected_cpu_table_position =
+						self.canvas_data.cpu_data.len() as i64 - 1;
 				}
 				_ => {}
 			}
@@ -685,17 +678,11 @@ impl App {
 	}
 
 	fn change_cpu_table_position(&mut self, num_to_change_by: i64) {
-		if let Some(cpu_package) = self.data.list_of_cpu_packages.last() {
-			if self.currently_selected_cpu_table_position + num_to_change_by >= 0
-				&& self.currently_selected_cpu_table_position + num_to_change_by
-					< if self.show_average_cpu {
-						cpu_package.cpu_vec.len()
-					} else {
-						cpu_package.cpu_vec.len() - 1
-					} as i64
-			{
-				self.currently_selected_cpu_table_position += num_to_change_by;
-			}
+		if self.currently_selected_cpu_table_position + num_to_change_by >= 0
+			&& self.currently_selected_cpu_table_position + num_to_change_by
+				< self.canvas_data.cpu_data.len() as i64
+		{
+			self.currently_selected_cpu_table_position += num_to_change_by;
 		}
 	}
 

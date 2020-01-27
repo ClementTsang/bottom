@@ -391,7 +391,7 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 	// CPU usage graph
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
+		.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
 	let y_axis = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([-0.5, 100.5])

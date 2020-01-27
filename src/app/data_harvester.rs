@@ -25,7 +25,7 @@ fn push_if_valid<T: std::clone::Clone>(result: &Result<T>, vector_to_push: &mut 
 
 #[derive(Clone, Debug)]
 pub struct Data {
-	pub list_of_cpu_packages: Vec<cpu::CPUPackage>,
+	pub cpu: cpu::CPUHarvest,
 	pub list_of_io: Vec<disks::IOPackage>,
 	pub memory: mem::MemHarvest,
 	pub swap: mem::MemHarvest,
@@ -40,7 +40,7 @@ pub struct Data {
 impl Default for Data {
 	fn default() -> Self {
 		Data {
-			list_of_cpu_packages: Vec::default(),
+			cpu: cpu::CPUHarvest::default(),
 			list_of_io: Vec::default(),
 			memory: mem::MemHarvest::default(),
 			swap: mem::MemHarvest::default(),
@@ -56,7 +56,6 @@ impl Default for Data {
 
 impl Data {
 	pub fn first_run_cleanup(&mut self) {
-		self.list_of_cpu_packages = Vec::new();
 		self.list_of_io = Vec::new();
 		self.list_of_temperature_sensor = Vec::new();
 		self.list_of_processes = Vec::new();
@@ -66,6 +65,7 @@ impl Data {
 		self.network.first_run_cleanup();
 		self.memory = mem::MemHarvest::default();
 		self.swap = mem::MemHarvest::default();
+		self.cpu = cpu::CPUHarvest::default();
 	}
 }
 
@@ -112,6 +112,7 @@ impl DataState {
 		self.sys.refresh_all();
 		self.mem_total_kb = self.sys.get_total_memory();
 		futures::executor::block_on(self.update_data());
+		std::thread::sleep(std::time::Duration::from_millis(250));
 		self.data.first_run_cleanup();
 	}
 
@@ -145,11 +146,10 @@ impl DataState {
 			self.data.swap = swap;
 		}
 
+		// CPU
+		self.data.cpu = cpu::get_cpu_data_list(&self.sys);
+
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
-		push_if_valid(
-			&cpu::get_cpu_data_list(&self.sys, &current_instant),
-			&mut self.data.list_of_cpu_packages,
-		);
 		set_if_valid(
 			&processes::get_sorted_processes_list(
 				&self.sys,
@@ -192,17 +192,6 @@ impl DataState {
 			for stale in stale_list {
 				self.prev_pid_stats.remove(&stale);
 			}
-
-			self.data.list_of_cpu_packages = self
-				.data
-				.list_of_cpu_packages
-				.iter()
-				.cloned()
-				.filter(|entry| {
-					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
-				})
-				.collect::<Vec<_>>();
-
 			self.data.list_of_io = self
 				.data
 				.list_of_io

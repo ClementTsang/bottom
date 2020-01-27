@@ -9,7 +9,6 @@ use crate::{
 };
 use constants::*;
 use regex::Regex;
-use std::time::Instant;
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
@@ -238,78 +237,48 @@ fn return_mapped_process(process: &data_harvester::processes::ProcessData) -> Co
 }
 
 pub fn update_cpu_data_points(
-	show_avg_cpu: bool, app_data: &data_harvester::Data,
+	show_avg_cpu: bool, current_data: &data_janitor::DataCollection,
 ) -> Vec<ConvertedCpuData> {
 	let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
-	let mut cpu_collection: Vec<Vec<CpuPoint>> = Vec::new();
+	let current_time = current_data.current_instant;
+	let cpu_listing_offset = if show_avg_cpu { 0 } else { 1 };
 
-	if !app_data.list_of_cpu_packages.is_empty() {
-		// I'm sorry for the following if statement but I couldn't be bothered here...
-		for cpu_num in (if show_avg_cpu { 0 } else { 1 })
-			..app_data.list_of_cpu_packages.last().unwrap().cpu_vec.len()
-		{
-			let mut this_cpu_data: Vec<CpuPoint> = Vec::new();
+	for (time, data) in &current_data.timed_data_vec {
+		let time_from_start: f64 = (TIME_STARTS_FROM as f64
+			- current_time.duration_since(*time).as_millis() as f64)
+			.floor();
 
-			for data in &app_data.list_of_cpu_packages {
-				let current_time = Instant::now();
-				let current_cpu_usage = data.cpu_vec[cpu_num].cpu_usage;
-
-				let new_entry = CpuPoint {
-					time: ((TIME_STARTS_FROM as f64
-						- current_time.duration_since(data.instant).as_millis() as f64)
-						* 10_f64)
-						.floor(),
-					usage: current_cpu_usage,
-				};
-
-				// Now, inject our joining points...
-				if let Some(previous_element_data) = this_cpu_data.last().cloned() {
-					for idx in 0..50 {
-						this_cpu_data.push(CpuPoint {
-							time: previous_element_data.time
-								+ ((new_entry.time - previous_element_data.time) / 50.0
-									* f64::from(idx)),
-							usage: previous_element_data.usage
-								+ ((new_entry.usage - previous_element_data.usage) / 50.0
-									* f64::from(idx)),
-						});
-					}
-				}
-
-				this_cpu_data.push(new_entry);
+		for (itx, cpu) in data.cpu_data.iter().enumerate() {
+			if !show_avg_cpu && itx == 0 {
+				continue;
 			}
 
-			cpu_collection.push(this_cpu_data);
-		}
+			// Check if the vector exists yet
+			let itx_offset = itx - cpu_listing_offset;
+			if cpu_data_vector.len() <= itx_offset {
+				cpu_data_vector.push(ConvertedCpuData::default());
+				cpu_data_vector[itx_offset].cpu_name = if show_avg_cpu && itx_offset == 0 {
+					"AVG".to_string()
+				} else {
+					current_data.cpu_harvest.cpu_vec[itx]
+						.cpu_name
+						.to_uppercase()
+				};
+			}
 
-		// Finally, add it all onto the end
-		for (i, data) in cpu_collection.iter().enumerate() {
-			if !app_data.list_of_cpu_packages.is_empty() {
-				// Commented out: this version includes the percentage in the label...
-				// cpu_data_vector.push((
-				// 	// + 1 to skip total CPU if show_avg_cpu is false
-				// 	format!(
-				// 		"{:4}: ",
-				// 		&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec[i + if show_avg_cpu { 0 } else { 1 }].cpu_name)
-				// 	)
-				// 	.to_uppercase() + &format!("{:3}%", (data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)),
-				// 	data.clone(),
-				// ))
-				cpu_data_vector.push(ConvertedCpuData {
-					cpu_name: format!(
-						"{} ",
-						if show_avg_cpu && i == 0 {
-							"AVG"
-						} else {
-							&*(app_data.list_of_cpu_packages.last().unwrap().cpu_vec
-								[i + if show_avg_cpu { 0 } else { 1 }]
-							.cpu_name)
-						}
-					)
-					.to_uppercase(),
-					cpu_data: data.clone(),
+			//Insert joiner points
+			for &(joiner_offset, joiner_val) in &cpu.1 {
+				let offset_time = time_from_start - joiner_offset as f64;
+				cpu_data_vector[itx_offset].cpu_data.push(CpuPoint {
+					time: offset_time,
+					usage: joiner_val,
 				});
 			}
+
+			cpu_data_vector[itx_offset].cpu_data.push(CpuPoint {
+				time: time_from_start,
+				usage: cpu.0,
+			});
 		}
 	}
 
