@@ -80,7 +80,7 @@ Run using `btm`.
 
 - `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
 
-- `-s`, `--simple_search` will default the search to simple search rather than regex search.
+- `-i`, `--case_insensitive` will default to not matching cases when searching processes.
 
 ### Keybindings
 

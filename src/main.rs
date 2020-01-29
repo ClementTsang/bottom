@@ -72,9 +72,9 @@ fn main() -> error::Result<()> {
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
-		(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
+		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
-		(@arg SEARCH_DEFAULT_USE_SIMPLE: -s --simple_search "Uses a simple case-insensitive string comparison to search processes by default.")
+		(@arg CASE_INSENSITIVE_DEFAULT: -i --case_insensitive "Do not match case when searching processes by default.")
 	)
 	.get_matches();
 
@@ -132,7 +132,7 @@ fn main() -> error::Result<()> {
 	}
 
 	// Set default search method
-	if matches.is_present("SEARCH_DEFAULT_USE_SIMPLE") {
+	if matches.is_present("CASE_INSENSITIVE_DEFAULT") {
 		app.use_simple = true;
 	}
 
