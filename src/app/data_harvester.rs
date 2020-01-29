@@ -1,6 +1,6 @@
 //! This is the main file to house data collection functions.
 
-use crate::{constants, utils::error::Result};
+use crate::utils::error::Result;
 use std::{collections::HashMap, time::Instant};
 use sysinfo::{System, SystemExt};
 
@@ -66,13 +66,11 @@ impl Data {
 pub struct DataState {
 	pub data: Data,
 	sys: System,
-	stale_max_seconds: u64,
 	prev_pid_stats: HashMap<String, (f64, Instant)>,
 	prev_idle: f64,
 	prev_non_idle: f64,
 	mem_total_kb: u64,
 	temperature_type: temperature::TemperatureType,
-	last_clean: Instant, // Last time stale data was cleared
 	use_current_cpu_total: bool,
 }
 
@@ -81,13 +79,11 @@ impl Default for DataState {
 		DataState {
 			data: Data::default(),
 			sys: System::new(),
-			stale_max_seconds: constants::STALE_MAX_MILLISECONDS / 1000,
 			prev_pid_stats: HashMap::new(),
 			prev_idle: 0_f64,
 			prev_non_idle: 0_f64,
 			mem_total_kb: 0,
 			temperature_type: temperature::TemperatureType::Celsius,
-			last_clean: Instant::now(),
 			use_current_cpu_total: false,
 		}
 	}
@@ -173,23 +169,5 @@ impl DataState {
 
 		// Update time
 		self.data.last_collection_time = current_instant;
-
-		// Filter out stale timed entries
-		let clean_instant = Instant::now();
-		if clean_instant.duration_since(self.last_clean).as_secs() > self.stale_max_seconds {
-			let stale_list: Vec<_> = self
-				.prev_pid_stats
-				.iter()
-				.filter(|&(_, &v)| {
-					clean_instant.duration_since(v.1).as_secs() > self.stale_max_seconds
-				})
-				.map(|(k, _)| k.clone())
-				.collect();
-			for stale in stale_list {
-				self.prev_pid_stats.remove(&stale);
-			}
-
-			self.last_clean = clean_instant;
-		}
 	}
 }

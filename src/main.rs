@@ -46,6 +46,7 @@ enum Event<I, J> {
 	KeyInput(I),
 	MouseInput(J),
 	Update(Box<data_harvester::Data>),
+	Clean,
 }
 
 enum ResetEvent {
@@ -175,6 +176,16 @@ fn main() -> error::Result<()> {
 		});
 	}
 
+	// Cleaning loop
+	{
+		let tx = tx.clone();
+		thread::spawn(move || loop {
+			thread::sleep(Duration::from_millis(
+				constants::STALE_MAX_MILLISECONDS as u64,
+			));
+			tx.send(Event::Clean).unwrap();
+		});
+	}
 	// Event loop
 	let (rtx, rrx) = mpsc::channel();
 	{
@@ -300,6 +311,10 @@ fn main() -> error::Result<()> {
 						// Processes
 						handle_process_sorting(&mut app);
 					}
+				}
+				Event::Clean => {
+					app.data_collection
+						.clean_data(constants::STALE_MAX_MILLISECONDS);
 				}
 			}
 		}
