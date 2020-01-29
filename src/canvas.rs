@@ -401,18 +401,8 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 	let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
 
 	for (i, cpu) in cpu_data.iter().enumerate() {
-		let mut avg_cpu_exist_offset = 0;
-		if app_state.show_average_cpu {
-			if i == 0 {
-				// Skip, we want to render the average cpu last!
-				continue;
-			} else {
-				avg_cpu_exist_offset = 1;
-			}
-		}
-
 		cpu_entries_vec.push((
-			Style::default().fg(COLOUR_LIST[(i - avg_cpu_exist_offset) % COLOUR_LIST.len()]),
+			Style::default().fg(COLOUR_LIST[(i) % COLOUR_LIST.len()]),
 			cpu.cpu_data
 				.iter()
 				.map(<(f64, f64)>::from)
@@ -423,7 +413,7 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 	if app_state.show_average_cpu {
 		if let Some(avg_cpu_entry) = cpu_data.first() {
 			cpu_entries_vec.push((
-				Style::default().fg(COLOUR_LIST[(cpu_data.len() - 1) % COLOUR_LIST.len()]),
+				Style::default().fg(COLOUR_LIST[0]),
 				avg_cpu_entry
 					.cpu_data
 					.iter()
