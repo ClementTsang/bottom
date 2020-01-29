@@ -277,8 +277,8 @@ pub fn draw_data<B: backend::Backend>(
 				.margin(1)
 				.constraints(
 					[
-						Constraint::Percentage(33),
-						Constraint::Percentage(34),
+						Constraint::Percentage(30),
+						Constraint::Percentage(36),
 						Constraint::Percentage(34),
 					]
 					.as_ref(),
@@ -971,7 +971,8 @@ fn draw_processes_table<B: backend::Backend>(
 		app_state.currently_selected_process_position,
 	);
 
-	let sliced_vec: Vec<ConvertedProcessHarvest> = (&process_data[start_position as usize..]).to_vec();
+	let sliced_vec: Vec<ConvertedProcessHarvest> =
+		(&process_data[start_position as usize..]).to_vec();
 	let mut process_counter = 0;
 
 	// Draw!
