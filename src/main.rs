@@ -181,7 +181,7 @@ fn main() -> error::Result<()> {
 		let tx = tx.clone();
 		thread::spawn(move || loop {
 			thread::sleep(Duration::from_millis(
-				constants::STALE_MAX_MILLISECONDS as u64,
+				constants::STALE_MAX_MILLISECONDS as u64 + 5000,
 			));
 			tx.send(Event::Clean).unwrap();
 		});

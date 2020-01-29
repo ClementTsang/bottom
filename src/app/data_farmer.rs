@@ -82,7 +82,7 @@ impl DataCollection {
 
 		let mut remove_index = 0;
 		for entry in &self.timed_data_vec {
-			if current_time.duration_since(entry.0).as_millis() > max_time_millis {
+			if current_time.duration_since(entry.0).as_millis() >= max_time_millis {
 				remove_index += 1;
 			} else {
 				break;
