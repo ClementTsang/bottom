@@ -77,8 +77,19 @@ impl Default for DataCollection {
 }
 
 impl DataCollection {
-	pub fn clean_data(&mut self) {
-		// TODO: [OPT] To implement to clean
+	pub fn clean_data(&mut self, max_time_millis: u128) {
+		let current_time = Instant::now();
+
+		let mut remove_index = 0;
+		for entry in &self.timed_data_vec {
+			if current_time.duration_since(entry.0).as_millis() > max_time_millis {
+				remove_index += 1;
+			} else {
+				break;
+			}
+		}
+
+		self.timed_data_vec.drain(0..remove_index);
 	}
 
 	pub fn eat_data(&mut self, harvested_data: &Data) {
