@@ -6,10 +6,7 @@ pub struct CPUData {
 	pub cpu_usage: f64,
 }
 
-#[derive(Default, Debug, Clone)]
-pub struct CPUHarvest {
-	pub cpu_vec: Vec<CPUData>,
-}
+pub type CPUHarvest = Vec<CPUData>;
 
 pub fn get_cpu_data_list(sys: &System) -> CPUHarvest {
 	let cpu_data = sys.get_processor_list();
@@ -22,5 +19,5 @@ pub fn get_cpu_data_list(sys: &System) -> CPUHarvest {
 		});
 	}
 
-	CPUHarvest { cpu_vec }
+	cpu_vec
 }

@@ -2,8 +2,9 @@
 //! can actually handle.
 
 use crate::{
+	app::data_farmer,
 	app::data_harvester,
-	app::data_janitor,
+	app::App,
 	constants,
 	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
@@ -21,7 +22,7 @@ pub struct ConvertedNetworkData {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct ConvertedProcessData {
+pub struct ConvertedProcessHarvest {
 	pub pid: u32,
 	pub name: String,
 	pub cpu_usage: String,
@@ -55,15 +56,16 @@ impl From<&CpuPoint> for (f64, f64) {
 	}
 }
 
-pub fn update_temp_row(
-	app_data: &data_harvester::Data, temp_type: &data_harvester::temperature::TemperatureType,
-) -> Vec<Vec<String>> {
+pub fn update_temp_row(app: &App) -> Vec<Vec<String>> {
 	let mut sensor_vector: Vec<Vec<String>> = Vec::new();
 
-	if (&app_data.list_of_temperature_sensor).is_empty() {
+	let current_data = &app.data_collection;
+	let temp_type = &app.temperature_type;
+
+	if current_data.temp_harvest.is_empty() {
 		sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()])
 	} else {
-		for sensor in &app_data.list_of_temperature_sensor {
+		for sensor in &current_data.temp_harvest {
 			sensor_vector.push(vec![
 				sensor.component_name.to_string(),
 				(sensor.temperature.ceil() as u64).to_string()
@@ -79,44 +81,18 @@ pub fn update_temp_row(
 	sensor_vector
 }
 
-pub fn update_disk_row(app_data: &data_harvester::Data) -> Vec<Vec<String>> {
+pub fn update_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<String>> {
 	let mut disk_vector: Vec<Vec<String>> = Vec::new();
-	for disk in &app_data.list_of_disks {
-		let io_activity = {
-			let mut final_result = ("0B/s".to_string(), "0B/s".to_string());
-			if app_data.list_of_io.len() > 2 {
-				if let Some(io_package) = &app_data.list_of_io.last() {
-					if let Some(trimmed_mount) = disk.name.to_string().split('/').last() {
-						let prev_io_package = &app_data.list_of_io[app_data.list_of_io.len() - 2];
-
-						let io_hashmap = &io_package.io_hash;
-						let prev_io_hashmap = &prev_io_package.io_hash;
-						let time_difference = io_package
-							.instant
-							.duration_since(prev_io_package.instant)
-							.as_secs_f64();
-						if io_hashmap.contains_key(trimmed_mount)
-							&& prev_io_hashmap.contains_key(trimmed_mount)
-						{
-							// Ideally change this...
-							let ele = &io_hashmap[trimmed_mount];
-							let prev = &prev_io_hashmap[trimmed_mount];
-							let read_bytes_per_sec = ((ele.read_bytes - prev.read_bytes) as f64
-								/ time_difference) as u64;
-							let write_bytes_per_sec = ((ele.write_bytes - prev.write_bytes) as f64
-								/ time_difference) as u64;
-							let converted_read = get_simple_byte_values(read_bytes_per_sec, false);
-							let converted_write =
-								get_simple_byte_values(write_bytes_per_sec, false);
-							final_result = (
-								format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
-								format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
-							);
-						}
-					}
-				}
-			}
-			final_result
+	for (itx, disk) in current_data.disk_harvest.iter().enumerate() {
+		let io_activity = if current_data.io_labels.len() > itx {
+			let converted_read = get_simple_byte_values(current_data.io_labels[itx].0, false);
+			let converted_write = get_simple_byte_values(current_data.io_labels[itx].1, false);
+			(
+				format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
+				format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
+			)
+		} else {
+			("0B/s".to_string(), "0B/s".to_string())
 		};
 
 		let converted_free_space = get_simple_byte_values(disk.free_space, false);
@@ -143,8 +119,8 @@ pub fn update_disk_row(app_data: &data_harvester::Data) -> Vec<Vec<String>> {
 
 pub fn simple_update_process_row(
 	app_data: &data_harvester::Data, matching_string: &str, use_pid: bool,
-) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
-	let process_vector: Vec<ConvertedProcessData> = app_data
+) -> (Vec<ConvertedProcessHarvest>, Vec<ConvertedProcessHarvest>) {
+	let process_vector: Vec<ConvertedProcessHarvest> = app_data
 		.list_of_processes
 		.iter()
 		.filter(|process| {
@@ -161,7 +137,7 @@ pub fn simple_update_process_row(
 		.map(|process| return_mapped_process(process))
 		.collect::<Vec<_>>();
 
-	let mut grouped_process_vector: Vec<ConvertedProcessData> = Vec::new();
+	let mut grouped_process_vector: Vec<ConvertedProcessHarvest> = Vec::new();
 	if let Some(grouped_list_of_processes) = &app_data.grouped_list_of_processes {
 		grouped_process_vector = grouped_list_of_processes
 			.iter()
@@ -186,8 +162,8 @@ pub fn simple_update_process_row(
 pub fn regex_update_process_row(
 	app_data: &data_harvester::Data, regex_matcher: &std::result::Result<Regex, regex::Error>,
 	use_pid: bool,
-) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
-	let process_vector: Vec<ConvertedProcessData> = app_data
+) -> (Vec<ConvertedProcessHarvest>, Vec<ConvertedProcessHarvest>) {
+	let process_vector: Vec<ConvertedProcessHarvest> = app_data
 		.list_of_processes
 		.iter()
 		.filter(|process| {
@@ -204,7 +180,7 @@ pub fn regex_update_process_row(
 		.map(|process| return_mapped_process(process))
 		.collect::<Vec<_>>();
 
-	let mut grouped_process_vector: Vec<ConvertedProcessData> = Vec::new();
+	let mut grouped_process_vector: Vec<ConvertedProcessHarvest> = Vec::new();
 	if let Some(grouped_list_of_processes) = &app_data.grouped_list_of_processes {
 		grouped_process_vector = grouped_list_of_processes
 			.iter()
@@ -226,8 +202,10 @@ pub fn regex_update_process_row(
 	(process_vector, grouped_process_vector)
 }
 
-fn return_mapped_process(process: &data_harvester::processes::ProcessData) -> ConvertedProcessData {
-	ConvertedProcessData {
+fn return_mapped_process(
+	process: &data_harvester::processes::ProcessHarvest,
+) -> ConvertedProcessHarvest {
+	ConvertedProcessHarvest {
 		pid: process.pid,
 		name: process.name.to_string(),
 		cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
@@ -237,7 +215,7 @@ fn return_mapped_process(process: &data_harvester::processes::ProcessData) -> Co
 }
 
 pub fn update_cpu_data_points(
-	show_avg_cpu: bool, current_data: &data_janitor::DataCollection,
+	show_avg_cpu: bool, current_data: &data_farmer::DataCollection,
 ) -> Vec<ConvertedCpuData> {
 	let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
 	let current_time = current_data.current_instant;
@@ -260,9 +238,7 @@ pub fn update_cpu_data_points(
 				cpu_data_vector[itx_offset].cpu_name = if show_avg_cpu && itx_offset == 0 {
 					"AVG".to_string()
 				} else {
-					current_data.cpu_harvest.cpu_vec[itx]
-						.cpu_name
-						.to_uppercase()
+					current_data.cpu_harvest[itx].cpu_name.to_uppercase()
 				};
 			}
 
@@ -285,7 +261,7 @@ pub fn update_cpu_data_points(
 	cpu_data_vector
 }
 
-pub fn update_mem_data_points(current_data: &data_janitor::DataCollection) -> Vec<(f64, f64)> {
+pub fn update_mem_data_points(current_data: &data_farmer::DataCollection) -> Vec<(f64, f64)> {
 	let mut result: Vec<(f64, f64)> = Vec::new();
 	let current_time = current_data.current_instant;
 
@@ -306,7 +282,7 @@ pub fn update_mem_data_points(current_data: &data_janitor::DataCollection) -> Ve
 	result
 }
 
-pub fn update_swap_data_points(current_data: &data_janitor::DataCollection) -> Vec<(f64, f64)> {
+pub fn update_swap_data_points(current_data: &data_farmer::DataCollection) -> Vec<(f64, f64)> {
 	let mut result: Vec<(f64, f64)> = Vec::new();
 	let current_time = current_data.current_instant;
 
@@ -327,7 +303,7 @@ pub fn update_swap_data_points(current_data: &data_janitor::DataCollection) -> V
 	result
 }
 
-pub fn update_mem_labels(current_data: &data_janitor::DataCollection) -> (String, String) {
+pub fn update_mem_labels(current_data: &data_farmer::DataCollection) -> (String, String) {
 	let mem_label = if current_data.memory_harvest.mem_total_in_mb == 0 {
 		"".to_string()
 	} else {
@@ -360,13 +336,11 @@ pub fn update_mem_labels(current_data: &data_janitor::DataCollection) -> (String
 		)
 	};
 
-	debug!("{:?}", mem_label);
-
 	(mem_label, swap_label)
 }
 
 pub fn convert_network_data_points(
-	current_data: &data_janitor::DataCollection,
+	current_data: &data_farmer::DataCollection,
 ) -> ConvertedNetworkData {
 	let mut rx: Vec<(f64, f64)> = Vec::new();
 	let mut tx: Vec<(f64, f64)> = Vec::new();

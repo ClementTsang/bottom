@@ -17,23 +17,17 @@ fn set_if_valid<T: std::clone::Clone>(result: &Result<T>, value_to_set: &mut T) 
 	}
 }
 
-fn push_if_valid<T: std::clone::Clone>(result: &Result<T>, vector_to_push: &mut Vec<T>) {
-	if let Ok(result) = result {
-		vector_to_push.push(result.clone());
-	}
-}
-
 #[derive(Clone, Debug)]
 pub struct Data {
 	pub cpu: cpu::CPUHarvest,
-	pub list_of_io: Vec<disks::IOPackage>,
 	pub memory: mem::MemHarvest,
 	pub swap: mem::MemHarvest,
-	pub list_of_temperature_sensor: Vec<temperature::TempData>,
+	pub temperature_sensors: Vec<temperature::TempHarvest>,
 	pub network: network::NetworkHarvest,
-	pub list_of_processes: Vec<processes::ProcessData>,
-	pub grouped_list_of_processes: Option<Vec<processes::ProcessData>>,
-	pub list_of_disks: Vec<disks::DiskData>,
+	pub list_of_processes: Vec<processes::ProcessHarvest>,
+	pub grouped_list_of_processes: Option<Vec<processes::ProcessHarvest>>,
+	pub disks: Vec<disks::DiskHarvest>,
+	pub io: disks::IOHarvest,
 	pub last_collection_time: Instant,
 }
 
@@ -41,13 +35,13 @@ impl Default for Data {
 	fn default() -> Self {
 		Data {
 			cpu: cpu::CPUHarvest::default(),
-			list_of_io: Vec::default(),
 			memory: mem::MemHarvest::default(),
 			swap: mem::MemHarvest::default(),
-			list_of_temperature_sensor: Vec::default(),
+			temperature_sensors: Vec::default(),
 			list_of_processes: Vec::default(),
 			grouped_list_of_processes: None,
-			list_of_disks: Vec::default(),
+			disks: Vec::default(),
+			io: disks::IOHarvest::default(),
 			network: network::NetworkHarvest::default(),
 			last_collection_time: Instant::now(),
 		}
@@ -56,11 +50,11 @@ impl Default for Data {
 
 impl Data {
 	pub fn first_run_cleanup(&mut self) {
-		self.list_of_io = Vec::new();
-		self.list_of_temperature_sensor = Vec::new();
+		self.io = disks::IOHarvest::default();
+		self.temperature_sensors = Vec::new();
 		self.list_of_processes = Vec::new();
 		self.grouped_list_of_processes = None;
-		self.list_of_disks = Vec::new();
+		self.disks = Vec::new();
 
 		self.network.first_run_cleanup();
 		self.memory = mem::MemHarvest::default();
@@ -149,6 +143,20 @@ impl DataState {
 		// CPU
 		self.data.cpu = cpu::get_cpu_data_list(&self.sys);
 
+		// Disks
+		if let Ok(disks) = disks::get_disk_usage_list().await {
+			self.data.disks = disks;
+		}
+		if let Ok(io) = disks::get_io_usage_list(false).await {
+			self.data.io = io;
+		}
+
+		// Temp
+		if let Ok(temp) = temperature::get_temperature_data(&self.sys, &self.temperature_type).await
+		{
+			self.data.temperature_sensors = temp;
+		}
+
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		set_if_valid(
 			&processes::get_sorted_processes_list(
@@ -163,19 +171,7 @@ impl DataState {
 			&mut self.data.list_of_processes,
 		);
 
-		set_if_valid(
-			&disks::get_disk_usage_list().await,
-			&mut self.data.list_of_disks,
-		);
-		push_if_valid(
-			&disks::get_io_usage_list(false).await,
-			&mut self.data.list_of_io,
-		);
-		set_if_valid(
-			&temperature::get_temperature_data(&self.sys, &self.temperature_type).await,
-			&mut self.data.list_of_temperature_sensor,
-		);
-
+		// Update time
 		self.data.last_collection_time = current_instant;
 
 		// Filter out stale timed entries
@@ -192,15 +188,6 @@ impl DataState {
 			for stale in stale_list {
 				self.prev_pid_stats.remove(&stale);
 			}
-			self.data.list_of_io = self
-				.data
-				.list_of_io
-				.iter()
-				.cloned()
-				.filter(|entry| {
-					clean_instant.duration_since(entry.instant).as_secs() <= self.stale_max_seconds
-				})
-				.collect::<Vec<_>>();
 
 			self.last_clean = clean_instant;
 		}

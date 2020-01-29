@@ -1,6 +1,6 @@
 use crate::{
 	app, constants,
-	data_conversion::{ConvertedCpuData, ConvertedProcessData},
+	data_conversion::{ConvertedCpuData, ConvertedProcessHarvest},
 	utils::{error, gen_util::*},
 };
 use std::cmp::max;
@@ -94,8 +94,8 @@ pub struct CanvasData {
 	pub network_data_tx: Vec<(f64, f64)>,
 	pub disk_data: Vec<Vec<String>>,
 	pub temp_sensor_data: Vec<Vec<String>>,
-	pub process_data: Vec<ConvertedProcessData>,
-	pub grouped_process_data: Vec<ConvertedProcessData>,
+	pub process_data: Vec<ConvertedProcessHarvest>,
+	pub grouped_process_data: Vec<ConvertedProcessHarvest>,
 	pub mem_label: String,
 	pub swap_label: String,
 	pub mem_data: Vec<(f64, f64)>,
@@ -951,7 +951,7 @@ fn draw_search_field<B: backend::Backend>(
 fn draw_processes_table<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	let process_data: &[ConvertedProcessData] = if app_state.is_grouped() {
+	let process_data: &[ConvertedProcessHarvest] = if app_state.is_grouped() {
 		&app_state.canvas_data.grouped_process_data
 	} else {
 		&app_state.canvas_data.process_data
@@ -971,7 +971,7 @@ fn draw_processes_table<B: backend::Backend>(
 		app_state.currently_selected_process_position,
 	);
 
-	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
+	let sliced_vec: Vec<ConvertedProcessHarvest> = (&process_data[start_position as usize..]).to_vec();
 	let mut process_counter = 0;
 
 	// Draw!

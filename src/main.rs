@@ -36,7 +36,7 @@ mod constants;
 mod data_conversion;
 
 use app::data_harvester;
-use app::data_harvester::processes::ProcessData;
+use app::data_harvester::processes::ProcessHarvest;
 use constants::TICK_RATE_IN_MILLISECONDS;
 use data_conversion::*;
 use std::collections::BTreeMap;
@@ -203,13 +203,14 @@ fn main() -> error::Result<()> {
 	}
 
 	loop {
+		// TODO: [OPT] this should not block... let's properly use tick rates and non-blocking, okay?
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
 					if event.modifiers.is_empty() {
 						// If only a code, and no modifiers, don't bother...
 
-						// Required to catch for while typing
+						// Required catch for searching - otherwise you couldn't search with q.
 						if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
 							break;
 						}
@@ -233,7 +234,7 @@ fn main() -> error::Result<()> {
 						if let KeyModifiers::CONTROL = event.modifiers {
 							match event.code {
 								KeyCode::Char('c') => break,
-								KeyCode::Char('f') => app.toggle_searching(), // Note that this is fine for now, assuming '/' does not do anything other than search.
+								KeyCode::Char('f') => app.enable_searching(),
 								KeyCode::Left | KeyCode::Char('h') => app.move_left(),
 								KeyCode::Right | KeyCode::Char('l') => app.move_right(),
 								KeyCode::Up | KeyCode::Char('k') => app.move_up(),
@@ -245,6 +246,7 @@ fn main() -> error::Result<()> {
 										app.reset();
 									}
 								}
+								// TODO: [SEARCH] Rename "simple" search to just... search without cases...
 								KeyCode::Char('s') => app.toggle_simple_search(),
 								KeyCode::Char('a') => app.skip_cursor_beginning(),
 								KeyCode::Char('e') => app.skip_cursor_end(),
@@ -280,11 +282,10 @@ fn main() -> error::Result<()> {
 						app.canvas_data.total_tx_display = network_data.total_tx_display;
 
 						// Disk
-						app.canvas_data.disk_data = update_disk_row(&app.data);
+						app.canvas_data.disk_data = update_disk_row(&app.data_collection);
 
 						// Temperatures
-						app.canvas_data.temp_sensor_data =
-							update_temp_row(&app.data, &app.temperature_type);
+						app.canvas_data.temp_sensor_data = update_temp_row(&app);
 						// Memory
 						app.canvas_data.mem_data = update_mem_data_points(&app.data_collection);
 						app.canvas_data.swap_data = update_swap_data_points(&app.data_collection);
@@ -349,7 +350,7 @@ fn handle_process_sorting(app: &mut app::App) {
 		process_map
 			.iter()
 			.map(|(name, data)| {
-				ProcessData {
+				ProcessHarvest {
 					pid: 0, // Irrelevant
 					cpu_usage_percent: data.0,
 					mem_usage_percent: data.1,

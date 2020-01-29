@@ -2,10 +2,10 @@ pub mod data_harvester;
 use data_harvester::{processes, temperature};
 use std::time::Instant;
 
-pub mod data_janitor;
-use data_janitor::*;
+pub mod data_farmer;
+use data_farmer::*;
 
-use crate::{canvas, constants, data_conversion::ConvertedProcessData, utils::error::Result};
+use crate::{canvas, constants, data_conversion::ConvertedProcessHarvest, utils::error::Result};
 
 mod process_killer;
 
@@ -76,7 +76,7 @@ pub struct App {
 	pub show_help: bool,
 	pub show_dd: bool,
 	pub dd_err: Option<String>,
-	to_delete_process_list: Option<Vec<ConvertedProcessData>>,
+	to_delete_process_list: Option<Vec<ConvertedProcessHarvest>>,
 	pub is_frozen: bool,
 	pub left_legend: bool,
 	pub use_current_cpu_total: bool,
@@ -196,19 +196,13 @@ impl App {
 		self.enable_grouping
 	}
 
-	pub fn toggle_searching(&mut self) {
+	pub fn enable_searching(&mut self) {
 		if !self.is_in_dialog() {
 			match self.current_application_position {
 				ApplicationPosition::Process | ApplicationPosition::ProcessSearch => {
-					if self.enable_searching {
-						// Toggle off
-						self.enable_searching = false;
-						self.current_application_position = ApplicationPosition::Process;
-					} else {
-						// Toggle on
-						self.enable_searching = true;
-						self.current_application_position = ApplicationPosition::ProcessSearch;
-					}
+					// Toggle on
+					self.enable_searching = true;
+					self.current_application_position = ApplicationPosition::ProcessSearch;
 				}
 				_ => {}
 			}
@@ -397,7 +391,7 @@ impl App {
 			} else {
 				match caught_char {
 					'/' => {
-						self.toggle_searching();
+						self.enable_searching();
 					}
 					'd' => {
 						if let ApplicationPosition::Process = self.current_application_position {
@@ -405,7 +399,7 @@ impl App {
 								self.awaiting_second_char = false;
 								self.second_char = ' ';
 								let current_process = if self.is_grouped() {
-									let mut res: Vec<ConvertedProcessData> = Vec::new();
+									let mut res: Vec<ConvertedProcessHarvest> = Vec::new();
 									for pid in &self.canvas_data.grouped_process_data
 										[self.currently_selected_process_position as usize]
 										.group
@@ -530,7 +524,7 @@ impl App {
 		Ok(())
 	}
 
-	pub fn get_current_highlighted_process_list(&self) -> Option<Vec<ConvertedProcessData>> {
+	pub fn get_current_highlighted_process_list(&self) -> Option<Vec<ConvertedProcessHarvest>> {
 		self.to_delete_process_list.clone()
 	}
 
@@ -633,10 +627,10 @@ impl App {
 				}
 				ApplicationPosition::Temp => {
 					self.currently_selected_temperature_position =
-						self.data.list_of_temperature_sensor.len() as i64 - 1
+						self.data.temperature_sensors.len() as i64 - 1
 				}
 				ApplicationPosition::Disk => {
-					self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1
+					self.currently_selected_disk_position = self.data.disks.len() as i64 - 1
 				}
 				ApplicationPosition::Cpu => {
 					self.currently_selected_cpu_table_position =
@@ -698,7 +692,7 @@ impl App {
 	fn change_temp_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_temperature_position + num_to_change_by >= 0
 			&& self.currently_selected_temperature_position + num_to_change_by
-				< self.data.list_of_temperature_sensor.len() as i64
+				< self.data.temperature_sensors.len() as i64
 		{
 			self.currently_selected_temperature_position += num_to_change_by;
 		}
@@ -707,7 +701,7 @@ impl App {
 	fn change_disk_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_disk_position + num_to_change_by >= 0
 			&& self.currently_selected_disk_position + num_to_change_by
-				< self.data.list_of_disks.len() as i64
+				< self.data.disks.len() as i64
 		{
 			self.currently_selected_disk_position += num_to_change_by;
 		}

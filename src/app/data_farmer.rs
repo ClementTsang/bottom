@@ -1,6 +1,18 @@
-use crate::data_harvester::{cpu, mem, network, Data};
-/// In charge of cleaning and managing data.  I couldn't think of a better
-/// name for the file.
+use crate::data_harvester::{cpu, disks, mem, network, processes, temperature, Data};
+/// In charge of cleaning, processing, and managing data.  I couldn't think of
+/// a better name for the file.  Since I called data collection "harvesting",
+/// then this is the farmer I guess.
+///
+/// Essentially the main goal is to shift the initial calculation and distribution
+/// of joiner points and data to one central location that will only do it
+/// *once* upon receiving the data --- as opposed to doing it on canvas draw,
+/// which will be a costly process.
+///
+/// This will also handle the *cleaning* of stale data.  That should be done
+/// in some manner (timer on another thread, some loop) that will occasionally
+/// call the purging function.  Failure to do so *will* result in a growing
+/// memory usage and higher CPU usage - you will be trying to process more and
+/// more points as this is used!
 use std::time::Instant;
 use std::vec::Vec;
 
@@ -15,8 +27,9 @@ pub struct TimedData {
 	pub cpu_data: Vec<JoinedDataPoints>,
 	pub mem_data: JoinedDataPoints,
 	pub swap_data: JoinedDataPoints,
-	pub temp_data: JoinedDataPoints,
-	pub io_data: JoinedDataPoints,
+	// Unused for now
+	// pub io_data : JoinedDataPoints
+	// pub temp_data: JoinedDataPoints,
 }
 
 /// AppCollection represents the pooled data stored within the main app
@@ -36,6 +49,12 @@ pub struct DataCollection {
 	pub memory_harvest: mem::MemHarvest,
 	pub swap_harvest: mem::MemHarvest,
 	pub cpu_harvest: cpu::CPUHarvest,
+	pub process_harvest: processes::ProcessHarvest,
+	pub disk_harvest: Vec<disks::DiskHarvest>,
+	pub io_harvest: disks::IOHarvest,
+	pub io_labels: Vec<(u64, u64)>,
+	io_prev: Vec<(u64, u64)>,
+	pub temp_harvest: Vec<temperature::TempHarvest>,
 }
 
 impl Default for DataCollection {
@@ -47,12 +66,20 @@ impl Default for DataCollection {
 			memory_harvest: mem::MemHarvest::default(),
 			swap_harvest: mem::MemHarvest::default(),
 			cpu_harvest: cpu::CPUHarvest::default(),
+			process_harvest: processes::ProcessHarvest::default(),
+			disk_harvest: Vec::default(),
+			io_harvest: disks::IOHarvest::default(),
+			io_labels: Vec::default(),
+			io_prev: Vec::default(),
+			temp_harvest: Vec::default(),
 		}
 	}
 }
 
 impl DataCollection {
-	pub fn clean_data(&mut self) {}
+	pub fn clean_data(&mut self) {
+		// TODO: [OPT] To implement to clean
+	}
 
 	pub fn eat_data(&mut self, harvested_data: &Data) {
 		let harvested_time = harvested_data.last_collection_time;
@@ -66,6 +93,14 @@ impl DataCollection {
 
 		// CPU
 		self.eat_cpu(&harvested_data, &harvested_time, &mut new_entry);
+
+		// Temp
+		self.eat_temp(&harvested_data, &harvested_time, &mut new_entry);
+
+		// Disks
+		self.eat_disks(&harvested_data, &harvested_time, &mut new_entry);
+
+		// Processes
 
 		// And we're done eating.
 		self.current_instant = harvested_time;
@@ -147,7 +182,7 @@ impl DataCollection {
 		// Note this only pre-calculates the data points - the names will be
 		// within the local copy of cpu_harvest.  Since it's all sequential
 		// it probably doesn't matter anyways.
-		for (itx, cpu) in harvested_data.cpu.cpu_vec.iter().enumerate() {
+		for (itx, cpu) in harvested_data.cpu.iter().enumerate() {
 			let cpu_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
 				generate_joining_points(
 					&time,
@@ -164,6 +199,51 @@ impl DataCollection {
 		}
 
 		self.cpu_harvest = harvested_data.cpu.clone();
+	}
+
+	fn eat_temp(
+		&mut self, harvested_data: &Data, _harvested_time: &Instant, _new_entry: &mut TimedData,
+	) {
+		// TODO: [PO] To implement
+		self.temp_harvest = harvested_data.temperature_sensors.clone();
+	}
+
+	fn eat_disks(
+		&mut self, harvested_data: &Data, harvested_time: &Instant, _new_entry: &mut TimedData,
+	) {
+		// TODO: [PO] To implement
+
+		let time_since_last_harvest = harvested_time
+			.duration_since(self.current_instant)
+			.as_secs_f64();
+
+		for (itx, device) in harvested_data.disks.iter().enumerate() {
+			if let Some(trim) = device.name.split('/').last() {
+				let io_device = harvested_data.io.get(trim);
+				if let Some(io) = io_device {
+					let io_r_pt = io.read_bytes;
+					let io_w_pt = io.write_bytes;
+
+					if self.io_labels.len() <= itx {
+						self.io_prev.push((io_r_pt, io_w_pt));
+						self.io_labels.push((0, 0));
+					} else {
+						let r_rate = ((io_r_pt - self.io_prev[itx].0) as f64
+							/ time_since_last_harvest)
+							.round() as u64;
+						let w_rate = ((io_w_pt - self.io_prev[itx].1) as f64
+							/ time_since_last_harvest)
+							.round() as u64;
+
+						self.io_labels[itx] = (r_rate, w_rate);
+						self.io_prev[itx] = (io_r_pt, io_w_pt);
+					}
+				}
+			}
+		}
+
+		self.disk_harvest = harvested_data.disks.clone();
+		self.io_harvest = harvested_data.io.clone();
 	}
 }
 

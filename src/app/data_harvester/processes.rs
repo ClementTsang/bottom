@@ -18,7 +18,7 @@ impl Default for ProcessSorting {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct ProcessData {
+pub struct ProcessHarvest {
 	pub pid: u32,
 	pub cpu_usage_percent: f64,
 	pub mem_usage_percent: f64,
@@ -182,9 +182,9 @@ fn convert_ps(
 	process: &str, cpu_usage: f64, cpu_percentage: f64,
 	prev_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
 	curr_time: &Instant,
-) -> std::io::Result<ProcessData> {
+) -> std::io::Result<ProcessHarvest> {
 	if process.trim().to_string().is_empty() {
-		return Ok(ProcessData {
+		return Ok(ProcessHarvest {
 			pid: 0,
 			name: "".to_string(),
 			mem_usage_percent: 0.0,
@@ -205,7 +205,7 @@ fn convert_ps(
 		.parse::<f64>()
 		.unwrap_or(0_f64);
 
-	Ok(ProcessData {
+	Ok(ProcessHarvest {
 		pid,
 		name,
 		mem_usage_percent,
@@ -225,8 +225,8 @@ pub fn get_sorted_processes_list(
 	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64,
 	prev_pid_stats: &mut std::collections::HashMap<String, (f64, Instant)>,
 	use_current_cpu_total: bool, mem_total_kb: u64, curr_time: &Instant,
-) -> crate::utils::error::Result<Vec<ProcessData>> {
-	let mut process_vector: Vec<ProcessData> = Vec::new();
+) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+	let mut process_vector: Vec<ProcessHarvest> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		// Linux specific - this is a massive pain... ugh.
@@ -282,7 +282,7 @@ pub fn get_sorted_processes_list(
 				process_val.name().to_string()
 			};
 
-			process_vector.push(ProcessData {
+			process_vector.push(ProcessHarvest {
 				pid: process_val.pid() as u32,
 				name,
 				mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
@@ -296,7 +296,7 @@ pub fn get_sorted_processes_list(
 }
 
 pub fn sort_processes(
-	process_vector: &mut Vec<ProcessData>, sorting_method: &ProcessSorting, reverse_order: bool,
+	process_vector: &mut Vec<ProcessHarvest>, sorting_method: &ProcessSorting, reverse_order: bool,
 ) {
 	// Always sort alphabetically first!
 	process_vector.sort_by(|a, b| get_ordering(&a.name, &b.name, false));
