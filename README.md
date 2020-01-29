@@ -28,7 +28,7 @@ The compatibility of each widget and operating systems are, as of version 0.1.0,
 | ------------------------------ | -------- | -------- | -------- | --------------------- | --------- | --------------------------------------------- |
 | Linux (tested on Arch Linux)   | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
 | Windows (tested on Windows 10) | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
-| macOS                          | Untested | Untested | Untested | Untested              | Untested  | Untested                                      |
+| macOS   (tested on macOS Catalina) | ✓ | ✓ | ✓ | ✓              | ✓  | ✓ (`dd` not working)                                 |✓ 
 
 ## Installation
 
