@@ -44,11 +44,11 @@ You can get the release versions from the AUR by installing `bottom`.
 
 ### Windows
 
-You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.  I plan to add a Chocolatey install option.
 
 ### macOS
 
-macOS support will hopefully come soon<sup>TM</sup>. I've had reports of it working already, but I cannot personally confirm whether things are working until then.
+macOS seems to work fine for the most part.  I plan to add a Homebrew install option.
 
 ## Usage
 
