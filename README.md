@@ -24,11 +24,11 @@ Features of bottom include:
 
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
-| OS/Widget                      | CPU      | Memory   | Disks    | Temperature           | Processes | Networks                                      |
-| ------------------------------ | -------- | -------- | -------- | --------------------- | --------- | --------------------------------------------- |
-| Linux (tested on Arch Linux)   | ✓        | ✓        | ✓        | ✓                     | ✓         | ✓                                             |
-| Windows (tested on Windows 10) | ✓        | ✓        | ✓        | Currently not working | ✓         | Partially supported (total RX/TX unavailable) |
-| macOS   (tested on macOS Catalina) | ✓ | ✓ | ✓ | ✓              | ✓  | ✓ (`dd` not working)                                 |✓ 
+| OS/Widget                        | CPU | Memory | Disks | Temperature | Processes | Networks              |
+| -------------------------------- | --- | ------ | ----- | ----------- | --------- | --------------------- |
+| Linux (tested on Arch Linux)     | ✓   | ✓      | ✓     | ✓           | ✓         | ✓                     |
+| Windows (tested on Windows 10)   | ✓   | ✓      | ✓     | ✗           | ✓         | Total RX/TX not shown |
+| macOS (tested on macOS Catalina) | ✓   | ✓      | ✓     | ✓           | ✓         | ✓                     |
 
 ## Installation
 
@@ -44,11 +44,11 @@ You can get the release versions from the AUR by installing `bottom`.
 
 ### Windows
 
-You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.  I plan to add a Chocolatey install option.
+You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately. I plan to add a Chocolatey install option.
 
 ### macOS
 
-macOS seems to work fine for the most part.  I plan to add a Homebrew install option.
+macOS seems to work fine for the most part. I plan to add a Homebrew install option.
 
 ## Usage
 
