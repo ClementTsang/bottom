@@ -33,7 +33,7 @@ impl Process {
 
 /// Kills a process, given a PID.
 pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
-	if cfg!(target_os = "linux") {
+	if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
 		Command::new("kill").arg(pid.to_string()).output()?;
 	} else if cfg!(target_os = "windows") {
 		#[cfg(target_os = "windows")]
@@ -41,11 +41,6 @@ pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
 			let process = Process::open(pid as DWORD)?;
 			process.kill()?;
 		}
-	} else if cfg!(target_os = "macos") {
-		// TODO: macOS
-		return Err(BottomError::GenericError {
-			message: "Sorry, macOS support is not implemented yet!".to_string(),
-		});
 	} else {
 		return Err(BottomError::GenericError {
 			message:
