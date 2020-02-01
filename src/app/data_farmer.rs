@@ -276,7 +276,7 @@ pub fn generate_joining_points(
 		500,
 	);
 
-	for itx in (0..num_points).step_by(1) {
+	for itx in 0..num_points {
 		points.push((
 			time_difference - (itx as f64 / num_points as f64 * time_difference),
 			start_y + (itx as f64 / num_points as f64 * value_difference),

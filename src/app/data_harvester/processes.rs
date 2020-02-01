@@ -144,12 +144,13 @@ fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 /// Note that cpu_percentage should be represented WITHOUT the \times 100 factor!
 fn linux_cpu_usage(
 	pid: u32, cpu_usage: f64, cpu_percentage: f64,
-	previous_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant)>,
+	new_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
 	curr_time: &Instant,
 ) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
-	let before_proc_val: f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
-		previous_pid_stats
+	let before_proc_val: f64 = if prev_pid_stats.contains_key(&pid.to_string()) {
+		prev_pid_stats
 			.get(&pid.to_string())
 			.unwrap_or(&(0_f64, *curr_time))
 			.0
@@ -167,10 +168,7 @@ fn linux_cpu_usage(
 		(after_proc_val - before_proc_val) / cpu_usage * 100_f64
 	);*/
 
-	let entry = previous_pid_stats
-		.entry(pid.to_string())
-		.or_insert((after_proc_val, *curr_time));
-	*entry = (after_proc_val, *curr_time);
+	new_pid_stats.insert(pid.to_string(), (after_proc_val, *curr_time));
 	if use_current_cpu_total {
 		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
 	} else {
@@ -180,7 +178,8 @@ fn linux_cpu_usage(
 
 fn convert_ps(
 	process: &str, cpu_usage: f64, cpu_percentage: f64,
-	prev_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant)>,
+	new_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
 	curr_time: &Instant,
 ) -> std::io::Result<ProcessHarvest> {
 	if process.trim().to_string().is_empty() {
@@ -214,6 +213,7 @@ fn convert_ps(
 			cpu_usage,
 			cpu_percentage,
 			prev_pid_stats,
+			new_pid_stats,
 			use_current_cpu_total,
 			curr_time,
 		)?,
@@ -223,8 +223,8 @@ fn convert_ps(
 
 pub fn get_sorted_processes_list(
 	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64,
-	prev_pid_stats: &mut std::collections::HashMap<String, (f64, Instant)>,
-	use_current_cpu_total: bool, mem_total_kb: u64, curr_time: &Instant,
+	prev_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	mem_total_kb: u64, curr_time: &Instant,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
 	let mut process_vector: Vec<ProcessHarvest> = Vec::new();
 
@@ -240,12 +240,15 @@ pub fn get_sorted_processes_list(
 		if let Ok((cpu_usage, cpu_percentage)) = cpu_calc {
 			let process_stream = split_string.collect::<Vec<&str>>();
 
+			let mut new_pid_stats: HashMap<String, (f64, Instant)> = HashMap::new();
+
 			for process in process_stream {
 				if let Ok(process_object) = convert_ps(
 					process,
 					cpu_usage,
 					cpu_percentage,
-					prev_pid_stats,
+					&prev_pid_stats,
+					&mut new_pid_stats,
 					use_current_cpu_total,
 					curr_time,
 				) {
@@ -254,6 +257,8 @@ pub fn get_sorted_processes_list(
 					}
 				}
 			}
+
+			*prev_pid_stats = new_pid_stats;
 		} else {
 			error!("Unable to properly parse CPU data in Linux.");
 			error!("Result: {:?}", cpu_calc.err());
