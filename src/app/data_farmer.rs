@@ -264,13 +264,18 @@ pub fn generate_joining_points(
 	let mut points: Vec<(TimeOffset, Value)> = Vec::new();
 
 	// Convert time floats first:
-	let time_difference = (*end_x).duration_since(*start_x).as_millis() as f64;
+	let tmp_time_diff = (*end_x).duration_since(*start_x).as_millis() as f64;
+	let time_difference = if tmp_time_diff == 0.0 {
+		0.001
+	} else {
+		tmp_time_diff
+	};
 	let value_difference = end_y - start_y;
 
 	// Let's generate... about this many points!
 	let num_points = std::cmp::min(
 		std::cmp::max(
-			(value_difference.abs() / (time_difference + 0.0001) * 500.0) as u64,
+			(value_difference.abs() / time_difference * 500.0) as u64,
 			100,
 		),
 		500,
