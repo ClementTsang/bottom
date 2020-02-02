@@ -461,7 +461,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 ) {
 	let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
 
-	let num_rows = u64::from(draw_loc.height) - 5;
+	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),

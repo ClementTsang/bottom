@@ -13,12 +13,14 @@ use crossterm::{
 		KeyModifiers, MouseEvent,
 	},
 	execute,
+	style::Print,
 	terminal::LeaveAlternateScreen,
 	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 };
 
 use std::{
 	io::{stdout, Write},
+	panic::{self, PanicInfo},
 	sync::mpsc,
 	thread,
 	time::{Duration, Instant},
@@ -135,14 +137,17 @@ fn main() -> error::Result<()> {
 	}
 
 	// Set up up tui and crossterm
-	let mut stdout = stdout();
+	let mut stdout_val = stdout();
 	enable_raw_mode()?;
-	execute!(stdout, EnterAlternateScreen)?;
-	execute!(stdout, EnableMouseCapture)?;
+	execute!(stdout_val, EnterAlternateScreen)?;
+	execute!(stdout_val, EnableMouseCapture)?;
 
-	let mut terminal = Terminal::new(CrosstermBackend::new(stdout))?;
+	let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
 	terminal.hide_cursor()?;
 	terminal.clear()?;
+
+	// Set panic hook
+	panic::set_hook(Box::new(|info| panic_hook(info)));
 
 	// Set up input handling
 	let (tx, rx) = mpsc::channel();
@@ -332,25 +337,57 @@ fn main() -> error::Result<()> {
 
 		// Draw!
 		if let Err(err) = canvas::draw_data(&mut terminal, &mut app) {
-			cleanup(&mut terminal)?;
+			cleanup_terminal(&mut terminal)?;
 			error!("{}", err);
 			return Err(err);
 		}
 	}
 
-	cleanup(&mut terminal)?;
+	cleanup_terminal(&mut terminal)?;
 	Ok(())
 }
 
-fn cleanup(
+fn cleanup_terminal(
 	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
 	disable_raw_mode()?;
-	execute!(terminal.backend_mut(), DisableMouseCapture)?;
 	execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+	execute!(terminal.backend_mut(), DisableMouseCapture)?;
 	terminal.show_cursor()?;
 
 	Ok(())
+}
+
+/// Based on https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs
+fn panic_hook(panic_info: &PanicInfo<'_>) {
+	let mut stdout = stdout();
+
+	if cfg!(debug_assertions) {
+		let msg = match panic_info.payload().downcast_ref::<&'static str>() {
+			Some(s) => *s,
+			None => match panic_info.payload().downcast_ref::<String>() {
+				Some(s) => &s[..],
+				None => "Box<Any>",
+			},
+		};
+
+		let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
+
+		execute!(
+			stdout,
+			Print(format!(
+				"thread '<unnamed>' panicked at '{}', {}\n\r{}",
+				msg,
+				panic_info.location().unwrap(),
+				stacktrace
+			)),
+		)
+		.unwrap();
+	}
+
+	disable_raw_mode().unwrap();
+	execute!(stdout, LeaveAlternateScreen).unwrap();
+	execute!(stdout, DisableMouseCapture).unwrap();
 }
 
 fn update_final_process_list(app: &mut app::App) {
