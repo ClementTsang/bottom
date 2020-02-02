@@ -131,7 +131,7 @@ fn main() -> error::Result<()> {
 
 	// Set default search method
 	if matches.is_present("CASE_INSENSITIVE_DEFAULT") {
-		app.use_simple = true;
+		app.ignore_case = true;
 	}
 
 	// Set up up tui and crossterm
@@ -256,7 +256,7 @@ fn main() -> error::Result<()> {
 									}
 								}
 								// TODO: [SEARCH] Rename "simple" search to just... search without cases...
-								KeyCode::Char('s') => app.toggle_simple_search(),
+								KeyCode::Char('s') => app.toggle_ignore_case(),
 								KeyCode::Char('a') => app.skip_cursor_beginning(),
 								KeyCode::Char('e') => app.skip_cursor_end(),
 								_ => {}

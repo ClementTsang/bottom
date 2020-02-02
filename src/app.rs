@@ -9,7 +9,7 @@ use crate::{canvas, constants, data_conversion::ConvertedProcessData, utils::err
 
 mod process_killer;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum WidgetPosition {
 	Cpu,
 	Mem,
@@ -86,7 +86,7 @@ pub struct App {
 	enable_searching: bool,
 	current_search_query: String,
 	searching_pid: bool,
-	pub use_simple: bool,
+	pub ignore_case: bool,
 	current_regex: std::result::Result<regex::Regex, regex::Error>,
 	current_cursor_position: usize,
 	pub data_collection: DataCollection,
@@ -132,7 +132,7 @@ impl App {
 			enable_searching: false,
 			current_search_query: String::default(),
 			searching_pid: false,
-			use_simple: false,
+			ignore_case: false,
 			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lifetimes to avoid cloning
 			current_cursor_position: 0,
 			data_collection: DataCollection::default(),
@@ -246,24 +246,26 @@ impl App {
 		&self.current_search_query
 	}
 
-	pub fn toggle_simple_search(&mut self) {
+	pub fn toggle_ignore_case(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.use_simple = !self.use_simple;
-
-				// Update to latest (when simple is on this is not updated)
-				if !self.use_simple {
-					self.current_regex = if self.current_search_query.is_empty() {
-						BASE_REGEX.clone()
-					} else {
-						regex::Regex::new(&(self.current_search_query))
-					};
-				}
-
-				// Force update to process display in GUI
+				self.ignore_case = !self.ignore_case;
+				self.update_regex();
 				self.update_process_gui = true;
 			}
 		}
+	}
+
+	fn update_regex(&mut self) {
+		self.current_regex = if self.current_search_query.is_empty() {
+			BASE_REGEX.clone()
+		} else if self.ignore_case {
+			regex::Regex::new(&(format!("(?i){}", self.current_search_query)))
+		} else {
+			regex::Regex::new(&(self.current_search_query))
+		};
+		self.previous_process_position = 0;
+		self.currently_selected_process_position = 0;
 	}
 
 	pub fn get_cursor_position(&self) -> usize {
@@ -294,13 +296,7 @@ impl App {
 				self.current_search_query
 					.remove(self.current_cursor_position);
 
-				if !self.use_simple {
-					self.current_regex = if self.current_search_query.is_empty() {
-						BASE_REGEX.clone()
-					} else {
-						regex::Regex::new(&(self.current_search_query))
-					};
-				}
+				self.update_regex();
 				self.update_process_gui = true;
 			}
 		}
@@ -381,13 +377,8 @@ impl App {
 					.insert(self.current_cursor_position, caught_char);
 				self.current_cursor_position += 1;
 
-				if !self.use_simple {
-					self.current_regex = if self.current_search_query.is_empty() {
-						BASE_REGEX.clone()
-					} else {
-						regex::Regex::new(&(self.current_search_query))
-					};
-				}
+				self.update_regex();
+
 				self.update_process_gui = true;
 			} else {
 				match caught_char {
@@ -401,7 +392,7 @@ impl App {
 								self.second_char = ' ';
 								let current_process = Vec::new();
 
-								// TODO: FIX THIS SHITTTTTT
+								// TODO: Fix
 
 								self.to_delete_process_list = Some(current_process);
 								self.show_dd = true;
@@ -607,14 +598,15 @@ impl App {
 			match self.current_widget_selected {
 				WidgetPosition::Process => {
 					self.currently_selected_process_position =
-						self.data.list_of_processes.len() as i64 - 1
+						self.canvas_data.finalized_process_data.len() as i64 - 1
 				}
 				WidgetPosition::Temp => {
 					self.currently_selected_temperature_position =
-						self.data.temperature_sensors.len() as i64 - 1
+						self.canvas_data.temp_sensor_data.len() as i64 - 1
 				}
 				WidgetPosition::Disk => {
-					self.currently_selected_disk_position = self.data.disks.len() as i64 - 1
+					self.currently_selected_disk_position =
+						self.canvas_data.disk_data.len() as i64 - 1
 				}
 				WidgetPosition::Cpu => {
 					self.currently_selected_cpu_table_position =
@@ -667,7 +659,7 @@ impl App {
 	fn change_process_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_process_position + num_to_change_by >= 0
 			&& self.currently_selected_process_position + num_to_change_by
-				< self.data.list_of_processes.len() as i64
+				< self.canvas_data.finalized_process_data.len() as i64
 		{
 			self.currently_selected_process_position += num_to_change_by;
 		}
@@ -676,7 +668,7 @@ impl App {
 	fn change_temp_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_temperature_position + num_to_change_by >= 0
 			&& self.currently_selected_temperature_position + num_to_change_by
-				< self.data.temperature_sensors.len() as i64
+				< self.canvas_data.temp_sensor_data.len() as i64
 		{
 			self.currently_selected_temperature_position += num_to_change_by;
 		}
@@ -685,7 +677,7 @@ impl App {
 	fn change_disk_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_disk_position + num_to_change_by >= 0
 			&& self.currently_selected_disk_position + num_to_change_by
-				< self.data.disks.len() as i64
+				< self.canvas_data.disk_data.len() as i64
 		{
 			self.currently_selected_disk_position += num_to_change_by;
 		}

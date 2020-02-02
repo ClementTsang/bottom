@@ -912,10 +912,10 @@ fn draw_search_field<B: backend::Backend>(
 		} else {
 			Text::styled("\nName", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
-		if app_state.use_simple {
-			Text::styled(" (Simple): ", Style::default().fg(TABLE_HEADER_COLOUR))
+		if app_state.ignore_case {
+			Text::styled(" (Ignore Case): ", Style::default().fg(TABLE_HEADER_COLOUR))
 		} else {
-			Text::styled(" (Regex): ", Style::default().fg(TABLE_HEADER_COLOUR))
+			Text::styled(": ", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
 	];
 
@@ -957,12 +957,19 @@ fn draw_processes_table<B: backend::Backend>(
 	// do so by hiding some elements!
 	let num_rows = i64::from(draw_loc.height) - 5;
 
-	let start_position = get_start_position(
+	let position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
 		&mut app_state.previous_process_position,
 		app_state.currently_selected_process_position,
 	);
+
+	// Sanity check
+	let start_position = if position >= process_data.len() as i64 {
+		std::cmp::max(0, process_data.len() as i64 - 1)
+	} else {
+		position
+	};
 
 	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
 	let mut process_counter = 0;
