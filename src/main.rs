@@ -253,10 +253,10 @@ fn main() -> error::Result<()> {
 							match event.code {
 								KeyCode::Char('c') => break,
 								KeyCode::Char('f') => app.enable_searching(),
-								KeyCode::Left | KeyCode::Char('h') => app.move_left(),
-								KeyCode::Right | KeyCode::Char('l') => app.move_right(),
-								KeyCode::Up | KeyCode::Char('k') => app.move_up(),
-								KeyCode::Down | KeyCode::Char('j') => app.move_down(),
+								KeyCode::Left => app.move_left(),
+								KeyCode::Right => app.move_right(),
+								KeyCode::Up => app.move_up(),
+								KeyCode::Down => app.move_down(),
 								KeyCode::Char('p') => app.search_with_pid(),
 								KeyCode::Char('n') => app.search_with_name(),
 								KeyCode::Char('r') => {
@@ -264,9 +264,16 @@ fn main() -> error::Result<()> {
 										app.reset();
 									}
 								}
-								// TODO: [SEARCH] Rename "simple" search to just... search without cases...
 								KeyCode::Char('a') => app.skip_cursor_beginning(),
 								KeyCode::Char('e') => app.skip_cursor_end(),
+								_ => {}
+							}
+						} else if let KeyModifiers::SHIFT = event.modifiers {
+							match event.code {
+								KeyCode::Left => app.move_left(),
+								KeyCode::Right => app.move_right(),
+								KeyCode::Up => app.move_up(),
+								KeyCode::Down => app.move_down(),
 								_ => {}
 							}
 						}

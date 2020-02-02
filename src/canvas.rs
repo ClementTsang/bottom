@@ -38,7 +38,7 @@ lazy_static! {
 		Text::raw("Ctrl-r to reset all data.\n"),
 		Text::raw("f to toggle freezing and unfreezing the display.\n"),
 		Text::raw(
-			"Ctrl-Up or Ctrl-k, Ctrl-Down or Ctrl-j, Ctrl-Left or Ctrl-h, Ctrl-Right or Ctrl-l to navigate between widgets.\n"
+			"Ctrl/Shift-Up, Ctrl/Shift-Down, Ctrl/Shift-Left, and Ctrl/Shift-Right to navigate between widgets.\n"
 		),
 		Text::raw("Up or k and Down or j scrolls through a list.\n"),
 		Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),

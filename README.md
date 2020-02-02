@@ -94,7 +94,7 @@ when searching processes.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl-Up` or `Ctrl-k`, `Ctrl-Down` or `Ctrl-j`, `Ctrl-Left` or `Ctrl-h`, `Ctrl-Right` or `Ctrl-l` to navigate between widgets.
+- `Ctrl/Shift-Up`, `Ctrl/Shift-Down`, `Ctrl/Shift-Left`, and `Ctrl/Shift-Right` to navigate between widgets.
 
 - `Esc` to close a dialog window.
 
