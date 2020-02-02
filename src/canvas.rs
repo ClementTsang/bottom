@@ -741,7 +741,7 @@ fn draw_temp_table<B: backend::Backend>(
 ) {
 	let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
 
-	let num_rows = u64::from(draw_loc.height) - 5;
+	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
@@ -807,7 +807,7 @@ fn draw_disk_table<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
 	let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
-	let num_rows = u64::from(draw_loc.height) - 5;
+	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
@@ -958,7 +958,7 @@ fn draw_processes_table<B: backend::Backend>(
 	// hit the process we've currently scrolled to.
 	// We also need to move the list - we can
 	// do so by hiding some elements!
-	let num_rows = u64::from(draw_loc.height) - 5;
+	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
 
 	let position = get_start_position(
 		num_rows,
