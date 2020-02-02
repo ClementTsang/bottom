@@ -53,7 +53,7 @@ lazy_static! {
 		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.\n"),
 		Text::raw("Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
 		Text::raw("Use Ctrl-a and Ctrl-e to set the cursor to the start and end of the bar respectively.\n"),
-		Text::raw("Use Ctrl-s to toggle between simple and regex search.\n"),
+		Text::raw("Use Tab to toggle whether to ignore case.\n"),
 		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);

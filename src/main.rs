@@ -256,7 +256,6 @@ fn main() -> error::Result<()> {
 									}
 								}
 								// TODO: [SEARCH] Rename "simple" search to just... search without cases...
-								KeyCode::Char('s') => app.toggle_ignore_case(),
 								KeyCode::Char('a') => app.skip_cursor_beginning(),
 								KeyCode::Char('e') => app.skip_cursor_end(),
 								_ => {}

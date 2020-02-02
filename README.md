@@ -128,7 +128,7 @@ when searching processes.
 
 - `Ctrl-p` or `Ctrl-n` to switch between searching for PID and name respectively.
 
-- `Ctrl-s` to toggle between a simple search and a regex search.
+- `Tab` to toggle whether to ignore case.
 
 - `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
 

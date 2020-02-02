@@ -189,6 +189,7 @@ impl App {
 		match self.current_widget_selected {
 			WidgetPosition::Process => self.toggle_grouping(),
 			WidgetPosition::Disk => {}
+			WidgetPosition::ProcessSearch => self.toggle_ignore_case(),
 			_ => {}
 		}
 	}
