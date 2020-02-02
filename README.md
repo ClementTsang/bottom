@@ -94,7 +94,7 @@ when searching processes.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl/Shift-Up`, `Ctrl/Shift-Down`, `Ctrl/Shift-Left`, and `Ctrl/Shift-Right` to navigate between widgets.
+- `Ctrl/Shift-Up`, `Ctrl/Shift-Down`, `Ctrl/Shift-Left`, and `Ctrl/Shift-Right` to navigate between widgets. **Note that on macOS, `Ctrl`-arrow keys conflicts with an existing macOS binding, use `Shift`-arrow key instead.**
 
 - `Esc` to close a dialog window.
 
