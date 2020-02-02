@@ -35,17 +35,16 @@ mod canvas;
 mod constants;
 mod data_conversion;
 
-use app::data_collection;
-use app::data_collection::processes::ProcessData;
+use app::data_harvester::{self, processes::ProcessSorting};
 use constants::TICK_RATE_IN_MILLISECONDS;
 use data_conversion::*;
-use std::collections::BTreeMap;
 use utils::error::{self, BottomError};
 
 enum Event<I, J> {
 	KeyInput(I),
 	MouseInput(J),
-	Update(Box<data_collection::Data>),
+	Update(Box<data_harvester::Data>),
+	Clean,
 }
 
 enum ResetEvent {
@@ -71,9 +70,9 @@ fn main() -> error::Result<()> {
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
-		(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
+		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
-		(@arg SEARCH_DEFAULT_USE_SIMPLE: -s --simple_search "Uses a simple case-insensitive string comparison to search processes by default.")
+		(@arg CASE_INSENSITIVE_DEFAULT: -i --case_insensitive "Do not match case when searching processes by default.")
 	)
 	.get_matches();
 
@@ -104,11 +103,11 @@ fn main() -> error::Result<()> {
 
 	// Set other settings
 	let temperature_type = if matches.is_present("FAHRENHEIT") {
-		data_collection::temperature::TemperatureType::Fahrenheit
+		data_harvester::temperature::TemperatureType::Fahrenheit
 	} else if matches.is_present("KELVIN") {
-		data_collection::temperature::TemperatureType::Kelvin
+		data_harvester::temperature::TemperatureType::Kelvin
 	} else {
-		data_collection::temperature::TemperatureType::Celsius
+		data_harvester::temperature::TemperatureType::Celsius
 	};
 	let show_average_cpu = matches.is_present("AVG_CPU");
 	let use_dot = matches.is_present("DOT_MARKER");
@@ -131,8 +130,8 @@ fn main() -> error::Result<()> {
 	}
 
 	// Set default search method
-	if matches.is_present("SEARCH_DEFAULT_USE_SIMPLE") {
-		app.use_simple = true;
+	if matches.is_present("CASE_INSENSITIVE_DEFAULT") {
+		app.ignore_case = true;
 	}
 
 	// Set up up tui and crossterm
@@ -175,15 +174,24 @@ fn main() -> error::Result<()> {
 		});
 	}
 
+	// Cleaning loop
+	{
+		let tx = tx.clone();
+		thread::spawn(move || loop {
+			thread::sleep(Duration::from_millis(
+				constants::STALE_MAX_MILLISECONDS as u64 + 5000,
+			));
+			tx.send(Event::Clean).unwrap();
+		});
+	}
 	// Event loop
 	let (rtx, rrx) = mpsc::channel();
 	{
 		let tx = tx;
-		let mut first_run = true;
 		let temp_type = app.temperature_type.clone();
 		thread::spawn(move || {
 			let tx = tx.clone();
-			let mut data_state = data_collection::DataState::default();
+			let mut data_state = data_harvester::DataState::default();
 			data_state.init();
 			data_state.set_temperature_type(temp_type);
 			data_state.set_use_current_cpu_total(use_current_cpu_total);
@@ -191,35 +199,27 @@ fn main() -> error::Result<()> {
 				if let Ok(message) = rrx.try_recv() {
 					match message {
 						ResetEvent::Reset => {
-							//debug!("Received reset message");
-							first_run = true;
-							data_state.data = app::data_collection::Data::default();
+							data_state.data.first_run_cleanup();
 						}
 					}
 				}
 				futures::executor::block_on(data_state.update_data());
 				tx.send(Event::Update(Box::from(data_state.data.clone())))
-					.unwrap();
-
-				if first_run {
-					// Fix for if you set a really long time for update periods (and just gives a faster first value)
-					thread::sleep(Duration::from_millis(250));
-					first_run = false;
-				} else {
-					thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
-				}
+					.unwrap(); // TODO: [UNWRAP] Might be required, it's in a closure and idk how to deal with it
+				thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
 			}
 		});
 	}
 
 	loop {
+		// TODO: [OPT] this should not block... let's properly use tick rates and non-blocking, okay?
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
 					if event.modifiers.is_empty() {
 						// If only a code, and no modifiers, don't bother...
 
-						// Required to catch for while typing
+						// Required catch for searching - otherwise you couldn't search with q.
 						if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
 							break;
 						}
@@ -243,7 +243,7 @@ fn main() -> error::Result<()> {
 						if let KeyModifiers::CONTROL = event.modifiers {
 							match event.code {
 								KeyCode::Char('c') => break,
-								KeyCode::Char('f') => app.toggle_searching(), // Note that this is fine for now, assuming '/' does not do anything other than search.
+								KeyCode::Char('f') => app.enable_searching(),
 								KeyCode::Left | KeyCode::Char('h') => app.move_left(),
 								KeyCode::Right | KeyCode::Char('l') => app.move_right(),
 								KeyCode::Up | KeyCode::Char('k') => app.move_up(),
@@ -255,7 +255,7 @@ fn main() -> error::Result<()> {
 										app.reset();
 									}
 								}
-								KeyCode::Char('s') => app.toggle_simple_search(),
+								// TODO: [SEARCH] Rename "simple" search to just... search without cases...
 								KeyCode::Char('a') => app.skip_cursor_beginning(),
 								KeyCode::Char('e') => app.skip_cursor_end(),
 								_ => {}
@@ -264,7 +264,7 @@ fn main() -> error::Result<()> {
 					}
 
 					if app.update_process_gui {
-						handle_process_sorting(&mut app);
+						update_final_process_list(&mut app);
 						app.update_process_gui = false;
 					}
 				}
@@ -274,38 +274,54 @@ fn main() -> error::Result<()> {
 					_ => {}
 				},
 				Event::Update(data) => {
-					// NOTE TO SELF - data is refreshed into app state HERE!  That means, if it is
-					// frozen, then, app.data is never refreshed, until unfrozen!
 					if !app.is_frozen {
-						app.data = *data;
+						app.data_collection.eat_data(&data);
 
-						handle_process_sorting(&mut app);
+						// Convert all data into tui-compliant components
 
-						// Convert all data into tui components
-						let network_data = update_network_data_points(&app.data);
+						// Network
+						let network_data = convert_network_data_points(&app.data_collection);
 						app.canvas_data.network_data_rx = network_data.rx;
 						app.canvas_data.network_data_tx = network_data.tx;
 						app.canvas_data.rx_display = network_data.rx_display;
 						app.canvas_data.tx_display = network_data.tx_display;
 						app.canvas_data.total_rx_display = network_data.total_rx_display;
 						app.canvas_data.total_tx_display = network_data.total_tx_display;
-						app.canvas_data.disk_data = update_disk_row(&app.data);
-						app.canvas_data.temp_sensor_data =
-							update_temp_row(&app.data, &app.temperature_type);
-						app.canvas_data.mem_data = update_mem_data_points(&app.data);
-						app.canvas_data.memory_labels = update_mem_data_values(&app.data);
-						app.canvas_data.swap_data = update_swap_data_points(&app.data);
+
+						// Disk
+						app.canvas_data.disk_data = update_disk_row(&app.data_collection);
+
+						// Temperatures
+						app.canvas_data.temp_sensor_data = update_temp_row(&app);
+						// Memory
+						app.canvas_data.mem_data = update_mem_data_points(&app.data_collection);
+						app.canvas_data.swap_data = update_swap_data_points(&app.data_collection);
+						let memory_and_swap_labels = update_mem_labels(&app.data_collection);
+						app.canvas_data.mem_label = memory_and_swap_labels.0;
+						app.canvas_data.swap_label = memory_and_swap_labels.1;
+
+						// CPU
 						app.canvas_data.cpu_data =
-							update_cpu_data_points(app.show_average_cpu, &app.data);
+							update_cpu_data_points(app.show_average_cpu, &app.data_collection);
+
+						// Processes
+						let (single, grouped) = convert_process_data(&app.data_collection);
+						app.canvas_data.process_data = single;
+						app.canvas_data.grouped_process_data = grouped;
+						update_final_process_list(&mut app);
 					}
+				}
+				Event::Clean => {
+					app.data_collection
+						.clean_data(constants::STALE_MAX_MILLISECONDS);
 				}
 			}
 		}
 
 		// Quick fix for tab updating the table headers
-		if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
+		if let data_harvester::processes::ProcessSorting::PID = &app.process_sorting_type {
 			if app.is_grouped() {
-				app.process_sorting_type = data_collection::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
+				app.process_sorting_type = data_harvester::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
 				app.process_sorting_reverse = true;
 			}
 		}
@@ -322,94 +338,6 @@ fn main() -> error::Result<()> {
 	Ok(())
 }
 
-type TempProcess = (f64, Option<f64>, Option<u64>, Vec<u32>);
-
-fn handle_process_sorting(app: &mut app::App) {
-	// Handle combining multi-pid processes to form one entry in table.
-	// This was done this way to save time and avoid code
-	// duplication... sorry future me.  Really.
-
-	// First, convert this all into a BTreeMap.  The key is by name.  This
-	// pulls double duty by allowing us to combine entries AND it sorts!
-
-	// Fields for tuple: CPU%, MEM%, MEM_KB, PID_VEC
-	let mut process_map: BTreeMap<String, TempProcess> = BTreeMap::new();
-	for process in &app.data.list_of_processes {
-		let entry_val =
-			process_map
-				.entry(process.name.clone())
-				.or_insert((0.0, None, None, vec![]));
-		if let Some(mem_usage) = process.mem_usage_percent {
-			entry_val.0 += process.cpu_usage_percent;
-			if let Some(m) = &mut entry_val.1 {
-				*m += mem_usage;
-			}
-			entry_val.3.push(process.pid);
-		} else if let Some(mem_usage_kb) = process.mem_usage_kb {
-			entry_val.0 += process.cpu_usage_percent;
-			if let Some(m) = &mut entry_val.2 {
-				*m += mem_usage_kb;
-			}
-			entry_val.3.push(process.pid);
-		}
-	}
-
-	// Now... turn this back into the exact same vector... but now with merged processes!
-	app.data.grouped_list_of_processes = Some(
-		process_map
-			.iter()
-			.map(|(name, data)| {
-				ProcessData {
-					pid: 0, // Irrelevant
-					cpu_usage_percent: data.0,
-					mem_usage_percent: data.1,
-					mem_usage_kb: data.2,
-					name: name.clone(),
-					pid_vec: Some(data.3.clone()),
-				}
-			})
-			.collect::<Vec<_>>(),
-	);
-
-	if let Some(grouped_list_of_processes) = &mut app.data.grouped_list_of_processes {
-		if let data_collection::processes::ProcessSorting::PID = &app.process_sorting_type {
-			data_collection::processes::sort_processes(
-				grouped_list_of_processes,
-				&data_collection::processes::ProcessSorting::CPU, // Go back to default, negate PID for group
-				true,
-			);
-		} else {
-			data_collection::processes::sort_processes(
-				grouped_list_of_processes,
-				&app.process_sorting_type,
-				app.process_sorting_reverse,
-			);
-		}
-	}
-
-	data_collection::processes::sort_processes(
-		&mut app.data.list_of_processes,
-		&app.process_sorting_type,
-		app.process_sorting_reverse,
-	);
-
-	let tuple_results = if app.use_simple {
-		simple_update_process_row(
-			&app.data,
-			&(app.get_current_search_query().to_ascii_lowercase()),
-			app.is_searching_with_pid(),
-		)
-	} else {
-		regex_update_process_row(
-			&app.data,
-			app.get_current_regex_matcher(),
-			app.is_searching_with_pid(),
-		)
-	};
-	app.canvas_data.process_data = tuple_results.0;
-	app.canvas_data.grouped_process_data = tuple_results.1;
-}
-
 fn cleanup(
 	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
@@ -419,4 +347,74 @@ fn cleanup(
 	terminal.show_cursor()?;
 
 	Ok(())
+}
+
+fn update_final_process_list(app: &mut app::App) {
+	let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
+		app.canvas_data
+			.grouped_process_data
+			.clone()
+			.into_iter()
+			.filter(|process| {
+				if let Ok(matcher) = app.get_current_regex_matcher() {
+					matcher.is_match(&process.name)
+				} else {
+					true
+				}
+			})
+			.collect::<Vec<ConvertedProcessData>>()
+	} else {
+		app.canvas_data
+			.process_data
+			.iter()
+			.filter(|(_pid, process)| {
+				if let Ok(matcher) = app.get_current_regex_matcher() {
+					if app.is_searching_with_pid() {
+						matcher.is_match(&process.pid.to_string())
+					} else {
+						matcher.is_match(&process.name)
+					}
+				} else {
+					true
+				}
+			})
+			.map(|(_pid, process)| ConvertedProcessData {
+				pid: process.pid,
+				name: process.name.clone(),
+				cpu_usage: process.cpu_usage_percent,
+				mem_usage: process.mem_usage_percent,
+				group_pids: vec![process.pid],
+			})
+			.collect::<Vec<ConvertedProcessData>>()
+	};
+
+	sort_process_data(&mut filtered_process_data, app);
+	app.canvas_data.finalized_process_data = filtered_process_data;
+}
+
+fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &app::App) {
+	to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(&a.name, &b.name, false));
+
+	match app.process_sorting_type {
+		ProcessSorting::CPU => {
+			to_sort_vec.sort_by(|a, b| {
+				utils::gen_util::get_ordering(a.cpu_usage, b.cpu_usage, app.process_sorting_reverse)
+			});
+		}
+		ProcessSorting::MEM => {
+			to_sort_vec.sort_by(|a, b| {
+				utils::gen_util::get_ordering(a.mem_usage, b.mem_usage, app.process_sorting_reverse)
+			});
+		}
+		ProcessSorting::NAME => to_sort_vec.sort_by(|a, b| {
+			utils::gen_util::get_ordering(&a.name, &b.name, app.process_sorting_reverse)
+		}),
+		ProcessSorting::PID => {
+			if !app.is_grouped() {
+				to_sort_vec.sort_by(|a, b| {
+					utils::gen_util::get_ordering(a.pid, b.pid, app.process_sorting_reverse)
+				});
+			}
+		}
+	}
 }

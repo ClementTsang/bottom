@@ -1,13 +1,16 @@
-pub mod data_collection;
-use data_collection::{processes, temperature};
+pub mod data_harvester;
+use data_harvester::{processes, temperature};
 use std::time::Instant;
 
-use crate::{canvas, constants, data_conversion::ConvertedProcessData, utils::error::Result};
+pub mod data_farmer;
+use data_farmer::*;
+
+use crate::{canvas, constants, utils::error::Result};
 
 mod process_killer;
 
-#[derive(Clone, Copy)]
-pub enum ApplicationPosition {
+#[derive(Debug, Clone, Copy)]
+pub enum WidgetPosition {
 	Cpu,
 	Mem,
 	Disk,
@@ -30,6 +33,23 @@ lazy_static! {
 		regex::Regex::new(".*");
 }
 
+/// AppConfigFields is meant to cover basic fields that would normally be set
+/// by config files or launch options.  Don't need to be mutable (set and forget).
+pub struct AppConfigFields {
+	pub update_rate_in_milliseconds: u64,
+	pub temperature_type: temperature::TemperatureType,
+	pub use_dot: bool,
+}
+
+/// AppScrollWidgetState deals with fields for a scrollable app's current state.
+pub struct AppScrollWidgetState {
+	pub widget_scroll_position: i64,
+}
+
+/// AppSearchState only deals with the search's state.
+pub struct AppSearchState {}
+
+// TODO: [OPT] Group like fields together... this is kinda gross to step through
 pub struct App {
 	// Sorting
 	pub process_sorting_type: processes::ProcessSorting,
@@ -48,27 +68,28 @@ pub struct App {
 	pub temperature_type: temperature::TemperatureType,
 	pub update_rate_in_milliseconds: u64,
 	pub show_average_cpu: bool,
-	pub current_application_position: ApplicationPosition,
-	pub data: data_collection::Data,
+	pub current_widget_selected: WidgetPosition,
+	pub data: data_harvester::Data,
 	awaiting_second_char: bool,
 	second_char: char,
 	pub use_dot: bool,
 	pub show_help: bool,
 	pub show_dd: bool,
 	pub dd_err: Option<String>,
-	to_delete_process_list: Option<Vec<ConvertedProcessData>>,
+	to_delete_process_list: Option<(String, Vec<u32>)>,
 	pub is_frozen: bool,
 	pub left_legend: bool,
 	pub use_current_cpu_total: bool,
 	last_key_press: Instant,
-	pub canvas_data: canvas::CanvasData,
+	pub canvas_data: canvas::DisplayableData,
 	enable_grouping: bool,
-	enable_searching: bool, // TODO: [OPT] group together?
+	enable_searching: bool,
 	current_search_query: String,
 	searching_pid: bool,
-	pub use_simple: bool,
+	pub ignore_case: bool,
 	current_regex: std::result::Result<regex::Regex, regex::Error>,
 	current_cursor_position: usize,
+	pub data_collection: DataCollection,
 }
 
 impl App {
@@ -84,7 +105,7 @@ impl App {
 			temperature_type,
 			update_rate_in_milliseconds,
 			show_average_cpu,
-			current_application_position: ApplicationPosition::Process,
+			current_widget_selected: WidgetPosition::Process,
 			scroll_direction: ScrollDirection::DOWN,
 			currently_selected_process_position: 0,
 			currently_selected_disk_position: 0,
@@ -94,7 +115,7 @@ impl App {
 			previous_disk_position: 0,
 			previous_temp_position: 0,
 			previous_cpu_table_position: 0,
-			data: data_collection::Data::default(),
+			data: data_harvester::Data::default(),
 			awaiting_second_char: false,
 			second_char: ' ',
 			use_dot,
@@ -106,14 +127,15 @@ impl App {
 			left_legend,
 			use_current_cpu_total,
 			last_key_press: Instant::now(),
-			canvas_data: canvas::CanvasData::default(),
+			canvas_data: canvas::DisplayableData::default(),
 			enable_grouping: false,
 			enable_searching: false,
 			current_search_query: String::default(),
 			searching_pid: false,
-			use_simple: false,
+			ignore_case: false,
 			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lifetimes to avoid cloning
 			current_cursor_position: 0,
+			data_collection: DataCollection::default(),
 		}
 	}
 
@@ -122,7 +144,7 @@ impl App {
 		self.show_help = false;
 		self.show_dd = false;
 		if self.enable_searching {
-			self.current_application_position = ApplicationPosition::Process;
+			self.current_widget_selected = WidgetPosition::Process;
 			self.enable_searching = false;
 		}
 		self.current_search_query = String::new();
@@ -139,7 +161,7 @@ impl App {
 			self.to_delete_process_list = None;
 			self.dd_err = None;
 		} else if self.enable_searching {
-			self.current_application_position = ApplicationPosition::Process;
+			self.current_widget_selected = WidgetPosition::Process;
 			self.enable_searching = false;
 		}
 	}
@@ -156,16 +178,18 @@ impl App {
 	pub fn toggle_grouping(&mut self) {
 		// Disallow usage whilst in a dialog and only in processes
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::Process = self.current_application_position {
+			if let WidgetPosition::Process = self.current_widget_selected {
 				self.enable_grouping = !(self.enable_grouping);
+				self.update_process_gui = true;
 			}
 		}
 	}
 
 	pub fn on_tab(&mut self) {
-		match self.current_application_position {
-			ApplicationPosition::Process => self.toggle_grouping(),
-			ApplicationPosition::Disk => {}
+		match self.current_widget_selected {
+			WidgetPosition::Process => self.toggle_grouping(),
+			WidgetPosition::Disk => {}
+			WidgetPosition::ProcessSearch => self.toggle_ignore_case(),
 			_ => {}
 		}
 	}
@@ -174,19 +198,13 @@ impl App {
 		self.enable_grouping
 	}
 
-	pub fn toggle_searching(&mut self) {
+	pub fn enable_searching(&mut self) {
 		if !self.is_in_dialog() {
-			match self.current_application_position {
-				ApplicationPosition::Process | ApplicationPosition::ProcessSearch => {
-					if self.enable_searching {
-						// Toggle off
-						self.enable_searching = false;
-						self.current_application_position = ApplicationPosition::Process;
-					} else {
-						// Toggle on
-						self.enable_searching = true;
-						self.current_application_position = ApplicationPosition::ProcessSearch;
-					}
+			match self.current_widget_selected {
+				WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+					// Toggle on
+					self.enable_searching = true;
+					self.current_widget_selected = WidgetPosition::ProcessSearch;
 				}
 				_ => {}
 			}
@@ -198,7 +216,7 @@ impl App {
 	}
 
 	pub fn is_in_search_widget(&self) -> bool {
-		if let ApplicationPosition::ProcessSearch = self.current_application_position {
+		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 			true
 		} else {
 			false
@@ -207,7 +225,7 @@ impl App {
 
 	pub fn search_with_pid(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				self.searching_pid = true;
 			}
 		}
@@ -215,7 +233,7 @@ impl App {
 
 	pub fn search_with_name(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				self.searching_pid = false;
 			}
 		}
@@ -229,13 +247,26 @@ impl App {
 		&self.current_search_query
 	}
 
-	pub fn toggle_simple_search(&mut self) {
+	pub fn toggle_ignore_case(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
-				self.use_simple = !self.use_simple;
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
+				self.ignore_case = !self.ignore_case;
+				self.update_regex();
 				self.update_process_gui = true;
 			}
 		}
+	}
+
+	fn update_regex(&mut self) {
+		self.current_regex = if self.current_search_query.is_empty() {
+			BASE_REGEX.clone()
+		} else if self.ignore_case {
+			regex::Regex::new(&(format!("(?i){}", self.current_search_query)))
+		} else {
+			regex::Regex::new(&(self.current_search_query))
+		};
+		self.previous_process_position = 0;
+		self.currently_selected_process_position = 0;
 	}
 
 	pub fn get_cursor_position(&self) -> usize {
@@ -260,18 +291,13 @@ impl App {
 	}
 
 	pub fn on_backspace(&mut self) {
-		if let ApplicationPosition::ProcessSearch = self.current_application_position {
+		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 			if self.current_cursor_position > 0 {
 				self.current_cursor_position -= 1;
 				self.current_search_query
 					.remove(self.current_cursor_position);
 
-				// TODO: [OPT] this runs even while in simple... consider making this only run if they toggle back to regex!
-				self.current_regex = if self.current_search_query.is_empty() {
-					BASE_REGEX.clone()
-				} else {
-					regex::Regex::new(&(self.current_search_query))
-				};
+				self.update_regex();
 				self.update_process_gui = true;
 			}
 		}
@@ -283,7 +309,7 @@ impl App {
 
 	pub fn on_up_key(&mut self) {
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 			} else {
 				self.decrement_position_count();
 			}
@@ -292,7 +318,7 @@ impl App {
 
 	pub fn on_down_key(&mut self) {
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 			} else {
 				self.increment_position_count();
 			}
@@ -301,7 +327,7 @@ impl App {
 
 	pub fn on_left_key(&mut self) {
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				if self.current_cursor_position > 0 {
 					self.current_cursor_position -= 1;
 				}
@@ -311,7 +337,7 @@ impl App {
 
 	pub fn on_right_key(&mut self) {
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				if self.current_cursor_position < self.current_search_query.len() {
 					self.current_cursor_position += 1;
 				}
@@ -321,7 +347,7 @@ impl App {
 
 	pub fn skip_cursor_beginning(&mut self) {
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				self.current_cursor_position = 0;
 			}
 		}
@@ -329,7 +355,7 @@ impl App {
 
 	pub fn skip_cursor_end(&mut self) {
 		if !self.is_in_dialog() {
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				self.current_cursor_position = self.current_search_query.len();
 			}
 		}
@@ -347,51 +373,55 @@ impl App {
 			}
 			self.last_key_press = current_key_press_inst;
 
-			if let ApplicationPosition::ProcessSearch = self.current_application_position {
+			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				self.current_search_query
 					.insert(self.current_cursor_position, caught_char);
 				self.current_cursor_position += 1;
 
-				// TODO: [OPT] this runs even while in simple... consider making this only run if they toggle back to regex!
-				self.current_regex = if self.current_search_query.is_empty() {
-					BASE_REGEX.clone()
-				} else {
-					regex::Regex::new(&(self.current_search_query))
-				};
+				self.update_regex();
+
 				self.update_process_gui = true;
 			} else {
 				match caught_char {
 					'/' => {
-						self.toggle_searching();
+						self.enable_searching();
 					}
 					'd' => {
-						if let ApplicationPosition::Process = self.current_application_position {
+						if let WidgetPosition::Process = self.current_widget_selected {
 							if self.awaiting_second_char && self.second_char == 'd' {
 								self.awaiting_second_char = false;
 								self.second_char = ' ';
-								let current_process = if self.is_grouped() {
-									let mut res: Vec<ConvertedProcessData> = Vec::new();
-									for pid in &self.canvas_data.grouped_process_data
-										[self.currently_selected_process_position as usize]
-										.group
-									{
-										let result = self
-											.canvas_data
-											.process_data
-											.iter()
-											.find(|p| p.pid == *pid);
-										if let Some(process) = result {
-											res.push((*process).clone());
+
+								if self.currently_selected_process_position
+									< self.canvas_data.finalized_process_data.len() as i64
+								{
+									let current_process = if self.is_grouped() {
+										let group_pids = &self.canvas_data.finalized_process_data
+											[self.currently_selected_process_position as usize]
+											.group_pids;
+
+										let mut ret = ("".to_string(), group_pids.clone());
+
+										for pid in group_pids {
+											if let Some(process) =
+												self.canvas_data.process_data.get(&pid)
+											{
+												ret.0 = process.name.clone();
+												break;
+											}
 										}
-									}
-									res
-								} else {
-									vec![self.canvas_data.process_data
-										[self.currently_selected_process_position as usize]
-										.clone()]
-								};
-								self.to_delete_process_list = Some(current_process);
-								self.show_dd = true;
+										ret
+									} else {
+										let process = self.canvas_data.finalized_process_data
+											[self.currently_selected_process_position as usize]
+											.clone();
+										(process.name.clone(), vec![process.pid])
+									};
+
+									self.to_delete_process_list = Some(current_process);
+									self.show_dd = true;
+								}
+
 								self.reset_multi_tap_keys();
 							} else {
 								self.awaiting_second_char = true;
@@ -484,10 +514,10 @@ impl App {
 
 	pub fn kill_highlighted_process(&mut self) -> Result<()> {
 		// Technically unnecessary but this is a good check...
-		if let ApplicationPosition::Process = self.current_application_position {
+		if let WidgetPosition::Process = self.current_widget_selected {
 			if let Some(current_selected_processes) = &(self.to_delete_process_list) {
-				for current_selected_process in current_selected_processes {
-					process_killer::kill_process_given_pid(current_selected_process.pid)?;
+				for pid in &current_selected_processes.1 {
+					process_killer::kill_process_given_pid(*pid)?;
 				}
 			}
 			self.to_delete_process_list = None;
@@ -495,7 +525,7 @@ impl App {
 		Ok(())
 	}
 
-	pub fn get_current_highlighted_process_list(&self) -> Option<Vec<ConvertedProcessData>> {
+	pub fn get_to_delete_processes(&self) -> Option<(String, Vec<u32>)> {
 		self.to_delete_process_list.clone()
 	}
 
@@ -511,12 +541,12 @@ impl App {
 	// PROC_SEARCH -(up)> Disk, -(down)> PROC, -(left)> Network
 	pub fn move_left(&mut self) {
 		if !self.is_in_dialog() {
-			self.current_application_position = match self.current_application_position {
-				ApplicationPosition::Process => ApplicationPosition::Network,
-				ApplicationPosition::ProcessSearch => ApplicationPosition::Network,
-				ApplicationPosition::Disk => ApplicationPosition::Mem,
-				ApplicationPosition::Temp => ApplicationPosition::Mem,
-				_ => self.current_application_position,
+			self.current_widget_selected = match self.current_widget_selected {
+				WidgetPosition::Process => WidgetPosition::Network,
+				WidgetPosition::ProcessSearch => WidgetPosition::Network,
+				WidgetPosition::Disk => WidgetPosition::Mem,
+				WidgetPosition::Temp => WidgetPosition::Mem,
+				_ => self.current_widget_selected,
 			};
 			self.reset_multi_tap_keys();
 		}
@@ -524,10 +554,10 @@ impl App {
 
 	pub fn move_right(&mut self) {
 		if !self.is_in_dialog() {
-			self.current_application_position = match self.current_application_position {
-				ApplicationPosition::Mem => ApplicationPosition::Temp,
-				ApplicationPosition::Network => ApplicationPosition::Process,
-				_ => self.current_application_position,
+			self.current_widget_selected = match self.current_widget_selected {
+				WidgetPosition::Mem => WidgetPosition::Temp,
+				WidgetPosition::Network => WidgetPosition::Process,
+				_ => self.current_widget_selected,
 			};
 			self.reset_multi_tap_keys();
 		}
@@ -535,20 +565,20 @@ impl App {
 
 	pub fn move_up(&mut self) {
 		if !self.is_in_dialog() {
-			self.current_application_position = match self.current_application_position {
-				ApplicationPosition::Mem => ApplicationPosition::Cpu,
-				ApplicationPosition::Network => ApplicationPosition::Mem,
-				ApplicationPosition::Process => {
+			self.current_widget_selected = match self.current_widget_selected {
+				WidgetPosition::Mem => WidgetPosition::Cpu,
+				WidgetPosition::Network => WidgetPosition::Mem,
+				WidgetPosition::Process => {
 					if self.is_searching() {
-						ApplicationPosition::ProcessSearch
+						WidgetPosition::ProcessSearch
 					} else {
-						ApplicationPosition::Disk
+						WidgetPosition::Disk
 					}
 				}
-				ApplicationPosition::ProcessSearch => ApplicationPosition::Disk,
-				ApplicationPosition::Temp => ApplicationPosition::Cpu,
-				ApplicationPosition::Disk => ApplicationPosition::Temp,
-				_ => self.current_application_position,
+				WidgetPosition::ProcessSearch => WidgetPosition::Disk,
+				WidgetPosition::Temp => WidgetPosition::Cpu,
+				WidgetPosition::Disk => WidgetPosition::Temp,
+				_ => self.current_widget_selected,
 			};
 			self.reset_multi_tap_keys();
 		}
@@ -556,19 +586,19 @@ impl App {
 
 	pub fn move_down(&mut self) {
 		if !self.is_in_dialog() {
-			self.current_application_position = match self.current_application_position {
-				ApplicationPosition::Cpu => ApplicationPosition::Mem,
-				ApplicationPosition::Mem => ApplicationPosition::Network,
-				ApplicationPosition::Temp => ApplicationPosition::Disk,
-				ApplicationPosition::Disk => {
+			self.current_widget_selected = match self.current_widget_selected {
+				WidgetPosition::Cpu => WidgetPosition::Mem,
+				WidgetPosition::Mem => WidgetPosition::Network,
+				WidgetPosition::Temp => WidgetPosition::Disk,
+				WidgetPosition::Disk => {
 					if self.is_searching() {
-						ApplicationPosition::ProcessSearch
+						WidgetPosition::ProcessSearch
 					} else {
-						ApplicationPosition::Process
+						WidgetPosition::Process
 					}
 				}
-				ApplicationPosition::ProcessSearch => ApplicationPosition::Process,
-				_ => self.current_application_position,
+				WidgetPosition::ProcessSearch => WidgetPosition::Process,
+				_ => self.current_widget_selected,
 			};
 			self.reset_multi_tap_keys();
 		}
@@ -576,11 +606,11 @@ impl App {
 
 	pub fn skip_to_first(&mut self) {
 		if !self.is_in_dialog() {
-			match self.current_application_position {
-				ApplicationPosition::Process => self.currently_selected_process_position = 0,
-				ApplicationPosition::Temp => self.currently_selected_temperature_position = 0,
-				ApplicationPosition::Disk => self.currently_selected_disk_position = 0,
-				ApplicationPosition::Cpu => self.currently_selected_cpu_table_position = 0,
+			match self.current_widget_selected {
+				WidgetPosition::Process => self.currently_selected_process_position = 0,
+				WidgetPosition::Temp => self.currently_selected_temperature_position = 0,
+				WidgetPosition::Disk => self.currently_selected_disk_position = 0,
+				WidgetPosition::Cpu => self.currently_selected_cpu_table_position = 0,
 
 				_ => {}
 			}
@@ -591,28 +621,22 @@ impl App {
 
 	pub fn skip_to_last(&mut self) {
 		if !self.is_in_dialog() {
-			match self.current_application_position {
-				ApplicationPosition::Process => {
+			match self.current_widget_selected {
+				WidgetPosition::Process => {
 					self.currently_selected_process_position =
-						self.data.list_of_processes.len() as i64 - 1
+						self.canvas_data.finalized_process_data.len() as i64 - 1
 				}
-				ApplicationPosition::Temp => {
+				WidgetPosition::Temp => {
 					self.currently_selected_temperature_position =
-						self.data.list_of_temperature_sensor.len() as i64 - 1
+						self.canvas_data.temp_sensor_data.len() as i64 - 1
 				}
-				ApplicationPosition::Disk => {
-					self.currently_selected_disk_position = self.data.list_of_disks.len() as i64 - 1
+				WidgetPosition::Disk => {
+					self.currently_selected_disk_position =
+						self.canvas_data.disk_data.len() as i64 - 1
 				}
-				ApplicationPosition::Cpu => {
-					if let Some(cpu_package) = self.data.list_of_cpu_packages.last() {
-						if self.show_average_cpu {
-							self.currently_selected_cpu_table_position =
-								cpu_package.cpu_vec.len() as i64;
-						} else {
-							self.currently_selected_cpu_table_position =
-								cpu_package.cpu_vec.len() as i64 - 1;
-						}
-					}
+				WidgetPosition::Cpu => {
+					self.currently_selected_cpu_table_position =
+						self.canvas_data.cpu_data.len() as i64 - 1;
 				}
 				_ => {}
 			}
@@ -623,11 +647,11 @@ impl App {
 
 	pub fn decrement_position_count(&mut self) {
 		if !self.is_in_dialog() {
-			match self.current_application_position {
-				ApplicationPosition::Process => self.change_process_position(-1),
-				ApplicationPosition::Temp => self.change_temp_position(-1),
-				ApplicationPosition::Disk => self.change_disk_position(-1),
-				ApplicationPosition::Cpu => self.change_cpu_table_position(-1), // TODO: Temporary, may change if we add scaling
+			match self.current_widget_selected {
+				WidgetPosition::Process => self.change_process_position(-1),
+				WidgetPosition::Temp => self.change_temp_position(-1),
+				WidgetPosition::Disk => self.change_disk_position(-1),
+				WidgetPosition::Cpu => self.change_cpu_table_position(-1), // TODO: Temporary, may change if we add scaling
 				_ => {}
 			}
 			self.scroll_direction = ScrollDirection::UP;
@@ -637,11 +661,11 @@ impl App {
 
 	pub fn increment_position_count(&mut self) {
 		if !self.is_in_dialog() {
-			match self.current_application_position {
-				ApplicationPosition::Process => self.change_process_position(1),
-				ApplicationPosition::Temp => self.change_temp_position(1),
-				ApplicationPosition::Disk => self.change_disk_position(1),
-				ApplicationPosition::Cpu => self.change_cpu_table_position(1), // TODO: Temporary, may change if we add scaling
+			match self.current_widget_selected {
+				WidgetPosition::Process => self.change_process_position(1),
+				WidgetPosition::Temp => self.change_temp_position(1),
+				WidgetPosition::Disk => self.change_disk_position(1),
+				WidgetPosition::Cpu => self.change_cpu_table_position(1), // TODO: Temporary, may change if we add scaling
 				_ => {}
 			}
 			self.scroll_direction = ScrollDirection::DOWN;
@@ -650,24 +674,18 @@ impl App {
 	}
 
 	fn change_cpu_table_position(&mut self, num_to_change_by: i64) {
-		if let Some(cpu_package) = self.data.list_of_cpu_packages.last() {
-			if self.currently_selected_cpu_table_position + num_to_change_by >= 0
-				&& self.currently_selected_cpu_table_position + num_to_change_by
-					< if self.show_average_cpu {
-						cpu_package.cpu_vec.len()
-					} else {
-						cpu_package.cpu_vec.len() - 1
-					} as i64
-			{
-				self.currently_selected_cpu_table_position += num_to_change_by;
-			}
+		if self.currently_selected_cpu_table_position + num_to_change_by >= 0
+			&& self.currently_selected_cpu_table_position + num_to_change_by
+				< self.canvas_data.cpu_data.len() as i64
+		{
+			self.currently_selected_cpu_table_position += num_to_change_by;
 		}
 	}
 
 	fn change_process_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_process_position + num_to_change_by >= 0
 			&& self.currently_selected_process_position + num_to_change_by
-				< self.data.list_of_processes.len() as i64
+				< self.canvas_data.finalized_process_data.len() as i64
 		{
 			self.currently_selected_process_position += num_to_change_by;
 		}
@@ -676,7 +694,7 @@ impl App {
 	fn change_temp_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_temperature_position + num_to_change_by >= 0
 			&& self.currently_selected_temperature_position + num_to_change_by
-				< self.data.list_of_temperature_sensor.len() as i64
+				< self.canvas_data.temp_sensor_data.len() as i64
 		{
 			self.currently_selected_temperature_position += num_to_change_by;
 		}
@@ -685,7 +703,7 @@ impl App {
 	fn change_disk_position(&mut self, num_to_change_by: i64) {
 		if self.currently_selected_disk_position + num_to_change_by >= 0
 			&& self.currently_selected_disk_position + num_to_change_by
-				< self.data.list_of_disks.len() as i64
+				< self.canvas_data.disk_data.len() as i64
 		{
 			self.currently_selected_disk_position += num_to_change_by;
 		}

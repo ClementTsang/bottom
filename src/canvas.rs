@@ -1,9 +1,11 @@
 use crate::{
-	app, constants,
+	app::{self, data_harvester::processes::ProcessHarvest},
+	constants,
 	data_conversion::{ConvertedCpuData, ConvertedProcessData},
 	utils::{error, gen_util::*},
 };
 use std::cmp::max;
+use std::collections::HashMap;
 use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -51,7 +53,7 @@ lazy_static! {
 		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.\n"),
 		Text::raw("Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
 		Text::raw("Use Ctrl-a and Ctrl-e to set the cursor to the start and end of the bar respectively.\n"),
-		Text::raw("Use Ctrl-s to toggle between simple and regex search.\n"),
+		Text::raw("Use Tab to toggle whether to ignore case.\n"),
 		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
@@ -85,7 +87,7 @@ lazy_static! {
 }
 
 #[derive(Default)]
-pub struct CanvasData {
+pub struct DisplayableData {
 	pub rx_display: String,
 	pub tx_display: String,
 	pub total_rx_display: String,
@@ -94,9 +96,11 @@ pub struct CanvasData {
 	pub network_data_tx: Vec<(f64, f64)>,
 	pub disk_data: Vec<Vec<String>>,
 	pub temp_sensor_data: Vec<Vec<String>>,
-	pub process_data: Vec<ConvertedProcessData>,
-	pub grouped_process_data: Vec<ConvertedProcessData>,
-	pub memory_labels: Vec<(u64, u64)>,
+	pub process_data: HashMap<u32, ProcessHarvest>, // Not final
+	pub grouped_process_data: Vec<ConvertedProcessData>, // Not final
+	pub finalized_process_data: Vec<ConvertedProcessData>, // What's actually displayed
+	pub mem_label: String,
+	pub swap_label: String,
 	pub mem_data: Vec<(f64, f64)>,
 	pub swap_data: Vec<(f64, f64)>,
 	pub cpu_data: Vec<ConvertedCpuData>,
@@ -131,11 +135,11 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 
 	// Generate colours
 	let mut colour_vec: Vec<Color> = vec![
-		Color::LightCyan,
-		Color::LightYellow,
 		Color::Red,
-		Color::Green,
+		Color::LightYellow,
 		Color::LightMagenta,
+		Color::LightCyan,
+		Color::Green,
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
@@ -235,23 +239,23 @@ pub fn draw_data<B: backend::Backend>(
 					.alignment(Alignment::Center)
 					.wrap(true)
 					.render(&mut f, middle_dialog_chunk[1]);
-			} else if let Some(process_list) = app_state.get_current_highlighted_process_list() {
-				if let Some(process) = process_list.first() {
+			} else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
+				if let Some(first_pid) = to_kill_processes.1.first() {
 					let dd_text = [
-					if app_state.is_grouped() {
-						Text::raw(format!(
-							"\nAre you sure you want to kill {} process(es) with name {}?",
-							process_list.len(), process.name
-						))
-					} else {
-						Text::raw(format!(
-							"\nAre you sure you want to kill process {} with PID {}?",
-							process.name, process.pid
-						))
-					},
-					Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
-					Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
-				];
+						if app_state.is_grouped() {
+							Text::raw(format!(
+								"\nAre you sure you want to kill {} process(es) with name {}?",
+								to_kill_processes.1.len(), to_kill_processes.0
+							))
+						} else {
+							Text::raw(format!(
+								"\nAre you sure you want to kill process {} with PID {}?",
+								to_kill_processes.0, first_pid
+							))
+						},
+						Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
+						Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
+					];
 
 					Paragraph::new(dd_text.iter())
 						.block(
@@ -264,6 +268,7 @@ pub fn draw_data<B: backend::Backend>(
 						.wrap(true)
 						.render(&mut f, middle_dialog_chunk[1]);
 				} else {
+					// This is a bit nasty, but it works well... I guess.
 					app_state.show_dd = false;
 				}
 			} else {
@@ -276,8 +281,8 @@ pub fn draw_data<B: backend::Backend>(
 				.margin(1)
 				.constraints(
 					[
-						Constraint::Percentage(33),
-						Constraint::Percentage(34),
+						Constraint::Percentage(30),
+						Constraint::Percentage(36),
 						Constraint::Percentage(34),
 					]
 					.as_ref(),
@@ -334,7 +339,6 @@ pub fn draw_data<B: backend::Backend>(
 						} else {
 							5
 						};
-						debug!("Req: {}", required);
 						let remaining = bottom_chunks[0].height - required;
 						[Constraint::Length(remaining), Constraint::Length(required)]
 					}
@@ -391,7 +395,7 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 	// CPU usage graph
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
+		.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
 	let y_axis = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([-0.5, 100.5])
@@ -401,18 +405,8 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 	let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
 
 	for (i, cpu) in cpu_data.iter().enumerate() {
-		let mut avg_cpu_exist_offset = 0;
-		if app_state.show_average_cpu {
-			if i == 0 {
-				// Skip, we want to render the average cpu last!
-				continue;
-			} else {
-				avg_cpu_exist_offset = 1;
-			}
-		}
-
 		cpu_entries_vec.push((
-			Style::default().fg(COLOUR_LIST[(i - avg_cpu_exist_offset) % COLOUR_LIST.len()]),
+			Style::default().fg(COLOUR_LIST[(i) % COLOUR_LIST.len()]),
 			cpu.cpu_data
 				.iter()
 				.map(<(f64, f64)>::from)
@@ -423,7 +417,7 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 	if app_state.show_average_cpu {
 		if let Some(avg_cpu_entry) = cpu_data.first() {
 			cpu_entries_vec.push((
-				Style::default().fg(COLOUR_LIST[(cpu_data.len() - 1) % COLOUR_LIST.len()]),
+				Style::default().fg(COLOUR_LIST[0]),
 				avg_cpu_entry
 					.cpu_data
 					.iter()
@@ -451,8 +445,8 @@ fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, d
 			Block::default()
 				.title("CPU")
 				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -495,8 +489,8 @@ fn draw_cpu_legend<B: backend::Backend>(
 		.map(|(itx, cpu_string_row)| {
 			Row::StyledData(
 				cpu_string_row.iter(),
-				match app_state.current_application_position {
-					app::ApplicationPosition::Cpu => {
+				match app_state.current_widget_selected {
+					app::WidgetPosition::Cpu => {
 						if cpu_row_counter
 							== app_state.currently_selected_cpu_table_position - start_position
 						{
@@ -525,8 +519,8 @@ fn draw_cpu_legend<B: backend::Backend>(
 	// Draw
 	Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
 		.block(Block::default().borders(Borders::ALL).border_style(
-			match app_state.current_application_position {
-				app::ApplicationPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+			match app_state.current_widget_selected {
+				app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 				_ => *CANVAS_BORDER_STYLE,
 			},
 		))
@@ -564,8 +558,8 @@ fn draw_memory_table<B: backend::Backend>(
 	// Draw
 	Table::new(MEM_HEADERS.iter(), mapped_mem_rows)
 		.block(Block::default().borders(Borders::ALL).border_style(
-			match app_state.current_application_position {
-				app::ApplicationPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+			match app_state.current_widget_selected {
+				app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 				_ => *CANVAS_BORDER_STYLE,
 			},
 		))
@@ -582,29 +576,19 @@ fn draw_memory_table<B: backend::Backend>(
 fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
 	let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
 	let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
-	let memory_labels: &[(u64, u64)] = &(app_state.canvas_data.memory_labels);
 
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, constants::TIME_STARTS_FROM as f64 * 10.0]);
-	let y_axis = Axis::default()
+		.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
+
+	// Offset as the zero value isn't drawn otherwise...
+	let y_axis: Axis<&str> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([-0.5, 100.5]) // Offset as the zero value isn't drawn otherwise...
+		.bounds([-0.5, 100.5])
 		.labels(&["0%", "100%"]);
 
-	let mem_name = "RAM:".to_string()
-		+ &format!(
-			"{:3}%",
-			(mem_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
-		) + &format!(
-		"   {:.1}GB/{:.1}GB",
-		memory_labels.first().unwrap_or(&(0, 0)).0 as f64 / 1024.0,
-		memory_labels.first().unwrap_or(&(0, 0)).1 as f64 / 1024.0
-	);
-	let swap_name: String;
-
 	let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
-		.name(&mem_name)
+		.name(&app_state.canvas_data.mem_label)
 		.marker(if app_state.use_dot {
 			Marker::Dot
 		} else {
@@ -614,42 +598,26 @@ fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App
 		.data(&mem_data)];
 
 	if !(&swap_data).is_empty() {
-		if let Some(last_canvas_result) = (&swap_data).last() {
-			if last_canvas_result.1 >= 0.0 {
-				swap_name = "SWP:".to_string()
-					+ &format!(
-						"{:3}%",
-						(swap_data.last().unwrap_or(&(0_f64, 0_f64)).1.round() as u64)
-					) + &format!(
-					"   {:.1}GB/{:.1}GB",
-					memory_labels[1].0 as f64 / 1024.0,
-					memory_labels[1].1 as f64 / 1024.0
-				);
-				mem_canvas_vec.push(
-					Dataset::default()
-						.name(&swap_name)
-						.marker(if app_state.use_dot {
-							Marker::Dot
-						} else {
-							Marker::Braille
-						})
-						.style(Style::default().fg(COLOUR_LIST[1]))
-						.data(&swap_data),
-				);
-			}
-		}
+		mem_canvas_vec.push(
+			Dataset::default()
+				.name(&app_state.canvas_data.swap_label)
+				.marker(if app_state.use_dot {
+					Marker::Dot
+				} else {
+					Marker::Braille
+				})
+				.style(Style::default().fg(COLOUR_LIST[1]))
+				.data(&swap_data),
+		);
 	}
-
-	// Memory usage table
-	// draw_memory_table(f, &app_state, mem_labels, swap_labels, label_loc);
 
 	Chart::default()
 		.block(
 			Block::default()
 				.title("Memory")
 				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -665,7 +633,7 @@ fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::Ap
 
 	let x_axis: Axis<String> = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, 600_000.0]);
+		.bounds([0.0, 60_000.0]);
 	let y_axis = Axis::default()
 		.style(Style::default().fg(GRAPH_COLOUR))
 		.bounds([-0.5, 30_f64])
@@ -675,8 +643,8 @@ fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::Ap
 			Block::default()
 				.title("Network")
 				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -753,8 +721,8 @@ fn draw_network_labels<B: backend::Backend>(
 		mapped_network,
 	)
 	.block(Block::default().borders(Borders::ALL).border_style(
-		match app_state.current_application_position {
-			app::ApplicationPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+		match app_state.current_widget_selected {
+			app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 			_ => *CANVAS_BORDER_STYLE,
 		},
 	))
@@ -787,8 +755,8 @@ fn draw_temp_table<B: backend::Backend>(
 	let temperature_rows = sliced_vec.iter().map(|temp_row| {
 		Row::StyledData(
 			temp_row.iter(),
-			match app_state.current_application_position {
-				app::ApplicationPosition::Temp => {
+			match app_state.current_widget_selected {
+				app::WidgetPosition::Temp => {
 					if temp_row_counter
 						== app_state.currently_selected_temperature_position - start_position
 					{
@@ -820,8 +788,8 @@ fn draw_temp_table<B: backend::Backend>(
 			Block::default()
 				.title("Temperatures")
 				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -853,8 +821,8 @@ fn draw_disk_table<B: backend::Backend>(
 	let disk_rows = sliced_vec.iter().map(|disk| {
 		Row::StyledData(
 			disk.iter(),
-			match app_state.current_application_position {
-				app::ApplicationPosition::Disk => {
+			match app_state.current_widget_selected {
+				app::WidgetPosition::Disk => {
 					if disk_counter == app_state.currently_selected_disk_position - start_position {
 						disk_counter = -1;
 						Style::default().fg(Color::Black).bg(Color::Cyan)
@@ -885,8 +853,8 @@ fn draw_disk_table<B: backend::Backend>(
 			Block::default()
 				.title("Disk")
 				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)
@@ -919,8 +887,7 @@ fn draw_search_field<B: backend::Backend>(
 		.chars()
 		.enumerate()
 		.map(|(itx, c)| {
-			if let app::ApplicationPosition::ProcessSearch = app_state.current_application_position
-			{
+			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
 				if itx == cursor_position {
 					return Text::styled(
 						c.to_string(),
@@ -931,7 +898,7 @@ fn draw_search_field<B: backend::Backend>(
 			Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
 		})
 		.collect::<Vec<_>>();
-	if let app::ApplicationPosition::ProcessSearch = app_state.current_application_position {
+	if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
 		if cursor_position >= query.len() {
 			query_with_cursor.push(Text::styled(
 				" ".to_string(),
@@ -946,10 +913,10 @@ fn draw_search_field<B: backend::Backend>(
 		} else {
 			Text::styled("\nName", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
-		if app_state.use_simple {
-			Text::styled(" (Simple): ", Style::default().fg(TABLE_HEADER_COLOUR))
+		if app_state.ignore_case {
+			Text::styled(" (Ignore Case): ", Style::default().fg(TABLE_HEADER_COLOUR))
 		} else {
-			Text::styled(" (Regex): ", Style::default().fg(TABLE_HEADER_COLOUR))
+			Text::styled(": ", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
 	];
 
@@ -964,8 +931,8 @@ fn draw_search_field<B: backend::Backend>(
 				.border_style(if app_state.get_current_regex_matcher().is_err() {
 					Style::default().fg(Color::Red)
 				} else {
-					match app_state.current_application_position {
-						app::ApplicationPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					match app_state.current_widget_selected {
+						app::WidgetPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 						_ => *CANVAS_BORDER_STYLE,
 					}
 				}),
@@ -979,25 +946,31 @@ fn draw_search_field<B: backend::Backend>(
 fn draw_processes_table<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	let process_data: &[ConvertedProcessData] = if app_state.is_grouped() {
-		&app_state.canvas_data.grouped_process_data
-	} else {
-		&app_state.canvas_data.process_data
-	};
+	let process_data: &[ConvertedProcessData] = &app_state.canvas_data.finalized_process_data;
 
 	// Admittedly this is kinda a hack... but we need to:
 	// * Scroll
 	// * Show/hide elements based on scroll position
-	// As such, we use a process_counter to know when we've hit the process we've currently scrolled to.  We also need to move the list - we can
+	//
+	// As such, we use a process_counter to know when we've
+	// hit the process we've currently scrolled to.
+	// We also need to move the list - we can
 	// do so by hiding some elements!
 	let num_rows = i64::from(draw_loc.height) - 5;
 
-	let start_position = get_start_position(
+	let position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
 		&mut app_state.previous_process_position,
 		app_state.currently_selected_process_position,
 	);
+
+	// Sanity check
+	let start_position = if position >= process_data.len() as i64 {
+		std::cmp::max(0, process_data.len() as i64 - 1)
+	} else {
+		position
+	};
 
 	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
 	let mut process_counter = 0;
@@ -1006,18 +979,18 @@ fn draw_processes_table<B: backend::Backend>(
 	let process_rows = sliced_vec.iter().map(|process| {
 		let stringified_process_vec: Vec<String> = vec![
 			if app_state.is_grouped() {
-				process.group.len().to_string()
+				process.group_pids.len().to_string()
 			} else {
 				process.pid.to_string()
 			},
 			process.name.clone(),
-			process.cpu_usage.clone(),
-			process.mem_usage.clone(),
+			format!("{:.1}%", process.cpu_usage),
+			format!("{:.1}%", process.mem_usage),
 		];
 		Row::StyledData(
 			stringified_process_vec.into_iter(),
-			match app_state.current_application_position {
-				app::ApplicationPosition::Process => {
+			match app_state.current_widget_selected {
+				app::WidgetPosition::Process => {
 					if process_counter
 						== app_state.currently_selected_process_position - start_position
 					{
@@ -1035,7 +1008,7 @@ fn draw_processes_table<B: backend::Backend>(
 		)
 	});
 
-	use app::data_collection::processes::ProcessSorting;
+	use app::data_harvester::processes::ProcessSorting;
 	let mut pid_or_name = if app_state.is_grouped() {
 		"Count"
 	} else {
@@ -1079,8 +1052,8 @@ fn draw_processes_table<B: backend::Backend>(
 			Block::default()
 				.title("Processes")
 				.borders(Borders::ALL)
-				.border_style(match app_state.current_application_position {
-					app::ApplicationPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				}),
 		)

@@ -1,5 +1,4 @@
 use crate::utils::error;
-use std::cmp::Ordering;
 use std::{collections::HashMap, process::Command, time::Instant};
 use sysinfo::{ProcessExt, System, SystemExt};
 
@@ -18,13 +17,11 @@ impl Default for ProcessSorting {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct ProcessData {
+pub struct ProcessHarvest {
 	pub pid: u32,
 	pub cpu_usage_percent: f64,
-	pub mem_usage_percent: Option<f64>,
-	pub mem_usage_kb: Option<u64>,
+	pub mem_usage_percent: f64,
 	pub name: String,
-	pub pid_vec: Option<Vec<u32>>,
 }
 
 fn cpu_usage_calculation(
@@ -101,31 +98,6 @@ fn cpu_usage_calculation(
 	Ok((result, cpu_percentage))
 }
 
-fn get_ordering<T: std::cmp::PartialOrd>(
-	a_val: T, b_val: T, reverse_order: bool,
-) -> std::cmp::Ordering {
-	match a_val.partial_cmp(&b_val) {
-		Some(x) => match x {
-			Ordering::Greater => {
-				if reverse_order {
-					std::cmp::Ordering::Less
-				} else {
-					std::cmp::Ordering::Greater
-				}
-			}
-			Ordering::Less => {
-				if reverse_order {
-					std::cmp::Ordering::Greater
-				} else {
-					std::cmp::Ordering::Less
-				}
-			}
-			Ordering::Equal => Ordering::Equal,
-		},
-		None => Ordering::Equal,
-	}
-}
-
 fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
@@ -145,12 +117,13 @@ fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 /// Note that cpu_percentage should be represented WITHOUT the \times 100 factor!
 fn linux_cpu_usage(
 	pid: u32, cpu_usage: f64, cpu_percentage: f64,
-	previous_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant)>,
+	new_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
 	curr_time: &Instant,
 ) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
-	let before_proc_val: f64 = if previous_pid_stats.contains_key(&pid.to_string()) {
-		previous_pid_stats
+	let before_proc_val: f64 = if prev_pid_stats.contains_key(&pid.to_string()) {
+		prev_pid_stats
 			.get(&pid.to_string())
 			.unwrap_or(&(0_f64, *curr_time))
 			.0
@@ -168,10 +141,7 @@ fn linux_cpu_usage(
 		(after_proc_val - before_proc_val) / cpu_usage * 100_f64
 	);*/
 
-	let entry = previous_pid_stats
-		.entry(pid.to_string())
-		.or_insert((after_proc_val, *curr_time));
-	*entry = (after_proc_val, *curr_time);
+	new_pid_stats.insert(pid.to_string(), (after_proc_val, *curr_time));
 	if use_current_cpu_total {
 		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
 	} else {
@@ -181,17 +151,16 @@ fn linux_cpu_usage(
 
 fn convert_ps(
 	process: &str, cpu_usage: f64, cpu_percentage: f64,
-	prev_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant)>,
+	new_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
 	curr_time: &Instant,
-) -> std::io::Result<ProcessData> {
+) -> std::io::Result<ProcessHarvest> {
 	if process.trim().to_string().is_empty() {
-		return Ok(ProcessData {
+		return Ok(ProcessHarvest {
 			pid: 0,
 			name: "".to_string(),
-			mem_usage_percent: None,
-			mem_usage_kb: None,
-			cpu_usage_percent: 0_f64,
-			pid_vec: None,
+			mem_usage_percent: 0.0,
+			cpu_usage_percent: 0.0,
 		});
 	}
 
@@ -201,37 +170,34 @@ fn convert_ps(
 		.parse::<u32>()
 		.unwrap_or(0);
 	let name = (&process[11..61]).trim().to_string();
-	let mem_usage_percent = Some(
-		(&process[62..])
-			.trim()
-			.to_string()
-			.parse::<f64>()
-			.unwrap_or(0_f64),
-	);
+	let mem_usage_percent = (&process[62..])
+		.trim()
+		.to_string()
+		.parse::<f64>()
+		.unwrap_or(0_f64);
 
-	Ok(ProcessData {
+	Ok(ProcessHarvest {
 		pid,
 		name,
 		mem_usage_percent,
-		mem_usage_kb: None,
 		cpu_usage_percent: linux_cpu_usage(
 			pid,
 			cpu_usage,
 			cpu_percentage,
 			prev_pid_stats,
+			new_pid_stats,
 			use_current_cpu_total,
 			curr_time,
 		)?,
-		pid_vec: None,
 	})
 }
 
 pub fn get_sorted_processes_list(
 	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64,
-	prev_pid_stats: &mut std::collections::HashMap<String, (f64, Instant)>,
-	use_current_cpu_total: bool, curr_time: &Instant,
-) -> crate::utils::error::Result<Vec<ProcessData>> {
-	let mut process_vector: Vec<ProcessData> = Vec::new();
+	prev_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	mem_total_kb: u64, curr_time: &Instant,
+) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+	let mut process_vector: Vec<ProcessHarvest> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		// Linux specific - this is a massive pain... ugh.
@@ -241,17 +207,19 @@ pub fn get_sorted_processes_list(
 			.output()?;
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
-		//debug!("{:?}", split_string);
 		let cpu_calc = cpu_usage_calculation(prev_idle, prev_non_idle);
 		if let Ok((cpu_usage, cpu_percentage)) = cpu_calc {
 			let process_stream = split_string.collect::<Vec<&str>>();
+
+			let mut new_pid_stats: HashMap<String, (f64, Instant)> = HashMap::new();
 
 			for process in process_stream {
 				if let Ok(process_object) = convert_ps(
 					process,
 					cpu_usage,
 					cpu_percentage,
-					prev_pid_stats,
+					&prev_pid_stats,
+					&mut new_pid_stats,
 					use_current_cpu_total,
 					curr_time,
 				) {
@@ -260,6 +228,8 @@ pub fn get_sorted_processes_list(
 					}
 				}
 			}
+
+			*prev_pid_stats = new_pid_stats;
 		} else {
 			error!("Unable to properly parse CPU data in Linux.");
 			error!("Result: {:?}", cpu_calc.err());
@@ -288,42 +258,14 @@ pub fn get_sorted_processes_list(
 				process_val.name().to_string()
 			};
 
-			process_vector.push(ProcessData {
+			process_vector.push(ProcessHarvest {
 				pid: process_val.pid() as u32,
 				name,
-				mem_usage_percent: None,
-				mem_usage_kb: Some(process_val.memory()),
+				mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
 				cpu_usage_percent: f64::from(process_val.cpu_usage()),
-				pid_vec: None,
 			});
 		}
 	}
 
 	Ok(process_vector)
-}
-
-pub fn sort_processes(
-	process_vector: &mut Vec<ProcessData>, sorting_method: &ProcessSorting, reverse_order: bool,
-) {
-	// Always sort alphabetically first!
-	process_vector.sort_by(|a, b| get_ordering(&a.name, &b.name, false));
-
-	match sorting_method {
-		ProcessSorting::CPU => {
-			process_vector.sort_by(|a, b| {
-				get_ordering(a.cpu_usage_percent, b.cpu_usage_percent, reverse_order)
-			});
-		}
-		ProcessSorting::MEM => {
-			process_vector.sort_by(|a, b| {
-				get_ordering(a.mem_usage_percent, b.mem_usage_percent, reverse_order)
-			});
-		}
-		ProcessSorting::PID => {
-			process_vector.sort_by(|a, b| get_ordering(a.pid, b.pid, reverse_order));
-		}
-		ProcessSorting::NAME => {
-			process_vector.sort_by(|a, b| get_ordering(&a.name, &b.name, reverse_order))
-		}
-	}
 }

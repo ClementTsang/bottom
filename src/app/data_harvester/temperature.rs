@@ -3,9 +3,9 @@ use heim::units::thermodynamic_temperature;
 use std::cmp::Ordering;
 use sysinfo::{ComponentExt, System, SystemExt};
 
-#[derive(Debug, Clone)]
-pub struct TempData {
-	pub component_name: Box<str>,
+#[derive(Default, Debug, Clone)]
+pub struct TempHarvest {
+	pub component_name: String,
 	pub temperature: f32,
 }
 
@@ -24,15 +24,15 @@ impl Default for TemperatureType {
 
 pub async fn get_temperature_data(
 	sys: &System, temp_type: &TemperatureType,
-) -> crate::utils::error::Result<Vec<TempData>> {
-	let mut temperature_vec: Vec<TempData> = Vec::new();
+) -> crate::utils::error::Result<Vec<TempHarvest>> {
+	let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		let mut sensor_data = heim::sensors::temperatures();
 		while let Some(sensor) = sensor_data.next().await {
 			if let Ok(sensor) = sensor {
-				temperature_vec.push(TempData {
-					component_name: Box::from(sensor.unit()),
+				temperature_vec.push(TempHarvest {
+					component_name: sensor.unit().to_string(),
 					temperature: match temp_type {
 						TemperatureType::Celsius => sensor
 							.current()
@@ -52,8 +52,8 @@ pub async fn get_temperature_data(
 	} else {
 		let sensor_data = sys.get_components_list();
 		for component in sensor_data {
-			temperature_vec.push(TempData {
-				component_name: Box::from(component.get_label()),
+			temperature_vec.push(TempHarvest {
+				component_name: component.get_label().to_string(),
 				temperature: match temp_type {
 					TemperatureType::Celsius => component.get_temperature(),
 					TemperatureType::Kelvin => component.get_temperature() + 273.15,

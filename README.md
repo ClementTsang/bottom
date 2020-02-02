@@ -80,7 +80,9 @@ Run using `btm`.
 
 - `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
 
-- `-s`, `--simple_search` will default the search to simple search rather than regex search.
+- `-i`, `--case_insensitive` will default to not matching case
+
+when searching processes.
 
 ### Keybindings
 
@@ -126,7 +128,7 @@ Run using `btm`.
 
 - `Ctrl-p` or `Ctrl-n` to switch between searching for PID and name respectively.
 
-- `Ctrl-s` to toggle between a simple search and a regex search.
+- `Tab` to toggle whether to ignore case.
 
 - `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
 
