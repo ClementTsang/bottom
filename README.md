@@ -147,6 +147,8 @@ Note that `q` is disabled while in the search widget.
 - This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
 
 - This application was written with the following libraries:
+
+  - [backtrace](https://github.com/rust-lang/backtrace-rs)
   - [chrono](https://github.com/chronotope/chrono)
   - [clap](https://github.com/clap-rs/clap)
   - [crossterm](https://github.com/TimonPost/crossterm)
@@ -155,9 +157,10 @@ Note that `q` is disabled while in the search widget.
   - [futures-rs](https://github.com/rust-lang-nursery/futures-rs)
   - [futures-timer](https://github.com/rustasync/futures-timer)
   - [heim](https://github.com/heim-rs/heim)
+  - [lazy_static](https://github.com/rust-lang-nursery/lazy-static.rs)
   - [log](https://github.com/rust-lang-nursery/log)
   - [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
   - [tokio](https://github.com/tokio-rs/tokio)
   - [tui-rs](https://github.com/fdehau/tui-rs)
   - [winapi](https://github.com/retep998/winapi-rs)
-  - [lazy_static](https://github.com/rust-lang-nursery/lazy-static.rs)
+  - [yaml-rust](https://github.com/chyh1990/yaml-rust)

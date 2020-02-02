@@ -36,6 +36,7 @@ winapi = "0.3.8"
 tui = {version = "0.8", features = ["crossterm"], default-features = false }
 lazy_static = "1.4.0"
 backtrace = "0.3"
+yaml-rust = "0.4.3"
 
 [dev-dependencies]
 assert_cmd = "0.12"
