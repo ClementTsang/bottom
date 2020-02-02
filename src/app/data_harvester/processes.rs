@@ -1,5 +1,4 @@
 use crate::utils::error;
-use std::cmp::Ordering;
 use std::{collections::HashMap, process::Command, time::Instant};
 use sysinfo::{ProcessExt, System, SystemExt};
 
@@ -23,7 +22,6 @@ pub struct ProcessHarvest {
 	pub cpu_usage_percent: f64,
 	pub mem_usage_percent: f64,
 	pub name: String,
-	pub pid_vec: Option<Vec<u32>>,
 }
 
 fn cpu_usage_calculation(
@@ -100,31 +98,6 @@ fn cpu_usage_calculation(
 	Ok((result, cpu_percentage))
 }
 
-fn get_ordering<T: std::cmp::PartialOrd>(
-	a_val: T, b_val: T, reverse_order: bool,
-) -> std::cmp::Ordering {
-	match a_val.partial_cmp(&b_val) {
-		Some(x) => match x {
-			Ordering::Greater => {
-				if reverse_order {
-					std::cmp::Ordering::Less
-				} else {
-					std::cmp::Ordering::Greater
-				}
-			}
-			Ordering::Less => {
-				if reverse_order {
-					std::cmp::Ordering::Greater
-				} else {
-					std::cmp::Ordering::Less
-				}
-			}
-			Ordering::Equal => Ordering::Equal,
-		},
-		None => Ordering::Equal,
-	}
-}
-
 fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
@@ -188,7 +161,6 @@ fn convert_ps(
 			name: "".to_string(),
 			mem_usage_percent: 0.0,
 			cpu_usage_percent: 0.0,
-			pid_vec: None,
 		});
 	}
 
@@ -217,7 +189,6 @@ fn convert_ps(
 			use_current_cpu_total,
 			curr_time,
 		)?,
-		pid_vec: None,
 	})
 }
 
@@ -292,36 +263,9 @@ pub fn get_sorted_processes_list(
 				name,
 				mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
 				cpu_usage_percent: f64::from(process_val.cpu_usage()),
-				pid_vec: None,
 			});
 		}
 	}
 
 	Ok(process_vector)
-}
-
-pub fn sort_processes(
-	process_vector: &mut Vec<ProcessHarvest>, sorting_method: &ProcessSorting, reverse_order: bool,
-) {
-	// Always sort alphabetically first!
-	process_vector.sort_by(|a, b| get_ordering(&a.name, &b.name, false));
-
-	match sorting_method {
-		ProcessSorting::CPU => {
-			process_vector.sort_by(|a, b| {
-				get_ordering(a.cpu_usage_percent, b.cpu_usage_percent, reverse_order)
-			});
-		}
-		ProcessSorting::MEM => {
-			process_vector.sort_by(|a, b| {
-				get_ordering(a.mem_usage_percent, b.mem_usage_percent, reverse_order)
-			});
-		}
-		ProcessSorting::PID => {
-			process_vector.sort_by(|a, b| get_ordering(a.pid, b.pid, reverse_order));
-		}
-		ProcessSorting::NAME => {
-			process_vector.sort_by(|a, b| get_ordering(&a.name, &b.name, reverse_order))
-		}
-	}
 }

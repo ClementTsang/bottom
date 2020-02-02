@@ -2,14 +2,16 @@
 //! can actually handle.
 
 use crate::{
-	app::data_farmer,
-	app::data_harvester,
-	app::App,
+	app::{
+		data_farmer,
+		data_harvester::{self, processes::ProcessHarvest},
+		App,
+	},
 	constants,
 	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
 use constants::*;
-use regex::Regex;
+use std::collections::HashMap;
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
@@ -22,12 +24,12 @@ pub struct ConvertedNetworkData {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct ConvertedProcessHarvest {
+pub struct ConvertedProcessData {
 	pub pid: u32,
 	pub name: String,
-	pub cpu_usage: String,
-	pub mem_usage: String,
-	pub group: Vec<u32>,
+	pub cpu_usage: f64,
+	pub mem_usage: f64,
+	pub group_pids: Vec<u32>,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -115,103 +117,6 @@ pub fn update_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<St
 	}
 
 	disk_vector
-}
-
-pub fn simple_update_process_row(
-	app_data: &data_harvester::Data, matching_string: &str, use_pid: bool,
-) -> (Vec<ConvertedProcessHarvest>, Vec<ConvertedProcessHarvest>) {
-	let process_vector: Vec<ConvertedProcessHarvest> = app_data
-		.list_of_processes
-		.iter()
-		.filter(|process| {
-			if use_pid {
-				process
-					.pid
-					.to_string()
-					.to_ascii_lowercase()
-					.contains(matching_string)
-			} else {
-				process.name.to_ascii_lowercase().contains(matching_string)
-			}
-		})
-		.map(|process| return_mapped_process(process))
-		.collect::<Vec<_>>();
-
-	let mut grouped_process_vector: Vec<ConvertedProcessHarvest> = Vec::new();
-	if let Some(grouped_list_of_processes) = &app_data.grouped_list_of_processes {
-		grouped_process_vector = grouped_list_of_processes
-			.iter()
-			.filter(|process| {
-				if use_pid {
-					process
-						.pid
-						.to_string()
-						.to_ascii_lowercase()
-						.contains(matching_string)
-				} else {
-					process.name.to_ascii_lowercase().contains(matching_string)
-				}
-			})
-			.map(|process| return_mapped_process(process))
-			.collect::<Vec<_>>();
-	}
-
-	(process_vector, grouped_process_vector)
-}
-
-pub fn regex_update_process_row(
-	app_data: &data_harvester::Data, regex_matcher: &std::result::Result<Regex, regex::Error>,
-	use_pid: bool,
-) -> (Vec<ConvertedProcessHarvest>, Vec<ConvertedProcessHarvest>) {
-	let process_vector: Vec<ConvertedProcessHarvest> = app_data
-		.list_of_processes
-		.iter()
-		.filter(|process| {
-			if let Ok(matcher) = regex_matcher {
-				if use_pid {
-					matcher.is_match(&process.pid.to_string())
-				} else {
-					matcher.is_match(&process.name)
-				}
-			} else {
-				true
-			}
-		})
-		.map(|process| return_mapped_process(process))
-		.collect::<Vec<_>>();
-
-	let mut grouped_process_vector: Vec<ConvertedProcessHarvest> = Vec::new();
-	if let Some(grouped_list_of_processes) = &app_data.grouped_list_of_processes {
-		grouped_process_vector = grouped_list_of_processes
-			.iter()
-			.filter(|process| {
-				if let Ok(matcher) = regex_matcher {
-					if use_pid {
-						matcher.is_match(&process.pid.to_string())
-					} else {
-						matcher.is_match(&process.name)
-					}
-				} else {
-					true
-				}
-			})
-			.map(|process| return_mapped_process(process))
-			.collect::<Vec<_>>();
-	}
-
-	(process_vector, grouped_process_vector)
-}
-
-fn return_mapped_process(
-	process: &data_harvester::processes::ProcessHarvest,
-) -> ConvertedProcessHarvest {
-	ConvertedProcessHarvest {
-		pid: process.pid,
-		name: process.name.to_string(),
-		cpu_usage: format!("{:.1}%", process.cpu_usage_percent),
-		mem_usage: format!("{:.1}%", process.mem_usage_percent),
-		group: vec![],
-	}
 }
 
 pub fn update_cpu_data_points(
@@ -431,4 +336,46 @@ pub fn convert_network_data_points(
 		total_rx_display,
 		total_tx_display,
 	}
+}
+
+pub fn convert_process_data(
+	current_data: &data_farmer::DataCollection,
+) -> (HashMap<u32, ProcessHarvest>, Vec<ConvertedProcessData>) {
+	let mut single_list = HashMap::new();
+
+	// cpu, mem, pids
+	let mut grouped_hashmap: HashMap<String, (u32, f64, f64, Vec<u32>)> =
+		std::collections::HashMap::new();
+
+	// Go through every single process in the list... and build a hashmap + single list
+	for process in &(current_data).process_harvest {
+		let entry = grouped_hashmap.entry(process.name.clone()).or_insert((
+			process.pid,
+			0.0,
+			0.0,
+			Vec::new(),
+		));
+
+		(*entry).1 += process.cpu_usage_percent;
+		(*entry).2 += process.mem_usage_percent;
+		(*entry).3.push(process.pid);
+
+		single_list.insert(process.pid, process.clone());
+	}
+
+	let grouped_list: Vec<ConvertedProcessData> = grouped_hashmap
+		.iter()
+		.map(|(name, process_details)| {
+			let p = process_details.clone();
+			ConvertedProcessData {
+				pid: p.0,
+				name: name.to_string(),
+				cpu_usage: p.1,
+				mem_usage: p.2,
+				group_pids: p.3,
+			}
+		})
+		.collect::<Vec<_>>();
+
+	(single_list, grouped_list)
 }

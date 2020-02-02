@@ -35,11 +35,9 @@ mod canvas;
 mod constants;
 mod data_conversion;
 
-use app::data_harvester;
-use app::data_harvester::processes::ProcessHarvest;
+use app::data_harvester::{self, processes::ProcessSorting};
 use constants::TICK_RATE_IN_MILLISECONDS;
 use data_conversion::*;
-use std::collections::BTreeMap;
 use utils::error::{self, BottomError};
 
 enum Event<I, J> {
@@ -267,7 +265,7 @@ fn main() -> error::Result<()> {
 					}
 
 					if app.update_process_gui {
-						handle_process_sorting(&mut app);
+						update_final_process_list(&mut app);
 						app.update_process_gui = false;
 					}
 				}
@@ -279,7 +277,6 @@ fn main() -> error::Result<()> {
 				Event::Update(data) => {
 					if !app.is_frozen {
 						app.data_collection.eat_data(&data);
-						app.data = *data; // TODO: [OPT] remove this
 
 						// Convert all data into tui-compliant components
 
@@ -309,7 +306,10 @@ fn main() -> error::Result<()> {
 							update_cpu_data_points(app.show_average_cpu, &app.data_collection);
 
 						// Processes
-						handle_process_sorting(&mut app);
+						let (single, grouped) = convert_process_data(&app.data_collection);
+						app.canvas_data.process_data = single;
+						app.canvas_data.grouped_process_data = grouped;
+						update_final_process_list(&mut app);
 					}
 				}
 				Event::Clean => {
@@ -339,82 +339,6 @@ fn main() -> error::Result<()> {
 	Ok(())
 }
 
-type TempProcess = (f64, f64, Vec<u32>);
-
-fn handle_process_sorting(app: &mut app::App) {
-	// Handle combining multi-pid processes to form one entry in table.
-	// This was done this way to save time and avoid code
-	// duplication... sorry future me.  Really.
-
-	// First, convert this all into a BTreeMap.  The key is by name.  This
-	// pulls double duty by allowing us to combine entries AND it sorts!
-
-	// Fields for tuple: CPU%, MEM%, MEM_KB, PID_VEC
-	let mut process_map: BTreeMap<String, TempProcess> = BTreeMap::new();
-	for process in &app.data.list_of_processes {
-		let entry_val = process_map
-			.entry(process.name.clone())
-			.or_insert((0.0, 0.0, vec![]));
-		entry_val.0 += process.cpu_usage_percent;
-		entry_val.1 += process.mem_usage_percent;
-		entry_val.2.push(process.pid);
-	}
-
-	// Now... turn this back into the exact same vector... but now with merged processes!
-	app.data.grouped_list_of_processes = Some(
-		process_map
-			.iter()
-			.map(|(name, data)| {
-				ProcessHarvest {
-					pid: 0, // Irrelevant
-					cpu_usage_percent: data.0,
-					mem_usage_percent: data.1,
-					name: name.clone(),
-					pid_vec: Some(data.2.clone()),
-				}
-			})
-			.collect::<Vec<_>>(),
-	);
-
-	if let Some(grouped_list_of_processes) = &mut app.data.grouped_list_of_processes {
-		if let data_harvester::processes::ProcessSorting::PID = &app.process_sorting_type {
-			data_harvester::processes::sort_processes(
-				grouped_list_of_processes,
-				&data_harvester::processes::ProcessSorting::CPU, // Go back to default, negate PID for group
-				true,
-			);
-		} else {
-			data_harvester::processes::sort_processes(
-				grouped_list_of_processes,
-				&app.process_sorting_type,
-				app.process_sorting_reverse,
-			);
-		}
-	}
-
-	data_harvester::processes::sort_processes(
-		&mut app.data.list_of_processes,
-		&app.process_sorting_type,
-		app.process_sorting_reverse,
-	);
-
-	let tuple_results = if app.use_simple {
-		simple_update_process_row(
-			&app.data,
-			&(app.get_current_search_query().to_ascii_lowercase()),
-			app.is_searching_with_pid(),
-		)
-	} else {
-		regex_update_process_row(
-			&app.data,
-			app.get_current_regex_matcher(),
-			app.is_searching_with_pid(),
-		)
-	};
-	app.canvas_data.process_data = tuple_results.0;
-	app.canvas_data.grouped_process_data = tuple_results.1;
-}
-
 fn cleanup(
 	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
@@ -424,4 +348,74 @@ fn cleanup(
 	terminal.show_cursor()?;
 
 	Ok(())
+}
+
+fn update_final_process_list(app: &mut app::App) {
+	let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
+		app.canvas_data
+			.grouped_process_data
+			.clone()
+			.into_iter()
+			.filter(|process| {
+				if let Ok(matcher) = app.get_current_regex_matcher() {
+					matcher.is_match(&process.name)
+				} else {
+					true
+				}
+			})
+			.collect::<Vec<ConvertedProcessData>>()
+	} else {
+		app.canvas_data
+			.process_data
+			.iter()
+			.filter(|(_pid, process)| {
+				if let Ok(matcher) = app.get_current_regex_matcher() {
+					if app.is_searching_with_pid() {
+						matcher.is_match(&process.pid.to_string())
+					} else {
+						matcher.is_match(&process.name)
+					}
+				} else {
+					true
+				}
+			})
+			.map(|(_pid, process)| ConvertedProcessData {
+				pid: process.pid,
+				name: process.name.clone(),
+				cpu_usage: process.cpu_usage_percent,
+				mem_usage: process.mem_usage_percent,
+				group_pids: vec![process.pid],
+			})
+			.collect::<Vec<ConvertedProcessData>>()
+	};
+
+	sort_process_data(&mut filtered_process_data, app);
+	app.canvas_data.finalized_process_data = filtered_process_data;
+}
+
+fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &app::App) {
+	to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(&a.name, &b.name, false));
+
+	match app.process_sorting_type {
+		ProcessSorting::CPU => {
+			to_sort_vec.sort_by(|a, b| {
+				utils::gen_util::get_ordering(a.cpu_usage, b.cpu_usage, app.process_sorting_reverse)
+			});
+		}
+		ProcessSorting::MEM => {
+			to_sort_vec.sort_by(|a, b| {
+				utils::gen_util::get_ordering(a.mem_usage, b.mem_usage, app.process_sorting_reverse)
+			});
+		}
+		ProcessSorting::NAME => to_sort_vec.sort_by(|a, b| {
+			utils::gen_util::get_ordering(&a.name, &b.name, app.process_sorting_reverse)
+		}),
+		ProcessSorting::PID => {
+			if !app.is_grouped() {
+				to_sort_vec.sort_by(|a, b| {
+					utils::gen_util::get_ordering(a.pid, b.pid, app.process_sorting_reverse)
+				});
+			}
+		}
+	}
 }

@@ -25,7 +25,6 @@ pub struct Data {
 	pub temperature_sensors: Vec<temperature::TempHarvest>,
 	pub network: network::NetworkHarvest,
 	pub list_of_processes: Vec<processes::ProcessHarvest>,
-	pub grouped_list_of_processes: Option<Vec<processes::ProcessHarvest>>,
 	pub disks: Vec<disks::DiskHarvest>,
 	pub io: disks::IOHarvest,
 	pub last_collection_time: Instant,
@@ -39,7 +38,6 @@ impl Default for Data {
 			swap: mem::MemHarvest::default(),
 			temperature_sensors: Vec::default(),
 			list_of_processes: Vec::default(),
-			grouped_list_of_processes: None,
 			disks: Vec::default(),
 			io: disks::IOHarvest::default(),
 			network: network::NetworkHarvest::default(),
@@ -53,7 +51,6 @@ impl Data {
 		self.io = disks::IOHarvest::default();
 		self.temperature_sensors = Vec::new();
 		self.list_of_processes = Vec::new();
-		self.grouped_list_of_processes = None;
 		self.disks = Vec::new();
 
 		self.network.first_run_cleanup();

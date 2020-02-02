@@ -49,7 +49,7 @@ pub struct DataCollection {
 	pub memory_harvest: mem::MemHarvest,
 	pub swap_harvest: mem::MemHarvest,
 	pub cpu_harvest: cpu::CPUHarvest,
-	pub process_harvest: processes::ProcessHarvest,
+	pub process_harvest: Vec<processes::ProcessHarvest>,
 	pub disk_harvest: Vec<disks::DiskHarvest>,
 	pub io_harvest: disks::IOHarvest,
 	pub io_labels: Vec<(u64, u64)>,
@@ -66,7 +66,7 @@ impl Default for DataCollection {
 			memory_harvest: mem::MemHarvest::default(),
 			swap_harvest: mem::MemHarvest::default(),
 			cpu_harvest: cpu::CPUHarvest::default(),
-			process_harvest: processes::ProcessHarvest::default(),
+			process_harvest: Vec::default(),
 			disk_harvest: Vec::default(),
 			io_harvest: disks::IOHarvest::default(),
 			io_labels: Vec::default(),
@@ -106,14 +106,15 @@ impl DataCollection {
 		self.eat_cpu(&harvested_data, &harvested_time, &mut new_entry);
 
 		// Temp
-		self.eat_temp(&harvested_data, &harvested_time, &mut new_entry);
+		self.eat_temp(&harvested_data);
 
 		// Disks
-		self.eat_disks(&harvested_data, &harvested_time, &mut new_entry);
+		self.eat_disks(&harvested_data, &harvested_time);
 
 		// Processes
+		self.eat_proc(&harvested_data);
 
-		// And we're done eating.
+		// And we're done eating.  Update time and push the new entry!
 		self.current_instant = harvested_time;
 		self.timed_data_vec.push((harvested_time, new_entry));
 	}
@@ -212,16 +213,12 @@ impl DataCollection {
 		self.cpu_harvest = harvested_data.cpu.clone();
 	}
 
-	fn eat_temp(
-		&mut self, harvested_data: &Data, _harvested_time: &Instant, _new_entry: &mut TimedData,
-	) {
+	fn eat_temp(&mut self, harvested_data: &Data) {
 		// TODO: [PO] To implement
 		self.temp_harvest = harvested_data.temperature_sensors.clone();
 	}
 
-	fn eat_disks(
-		&mut self, harvested_data: &Data, harvested_time: &Instant, _new_entry: &mut TimedData,
-	) {
+	fn eat_disks(&mut self, harvested_data: &Data, harvested_time: &Instant) {
 		// TODO: [PO] To implement
 
 		let time_since_last_harvest = harvested_time
@@ -255,6 +252,10 @@ impl DataCollection {
 
 		self.disk_harvest = harvested_data.disks.clone();
 		self.io_harvest = harvested_data.io.clone();
+	}
+
+	fn eat_proc(&mut self, harvested_data: &Data) {
+		self.process_harvest = harvested_data.list_of_processes.clone();
 	}
 }
 
