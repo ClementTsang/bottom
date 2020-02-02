@@ -5,7 +5,7 @@ use std::time::Instant;
 pub mod data_farmer;
 use data_farmer::*;
 
-use crate::{canvas, constants, data_conversion::ConvertedProcessData, utils::error::Result};
+use crate::{canvas, constants, utils::error::Result};
 
 mod process_killer;
 
@@ -76,7 +76,7 @@ pub struct App {
 	pub show_help: bool,
 	pub show_dd: bool,
 	pub dd_err: Option<String>,
-	to_delete_process_list: Option<Vec<ConvertedProcessData>>,
+	to_delete_process_list: Option<(String, Vec<u32>)>,
 	pub is_frozen: bool,
 	pub left_legend: bool,
 	pub use_current_cpu_total: bool,
@@ -390,12 +390,37 @@ impl App {
 							if self.awaiting_second_char && self.second_char == 'd' {
 								self.awaiting_second_char = false;
 								self.second_char = ' ';
-								let current_process = Vec::new();
 
-								// TODO: Fix
+								if self.currently_selected_process_position
+									< self.canvas_data.finalized_process_data.len() as i64
+								{
+									let current_process = if self.is_grouped() {
+										let group_pids = &self.canvas_data.finalized_process_data
+											[self.currently_selected_process_position as usize]
+											.group_pids;
 
-								self.to_delete_process_list = Some(current_process);
-								self.show_dd = true;
+										let mut ret = ("".to_string(), group_pids.clone());
+
+										for pid in group_pids {
+											if let Some(process) =
+												self.canvas_data.process_data.get(&pid)
+											{
+												ret.0 = process.name.clone();
+												break;
+											}
+										}
+										ret
+									} else {
+										let process = self.canvas_data.finalized_process_data
+											[self.currently_selected_process_position as usize]
+											.clone();
+										(process.name.clone(), vec![process.pid])
+									};
+
+									self.to_delete_process_list = Some(current_process);
+									self.show_dd = true;
+								}
+
 								self.reset_multi_tap_keys();
 							} else {
 								self.awaiting_second_char = true;
@@ -490,8 +515,8 @@ impl App {
 		// Technically unnecessary but this is a good check...
 		if let WidgetPosition::Process = self.current_widget_selected {
 			if let Some(current_selected_processes) = &(self.to_delete_process_list) {
-				for current_selected_process in current_selected_processes {
-					process_killer::kill_process_given_pid(current_selected_process.pid)?;
+				for pid in &current_selected_processes.1 {
+					process_killer::kill_process_given_pid(*pid)?;
 				}
 			}
 			self.to_delete_process_list = None;
@@ -499,7 +524,7 @@ impl App {
 		Ok(())
 	}
 
-	pub fn get_current_highlighted_process_list(&self) -> Option<Vec<ConvertedProcessData>> {
+	pub fn get_to_delete_processes(&self) -> Option<(String, Vec<u32>)> {
 		self.to_delete_process_list.clone()
 	}
 

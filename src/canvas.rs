@@ -239,23 +239,23 @@ pub fn draw_data<B: backend::Backend>(
 					.alignment(Alignment::Center)
 					.wrap(true)
 					.render(&mut f, middle_dialog_chunk[1]);
-			} else if let Some(process_list) = app_state.get_current_highlighted_process_list() {
-				if let Some(process) = process_list.first() {
+			} else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
+				if let Some(first_pid) = to_kill_processes.1.first() {
 					let dd_text = [
-					if app_state.is_grouped() {
-						Text::raw(format!(
-							"\nAre you sure you want to kill {} process(es) with name {}?",
-							process_list.len(), process.name
-						))
-					} else {
-						Text::raw(format!(
-							"\nAre you sure you want to kill process {} with PID {}?",
-							process.name, process.pid
-						))
-					},
-					Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
-					Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
-				];
+						if app_state.is_grouped() {
+							Text::raw(format!(
+								"\nAre you sure you want to kill {} process(es) with name {}?",
+								to_kill_processes.1.len(), to_kill_processes.0
+							))
+						} else {
+							Text::raw(format!(
+								"\nAre you sure you want to kill process {} with PID {}?",
+								to_kill_processes.0, first_pid
+							))
+						},
+						Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
+						Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
+					];
 
 					Paragraph::new(dd_text.iter())
 						.block(
@@ -268,6 +268,7 @@ pub fn draw_data<B: backend::Backend>(
 						.wrap(true)
 						.render(&mut f, middle_dialog_chunk[1]);
 				} else {
+					// This is a bit nasty, but it works well... I guess.
 					app_state.show_dd = false;
 				}
 			} else {
