@@ -461,7 +461,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 ) {
 	let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
 
-	let num_rows = i64::from(draw_loc.height) - 5;
+	let num_rows = u64::from(draw_loc.height) - 5;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
@@ -481,7 +481,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 		}
 	}
 
-	let mut cpu_row_counter = 0;
+	let mut cpu_row_counter: i64 = 0;
 
 	let cpu_rows = stringified_cpu_data
 		.iter()
@@ -491,7 +491,7 @@ fn draw_cpu_legend<B: backend::Backend>(
 				cpu_string_row.iter(),
 				match app_state.current_widget_selected {
 					app::WidgetPosition::Cpu => {
-						if cpu_row_counter
+						if cpu_row_counter as u64
 							== app_state.currently_selected_cpu_table_position - start_position
 						{
 							cpu_row_counter = -1;
@@ -741,7 +741,7 @@ fn draw_temp_table<B: backend::Backend>(
 ) {
 	let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
 
-	let num_rows = i64::from(draw_loc.height) - 5;
+	let num_rows = u64::from(draw_loc.height) - 5;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
@@ -750,14 +750,14 @@ fn draw_temp_table<B: backend::Backend>(
 	);
 
 	let sliced_vec: Vec<Vec<String>> = (&temp_sensor_data[start_position as usize..]).to_vec();
-	let mut temp_row_counter = 0;
+	let mut temp_row_counter: i64 = 0;
 
 	let temperature_rows = sliced_vec.iter().map(|temp_row| {
 		Row::StyledData(
 			temp_row.iter(),
 			match app_state.current_widget_selected {
 				app::WidgetPosition::Temp => {
-					if temp_row_counter
+					if temp_row_counter as u64
 						== app_state.currently_selected_temperature_position - start_position
 					{
 						temp_row_counter = -1;
@@ -807,7 +807,7 @@ fn draw_disk_table<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
 	let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
-	let num_rows = i64::from(draw_loc.height) - 5;
+	let num_rows = u64::from(draw_loc.height) - 5;
 	let start_position = get_start_position(
 		num_rows,
 		&(app_state.scroll_direction),
@@ -816,14 +816,16 @@ fn draw_disk_table<B: backend::Backend>(
 	);
 
 	let sliced_vec: Vec<Vec<String>> = (&disk_data[start_position as usize..]).to_vec();
-	let mut disk_counter = 0;
+	let mut disk_counter: i64 = 0;
 
 	let disk_rows = sliced_vec.iter().map(|disk| {
 		Row::StyledData(
 			disk.iter(),
 			match app_state.current_widget_selected {
 				app::WidgetPosition::Disk => {
-					if disk_counter == app_state.currently_selected_disk_position - start_position {
+					if disk_counter as u64
+						== app_state.currently_selected_disk_position - start_position
+					{
 						disk_counter = -1;
 						Style::default().fg(Color::Black).bg(Color::Cyan)
 					} else {
@@ -956,7 +958,7 @@ fn draw_processes_table<B: backend::Backend>(
 	// hit the process we've currently scrolled to.
 	// We also need to move the list - we can
 	// do so by hiding some elements!
-	let num_rows = i64::from(draw_loc.height) - 5;
+	let num_rows = u64::from(draw_loc.height) - 5;
 
 	let position = get_start_position(
 		num_rows,
@@ -966,14 +968,14 @@ fn draw_processes_table<B: backend::Backend>(
 	);
 
 	// Sanity check
-	let start_position = if position >= process_data.len() as i64 {
-		std::cmp::max(0, process_data.len() as i64 - 1)
+	let start_position = if position >= process_data.len() as u64 {
+		std::cmp::max(0, process_data.len() as i64 - 1) as u64
 	} else {
 		position
 	};
 
 	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
-	let mut process_counter = 0;
+	let mut process_counter: i64 = 0;
 
 	// Draw!
 	let process_rows = sliced_vec.iter().map(|process| {
@@ -991,7 +993,7 @@ fn draw_processes_table<B: backend::Backend>(
 			stringified_process_vec.into_iter(),
 			match app_state.current_widget_selected {
 				app::WidgetPosition::Process => {
-					if process_counter
+					if process_counter as u64
 						== app_state.currently_selected_process_position - start_position
 					{
 						process_counter = -1;
@@ -1138,9 +1140,9 @@ fn get_variable_intrinsic_widths(
 }
 
 fn get_start_position(
-	num_rows: i64, scroll_direction: &app::ScrollDirection, previously_scrolled_position: &mut i64,
-	currently_selected_position: i64,
-) -> i64 {
+	num_rows: u64, scroll_direction: &app::ScrollDirection, previously_scrolled_position: &mut u64,
+	currently_selected_position: u64,
+) -> u64 {
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
 			if currently_selected_position < *previously_scrolled_position + num_rows {

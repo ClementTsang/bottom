@@ -57,14 +57,14 @@ pub struct App {
 	pub update_process_gui: bool,
 	// Positioning
 	pub scroll_direction: ScrollDirection,
-	pub currently_selected_process_position: i64,
-	pub currently_selected_disk_position: i64,
-	pub currently_selected_temperature_position: i64,
-	pub currently_selected_cpu_table_position: i64,
-	pub previous_disk_position: i64,
-	pub previous_temp_position: i64,
-	pub previous_process_position: i64,
-	pub previous_cpu_table_position: i64,
+	pub currently_selected_process_position: u64,
+	pub currently_selected_disk_position: u64,
+	pub currently_selected_temperature_position: u64,
+	pub currently_selected_cpu_table_position: u64,
+	pub previous_disk_position: u64,
+	pub previous_temp_position: u64,
+	pub previous_process_position: u64,
+	pub previous_cpu_table_position: u64,
 	pub temperature_type: temperature::TemperatureType,
 	pub update_rate_in_milliseconds: u64,
 	pub show_average_cpu: bool,
@@ -393,7 +393,7 @@ impl App {
 								self.second_char = ' ';
 
 								if self.currently_selected_process_position
-									< self.canvas_data.finalized_process_data.len() as i64
+									< self.canvas_data.finalized_process_data.len() as u64
 								{
 									let current_process = if self.is_grouped() {
 										let group_pids = &self.canvas_data.finalized_process_data
@@ -624,19 +624,19 @@ impl App {
 			match self.current_widget_selected {
 				WidgetPosition::Process => {
 					self.currently_selected_process_position =
-						self.canvas_data.finalized_process_data.len() as i64 - 1
+						self.canvas_data.finalized_process_data.len() as u64 - 1
 				}
 				WidgetPosition::Temp => {
 					self.currently_selected_temperature_position =
-						self.canvas_data.temp_sensor_data.len() as i64 - 1
+						self.canvas_data.temp_sensor_data.len() as u64 - 1
 				}
 				WidgetPosition::Disk => {
 					self.currently_selected_disk_position =
-						self.canvas_data.disk_data.len() as i64 - 1
+						self.canvas_data.disk_data.len() as u64 - 1
 				}
 				WidgetPosition::Cpu => {
 					self.currently_selected_cpu_table_position =
-						self.canvas_data.cpu_data.len() as i64 - 1;
+						self.canvas_data.cpu_data.len() as u64 - 1;
 				}
 				_ => {}
 			}
@@ -674,38 +674,42 @@ impl App {
 	}
 
 	fn change_cpu_table_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_cpu_table_position + num_to_change_by >= 0
-			&& self.currently_selected_cpu_table_position + num_to_change_by
+		if self.currently_selected_cpu_table_position as i64 + num_to_change_by >= 0
+			&& self.currently_selected_cpu_table_position as i64 + num_to_change_by
 				< self.canvas_data.cpu_data.len() as i64
 		{
-			self.currently_selected_cpu_table_position += num_to_change_by;
+			self.currently_selected_cpu_table_position =
+				(self.currently_selected_cpu_table_position as i64 + num_to_change_by) as u64;
 		}
 	}
 
 	fn change_process_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_process_position + num_to_change_by >= 0
-			&& self.currently_selected_process_position + num_to_change_by
+		if self.currently_selected_process_position as i64 + num_to_change_by >= 0
+			&& self.currently_selected_process_position as i64 + num_to_change_by
 				< self.canvas_data.finalized_process_data.len() as i64
 		{
-			self.currently_selected_process_position += num_to_change_by;
+			self.currently_selected_process_position =
+				(self.currently_selected_process_position as i64 + num_to_change_by) as u64;
 		}
 	}
 
 	fn change_temp_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_temperature_position + num_to_change_by >= 0
-			&& self.currently_selected_temperature_position + num_to_change_by
+		if self.currently_selected_temperature_position as i64 + num_to_change_by >= 0
+			&& self.currently_selected_temperature_position as i64 + num_to_change_by
 				< self.canvas_data.temp_sensor_data.len() as i64
 		{
-			self.currently_selected_temperature_position += num_to_change_by;
+			self.currently_selected_temperature_position =
+				(self.currently_selected_temperature_position as i64 + num_to_change_by) as u64;
 		}
 	}
 
 	fn change_disk_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_disk_position + num_to_change_by >= 0
-			&& self.currently_selected_disk_position + num_to_change_by
+		if self.currently_selected_disk_position as i64 + num_to_change_by >= 0
+			&& self.currently_selected_disk_position as i64 + num_to_change_by
 				< self.canvas_data.disk_data.len() as i64
 		{
-			self.currently_selected_disk_position += num_to_change_by;
+			self.currently_selected_disk_position =
+				(self.currently_selected_disk_position as i64 + num_to_change_by) as u64;
 		}
 	}
 }

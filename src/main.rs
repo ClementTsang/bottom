@@ -9,8 +9,8 @@ extern crate lazy_static;
 
 use crossterm::{
 	event::{
-		self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyModifiers,
-		MouseEvent,
+		poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode,
+		KeyModifiers, MouseEvent,
 	},
 	execute,
 	terminal::LeaveAlternateScreen,
@@ -148,25 +148,29 @@ fn main() -> error::Result<()> {
 	let (tx, rx) = mpsc::channel();
 	{
 		let tx = tx.clone();
-		thread::spawn(move || {
-			let mut mouse_timer = Instant::now();
-			let mut keyboard_timer = Instant::now();
+		thread::spawn(move || loop {
+			if poll(Duration::from_millis(20)).is_ok() {
+				let mut mouse_timer = Instant::now();
+				let mut keyboard_timer = Instant::now();
 
-			loop {
-				if let Ok(event) = event::read() {
-					if let CEvent::Key(key) = event {
-						if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-							if tx.send(Event::KeyInput(key)).is_err() {
-								return;
+				loop {
+					if poll(Duration::from_millis(20)).is_ok() {
+						if let Ok(event) = read() {
+							if let CEvent::Key(key) = event {
+								if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+									if tx.send(Event::KeyInput(key)).is_err() {
+										return;
+									}
+									keyboard_timer = Instant::now();
+								}
+							} else if let CEvent::Mouse(mouse) = event {
+								if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+									if tx.send(Event::MouseInput(mouse)).is_err() {
+										return;
+									}
+									mouse_timer = Instant::now();
+								}
 							}
-							keyboard_timer = Instant::now();
-						}
-					} else if let CEvent::Mouse(mouse) = event {
-						if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-							if tx.send(Event::MouseInput(mouse)).is_err() {
-								return;
-							}
-							mouse_timer = Instant::now();
 						}
 					}
 				}
