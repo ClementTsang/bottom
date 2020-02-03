@@ -601,10 +601,10 @@ impl App {
 	// CPU -(down)> MEM
 	// MEM -(down)> Network, -(right)> TEMP
 	// TEMP -(down)> Disk, -(left)> MEM, -(up)> CPU
-	// Disk -(down)> Processes OR PROC_SEARCH, -(left)> MEM, -(up)> TEMP
+	// Disk -(down)> Processes, -(left)> MEM, -(up)> TEMP
 	// Network -(up)> MEM, -(right)> PROC
-	// PROC -(up)> Disk OR PROC_SEARCH if enabled, -(left)> Network
-	// PROC_SEARCH -(up)> Disk, -(down)> PROC, -(left)> Network
+	// PROC -(up)> Disk, -(down)> PROC_SEARCH, -(left)> Network
+	// PROC_SEARCH -(up)> PROC, -(left)> Network
 	pub fn move_left(&mut self) {
 		if !self.is_in_dialog() {
 			self.current_widget_selected = match self.current_widget_selected {
@@ -634,14 +634,8 @@ impl App {
 			self.current_widget_selected = match self.current_widget_selected {
 				WidgetPosition::Mem => WidgetPosition::Cpu,
 				WidgetPosition::Network => WidgetPosition::Mem,
-				WidgetPosition::Process => {
-					if self.is_searching() {
-						WidgetPosition::ProcessSearch
-					} else {
-						WidgetPosition::Disk
-					}
-				}
-				WidgetPosition::ProcessSearch => WidgetPosition::Disk,
+				WidgetPosition::Process => WidgetPosition::Disk,
+				WidgetPosition::ProcessSearch => WidgetPosition::Process,
 				WidgetPosition::Temp => WidgetPosition::Cpu,
 				WidgetPosition::Disk => WidgetPosition::Temp,
 				_ => self.current_widget_selected,
@@ -656,14 +650,14 @@ impl App {
 				WidgetPosition::Cpu => WidgetPosition::Mem,
 				WidgetPosition::Mem => WidgetPosition::Network,
 				WidgetPosition::Temp => WidgetPosition::Disk,
-				WidgetPosition::Disk => {
+				WidgetPosition::Disk => WidgetPosition::Process,
+				WidgetPosition::Process => {
 					if self.is_searching() {
 						WidgetPosition::ProcessSearch
 					} else {
 						WidgetPosition::Process
 					}
 				}
-				WidgetPosition::ProcessSearch => WidgetPosition::Process,
 				_ => self.current_widget_selected,
 			};
 			self.reset_multi_tap_keys();

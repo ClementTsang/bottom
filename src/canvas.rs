@@ -897,33 +897,46 @@ fn draw_search_field<B: backend::Backend>(
 		&query[(query.len() - width as usize)..]
 	};
 
-	// TODO: [SEARCH] Consider making this look prettier
 	let cursor_position = app_state.get_cursor_position();
 
-	// TODO: [SEARCH] This can be optimized... if the cursor is at the very end or not focused we can skip this
-	let mut query_with_cursor: Vec<Text> = shrunk_query
-		.chars()
-		.enumerate()
-		.map(|(itx, c)| {
-			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
-				if itx == cursor_position {
-					return Text::styled(
-						c.to_string(),
-						Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-					);
-				}
-			}
-			Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
-		})
-		.collect::<Vec<_>>();
-	if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
+	let query_with_cursor: Vec<Text> = if let app::WidgetPosition::ProcessSearch =
+		app_state.current_widget_selected
+	{
 		if cursor_position >= query.len() {
-			query_with_cursor.push(Text::styled(
+			let mut q = vec![Text::styled(
+				shrunk_query.to_string(),
+				Style::default().fg(TEXT_COLOUR),
+			)];
+
+			q.push(Text::styled(
 				" ".to_string(),
 				Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-			))
+			));
+
+			q
+		} else {
+			shrunk_query
+				.chars()
+				.enumerate()
+				.map(|(itx, c)| {
+					if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
+						if itx == cursor_position {
+							return Text::styled(
+								c.to_string(),
+								Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
+							);
+						}
+					}
+					Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
+				})
+				.collect::<Vec<_>>()
 		}
-	}
+	} else {
+		vec![Text::styled(
+			shrunk_query.to_string(),
+			Style::default().fg(TEXT_COLOUR),
+		)]
+	};
 
 	let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
 		Text::styled(
