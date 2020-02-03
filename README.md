@@ -80,7 +80,7 @@ Run using `btm`.
 
 - `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
 
-- `-i`, `--case_insensitive` will default to not matching case.
+- `-s`, `--case_sensitive` will default to matching case.
 
 - `-w`, `--whole` will default to searching for the world word.
 

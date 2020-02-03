@@ -62,7 +62,7 @@ impl Default for AppSearchState {
 		AppSearchState {
 			current_search_query: String::default(),
 			searching_pid: false,
-			ignore_case: false,
+			ignore_case: true,
 			current_regex: BASE_REGEX.clone(),
 			current_cursor_position: 0,
 			match_word: false,

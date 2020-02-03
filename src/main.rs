@@ -74,7 +74,7 @@ fn main() -> error::Result<()> {
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
-		(@arg CASE_INSENSITIVE: -i --case_insensitive "Do not match case when searching by default.")
+		(@arg CASE_SENSITIVE: -s --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -w --whole "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -x --regex "Use regex in searching by default.")
 	)
@@ -134,8 +134,16 @@ fn main() -> error::Result<()> {
 	}
 
 	// Set default search method
-	if matches.is_present("CASE_INSENSITIVE") {
+	if matches.is_present("CASE_SENSITIVE") {
 		app.search_state.toggle_ignore_case();
+	}
+
+	if matches.is_present("WHOLE_WORD") {
+		app.search_state.toggle_search_whole_word();
+	}
+
+	if matches.is_present("REGEX_DEFAULT") {
+		app.search_state.toggle_search_regex();
 	}
 
 	// Set up up tui and crossterm
