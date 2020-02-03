@@ -4,7 +4,7 @@
 
 A graphical top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
-![Quick demo recording](assets/recording_1.gif)
+![Quick demo recording](assets/recording_1.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux_
 
 ## Features
 
