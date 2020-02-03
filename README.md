@@ -24,7 +24,7 @@ Features of bottom include:
 
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
-| OS/Widget                        | CPU | Memory | Disks | Temperature | Processes | Networks              |
+| OS                               | CPU | Memory | Disks | Temperature | Processes | Networks              |
 | -------------------------------- | --- | ------ | ----- | ----------- | --------- | --------------------- |
 | Linux (tested on Arch Linux)     | ✓   | ✓      | ✓     | ✓           | ✓         | ✓                     |
 | Windows (tested on Windows 10)   | ✓   | ✓      | ✓     | ✗           | ✓         | Total RX/TX not shown |
@@ -42,13 +42,17 @@ Other installation methods based on distros are as follows:
 
 You can get the release versions from the AUR by installing `bottom`.
 
+#### Ubuntu
+
+TBD
+
 ### Windows
 
-You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately. I plan to add a Chocolatey install option.
+You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately. I plan to add a Chocolatey install option in the future.
 
 ### macOS
 
-macOS seems to work fine for the most part. I plan to add a Homebrew install option.
+macOS seems to work fine for the most part, barring minor issues with the `Ctrl`-arrow key bindings (use `Shift` instead). I plan to add a Homebrew install option in the future.
 
 ## Usage
 
