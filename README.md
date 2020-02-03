@@ -84,7 +84,7 @@ Run using `btm`.
 
 - `-w`, `--whole` will default to searching for the world word.
 
-- `-r`, `--regex` will default to using regex.
+- `-x`, `--regex` will default to using regex.
 
 when searching processes.
 
