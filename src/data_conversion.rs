@@ -259,44 +259,16 @@ pub fn convert_network_data_points(
 		//Insert joiner points
 		for &(joiner_offset, joiner_val) in &data.rx_data.1 {
 			let offset_time = time_from_start - joiner_offset as f64;
-			rx.push((
-				offset_time,
-				if joiner_val > 0.0 {
-					(joiner_val).log(2.0)
-				} else {
-					0.0
-				},
-			));
+			rx.push((offset_time, joiner_val));
 		}
 
 		for &(joiner_offset, joiner_val) in &data.tx_data.1 {
 			let offset_time = time_from_start - joiner_offset as f64;
-			tx.push((
-				offset_time,
-				if joiner_val > 0.0 {
-					(joiner_val).log(2.0)
-				} else {
-					0.0
-				},
-			));
+			tx.push((offset_time, joiner_val));
 		}
 
-		rx.push((
-			time_from_start,
-			if data.rx_data.0 > 0.0 {
-				(data.rx_data.0).log(2.0)
-			} else {
-				0.0
-			},
-		));
-		tx.push((
-			time_from_start,
-			if data.rx_data.0 > 0.0 {
-				(data.rx_data.0).log(2.0)
-			} else {
-				0.0
-			},
-		));
+		rx.push((time_from_start, data.rx_data.0));
+		tx.push((time_from_start, data.rx_data.0));
 	}
 
 	let total_rx_converted_result: (f64, String);

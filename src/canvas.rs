@@ -889,7 +889,7 @@ fn draw_disk_table<B: backend::Backend>(
 fn draw_search_field<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	let width = max(0, draw_loc.width as i64 - 20) as u64; // TODO [SEARCH] this is hard-coded... ew
+	let width = max(0, draw_loc.width as i64 - 34) as u64;
 	let query = app_state.get_current_search_query();
 	let shrunk_query = if query.len() < width as usize {
 		query

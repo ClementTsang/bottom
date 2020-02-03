@@ -157,31 +157,33 @@ impl DataCollection {
 		&mut self, harvested_data: &Data, harvested_time: &Instant, new_entry: &mut TimedData,
 	) {
 		// RX
+		let logged_rx_val = if harvested_data.network.rx as f64 > 0.0 {
+			(harvested_data.network.rx as f64).log(2.0)
+		} else {
+			0.0
+		};
+
 		let rx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-			generate_joining_points(
-				&time,
-				last_pt.rx_data.0,
-				&harvested_time,
-				harvested_data.network.rx as f64,
-			)
+			generate_joining_points(&time, last_pt.rx_data.0, &harvested_time, logged_rx_val)
 		} else {
 			Vec::new()
 		};
-		let rx_pt = (harvested_data.network.rx as f64, rx_joining_pts);
+		let rx_pt = (logged_rx_val, rx_joining_pts);
 		new_entry.rx_data = rx_pt;
 
 		// TX
+		let logged_tx_val = if harvested_data.network.tx as f64 > 0.0 {
+			(harvested_data.network.tx as f64).log(2.0)
+		} else {
+			0.0
+		};
+
 		let tx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-			generate_joining_points(
-				&time,
-				last_pt.tx_data.0,
-				&harvested_time,
-				harvested_data.network.tx as f64,
-			)
+			generate_joining_points(&time, last_pt.tx_data.0, &harvested_time, logged_tx_val)
 		} else {
 			Vec::new()
 		};
-		let tx_pt = (harvested_data.network.tx as f64, tx_joining_pts);
+		let tx_pt = (logged_tx_val, tx_joining_pts);
 		new_entry.tx_data = tx_pt;
 
 		// In addition copy over latest data for easy reference
