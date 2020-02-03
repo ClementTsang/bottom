@@ -32,7 +32,7 @@ const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
-	static ref HELP_TEXT: [Text<'static>; 20] = [
+	static ref HELP_TEXT: [Text<'static>; 22] = [
 		Text::raw("\nGeneral Keybindings\n"),
 		Text::raw("q, Ctrl-c to quit.  Note if you are currently in the search widget, `q` will not work.\n"),
 		Text::raw("Ctrl-r to reset all data.\n"),
@@ -52,8 +52,10 @@ lazy_static! {
 		Text::raw("Tab to group together processes with the same name.\n"),
 		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.\n"),
 		Text::raw("Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
-		Text::raw("Use Ctrl-a and Ctrl-e to set the cursor to the start and end of the bar respectively.\n"),
-		Text::raw("Use Tab to toggle whether to ignore case.\n"),
+		Text::raw("Use Tab to set the cursor to the start and end of the bar respectively.\n"),
+		Text::raw("Use Alt-c to toggle whether to ignore case.\n"),
+		Text::raw("Use Alt-m to toggle matching the entire word.\n"),
+		Text::raw("Use Alt-r to toggle regex.\n"),
 		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
 	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);

@@ -80,7 +80,11 @@ Run using `btm`.
 
 - `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
 
-- `-i`, `--case_insensitive` will default to not matching case
+- `-i`, `--case_insensitive` will default to not matching case.
+
+- `-w`, `--whole` will default to searching for the world word.
+
+- `-r`, `--regex` will default to using regex.
 
 when searching processes.
 
@@ -126,9 +130,13 @@ when searching processes.
 
 #### Search Widget
 
-- `Ctrl-p` or `Ctrl-n` to switch between searching for PID and name respectively.
+- `Tab` to switch between searching for PID and name respectively.
 
-- `Tab` to toggle whether to ignore case.
+- `Alt-c` to toggle ignoring case.
+
+- `Alt-m` to toggle matching the entire word.
+
+- `Alt-r` to toggle using regex.
 
 - `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
 

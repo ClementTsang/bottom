@@ -74,7 +74,9 @@ fn main() -> error::Result<()> {
 		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
 		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
-		(@arg CASE_INSENSITIVE_DEFAULT: -i --case_insensitive "Do not match case when searching processes by default.")
+		(@arg CASE_INSENSITIVE: -i --case_insensitive "Do not match case when searching by default.")
+		(@arg WHOLE_WORD: -w --whole "Match whole word when searching by default.")
+		(@arg REGEX_DEFAULT: -x --regex "Use regex in searching by default.")
 	)
 	.get_matches();
 
@@ -132,7 +134,7 @@ fn main() -> error::Result<()> {
 	}
 
 	// Set default search method
-	if matches.is_present("CASE_INSENSITIVE_DEFAULT") {
+	if matches.is_present("CASE_INSENSITIVE") {
 		app.search_state.toggle_ignore_case();
 	}
 
