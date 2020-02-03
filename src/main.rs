@@ -133,7 +133,7 @@ fn main() -> error::Result<()> {
 
 	// Set default search method
 	if matches.is_present("CASE_INSENSITIVE_DEFAULT") {
-		app.ignore_case = true;
+		app.search_state.toggle_ignore_case();
 	}
 
 	// Set up up tui and crossterm
@@ -257,8 +257,6 @@ fn main() -> error::Result<()> {
 								KeyCode::Right => app.move_right(),
 								KeyCode::Up => app.move_up(),
 								KeyCode::Down => app.move_down(),
-								KeyCode::Char('p') => app.search_with_pid(),
-								KeyCode::Char('n') => app.search_with_name(),
 								KeyCode::Char('r') => {
 									if rtx.send(ResetEvent::Reset).is_ok() {
 										app.reset();
@@ -274,6 +272,28 @@ fn main() -> error::Result<()> {
 								KeyCode::Right => app.move_right(),
 								KeyCode::Up => app.move_up(),
 								KeyCode::Down => app.move_down(),
+								_ => {}
+							}
+						} else if let KeyModifiers::ALT = event.modifiers {
+							match event.code {
+								KeyCode::Char('c') => {
+									if app.is_in_search_widget() {
+										app.search_state.toggle_ignore_case();
+										app.update_regex();
+									}
+								}
+								KeyCode::Char('w') => {
+									if app.is_in_search_widget() {
+										app.search_state.toggle_search_whole_word();
+										app.update_regex();
+									}
+								}
+								KeyCode::Char('r') => {
+									if app.is_in_search_widget() {
+										app.search_state.toggle_search_regex();
+										app.update_regex();
+									}
+								}
 								_ => {}
 							}
 						}
@@ -417,7 +437,7 @@ fn update_final_process_list(app: &mut app::App) {
 			.iter()
 			.filter(|(_pid, process)| {
 				if let Ok(matcher) = app.get_current_regex_matcher() {
-					if app.is_searching_with_pid() {
+					if app.search_state.is_searching_with_pid() {
 						matcher.is_match(&process.pid.to_string())
 					} else {
 						matcher.is_match(&process.name)

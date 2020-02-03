@@ -46,8 +46,64 @@ pub struct AppScrollWidgetState {
 	pub widget_scroll_position: i64,
 }
 
-/// AppSearchState only deals with the search's state.
-pub struct AppSearchState {}
+/// AppSearchState only deals with the search's current settings and state.
+pub struct AppSearchState {
+	current_search_query: String,
+	searching_pid: bool,
+	ignore_case: bool,
+	current_regex: std::result::Result<regex::Regex, regex::Error>,
+	current_cursor_position: usize,
+	match_word: bool,
+	use_regex: bool,
+}
+
+impl Default for AppSearchState {
+	fn default() -> Self {
+		AppSearchState {
+			current_search_query: String::default(),
+			searching_pid: false,
+			ignore_case: false,
+			current_regex: BASE_REGEX.clone(),
+			current_cursor_position: 0,
+			match_word: false,
+			use_regex: false,
+		}
+	}
+}
+
+impl AppSearchState {
+	pub fn toggle_ignore_case(&mut self) {
+		self.ignore_case = !self.ignore_case;
+	}
+
+	pub fn toggle_search_whole_word(&mut self) {
+		self.match_word = !self.match_word;
+	}
+
+	pub fn toggle_search_regex(&mut self) {
+		self.use_regex = !self.use_regex;
+	}
+
+	pub fn toggle_search_with_pid(&mut self) {
+		self.searching_pid = !self.searching_pid;
+	}
+
+	pub fn is_ignoring_case(&self) -> bool {
+		self.ignore_case
+	}
+
+	pub fn is_searching_whole_word(&self) -> bool {
+		self.match_word
+	}
+
+	pub fn is_searching_with_regex(&self) -> bool {
+		self.use_regex
+	}
+
+	pub fn is_searching_with_pid(&self) -> bool {
+		self.searching_pid
+	}
+}
 
 // TODO: [OPT] Group like fields together... this is kinda gross to step through
 pub struct App {
@@ -84,12 +140,8 @@ pub struct App {
 	pub canvas_data: canvas::DisplayableData,
 	enable_grouping: bool,
 	enable_searching: bool,
-	current_search_query: String,
-	searching_pid: bool,
-	pub ignore_case: bool,
-	current_regex: std::result::Result<regex::Regex, regex::Error>,
-	current_cursor_position: usize,
 	pub data_collection: DataCollection,
+	pub search_state: AppSearchState,
 }
 
 impl App {
@@ -130,12 +182,8 @@ impl App {
 			canvas_data: canvas::DisplayableData::default(),
 			enable_grouping: false,
 			enable_searching: false,
-			current_search_query: String::default(),
-			searching_pid: false,
-			ignore_case: false,
-			current_regex: BASE_REGEX.clone(), //TODO: [OPT] seems like a thing we can switch to lifetimes to avoid cloning
-			current_cursor_position: 0,
 			data_collection: DataCollection::default(),
+			search_state: AppSearchState::default(),
 		}
 	}
 
@@ -147,8 +195,8 @@ impl App {
 			self.current_widget_selected = WidgetPosition::Process;
 			self.enable_searching = false;
 		}
-		self.current_search_query = String::new();
-		self.searching_pid = false;
+		self.search_state.current_search_query = String::new();
+		self.search_state.searching_pid = false;
 		self.to_delete_process_list = None;
 		self.dd_err = None;
 	}
@@ -189,7 +237,13 @@ impl App {
 		match self.current_widget_selected {
 			WidgetPosition::Process => self.toggle_grouping(),
 			WidgetPosition::Disk => {}
-			WidgetPosition::ProcessSearch => self.toggle_ignore_case(),
+			WidgetPosition::ProcessSearch => {
+				if self.search_state.is_searching_with_pid() {
+					self.search_with_name();
+				} else {
+					self.search_with_pid();
+				}
+			}
 			_ => {}
 		}
 	}
@@ -226,7 +280,7 @@ impl App {
 	pub fn search_with_pid(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.searching_pid = true;
+				self.search_state.searching_pid = true;
 			}
 		}
 	}
@@ -234,43 +288,50 @@ impl App {
 	pub fn search_with_name(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.searching_pid = false;
+				self.search_state.searching_pid = false;
 			}
 		}
 	}
 
-	pub fn is_searching_with_pid(&self) -> bool {
-		self.searching_pid
-	}
-
 	pub fn get_current_search_query(&self) -> &String {
-		&self.current_search_query
+		&self.search_state.current_search_query
 	}
 
 	pub fn toggle_ignore_case(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.ignore_case = !self.ignore_case;
+				self.search_state.toggle_ignore_case();
 				self.update_regex();
 				self.update_process_gui = true;
 			}
 		}
 	}
 
-	fn update_regex(&mut self) {
-		self.current_regex = if self.current_search_query.is_empty() {
+	pub fn update_regex(&mut self) {
+		self.search_state.current_regex = if self.search_state.current_search_query.is_empty() {
 			BASE_REGEX.clone()
-		} else if self.ignore_case {
-			regex::Regex::new(&(format!("(?i){}", self.current_search_query)))
 		} else {
-			regex::Regex::new(&(self.current_search_query))
+			let mut final_regex_string = self.search_state.current_search_query.clone();
+
+			if !self.search_state.is_searching_with_regex() {
+				final_regex_string = regex::escape(&final_regex_string);
+			}
+
+			if self.search_state.is_searching_whole_word() {
+				final_regex_string = format!("^{}$", final_regex_string);
+			}
+			if self.search_state.is_ignoring_case() {
+				final_regex_string = format!("(?i){}", final_regex_string);
+			}
+
+			regex::Regex::new(&final_regex_string)
 		};
 		self.previous_process_position = 0;
 		self.currently_selected_process_position = 0;
 	}
 
 	pub fn get_cursor_position(&self) -> usize {
-		self.current_cursor_position
+		self.search_state.current_cursor_position
 	}
 
 	/// One of two functions allowed to run while in a dialog...
@@ -292,10 +353,11 @@ impl App {
 
 	pub fn on_backspace(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			if self.current_cursor_position > 0 {
-				self.current_cursor_position -= 1;
-				self.current_search_query
-					.remove(self.current_cursor_position);
+			if self.search_state.current_cursor_position > 0 {
+				self.search_state.current_cursor_position -= 1;
+				self.search_state
+					.current_search_query
+					.remove(self.search_state.current_cursor_position);
 
 				self.update_regex();
 				self.update_process_gui = true;
@@ -304,7 +366,7 @@ impl App {
 	}
 
 	pub fn get_current_regex_matcher(&self) -> &std::result::Result<regex::Regex, regex::Error> {
-		&self.current_regex
+		&self.search_state.current_regex
 	}
 
 	pub fn on_up_key(&mut self) {
@@ -328,8 +390,8 @@ impl App {
 	pub fn on_left_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				if self.current_cursor_position > 0 {
-					self.current_cursor_position -= 1;
+				if self.search_state.current_cursor_position > 0 {
+					self.search_state.current_cursor_position -= 1;
 				}
 			}
 		}
@@ -338,8 +400,10 @@ impl App {
 	pub fn on_right_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				if self.current_cursor_position < self.current_search_query.len() {
-					self.current_cursor_position += 1;
+				if self.search_state.current_cursor_position
+					< self.search_state.current_search_query.len()
+				{
+					self.search_state.current_cursor_position += 1;
 				}
 			}
 		}
@@ -348,7 +412,7 @@ impl App {
 	pub fn skip_cursor_beginning(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.current_cursor_position = 0;
+				self.search_state.current_cursor_position = 0;
 			}
 		}
 	}
@@ -356,7 +420,8 @@ impl App {
 	pub fn skip_cursor_end(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.current_cursor_position = self.current_search_query.len();
+				self.search_state.current_cursor_position =
+					self.search_state.current_search_query.len();
 			}
 		}
 	}
@@ -374,9 +439,10 @@ impl App {
 			self.last_key_press = current_key_press_inst;
 
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.current_search_query
-					.insert(self.current_cursor_position, caught_char);
-				self.current_cursor_position += 1;
+				self.search_state
+					.current_search_query
+					.insert(self.search_state.current_cursor_position, caught_char);
+				self.search_state.current_cursor_position += 1;
 
 				self.update_regex();
 

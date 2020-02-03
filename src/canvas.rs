@@ -376,10 +376,24 @@ pub fn draw_data<B: backend::Backend>(
 				let processes_chunk = Layout::default()
 					.direction(Direction::Vertical)
 					.margin(0)
-					.constraints([Constraint::Percentage(25), Constraint::Percentage(75)].as_ref())
+					.constraints(
+						if (bottom_chunks[1].height as f64 * 0.25) as u16 >= 4 {
+							[Constraint::Percentage(75), Constraint::Percentage(25)]
+						} else {
+							let required = if bottom_chunks[1].height < 10 {
+								bottom_chunks[1].height / 2
+							} else {
+								5
+							};
+							let remaining = bottom_chunks[1].height - required;
+							[Constraint::Length(remaining), Constraint::Length(required)]
+						}
+						.as_ref(),
+					)
 					.split(bottom_chunks[1]);
-				draw_search_field(&mut f, app_state, processes_chunk[0]);
-				draw_processes_table(&mut f, app_state, processes_chunk[1]);
+
+				draw_processes_table(&mut f, app_state, processes_chunk[0]);
+				draw_search_field(&mut f, app_state, processes_chunk[1]);
 			} else {
 				draw_processes_table(&mut f, app_state, bottom_chunks[1]);
 			}
@@ -873,7 +887,7 @@ fn draw_disk_table<B: backend::Backend>(
 fn draw_search_field<B: backend::Backend>(
 	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 ) {
-	let width = draw_loc.width - 18; // TODO [SEARCH] this is hard-coded... ew
+	let width = max(0, draw_loc.width as i64 - 20) as u64; // TODO [SEARCH] this is hard-coded... ew
 	let query = app_state.get_current_search_query();
 	let shrunk_query = if query.len() < width as usize {
 		query
@@ -909,36 +923,66 @@ fn draw_search_field<B: backend::Backend>(
 		}
 	}
 
-	let mut search_text = vec![
-		if app_state.is_searching_with_pid() {
-			Text::styled("\nPID", Style::default().fg(TABLE_HEADER_COLOUR))
+	let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
+		Text::styled(
+			"Search by PID (Tab for Name): ",
+			Style::default().fg(TABLE_HEADER_COLOUR),
+		)
+	} else {
+		Text::styled(
+			"Search by Name (Tab for PID): ",
+			Style::default().fg(TABLE_HEADER_COLOUR),
+		)
+	}];
+
+	// Text options shamelessly stolen from VS Code.
+	let option_text = vec![
+		Text::styled("\n\n", Style::default().fg(TABLE_HEADER_COLOUR)),
+		Text::styled(
+			"Match Case (Alt+C)",
+			Style::default().fg(TABLE_HEADER_COLOUR),
+		),
+		if !app_state.search_state.is_ignoring_case() {
+			Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
 		} else {
-			Text::styled("\nName", Style::default().fg(TABLE_HEADER_COLOUR))
+			Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
-		if app_state.ignore_case {
-			Text::styled(" (Ignore Case): ", Style::default().fg(TABLE_HEADER_COLOUR))
+		Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
+		Text::styled(
+			"Match Whole Word (Alt+W)",
+			Style::default().fg(TABLE_HEADER_COLOUR),
+		),
+		if app_state.search_state.is_searching_whole_word() {
+			Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
 		} else {
-			Text::styled(": ", Style::default().fg(TABLE_HEADER_COLOUR))
+			Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
+		},
+		Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
+		Text::styled(
+			"Use Regex (Alt+R)",
+			Style::default().fg(TABLE_HEADER_COLOUR),
+		),
+		if app_state.search_state.is_searching_with_regex() {
+			Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
+		} else {
+			Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
 		},
 	];
 
 	search_text.extend(query_with_cursor);
+	search_text.extend(option_text);
 
-	// TODO: [SEARCH] Gotta make this easier to understand... it's pretty ugly cramming controls like this
 	Paragraph::new(search_text.iter())
-		.block(
-			Block::default()
-				.title("Search (Esc or Ctrl-f to close)")
-				.borders(Borders::ALL)
-				.border_style(if app_state.get_current_regex_matcher().is_err() {
-					Style::default().fg(Color::Red)
-				} else {
-					match app_state.current_widget_selected {
-						app::WidgetPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
-					}
-				}),
-		)
+		.block(Block::default().borders(Borders::ALL).border_style(
+			if app_state.get_current_regex_matcher().is_err() {
+				Style::default().fg(Color::Red)
+			} else {
+				match app_state.current_widget_selected {
+					app::WidgetPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					_ => *CANVAS_BORDER_STYLE,
+				}
+			},
+		))
 		.style(Style::default().fg(Color::Gray))
 		.alignment(Alignment::Left)
 		.wrap(false)
