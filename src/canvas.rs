@@ -137,11 +137,12 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 
 	// Generate colours
 	let mut colour_vec: Vec<Color> = vec![
-		Color::Red,
+		Color::Rgb(150, 106, 253),
 		Color::LightYellow,
 		Color::LightMagenta,
 		Color::LightCyan,
 		Color::Green,
+		Color::Red,
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
@@ -284,8 +285,8 @@ pub fn draw_data<B: backend::Backend>(
 				.constraints(
 					[
 						Constraint::Percentage(30),
-						Constraint::Percentage(36),
-						Constraint::Percentage(34),
+						Constraint::Percentage(37),
+						Constraint::Percentage(33),
 					]
 					.as_ref(),
 				)
@@ -668,6 +669,7 @@ fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::Ap
 		.y_axis(y_axis)
 		.datasets(&[
 			Dataset::default()
+				.name("RX")
 				.marker(if app_state.use_dot {
 					Marker::Dot
 				} else {
@@ -676,6 +678,7 @@ fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::Ap
 				.style(Style::default().fg(COLOUR_LIST[0]))
 				.data(&network_data_rx),
 			Dataset::default()
+				.name("TX")
 				.marker(if app_state.use_dot {
 					Marker::Dot
 				} else {
