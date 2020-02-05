@@ -155,9 +155,21 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	colour_vec
 }
 
+#[allow(dead_code)]
 #[derive(Default)]
 /// Handles the canvas' state.
-pub struct Painter {}
+pub struct Painter {
+	height: f64,
+	width: f64,
+	vertical_dialog_chunk: Vec<Rect>,
+	middle_dialog_chunk: Vec<Rect>,
+	vertical_chunks: Vec<Rect>,
+	middle_chunks: Vec<Rect>,
+	middle_divided_chunk_2: Vec<Rect>,
+	bottom_chunks: Vec<Rect>,
+	cpu_chunk: Vec<Rect>,
+	network_chunk: Vec<Rect>,
+}
 
 impl Painter {
 	pub fn draw_data<B: backend::Backend>(
@@ -539,45 +551,6 @@ impl Painter {
 			.block(Block::default().borders(Borders::ALL).border_style(
 				match app_state.current_widget_selected {
 					app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				},
-			))
-			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
-			.widths(
-				&(intrinsic_widths
-					.into_iter()
-					.map(|calculated_width| Constraint::Length(calculated_width as u16))
-					.collect::<Vec<_>>()),
-			)
-			.render(f, draw_loc);
-	}
-
-	#[allow(dead_code)]
-	fn draw_memory_table<B: backend::Backend>(
-		f: &mut Frame<B>, app_state: &app::App, memory_entry: Vec<String>, swap_entry: Vec<String>,
-		draw_loc: Rect,
-	) {
-		// Calculate widths
-		let width = f64::from(draw_loc.width);
-		let width_ratios = [0.2, 0.4, 0.4];
-		let variable_intrinsic_results =
-			get_variable_intrinsic_widths(width as u16, &width_ratios, &MEM_HEADERS_LENS);
-		let intrinsic_widths: Vec<u16> =
-			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
-
-		let mem_rows = vec![memory_entry, swap_entry];
-		let mapped_mem_rows = mem_rows.iter().enumerate().map(|(itx, val)| {
-			Row::StyledData(
-				val.iter(),
-				Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
-			)
-		});
-
-		// Draw
-		Table::new(MEM_HEADERS.iter(), mapped_mem_rows)
-			.block(Block::default().borders(Borders::ALL).border_style(
-				match app_state.current_widget_selected {
-					app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
 				},
 			))
@@ -1103,7 +1076,6 @@ impl Painter {
 			ProcessSorting::NAME => name += &direction_val,
 		};
 
-		// TODO: [OPT] Reuse calculation to save time?
 		let process_headers = [pid_or_name, name, cpu, mem];
 		let process_headers_lens: Vec<usize> = process_headers
 			.iter()
