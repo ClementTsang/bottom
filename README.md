@@ -62,15 +62,17 @@ Run using `btm`.
 
 - `-h`, `--help` shows the help screen and exits.
 
-- `-a`, `--avgcpu` enables also showing the average CPU usage in addition to per-core CPU usage.
+- `-a`, `--avg_cpu` enables also showing the average CPU usage in addition to per-core CPU usage.
 
 - `-m`, `--dot-marker` uses a dot marker instead of the default braille marker.
 
-- `-c`, `--celsius` displays the temperature type in Celsius. This is the default.
+- Temperature units (you can only use one at a time):
 
-- `-f`, `--fahrenheit` displays the temperature type in Fahrenheit.
+  - `-c`, `--celsius` displays the temperature type in Celsius. This is the default.
 
-- `-k`, `--kelvin` displays the temperature type in Kelvin.
+  - `-f`, `--fahrenheit` displays the temperature type in Fahrenheit.
+
+  - `-k`, `--kelvin` displays the temperature type in Kelvin.
 
 - `-v`, `--version` displays the version number and exits.
 
@@ -84,11 +86,11 @@ Run using `btm`.
 
 - `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
 
-- `-s`, `--case_sensitive` will default to matching case.
+- `-S`, `--case_sensitive` will default to matching case.
 
-- `-w`, `--whole` will default to searching for the world word.
+- `-W`, `--whole` will default to searching for the world word.
 
-- `-x`, `--regex` will default to using regex.
+- `-R`, `--regex` will default to using regex.
 
 when searching processes.
 
