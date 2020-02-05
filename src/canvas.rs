@@ -155,980 +155,988 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	colour_vec
 }
 
-#[allow(unused_variables)]
-pub fn draw_data<B: backend::Backend>(
-	terminal: &mut Terminal<B>, app_state: &mut app::App,
-) -> error::Result<()> {
-	terminal.autoresize()?;
-	terminal.draw(|mut f| {
-		if app_state.show_help {
-			// Only for the help
-			let vertical_dialog_chunk = Layout::default()
-				.direction(Direction::Vertical)
-				.margin(1)
-				.constraints(
-					[
-						Constraint::Percentage(22),
-						Constraint::Percentage(60),
-						Constraint::Percentage(18),
-					]
-					.as_ref(),
-				)
-				.split(f.size());
+#[derive(Default)]
+/// Handles the canvas' state.
+pub struct Painter {}
 
-			let middle_dialog_chunk = Layout::default()
-				.direction(Direction::Horizontal)
-				.margin(0)
-				.constraints(
-					[
-						Constraint::Percentage(20),
-						Constraint::Percentage(60),
-						Constraint::Percentage(20),
-					]
-					.as_ref(),
-				)
-				.split(vertical_dialog_chunk[1]);
+impl Painter {
+	pub fn draw_data<B: backend::Backend>(
+		&mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
+	) -> error::Result<()> {
+		terminal.autoresize()?;
+		terminal.draw(|mut f| {
+			if app_state.show_help {
+				// Only for the help
+				let vertical_dialog_chunk = Layout::default()
+					.direction(Direction::Vertical)
+					.margin(1)
+					.constraints(
+						[
+							Constraint::Percentage(22),
+							Constraint::Percentage(60),
+							Constraint::Percentage(18),
+						]
+						.as_ref(),
+					)
+					.split(f.size());
 
-			Paragraph::new(HELP_TEXT.iter())
-				.block(
-					Block::default()
-						.title("Help (Press Esc to close)")
-						.borders(Borders::ALL),
-				)
-				.style(Style::default().fg(Color::Gray))
-				.alignment(Alignment::Left)
-				.wrap(true)
-				.render(&mut f, middle_dialog_chunk[1]);
-		} else if app_state.show_dd {
-			let vertical_dialog_chunk = Layout::default()
-				.direction(Direction::Vertical)
-				.margin(1)
-				.constraints(
-					[
-						Constraint::Percentage(40),
-						Constraint::Percentage(20),
-						Constraint::Percentage(40),
-					]
-					.as_ref(),
-				)
-				.split(f.size());
+				let middle_dialog_chunk = Layout::default()
+					.direction(Direction::Horizontal)
+					.margin(0)
+					.constraints(
+						[
+							Constraint::Percentage(20),
+							Constraint::Percentage(60),
+							Constraint::Percentage(20),
+						]
+						.as_ref(),
+					)
+					.split(vertical_dialog_chunk[1]);
 
-			let middle_dialog_chunk = Layout::default()
-				.direction(Direction::Horizontal)
-				.margin(0)
-				.constraints(
-					[
-						Constraint::Percentage(30),
-						Constraint::Percentage(40),
-						Constraint::Percentage(30),
-					]
-					.as_ref(),
-				)
-				.split(vertical_dialog_chunk[1]);
-
-			if let Some(dd_err) = app_state.dd_err.clone() {
-				let dd_text = [Text::raw(format!(
-					"\nFailure to properly kill the process - {}",
-					dd_err
-				))];
-
-				Paragraph::new(dd_text.iter())
+				Paragraph::new(HELP_TEXT.iter())
 					.block(
 						Block::default()
-							.title("Kill Process Error (Press Esc to close)")
+							.title("Help (Press Esc to close)")
 							.borders(Borders::ALL),
 					)
 					.style(Style::default().fg(Color::Gray))
-					.alignment(Alignment::Center)
+					.alignment(Alignment::Left)
 					.wrap(true)
 					.render(&mut f, middle_dialog_chunk[1]);
-			} else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
-				if let Some(first_pid) = to_kill_processes.1.first() {
-					let dd_text = [
-						if app_state.is_grouped() {
-							Text::raw(format!(
-								"\nAre you sure you want to kill {} process(es) with name {}?",
-								to_kill_processes.1.len(), to_kill_processes.0
-							))
-						} else {
-							Text::raw(format!(
-								"\nAre you sure you want to kill process {} with PID {}?",
-								to_kill_processes.0, first_pid
-							))
-						},
-						Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
-						Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
-					];
+			} else if app_state.show_dd {
+				let vertical_dialog_chunk = Layout::default()
+					.direction(Direction::Vertical)
+					.margin(1)
+					.constraints(
+						[
+							Constraint::Percentage(40),
+							Constraint::Percentage(20),
+							Constraint::Percentage(40),
+						]
+						.as_ref(),
+					)
+					.split(f.size());
+
+				let middle_dialog_chunk = Layout::default()
+					.direction(Direction::Horizontal)
+					.margin(0)
+					.constraints(
+						[
+							Constraint::Percentage(30),
+							Constraint::Percentage(40),
+							Constraint::Percentage(30),
+						]
+						.as_ref(),
+					)
+					.split(vertical_dialog_chunk[1]);
+
+				if let Some(dd_err) = app_state.dd_err.clone() {
+					let dd_text = [Text::raw(format!(
+						"\nFailure to properly kill the process - {}",
+						dd_err
+					))];
 
 					Paragraph::new(dd_text.iter())
 						.block(
 							Block::default()
-								.title("Kill Process Confirmation (Press Esc to close)")
+								.title("Kill Process Error (Press Esc to close)")
 								.borders(Borders::ALL),
 						)
 						.style(Style::default().fg(Color::Gray))
 						.alignment(Alignment::Center)
 						.wrap(true)
 						.render(&mut f, middle_dialog_chunk[1]);
+				} else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
+					if let Some(first_pid) = to_kill_processes.1.first() {
+						let dd_text = [
+							if app_state.is_grouped() {
+								Text::raw(format!(
+									"\nAre you sure you want to kill {} process(es) with name {}?",
+									to_kill_processes.1.len(), to_kill_processes.0
+								))
+							} else {
+								Text::raw(format!(
+									"\nAre you sure you want to kill process {} with PID {}?",
+									to_kill_processes.0, first_pid
+								))
+							},
+							Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
+							Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
+						];
+
+						Paragraph::new(dd_text.iter())
+							.block(
+								Block::default()
+									.title("Kill Process Confirmation (Press Esc to close)")
+									.borders(Borders::ALL),
+							)
+							.style(Style::default().fg(Color::Gray))
+							.alignment(Alignment::Center)
+							.wrap(true)
+							.render(&mut f, middle_dialog_chunk[1]);
+					} else {
+						// This is a bit nasty, but it works well... I guess.
+						app_state.show_dd = false;
+					}
 				} else {
 					// This is a bit nasty, but it works well... I guess.
 					app_state.show_dd = false;
 				}
 			} else {
-				// This is a bit nasty, but it works well... I guess.
-				app_state.show_dd = false;
-			}
-		} else {
-			let vertical_chunks = Layout::default()
-				.direction(Direction::Vertical)
-				.margin(1)
-				.constraints(
-					[
-						Constraint::Percentage(30),
-						Constraint::Percentage(37),
-						Constraint::Percentage(33),
-					]
-					.as_ref(),
-				)
-				.split(f.size());
+				// TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
+				let vertical_chunks = Layout::default()
+					.direction(Direction::Vertical)
+					.margin(1)
+					.constraints(
+						[
+							Constraint::Percentage(30),
+							Constraint::Percentage(37),
+							Constraint::Percentage(33),
+						]
+						.as_ref(),
+					)
+					.split(f.size());
 
-			let middle_chunks = Layout::default()
-				.direction(Direction::Horizontal)
-				.margin(0)
-				.constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
-				.split(vertical_chunks[1]);
+				let middle_chunks = Layout::default()
+					.direction(Direction::Horizontal)
+					.margin(0)
+					.constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
+					.split(vertical_chunks[1]);
 
-			let middle_divided_chunk_2 = Layout::default()
-				.direction(Direction::Vertical)
-				.margin(0)
-				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-				.split(middle_chunks[1]);
+				let middle_divided_chunk_2 = Layout::default()
+					.direction(Direction::Vertical)
+					.margin(0)
+					.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+					.split(middle_chunks[1]);
 
-			let middle_divide_chunk_3 = Layout::default()
-				.direction(Direction::Horizontal)
-				.margin(0)
-				.constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
-				.split(middle_divided_chunk_2[0]);
+				let bottom_chunks = Layout::default()
+					.direction(Direction::Horizontal)
+					.margin(0)
+					.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+					.split(vertical_chunks[2]);
 
-			let bottom_chunks = Layout::default()
-				.direction(Direction::Horizontal)
-				.margin(0)
-				.constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-				.split(vertical_chunks[2]);
-
-			// Component specific chunks
-			let cpu_chunk = Layout::default()
-				.direction(Direction::Horizontal)
-				.margin(0)
-				.constraints(
-					if app_state.left_legend {
-						[Constraint::Percentage(15), Constraint::Percentage(85)]
-					} else {
-						[Constraint::Percentage(85), Constraint::Percentage(15)]
-					}
-					.as_ref(),
-				)
-				.split(vertical_chunks[0]);
-
-			let network_chunk = Layout::default()
-				.direction(Direction::Vertical)
-				.margin(0)
-				.constraints(
-					if (bottom_chunks[0].height as f64 * 0.25) as u16 >= 4 {
-						[Constraint::Percentage(75), Constraint::Percentage(25)]
-					} else {
-						let required = if bottom_chunks[0].height < 10 {
-							bottom_chunks[0].height / 2
+				// Component specific chunks
+				let cpu_chunk = Layout::default()
+					.direction(Direction::Horizontal)
+					.margin(0)
+					.constraints(
+						if app_state.left_legend {
+							[Constraint::Percentage(15), Constraint::Percentage(85)]
 						} else {
-							5
-						};
-						let remaining = bottom_chunks[0].height - required;
-						[Constraint::Length(remaining), Constraint::Length(required)]
-					}
-					.as_ref(),
-				)
-				.split(bottom_chunks[0]);
+							[Constraint::Percentage(85), Constraint::Percentage(15)]
+						}
+						.as_ref(),
+					)
+					.split(vertical_chunks[0]);
 
-			// Default chunk index based on left or right legend setting
-			let legend_index = if app_state.left_legend { 0 } else { 1 };
-			let graph_index = if app_state.left_legend { 1 } else { 0 };
-
-			// Set up blocks and their components
-			// CPU graph
-			draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
-
-			// CPU legend
-			draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
-
-			//Memory usage graph
-			draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
-
-			// Network graph
-			draw_network_graph(&mut f, &app_state, network_chunk[0]);
-
-			draw_network_labels(&mut f, app_state, network_chunk[1]);
-
-			// Temperature table
-			draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0]);
-
-			// Disk usage table
-			draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
-
-			// Processes table
-			if app_state.is_searching() {
-				let processes_chunk = Layout::default()
+				let network_chunk = Layout::default()
 					.direction(Direction::Vertical)
 					.margin(0)
 					.constraints(
-						if (bottom_chunks[1].height as f64 * 0.25) as u16 >= 4 {
+						if (bottom_chunks[0].height as f64 * 0.25) as u16 >= 4 {
 							[Constraint::Percentage(75), Constraint::Percentage(25)]
 						} else {
-							let required = if bottom_chunks[1].height < 10 {
-								bottom_chunks[1].height / 2
+							let required = if bottom_chunks[0].height < 10 {
+								bottom_chunks[0].height / 2
 							} else {
 								5
 							};
-							let remaining = bottom_chunks[1].height - required;
+							let remaining = bottom_chunks[0].height - required;
 							[Constraint::Length(remaining), Constraint::Length(required)]
 						}
 						.as_ref(),
 					)
-					.split(bottom_chunks[1]);
+					.split(bottom_chunks[0]);
 
-				draw_processes_table(&mut f, app_state, processes_chunk[0]);
-				draw_search_field(&mut f, app_state, processes_chunk[1]);
-			} else {
-				draw_processes_table(&mut f, app_state, bottom_chunks[1]);
+				// Default chunk index based on left or right legend setting
+				let legend_index = if app_state.left_legend { 0 } else { 1 };
+				let graph_index = if app_state.left_legend { 1 } else { 0 };
+
+				// Set up blocks and their components
+				// CPU graph
+				self.draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
+
+				// CPU legend
+				self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
+
+				//Memory usage graph
+				self.draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
+
+				// Network graph
+				self.draw_network_graph(&mut f, &app_state, network_chunk[0]);
+
+				self.draw_network_labels(&mut f, app_state, network_chunk[1]);
+
+				// Temperature table
+				self.draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0]);
+
+				// Disk usage table
+				self.draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
+
+				// Processes table
+				if app_state.is_searching() {
+					let processes_chunk = Layout::default()
+						.direction(Direction::Vertical)
+						.margin(0)
+						.constraints(
+							if (bottom_chunks[1].height as f64 * 0.25) as u16 >= 4 {
+								[Constraint::Percentage(75), Constraint::Percentage(25)]
+							} else {
+								let required = if bottom_chunks[1].height < 10 {
+									bottom_chunks[1].height / 2
+								} else {
+									5
+								};
+								let remaining = bottom_chunks[1].height - required;
+								[Constraint::Length(remaining), Constraint::Length(required)]
+							}
+							.as_ref(),
+						)
+						.split(bottom_chunks[1]);
+
+					self.draw_processes_table(&mut f, app_state, processes_chunk[0]);
+					self.draw_search_field(&mut f, app_state, processes_chunk[1]);
+				} else {
+					self.draw_processes_table(&mut f, app_state, bottom_chunks[1]);
+				}
 			}
-		}
-	})?;
+		})?;
 
-	Ok(())
-}
-
-fn draw_cpu_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
-	let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
-
-	// CPU usage graph
-	let x_axis: Axis<String> = Axis::default()
-		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
-	let y_axis = Axis::default()
-		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([-0.5, 100.5])
-		.labels(&["0%", "100%"]);
-
-	let mut dataset_vector: Vec<Dataset> = Vec::new();
-	let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
-
-	for (i, cpu) in cpu_data.iter().enumerate() {
-		cpu_entries_vec.push((
-			Style::default().fg(COLOUR_LIST[(i) % COLOUR_LIST.len()]),
-			cpu.cpu_data
-				.iter()
-				.map(<(f64, f64)>::from)
-				.collect::<Vec<_>>(),
-		));
+		Ok(())
 	}
 
-	if app_state.show_average_cpu {
-		if let Some(avg_cpu_entry) = cpu_data.first() {
+	fn draw_cpu_graph<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect,
+	) {
+		let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
+
+		// CPU usage graph
+		let x_axis: Axis<String> = Axis::default()
+			.style(Style::default().fg(GRAPH_COLOUR))
+			.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
+		let y_axis = Axis::default()
+			.style(Style::default().fg(GRAPH_COLOUR))
+			.bounds([-0.5, 100.5])
+			.labels(&["0%", "100%"]);
+
+		let mut dataset_vector: Vec<Dataset> = Vec::new();
+		let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
+
+		for (i, cpu) in cpu_data.iter().enumerate() {
 			cpu_entries_vec.push((
-				Style::default().fg(COLOUR_LIST[0]),
-				avg_cpu_entry
-					.cpu_data
+				Style::default().fg(COLOUR_LIST[(i) % COLOUR_LIST.len()]),
+				cpu.cpu_data
 					.iter()
 					.map(<(f64, f64)>::from)
 					.collect::<Vec<_>>(),
 			));
 		}
+
+		if app_state.show_average_cpu {
+			if let Some(avg_cpu_entry) = cpu_data.first() {
+				cpu_entries_vec.push((
+					Style::default().fg(COLOUR_LIST[0]),
+					avg_cpu_entry
+						.cpu_data
+						.iter()
+						.map(<(f64, f64)>::from)
+						.collect::<Vec<_>>(),
+				));
+			}
+		}
+
+		for cpu_entry in &cpu_entries_vec {
+			dataset_vector.push(
+				Dataset::default()
+					.marker(if app_state.use_dot {
+						Marker::Dot
+					} else {
+						Marker::Braille
+					})
+					.style(cpu_entry.0)
+					.data(&(cpu_entry.1)),
+			);
+		}
+
+		Chart::default()
+			.block(
+				Block::default()
+					.title("CPU")
+					.borders(Borders::ALL)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}),
+			)
+			.x_axis(x_axis)
+			.y_axis(y_axis)
+			.datasets(&dataset_vector)
+			.render(f, draw_loc);
 	}
 
-	for cpu_entry in &cpu_entries_vec {
-		dataset_vector.push(
-			Dataset::default()
-				.marker(if app_state.use_dot {
-					Marker::Dot
-				} else {
-					Marker::Braille
-				})
-				.style(cpu_entry.0)
-				.data(&(cpu_entry.1)),
+	fn draw_cpu_legend<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+	) {
+		let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
+
+		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+		let start_position = get_start_position(
+			num_rows,
+			&(app_state.scroll_direction),
+			&mut app_state.previous_cpu_table_position,
+			app_state.currently_selected_cpu_table_position,
 		);
-	}
 
-	Chart::default()
-		.block(
-			Block::default()
-				.title("CPU")
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_widget_selected {
+		let sliced_cpu_data = (&cpu_data[start_position as usize..]).to_vec();
+		let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
+
+		for cpu in sliced_cpu_data {
+			if let Some(cpu_data) = cpu.cpu_data.last() {
+				stringified_cpu_data.push(vec![
+					cpu.cpu_name.clone(),
+					format!("{:.0}%", cpu_data.usage.round()),
+				]);
+			}
+		}
+
+		let mut cpu_row_counter: i64 = 0;
+
+		let cpu_rows = stringified_cpu_data
+			.iter()
+			.enumerate()
+			.map(|(itx, cpu_string_row)| {
+				Row::StyledData(
+					cpu_string_row.iter(),
+					match app_state.current_widget_selected {
+						app::WidgetPosition::Cpu => {
+							if cpu_row_counter as u64
+								== app_state.currently_selected_cpu_table_position - start_position
+							{
+								cpu_row_counter = -1;
+								Style::default().fg(Color::Black).bg(Color::Cyan)
+							} else {
+								if cpu_row_counter >= 0 {
+									cpu_row_counter += 1;
+								}
+								Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
+							}
+						}
+						_ => Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
+					},
+				)
+			});
+
+		// Calculate widths
+		let width = f64::from(draw_loc.width);
+		let width_ratios = vec![0.5, 0.5];
+		let variable_intrinsic_results =
+			get_variable_intrinsic_widths(width as u16, &width_ratios, &CPU_LEGEND_HEADER_LENS);
+		let intrinsic_widths: Vec<u16> =
+			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+		// Draw
+		Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
+			.block(Block::default().borders(Borders::ALL).border_style(
+				match app_state.current_widget_selected {
 					app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
 					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.x_axis(x_axis)
-		.y_axis(y_axis)
-		.datasets(&dataset_vector)
-		.render(f, draw_loc);
-}
-
-fn draw_cpu_legend<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
-) {
-	let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
-
-	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
-	let start_position = get_start_position(
-		num_rows,
-		&(app_state.scroll_direction),
-		&mut app_state.previous_cpu_table_position,
-		app_state.currently_selected_cpu_table_position,
-	);
-
-	let sliced_cpu_data = (&cpu_data[start_position as usize..]).to_vec();
-	let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
-
-	for cpu in sliced_cpu_data {
-		if let Some(cpu_data) = cpu.cpu_data.last() {
-			stringified_cpu_data.push(vec![
-				cpu.cpu_name.clone(),
-				format!("{:.0}%", cpu_data.usage.round()),
-			]);
-		}
+				},
+			))
+			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.widths(
+				&(intrinsic_widths
+					.into_iter()
+					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.collect::<Vec<_>>()),
+			)
+			.render(f, draw_loc);
 	}
 
-	let mut cpu_row_counter: i64 = 0;
+	#[allow(dead_code)]
+	fn draw_memory_table<B: backend::Backend>(
+		f: &mut Frame<B>, app_state: &app::App, memory_entry: Vec<String>, swap_entry: Vec<String>,
+		draw_loc: Rect,
+	) {
+		// Calculate widths
+		let width = f64::from(draw_loc.width);
+		let width_ratios = [0.2, 0.4, 0.4];
+		let variable_intrinsic_results =
+			get_variable_intrinsic_widths(width as u16, &width_ratios, &MEM_HEADERS_LENS);
+		let intrinsic_widths: Vec<u16> =
+			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
 
-	let cpu_rows = stringified_cpu_data
-		.iter()
-		.enumerate()
-		.map(|(itx, cpu_string_row)| {
+		let mem_rows = vec![memory_entry, swap_entry];
+		let mapped_mem_rows = mem_rows.iter().enumerate().map(|(itx, val)| {
 			Row::StyledData(
-				cpu_string_row.iter(),
+				val.iter(),
+				Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
+			)
+		});
+
+		// Draw
+		Table::new(MEM_HEADERS.iter(), mapped_mem_rows)
+			.block(Block::default().borders(Borders::ALL).border_style(
 				match app_state.current_widget_selected {
-					app::WidgetPosition::Cpu => {
-						if cpu_row_counter as u64
-							== app_state.currently_selected_cpu_table_position - start_position
+					app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+					_ => *CANVAS_BORDER_STYLE,
+				},
+			))
+			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.widths(
+				&(intrinsic_widths
+					.into_iter()
+					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.collect::<Vec<_>>()),
+			)
+			.render(f, draw_loc);
+	}
+
+	fn draw_memory_graph<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect,
+	) {
+		let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
+		let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
+
+		let x_axis: Axis<String> = Axis::default()
+			.style(Style::default().fg(GRAPH_COLOUR))
+			.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
+
+		// Offset as the zero value isn't drawn otherwise...
+		let y_axis: Axis<&str> = Axis::default()
+			.style(Style::default().fg(GRAPH_COLOUR))
+			.bounds([-0.5, 100.5])
+			.labels(&["0%", "100%"]);
+
+		let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
+			.name(&app_state.canvas_data.mem_label)
+			.marker(if app_state.use_dot {
+				Marker::Dot
+			} else {
+				Marker::Braille
+			})
+			.style(Style::default().fg(COLOUR_LIST[0]))
+			.data(&mem_data)];
+
+		if !(&swap_data).is_empty() {
+			mem_canvas_vec.push(
+				Dataset::default()
+					.name(&app_state.canvas_data.swap_label)
+					.marker(if app_state.use_dot {
+						Marker::Dot
+					} else {
+						Marker::Braille
+					})
+					.style(Style::default().fg(COLOUR_LIST[1]))
+					.data(&swap_data),
+			);
+		}
+
+		Chart::default()
+			.block(
+				Block::default()
+					.title("Memory")
+					.borders(Borders::ALL)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}),
+			)
+			.x_axis(x_axis)
+			.y_axis(y_axis)
+			.datasets(&mem_canvas_vec)
+			.render(f, draw_loc);
+	}
+
+	fn draw_network_graph<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect,
+	) {
+		let network_data_rx: &[(f64, f64)] = &(app_state.canvas_data.network_data_rx);
+		let network_data_tx: &[(f64, f64)] = &(app_state.canvas_data.network_data_tx);
+
+		let x_axis: Axis<String> = Axis::default()
+			.style(Style::default().fg(GRAPH_COLOUR))
+			.bounds([0.0, 60_000.0]);
+		let y_axis = Axis::default()
+			.style(Style::default().fg(GRAPH_COLOUR))
+			.bounds([-0.5, 30_f64])
+			.labels(&["0B", "1KiB", "1MiB", "1GiB"]);
+		Chart::default()
+			.block(
+				Block::default()
+					.title("Network")
+					.borders(Borders::ALL)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}),
+			)
+			.x_axis(x_axis)
+			.y_axis(y_axis)
+			.datasets(&[
+				Dataset::default()
+					.name("RX")
+					.marker(if app_state.use_dot {
+						Marker::Dot
+					} else {
+						Marker::Braille
+					})
+					.style(Style::default().fg(COLOUR_LIST[0]))
+					.data(&network_data_rx),
+				Dataset::default()
+					.name("TX")
+					.marker(if app_state.use_dot {
+						Marker::Dot
+					} else {
+						Marker::Braille
+					})
+					.style(Style::default().fg(COLOUR_LIST[1]))
+					.data(&network_data_tx),
+			])
+			.render(f, draw_loc);
+	}
+
+	fn draw_network_labels<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+	) {
+		let rx_display: String = app_state.canvas_data.rx_display.clone();
+		let tx_display: String = app_state.canvas_data.tx_display.clone();
+		let total_rx_display: String = app_state.canvas_data.total_rx_display.clone();
+		let total_tx_display: String = app_state.canvas_data.total_tx_display.clone();
+
+		// Gross but I need it to work...
+		let total_network = if cfg!(not(target_os = "windows")) {
+			vec![vec![
+				rx_display,
+				tx_display,
+				total_rx_display,
+				total_tx_display,
+			]]
+		} else {
+			vec![vec![rx_display, tx_display]]
+		};
+		let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
+
+		// Calculate widths
+		let width_ratios: Vec<f64>;
+		let lens: &Vec<usize>;
+		let width = f64::from(draw_loc.width);
+
+		if cfg!(not(target_os = "windows")) {
+			width_ratios = vec![0.25, 0.25, 0.25, 0.25];
+			lens = &NON_WINDOWS_NETWORK_HEADERS_LENS;
+		} else {
+			width_ratios = vec![0.25, 0.25];
+			lens = &WINDOWS_NETWORK_HEADERS_LENS;
+		}
+		let variable_intrinsic_results =
+			get_variable_intrinsic_widths(width as u16, &width_ratios, lens);
+		let intrinsic_widths: Vec<u16> =
+			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+		// Draw
+		Table::new(
+			// TODO: [OPT] Feels like I can optimize this and avoid multiple to_vec calls?
+			if cfg!(not(target_os = "windows")) {
+				NON_WINDOWS_NETWORK_HEADERS.to_vec()
+			} else {
+				WINDOWS_NETWORK_HEADERS.to_vec()
+			}
+			.iter(),
+			mapped_network,
+		)
+		.block(Block::default().borders(Borders::ALL).border_style(
+			match app_state.current_widget_selected {
+				app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+				_ => *CANVAS_BORDER_STYLE,
+			},
+		))
+		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+		.widths(
+			&(intrinsic_widths
+				.into_iter()
+				.map(|calculated_width| Constraint::Length(calculated_width as u16))
+				.collect::<Vec<_>>()),
+		)
+		.render(f, draw_loc);
+	}
+
+	fn draw_temp_table<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+	) {
+		let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
+
+		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+		let start_position = get_start_position(
+			num_rows,
+			&(app_state.scroll_direction),
+			&mut app_state.previous_temp_position,
+			app_state.currently_selected_temperature_position,
+		);
+
+		let sliced_vec: Vec<Vec<String>> = (&temp_sensor_data[start_position as usize..]).to_vec();
+		let mut temp_row_counter: i64 = 0;
+
+		let temperature_rows = sliced_vec.iter().map(|temp_row| {
+			Row::StyledData(
+				temp_row.iter(),
+				match app_state.current_widget_selected {
+					app::WidgetPosition::Temp => {
+						if temp_row_counter as u64
+							== app_state.currently_selected_temperature_position - start_position
 						{
-							cpu_row_counter = -1;
+							temp_row_counter = -1;
 							Style::default().fg(Color::Black).bg(Color::Cyan)
 						} else {
-							if cpu_row_counter >= 0 {
-								cpu_row_counter += 1;
+							if temp_row_counter >= 0 {
+								temp_row_counter += 1;
 							}
-							Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
+							Style::default().fg(TEXT_COLOUR)
 						}
 					}
-					_ => Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
+					_ => Style::default().fg(TEXT_COLOUR),
 				},
 			)
 		});
 
-	// Calculate widths
-	let width = f64::from(draw_loc.width);
-	let width_ratios = vec![0.5, 0.5];
-	let variable_intrinsic_results =
-		get_variable_intrinsic_widths(width as u16, &width_ratios, &CPU_LEGEND_HEADER_LENS);
-	let intrinsic_widths: Vec<u16> =
-		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+		// Calculate widths
+		let width = f64::from(draw_loc.width);
+		let width_ratios = [0.5, 0.5];
+		let variable_intrinsic_results =
+			get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
+		let intrinsic_widths: Vec<u16> =
+			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
 
-	// Draw
-	Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
-		.block(Block::default().borders(Borders::ALL).border_style(
-			match app_state.current_widget_selected {
-				app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-				_ => *CANVAS_BORDER_STYLE,
-			},
-		))
-		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
-		.widths(
-			&(intrinsic_widths
-				.into_iter()
-				.map(|calculated_width| Constraint::Length(calculated_width as u16))
-				.collect::<Vec<_>>()),
-		)
-		.render(f, draw_loc);
-}
+		// Draw
+		Table::new(TEMP_HEADERS.iter(), temperature_rows)
+			.block(
+				Block::default()
+					.title("Temperatures")
+					.borders(Borders::ALL)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}),
+			)
+			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.widths(
+				&(intrinsic_widths
+					.into_iter()
+					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.collect::<Vec<_>>()),
+			)
+			.render(f, draw_loc);
+	}
 
-#[allow(dead_code)]
-fn draw_memory_table<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &app::App, memory_entry: Vec<String>, swap_entry: Vec<String>,
-	draw_loc: Rect,
-) {
-	// Calculate widths
-	let width = f64::from(draw_loc.width);
-	let width_ratios = [0.2, 0.4, 0.4];
-	let variable_intrinsic_results =
-		get_variable_intrinsic_widths(width as u16, &width_ratios, &MEM_HEADERS_LENS);
-	let intrinsic_widths: Vec<u16> =
-		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
-
-	let mem_rows = vec![memory_entry, swap_entry];
-	let mapped_mem_rows = mem_rows.iter().enumerate().map(|(itx, val)| {
-		Row::StyledData(
-			val.iter(),
-			Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
-		)
-	});
-
-	// Draw
-	Table::new(MEM_HEADERS.iter(), mapped_mem_rows)
-		.block(Block::default().borders(Borders::ALL).border_style(
-			match app_state.current_widget_selected {
-				app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-				_ => *CANVAS_BORDER_STYLE,
-			},
-		))
-		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
-		.widths(
-			&(intrinsic_widths
-				.into_iter()
-				.map(|calculated_width| Constraint::Length(calculated_width as u16))
-				.collect::<Vec<_>>()),
-		)
-		.render(f, draw_loc);
-}
-
-fn draw_memory_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
-	let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
-	let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
-
-	let x_axis: Axis<String> = Axis::default()
-		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
-
-	// Offset as the zero value isn't drawn otherwise...
-	let y_axis: Axis<&str> = Axis::default()
-		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([-0.5, 100.5])
-		.labels(&["0%", "100%"]);
-
-	let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
-		.name(&app_state.canvas_data.mem_label)
-		.marker(if app_state.use_dot {
-			Marker::Dot
-		} else {
-			Marker::Braille
-		})
-		.style(Style::default().fg(COLOUR_LIST[0]))
-		.data(&mem_data)];
-
-	if !(&swap_data).is_empty() {
-		mem_canvas_vec.push(
-			Dataset::default()
-				.name(&app_state.canvas_data.swap_label)
-				.marker(if app_state.use_dot {
-					Marker::Dot
-				} else {
-					Marker::Braille
-				})
-				.style(Style::default().fg(COLOUR_LIST[1]))
-				.data(&swap_data),
+	fn draw_disk_table<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+	) {
+		let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
+		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+		let start_position = get_start_position(
+			num_rows,
+			&(app_state.scroll_direction),
+			&mut app_state.previous_disk_position,
+			app_state.currently_selected_disk_position,
 		);
-	}
 
-	Chart::default()
-		.block(
-			Block::default()
-				.title("Memory")
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_widget_selected {
-					app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.x_axis(x_axis)
-		.y_axis(y_axis)
-		.datasets(&mem_canvas_vec)
-		.render(f, draw_loc);
-}
+		let sliced_vec: Vec<Vec<String>> = (&disk_data[start_position as usize..]).to_vec();
+		let mut disk_counter: i64 = 0;
 
-fn draw_network_graph<B: backend::Backend>(f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect) {
-	let network_data_rx: &[(f64, f64)] = &(app_state.canvas_data.network_data_rx);
-	let network_data_tx: &[(f64, f64)] = &(app_state.canvas_data.network_data_tx);
-
-	let x_axis: Axis<String> = Axis::default()
-		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([0.0, 60_000.0]);
-	let y_axis = Axis::default()
-		.style(Style::default().fg(GRAPH_COLOUR))
-		.bounds([-0.5, 30_f64])
-		.labels(&["0B", "1KiB", "1MiB", "1GiB"]);
-	Chart::default()
-		.block(
-			Block::default()
-				.title("Network")
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_widget_selected {
-					app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.x_axis(x_axis)
-		.y_axis(y_axis)
-		.datasets(&[
-			Dataset::default()
-				.name("RX")
-				.marker(if app_state.use_dot {
-					Marker::Dot
-				} else {
-					Marker::Braille
-				})
-				.style(Style::default().fg(COLOUR_LIST[0]))
-				.data(&network_data_rx),
-			Dataset::default()
-				.name("TX")
-				.marker(if app_state.use_dot {
-					Marker::Dot
-				} else {
-					Marker::Braille
-				})
-				.style(Style::default().fg(COLOUR_LIST[1]))
-				.data(&network_data_tx),
-		])
-		.render(f, draw_loc);
-}
-
-fn draw_network_labels<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
-) {
-	let rx_display: String = app_state.canvas_data.rx_display.clone();
-	let tx_display: String = app_state.canvas_data.tx_display.clone();
-	let total_rx_display: String = app_state.canvas_data.total_rx_display.clone();
-	let total_tx_display: String = app_state.canvas_data.total_tx_display.clone();
-
-	// Gross but I need it to work...
-	let total_network = if cfg!(not(target_os = "windows")) {
-		vec![vec![
-			rx_display,
-			tx_display,
-			total_rx_display,
-			total_tx_display,
-		]]
-	} else {
-		vec![vec![rx_display, tx_display]]
-	};
-	let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
-
-	// Calculate widths
-	let width_ratios: Vec<f64>;
-	let lens: &Vec<usize>;
-	let width = f64::from(draw_loc.width);
-
-	if cfg!(not(target_os = "windows")) {
-		width_ratios = vec![0.25, 0.25, 0.25, 0.25];
-		lens = &NON_WINDOWS_NETWORK_HEADERS_LENS;
-	} else {
-		width_ratios = vec![0.25, 0.25];
-		lens = &WINDOWS_NETWORK_HEADERS_LENS;
-	}
-	let variable_intrinsic_results =
-		get_variable_intrinsic_widths(width as u16, &width_ratios, lens);
-	let intrinsic_widths: Vec<u16> =
-		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
-
-	// Draw
-	Table::new(
-		// TODO: [OPT] Feels like I can optimize this and avoid multiple to_vec calls?
-		if cfg!(not(target_os = "windows")) {
-			NON_WINDOWS_NETWORK_HEADERS.to_vec()
-		} else {
-			WINDOWS_NETWORK_HEADERS.to_vec()
-		}
-		.iter(),
-		mapped_network,
-	)
-	.block(Block::default().borders(Borders::ALL).border_style(
-		match app_state.current_widget_selected {
-			app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-			_ => *CANVAS_BORDER_STYLE,
-		},
-	))
-	.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
-	.widths(
-		&(intrinsic_widths
-			.into_iter()
-			.map(|calculated_width| Constraint::Length(calculated_width as u16))
-			.collect::<Vec<_>>()),
-	)
-	.render(f, draw_loc);
-}
-
-fn draw_temp_table<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
-) {
-	let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
-
-	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
-	let start_position = get_start_position(
-		num_rows,
-		&(app_state.scroll_direction),
-		&mut app_state.previous_temp_position,
-		app_state.currently_selected_temperature_position,
-	);
-
-	let sliced_vec: Vec<Vec<String>> = (&temp_sensor_data[start_position as usize..]).to_vec();
-	let mut temp_row_counter: i64 = 0;
-
-	let temperature_rows = sliced_vec.iter().map(|temp_row| {
-		Row::StyledData(
-			temp_row.iter(),
-			match app_state.current_widget_selected {
-				app::WidgetPosition::Temp => {
-					if temp_row_counter as u64
-						== app_state.currently_selected_temperature_position - start_position
-					{
-						temp_row_counter = -1;
-						Style::default().fg(Color::Black).bg(Color::Cyan)
-					} else {
-						if temp_row_counter >= 0 {
-							temp_row_counter += 1;
-						}
-						Style::default().fg(TEXT_COLOUR)
-					}
-				}
-				_ => Style::default().fg(TEXT_COLOUR),
-			},
-		)
-	});
-
-	// Calculate widths
-	let width = f64::from(draw_loc.width);
-	let width_ratios = [0.5, 0.5];
-	let variable_intrinsic_results =
-		get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
-	let intrinsic_widths: Vec<u16> =
-		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
-
-	// Draw
-	Table::new(TEMP_HEADERS.iter(), temperature_rows)
-		.block(
-			Block::default()
-				.title("Temperatures")
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_widget_selected {
-					app::WidgetPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
-		.widths(
-			&(intrinsic_widths
-				.into_iter()
-				.map(|calculated_width| Constraint::Length(calculated_width as u16))
-				.collect::<Vec<_>>()),
-		)
-		.render(f, draw_loc);
-}
-
-fn draw_disk_table<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
-) {
-	let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
-	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
-	let start_position = get_start_position(
-		num_rows,
-		&(app_state.scroll_direction),
-		&mut app_state.previous_disk_position,
-		app_state.currently_selected_disk_position,
-	);
-
-	let sliced_vec: Vec<Vec<String>> = (&disk_data[start_position as usize..]).to_vec();
-	let mut disk_counter: i64 = 0;
-
-	let disk_rows = sliced_vec.iter().map(|disk| {
-		Row::StyledData(
-			disk.iter(),
-			match app_state.current_widget_selected {
-				app::WidgetPosition::Disk => {
-					if disk_counter as u64
-						== app_state.currently_selected_disk_position - start_position
-					{
-						disk_counter = -1;
-						Style::default().fg(Color::Black).bg(Color::Cyan)
-					} else {
-						if disk_counter >= 0 {
-							disk_counter += 1;
-						}
-						Style::default().fg(TEXT_COLOUR)
-					}
-				}
-				_ => Style::default().fg(TEXT_COLOUR),
-			},
-		)
-	});
-
-	// Calculate widths
-	// TODO: Ellipsis on strings?
-	let width = f64::from(draw_loc.width);
-	let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13];
-	let variable_intrinsic_results =
-		get_variable_intrinsic_widths(width as u16, &width_ratios, &DISK_HEADERS_LENS);
-	let intrinsic_widths: Vec<u16> =
-		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
-
-	// Draw!
-	Table::new(DISK_HEADERS.iter(), disk_rows)
-		.block(
-			Block::default()
-				.title("Disk")
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_widget_selected {
-					app::WidgetPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
-		.widths(
-			&(intrinsic_widths
-				.into_iter()
-				.map(|calculated_width| Constraint::Length(calculated_width as u16))
-				.collect::<Vec<_>>()),
-		)
-		.render(f, draw_loc);
-}
-
-fn draw_search_field<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
-) {
-	let width = max(0, draw_loc.width as i64 - 34) as u64;
-	let query = app_state.get_current_search_query();
-	let shrunk_query = if query.len() < width as usize {
-		query
-	} else {
-		&query[(query.len() - width as usize)..]
-	};
-
-	let cursor_position = app_state.get_cursor_position();
-
-	let query_with_cursor: Vec<Text> = if let app::WidgetPosition::ProcessSearch =
-		app_state.current_widget_selected
-	{
-		if cursor_position >= query.len() {
-			let mut q = vec![Text::styled(
-				shrunk_query.to_string(),
-				Style::default().fg(TEXT_COLOUR),
-			)];
-
-			q.push(Text::styled(
-				" ".to_string(),
-				Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-			));
-
-			q
-		} else {
-			shrunk_query
-				.chars()
-				.enumerate()
-				.map(|(itx, c)| {
-					if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
-						if itx == cursor_position {
-							return Text::styled(
-								c.to_string(),
-								Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-							);
-						}
-					}
-					Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
-				})
-				.collect::<Vec<_>>()
-		}
-	} else {
-		vec![Text::styled(
-			shrunk_query.to_string(),
-			Style::default().fg(TEXT_COLOUR),
-		)]
-	};
-
-	let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
-		Text::styled(
-			"Search by PID (Tab for Name): ",
-			Style::default().fg(TABLE_HEADER_COLOUR),
-		)
-	} else {
-		Text::styled(
-			"Search by Name (Tab for PID): ",
-			Style::default().fg(TABLE_HEADER_COLOUR),
-		)
-	}];
-
-	// Text options shamelessly stolen from VS Code.
-	let option_text = vec![
-		Text::styled("\n\n", Style::default().fg(TABLE_HEADER_COLOUR)),
-		Text::styled(
-			"Match Case (Alt+C)",
-			Style::default().fg(TABLE_HEADER_COLOUR),
-		),
-		if !app_state.search_state.is_ignoring_case() {
-			Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
-		} else {
-			Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
-		},
-		Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
-		Text::styled(
-			"Match Whole Word (Alt+W)",
-			Style::default().fg(TABLE_HEADER_COLOUR),
-		),
-		if app_state.search_state.is_searching_whole_word() {
-			Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
-		} else {
-			Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
-		},
-		Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
-		Text::styled(
-			"Use Regex (Alt+R)",
-			Style::default().fg(TABLE_HEADER_COLOUR),
-		),
-		if app_state.search_state.is_searching_with_regex() {
-			Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
-		} else {
-			Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
-		},
-	];
-
-	search_text.extend(query_with_cursor);
-	search_text.extend(option_text);
-
-	Paragraph::new(search_text.iter())
-		.block(Block::default().borders(Borders::ALL).border_style(
-			if app_state.get_current_regex_matcher().is_err() {
-				Style::default().fg(Color::Red)
-			} else {
+		let disk_rows = sliced_vec.iter().map(|disk| {
+			Row::StyledData(
+				disk.iter(),
 				match app_state.current_widget_selected {
-					app::WidgetPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}
-			},
-		))
-		.style(Style::default().fg(Color::Gray))
-		.alignment(Alignment::Left)
-		.wrap(false)
-		.render(f, draw_loc);
-}
-
-fn draw_processes_table<B: backend::Backend>(
-	f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
-) {
-	let process_data: &[ConvertedProcessData] = &app_state.canvas_data.finalized_process_data;
-
-	// Admittedly this is kinda a hack... but we need to:
-	// * Scroll
-	// * Show/hide elements based on scroll position
-	//
-	// As such, we use a process_counter to know when we've
-	// hit the process we've currently scrolled to.
-	// We also need to move the list - we can
-	// do so by hiding some elements!
-	let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
-
-	let position = get_start_position(
-		num_rows,
-		&(app_state.scroll_direction),
-		&mut app_state.previous_process_position,
-		app_state.currently_selected_process_position,
-	);
-
-	// Sanity check
-	let start_position = if position >= process_data.len() as u64 {
-		std::cmp::max(0, process_data.len() as i64 - 1) as u64
-	} else {
-		position
-	};
-
-	let sliced_vec: Vec<ConvertedProcessData> = (&process_data[start_position as usize..]).to_vec();
-	let mut process_counter: i64 = 0;
-
-	// Draw!
-	let process_rows = sliced_vec.iter().map(|process| {
-		let stringified_process_vec: Vec<String> = vec![
-			if app_state.is_grouped() {
-				process.group_pids.len().to_string()
-			} else {
-				process.pid.to_string()
-			},
-			process.name.clone(),
-			format!("{:.1}%", process.cpu_usage),
-			format!("{:.1}%", process.mem_usage),
-		];
-		Row::StyledData(
-			stringified_process_vec.into_iter(),
-			match app_state.current_widget_selected {
-				app::WidgetPosition::Process => {
-					if process_counter as u64
-						== app_state.currently_selected_process_position - start_position
-					{
-						process_counter = -1;
-						Style::default().fg(Color::Black).bg(Color::Cyan)
-					} else {
-						if process_counter >= 0 {
-							process_counter += 1;
+					app::WidgetPosition::Disk => {
+						if disk_counter as u64
+							== app_state.currently_selected_disk_position - start_position
+						{
+							disk_counter = -1;
+							Style::default().fg(Color::Black).bg(Color::Cyan)
+						} else {
+							if disk_counter >= 0 {
+								disk_counter += 1;
+							}
+							Style::default().fg(TEXT_COLOUR)
 						}
-						Style::default().fg(TEXT_COLOUR)
 					}
-				}
-				_ => Style::default().fg(TEXT_COLOUR),
-			},
-		)
-	});
+					_ => Style::default().fg(TEXT_COLOUR),
+				},
+			)
+		});
 
-	use app::data_harvester::processes::ProcessSorting;
-	let mut pid_or_name = if app_state.is_grouped() {
-		"Count"
-	} else {
-		"PID(p)"
+		// Calculate widths
+		// TODO: Ellipsis on strings?
+		let width = f64::from(draw_loc.width);
+		let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13];
+		let variable_intrinsic_results =
+			get_variable_intrinsic_widths(width as u16, &width_ratios, &DISK_HEADERS_LENS);
+		let intrinsic_widths: Vec<u16> =
+			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+		// Draw!
+		Table::new(DISK_HEADERS.iter(), disk_rows)
+			.block(
+				Block::default()
+					.title("Disk")
+					.borders(Borders::ALL)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}),
+			)
+			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.widths(
+				&(intrinsic_widths
+					.into_iter()
+					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.collect::<Vec<_>>()),
+			)
+			.render(f, draw_loc);
 	}
-	.to_string();
-	let mut name = "Name(n)".to_string();
-	let mut cpu = "CPU%(c)".to_string();
-	let mut mem = "Mem%(m)".to_string();
 
-	let direction_val = if app_state.process_sorting_reverse {
-		"⯆".to_string()
-	} else {
-		"⯅".to_string()
-	};
+	fn draw_search_field<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+	) {
+		let width = max(0, draw_loc.width as i64 - 34) as u64;
+		let query = app_state.get_current_search_query();
+		let shrunk_query = if query.len() < width as usize {
+			query
+		} else {
+			&query[(query.len() - width as usize)..]
+		};
 
-	match app_state.process_sorting_type {
-		ProcessSorting::CPU => cpu += &direction_val,
-		ProcessSorting::MEM => mem += &direction_val,
-		ProcessSorting::PID => pid_or_name += &direction_val,
-		ProcessSorting::NAME => name += &direction_val,
-	};
+		let cursor_position = app_state.get_cursor_position();
 
-	// TODO: [OPT] Reuse calculation to save time?
-	let process_headers = [pid_or_name, name, cpu, mem];
-	let process_headers_lens: Vec<usize> = process_headers
-		.iter()
-		.map(|entry| entry.len())
-		.collect::<Vec<_>>();
+		let query_with_cursor: Vec<Text> =
+			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
+				if cursor_position >= query.len() {
+					let mut q = vec![Text::styled(
+						shrunk_query.to_string(),
+						Style::default().fg(TEXT_COLOUR),
+					)];
 
-	// Calculate widths
-	let width = f64::from(draw_loc.width);
-	let width_ratios = [0.2, 0.4, 0.2, 0.2];
-	let variable_intrinsic_results =
-		get_variable_intrinsic_widths(width as u16, &width_ratios, &process_headers_lens);
-	let intrinsic_widths: Vec<u16> =
-		((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+					q.push(Text::styled(
+						" ".to_string(),
+						Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
+					));
 
-	Table::new(process_headers.iter(), process_rows)
-		.block(
-			Block::default()
-				.title("Processes")
-				.borders(Borders::ALL)
-				.border_style(match app_state.current_widget_selected {
-					app::WidgetPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
-				}),
-		)
-		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
-		.widths(
-			&(intrinsic_widths
-				.into_iter()
-				.map(|calculated_width| Constraint::Length(calculated_width as u16))
-				.collect::<Vec<_>>()),
-		)
-		.render(f, draw_loc);
+					q
+				} else {
+					shrunk_query
+						.chars()
+						.enumerate()
+						.map(|(itx, c)| {
+							if let app::WidgetPosition::ProcessSearch =
+								app_state.current_widget_selected
+							{
+								if itx == cursor_position {
+									return Text::styled(
+										c.to_string(),
+										Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
+									);
+								}
+							}
+							Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
+						})
+						.collect::<Vec<_>>()
+				}
+			} else {
+				vec![Text::styled(
+					shrunk_query.to_string(),
+					Style::default().fg(TEXT_COLOUR),
+				)]
+			};
+
+		let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
+			Text::styled(
+				"Search by PID (Tab for Name): ",
+				Style::default().fg(TABLE_HEADER_COLOUR),
+			)
+		} else {
+			Text::styled(
+				"Search by Name (Tab for PID): ",
+				Style::default().fg(TABLE_HEADER_COLOUR),
+			)
+		}];
+
+		// Text options shamelessly stolen from VS Code.
+		let option_text = vec![
+			Text::styled("\n\n", Style::default().fg(TABLE_HEADER_COLOUR)),
+			Text::styled(
+				"Match Case (Alt+C)",
+				Style::default().fg(TABLE_HEADER_COLOUR),
+			),
+			if !app_state.search_state.is_ignoring_case() {
+				Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
+			} else {
+				Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
+			},
+			Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
+			Text::styled(
+				"Match Whole Word (Alt+W)",
+				Style::default().fg(TABLE_HEADER_COLOUR),
+			),
+			if app_state.search_state.is_searching_whole_word() {
+				Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
+			} else {
+				Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
+			},
+			Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
+			Text::styled(
+				"Use Regex (Alt+R)",
+				Style::default().fg(TABLE_HEADER_COLOUR),
+			),
+			if app_state.search_state.is_searching_with_regex() {
+				Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
+			} else {
+				Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
+			},
+		];
+
+		search_text.extend(query_with_cursor);
+		search_text.extend(option_text);
+
+		Paragraph::new(search_text.iter())
+			.block(Block::default().borders(Borders::ALL).border_style(
+				if app_state.get_current_regex_matcher().is_err() {
+					Style::default().fg(Color::Red)
+				} else {
+					match app_state.current_widget_selected {
+						app::WidgetPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}
+				},
+			))
+			.style(Style::default().fg(Color::Gray))
+			.alignment(Alignment::Left)
+			.wrap(false)
+			.render(f, draw_loc);
+	}
+
+	fn draw_processes_table<B: backend::Backend>(
+		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+	) {
+		let process_data: &[ConvertedProcessData] = &app_state.canvas_data.finalized_process_data;
+
+		// Admittedly this is kinda a hack... but we need to:
+		// * Scroll
+		// * Show/hide elements based on scroll position
+		//
+		// As such, we use a process_counter to know when we've
+		// hit the process we've currently scrolled to.
+		// We also need to move the list - we can
+		// do so by hiding some elements!
+		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+
+		let position = get_start_position(
+			num_rows,
+			&(app_state.scroll_direction),
+			&mut app_state.previous_process_position,
+			app_state.currently_selected_process_position,
+		);
+
+		// Sanity check
+		let start_position = if position >= process_data.len() as u64 {
+			std::cmp::max(0, process_data.len() as i64 - 1) as u64
+		} else {
+			position
+		};
+
+		let sliced_vec: Vec<ConvertedProcessData> =
+			(&process_data[start_position as usize..]).to_vec();
+		let mut process_counter: i64 = 0;
+
+		// Draw!
+		let process_rows = sliced_vec.iter().map(|process| {
+			let stringified_process_vec: Vec<String> = vec![
+				if app_state.is_grouped() {
+					process.group_pids.len().to_string()
+				} else {
+					process.pid.to_string()
+				},
+				process.name.clone(),
+				format!("{:.1}%", process.cpu_usage),
+				format!("{:.1}%", process.mem_usage),
+			];
+			Row::StyledData(
+				stringified_process_vec.into_iter(),
+				match app_state.current_widget_selected {
+					app::WidgetPosition::Process => {
+						if process_counter as u64
+							== app_state.currently_selected_process_position - start_position
+						{
+							process_counter = -1;
+							Style::default().fg(Color::Black).bg(Color::Cyan)
+						} else {
+							if process_counter >= 0 {
+								process_counter += 1;
+							}
+							Style::default().fg(TEXT_COLOUR)
+						}
+					}
+					_ => Style::default().fg(TEXT_COLOUR),
+				},
+			)
+		});
+
+		use app::data_harvester::processes::ProcessSorting;
+		let mut pid_or_name = if app_state.is_grouped() {
+			"Count"
+		} else {
+			"PID(p)"
+		}
+		.to_string();
+		let mut name = "Name(n)".to_string();
+		let mut cpu = "CPU%(c)".to_string();
+		let mut mem = "Mem%(m)".to_string();
+
+		let direction_val = if app_state.process_sorting_reverse {
+			"⯆".to_string()
+		} else {
+			"⯅".to_string()
+		};
+
+		match app_state.process_sorting_type {
+			ProcessSorting::CPU => cpu += &direction_val,
+			ProcessSorting::MEM => mem += &direction_val,
+			ProcessSorting::PID => pid_or_name += &direction_val,
+			ProcessSorting::NAME => name += &direction_val,
+		};
+
+		// TODO: [OPT] Reuse calculation to save time?
+		let process_headers = [pid_or_name, name, cpu, mem];
+		let process_headers_lens: Vec<usize> = process_headers
+			.iter()
+			.map(|entry| entry.len())
+			.collect::<Vec<_>>();
+
+		// Calculate widths
+		let width = f64::from(draw_loc.width);
+		let width_ratios = [0.2, 0.4, 0.2, 0.2];
+		let variable_intrinsic_results =
+			get_variable_intrinsic_widths(width as u16, &width_ratios, &process_headers_lens);
+		let intrinsic_widths: Vec<u16> =
+			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+
+		Table::new(process_headers.iter(), process_rows)
+			.block(
+				Block::default()
+					.title("Processes")
+					.borders(Borders::ALL)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
+						_ => *CANVAS_BORDER_STYLE,
+					}),
+			)
+			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.widths(
+				&(intrinsic_widths
+					.into_iter()
+					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.collect::<Vec<_>>()),
+			)
+			.render(f, draw_loc);
+	}
 }
 
 /// A somewhat jury-rigged solution to simulate a variable intrinsic layout for

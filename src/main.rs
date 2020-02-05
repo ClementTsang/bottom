@@ -230,8 +230,9 @@ fn main() -> error::Result<()> {
 		});
 	}
 
+	let mut painter = canvas::Painter::default();
 	loop {
-		// TODO: [OPT] this should not block... let's properly use tick rates and non-blocking, okay?
+		// TODO: [OPT] this should not block...
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
@@ -372,15 +373,23 @@ fn main() -> error::Result<()> {
 			}
 		}
 
-		// Draw!
-		if let Err(err) = canvas::draw_data(&mut terminal, &mut app) {
-			cleanup_terminal(&mut terminal)?;
-			error!("{}", err);
-			return Err(err);
-		}
+		try_drawing(&mut terminal, &mut app, &mut painter)?;
 	}
 
 	cleanup_terminal(&mut terminal)?;
+	Ok(())
+}
+
+fn try_drawing(
+	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
+	app: &mut app::App, painter: &mut canvas::Painter,
+) -> error::Result<()> {
+	if let Err(err) = painter.draw_data(terminal, app) {
+		cleanup_terminal(terminal)?;
+		error!("{}", err);
+		return Err(err);
+	}
+
 	Ok(())
 }
 
