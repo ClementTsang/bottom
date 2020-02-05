@@ -16,6 +16,7 @@ path = "src/main.rs"
 
 [profile.release]
 debug = 1
+# debug = true
 opt-level = 'z'  # Optimize for size.
 lto = true
 

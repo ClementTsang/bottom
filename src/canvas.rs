@@ -28,7 +28,7 @@ const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s"
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 const MEM_HEADERS: [&str; 3] = ["Mem", "Usage", "Usage%"];
 const NON_WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
-const WINDOWS_NETWORK_HEADERS: [&str; 2] = ["RX", "TX"];
+const WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "", ""];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
@@ -499,7 +499,7 @@ impl Painter {
 			app_state.currently_selected_cpu_table_position,
 		);
 
-		let sliced_cpu_data = (&cpu_data[start_position as usize..]).to_vec();
+		let sliced_cpu_data = &cpu_data[start_position as usize..];
 		let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
 
 		for cpu in sliced_cpu_data {
@@ -543,8 +543,7 @@ impl Painter {
 		let width_ratios = vec![0.5, 0.5];
 		let variable_intrinsic_results =
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &CPU_LEGEND_HEADER_LENS);
-		let intrinsic_widths: Vec<u16> =
-			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		// Draw
 		Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
@@ -558,7 +557,7 @@ impl Painter {
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
-					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
 			.render(f, draw_loc);
@@ -703,16 +702,14 @@ impl Painter {
 		}
 		let variable_intrinsic_results =
 			get_variable_intrinsic_widths(width as u16, &width_ratios, lens);
-		let intrinsic_widths: Vec<u16> =
-			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		// Draw
 		Table::new(
-			// TODO: [OPT] Feels like I can optimize this and avoid multiple to_vec calls?
 			if cfg!(not(target_os = "windows")) {
-				NON_WINDOWS_NETWORK_HEADERS.to_vec()
+				NON_WINDOWS_NETWORK_HEADERS
 			} else {
-				WINDOWS_NETWORK_HEADERS.to_vec()
+				WINDOWS_NETWORK_HEADERS
 			}
 			.iter(),
 			mapped_network,
@@ -727,7 +724,7 @@ impl Painter {
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
-				.map(|calculated_width| Constraint::Length(calculated_width as u16))
+				.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 				.collect::<Vec<_>>()),
 		)
 		.render(f, draw_loc);
@@ -746,7 +743,7 @@ impl Painter {
 			app_state.currently_selected_temperature_position,
 		);
 
-		let sliced_vec: Vec<Vec<String>> = (&temp_sensor_data[start_position as usize..]).to_vec();
+		let sliced_vec = &(temp_sensor_data[start_position as usize..]);
 		let mut temp_row_counter: i64 = 0;
 
 		let temperature_rows = sliced_vec.iter().map(|temp_row| {
@@ -776,8 +773,7 @@ impl Painter {
 		let width_ratios = [0.5, 0.5];
 		let variable_intrinsic_results =
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
-		let intrinsic_widths: Vec<u16> =
-			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		// Draw
 		Table::new(TEMP_HEADERS.iter(), temperature_rows)
@@ -794,7 +790,7 @@ impl Painter {
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
-					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
 			.render(f, draw_loc);
@@ -812,7 +808,7 @@ impl Painter {
 			app_state.currently_selected_disk_position,
 		);
 
-		let sliced_vec: Vec<Vec<String>> = (&disk_data[start_position as usize..]).to_vec();
+		let sliced_vec = &disk_data[start_position as usize..];
 		let mut disk_counter: i64 = 0;
 
 		let disk_rows = sliced_vec.iter().map(|disk| {
@@ -843,8 +839,7 @@ impl Painter {
 		let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13];
 		let variable_intrinsic_results =
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &DISK_HEADERS_LENS);
-		let intrinsic_widths: Vec<u16> =
-			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+		let intrinsic_widths = &variable_intrinsic_results.0[0..variable_intrinsic_results.1];
 
 		// Draw!
 		Table::new(DISK_HEADERS.iter(), disk_rows)
@@ -861,7 +856,7 @@ impl Painter {
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
-					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
 			.render(f, draw_loc);
@@ -1015,8 +1010,7 @@ impl Painter {
 			position
 		};
 
-		let sliced_vec: Vec<ConvertedProcessData> =
-			(&process_data[start_position as usize..]).to_vec();
+		let sliced_vec = &(process_data[start_position as usize..]);
 		let mut process_counter: i64 = 0;
 
 		// Draw!
@@ -1087,8 +1081,7 @@ impl Painter {
 		let width_ratios = [0.2, 0.4, 0.2, 0.2];
 		let variable_intrinsic_results =
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &process_headers_lens);
-		let intrinsic_widths: Vec<u16> =
-			((variable_intrinsic_results.0)[0..variable_intrinsic_results.1]).to_vec();
+		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		Table::new(process_headers.iter(), process_rows)
 			.block(
@@ -1104,7 +1097,7 @@ impl Painter {
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
-					.map(|calculated_width| Constraint::Length(calculated_width as u16))
+					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
 			.render(f, draw_loc);
