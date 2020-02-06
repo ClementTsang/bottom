@@ -336,20 +336,20 @@ fn main() -> error::Result<()> {
 						app.canvas_data.total_tx_display = network_data.total_tx_display;
 
 						// Disk
-						app.canvas_data.disk_data = update_disk_row(&app.data_collection);
+						app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
 
 						// Temperatures
-						app.canvas_data.temp_sensor_data = update_temp_row(&app);
+						app.canvas_data.temp_sensor_data = convert_temp_row(&app);
 						// Memory
-						app.canvas_data.mem_data = update_mem_data_points(&app.data_collection);
-						app.canvas_data.swap_data = update_swap_data_points(&app.data_collection);
-						let memory_and_swap_labels = update_mem_labels(&app.data_collection);
+						app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection);
+						app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection);
+						let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
 						app.canvas_data.mem_label = memory_and_swap_labels.0;
 						app.canvas_data.swap_label = memory_and_swap_labels.1;
 
 						// CPU
 						app.canvas_data.cpu_data =
-							update_cpu_data_points(app.show_average_cpu, &app.data_collection);
+							convert_cpu_data_points(app.show_average_cpu, &app.data_collection);
 
 						// Processes
 						let (single, grouped) = convert_process_data(&app.data_collection);
