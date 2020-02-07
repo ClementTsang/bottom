@@ -7,6 +7,8 @@ extern crate failure;
 #[macro_use]
 extern crate lazy_static;
 
+use serde::Deserialize;
+
 use crossterm::{
 	event::{
 		poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode,
@@ -38,7 +40,7 @@ mod constants;
 mod data_conversion;
 
 use app::data_harvester::{self, processes::ProcessSorting};
-use constants::TICK_RATE_IN_MILLISECONDS;
+use constants::*;
 use data_conversion::*;
 use utils::error::{self, BottomError};
 
@@ -53,8 +55,22 @@ enum ResetEvent {
 	Reset,
 }
 
+#[derive(Deserialize)]
+struct Config {
+	avg_cpu: Option<bool>,
+	dot_marker: Option<bool>,
+	temperature_type: Option<String>,
+	rate: Option<u64>,
+	left_legend: Option<bool>,
+	current_usage: Option<bool>,
+	group_processes: Option<bool>,
+	case_sensitive: Option<bool>,
+	whole_word: Option<bool>,
+	regex: Option<bool>,
+}
+
 fn main() -> error::Result<()> {
-	// Parse command line options
+	//Parse command line options
 	let matches = clap_app!(app =>
 		(name: crate_name!())
 		(version: crate_version!())
@@ -62,7 +78,6 @@ fn main() -> error::Result<()> {
 		(about: crate_description!())
 		(@arg AVG_CPU: -a --avg_cpu "Enables showing the average CPU usage.")
 		(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.")
-		(@arg DEBUG: -d --debug "Enables debug mode, which will output a log file.")
 		(@group TEMPERATURE_TYPE =>
 			(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
 			(@arg FAHRENHEIT : -f --fahrenheit "Sets the temperature type to Fahrenheit.")
@@ -71,20 +86,39 @@ fn main() -> error::Result<()> {
 		(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
-		//(@arg CONFIG_LOCATION: -co --config +takes_value "Sets the location of the config file.  Expects a config file in the JSON format.")
+		(@arg CONFIG_LOCATION: -C --config +takes_value "Sets the location of the config file.  Expects a config file in the TOML format.")
 		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
-		(@arg WHOLE_WORD: -W --whole "Match whole word when searching by default.")
+		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
 	)
 	.get_matches();
 
+	if cfg!(debug_assertions) {
+		utils::logging::init_logger()?;
+	}
+
+	let config_path = std::path::Path::new(
+		matches
+			.value_of("CONFIG_LOCATION")
+			.unwrap_or(DEFAULT_CONFIG_FILE_PATH),
+	);
+
+	let config_string = std::fs::read_to_string(config_path);
+	let config_toml: Config = if let Ok(config_str) = config_string {
+		toml::from_str(&config_str)?
+	} else {
+		toml::from_str("")?
+	};
+
 	let update_rate_in_milliseconds: u128 = if matches.is_present("RATE_MILLIS") {
 		matches
 			.value_of("RATE_MILLIS")
-			.unwrap_or(&constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS.to_string())
+			.unwrap_or(&DEFAULT_REFRESH_RATE_IN_MILLISECONDS.to_string())
 			.parse::<u128>()?
+	} else if let Some(rate) = config_toml.rate {
+		rate as u128
 	} else {
 		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
 	};
@@ -99,24 +133,53 @@ fn main() -> error::Result<()> {
 		});
 	}
 
-	// Attempt to create debugging...
-	let enable_debugging = matches.is_present("DEBUG");
-	if enable_debugging || cfg!(debug_assertions) {
-		utils::logging::init_logger()?;
-	}
-
 	// Set other settings
 	let temperature_type = if matches.is_present("FAHRENHEIT") {
 		data_harvester::temperature::TemperatureType::Fahrenheit
 	} else if matches.is_present("KELVIN") {
 		data_harvester::temperature::TemperatureType::Kelvin
+	} else if matches.is_present("CELSIUS") {
+		data_harvester::temperature::TemperatureType::Celsius
+	} else if let Some(temp_type) = config_toml.temperature_type {
+		// Give lowest priority to config.
+		match temp_type.as_str() {
+			constants::FAHRENHEIT => data_harvester::temperature::TemperatureType::Fahrenheit,
+			constants::KELVIN => data_harvester::temperature::TemperatureType::Kelvin,
+			constants::CELSIUS => data_harvester::temperature::TemperatureType::Celsius,
+			_ => data_harvester::temperature::TemperatureType::Celsius,
+		}
 	} else {
 		data_harvester::temperature::TemperatureType::Celsius
 	};
-	let show_average_cpu = matches.is_present("AVG_CPU");
-	let use_dot = matches.is_present("DOT_MARKER");
-	let left_legend = matches.is_present("LEFT_LEGEND");
-	let use_current_cpu_total = matches.is_present("USE_CURR_USAGE");
+	let show_average_cpu = if matches.is_present("AVG_CPU") {
+		true
+	} else if let Some(avg_cpu) = config_toml.avg_cpu {
+		avg_cpu
+	} else {
+		false
+	};
+	let use_dot = if matches.is_present("DOT_MARKER") {
+		true
+	} else if let Some(dot_marker) = config_toml.dot_marker {
+		dot_marker
+	} else {
+		false
+	};
+	let left_legend = if matches.is_present("LEFT_LEGEND") {
+		true
+	} else if let Some(left_legend) = config_toml.left_legend {
+		left_legend
+	} else {
+		false
+	};
+
+	let use_current_cpu_total = if matches.is_present("USE_CURR_USAGE") {
+		true
+	} else if let Some(current_usage) = config_toml.current_usage {
+		current_usage
+	} else {
+		false
+	};
 
 	// Create "app" struct, which will control most of the program and store settings/state
 	let mut app = app::App::new(
@@ -131,19 +194,35 @@ fn main() -> error::Result<()> {
 	// Enable grouping immediately if set.
 	if matches.is_present("GROUP_PROCESSES") {
 		app.toggle_grouping();
+	} else if let Some(grouping) = config_toml.group_processes {
+		if grouping {
+			app.toggle_grouping();
+		}
 	}
 
 	// Set default search method
 	if matches.is_present("CASE_SENSITIVE") {
 		app.search_state.toggle_ignore_case();
+	} else if let Some(case_sensitive) = config_toml.case_sensitive {
+		if case_sensitive {
+			app.search_state.toggle_ignore_case();
+		}
 	}
 
 	if matches.is_present("WHOLE_WORD") {
 		app.search_state.toggle_search_whole_word();
+	} else if let Some(whole_word) = config_toml.whole_word {
+		if whole_word {
+			app.search_state.toggle_search_whole_word();
+		}
 	}
 
 	if matches.is_present("REGEX_DEFAULT") {
 		app.search_state.toggle_search_regex();
+	} else if let Some(regex) = config_toml.regex {
+		if regex {
+			app.search_state.toggle_search_regex();
+		}
 	}
 
 	// Set up up tui and crossterm

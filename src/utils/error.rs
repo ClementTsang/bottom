@@ -40,6 +40,11 @@ pub enum BottomError {
 	/// The data provided is the error found.
 	#[fail(display = "ERROR: Invalid fern error: {}", message)]
 	FernError { message: String },
+	/// An error to represent errors with fern
+	///
+	/// The data provided is the error found.
+	#[fail(display = "ERROR: Invalid config file error: {}", message)]
+	ConfigError { message: String },
 }
 
 impl From<std::io::Error> for BottomError {
@@ -77,6 +82,14 @@ impl From<std::num::ParseIntError> for BottomError {
 impl From<std::string::String> for BottomError {
 	fn from(err: std::string::String) -> Self {
 		BottomError::GenericError { message: err }
+	}
+}
+
+impl From<toml::de::Error> for BottomError {
+	fn from(err: toml::de::Error) -> Self {
+		BottomError::ConfigError {
+			message: err.to_string(),
+		}
 	}
 }
 
