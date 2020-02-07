@@ -1,0 +1,10 @@
+avg_cpu = true
+dot_marker = true
+temperature_type = "kelvin"
+rate = 2000
+left_legend = false
+current_usage = false
+group_processes = true
+case_sensitive = true
+whole_word = true
+regex = true
