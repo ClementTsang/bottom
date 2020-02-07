@@ -92,7 +92,7 @@ Run using `btm`.
 
 - `-R`, `--regex` will default to using regex.
 
-- `-C`, `--config` takes in a file path leading to a TOML file, where one can set flags by default. The default path this will check is, on Linux, `~/.config/btm/btm.toml`. Options are the same as the long names as other flags (ie: `regex = true`). See the sample config for an example.
+- `-C`, `--config` takes in a file path leading to a TOML file, where one can set flags by default. The default path this will check is, on Linux, `~/.config/btm/btm.toml`. Options are the same as the long names as other flags (ie: `regex = true`). See the [sample config](./sample_config.toml) for an example.
 
 ### Keybindings
 
