@@ -99,11 +99,13 @@ fn main() -> error::Result<()> {
 		utils::logging::init_logger()?;
 	}
 
-	let config_path = std::path::Path::new(
-		matches
-			.value_of("CONFIG_LOCATION")
-			.unwrap_or(DEFAULT_CONFIG_FILE_PATH),
-	);
+	let config_path = std::path::Path::new(matches.value_of("CONFIG_LOCATION").unwrap_or(
+		if cfg!(target_os = "windows") {
+			DEFAULT_WINDOWS_CONFIG_FILE_PATH
+		} else {
+			DEFAULT_UNIX_CONFIG_FILE_PATH
+		},
+	));
 
 	let config_string = std::fs::read_to_string(config_path);
 	let config_toml: Config = if let Ok(config_str) = config_string {
@@ -143,9 +145,9 @@ fn main() -> error::Result<()> {
 	} else if let Some(temp_type) = config_toml.temperature_type {
 		// Give lowest priority to config.
 		match temp_type.as_str() {
-			constants::FAHRENHEIT => data_harvester::temperature::TemperatureType::Fahrenheit,
-			constants::KELVIN => data_harvester::temperature::TemperatureType::Kelvin,
-			constants::CELSIUS => data_harvester::temperature::TemperatureType::Celsius,
+			"fahrenheit" | "f" => data_harvester::temperature::TemperatureType::Fahrenheit,
+			"kelvin" | "k" => data_harvester::temperature::TemperatureType::Kelvin,
+			"celsius" | "c" => data_harvester::temperature::TemperatureType::Celsius,
 			_ => data_harvester::temperature::TemperatureType::Celsius,
 		}
 	} else {

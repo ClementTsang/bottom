@@ -92,7 +92,16 @@ Run using `btm`.
 
 - `-R`, `--regex` will default to using regex.
 
-- `-C`, `--config` takes in a file path leading to a TOML file, where one can set flags by default. The default path this will check is, on Linux, `~/.config/btm/btm.toml`. Options are the same as the long names as other flags (ie: `regex = true`). See the [sample config](./sample_config.toml) for an example.
+- `-C`, `--config` takes in a file path leading to a TOML file, where one can set flags to execute by default.
+
+  - Options are generally the same as the long names as other flags (ie: `case_sensitive = true`).
+  - For temperature type, use `temperature_type = <kelvin|k|celsius|c|fahrenheit|f>`.
+  - See the [sample config](./sample_config.toml) for an example.
+
+  bottom will check specific locations by default for a config file.
+
+  - For Unix-based systems: `~/.config/btm/btm.toml`.
+  - For Windows: TBD.
 
 ### Keybindings
 

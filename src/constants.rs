@@ -6,8 +6,7 @@ pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u128 = 1000;
 pub const NUM_COLOURS: i32 = 256;
 
 // Config and flags
-pub const DEFAULT_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
+pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
 
-pub const KELVIN: &str = "kelvin";
-pub const FAHRENHEIT: &str = "fahrenheit";
-pub const CELSIUS: &str = "celsius";
+// TODO: [CONF] Default windows path?
+pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "";
