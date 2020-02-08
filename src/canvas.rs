@@ -188,15 +188,14 @@ pub struct Painter {
 }
 
 pub struct CanvasColours {
-	text_colour: Color,
-	scroll_text_colour: Color,
-	scroll_bg_colour: Color,
+	currently_selected_text_colour: Color,
+	currently_selected_bg_colour: Color,
 	currently_selected_text_style: Style,
 	table_header_style: Style,
-	ram_colour: Color,
-	swap_colour: Color,
-	rx_colour: Color,
-	tx_colour: Color,
+	ram_style: Style,
+	swap_style: Style,
+	rx_style: Style,
+	tx_style: Style,
 	cpu_colour_styles: Vec<Style>,
 	border_style: Style,
 	highlighted_border_style: Style,
@@ -208,15 +207,14 @@ pub struct CanvasColours {
 impl Default for CanvasColours {
 	fn default() -> Self {
 		CanvasColours {
-			text_colour: Color::Gray,
-			scroll_text_colour: Color::Black,
-			scroll_bg_colour: Color::Cyan,
+			currently_selected_text_colour: Color::Black,
+			currently_selected_bg_colour: Color::Cyan,
 			currently_selected_text_style: Style::default().fg(Color::Black).bg(Color::Cyan),
 			table_header_style: Style::default().fg(Color::LightBlue),
-			ram_colour: STANDARD_FIRST_COLOUR,
-			swap_colour: STANDARD_SECOND_COLOUR,
-			rx_colour: STANDARD_FIRST_COLOUR,
-			tx_colour: STANDARD_SECOND_COLOUR,
+			ram_style: Style::default().fg(STANDARD_FIRST_COLOUR),
+			swap_style: Style::default().fg(STANDARD_SECOND_COLOUR),
+			rx_style: Style::default().fg(STANDARD_FIRST_COLOUR),
+			tx_style: Style::default().fg(STANDARD_SECOND_COLOUR),
 			cpu_colour_styles: Vec::new(),
 			border_style: Style::default().fg(Color::Gray),
 			highlighted_border_style: Style::default().fg(Color::LightBlue),
@@ -229,8 +227,7 @@ impl Default for CanvasColours {
 
 impl CanvasColours {
 	pub fn set_text_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.text_colour = convert_hex_to_color(hex)?;
-		self.text_style = Style::default().fg(self.text_colour);
+		self.text_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_border_colour(&mut self, hex: &str) -> error::Result<()> {
@@ -246,19 +243,19 @@ impl CanvasColours {
 		Ok(())
 	}
 	pub fn set_ram_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.ram_colour = convert_hex_to_color(hex)?;
+		self.ram_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_swap_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.swap_colour = convert_hex_to_color(hex)?;
+		self.swap_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_rx_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.rx_colour = convert_hex_to_color(hex)?;
+		self.rx_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_tx_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.tx_colour = convert_hex_to_color(hex)?;
+		self.tx_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_cpu_colours(&mut self, hex_colours: &Vec<String>) -> error::Result<()> {
@@ -276,17 +273,17 @@ impl CanvasColours {
 	}
 
 	pub fn set_scroll_entry_text_color(&mut self, hex: &str) -> error::Result<()> {
-		self.scroll_text_colour = convert_hex_to_color(hex)?;
+		self.currently_selected_text_colour = convert_hex_to_color(hex)?;
 		self.currently_selected_text_style = Style::default()
-			.fg(self.scroll_text_colour)
-			.bg(self.scroll_bg_colour);
+			.fg(self.currently_selected_text_colour)
+			.bg(self.currently_selected_bg_colour);
 		Ok(())
 	}
 	pub fn set_scroll_entry_bg_color(&mut self, hex: &str) -> error::Result<()> {
-		self.scroll_bg_colour = convert_hex_to_color(hex)?;
+		self.currently_selected_bg_colour = convert_hex_to_color(hex)?;
 		self.currently_selected_text_style = Style::default()
-			.fg(self.scroll_text_colour)
-			.bg(self.scroll_bg_colour);
+			.fg(self.currently_selected_text_colour)
+			.bg(self.currently_selected_bg_colour);
 		Ok(())
 	}
 
@@ -343,7 +340,7 @@ impl Painter {
 							.style(self.colours.border_style)
 							.borders(Borders::ALL),
 					)
-					.style(Style::default().fg(self.colours.text_colour))
+					.style(self.colours.text_style)
 					.alignment(Alignment::Left)
 					.wrap(true)
 					.render(&mut f, middle_dialog_chunk[1]);
@@ -388,7 +385,7 @@ impl Painter {
 								.style(self.colours.border_style)
 								.borders(Borders::ALL),
 						)
-						.style(Style::default().fg(self.colours.text_colour))
+						.style(self.colours.text_style)
 						.alignment(Alignment::Center)
 						.wrap(true)
 						.render(&mut f, middle_dialog_chunk[1]);
@@ -418,7 +415,7 @@ impl Painter {
 									.style(self.colours.border_style)
 									.borders(Borders::ALL),
 							)
-							.style(Style::default().fg(self.colours.text_colour))
+							.style(self.colours.text_style)
 							.alignment(Alignment::Center)
 							.wrap(true)
 							.render(&mut f, middle_dialog_chunk[1]);
@@ -728,7 +725,7 @@ impl Painter {
 			} else {
 				Marker::Braille
 			})
-			.style(Style::default().fg(self.colours.ram_colour))
+			.style(self.colours.ram_style)
 			.data(&mem_data)];
 
 		if !(&swap_data).is_empty() {
@@ -740,7 +737,7 @@ impl Painter {
 					} else {
 						Marker::Braille
 					})
-					.style(Style::default().fg(self.colours.swap_colour))
+					.style(self.colours.swap_style)
 					.data(&swap_data),
 			);
 		}
@@ -795,7 +792,7 @@ impl Painter {
 					} else {
 						Marker::Braille
 					})
-					.style(Style::default().fg(self.colours.rx_colour))
+					.style(self.colours.rx_style)
 					.data(&network_data_rx),
 				Dataset::default()
 					.name("TX")
@@ -804,7 +801,7 @@ impl Painter {
 					} else {
 						Marker::Braille
 					})
-					.style(Style::default().fg(self.colours.tx_colour))
+					.style(self.colours.tx_style)
 					.data(&network_data_tx),
 			])
 			.render(f, draw_loc);
@@ -869,7 +866,7 @@ impl Painter {
 				}),
 		)
 		.header_style(self.colours.table_header_style)
-		.style(Style::default().fg(self.colours.text_colour))
+		.style(self.colours.text_style)
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
@@ -909,10 +906,10 @@ impl Painter {
 							if temp_row_counter >= 0 {
 								temp_row_counter += 1;
 							}
-							Style::default().fg(self.colours.text_colour)
+							self.colours.text_style
 						}
 					}
-					_ => Style::default().fg(self.colours.text_colour),
+					_ => self.colours.text_style,
 				},
 			)
 		});
@@ -975,10 +972,10 @@ impl Painter {
 							if disk_counter >= 0 {
 								disk_counter += 1;
 							}
-							Style::default().fg(self.colours.text_colour)
+							self.colours.text_style
 						}
 					}
-					_ => Style::default().fg(self.colours.text_colour),
+					_ => self.colours.text_style,
 				},
 			)
 		});
@@ -1026,46 +1023,45 @@ impl Painter {
 
 		let cursor_position = app_state.get_cursor_position();
 
-		let query_with_cursor: Vec<Text> = if let app::WidgetPosition::ProcessSearch =
-			app_state.current_widget_selected
-		{
-			if cursor_position >= query.len() {
-				let mut q = vec![Text::styled(
-					shrunk_query.to_string(),
-					Style::default().fg(self.colours.text_colour),
-				)];
+		let query_with_cursor: Vec<Text> =
+			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
+				if cursor_position >= query.len() {
+					let mut q = vec![Text::styled(
+						shrunk_query.to_string(),
+						self.colours.text_style,
+					)];
 
-				q.push(Text::styled(
-					" ".to_string(),
-					self.colours.currently_selected_text_style,
-				));
+					q.push(Text::styled(
+						" ".to_string(),
+						self.colours.currently_selected_text_style,
+					));
 
-				q
-			} else {
-				shrunk_query
-					.chars()
-					.enumerate()
-					.map(|(itx, c)| {
-						if let app::WidgetPosition::ProcessSearch =
-							app_state.current_widget_selected
-						{
-							if itx == cursor_position {
-								return Text::styled(
-									c.to_string(),
-									self.colours.currently_selected_text_style,
-								);
+					q
+				} else {
+					shrunk_query
+						.chars()
+						.enumerate()
+						.map(|(itx, c)| {
+							if let app::WidgetPosition::ProcessSearch =
+								app_state.current_widget_selected
+							{
+								if itx == cursor_position {
+									return Text::styled(
+										c.to_string(),
+										self.colours.currently_selected_text_style,
+									);
+								}
 							}
-						}
-						Text::styled(c.to_string(), Style::default().fg(self.colours.text_colour))
-					})
-					.collect::<Vec<_>>()
-			}
-		} else {
-			vec![Text::styled(
-				shrunk_query.to_string(),
-				Style::default().fg(self.colours.text_colour),
-			)]
-		};
+							Text::styled(c.to_string(), self.colours.text_style)
+						})
+						.collect::<Vec<_>>()
+				}
+			} else {
+				vec![Text::styled(
+					shrunk_query.to_string(),
+					self.colours.text_style,
+				)]
+			};
 
 		let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
 			Text::styled(
@@ -1123,7 +1119,7 @@ impl Painter {
 						}
 					}),
 			)
-			.style(Style::default().fg(self.colours.text_colour))
+			.style(self.colours.text_style)
 			.alignment(Alignment::Left)
 			.wrap(false)
 			.render(f, draw_loc);
@@ -1186,10 +1182,10 @@ impl Painter {
 							if process_counter >= 0 {
 								process_counter += 1;
 							}
-							Style::default().fg(self.colours.text_colour)
+							self.colours.text_style
 						}
 					}
-					_ => Style::default().fg(self.colours.text_colour),
+					_ => self.colours.text_style,
 				},
 			)
 		});
