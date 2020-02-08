@@ -204,6 +204,6 @@ Note that `q` is disabled while in the search widget.
   - [log](https://github.com/rust-lang-nursery/log)
   - [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
   - [tokio](https://github.com/tokio-rs/tokio)
+  - [toml-ru](https://github.com/alexcrichton/toml-rs)
   - [tui-rs](https://github.com/fdehau/tui-rs)
   - [winapi](https://github.com/retep998/winapi-rs)
-  - [yaml-rust](https://github.com/chyh1990/yaml-rust)
