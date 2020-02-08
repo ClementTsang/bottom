@@ -711,7 +711,7 @@ impl App {
 				WidgetPosition::Process => self.change_process_position(-1),
 				WidgetPosition::Temp => self.change_temp_position(-1),
 				WidgetPosition::Disk => self.change_disk_position(-1),
-				WidgetPosition::Cpu => self.change_cpu_table_position(-1), // TODO: Temporary, may change if we add scaling
+				WidgetPosition::Cpu => self.change_cpu_table_position(-1), // TODO: [PO?] Temporary, may change if we add scaling
 				_ => {}
 			}
 			self.scroll_direction = ScrollDirection::UP;
@@ -725,7 +725,7 @@ impl App {
 				WidgetPosition::Process => self.change_process_position(1),
 				WidgetPosition::Temp => self.change_temp_position(1),
 				WidgetPosition::Disk => self.change_disk_position(1),
-				WidgetPosition::Cpu => self.change_cpu_table_position(1), // TODO: Temporary, may change if we add scaling
+				WidgetPosition::Cpu => self.change_cpu_table_position(1), // TODO: [PO?] Temporary, may change if we add scaling
 				_ => {}
 			}
 			self.scroll_direction = ScrollDirection::DOWN;

@@ -92,16 +92,31 @@ Run using `btm`.
 
 - `-R`, `--regex` will default to using regex.
 
-- `-C`, `--config` takes in a file path leading to a TOML file, where one can set flags to execute by default.
+- `-C`, `--config` takes in a file path leading to a TOML file.
 
-  - Options are generally the same as the long names as other flags (ie: `case_sensitive = true`).
-  - For temperature type, use `temperature_type = <kelvin|k|celsius|c|fahrenheit|f>`.
-  - See the [sample config](./sample_config.toml) for an example.
+  One use of a config file is to set flags to execute by default.
+
+  - Options are generally the same as the long names as other flags (ex: `case_sensitive = true`).
+  - For temperature type, use `temperature_type = "<kelvin|k|celsius|c|fahrenheit|f>"`.
+
+  Another use is to set colours (by default they're somewhat randomly generated). The following labels are customizable with a hex colour code strings:
+
+  - Table header colours (`table_header_color="#ffffff"`).
+  - Every CPU core colour as an array (`cpu_core_colors=["#ffffff", "#000000", "#111111"]`). bottom will look at 216 (let's be realistic here) colours at most, and in order. If not enough colours are provided, then the rest will be pseudo-randomly generated.
+  - RAM and SWAP colours (`ram_color="#ffffff"`, `swap_color="#111111"`).
+  - RX and TX colours (`rx_color="#ffffff"`, `tx_color="#111111"`).
+  - General widget border colour (`border_color="#ffffff"`).
+  - Current widget border colour (`highlighted_border_color="#ffffff"`).
+  - Text colour (`text_color="#ffffff"`).
+  - Cursor colour (`cursor_color="#ffffff"`).
+  - Current selected scroll entry colour (`scroll_entry_text_color="#282828"`, `scroll_entry_bg_color="#458588"`).
 
   bottom will check specific locations by default for a config file.
 
   - For Unix-based systems: `~/.config/btm/btm.toml`.
   - For Windows: TBD.
+
+  See the [sample config](./sample_config.toml) for an example.
 
 ### Keybindings
 

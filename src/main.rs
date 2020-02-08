@@ -57,6 +57,12 @@ enum ResetEvent {
 
 #[derive(Deserialize)]
 struct Config {
+	flags: Option<ConfigFlags>,
+	colors: Option<ConfigColours>,
+}
+
+#[derive(Deserialize)]
+struct ConfigFlags {
 	avg_cpu: Option<bool>,
 	dot_marker: Option<bool>,
 	temperature_type: Option<String>,
@@ -67,6 +73,22 @@ struct Config {
 	case_sensitive: Option<bool>,
 	whole_word: Option<bool>,
 	regex: Option<bool>,
+}
+
+#[derive(Deserialize)]
+struct ConfigColours {
+	table_header_color: Option<String>,
+	cpu_core_colors: Option<Vec<String>>,
+	ram_color: Option<String>,
+	swap_color: Option<String>,
+	rx_color: Option<String>,
+	tx_color: Option<String>,
+	border_color: Option<String>,
+	highlighted_border_color: Option<String>,
+	text_color: Option<String>,
+	cursor_color: Option<String>,
+	scroll_entry_text_color: Option<String>,
+	scroll_entry_bg_color: Option<String>,
 }
 
 fn main() -> error::Result<()> {
@@ -119,8 +141,12 @@ fn main() -> error::Result<()> {
 			.value_of("RATE_MILLIS")
 			.unwrap_or(&DEFAULT_REFRESH_RATE_IN_MILLISECONDS.to_string())
 			.parse::<u128>()?
-	} else if let Some(rate) = config_toml.rate {
-		rate as u128
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(rate) = flags.rate {
+			rate as u128
+		} else {
+			constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+		}
 	} else {
 		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
 	};
@@ -142,43 +168,63 @@ fn main() -> error::Result<()> {
 		data_harvester::temperature::TemperatureType::Kelvin
 	} else if matches.is_present("CELSIUS") {
 		data_harvester::temperature::TemperatureType::Celsius
-	} else if let Some(temp_type) = config_toml.temperature_type {
-		// Give lowest priority to config.
-		match temp_type.as_str() {
-			"fahrenheit" | "f" => data_harvester::temperature::TemperatureType::Fahrenheit,
-			"kelvin" | "k" => data_harvester::temperature::TemperatureType::Kelvin,
-			"celsius" | "c" => data_harvester::temperature::TemperatureType::Celsius,
-			_ => data_harvester::temperature::TemperatureType::Celsius,
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(temp_type) = &flags.temperature_type {
+			// Give lowest priority to config.
+			match temp_type.as_str() {
+				"fahrenheit" | "f" => data_harvester::temperature::TemperatureType::Fahrenheit,
+				"kelvin" | "k" => data_harvester::temperature::TemperatureType::Kelvin,
+				"celsius" | "c" => data_harvester::temperature::TemperatureType::Celsius,
+				_ => data_harvester::temperature::TemperatureType::Celsius,
+			}
+		} else {
+			data_harvester::temperature::TemperatureType::Celsius
 		}
 	} else {
 		data_harvester::temperature::TemperatureType::Celsius
 	};
 	let show_average_cpu = if matches.is_present("AVG_CPU") {
 		true
-	} else if let Some(avg_cpu) = config_toml.avg_cpu {
-		avg_cpu
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(avg_cpu) = flags.avg_cpu {
+			avg_cpu
+		} else {
+			false
+		}
 	} else {
 		false
 	};
 	let use_dot = if matches.is_present("DOT_MARKER") {
 		true
-	} else if let Some(dot_marker) = config_toml.dot_marker {
-		dot_marker
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(dot_marker) = flags.dot_marker {
+			dot_marker
+		} else {
+			false
+		}
 	} else {
 		false
 	};
 	let left_legend = if matches.is_present("LEFT_LEGEND") {
 		true
-	} else if let Some(left_legend) = config_toml.left_legend {
-		left_legend
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(left_legend) = flags.left_legend {
+			left_legend
+		} else {
+			false
+		}
 	} else {
 		false
 	};
 
 	let use_current_cpu_total = if matches.is_present("USE_CURR_USAGE") {
 		true
-	} else if let Some(current_usage) = config_toml.current_usage {
-		current_usage
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(current_usage) = flags.current_usage {
+			current_usage
+		} else {
+			false
+		}
 	} else {
 		false
 	};
@@ -196,34 +242,42 @@ fn main() -> error::Result<()> {
 	// Enable grouping immediately if set.
 	if matches.is_present("GROUP_PROCESSES") {
 		app.toggle_grouping();
-	} else if let Some(grouping) = config_toml.group_processes {
-		if grouping {
-			app.toggle_grouping();
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(grouping) = flags.group_processes {
+			if grouping {
+				app.toggle_grouping();
+			}
 		}
 	}
 
 	// Set default search method
 	if matches.is_present("CASE_SENSITIVE") {
 		app.search_state.toggle_ignore_case();
-	} else if let Some(case_sensitive) = config_toml.case_sensitive {
-		if case_sensitive {
-			app.search_state.toggle_ignore_case();
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(case_sensitive) = flags.case_sensitive {
+			if case_sensitive {
+				app.search_state.toggle_ignore_case();
+			}
 		}
 	}
 
 	if matches.is_present("WHOLE_WORD") {
 		app.search_state.toggle_search_whole_word();
-	} else if let Some(whole_word) = config_toml.whole_word {
-		if whole_word {
-			app.search_state.toggle_search_whole_word();
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(whole_word) = flags.whole_word {
+			if whole_word {
+				app.search_state.toggle_search_whole_word();
+			}
 		}
 	}
 
 	if matches.is_present("REGEX_DEFAULT") {
 		app.search_state.toggle_search_regex();
-	} else if let Some(regex) = config_toml.regex {
-		if regex {
-			app.search_state.toggle_search_regex();
+	} else if let Some(flags) = &config_toml.flags {
+		if let Some(regex) = flags.regex {
+			if regex {
+				app.search_state.toggle_search_regex();
+			}
 		}
 	}
 
@@ -312,6 +366,13 @@ fn main() -> error::Result<()> {
 	}
 
 	let mut painter = canvas::Painter::default();
+	if let Err(config_check) = generate_config_colours(&config_toml, &mut painter) {
+		cleanup_terminal(&mut terminal)?;
+		return Err(config_check);
+	}
+
+	painter.colours.generate_remaining_cpu_colours();
+
 	loop {
 		// TODO: [OPT] this should not block...
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
@@ -481,6 +542,70 @@ fn cleanup_terminal(
 	execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 	execute!(terminal.backend_mut(), DisableMouseCapture)?;
 	terminal.show_cursor()?;
+
+	Ok(())
+}
+
+fn generate_config_colours(
+	config_toml: &Config, painter: &mut canvas::Painter,
+) -> error::Result<()> {
+	if let Some(colours) = &config_toml.colors {
+		if let Some(border_color) = &colours.border_color {
+			painter.colours.set_border_colour(border_color)?;
+		}
+
+		if let Some(highlighted_border_color) = &colours.highlighted_border_color {
+			painter
+				.colours
+				.set_highlighted_border_colour(highlighted_border_color)?;
+		}
+
+		if let Some(text_color) = &colours.text_color {
+			painter.colours.set_text_colour(text_color)?;
+		}
+
+		if let Some(cpu_core_colors) = &(colours.cpu_core_colors) {
+			painter.colours.set_cpu_colours(cpu_core_colors)?;
+		}
+
+		if let Some(ram_color) = &colours.ram_color {
+			painter.colours.set_ram_colour(ram_color)?;
+		}
+
+		if let Some(swap_color) = &colours.swap_color {
+			painter.colours.set_swap_colour(swap_color)?;
+		}
+
+		if let Some(rx_color) = &colours.rx_color {
+			painter.colours.set_rx_colour(rx_color)?;
+		}
+
+		if let Some(tx_color) = &colours.tx_color {
+			painter.colours.set_tx_colour(tx_color)?;
+		}
+
+		if let Some(cursor_color) = &colours.cursor_color {
+			painter.colours.set_cursor_colour(cursor_color)?;
+		}
+
+		if let Some(table_header_color) = &colours.table_header_color {
+			painter
+				.colours
+				.set_table_header_colour(table_header_color)?;
+		}
+
+		if let Some(scroll_entry_text_color) = &colours.scroll_entry_text_color {
+			painter
+				.colours
+				.set_scroll_entry_text_color(scroll_entry_text_color)?;
+		}
+
+		if let Some(scroll_entry_bg_color) = &colours.scroll_entry_bg_color {
+			painter
+				.colours
+				.set_scroll_entry_bg_color(scroll_entry_bg_color)?;
+		}
+	}
 
 	Ok(())
 }

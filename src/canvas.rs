@@ -1,6 +1,6 @@
 use crate::{
 	app::{self, data_harvester::processes::ProcessHarvest},
-	constants,
+	constants::*,
 	data_conversion::{ConvertedCpuData, ConvertedProcessData},
 	utils::{error, gen_util::*},
 };
@@ -15,11 +15,8 @@ use tui::{
 	Terminal,
 };
 
-const TEXT_COLOUR: Color = Color::Gray;
-const GRAPH_COLOUR: Color = Color::Gray;
-const BORDER_STYLE_COLOUR: Color = Color::Gray;
-const HIGHLIGHTED_BORDER_STYLE_COLOUR: Color = Color::LightBlue;
-const TABLE_HEADER_COLOUR: Color = Color::LightBlue;
+const STANDARD_FIRST_COLOUR: Color = Color::Rgb(150, 106, 253);
+const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 
 // Headers
@@ -58,10 +55,6 @@ lazy_static! {
 		Text::raw("Use Alt-r to toggle regex.\n"),
 		Text::raw("\nFor startup flags, type in \"btm -h\".")
 	];
-	static ref COLOUR_LIST: Vec<Color> = gen_n_colours(constants::NUM_COLOURS);
-	static ref CANVAS_BORDER_STYLE: Style = Style::default().fg(BORDER_STYLE_COLOUR);
-	static ref CANVAS_HIGHLIGHTED_BORDER_STYLE: Style =
-		Style::default().fg(HIGHLIGHTED_BORDER_STYLE_COLOUR);
 	static ref DISK_HEADERS_LENS: Vec<usize> = DISK_HEADERS
 		.iter()
 		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
@@ -98,8 +91,8 @@ pub struct DisplayableData {
 	pub network_data_tx: Vec<(f64, f64)>,
 	pub disk_data: Vec<Vec<String>>,
 	pub temp_sensor_data: Vec<Vec<String>>,
-	pub process_data: HashMap<u32, ProcessHarvest>, // Not final
-	pub grouped_process_data: Vec<ConvertedProcessData>, // Not final
+	pub process_data: HashMap<u32, ProcessHarvest>, // Not the final value
+	pub grouped_process_data: Vec<ConvertedProcessData>, // Not the final value
 	pub finalized_process_data: Vec<ConvertedProcessData>, // What's actually displayed
 	pub mem_label: String,
 	pub swap_label: String,
@@ -108,8 +101,8 @@ pub struct DisplayableData {
 	pub cpu_data: Vec<ConvertedCpuData>,
 }
 
-/// Generates random colours.
-/// Strategy found from https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
+/// Generates random colours.  Strategy found from
+/// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
 fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	fn gen_hsv(h: f32) -> f32 {
 		let new_val = h + GOLDEN_RATIO;
@@ -146,7 +139,7 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
-	for _i in 0..num_to_gen {
+	for _i in 0..(num_to_gen - 6) {
 		h = gen_hsv(h);
 		let result = hsv_to_rgb(h, 0.5, 0.95);
 		colour_vec.push(Color::Rgb(result.0, result.1, result.2));
@@ -155,9 +148,31 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	colour_vec
 }
 
+fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
+	fn convert_hex_to_rgb(hex: &str) -> error::Result<(u8, u8, u8)> {
+		if hex.len() == 7 && &hex[0..1] == "#" {
+			let r = u8::from_str_radix(&hex[1..3], 16)?;
+			let g = u8::from_str_radix(&hex[3..5], 16)?;
+			let b = u8::from_str_radix(&hex[5..7], 16)?;
+
+			return Ok((r, g, b));
+		}
+
+		Err(error::BottomError::GenericError {
+			message: format!(
+				"Colour hex {} is not of valid length.  It must be a 7 character string of the form \"#112233\".",
+				hex
+			),
+		})
+	}
+
+	let rgb = convert_hex_to_rgb(hex)?;
+	Ok(Color::Rgb(rgb.0, rgb.1, rgb.2))
+}
+
 #[allow(dead_code)]
 #[derive(Default)]
-/// Handles the canvas' state.
+/// Handles the canvas' state.  TODO: [OPT] implement this.
 pub struct Painter {
 	height: f64,
 	width: f64,
@@ -169,6 +184,118 @@ pub struct Painter {
 	bottom_chunks: Vec<Rect>,
 	cpu_chunk: Vec<Rect>,
 	network_chunk: Vec<Rect>,
+	pub colours: CanvasColours,
+}
+
+pub struct CanvasColours {
+	text_colour: Color,
+	scroll_text_colour: Color,
+	scroll_bg_colour: Color,
+	scroll_entry_style: Style,
+	border_colour: Color,
+	highlighted_border_colour: Color,
+	table_header_colour: Color,
+	ram_colour: Color,
+	swap_colour: Color,
+	rx_colour: Color,
+	tx_colour: Color,
+	cpu_colours: Vec<Color>,
+	cursor_colour: Color,
+	border_style: Style,
+	highlighted_border_style: Style,
+	text_style: Style,
+}
+
+impl Default for CanvasColours {
+	fn default() -> Self {
+		CanvasColours {
+			text_colour: Color::Gray,
+			scroll_text_colour: Color::Black,
+			scroll_bg_colour: Color::Cyan,
+			scroll_entry_style: Style::default().fg(Color::Black).bg(Color::Cyan),
+			border_colour: Color::Gray,
+			highlighted_border_colour: Color::LightBlue,
+			table_header_colour: Color::LightBlue,
+			ram_colour: STANDARD_FIRST_COLOUR,
+			swap_colour: STANDARD_SECOND_COLOUR,
+			rx_colour: STANDARD_FIRST_COLOUR,
+			tx_colour: STANDARD_SECOND_COLOUR,
+			cpu_colours: Vec::new(),
+			cursor_colour: Color::Cyan,
+			border_style: Style::default().fg(Color::Gray),
+			highlighted_border_style: Style::default().fg(Color::LightBlue),
+			text_style: Style::default().fg(Color::Gray),
+		}
+	}
+}
+
+impl CanvasColours {
+	pub fn set_text_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.text_colour = convert_hex_to_color(hex)?;
+		self.text_style = Style::default().fg(self.text_colour);
+		Ok(())
+	}
+	pub fn set_border_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.border_colour = convert_hex_to_color(hex)?;
+		self.border_style = Style::default().fg(self.border_colour);
+		Ok(())
+	}
+	pub fn set_highlighted_border_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.highlighted_border_colour = convert_hex_to_color(hex)?;
+		self.highlighted_border_style = Style::default().fg(self.highlighted_border_colour);
+		Ok(())
+	}
+	pub fn set_table_header_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.table_header_colour = convert_hex_to_color(hex)?;
+		Ok(())
+	}
+	pub fn set_ram_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.ram_colour = convert_hex_to_color(hex)?;
+		Ok(())
+	}
+	pub fn set_swap_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.swap_colour = convert_hex_to_color(hex)?;
+		Ok(())
+	}
+	pub fn set_rx_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.rx_colour = convert_hex_to_color(hex)?;
+		Ok(())
+	}
+	pub fn set_tx_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.tx_colour = convert_hex_to_color(hex)?;
+		Ok(())
+	}
+	pub fn set_cpu_colours(&mut self, hex_colours: &Vec<String>) -> error::Result<()> {
+		let max_amount = std::cmp::min(hex_colours.len(), NUM_COLOURS as usize);
+		for i in 0..max_amount {
+			self.cpu_colours
+				.push(convert_hex_to_color(&hex_colours[i])?);
+		}
+		Ok(())
+	}
+	pub fn generate_remaining_cpu_colours(&mut self) {
+		let remaining_num_colours = NUM_COLOURS - self.cpu_colours.len() as i32;
+		self.cpu_colours
+			.extend(gen_n_colours(remaining_num_colours));
+	}
+	pub fn set_cursor_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.cursor_colour = convert_hex_to_color(hex)?;
+		Ok(())
+	}
+	pub fn set_scroll_entry_text_color(&mut self, hex: &str) -> error::Result<()> {
+		self.scroll_text_colour = convert_hex_to_color(hex)?;
+		self.scroll_entry_style = Style::default()
+			.fg(self.scroll_text_colour)
+			.bg(self.scroll_bg_colour);
+		Ok(())
+	}
+	pub fn set_scroll_entry_bg_color(&mut self, hex: &str) -> error::Result<()> {
+		self.scroll_bg_colour = convert_hex_to_color(hex)?;
+		self.scroll_entry_style = Style::default()
+			.fg(self.scroll_text_colour)
+			.bg(self.scroll_bg_colour);
+		Ok(())
+	}
 }
 
 impl Painter {
@@ -208,10 +335,12 @@ impl Painter {
 				Paragraph::new(HELP_TEXT.iter())
 					.block(
 						Block::default()
-							.title("Help (Press Esc to close)")
+							.title(" Help (Press Esc to close) ")
+							.title_style(self.colours.text_style)
+							.style(self.colours.border_style)
 							.borders(Borders::ALL),
 					)
-					.style(Style::default().fg(Color::Gray))
+					.style(Style::default().fg(self.colours.text_colour))
 					.alignment(Alignment::Left)
 					.wrap(true)
 					.render(&mut f, middle_dialog_chunk[1]);
@@ -251,10 +380,12 @@ impl Painter {
 					Paragraph::new(dd_text.iter())
 						.block(
 							Block::default()
-								.title("Kill Process Error (Press Esc to close)")
+								.title(" Kill Process Error (Press Esc to close) ")
+								.title_style(self.colours.text_style)
+								.style(self.colours.border_style)
 								.borders(Borders::ALL),
 						)
-						.style(Style::default().fg(Color::Gray))
+						.style(Style::default().fg(self.colours.text_colour))
 						.alignment(Alignment::Center)
 						.wrap(true)
 						.render(&mut f, middle_dialog_chunk[1]);
@@ -279,10 +410,12 @@ impl Painter {
 						Paragraph::new(dd_text.iter())
 							.block(
 								Block::default()
-									.title("Kill Process Confirmation (Press Esc to close)")
+									.title(" Kill Process Confirmation (Press Esc to close) ")
+									.title_style(self.colours.text_style)
+									.style(self.colours.border_style)
 									.borders(Borders::ALL),
 							)
-							.style(Style::default().fg(Color::Gray))
+							.style(Style::default().fg(self.colours.text_colour))
 							.alignment(Alignment::Center)
 							.wrap(true)
 							.render(&mut f, middle_dialog_chunk[1]);
@@ -423,11 +556,10 @@ impl Painter {
 		let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
 		// CPU usage graph
-		let x_axis: Axis<String> = Axis::default()
-			.style(Style::default().fg(GRAPH_COLOUR))
-			.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
+		let x_axis: Axis<String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
 		let y_axis = Axis::default()
-			.style(Style::default().fg(GRAPH_COLOUR))
+			.style(self.colours.text_style)
+			.labels_style(self.colours.text_style)
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
@@ -436,7 +568,7 @@ impl Painter {
 
 		for (i, cpu) in cpu_data.iter().enumerate() {
 			cpu_entries_vec.push((
-				Style::default().fg(COLOUR_LIST[(i) % COLOUR_LIST.len()]),
+				Style::default().fg(self.colours.cpu_colours[(i) % self.colours.cpu_colours.len()]),
 				cpu.cpu_data
 					.iter()
 					.map(<(f64, f64)>::from)
@@ -447,7 +579,7 @@ impl Painter {
 		if app_state.show_average_cpu {
 			if let Some(avg_cpu_entry) = cpu_data.first() {
 				cpu_entries_vec.push((
-					Style::default().fg(COLOUR_LIST[0]),
+					Style::default().fg(self.colours.cpu_colours[0]),
 					avg_cpu_entry
 						.cpu_data
 						.iter()
@@ -473,11 +605,12 @@ impl Painter {
 		Chart::default()
 			.block(
 				Block::default()
-					.title("CPU")
+					.title(" CPU ")
+					.title_style(self.colours.text_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
+						app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
 					}),
 			)
 			.x_axis(x_axis)
@@ -525,15 +658,18 @@ impl Painter {
 								== app_state.currently_selected_cpu_table_position - start_position
 							{
 								cpu_row_counter = -1;
-								Style::default().fg(Color::Black).bg(Color::Cyan)
+								self.colours.scroll_entry_style
 							} else {
 								if cpu_row_counter >= 0 {
 									cpu_row_counter += 1;
 								}
-								Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()])
+								Style::default()
+									.fg(self.colours.cpu_colours
+										[itx % self.colours.cpu_colours.len()])
 							}
 						}
-						_ => Style::default().fg(COLOUR_LIST[itx % COLOUR_LIST.len()]),
+						_ => Style::default()
+							.fg(self.colours.cpu_colours[itx % self.colours.cpu_colours.len()]),
 					},
 				)
 			});
@@ -549,11 +685,11 @@ impl Painter {
 		Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
 			.block(Block::default().borders(Borders::ALL).border_style(
 				match app_state.current_widget_selected {
-					app::WidgetPosition::Cpu => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-					_ => *CANVAS_BORDER_STYLE,
+					app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+					_ => self.colours.border_style,
 				},
 			))
-			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.header_style(Style::default().fg(self.colours.table_header_colour))
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
@@ -569,13 +705,12 @@ impl Painter {
 		let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
 		let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
 
-		let x_axis: Axis<String> = Axis::default()
-			.style(Style::default().fg(GRAPH_COLOUR))
-			.bounds([0.0, constants::TIME_STARTS_FROM as f64]);
+		let x_axis: Axis<String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
 
 		// Offset as the zero value isn't drawn otherwise...
 		let y_axis: Axis<&str> = Axis::default()
-			.style(Style::default().fg(GRAPH_COLOUR))
+			.style(self.colours.text_style)
+			.labels_style(self.colours.text_style)
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
@@ -586,7 +721,7 @@ impl Painter {
 			} else {
 				Marker::Braille
 			})
-			.style(Style::default().fg(COLOUR_LIST[0]))
+			.style(Style::default().fg(self.colours.ram_colour))
 			.data(&mem_data)];
 
 		if !(&swap_data).is_empty() {
@@ -598,7 +733,7 @@ impl Painter {
 					} else {
 						Marker::Braille
 					})
-					.style(Style::default().fg(COLOUR_LIST[1]))
+					.style(Style::default().fg(self.colours.swap_colour))
 					.data(&swap_data),
 			);
 		}
@@ -606,11 +741,12 @@ impl Painter {
 		Chart::default()
 			.block(
 				Block::default()
-					.title("Memory")
+					.title(" Memory ")
+					.title_style(self.colours.text_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Mem => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
+						app::WidgetPosition::Mem => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
 					}),
 			)
 			.x_axis(x_axis)
@@ -625,21 +761,21 @@ impl Painter {
 		let network_data_rx: &[(f64, f64)] = &(app_state.canvas_data.network_data_rx);
 		let network_data_tx: &[(f64, f64)] = &(app_state.canvas_data.network_data_tx);
 
-		let x_axis: Axis<String> = Axis::default()
-			.style(Style::default().fg(GRAPH_COLOUR))
-			.bounds([0.0, 60_000.0]);
+		let x_axis: Axis<String> = Axis::default().bounds([0.0, 60_000.0]);
 		let y_axis = Axis::default()
-			.style(Style::default().fg(GRAPH_COLOUR))
+			.style(self.colours.text_style)
+			.labels_style(self.colours.text_style)
 			.bounds([-0.5, 30_f64])
 			.labels(&["0B", "1KiB", "1MiB", "1GiB"]);
 		Chart::default()
 			.block(
 				Block::default()
-					.title("Network")
+					.title(" Network ")
+					.title_style(self.colours.text_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
+						app::WidgetPosition::Network => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
 					}),
 			)
 			.x_axis(x_axis)
@@ -652,7 +788,7 @@ impl Painter {
 					} else {
 						Marker::Braille
 					})
-					.style(Style::default().fg(COLOUR_LIST[0]))
+					.style(Style::default().fg(self.colours.rx_colour))
 					.data(&network_data_rx),
 				Dataset::default()
 					.name("TX")
@@ -661,7 +797,7 @@ impl Painter {
 					} else {
 						Marker::Braille
 					})
-					.style(Style::default().fg(COLOUR_LIST[1]))
+					.style(Style::default().fg(self.colours.tx_colour))
 					.data(&network_data_tx),
 			])
 			.render(f, draw_loc);
@@ -686,7 +822,9 @@ impl Painter {
 		} else {
 			vec![vec![rx_display, tx_display]]
 		};
-		let mapped_network = total_network.iter().map(|val| Row::Data(val.iter()));
+		let mapped_network = total_network
+			.iter()
+			.map(|val| Row::StyledData(val.iter(), self.colours.text_style));
 
 		// Calculate widths
 		let width_ratios: Vec<f64>;
@@ -716,11 +854,12 @@ impl Painter {
 		)
 		.block(Block::default().borders(Borders::ALL).border_style(
 			match app_state.current_widget_selected {
-				app::WidgetPosition::Network => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-				_ => *CANVAS_BORDER_STYLE,
+				app::WidgetPosition::Network => self.colours.highlighted_border_style,
+				_ => self.colours.border_style,
 			},
 		))
-		.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+		.header_style(Style::default().fg(self.colours.table_header_colour))
+		.style(Style::default().fg(self.colours.text_colour))
 		.widths(
 			&(intrinsic_widths
 				.into_iter()
@@ -755,15 +894,15 @@ impl Painter {
 							== app_state.currently_selected_temperature_position - start_position
 						{
 							temp_row_counter = -1;
-							Style::default().fg(Color::Black).bg(Color::Cyan)
+							self.colours.scroll_entry_style
 						} else {
 							if temp_row_counter >= 0 {
 								temp_row_counter += 1;
 							}
-							Style::default().fg(TEXT_COLOUR)
+							Style::default().fg(self.colours.text_colour)
 						}
 					}
-					_ => Style::default().fg(TEXT_COLOUR),
+					_ => Style::default().fg(self.colours.text_colour),
 				},
 			)
 		});
@@ -779,14 +918,15 @@ impl Painter {
 		Table::new(TEMP_HEADERS.iter(), temperature_rows)
 			.block(
 				Block::default()
-					.title("Temperatures")
+					.title(" Temperatures ")
+					.title_style(self.colours.text_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Temp => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
+						app::WidgetPosition::Temp => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
 					}),
 			)
-			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.header_style(Style::default().fg(self.colours.table_header_colour))
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
@@ -820,21 +960,21 @@ impl Painter {
 							== app_state.currently_selected_disk_position - start_position
 						{
 							disk_counter = -1;
-							Style::default().fg(Color::Black).bg(Color::Cyan)
+							self.colours.scroll_entry_style
 						} else {
 							if disk_counter >= 0 {
 								disk_counter += 1;
 							}
-							Style::default().fg(TEXT_COLOUR)
+							Style::default().fg(self.colours.text_colour)
 						}
 					}
-					_ => Style::default().fg(TEXT_COLOUR),
+					_ => Style::default().fg(self.colours.text_colour),
 				},
 			)
 		});
 
 		// Calculate widths
-		// TODO: Ellipsis on strings?
+		// TODO: [PRETTY] Ellipsis on strings?
 		let width = f64::from(draw_loc.width);
 		let width_ratios = [0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13];
 		let variable_intrinsic_results =
@@ -845,14 +985,15 @@ impl Painter {
 		Table::new(DISK_HEADERS.iter(), disk_rows)
 			.block(
 				Block::default()
-					.title("Disk")
+					.title(" Disk ")
+					.title_style(self.colours.text_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Disk => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
+						app::WidgetPosition::Disk => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
 					}),
 			)
-			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.header_style(Style::default().fg(self.colours.table_header_colour))
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
@@ -875,89 +1016,101 @@ impl Painter {
 
 		let cursor_position = app_state.get_cursor_position();
 
-		let query_with_cursor: Vec<Text> =
-			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
-				if cursor_position >= query.len() {
-					let mut q = vec![Text::styled(
-						shrunk_query.to_string(),
-						Style::default().fg(TEXT_COLOUR),
-					)];
-
-					q.push(Text::styled(
-						" ".to_string(),
-						Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-					));
-
-					q
-				} else {
-					shrunk_query
-						.chars()
-						.enumerate()
-						.map(|(itx, c)| {
-							if let app::WidgetPosition::ProcessSearch =
-								app_state.current_widget_selected
-							{
-								if itx == cursor_position {
-									return Text::styled(
-										c.to_string(),
-										Style::default().fg(TEXT_COLOUR).bg(TABLE_HEADER_COLOUR),
-									);
-								}
-							}
-							Text::styled(c.to_string(), Style::default().fg(TEXT_COLOUR))
-						})
-						.collect::<Vec<_>>()
-				}
-			} else {
-				vec![Text::styled(
+		let query_with_cursor: Vec<Text> = if let app::WidgetPosition::ProcessSearch =
+			app_state.current_widget_selected
+		{
+			if cursor_position >= query.len() {
+				let mut q = vec![Text::styled(
 					shrunk_query.to_string(),
-					Style::default().fg(TEXT_COLOUR),
-				)]
-			};
+					Style::default().fg(self.colours.text_colour),
+				)];
+
+				q.push(Text::styled(
+					" ".to_string(),
+					Style::default().bg(self.colours.cursor_colour),
+				));
+
+				q
+			} else {
+				shrunk_query
+					.chars()
+					.enumerate()
+					.map(|(itx, c)| {
+						if let app::WidgetPosition::ProcessSearch =
+							app_state.current_widget_selected
+						{
+							if itx == cursor_position {
+								return Text::styled(
+									c.to_string(),
+									Style::default()
+										.fg(self.colours.text_colour)
+										.bg(self.colours.table_header_colour),
+								);
+							}
+						}
+						Text::styled(c.to_string(), Style::default().fg(self.colours.text_colour))
+					})
+					.collect::<Vec<_>>()
+			}
+		} else {
+			vec![Text::styled(
+				shrunk_query.to_string(),
+				Style::default().fg(self.colours.text_colour),
+			)]
+		};
 
 		let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
 			Text::styled(
 				"Search by PID (Tab for Name): ",
-				Style::default().fg(TABLE_HEADER_COLOUR),
+				Style::default().fg(self.colours.table_header_colour),
 			)
 		} else {
 			Text::styled(
 				"Search by Name (Tab for PID): ",
-				Style::default().fg(TABLE_HEADER_COLOUR),
+				Style::default().fg(self.colours.table_header_colour),
 			)
 		}];
 
 		// Text options shamelessly stolen from VS Code.
 		let option_text = vec![
-			Text::styled("\n\n", Style::default().fg(TABLE_HEADER_COLOUR)),
+			Text::styled(
+				"\n\n",
+				Style::default().fg(self.colours.table_header_colour),
+			),
 			Text::styled(
 				"Match Case (Alt+C)",
-				Style::default().fg(TABLE_HEADER_COLOUR),
+				Style::default().fg(self.colours.table_header_colour),
 			),
 			if !app_state.search_state.is_ignoring_case() {
-				Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
+				Text::styled("[*]", Style::default().fg(self.colours.table_header_colour))
 			} else {
-				Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
+				Text::styled("[ ]", Style::default().fg(self.colours.table_header_colour))
 			},
-			Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
+			Text::styled(
+				"     ",
+				Style::default().fg(self.colours.table_header_colour),
+			),
 			Text::styled(
 				"Match Whole Word (Alt+W)",
-				Style::default().fg(TABLE_HEADER_COLOUR),
+				Style::default().fg(self.colours.table_header_colour),
 			),
 			if app_state.search_state.is_searching_whole_word() {
-				Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
+				Text::styled("[*]", Style::default().fg(self.colours.table_header_colour))
 			} else {
-				Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
+				Text::styled("[ ]", Style::default().fg(self.colours.table_header_colour))
 			},
-			Text::styled("     ", Style::default().fg(TABLE_HEADER_COLOUR)),
+			Text::styled(
+				"     ",
+				Style::default().fg(self.colours.table_header_colour),
+			),
 			Text::styled(
 				"Use Regex (Alt+R)",
-				Style::default().fg(TABLE_HEADER_COLOUR),
+				Style::default().fg(self.colours.table_header_colour),
 			),
 			if app_state.search_state.is_searching_with_regex() {
-				Text::styled("[*]", Style::default().fg(TABLE_HEADER_COLOUR))
+				Text::styled("[*]", Style::default().fg(self.colours.table_header_colour))
 			} else {
-				Text::styled("[ ]", Style::default().fg(TABLE_HEADER_COLOUR))
+				Text::styled("[ ]", Style::default().fg(self.colours.table_header_colour))
 			},
 		];
 
@@ -970,12 +1123,12 @@ impl Painter {
 					Style::default().fg(Color::Red)
 				} else {
 					match app_state.current_widget_selected {
-						app::WidgetPosition::ProcessSearch => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
+						app::WidgetPosition::ProcessSearch => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
 					}
 				},
 			))
-			.style(Style::default().fg(Color::Gray))
+			.style(Style::default().fg(self.colours.text_colour))
 			.alignment(Alignment::Left)
 			.wrap(false)
 			.render(f, draw_loc);
@@ -1033,15 +1186,15 @@ impl Painter {
 							== app_state.currently_selected_process_position - start_position
 						{
 							process_counter = -1;
-							Style::default().fg(Color::Black).bg(Color::Cyan)
+							self.colours.scroll_entry_style
 						} else {
 							if process_counter >= 0 {
 								process_counter += 1;
 							}
-							Style::default().fg(TEXT_COLOUR)
+							Style::default().fg(self.colours.text_colour)
 						}
 					}
-					_ => Style::default().fg(TEXT_COLOUR),
+					_ => Style::default().fg(self.colours.text_colour),
 				},
 			)
 		});
@@ -1086,14 +1239,15 @@ impl Painter {
 		Table::new(process_headers.iter(), process_rows)
 			.block(
 				Block::default()
-					.title("Processes")
+					.title(" Processes ")
+					.title_style(self.colours.text_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Process => *CANVAS_HIGHLIGHTED_BORDER_STYLE,
-						_ => *CANVAS_BORDER_STYLE,
+						app::WidgetPosition::Process => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
 					}),
 			)
-			.header_style(Style::default().fg(TABLE_HEADER_COLOUR))
+			.header_style(Style::default().fg(self.colours.table_header_colour))
 			.widths(
 				&(intrinsic_widths
 					.into_iter()

@@ -1,10 +1,26 @@
+[flags]
 avg_cpu = true
 dot_marker = true
-temperature_type = "kelvin"
-rate = 2000
-left_legend = false
+temperature_type = "k"
+rate = 1000
+left_legend = true
 current_usage = false
-group_processes = true
+group_processes = false
 case_sensitive = true
 whole_word = true
 regex = true
+
+[colors]
+# Based on gruvbox: https://github.com/morhetz/gruvbox
+table_header_color="#458588"
+cpu_core_colors=["#cc241d", "#98971a", "#d79921", "#458588", "#b16286", "#689d6a", "#fb4934", "#b8bb26", "#fabd2f", "#83a598"]
+ram_color="#fb4934"
+swap_color="#fabd2f"
+rx_color="#458588"
+tx_color="#689d6a"
+border_color="#ebdbb2"
+highlighted_border_color="#fe8019"
+text_color="#ebdbb2"
+cursor_color="#8ec07c"
+scroll_entry_text_color="#282828"
+scroll_entry_bg_color="#458588"
