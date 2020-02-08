@@ -103,7 +103,7 @@ pub struct DisplayableData {
 
 /// Generates random colours.  Strategy found from
 /// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
-fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
+fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 	fn gen_hsv(h: f32) -> f32 {
 		let new_val = h + GOLDEN_RATIO;
 		if new_val > 1.0 {
@@ -129,20 +129,20 @@ fn gen_n_colours(num_to_gen: i32) -> Vec<Color> {
 	}
 
 	// Generate colours
-	let mut colour_vec: Vec<Color> = vec![
-		Color::Rgb(150, 106, 253),
-		Color::LightYellow,
-		Color::LightMagenta,
-		Color::LightCyan,
-		Color::Green,
-		Color::Red,
+	let mut colour_vec: Vec<Style> = vec![
+		Style::default().fg(Color::Rgb(150, 106, 253)),
+		Style::default().fg(Color::LightYellow),
+		Style::default().fg(Color::LightMagenta),
+		Style::default().fg(Color::LightCyan),
+		Style::default().fg(Color::Green),
+		Style::default().fg(Color::Red),
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
 	for _i in 0..(num_to_gen - 6) {
 		h = gen_hsv(h);
 		let result = hsv_to_rgb(h, 0.5, 0.95);
-		colour_vec.push(Color::Rgb(result.0, result.1, result.2));
+		colour_vec.push(Style::default().fg(Color::Rgb(result.0, result.1, result.2)));
 	}
 
 	colour_vec
@@ -191,19 +191,18 @@ pub struct CanvasColours {
 	text_colour: Color,
 	scroll_text_colour: Color,
 	scroll_bg_colour: Color,
-	scroll_entry_style: Style,
-	border_colour: Color,
-	highlighted_border_colour: Color,
-	table_header_colour: Color,
+	currently_selected_text_style: Style,
+	table_header_style: Style,
 	ram_colour: Color,
 	swap_colour: Color,
 	rx_colour: Color,
 	tx_colour: Color,
-	cpu_colours: Vec<Color>,
-	cursor_colour: Color,
+	cpu_colour_styles: Vec<Style>,
 	border_style: Style,
 	highlighted_border_style: Style,
 	text_style: Style,
+	widget_title_style: Style,
+	graph_style: Style,
 }
 
 impl Default for CanvasColours {
@@ -212,19 +211,18 @@ impl Default for CanvasColours {
 			text_colour: Color::Gray,
 			scroll_text_colour: Color::Black,
 			scroll_bg_colour: Color::Cyan,
-			scroll_entry_style: Style::default().fg(Color::Black).bg(Color::Cyan),
-			border_colour: Color::Gray,
-			highlighted_border_colour: Color::LightBlue,
-			table_header_colour: Color::LightBlue,
+			currently_selected_text_style: Style::default().fg(Color::Black).bg(Color::Cyan),
+			table_header_style: Style::default().fg(Color::LightBlue),
 			ram_colour: STANDARD_FIRST_COLOUR,
 			swap_colour: STANDARD_SECOND_COLOUR,
 			rx_colour: STANDARD_FIRST_COLOUR,
 			tx_colour: STANDARD_SECOND_COLOUR,
-			cpu_colours: Vec::new(),
-			cursor_colour: Color::Cyan,
+			cpu_colour_styles: Vec::new(),
 			border_style: Style::default().fg(Color::Gray),
 			highlighted_border_style: Style::default().fg(Color::LightBlue),
 			text_style: Style::default().fg(Color::Gray),
+			widget_title_style: Style::default().fg(Color::Gray),
+			graph_style: Style::default().fg(Color::Gray),
 		}
 	}
 }
@@ -236,17 +234,15 @@ impl CanvasColours {
 		Ok(())
 	}
 	pub fn set_border_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.border_colour = convert_hex_to_color(hex)?;
-		self.border_style = Style::default().fg(self.border_colour);
+		self.border_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_highlighted_border_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.highlighted_border_colour = convert_hex_to_color(hex)?;
-		self.highlighted_border_style = Style::default().fg(self.highlighted_border_colour);
+		self.highlighted_border_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_table_header_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.table_header_colour = convert_hex_to_color(hex)?;
+		self.table_header_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 	pub fn set_ram_colour(&mut self, hex: &str) -> error::Result<()> {
@@ -268,32 +264,39 @@ impl CanvasColours {
 	pub fn set_cpu_colours(&mut self, hex_colours: &Vec<String>) -> error::Result<()> {
 		let max_amount = std::cmp::min(hex_colours.len(), NUM_COLOURS as usize);
 		for i in 0..max_amount {
-			self.cpu_colours
-				.push(convert_hex_to_color(&hex_colours[i])?);
+			self.cpu_colour_styles
+				.push(Style::default().fg(convert_hex_to_color(&hex_colours[i])?));
 		}
 		Ok(())
 	}
 	pub fn generate_remaining_cpu_colours(&mut self) {
-		let remaining_num_colours = NUM_COLOURS - self.cpu_colours.len() as i32;
-		self.cpu_colours
-			.extend(gen_n_colours(remaining_num_colours));
+		let remaining_num_colours = NUM_COLOURS - self.cpu_colour_styles.len() as i32;
+		self.cpu_colour_styles
+			.extend(gen_n_styles(remaining_num_colours));
 	}
-	pub fn set_cursor_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.cursor_colour = convert_hex_to_color(hex)?;
-		Ok(())
-	}
+
 	pub fn set_scroll_entry_text_color(&mut self, hex: &str) -> error::Result<()> {
 		self.scroll_text_colour = convert_hex_to_color(hex)?;
-		self.scroll_entry_style = Style::default()
+		self.currently_selected_text_style = Style::default()
 			.fg(self.scroll_text_colour)
 			.bg(self.scroll_bg_colour);
 		Ok(())
 	}
 	pub fn set_scroll_entry_bg_color(&mut self, hex: &str) -> error::Result<()> {
 		self.scroll_bg_colour = convert_hex_to_color(hex)?;
-		self.scroll_entry_style = Style::default()
+		self.currently_selected_text_style = Style::default()
 			.fg(self.scroll_text_colour)
 			.bg(self.scroll_bg_colour);
+		Ok(())
+	}
+
+	pub fn set_widget_title_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.widget_title_style = Style::default().fg(convert_hex_to_color(hex)?);
+		Ok(())
+	}
+
+	pub fn set_graph_colour(&mut self, hex: &str) -> error::Result<()> {
+		self.graph_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
 }
@@ -336,7 +339,7 @@ impl Painter {
 					.block(
 						Block::default()
 							.title(" Help (Press Esc to close) ")
-							.title_style(self.colours.text_style)
+							.title_style(self.colours.widget_title_style)
 							.style(self.colours.border_style)
 							.borders(Borders::ALL),
 					)
@@ -411,7 +414,7 @@ impl Painter {
 							.block(
 								Block::default()
 									.title(" Kill Process Confirmation (Press Esc to close) ")
-									.title_style(self.colours.text_style)
+									.title_style(self.colours.widget_title_style)
 									.style(self.colours.border_style)
 									.borders(Borders::ALL),
 							)
@@ -558,8 +561,8 @@ impl Painter {
 		// CPU usage graph
 		let x_axis: Axis<String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
 		let y_axis = Axis::default()
-			.style(self.colours.text_style)
-			.labels_style(self.colours.text_style)
+			.style(self.colours.graph_style)
+			.labels_style(self.colours.graph_style)
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
@@ -568,7 +571,7 @@ impl Painter {
 
 		for (i, cpu) in cpu_data.iter().enumerate() {
 			cpu_entries_vec.push((
-				Style::default().fg(self.colours.cpu_colours[(i) % self.colours.cpu_colours.len()]),
+				self.colours.cpu_colour_styles[(i) % self.colours.cpu_colour_styles.len()],
 				cpu.cpu_data
 					.iter()
 					.map(<(f64, f64)>::from)
@@ -579,7 +582,7 @@ impl Painter {
 		if app_state.show_average_cpu {
 			if let Some(avg_cpu_entry) = cpu_data.first() {
 				cpu_entries_vec.push((
-					Style::default().fg(self.colours.cpu_colours[0]),
+					self.colours.cpu_colour_styles[0],
 					avg_cpu_entry
 						.cpu_data
 						.iter()
@@ -606,7 +609,7 @@ impl Painter {
 			.block(
 				Block::default()
 					.title(" CPU ")
-					.title_style(self.colours.text_style)
+					.title_style(self.colours.widget_title_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
@@ -658,18 +661,19 @@ impl Painter {
 								== app_state.currently_selected_cpu_table_position - start_position
 							{
 								cpu_row_counter = -1;
-								self.colours.scroll_entry_style
+								self.colours.currently_selected_text_style
 							} else {
 								if cpu_row_counter >= 0 {
 									cpu_row_counter += 1;
 								}
-								Style::default()
-									.fg(self.colours.cpu_colours
-										[itx % self.colours.cpu_colours.len()])
+								self.colours.cpu_colour_styles
+									[itx % self.colours.cpu_colour_styles.len()]
 							}
 						}
-						_ => Style::default()
-							.fg(self.colours.cpu_colours[itx % self.colours.cpu_colours.len()]),
+						_ => {
+							self.colours.cpu_colour_styles
+								[itx % self.colours.cpu_colour_styles.len()]
+						}
 					},
 				)
 			});
@@ -683,13 +687,16 @@ impl Painter {
 
 		// Draw
 		Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
-			.block(Block::default().borders(Borders::ALL).border_style(
-				match app_state.current_widget_selected {
-					app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
-					_ => self.colours.border_style,
-				},
-			))
-			.header_style(Style::default().fg(self.colours.table_header_colour))
+			.block(
+				Block::default()
+					.borders(Borders::ALL)
+					.title_style(self.colours.widget_title_style)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
+					}),
+			)
+			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
@@ -709,8 +716,8 @@ impl Painter {
 
 		// Offset as the zero value isn't drawn otherwise...
 		let y_axis: Axis<&str> = Axis::default()
-			.style(self.colours.text_style)
-			.labels_style(self.colours.text_style)
+			.style(self.colours.graph_style)
+			.labels_style(self.colours.graph_style)
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
@@ -742,7 +749,7 @@ impl Painter {
 			.block(
 				Block::default()
 					.title(" Memory ")
-					.title_style(self.colours.text_style)
+					.title_style(self.colours.widget_title_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Mem => self.colours.highlighted_border_style,
@@ -763,15 +770,15 @@ impl Painter {
 
 		let x_axis: Axis<String> = Axis::default().bounds([0.0, 60_000.0]);
 		let y_axis = Axis::default()
-			.style(self.colours.text_style)
-			.labels_style(self.colours.text_style)
+			.style(self.colours.graph_style)
+			.labels_style(self.colours.graph_style)
 			.bounds([-0.5, 30_f64])
 			.labels(&["0B", "1KiB", "1MiB", "1GiB"]);
 		Chart::default()
 			.block(
 				Block::default()
 					.title(" Network ")
-					.title_style(self.colours.text_style)
+					.title_style(self.colours.widget_title_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Network => self.colours.highlighted_border_style,
@@ -852,13 +859,16 @@ impl Painter {
 			.iter(),
 			mapped_network,
 		)
-		.block(Block::default().borders(Borders::ALL).border_style(
-			match app_state.current_widget_selected {
-				app::WidgetPosition::Network => self.colours.highlighted_border_style,
-				_ => self.colours.border_style,
-			},
-		))
-		.header_style(Style::default().fg(self.colours.table_header_colour))
+		.block(
+			Block::default()
+				.borders(Borders::ALL)
+				.title_style(self.colours.widget_title_style)
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Network => self.colours.highlighted_border_style,
+					_ => self.colours.border_style,
+				}),
+		)
+		.header_style(self.colours.table_header_style)
 		.style(Style::default().fg(self.colours.text_colour))
 		.widths(
 			&(intrinsic_widths
@@ -894,7 +904,7 @@ impl Painter {
 							== app_state.currently_selected_temperature_position - start_position
 						{
 							temp_row_counter = -1;
-							self.colours.scroll_entry_style
+							self.colours.currently_selected_text_style
 						} else {
 							if temp_row_counter >= 0 {
 								temp_row_counter += 1;
@@ -919,14 +929,14 @@ impl Painter {
 			.block(
 				Block::default()
 					.title(" Temperatures ")
-					.title_style(self.colours.text_style)
+					.title_style(self.colours.widget_title_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Temp => self.colours.highlighted_border_style,
 						_ => self.colours.border_style,
 					}),
 			)
-			.header_style(Style::default().fg(self.colours.table_header_colour))
+			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
@@ -960,7 +970,7 @@ impl Painter {
 							== app_state.currently_selected_disk_position - start_position
 						{
 							disk_counter = -1;
-							self.colours.scroll_entry_style
+							self.colours.currently_selected_text_style
 						} else {
 							if disk_counter >= 0 {
 								disk_counter += 1;
@@ -986,14 +996,14 @@ impl Painter {
 			.block(
 				Block::default()
 					.title(" Disk ")
-					.title_style(self.colours.text_style)
+					.title_style(self.colours.widget_title_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Disk => self.colours.highlighted_border_style,
 						_ => self.colours.border_style,
 					}),
 			)
-			.header_style(Style::default().fg(self.colours.table_header_colour))
+			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
 					.into_iter()
@@ -1027,7 +1037,7 @@ impl Painter {
 
 				q.push(Text::styled(
 					" ".to_string(),
-					Style::default().bg(self.colours.cursor_colour),
+					self.colours.currently_selected_text_style,
 				));
 
 				q
@@ -1042,9 +1052,7 @@ impl Painter {
 							if itx == cursor_position {
 								return Text::styled(
 									c.to_string(),
-									Style::default()
-										.fg(self.colours.text_colour)
-										.bg(self.colours.table_header_colour),
+									self.colours.currently_selected_text_style,
 								);
 							}
 						}
@@ -1062,55 +1070,37 @@ impl Painter {
 		let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
 			Text::styled(
 				"Search by PID (Tab for Name): ",
-				Style::default().fg(self.colours.table_header_colour),
+				self.colours.table_header_style,
 			)
 		} else {
 			Text::styled(
 				"Search by Name (Tab for PID): ",
-				Style::default().fg(self.colours.table_header_colour),
+				self.colours.table_header_style,
 			)
 		}];
 
 		// Text options shamelessly stolen from VS Code.
 		let option_text = vec![
-			Text::styled(
-				"\n\n",
-				Style::default().fg(self.colours.table_header_colour),
-			),
-			Text::styled(
-				"Match Case (Alt+C)",
-				Style::default().fg(self.colours.table_header_colour),
-			),
+			Text::styled("\n\n", self.colours.table_header_style),
+			Text::styled("Match Case (Alt+C)", self.colours.table_header_style),
 			if !app_state.search_state.is_ignoring_case() {
-				Text::styled("[*]", Style::default().fg(self.colours.table_header_colour))
+				Text::styled("[*]", self.colours.table_header_style)
 			} else {
-				Text::styled("[ ]", Style::default().fg(self.colours.table_header_colour))
+				Text::styled("[ ]", self.colours.table_header_style)
 			},
-			Text::styled(
-				"     ",
-				Style::default().fg(self.colours.table_header_colour),
-			),
-			Text::styled(
-				"Match Whole Word (Alt+W)",
-				Style::default().fg(self.colours.table_header_colour),
-			),
+			Text::styled("     ", self.colours.table_header_style),
+			Text::styled("Match Whole Word (Alt+W)", self.colours.table_header_style),
 			if app_state.search_state.is_searching_whole_word() {
-				Text::styled("[*]", Style::default().fg(self.colours.table_header_colour))
+				Text::styled("[*]", self.colours.table_header_style)
 			} else {
-				Text::styled("[ ]", Style::default().fg(self.colours.table_header_colour))
+				Text::styled("[ ]", self.colours.table_header_style)
 			},
-			Text::styled(
-				"     ",
-				Style::default().fg(self.colours.table_header_colour),
-			),
-			Text::styled(
-				"Use Regex (Alt+R)",
-				Style::default().fg(self.colours.table_header_colour),
-			),
+			Text::styled("     ", self.colours.table_header_style),
+			Text::styled("Use Regex (Alt+R)", self.colours.table_header_style),
 			if app_state.search_state.is_searching_with_regex() {
-				Text::styled("[*]", Style::default().fg(self.colours.table_header_colour))
+				Text::styled("[*]", self.colours.table_header_style)
 			} else {
-				Text::styled("[ ]", Style::default().fg(self.colours.table_header_colour))
+				Text::styled("[ ]", self.colours.table_header_style)
 			},
 		];
 
@@ -1118,16 +1108,21 @@ impl Painter {
 		search_text.extend(option_text);
 
 		Paragraph::new(search_text.iter())
-			.block(Block::default().borders(Borders::ALL).border_style(
-				if app_state.get_current_regex_matcher().is_err() {
-					Style::default().fg(Color::Red)
-				} else {
-					match app_state.current_widget_selected {
-						app::WidgetPosition::ProcessSearch => self.colours.highlighted_border_style,
-						_ => self.colours.border_style,
-					}
-				},
-			))
+			.block(
+				Block::default()
+					.borders(Borders::ALL)
+					.title_style(self.colours.widget_title_style)
+					.border_style(if app_state.get_current_regex_matcher().is_err() {
+						Style::default().fg(Color::Red)
+					} else {
+						match app_state.current_widget_selected {
+							app::WidgetPosition::ProcessSearch => {
+								self.colours.highlighted_border_style
+							}
+							_ => self.colours.border_style,
+						}
+					}),
+			)
 			.style(Style::default().fg(self.colours.text_colour))
 			.alignment(Alignment::Left)
 			.wrap(false)
@@ -1186,7 +1181,7 @@ impl Painter {
 							== app_state.currently_selected_process_position - start_position
 						{
 							process_counter = -1;
-							self.colours.scroll_entry_style
+							self.colours.currently_selected_text_style
 						} else {
 							if process_counter >= 0 {
 								process_counter += 1;
@@ -1240,14 +1235,14 @@ impl Painter {
 			.block(
 				Block::default()
 					.title(" Processes ")
-					.title_style(self.colours.text_style)
+					.title_style(self.colours.widget_title_style)
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Process => self.colours.highlighted_border_style,
 						_ => self.colours.border_style,
 					}),
 			)
-			.header_style(Style::default().fg(self.colours.table_header_colour))
+			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
 					.into_iter()

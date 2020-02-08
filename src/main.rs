@@ -86,9 +86,10 @@ struct ConfigColours {
 	border_color: Option<String>,
 	highlighted_border_color: Option<String>,
 	text_color: Option<String>,
-	cursor_color: Option<String>,
-	scroll_entry_text_color: Option<String>,
-	scroll_entry_bg_color: Option<String>,
+	selected_text_color: Option<String>,
+	selected_bg_color: Option<String>,
+	widget_title_color: Option<String>,
+	graph_color: Option<String>,
 }
 
 fn main() -> error::Result<()> {
@@ -584,26 +585,32 @@ fn generate_config_colours(
 			painter.colours.set_tx_colour(tx_color)?;
 		}
 
-		if let Some(cursor_color) = &colours.cursor_color {
-			painter.colours.set_cursor_colour(cursor_color)?;
-		}
-
 		if let Some(table_header_color) = &colours.table_header_color {
 			painter
 				.colours
 				.set_table_header_colour(table_header_color)?;
 		}
 
-		if let Some(scroll_entry_text_color) = &colours.scroll_entry_text_color {
+		if let Some(scroll_entry_text_color) = &colours.selected_text_color {
 			painter
 				.colours
 				.set_scroll_entry_text_color(scroll_entry_text_color)?;
 		}
 
-		if let Some(scroll_entry_bg_color) = &colours.scroll_entry_bg_color {
+		if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
 			painter
 				.colours
 				.set_scroll_entry_bg_color(scroll_entry_bg_color)?;
+		}
+
+		if let Some(widget_title_color) = &colours.widget_title_color {
+			painter
+				.colours
+				.set_widget_title_colour(widget_title_color)?;
+		}
+
+		if let Some(graph_color) = &colours.graph_color {
+			painter.colours.set_graph_colour(graph_color)?;
 		}
 	}
 
