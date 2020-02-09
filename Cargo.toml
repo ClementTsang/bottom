@@ -23,7 +23,6 @@ lto = true
 [dependencies]
 chrono = "0.4.10"
 clap = "2.33.0"
-failure = "0.1.6"
 fern = "0.5.9"
 futures-timer = "3.0.1"
 futures = "0.3.3"

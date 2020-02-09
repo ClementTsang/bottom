@@ -27,31 +27,78 @@ const WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "", ""];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
-	static ref HELP_TEXT: [Text<'static>; 22] = [
-		Text::raw("\nGeneral Keybindings\n"),
-		Text::raw("q, Ctrl-c to quit.  Note if you are currently in the search widget, `q` will not work.\n"),
-		Text::raw("Ctrl-r to reset all data.\n"),
-		Text::raw("f to toggle freezing and unfreezing the display.\n"),
-		Text::raw(
-			"Ctrl/Shift-Up, Ctrl/Shift-Down, Ctrl/Shift-Left, and Ctrl/Shift-Right to navigate between widgets.\n"
+	static ref DEFAULT_TEXT_STYLE: Style = Style::default().fg(Color::Gray);
+	static ref DEFAULT_HEADER_STYLE: Style = Style::default().fg(Color::LightBlue);
+	static ref HELP_TEXT: [Text<'static>; 30] = [
+		Text::styled("\n General Keybindings\n", *DEFAULT_HEADER_STYLE),
+		Text::styled("q, Ctrl-c      Quit\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Ctrl-r         Reset all data\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("f              Freeze display\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Ctrl-Arrow     Move selected widget\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Shift-Arrow    Move selected widget\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Up, k          Move cursor up\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Down, j        Move cursor down\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Left, h        Move cursor left\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Right, l       Move cursor right\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Esc            Close dialog box\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("?              Open the help screen\n", *DEFAULT_TEXT_STYLE),
+		Text::styled(
+			"gg             Skip to the first entry of a list\n",
+			*DEFAULT_TEXT_STYLE
 		),
-		Text::raw("Up or k and Down or j scrolls through a list.\n"),
-		Text::raw("Esc to close a dialog window (help or dd confirmation).\n"),
-		Text::raw("? to get this help screen.\n"),
-		Text::raw("\n Process Widget Keybindings\n"),
-		Text::raw("dd to kill the selected process.\n"),
-		Text::raw("c to sort by CPU usage.\n"),
-		Text::raw("m to sort by memory usage.\n"),
-		Text::raw("p to sort by PID.\n"),
-		Text::raw("n to sort by process name.\n"),
-		Text::raw("Tab to group together processes with the same name.\n"),
-		Text::raw("Ctrl-f to toggle searching for a process.  / to just open it.\n"),
-		Text::raw("Use Ctrl-p and Ctrl-n to toggle between searching for PID and name.\n"),
-		Text::raw("Use Tab to set the cursor to the start and end of the bar respectively.\n"),
-		Text::raw("Use Alt-c to toggle whether to ignore case.\n"),
-		Text::raw("Use Alt-m to toggle matching the entire word.\n"),
-		Text::raw("Use Alt-r to toggle regex.\n"),
-		Text::raw("\nFor startup flags, type in \"btm -h\".")
+		Text::styled(
+			"G              Skip to the last entry of a list\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"\n             Process Keybindings\n",
+			*DEFAULT_HEADER_STYLE
+		),
+		Text::styled(
+			"dd             Kill the highlighted process\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled("c              Sort by CPU usage\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("m              Sort by memory usage\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("p              Sort by PID\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("n              Sort by process name\n", *DEFAULT_TEXT_STYLE),
+		Text::styled(
+			"Tab            Group together processes with the same name\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"Ctrl-f, /      Open up the search widget\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled("\n Search Keybindings\n", *DEFAULT_HEADER_STYLE),
+		Text::styled(
+			"Tab            Toggle between searching for PID and name.\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"Ctrl-a         Skip to the start of search widget\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"Ctrl-e         Skip to the end of search widget\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"Alt-c          Toggle whether to ignore case\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"Alt-m          Toggle whether to match the whole word\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"Alt-r          Toggle whether to use regex\n",
+			*DEFAULT_TEXT_STYLE
+		),
+		Text::styled(
+			"\n For startup flags, type in \"btm -h\".",
+			*DEFAULT_TEXT_STYLE
+		)
 	];
 	static ref DISK_HEADERS_LENS: Vec<usize> = DISK_HEADERS
 		.iter()
@@ -129,9 +176,9 @@ impl Painter {
 					.margin(1)
 					.constraints(
 						[
-							Constraint::Percentage(22),
-							Constraint::Percentage(60),
-							Constraint::Percentage(18),
+							Constraint::Percentage(17),
+							Constraint::Percentage(70),
+							Constraint::Percentage(13),
 						]
 						.as_ref(),
 					)
@@ -153,7 +200,7 @@ impl Painter {
 				Paragraph::new(HELP_TEXT.iter())
 					.block(
 						Block::default()
-							.title(" Help (Press Esc to close) ")
+							.title(" Help ")
 							.title_style(self.colours.widget_title_style)
 							.style(self.colours.border_style)
 							.borders(Borders::ALL),

@@ -60,12 +60,10 @@ pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
 			return Ok((r, g, b));
 		}
 
-		Err(error::BottomError::GenericError {
-			message: format!(
+		Err(error::BottomError::GenericError(format!(
 				"Colour hex {} is not of valid length.  It must be a 7 character string of the form \"#112233\".",
 				hex
-			),
-		})
+			)))
 	}
 
 	let rgb = convert_hex_to_rgb(hex)?;

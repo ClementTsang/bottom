@@ -42,11 +42,10 @@ pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
 			process.kill()?;
 		}
 	} else {
-		return Err(BottomError::GenericError {
-			message:
-				"Sorry, support operating systems outside the main three are not implemented yet!"
-					.to_string(),
-		});
+		return Err(BottomError::GenericError(
+			"Sorry, support operating systems outside the main three are not implemented yet!"
+				.to_string(),
+		));
 	}
 
 	Ok(())

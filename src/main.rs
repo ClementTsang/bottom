@@ -3,8 +3,6 @@ extern crate log;
 #[macro_use]
 extern crate clap;
 #[macro_use]
-extern crate failure;
-#[macro_use]
 extern crate lazy_static;
 
 use serde::Deserialize;
@@ -153,13 +151,13 @@ fn main() -> error::Result<()> {
 	};
 
 	if update_rate_in_milliseconds < 250 {
-		return Err(BottomError::InvalidArg {
-			message: "Please set your update rate to be greater than 250 milliseconds.".to_string(),
-		});
+		return Err(BottomError::InvalidArg(
+			"Please set your update rate to be greater than 250 milliseconds.".to_string(),
+		));
 	} else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
-		return Err(BottomError::InvalidArg {
-			message: "Please set your update rate to be less than unsigned INT_MAX.".to_string(),
-		});
+		return Err(BottomError::InvalidArg(
+			"Please set your update rate to be less than unsigned INT_MAX.".to_string(),
+		));
 	}
 
 	// Set other settings
@@ -176,7 +174,11 @@ fn main() -> error::Result<()> {
 				"fahrenheit" | "f" => data_harvester::temperature::TemperatureType::Fahrenheit,
 				"kelvin" | "k" => data_harvester::temperature::TemperatureType::Kelvin,
 				"celsius" | "c" => data_harvester::temperature::TemperatureType::Celsius,
-				_ => data_harvester::temperature::TemperatureType::Celsius,
+				_ => {
+					return Err(BottomError::ConfigError(
+						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
+					));
+				}
 			}
 		} else {
 			data_harvester::temperature::TemperatureType::Celsius

@@ -1,7 +1,7 @@
 [flags]
 avg_cpu = true
 dot_marker = true
-temperature_type = "k"
+temperature_type = "ke"
 rate = 1000
 left_legend = true
 current_usage = false

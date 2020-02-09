@@ -1,102 +1,89 @@
-use failure::Fail;
 use std::result;
 
 /// A type alias for handling errors related to Bottom.
 pub type Result<T> = result::Result<T, BottomError>;
 
 /// An error that can occur while Bottom runs.
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum BottomError {
 	/// An error when there is an IO exception.
-	///
-	/// The data provided is the error found.
-	#[fail(display = "ERROR: Encountered an IO exception: {}", message)]
-	InvalidIO { message: String },
+	InvalidIO(String),
 	/// An error when there is an invalid argument passed in.
-	///
-	/// The data provided is the error found.
-	#[fail(display = "ERROR: Invalid argument: {}", message)]
-	InvalidArg { message: String },
+	InvalidArg(String),
 	/// An error when the heim library encounters a problem.
-	///
-	/// The data provided is the error found.
-	#[fail(
-		display = "ERROR: Invalid error during data collection due to Heim: {}",
-		message
-	)]
-	InvalidHeim { message: String },
+	InvalidHeim(String),
 	/// An error when the Crossterm library encounters a problem.
-	///
-	/// The data provided is the error found.
-	#[fail(display = "ERROR: Invalid error due to Crossterm: {}", message)]
-	CrosstermError { message: String },
-	/// An error to represent generic errors
-	///
-	/// The data provided is the error found.
-	#[fail(display = "ERROR: Invalid generic error: {}", message)]
-	GenericError { message: String },
-	/// An error to represent errors with fern
-	///
-	/// The data provided is the error found.
-	#[fail(display = "ERROR: Invalid fern error: {}", message)]
-	FernError { message: String },
-	/// An error to represent errors with fern
-	///
-	/// The data provided is the error found.
-	#[fail(display = "ERROR: Invalid config file error: {}", message)]
-	ConfigError { message: String },
+	CrosstermError(String),
+	/// An error to represent generic errors.
+	GenericError(String),
+	/// An error to represent errors with fern.
+	FernError(String),
+	/// An error to represent errors with the config.
+	ConfigError(String),
+}
+
+impl std::fmt::Display for BottomError {
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		match *self {
+			BottomError::InvalidIO(ref message) => {
+				write!(f, "Encountered an IO exception: {}", message)
+			}
+			BottomError::InvalidArg(ref message) => write!(f, "Invalid argument: {}", message),
+			BottomError::InvalidHeim(ref message) => write!(
+				f,
+				"Invalid error during data collection due to Heim: {}",
+				message
+			),
+			BottomError::CrosstermError(ref message) => {
+				write!(f, "Invalid error due to Crossterm: {}", message)
+			}
+			BottomError::GenericError(ref message) => write!(f, "{}", message),
+			BottomError::FernError(ref message) => write!(f, "Invalid fern error: {}", message),
+			BottomError::ConfigError(ref message) => {
+				write!(f, "Invalid config file error: {}", message)
+			}
+		}
+	}
 }
 
 impl From<std::io::Error> for BottomError {
 	fn from(err: std::io::Error) -> Self {
-		BottomError::InvalidIO {
-			message: err.to_string(),
-		}
+		BottomError::InvalidIO(err.to_string())
 	}
 }
 
 impl From<heim::Error> for BottomError {
 	fn from(err: heim::Error) -> Self {
-		BottomError::InvalidHeim {
-			message: err.to_string(),
-		}
+		BottomError::InvalidHeim(err.to_string())
 	}
 }
 
 impl From<crossterm::ErrorKind> for BottomError {
 	fn from(err: crossterm::ErrorKind) -> Self {
-		BottomError::CrosstermError {
-			message: err.to_string(),
-		}
+		BottomError::CrosstermError(err.to_string())
 	}
 }
 
 impl From<std::num::ParseIntError> for BottomError {
 	fn from(err: std::num::ParseIntError) -> Self {
-		BottomError::InvalidArg {
-			message: err.to_string(),
-		}
+		BottomError::InvalidArg(err.to_string())
 	}
 }
 
 impl From<std::string::String> for BottomError {
 	fn from(err: std::string::String) -> Self {
-		BottomError::GenericError { message: err }
+		BottomError::GenericError(err)
 	}
 }
 
 impl From<toml::de::Error> for BottomError {
 	fn from(err: toml::de::Error) -> Self {
-		BottomError::ConfigError {
-			message: err.to_string(),
-		}
+		BottomError::ConfigError(err.to_string())
 	}
 }
 
 impl From<fern::InitError> for BottomError {
 	fn from(err: fern::InitError) -> Self {
-		BottomError::FernError {
-			message: err.to_string(),
-		}
+		BottomError::FernError(err.to_string())
 	}
 }

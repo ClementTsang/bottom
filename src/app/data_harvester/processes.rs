@@ -37,12 +37,10 @@ fn cpu_usage_calculation(
 
 	let split_results = stat_results.split('\n').collect::<Vec<&str>>();
 	if split_results.is_empty() {
-		return Err(error::BottomError::InvalidIO {
-			message: format!(
-				"Unable to properly split the stat results; saw {} values, expected at least 1 value.",
-				split_results.len()
-			),
-		});
+		return Err(error::BottomError::InvalidIO(format!(
+			"Unable to properly split the stat results; saw {} values, expected at least 1 value.",
+			split_results.len()
+		)));
 	} else {
 		first_line = split_results[0];
 	}
@@ -51,12 +49,10 @@ fn cpu_usage_calculation(
 
 	// SC in case that the parsing will fail due to length:
 	if val.len() <= 10 {
-		return Err(error::BottomError::InvalidIO {
-			message: format!(
+		return Err(error::BottomError::InvalidIO(format!(
 				"CPU parsing will fail due to too short of a return value; saw {} values, expected 10 values.",
 				val.len()
-			),
-		});
+			)));
 	}
 
 	let user: f64 = val[1].parse::<_>().unwrap_or(0_f64);
