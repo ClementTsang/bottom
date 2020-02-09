@@ -169,7 +169,7 @@ impl Painter {
 	) -> error::Result<()> {
 		terminal.autoresize()?;
 		terminal.draw(|mut f| {
-			if app_state.show_help {
+			if app_state.help_dialog_state.is_showing_help {
 				// Only for the help
 				let vertical_dialog_chunk = Layout::default()
 					.direction(Direction::Vertical)
@@ -209,7 +209,7 @@ impl Painter {
 					.alignment(Alignment::Left)
 					.wrap(true)
 					.render(&mut f, middle_dialog_chunk[1]);
-			} else if app_state.show_dd {
+			} else if app_state.delete_dialog_state.is_showing_dd {
 				let vertical_dialog_chunk = Layout::default()
 					.direction(Direction::Vertical)
 					.margin(1)
@@ -245,7 +245,7 @@ impl Painter {
 					Paragraph::new(dd_text.iter())
 						.block(
 							Block::default()
-								.title(" Kill Process Error (Press Esc to close) ")
+								.title(" Error ")
 								.title_style(self.colours.text_style)
 								.style(self.colours.border_style)
 								.borders(Borders::ALL),
@@ -258,24 +258,42 @@ impl Painter {
 					if let Some(first_pid) = to_kill_processes.1.first() {
 						let dd_text = [
 							if app_state.is_grouped() {
-								Text::raw(format!(
-									"\nAre you sure you want to kill {} process(es) with name {}?",
-									to_kill_processes.1.len(), to_kill_processes.0
-								))
+								if to_kill_processes.1.len() != 1 {
+									Text::raw(format!(
+										"\nAre you sure you want to kill {} processes with the name {}?",
+										to_kill_processes.1.len(), to_kill_processes.0
+									))
+								} else {
+									Text::raw(format!(
+										"\nAre you sure you want to kill {} process with the name {}?",
+										to_kill_processes.1.len(), to_kill_processes.0
+									))
+								}
 							} else {
 								Text::raw(format!(
 									"\nAre you sure you want to kill process {} with PID {}?",
 									to_kill_processes.0, first_pid
 								))
 							},
-							Text::raw("\n\nPress ENTER to proceed, ESC to exit."),
-							Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown."),
+							Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown.\n\n"),
+							if app_state.delete_dialog_state.is_on_yes {
+								Text::styled("Yes", self.colours.currently_selected_text_style)
+							} else {
+								Text::raw("Yes")
+							},
+							Text::raw("                 "),
+							if app_state.delete_dialog_state.is_on_yes {
+								Text::raw("No")
+							} else {
+								Text::styled("No", self.colours.currently_selected_text_style)
+							},
+							
 						];
 
 						Paragraph::new(dd_text.iter())
 							.block(
 								Block::default()
-									.title(" Kill Process Confirmation (Press Esc to close) ")
+									.title(" Confirm Kill Process ")
 									.title_style(self.colours.widget_title_style)
 									.style(self.colours.border_style)
 									.borders(Borders::ALL),
@@ -286,11 +304,11 @@ impl Painter {
 							.render(&mut f, middle_dialog_chunk[1]);
 					} else {
 						// This is a bit nasty, but it works well... I guess.
-						app_state.show_dd = false;
+						app_state.delete_dialog_state.is_showing_dd = false;
 					}
 				} else {
 					// This is a bit nasty, but it works well... I guess.
-					app_state.show_dd = false;
+					app_state.delete_dialog_state.is_showing_dd = false;
 				}
 			} else {
 				// TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases

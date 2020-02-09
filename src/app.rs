@@ -105,6 +105,17 @@ impl AppSearchState {
 	}
 }
 
+#[derive(Default)]
+pub struct AppDeleteDialogState {
+	pub is_showing_dd: bool,
+	pub is_on_yes: bool, // Defaults to "No"
+}
+
+#[derive(Default)]
+pub struct AppHelpDialogState {
+	pub is_showing_help: bool,
+}
+
 // TODO: [OPT] Group like fields together... this is kinda gross to step through
 pub struct App {
 	// Sorting
@@ -129,8 +140,6 @@ pub struct App {
 	awaiting_second_char: bool,
 	second_char: char,
 	pub use_dot: bool,
-	pub show_help: bool,
-	pub show_dd: bool,
 	pub dd_err: Option<String>,
 	to_delete_process_list: Option<(String, Vec<u32>)>,
 	pub is_frozen: bool,
@@ -142,6 +151,8 @@ pub struct App {
 	enable_searching: bool,
 	pub data_collection: DataCollection,
 	pub search_state: AppSearchState,
+	pub delete_dialog_state: AppDeleteDialogState,
+	pub help_dialog_state: AppHelpDialogState,
 }
 
 impl App {
@@ -171,8 +182,6 @@ impl App {
 			awaiting_second_char: false,
 			second_char: ' ',
 			use_dot,
-			show_help: false,
-			show_dd: false,
 			dd_err: None,
 			to_delete_process_list: None,
 			is_frozen: false,
@@ -184,13 +193,15 @@ impl App {
 			enable_searching: false,
 			data_collection: DataCollection::default(),
 			search_state: AppSearchState::default(),
+			delete_dialog_state: AppDeleteDialogState::default(),
+			help_dialog_state: AppHelpDialogState::default(),
 		}
 	}
 
 	pub fn reset(&mut self) {
 		self.reset_multi_tap_keys();
-		self.show_help = false;
-		self.show_dd = false;
+		self.help_dialog_state.is_showing_help = false;
+		self.delete_dialog_state.is_showing_dd = false;
 		if self.enable_searching {
 			self.current_widget_selected = WidgetPosition::Process;
 			self.enable_searching = false;
@@ -204,8 +215,8 @@ impl App {
 	pub fn on_esc(&mut self) {
 		self.reset_multi_tap_keys();
 		if self.is_in_dialog() {
-			self.show_help = false;
-			self.show_dd = false;
+			self.help_dialog_state.is_showing_help = false;
+			self.delete_dialog_state.is_showing_dd = false;
 			self.to_delete_process_list = None;
 			self.dd_err = None;
 		} else if self.enable_searching {
@@ -220,7 +231,7 @@ impl App {
 	}
 
 	fn is_in_dialog(&self) -> bool {
-		self.show_help || self.show_dd
+		self.help_dialog_state.is_showing_help || self.delete_dialog_state.is_showing_dd
 	}
 
 	pub fn toggle_grouping(&mut self) {
@@ -336,18 +347,21 @@ impl App {
 
 	/// One of two functions allowed to run while in a dialog...
 	pub fn on_enter(&mut self) {
-		if self.show_dd {
+		if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
 			// If within dd...
 			if self.dd_err.is_none() {
 				// Also ensure that we didn't just fail a dd...
 				let dd_result = self.kill_highlighted_process();
+				self.delete_dialog_state.is_on_yes = false;
 				if let Err(dd_err) = dd_result {
 					// There was an issue... inform the user...
 					self.dd_err = Some(dd_err.to_string());
 				} else {
-					self.show_dd = false;
+					self.delete_dialog_state.is_showing_dd = false;
 				}
 			}
+		} else {
+			self.delete_dialog_state.is_showing_dd = false;
 		}
 	}
 
@@ -394,6 +408,10 @@ impl App {
 					self.search_state.current_cursor_position -= 1;
 				}
 			}
+		} else {
+			if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
+				self.delete_dialog_state.is_on_yes = true;
+			}
 		}
 	}
 
@@ -405,6 +423,10 @@ impl App {
 				{
 					self.search_state.current_cursor_position += 1;
 				}
+			}
+		} else {
+			if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
+				self.delete_dialog_state.is_on_yes = false;
 			}
 		}
 	}
@@ -485,7 +507,7 @@ impl App {
 									};
 
 									self.to_delete_process_list = Some(current_process);
-									self.show_dd = true;
+									self.delete_dialog_state.is_showing_dd = true;
 								}
 
 								self.reset_multi_tap_keys();
@@ -567,7 +589,7 @@ impl App {
 						self.currently_selected_process_position = 0;
 					}
 					'?' => {
-						self.show_help = true;
+						self.help_dialog_state.is_showing_help = true;
 					}
 					_ => {}
 				}
