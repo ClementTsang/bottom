@@ -279,26 +279,18 @@ pub fn convert_network_data_points(
 	rx_converted_result = get_exact_byte_values(current_data.network_harvest.rx, false);
 	total_rx_converted_result = get_exact_byte_values(current_data.network_harvest.total_rx, false);
 	let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
-	let total_rx_display = if cfg!(not(target_os = "windows")) {
-		format!(
-			"{:.*}{}",
-			1, total_rx_converted_result.0, total_rx_converted_result.1
-		)
-	} else {
-		"N/A".to_string()
-	};
+	let total_rx_display = format!(
+		"{:.*}{}",
+		1, total_rx_converted_result.0, total_rx_converted_result.1
+	);
 
 	tx_converted_result = get_exact_byte_values(current_data.network_harvest.tx, false);
 	total_tx_converted_result = get_exact_byte_values(current_data.network_harvest.total_tx, false);
 	let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
-	let total_tx_display = if cfg!(not(target_os = "windows")) {
-		format!(
-			"{:.*}{}",
-			1, total_tx_converted_result.0, total_tx_converted_result.1
-		)
-	} else {
-		"N/A".to_string()
-	};
+	let total_tx_display = format!(
+		"{:.*}{}",
+		1, total_tx_converted_result.0, total_tx_converted_result.1
+	);
 
 	ConvertedNetworkData {
 		rx,
