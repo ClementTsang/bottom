@@ -1,5 +1,9 @@
 use crate::utils::error;
-use std::{collections::HashMap, process::Command, time::Instant};
+use std::{
+	collections::{hash_map::RandomState, HashMap},
+	process::Command,
+	time::Instant,
+};
 use sysinfo::{ProcessExt, System, SystemExt};
 
 #[derive(Clone)]
@@ -111,10 +115,10 @@ fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 }
 
 /// Note that cpu_percentage should be represented WITHOUT the \times 100 factor!
-fn linux_cpu_usage(
+fn linux_cpu_usage<S: core::hash::BuildHasher>(
 	pid: u32, cpu_usage: f64, cpu_percentage: f64,
-	prev_pid_stats: &HashMap<String, (f64, Instant)>,
-	new_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
+	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
 	curr_time: &Instant,
 ) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
@@ -145,10 +149,10 @@ fn linux_cpu_usage(
 	}
 }
 
-fn convert_ps(
+fn convert_ps<S: core::hash::BuildHasher>(
 	process: &str, cpu_usage: f64, cpu_percentage: f64,
-	prev_pid_stats: &HashMap<String, (f64, Instant)>,
-	new_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
+	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
 	curr_time: &Instant,
 ) -> std::io::Result<ProcessHarvest> {
 	if process.trim().to_string().is_empty() {
@@ -190,7 +194,7 @@ fn convert_ps(
 
 pub fn get_sorted_processes_list(
 	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64,
-	prev_pid_stats: &mut HashMap<String, (f64, Instant)>, use_current_cpu_total: bool,
+	prev_pid_stats: &mut HashMap<String, (f64, Instant), RandomState>, use_current_cpu_total: bool,
 	mem_total_kb: u64, curr_time: &Instant,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
 	let mut process_vector: Vec<ProcessHarvest> = Vec::new();
@@ -207,7 +211,7 @@ pub fn get_sorted_processes_list(
 		if let Ok((cpu_usage, cpu_percentage)) = cpu_calc {
 			let process_stream = split_string.collect::<Vec<&str>>();
 
-			let mut new_pid_stats: HashMap<String, (f64, Instant)> = HashMap::new();
+			let mut new_pid_stats: HashMap<String, (f64, Instant), RandomState> = HashMap::new();
 
 			for process in process_stream {
 				if let Ok(process_object) = convert_ps(

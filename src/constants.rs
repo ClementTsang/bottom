@@ -12,7 +12,7 @@ pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
 pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "";
 
 // Help text
-pub const GENERAL_HELP_TEXT: [&'static str; 14] = [
+pub const GENERAL_HELP_TEXT: [&str; 14] = [
 	"General Keybindings\n\n",
 	"Esc            Close dialog box\n",
 	"q, Ctrl-c      Quit bottom\n",
@@ -29,7 +29,7 @@ pub const GENERAL_HELP_TEXT: [&'static str; 14] = [
 	"G              Skip to the last entry of a list\n",
 ];
 
-pub const PROCESS_HELP_TEXT: [&'static str; 8] = [
+pub const PROCESS_HELP_TEXT: [&str; 8] = [
 	"Process Keybindings\n\n",
 	"dd             Kill the highlighted process\n",
 	"c              Sort by CPU usage\n",
@@ -40,7 +40,7 @@ pub const PROCESS_HELP_TEXT: [&'static str; 8] = [
 	"Ctrl-f, /      Open up the search widget\n",
 ];
 
-pub const SEARCH_HELP_TEXT: [&'static str; 8] = [
+pub const SEARCH_HELP_TEXT: [&str; 8] = [
 	"Search Keybindings\n\n",
 	"Tab            Toggle between searching for PID and name.\n",
 	"Esc            Close search widget\n",

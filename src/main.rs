@@ -53,13 +53,13 @@ enum ResetEvent {
 	Reset,
 }
 
-#[derive(Deserialize)]
+#[derive(Default, Deserialize)]
 struct Config {
 	flags: Option<ConfigFlags>,
 	colors: Option<ConfigColours>,
 }
 
-#[derive(Deserialize)]
+#[derive(Default, Deserialize)]
 struct ConfigFlags {
 	avg_cpu: Option<bool>,
 	dot_marker: Option<bool>,
@@ -73,7 +73,7 @@ struct ConfigFlags {
 	regex: Option<bool>,
 }
 
-#[derive(Deserialize)]
+#[derive(Default, Deserialize)]
 struct ConfigColours {
 	table_header_color: Option<String>,
 	cpu_core_colors: Option<Vec<String>>,
@@ -90,9 +90,8 @@ struct ConfigColours {
 	graph_color: Option<String>,
 }
 
-fn main() -> error::Result<()> {
-	//Parse command line options
-	let matches = clap_app!(app =>
+fn get_matches() -> clap::ArgMatches<'static> {
+	clap_app!(app =>
 		(name: crate_name!())
 		(version: crate_version!())
 		(author: crate_authors!())
@@ -114,123 +113,24 @@ fn main() -> error::Result<()> {
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
 	)
-	.get_matches();
+	.get_matches()
+}
 
-	if cfg!(debug_assertions) {
-		utils::logging::init_logger()?;
-	}
+fn main() -> error::Result<()> {
+	create_logger()?;
+	let matches = get_matches();
 
-	let config_path = std::path::Path::new(matches.value_of("CONFIG_LOCATION").unwrap_or(
-		if cfg!(target_os = "windows") {
-			DEFAULT_WINDOWS_CONFIG_FILE_PATH
-		} else {
-			DEFAULT_UNIX_CONFIG_FILE_PATH
-		},
-	));
+	let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
-	let config_string = std::fs::read_to_string(config_path);
-	let config_toml: Config = if let Ok(config_str) = config_string {
-		toml::from_str(&config_str)?
-	} else {
-		toml::from_str("")?
-	};
-
-	let update_rate_in_milliseconds: u128 = if matches.is_present("RATE_MILLIS") {
-		matches
-			.value_of("RATE_MILLIS")
-			.unwrap_or(&DEFAULT_REFRESH_RATE_IN_MILLISECONDS.to_string())
-			.parse::<u128>()?
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(rate) = flags.rate {
-			rate as u128
-		} else {
-			constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-		}
-	} else {
-		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-	};
-
-	if update_rate_in_milliseconds < 250 {
-		return Err(BottomError::InvalidArg(
-			"Please set your update rate to be greater than 250 milliseconds.".to_string(),
-		));
-	} else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
-		return Err(BottomError::InvalidArg(
-			"Please set your update rate to be less than unsigned INT_MAX.".to_string(),
-		));
-	}
+	let update_rate_in_milliseconds: u128 =
+		get_update_rate_in_milliseconds(&matches.value_of("RATE_MILLIS"), &config)?;
 
 	// Set other settings
-	let temperature_type = if matches.is_present("FAHRENHEIT") {
-		data_harvester::temperature::TemperatureType::Fahrenheit
-	} else if matches.is_present("KELVIN") {
-		data_harvester::temperature::TemperatureType::Kelvin
-	} else if matches.is_present("CELSIUS") {
-		data_harvester::temperature::TemperatureType::Celsius
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(temp_type) = &flags.temperature_type {
-			// Give lowest priority to config.
-			match temp_type.as_str() {
-				"fahrenheit" | "f" => data_harvester::temperature::TemperatureType::Fahrenheit,
-				"kelvin" | "k" => data_harvester::temperature::TemperatureType::Kelvin,
-				"celsius" | "c" => data_harvester::temperature::TemperatureType::Celsius,
-				_ => {
-					return Err(BottomError::ConfigError(
-						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
-					));
-				}
-			}
-		} else {
-			data_harvester::temperature::TemperatureType::Celsius
-		}
-	} else {
-		data_harvester::temperature::TemperatureType::Celsius
-	};
-	let show_average_cpu = if matches.is_present("AVG_CPU") {
-		true
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(avg_cpu) = flags.avg_cpu {
-			avg_cpu
-		} else {
-			false
-		}
-	} else {
-		false
-	};
-	let use_dot = if matches.is_present("DOT_MARKER") {
-		true
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(dot_marker) = flags.dot_marker {
-			dot_marker
-		} else {
-			false
-		}
-	} else {
-		false
-	};
-	let left_legend = if matches.is_present("LEFT_LEGEND") {
-		true
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(left_legend) = flags.left_legend {
-			left_legend
-		} else {
-			false
-		}
-	} else {
-		false
-	};
-
-	let use_current_cpu_total = if matches.is_present("USE_CURR_USAGE") {
-		true
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(current_usage) = flags.current_usage {
-			current_usage
-		} else {
-			false
-		}
-	} else {
-		false
-	};
+	let temperature_type = get_temperature_option(&matches, &config)?;
+	let show_average_cpu = get_avg_cpu_option(&matches, &config);
+	let use_dot = get_use_dot_option(&matches, &config);
+	let left_legend = get_use_left_legend_option(&matches, &config);
+	let use_current_cpu_total = get_use_current_cpu_total_option(&matches, &config);
 
 	// Create "app" struct, which will control most of the program and store settings/state
 	let mut app = app::App::new(
@@ -242,47 +142,10 @@ fn main() -> error::Result<()> {
 		use_current_cpu_total,
 	);
 
-	// Enable grouping immediately if set.
-	if matches.is_present("GROUP_PROCESSES") {
-		app.toggle_grouping();
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(grouping) = flags.group_processes {
-			if grouping {
-				app.toggle_grouping();
-			}
-		}
-	}
-
-	// Set default search method
-	if matches.is_present("CASE_SENSITIVE") {
-		app.search_state.toggle_ignore_case();
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(case_sensitive) = flags.case_sensitive {
-			if case_sensitive {
-				app.search_state.toggle_ignore_case();
-			}
-		}
-	}
-
-	if matches.is_present("WHOLE_WORD") {
-		app.search_state.toggle_search_whole_word();
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(whole_word) = flags.whole_word {
-			if whole_word {
-				app.search_state.toggle_search_whole_word();
-			}
-		}
-	}
-
-	if matches.is_present("REGEX_DEFAULT") {
-		app.search_state.toggle_search_regex();
-	} else if let Some(flags) = &config_toml.flags {
-		if let Some(regex) = flags.regex {
-			if regex {
-				app.search_state.toggle_search_regex();
-			}
-		}
-	}
+	enable_app_grouping(&matches, &config, &mut app);
+	enable_app_case_sensitive(&matches, &config, &mut app);
+	enable_app_match_whole_word(&matches, &config, &mut app);
+	enable_app_use_regex(&matches, &config, &mut app);
 
 	// Set up up tui and crossterm
 	let mut stdout_val = stdout();
@@ -299,37 +162,7 @@ fn main() -> error::Result<()> {
 
 	// Set up input handling
 	let (tx, rx) = mpsc::channel();
-	{
-		let tx = tx.clone();
-		thread::spawn(move || loop {
-			if poll(Duration::from_millis(20)).is_ok() {
-				let mut mouse_timer = Instant::now();
-				let mut keyboard_timer = Instant::now();
-
-				loop {
-					if poll(Duration::from_millis(20)).is_ok() {
-						if let Ok(event) = read() {
-							if let CEvent::Key(key) = event {
-								if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-									if tx.send(Event::KeyInput(key)).is_err() {
-										return;
-									}
-									keyboard_timer = Instant::now();
-								}
-							} else if let CEvent::Mouse(mouse) = event {
-								if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-									if tx.send(Event::MouseInput(mouse)).is_err() {
-										return;
-									}
-									mouse_timer = Instant::now();
-								}
-							}
-						}
-					}
-				}
-			}
-		});
-	}
+	create_input_thread(tx.clone());
 
 	// Cleaning loop
 	{
@@ -343,33 +176,16 @@ fn main() -> error::Result<()> {
 	}
 	// Event loop
 	let (rtx, rrx) = mpsc::channel();
-	{
-		let tx = tx;
-		let temp_type = app.temperature_type.clone();
-		thread::spawn(move || {
-			let tx = tx.clone();
-			let mut data_state = data_harvester::DataState::default();
-			data_state.init();
-			data_state.set_temperature_type(temp_type);
-			data_state.set_use_current_cpu_total(use_current_cpu_total);
-			loop {
-				if let Ok(message) = rrx.try_recv() {
-					match message {
-						ResetEvent::Reset => {
-							data_state.data.first_run_cleanup();
-						}
-					}
-				}
-				futures::executor::block_on(data_state.update_data());
-				let event = Event::Update(Box::from(data_state.data.clone()));
-				tx.send(event).unwrap();
-				thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
-			}
-		});
-	}
+	create_event_thread(
+		tx,
+		rrx,
+		use_current_cpu_total,
+		update_rate_in_milliseconds as u64,
+		app.temperature_type.clone(),
+	);
 
 	let mut painter = canvas::Painter::default();
-	if let Err(config_check) = generate_config_colours(&config_toml, &mut painter) {
+	if let Err(config_check) = generate_config_colours(&config, &mut painter) {
 		cleanup_terminal(&mut terminal)?;
 		return Err(config_check);
 	}
@@ -409,10 +225,10 @@ fn main() -> error::Result<()> {
 							match event.code {
 								KeyCode::Char('c') => break,
 								KeyCode::Char('f') => app.enable_searching(),
-								KeyCode::Left => app.move_left(),
-								KeyCode::Right => app.move_right(),
-								KeyCode::Up => app.move_up(),
-								KeyCode::Down => app.move_down(),
+								KeyCode::Left | KeyCode::Char('h') => app.move_left(),
+								KeyCode::Right | KeyCode::Char('l') => app.move_right(),
+								KeyCode::Up | KeyCode::Char('k') => app.move_up(),
+								KeyCode::Down | KeyCode::Char('j') => app.move_down(),
 								KeyCode::Char('r') => {
 									if rtx.send(ResetEvent::Reset).is_ok() {
 										app.reset();
@@ -424,10 +240,19 @@ fn main() -> error::Result<()> {
 							}
 						} else if let KeyModifiers::SHIFT = event.modifiers {
 							match event.code {
-								KeyCode::Left => app.move_left(),
-								KeyCode::Right => app.move_right(),
-								KeyCode::Up => app.move_up(),
-								KeyCode::Down => app.move_down(),
+								KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('H') => {
+									app.move_left()
+								}
+								KeyCode::Right | KeyCode::Char('l') | KeyCode::Char('L') => {
+									app.move_right()
+								}
+								KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('K') => {
+									app.move_up()
+								}
+								KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('J') => {
+									app.move_down()
+								}
+								KeyCode::Char('/') | KeyCode::Char('?') => app.on_char_key('?'),
 								_ => {}
 							}
 						} else if let KeyModifiers::ALT = event.modifiers {
@@ -525,6 +350,189 @@ fn main() -> error::Result<()> {
 	Ok(())
 }
 
+fn create_logger() -> error::Result<()> {
+	if cfg!(debug_assertions) {
+		utils::logging::init_logger()?;
+	}
+	Ok(())
+}
+
+fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
+	let config_path = std::path::Path::new(flag_config_location.unwrap_or(
+		if cfg!(target_os = "windows") {
+			DEFAULT_WINDOWS_CONFIG_FILE_PATH
+		} else {
+			DEFAULT_UNIX_CONFIG_FILE_PATH
+		},
+	));
+
+	if let Ok(config_str) = std::fs::read_to_string(config_path) {
+		Ok(toml::from_str(config_str.as_str())?)
+	} else {
+		Ok(Config::default())
+	}
+}
+
+fn get_update_rate_in_milliseconds(
+	update_rate: &Option<&str>, config: &Config,
+) -> error::Result<u128> {
+	let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
+		update_rate.parse::<u128>()?
+	} else if let Some(flags) = &config.flags {
+		if let Some(rate) = flags.rate {
+			rate as u128
+		} else {
+			constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+		}
+	} else {
+		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+	};
+
+	if update_rate_in_milliseconds < 250 {
+		return Err(BottomError::InvalidArg(
+			"Please set your update rate to be greater than 250 milliseconds.".to_string(),
+		));
+	} else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
+		return Err(BottomError::InvalidArg(
+			"Please set your update rate to be less than unsigned INT_MAX.".to_string(),
+		));
+	}
+
+	Ok(update_rate_in_milliseconds)
+}
+
+fn get_temperature_option(
+	matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<data_harvester::temperature::TemperatureType> {
+	if matches.is_present("FAHRENHEIT") {
+		return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
+	} else if matches.is_present("KELVIN") {
+		return Ok(data_harvester::temperature::TemperatureType::Kelvin);
+	} else if matches.is_present("CELSIUS") {
+		return Ok(data_harvester::temperature::TemperatureType::Celsius);
+	} else if let Some(flags) = &config.flags {
+		if let Some(temp_type) = &flags.temperature_type {
+			// Give lowest priority to config.
+			match temp_type.as_str() {
+				"fahrenheit" | "f" => {
+					return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
+				}
+				"kelvin" | "k" => {
+					return Ok(data_harvester::temperature::TemperatureType::Kelvin);
+				}
+				"celsius" | "c" => {
+					return Ok(data_harvester::temperature::TemperatureType::Celsius);
+				}
+				_ => {
+					return Err(BottomError::ConfigError(
+						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
+					));
+				}
+			}
+		}
+	}
+	Ok(data_harvester::temperature::TemperatureType::Celsius)
+}
+
+fn get_avg_cpu_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+	if matches.is_present("AVG_CPU") {
+		return true;
+	} else if let Some(flags) = &config.flags {
+		if let Some(avg_cpu) = flags.avg_cpu {
+			return avg_cpu;
+		}
+	}
+
+	false
+}
+
+fn get_use_dot_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+	if matches.is_present("DOT_MARKER") {
+		return true;
+	} else if let Some(flags) = &config.flags {
+		if let Some(dot_marker) = flags.dot_marker {
+			return dot_marker;
+		}
+	}
+	false
+}
+
+fn get_use_left_legend_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+	if matches.is_present("LEFT_LEGEND") {
+		return true;
+	} else if let Some(flags) = &config.flags {
+		if let Some(left_legend) = flags.left_legend {
+			return left_legend;
+		}
+	}
+
+	false
+}
+
+fn get_use_current_cpu_total_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+	if matches.is_present("USE_CURR_USAGE") {
+		return true;
+	} else if let Some(flags) = &config.flags {
+		if let Some(current_usage) = flags.current_usage {
+			return current_usage;
+		}
+	}
+
+	false
+}
+
+fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App) {
+	if matches.is_present("GROUP_PROCESSES") {
+		app.toggle_grouping();
+	} else if let Some(flags) = &config.flags {
+		if let Some(grouping) = flags.group_processes {
+			if grouping {
+				app.toggle_grouping();
+			}
+		}
+	}
+}
+
+fn enable_app_case_sensitive(
+	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App,
+) {
+	if matches.is_present("CASE_SENSITIVE") {
+		app.search_state.toggle_ignore_case();
+	} else if let Some(flags) = &config.flags {
+		if let Some(case_sensitive) = flags.case_sensitive {
+			if case_sensitive {
+				app.search_state.toggle_ignore_case();
+			}
+		}
+	}
+}
+
+fn enable_app_match_whole_word(
+	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App,
+) {
+	if matches.is_present("WHOLE_WORD") {
+		app.search_state.toggle_search_whole_word();
+	} else if let Some(flags) = &config.flags {
+		if let Some(whole_word) = flags.whole_word {
+			if whole_word {
+				app.search_state.toggle_search_whole_word();
+			}
+		}
+	}
+}
+
+fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App) {
+	if matches.is_present("REGEX_DEFAULT") {
+		app.search_state.toggle_search_regex();
+	} else if let Some(flags) = &config.flags {
+		if let Some(regex) = flags.regex {
+			if regex {
+				app.search_state.toggle_search_regex();
+			}
+		}
+	}
+}
+
 fn try_drawing(
 	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 	app: &mut app::App, painter: &mut canvas::Painter,
@@ -549,10 +557,8 @@ fn cleanup_terminal(
 	Ok(())
 }
 
-fn generate_config_colours(
-	config_toml: &Config, painter: &mut canvas::Painter,
-) -> error::Result<()> {
-	if let Some(colours) = &config_toml.colors {
+fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> error::Result<()> {
+	if let Some(colours) = &config.colors {
 		if let Some(border_color) = &colours.border_color {
 			painter.colours.set_border_colour(border_color)?;
 		}
@@ -719,4 +725,64 @@ fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &app::App
 			}
 		}
 	}
+}
+
+fn create_input_thread(
+	tx: std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
+) {
+	thread::spawn(move || loop {
+		if poll(Duration::from_millis(20)).is_ok() {
+			let mut mouse_timer = Instant::now();
+			let mut keyboard_timer = Instant::now();
+
+			loop {
+				if poll(Duration::from_millis(20)).is_ok() {
+					if let Ok(event) = read() {
+						if let CEvent::Key(key) = event {
+							if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+								if tx.send(Event::KeyInput(key)).is_err() {
+									return;
+								}
+								keyboard_timer = Instant::now();
+							}
+						} else if let CEvent::Mouse(mouse) = event {
+							if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+								if tx.send(Event::MouseInput(mouse)).is_err() {
+									return;
+								}
+								mouse_timer = Instant::now();
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+}
+
+fn create_event_thread(
+	tx: std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
+	rrx: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
+	update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
+) {
+	thread::spawn(move || {
+		let tx = tx.clone();
+		let mut data_state = data_harvester::DataState::default();
+		data_state.init();
+		data_state.set_temperature_type(temp_type);
+		data_state.set_use_current_cpu_total(use_current_cpu_total);
+		loop {
+			if let Ok(message) = rrx.try_recv() {
+				match message {
+					ResetEvent::Reset => {
+						data_state.data.first_run_cleanup();
+					}
+				}
+			}
+			futures::executor::block_on(data_state.update_data());
+			let event = Event::Update(Box::from(data_state.data.clone()));
+			tx.send(event).unwrap();
+			thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
+		}
+	});
 }

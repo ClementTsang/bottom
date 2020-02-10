@@ -78,11 +78,14 @@ impl CanvasColours {
 		self.tx_style = Style::default().fg(convert_hex_to_color(hex)?);
 		Ok(())
 	}
-	pub fn set_cpu_colours(&mut self, hex_colours: &Vec<String>) -> error::Result<()> {
+	pub fn set_cpu_colours(&mut self, hex_colours: &[String]) -> error::Result<()> {
 		let max_amount = std::cmp::min(hex_colours.len(), NUM_COLOURS as usize);
-		for i in 0..max_amount {
+		for (itx, hex_colour) in hex_colours.iter().enumerate() {
+			if itx >= max_amount {
+				break;
+			}
 			self.cpu_colour_styles
-				.push(Style::default().fg(convert_hex_to_color(&hex_colours[i])?));
+				.push(Style::default().fg(convert_hex_to_color(hex_colour)?));
 		}
 		Ok(())
 	}

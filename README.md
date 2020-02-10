@@ -48,7 +48,9 @@ TBD
 
 ### Windows
 
-You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately. I plan to add a Chocolatey install option in the future.
+I advise running the program with the `--dot_marker` or `-m` option, as the braille font seems to not work out of the box on Powershell. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+
+I plan to add a Chocolatey install option in the future.
 
 ### macOS
 

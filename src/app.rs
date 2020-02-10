@@ -426,10 +426,8 @@ impl App {
 					self.search_state.current_cursor_position -= 1;
 				}
 			}
-		} else {
-			if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
-				self.delete_dialog_state.is_on_yes = true;
-			}
+		} else if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
+			self.delete_dialog_state.is_on_yes = true;
 		}
 	}
 
@@ -442,10 +440,8 @@ impl App {
 					self.search_state.current_cursor_position += 1;
 				}
 			}
-		} else {
-			if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
-				self.delete_dialog_state.is_on_yes = false;
-			}
+		} else if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
+			self.delete_dialog_state.is_on_yes = false;
 		}
 	}
 
@@ -615,14 +611,12 @@ impl App {
 					self.awaiting_second_char = false;
 				}
 			}
-		} else {
-			if self.help_dialog_state.is_showing_help {
-				match caught_char {
-					'1' => self.help_dialog_state.current_category = AppHelpCategory::General,
-					'2' => self.help_dialog_state.current_category = AppHelpCategory::Process,
-					'3' => self.help_dialog_state.current_category = AppHelpCategory::Search,
-					_ => {}
-				}
+		} else if self.help_dialog_state.is_showing_help {
+			match caught_char {
+				'1' => self.help_dialog_state.current_category = AppHelpCategory::General,
+				'2' => self.help_dialog_state.current_category = AppHelpCategory::Process,
+				'3' => self.help_dialog_state.current_category = AppHelpCategory::Search,
+				_ => {}
 			}
 		}
 	}

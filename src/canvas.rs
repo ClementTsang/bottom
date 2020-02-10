@@ -588,7 +588,7 @@ impl Painter {
 			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
-					.into_iter()
+					.iter()
 					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
@@ -678,7 +678,10 @@ impl Painter {
 			.y_axis(y_axis)
 			.datasets(&[
 				Dataset::default()
-					.name("RX")
+					.name(&format!(
+						"RX: {:7}",
+						app_state.canvas_data.rx_display.clone()
+					))
 					.marker(if app_state.use_dot {
 						Marker::Dot
 					} else {
@@ -687,7 +690,10 @@ impl Painter {
 					.style(self.colours.rx_style)
 					.data(&network_data_rx),
 				Dataset::default()
-					.name("TX")
+					.name(&format!(
+						"TX: {:7}",
+						app_state.canvas_data.tx_display.clone()
+					))
 					.marker(if app_state.use_dot {
 						Marker::Dot
 					} else {
@@ -742,7 +748,7 @@ impl Painter {
 			.style(self.colours.text_style)
 			.widths(
 				&(intrinsic_widths
-					.into_iter()
+					.iter()
 					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
@@ -809,7 +815,7 @@ impl Painter {
 			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
-					.into_iter()
+					.iter()
 					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
@@ -876,7 +882,7 @@ impl Painter {
 			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
-					.into_iter()
+					.iter()
 					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
@@ -1122,7 +1128,7 @@ impl Painter {
 			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
-					.into_iter()
+					.iter()
 					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
 					.collect::<Vec<_>>()),
 			)
