@@ -26,8 +26,7 @@ const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 const MEM_HEADERS: [&str; 3] = ["Mem", "Usage", "Usage%"];
-const NON_WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
-const WINDOWS_NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "", ""];
+const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
@@ -49,11 +48,7 @@ lazy_static! {
 		.iter()
 		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
 		.collect::<Vec<_>>();
-	static ref NON_WINDOWS_NETWORK_HEADERS_LENS: Vec<usize> = NON_WINDOWS_NETWORK_HEADERS
-		.iter()
-		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-		.collect::<Vec<_>>();
-	static ref WINDOWS_NETWORK_HEADERS_LENS: Vec<usize> = WINDOWS_NETWORK_HEADERS
+	static ref NETWORK_HEADERS_LENS: Vec<usize> = NETWORK_HEADERS
 		.iter()
 		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
 		.collect::<Vec<_>>();
@@ -713,64 +708,45 @@ impl Painter {
 		let total_tx_display: String = app_state.canvas_data.total_tx_display.clone();
 
 		// Gross but I need it to work...
-		let total_network = if cfg!(not(target_os = "windows")) {
-			vec![vec![
-				rx_display,
-				tx_display,
-				total_rx_display,
-				total_tx_display,
-			]]
-		} else {
-			vec![vec![rx_display, tx_display]]
-		};
+		let total_network = vec![vec![
+			rx_display,
+			tx_display,
+			total_rx_display,
+			total_tx_display,
+		]];
 		let mapped_network = total_network
 			.iter()
 			.map(|val| Row::StyledData(val.iter(), self.colours.text_style));
 
 		// Calculate widths
-		let width_ratios: Vec<f64>;
-		let lens: &Vec<usize>;
+		let width_ratios: Vec<f64> = vec![0.25, 0.25, 0.25, 0.25];
+		let lens: &Vec<usize> = &NETWORK_HEADERS_LENS;
 		let width = f64::from(draw_loc.width);
 
-		if cfg!(not(target_os = "windows")) {
-			width_ratios = vec![0.25, 0.25, 0.25, 0.25];
-			lens = &NON_WINDOWS_NETWORK_HEADERS_LENS;
-		} else {
-			width_ratios = vec![0.25, 0.25];
-			lens = &WINDOWS_NETWORK_HEADERS_LENS;
-		}
 		let variable_intrinsic_results =
 			get_variable_intrinsic_widths(width as u16, &width_ratios, lens);
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		// Draw
-		Table::new(
-			if cfg!(not(target_os = "windows")) {
-				NON_WINDOWS_NETWORK_HEADERS
-			} else {
-				WINDOWS_NETWORK_HEADERS
-			}
-			.iter(),
-			mapped_network,
-		)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title_style(self.colours.widget_title_style)
-				.border_style(match app_state.current_widget_selected {
-					app::WidgetPosition::Network => self.colours.highlighted_border_style,
-					_ => self.colours.border_style,
-				}),
-		)
-		.header_style(self.colours.table_header_style)
-		.style(self.colours.text_style)
-		.widths(
-			&(intrinsic_widths
-				.into_iter()
-				.map(|calculated_width| Constraint::Length(*calculated_width as u16))
-				.collect::<Vec<_>>()),
-		)
-		.render(f, draw_loc);
+		Table::new(NETWORK_HEADERS.iter(), mapped_network)
+			.block(
+				Block::default()
+					.borders(Borders::ALL)
+					.title_style(self.colours.widget_title_style)
+					.border_style(match app_state.current_widget_selected {
+						app::WidgetPosition::Network => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
+					}),
+			)
+			.header_style(self.colours.table_header_style)
+			.style(self.colours.text_style)
+			.widths(
+				&(intrinsic_widths
+					.into_iter()
+					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
+					.collect::<Vec<_>>()),
+			)
+			.render(f, draw_loc);
 	}
 
 	fn draw_temp_table<B: backend::Backend>(

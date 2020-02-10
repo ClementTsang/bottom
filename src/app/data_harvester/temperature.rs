@@ -56,9 +56,11 @@ pub async fn get_temperature_data(
 				component_name: component.get_label().to_string(),
 				temperature: match temp_type {
 					TemperatureType::Celsius => component.get_temperature(),
-					TemperatureType::Kelvin => component.get_temperature() + 273.15,
+					TemperatureType::Kelvin => {
+						convert_celsius_to_kelvin(component.get_temperature())
+					}
 					TemperatureType::Fahrenheit => {
-						(component.get_temperature() * (9.0 / 5.0)) + 32.0
+						convert_celsius_to_fahrenheit(component.get_temperature())
 					}
 				},
 			});
@@ -84,4 +86,12 @@ pub async fn get_temperature_data(
 	});
 
 	Ok(temperature_vec)
+}
+
+fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+	celsius + 273.15
+}
+
+fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+	(celsius * (9.0 / 5.0)) + 32.0
 }
