@@ -12,7 +12,7 @@ pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
 pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "";
 
 // Help text
-pub const GENERAL_HELP_TEXT: [&str; 14] = [
+pub const GENERAL_HELP_TEXT: [&str; 15] = [
 	"General Keybindings\n\n",
 	"Esc            Close dialog box\n",
 	"q, Ctrl-c      Quit bottom\n",
@@ -20,6 +20,7 @@ pub const GENERAL_HELP_TEXT: [&str; 14] = [
 	"f              Freeze display\n",
 	"Ctrl-Arrow     Move currently selected widget\n",
 	"Shift-Arrow    Move currently selected widget\n",
+	"H/J/K/L        Move currently selected widget up/down/left/right\n",
 	"Up, k          Move cursor up\n",
 	"Down, j        Move cursor down\n",
 	"Left, h        Move cursor left\n",
