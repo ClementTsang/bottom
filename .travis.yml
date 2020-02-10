@@ -23,8 +23,11 @@ before_install:
     elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
       export TARGET=x86_64-apple-darwin;
     fi
-before_script: rustup target add $TARGET
+before_script:
+  - rustup target add $TARGET
+  - rustup component add clippy
 script:
+  - cargo clippy -- -D warnings
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
 
