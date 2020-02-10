@@ -373,8 +373,8 @@ fn main() -> error::Result<()> {
 		cleanup_terminal(&mut terminal)?;
 		return Err(config_check);
 	}
-
 	painter.colours.generate_remaining_cpu_colours();
+	painter.initialize();
 
 	loop {
 		// TODO: [OPT] this should not block...
