@@ -1,5 +1,5 @@
-mod drawing_utils;
-use drawing_utils::*;
+mod colour_utils;
+use colour_utils::*;
 use tui::style::{Color, Style};
 
 use crate::{constants::*, utils::error};
