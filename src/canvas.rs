@@ -29,18 +29,18 @@ const FORCE_MIN_THRESHOLD: usize = 5;
 lazy_static! {
 	static ref DEFAULT_TEXT_STYLE: Style = Style::default().fg(Color::Gray);
 	static ref DEFAULT_HEADER_STYLE: Style = Style::default().fg(Color::LightBlue);
-	static ref HELP_TEXT: [Text<'static>; 30] = [
+	static ref GENERAL_HELP_TEXT: [Text<'static>; 14] = [
 		Text::styled("\n General Keybindings\n", *DEFAULT_HEADER_STYLE),
-		Text::styled("q, Ctrl-c      Quit\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Esc            Close dialog box\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("q, Ctrl-c      Quit bottom\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("Ctrl-r         Reset all data\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("f              Freeze display\n", *DEFAULT_TEXT_STYLE),
-		Text::styled("Ctrl-Arrow     Move selected widget\n", *DEFAULT_TEXT_STYLE),
-		Text::styled("Shift-Arrow    Move selected widget\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Ctrl-Arrow     Move currently selected widget\n", *DEFAULT_TEXT_STYLE),
+		Text::styled("Shift-Arrow    Move currently selected widget\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("Up, k          Move cursor up\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("Down, j        Move cursor down\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("Left, h        Move cursor left\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("Right, l       Move cursor right\n", *DEFAULT_TEXT_STYLE),
-		Text::styled("Esc            Close dialog box\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("?              Open the help screen\n", *DEFAULT_TEXT_STYLE),
 		Text::styled(
 			"gg             Skip to the first entry of a list\n",
@@ -50,10 +50,9 @@ lazy_static! {
 			"G              Skip to the last entry of a list\n",
 			*DEFAULT_TEXT_STYLE
 		),
-		Text::styled(
-			"\n             Process Keybindings\n",
-			*DEFAULT_HEADER_STYLE
-		),
+	];
+	static ref PROCESS_HELP_TEXT : [Text<'static>; 8] = [
+		Text::styled("\n Process Keybindings\n", *DEFAULT_HEADER_STYLE),
 		Text::styled(
 			"dd             Kill the highlighted process\n",
 			*DEFAULT_TEXT_STYLE
@@ -70,11 +69,14 @@ lazy_static! {
 			"Ctrl-f, /      Open up the search widget\n",
 			*DEFAULT_TEXT_STYLE
 		),
+	];
+	static ref SEARCH_HELP_TEXT : [Text<'static>; 8] = [
 		Text::styled("\n Search Keybindings\n", *DEFAULT_HEADER_STYLE),
 		Text::styled(
 			"Tab            Toggle between searching for PID and name.\n",
 			*DEFAULT_TEXT_STYLE
 		),
+		Text::styled("Esc            Close search widget\n", *DEFAULT_TEXT_STYLE),
 		Text::styled(
 			"Ctrl-a         Skip to the start of search widget\n",
 			*DEFAULT_TEXT_STYLE
@@ -93,10 +95,6 @@ lazy_static! {
 		),
 		Text::styled(
 			"Alt-r          Toggle whether to use regex\n",
-			*DEFAULT_TEXT_STYLE
-		),
-		Text::styled(
-			"\n For startup flags, type in \"btm -h\".",
 			*DEFAULT_TEXT_STYLE
 		)
 	];
@@ -176,9 +174,9 @@ impl Painter {
 					.margin(1)
 					.constraints(
 						[
-							Constraint::Percentage(17),
-							Constraint::Percentage(70),
-							Constraint::Percentage(13),
+							Constraint::Percentage(32),
+							Constraint::Percentage(36),
+							Constraint::Percentage(32),
 						]
 						.as_ref(),
 					)
@@ -197,10 +195,18 @@ impl Painter {
 					)
 					.split(vertical_dialog_chunk[1]);
 
-				Paragraph::new(HELP_TEXT.iter())
+				const HELP_BASE : &str = " Help ── 1: General ─── 2: Processes ─── 3: Search ─── Esc to close ";
+				let repeat_num = max(0, middle_dialog_chunk[1].width as i32 - HELP_BASE.chars().count() as i32 - 2);
+				let help_title = format!(" Help ─{}─ 1: General ─── 2: Processes ─── 3: Search ─── Esc to close ", "─".repeat(repeat_num as usize));
+
+				Paragraph::new(match app_state.help_dialog_state.current_category {
+					app::AppHelpCategory::General => (*GENERAL_HELP_TEXT).to_vec(),
+					app::AppHelpCategory::Process => (*PROCESS_HELP_TEXT).to_vec(),
+					app::AppHelpCategory::Search => (*SEARCH_HELP_TEXT).to_vec(),
+				}.iter())
 					.block(
 						Block::default()
-							.title(" Help ")
+							.title(&help_title)
 							.title_style(self.colours.widget_title_style)
 							.style(self.colours.border_style)
 							.borders(Borders::ALL),
@@ -242,10 +248,14 @@ impl Painter {
 						dd_err
 					))];
 
+					const ERROR_BASE : &str = " Error ── Esc to close ";
+					let repeat_num = max(0, middle_dialog_chunk[1].width as i32 - ERROR_BASE.chars().count() as i32 - 2);
+					let error_title = format!(" Error ─{}─ Esc to close ", "─".repeat(repeat_num as usize));
+
 					Paragraph::new(dd_text.iter())
 						.block(
 							Block::default()
-								.title(" Error ")
+								.title(&error_title)
 								.title_style(self.colours.text_style)
 								.style(self.colours.border_style)
 								.borders(Borders::ALL),
@@ -275,7 +285,7 @@ impl Painter {
 									to_kill_processes.0, first_pid
 								))
 							},
-							Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown.\n\n"),
+							Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown.\n\n\n"),
 							if app_state.delete_dialog_state.is_on_yes {
 								Text::styled("Yes", self.colours.currently_selected_text_style)
 							} else {
@@ -290,10 +300,14 @@ impl Painter {
 							
 						];
 
+						const DD_BASE : &str = " Confirm Kill Process ── Esc to close ";
+						let repeat_num = max(0, middle_dialog_chunk[1].width as i32 - DD_BASE.chars().count() as i32 - 2);
+						let dd_title = format!(" Confirm Kill Process ─{}─ Esc to close ", "─".repeat(repeat_num as usize));
+
 						Paragraph::new(dd_text.iter())
 							.block(
 								Block::default()
-									.title(" Confirm Kill Process ")
+									.title(&dd_title)
 									.title_style(self.colours.widget_title_style)
 									.style(self.colours.border_style)
 									.borders(Borders::ALL),

@@ -111,9 +111,24 @@ pub struct AppDeleteDialogState {
 	pub is_on_yes: bool, // Defaults to "No"
 }
 
-#[derive(Default)]
+pub enum AppHelpCategory {
+	General,
+	Process,
+	Search,
+}
+
 pub struct AppHelpDialogState {
 	pub is_showing_help: bool,
+	pub current_category: AppHelpCategory,
+}
+
+impl Default for AppHelpDialogState {
+	fn default() -> Self {
+		AppHelpDialogState {
+			is_showing_help: false,
+			current_category: AppHelpCategory::General,
+		}
+	}
 }
 
 // TODO: [OPT] Group like fields together... this is kinda gross to step through
@@ -216,7 +231,9 @@ impl App {
 		self.reset_multi_tap_keys();
 		if self.is_in_dialog() {
 			self.help_dialog_state.is_showing_help = false;
+			self.help_dialog_state.current_category = AppHelpCategory::General;
 			self.delete_dialog_state.is_showing_dd = false;
+			self.delete_dialog_state.is_on_yes = false;
 			self.to_delete_process_list = None;
 			self.dd_err = None;
 		} else if self.enable_searching {
@@ -353,8 +370,9 @@ impl App {
 				// Also ensure that we didn't just fail a dd...
 				let dd_result = self.kill_highlighted_process();
 				self.delete_dialog_state.is_on_yes = false;
+
+				// Check if there was an issue... if so, inform the user.
 				if let Err(dd_err) = dd_result {
-					// There was an issue... inform the user...
 					self.dd_err = Some(dd_err.to_string());
 				} else {
 					self.delete_dialog_state.is_showing_dd = false;
@@ -595,6 +613,15 @@ impl App {
 				}
 				if self.awaiting_second_char && caught_char != self.second_char {
 					self.awaiting_second_char = false;
+				}
+			}
+		} else {
+			if self.help_dialog_state.is_showing_help {
+				match caught_char {
+					'1' => self.help_dialog_state.current_category = AppHelpCategory::General,
+					'2' => self.help_dialog_state.current_category = AppHelpCategory::Process,
+					'3' => self.help_dialog_state.current_category = AppHelpCategory::Search,
+					_ => {}
 				}
 			}
 		}
