@@ -24,11 +24,11 @@ Features of bottom include:
 
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
-| OS                               | CPU | Memory | Disks | Temperature | Processes | Networks              |
-| -------------------------------- | --- | ------ | ----- | ----------- | --------- | --------------------- |
-| Linux (tested on Arch Linux)     | ✓   | ✓      | ✓     | ✓           | ✓         | ✓                     |
-| Windows (tested on Windows 10)   | ✓   | ✓      | ✓     | ✗           | ✓         | Total RX/TX not shown |
-| macOS (tested on macOS Catalina) | ✓   | ✓      | ✓     | ✓           | ✓         | ✓                     |
+| OS                               | CPU | Memory | Disks | Temperature | Processes | Networks |
+| -------------------------------- | --- | ------ | ----- | ----------- | --------- | -------- |
+| Linux (tested on Arch Linux)     | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
+| Windows (tested on Windows 10)   | ✓   | ✓      | ✓     | ✗           | ✓         | ✓        |
+| macOS (tested on macOS Catalina) | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
 
 ## Installation
 
