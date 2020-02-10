@@ -50,7 +50,7 @@ pub async fn get_temperature_data(
 			}
 		}
 	} else {
-		let sensor_data = sys.get_components_list();
+		let sensor_data = sys.get_components();
 		for component in sensor_data {
 			temperature_vec.push(TempHarvest {
 				component_name: component.get_label().to_string(),

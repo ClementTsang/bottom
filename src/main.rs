@@ -361,8 +361,8 @@ fn main() -> error::Result<()> {
 					}
 				}
 				futures::executor::block_on(data_state.update_data());
-				tx.send(Event::Update(Box::from(data_state.data.clone())))
-					.unwrap(); // TODO: [UNWRAP] Might be required, it's in a closure and idk how to deal with it
+				let event = Event::Update(Box::from(data_state.data.clone()));
+				tx.send(event).unwrap();
 				thread::sleep(Duration::from_millis(update_rate_in_milliseconds as u64));
 			}
 		});

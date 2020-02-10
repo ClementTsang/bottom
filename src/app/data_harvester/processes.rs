@@ -231,7 +231,7 @@ pub fn get_sorted_processes_list(
 			error!("Result: {:?}", cpu_calc.err());
 		}
 	} else {
-		let process_hashmap = sys.get_process_list();
+		let process_hashmap = sys.get_processes();
 		for process_val in process_hashmap.values() {
 			let name = if process_val.name().is_empty() {
 				let process_cmd = process_val.cmd();

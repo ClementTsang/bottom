@@ -75,7 +75,7 @@ impl Default for DataState {
 	fn default() -> Self {
 		DataState {
 			data: Data::default(),
-			sys: System::new(),
+			sys: System::new_all(),
 			prev_pid_stats: HashMap::new(),
 			prev_idle: 0_f64,
 			prev_non_idle: 0_f64,
@@ -96,7 +96,6 @@ impl DataState {
 	}
 
 	pub fn init(&mut self) {
-		self.sys.refresh_all();
 		self.mem_total_kb = self.sys.get_total_memory();
 		futures::executor::block_on(self.update_data());
 		std::thread::sleep(std::time::Duration::from_millis(250));
@@ -109,7 +108,7 @@ impl DataState {
 		if !cfg!(target_os = "linux") {
 			// For now, might be just windows tbh
 			self.sys.refresh_processes();
-			self.sys.refresh_network();
+			self.sys.refresh_networks();
 		}
 
 		let current_instant = std::time::Instant::now();
