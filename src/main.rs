@@ -197,6 +197,7 @@ fn main() -> error::Result<()> {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
+					debug!("Event: {:?}", event);
 					if event.modifiers.is_empty() {
 						// If only a code, and no modifiers, don't bother...
 
@@ -212,6 +213,10 @@ fn main() -> error::Result<()> {
 							KeyCode::Down => app.on_down_key(),
 							KeyCode::Left => app.on_left_key(),
 							KeyCode::Right => app.on_right_key(),
+							KeyCode::Char('H') => app.move_left(),
+							KeyCode::Char('L') => app.move_right(),
+							KeyCode::Char('K') => app.move_up(),
+							KeyCode::Char('J') => app.move_down(),
 							KeyCode::Char(character) => app.on_char_key(character),
 							KeyCode::Esc => app.on_esc(),
 							KeyCode::Enter => app.on_enter(),
@@ -225,10 +230,10 @@ fn main() -> error::Result<()> {
 							match event.code {
 								KeyCode::Char('c') => break,
 								KeyCode::Char('f') => app.enable_searching(),
-								KeyCode::Left | KeyCode::Char('h') => app.move_left(),
-								KeyCode::Right | KeyCode::Char('l') => app.move_right(),
-								KeyCode::Up | KeyCode::Char('k') => app.move_up(),
-								KeyCode::Down | KeyCode::Char('j') => app.move_down(),
+								KeyCode::Left => app.move_left(),
+								KeyCode::Right => app.move_right(),
+								KeyCode::Up => app.move_up(),
+								KeyCode::Down => app.move_down(),
 								KeyCode::Char('r') => {
 									if rtx.send(ResetEvent::Reset).is_ok() {
 										app.reset();
