@@ -30,7 +30,7 @@ lazy_static! {
 	static ref DEFAULT_TEXT_STYLE: Style = Style::default().fg(Color::Gray);
 	static ref DEFAULT_HEADER_STYLE: Style = Style::default().fg(Color::LightBlue);
 	static ref GENERAL_HELP_TEXT: [Text<'static>; 14] = [
-		Text::styled("\n General Keybindings\n", *DEFAULT_HEADER_STYLE),
+		Text::styled("General Keybindings\n\n", *DEFAULT_HEADER_STYLE),
 		Text::styled("Esc            Close dialog box\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("q, Ctrl-c      Quit bottom\n", *DEFAULT_TEXT_STYLE),
 		Text::styled("Ctrl-r         Reset all data\n", *DEFAULT_TEXT_STYLE),
@@ -52,7 +52,7 @@ lazy_static! {
 		),
 	];
 	static ref PROCESS_HELP_TEXT : [Text<'static>; 8] = [
-		Text::styled("\n Process Keybindings\n", *DEFAULT_HEADER_STYLE),
+		Text::styled("Process Keybindings\n\n", *DEFAULT_HEADER_STYLE),
 		Text::styled(
 			"dd             Kill the highlighted process\n",
 			*DEFAULT_TEXT_STYLE
@@ -71,7 +71,7 @@ lazy_static! {
 		),
 	];
 	static ref SEARCH_HELP_TEXT : [Text<'static>; 8] = [
-		Text::styled("\n Search Keybindings\n", *DEFAULT_HEADER_STYLE),
+		Text::styled("Search Keybindings\n\n", *DEFAULT_HEADER_STYLE),
 		Text::styled(
 			"Tab            Toggle between searching for PID and name.\n",
 			*DEFAULT_TEXT_STYLE
@@ -1000,10 +1000,15 @@ impl Painter {
 		search_text.extend(query_with_cursor);
 		search_text.extend(option_text);
 
+		const TITLE_BASE : &str = " Esc to close ";
+		let repeat_num = max(0, draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2);
+		let title = format!("{} Esc to close ", "─".repeat(repeat_num as usize));
+
 		Paragraph::new(search_text.iter())
 			.block(
 				Block::default()
 					.borders(Borders::ALL)
+					.title(&title)
 					.title_style(self.colours.widget_title_style)
 					.border_style(if app_state.get_current_regex_matcher().is_err() {
 						Style::default().fg(Color::Red)
