@@ -236,7 +236,7 @@ pub fn get_sorted_processes_list(
 	} else {
 		let process_hashmap = sys.get_processes();
 		let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
-		//let num_cpus = sys.get_processors().len() as f64;
+		let num_cpus = sys.get_processors().len() as f64;
 		for process_val in process_hashmap.values() {
 			let name = if process_val.name().is_empty() {
 				let process_cmd = process_val.cmd();
@@ -259,7 +259,11 @@ pub fn get_sorted_processes_list(
 				process_val.name().to_string()
 			};
 
-			let pcu = process_val.cpu_usage() as f64;
+			let pcu = if cfg!(target_os = "windows") {
+				process_val.cpu_usage() as f64
+			} else {
+				process_val.cpu_usage() as f64 / num_cpus
+			};
 			let process_cpu_usage = if use_current_cpu_total {
 				pcu / cpu_usage
 			} else {
