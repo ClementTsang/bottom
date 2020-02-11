@@ -104,6 +104,7 @@ impl DataState {
 
 	pub async fn update_data(&mut self) {
 		self.sys.refresh_system();
+		self.sys.refresh_processes();
 
 		if cfg!(not(target_os = "linux")) {
 			self.sys.refresh_processes();

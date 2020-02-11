@@ -84,7 +84,7 @@ Run using `btm`.
 
 - `-l`, `--left_legend` will move external table legends to the left side rather than the right side. Right side is default.
 
-- `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage. Only affects Linux for now.
+- `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage.
 
 - `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
 

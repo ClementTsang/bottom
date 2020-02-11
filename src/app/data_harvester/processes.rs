@@ -4,8 +4,7 @@ use std::{
 	process::Command,
 	time::Instant,
 };
-use sysinfo::{ProcessExt, System, SystemExt};
-
+use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 #[derive(Clone)]
 pub enum ProcessSorting {
 	CPU,
@@ -114,9 +113,9 @@ fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 	Ok(utime + stime) // This seems to match top...
 }
 
-/// Note that cpu_percentage should be represented WITHOUT the \times 100 factor!
+/// Note that cpu_fraction should be represented WITHOUT the \times 100 factor!
 fn linux_cpu_usage<S: core::hash::BuildHasher>(
-	pid: u32, cpu_usage: f64, cpu_percentage: f64,
+	pid: u32, cpu_usage: f64, cpu_fraction: f64,
 	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
 	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
 	curr_time: Instant,
@@ -145,12 +144,12 @@ fn linux_cpu_usage<S: core::hash::BuildHasher>(
 	if use_current_cpu_total {
 		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
 	} else {
-		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64 * cpu_percentage)
+		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64 * cpu_fraction)
 	}
 }
 
 fn convert_ps<S: core::hash::BuildHasher>(
-	process: &str, cpu_usage: f64, cpu_percentage: f64,
+	process: &str, cpu_usage: f64, cpu_fraction: f64,
 	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
 	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
 	curr_time: Instant,
@@ -183,7 +182,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
 		cpu_usage_percent: linux_cpu_usage(
 			pid,
 			cpu_usage,
-			cpu_percentage,
+			cpu_fraction,
 			prev_pid_stats,
 			new_pid_stats,
 			use_current_cpu_total,
@@ -208,7 +207,7 @@ pub fn get_sorted_processes_list(
 		let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
 		let split_string = ps_stdout.split('\n');
 		let cpu_calc = cpu_usage_calculation(prev_idle, prev_non_idle);
-		if let Ok((cpu_usage, cpu_percentage)) = cpu_calc {
+		if let Ok((cpu_usage, cpu_fraction)) = cpu_calc {
 			let process_stream = split_string.collect::<Vec<&str>>();
 
 			let mut new_pid_stats: HashMap<String, (f64, Instant), RandomState> = HashMap::new();
@@ -217,7 +216,7 @@ pub fn get_sorted_processes_list(
 				if let Ok(process_object) = convert_ps(
 					process,
 					cpu_usage,
-					cpu_percentage,
+					cpu_fraction,
 					&prev_pid_stats,
 					&mut new_pid_stats,
 					use_current_cpu_total,
@@ -236,6 +235,8 @@ pub fn get_sorted_processes_list(
 		}
 	} else {
 		let process_hashmap = sys.get_processes();
+		let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
+		//let num_cpus = sys.get_processors().len() as f64;
 		for process_val in process_hashmap.values() {
 			let name = if process_val.name().is_empty() {
 				let process_cmd = process_val.cmd();
@@ -258,11 +259,18 @@ pub fn get_sorted_processes_list(
 				process_val.name().to_string()
 			};
 
+			let pcu = process_val.cpu_usage() as f64;
+			let process_cpu_usage = if use_current_cpu_total {
+				pcu / cpu_usage
+			} else {
+				pcu
+			};
+
 			process_vector.push(ProcessHarvest {
 				pid: process_val.pid() as u32,
 				name,
 				mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
-				cpu_usage_percent: f64::from(process_val.cpu_usage()),
+				cpu_usage_percent: process_cpu_usage,
 			});
 		}
 	}
