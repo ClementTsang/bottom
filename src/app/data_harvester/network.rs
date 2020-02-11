@@ -20,8 +20,8 @@ impl NetworkHarvest {
 }
 
 pub async fn get_network_data(
-	sys: &System, prev_net_access_time: &Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
-	curr_time: &Instant,
+	sys: &System, prev_net_access_time: Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
+	curr_time: Instant,
 ) -> NetworkHarvest {
 	let mut io_data = net::io_counters();
 	let mut total_rx: u64 = 0;
@@ -42,9 +42,7 @@ pub async fn get_network_data(
 		}
 	}
 
-	let elapsed_time = curr_time
-		.duration_since(*prev_net_access_time)
-		.as_secs_f64();
+	let elapsed_time = curr_time.duration_since(prev_net_access_time).as_secs_f64();
 
 	let rx = ((total_rx - *prev_net_rx) as f64 / elapsed_time) as u64;
 	let tx = ((total_tx - *prev_net_tx) as f64 / elapsed_time) as u64;

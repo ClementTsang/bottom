@@ -118,10 +118,10 @@ impl DataState {
 		// Network
 		self.data.network = network::get_network_data(
 			&self.sys,
-			&self.data.last_collection_time,
+			self.data.last_collection_time,
 			&mut self.data.network.total_rx,
 			&mut self.data.network.total_tx,
-			&current_instant,
+			current_instant,
 		)
 		.await;
 
@@ -160,7 +160,7 @@ impl DataState {
 				&mut self.prev_pid_stats,
 				self.use_current_cpu_total,
 				self.mem_total_kb,
-				&current_instant,
+				current_instant,
 			),
 			&mut self.data.list_of_processes,
 		);

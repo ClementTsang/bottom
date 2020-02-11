@@ -97,19 +97,19 @@ impl DataCollection {
 		let mut new_entry = TimedData::default();
 
 		// Network
-		self.eat_network(&harvested_data, &harvested_time, &mut new_entry);
+		self.eat_network(&harvested_data, harvested_time, &mut new_entry);
 
 		// Memory and Swap
-		self.eat_memory_and_swap(&harvested_data, &harvested_time, &mut new_entry);
+		self.eat_memory_and_swap(&harvested_data, harvested_time, &mut new_entry);
 
 		// CPU
-		self.eat_cpu(&harvested_data, &harvested_time, &mut new_entry);
+		self.eat_cpu(&harvested_data, harvested_time, &mut new_entry);
 
 		// Temp
 		self.eat_temp(&harvested_data);
 
 		// Disks
-		self.eat_disks(&harvested_data, &harvested_time);
+		self.eat_disks(&harvested_data, harvested_time);
 
 		// Processes
 		self.eat_proc(&harvested_data);
@@ -120,14 +120,14 @@ impl DataCollection {
 	}
 
 	fn eat_memory_and_swap(
-		&mut self, harvested_data: &Data, harvested_time: &Instant, new_entry: &mut TimedData,
+		&mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
 	) {
 		// Memory
 		let mem_percent = harvested_data.memory.mem_used_in_mb as f64
 			/ harvested_data.memory.mem_total_in_mb as f64
 			* 100.0;
 		let mem_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-			generate_joining_points(&time, last_pt.mem_data.0, &harvested_time, mem_percent)
+			generate_joining_points(*time, last_pt.mem_data.0, harvested_time, mem_percent)
 		} else {
 			Vec::new()
 		};
@@ -140,7 +140,7 @@ impl DataCollection {
 				/ harvested_data.swap.mem_total_in_mb as f64
 				* 100.0;
 			let swap_joining_pt = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-				generate_joining_points(&time, last_pt.swap_data.0, &harvested_time, swap_percent)
+				generate_joining_points(*time, last_pt.swap_data.0, harvested_time, swap_percent)
 			} else {
 				Vec::new()
 			};
@@ -154,7 +154,7 @@ impl DataCollection {
 	}
 
 	fn eat_network(
-		&mut self, harvested_data: &Data, harvested_time: &Instant, new_entry: &mut TimedData,
+		&mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
 	) {
 		// RX
 		let logged_rx_val = if harvested_data.network.rx as f64 > 0.0 {
@@ -164,7 +164,7 @@ impl DataCollection {
 		};
 
 		let rx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-			generate_joining_points(&time, last_pt.rx_data.0, &harvested_time, logged_rx_val)
+			generate_joining_points(*time, last_pt.rx_data.0, harvested_time, logged_rx_val)
 		} else {
 			Vec::new()
 		};
@@ -179,7 +179,7 @@ impl DataCollection {
 		};
 
 		let tx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-			generate_joining_points(&time, last_pt.tx_data.0, &harvested_time, logged_tx_val)
+			generate_joining_points(*time, last_pt.tx_data.0, harvested_time, logged_tx_val)
 		} else {
 			Vec::new()
 		};
@@ -191,7 +191,7 @@ impl DataCollection {
 	}
 
 	fn eat_cpu(
-		&mut self, harvested_data: &Data, harvested_time: &Instant, new_entry: &mut TimedData,
+		&mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
 	) {
 		// Note this only pre-calculates the data points - the names will be
 		// within the local copy of cpu_harvest.  Since it's all sequential
@@ -199,9 +199,9 @@ impl DataCollection {
 		for (itx, cpu) in harvested_data.cpu.iter().enumerate() {
 			let cpu_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
 				generate_joining_points(
-					&time,
+					*time,
 					last_pt.cpu_data[itx].0,
-					&harvested_time,
+					harvested_time,
 					cpu.cpu_usage,
 				)
 			} else {
@@ -220,7 +220,7 @@ impl DataCollection {
 		self.temp_harvest = harvested_data.temperature_sensors.clone();
 	}
 
-	fn eat_disks(&mut self, harvested_data: &Data, harvested_time: &Instant) {
+	fn eat_disks(&mut self, harvested_data: &Data, harvested_time: Instant) {
 		// TODO: [PO] To implement
 
 		let time_since_last_harvest = harvested_time
@@ -262,12 +262,12 @@ impl DataCollection {
 }
 
 pub fn generate_joining_points(
-	start_x: &Instant, start_y: f64, end_x: &Instant, end_y: f64,
+	start_x: Instant, start_y: f64, end_x: Instant, end_y: f64,
 ) -> Vec<(TimeOffset, Value)> {
 	let mut points: Vec<(TimeOffset, Value)> = Vec::new();
 
 	// Convert time floats first:
-	let tmp_time_diff = (*end_x).duration_since(*start_x).as_millis() as f64;
+	let tmp_time_diff = (end_x).duration_since(start_x).as_millis() as f64;
 	let time_difference = if tmp_time_diff == 0.0 {
 		0.001
 	} else {

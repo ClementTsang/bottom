@@ -119,13 +119,13 @@ fn linux_cpu_usage<S: core::hash::BuildHasher>(
 	pid: u32, cpu_usage: f64, cpu_percentage: f64,
 	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
 	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
-	curr_time: &Instant,
+	curr_time: Instant,
 ) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
 	let before_proc_val: f64 = if prev_pid_stats.contains_key(&pid.to_string()) {
 		prev_pid_stats
 			.get(&pid.to_string())
-			.unwrap_or(&(0_f64, *curr_time))
+			.unwrap_or(&(0_f64, curr_time))
 			.0
 	} else {
 		0_f64
@@ -141,7 +141,7 @@ fn linux_cpu_usage<S: core::hash::BuildHasher>(
 		(after_proc_val - before_proc_val) / cpu_usage * 100_f64
 	);*/
 
-	new_pid_stats.insert(pid.to_string(), (after_proc_val, *curr_time));
+	new_pid_stats.insert(pid.to_string(), (after_proc_val, curr_time));
 	if use_current_cpu_total {
 		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
 	} else {
@@ -153,7 +153,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
 	process: &str, cpu_usage: f64, cpu_percentage: f64,
 	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
 	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
-	curr_time: &Instant,
+	curr_time: Instant,
 ) -> std::io::Result<ProcessHarvest> {
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessHarvest {
@@ -195,7 +195,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
 pub fn get_sorted_processes_list(
 	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64,
 	prev_pid_stats: &mut HashMap<String, (f64, Instant), RandomState>, use_current_cpu_total: bool,
-	mem_total_kb: u64, curr_time: &Instant,
+	mem_total_kb: u64, curr_time: Instant,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
 	let mut process_vector: Vec<ProcessHarvest> = Vec::new();
 
