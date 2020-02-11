@@ -27,7 +27,7 @@ before_script:
   - rustup target add $TARGET
   - rustup component add clippy
 script:
-  - cargo clippy
+  - cargo clippy -D clippy::all
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
 
