@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use crossterm::{
 	event::{
-		poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode,
+		poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
 		KeyModifiers, MouseEvent,
 	},
 	execute,
@@ -198,92 +198,8 @@ fn main() -> error::Result<()> {
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
-					debug!("Event: {:?}", event);
-					if event.modifiers.is_empty() {
-						// If only a code, and no modifiers, don't bother...
-
-						// Required catch for searching - otherwise you couldn't search with q.
-						if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
-							break;
-						}
-
-						match event.code {
-							KeyCode::End => app.skip_to_last(),
-							KeyCode::Home => app.skip_to_first(),
-							KeyCode::Up => app.on_up_key(),
-							KeyCode::Down => app.on_down_key(),
-							KeyCode::Left => app.on_left_key(),
-							KeyCode::Right => app.on_right_key(),
-							KeyCode::Char('H') => app.move_left(),
-							KeyCode::Char('L') => app.move_right(),
-							KeyCode::Char('K') => app.move_up(),
-							KeyCode::Char('J') => app.move_down(),
-							KeyCode::Char(character) => app.on_char_key(character),
-							KeyCode::Esc => app.on_esc(),
-							KeyCode::Enter => app.on_enter(),
-							KeyCode::Tab => app.on_tab(),
-							KeyCode::Backspace => app.on_backspace(),
-							_ => {}
-						}
-					} else {
-						// Otherwise, track the modifier as well...
-						if let KeyModifiers::CONTROL = event.modifiers {
-							match event.code {
-								KeyCode::Char('c') => break,
-								KeyCode::Char('f') => app.enable_searching(),
-								KeyCode::Left => app.move_left(),
-								KeyCode::Right => app.move_right(),
-								KeyCode::Up => app.move_up(),
-								KeyCode::Down => app.move_down(),
-								KeyCode::Char('r') => {
-									if rtx.send(ResetEvent::Reset).is_ok() {
-										app.reset();
-									}
-								}
-								KeyCode::Char('a') => app.skip_cursor_beginning(),
-								KeyCode::Char('e') => app.skip_cursor_end(),
-								_ => {}
-							}
-						} else if let KeyModifiers::SHIFT = event.modifiers {
-							match event.code {
-								KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('H') => {
-									app.move_left()
-								}
-								KeyCode::Right | KeyCode::Char('l') | KeyCode::Char('L') => {
-									app.move_right()
-								}
-								KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('K') => {
-									app.move_up()
-								}
-								KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('J') => {
-									app.move_down()
-								}
-								KeyCode::Char('/') | KeyCode::Char('?') => app.on_char_key('?'),
-								_ => {}
-							}
-						} else if let KeyModifiers::ALT = event.modifiers {
-							match event.code {
-								KeyCode::Char('c') => {
-									if app.is_in_search_widget() {
-										app.search_state.toggle_ignore_case();
-										app.update_regex();
-									}
-								}
-								KeyCode::Char('w') => {
-									if app.is_in_search_widget() {
-										app.search_state.toggle_search_whole_word();
-										app.update_regex();
-									}
-								}
-								KeyCode::Char('r') => {
-									if app.is_in_search_widget() {
-										app.search_state.toggle_search_regex();
-										app.update_regex();
-									}
-								}
-								_ => {}
-							}
-						}
+					if handle_key_event_or_break(event, &mut app, &rtx) {
+						break;
 					}
 
 					if app.update_process_gui {
@@ -291,11 +207,7 @@ fn main() -> error::Result<()> {
 						app.update_process_gui = false;
 					}
 				}
-				Event::MouseInput(event) => match event {
-					MouseEvent::ScrollUp(_x, _y, _modifiers) => app.decrement_position_count(),
-					MouseEvent::ScrollDown(_x, _y, _modifiers) => app.increment_position_count(),
-					_ => {}
-				},
+				Event::MouseInput(event) => handle_mouse_event(event, &mut app),
 				Event::Update(data) => {
 					if !app.is_frozen {
 						app.data_collection.eat_data(&data);
@@ -354,6 +266,102 @@ fn main() -> error::Result<()> {
 
 	cleanup_terminal(&mut terminal)?;
 	Ok(())
+}
+
+fn handle_mouse_event(event: MouseEvent, app: &mut app::App) {
+	match event {
+		MouseEvent::ScrollUp(_x, _y, _modifiers) => app.decrement_position_count(),
+		MouseEvent::ScrollDown(_x, _y, _modifiers) => app.increment_position_count(),
+		_ => {}
+	};
+}
+
+fn handle_key_event_or_break(
+	event: KeyEvent, app: &mut app::App, rtx: &std::sync::mpsc::Sender<ResetEvent>,
+) -> bool {
+	if event.modifiers.is_empty() {
+		// If only a code, and no modifiers, don't bother...
+
+		// Required catch for searching - otherwise you couldn't search with q.
+		if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
+			return true;
+		}
+
+		match event.code {
+			KeyCode::End => app.skip_to_last(),
+			KeyCode::Home => app.skip_to_first(),
+			KeyCode::Up => app.on_up_key(),
+			KeyCode::Down => app.on_down_key(),
+			KeyCode::Left => app.on_left_key(),
+			KeyCode::Right => app.on_right_key(),
+			KeyCode::Char('H') => app.move_left(),
+			KeyCode::Char('L') => app.move_right(),
+			KeyCode::Char('K') => app.move_up(),
+			KeyCode::Char('J') => app.move_down(),
+			KeyCode::Char(character) => app.on_char_key(character),
+			KeyCode::Esc => app.on_esc(),
+			KeyCode::Enter => app.on_enter(),
+			KeyCode::Tab => app.on_tab(),
+			KeyCode::Backspace => app.on_backspace(),
+			_ => {}
+		}
+	} else {
+		// Otherwise, track the modifier as well...
+		if let KeyModifiers::CONTROL = event.modifiers {
+			if event.code == KeyCode::Char('c') {
+				return true;
+			}
+
+			match event.code {
+				KeyCode::Char('f') => app.enable_searching(),
+				KeyCode::Left => app.move_left(),
+				KeyCode::Right => app.move_right(),
+				KeyCode::Up => app.move_up(),
+				KeyCode::Down => app.move_down(),
+				KeyCode::Char('r') => {
+					if rtx.send(ResetEvent::Reset).is_ok() {
+						app.reset();
+					}
+				}
+				KeyCode::Char('a') => app.skip_cursor_beginning(),
+				KeyCode::Char('e') => app.skip_cursor_end(),
+				_ => {}
+			}
+		} else if let KeyModifiers::SHIFT = event.modifiers {
+			match event.code {
+				KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('H') => app.move_left(),
+				KeyCode::Right | KeyCode::Char('l') | KeyCode::Char('L') => app.move_right(),
+				KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('K') => app.move_up(),
+				KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('J') => app.move_down(),
+				KeyCode::Char('/') | KeyCode::Char('?') => app.on_char_key('?'),
+				_ => {}
+			}
+		} else if let KeyModifiers::ALT = event.modifiers {
+			match event.code {
+				KeyCode::Char('c') => {
+					if app.is_in_search_widget() {
+						app.search_state.toggle_ignore_case();
+						app.update_regex();
+					}
+				}
+				KeyCode::Char('w') => {
+					if app.is_in_search_widget() {
+						app.search_state.toggle_search_whole_word();
+						app.update_regex();
+					}
+				}
+				KeyCode::Char('r') => {
+					if app.is_in_search_widget() {
+						app.search_state.toggle_search_regex();
+						app.update_regex();
+					}
+				}
+				_ => {}
+			}
+		}
+	}
+
+	false
 }
 
 fn create_logger() -> error::Result<()> {
