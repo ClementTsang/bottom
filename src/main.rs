@@ -182,7 +182,7 @@ fn main() -> error::Result<()> {
 		rrx,
 		use_current_cpu_total,
 		update_rate_in_milliseconds as u64,
-		app.temperature_type.clone(),
+		app.app_config_fields.temperature_type.clone(),
 	);
 
 	let mut painter = canvas::Painter::default();
@@ -214,6 +214,8 @@ fn main() -> error::Result<()> {
 
 						// Convert all data into tui-compliant components
 
+						// TODO: [OPT] MT the conversion step.
+
 						// Network
 						let network_data = convert_network_data_points(&app.data_collection);
 						app.canvas_data.network_data_rx = network_data.rx;
@@ -236,8 +238,10 @@ fn main() -> error::Result<()> {
 						app.canvas_data.swap_label = memory_and_swap_labels.1;
 
 						// CPU
-						app.canvas_data.cpu_data =
-							convert_cpu_data_points(app.show_average_cpu, &app.data_collection);
+						app.canvas_data.cpu_data = convert_cpu_data_points(
+							app.app_config_fields.show_average_cpu,
+							&app.data_collection,
+						);
 
 						// Processes
 						let (single, grouped) = convert_process_data(&app.data_collection);
@@ -294,10 +298,10 @@ fn handle_key_event_or_break(
 			KeyCode::Down => app.on_down_key(),
 			KeyCode::Left => app.on_left_key(),
 			KeyCode::Right => app.on_right_key(),
-			KeyCode::Char('H') => app.move_left(),
-			KeyCode::Char('L') => app.move_right(),
-			KeyCode::Char('K') => app.move_up(),
-			KeyCode::Char('J') => app.move_down(),
+			KeyCode::Char('H') => app.move_widget_selection_left(),
+			KeyCode::Char('L') => app.move_widget_selection_right(),
+			KeyCode::Char('K') => app.move_widget_selection_up(),
+			KeyCode::Char('J') => app.move_widget_selection_down(),
 			KeyCode::Char(character) => app.on_char_key(character),
 			KeyCode::Esc => app.on_esc(),
 			KeyCode::Enter => app.on_enter(),
@@ -314,10 +318,10 @@ fn handle_key_event_or_break(
 
 			match event.code {
 				KeyCode::Char('f') => app.enable_searching(),
-				KeyCode::Left => app.move_left(),
-				KeyCode::Right => app.move_right(),
-				KeyCode::Up => app.move_up(),
-				KeyCode::Down => app.move_down(),
+				KeyCode::Left => app.move_widget_selection_left(),
+				KeyCode::Right => app.move_widget_selection_right(),
+				KeyCode::Up => app.move_widget_selection_up(),
+				KeyCode::Down => app.move_widget_selection_down(),
 				KeyCode::Char('r') => {
 					if rtx.send(ResetEvent::Reset).is_ok() {
 						app.reset();
@@ -329,10 +333,18 @@ fn handle_key_event_or_break(
 			}
 		} else if let KeyModifiers::SHIFT = event.modifiers {
 			match event.code {
-				KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('H') => app.move_left(),
-				KeyCode::Right | KeyCode::Char('l') | KeyCode::Char('L') => app.move_right(),
-				KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('K') => app.move_up(),
-				KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('J') => app.move_down(),
+				KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('H') => {
+					app.move_widget_selection_left()
+				}
+				KeyCode::Right | KeyCode::Char('l') | KeyCode::Char('L') => {
+					app.move_widget_selection_right()
+				}
+				KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('K') => {
+					app.move_widget_selection_up()
+				}
+				KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('J') => {
+					app.move_widget_selection_down()
+				}
 				KeyCode::Char('/') | KeyCode::Char('?') => app.on_char_key('?'),
 				_ => {}
 			}

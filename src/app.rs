@@ -33,17 +33,31 @@ lazy_static! {
 		regex::Regex::new(".*");
 }
 
-/// AppConfigFields is meant to cover basic fields that would normally be set
-/// by config files or launch options.  Don't need to be mutable (set and forget).
-pub struct AppConfigFields {
-	pub update_rate_in_milliseconds: u64,
-	pub temperature_type: temperature::TemperatureType,
-	pub use_dot: bool,
+/// AppScrollWidgetState deals with fields for a scrollable app's current state.
+#[derive(Default)]
+pub struct AppScrollWidgetState {
+	pub current_scroll_position: u64,
+	pub previous_scroll_position: u64,
 }
 
-/// AppScrollWidgetState deals with fields for a scrollable app's current state.
-pub struct AppScrollWidgetState {
-	pub widget_scroll_position: i64,
+pub struct AppScrollState {
+	pub scroll_direction: ScrollDirection,
+	pub process_scroll_state: AppScrollWidgetState,
+	pub disk_scroll_state: AppScrollWidgetState,
+	pub temp_scroll_state: AppScrollWidgetState,
+	pub cpu_scroll_state: AppScrollWidgetState,
+}
+
+impl Default for AppScrollState {
+	fn default() -> Self {
+		AppScrollState {
+			scroll_direction: ScrollDirection::DOWN,
+			process_scroll_state: AppScrollWidgetState::default(),
+			disk_scroll_state: AppScrollWidgetState::default(),
+			temp_scroll_state: AppScrollWidgetState::default(),
+			cpu_scroll_state: AppScrollWidgetState::default(),
+		}
+	}
 }
 
 /// AppSearchState only deals with the search's current settings and state.
@@ -131,35 +145,29 @@ impl Default for AppHelpDialogState {
 	}
 }
 
-// TODO: [OPT] Group like fields together... this is kinda gross to step through
+/// AppConfigFields is meant to cover basic fields that would normally be set
+/// by config files or launch options.  Don't need to be mutable (set and forget).
+pub struct AppConfigFields {
+	pub update_rate_in_milliseconds: u64,
+	pub temperature_type: temperature::TemperatureType,
+	pub use_dot: bool,
+	pub left_legend: bool,
+	pub show_average_cpu: bool,
+	pub use_current_cpu_total: bool,
+}
+
 pub struct App {
-	// Sorting
 	pub process_sorting_type: processes::ProcessSorting,
 	pub process_sorting_reverse: bool,
 	pub update_process_gui: bool,
-	// Positioning
-	pub scroll_direction: ScrollDirection,
-	pub currently_selected_process_position: u64,
-	pub currently_selected_disk_position: u64,
-	pub currently_selected_temperature_position: u64,
-	pub currently_selected_cpu_table_position: u64,
-	pub previous_disk_position: u64,
-	pub previous_temp_position: u64,
-	pub previous_process_position: u64,
-	pub previous_cpu_table_position: u64,
-	pub temperature_type: temperature::TemperatureType,
-	pub update_rate_in_milliseconds: u64,
-	pub show_average_cpu: bool,
+	pub app_scroll_positions: AppScrollState,
 	pub current_widget_selected: WidgetPosition,
 	pub data: data_harvester::Data,
 	awaiting_second_char: bool,
-	second_char: char,
-	pub use_dot: bool,
+	second_char: Option<char>,
 	pub dd_err: Option<String>,
 	to_delete_process_list: Option<(String, Vec<u32>)>,
 	pub is_frozen: bool,
-	pub left_legend: bool,
-	pub use_current_cpu_total: bool,
 	last_key_press: Instant,
 	pub canvas_data: canvas::DisplayableData,
 	enable_grouping: bool,
@@ -168,6 +176,8 @@ pub struct App {
 	pub search_state: AppSearchState,
 	pub delete_dialog_state: AppDeleteDialogState,
 	pub help_dialog_state: AppHelpDialogState,
+	pub app_config_fields: AppConfigFields,
+	pub is_expanded: bool,
 }
 
 impl App {
@@ -180,28 +190,14 @@ impl App {
 			process_sorting_type: processes::ProcessSorting::CPU,
 			process_sorting_reverse: true,
 			update_process_gui: false,
-			temperature_type,
-			update_rate_in_milliseconds,
-			show_average_cpu,
 			current_widget_selected: WidgetPosition::Process,
-			scroll_direction: ScrollDirection::DOWN,
-			currently_selected_process_position: 0,
-			currently_selected_disk_position: 0,
-			currently_selected_temperature_position: 0,
-			currently_selected_cpu_table_position: 0,
-			previous_process_position: 0,
-			previous_disk_position: 0,
-			previous_temp_position: 0,
-			previous_cpu_table_position: 0,
+			app_scroll_positions: AppScrollState::default(),
 			data: data_harvester::Data::default(),
 			awaiting_second_char: false,
-			second_char: ' ',
-			use_dot,
+			second_char: None,
 			dd_err: None,
 			to_delete_process_list: None,
 			is_frozen: false,
-			left_legend,
-			use_current_cpu_total,
 			last_key_press: Instant::now(),
 			canvas_data: canvas::DisplayableData::default(),
 			enable_grouping: false,
@@ -210,6 +206,15 @@ impl App {
 			search_state: AppSearchState::default(),
 			delete_dialog_state: AppDeleteDialogState::default(),
 			help_dialog_state: AppHelpDialogState::default(),
+			app_config_fields: AppConfigFields {
+				show_average_cpu,
+				temperature_type,
+				use_dot,
+				update_rate_in_milliseconds,
+				left_legend,
+				use_current_cpu_total,
+			},
+			is_expanded: false,
 		}
 	}
 
@@ -239,12 +244,14 @@ impl App {
 		} else if self.enable_searching {
 			self.current_widget_selected = WidgetPosition::Process;
 			self.enable_searching = false;
+		} else if self.is_expanded {
+			self.is_expanded = false;
 		}
 	}
 
 	fn reset_multi_tap_keys(&mut self) {
 		self.awaiting_second_char = false;
-		self.second_char = ' ';
+		self.second_char = None;
 	}
 
 	fn is_in_dialog(&self) -> bool {
@@ -354,8 +361,12 @@ impl App {
 
 			regex::Regex::new(&final_regex_string)
 		};
-		self.previous_process_position = 0;
-		self.currently_selected_process_position = 0;
+		self.app_scroll_positions
+			.process_scroll_state
+			.previous_scroll_position = 0;
+		self.app_scroll_positions
+			.process_scroll_state
+			.current_scroll_position = 0;
 	}
 
 	pub fn get_cursor_position(&self) -> usize {
@@ -364,22 +375,27 @@ impl App {
 
 	/// One of two functions allowed to run while in a dialog...
 	pub fn on_enter(&mut self) {
-		if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
-			// If within dd...
-			if self.dd_err.is_none() {
-				// Also ensure that we didn't just fail a dd...
-				let dd_result = self.kill_highlighted_process();
-				self.delete_dialog_state.is_on_yes = false;
+		if self.delete_dialog_state.is_showing_dd {
+			if self.delete_dialog_state.is_on_yes {
+				// If within dd...
+				if self.dd_err.is_none() {
+					// Also ensure that we didn't just fail a dd...
+					let dd_result = self.kill_highlighted_process();
+					self.delete_dialog_state.is_on_yes = false;
 
-				// Check if there was an issue... if so, inform the user.
-				if let Err(dd_err) = dd_result {
-					self.dd_err = Some(dd_err.to_string());
-				} else {
-					self.delete_dialog_state.is_showing_dd = false;
+					// Check if there was an issue... if so, inform the user.
+					if let Err(dd_err) = dd_result {
+						self.dd_err = Some(dd_err.to_string());
+					} else {
+						self.delete_dialog_state.is_showing_dd = false;
+					}
 				}
+			} else {
+				self.delete_dialog_state.is_showing_dd = false;
 			}
-		} else {
-			self.delete_dialog_state.is_showing_dd = false;
+		} else if !self.is_in_dialog() {
+			// Pop-out mode.
+			self.is_expanded = true;
 		}
 	}
 
@@ -490,55 +506,79 @@ impl App {
 					}
 					'd' => {
 						if let WidgetPosition::Process = self.current_widget_selected {
-							if self.awaiting_second_char && self.second_char == 'd' {
-								self.awaiting_second_char = false;
-								self.second_char = ' ';
+							let mut is_first_d = true;
+							if let Some(second_char) = self.second_char {
+								if self.awaiting_second_char && second_char == 'd' {
+									is_first_d = false;
+									self.awaiting_second_char = false;
+									self.second_char = None;
 
-								if self.currently_selected_process_position
-									< self.canvas_data.finalized_process_data.len() as u64
-								{
-									let current_process = if self.is_grouped() {
-										let group_pids = &self.canvas_data.finalized_process_data
-											[self.currently_selected_process_position as usize]
-											.group_pids;
+									if self
+										.app_scroll_positions
+										.process_scroll_state
+										.current_scroll_position < self
+										.canvas_data
+										.finalized_process_data
+										.len() as u64
+									{
+										let current_process = if self.is_grouped() {
+											let group_pids = &self
+												.canvas_data
+												.finalized_process_data[self
+												.app_scroll_positions
+												.process_scroll_state
+												.current_scroll_position as usize]
+												.group_pids;
 
-										let mut ret = ("".to_string(), group_pids.clone());
+											let mut ret = ("".to_string(), group_pids.clone());
 
-										for pid in group_pids {
-											if let Some(process) =
-												self.canvas_data.process_data.get(&pid)
-											{
-												ret.0 = process.name.clone();
-												break;
+											for pid in group_pids {
+												if let Some(process) =
+													self.canvas_data.process_data.get(&pid)
+												{
+													ret.0 = process.name.clone();
+													break;
+												}
 											}
-										}
-										ret
-									} else {
-										let process = self.canvas_data.finalized_process_data
-											[self.currently_selected_process_position as usize]
-											.clone();
-										(process.name.clone(), vec![process.pid])
-									};
+											ret
+										} else {
+											let process = self.canvas_data.finalized_process_data
+												[self
+													.app_scroll_positions
+													.process_scroll_state
+													.current_scroll_position as usize]
+												.clone();
+											(process.name.clone(), vec![process.pid])
+										};
 
-									self.to_delete_process_list = Some(current_process);
-									self.delete_dialog_state.is_showing_dd = true;
+										self.to_delete_process_list = Some(current_process);
+										self.delete_dialog_state.is_showing_dd = true;
+									}
+
+									self.reset_multi_tap_keys();
 								}
+							}
 
-								self.reset_multi_tap_keys();
-							} else {
+							if is_first_d {
 								self.awaiting_second_char = true;
-								self.second_char = 'd';
+								self.second_char = Some('d');
 							}
 						}
 					}
 					'g' => {
-						if self.awaiting_second_char && self.second_char == 'g' {
-							self.awaiting_second_char = false;
-							self.second_char = ' ';
-							self.skip_to_first();
-						} else {
+						let mut is_first_g = true;
+						if let Some(second_char) = self.second_char {
+							if self.awaiting_second_char && second_char == 'g' {
+								is_first_g = false;
+								self.awaiting_second_char = false;
+								self.second_char = None;
+								self.skip_to_first();
+							}
+						}
+
+						if is_first_g {
 							self.awaiting_second_char = true;
-							self.second_char = 'g';
+							self.second_char = Some('g');
 						}
 					}
 					'G' => self.skip_to_last(),
@@ -558,7 +598,9 @@ impl App {
 							}
 						}
 						self.update_process_gui = true;
-						self.currently_selected_process_position = 0;
+						self.app_scroll_positions
+							.process_scroll_state
+							.current_scroll_position = 0;
 					}
 					'm' => {
 						match self.process_sorting_type {
@@ -571,7 +613,9 @@ impl App {
 							}
 						}
 						self.update_process_gui = true;
-						self.currently_selected_process_position = 0;
+						self.app_scroll_positions
+							.process_scroll_state
+							.current_scroll_position = 0;
 					}
 					'p' => {
 						// Disable if grouping
@@ -586,7 +630,9 @@ impl App {
 								}
 							}
 							self.update_process_gui = true;
-							self.currently_selected_process_position = 0;
+							self.app_scroll_positions
+								.process_scroll_state
+								.current_scroll_position = 0;
 						}
 					}
 					'n' => {
@@ -600,15 +646,20 @@ impl App {
 							}
 						}
 						self.update_process_gui = true;
-						self.currently_selected_process_position = 0;
+						self.app_scroll_positions
+							.process_scroll_state
+							.current_scroll_position = 0;
 					}
 					'?' => {
 						self.help_dialog_state.is_showing_help = true;
 					}
 					_ => {}
 				}
-				if self.awaiting_second_char && caught_char != self.second_char {
-					self.awaiting_second_char = false;
+
+				if let Some(second_char) = self.second_char {
+					if self.awaiting_second_char && caught_char != second_char {
+						self.awaiting_second_char = false;
+					}
 				}
 			}
 		} else if self.help_dialog_state.is_showing_help {
@@ -648,8 +699,8 @@ impl App {
 	// Network -(up)> MEM, -(right)> PROC
 	// PROC -(up)> Disk, -(down)> PROC_SEARCH, -(left)> Network
 	// PROC_SEARCH -(up)> PROC, -(left)> Network
-	pub fn move_left(&mut self) {
-		if !self.is_in_dialog() {
+	pub fn move_widget_selection_left(&mut self) {
+		if !self.is_in_dialog() && !self.is_expanded {
 			self.current_widget_selected = match self.current_widget_selected {
 				WidgetPosition::Process => WidgetPosition::Network,
 				WidgetPosition::ProcessSearch => WidgetPosition::Network,
@@ -657,23 +708,25 @@ impl App {
 				WidgetPosition::Temp => WidgetPosition::Mem,
 				_ => self.current_widget_selected,
 			};
-			self.reset_multi_tap_keys();
 		}
+
+		self.reset_multi_tap_keys();
 	}
 
-	pub fn move_right(&mut self) {
-		if !self.is_in_dialog() {
+	pub fn move_widget_selection_right(&mut self) {
+		if !self.is_in_dialog() && !self.is_expanded {
 			self.current_widget_selected = match self.current_widget_selected {
 				WidgetPosition::Mem => WidgetPosition::Temp,
 				WidgetPosition::Network => WidgetPosition::Process,
 				_ => self.current_widget_selected,
 			};
-			self.reset_multi_tap_keys();
 		}
+
+		self.reset_multi_tap_keys();
 	}
 
-	pub fn move_up(&mut self) {
-		if !self.is_in_dialog() {
+	pub fn move_widget_selection_up(&mut self) {
+		if !self.is_in_dialog() && !self.is_expanded {
 			self.current_widget_selected = match self.current_widget_selected {
 				WidgetPosition::Mem => WidgetPosition::Cpu,
 				WidgetPosition::Network => WidgetPosition::Mem,
@@ -683,12 +736,18 @@ impl App {
 				WidgetPosition::Disk => WidgetPosition::Temp,
 				_ => self.current_widget_selected,
 			};
-			self.reset_multi_tap_keys();
+		} else if self.is_expanded {
+			self.current_widget_selected = match self.current_widget_selected {
+				WidgetPosition::ProcessSearch => WidgetPosition::Process,
+				_ => self.current_widget_selected,
+			};
 		}
+
+		self.reset_multi_tap_keys();
 	}
 
-	pub fn move_down(&mut self) {
-		if !self.is_in_dialog() {
+	pub fn move_widget_selection_down(&mut self) {
+		if !self.is_in_dialog() && !self.is_expanded {
 			self.current_widget_selected = match self.current_widget_selected {
 				WidgetPosition::Cpu => WidgetPosition::Mem,
 				WidgetPosition::Mem => WidgetPosition::Network,
@@ -703,21 +762,49 @@ impl App {
 				}
 				_ => self.current_widget_selected,
 			};
-			self.reset_multi_tap_keys();
+		} else if self.is_expanded {
+			self.current_widget_selected = match self.current_widget_selected {
+				WidgetPosition::Process => {
+					if self.is_searching() {
+						WidgetPosition::ProcessSearch
+					} else {
+						WidgetPosition::Process
+					}
+				}
+				_ => self.current_widget_selected,
+			};
 		}
+
+		self.reset_multi_tap_keys();
 	}
 
 	pub fn skip_to_first(&mut self) {
 		if !self.is_in_dialog() {
 			match self.current_widget_selected {
-				WidgetPosition::Process => self.currently_selected_process_position = 0,
-				WidgetPosition::Temp => self.currently_selected_temperature_position = 0,
-				WidgetPosition::Disk => self.currently_selected_disk_position = 0,
-				WidgetPosition::Cpu => self.currently_selected_cpu_table_position = 0,
+				WidgetPosition::Process => {
+					self.app_scroll_positions
+						.process_scroll_state
+						.current_scroll_position = 0
+				}
+				WidgetPosition::Temp => {
+					self.app_scroll_positions
+						.temp_scroll_state
+						.current_scroll_position = 0
+				}
+				WidgetPosition::Disk => {
+					self.app_scroll_positions
+						.disk_scroll_state
+						.current_scroll_position = 0
+				}
+				WidgetPosition::Cpu => {
+					self.app_scroll_positions
+						.cpu_scroll_state
+						.current_scroll_position = 0
+				}
 
 				_ => {}
 			}
-			self.scroll_direction = ScrollDirection::UP;
+			self.app_scroll_positions.scroll_direction = ScrollDirection::UP;
 			self.reset_multi_tap_keys();
 		}
 	}
@@ -726,24 +813,28 @@ impl App {
 		if !self.is_in_dialog() {
 			match self.current_widget_selected {
 				WidgetPosition::Process => {
-					self.currently_selected_process_position =
-						self.canvas_data.finalized_process_data.len() as u64 - 1
+					self.app_scroll_positions
+						.process_scroll_state
+						.current_scroll_position = self.canvas_data.finalized_process_data.len() as u64 - 1
 				}
 				WidgetPosition::Temp => {
-					self.currently_selected_temperature_position =
-						self.canvas_data.temp_sensor_data.len() as u64 - 1
+					self.app_scroll_positions
+						.temp_scroll_state
+						.current_scroll_position = self.canvas_data.temp_sensor_data.len() as u64 - 1
 				}
 				WidgetPosition::Disk => {
-					self.currently_selected_disk_position =
-						self.canvas_data.disk_data.len() as u64 - 1
+					self.app_scroll_positions
+						.disk_scroll_state
+						.current_scroll_position = self.canvas_data.disk_data.len() as u64 - 1
 				}
 				WidgetPosition::Cpu => {
-					self.currently_selected_cpu_table_position =
-						self.canvas_data.cpu_data.len() as u64 - 1;
+					self.app_scroll_positions
+						.cpu_scroll_state
+						.current_scroll_position = self.canvas_data.cpu_data.len() as u64 - 1;
 				}
 				_ => {}
 			}
-			self.scroll_direction = ScrollDirection::DOWN;
+			self.app_scroll_positions.scroll_direction = ScrollDirection::DOWN;
 			self.reset_multi_tap_keys();
 		}
 	}
@@ -757,7 +848,7 @@ impl App {
 				WidgetPosition::Cpu => self.change_cpu_table_position(-1), // TODO: [PO?] Temporary, may change if we add scaling
 				_ => {}
 			}
-			self.scroll_direction = ScrollDirection::UP;
+			self.app_scroll_positions.scroll_direction = ScrollDirection::UP;
 			self.reset_multi_tap_keys();
 		}
 	}
@@ -771,48 +862,70 @@ impl App {
 				WidgetPosition::Cpu => self.change_cpu_table_position(1), // TODO: [PO?] Temporary, may change if we add scaling
 				_ => {}
 			}
-			self.scroll_direction = ScrollDirection::DOWN;
+			self.app_scroll_positions.scroll_direction = ScrollDirection::DOWN;
 			self.reset_multi_tap_keys();
 		}
 	}
 
 	fn change_cpu_table_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_cpu_table_position as i64 + num_to_change_by >= 0
-			&& self.currently_selected_cpu_table_position as i64 + num_to_change_by
-				< self.canvas_data.cpu_data.len() as i64
+		let current_posn = self
+			.app_scroll_positions
+			.cpu_scroll_state
+			.current_scroll_position;
+
+		if current_posn as i64 + num_to_change_by >= 0
+			&& current_posn as i64 + num_to_change_by < self.canvas_data.cpu_data.len() as i64
 		{
-			self.currently_selected_cpu_table_position =
-				(self.currently_selected_cpu_table_position as i64 + num_to_change_by) as u64;
+			self.app_scroll_positions
+				.cpu_scroll_state
+				.current_scroll_position = (current_posn as i64 + num_to_change_by) as u64;
 		}
 	}
 
 	fn change_process_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_process_position as i64 + num_to_change_by >= 0
-			&& self.currently_selected_process_position as i64 + num_to_change_by
+		let current_posn = self
+			.app_scroll_positions
+			.process_scroll_state
+			.current_scroll_position;
+
+		if current_posn as i64 + num_to_change_by >= 0
+			&& current_posn as i64 + num_to_change_by
 				< self.canvas_data.finalized_process_data.len() as i64
 		{
-			self.currently_selected_process_position =
-				(self.currently_selected_process_position as i64 + num_to_change_by) as u64;
+			self.app_scroll_positions
+				.process_scroll_state
+				.current_scroll_position = (current_posn as i64 + num_to_change_by) as u64;
 		}
 	}
 
 	fn change_temp_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_temperature_position as i64 + num_to_change_by >= 0
-			&& self.currently_selected_temperature_position as i64 + num_to_change_by
+		let current_posn = self
+			.app_scroll_positions
+			.temp_scroll_state
+			.current_scroll_position;
+
+		if current_posn as i64 + num_to_change_by >= 0
+			&& current_posn as i64 + num_to_change_by
 				< self.canvas_data.temp_sensor_data.len() as i64
 		{
-			self.currently_selected_temperature_position =
-				(self.currently_selected_temperature_position as i64 + num_to_change_by) as u64;
+			self.app_scroll_positions
+				.temp_scroll_state
+				.current_scroll_position = (current_posn as i64 + num_to_change_by) as u64;
 		}
 	}
 
 	fn change_disk_position(&mut self, num_to_change_by: i64) {
-		if self.currently_selected_disk_position as i64 + num_to_change_by >= 0
-			&& self.currently_selected_disk_position as i64 + num_to_change_by
-				< self.canvas_data.disk_data.len() as i64
+		let current_posn = self
+			.app_scroll_positions
+			.disk_scroll_state
+			.current_scroll_position;
+
+		if current_posn as i64 + num_to_change_by >= 0
+			&& current_posn as i64 + num_to_change_by < self.canvas_data.disk_data.len() as i64
 		{
-			self.currently_selected_disk_position =
-				(self.currently_selected_disk_position as i64 + num_to_change_by) as u64;
+			self.app_scroll_positions
+				.disk_scroll_state
+				.current_scroll_position = (current_posn as i64 + num_to_change_by) as u64;
 		}
 	}
 }

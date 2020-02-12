@@ -115,6 +115,8 @@ impl DataState {
 
 		let current_instant = std::time::Instant::now();
 
+		// TODO: [OPT] MT/Async the harvesting step.
+
 		// Network
 		self.data.network = network::get_network_data(
 			&self.sys,

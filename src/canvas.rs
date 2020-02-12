@@ -1,5 +1,5 @@
 use crate::{
-	app::{self, data_harvester::processes::ProcessHarvest},
+	app::{self, data_harvester::processes::ProcessHarvest, WidgetPosition},
 	constants::*,
 	data_conversion::{ConvertedCpuData, ConvertedProcessData},
 	utils::error,
@@ -146,9 +146,9 @@ impl Painter {
 					.margin(1)
 					.constraints(
 						[
-							Constraint::Percentage(32),
-							Constraint::Percentage(36),
-							Constraint::Percentage(32),
+							Constraint::Percentage(30),
+							Constraint::Percentage(40),
+							Constraint::Percentage(30),
 						]
 						.as_ref(),
 					)
@@ -319,6 +319,72 @@ impl Painter {
 					// This is a bit nasty, but it works well... I guess.
 					app_state.delete_dialog_state.is_showing_dd = false;
 				}
+			} else if app_state.is_expanded {
+				// TODO: [REF] we should combine this with normal drawing tbh
+
+				let rect = Layout::default()
+					.margin(1)
+					.constraints([Constraint::Percentage(100)].as_ref())
+					.split(f.size());
+				match &app_state.current_widget_selected {
+					WidgetPosition::Cpu => {
+						let cpu_chunk = Layout::default()
+							.direction(Direction::Horizontal)
+							.margin(0)
+							.constraints(
+								if app_state.app_config_fields.left_legend {
+									[Constraint::Percentage(15), Constraint::Percentage(85)]
+								} else {
+									[Constraint::Percentage(85), Constraint::Percentage(15)]
+								}
+								.as_ref(),
+							)
+							.split(rect[0]);
+
+						let legend_index = if app_state.app_config_fields.left_legend {
+							0
+						} else {
+							1
+						};
+						let graph_index = if app_state.app_config_fields.left_legend {
+							1
+						} else {
+							0
+						};
+
+						self.draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
+						self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
+					}
+					WidgetPosition::Mem => {
+						self.draw_memory_graph(&mut f, &app_state, rect[0]);
+					}
+					WidgetPosition::Disk => {
+						self.draw_disk_table(&mut f, app_state, rect[0]);
+					}
+					WidgetPosition::Temp => {
+						self.draw_temp_table(&mut f, app_state, rect[0]);
+					}
+					WidgetPosition::Network => {
+						self.draw_network_graph(&mut f, &app_state, rect[0]);
+					}
+					WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+						if app_state.is_searching() {
+							let processes_chunk = Layout::default()
+								.direction(Direction::Vertical)
+								.margin(0)
+								.constraints(
+									[Constraint::Percentage(85), Constraint::Percentage(15)]
+										.as_ref(),
+								)
+								.split(rect[0]);
+
+							self.draw_processes_table(&mut f, app_state, processes_chunk[0]);
+							self.draw_search_field(&mut f, app_state, processes_chunk[1]);
+						} else {
+							self.draw_processes_table(&mut f, app_state, rect[0]);
+						}
+					}
+				}
 			} else {
 				// TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
 				let vertical_chunks = Layout::default()
@@ -357,7 +423,7 @@ impl Painter {
 					.direction(Direction::Horizontal)
 					.margin(0)
 					.constraints(
-						if app_state.left_legend {
+						if app_state.app_config_fields.left_legend {
 							[Constraint::Percentage(15), Constraint::Percentage(85)]
 						} else {
 							[Constraint::Percentage(85), Constraint::Percentage(15)]
@@ -386,8 +452,16 @@ impl Painter {
 					.split(bottom_chunks[0]);
 
 				// Default chunk index based on left or right legend setting
-				let legend_index = if app_state.left_legend { 0 } else { 1 };
-				let graph_index = if app_state.left_legend { 1 } else { 0 };
+				let legend_index = if app_state.app_config_fields.left_legend {
+					0
+				} else {
+					1
+				};
+				let graph_index = if app_state.app_config_fields.left_legend {
+					1
+				} else {
+					0
+				};
 
 				// Set up blocks and their components
 				// CPU graph
@@ -468,7 +542,7 @@ impl Painter {
 			));
 		}
 
-		if app_state.show_average_cpu {
+		if app_state.app_config_fields.show_average_cpu {
 			if let Some(avg_cpu_entry) = cpu_data.first() {
 				cpu_entries_vec.push((
 					self.colours.cpu_colour_styles[0],
@@ -484,7 +558,7 @@ impl Painter {
 		for cpu_entry in &cpu_entries_vec {
 			dataset_vector.push(
 				Dataset::default()
-					.marker(if app_state.use_dot {
+					.marker(if app_state.app_config_fields.use_dot {
 						Marker::Dot
 					} else {
 						Marker::Braille
@@ -519,9 +593,15 @@ impl Painter {
 		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
 		let start_position = get_start_position(
 			num_rows,
-			&(app_state.scroll_direction),
-			&mut app_state.previous_cpu_table_position,
-			app_state.currently_selected_cpu_table_position,
+			&(app_state.app_scroll_positions.scroll_direction),
+			&mut app_state
+				.app_scroll_positions
+				.cpu_scroll_state
+				.previous_scroll_position,
+			app_state
+				.app_scroll_positions
+				.cpu_scroll_state
+				.current_scroll_position,
 		);
 
 		let sliced_cpu_data = &cpu_data[start_position as usize..];
@@ -547,7 +627,10 @@ impl Painter {
 					match app_state.current_widget_selected {
 						app::WidgetPosition::Cpu => {
 							if cpu_row_counter as u64
-								== app_state.currently_selected_cpu_table_position - start_position
+								== app_state
+									.app_scroll_positions
+									.cpu_scroll_state
+									.current_scroll_position - start_position
 							{
 								cpu_row_counter = -1;
 								self.colours.currently_selected_text_style
@@ -612,7 +695,7 @@ impl Painter {
 
 		let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
 			.name(&app_state.canvas_data.mem_label)
-			.marker(if app_state.use_dot {
+			.marker(if app_state.app_config_fields.use_dot {
 				Marker::Dot
 			} else {
 				Marker::Braille
@@ -624,7 +707,7 @@ impl Painter {
 			mem_canvas_vec.push(
 				Dataset::default()
 					.name(&app_state.canvas_data.swap_label)
-					.marker(if app_state.use_dot {
+					.marker(if app_state.app_config_fields.use_dot {
 						Marker::Dot
 					} else {
 						Marker::Braille
@@ -682,7 +765,7 @@ impl Painter {
 						"RX: {:7}",
 						app_state.canvas_data.rx_display.clone()
 					))
-					.marker(if app_state.use_dot {
+					.marker(if app_state.app_config_fields.use_dot {
 						Marker::Dot
 					} else {
 						Marker::Braille
@@ -694,13 +777,21 @@ impl Painter {
 						"TX: {:7}",
 						app_state.canvas_data.tx_display.clone()
 					))
-					.marker(if app_state.use_dot {
+					.marker(if app_state.app_config_fields.use_dot {
 						Marker::Dot
 					} else {
 						Marker::Braille
 					})
 					.style(self.colours.tx_style)
 					.data(&network_data_tx),
+				Dataset::default().name(&format!(
+					"Total RX: {:7}",
+					app_state.canvas_data.total_rx_display.clone()
+				)),
+				Dataset::default().name(&format!(
+					"Total TX: {:7}",
+					app_state.canvas_data.total_tx_display.clone()
+				)),
 			])
 			.render(f, draw_loc);
 	}
@@ -763,9 +854,15 @@ impl Painter {
 		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
 		let start_position = get_start_position(
 			num_rows,
-			&(app_state.scroll_direction),
-			&mut app_state.previous_temp_position,
-			app_state.currently_selected_temperature_position,
+			&(app_state.app_scroll_positions.scroll_direction),
+			&mut app_state
+				.app_scroll_positions
+				.temp_scroll_state
+				.previous_scroll_position,
+			app_state
+				.app_scroll_positions
+				.temp_scroll_state
+				.current_scroll_position,
 		);
 
 		let sliced_vec = &(temp_sensor_data[start_position as usize..]);
@@ -777,7 +874,10 @@ impl Painter {
 				match app_state.current_widget_selected {
 					app::WidgetPosition::Temp => {
 						if temp_row_counter as u64
-							== app_state.currently_selected_temperature_position - start_position
+							== app_state
+								.app_scroll_positions
+								.temp_scroll_state
+								.current_scroll_position - start_position
 						{
 							temp_row_counter = -1;
 							self.colours.currently_selected_text_style
@@ -829,9 +929,15 @@ impl Painter {
 		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
 		let start_position = get_start_position(
 			num_rows,
-			&(app_state.scroll_direction),
-			&mut app_state.previous_disk_position,
-			app_state.currently_selected_disk_position,
+			&(app_state.app_scroll_positions.scroll_direction),
+			&mut app_state
+				.app_scroll_positions
+				.disk_scroll_state
+				.previous_scroll_position,
+			app_state
+				.app_scroll_positions
+				.disk_scroll_state
+				.current_scroll_position,
 		);
 
 		let sliced_vec = &disk_data[start_position as usize..];
@@ -843,7 +949,10 @@ impl Painter {
 				match app_state.current_widget_selected {
 					app::WidgetPosition::Disk => {
 						if disk_counter as u64
-							== app_state.currently_selected_disk_position - start_position
+							== app_state
+								.app_scroll_positions
+								.disk_scroll_state
+								.current_scroll_position - start_position
 						{
 							disk_counter = -1;
 							self.colours.currently_selected_text_style
@@ -1029,9 +1138,15 @@ impl Painter {
 
 		let position = get_start_position(
 			num_rows,
-			&(app_state.scroll_direction),
-			&mut app_state.previous_process_position,
-			app_state.currently_selected_process_position,
+			&(app_state.app_scroll_positions.scroll_direction),
+			&mut app_state
+				.app_scroll_positions
+				.process_scroll_state
+				.previous_scroll_position,
+			app_state
+				.app_scroll_positions
+				.process_scroll_state
+				.current_scroll_position,
 		);
 
 		// Sanity check
@@ -1061,7 +1176,10 @@ impl Painter {
 				match app_state.current_widget_selected {
 					app::WidgetPosition::Process => {
 						if process_counter as u64
-							== app_state.currently_selected_process_position - start_position
+							== app_state
+								.app_scroll_positions
+								.process_scroll_state
+								.current_scroll_position - start_position
 						{
 							process_counter = -1;
 							self.colours.currently_selected_text_style

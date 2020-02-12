@@ -62,7 +62,7 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
 	let mut sensor_vector: Vec<Vec<String>> = Vec::new();
 
 	let current_data = &app.data_collection;
-	let temp_type = &app.temperature_type;
+	let temp_type = &app.app_config_fields.temperature_type;
 
 	if current_data.temp_harvest.is_empty() {
 		sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()])

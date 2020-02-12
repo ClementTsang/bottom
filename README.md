@@ -22,6 +22,10 @@ Features of bottom include:
 
 - Temperature widget to monitor detected sensors in your system.
 
+- Config file support for custom colours and default options.
+
+- Maximizing of widgets of interest.
+
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
 | OS                               | CPU | Memory | Disks | Temperature | Processes | Networks |
@@ -137,9 +141,11 @@ Run using `btm`.
 
 - `Ctrl/Shift-Arrow` or `H/J/K/L` to navigate between widgets. **Note that on macOS, `Ctrl`-arrow keys conflicts with an existing macOS binding, use `Shift`-arrow key instead.**
 
-- `Esc` to close a dialog window.
+- `Esc` to close a dialog window or exit maximized mode.
 
 - `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
+
+- `Enter` on a widget to maximize the widget.
 
 #### Scrollable Tables
 

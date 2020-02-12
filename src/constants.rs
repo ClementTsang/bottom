@@ -12,7 +12,7 @@ pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
 pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "";
 
 // Help text
-pub const GENERAL_HELP_TEXT: [&str; 15] = [
+pub const GENERAL_HELP_TEXT: [&str; 16] = [
 	"General Keybindings\n\n",
 	"Esc            Close dialog box\n",
 	"q, Ctrl-c      Quit bottom\n",
@@ -28,6 +28,7 @@ pub const GENERAL_HELP_TEXT: [&str; 15] = [
 	"?              Open the help screen\n",
 	"gg             Skip to the first entry of a list\n",
 	"G              Skip to the last entry of a list\n",
+	"Enter          Maximize the currently selected widget\n",
 ];
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
