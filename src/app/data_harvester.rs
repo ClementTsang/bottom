@@ -1,6 +1,5 @@
 //! This is the main file to house data collection functions.
 
-use crate::utils::error::Result;
 use std::{collections::HashMap, time::Instant};
 use sysinfo::{System, SystemExt};
 
@@ -10,12 +9,6 @@ pub mod mem;
 pub mod network;
 pub mod processes;
 pub mod temperature;
-
-fn set_if_valid<T: std::clone::Clone>(result: &Result<T>, value_to_set: &mut T) {
-	if let Ok(result) = result {
-		*value_to_set = (*result).clone();
-	}
-}
 
 #[derive(Clone, Debug)]
 pub struct Data {
@@ -69,6 +62,9 @@ pub struct DataState {
 	mem_total_kb: u64,
 	temperature_type: temperature::TemperatureType,
 	use_current_cpu_total: bool,
+	last_collection_time: Instant,
+	total_rx: u64,
+	total_tx: u64,
 }
 
 impl Default for DataState {
@@ -82,6 +78,9 @@ impl Default for DataState {
 			mem_total_kb: 0,
 			temperature_type: temperature::TemperatureType::Celsius,
 			use_current_cpu_total: false,
+			last_collection_time: Instant::now(),
+			total_rx: 0,
+			total_tx: 0,
 		}
 	}
 }
@@ -120,12 +119,15 @@ impl DataState {
 		// Network
 		self.data.network = network::get_network_data(
 			&self.sys,
-			self.data.last_collection_time,
-			&mut self.data.network.total_rx,
-			&mut self.data.network.total_tx,
+			self.last_collection_time,
+			&mut self.total_rx,
+			&mut self.total_tx,
 			current_instant,
 		)
 		.await;
+
+		self.total_rx = self.data.network.total_rx;
+		self.total_tx = self.data.network.total_tx;
 
 		// Mem and swap
 		if let Ok(memory) = mem::get_mem_data_list().await {
@@ -154,20 +156,20 @@ impl DataState {
 		}
 
 		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
-		set_if_valid(
-			&processes::get_sorted_processes_list(
-				&self.sys,
-				&mut self.prev_idle,
-				&mut self.prev_non_idle,
-				&mut self.prev_pid_stats,
-				self.use_current_cpu_total,
-				self.mem_total_kb,
-				current_instant,
-			),
-			&mut self.data.list_of_processes,
-		);
+		if let Ok(process_list) = processes::get_sorted_processes_list(
+			&self.sys,
+			&mut self.prev_idle,
+			&mut self.prev_non_idle,
+			&mut self.prev_pid_stats,
+			self.use_current_cpu_total,
+			self.mem_total_kb,
+			current_instant,
+		) {
+			self.data.list_of_processes = process_list;
+		}
 
 		// Update time
 		self.data.last_collection_time = current_instant;
+		self.last_collection_time = current_instant;
 	}
 }

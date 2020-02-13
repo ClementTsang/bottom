@@ -45,7 +45,7 @@ use utils::error::{self, BottomError};
 enum Event<I, J> {
 	KeyInput(I),
 	MouseInput(J),
-	Update(Box<data_harvester::Data>),
+	Update(data_harvester::Data),
 	Clean,
 }
 
@@ -806,7 +806,8 @@ fn create_event_thread(
 				}
 			}
 			futures::executor::block_on(data_state.update_data());
-			let event = Event::Update(Box::from(data_state.data.clone()));
+			let event = Event::Update(data_state.data);
+			data_state.data = data_harvester::Data::default();
 			tx.send(event).unwrap();
 			thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
 		}
