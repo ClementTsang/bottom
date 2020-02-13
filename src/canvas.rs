@@ -568,11 +568,29 @@ impl Painter {
 			);
 		}
 
+		let title = if app_state.is_expanded {
+			const TITLE_BASE: &str = " CPU ── Esc to go back ";
+			let repeat_num = max(
+				0,
+				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+			);
+			let result_title =
+				format!(" CPU ─{}─ Esc to go back ", "─".repeat(repeat_num as usize));
+
+			result_title
+		} else {
+			" CPU ".to_string()
+		};
+
 		Chart::default()
 			.block(
 				Block::default()
-					.title(" CPU ")
-					.title_style(self.colours.widget_title_style)
+					.title(&title)
+					.title_style(if app_state.is_expanded {
+						self.colours.highlighted_border_style
+					} else {
+						self.colours.widget_title_style
+					})
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
@@ -659,15 +677,12 @@ impl Painter {
 
 		// Draw
 		Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
-			.block(
-				Block::default()
-					.borders(Borders::ALL)
-					.title_style(self.colours.widget_title_style)
-					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
-						_ => self.colours.border_style,
-					}),
-			)
+			.block(Block::default().borders(Borders::ALL).border_style(
+				match app_state.current_widget_selected {
+					app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+					_ => self.colours.border_style,
+				},
+			))
 			.header_style(self.colours.table_header_style)
 			.widths(
 				&(intrinsic_widths
@@ -717,11 +732,31 @@ impl Painter {
 			);
 		}
 
+		let title = if app_state.is_expanded {
+			const TITLE_BASE: &str = " Memory ── Esc to go back ";
+			let repeat_num = max(
+				0,
+				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+			);
+			let result_title = format!(
+				" Memory ─{}─ Esc to go back ",
+				"─".repeat(repeat_num as usize)
+			);
+
+			result_title
+		} else {
+			" Memory ".to_string()
+		};
+
 		Chart::default()
 			.block(
 				Block::default()
-					.title(" Memory ")
-					.title_style(self.colours.widget_title_style)
+					.title(&title)
+					.title_style(if app_state.is_expanded {
+						self.colours.highlighted_border_style
+					} else {
+						self.colours.widget_title_style
+					})
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Mem => self.colours.highlighted_border_style,
@@ -746,11 +781,32 @@ impl Painter {
 			.labels_style(self.colours.graph_style)
 			.bounds([-0.5, 30_f64])
 			.labels(&["0B", "1KiB", "1MiB", "1GiB"]);
+
+		let title = if app_state.is_expanded {
+			const TITLE_BASE: &str = " Network ── Esc to go back ";
+			let repeat_num = max(
+				0,
+				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+			);
+			let result_title = format!(
+				" Network ─{}─ Esc to go back ",
+				"─".repeat(repeat_num as usize)
+			);
+
+			result_title
+		} else {
+			" Network ".to_string()
+		};
+
 		Chart::default()
 			.block(
 				Block::default()
-					.title(" Network ")
-					.title_style(self.colours.widget_title_style)
+					.title(&title)
+					.title_style(if app_state.is_expanded {
+						self.colours.highlighted_border_style
+					} else {
+						self.colours.widget_title_style
+					})
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Network => self.colours.highlighted_border_style,
@@ -826,15 +882,12 @@ impl Painter {
 
 		// Draw
 		Table::new(NETWORK_HEADERS.iter(), mapped_network)
-			.block(
-				Block::default()
-					.borders(Borders::ALL)
-					.title_style(self.colours.widget_title_style)
-					.border_style(match app_state.current_widget_selected {
-						app::WidgetPosition::Network => self.colours.highlighted_border_style,
-						_ => self.colours.border_style,
-					}),
-			)
+			.block(Block::default().borders(Borders::ALL).border_style(
+				match app_state.current_widget_selected {
+					app::WidgetPosition::Network => self.colours.highlighted_border_style,
+					_ => self.colours.border_style,
+				},
+			))
 			.header_style(self.colours.table_header_style)
 			.style(self.colours.text_style)
 			.widths(
@@ -900,12 +953,32 @@ impl Painter {
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
+		let title = if app_state.is_expanded {
+			const TITLE_BASE: &str = " Temperatures ── Esc to go back ";
+			let repeat_num = max(
+				0,
+				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+			);
+			let result_title = format!(
+				" Temperatures ─{}─ Esc to go back ",
+				"─".repeat(repeat_num as usize)
+			);
+
+			result_title
+		} else {
+			" Temperatures ".to_string()
+		};
+
 		// Draw
 		Table::new(TEMP_HEADERS.iter(), temperature_rows)
 			.block(
 				Block::default()
-					.title(" Temperatures ")
-					.title_style(self.colours.widget_title_style)
+					.title(&title)
+					.title_style(if app_state.is_expanded {
+						self.colours.highlighted_border_style
+					} else {
+						self.colours.widget_title_style
+					})
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Temp => self.colours.highlighted_border_style,
@@ -976,12 +1049,32 @@ impl Painter {
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &DISK_HEADERS_LENS);
 		let intrinsic_widths = &variable_intrinsic_results.0[0..variable_intrinsic_results.1];
 
+		let title = if app_state.is_expanded {
+			const TITLE_BASE: &str = " Disk ── Esc to go back ";
+			let repeat_num = max(
+				0,
+				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+			);
+			let result_title = format!(
+				" Disk ─{}─ Esc to go back ",
+				"─".repeat(repeat_num as usize)
+			);
+
+			result_title
+		} else {
+			" Disk ".to_string()
+		};
+
 		// Draw!
 		Table::new(DISK_HEADERS.iter(), disk_rows)
 			.block(
 				Block::default()
-					.title(" Disk ")
-					.title_style(self.colours.widget_title_style)
+					.title(&title)
+					.title_style(if app_state.is_expanded {
+						self.colours.highlighted_border_style
+					} else {
+						self.colours.widget_title_style
+					})
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Disk => self.colours.highlighted_border_style,
@@ -1232,11 +1325,34 @@ impl Painter {
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &process_headers_lens);
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
+		let title = if app_state.is_expanded {
+			const TITLE_BASE: &str = " Processes ── Esc to go back ";
+			let repeat_num = max(
+				0,
+				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+			);
+			let result_title = format!(
+				" Processes ─{}─ Esc to go back ",
+				"─".repeat(repeat_num as usize)
+			);
+
+			result_title
+		} else {
+			" Processes ".to_string()
+		};
+
 		Table::new(process_headers.iter(), process_rows)
 			.block(
 				Block::default()
-					.title(" Processes ")
-					.title_style(self.colours.widget_title_style)
+					.title(&title)
+					.title_style(if app_state.is_expanded {
+						match app_state.current_widget_selected {
+							app::WidgetPosition::Process => self.colours.highlighted_border_style,
+							_ => self.colours.border_style,
+						}
+					} else {
+						self.colours.widget_title_style
+					})
 					.borders(Borders::ALL)
 					.border_style(match app_state.current_widget_selected {
 						app::WidgetPosition::Process => self.colours.highlighted_border_style,
