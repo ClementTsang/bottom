@@ -184,13 +184,13 @@ impl App {
 	pub fn new(
 		show_average_cpu: bool, temperature_type: temperature::TemperatureType,
 		update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
-		use_current_cpu_total: bool,
+		use_current_cpu_total: bool, current_widget_selected: WidgetPosition,
 	) -> App {
 		App {
 			process_sorting_type: processes::ProcessSorting::CPU,
 			process_sorting_reverse: true,
 			update_process_gui: false,
-			current_widget_selected: WidgetPosition::Process,
+			current_widget_selected,
 			app_scroll_positions: AppScrollState::default(),
 			data: data_harvester::Data::default(),
 			awaiting_second_char: false,

@@ -71,6 +71,7 @@ struct ConfigFlags {
 	case_sensitive: Option<bool>,
 	whole_word: Option<bool>,
 	regex: Option<bool>,
+	default_widget: Option<String>,
 }
 
 #[derive(Default, Deserialize)]
@@ -112,6 +113,14 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
+		(@group DEFAULT_WIDGET =>
+			(@arg CPU_WIDGET: --cpu_default "Selects the CPU widget to be selected by default.")
+			(@arg MEM_WIDGET: --memory_default "Selects the memory widget to be selected by default.")
+			(@arg DISK_WIDGET: --disk_default "Selects the disk widget to be selected by default.")
+			(@arg TEMP_WIDGET: --temperature_default "Selects the temp widget to be selected by default.")
+			(@arg NET_WIDGET: --network_default "Selects the network widget to be selected by default.")
+			(@arg PROC_WIDGET: --process_default "Selects the process widget to be selected by default.  This is the default if nothing is set.")
+		)
 	)
 	.get_matches()
 }
@@ -132,6 +141,7 @@ fn main() -> error::Result<()> {
 	let use_dot = get_use_dot_option(&matches, &config);
 	let left_legend = get_use_left_legend_option(&matches, &config);
 	let use_current_cpu_total = get_use_current_cpu_total_option(&matches, &config);
+	let current_widget_selected = get_default_widget(&matches, &config);
 
 	// Create "app" struct, which will control most of the program and store settings/state
 	let mut app = app::App::new(
@@ -141,6 +151,7 @@ fn main() -> error::Result<()> {
 		use_dot,
 		left_legend,
 		use_current_cpu_total,
+		current_widget_selected,
 	);
 
 	enable_app_grouping(&matches, &config, &mut app);
@@ -557,6 +568,48 @@ fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, ap
 			}
 		}
 	}
+}
+
+fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> app::WidgetPosition {
+	if matches.is_present("CPU_WIDGET") {
+		return app::WidgetPosition::Cpu;
+	} else if matches.is_present("MEM_WIDGET") {
+		return app::WidgetPosition::Mem;
+	} else if matches.is_present("DISK_WIDGET") {
+		return app::WidgetPosition::Disk;
+	} else if matches.is_present("TEMP_WIDGET") {
+		return app::WidgetPosition::Temp;
+	} else if matches.is_present("NET_WIDGET") {
+		return app::WidgetPosition::Network;
+	} else if matches.is_present("PROC_WIDGET") {
+		return app::WidgetPosition::Process;
+	} else if let Some(flags) = &config.flags {
+		if let Some(default_widget) = &flags.default_widget {
+			match default_widget.to_lowercase().as_str() {
+				"cpu_default" => {
+					return app::WidgetPosition::Cpu;
+				}
+				"memory_default" => {
+					return app::WidgetPosition::Mem;
+				}
+				"processes_default" => {
+					return app::WidgetPosition::Process;
+				}
+				"network_default" => {
+					return app::WidgetPosition::Network;
+				}
+				"temperature_default" => {
+					return app::WidgetPosition::Temp;
+				}
+				"disk_default" => {
+					return app::WidgetPosition::Disk;
+				}
+				_ => {}
+			}
+		}
+	}
+
+	app::WidgetPosition::Process
 }
 
 fn try_drawing(
