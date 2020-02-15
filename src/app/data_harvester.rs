@@ -114,7 +114,10 @@ impl DataState {
 
 		let current_instant = std::time::Instant::now();
 
+		// CPU
 		self.data.cpu = cpu::get_cpu_data_list(&self.sys);
+
+		// Processes
 		if let Ok(process_list) = processes::get_sorted_processes_list(
 			&self.sys,
 			&mut self.prev_idle,
