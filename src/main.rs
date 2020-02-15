@@ -227,8 +227,6 @@ fn main() -> error::Result<()> {
 
 						// Convert all data into tui-compliant components
 
-						// TODO: [OPT] MT the conversion step.
-
 						// Network
 						let network_data = convert_network_data_points(&app.data_collection);
 						app.canvas_data.network_data_rx = network_data.rx;

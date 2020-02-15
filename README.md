@@ -26,6 +26,8 @@ Features of bottom include:
 
 - Maximizing of widgets of interest.
 
+Details about each widget can be found [here](./docs/widgets.md).
+
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
 | OS                               | CPU | Memory | Disks | Temperature | Processes | Networks |

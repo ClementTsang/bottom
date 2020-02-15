@@ -117,7 +117,9 @@ impl DataState {
 		// CPU
 		self.data.cpu = cpu::get_cpu_data_list(&self.sys);
 
-		// Processes
+		// Processes.  This is the longest part of the harvesting process... changing this might be
+		// good in the future.  What was tried already:
+		// * Splitting the internal part into multiple scoped threads (dropped by ~.01 seconds, but upped usage)
 		if let Ok(process_list) = processes::get_sorted_processes_list(
 			&self.sys,
 			&mut self.prev_idle,

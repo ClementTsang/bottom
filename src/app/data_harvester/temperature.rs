@@ -67,7 +67,7 @@ pub async fn get_temperature_data(
 		}
 	}
 
-	// By default, sort temperature, then by alphabetically!  Allow for configuring this...
+	// By default, sort temperature, then by alphabetically!
 
 	// Note we sort in reverse here; we want greater temps to be higher priority.
 	temperature_vec.sort_by(|a, b| match a.temperature.partial_cmp(&b.temperature) {
