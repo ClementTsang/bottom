@@ -342,18 +342,14 @@ fn handle_key_event_or_break(
 			}
 		} else if let KeyModifiers::SHIFT = event.modifiers {
 			match event.code {
-				KeyCode::Left | KeyCode::Char('h') | KeyCode::Char('H') => {
-					app.move_widget_selection_left()
-				}
-				KeyCode::Right | KeyCode::Char('l') | KeyCode::Char('L') => {
-					app.move_widget_selection_right()
-				}
-				KeyCode::Up | KeyCode::Char('k') | KeyCode::Char('K') => {
-					app.move_widget_selection_up()
-				}
-				KeyCode::Down | KeyCode::Char('j') | KeyCode::Char('J') => {
-					app.move_widget_selection_down()
-				}
+				KeyCode::Left => app.move_widget_selection_left(),
+				KeyCode::Char('h') | KeyCode::Char('H') => app.on_char_key('H'),
+				KeyCode::Right => app.move_widget_selection_right(),
+				KeyCode::Char('l') | KeyCode::Char('L') => app.on_char_key('L'),
+				KeyCode::Up => app.move_widget_selection_up(),
+				KeyCode::Char('k') | KeyCode::Char('K') => app.on_char_key('K'),
+				KeyCode::Down => app.move_widget_selection_down(),
+				KeyCode::Char('j') | KeyCode::Char('J') => app.on_char_key('J'),
 				KeyCode::Char('/') | KeyCode::Char('?') => app.on_char_key('?'),
 				_ => {}
 			}
