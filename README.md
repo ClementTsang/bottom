@@ -82,8 +82,6 @@ Run using `btm`.
 
 - `-v`, `--version` displays the version number and exits.
 
-- `-d`, `--debug` enables debug logging.
-
 - `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>128</sup> - 1. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
 
 - `-l`, `--left_legend` will move external table legends to the left side rather than the right side. Right side is default.
