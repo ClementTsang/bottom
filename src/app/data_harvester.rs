@@ -114,7 +114,6 @@ impl DataState {
 
 		let current_instant = std::time::Instant::now();
 
-		debug!("Start....");
 		self.data.cpu = cpu::get_cpu_data_list(&self.sys);
 		if let Ok(process_list) = processes::get_sorted_processes_list(
 			&self.sys,
@@ -175,7 +174,6 @@ impl DataState {
 		if let Ok(temp) = temp_res {
 			self.data.temperature_sensors = temp;
 		}
-		debug!("End....");
 
 		// Update time
 		self.data.last_collection_time = current_instant;

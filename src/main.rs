@@ -587,7 +587,7 @@ fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> a
 		return app::WidgetPosition::Process;
 	} else if let Some(flags) = &config.flags {
 		if let Some(default_widget) = &flags.default_widget {
-			match default_widget.to_lowercase().as_str() {
+			match default_widget.as_str() {
 				"cpu_default" => {
 					return app::WidgetPosition::Cpu;
 				}
