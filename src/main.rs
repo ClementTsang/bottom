@@ -4,6 +4,8 @@ extern crate log;
 extern crate clap;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate futures;
 
 use serde::Deserialize;
 

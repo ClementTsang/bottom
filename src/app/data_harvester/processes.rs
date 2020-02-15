@@ -116,10 +116,9 @@ fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 /// Note that cpu_fraction should be represented WITHOUT the \times 100 factor!
 fn linux_cpu_usage<S: core::hash::BuildHasher>(
 	pid: u32, cpu_usage: f64, cpu_fraction: f64,
-	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
-	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
 	curr_time: Instant,
-) -> std::io::Result<f64> {
+) -> std::io::Result<(f64, (String, (f64, Instant)))> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
 	let before_proc_val: f64 = if prev_pid_stats.contains_key(&pid.to_string()) {
 		prev_pid_stats
@@ -140,27 +139,36 @@ fn linux_cpu_usage<S: core::hash::BuildHasher>(
 		(after_proc_val - before_proc_val) / cpu_usage * 100_f64
 	);*/
 
-	new_pid_stats.insert(pid.to_string(), (after_proc_val, curr_time));
+	let new_dict_entry = (pid.to_string(), (after_proc_val, curr_time));
 	if use_current_cpu_total {
-		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
+		Ok((
+			(after_proc_val - before_proc_val) / cpu_usage * 100_f64,
+			new_dict_entry,
+		))
 	} else {
-		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64 * cpu_fraction)
+		Ok((
+			(after_proc_val - before_proc_val) / cpu_usage * 100_f64 * cpu_fraction,
+			new_dict_entry,
+		))
 	}
 }
 
 fn convert_ps<S: core::hash::BuildHasher>(
 	process: &str, cpu_usage: f64, cpu_fraction: f64,
-	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
-	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
+	prev_pid_stats: &HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
 	curr_time: Instant,
-) -> std::io::Result<ProcessHarvest> {
+) -> std::io::Result<(ProcessHarvest, (String, (f64, Instant)))> {
 	if process.trim().to_string().is_empty() {
-		return Ok(ProcessHarvest {
-			pid: 0,
-			name: "".to_string(),
-			mem_usage_percent: 0.0,
-			cpu_usage_percent: 0.0,
-		});
+		let dummy_result = (String::default(), (0.0, Instant::now()));
+		return Ok((
+			ProcessHarvest {
+				pid: 0,
+				name: "".to_string(),
+				mem_usage_percent: 0.0,
+				cpu_usage_percent: 0.0,
+			},
+			dummy_result,
+		));
 	}
 
 	let pid = (&process[..11])
@@ -175,20 +183,23 @@ fn convert_ps<S: core::hash::BuildHasher>(
 		.parse::<f64>()
 		.unwrap_or(0_f64);
 
-	Ok(ProcessHarvest {
+	let (cpu_usage_percent, new_entry) = linux_cpu_usage(
 		pid,
-		name,
-		mem_usage_percent,
-		cpu_usage_percent: linux_cpu_usage(
+		cpu_usage,
+		cpu_fraction,
+		prev_pid_stats,
+		use_current_cpu_total,
+		curr_time,
+	)?;
+	Ok((
+		ProcessHarvest {
 			pid,
-			cpu_usage,
-			cpu_fraction,
-			prev_pid_stats,
-			new_pid_stats,
-			use_current_cpu_total,
-			curr_time,
-		)?,
-	})
+			name,
+			mem_usage_percent,
+			cpu_usage_percent: cpu_usage_percent,
+		},
+		new_entry,
+	))
 }
 
 pub fn get_sorted_processes_list(
@@ -199,8 +210,6 @@ pub fn get_sorted_processes_list(
 	let mut process_vector: Vec<ProcessHarvest> = Vec::new();
 
 	if cfg!(target_os = "linux") {
-		// Linux specific - this is a massive pain... ugh.
-
 		let ps_result = Command::new("ps")
 			.args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"])
 			.output()?;
@@ -213,18 +222,19 @@ pub fn get_sorted_processes_list(
 			let mut new_pid_stats: HashMap<String, (f64, Instant), RandomState> = HashMap::new();
 
 			for process in process_stream {
-				if let Ok(process_object) = convert_ps(
+				if let Ok((process_object, new_entry)) = convert_ps(
 					process,
 					cpu_usage,
 					cpu_fraction,
 					&prev_pid_stats,
-					&mut new_pid_stats,
 					use_current_cpu_total,
 					curr_time,
 				) {
 					if !process_object.name.is_empty() {
 						process_vector.push(process_object);
 					}
+
+					new_pid_stats.insert(new_entry.0, new_entry.1);
 				}
 			}
 

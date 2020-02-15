@@ -114,48 +114,8 @@ impl DataState {
 
 		let current_instant = std::time::Instant::now();
 
-		// TODO: [OPT] MT/Async the harvesting step.
-
-		// Network
-		self.data.network = network::get_network_data(
-			&self.sys,
-			self.last_collection_time,
-			&mut self.total_rx,
-			&mut self.total_tx,
-			current_instant,
-		)
-		.await;
-
-		self.total_rx = self.data.network.total_rx;
-		self.total_tx = self.data.network.total_tx;
-
-		// Mem and swap
-		if let Ok(memory) = mem::get_mem_data_list().await {
-			self.data.memory = memory;
-		}
-
-		if let Ok(swap) = mem::get_swap_data_list().await {
-			self.data.swap = swap;
-		}
-
-		// CPU
+		debug!("Start....");
 		self.data.cpu = cpu::get_cpu_data_list(&self.sys);
-
-		// Disks
-		if let Ok(disks) = disks::get_disk_usage_list().await {
-			self.data.disks = disks;
-		}
-		if let Ok(io) = disks::get_io_usage_list(false).await {
-			self.data.io = io;
-		}
-
-		// Temp
-		if let Ok(temp) = temperature::get_temperature_data(&self.sys, &self.temperature_type).await
-		{
-			self.data.temperature_sensors = temp;
-		}
-
-		// What we want to do: For timed data, if there is an error, just do not add.  For other data, just don't update!
 		if let Ok(process_list) = processes::get_sorted_processes_list(
 			&self.sys,
 			&mut self.prev_idle,
@@ -167,6 +127,55 @@ impl DataState {
 		) {
 			self.data.list_of_processes = process_list;
 		}
+
+		// ASYNC
+		let network_data_fut = network::get_network_data(
+			&self.sys,
+			self.last_collection_time,
+			&mut self.total_rx,
+			&mut self.total_tx,
+			current_instant,
+		);
+
+		let mem_data_fut = mem::get_mem_data_list();
+		let swap_data_fut = mem::get_swap_data_list();
+		let disk_data_fut = disks::get_disk_usage_list();
+		let disk_io_usage_fut = disks::get_io_usage_list(false);
+		let temp_data_fut = temperature::get_temperature_data(&self.sys, &self.temperature_type);
+
+		let (net_data, mem_res, swap_res, disk_res, io_res, temp_res) = join!(
+			network_data_fut,
+			mem_data_fut,
+			swap_data_fut,
+			disk_data_fut,
+			disk_io_usage_fut,
+			temp_data_fut
+		);
+
+		// After async
+		self.data.network = net_data;
+		self.total_rx = self.data.network.total_rx;
+		self.total_tx = self.data.network.total_tx;
+
+		if let Ok(memory) = mem_res {
+			self.data.memory = memory;
+		}
+
+		if let Ok(swap) = swap_res {
+			self.data.swap = swap;
+		}
+
+		if let Ok(disks) = disk_res {
+			self.data.disks = disks;
+		}
+		if let Ok(io) = io_res {
+			self.data.io = io;
+		}
+
+		if let Ok(temp) = temp_res {
+			self.data.temperature_sensors = temp;
+		}
+		debug!("End....");
 
 		// Update time
 		self.data.last_collection_time = current_instant;
