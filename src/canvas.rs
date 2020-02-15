@@ -1157,8 +1157,12 @@ impl Painter {
 		}];
 
 		// Text options shamelessly stolen from VS Code.
-		let option_text = vec![
-			Text::styled("\n\n", self.colours.table_header_style),
+		let mut option_text = vec![];
+		for _ in 0..(draw_loc.height - 3) {
+			option_text.push(Text::raw("\n"));
+		}
+
+		let option_row = vec![
 			Text::styled("Match Case (Alt+C)", self.colours.table_header_style),
 			if !app_state.search_state.is_ignoring_case() {
 				Text::styled("[*]", self.colours.table_header_style)
@@ -1180,6 +1184,7 @@ impl Painter {
 				Text::styled("[ ]", self.colours.table_header_style)
 			},
 		];
+		option_text.extend(option_row);
 
 		search_text.extend(query_with_cursor);
 		search_text.extend(option_text);

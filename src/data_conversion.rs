@@ -268,7 +268,7 @@ pub fn convert_network_data_points(
 		}
 
 		rx.push((time_from_start, data.rx_data.0));
-		tx.push((time_from_start, data.rx_data.0));
+		tx.push((time_from_start, data.tx_data.0));
 	}
 
 	let total_rx_converted_result: (f64, String);
