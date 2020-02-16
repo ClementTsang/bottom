@@ -254,6 +254,13 @@ fn main() -> error::Result<()> {
 							&app.data_collection,
 						);
 
+						// Pre-fill CPU if needed
+						for itx in 0..app.canvas_data.cpu_data.len() {
+							if app.cpu_state.core_show_vec.len() <= itx {
+								app.cpu_state.core_show_vec.push(true);
+							}
+						}
+
 						// Processes
 						let (single, grouped) = convert_process_data(&app.data_collection);
 						app.canvas_data.process_data = single;

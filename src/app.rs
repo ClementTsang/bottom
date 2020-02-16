@@ -363,6 +363,24 @@ impl App {
 		self.enable_grouping
 	}
 
+	pub fn on_space(&mut self) {
+		match self.current_widget_selected {
+			WidgetPosition::Cpu => {
+				let curr_posn = self
+					.app_scroll_positions
+					.cpu_scroll_state
+					.current_scroll_position;
+				if self.cpu_state.is_showing_tray
+					&& curr_posn < self.data_collection.cpu_harvest.len() as u64
+				{
+					self.cpu_state.core_show_vec[curr_posn as usize] =
+						!self.cpu_state.core_show_vec[curr_posn as usize];
+				}
+			}
+			_ => {}
+		}
+	}
+
 	pub fn on_slash(&mut self) {
 		if !self.is_in_dialog() {
 			match self.current_widget_selected {
@@ -808,6 +826,7 @@ impl App {
 					'L' => self.move_widget_selection_right(),
 					'K' => self.move_widget_selection_up(),
 					'J' => self.move_widget_selection_down(),
+					' ' => self.on_space(),
 					_ => {}
 				}
 

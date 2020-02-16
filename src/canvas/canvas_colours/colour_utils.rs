@@ -37,11 +37,10 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 		Style::default().fg(Color::LightMagenta),
 		Style::default().fg(Color::LightCyan),
 		Style::default().fg(Color::Green),
-		Style::default().fg(Color::Red),
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
-	for _i in 0..(num_to_gen - 6) {
+	for _i in 0..(num_to_gen - 5) {
 		h = gen_hsv(h);
 		let result = hsv_to_rgb(h, 0.5, 0.95);
 		colour_vec.push(Style::default().fg(Color::Rgb(result.0, result.1, result.2)));

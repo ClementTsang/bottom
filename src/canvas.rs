@@ -23,9 +23,10 @@ use drawing_utils::*;
 
 // Headers
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
+const CPU_SELECT_LEGEND_HEADER: [&str; 3] = ["CPU", "Use%", "Show"];
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
-const MEM_HEADERS: [&str; 3] = ["Mem", "Usage", "Usage%"];
+const MEM_HEADERS: [&str; 3] = ["Mem", "Usage", "Use%"];
 const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
@@ -37,6 +38,10 @@ lazy_static! {
 		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
 		.collect::<Vec<_>>();
 	static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
+		.iter()
+		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+		.collect::<Vec<_>>();
+	static ref CPU_SELECT_LEGEND_HEADER_LENS: Vec<usize> = CPU_SELECT_LEGEND_HEADER
 		.iter()
 		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
 		.collect::<Vec<_>>();
@@ -532,22 +537,11 @@ impl Painter {
 		let mut dataset_vector: Vec<Dataset> = Vec::new();
 		let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
 
-		for (i, cpu) in cpu_data.iter().enumerate() {
-			cpu_entries_vec.push((
-				self.colours.cpu_colour_styles[(i) % self.colours.cpu_colour_styles.len()],
-				cpu.cpu_data
-					.iter()
-					.map(<(f64, f64)>::from)
-					.collect::<Vec<_>>(),
-			));
-		}
-
-		if app_state.app_config_fields.show_average_cpu {
-			if let Some(avg_cpu_entry) = cpu_data.first() {
+		for (itx, cpu) in cpu_data.iter().enumerate() {
+			if app_state.cpu_state.core_show_vec[itx] {
 				cpu_entries_vec.push((
-					self.colours.cpu_colour_styles[0],
-					avg_cpu_entry
-						.cpu_data
+					self.colours.cpu_colour_styles[(itx) % self.colours.cpu_colour_styles.len()],
+					cpu.cpu_data
 						.iter()
 						.map(<(f64, f64)>::from)
 						.collect::<Vec<_>>(),
@@ -625,16 +619,26 @@ impl Painter {
 		let sliced_cpu_data = &cpu_data[start_position as usize..];
 		let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
 
-		for cpu in sliced_cpu_data {
+		for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
 			if let Some(cpu_data) = cpu.cpu_data.last() {
-				stringified_cpu_data.push(vec![
+				let mut entry = vec![
 					cpu.cpu_name.clone(),
 					format!("{:.0}%", cpu_data.usage.round()),
-				]);
+				];
+
+				if app_state.cpu_state.is_showing_tray {
+					entry.push(
+						if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
+							"*".to_string()
+						} else {
+							String::default()
+						},
+					)
+				}
+
+				stringified_cpu_data.push(entry);
 			}
 		}
-
-		let mut cpu_row_counter: i64 = 0;
 
 		let cpu_rows = stringified_cpu_data
 			.iter()
@@ -644,25 +648,22 @@ impl Painter {
 					cpu_string_row.iter(),
 					match app_state.current_widget_selected {
 						app::WidgetPosition::Cpu => {
-							if cpu_row_counter as u64
+							if itx as u64
 								== app_state
 									.app_scroll_positions
 									.cpu_scroll_state
 									.current_scroll_position - start_position
 							{
-								cpu_row_counter = -1;
 								self.colours.currently_selected_text_style
 							} else {
-								if cpu_row_counter >= 0 {
-									cpu_row_counter += 1;
-								}
-								self.colours.cpu_colour_styles
-									[itx % self.colours.cpu_colour_styles.len()]
+								self.colours.cpu_colour_styles[itx
+									+ start_position as usize
+										% self.colours.cpu_colour_styles.len()]
 							}
 						}
 						_ => {
-							self.colours.cpu_colour_styles
-								[itx % self.colours.cpu_colour_styles.len()]
+							self.colours.cpu_colour_styles[itx
+								+ start_position as usize % self.colours.cpu_colour_styles.len()]
 						}
 					},
 				)
@@ -670,27 +671,46 @@ impl Painter {
 
 		// Calculate widths
 		let width = f64::from(draw_loc.width);
-		let width_ratios = vec![0.5, 0.5];
-		let variable_intrinsic_results =
-			get_variable_intrinsic_widths(width as u16, &width_ratios, &CPU_LEGEND_HEADER_LENS);
+		let width_ratios = if app_state.cpu_state.is_showing_tray {
+			vec![0.4, 0.3, 0.3]
+		} else {
+			vec![0.5, 0.5]
+		};
+		let variable_intrinsic_results = get_variable_intrinsic_widths(
+			width as u16,
+			&width_ratios,
+			if app_state.cpu_state.is_showing_tray {
+				&CPU_SELECT_LEGEND_HEADER_LENS
+			} else {
+				&CPU_LEGEND_HEADER_LENS
+			},
+		);
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		// Draw
-		Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
-			.block(Block::default().borders(Borders::ALL).border_style(
-				match app_state.current_widget_selected {
-					app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
-					_ => self.colours.border_style,
-				},
-			))
-			.header_style(self.colours.table_header_style)
-			.widths(
-				&(intrinsic_widths
-					.iter()
-					.map(|calculated_width| Constraint::Length(*calculated_width as u16))
-					.collect::<Vec<_>>()),
-			)
-			.render(f, draw_loc);
+		Table::new(
+			if app_state.cpu_state.is_showing_tray {
+				CPU_SELECT_LEGEND_HEADER.to_vec()
+			} else {
+				CPU_LEGEND_HEADER.to_vec()
+			}
+			.iter(),
+			cpu_rows,
+		)
+		.block(Block::default().borders(Borders::ALL).border_style(
+			match app_state.current_widget_selected {
+				app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+				_ => self.colours.border_style,
+			},
+		))
+		.header_style(self.colours.table_header_style)
+		.widths(
+			&(intrinsic_widths
+				.iter()
+				.map(|calculated_width| Constraint::Length(*calculated_width as u16))
+				.collect::<Vec<_>>()),
+		)
+		.render(f, draw_loc);
 	}
 
 	fn draw_memory_graph<B: backend::Backend>(
