@@ -355,19 +355,19 @@ fn handle_key_event_or_break(
 			match event.code {
 				KeyCode::Char('c') => {
 					if app.is_in_search_widget() {
-						app.search_state.toggle_ignore_case();
+						app.process_search_state.toggle_ignore_case();
 						app.update_regex();
 					}
 				}
 				KeyCode::Char('w') => {
 					if app.is_in_search_widget() {
-						app.search_state.toggle_search_whole_word();
+						app.process_search_state.toggle_search_whole_word();
 						app.update_regex();
 					}
 				}
 				KeyCode::Char('r') => {
 					if app.is_in_search_widget() {
-						app.search_state.toggle_search_regex();
+						app.process_search_state.toggle_search_regex();
 						app.update_regex();
 					}
 				}
@@ -526,11 +526,11 @@ fn enable_app_case_sensitive(
 	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App,
 ) {
 	if matches.is_present("CASE_SENSITIVE") {
-		app.search_state.toggle_ignore_case();
+		app.process_search_state.toggle_ignore_case();
 	} else if let Some(flags) = &config.flags {
 		if let Some(case_sensitive) = flags.case_sensitive {
 			if case_sensitive {
-				app.search_state.toggle_ignore_case();
+				app.process_search_state.toggle_ignore_case();
 			}
 		}
 	}
@@ -540,11 +540,11 @@ fn enable_app_match_whole_word(
 	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App,
 ) {
 	if matches.is_present("WHOLE_WORD") {
-		app.search_state.toggle_search_whole_word();
+		app.process_search_state.toggle_search_whole_word();
 	} else if let Some(flags) = &config.flags {
 		if let Some(whole_word) = flags.whole_word {
 			if whole_word {
-				app.search_state.toggle_search_whole_word();
+				app.process_search_state.toggle_search_whole_word();
 			}
 		}
 	}
@@ -552,11 +552,11 @@ fn enable_app_match_whole_word(
 
 fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App) {
 	if matches.is_present("REGEX_DEFAULT") {
-		app.search_state.toggle_search_regex();
+		app.process_search_state.toggle_search_regex();
 	} else if let Some(flags) = &config.flags {
 		if let Some(regex) = flags.regex {
 			if regex {
-				app.search_state.toggle_search_regex();
+				app.process_search_state.toggle_search_regex();
 			}
 		}
 	}
@@ -735,7 +735,7 @@ fn update_final_process_list(app: &mut app::App) {
 			.clone()
 			.into_iter()
 			.filter(|process| {
-				if app.search_state.is_invalid_or_blank_search {
+				if app.process_search_state.is_invalid_or_blank_search {
 					true
 				} else if let Ok(matcher) = app.get_current_regex_matcher() {
 					matcher.is_match(&process.name)
@@ -749,10 +749,10 @@ fn update_final_process_list(app: &mut app::App) {
 			.process_data
 			.iter()
 			.filter(|(_pid, process)| {
-				if app.search_state.is_invalid_or_blank_search {
+				if app.process_search_state.is_invalid_or_blank_search {
 					true
 				} else if let Ok(matcher) = app.get_current_regex_matcher() {
-					if app.search_state.is_searching_with_pid {
+					if app.process_search_state.is_searching_with_pid {
 						matcher.is_match(&process.pid.to_string())
 					} else {
 						matcher.is_match(&process.name)
