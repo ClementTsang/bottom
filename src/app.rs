@@ -60,7 +60,7 @@ impl Default for AppScrollState {
 	}
 }
 
-/// AppSearchState deals with generic searching (mainly for graph filtering)
+/// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
 	is_enabled: bool,
 	current_search_query: String,
@@ -157,6 +157,61 @@ pub struct AppConfigFields {
 	pub use_current_cpu_total: bool,
 }
 
+/// Network specific
+pub struct NetworkState {
+	pub is_showing_tray: bool,
+	pub is_showing_rx: bool,
+	pub is_showing_tx: bool,
+	pub zoom_level: f64,
+}
+
+impl Default for NetworkState {
+	fn default() -> Self {
+		NetworkState {
+			is_showing_tray: false,
+			is_showing_rx: true,
+			is_showing_tx: true,
+			zoom_level: 100.0,
+		}
+	}
+}
+
+/// CPU specific
+pub struct CpuState {
+	pub is_showing_tray: bool,
+	pub zoom_level: f64,
+	pub core_show_vec: Vec<bool>,
+}
+
+impl Default for CpuState {
+	fn default() -> Self {
+		CpuState {
+			is_showing_tray: false,
+			zoom_level: 100.0,
+			core_show_vec: Vec::new(),
+		}
+	}
+}
+
+/// Memory specific
+pub struct MemState {
+	pub is_showing_tray: bool,
+	pub is_showing_ram: bool,
+	pub is_showing_swap: bool,
+	pub zoom_level: f64,
+}
+
+impl Default for MemState {
+	fn default() -> Self {
+		MemState {
+			is_showing_tray: false,
+			is_showing_ram: true,
+			is_showing_swap: true,
+			zoom_level: 100.0,
+		}
+	}
+}
+
 pub struct App {
 	pub process_sorting_type: processes::ProcessSorting,
 	pub process_sorting_reverse: bool,
@@ -178,6 +233,9 @@ pub struct App {
 	pub help_dialog_state: AppHelpDialogState,
 	pub app_config_fields: AppConfigFields,
 	pub is_expanded: bool,
+	pub cpu_state: CpuState,
+	pub mem_state: MemState,
+	pub net_state: NetworkState,
 }
 
 impl App {
@@ -214,6 +272,9 @@ impl App {
 				use_current_cpu_total,
 			},
 			is_expanded: false,
+			cpu_state: CpuState::default(),
+			mem_state: MemState::default(),
+			net_state: NetworkState::default(),
 		}
 	}
 
@@ -240,10 +301,26 @@ impl App {
 			self.delete_dialog_state.is_on_yes = false;
 			self.to_delete_process_list = None;
 			self.dd_err = None;
-		} else if self.process_search_state.search_state.is_enabled {
-			self.current_widget_selected = WidgetPosition::Process;
-			self.process_search_state.search_state.is_enabled = false;
-		} else if self.is_expanded {
+		} else if !self.is_expanded {
+			match self.current_widget_selected {
+				WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+					if self.process_search_state.search_state.is_enabled {
+						self.current_widget_selected = WidgetPosition::Process;
+						self.process_search_state.search_state.is_enabled = false;
+					}
+				}
+				WidgetPosition::Cpu => {
+					self.cpu_state.is_showing_tray = false;
+				}
+				WidgetPosition::Mem => {
+					self.mem_state.is_showing_tray = false;
+				}
+				WidgetPosition::Network => {
+					self.net_state.is_showing_tray = false;
+				}
+				_ => {}
+			}
+		} else {
 			self.is_expanded = false;
 		}
 	}
@@ -286,13 +363,22 @@ impl App {
 		self.enable_grouping
 	}
 
-	pub fn enable_searching(&mut self) {
+	pub fn on_slash(&mut self) {
 		if !self.is_in_dialog() {
 			match self.current_widget_selected {
 				WidgetPosition::Process | WidgetPosition::ProcessSearch => {
 					// Toggle on
 					self.process_search_state.search_state.is_enabled = true;
 					self.current_widget_selected = WidgetPosition::ProcessSearch;
+				}
+				WidgetPosition::Cpu => {
+					self.cpu_state.is_showing_tray = true;
+				}
+				WidgetPosition::Mem => {
+					self.mem_state.is_showing_tray = true;
+				}
+				WidgetPosition::Network => {
+					self.net_state.is_showing_tray = true;
 				}
 				_ => {}
 			}
@@ -414,8 +500,11 @@ impl App {
 				self.delete_dialog_state.is_showing_dd = false;
 			}
 		} else if !self.is_in_dialog() {
-			// Pop-out mode.
-			self.is_expanded = true;
+			// Pop-out mode.  We ignore if in process search.
+			match self.current_widget_selected {
+				WidgetPosition::ProcessSearch => {}
+				_ => self.is_expanded = true,
+			}
 		}
 	}
 
@@ -533,6 +622,47 @@ impl App {
 		}
 	}
 
+	pub fn start_dd(&mut self) {
+		if self
+			.app_scroll_positions
+			.process_scroll_state
+			.current_scroll_position
+			< self.canvas_data.finalized_process_data.len() as u64
+		{
+			let current_process = if self.is_grouped() {
+				let group_pids = &self.canvas_data.finalized_process_data[self
+					.app_scroll_positions
+					.process_scroll_state
+					.current_scroll_position
+					as usize]
+					.group_pids;
+
+				let mut ret = ("".to_string(), group_pids.clone());
+
+				for pid in group_pids {
+					if let Some(process) = self.canvas_data.process_data.get(&pid) {
+						ret.0 = process.name.clone();
+						break;
+					}
+				}
+				ret
+			} else {
+				let process = self.canvas_data.finalized_process_data[self
+					.app_scroll_positions
+					.process_scroll_state
+					.current_scroll_position
+					as usize]
+					.clone();
+				(process.name.clone(), vec![process.pid])
+			};
+
+			self.to_delete_process_list = Some(current_process);
+			self.delete_dialog_state.is_showing_dd = true;
+		}
+
+		self.reset_multi_tap_keys();
+	}
+
 	pub fn on_char_key(&mut self, caught_char: char) {
 		// Forbid any char key presses when showing a dialog box...
 		if !self.is_in_dialog() {
@@ -565,7 +695,7 @@ impl App {
 			} else {
 				match caught_char {
 					'/' => {
-						self.enable_searching();
+						self.on_slash();
 					}
 					'd' => {
 						if let WidgetPosition::Process = self.current_widget_selected {
@@ -576,49 +706,7 @@ impl App {
 									self.awaiting_second_char = false;
 									self.second_char = None;
 
-									if self
-										.app_scroll_positions
-										.process_scroll_state
-										.current_scroll_position < self
-										.canvas_data
-										.finalized_process_data
-										.len() as u64
-									{
-										let current_process = if self.is_grouped() {
-											let group_pids = &self
-												.canvas_data
-												.finalized_process_data[self
-												.app_scroll_positions
-												.process_scroll_state
-												.current_scroll_position as usize]
-												.group_pids;
-
-											let mut ret = ("".to_string(), group_pids.clone());
-
-											for pid in group_pids {
-												if let Some(process) =
-													self.canvas_data.process_data.get(&pid)
-												{
-													ret.0 = process.name.clone();
-													break;
-												}
-											}
-											ret
-										} else {
-											let process = self.canvas_data.finalized_process_data
-												[self
-													.app_scroll_positions
-													.process_scroll_state
-													.current_scroll_position as usize]
-												.clone();
-											(process.name.clone(), vec![process.pid])
-										};
-
-										self.to_delete_process_list = Some(current_process);
-										self.delete_dialog_state.is_showing_dd = true;
-									}
-
-									self.reset_multi_tap_keys();
+									self.start_dd();
 								}
 							}
 

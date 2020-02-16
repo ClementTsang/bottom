@@ -295,8 +295,6 @@ fn handle_key_event_or_break(
 	event: KeyEvent, app: &mut app::App, rtx: &std::sync::mpsc::Sender<ResetEvent>,
 ) -> bool {
 	if event.modifiers.is_empty() {
-		// If only a code, and no modifiers, don't bother...
-
 		// Required catch for searching - otherwise you couldn't search with q.
 		if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
 			return true;
@@ -314,6 +312,7 @@ fn handle_key_event_or_break(
 			KeyCode::Enter => app.on_enter(),
 			KeyCode::Tab => app.on_tab(),
 			KeyCode::Backspace => app.on_backspace(),
+			KeyCode::Delete => app.start_dd(),
 			_ => {}
 		}
 	} else {
@@ -324,7 +323,7 @@ fn handle_key_event_or_break(
 			}
 
 			match event.code {
-				KeyCode::Char('f') => app.enable_searching(),
+				KeyCode::Char('f') => app.on_slash(),
 				KeyCode::Left => app.move_widget_selection_left(),
 				KeyCode::Right => app.move_widget_selection_right(),
 				KeyCode::Up => app.move_widget_selection_up(),
