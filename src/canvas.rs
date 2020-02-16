@@ -1144,7 +1144,7 @@ impl Painter {
 				)]
 			};
 
-		let mut search_text = vec![if app_state.search_state.is_searching_with_pid() {
+		let mut search_text = vec![if app_state.search_state.is_searching_with_pid {
 			Text::styled(
 				"Search by PID (Tab for Name): ",
 				self.colours.table_header_style,
@@ -1164,21 +1164,21 @@ impl Painter {
 
 		let option_row = vec![
 			Text::styled("Match Case (Alt+C)", self.colours.table_header_style),
-			if !app_state.search_state.is_ignoring_case() {
+			if !app_state.search_state.is_ignoring_case {
 				Text::styled("[*]", self.colours.table_header_style)
 			} else {
 				Text::styled("[ ]", self.colours.table_header_style)
 			},
 			Text::styled("     ", self.colours.table_header_style),
 			Text::styled("Match Whole Word (Alt+W)", self.colours.table_header_style),
-			if app_state.search_state.is_searching_whole_word() {
+			if app_state.search_state.is_searching_whole_word {
 				Text::styled("[*]", self.colours.table_header_style)
 			} else {
 				Text::styled("[ ]", self.colours.table_header_style)
 			},
 			Text::styled("     ", self.colours.table_header_style),
 			Text::styled("Use Regex (Alt+R)", self.colours.table_header_style),
-			if app_state.search_state.is_searching_with_regex() {
+			if app_state.search_state.is_searching_with_regex {
 				Text::styled("[*]", self.colours.table_header_style)
 			} else {
 				Text::styled("[ ]", self.colours.table_header_style)

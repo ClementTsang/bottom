@@ -63,59 +63,45 @@ impl Default for AppScrollState {
 /// AppSearchState only deals with the search's current settings and state.
 pub struct AppSearchState {
 	current_search_query: String,
-	searching_pid: bool,
-	ignore_case: bool,
+	pub is_searching_with_pid: bool,
 	current_regex: std::result::Result<regex::Regex, regex::Error>,
 	current_cursor_position: usize,
-	match_word: bool,
-	use_regex: bool,
+	pub is_invalid_or_blank_search: bool,
+	pub is_ignoring_case: bool,
+	pub is_searching_whole_word: bool,
+	pub is_searching_with_regex: bool,
 }
 
 impl Default for AppSearchState {
 	fn default() -> Self {
 		AppSearchState {
 			current_search_query: String::default(),
-			searching_pid: false,
-			ignore_case: true,
+			is_searching_with_pid: false,
+			is_ignoring_case: true,
 			current_regex: BASE_REGEX.clone(),
+			is_invalid_or_blank_search: true,
 			current_cursor_position: 0,
-			match_word: false,
-			use_regex: false,
+			is_searching_whole_word: false,
+			is_searching_with_regex: false,
 		}
 	}
 }
 
 impl AppSearchState {
 	pub fn toggle_ignore_case(&mut self) {
-		self.ignore_case = !self.ignore_case;
+		self.is_ignoring_case = !self.is_ignoring_case;
 	}
 
 	pub fn toggle_search_whole_word(&mut self) {
-		self.match_word = !self.match_word;
+		self.is_searching_whole_word = !self.is_searching_whole_word;
 	}
 
 	pub fn toggle_search_regex(&mut self) {
-		self.use_regex = !self.use_regex;
+		self.is_searching_with_regex = !self.is_searching_with_regex;
 	}
 
 	pub fn toggle_search_with_pid(&mut self) {
-		self.searching_pid = !self.searching_pid;
-	}
-
-	pub fn is_ignoring_case(&self) -> bool {
-		self.ignore_case
-	}
-
-	pub fn is_searching_whole_word(&self) -> bool {
-		self.match_word
-	}
-
-	pub fn is_searching_with_regex(&self) -> bool {
-		self.use_regex
-	}
-
-	pub fn is_searching_with_pid(&self) -> bool {
-		self.searching_pid
+		self.is_searching_with_pid = !self.is_searching_with_pid;
 	}
 }
 
@@ -171,7 +157,7 @@ pub struct App {
 	last_key_press: Instant,
 	pub canvas_data: canvas::DisplayableData,
 	enable_grouping: bool,
-	enable_searching: bool,
+	enable_process_searching: bool,
 	pub data_collection: DataCollection,
 	pub search_state: AppSearchState,
 	pub delete_dialog_state: AppDeleteDialogState,
@@ -201,7 +187,7 @@ impl App {
 			last_key_press: Instant::now(),
 			canvas_data: canvas::DisplayableData::default(),
 			enable_grouping: false,
-			enable_searching: false,
+			enable_process_searching: false,
 			data_collection: DataCollection::default(),
 			search_state: AppSearchState::default(),
 			delete_dialog_state: AppDeleteDialogState::default(),
@@ -222,12 +208,12 @@ impl App {
 		self.reset_multi_tap_keys();
 		self.help_dialog_state.is_showing_help = false;
 		self.delete_dialog_state.is_showing_dd = false;
-		if self.enable_searching {
+		if self.enable_process_searching {
 			self.current_widget_selected = WidgetPosition::Process;
-			self.enable_searching = false;
+			self.enable_process_searching = false;
 		}
 		self.search_state.current_search_query = String::new();
-		self.search_state.searching_pid = false;
+		self.search_state.is_searching_with_pid = false;
 		self.to_delete_process_list = None;
 		self.dd_err = None;
 	}
@@ -241,9 +227,9 @@ impl App {
 			self.delete_dialog_state.is_on_yes = false;
 			self.to_delete_process_list = None;
 			self.dd_err = None;
-		} else if self.enable_searching {
+		} else if self.enable_process_searching {
 			self.current_widget_selected = WidgetPosition::Process;
-			self.enable_searching = false;
+			self.enable_process_searching = false;
 		} else if self.is_expanded {
 			self.is_expanded = false;
 		}
@@ -273,7 +259,7 @@ impl App {
 			WidgetPosition::Process => self.toggle_grouping(),
 			WidgetPosition::Disk => {}
 			WidgetPosition::ProcessSearch => {
-				if self.search_state.is_searching_with_pid() {
+				if self.search_state.is_searching_with_pid {
 					self.search_with_name();
 				} else {
 					self.search_with_pid();
@@ -292,7 +278,7 @@ impl App {
 			match self.current_widget_selected {
 				WidgetPosition::Process | WidgetPosition::ProcessSearch => {
 					// Toggle on
-					self.enable_searching = true;
+					self.enable_process_searching = true;
 					self.current_widget_selected = WidgetPosition::ProcessSearch;
 				}
 				_ => {}
@@ -301,7 +287,7 @@ impl App {
 	}
 
 	pub fn is_searching(&self) -> bool {
-		self.enable_searching
+		self.enable_process_searching
 	}
 
 	pub fn is_in_search_widget(&self) -> bool {
@@ -315,7 +301,7 @@ impl App {
 	pub fn search_with_pid(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.search_state.searching_pid = true;
+				self.search_state.is_searching_with_pid = true;
 			}
 		}
 	}
@@ -323,7 +309,7 @@ impl App {
 	pub fn search_with_name(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.search_state.searching_pid = false;
+				self.search_state.is_searching_with_pid = false;
 			}
 		}
 	}
@@ -344,23 +330,25 @@ impl App {
 
 	pub fn update_regex(&mut self) {
 		self.search_state.current_regex = if self.search_state.current_search_query.is_empty() {
+			self.search_state.is_invalid_or_blank_search = true;
 			BASE_REGEX.clone()
 		} else {
 			let mut final_regex_string = self.search_state.current_search_query.clone();
 
-			if !self.search_state.is_searching_with_regex() {
+			if !self.search_state.is_searching_with_regex {
 				final_regex_string = regex::escape(&final_regex_string);
 			}
 
-			if self.search_state.is_searching_whole_word() {
+			if self.search_state.is_searching_whole_word {
 				final_regex_string = format!("^{}$", final_regex_string);
 			}
-			if self.search_state.is_ignoring_case() {
+			if self.search_state.is_ignoring_case {
 				final_regex_string = format!("(?i){}", final_regex_string);
 			}
 
 			regex::Regex::new(&final_regex_string)
 		};
+		self.search_state.is_invalid_or_blank_search = self.search_state.current_regex.is_err();
 		self.app_scroll_positions
 			.process_scroll_state
 			.previous_scroll_position = 0;
