@@ -104,6 +104,7 @@ impl Painter {
 	/// This is to set some remaining styles and text.
 	/// This bypasses some logic checks (size > 2, for example) but this
 	/// assumes that you, the programmer, are sane and do not do stupid things.
+	/// RIGHT?
 	pub fn initialize(&mut self) {
 		self.styled_general_help_text.push(Text::Styled(
 			GENERAL_HELP_TEXT[0].into(),
@@ -629,9 +630,9 @@ impl Painter {
 				if app_state.cpu_state.is_showing_tray {
 					entry.push(
 						if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
-							"*".to_string()
+							"[*]".to_string()
 						} else {
-							String::default()
+							"[ ]".to_string()
 						},
 					)
 				}
@@ -643,6 +644,13 @@ impl Painter {
 		let cpu_rows = stringified_cpu_data
 			.iter()
 			.enumerate()
+			.filter(|(itx, _cpu_string_row)| {
+				if app_state.cpu_state.is_showing_tray {
+					true
+				} else {
+					app_state.cpu_state.core_show_vec[*itx]
+				}
+			})
 			.map(|(itx, cpu_string_row)| {
 				Row::StyledData(
 					cpu_string_row.iter(),
