@@ -735,7 +735,11 @@ fn update_final_process_list(app: &mut app::App) {
 			.clone()
 			.into_iter()
 			.filter(|process| {
-				if app.process_search_state.is_invalid_or_blank_search {
+				if app
+					.process_search_state
+					.search_state
+					.is_invalid_or_blank_search
+				{
 					true
 				} else if let Ok(matcher) = app.get_current_regex_matcher() {
 					matcher.is_match(&process.name)
@@ -749,7 +753,11 @@ fn update_final_process_list(app: &mut app::App) {
 			.process_data
 			.iter()
 			.filter(|(_pid, process)| {
-				if app.process_search_state.is_invalid_or_blank_search {
+				if app
+					.process_search_state
+					.search_state
+					.is_invalid_or_blank_search
+				{
 					true
 				} else if let Ok(matcher) = app.get_current_regex_matcher() {
 					if app.process_search_state.is_searching_with_pid {
