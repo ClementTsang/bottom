@@ -279,12 +279,12 @@ pub fn generate_joining_points(
 	let num_points = std::cmp::min(
 		std::cmp::max(
 			(value_difference.abs() / time_difference * 500.0) as u64,
-			100,
+			50,
 		),
 		500,
 	);
 
-	for itx in 0..num_points {
+	for itx in (0..num_points).step_by(2) {
 		points.push((
 			time_difference - (itx as f64 / num_points as f64 * time_difference),
 			start_y + (itx as f64 / num_points as f64 * value_difference),
