@@ -301,7 +301,7 @@ impl App {
 			self.delete_dialog_state.is_on_yes = false;
 			self.to_delete_process_list = None;
 			self.dd_err = None;
-		} else if !self.is_expanded {
+		} else if self.is_filtering_or_searching() {
 			match self.current_widget_selected {
 				WidgetPosition::Process | WidgetPosition::ProcessSearch => {
 					if self.process_search_state.search_state.is_enabled {
@@ -320,9 +320,16 @@ impl App {
 				}
 				_ => {}
 			}
-		} else {
+		} else if self.is_expanded {
 			self.is_expanded = false;
 		}
+	}
+
+	fn is_filtering_or_searching(&self) -> bool {
+		self.cpu_state.is_showing_tray
+			|| self.mem_state.is_showing_tray
+			|| self.net_state.is_showing_tray
+			|| self.process_search_state.search_state.is_enabled
 	}
 
 	fn reset_multi_tap_keys(&mut self) {

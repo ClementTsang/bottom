@@ -563,7 +563,7 @@ impl Painter {
 			);
 		}
 
-		let title = if app_state.is_expanded {
+		let title = if app_state.is_expanded && !app_state.cpu_state.is_showing_tray {
 			const TITLE_BASE: &str = " CPU ── Esc to go back ";
 			let repeat_num = max(
 				0,
@@ -644,7 +644,7 @@ impl Painter {
 		let cpu_rows = stringified_cpu_data
 			.iter()
 			.enumerate()
-			.filter(|(itx, _cpu_string_row)| {
+			.filter(|(itx, _)| {
 				if app_state.cpu_state.is_showing_tray {
 					true
 				} else {
@@ -695,6 +695,19 @@ impl Painter {
 		);
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
+		let title = if app_state.cpu_state.is_showing_tray {
+			const TITLE_BASE: &str = " Esc to go close ";
+			let repeat_num = max(
+				0,
+				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+			);
+			let result_title = format!("{} Esc to go close ", "─".repeat(repeat_num as usize));
+
+			result_title
+		} else {
+			"".to_string()
+		};
+
 		// Draw
 		Table::new(
 			if app_state.cpu_state.is_showing_tray {
@@ -705,12 +718,23 @@ impl Painter {
 			.iter(),
 			cpu_rows,
 		)
-		.block(Block::default().borders(Borders::ALL).border_style(
-			match app_state.current_widget_selected {
-				app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
-				_ => self.colours.border_style,
-			},
-		))
+		.block(
+			Block::default()
+				.title(&title)
+				.title_style(if app_state.is_expanded {
+					self.colours.highlighted_border_style
+				} else {
+					match app_state.current_widget_selected {
+						app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+						_ => self.colours.border_style,
+					}
+				})
+				.borders(Borders::ALL)
+				.border_style(match app_state.current_widget_selected {
+					app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+					_ => self.colours.border_style,
+				}),
+		)
 		.header_style(self.colours.table_header_style)
 		.widths(
 			&(intrinsic_widths
