@@ -538,7 +538,7 @@ impl Painter {
 		let mut dataset_vector: Vec<Dataset> = Vec::new();
 		let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
 
-		for (itx, cpu) in cpu_data.iter().enumerate() {
+		for (itx, cpu) in cpu_data.iter().enumerate().rev() {
 			if app_state.cpu_state.core_show_vec[itx] {
 				cpu_entries_vec.push((
 					self.colours.cpu_colour_styles[(itx) % self.colours.cpu_colour_styles.len()],
