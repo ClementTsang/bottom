@@ -231,7 +231,7 @@ impl Painter {
 					)
 					.split(vertical_dialog_chunk[1]);
 
-				if let Some(dd_err) = app_state.dd_err.clone() {
+				if let Some(dd_err) = &app_state.dd_err {
 					let dd_text = [Text::raw(format!(
 						"\nFailure to properly kill the process - {}",
 						dd_err

@@ -15,8 +15,8 @@ name = "btm"
 path = "src/main.rs"
 
 [profile.release]
-# debug = true
-debug = 1
+debug = true
+# debug = 1
 opt-level = 'z'  # Optimize for size.
 # opt-level = 3  # Optimize for speed.
 lto = true

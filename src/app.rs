@@ -475,12 +475,12 @@ impl App {
 			let final_regex_string = &format!(
 				"{}{}{}",
 				if self.process_search_state.is_searching_whole_word {
-					"^{}$"
+					"^$"
 				} else {
 					""
 				},
 				if self.process_search_state.is_ignoring_case {
-					"(?i){}"
+					"(?i)"
 				} else {
 					""
 				},
@@ -492,9 +492,9 @@ impl App {
 				}
 			);
 
-			self.process_search_state.search_state.is_blank_search = false;
-
+			debug!("FINAL: {}", final_regex_string);
 			let new_regex = regex::Regex::new(final_regex_string);
+			self.process_search_state.search_state.is_blank_search = false;
 			self.process_search_state.search_state.is_invalid_search = new_regex.is_err();
 
 			self.process_search_state.search_state.current_regex = Some(new_regex);
