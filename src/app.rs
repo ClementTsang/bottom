@@ -396,9 +396,9 @@ impl App {
 					self.process_search_state.search_state.is_enabled = true;
 					self.current_widget_selected = WidgetPosition::ProcessSearch;
 				}
-				// WidgetPosition::Cpu => {
-				// 	self.cpu_state.is_showing_tray = true;
-				// }
+				WidgetPosition::Cpu => {
+					self.cpu_state.is_showing_tray = true;
+				}
 				// WidgetPosition::Mem => {
 				// 	self.mem_state.is_showing_tray = true;
 				// }
