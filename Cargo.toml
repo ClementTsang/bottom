@@ -15,16 +15,17 @@ name = "btm"
 path = "src/main.rs"
 
 [profile.release]
-debug = 1
 # debug = true
+debug = 1
 opt-level = 'z'  # Optimize for size.
+# opt-level = 3  # Optimize for speed.
 lto = true
 
 [dependencies]
 chrono = "0.4.10"
 clap = "2.33.0"
 fern = "0.5.9"
-futures-timer = "3.0.1"
+futures-timer = "3.0.2"
 futures = "0.3.4"
 heim = "0.0.10"
 log = "0.4.8"

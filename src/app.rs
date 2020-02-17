@@ -28,11 +28,6 @@ pub enum ScrollDirection {
 	DOWN,
 }
 
-lazy_static! {
-	static ref BASE_REGEX: std::result::Result<regex::Regex, regex::Error> =
-		regex::Regex::new(".*");
-}
-
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
 #[derive(Default)]
 pub struct AppScrollWidgetState {
@@ -64,9 +59,10 @@ impl Default for AppScrollState {
 pub struct AppSearchState {
 	is_enabled: bool,
 	current_search_query: String,
-	current_regex: std::result::Result<regex::Regex, regex::Error>,
+	current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
 	current_cursor_position: usize,
-	pub is_invalid_or_blank_search: bool,
+	pub is_blank_search: bool,
+	pub is_invalid_search: bool,
 }
 
 impl Default for AppSearchState {
@@ -74,10 +70,17 @@ impl Default for AppSearchState {
 		AppSearchState {
 			is_enabled: false,
 			current_search_query: String::default(),
-			current_regex: BASE_REGEX.clone(),
+			current_regex: None,
 			current_cursor_position: 0,
-			is_invalid_or_blank_search: true,
+			is_invalid_search: false,
+			is_blank_search: true,
 		}
+	}
+}
+
+impl AppSearchState {
+	pub fn is_invalid_or_blank_search(&self) -> bool {
+		self.is_blank_search || self.is_invalid_search
 	}
 }
 
@@ -388,6 +391,7 @@ impl App {
 						!self.cpu_state.core_show_vec[curr_posn as usize];
 				}
 			}
+			WidgetPosition::Network => {}
 			_ => {}
 		}
 	}
@@ -457,43 +461,44 @@ impl App {
 	}
 
 	pub fn update_regex(&mut self) {
-		self.process_search_state.search_state.current_regex = if self
+		if self
 			.process_search_state
 			.search_state
 			.current_search_query
 			.is_empty()
 		{
-			self.process_search_state
-				.search_state
-				.is_invalid_or_blank_search = true;
-			BASE_REGEX.clone()
+			self.process_search_state.search_state.is_invalid_search = false;
+			self.process_search_state.search_state.is_blank_search = true;
 		} else {
-			let mut final_regex_string = self
-				.process_search_state
-				.search_state
-				.current_search_query
-				.clone();
+			let regex_string = &self.process_search_state.search_state.current_search_query;
+			let escaped_regex: String;
+			let final_regex_string = &format!(
+				"{}{}{}",
+				if self.process_search_state.is_searching_whole_word {
+					"^{}$"
+				} else {
+					""
+				},
+				if self.process_search_state.is_ignoring_case {
+					"(?i){}"
+				} else {
+					""
+				},
+				if !self.process_search_state.is_searching_with_regex {
+					escaped_regex = regex::escape(regex_string);
+					&escaped_regex
+				} else {
+					regex_string
+				}
+			);
 
-			if !self.process_search_state.is_searching_with_regex {
-				final_regex_string = regex::escape(&final_regex_string);
-			}
+			self.process_search_state.search_state.is_blank_search = false;
 
-			if self.process_search_state.is_searching_whole_word {
-				final_regex_string = format!("^{}$", final_regex_string);
-			}
-			if self.process_search_state.is_ignoring_case {
-				final_regex_string = format!("(?i){}", final_regex_string);
-			}
+			let new_regex = regex::Regex::new(final_regex_string);
+			self.process_search_state.search_state.is_invalid_search = new_regex.is_err();
 
-			regex::Regex::new(&final_regex_string)
-		};
-		self.process_search_state
-			.search_state
-			.is_invalid_or_blank_search = self
-			.process_search_state
-			.search_state
-			.current_regex
-			.is_err();
+			self.process_search_state.search_state.current_regex = Some(new_regex);
+		}
 		self.app_scroll_positions
 			.process_scroll_state
 			.previous_scroll_position = 0;
@@ -585,13 +590,7 @@ impl App {
 
 	pub fn clear_search(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			self.process_search_state
-				.search_state
-				.current_cursor_position = 0;
-			self.process_search_state.search_state.current_search_query = String::default();
-			self.process_search_state
-				.search_state
-				.is_invalid_or_blank_search = true;
+			self.process_search_state = ProcessSearchState::default();
 			self.update_process_gui = true;
 		}
 	}
@@ -623,7 +622,9 @@ impl App {
 		}
 	}
 
-	pub fn get_current_regex_matcher(&self) -> &std::result::Result<regex::Regex, regex::Error> {
+	pub fn get_current_regex_matcher(
+		&self,
+	) -> &Option<std::result::Result<regex::Regex, regex::Error>> {
 		&self.process_search_state.search_state.current_regex
 	}
 

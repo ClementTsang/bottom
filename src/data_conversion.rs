@@ -35,27 +35,7 @@ pub struct ConvertedProcessData {
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedCpuData {
 	pub cpu_name: String,
-	pub cpu_data: Vec<CpuPoint>,
-}
-
-#[derive(Clone, Default, Debug)]
-pub struct CpuPoint {
-	pub time: f64,
-	pub usage: f64,
-}
-
-impl From<CpuPoint> for (f64, f64) {
-	fn from(c: CpuPoint) -> (f64, f64) {
-		let CpuPoint { time, usage } = c;
-		(time, usage)
-	}
-}
-
-impl From<&CpuPoint> for (f64, f64) {
-	fn from(c: &CpuPoint) -> (f64, f64) {
-		let CpuPoint { time, usage } = c;
-		(*time, *usage)
-	}
+	pub cpu_data: Vec<(f64, f64)>,
 }
 
 pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
@@ -150,16 +130,14 @@ pub fn convert_cpu_data_points(
 			//Insert joiner points
 			for &(joiner_offset, joiner_val) in &cpu.1 {
 				let offset_time = time_from_start - joiner_offset as f64;
-				cpu_data_vector[itx_offset].cpu_data.push(CpuPoint {
-					time: offset_time,
-					usage: joiner_val,
-				});
+				cpu_data_vector[itx_offset]
+					.cpu_data
+					.push((offset_time, joiner_val));
 			}
 
-			cpu_data_vector[itx_offset].cpu_data.push(CpuPoint {
-				time: time_from_start,
-				usage: cpu.0,
-			});
+			cpu_data_vector[itx_offset]
+				.cpu_data
+				.push((time_from_start, cpu.0));
 		}
 	}
 

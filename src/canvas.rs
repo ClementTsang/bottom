@@ -470,10 +470,8 @@ impl Painter {
 				};
 
 				// Set up blocks and their components
-				// CPU graph
+				// CPU graph + legend
 				self.draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
-
-				// CPU legend
 				self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
 
 				//Memory usage graph
@@ -481,7 +479,6 @@ impl Painter {
 
 				// Network graph
 				self.draw_network_graph(&mut f, &app_state, network_chunk[0]);
-
 				self.draw_network_labels(&mut f, app_state, network_chunk[1]);
 
 				// Temperature table
@@ -535,33 +532,24 @@ impl Painter {
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
-		let mut dataset_vector: Vec<Dataset> = Vec::new();
-		let mut cpu_entries_vec: Vec<(Style, Vec<(f64, f64)>)> = Vec::new();
-
-		for (itx, cpu) in cpu_data.iter().enumerate().rev() {
-			if app_state.cpu_state.core_show_vec[itx] {
-				cpu_entries_vec.push((
-					self.colours.cpu_colour_styles[(itx) % self.colours.cpu_colour_styles.len()],
-					cpu.cpu_data
-						.iter()
-						.map(<(f64, f64)>::from)
-						.collect::<Vec<_>>(),
-				));
-			}
-		}
-
-		for cpu_entry in &cpu_entries_vec {
-			dataset_vector.push(
+		let dataset_vector: Vec<Dataset> = cpu_data
+			.iter()
+			.enumerate()
+			.rev()
+			.filter(|(itx, _)| app_state.cpu_state.core_show_vec[*itx])
+			.map(|(itx, cpu)| {
 				Dataset::default()
 					.marker(if app_state.app_config_fields.use_dot {
 						Marker::Dot
 					} else {
 						Marker::Braille
 					})
-					.style(cpu_entry.0)
-					.data(&(cpu_entry.1)),
-			);
-		}
+					.style(
+						self.colours.cpu_colour_styles[itx % self.colours.cpu_colour_styles.len()],
+					)
+					.data(&cpu.cpu_data[..])
+			})
+			.collect::<Vec<_>>();
 
 		let title = if app_state.is_expanded && !app_state.cpu_state.is_showing_tray {
 			const TITLE_BASE: &str = " CPU ── Esc to go back ";
@@ -620,26 +608,29 @@ impl Painter {
 		let sliced_cpu_data = &cpu_data[start_position as usize..];
 		let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
 
-		for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
-			if let Some(cpu_data) = cpu.cpu_data.last() {
-				let entry = if app_state.cpu_state.is_showing_tray {
-					vec![
+		if app_state.cpu_state.is_showing_tray {
+			for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
+				if let Some(cpu_data) = cpu.cpu_data.last() {
+					let entry = vec![
 						if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
 							"[*]".to_string()
 						} else {
 							"[ ]".to_string()
 						},
 						cpu.cpu_name.clone(),
-						format!("{:.0}%", cpu_data.usage.round()),
-					]
-				} else {
-					vec![
-						cpu.cpu_name.clone(),
-						format!("{:.0}%", cpu_data.usage.round()),
-					]
-				};
+						format!("{:.0}%", cpu_data.1.round()),
+					];
 
-				stringified_cpu_data.push(entry);
+					stringified_cpu_data.push(entry);
+				}
+			}
+		} else {
+			for cpu in sliced_cpu_data.iter() {
+				if let Some(cpu_data) = cpu.cpu_data.last() {
+					let entry = vec![cpu.cpu_name.clone(), format!("{:.0}%", cpu_data.1.round())];
+
+					stringified_cpu_data.push(entry);
+				}
 			}
 		}
 
@@ -873,10 +864,7 @@ impl Painter {
 			.y_axis(y_axis)
 			.datasets(&[
 				Dataset::default()
-					.name(&format!(
-						"RX: {:7}",
-						app_state.canvas_data.rx_display.clone()
-					))
+					.name(&format!("RX: {:7}", app_state.canvas_data.rx_display))
 					.marker(if app_state.app_config_fields.use_dot {
 						Marker::Dot
 					} else {
@@ -885,10 +873,7 @@ impl Painter {
 					.style(self.colours.rx_style)
 					.data(&network_data_rx),
 				Dataset::default()
-					.name(&format!(
-						"TX: {:7}",
-						app_state.canvas_data.tx_display.clone()
-					))
+					.name(&format!("TX: {:7}", app_state.canvas_data.tx_display))
 					.marker(if app_state.app_config_fields.use_dot {
 						Marker::Dot
 					} else {
@@ -898,11 +883,11 @@ impl Painter {
 					.data(&network_data_tx),
 				Dataset::default().name(&format!(
 					"Total RX: {:7}",
-					app_state.canvas_data.total_rx_display.clone()
+					app_state.canvas_data.total_rx_display
 				)),
 				Dataset::default().name(&format!(
 					"Total TX: {:7}",
-					app_state.canvas_data.total_tx_display.clone()
+					app_state.canvas_data.total_tx_display
 				)),
 			])
 			.render(f, draw_loc);
@@ -911,10 +896,10 @@ impl Painter {
 	fn draw_network_labels<B: backend::Backend>(
 		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
-		let rx_display: String = app_state.canvas_data.rx_display.clone();
-		let tx_display: String = app_state.canvas_data.tx_display.clone();
-		let total_rx_display: String = app_state.canvas_data.total_rx_display.clone();
-		let total_tx_display: String = app_state.canvas_data.total_tx_display.clone();
+		let rx_display = &app_state.canvas_data.rx_display;
+		let tx_display = &app_state.canvas_data.tx_display;
+		let total_rx_display = &app_state.canvas_data.total_rx_display;
+		let total_tx_display = &app_state.canvas_data.total_tx_display;
 
 		// Gross but I need it to work...
 		let total_network = vec![vec![
@@ -1252,7 +1237,11 @@ impl Painter {
 		);
 		let title = format!("{} Esc to close ", "─".repeat(repeat_num as usize));
 
-		let current_border_style: Style = if app_state.get_current_regex_matcher().is_err() {
+		let current_border_style: Style = if app_state
+			.process_search_state
+			.search_state
+			.is_invalid_search
+		{
 			Style::default().fg(Color::Rgb(255, 0, 0))
 		} else {
 			match app_state.current_widget_selected {

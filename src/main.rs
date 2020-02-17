@@ -21,6 +21,7 @@ use crossterm::{
 };
 
 use std::{
+	boxed::Box,
 	io::{stdout, Write},
 	panic::{self, PanicInfo},
 	sync::mpsc,
@@ -47,7 +48,7 @@ use utils::error::{self, BottomError};
 enum Event<I, J> {
 	KeyInput(I),
 	MouseInput(J),
-	Update(data_harvester::Data),
+	Update(Box<data_harvester::Data>),
 	Clean,
 }
 
@@ -210,6 +211,7 @@ fn main() -> error::Result<()> {
 	painter.colours.generate_remaining_cpu_colours();
 	painter.initialize();
 
+	let mut first_run = true;
 	loop {
 		// TODO: [OPT] this should not block...
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
@@ -259,10 +261,13 @@ fn main() -> error::Result<()> {
 						);
 
 						// Pre-fill CPU if needed
-						for itx in 0..app.canvas_data.cpu_data.len() {
-							if app.cpu_state.core_show_vec.len() <= itx {
-								app.cpu_state.core_show_vec.push(true);
+						if first_run {
+							for itx in 0..app.canvas_data.cpu_data.len() {
+								if app.cpu_state.core_show_vec.len() <= itx {
+									app.cpu_state.core_show_vec.push(true);
+								}
 							}
+							first_run = false;
 						}
 
 						// Processes
@@ -756,22 +761,24 @@ fn update_final_process_list(app: &mut app::App) {
 	let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
 		app.canvas_data
 			.grouped_process_data
-			.clone()
-			.into_iter()
+			.iter()
 			.filter(|process| {
 				if app
 					.process_search_state
 					.search_state
-					.is_invalid_or_blank_search
+					.is_invalid_or_blank_search()
 				{
-					true
-				} else if let Ok(matcher) = app.get_current_regex_matcher() {
-					matcher.is_match(&process.name)
-				} else {
-					true
+					return true;
+				} else if let Some(matcher_result) = app.get_current_regex_matcher() {
+					if let Ok(matcher) = matcher_result {
+						return matcher.is_match(&process.name);
+					}
 				}
+
+				true
 			})
-			.collect::<Vec<ConvertedProcessData>>()
+			.cloned()
+			.collect::<Vec<_>>()
 	} else {
 		app.canvas_data
 			.process_data
@@ -780,18 +787,19 @@ fn update_final_process_list(app: &mut app::App) {
 				if app
 					.process_search_state
 					.search_state
-					.is_invalid_or_blank_search
+					.is_invalid_or_blank_search()
 				{
-					true
-				} else if let Ok(matcher) = app.get_current_regex_matcher() {
-					if app.process_search_state.is_searching_with_pid {
-						matcher.is_match(&process.pid.to_string())
-					} else {
-						matcher.is_match(&process.name)
+					return true;
+				} else if let Some(matcher_result) = app.get_current_regex_matcher() {
+					if let Ok(matcher) = matcher_result {
+						if app.process_search_state.is_searching_with_pid {
+							return matcher.is_match(&process.pid.to_string());
+						} else {
+							return matcher.is_match(&process.name);
+						}
 					}
-				} else {
-					true
 				}
+				true
 			})
 			.map(|(_pid, process)| ConvertedProcessData {
 				pid: process.pid,
@@ -800,7 +808,7 @@ fn update_final_process_list(app: &mut app::App) {
 				mem_usage: process.mem_usage_percent,
 				group_pids: vec![process.pid],
 			})
-			.collect::<Vec<ConvertedProcessData>>()
+			.collect::<Vec<_>>()
 	};
 
 	sort_process_data(&mut filtered_process_data, app);
@@ -887,7 +895,7 @@ fn create_event_thread(
 				}
 			}
 			futures::executor::block_on(data_state.update_data());
-			let event = Event::Update(data_state.data);
+			let event = Event::Update(Box::from(data_state.data));
 			data_state.data = data_harvester::Data::default();
 			tx.send(event).unwrap();
 			thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
