@@ -319,7 +319,7 @@ fn handle_key_event_or_break(
 			KeyCode::Enter => app.on_enter(),
 			KeyCode::Tab => app.on_tab(),
 			KeyCode::Backspace => app.on_backspace(),
-			KeyCode::Delete => app.start_dd(),
+			KeyCode::Delete => app.on_delete(),
 			_ => {}
 		}
 	} else {
@@ -342,6 +342,7 @@ fn handle_key_event_or_break(
 				}
 				KeyCode::Char('a') => app.skip_cursor_beginning(),
 				KeyCode::Char('e') => app.skip_cursor_end(),
+				KeyCode::Backspace => app.on_skip_backspace(),
 				_ => {}
 			}
 		} else if let KeyModifiers::SHIFT = event.modifiers {
