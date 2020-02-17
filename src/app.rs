@@ -492,7 +492,6 @@ impl App {
 				}
 			);
 
-			debug!("FINAL: {}", final_regex_string);
 			let new_regex = regex::Regex::new(final_regex_string);
 			self.process_search_state.search_state.is_blank_search = false;
 			self.process_search_state.search_state.is_invalid_search = new_regex.is_err();
@@ -590,7 +589,12 @@ impl App {
 
 	pub fn clear_search(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			self.process_search_state = ProcessSearchState::default();
+			self.process_search_state
+				.search_state
+				.current_cursor_position = 0;
+			self.process_search_state.search_state.current_search_query = String::default();
+			self.process_search_state.search_state.is_blank_search = true;
+			self.process_search_state.search_state.is_invalid_search = false;
 			self.update_process_gui = true;
 		}
 	}
