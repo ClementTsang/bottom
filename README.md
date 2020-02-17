@@ -4,7 +4,7 @@
 
 A graphical top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop). Supports Linux, macOS, and Windows.
 
-![Quick demo recording](assets/recording_1.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux. Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see sample config)_
+![Quick demo recording](assets/summary_and_search.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux. Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see sample config)_
 
 ## Features
 
@@ -166,9 +166,15 @@ See this [config](./sample_config.toml) for an example.
 
 - `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
 
-- `Esc` to close.
-
 - `Left` and `Right` arrow keys to move the cursor within the search bar.
+
+- `Ctrl-u` to clear the current search query.
+
+- `Backspace` to delete one character behind the current cursor position.
+
+- `Delete` to delete one character at the current cursor position.
+
+- `Esc` to close.
 
 Note that `q` is disabled while in the search widget.
 
