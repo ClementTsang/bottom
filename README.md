@@ -100,6 +100,8 @@ Run using `btm`.
 
 - `--cpu_default`, `--memory_default`, `--disk_default`, `--temperature_default`, `--network_default`, `--process_default` will select the corresponding widget on startup. By default the process widget is selected.
 
+- `-s`, `--show_disabled_data` will show data entries in the graph legends even if the lines for that entry are disabled.
+
 - `-C`, `--config` takes in a file path leading to a TOML file.
 
 ### Config Files

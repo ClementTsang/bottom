@@ -155,6 +155,7 @@ pub struct AppConfigFields {
 	pub left_legend: bool,
 	pub show_average_cpu: bool,
 	pub use_current_cpu_total: bool,
+	pub show_disabled_data: bool,
 }
 
 /// Network specific
@@ -239,10 +240,12 @@ pub struct App {
 }
 
 impl App {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		show_average_cpu: bool, temperature_type: temperature::TemperatureType,
 		update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
 		use_current_cpu_total: bool, current_widget_selected: WidgetPosition,
+		show_disabled_data: bool,
 	) -> App {
 		App {
 			process_sorting_type: processes::ProcessSorting::CPU,
@@ -270,6 +273,7 @@ impl App {
 				update_rate_in_milliseconds,
 				left_legend,
 				use_current_cpu_total,
+				show_disabled_data,
 			},
 			is_expanded: false,
 			cpu_state: CpuState::default(),

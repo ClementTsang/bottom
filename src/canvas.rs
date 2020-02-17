@@ -647,7 +647,9 @@ impl Painter {
 			.iter()
 			.enumerate()
 			.filter(|(itx, _)| {
-				if app_state.cpu_state.is_showing_tray {
+				if app_state.cpu_state.is_showing_tray
+					|| app_state.app_config_fields.show_disabled_data
+				{
 					true
 				} else {
 					app_state.cpu_state.core_show_vec[*itx]

@@ -23,6 +23,8 @@ default_widget = "cpu_default"
 #default_widget = "network_default"
 #default_widget = "process_default"
 
+show_disabled_data = true
+
 [colors]
 # Based on gruvbox: https://github.com/morhetz/gruvbox
 table_header_color="#458588"
