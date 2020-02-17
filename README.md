@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom) [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 
-A graphical top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
+A graphical top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop). Supports Linux, macOS, and Windows.
 
 ![Quick demo recording](assets/recording_1.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux_
 
@@ -10,7 +10,7 @@ A graphical top clone, written in Rust. Inspired by both [gtop](https://github.c
 
 Features of bottom include:
 
-- CPU widget to show a visual representation of per-core usage. Average CPU display also exists.
+- CPU widget to show a visual representation of per-core (and optionally average) usage.
 
 - Memory widget to show a visual representation of both RAM and SWAP usage.
 
@@ -24,7 +24,7 @@ Features of bottom include:
 
 - Config file support for custom colours and default options.
 
-- Maximizing of widgets of interest.
+- Maximizing of widgets of interest to take up the entire window.
 
 Details about each widget can be found [here](./docs/widgets.md).
 
