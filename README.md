@@ -134,6 +134,10 @@ See this [config](./sample_config.toml) for an example.
 
 - `G` (`Shift-g`) or `End` to jump to the last entry of the current table.
 
+#### CPU
+
+- `/` to allow for enabling/disabling showing certain cores with `Space`.
+
 #### Processes
 
 - `dd` to kill the selected process
