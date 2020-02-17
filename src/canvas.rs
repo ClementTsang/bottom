@@ -23,7 +23,7 @@ use drawing_utils::*;
 
 // Headers
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
-const CPU_SELECT_LEGEND_HEADER: [&str; 3] = ["CPU", "Use%", "Show"];
+const CPU_SELECT_LEGEND_HEADER: [&str; 3] = ["Show (Space)", "CPU", "Use%"];
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 const MEM_HEADERS: [&str; 3] = ["Mem", "Usage", "Use%"];
@@ -622,20 +622,22 @@ impl Painter {
 
 		for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
 			if let Some(cpu_data) = cpu.cpu_data.last() {
-				let mut entry = vec![
-					cpu.cpu_name.clone(),
-					format!("{:.0}%", cpu_data.usage.round()),
-				];
-
-				if app_state.cpu_state.is_showing_tray {
-					entry.push(
+				let entry = if app_state.cpu_state.is_showing_tray {
+					vec![
 						if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
 							"[*]".to_string()
 						} else {
 							"[ ]".to_string()
 						},
-					)
-				}
+						cpu.cpu_name.clone(),
+						format!("{:.0}%", cpu_data.usage.round()),
+					]
+				} else {
+					vec![
+						cpu.cpu_name.clone(),
+						format!("{:.0}%", cpu_data.usage.round()),
+					]
+				};
 
 				stringified_cpu_data.push(entry);
 			}
@@ -696,12 +698,12 @@ impl Painter {
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		let title = if app_state.cpu_state.is_showing_tray {
-			const TITLE_BASE: &str = " Esc to go close ";
+			const TITLE_BASE: &str = " Esc to close";
 			let repeat_num = max(
 				0,
 				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
 			);
-			let result_title = format!("{} Esc to go close ", "─".repeat(repeat_num as usize));
+			let result_title = format!("{} Esc to close ", "─".repeat(repeat_num as usize));
 
 			result_title
 		} else {
