@@ -12,7 +12,7 @@ pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
 pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "";
 
 // Help text
-pub const GENERAL_HELP_TEXT: [&str; 17] = [
+pub const GENERAL_HELP_TEXT: [&str; 15] = [
 	"General Keybindings\n\n",
 	"q, Ctrl-c      Quit bottom\n",
 	"Esc            Close filters, dialog boxes, etc.",
@@ -23,8 +23,6 @@ pub const GENERAL_HELP_TEXT: [&str; 17] = [
 	"H/J/K/L        Move currently selected widget up/down/left/right\n",
 	"Up, k          Move cursor up\n",
 	"Down, j        Move cursor down\n",
-	"Left, h        Move cursor left\n",
-	"Right, l       Move cursor right\n",
 	"?              Open the help screen\n",
 	"gg             Skip to the first entry of a list\n",
 	"G              Skip to the last entry of a list\n",
@@ -43,12 +41,17 @@ pub const PROCESS_HELP_TEXT: [&str; 8] = [
 	"Ctrl-f, /      Open up the search widget\n",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 8] = [
+pub const SEARCH_HELP_TEXT: [&str; 13] = [
 	"Search Keybindings\n\n",
 	"Tab            Toggle between searching for PID and name.\n",
 	"Esc            Close search widget\n",
 	"Ctrl-a         Skip to the start of search widget\n",
 	"Ctrl-e         Skip to the end of search widget\n",
+	"Ctrl-u         Clear the current search query\n",
+	"Backspace      Delete the character behind the cursor\n",
+	"Delete         Delete the character at the cursor\n",
+	"Left           Move cursor left\n",
+	"Right          Move cursor right\n",
 	"Alt-c          Toggle whether to ignore case\n",
 	"Alt-m          Toggle whether to match the whole word\n",
 	"Alt-r          Toggle whether to use regex\n",

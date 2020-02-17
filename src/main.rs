@@ -340,9 +340,10 @@ fn handle_key_event_or_break(
 						app.reset();
 					}
 				}
+				KeyCode::Char('u') => app.clear_search(),
 				KeyCode::Char('a') => app.skip_cursor_beginning(),
 				KeyCode::Char('e') => app.skip_cursor_end(),
-				KeyCode::Backspace => app.on_skip_backspace(),
+				// TODO: [FEATURE] Ctrl-backspace KeyCode::Backspace => app.on_skip_backspace(),
 				_ => {}
 			}
 		} else if let KeyModifiers::SHIFT = event.modifiers {

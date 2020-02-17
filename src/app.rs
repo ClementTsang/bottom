@@ -410,40 +410,6 @@ impl App {
 		}
 	}
 
-	pub fn on_delete(&mut self) {
-		match self.current_widget_selected {
-			WidgetPosition::Process => self.start_dd(),
-			WidgetPosition::ProcessSearch => {
-				if self.process_search_state.search_state.is_enabled
-					&& self
-						.process_search_state
-						.search_state
-						.current_cursor_position < self
-						.process_search_state
-						.search_state
-						.current_search_query
-						.len()
-				{
-					self.process_search_state
-						.search_state
-						.current_search_query
-						.remove(
-							self.process_search_state
-								.search_state
-								.current_cursor_position,
-						);
-
-					self.update_regex();
-					self.update_process_gui = true;
-				}
-			}
-			_ => {}
-		}
-	}
-
-	/// Deletes an entire word till the next space or end
-	pub fn on_skip_backspace(&mut self) {}
-
 	pub fn is_searching(&self) -> bool {
 		self.process_search_state.search_state.is_enabled
 	}
@@ -564,6 +530,65 @@ impl App {
 				WidgetPosition::ProcessSearch => {}
 				_ => self.is_expanded = true,
 			}
+		}
+	}
+
+	pub fn on_delete(&mut self) {
+		match self.current_widget_selected {
+			WidgetPosition::Process => self.start_dd(),
+			WidgetPosition::ProcessSearch => {
+				if self.process_search_state.search_state.is_enabled
+					&& self
+						.process_search_state
+						.search_state
+						.current_cursor_position < self
+						.process_search_state
+						.search_state
+						.current_search_query
+						.len()
+				{
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.remove(
+							self.process_search_state
+								.search_state
+								.current_cursor_position,
+						);
+
+					self.update_regex();
+					self.update_process_gui = true;
+				}
+			}
+			_ => {}
+		}
+	}
+
+	/// Deletes an entire word till the next space or end
+	#[allow(unused_variables)]
+	pub fn on_skip_backspace(&mut self) {
+		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
+			if self.process_search_state.search_state.is_enabled {
+				// Starting from the current position, work backwards on each char until we hit whitespace
+				let search_chars = self
+					.process_search_state
+					.search_state
+					.current_search_query
+					.chars();
+			}
+		}
+	}
+
+	pub fn clear_search(&mut self) {
+		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
+			self.process_search_state
+				.search_state
+				.current_cursor_position = 0;
+			self.process_search_state.search_state.current_search_query = String::default();
+			self.process_search_state
+				.search_state
+				.is_invalid_or_blank_search = true;
+			self.update_process_gui = true;
 		}
 	}
 
