@@ -1,3 +1,4 @@
+edition = "2018"
 max_width = 100
 newline_style = "Unix"
 reorder_imports = true
@@ -8,5 +9,8 @@ hard_tabs = true
 merge_imports = true
 merge_derives = true
 reorder_modules = true
-space_before_colon = true
+reorder_impl_items = true
 tab_spaces = 4
+format_strings = true
+space_before_colon = true
+space_after_colon = true
