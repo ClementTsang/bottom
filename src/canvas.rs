@@ -140,6 +140,8 @@ impl Painter {
 		);
 	}
 
+	// TODO: [REFACTOR] We should clean this up tbh
+	#[allow(clippy::cognitive_complexity)]
 	pub fn draw_data<B: backend::Backend>(
 		&mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
 	) -> error::Result<()> {
@@ -152,9 +154,9 @@ impl Painter {
 					.margin(1)
 					.constraints(
 						[
-							Constraint::Percentage(30),
-							Constraint::Percentage(40),
-							Constraint::Percentage(30),
+							Constraint::Percentage(20),
+							Constraint::Percentage(60),
+							Constraint::Percentage(20),
 						]
 						.as_ref(),
 					)
@@ -210,9 +212,9 @@ impl Painter {
 					.margin(1)
 					.constraints(
 						[
-							Constraint::Percentage(40),
-							Constraint::Percentage(20),
-							Constraint::Percentage(40),
+							Constraint::Percentage(35),
+							Constraint::Percentage(30),
+							Constraint::Percentage(35),
 						]
 						.as_ref(),
 					)
@@ -223,9 +225,9 @@ impl Painter {
 					.margin(0)
 					.constraints(
 						[
-							Constraint::Percentage(30),
-							Constraint::Percentage(40),
-							Constraint::Percentage(30),
+							Constraint::Percentage(25),
+							Constraint::Percentage(50),
+							Constraint::Percentage(25),
 						]
 						.as_ref(),
 					)
@@ -260,7 +262,7 @@ impl Painter {
 						.render(&mut f, middle_dialog_chunk[1]);
 				} else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
 					if let Some(first_pid) = to_kill_processes.1.first() {
-						let dd_text = [
+						let dd_text = vec![
 							if app_state.is_grouped() {
 								if to_kill_processes.1.len() != 1 {
 									Text::raw(format!(

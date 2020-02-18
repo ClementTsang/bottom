@@ -15,7 +15,7 @@ pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "";
 pub const GENERAL_HELP_TEXT: [&str; 15] = [
 	"General Keybindings\n\n",
 	"q, Ctrl-c      Quit bottom\n",
-	"Esc            Close filters, dialog boxes, etc.",
+	"Esc            Close filters, dialog boxes, etc.\n",
 	"Ctrl-r         Reset all data\n",
 	"f              Freeze display\n",
 	"Ctrl-Arrow     Move currently selected widget\n",

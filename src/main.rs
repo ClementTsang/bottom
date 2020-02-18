@@ -230,9 +230,9 @@ fn main() -> error::Result<()> {
 				}
 				Event::MouseInput(event) => handle_mouse_event(event, &mut app),
 				Event::Update(data) => {
-					if !app.is_frozen {
-						app.data_collection.eat_data(&data);
+					app.data_collection.eat_data(&data);
 
+					if !app.is_frozen {
 						// Convert all data into tui-compliant components
 
 						// Network
