@@ -76,6 +76,7 @@ struct ConfigFlags {
 	regex: Option<bool>,
 	default_widget: Option<String>,
 	show_disabled_data: Option<bool>,
+	//disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
 #[derive(Default, Deserialize)]
@@ -112,7 +113,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		(@arg CONFIG_LOCATION: -C --config +takes_value "Sets the location of the config file.  Expects a config file in the TOML format.")
-		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
+		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.") // TODO: [FEATURE] Min mode
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
@@ -126,6 +127,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 			(@arg NET_WIDGET: --network_default "Selects the network widget to be selected by default.")
 			(@arg PROC_WIDGET: --process_default "Selects the process widget to be selected by default.  This is the default if nothing is set.")
 		)
+		//(@arg TURNED_OFF_CPUS: -t ... +takes_value "Hides CPU data points by default") // TODO: [FEATURE] Enable disabling cores in config/flags
 	)
 	.get_matches()
 }

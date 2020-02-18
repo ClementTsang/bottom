@@ -23,7 +23,7 @@ use drawing_utils::*;
 
 // Headers
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
-const CPU_SELECT_LEGEND_HEADER: [&str; 3] = ["Show (Space)", "CPU", "Use%"];
+const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show (Space)"];
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 const MEM_HEADERS: [&str; 3] = ["Mem", "Usage", "Use%"];
@@ -608,28 +608,25 @@ impl Painter {
 		let sliced_cpu_data = &cpu_data[start_position as usize..];
 		let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
 
+		// TODO: [OPT] Reduce this instead...
 		if app_state.cpu_state.is_showing_tray {
 			for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
-				if let Some(cpu_data) = cpu.cpu_data.last() {
-					let entry = vec![
-						if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
-							"[*]".to_string()
-						} else {
-							"[ ]".to_string()
-						},
-						cpu.cpu_name.clone(),
-						format!("{:.0}%", cpu_data.1.round()),
-					];
-
-					stringified_cpu_data.push(entry);
-				}
+				stringified_cpu_data.push(vec![
+					cpu.cpu_name.clone(),
+					if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
+						"[*]".to_string()
+					} else {
+						"[ ]".to_string()
+					},
+				]);
 			}
 		} else {
 			for cpu in sliced_cpu_data.iter() {
 				if let Some(cpu_data) = cpu.cpu_data.last() {
-					let entry = vec![cpu.cpu_name.clone(), format!("{:.0}%", cpu_data.1.round())];
-
-					stringified_cpu_data.push(entry);
+					stringified_cpu_data.push(vec![
+						cpu.cpu_name.clone(),
+						format!("{:.0}%", cpu_data.1.round()),
+					]);
 				}
 			}
 		}
@@ -674,11 +671,8 @@ impl Painter {
 
 		// Calculate widths
 		let width = f64::from(draw_loc.width);
-		let width_ratios = if app_state.cpu_state.is_showing_tray {
-			vec![0.4, 0.3, 0.3]
-		} else {
-			vec![0.5, 0.5]
-		};
+		let width_ratios = vec![0.5, 0.5];
+
 		let variable_intrinsic_results = get_variable_intrinsic_widths(
 			width as u16,
 			&width_ratios,
@@ -691,7 +685,7 @@ impl Painter {
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
 		let title = if app_state.cpu_state.is_showing_tray {
-			const TITLE_BASE: &str = " Esc to close";
+			const TITLE_BASE: &str = " Esc to close ";
 			let repeat_num = max(
 				0,
 				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
@@ -706,9 +700,9 @@ impl Painter {
 		// Draw
 		Table::new(
 			if app_state.cpu_state.is_showing_tray {
-				CPU_SELECT_LEGEND_HEADER.to_vec()
+				CPU_SELECT_LEGEND_HEADER
 			} else {
-				CPU_LEGEND_HEADER.to_vec()
+				CPU_LEGEND_HEADER
 			}
 			.iter(),
 			cpu_rows,
