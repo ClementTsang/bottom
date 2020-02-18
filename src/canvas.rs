@@ -536,20 +536,26 @@ impl Painter {
 			.iter()
 			.enumerate()
 			.rev()
-			.filter(|(itx, _)| app_state.cpu_state.core_show_vec[*itx])
-			.map(|(itx, cpu)| {
-				Dataset::default()
-					.marker(if app_state.app_config_fields.use_dot {
-						Marker::Dot
-					} else {
-						Marker::Braille
-					})
-					.style(
-						self.colours.cpu_colour_styles[itx % self.colours.cpu_colour_styles.len()],
+			.filter_map(|(itx, cpu)| {
+				if app_state.cpu_state.core_show_vec[itx] {
+					Some(
+						Dataset::default()
+							.marker(if app_state.app_config_fields.use_dot {
+								Marker::Dot
+							} else {
+								Marker::Braille
+							})
+							.style(
+								self.colours.cpu_colour_styles
+									[itx % self.colours.cpu_colour_styles.len()],
+							)
+							.data(&cpu.cpu_data[..]),
 					)
-					.data(&cpu.cpu_data[..])
+				} else {
+					None
+				}
 			})
-			.collect::<Vec<_>>();
+			.collect();
 
 		let title = if app_state.is_expanded && !app_state.cpu_state.is_showing_tray {
 			const TITLE_BASE: &str = " CPU ── Esc to go back ";
@@ -608,9 +614,8 @@ impl Painter {
 		let sliced_cpu_data = &cpu_data[start_position as usize..];
 		let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
 
-		// TODO: [OPT] Reduce this instead...
-		if app_state.cpu_state.is_showing_tray {
-			for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
+		for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
+			if app_state.cpu_state.is_showing_tray {
 				stringified_cpu_data.push(vec![
 					cpu.cpu_name.clone(),
 					if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
@@ -619,10 +624,10 @@ impl Painter {
 						"[ ]".to_string()
 					},
 				]);
-			}
-		} else {
-			for cpu in sliced_cpu_data.iter() {
-				if let Some(cpu_data) = cpu.cpu_data.last() {
+			} else if let Some(cpu_data) = cpu.cpu_data.last() {
+				if app_state.app_config_fields.show_disabled_data
+					|| app_state.cpu_state.core_show_vec[itx]
+				{
 					stringified_cpu_data.push(vec![
 						cpu.cpu_name.clone(),
 						format!("{:.0}%", cpu_data.1.round()),
@@ -634,15 +639,6 @@ impl Painter {
 		let cpu_rows = stringified_cpu_data
 			.iter()
 			.enumerate()
-			.filter(|(itx, _)| {
-				if app_state.cpu_state.is_showing_tray
-					|| app_state.app_config_fields.show_disabled_data
-				{
-					true
-				} else {
-					app_state.cpu_state.core_show_vec[*itx]
-				}
-			})
 			.map(|(itx, cpu_string_row)| {
 				Row::StyledData(
 					cpu_string_row.iter(),
@@ -1179,7 +1175,9 @@ impl Painter {
 				)]
 			};
 
-		let mut search_text = vec![if app_state.process_search_state.is_searching_with_pid {
+		let mut search_text = vec![if app_state.is_grouped() {
+			Text::styled("Search by Name: ", self.colours.table_header_style)
+		} else if app_state.process_search_state.is_searching_with_pid {
 			Text::styled(
 				"Search by PID (Tab for Name): ",
 				self.colours.table_header_style,
@@ -1369,21 +1367,22 @@ impl Painter {
 			get_variable_intrinsic_widths(width as u16, &width_ratios, &process_headers_lens);
 		let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
-		let title = if app_state.is_expanded {
-			const TITLE_BASE: &str = " Processes ── Esc to go back ";
-			let repeat_num = max(
-				0,
-				draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-			);
-			let result_title = format!(
-				" Processes ─{}─ Esc to go back ",
-				"─".repeat(repeat_num as usize)
-			);
+		let title =
+			if app_state.is_expanded && !app_state.process_search_state.search_state.is_enabled {
+				const TITLE_BASE: &str = " Processes ── Esc to go back ";
+				let repeat_num = max(
+					0,
+					draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+				);
+				let result_title = format!(
+					" Processes ─{}─ Esc to go back ",
+					"─".repeat(repeat_num as usize)
+				);
 
-			result_title
-		} else {
-			" Processes ".to_string()
-		};
+				result_title
+			} else {
+				" Processes ".to_string()
+			};
 
 		Table::new(process_headers.iter(), process_rows)
 			.block(

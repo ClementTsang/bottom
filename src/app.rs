@@ -57,7 +57,7 @@ impl Default for AppScrollState {
 
 /// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
-	is_enabled: bool,
+	pub is_enabled: bool,
 	current_search_query: String,
 	current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
 	current_cursor_position: usize,
@@ -116,10 +116,6 @@ impl ProcessSearchState {
 
 	pub fn toggle_search_regex(&mut self) {
 		self.is_searching_with_regex = !self.is_searching_with_regex;
-	}
-
-	pub fn toggle_search_with_pid(&mut self) {
-		self.is_searching_with_pid = !self.is_searching_with_pid;
 	}
 }
 
@@ -333,10 +329,15 @@ impl App {
 	}
 
 	fn is_filtering_or_searching(&self) -> bool {
-		self.cpu_state.is_showing_tray
-			|| self.mem_state.is_showing_tray
-			|| self.net_state.is_showing_tray
-			|| self.process_search_state.search_state.is_enabled
+		match self.current_widget_selected {
+			WidgetPosition::Cpu => self.cpu_state.is_showing_tray,
+			WidgetPosition::Mem => self.mem_state.is_showing_tray,
+			WidgetPosition::Network => self.net_state.is_showing_tray,
+			WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+				self.process_search_state.search_state.is_enabled
+			}
+			_ => false,
+		}
 	}
 
 	fn reset_multi_tap_keys(&mut self) {
@@ -360,13 +361,21 @@ impl App {
 
 	pub fn on_tab(&mut self) {
 		match self.current_widget_selected {
-			WidgetPosition::Process => self.toggle_grouping(),
-			WidgetPosition::Disk => {}
-			WidgetPosition::ProcessSearch => {
-				if self.process_search_state.is_searching_with_pid {
+			WidgetPosition::Process => {
+				self.toggle_grouping();
+				if self.is_grouped() {
 					self.search_with_name();
 				} else {
-					self.search_with_pid();
+					self.update_process_gui = true;
+				}
+			}
+			WidgetPosition::ProcessSearch => {
+				if !self.is_grouped() {
+					if self.process_search_state.is_searching_with_pid {
+						self.search_with_name();
+					} else {
+						self.search_with_pid();
+					}
 				}
 			}
 			_ => {}
@@ -403,6 +412,9 @@ impl App {
 					// Toggle on
 					self.process_search_state.search_state.is_enabled = true;
 					self.current_widget_selected = WidgetPosition::ProcessSearch;
+					if self.is_grouped() {
+						self.search_with_name();
+					}
 				}
 				WidgetPosition::Cpu => {
 					self.cpu_state.is_showing_tray = true;
@@ -432,32 +444,20 @@ impl App {
 
 	pub fn search_with_pid(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
-			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.process_search_state.is_searching_with_pid = true;
-			}
+			self.process_search_state.is_searching_with_pid = true;
+			self.update_process_gui = true;
 		}
 	}
 
 	pub fn search_with_name(&mut self) {
 		if !self.is_in_dialog() && self.is_searching() {
-			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.process_search_state.is_searching_with_pid = false;
-			}
+			self.process_search_state.is_searching_with_pid = false;
+			self.update_process_gui = true;
 		}
 	}
 
 	pub fn get_current_search_query(&self) -> &String {
 		&self.process_search_state.search_state.current_search_query
-	}
-
-	pub fn toggle_ignore_case(&mut self) {
-		if !self.is_in_dialog() && self.is_searching() {
-			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.process_search_state.toggle_ignore_case();
-				self.update_regex();
-				self.update_process_gui = true;
-			}
-		}
 	}
 
 	pub fn update_regex(&mut self) {
@@ -473,9 +473,9 @@ impl App {
 			let regex_string = &self.process_search_state.search_state.current_search_query;
 			let escaped_regex: String;
 			let final_regex_string = &format!(
-				"{}{}{}",
+				"{}{}{}{}",
 				if self.process_search_state.is_searching_whole_word {
-					"^$"
+					"^"
 				} else {
 					""
 				},
@@ -489,7 +489,12 @@ impl App {
 					&escaped_regex
 				} else {
 					regex_string
-				}
+				},
+				if self.process_search_state.is_searching_whole_word {
+					"$"
+				} else {
+					""
+				},
 			);
 
 			let new_regex = regex::Regex::new(final_regex_string);
@@ -784,7 +789,6 @@ impl App {
 					.current_cursor_position += 1;
 
 				self.update_regex();
-
 				self.update_process_gui = true;
 			} else {
 				match caught_char {

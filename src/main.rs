@@ -376,18 +376,21 @@ fn handle_key_event_or_break(
 					if app.is_in_search_widget() {
 						app.process_search_state.toggle_ignore_case();
 						app.update_regex();
+						app.update_process_gui = true;
 					}
 				}
 				KeyCode::Char('w') => {
 					if app.is_in_search_widget() {
 						app.process_search_state.toggle_search_whole_word();
 						app.update_regex();
+						app.update_process_gui = true;
 					}
 				}
 				KeyCode::Char('r') => {
 					if app.is_in_search_widget() {
 						app.process_search_state.toggle_search_regex();
 						app.update_regex();
+						app.update_process_gui = true;
 					}
 				}
 				_ => {}
@@ -785,30 +788,36 @@ fn update_final_process_list(app: &mut app::App) {
 		app.canvas_data
 			.process_data
 			.iter()
-			.filter(|(_pid, process)| {
-				if app
+			.filter_map(|(_pid, process)| {
+				let mut result = true;
+
+				if !app
 					.process_search_state
 					.search_state
 					.is_invalid_or_blank_search()
 				{
-					return true;
-				} else if let Some(matcher_result) = app.get_current_regex_matcher() {
-					if let Ok(matcher) = matcher_result {
-						if app.process_search_state.is_searching_with_pid {
-							return matcher.is_match(&process.pid.to_string());
-						} else {
-							return matcher.is_match(&process.name);
+					if let Some(matcher_result) = app.get_current_regex_matcher() {
+						if let Ok(matcher) = matcher_result {
+							if app.process_search_state.is_searching_with_pid {
+								result = matcher.is_match(&process.pid.to_string());
+							} else {
+								result = matcher.is_match(&process.name);
+							}
 						}
 					}
 				}
-				true
-			})
-			.map(|(_pid, process)| ConvertedProcessData {
-				pid: process.pid,
-				name: process.name.clone(),
-				cpu_usage: process.cpu_usage_percent,
-				mem_usage: process.mem_usage_percent,
-				group_pids: vec![process.pid],
+
+				if result {
+					return Some(ConvertedProcessData {
+						pid: process.pid,
+						name: process.name.clone(),
+						cpu_usage: process.cpu_usage_percent,
+						mem_usage: process.mem_usage_percent,
+						group_pids: vec![process.pid],
+					});
+				}
+
+				None
 			})
 			.collect::<Vec<_>>()
 	};
