@@ -2,7 +2,6 @@ language: rust
 rust:
   - stable
   - beta
-  - nightly
 os:
   - linux
   - osx
@@ -25,7 +24,9 @@ before_install:
     fi
 before_script:
   - rustup target add $TARGET
+  - rustup component add clippy
 script:
+  - cargo clippy -- -D clippy::all
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
 
