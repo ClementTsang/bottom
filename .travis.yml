@@ -43,3 +43,30 @@ before_cache:
 notifications:
   email:
     on_success: never
+
+after_script:
+  - |
+    if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+      cp ./target/x86_64-unknown-linux-gnu/debug/btm btm;
+      tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
+    elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
+      cp ./target/x86_64-pc-windows-msvc/debug/btm btm;
+      tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm;
+    elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
+      cp ./target/x86_64-apple-darwin/debug/btm btm;
+      tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
+    fi
+
+deploy:
+  provider: releases
+  api_key:
+    secure: nAzTrDADUZVpiTkpaTjfEZMFfyfgJV0jwrGvHx0u+DorGQIeuKIY+HTm6iOmU5OAdhPs5MBgqKJK2s9XoOxbw4qcC5uPHaRICX3yd63zi49gBwkE0FkCDOfrjR3xnsf9jNVFzfFFIoYAjY/67J9hzVmc9z9uhXIuokj6Hp0md/snjYpjeQi6QRi9n4zsTR60a4NanbeYJ9D+TdoJ4UyA3pdl7JOtQHwxgNPPpDij4aPz4mmdq0mlpFBYAMksMi9xhBXzB/AUgnsKvchpMcDZER2icHS5Yerq4buxcQjQgMYG10MKq24BeMfMR4lu9SAtKSgcclXvLDLdmY5DeMbrbup51xcuWcqouVwdw8aI7jOskFUKFFSmdEtEGeBG6PCf2fjsjpMjy0kZaO4HxS5kJJewLgXgpgQUQjRL5i2KGpO1pnMD4ev7CcdMrnQHZlNXbi6k6Z9FCOQukIcsmMjQEk4w2JSUCfX53wqQPV3ID4QKckTWrZkSayiet6rRFrRK4087fl7G3JjIMYG7+QbP8PoFkCCH3aUOPCg+3J2YockYB2Zjgnq/E/WNrt1rYxwA6ssKn8+7KqCLzXIv3gFHx9htE7nEvH6QH9dAacjT3bbaxkHpuS6+orxM12vL7+9K6j9HdePK8YqO+lByUmlBG8p91WIhgYkV4vLTAtO9FqA=
+  file:
+    - bottom_x86_64-unknown-linux-gnu.tar.gz
+    - bottom_x86_64-pc-windows-msvc.tar.gz
+    - bottom_x86_64-apple-darwin.tar.gz
+  cleanup: false
+  on:
+    tags: true
+    repo: ClementTsang/bottom
+  draft: true
