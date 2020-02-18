@@ -48,12 +48,15 @@ after_script:
   - |
     if [[ $TRAVIS_OS_NAME == "linux" ]]; then
       cp ./target/x86_64-unknown-linux-gnu/debug/btm btm;
+      strip btm;
       tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
     elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
       cp ./target/x86_64-pc-windows-msvc/debug/btm btm;
+      strip btm;
       tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm;
     elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
       cp ./target/x86_64-apple-darwin/debug/btm btm;
+      strip btm;
       tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
     fi
 
