@@ -25,9 +25,7 @@ before_install:
     fi
 before_script:
   - rustup target add $TARGET
-  - rustup component add clippy || rustup component add clippy --nightly || rustup component add clippy-preview || cargo install --git https://github.com/rust-lang/rust-clippy/ --force clippy || true
 script:
-  - cargo clippy -- -D clippy::all
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
 
