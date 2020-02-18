@@ -120,11 +120,8 @@ pub fn convert_cpu_data_points(
 			let itx_offset = itx - cpu_listing_offset;
 			if cpu_data_vector.len() <= itx_offset {
 				cpu_data_vector.push(ConvertedCpuData::default());
-				cpu_data_vector[itx_offset].cpu_name = if show_avg_cpu && itx_offset == 0 {
-					"AVG".to_string()
-				} else {
-					current_data.cpu_harvest[itx].cpu_name.to_uppercase()
-				};
+				cpu_data_vector[itx_offset].cpu_name =
+					current_data.cpu_harvest[itx].cpu_name.clone();
 			}
 
 			//Insert joiner points
