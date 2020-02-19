@@ -540,9 +540,41 @@ impl App {
 		} else if !self.is_in_dialog() {
 			// Pop-out mode.  We ignore if in process search.
 			match self.current_widget_selected {
-				WidgetPosition::ProcessSearch => {}
-				_ => self.is_expanded = true,
+				WidgetPosition::Process => {
+					self.app_scroll_positions
+						.process_scroll_state
+						.current_scroll_position = 0;
+					self.app_scroll_positions
+						.process_scroll_state
+						.previous_scroll_position = 0;
+				}
+				WidgetPosition::Cpu => {
+					self.app_scroll_positions
+						.cpu_scroll_state
+						.current_scroll_position = 0;
+					self.app_scroll_positions
+						.cpu_scroll_state
+						.previous_scroll_position = 0;
+				}
+				WidgetPosition::Temp => {
+					self.app_scroll_positions
+						.temp_scroll_state
+						.current_scroll_position = 0;
+					self.app_scroll_positions
+						.temp_scroll_state
+						.previous_scroll_position = 0;
+				}
+				WidgetPosition::Disk => {
+					self.app_scroll_positions
+						.disk_scroll_state
+						.current_scroll_position = 0;
+					self.app_scroll_positions
+						.disk_scroll_state
+						.previous_scroll_position = 0;
+				}
+				_ => {}
 			}
+			self.is_expanded = true;
 		}
 	}
 

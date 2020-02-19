@@ -74,12 +74,13 @@ pub fn get_start_position(
 	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
 	currently_selected_position: u64,
 ) -> u64 {
-	if currently_selected_position >= *scroll_position_bar
-		&& num_rows > (currently_selected_position - *scroll_position_bar + 1)
-	{
-		*scroll_position_bar =
-			std::cmp::max(0, currently_selected_position as i64 - num_rows as i64 + 1) as u64;
-	}
+	// if currently_selected_position >= *scroll_position_bar
+	// 	&& num_rows > (currently_selected_position - *scroll_position_bar + num_rows)
+	// {
+	// 	*scroll_position_bar =
+	// 		std::cmp::max(0, currently_selected_position as i64 - num_rows as i64) as u64;
+	// 	debug!("Scroll bar: {}", *scroll_position_bar);
+	// }
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
 			if currently_selected_position < *scroll_position_bar + num_rows {
