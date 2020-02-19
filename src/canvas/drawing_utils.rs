@@ -76,10 +76,7 @@ pub fn get_start_position(
 ) -> u64 {
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
-			if currently_selected_position < num_rows {
-				// Can we see it outright?
-				0
-			} else if currently_selected_position < *previously_scrolled_position + num_rows {
+			if currently_selected_position < *previously_scrolled_position + num_rows {
 				// If, using previous_scrolled_position, we can see the element
 				// (so within that and + num_rows) just reuse the current previously scrolled position
 				*previously_scrolled_position
@@ -93,9 +90,8 @@ pub fn get_start_position(
 				0
 			}
 		}
-		// TODO: [FIX] This is bugged.  Scrolling up then resizing is a no go!
 		app::ScrollDirection::UP => {
-			if currently_selected_position < *previously_scrolled_position {
+			if currently_selected_position <= *previously_scrolled_position {
 				// If it's past the first element, then show from that element downwards
 				*previously_scrolled_position = currently_selected_position;
 				*previously_scrolled_position
