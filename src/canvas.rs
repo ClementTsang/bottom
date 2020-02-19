@@ -141,6 +141,7 @@ impl Painter {
 	}
 
 	// TODO: [REFACTOR] We should clean this up tbh
+	// TODO: [FEATURE] Auto-resizing dialog sizes.
 	#[allow(clippy::cognitive_complexity)]
 	pub fn draw_data<B: backend::Backend>(
 		&mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
