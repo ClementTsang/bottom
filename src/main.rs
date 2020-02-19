@@ -735,32 +735,30 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 fn panic_hook(panic_info: &PanicInfo<'_>) {
 	let mut stdout = stdout();
 
-	if cfg!(debug_assertions) {
-		let msg = match panic_info.payload().downcast_ref::<&'static str>() {
-			Some(s) => *s,
-			None => match panic_info.payload().downcast_ref::<String>() {
-				Some(s) => &s[..],
-				None => "Box<Any>",
-			},
-		};
+	let msg = match panic_info.payload().downcast_ref::<&'static str>() {
+		Some(s) => *s,
+		None => match panic_info.payload().downcast_ref::<String>() {
+			Some(s) => &s[..],
+			None => "Box<Any>",
+		},
+	};
 
-		let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
-
-		execute!(
-			stdout,
-			Print(format!(
-				"thread '<unnamed>' panicked at '{}', {}\n\r{}",
-				msg,
-				panic_info.location().unwrap(),
-				stacktrace
-			)),
-		)
-		.unwrap();
-	}
+	let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
 
 	disable_raw_mode().unwrap();
 	execute!(stdout, LeaveAlternateScreen).unwrap();
 	execute!(stdout, DisableMouseCapture).unwrap();
+
+	execute!(
+		stdout,
+		Print(format!(
+			"thread '<unnamed>' panicked at '{}', {}\n\r{}",
+			msg,
+			panic_info.location().unwrap(),
+			stacktrace
+		)),
+	)
+	.unwrap();
 }
 
 fn update_final_process_list(app: &mut app::App) {

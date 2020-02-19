@@ -71,33 +71,39 @@ pub fn get_variable_intrinsic_widths(
 }
 
 pub fn get_start_position(
-	num_rows: u64, scroll_direction: &app::ScrollDirection, previously_scrolled_position: &mut u64,
+	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
 	currently_selected_position: u64,
 ) -> u64 {
+	if currently_selected_position >= *scroll_position_bar
+		&& num_rows > (currently_selected_position - *scroll_position_bar + 1)
+	{
+		*scroll_position_bar =
+			std::cmp::max(0, currently_selected_position as i64 - num_rows as i64 + 1) as u64;
+	}
 	match scroll_direction {
 		app::ScrollDirection::DOWN => {
-			if currently_selected_position < *previously_scrolled_position + num_rows {
+			if currently_selected_position < *scroll_position_bar + num_rows {
 				// If, using previous_scrolled_position, we can see the element
 				// (so within that and + num_rows) just reuse the current previously scrolled position
-				*previously_scrolled_position
+				*scroll_position_bar
 			} else if currently_selected_position >= num_rows {
 				// Else if the current position past the last element visible in the list, omit
 				// until we can see that element
-				*previously_scrolled_position = currently_selected_position - num_rows;
-				currently_selected_position - num_rows
+				*scroll_position_bar = currently_selected_position - num_rows;
+				*scroll_position_bar
 			} else {
 				// Else, if it is not past the last element visible, do not omit anything
 				0
 			}
 		}
 		app::ScrollDirection::UP => {
-			if currently_selected_position <= *previously_scrolled_position {
+			if currently_selected_position <= *scroll_position_bar {
 				// If it's past the first element, then show from that element downwards
-				*previously_scrolled_position = currently_selected_position;
-				*previously_scrolled_position
+				*scroll_position_bar = currently_selected_position;
+				*scroll_position_bar
 			} else {
 				// Else, don't change what our start position is from whatever it is set to!
-				*previously_scrolled_position
+				*scroll_position_bar
 			}
 		}
 	}
