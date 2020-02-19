@@ -7,9 +7,7 @@ pub const NUM_COLOURS: i32 = 256;
 
 // Config and flags
 pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
-
-// TODO: [CONF] Default windows path?
-pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "";
+pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "./btm.toml";
 
 // Help text
 pub const GENERAL_HELP_TEXT: [&str; 15] = [

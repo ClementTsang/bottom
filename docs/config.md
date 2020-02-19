@@ -33,4 +33,4 @@ Another use is to set colours, under the `[colors]`. The following labels are cu
 bottom will check specific locations by default for a config file.
 
 - For Unix-based systems: `~/.config/btm/btm.toml`.
-- For Windows: TBD.
+- For Windows: `./btm.toml`.
