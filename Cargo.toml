@@ -4,10 +4,10 @@ version = "0.2.0"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
-keywords = ["cli", "monitoring-tool", "top", "bottom", "graphical"]
+keywords = ["linux", "macos", "windows", "cli", "monitoring-tool", "top", "bottom", "graphical"]
 license = "MIT"
-categories = ["command-line-utilities"]
-description = "A graphical top clone, written in Rust. Inspired by both gtop and gotop."
+categories = ["command-line-utilities", "visualization"]
+description = "A graphical top clone, written in Rust. Inspired by both gtop and gotop.  Supports Linux, macOS, and Windows."
 readme = "README.md"
 
 [[bin]]

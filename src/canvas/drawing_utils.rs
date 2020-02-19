@@ -74,6 +74,7 @@ pub fn get_start_position(
 	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
 	currently_selected_position: u64,
 ) -> u64 {
+	// TODO: [FIX] Scroll does NOT work with expanded (and resizing overall).
 	// if currently_selected_position >= *scroll_position_bar
 	// 	&& num_rows > (currently_selected_position - *scroll_position_bar + num_rows)
 	// {

@@ -539,6 +539,8 @@ impl App {
 			}
 		} else if !self.is_in_dialog() {
 			// Pop-out mode.  We ignore if in process search.
+
+			// TODO: [FIX] This is a temporary workaround for scroll not being proper with expanded (and resizing overall).
 			match self.current_widget_selected {
 				WidgetPosition::Process => {
 					self.app_scroll_positions
