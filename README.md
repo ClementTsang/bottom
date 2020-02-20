@@ -108,25 +108,23 @@ See this [config](./sample_config.toml) for an example.
 
 - `q`, `Ctrl-c` to quit. Note if you are currently in the search widget, `q` will not work so you can still type.
 
+- `Esc` to close a dialog window, widget, or exit maximized mode.
+
 - `Ctrl-r` to reset the screen and reset all collected data.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl/Shift`-arrow or `H/J/K/L` to navigate between widgets. **Note that on macOS, `Ctrl`-arrow keys seem to conflict with an existing macOS binding, use `Shift`-arrow key or `H/J/K/L` instead.**
-
-- `Esc` to close a dialog window or exit maximized mode.
-
-- `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
-
-- `Enter` on a widget to maximize the widget.
-
-#### Scrollable tables
+- `Ctrl/Shift`-arrow or `H/J/K/L` to navigate between widgets. **Note that on macOS, some keybindings may collide with existing ones; `H/J/K/L` should work however.**
 
 - `Up` or `k` and `Down` or `j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
+
+- `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
 
 - `gg` or `Home` to jump to the first entry of the current table.
 
 - `G` (`Shift-g`) or `End` to jump to the last entry of the current table.
+
+- `Enter` on a widget to maximize the widget.
 
 #### CPU
 
@@ -152,23 +150,23 @@ See this [config](./sample_config.toml) for an example.
 
 - `Tab` to switch between searching for PID and name respectively.
 
+- `Esc` to close.
+
+- `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
+
+- `Ctrl-u` to clear the current search query.
+
+* `Backspace` to delete one character behind the current cursor position.
+
+* `Delete` to delete one character at the current cursor position.
+
+* `Left` and `Right` arrow keys to move the cursor within the search bar.
+
 - `Alt-c` to toggle ignoring case.
 
 - `Alt-m` to toggle matching the entire word.
 
 - `Alt-r` to toggle using regex.
-
-- `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
-
-- `Left` and `Right` arrow keys to move the cursor within the search bar.
-
-- `Ctrl-u` to clear the current search query.
-
-- `Backspace` to delete one character behind the current cursor position.
-
-- `Delete` to delete one character at the current cursor position.
-
-- `Esc` to close.
 
 Note that `q` is disabled while in the search widget.
 

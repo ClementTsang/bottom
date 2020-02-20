@@ -31,6 +31,9 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 	}
 
 	// Generate colours
+	// Why do we need so many colours?  Because macOS default terminal
+	// throws a tantrum if you don't give it supported colours, but so
+	// does PowerShell with some colours (Magenta and Yellow)!
 	let mut colour_vec: Vec<Style> = vec![
 		Style::default().fg(Color::LightMagenta),
 		Style::default().fg(Color::LightYellow),
