@@ -1,7 +1,7 @@
 language: rust
 rust:
   - stable
-  - beta
+  #- beta // TODO: [TRAVIS] Skip this on deploy
 os:
   - linux
   - osx
@@ -46,16 +46,22 @@ notifications:
 
 before_deploy:
   - |
-    cargo build --release;
-    cp ./target/release/btm btm;
-    strip btm;
-    if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-      tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
-      tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests sample_config.toml;
-    elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
+    if [[ $TRAVIS_OS_NAME == "windows" ]]; then
+      export TARGET=x86_64-pc-windows-msvc;
+      cargo build --release --target $TARGET;
+      cp ./target/x86_64-pc-windows-msvc/release/btm btm;
+      strip btm;
       tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm;
-    elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-      tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
+    else
+        cargo build --release;
+        cp ./target/release/btm btm;
+        strip btm;
+        if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+          tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
+          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests sample_config.toml;
+        elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
+          tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
+        fi
     fi
 
 deploy:
