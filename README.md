@@ -30,11 +30,11 @@ Details about each widget can be found [here](./docs/widgets.md).
 
 The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
 
-| OS                               | CPU | Memory | Disks | Temperature | Processes | Networks |
-| -------------------------------- | --- | ------ | ----- | ----------- | --------- | -------- |
-| Linux (tested on Arch Linux)     | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
-| Windows (tested on Windows 10)   | ✓   | ✓      | ✓     | ✗           | ✓         | ✓        |
-| macOS (tested on macOS Catalina) | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
+| OS                                                     | CPU | Memory | Disks | Temperature | Processes | Networks |
+| ------------------------------------------------------ | --- | ------ | ----- | ----------- | --------- | -------- |
+| Linux (tested on Arch Linux, using Kitty Terminal)     | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
+| Windows (tested on Windows 10, using Powershell)       | ✓   | ✓      | ✓     | ✗           | ✓         | ✓        |
+| macOS (tested on macOS Catalina, using Kitty Terminal) | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
 
 ## Installation
 
@@ -188,7 +188,7 @@ Note that `q` is disabled while in the search widget.
 
 - This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
 
-- This application was written with the following libraries:
+- This application was written with the following libraries, and would otherwise not be possible:
 
   - [backtrace](https://github.com/rust-lang/backtrace-rs)
   - [chrono](https://github.com/chronotope/chrono)
