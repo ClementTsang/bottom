@@ -1,11 +1,11 @@
 mod colour_utils;
 use colour_utils::*;
-use tui::style::{Color, Style};
+use tui::style::{Color, Modifier, Style};
 
 use crate::{constants::*, utils::error};
 
-const STANDARD_FIRST_COLOUR: Color = Color::Rgb(150, 106, 253);
-const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
+const STANDARD_FIRST_COLOUR: Color = Color::Magenta;
+const STANDARD_SECOND_COLOUR: Color = Color::Yellow;
 
 pub struct CanvasColours {
 	pub currently_selected_text_colour: Color,
@@ -30,7 +30,9 @@ impl Default for CanvasColours {
 			currently_selected_text_colour: Color::Black,
 			currently_selected_bg_colour: Color::Cyan,
 			currently_selected_text_style: Style::default().fg(Color::Black).bg(Color::Cyan),
-			table_header_style: Style::default().fg(Color::LightBlue),
+			table_header_style: Style::default()
+				.fg(Color::LightBlue)
+				.modifier(Modifier::BOLD),
 			ram_style: Style::default().fg(STANDARD_FIRST_COLOUR),
 			swap_style: Style::default().fg(STANDARD_SECOND_COLOUR),
 			rx_style: Style::default().fg(STANDARD_FIRST_COLOUR),
@@ -59,7 +61,9 @@ impl CanvasColours {
 		Ok(())
 	}
 	pub fn set_table_header_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.table_header_style = Style::default().fg(convert_hex_to_color(hex)?);
+		self.table_header_style = Style::default()
+			.fg(convert_hex_to_color(hex)?)
+			.modifier(Modifier::BOLD);
 		Ok(())
 	}
 	pub fn set_ram_colour(&mut self, hex: &str) -> error::Result<()> {

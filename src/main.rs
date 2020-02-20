@@ -170,13 +170,11 @@ fn main() -> error::Result<()> {
 
 	// Set up up tui and crossterm
 	let mut stdout_val = stdout();
+	execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
 	enable_raw_mode()?;
-	execute!(stdout_val, EnterAlternateScreen)?;
-	execute!(stdout_val, EnableMouseCapture)?;
 
 	let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
 	terminal.hide_cursor()?;
-	terminal.clear()?;
 
 	// Set panic hook
 	panic::set_hook(Box::new(|info| panic_hook(info)));
@@ -656,8 +654,11 @@ fn cleanup_terminal(
 	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
 	disable_raw_mode()?;
-	execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-	execute!(terminal.backend_mut(), DisableMouseCapture)?;
+	execute!(
+		terminal.backend_mut(),
+		DisableMouseCapture,
+		LeaveAlternateScreen
+	)?;
 	terminal.show_cursor()?;
 
 	Ok(())
