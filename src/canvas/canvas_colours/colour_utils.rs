@@ -32,12 +32,12 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 
 	// Generate colours
 	let mut colour_vec: Vec<Style> = vec![
-		Style::default().fg(Color::Magenta),
-		Style::default().fg(Color::Yellow),
-		Style::default().fg(Color::Red),
-		Style::default().fg(Color::Cyan),
-		Style::default().fg(Color::Green),
-		Style::default().fg(Color::Blue),
+		Style::default().fg(Color::LightMagenta),
+		Style::default().fg(Color::LightYellow),
+		Style::default().fg(Color::LightRed),
+		Style::default().fg(Color::LightCyan),
+		Style::default().fg(Color::LightGreen),
+		Style::default().fg(Color::LightBlue),
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
