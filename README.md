@@ -22,11 +22,15 @@ Features of bottom include:
 
 - Temperature widget to monitor detected sensors in your system.
 
+- Flags to customize the display.
+
 - Config file support for custom colours and default options.
 
 - Maximizing of widgets of interest to take up the entire window.
 
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
+
+For information about config files, see [this document](./docs/config.md) for more details, and this [config](./sample_config.toml) for an example.
 
 ## Installation
 
@@ -96,12 +100,6 @@ Run using `btm`.
 
 - `-C`, `--config` takes in a file path leading to a TOML file.
 
-### Config files
-
-The ability to use config files is supported by bottom to set boot flags by default, and set colour options. See [this document](./docs/config.md) for more details.
-
-See this [config](./sample_config.toml) for an example.
-
 ### Keybindings
 
 #### General
@@ -156,11 +154,11 @@ See this [config](./sample_config.toml) for an example.
 
 - `Ctrl-u` to clear the current search query.
 
-* `Backspace` to delete one character behind the current cursor position.
+- `Backspace` to delete one character behind the current cursor position.
 
-* `Delete` to delete one character at the current cursor position.
+- `Delete` to delete one character at the current cursor position.
 
-* `Left` and `Right` arrow keys to move the cursor within the search bar.
+- `Left` and `Right` arrow keys to move the cursor within the search bar.
 
 - `Alt-c` to toggle ignoring case.
 
