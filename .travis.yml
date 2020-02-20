@@ -47,18 +47,18 @@ notifications:
 before_deploy:
   - |
     if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-      cp ./target/x86_64-unknown-linux-gnu/debug/btm btm;
+      cp ./target/x86_64-unknown-linux-gnu/release/btm btm;
       strip btm;
       tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
       mkdir source_code;
       cp -r ./src ./Cargo.toml LICENSE tests sample_config.toml source_code;
       tar -czvf bottom_source_code.tar.gz source_code;
     elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
-      cp ./target/x86_64-pc-windows-msvc/debug/btm btm;
+      cp ./target/x86_64-pc-windows-msvc/release/btm btm;
       strip btm;
       tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm;
     elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-      cp ./target/x86_64-apple-darwin/debug/btm btm;
+      cp ./target/x86_64-apple-darwin/release/btm btm;
       strip btm;
       tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
     fi
