@@ -4,9 +4,6 @@ use tui::style::{Color, Modifier, Style};
 
 use crate::{constants::*, utils::error};
 
-const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
-const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
-
 pub struct CanvasColours {
 	pub currently_selected_text_colour: Color,
 	pub currently_selected_bg_colour: Color,

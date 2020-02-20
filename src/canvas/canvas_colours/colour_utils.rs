@@ -2,6 +2,8 @@ use crate::utils::{error, gen_util::*};
 use tui::style::{Color, Style};
 
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
+pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
+pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
 
 /// Generates random colours.  Strategy found from
 /// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
@@ -35,8 +37,8 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 	// throws a tantrum if you don't give it supported colours, but so
 	// does PowerShell with some colours (Magenta and Yellow)!
 	let mut colour_vec: Vec<Style> = vec![
-		Style::default().fg(Color::LightMagenta),
-		Style::default().fg(Color::LightYellow),
+		Style::default().fg(STANDARD_FIRST_COLOUR),
+		Style::default().fg(STANDARD_SECOND_COLOUR),
 		Style::default().fg(Color::LightRed),
 		Style::default().fg(Color::LightCyan),
 		Style::default().fg(Color::LightGreen),
