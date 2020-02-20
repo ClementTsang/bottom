@@ -747,9 +747,9 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
 	let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
 
 	disable_raw_mode().unwrap();
-	execute!(stdout, LeaveAlternateScreen).unwrap();
-	execute!(stdout, DisableMouseCapture).unwrap();
+	execute!(stdout, LeaveAlternateScreen, DisableMouseCapture).unwrap();
 
+	// Print stack trace.  Must be done after!
 	execute!(
 		stdout,
 		Print(format!(
