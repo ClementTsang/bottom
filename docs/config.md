@@ -28,7 +28,7 @@ Another use is to set colours, under the `[colors]`. The following labels are cu
 - Cursor colour (`cursor_color="#ffffff"`).
 - Current selected scroll entry colour (`scroll_entry_text_color="#282828"`, `scroll_entry_bg_color="#458588"`).
 
-Note some colours may not be compatible with the terminal you are using.
+Note some colours may not be compatible with the terminal you are using. For example, macOS's default Terminal does not play nice with many colours.
 
 ## Default config locations
 
