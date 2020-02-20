@@ -233,6 +233,7 @@ pub struct App {
 	pub help_dialog_state: AppHelpDialogState,
 	pub app_config_fields: AppConfigFields,
 	pub is_expanded: bool,
+	pub is_resized: bool,
 	pub cpu_state: CpuState,
 	pub mem_state: MemState,
 	pub net_state: NetworkState,
@@ -275,6 +276,7 @@ impl App {
 				show_disabled_data,
 			},
 			is_expanded: false,
+			is_resized: false,
 			cpu_state: CpuState::default(),
 			mem_state: MemState::default(),
 			net_state: NetworkState::default(),
@@ -325,6 +327,7 @@ impl App {
 			}
 		} else if self.is_expanded {
 			self.is_expanded = false;
+			self.is_resized = true;
 		}
 	}
 
@@ -540,43 +543,13 @@ impl App {
 		} else if !self.is_in_dialog() {
 			// Pop-out mode.  We ignore if in process search.
 
-			// TODO: [FIX] This is a temporary workaround for scroll not being proper with expanded (and resizing overall).
 			match self.current_widget_selected {
-				WidgetPosition::Process => {
-					self.app_scroll_positions
-						.process_scroll_state
-						.current_scroll_position = 0;
-					self.app_scroll_positions
-						.process_scroll_state
-						.previous_scroll_position = 0;
+				WidgetPosition::ProcessSearch => {}
+				_ => {
+					self.is_expanded = true;
+					self.is_resized = true;
 				}
-				WidgetPosition::Cpu => {
-					self.app_scroll_positions
-						.cpu_scroll_state
-						.current_scroll_position = 0;
-					self.app_scroll_positions
-						.cpu_scroll_state
-						.previous_scroll_position = 0;
-				}
-				WidgetPosition::Temp => {
-					self.app_scroll_positions
-						.temp_scroll_state
-						.current_scroll_position = 0;
-					self.app_scroll_positions
-						.temp_scroll_state
-						.previous_scroll_position = 0;
-				}
-				WidgetPosition::Disk => {
-					self.app_scroll_positions
-						.disk_scroll_state
-						.current_scroll_position = 0;
-					self.app_scroll_positions
-						.disk_scroll_state
-						.previous_scroll_position = 0;
-				}
-				_ => {}
 			}
-			self.is_expanded = true;
 		}
 	}
 

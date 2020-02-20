@@ -83,8 +83,8 @@ pub struct DisplayableData {
 #[derive(Default)]
 /// Handles the canvas' state.  TODO: [OPT] implement this.
 pub struct Painter {
-	height: f64,
-	width: f64,
+	height: u16,
+	width: u16,
 	vertical_dialog_chunk: Vec<Rect>,
 	middle_dialog_chunk: Vec<Rect>,
 	vertical_chunks: Vec<Rect>,
@@ -146,6 +146,17 @@ impl Painter {
 	pub fn draw_data<B: backend::Backend>(
 		&mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
 	) -> error::Result<()> {
+		let terminal_size = terminal.size()?;
+		let current_height = terminal_size.height;
+		let current_width = terminal_size.width;
+
+		if self.height == 0 && self.width == 0 {
+			self.height = current_height;
+			self.width = current_width;
+		} else if self.height != current_height || self.width != current_width {
+			app_state.is_resized = true;
+		}
+
 		terminal.autoresize()?;
 		terminal.draw(|mut f| {
 			if app_state.help_dialog_state.is_showing_help {
@@ -519,6 +530,8 @@ impl Painter {
 			}
 		})?;
 
+		app_state.is_resized = false;
+
 		Ok(())
 	}
 
@@ -612,6 +625,7 @@ impl Painter {
 				.app_scroll_positions
 				.cpu_scroll_state
 				.current_scroll_position,
+			app_state.is_resized,
 		);
 
 		let sliced_cpu_data = &cpu_data[start_position as usize..];
@@ -950,6 +964,7 @@ impl Painter {
 				.app_scroll_positions
 				.temp_scroll_state
 				.current_scroll_position,
+			app_state.is_resized,
 		);
 
 		let sliced_vec = &(temp_sensor_data[start_position as usize..]);
@@ -1045,6 +1060,7 @@ impl Painter {
 				.app_scroll_positions
 				.disk_scroll_state
 				.current_scroll_position,
+			app_state.is_resized,
 		);
 
 		let sliced_vec = &disk_data[start_position as usize..];
@@ -1285,6 +1301,7 @@ impl Painter {
 				.app_scroll_positions
 				.process_scroll_state
 				.current_scroll_position,
+			app_state.is_resized,
 		);
 
 		// Sanity check
