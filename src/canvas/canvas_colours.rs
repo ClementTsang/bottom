@@ -26,6 +26,8 @@ pub struct CanvasColours {
 
 impl Default for CanvasColours {
 	fn default() -> Self {
+		let text_colour = Color::Gray;
+
 		CanvasColours {
 			currently_selected_text_colour: Color::Black,
 			currently_selected_bg_colour: Color::Cyan,
@@ -38,11 +40,11 @@ impl Default for CanvasColours {
 			rx_style: Style::default().fg(STANDARD_FIRST_COLOUR),
 			tx_style: Style::default().fg(STANDARD_SECOND_COLOUR),
 			cpu_colour_styles: Vec::new(),
-			border_style: Style::default().fg(Color::Gray),
+			border_style: Style::default().fg(text_colour),
 			highlighted_border_style: Style::default().fg(Color::LightBlue),
-			text_style: Style::default().fg(Color::Gray),
-			widget_title_style: Style::default().fg(Color::Gray),
-			graph_style: Style::default().fg(Color::Gray),
+			text_style: Style::default().fg(text_colour),
+			widget_title_style: Style::default().fg(text_colour),
+			graph_style: Style::default().fg(text_colour),
 		}
 	}
 }
