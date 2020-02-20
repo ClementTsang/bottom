@@ -67,6 +67,7 @@ deploy:
   provider: releases
   api_key:
     secure: ppBn0DnqZ+Rzb84doZQxYdUBQ0rVrZNIiH6ZSFEiCVJd0ttqXfOjK/qXbIf/zabwO0Olqz18jwd9piHjNigWRrHwX9N+YH0DZTM3f4WS2/2acvOP3AjSw6oERjYTwS5yKe/XP1sU11uL6O0oAxYFeiAkn7QOM7flVUE2BmmLAs2lLtQ+9ylmUeBGatrkTfQ0Z2i1o7p5mtI2fKUozpImtHq8TClQEsF4oQS5nvkHtpLuPQ0UrJ8vKZijDBeMuLbDkR121ujRnjoBt8+eXBRbwzAvVotwRozyol8noAN3i4VvYueId6oX7Y2DSEp26wnCuRXGurUnyya5JE55AKoevK+SUHRe5+29/2lPbC5d/etZt2tSX1AIJk9fHeIfRPSTzanIIyDpUzSGoMKjl1ARKGrgHYehRxMKpW0cC2xHSlQ+NrA5apLpXKr2IzpkGsxpAxLqRASbX2VJYCEL70WoJfXinZrxeDxXsaWBLGaj9ySyk059GZBMz9GBdYNtwF3G/3aSIt0nkEGgKipgYXHi5keKKGmyfeZyYkRJRbc369JRZiHuOWct+1ZsOdrKKdbyAdcDGj5kbKuYwA6E+wgI62IWvUTm+vtKDuIbLpu/48aOUuEslGHkYAszLTapX/Le9c9XTu3L+PMgkPq2LSyaeGrfnM+DE/Hwe3Jvurccp94=
+  file_glob: true
   file:
     - "bottom_*.tar.gz"
   cleanup: false
