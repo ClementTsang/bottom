@@ -26,15 +26,7 @@ Features of bottom include:
 
 - Maximizing of widgets of interest to take up the entire window.
 
-Details about each widget can be found [here](./docs/widgets.md).
-
-The compatibility of each widget and operating systems are, as of version 0.1.0, as follows:
-
-| OS                                                     | CPU | Memory | Disks | Temperature | Processes | Networks |
-| ------------------------------------------------------ | --- | ------ | ----- | ----------- | --------- | -------- |
-| Linux (tested on Arch Linux, using Kitty Terminal)     | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
-| Windows (tested on Windows 10, using Powershell)       | ✓   | ✓      | ✓     | ✗           | ✓         | ✓        |
-| macOS (tested on macOS Catalina, using Kitty Terminal) | ✓   | ✓      | ✓     | ✓           | ✓         | ✓        |
+More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
 ## Installation
 
