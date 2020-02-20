@@ -1,6 +1,6 @@
 # Config Files
 
-## Boot Options
+## Boot options
 
 One use of a config file is to set boot flags to execute without having to state them when launching the program.
 
@@ -30,7 +30,7 @@ Another use is to set colours, under the `[colors]`. The following labels are cu
 
 Note some colours may not be compatible with the terminal you are using.
 
-## Default Locations
+## Default config locations
 
 bottom will check specific locations by default for a config file.
 

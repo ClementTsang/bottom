@@ -16,7 +16,7 @@ The compatibility of each widget and operating systems are, as of version 0.2.0,
 
 - macOS is tested on macOS Catalina, using the base Terminal and Kitty Terminal.
 
-## Widget Information
+## Widget information
 
 ### CPU
 

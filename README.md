@@ -96,7 +96,7 @@ Run using `btm`.
 
 - `-C`, `--config` takes in a file path leading to a TOML file.
 
-### Config Files
+### Config files
 
 The ability to use config files is supported by bottom to set boot flags by default, and set colour options. See [this document](./docs/config.md) for more details.
 
@@ -120,7 +120,7 @@ See this [config](./sample_config.toml) for an example.
 
 - `Enter` on a widget to maximize the widget.
 
-#### Scrollable Tables
+#### Scrollable tables
 
 - `Up` or `k` and `Down` or `j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
 
@@ -148,7 +148,7 @@ See this [config](./sample_config.toml) for an example.
 
 - `Ctrl-f` or `/` to open the search widget.
 
-#### Search Widget
+#### Search widget
 
 - `Tab` to switch between searching for PID and name respectively.
 
