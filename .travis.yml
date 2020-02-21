@@ -51,17 +51,18 @@ before_deploy:
       cargo build --release --target $TARGET;
       cp ./target/x86_64-pc-windows-msvc/release/btm btm;
       strip btm;
-      tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm;
+      cp default_config.toml btm.toml;
+      tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm btm.toml;
     else
         cargo build --release;
         cp ./target/release/btm btm;
         strip btm;
+        cp default_config.toml btm.toml;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-          tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
-          cp default_config.toml btm.toml;
+          tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm btm.toml;
           tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests sample_config.toml btm.toml;
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-          tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
+          tar -czvf bottom_x86_64-apple-darwin.tar.gz btm btm.toml;
         fi
     fi
 
@@ -70,9 +71,7 @@ deploy:
   api_key:
     secure: ppBn0DnqZ+Rzb84doZQxYdUBQ0rVrZNIiH6ZSFEiCVJd0ttqXfOjK/qXbIf/zabwO0Olqz18jwd9piHjNigWRrHwX9N+YH0DZTM3f4WS2/2acvOP3AjSw6oERjYTwS5yKe/XP1sU11uL6O0oAxYFeiAkn7QOM7flVUE2BmmLAs2lLtQ+9ylmUeBGatrkTfQ0Z2i1o7p5mtI2fKUozpImtHq8TClQEsF4oQS5nvkHtpLuPQ0UrJ8vKZijDBeMuLbDkR121ujRnjoBt8+eXBRbwzAvVotwRozyol8noAN3i4VvYueId6oX7Y2DSEp26wnCuRXGurUnyya5JE55AKoevK+SUHRe5+29/2lPbC5d/etZt2tSX1AIJk9fHeIfRPSTzanIIyDpUzSGoMKjl1ARKGrgHYehRxMKpW0cC2xHSlQ+NrA5apLpXKr2IzpkGsxpAxLqRASbX2VJYCEL70WoJfXinZrxeDxXsaWBLGaj9ySyk059GZBMz9GBdYNtwF3G/3aSIt0nkEGgKipgYXHi5keKKGmyfeZyYkRJRbc369JRZiHuOWct+1ZsOdrKKdbyAdcDGj5kbKuYwA6E+wgI62IWvUTm+vtKDuIbLpu/48aOUuEslGHkYAszLTapX/Le9c9XTu3L+PMgkPq2LSyaeGrfnM+DE/Hwe3Jvurccp94=
   file_glob: true
-  file:
-    - bottom_*.tar.gz
-    - btm.toml
+  file: bottom_*.tar.gz
   skip_cleanup: true
   on:
     tags: true
