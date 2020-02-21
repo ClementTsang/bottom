@@ -16,6 +16,16 @@ The compatibility of each widget and operating systems are, as of version 0.2.0,
 
 - macOS is tested on macOS Catalina, using the base Terminal and Kitty Terminal.
 
+Some notes about each OS:
+
+### Windows
+
+I advise running the program with the `--dot_marker` or `-m` option, as the braille font seems to not work out of the box on Powershell. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
+
+### macOS
+
+macOS seems to work fine for the most part, barring potential keybind conflicts when trying to switch widgets (`H/J/K/L` seems to have no conflicts).
+
 ## Widget information
 
 ### CPU

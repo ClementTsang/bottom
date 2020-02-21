@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom) [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 
-A graphical top clone, written in Rust. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop). Supports Linux, macOS, and Windows.
+A cross-platform graphical process/system monitor. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop). Supports Linux, macOS, and Windows.
 
 ![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux. Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see sample config)._
 
@@ -42,7 +42,11 @@ Other installation methods based on distros are as follows:
 
 #### Arch Linux
 
-You can get the release versions from the AUR by installing `bottom`.
+You can get the release versions from the AUR by installing `bottom`. For example:
+
+```bash
+yay bottom
+```
 
 #### Ubuntu
 
@@ -50,13 +54,18 @@ TBD
 
 ### Windows
 
-I advise running the program with the `--dot_marker` or `-m` option, as the braille font seems to not work out of the box on Powershell. You may need to install a font like [FreeMono](https://fonts2u.com/free-monospaced.font) and use a terminal like cmder for font support to work properly, unfortunately.
-
 I plan to add a Chocolatey install option in the future.
 
 ### macOS
 
-macOS seems to work fine for the most part, barring potential keybind conflicts when trying to switch widgets (`H/J/K/L` seems to have no conflicts). I plan to add a Homebrew install option in the future.
+You can get release versions using Homebrew:
+
+```bash
+brew tap clementtsang/bottom
+brew install bottom
+# Or
+brew install clementtsang/bottom/bottom
+```
 
 ## Usage
 
