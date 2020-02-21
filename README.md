@@ -4,7 +4,7 @@
 
 A cross-platform graphical process/system monitor. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop). Supports Linux, macOS, and Windows.
 
-![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux. Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see sample config)._
+![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux. Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._
 
 ## Features
 
@@ -30,7 +30,7 @@ Features of bottom include:
 
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
-For information about config files, see [this document](./docs/config.md) for more details, and this [config](./sample_config.toml) for an example.
+For information about config files, see [this document](./docs/config.md) for more details, and this [config](./sample_configs/demo_config.toml) for an example.
 
 ## Installation
 
@@ -107,7 +107,7 @@ Run using `btm`.
 
 - `-s`, `--show_disabled_data` will show data entries in the graph legends even if the lines for that entry are disabled.
 
-- `-C`, `--config` takes in a file path leading to a TOML file. By default it checks `~/.config/btm/btm.toml` or `./btm.toml` for Unix and Windows respectively.
+- `-C`, `--config` takes in a file path leading to a TOML file.
 
 ### Keybindings
 
