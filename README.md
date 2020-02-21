@@ -30,6 +30,8 @@ Features of bottom include:
 
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
+## Config files
+
 For information about config files, see [this document](./docs/config.md) for more details, and this [config](./sample_configs/demo_config.toml) for an example.
 
 ## Installation
