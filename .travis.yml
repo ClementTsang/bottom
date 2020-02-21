@@ -60,7 +60,7 @@ before_deploy:
         cp sample_configs/bottom.toml bottom.toml;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
           tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm bottom.toml;
-          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests sample_config.toml bottom.toml;
+          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests bottom.toml;
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
           tar -czvf bottom_x86_64-apple-darwin.tar.gz btm bottom.toml;
         fi

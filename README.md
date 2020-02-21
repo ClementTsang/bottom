@@ -50,10 +50,6 @@ You can get the release versions from the AUR by installing `bottom`. For exampl
 yay bottom
 ```
 
-#### Ubuntu
-
-TBD
-
 ### Windows
 
 I plan to add a Chocolatey install option in the future.
