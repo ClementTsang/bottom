@@ -51,13 +51,13 @@ before_deploy:
       cargo build --release --target $TARGET;
       cp ./target/x86_64-pc-windows-msvc/release/btm btm;
       strip btm;
-      cp default_config.toml bottom.toml;
+      cp sample_configs/bottom.toml bottom.toml;
       tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm bottom.toml;
     else
         cargo build --release;
         cp ./target/release/btm btm;
         strip btm;
-        cp default_config.toml bottom.toml;
+        cp sample_configs/bottom.toml bottom.toml;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
           tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm bottom.toml;
           tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests sample_config.toml bottom.toml;
