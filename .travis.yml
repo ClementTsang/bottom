@@ -49,10 +49,10 @@ before_deploy:
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
       export TARGET=x86_64-pc-windows-msvc;
       cargo build --release --target $TARGET;
-      cp ./target/x86_64-pc-windows-msvc/release/btm btm;
-      strip btm;
+      cp ./target/x86_64-pc-windows-msvc/release/btm btm.exe;
+      strip btm.exe;
       cp sample_configs/bottom.toml bottom.toml;
-      tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm bottom.toml;
+      tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm.exe bottom.toml;
     else
         cargo build --release;
         cp ./target/release/btm btm;
