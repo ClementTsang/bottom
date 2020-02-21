@@ -213,7 +213,6 @@ fn main() -> error::Result<()> {
 
 	let mut first_run = true;
 	loop {
-		// TODO: [OPT] this should not block...
 		if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
 			match recv {
 				Event::KeyInput(event) => {
@@ -408,15 +407,28 @@ fn create_logger() -> error::Result<()> {
 }
 
 fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
-	let config_path = std::path::Path::new(flag_config_location.unwrap_or(
-		if cfg!(target_os = "windows") {
-			DEFAULT_WINDOWS_CONFIG_FILE_PATH
+	use std::ffi::OsString;
+	let config_path = if let Some(conf_loc) = flag_config_location {
+		OsString::from(conf_loc)
+	} else if cfg!(target_os = "windows") {
+		if let Some(home_path) = dirs::config_dir() {
+			let mut path = home_path;
+			path.push(DEFAULT_WINDOWS_CONFIG_FILE_PATH);
+			path.into_os_string()
 		} else {
-			DEFAULT_UNIX_CONFIG_FILE_PATH
-		},
-	));
+			OsString::new()
+		}
+	} else if let Some(home_path) = dirs::home_dir() {
+		let mut path = home_path;
+		path.push(DEFAULT_UNIX_CONFIG_FILE_PATH);
+		path.into_os_string()
+	} else {
+		OsString::new()
+	};
 
-	if let Ok(config_str) = std::fs::read_to_string(config_path) {
+	let path = std::path::Path::new(&config_path);
+
+	if let Ok(config_str) = std::fs::read_to_string(path) {
 		Ok(toml::from_str(config_str.as_str())?)
 	} else {
 		Ok(Config::default())

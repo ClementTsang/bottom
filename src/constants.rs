@@ -6,8 +6,8 @@ pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u128 = 1000;
 pub const NUM_COLOURS: i32 = 256;
 
 // Config and flags
-pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = "~/.config/btm/btm.toml";
-pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "./btm.toml";
+pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = ".config/bottom/bottom.toml";
+pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
 // Help text
 pub const GENERAL_HELP_TEXT: [&str; 15] = [

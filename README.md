@@ -107,7 +107,7 @@ Run using `btm`.
 
 - `-s`, `--show_disabled_data` will show data entries in the graph legends even if the lines for that entry are disabled.
 
-- `-C`, `--config` takes in a file path leading to a TOML file.
+- `-C`, `--config` takes in a file path leading to a TOML file. By default it checks `~/.config/btm/btm.toml` or `./btm.toml` for Unix and Windows respectively.
 
 ### Keybindings
 
@@ -191,6 +191,7 @@ Note that `q` is disabled while in the search widget.
   - [chrono](https://github.com/chronotope/chrono)
   - [clap](https://github.com/clap-rs/clap)
   - [crossterm](https://github.com/TimonPost/crossterm)
+  - [dirs](https://github.com/soc/dirs-rs)
   - [fern](https://github.com/daboross/fern)
   - [futures-rs](https://github.com/rust-lang-nursery/futures-rs)
   - [futures-timer](https://github.com/rustasync/futures-timer)

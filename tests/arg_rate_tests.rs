@@ -4,6 +4,8 @@ use std::process::Command;
 
 // These tests are mostly here just to ensure that invalid results will be caught when passing arguments...
 
+// TODO: [TEST] Allow for release testing.
+
 //======================RATES======================//
 
 fn get_os_binary_loc() -> String {
@@ -36,7 +38,9 @@ fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
 		.arg("18446744073709551616")
 		.assert()
 		.failure()
-		.stderr(predicate::str::contains("rate to be less than unsigned INT_MAX."));
+		.stderr(predicate::str::contains(
+			"rate to be less than unsigned INT_MAX.",
+		));
 	Ok(())
 }
 
@@ -48,7 +52,9 @@ fn test_negative_rate() -> Result<(), Box<dyn std::error::Error>> {
 		.arg("-1000")
 		.assert()
 		.failure()
-		.stderr(predicate::str::contains("wasn't expected, or isn't valid in this context"));
+		.stderr(predicate::str::contains(
+			"wasn't expected, or isn't valid in this context",
+		));
 
 	Ok(())
 }

@@ -34,5 +34,5 @@ Note some colours may not be compatible with the terminal you are using. For exa
 
 bottom will check specific locations by default for a config file.
 
-- For Unix-based systems: `~/.config/btm/btm.toml`.
-- For Windows: `./btm.toml`.
+- For Unix-based systems: `$HOME/.config/bottom/bottom.toml`.
+- For Windows: `{FOLDERID_RoamingAppData}\bottom\bottom.toml` (for example, `C:\Users\Clement\AppData\Roaming\bottom\bottom.toml`).
