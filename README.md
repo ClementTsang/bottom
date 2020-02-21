@@ -56,7 +56,7 @@ I plan to add a Chocolatey install option in the future.
 
 ### macOS
 
-macOS seems to work fine for the most part, barring minor issues with the `Ctrl`-arrow key bindings (use `Shift` instead). I plan to add a Homebrew install option in the future.
+macOS seems to work fine for the most part, barring potential keybind conflicts when trying to switch widgets (`H/J/K/L` seems to have no conflicts). I plan to add a Homebrew install option in the future.
 
 ## Usage
 
