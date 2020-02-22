@@ -46,7 +46,7 @@ Other installation methods based on distros are as follows:
 
 #### Arch Linux
 
-You can get the release versions from the AUR by installing `bottom`. For example:
+You can get the release versions from the [AUR](https://aur.archlinux.org/packages/bottom/) by installing `bottom`. For example:
 
 ```bash
 yay bottom
@@ -54,7 +54,7 @@ yay bottom
 
 ### Windows
 
-You can get release versions via Chocolatey:
+You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/):
 
 ```bash
 choco install bottom
