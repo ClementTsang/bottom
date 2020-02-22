@@ -52,6 +52,15 @@ You can get the release versions from the [AUR](https://aur.archlinux.org/packag
 yay bottom
 ```
 
+#### Debian
+
+I'll provide a `.deb` file on each [release](https://github.com/ClementTsang/bottom/releases). One can install using this, for example:
+
+```bash
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.1/bottom_0.2.1_amd64.deb
+sudo dpkg -i bottom_0.2.1_amd64.deb
+```
+
 ### Windows
 
 You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/):
@@ -65,10 +74,10 @@ choco install bottom
 You can get release versions using Homebrew:
 
 ```bash
-brew tap clementtsang/bottom
-brew install bottom
+$ brew tap clementtsang/bottom
+$ brew install bottom
 # Or
-brew install clementtsang/bottom/bottom
+$ brew install clementtsang/bottom/bottom
 ```
 
 ## Usage

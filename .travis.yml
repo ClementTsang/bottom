@@ -67,7 +67,10 @@ before_deploy:
           cargo build --release --target i686-unknown-linux-gnu;
           strip ./target/i686-unknown-linux-gnu/release/btm;
           tar -czvf bottom_i686-unknown-linux-gnu.tar.gz ./target/i686-unknown-linux-gnu/release/btm;
-          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests;
+          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests README.md;
+        cargo install cargo-deb;
+        cargo deb;
+        cp ./target/debian/bottom_*.deb .;
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
           tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
         fi
@@ -82,6 +85,7 @@ deploy:
   file:
     - bottom_*.tar.gz
     - bottom_*.zip
+    - bottom_*.deb
   skip_cleanup: true
   on:
     tags: true

@@ -4,10 +4,10 @@ version = "0.2.1"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
-keywords = ["linux", "macos", "windows", "cli", "monitoring-tool", "top", "bottom", "tui"]
+keywords = ["cross-platform", "monitoring", "cli", "top", "bottom", "tui"]
 license = "MIT"
 categories = ["command-line-utilities", "visualization"]
-description = "A graphical top clone, written in Rust. Inspired by both gtop and gotop.  Supports Linux, macOS, and Windows."
+description = "A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows."
 readme = "README.md"
 
 [[bin]]
@@ -43,3 +43,15 @@ serde = "1.0"
 [dev-dependencies]
 assert_cmd = "0.12"
 predicates = "1"
+
+[package.metadata.deb]
+section = "utils"
+assets = [
+    ["target/release/btm", "usr/bin/", "755"],
+    ["LICENSE", "usr/share/doc/btm/", "644"],
+    ["README.md", "usr/share/doc/btm/README", "644"],
+]
+extended-description = """\
+By default, bottom will look for a config file in ~/.config/bottom/bottom.toml.
+If one is not specified it will fall back to defaults.
+"""
