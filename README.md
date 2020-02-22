@@ -52,9 +52,9 @@ You can get the release versions from the [AUR](https://aur.archlinux.org/packag
 yay bottom
 ```
 
-#### Debian
+#### Debian (and anything based on it, like Ubuntu)
 
-I'll provide a `.deb` file on each [release](https://github.com/ClementTsang/bottom/releases). One can install using this, for example:
+I'll provide a `.deb` file on each [release](https://github.com/ClementTsang/bottom/releases/latest). For example:
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.1/bottom_0.2.1_amd64.deb
