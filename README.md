@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom) [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 
-A cross-platform graphical process/system monitor. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop). Supports Linux, macOS, and Windows.
+A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
 ![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux. Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._
 
@@ -37,6 +37,8 @@ For information about config files, see [this document](./docs/config.md) for mo
 ## Installation
 
 In all cases you can install the in-development version by cloning and using `cargo build --release`. Note this is built and tested with Rust Stable (1.41.0 as of writing). You can also get release versions using `cargo install bottom`, or manually building from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
+
+I officially support and test 64-bit variants. I will also build and release 32-bit variants for Linux and Windows, but I'm (currently) not testing whether they work.
 
 ### Linux
 

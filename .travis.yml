@@ -47,22 +47,29 @@ notifications:
 before_deploy:
   - |
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
-      export TARGET=x86_64-pc-windows-msvc;
-      cargo build --release --target $TARGET;
-      cp ./target/x86_64-pc-windows-msvc/release/btm btm.exe;
-      strip btm.exe;
-      cp sample_configs/bottom.toml bottom.toml;
-      tar -czvf bottom_x86_64-pc-windows-msvc.tar.gz btm.exe bottom.toml;
+      rustup target add x86_64-pc-windows-msvc;
+      cargo build --release --target x86_64-pc-windows-msvc;
+      strip ./target/x86_64-pc-windows-msvc/release/btm;
+      mv ./target/x86_64-pc-windows-msvc/release/btm ./target/x86_64-pc-windows-msvc/release/btm.exe;
+      zip -r bottom_x86_64-pc-windows-msvc.zip ./target/x86_64-pc-windows-msvc/release/btm.exe;
+      rustup target add i686-pc-windows-msvc;
+      cargo build --release --target i686-pc-windows-msvc;
+      strip ./target/i686-pc-windows-msvc/release/btm;
+      mv ./target/i686-pc-windows-msvc/release/btm ./target/i686-pc-windows-msvc/release/btm.exe;
+      zip -r bottom_i686-pc-windows-msvc.zip ./target/i686-pc-windows-msvc/release/btm.exe;
     else
         cargo build --release;
         cp ./target/release/btm btm;
         strip btm;
-        cp sample_configs/bottom.toml bottom.toml;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-          tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm bottom.toml;
-          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests bottom.toml;
+          tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
+          rustup target add i686-unknown-linux-gnu;
+          cargo build --release --target i686-unknown-linux-gnu;
+          strip ./target/i686-unknown-linux-gnu/release/btm;
+          tar -czvf bottom_i686-unknown-linux-gnu.tar.gz ./target/i686-unknown-linux-gnu/release/btm;
+          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests;
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-          tar -czvf bottom_x86_64-apple-darwin.tar.gz btm bottom.toml;
+          tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
         fi
     fi
 
@@ -72,7 +79,9 @@ deploy:
   api_key:
     secure: ppBn0DnqZ+Rzb84doZQxYdUBQ0rVrZNIiH6ZSFEiCVJd0ttqXfOjK/qXbIf/zabwO0Olqz18jwd9piHjNigWRrHwX9N+YH0DZTM3f4WS2/2acvOP3AjSw6oERjYTwS5yKe/XP1sU11uL6O0oAxYFeiAkn7QOM7flVUE2BmmLAs2lLtQ+9ylmUeBGatrkTfQ0Z2i1o7p5mtI2fKUozpImtHq8TClQEsF4oQS5nvkHtpLuPQ0UrJ8vKZijDBeMuLbDkR121ujRnjoBt8+eXBRbwzAvVotwRozyol8noAN3i4VvYueId6oX7Y2DSEp26wnCuRXGurUnyya5JE55AKoevK+SUHRe5+29/2lPbC5d/etZt2tSX1AIJk9fHeIfRPSTzanIIyDpUzSGoMKjl1ARKGrgHYehRxMKpW0cC2xHSlQ+NrA5apLpXKr2IzpkGsxpAxLqRASbX2VJYCEL70WoJfXinZrxeDxXsaWBLGaj9ySyk059GZBMz9GBdYNtwF3G/3aSIt0nkEGgKipgYXHi5keKKGmyfeZyYkRJRbc369JRZiHuOWct+1ZsOdrKKdbyAdcDGj5kbKuYwA6E+wgI62IWvUTm+vtKDuIbLpu/48aOUuEslGHkYAszLTapX/Le9c9XTu3L+PMgkPq2LSyaeGrfnM+DE/Hwe3Jvurccp94=
   file_glob: true
-  file: bottom_*.tar.gz
+  file:
+    - bottom_*.tar.gz
+    - bottom_*.zip
   skip_cleanup: true
   on:
     tags: true
