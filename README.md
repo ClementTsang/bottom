@@ -54,7 +54,11 @@ yay bottom
 
 ### Windows
 
-I plan to add a Chocolatey install option in the future.
+You can get release versions via Chocolatey:
+
+```bash
+choco install bottom
+```
 
 ### macOS
 
