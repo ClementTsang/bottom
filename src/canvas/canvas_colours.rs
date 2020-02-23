@@ -49,50 +49,49 @@ impl Default for CanvasColours {
 }
 
 impl CanvasColours {
-	pub fn set_text_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.text_style = get_style_from_hex(hex)?;
+	pub fn set_text_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.text_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_border_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.border_style = get_style_from_hex(hex)?;
+	pub fn set_border_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.border_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_highlighted_border_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.highlighted_border_style = get_style_from_hex(hex)?;
+	pub fn set_highlighted_border_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.highlighted_border_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_table_header_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.table_header_style = get_style_from_hex(hex)?.modifier(Modifier::BOLD);
+	pub fn set_table_header_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.table_header_style = get_style_from_config(colour)?.modifier(Modifier::BOLD);
 		Ok(())
 	}
-	pub fn set_ram_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.ram_style = get_style_from_hex(hex)?;
+	pub fn set_ram_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.ram_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_swap_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.swap_style = get_style_from_hex(hex)?;
+	pub fn set_swap_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.swap_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_rx_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.rx_style = get_style_from_hex(hex)?;
+	pub fn set_rx_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.rx_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_tx_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.tx_style = get_style_from_hex(hex)?;
+	pub fn set_tx_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.tx_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_avg_cpu_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.avg_colour_style = get_style_from_hex(hex)?;
+	pub fn set_avg_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.avg_colour_style = get_style_from_config(colour)?;
 		Ok(())
 	}
-	pub fn set_cpu_colours(&mut self, hex_colours: &[String]) -> error::Result<()> {
-		let max_amount = std::cmp::min(hex_colours.len(), NUM_COLOURS as usize);
-		for (itx, hex_colour) in hex_colours.iter().enumerate() {
+	pub fn set_cpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
+		let max_amount = std::cmp::min(colours.len(), NUM_COLOURS as usize);
+		for (itx, colour) in colours.iter().enumerate() {
 			if itx >= max_amount {
 				break;
 			}
-			self.cpu_colour_styles
-				.push(Style::default().fg(convert_hex_to_color(hex_colour)?));
+			self.cpu_colour_styles.push(get_style_from_config(colour)?);
 		}
 		Ok(())
 	}
@@ -102,28 +101,28 @@ impl CanvasColours {
 			.extend(gen_n_styles(remaining_num_colours));
 	}
 
-	pub fn set_scroll_entry_text_color(&mut self, hex: &str) -> error::Result<()> {
-		self.currently_selected_text_colour = convert_hex_to_color(hex)?;
+	pub fn set_scroll_entry_text_color(&mut self, colour: &str) -> error::Result<()> {
+		self.currently_selected_text_colour = get_colour_from_config(colour)?;
 		self.currently_selected_text_style = Style::default()
 			.fg(self.currently_selected_text_colour)
 			.bg(self.currently_selected_bg_colour);
 		Ok(())
 	}
-	pub fn set_scroll_entry_bg_color(&mut self, hex: &str) -> error::Result<()> {
-		self.currently_selected_bg_colour = convert_hex_to_color(hex)?;
+	pub fn set_scroll_entry_bg_color(&mut self, colour: &str) -> error::Result<()> {
+		self.currently_selected_bg_colour = get_colour_from_config(colour)?;
 		self.currently_selected_text_style = Style::default()
 			.fg(self.currently_selected_text_colour)
 			.bg(self.currently_selected_bg_colour);
 		Ok(())
 	}
 
-	pub fn set_widget_title_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.widget_title_style = get_style_from_hex(hex)?;
+	pub fn set_widget_title_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.widget_title_style = get_style_from_config(colour)?;
 		Ok(())
 	}
 
-	pub fn set_graph_colour(&mut self, hex: &str) -> error::Result<()> {
-		self.graph_style = get_style_from_hex(hex)?;
+	pub fn set_graph_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.graph_style = get_style_from_config(colour)?;
 		Ok(())
 	}
 }
