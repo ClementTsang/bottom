@@ -82,6 +82,7 @@ struct ConfigFlags {
 #[derive(Default, Deserialize)]
 struct ConfigColours {
 	table_header_color: Option<String>,
+	avg_cpu_color: Option<String>,
 	cpu_core_colors: Option<Vec<String>>,
 	ram_color: Option<String>,
 	swap_color: Option<String>,
@@ -690,6 +691,10 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 
 		if let Some(text_color) = &colours.text_color {
 			painter.colours.set_text_colour(text_color)?;
+		}
+
+		if let Some(avg_cpu_color) = &colours.avg_cpu_color {
+			painter.colours.set_avg_cpu_colour(avg_cpu_color)?;
 		}
 
 		if let Some(cpu_core_colors) = &(colours.cpu_core_colors) {

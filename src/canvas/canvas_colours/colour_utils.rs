@@ -4,6 +4,7 @@ use tui::style::{Color, Style};
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
 pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
+pub const AVG_COLOUR: Color = Color::Red;
 
 /// Generates random colours.  Strategy found from
 /// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
@@ -39,14 +40,14 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 	let mut colour_vec: Vec<Style> = vec![
 		Style::default().fg(STANDARD_FIRST_COLOUR),
 		Style::default().fg(STANDARD_SECOND_COLOUR),
-		Style::default().fg(Color::LightRed),
 		Style::default().fg(Color::LightCyan),
 		Style::default().fg(Color::LightGreen),
 		Style::default().fg(Color::LightBlue),
-		Style::default().fg(Color::Red),
+		Style::default().fg(Color::LightRed),
 		Style::default().fg(Color::Cyan),
 		Style::default().fg(Color::Green),
 		Style::default().fg(Color::Blue),
+		Style::default().fg(Color::Red),
 	];
 
 	let mut h: f32 = 0.4; // We don't need random colours... right?
@@ -77,4 +78,8 @@ pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
 
 	let rgb = convert_hex_to_rgb(hex)?;
 	Ok(Color::Rgb(rgb.0, rgb.1, rgb.2))
+}
+
+pub fn get_style_from_hex(hex: &str) -> error::Result<Style> {
+	Ok(Style::default().fg(convert_hex_to_color(hex)?))
 }
