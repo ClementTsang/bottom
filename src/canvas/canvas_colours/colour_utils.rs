@@ -1,10 +1,36 @@
 use crate::utils::{error, gen_util::*};
+use std::collections::HashMap;
 use tui::style::{Color, Style};
 
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
 pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
 pub const AVG_COLOUR: Color = Color::Red;
+
+lazy_static! {
+	static ref COLOR_NAME_LOOKUP_TABLE: HashMap<&'static str, Color> = [
+		("reset", Color::Reset),
+		("black", Color::Black),
+		("red", Color::Red),
+		("green", Color::Green),
+		("yellow", Color::Yellow),
+		("blue", Color::Blue),
+		("magenta", Color::Magenta),
+		("cyan", Color::Cyan),
+		("gray", Color::Gray),
+		("darkgray", Color::DarkGray),
+		("lightred", Color::LightRed),
+		("lightgreen", Color::LightGreen),
+		("lightyellow", Color::LightYellow),
+		("lightblue", Color::LightBlue),
+		("lightmagenta", Color::LightMagenta),
+		("lightcyan", Color::LightCyan),
+		("white", Color::White)
+	]
+	.iter()
+	.copied()
+	.collect();
+}
 
 /// Generates random colours.  Strategy found from
 /// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
@@ -80,6 +106,83 @@ pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
 	Ok(Color::Rgb(rgb.0, rgb.1, rgb.2))
 }
 
+pub fn get_style_from_config(input_val: &str) -> error::Result<Style> {
+	if input_val.len() > 1 {
+		if &input_val[0..1] == "#" {
+			get_style_from_hex(input_val)
+		} else if input_val.contains(',') {
+			get_style_from_rgb(input_val)
+		} else {
+			get_style_from_color_name(input_val)
+		}
+	} else {
+		Err(error::BottomError::GenericError(format!(
+			"Colour input {} is not valid.",
+			input_val
+		)))
+	}
+}
+
+pub fn get_colour_from_config(input_val: &str) -> error::Result<Color> {
+	if input_val.len() > 1 {
+		if &input_val[0..1] == "#" {
+			convert_hex_to_color(input_val)
+		} else if input_val.contains(',') {
+			convert_rgb_to_color(input_val)
+		} else {
+			convert_name_to_color(input_val)
+		}
+	} else {
+		Err(error::BottomError::GenericError(format!(
+			"Colour input {} is not valid.",
+			input_val
+		)))
+	}
+}
+
 pub fn get_style_from_hex(hex: &str) -> error::Result<Style> {
 	Ok(Style::default().fg(convert_hex_to_color(hex)?))
+}
+
+fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
+	let rgb_list = rgb_str.split(',');
+	let rgb = rgb_list
+		.filter_map(|val| {
+			if let Ok(res) = val.to_string().trim().parse::<u8>() {
+				Some(res)
+			} else {
+				None
+			}
+		})
+		.collect::<Vec<_>>();
+	if rgb.len() == 3 {
+		Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
+	} else {
+		Err(error::BottomError::GenericError(format!(
+			"RGB colour {} is not of valid length.  It must be a comma separated value with 3 integers from 0 to 255, like \"255, 0, 155\".",
+			rgb_str
+		)))
+	}
+}
+
+pub fn get_style_from_rgb(rgb_str: &str) -> error::Result<Style> {
+	Ok(Style::default().fg(convert_rgb_to_color(rgb_str)?))
+}
+
+fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
+	let color = COLOR_NAME_LOOKUP_TABLE.get(color_name.to_lowercase().as_str());
+	if let Some(color) = color {
+		return Ok(*color);
+	}
+
+	Err(error::BottomError::GenericError(format!(
+		"Color {} is not a supported config colour.  bottom supports the following named colours as strings: \
+		Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, \
+		LightYellow, LightBlue,	LightMagenta, LightCyan, White",
+		color_name
+	)))
+}
+
+pub fn get_style_from_color_name(color_name: &str) -> error::Result<Style> {
+	Ok(Style::default().fg(convert_name_to_color(color_name)?))
 }
