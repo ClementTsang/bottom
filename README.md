@@ -36,7 +36,9 @@ For information about config files, see [this document](./docs/config.md) for mo
 
 ## Installation
 
-In all cases you can install the in-development version by cloning and using `cargo build --release`. Note this is built and tested with Rust Stable (1.41.0 as of writing). You can also get release versions using `cargo install bottom`, or manually building from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
+In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.41.0 as of writing).
+
+In addition to the below methods, you can also get release versions using `cargo install bottom`, or manually building from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
 
 I officially support and test 64-bit variants. I will also build and release 32-bit variants for Linux and Windows, but I'm (currently) not testing whether they work.
 
@@ -54,7 +56,7 @@ yay bottom
 
 #### Debian (and anything based on it, like Ubuntu)
 
-I'll provide a `.deb` file on each [release](https://github.com/ClementTsang/bottom/releases/latest). For example:
+A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest). For example:
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.1/bottom_0.2.1_amd64.deb
@@ -74,10 +76,10 @@ choco install bottom
 You can get release versions using Homebrew:
 
 ```bash
-brew tap clementtsang/bottom
-brew install bottom
+$ brew tap clementtsang/bottom
+$ brew install bottom
 # Or
-brew install clementtsang/bottom/bottom
+$ brew install clementtsang/bottom/bottom
 ```
 
 ## Usage
