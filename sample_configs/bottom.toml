@@ -5,7 +5,7 @@
 # This group of options represents a command-line flag/option.  Flags explicitly
 # added when running (ie: btm -a) will override this config file if an option
 # is also set here.
-#[flags]
+[flags]
 
 #avg_cpu = true
 #dot_marker = false
@@ -41,13 +41,16 @@
 # macOS default Terminal does NOT like custom colours and it will glitch out.
 # 
 # The default options here are based on gruvbox: https://github.com/morhetz/gruvbox
-#[colors]
+[colors]
 
 # Represents the colour of table headers (processes, CPU, disks, temperature).
 #table_header_color="#458588"
 
 # Represents the colour of the label each widget has.
 #widget_title_color="#cc241d"
+
+# Represents the average CPU color
+#avg_cpu_color="#d3869b"
 
 # Represents the colour the core will use in the CPU legend and graph.
 #cpu_core_colors=["#cc241d", "#98971a"]
@@ -70,7 +73,7 @@
 # Represents the colour of the border of selected widgets.
 #highlighted_border_color="#fe8019"
 
-# Represents the colour of the border of most text that is otherwise not covered.
+# Represents the colour of most text.
 #text_color="#ebdbb2"
 
 # Represents the colour of text that is selected.
@@ -81,3 +84,6 @@
 
 # Represents the colour of the lines and text of the graph.
 #graph_color="#ebdbb2"
+
+# Represents the cursor's colour.
+#cursor_color="#458588"

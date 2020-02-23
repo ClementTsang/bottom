@@ -562,8 +562,12 @@ impl Painter {
 								Marker::Braille
 							})
 							.style(
-								self.colours.cpu_colour_styles
-									[itx % self.colours.cpu_colour_styles.len()],
+								if app_state.app_config_fields.show_average_cpu && itx == 0 {
+									self.colours.avg_colour_style
+								} else {
+									self.colours.cpu_colour_styles
+										[itx % self.colours.cpu_colour_styles.len()]
+								},
 							)
 							.data(&cpu.cpu_data[..]),
 					)
@@ -668,6 +672,8 @@ impl Painter {
 									.current_scroll_position - start_position
 							{
 								self.colours.currently_selected_text_style
+							} else if app_state.app_config_fields.show_average_cpu && itx == 0 {
+								self.colours.avg_colour_style
 							} else {
 								self.colours.cpu_colour_styles[itx
 									+ start_position as usize
@@ -675,8 +681,13 @@ impl Painter {
 							}
 						}
 						_ => {
-							self.colours.cpu_colour_styles[itx
-								+ start_position as usize % self.colours.cpu_colour_styles.len()]
+							if app_state.app_config_fields.show_average_cpu && itx == 0 {
+								self.colours.avg_colour_style
+							} else {
+								self.colours.cpu_colour_styles[itx
+									+ start_position as usize
+										% self.colours.cpu_colour_styles.len()]
+							}
 						}
 					},
 				)

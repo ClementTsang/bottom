@@ -14,19 +14,24 @@ One use of a config file is to set boot flags to execute without having to state
 
 Another use is to set colours, under the `[colors]`. The following labels are customizable with hex colour code strings:
 
-- Table header colours (`table_header_color="#ffffff"`).
-- Every CPU core colour as an array (`cpu_core_colors=["#ffffff", "#000000", "#111111"]`).
-  - bottom will look at 216 (let's be realistic here) colours at most, and in order.
-  - If not enough colours are provided for the number of threads on the CPU, then the rest will be automatically generated.
-- RAM and SWAP colours (`ram_color="#ffffff"`, `swap_color="#111111"`).
-- RX and TX colours (`rx_color="#ffffff"`, `tx_color="#111111"`).
-- Widget title colour (`widget_title_color="#ffffff"`).
-- General widget border colour (`border_color="#ffffff"`).
-- Current widget border colour (`highlighted_border_color="#ffffff"`).
-- Text colour (`text_color="#ffffff"`).
-- Label and graph colour (`graph_color="#ffffff"`).
-- Cursor colour (`cursor_color="#ffffff"`).
-- Current selected scroll entry colour (`scroll_entry_text_color="#282828"`, `scroll_entry_bg_color="#458588"`).
+| Labels                          | Details                                        | Example                                             |
+| ------------------------------- | ---------------------------------------------- | --------------------------------------------------- |
+| Table header colours            | Colour of table headers                        | `table_header_color="#ffffff"`                      |
+| CPU colour per core             | Colour of each core. Read in order.            | `cpu_core_colors=["#ffffff", "#000000", "#111111"]` |
+|                                 | Looks at 256 colours at most.                  |
+| Average CPU colour              | The average CPU color                          | `avg_cpu_color="#d3869b"`                           |
+| RAM                             | The colour RAM will use                        | `ram_color="#ffffff"`                               |
+| SWAP                            | The colour SWAP will use                       | `swap_color="#111111"`                              |
+| RX                              | The colour rx will use                         | `rx_color="#ffffff"`                                |
+| TX                              | The colour tx will use                         | `tx_color="#111111"`                                |
+| Widget title colour             | The colour of the label each widget has        | `widget_title_color="#ffffff"`                      |
+| Border colour                   | The colour of the border of unselected widgets | `border_color="#ffffff"`                            |
+| Selected border colour          | The colour of the border of selected widgets   | `highlighted_border_color="#ffffff"`                |
+| Text colour                     | The colour of most text                        | `text_color="#ffffff"`                              |
+| Graph colour                    | The colour of the lines and text of the graph  | `graph_color="#ffffff"`                             |
+| Cursor colour                   | The cursor's colour                            | `cursor_color="#ffffff"`                            |
+| Selected text colour            | The colour of text that is selected            | `scroll_entry_text_color="#282828"`                 |
+| Selected text background colour | The background colour of text that is selected | `scroll_entry_bg_color="#458588"`                   |
 
 Note some colours may not be compatible with the terminal you are using. For example, macOS's default Terminal does not play nice with many colours.
 
