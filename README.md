@@ -74,10 +74,10 @@ choco install bottom
 You can get release versions using Homebrew:
 
 ```bash
-$ brew tap clementtsang/bottom
-$ brew install bottom
+brew tap clementtsang/bottom
+brew install bottom
 # Or
-$ brew install clementtsang/bottom/bottom
+brew install clementtsang/bottom/bottom
 ```
 
 ## Usage
