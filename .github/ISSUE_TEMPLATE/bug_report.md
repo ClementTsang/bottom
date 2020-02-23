@@ -2,8 +2,8 @@
 name: Bug report
 about: Found a bug?  Please report it if it hasn't already been filed...
 title: ""
-labels: ""
-assignees: ""
+labels: "bug"
+assignees: "ClementTsang"
 ---
 
 ## Describe the bug
