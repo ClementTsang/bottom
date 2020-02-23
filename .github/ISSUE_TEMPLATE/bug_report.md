@@ -25,8 +25,8 @@ If applicable, add screenshots to help explain your problem.
 
 Provide information on:
 
-- OS:
-- Terminal
+**OS:**
+**Terminal:**
 
 ## Additional context
 
