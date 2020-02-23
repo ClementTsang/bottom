@@ -2,6 +2,12 @@
 
 A description of the change and what it does.  If relevant, please provide screenshots of what results from the change.
 
+## Issue
+
+If applicable, what issue does this address?
+
+Issue:
+
 ## Type of change
 
 Remove the irrelevant one.
