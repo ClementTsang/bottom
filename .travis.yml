@@ -63,10 +63,6 @@ before_deploy:
         strip btm;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
           tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
-          rustup target add i686-unknown-linux-gnu;
-          cargo build --release --target i686-unknown-linux-gnu;
-          strip ./target/i686-unknown-linux-gnu/release/btm;
-          tar -czvf bottom_i686-unknown-linux-gnu.tar.gz ./target/i686-unknown-linux-gnu/release/btm;
           tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests README.md;
         cargo install cargo-deb;
         cargo deb;
