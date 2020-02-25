@@ -369,21 +369,21 @@ fn handle_key_event_or_break(
 			}
 		} else if let KeyModifiers::ALT = event.modifiers {
 			match event.code {
-				KeyCode::Char('c') => {
+				KeyCode::Char('c') | KeyCode::Char('C') => {
 					if app.is_in_search_widget() {
 						app.process_search_state.toggle_ignore_case();
 						app.update_regex();
 						app.update_process_gui = true;
 					}
 				}
-				KeyCode::Char('w') => {
+				KeyCode::Char('w') | KeyCode::Char('W') => {
 					if app.is_in_search_widget() {
 						app.process_search_state.toggle_search_whole_word();
 						app.update_regex();
 						app.update_process_gui = true;
 					}
 				}
-				KeyCode::Char('r') => {
+				KeyCode::Char('r') | KeyCode::Char('R') => {
 					if app.is_in_search_widget() {
 						app.process_search_state.toggle_search_regex();
 						app.update_regex();
