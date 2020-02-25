@@ -771,6 +771,12 @@ impl App {
 
 	pub fn on_char_key(&mut self, caught_char: char) {
 		// Forbid any char key presses when showing a dialog box...
+
+		// Skip control code chars
+		if caught_char.is_control() {
+			return;
+		}
+
 		if !self.is_in_dialog() {
 			let current_key_press_inst = Instant::now();
 			if current_key_press_inst
