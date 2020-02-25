@@ -59,8 +59,8 @@ yay bottom
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest). For example:
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.1/bottom_0.2.1_amd64.deb
-sudo dpkg -i bottom_0.2.1_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.2/bottom_0.2.2_amd64.deb
+sudo dpkg -i bottom_0.2.2_amd64.deb
 ```
 
 ### Windows
