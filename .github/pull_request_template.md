@@ -1,6 +1,6 @@
 ## Description
 
-A description of the change and what it does.  If relevant, please provide screenshots of what results from the change.
+A description of the change and what it does. If relevant, please provide screenshots of what results from the change.
 
 ## Issue
 
@@ -14,6 +14,10 @@ Remove the irrelevant one.
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
+
+## Test methodology
+
+Please state how this was tested.
 
 ## Checklist
 

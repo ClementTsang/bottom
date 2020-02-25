@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Found a bug?  Please report it if it hasn't already been filed...
+about: Found a bug?  Make sure it hasn't already been filed/solved - if so, please report it!
 title: ""
 labels: "bug"
 assignees: "ClementTsang"
@@ -25,8 +25,11 @@ If applicable, add screenshots to help explain your problem.
 
 Provide information on:
 
-**OS:**
+**Operating System:**
+
 **Terminal:**
+
+**Any other relevant information (more details are always good!):**
 
 ## Additional context
 
