@@ -325,7 +325,7 @@ fn handle_key_event_or_break(
 			KeyCode::Down => app.on_down_key(),
 			KeyCode::Left => app.on_left_key(),
 			KeyCode::Right => app.on_right_key(),
-			KeyCode::Char(character) => app.on_char_key(character),
+			KeyCode::Char(caught_char) => app.on_char_key(caught_char),
 			KeyCode::Esc => app.on_esc(),
 			KeyCode::Enter => app.on_enter(),
 			KeyCode::Tab => app.on_tab(),
@@ -361,14 +361,10 @@ fn handle_key_event_or_break(
 		} else if let KeyModifiers::SHIFT = event.modifiers {
 			match event.code {
 				KeyCode::Left => app.move_widget_selection_left(),
-				KeyCode::Char('h') | KeyCode::Char('H') => app.on_char_key('H'),
 				KeyCode::Right => app.move_widget_selection_right(),
-				KeyCode::Char('l') | KeyCode::Char('L') => app.on_char_key('L'),
 				KeyCode::Up => app.move_widget_selection_up(),
-				KeyCode::Char('k') | KeyCode::Char('K') => app.on_char_key('K'),
 				KeyCode::Down => app.move_widget_selection_down(),
-				KeyCode::Char('j') | KeyCode::Char('J') => app.on_char_key('J'),
-				KeyCode::Char('/') | KeyCode::Char('?') => app.on_char_key('?'),
+				KeyCode::Char(caught_char) => app.on_char_key(caught_char),
 				_ => {}
 			}
 		} else if let KeyModifiers::ALT = event.modifiers {
