@@ -536,19 +536,19 @@ impl Painter {
 	}
 
 	fn draw_cpu_graph<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &app::App, draw_loc: Rect,
 	) {
 		let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
 		// CPU usage graph
-		let x_axis: Axis<String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
+		let x_axis: Axis<'_, String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
 		let y_axis = Axis::default()
 			.style(self.colours.graph_style)
 			.labels_style(self.colours.graph_style)
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
-		let dataset_vector: Vec<Dataset> = cpu_data
+		let dataset_vector: Vec<Dataset<'_>> = cpu_data
 			.iter()
 			.enumerate()
 			.rev()
@@ -613,7 +613,7 @@ impl Painter {
 	}
 
 	fn draw_cpu_legend<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
 		let cpu_data: &[ConvertedCpuData] = &(app_state.canvas_data.cpu_data);
 
@@ -759,21 +759,21 @@ impl Painter {
 	}
 
 	fn draw_memory_graph<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &app::App, draw_loc: Rect,
 	) {
 		let mem_data: &[(f64, f64)] = &(app_state.canvas_data.mem_data);
 		let swap_data: &[(f64, f64)] = &(app_state.canvas_data.swap_data);
 
-		let x_axis: Axis<String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
+		let x_axis: Axis<'_, String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
 
 		// Offset as the zero value isn't drawn otherwise...
-		let y_axis: Axis<&str> = Axis::default()
+		let y_axis: Axis<'_, &str> = Axis::default()
 			.style(self.colours.graph_style)
 			.labels_style(self.colours.graph_style)
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
-		let mut mem_canvas_vec: Vec<Dataset> = vec![Dataset::default()
+		let mut mem_canvas_vec: Vec<Dataset<'_>> = vec![Dataset::default()
 			.name(&app_state.canvas_data.mem_label)
 			.marker(if app_state.app_config_fields.use_dot {
 				Marker::Dot
@@ -835,13 +835,13 @@ impl Painter {
 	}
 
 	fn draw_network_graph<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &app::App, draw_loc: Rect,
 	) {
 		let network_data_rx: &[(f64, f64)] = &(app_state.canvas_data.network_data_rx);
 		let network_data_tx: &[(f64, f64)] = &(app_state.canvas_data.network_data_tx);
 
-		let x_axis: Axis<String> = Axis::default().bounds([0.0, 60_000.0]);
-		let y_axis = Axis::default()
+		let x_axis: Axis<'_, String> = Axis::default().bounds([0.0, 60_000.0]);
+		let y_axis: Axis<'_, &str> = Axis::default()
 			.style(self.colours.graph_style)
 			.labels_style(self.colours.graph_style)
 			.bounds([-0.5, 30_f64])
@@ -912,7 +912,7 @@ impl Painter {
 	}
 
 	fn draw_network_labels<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
 		let rx_display = &app_state.canvas_data.rx_display;
 		let tx_display = &app_state.canvas_data.tx_display;
@@ -959,7 +959,7 @@ impl Painter {
 	}
 
 	fn draw_temp_table<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
 		let temp_sensor_data: &[Vec<String>] = &(app_state.canvas_data.temp_sensor_data);
 
@@ -1056,7 +1056,7 @@ impl Painter {
 	}
 
 	fn draw_disk_table<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
 		let disk_data: &[Vec<String>] = &(app_state.canvas_data.disk_data);
 		let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
@@ -1153,7 +1153,7 @@ impl Painter {
 	}
 
 	fn draw_search_field<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
 		let width = max(0, draw_loc.width as i64 - 34) as u64;
 		let query = app_state.get_current_search_query();
@@ -1165,7 +1165,7 @@ impl Painter {
 
 		let cursor_position = app_state.get_cursor_position();
 
-		let query_with_cursor: Vec<Text> =
+		let query_with_cursor: Vec<Text<'_>> =
 			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
 				if cursor_position >= query.len() {
 					let mut q = vec![Text::styled(
@@ -1287,7 +1287,7 @@ impl Painter {
 	}
 
 	fn draw_processes_table<B: backend::Backend>(
-		&self, f: &mut Frame<B>, app_state: &mut app::App, draw_loc: Rect,
+		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
 		let process_data: &[ConvertedProcessData] = &app_state.canvas_data.finalized_process_data;
 
