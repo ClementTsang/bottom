@@ -773,29 +773,26 @@ impl Painter {
 			.bounds([-0.5, 100.5])
 			.labels(&["0%", "100%"]);
 
-		let mut mem_canvas_vec: Vec<Dataset<'_>> = vec![Dataset::default()
-			.name(&app_state.canvas_data.mem_label)
-			.marker(if app_state.app_config_fields.use_dot {
-				Marker::Dot
-			} else {
-				Marker::Braille
-			})
-			.style(self.colours.ram_style)
-			.data(&mem_data)];
-
-		if !(&swap_data).is_empty() {
-			mem_canvas_vec.push(
-				Dataset::default()
-					.name(&app_state.canvas_data.swap_label)
-					.marker(if app_state.app_config_fields.use_dot {
-						Marker::Dot
-					} else {
-						Marker::Braille
-					})
-					.style(self.colours.swap_style)
-					.data(&swap_data),
-			);
-		}
+		let mem_canvas_vec: Vec<Dataset<'_>> = vec![
+			Dataset::default()
+				.name(&app_state.canvas_data.mem_label)
+				.marker(if app_state.app_config_fields.use_dot {
+					Marker::Dot
+				} else {
+					Marker::Braille
+				})
+				.style(self.colours.ram_style)
+				.data(&mem_data),
+			Dataset::default()
+				.name(&app_state.canvas_data.swap_label)
+				.marker(if app_state.app_config_fields.use_dot {
+					Marker::Dot
+				} else {
+					Marker::Braille
+				})
+				.style(self.colours.swap_style)
+				.data(&swap_data),
+		];
 
 		let title = if app_state.is_expanded {
 			const TITLE_BASE: &str = " Memory ── Esc to go back ";
