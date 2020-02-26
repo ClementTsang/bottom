@@ -68,7 +68,7 @@ sudo dpkg -i bottom_0.2.2_amd64.deb
 You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/):
 
 ```bash
-choco install bottom
+choco install bottom --version=0.2.1
 ```
 
 ### macOS
