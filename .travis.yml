@@ -29,7 +29,6 @@ script:
   - cargo clippy -- -D clippy::all
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
-  - cargo install --path . --target $TARGET
 
 # Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work
 cache:
@@ -46,6 +45,7 @@ notifications:
     on_success: never
 
 before_deploy:
+  - cargo install --path . --target $TARGET
   - |
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
       choco install zip;
