@@ -202,6 +202,12 @@ Note that `q` is disabled while in the search widget.
 
 - Scrolling with the mouse will scroll through the currently selected list if the widget is a scrollable table.
 
+## Contribution
+
+Contribution is welcome!  Just submit a PR.
+
+If you spot any issue with nobody assigned to it, or it seems like no work has started on it, feel free to try and do it!
+
 ## Thanks, kudos, and all the like
 
 - This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
