@@ -6,7 +6,7 @@ _A description of the change and what it does. If relevant, please provide scree
 
 If applicable, what issue does this address?
 
-Issue: #
+Closes: #
 
 ## Type of change
 
