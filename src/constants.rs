@@ -50,7 +50,7 @@ pub const SEARCH_HELP_TEXT: [&str; 13] = [
 	"Delete         Delete the character at the cursor\n",
 	"Left           Move cursor left\n",
 	"Right          Move cursor right\n",
-	"Alt-c          Toggle whether to ignore case\n",
-	"Alt-m          Toggle whether to match the whole word\n",
-	"Alt-r          Toggle whether to use regex\n",
+	"Alt-c/F1       Toggle whether to ignore case\n",
+	"Alt-w/F2       Toggle whether to match the whole word\n",
+	"Alt-r/F3       Toggle whether to use regex\n",
 ];

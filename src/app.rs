@@ -106,15 +106,15 @@ impl Default for ProcessSearchState {
 }
 
 impl ProcessSearchState {
-	pub fn toggle_ignore_case(&mut self) {
+	pub fn search_toggle_ignore_case(&mut self) {
 		self.is_ignoring_case = !self.is_ignoring_case;
 	}
 
-	pub fn toggle_search_whole_word(&mut self) {
+	pub fn search_toggle_whole_word(&mut self) {
 		self.is_searching_whole_word = !self.is_searching_whole_word;
 	}
 
-	pub fn toggle_search_regex(&mut self) {
+	pub fn search_toggle_regex(&mut self) {
 		self.is_searching_with_regex = !self.is_searching_with_regex;
 	}
 }
@@ -461,6 +461,24 @@ impl App {
 
 	pub fn get_current_search_query(&self) -> &String {
 		&self.process_search_state.search_state.current_search_query
+	}
+
+	pub fn toggle_ignore_case(&mut self) {
+		self.process_search_state.search_toggle_ignore_case();
+		self.update_regex();
+		self.update_process_gui = true;
+	}
+
+	pub fn toggle_search_whole_word(&mut self) {
+		self.process_search_state.search_toggle_whole_word();
+		self.update_regex();
+		self.update_process_gui = true;
+	}
+
+	pub fn toggle_search_regex(&mut self) {
+		self.process_search_state.search_toggle_regex();
+		self.update_regex();
+		self.update_process_gui = true;
 	}
 
 	pub fn update_regex(&mut self) {
