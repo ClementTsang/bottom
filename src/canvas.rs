@@ -97,6 +97,7 @@ pub struct Painter {
 	pub styled_general_help_text: Vec<Text<'static>>,
 	pub styled_process_help_text: Vec<Text<'static>>,
 	pub styled_search_help_text: Vec<Text<'static>>,
+	is_mac_os: bool,
 }
 
 impl Painter {
@@ -106,6 +107,8 @@ impl Painter {
 	/// assumes that you, the programmer, are sane and do not do stupid things.
 	/// RIGHT?
 	pub fn initialize(&mut self) {
+		self.is_mac_os = cfg!(target_os = "macos");
+
 		self.styled_general_help_text.push(Text::Styled(
 			GENERAL_HELP_TEXT[0].into(),
 			self.colours.table_header_style,
@@ -1222,27 +1225,60 @@ impl Painter {
 			option_text.push(Text::raw("\n"));
 		}
 
-		let option_row = vec![
-			Text::styled("Match Case (Alt+C)", self.colours.table_header_style),
+		let case_style = if !app_state.process_search_state.is_ignoring_case {
+			self.colours.currently_selected_text_style
+		} else {
+			self.colours.text_style
+		};
+
+		let whole_word_style = if app_state.process_search_state.is_searching_whole_word {
+			self.colours.currently_selected_text_style
+		} else {
+			self.colours.text_style
+		};
+
+		let regex_style = if app_state.process_search_state.is_searching_with_regex {
+			self.colours.currently_selected_text_style
+		} else {
+			self.colours.text_style
+		};
+
+		let case_text = format!(
+			"Match Case ({})[{}]",
+			if self.is_mac_os { "F1" } else { "Alt+C" },
 			if !app_state.process_search_state.is_ignoring_case {
-				Text::styled("[*]", self.colours.table_header_style)
+				"*"
 			} else {
-				Text::styled("[ ]", self.colours.table_header_style)
-			},
-			Text::styled("     ", self.colours.table_header_style),
-			Text::styled("Match Whole Word (Alt+W)", self.colours.table_header_style),
+				" "
+			}
+		);
+
+		let whole_text = format!(
+			"Match Whole Word ({})[{}]",
+			if self.is_mac_os { "F2" } else { "Alt+W" },
 			if app_state.process_search_state.is_searching_whole_word {
-				Text::styled("[*]", self.colours.table_header_style)
+				"*"
 			} else {
-				Text::styled("[ ]", self.colours.table_header_style)
-			},
-			Text::styled("     ", self.colours.table_header_style),
-			Text::styled("Use Regex (Alt+R)", self.colours.table_header_style),
+				" "
+			}
+		);
+
+		let regex_text = format!(
+			"Use Regex ({})[{}]",
+			if self.is_mac_os { "F3" } else { "Alt+R" },
 			if app_state.process_search_state.is_searching_with_regex {
-				Text::styled("[*]", self.colours.table_header_style)
+				"*"
 			} else {
-				Text::styled("[ ]", self.colours.table_header_style)
-			},
+				" "
+			}
+		);
+
+		let option_row = vec![
+			Text::styled(&case_text, case_style),
+			Text::raw("     "),
+			Text::styled(&whole_text, whole_word_style),
+			Text::raw("     "),
+			Text::styled(&regex_text, regex_style),
 		];
 		option_text.extend(option_row);
 

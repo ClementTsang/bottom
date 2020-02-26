@@ -42,7 +42,10 @@ mod canvas;
 mod constants;
 mod data_conversion;
 
-use app::data_harvester::{self, processes::ProcessSorting};
+use app::{
+	data_harvester::{self, processes::ProcessSorting},
+	App,
+};
 use constants::*;
 use data_conversion::*;
 use utils::error::{self, BottomError};
@@ -155,7 +158,7 @@ fn main() -> error::Result<()> {
 	let show_disabled_data = get_show_disabled_data_option(&matches, &config);
 
 	// Create "app" struct, which will control most of the program and store settings/state
-	let mut app = app::App::new(
+	let mut app = App::new(
 		show_average_cpu,
 		temperature_type,
 		update_rate_in_milliseconds as u64,
@@ -301,7 +304,7 @@ fn main() -> error::Result<()> {
 	Ok(())
 }
 
-fn handle_mouse_event(event: MouseEvent, app: &mut app::App) {
+fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 	match event {
 		MouseEvent::ScrollUp(_x, _y, _modifiers) => app.decrement_position_count(),
 		MouseEvent::ScrollDown(_x, _y, _modifiers) => app.increment_position_count(),
@@ -310,7 +313,7 @@ fn handle_mouse_event(event: MouseEvent, app: &mut app::App) {
 }
 
 fn handle_key_event_or_break(
-	event: KeyEvent, app: &mut app::App, rtx: &std::sync::mpsc::Sender<ResetEvent>,
+	event: KeyEvent, app: &mut App, rtx: &std::sync::mpsc::Sender<ResetEvent>,
 ) -> bool {
 	if event.modifiers.is_empty() {
 		// Required catch for searching - otherwise you couldn't search with q.
@@ -331,11 +334,45 @@ fn handle_key_event_or_break(
 			KeyCode::Tab => app.on_tab(),
 			KeyCode::Backspace => app.on_backspace(),
 			KeyCode::Delete => app.on_delete(),
+			KeyCode::F(1) => {
+				if app.is_in_search_widget() {
+					app.toggle_ignore_case();
+				}
+			}
+			KeyCode::F(2) => {
+				if app.is_in_search_widget() {
+					app.toggle_search_whole_word();
+				}
+			}
+			KeyCode::F(3) => {
+				if app.is_in_search_widget() {
+					app.toggle_search_regex();
+				}
+			}
 			_ => {}
 		}
 	} else {
 		// Otherwise, track the modifier as well...
-		if let KeyModifiers::CONTROL = event.modifiers {
+		if let KeyModifiers::ALT = event.modifiers {
+			match event.code {
+				KeyCode::Char('c') | KeyCode::Char('C') => {
+					if app.is_in_search_widget() {
+						app.toggle_ignore_case();
+					}
+				}
+				KeyCode::Char('w') | KeyCode::Char('W') => {
+					if app.is_in_search_widget() {
+						app.toggle_search_whole_word();
+					}
+				}
+				KeyCode::Char('r') | KeyCode::Char('R') => {
+					if app.is_in_search_widget() {
+						app.toggle_search_regex();
+					}
+				}
+				_ => {}
+			}
+		} else if let KeyModifiers::CONTROL = event.modifiers {
 			if event.code == KeyCode::Char('c') {
 				return true;
 			}
@@ -365,31 +402,6 @@ fn handle_key_event_or_break(
 				KeyCode::Up => app.move_widget_selection_up(),
 				KeyCode::Down => app.move_widget_selection_down(),
 				KeyCode::Char(caught_char) => app.on_char_key(caught_char),
-				_ => {}
-			}
-		} else if let KeyModifiers::ALT = event.modifiers {
-			match event.code {
-				KeyCode::Char('c') | KeyCode::Char('C') => {
-					if app.is_in_search_widget() {
-						app.process_search_state.toggle_ignore_case();
-						app.update_regex();
-						app.update_process_gui = true;
-					}
-				}
-				KeyCode::Char('w') | KeyCode::Char('W') => {
-					if app.is_in_search_widget() {
-						app.process_search_state.toggle_search_whole_word();
-						app.update_regex();
-						app.update_process_gui = true;
-					}
-				}
-				KeyCode::Char('r') | KeyCode::Char('R') => {
-					if app.is_in_search_widget() {
-						app.process_search_state.toggle_search_regex();
-						app.update_regex();
-						app.update_process_gui = true;
-					}
-				}
 				_ => {}
 			}
 		}
@@ -554,7 +566,7 @@ fn get_show_disabled_data_option(matches: &clap::ArgMatches<'static>, config: &C
 	false
 }
 
-fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App) {
+fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
 	if matches.is_present("GROUP_PROCESSES") {
 		app.toggle_grouping();
 	} else if let Some(flags) = &config.flags {
@@ -566,41 +578,39 @@ fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app
 	}
 }
 
-fn enable_app_case_sensitive(
-	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App,
-) {
+fn enable_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
 	if matches.is_present("CASE_SENSITIVE") {
-		app.process_search_state.toggle_ignore_case();
+		app.process_search_state.search_toggle_ignore_case();
 	} else if let Some(flags) = &config.flags {
 		if let Some(case_sensitive) = flags.case_sensitive {
 			if case_sensitive {
-				app.process_search_state.toggle_ignore_case();
+				app.process_search_state.search_toggle_ignore_case();
 			}
 		}
 	}
 }
 
 fn enable_app_match_whole_word(
-	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App,
+	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
 ) {
 	if matches.is_present("WHOLE_WORD") {
-		app.process_search_state.toggle_search_whole_word();
+		app.process_search_state.search_toggle_whole_word();
 	} else if let Some(flags) = &config.flags {
 		if let Some(whole_word) = flags.whole_word {
 			if whole_word {
-				app.process_search_state.toggle_search_whole_word();
+				app.process_search_state.search_toggle_whole_word();
 			}
 		}
 	}
 }
 
-fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut app::App) {
+fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
 	if matches.is_present("REGEX_DEFAULT") {
-		app.process_search_state.toggle_search_regex();
+		app.process_search_state.search_toggle_regex();
 	} else if let Some(flags) = &config.flags {
 		if let Some(regex) = flags.regex {
 			if regex {
-				app.process_search_state.toggle_search_regex();
+				app.process_search_state.search_toggle_regex();
 			}
 		}
 	}
@@ -650,7 +660,7 @@ fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> a
 
 fn try_drawing(
 	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-	app: &mut app::App, painter: &mut canvas::Painter,
+	app: &mut App, painter: &mut canvas::Painter,
 ) -> error::Result<()> {
 	if let Err(err) = painter.draw_data(terminal, app) {
 		cleanup_terminal(terminal)?;
@@ -777,7 +787,7 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
 	.unwrap();
 }
 
-fn update_final_process_list(app: &mut app::App) {
+fn update_final_process_list(app: &mut App) {
 	let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
 		app.canvas_data
 			.grouped_process_data
@@ -841,7 +851,7 @@ fn update_final_process_list(app: &mut app::App) {
 	app.canvas_data.finalized_process_data = filtered_process_data;
 }
 
-fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &app::App) {
+fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &App) {
 	to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(&a.name, &b.name, false));
 
 	match app.process_sorting_type {

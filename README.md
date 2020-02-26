@@ -184,11 +184,11 @@ Run using `btm`.
 
 - `Left` and `Right` arrow keys to move the cursor within the search bar.
 
-- `Alt-c` to toggle ignoring case.
+- `Alt-c/F1` to toggle ignoring case.
 
-- `Alt-m` to toggle matching the entire word.
+- `Alt-w/F2` to toggle matching the entire word.
 
-- `Alt-r` to toggle using regex.
+- `Alt-r/F3` to toggle using regex.
 
 Note that `q` is disabled while in the search widget.
 
