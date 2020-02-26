@@ -37,6 +37,7 @@ lazy_static = "1.4.0"
 backtrace = "0.3"
 toml = "0.5.6"
 serde = {version = "1.0", features = ["derive"] }
+unicode-segmentation = "1.6.0"
 
 [dev-dependencies]
 assert_cmd = "0.12"

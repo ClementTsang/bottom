@@ -229,4 +229,5 @@ If you spot any issue with nobody assigned to it, or it seems like no work has s
   - [tokio](https://github.com/tokio-rs/tokio)
   - [toml-rs](https://github.com/alexcrichton/toml-rs)
   - [tui-rs](https://github.com/fdehau/tui-rs)
+  - [unicode-segmentation](https://github.com/unicode-rs/unicode-segmentation)
   - [winapi](https://github.com/retep998/winapi-rs)
