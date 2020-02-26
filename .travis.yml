@@ -29,7 +29,7 @@ script:
   - cargo clippy -- -D clippy::all
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
-  - cargo install --target $TARGET
+  - cargo install --path . --target $TARGET
 
 # Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work
 cache:
