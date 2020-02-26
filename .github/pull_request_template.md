@@ -23,11 +23,11 @@ _Please state how this was tested:_
 
 _Please ensure all are ticked (and actually done):_
 
-- [ ] Feature itself has been tested and verified to work
-- [ ] Code has been linted
+- [ ] Change has been tested to work
+- [ ] Code has been linted using rustfmt
 - [ ] Code has been self-reviewed
 - [ ] Code has been tested and no new breakage is introduced
-- [ ] Documentation has been added
+- [ ] Documentation has been added/updated if needed
 
 ## Other information
 
