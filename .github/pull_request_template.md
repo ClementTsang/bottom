@@ -1,25 +1,27 @@
 ## Description
 
-A description of the change and what it does. If relevant, please provide screenshots of what results from the change.
+_A description of the change and what it does. If relevant, please provide screenshots of what results from the change:_
 
 ## Issue
 
 If applicable, what issue does this address?
 
-Issue:
+Issue: #
 
 ## Type of change
 
-Remove the irrelevant one.
+_Remove the irrelevant one:_
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
+- [x] Bug fix (non-breaking change which fixes an issue)
+- [x] New feature (non-breaking change which adds functionality)
 
 ## Test methodology
 
-Please state how this was tested.
+_Please state how this was tested:_
 
 ## Checklist
+
+_Please ensure all are ticked (and actually done):_
 
 - [ ] Code has been linted
 - [ ] Code has been self-reviewed
@@ -28,4 +30,4 @@ Please state how this was tested.
 
 ## Other information
 
-Provide any other relevant information.
+_Provide any other relevant information:_

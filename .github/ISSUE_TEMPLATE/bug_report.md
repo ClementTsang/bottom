@@ -8,22 +8,22 @@ assignees: "ClementTsang"
 
 ## Describe the bug
 
-A clear and concise description of what the bug is and what the expected behaviour was.
+_A clear and concise description of what the bug is and what the expected behaviour was:_
 
 ## To reproduce
 
-Steps on how to reproduce the behaviour:
+_Steps on how to reproduce the behaviour:_
 
-1. Go to ...
+1. Go to...
 2. See error
 
 ## Screenshots
 
-If applicable, add screenshots to help explain your problem.
+_If applicable, add screenshots to help explain your problem:_
 
 ## Platform
 
-Provide information on:
+_Provide information on:_
 
 **Operating System:**
 
@@ -33,4 +33,4 @@ Provide information on:
 
 ## Additional context
 
-If anything hasn't been covered by the above categories, state it down here.
+_If anything hasn't been covered by the above categories, state it down here:_
