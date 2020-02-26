@@ -38,17 +38,23 @@ For information about config files, see [this document](./docs/config.md) for mo
 
 In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.41.0 as of writing).
 
-In addition to the below methods, you can also get release versions using `cargo install bottom`, or manually building from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
+In addition to the below methods, you can manually build from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
 
-I officially support and test 64-bit variants. I will also build and release 32-bit variants for Linux and Windows, but I'm (currently) not testing whether they work.
+I officially support and test 64-bit versions of [Tier 1](https://forge.rust-lang.org/release/platform-support.html) Rust targets. I will try to build and release 32-bit versions for Linux and Windows, but as of now, I will not be testing 32-bit for validity beyond building.
+
+### Cargo
+
+```bash
+cargo install bottom
+```
 
 ### Linux
 
-Other installation methods based on distros are as follows:
+Installation methods on a per-distro basis:
 
 #### Arch Linux
 
-You can get the release versions from the [AUR](https://aur.archlinux.org/packages/bottom/) by installing `bottom`. For example:
+You can get the release versions from the [AUR](https://aur.archlinux.org/packages/bottom/) by installing `bottom`. For example, using `yay`:
 
 ```bash
 yay bottom
@@ -56,7 +62,7 @@ yay bottom
 
 #### Debian (and anything based on it, like Ubuntu)
 
-A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest). For example:
+A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.2/bottom_0.2.2_amd64.deb
