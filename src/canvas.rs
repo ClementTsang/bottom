@@ -1423,9 +1423,9 @@ impl Painter {
 		let mut mem = "Mem%(m)".to_string();
 
 		let direction_val = if app_state.process_sorting_reverse {
-			"⯆ ".to_string()
+			"▼".to_string()
 		} else {
-			"⯅ ".to_string()
+			"▲".to_string()
 		};
 
 		match app_state.process_sorting_type {
