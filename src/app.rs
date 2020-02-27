@@ -32,6 +32,12 @@ pub enum ScrollDirection {
 	DOWN,
 }
 
+#[derive(Debug)]
+pub enum SearchDirection {
+	LEFT,
+	RIGHT,
+}
+
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
 #[derive(Default)]
 pub struct AppScrollWidgetState {
@@ -644,7 +650,7 @@ impl App {
 				&self.process_search_state.search_state.current_search_query[start_position..],
 				start_position,
 			)
-			.unwrap();
+			.unwrap(); // TODO: [UNWRAP] unwrap in this and walk_back seem sketch
 	}
 
 	pub fn search_walk_back(&mut self, start_position: usize) {
@@ -819,7 +825,7 @@ impl App {
 			self.last_key_press = current_key_press_inst;
 
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				if UnicodeWidthStr::width_cjk(
+				if UnicodeWidthStr::width(
 					self.process_search_state
 						.search_state
 						.current_search_query

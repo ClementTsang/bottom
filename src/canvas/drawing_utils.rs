@@ -70,6 +70,15 @@ pub fn get_variable_intrinsic_widths(
 	(resulting_widths, last_index)
 }
 
+#[allow(dead_code, unused_variables)]
+pub fn get_search_start_position(
+	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
+	currently_selected_position: u64, is_resized: bool,
+) -> u64 {
+	//TODO: [Scroll] Gotta fix this too lol
+	0
+}
+
 pub fn get_start_position(
 	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
 	currently_selected_position: u64, is_resized: bool,

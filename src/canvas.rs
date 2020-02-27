@@ -1159,12 +1159,16 @@ impl Painter {
 	) {
 		let width = max(0, draw_loc.width as i64 - 34) as u64; // TODO: [REFACTOR] Hard coding this is terrible.
 		let query = app_state.get_current_search_query().as_str();
-		let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true)
-			.rev()
-			.enumerate(); // Reverse due to us wanting to draw from back -> front
-		let num_graphemes = min(UnicodeWidthStr::width_cjk(query), width as usize);
+		let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true).rev(); // Reverse due to us wanting to draw from back -> front
 		let cursor_position = app_state.get_cursor_position();
+		let right_border = min(UnicodeWidthStr::width(query), width as usize);
+		debug!(
+			"Width: {}, query length: {}",
+			width,
+			UnicodeWidthStr::width(query)
+		);
 
+		let mut itx = 0;
 		let mut query_with_cursor: Vec<Text<'_>> = if let app::WidgetPosition::ProcessSearch =
 			app_state.current_widget_selected
 		{
@@ -1178,8 +1182,8 @@ impl Painter {
 
 			res.extend(
 				grapheme_indices
-					.filter_map(|(itx, grapheme)| {
-						if itx >= num_graphemes {
+					.filter_map(|grapheme| {
+						if itx >= right_border {
 							None
 						} else {
 							let styled = if grapheme.0 == cursor_position {
@@ -1187,6 +1191,7 @@ impl Painter {
 							} else {
 								Text::styled(grapheme.1, self.colours.text_style)
 							};
+							itx += UnicodeWidthStr::width(grapheme.1);
 							Some(styled)
 						}
 					})
@@ -1198,11 +1203,12 @@ impl Painter {
 			// This is easier - we just need to get a range of graphemes, rather than
 			// dealing with possibly inserting a cursor (as none is shown!)
 			grapheme_indices
-				.filter_map(|(itx, grapheme)| {
-					if itx >= num_graphemes {
+				.filter_map(|grapheme| {
+					if itx >= right_border {
 						None
 					} else {
 						let styled = Text::styled(grapheme.1, self.colours.text_style);
+						itx += UnicodeWidthStr::width(grapheme.1);
 						Some(styled)
 					}
 				})
