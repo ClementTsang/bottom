@@ -34,6 +34,8 @@ This checklist is mostly for me personally - just want to have a easy to refer t
 
 - Is documentation up to spec?
 
+- If everything is good, create a release branch!
+
 ## Linux
 
 ### Arch

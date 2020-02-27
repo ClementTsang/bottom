@@ -89,4 +89,5 @@ deploy:
     tags: true
     condition: "$TRAVIS_RUST_VERSION = stable"
     repo: ClementTsang/bottom
+    branch: master
   draft: true
