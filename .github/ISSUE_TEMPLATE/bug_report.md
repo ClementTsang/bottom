@@ -23,11 +23,13 @@ _If applicable, add screenshots to help explain your problem:_
 
 ## Platform
 
-_Provide information on:_
+_If relevant, please provide information on:_
 
 **Operating System:**
 
 **Terminal:**
+
+**Shell:**
 
 **Any other relevant information (more details are always good!):**
 
