@@ -3,7 +3,7 @@ name: Bug report
 about: Found a bug?  Make sure it hasn't already been filed/solved - if so, please report it!
 title: ""
 labels: "bug"
-assignees: "ClementTsang"
+assignees: ""
 ---
 
 ## Describe the bug

@@ -23,6 +23,7 @@ _Please state how this was tested:_
 
 _Please ensure all are ticked (and actually done):_
 
+- [ ] Feature itself has been tested and verified to work
 - [ ] Code has been linted
 - [ ] Code has been self-reviewed
 - [ ] Code has been tested and no new breakage is introduced

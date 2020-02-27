@@ -3,7 +3,7 @@ name: Feature request
 about: Got a good idea that hasn't already been mentioned?  Suggest it!
 title: ""
 labels: "enhancement"
-assignees: "ClementTsang"
+assignees: ""
 ---
 
 ## Describe the feature request
