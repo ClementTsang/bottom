@@ -8,7 +8,7 @@ assignees: ""
 
 ## Describe the bug
 
-_A clear and concise description of what the bug is and what the expected behaviour was:_
+_A clear and concise description of what the bug is and what the expected behaviour was. If applicable, add screenshots to help explain your problem:_
 
 ## To reproduce
 
@@ -16,10 +16,6 @@ _Steps on how to reproduce the behaviour:_
 
 1. Go to...
 2. See error
-
-## Screenshots
-
-_If applicable, add screenshots to help explain your problem:_
 
 ## Platform
 
