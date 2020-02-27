@@ -13,6 +13,8 @@ pub struct CanvasColours {
 	pub swap_style: Style,
 	pub rx_style: Style,
 	pub tx_style: Style,
+	pub rx_total_style: Style,
+	pub tx_total_style: Style,
 	pub avg_colour_style: Style,
 	pub cpu_colour_styles: Vec<Style>,
 	pub border_style: Style,
@@ -30,13 +32,13 @@ impl Default for CanvasColours {
 			currently_selected_text_colour: Color::Black,
 			currently_selected_bg_colour: Color::Cyan,
 			currently_selected_text_style: Style::default().fg(Color::Black).bg(Color::Cyan),
-			table_header_style: Style::default()
-				.fg(Color::LightBlue)
-				.modifier(Modifier::BOLD),
+			table_header_style: Style::default().fg(Color::LightBlue),
 			ram_style: Style::default().fg(STANDARD_FIRST_COLOUR),
 			swap_style: Style::default().fg(STANDARD_SECOND_COLOUR),
 			rx_style: Style::default().fg(STANDARD_FIRST_COLOUR),
 			tx_style: Style::default().fg(STANDARD_SECOND_COLOUR),
+			rx_total_style: Style::default().fg(STANDARD_THIRD_COLOUR),
+			tx_total_style: Style::default().fg(STANDARD_FOURTH_COLOUR),
 			avg_colour_style: Style::default().fg(AVG_COLOUR),
 			cpu_colour_styles: Vec::new(),
 			border_style: Style::default().fg(text_colour),
@@ -86,6 +88,16 @@ impl CanvasColours {
 
 	pub fn set_tx_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.tx_style = get_style_from_config(colour)?;
+		Ok(())
+	}
+
+	pub fn set_rx_total_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.rx_total_style = get_style_from_config(colour)?;
+		Ok(())
+	}
+
+	pub fn set_tx_total_colour(&mut self, colour: &str) -> error::Result<()> {
+		self.tx_total_style = get_style_from_config(colour)?;
 		Ok(())
 	}
 

@@ -5,6 +5,8 @@ use tui::style::{Color, Style};
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
 pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
+pub const STANDARD_THIRD_COLOUR: Color = Color::LightCyan;
+pub const STANDARD_FOURTH_COLOUR: Color = Color::LightGreen;
 pub const AVG_COLOUR: Color = Color::Red;
 
 lazy_static! {
@@ -66,8 +68,8 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 	let mut colour_vec: Vec<Style> = vec![
 		Style::default().fg(STANDARD_FIRST_COLOUR),
 		Style::default().fg(STANDARD_SECOND_COLOUR),
-		Style::default().fg(Color::LightCyan),
-		Style::default().fg(Color::LightGreen),
+		Style::default().fg(STANDARD_THIRD_COLOUR),
+		Style::default().fg(STANDARD_FOURTH_COLOUR),
 		Style::default().fg(Color::LightBlue),
 		Style::default().fg(Color::LightRed),
 		Style::default().fg(Color::Cyan),

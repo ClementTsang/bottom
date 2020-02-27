@@ -901,14 +901,18 @@ impl Painter {
 					})
 					.style(self.colours.tx_style)
 					.data(&network_data_tx),
-				Dataset::default().name(&format!(
-					"Total RX: {:7}",
-					app_state.canvas_data.total_rx_display
-				)),
-				Dataset::default().name(&format!(
-					"Total TX: {:7}",
-					app_state.canvas_data.total_tx_display
-				)),
+				Dataset::default()
+					.name(&format!(
+						"Total RX: {:7}",
+						app_state.canvas_data.total_rx_display
+					))
+					.style(self.colours.rx_total_style),
+				Dataset::default()
+					.name(&format!(
+						"Total TX: {:7}",
+						app_state.canvas_data.total_tx_display
+					))
+					.style(self.colours.tx_total_style),
 			])
 			.render(f, draw_loc);
 	}

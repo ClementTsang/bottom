@@ -93,6 +93,8 @@ struct ConfigColours {
 	swap_color: Option<String>,
 	rx_color: Option<String>,
 	tx_color: Option<String>,
+	rx_total_color: Option<String>,
+	tx_total_color: Option<String>,
 	border_color: Option<String>,
 	highlighted_border_color: Option<String>,
 	text_color: Option<String>,
@@ -729,6 +731,14 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 
 		if let Some(tx_color) = &colours.tx_color {
 			painter.colours.set_tx_colour(tx_color)?;
+		}
+
+		if let Some(rx_total_color) = &colours.rx_total_color {
+			painter.colours.set_rx_total_colour(rx_total_color)?;
+		}
+
+		if let Some(tx_total_color) = &colours.tx_total_color {
+			painter.colours.set_tx_total_colour(tx_total_color)?;
 		}
 
 		if let Some(table_header_color) = &colours.table_header_color {
