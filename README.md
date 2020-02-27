@@ -36,7 +36,7 @@ For information about config files, see [this document](./docs/config.md) for mo
 
 ## Installation
 
-In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.41.0 as of writing).
+In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.41 as of writing).
 
 In addition to the below methods, you can manually build from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
 
@@ -230,4 +230,5 @@ If you spot any issue with nobody assigned to it, or it seems like no work has s
   - [toml-rs](https://github.com/alexcrichton/toml-rs)
   - [tui-rs](https://github.com/fdehau/tui-rs)
   - [unicode-segmentation](https://github.com/unicode-rs/unicode-segmentation)
+  - [unicode-width](https://github.com/unicode-rs/unicode-width)
   - [winapi](https://github.com/retep998/winapi-rs)
