@@ -9,6 +9,7 @@ use crate::{canvas, constants, utils::error::Result};
 mod process_killer;
 
 use unicode_segmentation::GraphemeCursor;
+use unicode_width::UnicodeWidthStr;
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
@@ -818,11 +819,12 @@ impl App {
 			self.last_key_press = current_key_press_inst;
 
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				if self
-					.process_search_state
-					.search_state
-					.current_search_query
-					.len() <= MAX_SEARCH_LENGTH
+				if UnicodeWidthStr::width_cjk(
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.as_str(),
+				) <= MAX_SEARCH_LENGTH
 				{
 					self.process_search_state
 						.search_state
