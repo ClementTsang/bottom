@@ -4,7 +4,7 @@ _A description of the change and what it does. If relevant, please provide scree
 
 ## Issue
 
-If applicable, what issue does this address?
+_If applicable, what issue does this address?_
 
 Closes: #
 
