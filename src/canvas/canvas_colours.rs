@@ -53,38 +53,47 @@ impl CanvasColours {
 		self.text_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_border_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.border_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_highlighted_border_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.highlighted_border_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_table_header_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.table_header_style = get_style_from_config(colour)?.modifier(Modifier::BOLD);
 		Ok(())
 	}
+
 	pub fn set_ram_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.ram_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_swap_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.swap_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_rx_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.rx_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_tx_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.tx_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_avg_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
 		self.avg_colour_style = get_style_from_config(colour)?;
 		Ok(())
 	}
+
 	pub fn set_cpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
 		let max_amount = std::cmp::min(colours.len(), NUM_COLOURS as usize);
 		for (itx, colour) in colours.iter().enumerate() {
@@ -95,6 +104,7 @@ impl CanvasColours {
 		}
 		Ok(())
 	}
+
 	pub fn generate_remaining_cpu_colours(&mut self) {
 		let remaining_num_colours = NUM_COLOURS - self.cpu_colour_styles.len() as i32;
 		self.cpu_colour_styles
@@ -108,6 +118,7 @@ impl CanvasColours {
 			.bg(self.currently_selected_bg_colour);
 		Ok(())
 	}
+
 	pub fn set_scroll_entry_bg_color(&mut self, colour: &str) -> error::Result<()> {
 		self.currently_selected_bg_colour = get_colour_from_config(colour)?;
 		self.currently_selected_text_style = Style::default()
