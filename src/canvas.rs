@@ -4,7 +4,7 @@ use crate::{
 	data_conversion::{ConvertedCpuData, ConvertedProcessData},
 	utils::error,
 };
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::HashMap;
 use tui::{
 	backend,
@@ -14,6 +14,8 @@ use tui::{
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
 	Terminal,
 };
+use unicode_segmentation::UnicodeSegmentation;
+use unicode_width::UnicodeWidthStr;
 
 mod canvas_colours;
 use canvas_colours::*;
@@ -1155,55 +1157,66 @@ impl Painter {
 	fn draw_search_field<B: backend::Backend>(
 		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
-		let width = max(0, draw_loc.width as i64 - 34) as u64;
-		let query = app_state.get_current_search_query();
-		let shrunk_query = if query.len() < width as usize {
-			query
+		let width = max(0, draw_loc.width as i64 - 34) as u64; // TODO: [REFACTOR] Hard coding this is terrible.
+		let query = app_state.get_current_search_query().as_str();
+		let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true).rev(); // Reverse due to us wanting to draw from back -> front
+		let cursor_position = app_state.get_cursor_position();
+		let right_border = min(UnicodeWidthStr::width(query), width as usize);
+		debug!(
+			"Width: {}, query length: {}",
+			width,
+			UnicodeWidthStr::width(query)
+		);
+
+		let mut itx = 0;
+		let mut query_with_cursor: Vec<Text<'_>> = if let app::WidgetPosition::ProcessSearch =
+			app_state.current_widget_selected
+		{
+			let mut res = Vec::new();
+			if cursor_position >= query.len() {
+				res.push(Text::styled(
+					" ",
+					self.colours.currently_selected_text_style,
+				))
+			}
+
+			res.extend(
+				grapheme_indices
+					.filter_map(|grapheme| {
+						if itx >= right_border {
+							None
+						} else {
+							let styled = if grapheme.0 == cursor_position {
+								Text::styled(grapheme.1, self.colours.currently_selected_text_style)
+							} else {
+								Text::styled(grapheme.1, self.colours.text_style)
+							};
+							itx += UnicodeWidthStr::width(grapheme.1);
+							Some(styled)
+						}
+					})
+					.collect::<Vec<_>>(),
+			);
+
+			res
 		} else {
-			&query[(query.len() - width as usize)..]
+			// This is easier - we just need to get a range of graphemes, rather than
+			// dealing with possibly inserting a cursor (as none is shown!)
+			grapheme_indices
+				.filter_map(|grapheme| {
+					if itx >= right_border {
+						None
+					} else {
+						let styled = Text::styled(grapheme.1, self.colours.text_style);
+						itx += UnicodeWidthStr::width(grapheme.1);
+						Some(styled)
+					}
+				})
+				.collect::<Vec<_>>()
 		};
 
-		let cursor_position = app_state.get_cursor_position();
-
-		let query_with_cursor: Vec<Text<'_>> =
-			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
-				if cursor_position >= query.len() {
-					let mut q = vec![Text::styled(
-						shrunk_query.to_string(),
-						self.colours.text_style,
-					)];
-
-					q.push(Text::styled(
-						" ".to_string(),
-						self.colours.currently_selected_text_style,
-					));
-
-					q
-				} else {
-					shrunk_query
-						.chars()
-						.enumerate()
-						.map(|(itx, c)| {
-							if let app::WidgetPosition::ProcessSearch =
-								app_state.current_widget_selected
-							{
-								if itx == cursor_position {
-									return Text::styled(
-										c.to_string(),
-										self.colours.currently_selected_text_style,
-									);
-								}
-							}
-							Text::styled(c.to_string(), self.colours.text_style)
-						})
-						.collect::<Vec<_>>()
-				}
-			} else {
-				vec![Text::styled(
-					shrunk_query.to_string(),
-					self.colours.text_style,
-				)]
-			};
+		// I feel like this is most definitely not the efficient way of doing this but eh
+		query_with_cursor.reverse();
 
 		let mut search_text = vec![if app_state.is_grouped() {
 			Text::styled("Search by Name: ", self.colours.table_header_style)

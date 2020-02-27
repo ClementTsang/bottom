@@ -6,8 +6,12 @@ pub mod data_farmer;
 use data_farmer::*;
 
 use crate::{canvas, constants, utils::error::Result};
-
 mod process_killer;
+
+use unicode_segmentation::GraphemeCursor;
+use unicode_width::UnicodeWidthStr;
+
+const MAX_SEARCH_LENGTH: usize = 200;
 
 #[derive(Debug, Clone, Copy)]
 pub enum WidgetPosition {
@@ -26,6 +30,12 @@ pub enum ScrollDirection {
 	UP,
 	// DOWN means scrolling down --- this usually INCREMENTS
 	DOWN,
+}
+
+#[derive(Debug)]
+pub enum SearchDirection {
+	LEFT,
+	RIGHT,
 }
 
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
@@ -60,9 +70,9 @@ pub struct AppSearchState {
 	pub is_enabled: bool,
 	current_search_query: String,
 	current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
-	current_cursor_position: usize,
 	pub is_blank_search: bool,
 	pub is_invalid_search: bool,
+	pub grapheme_cursor: GraphemeCursor,
 }
 
 impl Default for AppSearchState {
@@ -71,9 +81,9 @@ impl Default for AppSearchState {
 			is_enabled: false,
 			current_search_query: String::default(),
 			current_regex: None,
-			current_cursor_position: 0,
 			is_invalid_search: false,
 			is_blank_search: true,
+			grapheme_cursor: GraphemeCursor::new(0, 0, true),
 		}
 	}
 }
@@ -535,7 +545,8 @@ impl App {
 	pub fn get_cursor_position(&self) -> usize {
 		self.process_search_state
 			.search_state
-			.current_cursor_position
+			.grapheme_cursor
+			.cur_cursor()
 	}
 
 	/// One of two functions allowed to run while in a dialog...
@@ -576,23 +587,26 @@ impl App {
 			WidgetPosition::Process => self.start_dd(),
 			WidgetPosition::ProcessSearch => {
 				if self.process_search_state.search_state.is_enabled
-					&& self
-						.process_search_state
-						.search_state
-						.current_cursor_position < self
-						.process_search_state
-						.search_state
-						.current_search_query
-						.len()
+					&& self.get_cursor_position()
+						< self
+							.process_search_state
+							.search_state
+							.current_search_query
+							.len()
 				{
 					self.process_search_state
 						.search_state
 						.current_search_query
-						.remove(
-							self.process_search_state
-								.search_state
-								.current_cursor_position,
-						);
+						.remove(self.get_cursor_position());
+
+					self.process_search_state.search_state.grapheme_cursor = GraphemeCursor::new(
+						self.get_cursor_position(),
+						self.process_search_state
+							.search_state
+							.current_search_query
+							.len(),
+						true,
+					);
 
 					self.update_regex();
 					self.update_process_gui = true;
@@ -619,9 +633,8 @@ impl App {
 
 	pub fn clear_search(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			self.process_search_state
-				.search_state
-				.current_cursor_position = 0;
+			self.process_search_state.search_state.grapheme_cursor =
+				GraphemeCursor::new(0, 0, true);
 			self.process_search_state.search_state.current_search_query = String::default();
 			self.process_search_state.search_state.is_blank_search = true;
 			self.process_search_state.search_state.is_invalid_search = false;
@@ -629,26 +642,46 @@ impl App {
 		}
 	}
 
+	pub fn search_walk_forward(&mut self, start_position: usize) {
+		self.process_search_state
+			.search_state
+			.grapheme_cursor
+			.next_boundary(
+				&self.process_search_state.search_state.current_search_query[start_position..],
+				start_position,
+			)
+			.unwrap(); // TODO: [UNWRAP] unwrap in this and walk_back seem sketch
+	}
+
+	pub fn search_walk_back(&mut self, start_position: usize) {
+		self.process_search_state
+			.search_state
+			.grapheme_cursor
+			.prev_boundary(
+				&self.process_search_state.search_state.current_search_query[..start_position],
+				0,
+			)
+			.unwrap();
+	}
+
 	pub fn on_backspace(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			if self.process_search_state.search_state.is_enabled
-				&& self
-					.process_search_state
-					.search_state
-					.current_cursor_position
-					> 0
-			{
-				self.process_search_state
-					.search_state
-					.current_cursor_position -= 1;
+			if self.process_search_state.search_state.is_enabled && self.get_cursor_position() > 0 {
+				self.search_walk_back(self.get_cursor_position());
+
 				self.process_search_state
 					.search_state
 					.current_search_query
-					.remove(
-						self.process_search_state
-							.search_state
-							.current_cursor_position,
-					);
+					.remove(self.get_cursor_position());
+
+				self.process_search_state.search_state.grapheme_cursor = GraphemeCursor::new(
+					self.get_cursor_position(),
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.len(),
+					true,
+				);
 
 				self.update_regex();
 				self.update_process_gui = true;
@@ -683,16 +716,7 @@ impl App {
 	pub fn on_left_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				if self
-					.process_search_state
-					.search_state
-					.current_cursor_position
-					> 0
-				{
-					self.process_search_state
-						.search_state
-						.current_cursor_position -= 1;
-				}
+				self.search_walk_back(self.get_cursor_position());
 			}
 		} else if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
 			self.delete_dialog_state.is_on_yes = true;
@@ -702,20 +726,7 @@ impl App {
 	pub fn on_right_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				if self
-					.process_search_state
-					.search_state
-					.current_cursor_position
-					< self
-						.process_search_state
-						.search_state
-						.current_search_query
-						.len()
-				{
-					self.process_search_state
-						.search_state
-						.current_cursor_position += 1;
-				}
+				self.search_walk_forward(self.get_cursor_position());
 			}
 		} else if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
 			self.delete_dialog_state.is_on_yes = false;
@@ -725,9 +736,14 @@ impl App {
 	pub fn skip_cursor_beginning(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.process_search_state
-					.search_state
-					.current_cursor_position = 0;
+				self.process_search_state.search_state.grapheme_cursor = GraphemeCursor::new(
+					0,
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.len(),
+					true,
+				);
 			}
 		}
 	}
@@ -735,13 +751,17 @@ impl App {
 	pub fn skip_cursor_end(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.process_search_state
-					.search_state
-					.current_cursor_position = self
-					.process_search_state
-					.search_state
-					.current_search_query
-					.len();
+				self.process_search_state.search_state.grapheme_cursor = GraphemeCursor::new(
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.len(),
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.len(),
+					true,
+				);
 			}
 		}
 	}
@@ -788,13 +808,12 @@ impl App {
 	}
 
 	pub fn on_char_key(&mut self, caught_char: char) {
-		// Forbid any char key presses when showing a dialog box...
-
 		// Skip control code chars
 		if caught_char.is_control() {
 			return;
 		}
 
+		// Forbid any char key presses when showing a dialog box...
 		if !self.is_in_dialog() {
 			let current_key_press_inst = Instant::now();
 			if current_key_press_inst
@@ -806,21 +825,30 @@ impl App {
 			self.last_key_press = current_key_press_inst;
 
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-				self.process_search_state
-					.search_state
-					.current_search_query
-					.insert(
+				if UnicodeWidthStr::width(
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.as_str(),
+				) <= MAX_SEARCH_LENGTH
+				{
+					self.process_search_state
+						.search_state
+						.current_search_query
+						.insert(self.get_cursor_position(), caught_char);
+
+					self.process_search_state.search_state.grapheme_cursor = GraphemeCursor::new(
+						self.get_cursor_position(),
 						self.process_search_state
 							.search_state
-							.current_cursor_position,
-						caught_char,
+							.current_search_query
+							.len(),
+						true,
 					);
-				self.process_search_state
-					.search_state
-					.current_cursor_position += 1;
-
-				self.update_regex();
-				self.update_process_gui = true;
+					self.search_walk_forward(self.get_cursor_position());
+					self.update_regex();
+					self.update_process_gui = true;
+				}
 			} else {
 				match caught_char {
 					'/' => {
