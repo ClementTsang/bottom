@@ -12,29 +12,29 @@ pub mod temperature;
 
 #[derive(Clone, Debug)]
 pub struct Data {
-	pub cpu: cpu::CPUHarvest,
-	pub memory: mem::MemHarvest,
-	pub swap: mem::MemHarvest,
-	pub temperature_sensors: Vec<temperature::TempHarvest>,
-	pub network: network::NetworkHarvest,
-	pub list_of_processes: Vec<processes::ProcessHarvest>,
-	pub disks: Vec<disks::DiskHarvest>,
-	pub io: disks::IOHarvest,
-	pub last_collection_time: Instant,
+	pub cpu : cpu::CPUHarvest,
+	pub memory : mem::MemHarvest,
+	pub swap : mem::MemHarvest,
+	pub temperature_sensors : Vec<temperature::TempHarvest>,
+	pub network : network::NetworkHarvest,
+	pub list_of_processes : Vec<processes::ProcessHarvest>,
+	pub disks : Vec<disks::DiskHarvest>,
+	pub io : disks::IOHarvest,
+	pub last_collection_time : Instant,
 }
 
 impl Default for Data {
 	fn default() -> Self {
 		Data {
-			cpu: cpu::CPUHarvest::default(),
-			memory: mem::MemHarvest::default(),
-			swap: mem::MemHarvest::default(),
-			temperature_sensors: Vec::default(),
-			list_of_processes: Vec::default(),
-			disks: Vec::default(),
-			io: disks::IOHarvest::default(),
-			network: network::NetworkHarvest::default(),
-			last_collection_time: Instant::now(),
+			cpu : cpu::CPUHarvest::default(),
+			memory : mem::MemHarvest::default(),
+			swap : mem::MemHarvest::default(),
+			temperature_sensors : Vec::default(),
+			list_of_processes : Vec::default(),
+			disks : Vec::default(),
+			io : disks::IOHarvest::default(),
+			network : network::NetworkHarvest::default(),
+			last_collection_time : Instant::now(),
 		}
 	}
 }
@@ -54,43 +54,43 @@ impl Data {
 }
 
 pub struct DataState {
-	pub data: Data,
-	sys: System,
-	prev_pid_stats: HashMap<String, (f64, Instant)>,
-	prev_idle: f64,
-	prev_non_idle: f64,
-	mem_total_kb: u64,
-	temperature_type: temperature::TemperatureType,
-	use_current_cpu_total: bool,
-	last_collection_time: Instant,
-	total_rx: u64,
-	total_tx: u64,
+	pub data : Data,
+	sys : System,
+	prev_pid_stats : HashMap<String, (f64, Instant)>,
+	prev_idle : f64,
+	prev_non_idle : f64,
+	mem_total_kb : u64,
+	temperature_type : temperature::TemperatureType,
+	use_current_cpu_total : bool,
+	last_collection_time : Instant,
+	total_rx : u64,
+	total_tx : u64,
 }
 
 impl Default for DataState {
 	fn default() -> Self {
 		DataState {
-			data: Data::default(),
-			sys: System::new_all(),
-			prev_pid_stats: HashMap::new(),
-			prev_idle: 0_f64,
-			prev_non_idle: 0_f64,
-			mem_total_kb: 0,
-			temperature_type: temperature::TemperatureType::Celsius,
-			use_current_cpu_total: false,
-			last_collection_time: Instant::now(),
-			total_rx: 0,
-			total_tx: 0,
+			data : Data::default(),
+			sys : System::new_all(),
+			prev_pid_stats : HashMap::new(),
+			prev_idle : 0_f64,
+			prev_non_idle : 0_f64,
+			mem_total_kb : 0,
+			temperature_type : temperature::TemperatureType::Celsius,
+			use_current_cpu_total : false,
+			last_collection_time : Instant::now(),
+			total_rx : 0,
+			total_tx : 0,
 		}
 	}
 }
 
 impl DataState {
-	pub fn set_temperature_type(&mut self, temperature_type: temperature::TemperatureType) {
+	pub fn set_temperature_type(&mut self, temperature_type : temperature::TemperatureType) {
 		self.temperature_type = temperature_type;
 	}
 
-	pub fn set_use_current_cpu_total(&mut self, use_current_cpu_total: bool) {
+	pub fn set_use_current_cpu_total(&mut self, use_current_cpu_total : bool) {
 		self.use_current_cpu_total = use_current_cpu_total;
 	}
 

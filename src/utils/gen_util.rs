@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-pub fn float_min(a: f32, b: f32) -> f32 {
+pub fn float_min(a : f32, b : f32) -> f32 {
 	match a.partial_cmp(&b) {
 		Some(x) => match x {
 			Ordering::Greater => b,
@@ -11,7 +11,7 @@ pub fn float_min(a: f32, b: f32) -> f32 {
 	}
 }
 
-pub fn float_max(a: f32, b: f32) -> f32 {
+pub fn float_max(a : f32, b : f32) -> f32 {
 	match a.partial_cmp(&b) {
 		Some(x) => match x {
 			Ordering::Greater => a,
@@ -24,13 +24,14 @@ pub fn float_max(a: f32, b: f32) -> f32 {
 
 /// Returns a tuple containing the value and the unit.  In units of 1024.
 /// This only supports up to a tebibyte.
-pub fn get_exact_byte_values(bytes: u64, spacing: bool) -> (f64, String) {
+pub fn get_exact_byte_values(bytes : u64, spacing : bool) -> (f64, String) {
 	match bytes {
 		b if b < 1024 => (
 			bytes as f64,
 			if spacing {
 				"  B".to_string()
-			} else {
+			}
+			else {
 				"B".to_string()
 			},
 		),
@@ -43,13 +44,14 @@ pub fn get_exact_byte_values(bytes: u64, spacing: bool) -> (f64, String) {
 
 /// Returns a tuple containing the value and the unit.  In units of 1000.
 /// This only supports up to a terabyte.  Note the "byte" unit will have a space appended to match the others.
-pub fn get_simple_byte_values(bytes: u64, spacing: bool) -> (f64, String) {
+pub fn get_simple_byte_values(bytes : u64, spacing : bool) -> (f64, String) {
 	match bytes {
 		b if b < 1000 => (
 			bytes as f64,
 			if spacing {
 				" B".to_string()
-			} else {
+			}
+			else {
 				"B".to_string()
 			},
 		),
@@ -61,22 +63,24 @@ pub fn get_simple_byte_values(bytes: u64, spacing: bool) -> (f64, String) {
 }
 
 /// Gotta get partial ordering?  No problem, here's something to deal with it~
-pub fn get_ordering<T: std::cmp::PartialOrd>(
-	a_val: T, b_val: T, reverse_order: bool,
+pub fn get_ordering<T : std::cmp::PartialOrd>(
+	a_val : T, b_val : T, reverse_order : bool,
 ) -> std::cmp::Ordering {
 	match a_val.partial_cmp(&b_val) {
 		Some(x) => match x {
 			Ordering::Greater => {
 				if reverse_order {
 					std::cmp::Ordering::Less
-				} else {
+				}
+				else {
 					std::cmp::Ordering::Greater
 				}
 			}
 			Ordering::Less => {
 				if reverse_order {
 					std::cmp::Ordering::Greater
-				} else {
+				}
+				else {
 					std::cmp::Ordering::Less
 				}
 			}

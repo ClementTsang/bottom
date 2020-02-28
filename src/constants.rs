@@ -1,16 +1,16 @@
-pub const STALE_MAX_MILLISECONDS: u128 = 60 * 1000; // How long to store data.
-pub const TIME_STARTS_FROM: u64 = 60 * 1000;
-pub const TICK_RATE_IN_MILLISECONDS: u64 = 200; // How fast the screen refreshes
-pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u128 = 1000;
-pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u128 = 1000;
-pub const NUM_COLOURS: i32 = 256;
+pub const STALE_MAX_MILLISECONDS : u128 = 60 * 1000; // How long to store data.
+pub const TIME_STARTS_FROM : u64 = 60 * 1000;
+pub const TICK_RATE_IN_MILLISECONDS : u64 = 200; // How fast the screen refreshes
+pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS : u128 = 1000;
+pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS : u128 = 1000;
+pub const NUM_COLOURS : i32 = 256;
 
 // Config and flags
-pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = ".config/bottom/bottom.toml";
-pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
+pub const DEFAULT_UNIX_CONFIG_FILE_PATH : &str = ".config/bottom/bottom.toml";
+pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH : &str = "bottom/bottom.toml";
 
 // Help text
-pub const GENERAL_HELP_TEXT: [&str; 15] = [
+pub const GENERAL_HELP_TEXT : [&str; 15] = [
 	"General Keybindings\n\n",
 	"q, Ctrl-c      Quit bottom\n",
 	"Esc            Close filters, dialog boxes, etc.\n",
@@ -28,7 +28,7 @@ pub const GENERAL_HELP_TEXT: [&str; 15] = [
 	"/              Filter out graph lines (only CPU at the moment)\n",
 ];
 
-pub const PROCESS_HELP_TEXT: [&str; 8] = [
+pub const PROCESS_HELP_TEXT : [&str; 8] = [
 	"Process Keybindings\n\n",
 	"dd             Kill the highlighted process\n",
 	"c              Sort by CPU usage\n",
@@ -39,7 +39,7 @@ pub const PROCESS_HELP_TEXT: [&str; 8] = [
 	"Ctrl-f, /      Open up the search widget\n",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 13] = [
+pub const SEARCH_HELP_TEXT : [&str; 13] = [
 	"Search Keybindings\n\n",
 	"Tab            Toggle between searching for PID and name.\n",
 	"Esc            Close search widget\n",

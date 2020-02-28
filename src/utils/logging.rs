@@ -11,7 +11,8 @@ pub fn init_logger() -> Result<(), fern::InitError> {
 		})
 		.level(if cfg!(debug_assertions) {
 			log::LevelFilter::Debug
-		} else {
+		}
+		else {
 			log::LevelFilter::Info
 		})
 		.chain(fern::log_file("debug.log")?)

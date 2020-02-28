@@ -11,11 +11,14 @@ use std::process::Command;
 fn get_os_binary_loc() -> String {
 	if cfg!(target_os = "linux") {
 		"./target/x86_64-unknown-linux-gnu/debug/btm".to_string()
-	} else if cfg!(target_os = "windows") {
+	}
+	else if cfg!(target_os = "windows") {
 		"./target/x86_64-pc-windows-msvc/debug/btm".to_string()
-	} else if cfg!(target_os = "macos") {
+	}
+	else if cfg!(target_os = "macos") {
 		"./target/x86_64-apple-darwin/debug/btm".to_string()
-	} else {
+	}
+	else {
 		"".to_string()
 	}
 }

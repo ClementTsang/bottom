@@ -21,14 +21,14 @@ impl Default for ProcessSorting {
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
-	pub pid: u32,
-	pub cpu_usage_percent: f64,
-	pub mem_usage_percent: f64,
-	pub name: String,
+	pub pid : u32,
+	pub cpu_usage_percent : f64,
+	pub mem_usage_percent : f64,
+	pub name : String,
 }
 
 fn cpu_usage_calculation(
-	prev_idle: &mut f64, prev_non_idle: &mut f64,
+	prev_idle : &mut f64, prev_non_idle : &mut f64,
 ) -> error::Result<(f64, f64)> {
 	// From SO answer: https://stackoverflow.com/a/23376195
 	let mut path = std::path::PathBuf::new();
@@ -36,7 +36,7 @@ fn cpu_usage_calculation(
 	path.push("stat");
 
 	let stat_results = std::fs::read_to_string(path)?;
-	let first_line: &str;
+	let first_line : &str;
 
 	let split_results = stat_results.split('\n').collect::<Vec<&str>>();
 	if split_results.is_empty() {
@@ -44,7 +44,8 @@ fn cpu_usage_calculation(
 			"Unable to properly split the stat results; saw {} values, expected at least 1 value.",
 			split_results.len()
 		)));
-	} else {
+	}
+	else {
 		first_line = split_results[0];
 	}
 
@@ -53,20 +54,21 @@ fn cpu_usage_calculation(
 	// SC in case that the parsing will fail due to length:
 	if val.len() <= 10 {
 		return Err(error::BottomError::InvalidIO(format!(
-				"CPU parsing will fail due to too short of a return value; saw {} values, expected 10 values.",
-				val.len()
-			)));
+			"CPU parsing will fail due to too short of a return value; saw {} values, expected 10 \
+			 values.",
+			val.len()
+		)));
 	}
 
-	let user: f64 = val[1].parse::<_>().unwrap_or(0_f64);
-	let nice: f64 = val[2].parse::<_>().unwrap_or(0_f64);
-	let system: f64 = val[3].parse::<_>().unwrap_or(0_f64);
-	let idle: f64 = val[4].parse::<_>().unwrap_or(0_f64);
-	let iowait: f64 = val[5].parse::<_>().unwrap_or(0_f64);
-	let irq: f64 = val[6].parse::<_>().unwrap_or(0_f64);
-	let softirq: f64 = val[7].parse::<_>().unwrap_or(0_f64);
-	let steal: f64 = val[8].parse::<_>().unwrap_or(0_f64);
-	let guest: f64 = val[9].parse::<_>().unwrap_or(0_f64);
+	let user : f64 = val[1].parse::<_>().unwrap_or(0_f64);
+	let nice : f64 = val[2].parse::<_>().unwrap_or(0_f64);
+	let system : f64 = val[3].parse::<_>().unwrap_or(0_f64);
+	let idle : f64 = val[4].parse::<_>().unwrap_or(0_f64);
+	let iowait : f64 = val[5].parse::<_>().unwrap_or(0_f64);
+	let irq : f64 = val[6].parse::<_>().unwrap_or(0_f64);
+	let softirq : f64 = val[7].parse::<_>().unwrap_or(0_f64);
+	let steal : f64 = val[8].parse::<_>().unwrap_or(0_f64);
+	let guest : f64 = val[9].parse::<_>().unwrap_or(0_f64);
 
 	let idle = idle + iowait;
 	let non_idle = user + nice + system + irq + softirq + steal + guest;
@@ -74,8 +76,8 @@ fn cpu_usage_calculation(
 	let total = idle + non_idle;
 	let prev_total = *prev_idle + *prev_non_idle;
 
-	let total_delta: f64 = total - prev_total;
-	let idle_delta: f64 = idle - *prev_idle;
+	let total_delta : f64 = total - prev_total;
+	let idle_delta : f64 = idle - *prev_idle;
 
 	//debug!("Vangelis function: CPU PERCENT: {}", (total_delta - idle_delta) / total_delta * 100_f64);
 
@@ -84,20 +86,22 @@ fn cpu_usage_calculation(
 
 	let result = if total_delta - idle_delta != 0_f64 {
 		total_delta - idle_delta
-	} else {
+	}
+	else {
 		1_f64
 	};
 
 	let cpu_percentage = if total_delta != 0_f64 {
 		result / total_delta
-	} else {
+	}
+	else {
 		0_f64
 	};
 
 	Ok((result, cpu_percentage))
 }
 
-fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
+fn get_process_cpu_stats(pid : u32) -> std::io::Result<f64> {
 	let mut path = std::path::PathBuf::new();
 	path.push("/proc");
 	path.push(&pid.to_string());
@@ -114,19 +118,20 @@ fn get_process_cpu_stats(pid: u32) -> std::io::Result<f64> {
 }
 
 /// Note that cpu_fraction should be represented WITHOUT the \times 100 factor!
-fn linux_cpu_usage<S: core::hash::BuildHasher>(
-	pid: u32, cpu_usage: f64, cpu_fraction: f64,
-	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
-	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
-	curr_time: Instant,
+fn linux_cpu_usage<S : core::hash::BuildHasher>(
+	pid : u32, cpu_usage : f64, cpu_fraction : f64,
+	prev_pid_stats : &HashMap<String, (f64, Instant), S>,
+	new_pid_stats : &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total : bool,
+	curr_time : Instant,
 ) -> std::io::Result<f64> {
 	// Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
-	let before_proc_val: f64 = if prev_pid_stats.contains_key(&pid.to_string()) {
+	let before_proc_val : f64 = if prev_pid_stats.contains_key(&pid.to_string()) {
 		prev_pid_stats
 			.get(&pid.to_string())
 			.unwrap_or(&(0_f64, curr_time))
 			.0
-	} else {
+	}
+	else {
 		0_f64
 	};
 	let after_proc_val = get_process_cpu_stats(pid)?;
@@ -144,23 +149,24 @@ fn linux_cpu_usage<S: core::hash::BuildHasher>(
 
 	if use_current_cpu_total {
 		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64)
-	} else {
+	}
+	else {
 		Ok((after_proc_val - before_proc_val) / cpu_usage * 100_f64 * cpu_fraction)
 	}
 }
 
-fn convert_ps<S: core::hash::BuildHasher>(
-	process: &str, cpu_usage: f64, cpu_fraction: f64,
-	prev_pid_stats: &HashMap<String, (f64, Instant), S>,
-	new_pid_stats: &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total: bool,
-	curr_time: Instant,
+fn convert_ps<S : core::hash::BuildHasher>(
+	process : &str, cpu_usage : f64, cpu_fraction : f64,
+	prev_pid_stats : &HashMap<String, (f64, Instant), S>,
+	new_pid_stats : &mut HashMap<String, (f64, Instant), S>, use_current_cpu_total : bool,
+	curr_time : Instant,
 ) -> std::io::Result<ProcessHarvest> {
 	if process.trim().to_string().is_empty() {
 		return Ok(ProcessHarvest {
-			pid: 0,
-			name: "".to_string(),
-			mem_usage_percent: 0.0,
-			cpu_usage_percent: 0.0,
+			pid : 0,
+			name : "".to_string(),
+			mem_usage_percent : 0.0,
+			cpu_usage_percent : 0.0,
 		});
 	}
 
@@ -194,11 +200,11 @@ fn convert_ps<S: core::hash::BuildHasher>(
 }
 
 pub fn get_sorted_processes_list(
-	sys: &System, prev_idle: &mut f64, prev_non_idle: &mut f64,
-	prev_pid_stats: &mut HashMap<String, (f64, Instant), RandomState>, use_current_cpu_total: bool,
-	mem_total_kb: u64, curr_time: Instant,
+	sys : &System, prev_idle : &mut f64, prev_non_idle : &mut f64,
+	prev_pid_stats : &mut HashMap<String, (f64, Instant), RandomState>,
+	use_current_cpu_total : bool, mem_total_kb : u64, curr_time : Instant,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-	let mut process_vector: Vec<ProcessHarvest> = Vec::new();
+	let mut process_vector : Vec<ProcessHarvest> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		let ps_result = Command::new("ps")
@@ -210,7 +216,7 @@ pub fn get_sorted_processes_list(
 		if let Ok((cpu_usage, cpu_fraction)) = cpu_calc {
 			let process_stream = split_string.collect::<Vec<&str>>();
 
-			let mut new_pid_stats: HashMap<String, (f64, Instant), RandomState> = HashMap::new();
+			let mut new_pid_stats : HashMap<String, (f64, Instant), RandomState> = HashMap::new();
 
 			for process in process_stream {
 				if let Ok(process_object) = convert_ps(
@@ -229,11 +235,13 @@ pub fn get_sorted_processes_list(
 			}
 
 			*prev_pid_stats = new_pid_stats;
-		} else {
+		}
+		else {
 			error!("Unable to properly parse CPU data in Linux.");
 			error!("Result: {:?}", cpu_calc.err());
 		}
-	} else {
+	}
+	else {
 		let process_hashmap = sys.get_processes();
 		let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
 		let num_cpus = sys.get_processors().len() as f64;
@@ -242,39 +250,45 @@ pub fn get_sorted_processes_list(
 				let process_cmd = process_val.cmd();
 				if process_cmd.len() > 1 {
 					process_cmd[0].clone()
-				} else {
+				}
+				else {
 					let process_exe = process_val.exe().file_stem();
 					if let Some(exe) = process_exe {
 						let process_exe_opt = exe.to_str();
 						if let Some(exe_name) = process_exe_opt {
 							exe_name.to_string()
-						} else {
+						}
+						else {
 							"".to_string()
 						}
-					} else {
+					}
+					else {
 						"".to_string()
 					}
 				}
-			} else {
+			}
+			else {
 				process_val.name().to_string()
 			};
 
 			let pcu = if cfg!(target_os = "windows") {
 				process_val.cpu_usage() as f64
-			} else {
+			}
+			else {
 				process_val.cpu_usage() as f64 / num_cpus
 			};
 			let process_cpu_usage = if use_current_cpu_total {
 				pcu / cpu_usage
-			} else {
+			}
+			else {
 				pcu
 			};
 
 			process_vector.push(ProcessHarvest {
-				pid: process_val.pid() as u32,
+				pid : process_val.pid() as u32,
 				name,
-				mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
-				cpu_usage_percent: process_cpu_usage,
+				mem_usage_percent : process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
+				cpu_usage_percent : process_cpu_usage,
 			});
 		}
 	}

@@ -11,7 +11,7 @@ mod process_killer;
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::UnicodeWidthStr;
 
-const MAX_SEARCH_LENGTH: usize = 200;
+const MAX_SEARCH_LENGTH : usize = 200;
 
 #[derive(Debug, Clone, Copy)]
 pub enum WidgetPosition {
@@ -41,49 +41,49 @@ pub enum SearchDirection {
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
 #[derive(Default)]
 pub struct AppScrollWidgetState {
-	pub current_scroll_position: u64,
-	pub previous_scroll_position: u64,
+	pub current_scroll_position : u64,
+	pub previous_scroll_position : u64,
 }
 
 pub struct AppScrollState {
-	pub scroll_direction: ScrollDirection,
-	pub process_scroll_state: AppScrollWidgetState,
-	pub disk_scroll_state: AppScrollWidgetState,
-	pub temp_scroll_state: AppScrollWidgetState,
-	pub cpu_scroll_state: AppScrollWidgetState,
+	pub scroll_direction : ScrollDirection,
+	pub process_scroll_state : AppScrollWidgetState,
+	pub disk_scroll_state : AppScrollWidgetState,
+	pub temp_scroll_state : AppScrollWidgetState,
+	pub cpu_scroll_state : AppScrollWidgetState,
 }
 
 impl Default for AppScrollState {
 	fn default() -> Self {
 		AppScrollState {
-			scroll_direction: ScrollDirection::DOWN,
-			process_scroll_state: AppScrollWidgetState::default(),
-			disk_scroll_state: AppScrollWidgetState::default(),
-			temp_scroll_state: AppScrollWidgetState::default(),
-			cpu_scroll_state: AppScrollWidgetState::default(),
+			scroll_direction : ScrollDirection::DOWN,
+			process_scroll_state : AppScrollWidgetState::default(),
+			disk_scroll_state : AppScrollWidgetState::default(),
+			temp_scroll_state : AppScrollWidgetState::default(),
+			cpu_scroll_state : AppScrollWidgetState::default(),
 		}
 	}
 }
 
 /// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
-	pub is_enabled: bool,
-	current_search_query: String,
-	current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
-	pub is_blank_search: bool,
-	pub is_invalid_search: bool,
-	pub grapheme_cursor: GraphemeCursor,
+	pub is_enabled : bool,
+	current_search_query : String,
+	current_regex : Option<std::result::Result<regex::Regex, regex::Error>>,
+	pub is_blank_search : bool,
+	pub is_invalid_search : bool,
+	pub grapheme_cursor : GraphemeCursor,
 }
 
 impl Default for AppSearchState {
 	fn default() -> Self {
 		AppSearchState {
-			is_enabled: false,
-			current_search_query: String::default(),
-			current_regex: None,
-			is_invalid_search: false,
-			is_blank_search: true,
-			grapheme_cursor: GraphemeCursor::new(0, 0, true),
+			is_enabled : false,
+			current_search_query : String::default(),
+			current_regex : None,
+			is_invalid_search : false,
+			is_blank_search : true,
+			grapheme_cursor : GraphemeCursor::new(0, 0, true),
 		}
 	}
 }
@@ -96,21 +96,21 @@ impl AppSearchState {
 
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
-	pub search_state: AppSearchState,
-	pub is_searching_with_pid: bool,
-	pub is_ignoring_case: bool,
-	pub is_searching_whole_word: bool,
-	pub is_searching_with_regex: bool,
+	pub search_state : AppSearchState,
+	pub is_searching_with_pid : bool,
+	pub is_ignoring_case : bool,
+	pub is_searching_whole_word : bool,
+	pub is_searching_with_regex : bool,
 }
 
 impl Default for ProcessSearchState {
 	fn default() -> Self {
 		ProcessSearchState {
-			search_state: AppSearchState::default(),
-			is_searching_with_pid: false,
-			is_ignoring_case: true,
-			is_searching_whole_word: false,
-			is_searching_with_regex: false,
+			search_state : AppSearchState::default(),
+			is_searching_with_pid : false,
+			is_ignoring_case : true,
+			is_searching_whole_word : false,
+			is_searching_with_regex : false,
 		}
 	}
 }
@@ -131,8 +131,8 @@ impl ProcessSearchState {
 
 #[derive(Default)]
 pub struct AppDeleteDialogState {
-	pub is_showing_dd: bool,
-	pub is_on_yes: bool, // Defaults to "No"
+	pub is_showing_dd : bool,
+	pub is_on_yes : bool, // Defaults to "No"
 }
 
 pub enum AppHelpCategory {
@@ -142,15 +142,15 @@ pub enum AppHelpCategory {
 }
 
 pub struct AppHelpDialogState {
-	pub is_showing_help: bool,
-	pub current_category: AppHelpCategory,
+	pub is_showing_help : bool,
+	pub current_category : AppHelpCategory,
 }
 
 impl Default for AppHelpDialogState {
 	fn default() -> Self {
 		AppHelpDialogState {
-			is_showing_help: false,
-			current_category: AppHelpCategory::General,
+			is_showing_help : false,
+			current_category : AppHelpCategory::General,
 		}
 	}
 }
@@ -158,125 +158,125 @@ impl Default for AppHelpDialogState {
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.  Don't need to be mutable (set and forget).
 pub struct AppConfigFields {
-	pub update_rate_in_milliseconds: u64,
-	pub temperature_type: temperature::TemperatureType,
-	pub use_dot: bool,
-	pub left_legend: bool,
-	pub show_average_cpu: bool,
-	pub use_current_cpu_total: bool,
-	pub show_disabled_data: bool,
+	pub update_rate_in_milliseconds : u64,
+	pub temperature_type : temperature::TemperatureType,
+	pub use_dot : bool,
+	pub left_legend : bool,
+	pub show_average_cpu : bool,
+	pub use_current_cpu_total : bool,
+	pub show_disabled_data : bool,
 }
 
 /// Network specific
 pub struct NetworkState {
-	pub is_showing_tray: bool,
-	pub is_showing_rx: bool,
-	pub is_showing_tx: bool,
-	pub zoom_level: f64,
+	pub is_showing_tray : bool,
+	pub is_showing_rx : bool,
+	pub is_showing_tx : bool,
+	pub zoom_level : f64,
 }
 
 impl Default for NetworkState {
 	fn default() -> Self {
 		NetworkState {
-			is_showing_tray: false,
-			is_showing_rx: true,
-			is_showing_tx: true,
-			zoom_level: 100.0,
+			is_showing_tray : false,
+			is_showing_rx : true,
+			is_showing_tx : true,
+			zoom_level : 100.0,
 		}
 	}
 }
 
 /// CPU specific
 pub struct CpuState {
-	pub is_showing_tray: bool,
-	pub zoom_level: f64,
-	pub core_show_vec: Vec<bool>,
+	pub is_showing_tray : bool,
+	pub zoom_level : f64,
+	pub core_show_vec : Vec<bool>,
 }
 
 impl Default for CpuState {
 	fn default() -> Self {
 		CpuState {
-			is_showing_tray: false,
-			zoom_level: 100.0,
-			core_show_vec: Vec::new(),
+			is_showing_tray : false,
+			zoom_level : 100.0,
+			core_show_vec : Vec::new(),
 		}
 	}
 }
 
 /// Memory specific
 pub struct MemState {
-	pub is_showing_tray: bool,
-	pub is_showing_ram: bool,
-	pub is_showing_swap: bool,
-	pub zoom_level: f64,
+	pub is_showing_tray : bool,
+	pub is_showing_ram : bool,
+	pub is_showing_swap : bool,
+	pub zoom_level : f64,
 }
 
 impl Default for MemState {
 	fn default() -> Self {
 		MemState {
-			is_showing_tray: false,
-			is_showing_ram: true,
-			is_showing_swap: true,
-			zoom_level: 100.0,
+			is_showing_tray : false,
+			is_showing_ram : true,
+			is_showing_swap : true,
+			zoom_level : 100.0,
 		}
 	}
 }
 
 pub struct App {
-	pub process_sorting_type: processes::ProcessSorting,
-	pub process_sorting_reverse: bool,
-	pub update_process_gui: bool,
-	pub app_scroll_positions: AppScrollState,
-	pub current_widget_selected: WidgetPosition,
-	pub data: data_harvester::Data,
-	awaiting_second_char: bool,
-	second_char: Option<char>,
-	pub dd_err: Option<String>,
-	to_delete_process_list: Option<(String, Vec<u32>)>,
-	pub is_frozen: bool,
-	last_key_press: Instant,
-	pub canvas_data: canvas::DisplayableData,
-	enable_grouping: bool,
-	pub data_collection: DataCollection,
-	pub process_search_state: ProcessSearchState,
-	pub delete_dialog_state: AppDeleteDialogState,
-	pub help_dialog_state: AppHelpDialogState,
-	pub app_config_fields: AppConfigFields,
-	pub is_expanded: bool,
-	pub is_resized: bool,
-	pub cpu_state: CpuState,
-	pub mem_state: MemState,
-	pub net_state: NetworkState,
+	pub process_sorting_type : processes::ProcessSorting,
+	pub process_sorting_reverse : bool,
+	pub update_process_gui : bool,
+	pub app_scroll_positions : AppScrollState,
+	pub current_widget_selected : WidgetPosition,
+	pub data : data_harvester::Data,
+	awaiting_second_char : bool,
+	second_char : Option<char>,
+	pub dd_err : Option<String>,
+	to_delete_process_list : Option<(String, Vec<u32>)>,
+	pub is_frozen : bool,
+	last_key_press : Instant,
+	pub canvas_data : canvas::DisplayableData,
+	enable_grouping : bool,
+	pub data_collection : DataCollection,
+	pub process_search_state : ProcessSearchState,
+	pub delete_dialog_state : AppDeleteDialogState,
+	pub help_dialog_state : AppHelpDialogState,
+	pub app_config_fields : AppConfigFields,
+	pub is_expanded : bool,
+	pub is_resized : bool,
+	pub cpu_state : CpuState,
+	pub mem_state : MemState,
+	pub net_state : NetworkState,
 }
 
 impl App {
 	#[allow(clippy::too_many_arguments)]
 	pub fn new(
-		show_average_cpu: bool, temperature_type: temperature::TemperatureType,
-		update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
-		use_current_cpu_total: bool, current_widget_selected: WidgetPosition,
-		show_disabled_data: bool,
+		show_average_cpu : bool, temperature_type : temperature::TemperatureType,
+		update_rate_in_milliseconds : u64, use_dot : bool, left_legend : bool,
+		use_current_cpu_total : bool, current_widget_selected : WidgetPosition,
+		show_disabled_data : bool,
 	) -> App {
 		App {
-			process_sorting_type: processes::ProcessSorting::CPU,
-			process_sorting_reverse: true,
-			update_process_gui: false,
+			process_sorting_type : processes::ProcessSorting::CPU,
+			process_sorting_reverse : true,
+			update_process_gui : false,
 			current_widget_selected,
-			app_scroll_positions: AppScrollState::default(),
-			data: data_harvester::Data::default(),
-			awaiting_second_char: false,
-			second_char: None,
-			dd_err: None,
-			to_delete_process_list: None,
-			is_frozen: false,
-			last_key_press: Instant::now(),
-			canvas_data: canvas::DisplayableData::default(),
-			enable_grouping: false,
-			data_collection: DataCollection::default(),
-			process_search_state: ProcessSearchState::default(),
-			delete_dialog_state: AppDeleteDialogState::default(),
-			help_dialog_state: AppHelpDialogState::default(),
-			app_config_fields: AppConfigFields {
+			app_scroll_positions : AppScrollState::default(),
+			data : data_harvester::Data::default(),
+			awaiting_second_char : false,
+			second_char : None,
+			dd_err : None,
+			to_delete_process_list : None,
+			is_frozen : false,
+			last_key_press : Instant::now(),
+			canvas_data : canvas::DisplayableData::default(),
+			enable_grouping : false,
+			data_collection : DataCollection::default(),
+			process_search_state : ProcessSearchState::default(),
+			delete_dialog_state : AppDeleteDialogState::default(),
+			help_dialog_state : AppHelpDialogState::default(),
+			app_config_fields : AppConfigFields {
 				show_average_cpu,
 				temperature_type,
 				use_dot,
@@ -285,11 +285,11 @@ impl App {
 				use_current_cpu_total,
 				show_disabled_data,
 			},
-			is_expanded: false,
-			is_resized: false,
-			cpu_state: CpuState::default(),
-			mem_state: MemState::default(),
-			net_state: NetworkState::default(),
+			is_expanded : false,
+			is_resized : false,
+			cpu_state : CpuState::default(),
+			mem_state : MemState::default(),
+			net_state : NetworkState::default(),
 		}
 	}
 
@@ -316,7 +316,8 @@ impl App {
 			self.delete_dialog_state.is_on_yes = false;
 			self.to_delete_process_list = None;
 			self.dd_err = None;
-		} else if self.is_filtering_or_searching() {
+		}
+		else if self.is_filtering_or_searching() {
 			match self.current_widget_selected {
 				WidgetPosition::Process | WidgetPosition::ProcessSearch => {
 					if self.process_search_state.search_state.is_enabled {
@@ -335,7 +336,8 @@ impl App {
 				}
 				_ => {}
 			}
-		} else if self.is_expanded {
+		}
+		else if self.is_expanded {
 			self.is_expanded = false;
 			self.is_resized = true;
 		}
@@ -378,7 +380,8 @@ impl App {
 				self.toggle_grouping();
 				if self.is_grouped() {
 					self.search_with_name();
-				} else {
+				}
+				else {
 					self.update_process_gui = true;
 				}
 			}
@@ -386,7 +389,8 @@ impl App {
 				if !self.is_grouped() {
 					if self.process_search_state.is_searching_with_pid {
 						self.search_with_name();
-					} else {
+					}
+					else {
 						self.search_with_pid();
 					}
 				}
@@ -450,7 +454,8 @@ impl App {
 	pub fn is_in_search_widget(&self) -> bool {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 			true
-		} else {
+		}
+		else {
 			false
 		}
 	}
@@ -500,30 +505,35 @@ impl App {
 		{
 			self.process_search_state.search_state.is_invalid_search = false;
 			self.process_search_state.search_state.is_blank_search = true;
-		} else {
+		}
+		else {
 			let regex_string = &self.process_search_state.search_state.current_search_query;
-			let escaped_regex: String;
+			let escaped_regex : String;
 			let final_regex_string = &format!(
 				"{}{}{}{}",
 				if self.process_search_state.is_searching_whole_word {
 					"^"
-				} else {
+				}
+				else {
 					""
 				},
 				if self.process_search_state.is_ignoring_case {
 					"(?i)"
-				} else {
+				}
+				else {
 					""
 				},
 				if !self.process_search_state.is_searching_with_regex {
 					escaped_regex = regex::escape(regex_string);
 					&escaped_regex
-				} else {
+				}
+				else {
 					regex_string
 				},
 				if self.process_search_state.is_searching_whole_word {
 					"$"
-				} else {
+				}
+				else {
 					""
 				},
 			);
@@ -562,14 +572,17 @@ impl App {
 					// Check if there was an issue... if so, inform the user.
 					if let Err(dd_err) = dd_result {
 						self.dd_err = Some(dd_err.to_string());
-					} else {
+					}
+					else {
 						self.delete_dialog_state.is_showing_dd = false;
 					}
 				}
-			} else {
+			}
+			else {
 				self.delete_dialog_state.is_showing_dd = false;
 			}
-		} else if !self.is_in_dialog() {
+		}
+		else if !self.is_in_dialog() {
 			// Pop-out mode.  We ignore if in process search.
 
 			match self.current_widget_selected {
@@ -642,7 +655,7 @@ impl App {
 		}
 	}
 
-	pub fn search_walk_forward(&mut self, start_position: usize) {
+	pub fn search_walk_forward(&mut self, start_position : usize) {
 		self.process_search_state
 			.search_state
 			.grapheme_cursor
@@ -653,7 +666,7 @@ impl App {
 			.unwrap(); // TODO: [UNWRAP] unwrap in this and walk_back seem sketch
 	}
 
-	pub fn search_walk_back(&mut self, start_position: usize) {
+	pub fn search_walk_back(&mut self, start_position : usize) {
 		self.process_search_state
 			.search_state
 			.grapheme_cursor
@@ -698,7 +711,8 @@ impl App {
 	pub fn on_up_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			} else {
+			}
+			else {
 				self.decrement_position_count();
 			}
 		}
@@ -707,7 +721,8 @@ impl App {
 	pub fn on_down_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			} else {
+			}
+			else {
 				self.increment_position_count();
 			}
 		}
@@ -718,7 +733,8 @@ impl App {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				self.search_walk_back(self.get_cursor_position());
 			}
-		} else if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
+		}
+		else if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
 			self.delete_dialog_state.is_on_yes = true;
 		}
 	}
@@ -728,7 +744,8 @@ impl App {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 				self.search_walk_forward(self.get_cursor_position());
 			}
-		} else if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
+		}
+		else if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
 			self.delete_dialog_state.is_on_yes = false;
 		}
 	}
@@ -790,7 +807,8 @@ impl App {
 					}
 				}
 				ret
-			} else {
+			}
+			else {
 				let process = self.canvas_data.finalized_process_data[self
 					.app_scroll_positions
 					.process_scroll_state
@@ -807,7 +825,7 @@ impl App {
 		self.reset_multi_tap_keys();
 	}
 
-	pub fn on_char_key(&mut self, caught_char: char) {
+	pub fn on_char_key(&mut self, caught_char : char) {
 		// Skip control code chars
 		if caught_char.is_control() {
 			return;
@@ -849,7 +867,8 @@ impl App {
 					self.update_regex();
 					self.update_process_gui = true;
 				}
-			} else {
+			}
+			else {
 				match caught_char {
 					'/' => {
 						self.on_slash();
@@ -975,7 +994,8 @@ impl App {
 					}
 				}
 			}
-		} else if self.help_dialog_state.is_showing_help {
+		}
+		else if self.help_dialog_state.is_showing_help {
 			match caught_char {
 				'1' => self.help_dialog_state.current_category = AppHelpCategory::General,
 				'2' => self.help_dialog_state.current_category = AppHelpCategory::Process,
@@ -1049,7 +1069,8 @@ impl App {
 				WidgetPosition::Disk => WidgetPosition::Temp,
 				_ => self.current_widget_selected,
 			};
-		} else if self.is_expanded {
+		}
+		else if self.is_expanded {
 			self.current_widget_selected = match self.current_widget_selected {
 				WidgetPosition::ProcessSearch => WidgetPosition::Process,
 				_ => self.current_widget_selected,
@@ -1069,18 +1090,21 @@ impl App {
 				WidgetPosition::Process => {
 					if self.is_searching() {
 						WidgetPosition::ProcessSearch
-					} else {
+					}
+					else {
 						WidgetPosition::Process
 					}
 				}
 				_ => self.current_widget_selected,
 			};
-		} else if self.is_expanded {
+		}
+		else if self.is_expanded {
 			self.current_widget_selected = match self.current_widget_selected {
 				WidgetPosition::Process => {
 					if self.is_searching() {
 						WidgetPosition::ProcessSearch
-					} else {
+					}
+					else {
 						WidgetPosition::Process
 					}
 				}
@@ -1180,7 +1204,7 @@ impl App {
 		}
 	}
 
-	fn change_cpu_table_position(&mut self, num_to_change_by: i64) {
+	fn change_cpu_table_position(&mut self, num_to_change_by : i64) {
 		let current_posn = self
 			.app_scroll_positions
 			.cpu_scroll_state
@@ -1195,7 +1219,7 @@ impl App {
 		}
 	}
 
-	fn change_process_position(&mut self, num_to_change_by: i64) {
+	fn change_process_position(&mut self, num_to_change_by : i64) {
 		let current_posn = self
 			.app_scroll_positions
 			.process_scroll_state
@@ -1211,7 +1235,7 @@ impl App {
 		}
 	}
 
-	fn change_temp_position(&mut self, num_to_change_by: i64) {
+	fn change_temp_position(&mut self, num_to_change_by : i64) {
 		let current_posn = self
 			.app_scroll_positions
 			.temp_scroll_state
@@ -1227,7 +1251,7 @@ impl App {
 		}
 	}
 
-	fn change_disk_position(&mut self, num_to_change_by: i64) {
+	fn change_disk_position(&mut self, num_to_change_by : i64) {
 		let current_posn = self
 			.app_scroll_positions
 			.disk_scroll_state

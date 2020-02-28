@@ -5,8 +5,8 @@ use sysinfo::{ComponentExt, System, SystemExt};
 
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
-	pub component_name: String,
-	pub temperature: f32,
+	pub component_name : String,
+	pub temperature : f32,
 }
 
 #[derive(Clone, Debug)]
@@ -23,17 +23,17 @@ impl Default for TemperatureType {
 }
 
 pub async fn get_temperature_data(
-	sys: &System, temp_type: &TemperatureType,
+	sys : &System, temp_type : &TemperatureType,
 ) -> crate::utils::error::Result<Vec<TempHarvest>> {
-	let mut temperature_vec: Vec<TempHarvest> = Vec::new();
+	let mut temperature_vec : Vec<TempHarvest> = Vec::new();
 
 	if cfg!(target_os = "linux") {
 		let mut sensor_data = heim::sensors::temperatures();
 		while let Some(sensor) = sensor_data.next().await {
 			if let Ok(sensor) = sensor {
 				temperature_vec.push(TempHarvest {
-					component_name: sensor.unit().to_string(),
-					temperature: match temp_type {
+					component_name : sensor.unit().to_string(),
+					temperature : match temp_type {
 						TemperatureType::Celsius => sensor
 							.current()
 							.get::<thermodynamic_temperature::degree_celsius>(
@@ -49,12 +49,13 @@ pub async fn get_temperature_data(
 				});
 			}
 		}
-	} else {
+	}
+	else {
 		let sensor_data = sys.get_components();
 		for component in sensor_data {
 			temperature_vec.push(TempHarvest {
-				component_name: component.get_label().to_string(),
-				temperature: match temp_type {
+				component_name : component.get_label().to_string(),
+				temperature : match temp_type {
 					TemperatureType::Celsius => component.get_temperature(),
 					TemperatureType::Kelvin => {
 						convert_celsius_to_kelvin(component.get_temperature())
@@ -88,10 +89,10 @@ pub async fn get_temperature_data(
 	Ok(temperature_vec)
 }
 
-fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+fn convert_celsius_to_kelvin(celsius : f32) -> f32 {
 	celsius + 273.15
 }
 
-fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+fn convert_celsius_to_fahrenheit(celsius : f32) -> f32 {
 	(celsius * (9.0 / 5.0)) + 32.0
 }

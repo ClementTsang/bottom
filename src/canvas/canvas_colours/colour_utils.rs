@@ -2,12 +2,12 @@ use crate::utils::{error, gen_util::*};
 use std::collections::HashMap;
 use tui::style::{Color, Style};
 
-const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
-pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
-pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
-pub const STANDARD_THIRD_COLOUR: Color = Color::LightCyan;
-pub const STANDARD_FOURTH_COLOUR: Color = Color::LightGreen;
-pub const AVG_COLOUR: Color = Color::Red;
+const GOLDEN_RATIO : f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
+pub const STANDARD_FIRST_COLOUR : Color = Color::LightMagenta;
+pub const STANDARD_SECOND_COLOUR : Color = Color::LightYellow;
+pub const STANDARD_THIRD_COLOUR : Color = Color::LightCyan;
+pub const STANDARD_FOURTH_COLOUR : Color = Color::LightGreen;
+pub const AVG_COLOUR : Color = Color::Red;
 
 lazy_static! {
 	static ref COLOR_NAME_LOOKUP_TABLE: HashMap<&'static str, Color> = [
@@ -36,20 +36,21 @@ lazy_static! {
 
 /// Generates random colours.  Strategy found from
 /// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
-pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
-	fn gen_hsv(h: f32) -> f32 {
+pub fn gen_n_styles(num_to_gen : i32) -> Vec<Style> {
+	fn gen_hsv(h : f32) -> f32 {
 		let new_val = h + GOLDEN_RATIO;
 		if new_val > 1.0 {
 			new_val.fract()
-		} else {
+		}
+		else {
 			new_val
 		}
 	}
 	/// This takes in an h, s, and v value of range [0, 1]
 	/// For explanation of what this does, see
 	/// https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB_alternative
-	fn hsv_to_rgb(hue: f32, saturation: f32, value: f32) -> (u8, u8, u8) {
-		fn hsv_helper(num: u32, hu: f32, sat: f32, val: f32) -> f32 {
+	fn hsv_to_rgb(hue : f32, saturation : f32, value : f32) -> (u8, u8, u8) {
+		fn hsv_helper(num : u32, hu : f32, sat : f32, val : f32) -> f32 {
 			let k = (num as f32 + hu * 6.0) % 6.0;
 			val - val * sat * float_max(float_min(k, float_min(4.1 - k, 1.1)), 0.0)
 		}
@@ -65,7 +66,7 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 	// Why do we need so many colours?  Because macOS default terminal
 	// throws a tantrum if you don't give it supported colours, but so
 	// does PowerShell with some colours (Magenta and Yellow)!
-	let mut colour_vec: Vec<Style> = vec![
+	let mut colour_vec : Vec<Style> = vec![
 		Style::default().fg(STANDARD_FIRST_COLOUR),
 		Style::default().fg(STANDARD_SECOND_COLOUR),
 		Style::default().fg(STANDARD_THIRD_COLOUR),
@@ -78,7 +79,7 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 		Style::default().fg(Color::Red),
 	];
 
-	let mut h: f32 = 0.4; // We don't need random colours... right?
+	let mut h : f32 = 0.4; // We don't need random colours... right?
 	for _i in 0..(num_to_gen - 10) {
 		h = gen_hsv(h);
 		let result = hsv_to_rgb(h, 0.5, 0.95);
@@ -88,8 +89,8 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 	colour_vec
 }
 
-pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
-	fn convert_hex_to_rgb(hex: &str) -> error::Result<(u8, u8, u8)> {
+pub fn convert_hex_to_color(hex : &str) -> error::Result<Color> {
+	fn convert_hex_to_rgb(hex : &str) -> error::Result<(u8, u8, u8)> {
 		if hex.len() == 7 && &hex[0..1] == "#" {
 			let r = u8::from_str_radix(&hex[1..3], 16)?;
 			let g = u8::from_str_radix(&hex[3..5], 16)?;
@@ -99,25 +100,29 @@ pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
 		}
 
 		Err(error::BottomError::GenericError(format!(
-				"Colour hex {} is not of valid length.  It must be a 7 character string of the form \"#112233\".",
-				hex
-			)))
+			"Colour hex {} is not of valid length.  It must be a 7 character string of the form \
+			 \"#112233\".",
+			hex
+		)))
 	}
 
 	let rgb = convert_hex_to_rgb(hex)?;
 	Ok(Color::Rgb(rgb.0, rgb.1, rgb.2))
 }
 
-pub fn get_style_from_config(input_val: &str) -> error::Result<Style> {
+pub fn get_style_from_config(input_val : &str) -> error::Result<Style> {
 	if input_val.len() > 1 {
 		if &input_val[0..1] == "#" {
 			get_style_from_hex(input_val)
-		} else if input_val.contains(',') {
+		}
+		else if input_val.contains(',') {
 			get_style_from_rgb(input_val)
-		} else {
+		}
+		else {
 			get_style_from_color_name(input_val)
 		}
-	} else {
+	}
+	else {
 		Err(error::BottomError::GenericError(format!(
 			"Colour input {} is not valid.",
 			input_val
@@ -125,16 +130,19 @@ pub fn get_style_from_config(input_val: &str) -> error::Result<Style> {
 	}
 }
 
-pub fn get_colour_from_config(input_val: &str) -> error::Result<Color> {
+pub fn get_colour_from_config(input_val : &str) -> error::Result<Color> {
 	if input_val.len() > 1 {
 		if &input_val[0..1] == "#" {
 			convert_hex_to_color(input_val)
-		} else if input_val.contains(',') {
+		}
+		else if input_val.contains(',') {
 			convert_rgb_to_color(input_val)
-		} else {
+		}
+		else {
 			convert_name_to_color(input_val)
 		}
-	} else {
+	}
+	else {
 		Err(error::BottomError::GenericError(format!(
 			"Colour input {} is not valid.",
 			input_val
@@ -142,49 +150,52 @@ pub fn get_colour_from_config(input_val: &str) -> error::Result<Color> {
 	}
 }
 
-pub fn get_style_from_hex(hex: &str) -> error::Result<Style> {
+pub fn get_style_from_hex(hex : &str) -> error::Result<Style> {
 	Ok(Style::default().fg(convert_hex_to_color(hex)?))
 }
 
-fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
+fn convert_rgb_to_color(rgb_str : &str) -> error::Result<Color> {
 	let rgb_list = rgb_str.split(',');
 	let rgb = rgb_list
 		.filter_map(|val| {
 			if let Ok(res) = val.to_string().trim().parse::<u8>() {
 				Some(res)
-			} else {
+			}
+			else {
 				None
 			}
 		})
 		.collect::<Vec<_>>();
 	if rgb.len() == 3 {
 		Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
-	} else {
+	}
+	else {
 		Err(error::BottomError::GenericError(format!(
-			"RGB colour {} is not of valid length.  It must be a comma separated value with 3 integers from 0 to 255, like \"255, 0, 155\".",
+			"RGB colour {} is not of valid length.  It must be a comma separated value with 3 \
+			 integers from 0 to 255, like \"255, 0, 155\".",
 			rgb_str
 		)))
 	}
 }
 
-pub fn get_style_from_rgb(rgb_str: &str) -> error::Result<Style> {
+pub fn get_style_from_rgb(rgb_str : &str) -> error::Result<Style> {
 	Ok(Style::default().fg(convert_rgb_to_color(rgb_str)?))
 }
 
-fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
+fn convert_name_to_color(color_name : &str) -> error::Result<Color> {
 	let color = COLOR_NAME_LOOKUP_TABLE.get(color_name.to_lowercase().as_str());
 	if let Some(color) = color {
 		return Ok(*color);
 	}
 
 	Err(error::BottomError::GenericError(format!(
-		"Color {} is not a supported config colour.  bottom supports the following named colours as strings: \
-		Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, \
-		LightYellow, LightBlue,	LightMagenta, LightCyan, White",
+		"Color {} is not a supported config colour.  bottom supports the following named colours \
+		 as strings: Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, \
+		 LightRed, LightGreen, LightYellow, LightBlue,	LightMagenta, LightCyan, White",
 		color_name
 	)))
 }
 
-pub fn get_style_from_color_name(color_name: &str) -> error::Result<Style> {
+pub fn get_style_from_color_name(color_name : &str) -> error::Result<Style> {
 	Ok(Style::default().fg(convert_name_to_color(color_name)?))
 }

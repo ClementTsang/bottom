@@ -18,8 +18,7 @@ use crossterm::{
 	},
 	execute,
 	style::Print,
-	terminal::LeaveAlternateScreen,
-	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 use std::{
@@ -63,45 +62,45 @@ enum ResetEvent {
 
 #[derive(Default, Deserialize)]
 struct Config {
-	flags: Option<ConfigFlags>,
-	colors: Option<ConfigColours>,
+	flags : Option<ConfigFlags>,
+	colors : Option<ConfigColours>,
 }
 
 #[derive(Default, Deserialize)]
 struct ConfigFlags {
-	avg_cpu: Option<bool>,
-	dot_marker: Option<bool>,
-	temperature_type: Option<String>,
-	rate: Option<u64>,
-	left_legend: Option<bool>,
-	current_usage: Option<bool>,
-	group_processes: Option<bool>,
-	case_sensitive: Option<bool>,
-	whole_word: Option<bool>,
-	regex: Option<bool>,
-	default_widget: Option<String>,
-	show_disabled_data: Option<bool>,
+	avg_cpu : Option<bool>,
+	dot_marker : Option<bool>,
+	temperature_type : Option<String>,
+	rate : Option<u64>,
+	left_legend : Option<bool>,
+	current_usage : Option<bool>,
+	group_processes : Option<bool>,
+	case_sensitive : Option<bool>,
+	whole_word : Option<bool>,
+	regex : Option<bool>,
+	default_widget : Option<String>,
+	show_disabled_data : Option<bool>,
 	//disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
 #[derive(Default, Deserialize)]
 struct ConfigColours {
-	table_header_color: Option<String>,
-	avg_cpu_color: Option<String>,
-	cpu_core_colors: Option<Vec<String>>,
-	ram_color: Option<String>,
-	swap_color: Option<String>,
-	rx_color: Option<String>,
-	tx_color: Option<String>,
-	rx_total_color: Option<String>,
-	tx_total_color: Option<String>,
-	border_color: Option<String>,
-	highlighted_border_color: Option<String>,
-	text_color: Option<String>,
-	selected_text_color: Option<String>,
-	selected_bg_color: Option<String>,
-	widget_title_color: Option<String>,
-	graph_color: Option<String>,
+	table_header_color : Option<String>,
+	avg_cpu_color : Option<String>,
+	cpu_core_colors : Option<Vec<String>>,
+	ram_color : Option<String>,
+	swap_color : Option<String>,
+	rx_color : Option<String>,
+	tx_color : Option<String>,
+	rx_total_color : Option<String>,
+	tx_total_color : Option<String>,
+	border_color : Option<String>,
+	highlighted_border_color : Option<String>,
+	text_color : Option<String>,
+	selected_text_color : Option<String>,
+	selected_bg_color : Option<String>,
+	widget_title_color : Option<String>,
+	graph_color : Option<String>,
 }
 
 fn get_matches() -> clap::ArgMatches<'static> {
@@ -145,9 +144,9 @@ fn main() -> error::Result<()> {
 	create_logger()?;
 	let matches = get_matches();
 
-	let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
+	let config : Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
-	let update_rate_in_milliseconds: u128 =
+	let update_rate_in_milliseconds : u128 =
 		get_update_rate_in_milliseconds(&matches.value_of("RATE_MILLIS"), &config)?;
 
 	// Set other settings
@@ -306,7 +305,7 @@ fn main() -> error::Result<()> {
 	Ok(())
 }
 
-fn handle_mouse_event(event: MouseEvent, app: &mut App) {
+fn handle_mouse_event(event : MouseEvent, app : &mut App) {
 	match event {
 		MouseEvent::ScrollUp(_x, _y, _modifiers) => app.decrement_position_count(),
 		MouseEvent::ScrollDown(_x, _y, _modifiers) => app.increment_position_count(),
@@ -315,7 +314,7 @@ fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 fn handle_key_event_or_break(
-	event: KeyEvent, app: &mut App, rtx: &std::sync::mpsc::Sender<ResetEvent>,
+	event : KeyEvent, app : &mut App, rtx : &std::sync::mpsc::Sender<ResetEvent>,
 ) -> bool {
 	//debug!("KeyEvent: {:?}", event);
 
@@ -359,7 +358,8 @@ fn handle_key_event_or_break(
 			}
 			_ => {}
 		}
-	} else {
+	}
+	else {
 		// Otherwise, track the modifier as well...
 		if let KeyModifiers::ALT = event.modifiers {
 			match event.code {
@@ -380,7 +380,8 @@ fn handle_key_event_or_break(
 				}
 				_ => {}
 			}
-		} else if let KeyModifiers::CONTROL = event.modifiers {
+		}
+		else if let KeyModifiers::CONTROL = event.modifiers {
 			if event.code == KeyCode::Char('c') {
 				return true;
 			}
@@ -403,7 +404,8 @@ fn handle_key_event_or_break(
 				// KeyCode::Backspace => app.on_skip_backspace(),
 				_ => {}
 			}
-		} else if let KeyModifiers::SHIFT = event.modifiers {
+		}
+		else if let KeyModifiers::SHIFT = event.modifiers {
 			match event.code {
 				KeyCode::Left => app.move_widget_selection_left(),
 				KeyCode::Right => app.move_widget_selection_right(),
@@ -425,23 +427,27 @@ fn create_logger() -> error::Result<()> {
 	Ok(())
 }
 
-fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
+fn create_config(flag_config_location : Option<&str>) -> error::Result<Config> {
 	use std::ffi::OsString;
 	let config_path = if let Some(conf_loc) = flag_config_location {
 		OsString::from(conf_loc)
-	} else if cfg!(target_os = "windows") {
+	}
+	else if cfg!(target_os = "windows") {
 		if let Some(home_path) = dirs::config_dir() {
 			let mut path = home_path;
 			path.push(DEFAULT_WINDOWS_CONFIG_FILE_PATH);
 			path.into_os_string()
-		} else {
+		}
+		else {
 			OsString::new()
 		}
-	} else if let Some(home_path) = dirs::home_dir() {
+	}
+	else if let Some(home_path) = dirs::home_dir() {
 		let mut path = home_path;
 		path.push(DEFAULT_UNIX_CONFIG_FILE_PATH);
 		path.into_os_string()
-	} else {
+	}
+	else {
 		OsString::new()
 	};
 
@@ -449,23 +455,27 @@ fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
 
 	if let Ok(config_str) = std::fs::read_to_string(path) {
 		Ok(toml::from_str(config_str.as_str())?)
-	} else {
+	}
+	else {
 		Ok(Config::default())
 	}
 }
 
 fn get_update_rate_in_milliseconds(
-	update_rate: &Option<&str>, config: &Config,
+	update_rate : &Option<&str>, config : &Config,
 ) -> error::Result<u128> {
 	let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
 		update_rate.parse::<u128>()?
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(rate) = flags.rate {
 			rate as u128
-		} else {
+		}
+		else {
 			constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
 		}
-	} else {
+	}
+	else {
 		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
 	};
 
@@ -473,7 +483,8 @@ fn get_update_rate_in_milliseconds(
 		return Err(BottomError::InvalidArg(
 			"Please set your update rate to be greater than 250 milliseconds.".to_string(),
 		));
-	} else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
+	}
+	else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
 		return Err(BottomError::InvalidArg(
 			"Please set your update rate to be less than unsigned INT_MAX.".to_string(),
 		));
@@ -483,15 +494,18 @@ fn get_update_rate_in_milliseconds(
 }
 
 fn get_temperature_option(
-	matches: &clap::ArgMatches<'static>, config: &Config,
+	matches : &clap::ArgMatches<'static>, config : &Config,
 ) -> error::Result<data_harvester::temperature::TemperatureType> {
 	if matches.is_present("FAHRENHEIT") {
 		return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
-	} else if matches.is_present("KELVIN") {
+	}
+	else if matches.is_present("KELVIN") {
 		return Ok(data_harvester::temperature::TemperatureType::Kelvin);
-	} else if matches.is_present("CELSIUS") {
+	}
+	else if matches.is_present("CELSIUS") {
 		return Ok(data_harvester::temperature::TemperatureType::Celsius);
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(temp_type) = &flags.temperature_type {
 			// Give lowest priority to config.
 			match temp_type.as_str() {
@@ -506,7 +520,9 @@ fn get_temperature_option(
 				}
 				_ => {
 					return Err(BottomError::ConfigError(
-						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
+						"Invalid temperature type.  Please have the value be of the form \
+						 <kelvin|k|celsius|c|fahrenheit|f>"
+							.to_string(),
 					));
 				}
 			}
@@ -515,10 +531,11 @@ fn get_temperature_option(
 	Ok(data_harvester::temperature::TemperatureType::Celsius)
 }
 
-fn get_avg_cpu_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_avg_cpu_option(matches : &clap::ArgMatches<'static>, config : &Config) -> bool {
 	if matches.is_present("AVG_CPU") {
 		return true;
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(avg_cpu) = flags.avg_cpu {
 			return avg_cpu;
 		}
@@ -527,10 +544,11 @@ fn get_avg_cpu_option(matches: &clap::ArgMatches<'static>, config: &Config) -> b
 	false
 }
 
-fn get_use_dot_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_dot_option(matches : &clap::ArgMatches<'static>, config : &Config) -> bool {
 	if matches.is_present("DOT_MARKER") {
 		return true;
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(dot_marker) = flags.dot_marker {
 			return dot_marker;
 		}
@@ -538,10 +556,11 @@ fn get_use_dot_option(matches: &clap::ArgMatches<'static>, config: &Config) -> b
 	false
 }
 
-fn get_use_left_legend_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_left_legend_option(matches : &clap::ArgMatches<'static>, config : &Config) -> bool {
 	if matches.is_present("LEFT_LEGEND") {
 		return true;
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(left_legend) = flags.left_legend {
 			return left_legend;
 		}
@@ -550,10 +569,13 @@ fn get_use_left_legend_option(matches: &clap::ArgMatches<'static>, config: &Conf
 	false
 }
 
-fn get_use_current_cpu_total_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_current_cpu_total_option(
+	matches : &clap::ArgMatches<'static>, config : &Config,
+) -> bool {
 	if matches.is_present("USE_CURR_USAGE") {
 		return true;
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(current_usage) = flags.current_usage {
 			return current_usage;
 		}
@@ -562,10 +584,11 @@ fn get_use_current_cpu_total_option(matches: &clap::ArgMatches<'static>, config:
 	false
 }
 
-fn get_show_disabled_data_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_show_disabled_data_option(matches : &clap::ArgMatches<'static>, config : &Config) -> bool {
 	if matches.is_present("SHOW_DISABLED_DATA") {
 		return true;
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(show_disabled_data) = flags.show_disabled_data {
 			return show_disabled_data;
 		}
@@ -574,10 +597,11 @@ fn get_show_disabled_data_option(matches: &clap::ArgMatches<'static>, config: &C
 	false
 }
 
-fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+fn enable_app_grouping(matches : &clap::ArgMatches<'static>, config : &Config, app : &mut App) {
 	if matches.is_present("GROUP_PROCESSES") {
 		app.toggle_grouping();
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(grouping) = flags.group_processes {
 			if grouping {
 				app.toggle_grouping();
@@ -586,10 +610,13 @@ fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app
 	}
 }
 
-fn enable_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+fn enable_app_case_sensitive(
+	matches : &clap::ArgMatches<'static>, config : &Config, app : &mut App,
+) {
 	if matches.is_present("CASE_SENSITIVE") {
 		app.process_search_state.search_toggle_ignore_case();
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(case_sensitive) = flags.case_sensitive {
 			if case_sensitive {
 				app.process_search_state.search_toggle_ignore_case();
@@ -599,11 +626,12 @@ fn enable_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Confi
 }
 
 fn enable_app_match_whole_word(
-	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
+	matches : &clap::ArgMatches<'static>, config : &Config, app : &mut App,
 ) {
 	if matches.is_present("WHOLE_WORD") {
 		app.process_search_state.search_toggle_whole_word();
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(whole_word) = flags.whole_word {
 			if whole_word {
 				app.process_search_state.search_toggle_whole_word();
@@ -612,10 +640,11 @@ fn enable_app_match_whole_word(
 	}
 }
 
-fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+fn enable_app_use_regex(matches : &clap::ArgMatches<'static>, config : &Config, app : &mut App) {
 	if matches.is_present("REGEX_DEFAULT") {
 		app.process_search_state.search_toggle_regex();
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(regex) = flags.regex {
 			if regex {
 				app.process_search_state.search_toggle_regex();
@@ -624,20 +653,28 @@ fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, ap
 	}
 }
 
-fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> app::WidgetPosition {
+fn get_default_widget(
+	matches : &clap::ArgMatches<'static>, config : &Config,
+) -> app::WidgetPosition {
 	if matches.is_present("CPU_WIDGET") {
 		return app::WidgetPosition::Cpu;
-	} else if matches.is_present("MEM_WIDGET") {
+	}
+	else if matches.is_present("MEM_WIDGET") {
 		return app::WidgetPosition::Mem;
-	} else if matches.is_present("DISK_WIDGET") {
+	}
+	else if matches.is_present("DISK_WIDGET") {
 		return app::WidgetPosition::Disk;
-	} else if matches.is_present("TEMP_WIDGET") {
+	}
+	else if matches.is_present("TEMP_WIDGET") {
 		return app::WidgetPosition::Temp;
-	} else if matches.is_present("NET_WIDGET") {
+	}
+	else if matches.is_present("NET_WIDGET") {
 		return app::WidgetPosition::Network;
-	} else if matches.is_present("PROC_WIDGET") {
+	}
+	else if matches.is_present("PROC_WIDGET") {
 		return app::WidgetPosition::Process;
-	} else if let Some(flags) = &config.flags {
+	}
+	else if let Some(flags) = &config.flags {
 		if let Some(default_widget) = &flags.default_widget {
 			match default_widget.as_str() {
 				"cpu_default" => {
@@ -667,8 +704,8 @@ fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> a
 }
 
 fn try_drawing(
-	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-	app: &mut App, painter: &mut canvas::Painter,
+	terminal : &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
+	app : &mut App, painter : &mut canvas::Painter,
 ) -> error::Result<()> {
 	if let Err(err) = painter.draw_data(terminal, app) {
 		cleanup_terminal(terminal)?;
@@ -680,7 +717,7 @@ fn try_drawing(
 }
 
 fn cleanup_terminal(
-	terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
+	terminal : &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
 	disable_raw_mode()?;
 	execute!(
@@ -693,7 +730,7 @@ fn cleanup_terminal(
 	Ok(())
 }
 
-fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> error::Result<()> {
+fn generate_config_colours(config : &Config, painter : &mut canvas::Painter) -> error::Result<()> {
 	if let Some(colours) = &config.colors {
 		if let Some(border_color) = &colours.border_color {
 			painter.colours.set_border_colour(border_color)?;
@@ -774,7 +811,7 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 }
 
 /// Based on https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs
-fn panic_hook(panic_info: &PanicInfo<'_>) {
+fn panic_hook(panic_info : &PanicInfo<'_>) {
 	let mut stdout = stdout();
 
 	let msg = match panic_info.payload().downcast_ref::<&'static str>() {
@@ -785,7 +822,7 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
 		},
 	};
 
-	let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
+	let stacktrace : String = format!("{:?}", backtrace::Backtrace::new());
 
 	disable_raw_mode().unwrap();
 	execute!(stdout, LeaveAlternateScreen, DisableMouseCapture).unwrap();
@@ -803,8 +840,8 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
 	.unwrap();
 }
 
-fn update_final_process_list(app: &mut App) {
-	let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
+fn update_final_process_list(app : &mut App) {
+	let mut filtered_process_data : Vec<ConvertedProcessData> = if app.is_grouped() {
 		app.canvas_data
 			.grouped_process_data
 			.iter()
@@ -815,7 +852,8 @@ fn update_final_process_list(app: &mut App) {
 					.is_invalid_or_blank_search()
 				{
 					return true;
-				} else if let Some(matcher_result) = app.get_current_regex_matcher() {
+				}
+				else if let Some(matcher_result) = app.get_current_regex_matcher() {
 					if let Ok(matcher) = matcher_result {
 						return matcher.is_match(&process.name);
 					}
@@ -825,7 +863,8 @@ fn update_final_process_list(app: &mut App) {
 			})
 			.cloned()
 			.collect::<Vec<_>>()
-	} else {
+	}
+	else {
 		app.canvas_data
 			.process_data
 			.iter()
@@ -841,7 +880,8 @@ fn update_final_process_list(app: &mut App) {
 						if let Ok(matcher) = matcher_result {
 							if app.process_search_state.is_searching_with_pid {
 								result = matcher.is_match(&process.pid.to_string());
-							} else {
+							}
+							else {
 								result = matcher.is_match(&process.name);
 							}
 						}
@@ -850,11 +890,11 @@ fn update_final_process_list(app: &mut App) {
 
 				if result {
 					return Some(ConvertedProcessData {
-						pid: process.pid,
-						name: process.name.clone(),
-						cpu_usage: process.cpu_usage_percent,
-						mem_usage: process.mem_usage_percent,
-						group_pids: vec![process.pid],
+						pid : process.pid,
+						name : process.name.clone(),
+						cpu_usage : process.cpu_usage_percent,
+						mem_usage : process.mem_usage_percent,
+						group_pids : vec![process.pid],
 					});
 				}
 
@@ -867,7 +907,7 @@ fn update_final_process_list(app: &mut App) {
 	app.canvas_data.finalized_process_data = filtered_process_data;
 }
 
-fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &App) {
+fn sort_process_data(to_sort_vec : &mut Vec<ConvertedProcessData>, app : &App) {
 	to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(&a.name, &b.name, false));
 
 	match app.process_sorting_type {
@@ -895,7 +935,7 @@ fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &App) {
 }
 
 fn create_input_thread(
-	tx: std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
+	tx : std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
 ) {
 	thread::spawn(move || loop {
 		if poll(Duration::from_millis(20)).is_ok() {
@@ -912,7 +952,8 @@ fn create_input_thread(
 								}
 								keyboard_timer = Instant::now();
 							}
-						} else if let CEvent::Mouse(mouse) = event {
+						}
+						else if let CEvent::Mouse(mouse) = event {
 							if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
 								if tx.send(Event::MouseInput(mouse)).is_err() {
 									return;
@@ -928,9 +969,9 @@ fn create_input_thread(
 }
 
 fn create_event_thread(
-	tx: std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
-	rrx: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
-	update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
+	tx : std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
+	rrx : std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total : bool,
+	update_rate_in_milliseconds : u64, temp_type : data_harvester::temperature::TemperatureType,
 ) {
 	thread::spawn(move || {
 		let tx = tx.clone();

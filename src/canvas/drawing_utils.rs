@@ -8,10 +8,10 @@ use crate::app;
 /// `width thresholds` and `desired_widths_ratio` should be the same length.
 /// Otherwise bad things happen.
 pub fn get_variable_intrinsic_widths(
-	total_width: u16, desired_widths_ratio: &[f64], width_thresholds: &[usize],
+	total_width : u16, desired_widths_ratio : &[f64], width_thresholds : &[usize],
 ) -> (Vec<u16>, usize) {
 	let num_widths = desired_widths_ratio.len();
-	let mut resulting_widths: Vec<u16> = vec![0; num_widths];
+	let mut resulting_widths : Vec<u16> = vec![0; num_widths];
 	let mut last_index = 0;
 
 	let mut remaining_width = (total_width - (num_widths as u16 - 1)) as i32; // Required for spaces...
@@ -25,22 +25,26 @@ pub fn get_variable_intrinsic_widths(
 			// Try to take threshold, else, 0
 			if remaining_width < width_thresholds[itx] as i32 {
 				0
-			} else {
+			}
+			else {
 				remaining_width -= width_thresholds[itx] as i32;
 				width_thresholds[itx] as u16
 			}
-		} else {
+		}
+		else {
 			// Take as large as possible
 			if remaining_width < desired_width {
 				// Check the biggest chunk possible
 				if remaining_width < width_thresholds[itx] as i32 {
 					0
-				} else {
+				}
+				else {
 					let temp_width = remaining_width;
 					remaining_width = 0;
 					temp_width as u16
 				}
-			} else {
+			}
+			else {
 				remaining_width -= desired_width;
 				desired_width as u16
 			}
@@ -48,7 +52,8 @@ pub fn get_variable_intrinsic_widths(
 
 		if resulting_widths[itx] == 0 {
 			break;
-		} else {
+		}
+		else {
 			last_index += 1;
 		}
 	}
@@ -72,16 +77,16 @@ pub fn get_variable_intrinsic_widths(
 
 #[allow(dead_code, unused_variables)]
 pub fn get_search_start_position(
-	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
-	currently_selected_position: u64, is_resized: bool,
+	num_rows : u64, scroll_direction : &app::ScrollDirection, scroll_position_bar : &mut u64,
+	currently_selected_position : u64, is_resized : bool,
 ) -> u64 {
 	//TODO: [Scroll] Gotta fix this too lol
 	0
 }
 
 pub fn get_start_position(
-	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
-	currently_selected_position: u64, is_resized: bool,
+	num_rows : u64, scroll_direction : &app::ScrollDirection, scroll_position_bar : &mut u64,
+	currently_selected_position : u64, is_resized : bool,
 ) -> u64 {
 	if is_resized {
 		*scroll_position_bar = 0;
@@ -93,12 +98,14 @@ pub fn get_start_position(
 				// If, using previous_scrolled_position, we can see the element
 				// (so within that and + num_rows) just reuse the current previously scrolled position
 				*scroll_position_bar
-			} else if currently_selected_position >= num_rows {
+			}
+			else if currently_selected_position >= num_rows {
 				// Else if the current position past the last element visible in the list, omit
 				// until we can see that element
 				*scroll_position_bar = currently_selected_position - num_rows;
 				*scroll_position_bar
-			} else {
+			}
+			else {
 				// Else, if it is not past the last element visible, do not omit anything
 				0
 			}
@@ -108,10 +115,12 @@ pub fn get_start_position(
 				// If it's past the first element, then show from that element downwards
 				*scroll_position_bar = currently_selected_position;
 				*scroll_position_bar
-			} else if currently_selected_position >= *scroll_position_bar + num_rows {
+			}
+			else if currently_selected_position >= *scroll_position_bar + num_rows {
 				*scroll_position_bar = currently_selected_position - num_rows;
 				*scroll_position_bar
-			} else {
+			}
+			else {
 				// Else, don't change what our start position is from whatever it is set to!
 				*scroll_position_bar
 			}

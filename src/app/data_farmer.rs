@@ -22,11 +22,11 @@ pub type JoinedDataPoints = (Value, Vec<(TimeOffset, Value)>);
 
 #[derive(Debug, Default)]
 pub struct TimedData {
-	pub rx_data: JoinedDataPoints,
-	pub tx_data: JoinedDataPoints,
-	pub cpu_data: Vec<JoinedDataPoints>,
-	pub mem_data: JoinedDataPoints,
-	pub swap_data: JoinedDataPoints,
+	pub rx_data : JoinedDataPoints,
+	pub tx_data : JoinedDataPoints,
+	pub cpu_data : Vec<JoinedDataPoints>,
+	pub mem_data : JoinedDataPoints,
+	pub swap_data : JoinedDataPoints,
 	// Unused for now
 	// pub io_data : JoinedDataPoints
 	// pub temp_data: JoinedDataPoints,
@@ -43,48 +43,49 @@ pub struct TimedData {
 /// not the data collector.
 #[derive(Debug)]
 pub struct DataCollection {
-	pub current_instant: Instant,
-	pub timed_data_vec: Vec<(Instant, TimedData)>,
-	pub network_harvest: network::NetworkHarvest,
-	pub memory_harvest: mem::MemHarvest,
-	pub swap_harvest: mem::MemHarvest,
-	pub cpu_harvest: cpu::CPUHarvest,
-	pub process_harvest: Vec<processes::ProcessHarvest>,
-	pub disk_harvest: Vec<disks::DiskHarvest>,
-	pub io_harvest: disks::IOHarvest,
-	pub io_labels: Vec<(u64, u64)>,
-	io_prev: Vec<(u64, u64)>,
-	pub temp_harvest: Vec<temperature::TempHarvest>,
+	pub current_instant : Instant,
+	pub timed_data_vec : Vec<(Instant, TimedData)>,
+	pub network_harvest : network::NetworkHarvest,
+	pub memory_harvest : mem::MemHarvest,
+	pub swap_harvest : mem::MemHarvest,
+	pub cpu_harvest : cpu::CPUHarvest,
+	pub process_harvest : Vec<processes::ProcessHarvest>,
+	pub disk_harvest : Vec<disks::DiskHarvest>,
+	pub io_harvest : disks::IOHarvest,
+	pub io_labels : Vec<(u64, u64)>,
+	io_prev : Vec<(u64, u64)>,
+	pub temp_harvest : Vec<temperature::TempHarvest>,
 }
 
 impl Default for DataCollection {
 	fn default() -> Self {
 		DataCollection {
-			current_instant: Instant::now(),
-			timed_data_vec: Vec::default(),
-			network_harvest: network::NetworkHarvest::default(),
-			memory_harvest: mem::MemHarvest::default(),
-			swap_harvest: mem::MemHarvest::default(),
-			cpu_harvest: cpu::CPUHarvest::default(),
-			process_harvest: Vec::default(),
-			disk_harvest: Vec::default(),
-			io_harvest: disks::IOHarvest::default(),
-			io_labels: Vec::default(),
-			io_prev: Vec::default(),
-			temp_harvest: Vec::default(),
+			current_instant : Instant::now(),
+			timed_data_vec : Vec::default(),
+			network_harvest : network::NetworkHarvest::default(),
+			memory_harvest : mem::MemHarvest::default(),
+			swap_harvest : mem::MemHarvest::default(),
+			cpu_harvest : cpu::CPUHarvest::default(),
+			process_harvest : Vec::default(),
+			disk_harvest : Vec::default(),
+			io_harvest : disks::IOHarvest::default(),
+			io_labels : Vec::default(),
+			io_prev : Vec::default(),
+			temp_harvest : Vec::default(),
 		}
 	}
 }
 
 impl DataCollection {
-	pub fn clean_data(&mut self, max_time_millis: u128) {
+	pub fn clean_data(&mut self, max_time_millis : u128) {
 		let current_time = Instant::now();
 
 		let mut remove_index = 0;
 		for entry in &self.timed_data_vec {
 			if current_time.duration_since(entry.0).as_millis() >= max_time_millis {
 				remove_index += 1;
-			} else {
+			}
+			else {
 				break;
 			}
 		}
@@ -92,7 +93,7 @@ impl DataCollection {
 		self.timed_data_vec.drain(0..remove_index);
 	}
 
-	pub fn eat_data(&mut self, harvested_data: &Data) {
+	pub fn eat_data(&mut self, harvested_data : &Data) {
 		let harvested_time = harvested_data.last_collection_time;
 		let mut new_entry = TimedData::default();
 
@@ -120,7 +121,7 @@ impl DataCollection {
 	}
 
 	fn eat_memory_and_swap(
-		&mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
+		&mut self, harvested_data : &Data, harvested_time : Instant, new_entry : &mut TimedData,
 	) {
 		// Memory
 		let mem_percent = harvested_data.memory.mem_used_in_mb as f64
@@ -128,7 +129,8 @@ impl DataCollection {
 			* 100.0;
 		let mem_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
 			generate_joining_points(*time, last_pt.mem_data.0, harvested_time, mem_percent)
-		} else {
+		}
+		else {
 			Vec::new()
 		};
 		let mem_pt = (mem_percent, mem_joining_pts);
@@ -141,7 +143,8 @@ impl DataCollection {
 				* 100.0;
 			let swap_joining_pt = if let Some((time, last_pt)) = self.timed_data_vec.last() {
 				generate_joining_points(*time, last_pt.swap_data.0, harvested_time, swap_percent)
-			} else {
+			}
+			else {
 				Vec::new()
 			};
 			let swap_pt = (swap_percent, swap_joining_pt);
@@ -154,18 +157,20 @@ impl DataCollection {
 	}
 
 	fn eat_network(
-		&mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
+		&mut self, harvested_data : &Data, harvested_time : Instant, new_entry : &mut TimedData,
 	) {
 		// RX
 		let logged_rx_val = if harvested_data.network.rx as f64 > 0.0 {
 			(harvested_data.network.rx as f64).log(2.0)
-		} else {
+		}
+		else {
 			0.0
 		};
 
 		let rx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
 			generate_joining_points(*time, last_pt.rx_data.0, harvested_time, logged_rx_val)
-		} else {
+		}
+		else {
 			Vec::new()
 		};
 		let rx_pt = (logged_rx_val, rx_joining_pts);
@@ -174,13 +179,15 @@ impl DataCollection {
 		// TX
 		let logged_tx_val = if harvested_data.network.tx as f64 > 0.0 {
 			(harvested_data.network.tx as f64).log(2.0)
-		} else {
+		}
+		else {
 			0.0
 		};
 
 		let tx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
 			generate_joining_points(*time, last_pt.tx_data.0, harvested_time, logged_tx_val)
-		} else {
+		}
+		else {
 			Vec::new()
 		};
 		let tx_pt = (logged_tx_val, tx_joining_pts);
@@ -191,7 +198,7 @@ impl DataCollection {
 	}
 
 	fn eat_cpu(
-		&mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
+		&mut self, harvested_data : &Data, harvested_time : Instant, new_entry : &mut TimedData,
 	) {
 		// Note this only pre-calculates the data points - the names will be
 		// within the local copy of cpu_harvest.  Since it's all sequential
@@ -204,7 +211,8 @@ impl DataCollection {
 					harvested_time,
 					cpu.cpu_usage,
 				)
-			} else {
+			}
+			else {
 				Vec::new()
 			};
 
@@ -215,12 +223,12 @@ impl DataCollection {
 		self.cpu_harvest = harvested_data.cpu.clone();
 	}
 
-	fn eat_temp(&mut self, harvested_data: &Data) {
+	fn eat_temp(&mut self, harvested_data : &Data) {
 		// TODO: [PO] To implement
 		self.temp_harvest = harvested_data.temperature_sensors.clone();
 	}
 
-	fn eat_disks(&mut self, harvested_data: &Data, harvested_time: Instant) {
+	fn eat_disks(&mut self, harvested_data : &Data, harvested_time : Instant) {
 		// TODO: [PO] To implement
 
 		let time_since_last_harvest = harvested_time
@@ -237,7 +245,8 @@ impl DataCollection {
 					if self.io_labels.len() <= itx {
 						self.io_prev.push((io_r_pt, io_w_pt));
 						self.io_labels.push((0, 0));
-					} else {
+					}
+					else {
 						let r_rate = ((io_r_pt - self.io_prev[itx].0) as f64
 							/ time_since_last_harvest)
 							.round() as u64;
@@ -256,21 +265,22 @@ impl DataCollection {
 		self.io_harvest = harvested_data.io.clone();
 	}
 
-	fn eat_proc(&mut self, harvested_data: &Data) {
+	fn eat_proc(&mut self, harvested_data : &Data) {
 		self.process_harvest = harvested_data.list_of_processes.clone();
 	}
 }
 
 pub fn generate_joining_points(
-	start_x: Instant, start_y: f64, end_x: Instant, end_y: f64,
+	start_x : Instant, start_y : f64, end_x : Instant, end_y : f64,
 ) -> Vec<(TimeOffset, Value)> {
-	let mut points: Vec<(TimeOffset, Value)> = Vec::new();
+	let mut points : Vec<(TimeOffset, Value)> = Vec::new();
 
 	// Convert time floats first:
 	let tmp_time_diff = (end_x).duration_since(start_x).as_millis() as f64;
 	let time_difference = if tmp_time_diff == 0.0 {
 		0.001
-	} else {
+	}
+	else {
 		tmp_time_diff
 	};
 	let value_difference = end_y - start_y;

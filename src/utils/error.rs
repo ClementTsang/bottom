@@ -23,7 +23,7 @@ pub enum BottomError {
 }
 
 impl std::fmt::Display for BottomError {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f : &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match *self {
 			BottomError::InvalidIO(ref message) => {
 				write!(f, "Encountered an IO exception: {}", message)
@@ -47,43 +47,43 @@ impl std::fmt::Display for BottomError {
 }
 
 impl From<std::io::Error> for BottomError {
-	fn from(err: std::io::Error) -> Self {
+	fn from(err : std::io::Error) -> Self {
 		BottomError::InvalidIO(err.to_string())
 	}
 }
 
 impl From<heim::Error> for BottomError {
-	fn from(err: heim::Error) -> Self {
+	fn from(err : heim::Error) -> Self {
 		BottomError::InvalidHeim(err.to_string())
 	}
 }
 
 impl From<crossterm::ErrorKind> for BottomError {
-	fn from(err: crossterm::ErrorKind) -> Self {
+	fn from(err : crossterm::ErrorKind) -> Self {
 		BottomError::CrosstermError(err.to_string())
 	}
 }
 
 impl From<std::num::ParseIntError> for BottomError {
-	fn from(err: std::num::ParseIntError) -> Self {
+	fn from(err : std::num::ParseIntError) -> Self {
 		BottomError::InvalidArg(err.to_string())
 	}
 }
 
 impl From<std::string::String> for BottomError {
-	fn from(err: std::string::String) -> Self {
+	fn from(err : std::string::String) -> Self {
 		BottomError::GenericError(err)
 	}
 }
 
 impl From<toml::de::Error> for BottomError {
-	fn from(err: toml::de::Error) -> Self {
+	fn from(err : toml::de::Error) -> Self {
 		BottomError::ConfigError(err.to_string())
 	}
 }
 
 impl From<fern::InitError> for BottomError {
-	fn from(err: fern::InitError) -> Self {
+	fn from(err : fern::InitError) -> Self {
 		BottomError::FernError(err.to_string())
 	}
 }

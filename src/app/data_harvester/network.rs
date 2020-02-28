@@ -1,15 +1,14 @@
 use futures::StreamExt;
-use heim::net;
-use heim::units::information::byte;
+use heim::{net, units::information::byte};
 use std::time::Instant;
 use sysinfo::{NetworkExt, System, SystemExt};
 
 #[derive(Default, Clone, Debug)]
 pub struct NetworkHarvest {
-	pub rx: u64,
-	pub tx: u64,
-	pub total_rx: u64,
-	pub total_tx: u64,
+	pub rx : u64,
+	pub tx : u64,
+	pub total_rx : u64,
+	pub total_tx : u64,
 }
 
 impl NetworkHarvest {
@@ -20,12 +19,12 @@ impl NetworkHarvest {
 }
 
 pub async fn get_network_data(
-	sys: &System, prev_net_access_time: Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
-	curr_time: Instant,
+	sys : &System, prev_net_access_time : Instant, prev_net_rx : &mut u64, prev_net_tx : &mut u64,
+	curr_time : Instant,
 ) -> NetworkHarvest {
 	let mut io_data = net::io_counters();
-	let mut total_rx: u64 = 0;
-	let mut total_tx: u64 = 0;
+	let mut total_rx : u64 = 0;
+	let mut total_tx : u64 = 0;
 
 	if cfg!(target_os = "windows") {
 		let networks = sys.get_networks();
@@ -33,7 +32,8 @@ pub async fn get_network_data(
 			total_rx += network.get_total_income();
 			total_tx += network.get_total_outcome();
 		}
-	} else {
+	}
+	else {
 		while let Some(io) = io_data.next().await {
 			if let Ok(io) = io {
 				total_rx += io.bytes_recv().get::<byte>();

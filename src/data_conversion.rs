@@ -15,38 +15,39 @@ use std::collections::HashMap;
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
-	pub rx: Vec<(f64, f64)>,
-	pub tx: Vec<(f64, f64)>,
-	pub rx_display: String,
-	pub tx_display: String,
-	pub total_rx_display: String,
-	pub total_tx_display: String,
+	pub rx : Vec<(f64, f64)>,
+	pub tx : Vec<(f64, f64)>,
+	pub rx_display : String,
+	pub tx_display : String,
+	pub total_rx_display : String,
+	pub total_tx_display : String,
 }
 
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedProcessData {
-	pub pid: u32,
-	pub name: String,
-	pub cpu_usage: f64,
-	pub mem_usage: f64,
-	pub group_pids: Vec<u32>,
+	pub pid : u32,
+	pub name : String,
+	pub cpu_usage : f64,
+	pub mem_usage : f64,
+	pub group_pids : Vec<u32>,
 }
 
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedCpuData {
-	pub cpu_name: String,
-	pub cpu_data: Vec<(f64, f64)>,
+	pub cpu_name : String,
+	pub cpu_data : Vec<(f64, f64)>,
 }
 
-pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
-	let mut sensor_vector: Vec<Vec<String>> = Vec::new();
+pub fn convert_temp_row(app : &App) -> Vec<Vec<String>> {
+	let mut sensor_vector : Vec<Vec<String>> = Vec::new();
 
 	let current_data = &app.data_collection;
 	let temp_type = &app.app_config_fields.temperature_type;
 
 	if current_data.temp_harvest.is_empty() {
 		sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()])
-	} else {
+	}
+	else {
 		for sensor in &current_data.temp_harvest {
 			sensor_vector.push(vec![
 				sensor.component_name.to_string(),
@@ -63,8 +64,8 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
 	sensor_vector
 }
 
-pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<String>> {
-	let mut disk_vector: Vec<Vec<String>> = Vec::new();
+pub fn convert_disk_row(current_data : &data_farmer::DataCollection) -> Vec<Vec<String>> {
+	let mut disk_vector : Vec<Vec<String>> = Vec::new();
 	for (itx, disk) in current_data.disk_harvest.iter().enumerate() {
 		let io_activity = if current_data.io_labels.len() > itx {
 			let converted_read = get_simple_byte_values(current_data.io_labels[itx].0, false);
@@ -73,7 +74,8 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 				format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
 				format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
 			)
-		} else {
+		}
+		else {
 			("0B/s".to_string(), "0B/s".to_string())
 		};
 
@@ -100,14 +102,14 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 }
 
 pub fn convert_cpu_data_points(
-	show_avg_cpu: bool, current_data: &data_farmer::DataCollection,
+	show_avg_cpu : bool, current_data : &data_farmer::DataCollection,
 ) -> Vec<ConvertedCpuData> {
-	let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
+	let mut cpu_data_vector : Vec<ConvertedCpuData> = Vec::new();
 	let current_time = current_data.current_instant;
 	let cpu_listing_offset = if show_avg_cpu { 0 } else { 1 };
 
 	for (time, data) in &current_data.timed_data_vec {
-		let time_from_start: f64 = (TIME_STARTS_FROM as f64
+		let time_from_start : f64 = (TIME_STARTS_FROM as f64
 			- current_time.duration_since(*time).as_millis() as f64)
 			.floor();
 
@@ -141,12 +143,12 @@ pub fn convert_cpu_data_points(
 	cpu_data_vector
 }
 
-pub fn convert_mem_data_points(current_data: &data_farmer::DataCollection) -> Vec<(f64, f64)> {
-	let mut result: Vec<(f64, f64)> = Vec::new();
+pub fn convert_mem_data_points(current_data : &data_farmer::DataCollection) -> Vec<(f64, f64)> {
+	let mut result : Vec<(f64, f64)> = Vec::new();
 	let current_time = current_data.current_instant;
 
 	for (time, data) in &current_data.timed_data_vec {
-		let time_from_start: f64 = (TIME_STARTS_FROM as f64
+		let time_from_start : f64 = (TIME_STARTS_FROM as f64
 			- current_time.duration_since(*time).as_millis() as f64)
 			.floor();
 
@@ -162,12 +164,12 @@ pub fn convert_mem_data_points(current_data: &data_farmer::DataCollection) -> Ve
 	result
 }
 
-pub fn convert_swap_data_points(current_data: &data_farmer::DataCollection) -> Vec<(f64, f64)> {
-	let mut result: Vec<(f64, f64)> = Vec::new();
+pub fn convert_swap_data_points(current_data : &data_farmer::DataCollection) -> Vec<(f64, f64)> {
+	let mut result : Vec<(f64, f64)> = Vec::new();
 	let current_time = current_data.current_instant;
 
 	for (time, data) in &current_data.timed_data_vec {
-		let time_from_start: f64 = (TIME_STARTS_FROM as f64
+		let time_from_start : f64 = (TIME_STARTS_FROM as f64
 			- current_time.duration_since(*time).as_millis() as f64)
 			.floor();
 
@@ -183,10 +185,11 @@ pub fn convert_swap_data_points(current_data: &data_farmer::DataCollection) -> V
 	result
 }
 
-pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String, String) {
+pub fn convert_mem_labels(current_data : &data_farmer::DataCollection) -> (String, String) {
 	let mem_label = if current_data.memory_harvest.mem_total_in_mb == 0 {
 		"".to_string()
-	} else {
+	}
+	else {
 		"RAM:".to_string()
 			+ &format!(
 				"{:3.0}%",
@@ -202,7 +205,8 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
 
 	let swap_label = if current_data.swap_harvest.mem_total_in_mb == 0 {
 		"".to_string()
-	} else {
+	}
+	else {
 		"SWP:".to_string()
 			+ &format!(
 				"{:3.0}%",
@@ -220,14 +224,14 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
 }
 
 pub fn convert_network_data_points(
-	current_data: &data_farmer::DataCollection,
+	current_data : &data_farmer::DataCollection,
 ) -> ConvertedNetworkData {
-	let mut rx: Vec<(f64, f64)> = Vec::new();
-	let mut tx: Vec<(f64, f64)> = Vec::new();
+	let mut rx : Vec<(f64, f64)> = Vec::new();
+	let mut tx : Vec<(f64, f64)> = Vec::new();
 
 	let current_time = current_data.current_instant;
 	for (time, data) in &current_data.timed_data_vec {
-		let time_from_start: f64 = (TIME_STARTS_FROM as f64
+		let time_from_start : f64 = (TIME_STARTS_FROM as f64
 			- current_time.duration_since(*time).as_millis() as f64)
 			.floor();
 
@@ -246,10 +250,10 @@ pub fn convert_network_data_points(
 		tx.push((time_from_start, data.tx_data.0));
 	}
 
-	let total_rx_converted_result: (f64, String);
-	let rx_converted_result: (f64, String);
-	let total_tx_converted_result: (f64, String);
-	let tx_converted_result: (f64, String);
+	let total_rx_converted_result : (f64, String);
+	let rx_converted_result : (f64, String);
+	let total_tx_converted_result : (f64, String);
+	let tx_converted_result : (f64, String);
 
 	rx_converted_result = get_exact_byte_values(current_data.network_harvest.rx, false);
 	total_rx_converted_result = get_exact_byte_values(current_data.network_harvest.total_rx, false);
@@ -278,12 +282,12 @@ pub fn convert_network_data_points(
 }
 
 pub fn convert_process_data(
-	current_data: &data_farmer::DataCollection,
+	current_data : &data_farmer::DataCollection,
 ) -> (HashMap<u32, ProcessHarvest>, Vec<ConvertedProcessData>) {
-	let mut single_list: HashMap<u32, ProcessHarvest> = HashMap::new();
+	let mut single_list : HashMap<u32, ProcessHarvest> = HashMap::new();
 
 	// cpu, mem, pids
-	let mut grouped_hashmap: HashMap<String, (u32, f64, f64, Vec<u32>)> =
+	let mut grouped_hashmap : HashMap<String, (u32, f64, f64, Vec<u32>)> =
 		std::collections::HashMap::new();
 
 	// Go through every single process in the list... and build a hashmap + single list
@@ -302,16 +306,16 @@ pub fn convert_process_data(
 		single_list.insert(process.pid, process.clone());
 	}
 
-	let grouped_list: Vec<ConvertedProcessData> = grouped_hashmap
+	let grouped_list : Vec<ConvertedProcessData> = grouped_hashmap
 		.iter()
 		.map(|(name, process_details)| {
 			let p = process_details.clone();
 			ConvertedProcessData {
-				pid: p.0,
-				name: name.to_string(),
-				cpu_usage: p.1,
-				mem_usage: p.2,
-				group_pids: p.3,
+				pid : p.0,
+				name : name.to_string(),
+				cpu_usage : p.1,
+				mem_usage : p.2,
+				group_pids : p.3,
 			}
 		})
 		.collect::<Vec<_>>();
