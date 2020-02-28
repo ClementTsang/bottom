@@ -54,10 +54,12 @@ Installation methods on a per-distro basis:
 
 #### Arch Linux
 
-You can get the release versions from the [AUR](https://aur.archlinux.org/packages/bottom/) by installing `bottom`. For example, using `yay`:
+You can get the release versions from the AUR by installing [`bottom`](https://aur.archlinux.org/packages/bottom/) or [`bottom-bin`](https://aur.archlinux.org/packages/bottom-bin/). For example, using `yay`:
 
 ```bash
 yay bottom
+#Or
+yay bottom-bin
 ```
 
 #### Debian (and anything based on it, like Ubuntu)
@@ -204,7 +206,7 @@ Note that `q` is disabled while in the search widget.
 
 ## Contribution
 
-Contribution is welcome!  Just submit a PR.
+Contribution is welcome! Just submit a PR.
 
 If you spot any issue with nobody assigned to it, or it seems like no work has started on it, feel free to try and do it!
 
