@@ -11,4 +11,3 @@ reorder_modules = true
 reorder_impl_items = true
 tab_spaces = 4
 format_strings = true
-space_after_colon = true
