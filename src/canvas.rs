@@ -4,7 +4,7 @@ use crate::{
 	data_conversion::{ConvertedCpuData, ConvertedProcessData},
 	utils::error,
 };
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::collections::HashMap;
 use tui::{
 	backend,
@@ -1162,27 +1162,31 @@ impl Painter {
 		&self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
 	) {
 		let width = max(0, draw_loc.width as i64 - 34) as u64; // TODO: [REFACTOR] Hard coding this is terrible.
-		let query = app_state.get_current_search_query().as_str();
-		let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true).rev(); // Reverse due to us wanting to draw from back -> front
 		let cursor_position = app_state.get_cursor_position();
-		let right_border = min(UnicodeWidthStr::width(query), width as usize);
+		let char_cursor_position = app_state.get_char_cursor_position();
 
-		let mut itx = 0;
-		let mut query_with_cursor: Vec<Text<'_>> = if let app::WidgetPosition::ProcessSearch =
-			app_state.current_widget_selected
-		{
-			let mut res = Vec::new();
-			if cursor_position >= query.len() {
-				res.push(Text::styled(
-					" ",
-					self.colours.currently_selected_text_style,
-				))
-			}
+		let start_position: usize = get_search_start_position(
+			width as usize,
+			&app_state.process_search_state.search_state.cursor_direction,
+			&mut app_state.process_search_state.search_state.cursor_bar,
+			char_cursor_position,
+			app_state.is_resized,
+		);
 
-			res.extend(
-				grapheme_indices
+		let query = app_state.get_current_search_query().as_str();
+		debug!(
+			"query: {}, width: {}, cursor: {}, start position: {}",
+			query, width, char_cursor_position, start_position
+		);
+		let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
+		let mut current_grapheme_posn = 0;
+		let query_with_cursor: Vec<Text<'_>> =
+			if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
+				let mut res = grapheme_indices
 					.filter_map(|grapheme| {
-						if itx >= right_border {
+						current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
+
+						if current_grapheme_posn <= start_position {
 							None
 						} else {
 							let styled = if grapheme.0 == cursor_position {
@@ -1190,32 +1194,34 @@ impl Painter {
 							} else {
 								Text::styled(grapheme.1, self.colours.text_style)
 							};
-							itx += UnicodeWidthStr::width(grapheme.1);
 							Some(styled)
 						}
 					})
-					.collect::<Vec<_>>(),
-			);
+					.collect::<Vec<_>>();
 
-			res
-		} else {
-			// This is easier - we just need to get a range of graphemes, rather than
-			// dealing with possibly inserting a cursor (as none is shown!)
-			grapheme_indices
-				.filter_map(|grapheme| {
-					if itx >= right_border {
-						None
-					} else {
-						let styled = Text::styled(grapheme.1, self.colours.text_style);
-						itx += UnicodeWidthStr::width(grapheme.1);
-						Some(styled)
-					}
-				})
-				.collect::<Vec<_>>()
-		};
+				if cursor_position >= query.len() {
+					res.push(Text::styled(
+						" ",
+						self.colours.currently_selected_text_style,
+					))
+				}
 
-		// I feel like this is most definitely not the efficient way of doing this but eh
-		query_with_cursor.reverse();
+				res
+			} else {
+				// This is easier - we just need to get a range of graphemes, rather than
+				// dealing with possibly inserting a cursor (as none is shown!)
+				grapheme_indices
+					.filter_map(|grapheme| {
+						current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
+						if current_grapheme_posn <= start_position {
+							None
+						} else {
+							let styled = Text::styled(grapheme.1, self.colours.text_style);
+							Some(styled)
+						}
+					})
+					.collect::<Vec<_>>()
+			};
 
 		let mut search_text = vec![if app_state.is_grouped() {
 			Text::styled("Search by Name: ", self.colours.table_header_style)

@@ -8,8 +8,8 @@ use data_farmer::*;
 use crate::{canvas, constants, utils::error::Result};
 mod process_killer;
 
-use unicode_segmentation::{GraphemeCursor};
-use unicode_width::UnicodeWidthStr;
+use unicode_segmentation::GraphemeCursor;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
@@ -33,7 +33,7 @@ pub enum ScrollDirection {
 }
 
 #[derive(Debug)]
-pub enum SearchDirection {
+pub enum CursorDirection {
 	LEFT,
 	RIGHT,
 }
@@ -73,6 +73,10 @@ pub struct AppSearchState {
 	pub is_blank_search: bool,
 	pub is_invalid_search: bool,
 	pub grapheme_cursor: GraphemeCursor,
+	pub cursor_direction: CursorDirection,
+	pub cursor_bar: usize,
+	/// This represents the position in terms of CHARACTERS, not graphemes
+	pub char_cursor_position: usize,
 }
 
 impl Default for AppSearchState {
@@ -84,11 +88,21 @@ impl Default for AppSearchState {
 			is_invalid_search: false,
 			is_blank_search: true,
 			grapheme_cursor: GraphemeCursor::new(0, 0, true),
+			cursor_direction: CursorDirection::RIGHT,
+			cursor_bar: 0,
+			char_cursor_position: 0,
 		}
 	}
 }
 
 impl AppSearchState {
+	/// Returns a reset but still enabled app search state
+	pub fn reset() -> Self {
+		let mut app_search_state = AppSearchState::default();
+		app_search_state.is_enabled = true;
+		app_search_state
+	}
+
 	pub fn is_invalid_or_blank_search(&self) -> bool {
 		self.is_blank_search || self.is_invalid_search
 	}
@@ -549,6 +563,10 @@ impl App {
 			.cur_cursor()
 	}
 
+	pub fn get_char_cursor_position(&self) -> usize {
+		self.process_search_state.search_state.char_cursor_position
+	}
+
 	/// One of two functions allowed to run while in a dialog...
 	pub fn on_enter(&mut self) {
 		if self.delete_dialog_state.is_showing_dd {
@@ -620,19 +638,14 @@ impl App {
 	#[allow(unused_variables)]
 	pub fn skip_word_backspace(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			if self.process_search_state.search_state.is_enabled {
-			}
+			if self.process_search_state.search_state.is_enabled {}
 		}
 	}
 
 	pub fn clear_search(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-			self.process_search_state.search_state.grapheme_cursor =
-				GraphemeCursor::new(0, 0, true);
-			self.process_search_state.search_state.current_search_query = String::default();
-			self.process_search_state.search_state.is_blank_search = true;
-			self.process_search_state.search_state.is_invalid_search = false;
 			self.update_process_gui = true;
+			self.process_search_state.search_state = AppSearchState::reset();
 		}
 	}
 
@@ -663,7 +676,8 @@ impl App {
 			if self.process_search_state.search_state.is_enabled && self.get_cursor_position() > 0 {
 				self.search_walk_back(self.get_cursor_position());
 
-				self.process_search_state
+				let removed_char = self
+					.process_search_state
 					.search_state
 					.current_search_query
 					.remove(self.get_cursor_position());
@@ -676,6 +690,9 @@ impl App {
 						.len(),
 					true,
 				);
+
+				self.process_search_state.search_state.char_cursor_position -=
+					UnicodeWidthChar::width(removed_char).unwrap_or(0);
 
 				self.update_regex();
 				self.update_process_gui = true;
@@ -710,7 +727,15 @@ impl App {
 	pub fn on_left_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
+				let prev_cursor = self.get_cursor_position();
 				self.search_walk_back(self.get_cursor_position());
+				if self.get_cursor_position() < prev_cursor {
+					let str_slice = &self.process_search_state.search_state.current_search_query
+						[self.get_cursor_position()..prev_cursor];
+					self.process_search_state.search_state.char_cursor_position -=
+						UnicodeWidthStr::width(str_slice);
+					self.process_search_state.search_state.cursor_direction = CursorDirection::LEFT;
+				}
 			}
 		} else if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
 			self.delete_dialog_state.is_on_yes = true;
@@ -720,7 +745,16 @@ impl App {
 	pub fn on_right_key(&mut self) {
 		if !self.is_in_dialog() {
 			if let WidgetPosition::ProcessSearch = self.current_widget_selected {
+				let prev_cursor = self.get_cursor_position();
 				self.search_walk_forward(self.get_cursor_position());
+				if self.get_cursor_position() > prev_cursor {
+					let str_slice = &self.process_search_state.search_state.current_search_query
+						[prev_cursor..self.get_cursor_position()];
+					self.process_search_state.search_state.char_cursor_position +=
+						UnicodeWidthStr::width(str_slice);
+					self.process_search_state.search_state.cursor_direction =
+						CursorDirection::RIGHT;
+				}
 			}
 		} else if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
 			self.delete_dialog_state.is_on_yes = false;
@@ -738,6 +772,8 @@ impl App {
 						.len(),
 					true,
 				);
+				self.process_search_state.search_state.char_cursor_position = 0;
+				self.process_search_state.search_state.cursor_direction = CursorDirection::LEFT;
 			}
 		}
 	}
@@ -756,6 +792,14 @@ impl App {
 						.len(),
 					true,
 				);
+				self.process_search_state.search_state.char_cursor_position =
+					UnicodeWidthStr::width(
+						self.process_search_state
+							.search_state
+							.current_search_query
+							.as_str(),
+					);
+				self.process_search_state.search_state.cursor_direction = CursorDirection::RIGHT;
 			}
 		}
 	}
@@ -840,6 +884,10 @@ impl App {
 						true,
 					);
 					self.search_walk_forward(self.get_cursor_position());
+
+					self.process_search_state.search_state.char_cursor_position +=
+						UnicodeWidthChar::width(caught_char).unwrap_or(0);
+
 					self.update_regex();
 					self.update_process_gui = true;
 				}
