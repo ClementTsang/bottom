@@ -317,7 +317,7 @@ fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 fn handle_key_event_or_break(
 	event: KeyEvent, app: &mut App, rtx: &std::sync::mpsc::Sender<ResetEvent>,
 ) -> bool {
-	//debug!("KeyEvent: {:?}", event);
+	// debug!("KeyEvent: {:?}", event);
 
 	// TODO: [PASTE] Note that this does NOT support some emojis like flags.  This is due to us
 	// catching PER CHARACTER right now WITH A forced throttle!  This means multi-char will not work.
@@ -399,8 +399,7 @@ fn handle_key_event_or_break(
 				KeyCode::Char('u') => app.clear_search(),
 				KeyCode::Char('a') => app.skip_cursor_beginning(),
 				KeyCode::Char('e') => app.skip_cursor_end(),
-				// TODO: [FEATURE] Ctrl-backspace
-				// KeyCode::Backspace => app.on_skip_backspace(),
+				// KeyCode::Backspace => app.skip_word_backspace(),
 				_ => {}
 			}
 		} else if let KeyModifiers::SHIFT = event.modifiers {

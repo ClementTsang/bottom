@@ -8,7 +8,7 @@ use data_farmer::*;
 use crate::{canvas, constants, utils::error::Result};
 mod process_killer;
 
-use unicode_segmentation::GraphemeCursor;
+use unicode_segmentation::{GraphemeCursor};
 use unicode_width::UnicodeWidthStr;
 
 const MAX_SEARCH_LENGTH: usize = 200;
@@ -618,15 +618,9 @@ impl App {
 
 	/// Deletes an entire word till the next space or end
 	#[allow(unused_variables)]
-	pub fn on_skip_backspace(&mut self) {
+	pub fn skip_word_backspace(&mut self) {
 		if let WidgetPosition::ProcessSearch = self.current_widget_selected {
 			if self.process_search_state.search_state.is_enabled {
-				// Starting from the current position, work backwards on each char until we hit whitespace
-				let search_chars = self
-					.process_search_state
-					.search_state
-					.current_search_query
-					.chars();
 			}
 		}
 	}

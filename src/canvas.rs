@@ -1166,11 +1166,6 @@ impl Painter {
 		let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true).rev(); // Reverse due to us wanting to draw from back -> front
 		let cursor_position = app_state.get_cursor_position();
 		let right_border = min(UnicodeWidthStr::width(query), width as usize);
-		debug!(
-			"Width: {}, query length: {}",
-			width,
-			UnicodeWidthStr::width(query)
-		);
 
 		let mut itx = 0;
 		let mut query_with_cursor: Vec<Text<'_>> = if let app::WidgetPosition::ProcessSearch =
