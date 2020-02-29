@@ -13,28 +13,28 @@ pub const STANDARD_FOURTH_COLOUR: Color = Color::LightGreen;
 pub const AVG_COLOUR: Color = Color::Red;
 
 lazy_static! {
-	static ref COLOR_NAME_LOOKUP_TABLE: HashMap<&'static str, Color> = [
-		("reset", Color::Reset),
-		("black", Color::Black),
-		("red", Color::Red),
-		("green", Color::Green),
-		("yellow", Color::Yellow),
-		("blue", Color::Blue),
-		("magenta", Color::Magenta),
-		("cyan", Color::Cyan),
-		("gray", Color::Gray),
-		("darkgray", Color::DarkGray),
-		("lightred", Color::LightRed),
-		("lightgreen", Color::LightGreen),
-		("lightyellow", Color::LightYellow),
-		("lightblue", Color::LightBlue),
-		("lightmagenta", Color::LightMagenta),
-		("lightcyan", Color::LightCyan),
-		("white", Color::White)
-	]
-	.iter()
-	.copied()
-	.collect();
+    static ref COLOR_NAME_LOOKUP_TABLE: HashMap<&'static str, Color> = [
+        ("reset", Color::Reset),
+        ("black", Color::Black),
+        ("red", Color::Red),
+        ("green", Color::Green),
+        ("yellow", Color::Yellow),
+        ("blue", Color::Blue),
+        ("magenta", Color::Magenta),
+        ("cyan", Color::Cyan),
+        ("gray", Color::Gray),
+        ("darkgray", Color::DarkGray),
+        ("lightred", Color::LightRed),
+        ("lightgreen", Color::LightGreen),
+        ("lightyellow", Color::LightYellow),
+        ("lightblue", Color::LightBlue),
+        ("lightmagenta", Color::LightMagenta),
+        ("lightcyan", Color::LightCyan),
+        ("white", Color::White)
+    ]
+    .iter()
+    .copied()
+    .collect();
 }
 
 /// Generates random colours.  Strategy found from

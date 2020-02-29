@@ -37,13 +37,15 @@ pub async fn get_temperature_data(
                     temperature: match temp_type {
                         TemperatureType::Celsius => sensor
                             .current()
-                            .get::<thermodynamic_temperature::degree_celsius>(),
+                            .get::<thermodynamic_temperature::degree_celsius>(
+                        ),
                         TemperatureType::Kelvin => {
                             sensor.current().get::<thermodynamic_temperature::kelvin>()
                         }
                         TemperatureType::Fahrenheit => sensor
                             .current()
-                            .get::<thermodynamic_temperature::degree_fahrenheit>(),
+                            .get::<thermodynamic_temperature::degree_fahrenheit>(
+                        ),
                     },
                 });
             }

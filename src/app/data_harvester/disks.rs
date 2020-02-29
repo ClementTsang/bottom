@@ -68,13 +68,13 @@ pub async fn get_disk_usage_list() -> crate::utils::error::Result<Vec<DiskHarves
                     .mount_point()
                     .to_str()
                     .unwrap_or("Name Unavailable"))
-                    .to_string(),
+                .to_string(),
                 name: (partition
                     .device()
                     .unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable"))
                     .to_str()
                     .unwrap_or("Name Unavailable"))
-                    .to_string(),
+                .to_string(),
             });
         }
     }

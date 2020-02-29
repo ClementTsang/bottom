@@ -609,11 +609,11 @@ impl App {
             WidgetPosition::ProcessSearch => {
                 if self.process_search_state.search_state.is_enabled
                     && self.get_cursor_position()
-                    < self
-                    .process_search_state
-                    .search_state
-                    .current_search_query
-                    .len()
+                        < self
+                            .process_search_state
+                            .search_state
+                            .current_search_query
+                            .len()
                 {
                     self.process_search_state
                         .search_state
@@ -712,7 +712,8 @@ impl App {
 
     pub fn on_up_key(&mut self) {
         if !self.is_in_dialog() {
-            if let WidgetPosition::ProcessSearch = self.current_widget_selected {} else {
+            if let WidgetPosition::ProcessSearch = self.current_widget_selected {
+            } else {
                 self.decrement_position_count();
             }
         }
@@ -720,7 +721,8 @@ impl App {
 
     pub fn on_down_key(&mut self) {
         if !self.is_in_dialog() {
-            if let WidgetPosition::ProcessSearch = self.current_widget_selected {} else {
+            if let WidgetPosition::ProcessSearch = self.current_widget_selected {
+            } else {
                 self.increment_position_count();
             }
         }
@@ -858,7 +860,8 @@ impl App {
             let current_key_press_inst = Instant::now();
             if current_key_press_inst
                 .duration_since(self.last_key_press)
-                .as_millis() > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS
+                .as_millis()
+                > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS
             {
                 self.reset_multi_tap_keys();
             }
@@ -1172,12 +1175,14 @@ impl App {
                 WidgetPosition::Process => {
                     self.app_scroll_positions
                         .process_scroll_state
-                        .current_scroll_position = self.canvas_data.finalized_process_data.len() as u64 - 1
+                        .current_scroll_position =
+                        self.canvas_data.finalized_process_data.len() as u64 - 1
                 }
                 WidgetPosition::Temp => {
                     self.app_scroll_positions
                         .temp_scroll_state
-                        .current_scroll_position = self.canvas_data.temp_sensor_data.len() as u64 - 1
+                        .current_scroll_position =
+                        self.canvas_data.temp_sensor_data.len() as u64 - 1
                 }
                 WidgetPosition::Disk => {
                     self.app_scroll_positions
@@ -1247,7 +1252,7 @@ impl App {
 
         if current_posn as i64 + num_to_change_by >= 0
             && current_posn as i64 + num_to_change_by
-            < self.canvas_data.finalized_process_data.len() as i64
+                < self.canvas_data.finalized_process_data.len() as i64
         {
             self.app_scroll_positions
                 .process_scroll_state
@@ -1263,7 +1268,7 @@ impl App {
 
         if current_posn as i64 + num_to_change_by >= 0
             && current_posn as i64 + num_to_change_by
-            < self.canvas_data.temp_sensor_data.len() as i64
+                < self.canvas_data.temp_sensor_data.len() as i64
         {
             self.app_scroll_positions
                 .temp_scroll_state
