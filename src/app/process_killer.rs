@@ -1,16 +1,17 @@
-/// This file is meant to house (OS specific) implementations on how to kill processes.
-use crate::utils::error::BottomError;
 use std::process::Command;
 
 // Copied from SO: https://stackoverflow.com/a/55231715
 #[cfg(target_os = "windows")]
 use winapi::{
-	shared::{minwindef::DWORD, ntdef::HANDLE},
-	um::{
-		processthreadsapi::{OpenProcess, TerminateProcess},
-		winnt::{PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE},
+    shared::{minwindef::DWORD, ntdef::HANDLE},
+    um::{
+        processthreadsapi::{OpenProcess, TerminateProcess},
+        winnt::{PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE},
 	},
 };
+
+/// This file is meant to house (OS specific) implementations on how to kill processes.
+use crate::utils::error::BottomError;
 
 #[cfg(target_os = "windows")]
 struct Process(HANDLE);

@@ -1,26 +1,13 @@
 #![warn(rust_2018_idioms)]
 
 #[macro_use]
-extern crate log;
-#[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate futures;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
-extern crate futures;
-
-use serde::Deserialize;
-
-use crossterm::{
-	event::{
-		poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
-		KeyModifiers, MouseEvent,
-	},
-	execute,
-	style::Print,
-	terminal::LeaveAlternateScreen,
-	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
-};
+extern crate log;
 
 use std::{
 	boxed::Box,
@@ -30,7 +17,27 @@ use std::{
 	thread,
 	time::{Duration, Instant},
 };
+
+use crossterm::{
+	event::{
+		DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
+		poll, read,
+	},
+	execute,
+	style::Print,
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
+	terminal::LeaveAlternateScreen,
+};
+use serde::Deserialize;
 use tui::{backend::CrosstermBackend, Terminal};
+
+use app::{
+	App,
+	data_harvester::{self, processes::ProcessSorting},
+};
+use constants::*;
+use data_conversion::*;
+use utils::error::{self, BottomError};
 
 pub mod app;
 mod utils {
@@ -41,14 +48,6 @@ mod utils {
 mod canvas;
 mod constants;
 mod data_conversion;
-
-use app::{
-	data_harvester::{self, processes::ProcessSorting},
-	App,
-};
-use constants::*;
-use data_conversion::*;
-use utils::error::{self, BottomError};
 
 enum Event<I, J> {
 	KeyInput(I),

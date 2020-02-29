@@ -1,8 +1,10 @@
-mod colour_utils;
-use colour_utils::*;
 use tui::style::{Color, Modifier, Style};
 
+use colour_utils::*;
+
 use crate::{constants::*, utils::error};
+
+mod colour_utils;
 
 pub struct CanvasColours {
 	pub currently_selected_text_colour: Color,

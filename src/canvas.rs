@@ -1,27 +1,29 @@
-use crate::{
-	app::{self, data_harvester::processes::ProcessHarvest, WidgetPosition},
-	constants::*,
-	data_conversion::{ConvertedCpuData, ConvertedProcessData},
-	utils::error,
-};
 use std::cmp::max;
 use std::collections::HashMap;
+
 use tui::{
-	backend,
-	layout::{Alignment, Constraint, Direction, Layout, Rect},
-	style::{Color, Style},
-	terminal::Frame,
-	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
-	Terminal,
+    backend,
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
+    Terminal,
+    terminal::Frame,
+    widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
 };
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
-mod canvas_colours;
 use canvas_colours::*;
-
-mod drawing_utils;
 use drawing_utils::*;
+
+use crate::{
+    app::{self, data_harvester::processes::ProcessHarvest, WidgetPosition},
+    constants::*,
+    data_conversion::{ConvertedCpuData, ConvertedProcessData},
+    utils::error,
+};
+
+mod canvas_colours;
+mod drawing_utils;
 
 // Headers
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];

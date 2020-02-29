@@ -1,7 +1,8 @@
+use std::time::Instant;
+
 use futures::StreamExt;
 use heim::net;
 use heim::units::information::byte;
-use std::time::Instant;
 use sysinfo::{NetworkExt, System, SystemExt};
 
 #[derive(Default, Clone, Debug)]

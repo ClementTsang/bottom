@@ -1,6 +1,7 @@
+use std::cmp::Ordering;
+
 use futures::StreamExt;
 use heim::units::thermodynamic_temperature;
-use std::cmp::Ordering;
 use sysinfo::{ComponentExt, System, SystemExt};
 
 #[derive(Default, Debug, Clone)]

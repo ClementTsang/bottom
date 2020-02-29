@@ -1,17 +1,19 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
-use crate::{
-	app::{
-		data_farmer,
-		data_harvester::{self, processes::ProcessHarvest},
-		App,
-	},
-	constants,
-	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
-};
-use constants::*;
 use std::collections::HashMap;
+
+use constants::*;
+
+use crate::{
+    app::{
+        App,
+        data_farmer,
+        data_harvester::{self, processes::ProcessHarvest},
+	},
+    constants,
+    utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
+};
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {

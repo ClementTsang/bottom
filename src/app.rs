@@ -1,15 +1,16 @@
-pub mod data_harvester;
-use data_harvester::{processes, temperature};
 use std::time::Instant;
-
-pub mod data_farmer;
-use data_farmer::*;
-
-use crate::{canvas, constants, utils::error::Result};
-mod process_killer;
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
+use data_farmer::*;
+use data_harvester::{processes, temperature};
+
+use crate::{canvas, constants, utils::error::Result};
+
+pub mod data_harvester;
+pub mod data_farmer;
+mod process_killer;
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
