@@ -1032,7 +1032,7 @@ impl App {
 	pub fn kill_highlighted_process(&mut self) -> Result<()> {
 		// Technically unnecessary but this is a good check...
 		if let WidgetPosition::Process = self.current_widget_selected {
-			if let Some(current_selected_processes) = &(self.to_delete_process_list) {
+			if let Some(current_selected_processes) = &self.to_delete_process_list {
 				for pid in &current_selected_processes.1 {
 					process_killer::kill_process_given_pid(*pid)?;
 				}
