@@ -3,10 +3,10 @@ use std::process::Command;
 // Copied from SO: https://stackoverflow.com/a/55231715
 #[cfg(target_os = "windows")]
 use winapi::{
-	shared::{minwindef::DWORD, ntdef::HANDLE},
-	um::{
-		processthreadsapi::{OpenProcess, TerminateProcess},
-		winnt::{PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE},
+    shared::{minwindef::DWORD, ntdef::HANDLE},
+    um::{
+        processthreadsapi::{OpenProcess, TerminateProcess},
+        winnt::{PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE},
     },
 };
 
@@ -38,10 +38,10 @@ pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
         Command::new("kill").arg(pid.to_string()).output()?;
     } else if cfg!(target_os = "windows") {
         #[cfg(target_os = "windows")]
-            {
-                let process = Process::open(pid as DWORD)?;
-                process.kill()?;
-            }
+        {
+            let process = Process::open(pid as DWORD)?;
+            process.kill()?;
+        }
     } else {
         return Err(BottomError::GenericError(
             "Sorry, support operating systems outside the main three are not implemented yet!"

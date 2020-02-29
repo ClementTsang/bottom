@@ -6,13 +6,13 @@ use std::collections::HashMap;
 use constants::*;
 
 use crate::{
-	app::{
-		App,
-		data_farmer,
-		data_harvester::{self, processes::ProcessHarvest},
+    app::{
+        data_farmer,
+        data_harvester::{self, processes::ProcessHarvest},
+        App,
     },
-	constants,
-	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
+    constants,
+    utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
 
 #[derive(Default, Debug)]
@@ -54,10 +54,10 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
                 sensor.component_name.to_string(),
                 (sensor.temperature.ceil() as u64).to_string()
                     + match temp_type {
-                    data_harvester::temperature::TemperatureType::Celsius => "C",
-                    data_harvester::temperature::TemperatureType::Kelvin => "K",
-                    data_harvester::temperature::TemperatureType::Fahrenheit => "F",
-                },
+                        data_harvester::temperature::TemperatureType::Celsius => "C",
+                        data_harvester::temperature::TemperatureType::Kelvin => "K",
+                        data_harvester::temperature::TemperatureType::Fahrenheit => "F",
+                    },
             ]);
         }
     }
@@ -191,15 +191,16 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
     } else {
         "RAM:".to_string()
             + &format!(
-            "{:3.0}%",
-            (current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
-                / current_data.memory_harvest.mem_total_in_mb as f64)
-                .round()
-        ) + &format!(
-            "   {:.1}GB/{:.1}GB",
-            current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
-            (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0).round()
-        )
+                "{:3.0}%",
+                (current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
+                    / current_data.memory_harvest.mem_total_in_mb as f64)
+                    .round()
+            )
+            + &format!(
+                "   {:.1}GB/{:.1}GB",
+                current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
+                (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0).round()
+            )
     };
 
     let swap_label = if current_data.swap_harvest.mem_total_in_mb == 0 {
@@ -207,15 +208,16 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
     } else {
         "SWP:".to_string()
             + &format!(
-            "{:3.0}%",
-            (current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
-                / current_data.swap_harvest.mem_total_in_mb as f64)
-                .round()
-        ) + &format!(
-            "   {:.1}GB/{:.1}GB",
-            current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
-            (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0).round()
-        )
+                "{:3.0}%",
+                (current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
+                    / current_data.swap_harvest.mem_total_in_mb as f64)
+                    .round()
+            )
+            + &format!(
+                "   {:.1}GB/{:.1}GB",
+                current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
+                (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0).round()
+            )
     };
 
     (mem_label, swap_label)

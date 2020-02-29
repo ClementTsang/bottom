@@ -149,13 +149,13 @@ impl DataState {
         let temp_data_fut = temperature::get_temperature_data(&self.sys, &self.temperature_type);
 
         let (net_data, mem_res, swap_res, disk_res, io_res, temp_res) = join!(
-			network_data_fut,
-			mem_data_fut,
-			swap_data_fut,
-			disk_data_fut,
-			disk_io_usage_fut,
-			temp_data_fut
-		);
+            network_data_fut,
+            mem_data_fut,
+            swap_data_fut,
+            disk_data_fut,
+            disk_io_usage_fut,
+            temp_data_fut
+        );
 
         // After async
         self.data.network = net_data;

@@ -1,7 +1,7 @@
 use std::{
-	collections::{hash_map::RandomState, HashMap},
-	process::Command,
-	time::Instant,
+    collections::{hash_map::RandomState, HashMap},
+    process::Command,
+    time::Instant,
 };
 
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};

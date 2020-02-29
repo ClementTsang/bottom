@@ -10,29 +10,29 @@ extern crate lazy_static;
 extern crate log;
 
 use std::{
-	boxed::Box,
-	io::{stdout, Write},
-	panic::{self, PanicInfo},
-	sync::mpsc,
-	thread,
-	time::{Duration, Instant},
+    boxed::Box,
+    io::{stdout, Write},
+    panic::{self, PanicInfo},
+    sync::mpsc,
+    thread,
+    time::{Duration, Instant},
 };
 
 use crossterm::{
-	event::{
-		DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
-		poll, read,
+    event::{
+        poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
+        KeyModifiers, MouseEvent,
     },
-	execute,
-	style::Print,
-	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
-	terminal::LeaveAlternateScreen,
+    execute,
+    style::Print,
+    terminal::LeaveAlternateScreen,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
 use app::{
-	App,
-	data_harvester::{self, processes::ProcessSorting},
+    data_harvester::{self, processes::ProcessSorting},
+    App,
 };
 use constants::*;
 use data_conversion::*;
@@ -435,10 +435,10 @@ fn cleanup_terminal(
 ) -> error::Result<()> {
     disable_raw_mode()?;
     execute!(
-		terminal.backend_mut(),
-		DisableMouseCapture,
-		LeaveAlternateScreen
-	)?;
+        terminal.backend_mut(),
+        DisableMouseCapture,
+        LeaveAlternateScreen
+    )?;
     terminal.show_cursor()?;
 
     Ok(())
@@ -543,15 +543,15 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
 
     // Print stack trace.  Must be done after!
     execute!(
-		stdout,
-		Print(format!(
-			"thread '<unnamed>' panicked at '{}', {}\n\r{}",
-			msg,
-			panic_info.location().unwrap(),
-			stacktrace
-		)),
-	)
-        .unwrap();
+        stdout,
+        Print(format!(
+            "thread '<unnamed>' panicked at '{}', {}\n\r{}",
+            msg,
+            panic_info.location().unwrap(),
+            stacktrace
+        )),
+    )
+    .unwrap();
 }
 
 fn update_final_process_list(app: &mut App) {

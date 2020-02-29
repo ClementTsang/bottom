@@ -2,12 +2,12 @@ use std::cmp::max;
 use std::collections::HashMap;
 
 use tui::{
-	backend,
-	layout::{Alignment, Constraint, Direction, Layout, Rect},
-	style::{Color, Style},
-	Terminal,
-	terminal::Frame,
-	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
+    backend,
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
+    terminal::Frame,
+    widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
+    Terminal,
 };
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
@@ -16,10 +16,10 @@ use canvas_colours::*;
 use drawing_utils::*;
 
 use crate::{
-	app::{self, data_harvester::processes::ProcessHarvest, WidgetPosition},
-	constants::*,
-	data_conversion::{ConvertedCpuData, ConvertedProcessData},
-	utils::error,
+    app::{self, data_harvester::processes::ProcessHarvest, WidgetPosition},
+    constants::*,
+    data_conversion::{ConvertedCpuData, ConvertedProcessData},
+    utils::error,
 };
 
 mod canvas_colours;
@@ -35,32 +35,32 @@ const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
-	static ref DEFAULT_TEXT_STYLE: Style = Style::default().fg(Color::Gray);
-	static ref DEFAULT_HEADER_STYLE: Style = Style::default().fg(Color::LightBlue);
-	static ref DISK_HEADERS_LENS: Vec<usize> = DISK_HEADERS
-		.iter()
-		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-		.collect::<Vec<_>>();
-	static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
-		.iter()
-		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-		.collect::<Vec<_>>();
-	static ref CPU_SELECT_LEGEND_HEADER_LENS: Vec<usize> = CPU_SELECT_LEGEND_HEADER
-		.iter()
-		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-		.collect::<Vec<_>>();
-	static ref TEMP_HEADERS_LENS: Vec<usize> = TEMP_HEADERS
-		.iter()
-		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-		.collect::<Vec<_>>();
-	static ref MEM_HEADERS_LENS: Vec<usize> = MEM_HEADERS
-		.iter()
-		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-		.collect::<Vec<_>>();
-	static ref NETWORK_HEADERS_LENS: Vec<usize> = NETWORK_HEADERS
-		.iter()
-		.map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-		.collect::<Vec<_>>();
+    static ref DEFAULT_TEXT_STYLE: Style = Style::default().fg(Color::Gray);
+    static ref DEFAULT_HEADER_STYLE: Style = Style::default().fg(Color::LightBlue);
+    static ref DISK_HEADERS_LENS: Vec<usize> = DISK_HEADERS
+        .iter()
+        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .collect::<Vec<_>>();
+    static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
+        .iter()
+        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .collect::<Vec<_>>();
+    static ref CPU_SELECT_LEGEND_HEADER_LENS: Vec<usize> = CPU_SELECT_LEGEND_HEADER
+        .iter()
+        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .collect::<Vec<_>>();
+    static ref TEMP_HEADERS_LENS: Vec<usize> = TEMP_HEADERS
+        .iter()
+        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .collect::<Vec<_>>();
+    static ref MEM_HEADERS_LENS: Vec<usize> = MEM_HEADERS
+        .iter()
+        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .collect::<Vec<_>>();
+    static ref NETWORK_HEADERS_LENS: Vec<usize> = NETWORK_HEADERS
+        .iter()
+        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .collect::<Vec<_>>();
 }
 
 #[derive(Default)]
@@ -677,9 +677,10 @@ impl Painter {
                         app::WidgetPosition::Cpu => {
                             if itx as u64
                                 == app_state
-                                .app_scroll_positions
-                                .cpu_scroll_state
-                                .current_scroll_position - start_position
+                                    .app_scroll_positions
+                                    .cpu_scroll_state
+                                    .current_scroll_position
+                                    - start_position
                             {
                                 self.colours.currently_selected_text_style
                             } else if app_state.app_config_fields.show_average_cpu && itx == 0 {
@@ -687,7 +688,7 @@ impl Painter {
                             } else {
                                 self.colours.cpu_colour_styles[itx
                                     + start_position as usize
-                                    % self.colours.cpu_colour_styles.len()]
+                                        % self.colours.cpu_colour_styles.len()]
                             }
                         }
                         _ => {
@@ -696,7 +697,7 @@ impl Painter {
                             } else {
                                 self.colours.cpu_colour_styles[itx
                                     + start_position as usize
-                                    % self.colours.cpu_colour_styles.len()]
+                                        % self.colours.cpu_colour_styles.len()]
                             }
                         }
                     },
@@ -738,34 +739,34 @@ impl Painter {
             } else {
                 CPU_LEGEND_HEADER
             }
-                .iter(),
+            .iter(),
             cpu_rows,
         )
-            .block(
-                Block::default()
-                    .title(&title)
-                    .title_style(if app_state.is_expanded {
-                        self.colours.highlighted_border_style
-                    } else {
-                        match app_state.current_widget_selected {
-                            app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
-                            _ => self.colours.border_style,
-                        }
-                    })
-                    .borders(Borders::ALL)
-                    .border_style(match app_state.current_widget_selected {
+        .block(
+            Block::default()
+                .title(&title)
+                .title_style(if app_state.is_expanded {
+                    self.colours.highlighted_border_style
+                } else {
+                    match app_state.current_widget_selected {
                         app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
-                    }),
-            )
-            .header_style(self.colours.table_header_style)
-            .widths(
-                &(intrinsic_widths
-                    .iter()
-                    .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                    .collect::<Vec<_>>()),
-            )
-            .render(f, draw_loc);
+                    }
+                })
+                .borders(Borders::ALL)
+                .border_style(match app_state.current_widget_selected {
+                    app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+                    _ => self.colours.border_style,
+                }),
+        )
+        .header_style(self.colours.table_header_style)
+        .widths(
+            &(intrinsic_widths
+                .iter()
+                .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+                .collect::<Vec<_>>()),
+        )
+        .render(f, draw_loc);
     }
 
     fn draw_memory_graph<B: backend::Backend>(
@@ -999,9 +1000,10 @@ impl Painter {
                     app::WidgetPosition::Temp => {
                         if temp_row_counter as u64
                             == app_state
-                            .app_scroll_positions
-                            .temp_scroll_state
-                            .current_scroll_position - start_position
+                                .app_scroll_positions
+                                .temp_scroll_state
+                                .current_scroll_position
+                                - start_position
                         {
                             temp_row_counter = -1;
                             self.colours.currently_selected_text_style
@@ -1095,9 +1097,10 @@ impl Painter {
                     app::WidgetPosition::Disk => {
                         if disk_counter as u64
                             == app_state
-                            .app_scroll_positions
-                            .disk_scroll_state
-                            .current_scroll_position - start_position
+                                .app_scroll_positions
+                                .disk_scroll_state
+                                .current_scroll_position
+                                - start_position
                         {
                             disk_counter = -1;
                             self.colours.currently_selected_text_style
@@ -1395,9 +1398,10 @@ impl Painter {
                     app::WidgetPosition::Process => {
                         if process_counter as u64
                             == app_state
-                            .app_scroll_positions
-                            .process_scroll_state
-                            .current_scroll_position - start_position
+                                .app_scroll_positions
+                                .process_scroll_state
+                                .current_scroll_position
+                                - start_position
                         {
                             process_counter = -1;
                             self.colours.currently_selected_text_style
@@ -1419,7 +1423,7 @@ impl Painter {
         } else {
             "PID(p)"
         }
-            .to_string();
+        .to_string();
         let mut name = "Name(n)".to_string();
         let mut cpu = "CPU%(c)".to_string();
         let mut mem = "Mem%(m)".to_string();
