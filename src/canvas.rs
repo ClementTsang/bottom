@@ -5,9 +5,9 @@ use tui::{
 	backend,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
 	style::{Color, Style},
+	Terminal,
 	terminal::Frame,
 	widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Paragraph, Row, Table, Text, Widget},
-	Terminal,
 };
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
