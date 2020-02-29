@@ -1174,10 +1174,6 @@ impl Painter {
 		);
 
 		let query = app_state.get_current_search_query().as_str();
-		debug!(
-			"query: {}, width: {}, cursor: {}, start position: {}",
-			query, width, char_cursor_position, start_position
-		);
 		let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
 		let mut current_grapheme_posn = 0;
 		let query_with_cursor: Vec<Text<'_>> =
