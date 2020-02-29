@@ -425,7 +425,10 @@ fn create_logger() -> error::Result<()> {
 }
 
 fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
-	use std::ffi::OsString;
+	use std::{
+		ffi::OsString,
+		fs
+	};
 	let config_path = if let Some(conf_loc) = flag_config_location {
 		OsString::from(conf_loc)
 	} else if cfg!(target_os = "windows") {
@@ -446,10 +449,14 @@ fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
 
 	let path = std::path::Path::new(&config_path);
 
-	if let Ok(config_str) = std::fs::read_to_string(path) {
-		Ok(toml::from_str(config_str.as_str())?)
+	if let Ok(config_string) = fs::read_to_string(path) {
+		Ok(toml::from_str(config_string.as_str())?)
 	} else {
-		Ok(Config::default())
+		if let Some(parent_path) = path.parent() {
+			fs::create_dir_all(parent_path)?;
+		}
+		fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
+		Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
 	}
 }
 
