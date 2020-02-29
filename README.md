@@ -206,7 +206,7 @@ Note that `q` is disabled while in the search widget.
 
 ## Contribution
 
-Contribution is welcome! Just submit a PR.
+Contribution is welcome! Just submit a PR. Note that I develop and test on stable Rust.
 
 If you spot any issue with nobody assigned to it, or it seems like no work has started on it, feel free to try and do it!
 

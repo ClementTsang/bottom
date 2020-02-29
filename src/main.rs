@@ -399,6 +399,8 @@ fn handle_key_event_or_break(
 				KeyCode::Char('u') => app.clear_search(),
 				KeyCode::Char('a') => app.skip_cursor_beginning(),
 				KeyCode::Char('e') => app.skip_cursor_end(),
+				// Can't do now, CTRL+BACKSPACE doesn't work and graphemes
+				// are hard to iter while truncating last (eloquently).
 				// KeyCode::Backspace => app.skip_word_backspace(),
 				_ => {}
 			}

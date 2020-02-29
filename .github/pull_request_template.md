@@ -14,6 +14,7 @@ _Remove the irrelevant one:_
 
 - [x] Bug fix (non-breaking change which fixes an issue)
 - [x] New feature (non-breaking change which adds functionality)
+- [x] Other (something else)
 
 ## Test methodology
 
@@ -24,7 +25,7 @@ _Please state how this was tested:_
 _Please ensure all are ticked (and actually done):_
 
 - [ ] Change has been tested to work
-- [ ] Code has been linted using rustfmt
+- [ ] Areas your change affects has been linted using rustfmt
 - [ ] Code has been self-reviewed
 - [ ] Code has been tested and no new breakage is introduced
 - [ ] Documentation has been added/updated if needed
