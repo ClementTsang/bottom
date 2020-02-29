@@ -180,6 +180,7 @@ pub struct AppConfigFields {
 	pub show_average_cpu: bool,
 	pub use_current_cpu_total: bool,
 	pub show_disabled_data: bool,
+	pub use_basic_mode: bool,
 }
 
 /// Network specific
@@ -270,7 +271,7 @@ impl App {
 		show_average_cpu: bool, temperature_type: temperature::TemperatureType,
 		update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
 		use_current_cpu_total: bool, current_widget_selected: WidgetPosition,
-		show_disabled_data: bool,
+		show_disabled_data: bool, use_basic_mode: bool,
 	) -> App {
 		App {
 			process_sorting_type: processes::ProcessSorting::CPU,
@@ -299,6 +300,7 @@ impl App {
 				left_legend,
 				use_current_cpu_total,
 				show_disabled_data,
+				use_basic_mode
 			},
 			is_expanded: false,
 			is_resized: false,
