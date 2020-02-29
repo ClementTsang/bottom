@@ -15,7 +15,7 @@
 use std::time::Instant;
 use std::vec::Vec;
 
-use crate::data_harvester::{cpu, disks, mem, network, processes, temperature, Data};
+use crate::data_harvester::{cpu, Data, disks, mem, network, processes, temperature};
 
 pub type TimeOffset = f64;
 pub type Value = f64;

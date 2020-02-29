@@ -7,9 +7,9 @@ use constants::*;
 
 use crate::{
 	app::{
+		App,
 		data_farmer,
 		data_harvester::{self, processes::ProcessHarvest},
-		App,
 	},
 	constants,
 	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
