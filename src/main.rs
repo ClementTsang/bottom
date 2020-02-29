@@ -20,20 +20,20 @@ use std::{
 
 use crossterm::{
 	event::{
-		DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
-		poll, read,
+		poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
+		KeyModifiers, MouseEvent,
 	},
 	execute,
 	style::Print,
-	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 	terminal::LeaveAlternateScreen,
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 };
 use serde::Deserialize;
 use tui::{backend::CrosstermBackend, Terminal};
 
 use app::{
-	App,
 	data_harvester::{self, processes::ProcessSorting},
+	App,
 };
 use constants::*;
 use data_conversion::*;
@@ -80,6 +80,7 @@ struct ConfigFlags {
 	regex: Option<bool>,
 	default_widget: Option<String>,
 	show_disabled_data: Option<bool>,
+	basic_mode: Option<bool>,
 	//disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -120,7 +121,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		(@arg CONFIG_LOCATION: -C --config +takes_value "Sets the location of the config file.  Expects a config file in the TOML format.")
-		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.") // TODO: [FEATURE] Min mode
+		(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
@@ -157,6 +158,7 @@ fn main() -> error::Result<()> {
 	let use_current_cpu_total = get_use_current_cpu_total_option(&matches, &config);
 	let current_widget_selected = get_default_widget(&matches, &config);
 	let show_disabled_data = get_show_disabled_data_option(&matches, &config);
+	let use_basic_mode = get_use_basic_mode_option(&matches, &config);
 
 	// Create "app" struct, which will control most of the program and store settings/state
 	let mut app = App::new(
@@ -168,6 +170,7 @@ fn main() -> error::Result<()> {
 		use_current_cpu_total,
 		current_widget_selected,
 		show_disabled_data,
+		use_basic_mode,
 	);
 
 	enable_app_grouping(&matches, &config, &mut app);
@@ -509,7 +512,7 @@ fn get_temperature_option(
 						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
 					))
 				}
-			}
+			};
 		}
 	}
 	Ok(data_harvester::temperature::TemperatureType::Celsius)
@@ -568,6 +571,18 @@ fn get_show_disabled_data_option(matches: &clap::ArgMatches<'static>, config: &C
 	} else if let Some(flags) = &config.flags {
 		if let Some(show_disabled_data) = flags.show_disabled_data {
 			return show_disabled_data;
+		}
+	}
+
+	false
+}
+
+fn get_use_basic_mode_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+	if matches.is_present("BASIC_MODE") {
+		return true;
+	} else if let Some(flags) = &config.flags {
+		if let Some(basic_mode) = flags.basic_mode {
+			return basic_mode;
 		}
 	}
 
