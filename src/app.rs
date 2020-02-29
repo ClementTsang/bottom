@@ -8,8 +8,8 @@ use data_harvester::{processes, temperature};
 
 use crate::{canvas, constants, utils::error::Result};
 
-pub mod data_harvester;
 pub mod data_farmer;
+pub mod data_harvester;
 mod process_killer;
 
 const MAX_SEARCH_LENGTH: usize = 200;

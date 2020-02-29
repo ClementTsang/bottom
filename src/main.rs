@@ -20,20 +20,20 @@ use std::{
 
 use crossterm::{
 	event::{
-		DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
-		poll, read,
+		poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
+		KeyModifiers, MouseEvent,
 	},
 	execute,
 	style::Print,
-	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 	terminal::LeaveAlternateScreen,
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 };
 use serde::Deserialize;
 use tui::{backend::CrosstermBackend, Terminal};
 
 use app::{
-	App,
 	data_harvester::{self, processes::ProcessSorting},
+	App,
 };
 use constants::*;
 use data_conversion::*;
