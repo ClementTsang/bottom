@@ -15,5 +15,6 @@ Cargo.lock
 rust-unmangle
 *.svg
 *.data
+.idea/
 
 sample_configs/testing.toml
