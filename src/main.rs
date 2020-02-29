@@ -18,8 +18,7 @@ use crossterm::{
 	},
 	execute,
 	style::Print,
-	terminal::LeaveAlternateScreen,
-	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 use std::{
@@ -425,10 +424,7 @@ fn create_logger() -> error::Result<()> {
 }
 
 fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
-	use std::{
-		ffi::OsString,
-		fs
-	};
+	use std::{ffi::OsString, fs};
 	let config_path = if let Some(conf_loc) = flag_config_location {
 		OsString::from(conf_loc)
 	} else if cfg!(target_os = "windows") {
@@ -512,7 +508,9 @@ fn get_temperature_option(
 				}
 				_ => {
 					return Err(BottomError::ConfigError(
-						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
+						"Invalid temperature type.  Please have the value be of the form \
+						 <kelvin|k|celsius|c|fahrenheit|f>"
+							.to_string(),
 					));
 				}
 			}
