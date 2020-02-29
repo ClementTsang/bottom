@@ -54,7 +54,7 @@ pub fn get_variable_intrinsic_widths(
     }
 
     // Simple redistribution tactic - if there's any space left, split it evenly amongst all members
-    if last_index < num_widths {
+    if last_index < num_widths && last_index != 0 {
         let for_all_widths = (remaining_width / last_index as i32) as u16;
         let mut remainder = remaining_width % last_index as i32;
 
@@ -149,4 +149,13 @@ pub fn get_start_position(
             }
         }
     }
+}
+
+/// Calculate how many bars are to be
+/// drawn within basic mode's components.
+pub fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) -> usize {
+    std::cmp::min(
+        (num_bars_available as f64 * use_percentage / 100.0).round() as usize,
+        num_bars_available,
+    )
 }

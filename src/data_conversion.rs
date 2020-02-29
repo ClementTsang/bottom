@@ -37,6 +37,7 @@ pub struct ConvertedProcessData {
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedCpuData {
     pub cpu_name: String,
+    /// Tuple is time, value
     pub cpu_data: Vec<(f64, f64)>,
 }
 

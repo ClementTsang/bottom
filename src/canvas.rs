@@ -1,8 +1,8 @@
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::HashMap;
 
 use tui::{
-    backend,
+    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     terminal::Frame,
@@ -153,13 +153,16 @@ impl Painter {
     // TODO: [REFACTOR] We should clean this up tbh
     // TODO: [FEATURE] Auto-resizing dialog sizes.
     #[allow(clippy::cognitive_complexity)]
-    pub fn draw_data<B: backend::Backend>(
+    pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
     ) -> error::Result<()> {
         let terminal_size = terminal.size()?;
         let current_height = terminal_size.height;
         let current_width = terminal_size.width;
 
+        // TODO: [OPT] we might be able to add an argument s.t. if there is
+        // no resize AND it's not a data update (or process refresh/search/etc.)
+        // then just... don't draw again!
         if self.height == 0 && self.width == 0 {
             self.height = current_height;
             self.width = current_width;
@@ -415,6 +418,45 @@ impl Painter {
                         }
                     }
                 }
+            } else if app_state.app_config_fields.use_basic_mode {
+                // Basic mode.  This basically removes all graphs but otherwise
+                // the same info.
+
+                let horizontal_chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([
+                        Constraint::Percentage(60),
+                        Constraint::Percentage(40),
+                    ].as_ref())
+                    .split(f.size());
+
+                let left_chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(1)
+                    .constraints([
+                        Constraint::Percentage(60),
+                        Constraint::Percentage(20),
+                        Constraint::Percentage(20)
+                    ].as_ref())
+                    .split(horizontal_chunks[0]);
+
+                let right_chunks  = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(1)
+                    .constraints([
+                        Constraint::Length(4),
+                        Constraint::Length(6),
+                        Constraint::Min(3),
+                    ].as_ref())
+                    .split(horizontal_chunks[1]);
+
+
+                self.draw_basic_cpu(&mut f, app_state, left_chunks[0]);
+                self.draw_temp_table(&mut f, app_state, left_chunks[1]);
+                self.draw_disk_table(&mut f, app_state, left_chunks[2]);
+                self.draw_basic_memory(&mut f, app_state, right_chunks[0]);
+                self.draw_basic_network(&mut f, app_state, right_chunks[1]);
+                self.draw_process_and_search(&mut f, app_state, right_chunks[2]);
             } else {
                 // TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
                 let vertical_chunks = Layout::default()
@@ -426,7 +468,7 @@ impl Painter {
                             Constraint::Percentage(37),
                             Constraint::Percentage(33),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
 
@@ -458,7 +500,7 @@ impl Painter {
                         } else {
                             [Constraint::Percentage(85), Constraint::Percentage(15)]
                         }
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(vertical_chunks[0]);
 
@@ -493,50 +535,14 @@ impl Painter {
                     0
                 };
 
-                // Set up blocks and their components
-                // CPU graph + legend
                 self.draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
                 self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
-
-                //Memory usage graph
                 self.draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
-
-                // Network graph
                 self.draw_network_graph(&mut f, &app_state, network_chunk[0]);
                 self.draw_network_labels(&mut f, app_state, network_chunk[1]);
-
-                // Temperature table
                 self.draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0]);
-
-                // Disk usage table
                 self.draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
-
-                // Processes table
-                if app_state.is_searching() {
-                    let processes_chunk = Layout::default()
-                        .direction(Direction::Vertical)
-                        .margin(0)
-                        .constraints(
-                            if (bottom_chunks[1].height as f64 * 0.25) as u16 >= 4 {
-                                [Constraint::Percentage(75), Constraint::Percentage(25)]
-                            } else {
-                                let required = if bottom_chunks[1].height < 10 {
-                                    bottom_chunks[1].height / 2
-                                } else {
-                                    5
-                                };
-                                let remaining = bottom_chunks[1].height - required;
-                                [Constraint::Length(remaining), Constraint::Length(required)]
-                            }
-                                .as_ref(),
-                        )
-                        .split(bottom_chunks[1]);
-
-                    self.draw_processes_table(&mut f, app_state, processes_chunk[0]);
-                    self.draw_search_field(&mut f, app_state, processes_chunk[1]);
-                } else {
-                    self.draw_processes_table(&mut f, app_state, bottom_chunks[1]);
-                }
+                self.draw_process_and_search(&mut f, app_state, bottom_chunks[1]);
             }
         })?;
 
@@ -545,7 +551,37 @@ impl Painter {
         Ok(())
     }
 
-    fn draw_cpu_graph<B: backend::Backend>(
+    fn draw_process_and_search<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+    ) {
+        if app_state.is_searching() {
+            let processes_chunk = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(0)
+                .constraints(
+                    if (draw_loc.height as f64 * 0.25) as u16 >= 4 {
+                        [Constraint::Percentage(75), Constraint::Percentage(25)]
+                    } else {
+                        let required = if draw_loc.height < 10 {
+                            draw_loc.height / 2
+                        } else {
+                            5
+                        };
+                        let remaining = draw_loc.height - required;
+                        [Constraint::Length(remaining), Constraint::Length(required)]
+                    }
+                    .as_ref(),
+                )
+                .split(draw_loc);
+
+            self.draw_processes_table(f, app_state, processes_chunk[0]);
+            self.draw_search_field(f, app_state, processes_chunk[1]);
+        } else {
+            self.draw_processes_table(f, app_state, draw_loc);
+        }
+    }
+
+    fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &app::App, draw_loc: Rect,
     ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
@@ -622,7 +658,7 @@ impl Painter {
             .render(f, draw_loc);
     }
 
-    fn draw_cpu_legend<B: backend::Backend>(
+    fn draw_cpu_legend<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
@@ -769,7 +805,7 @@ impl Painter {
         .render(f, draw_loc);
     }
 
-    fn draw_memory_graph<B: backend::Backend>(
+    fn draw_memory_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &app::App, draw_loc: Rect,
     ) {
         let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
@@ -842,7 +878,7 @@ impl Painter {
             .render(f, draw_loc);
     }
 
-    fn draw_network_graph<B: backend::Backend>(
+    fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &app::App, draw_loc: Rect,
     ) {
         let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
@@ -923,7 +959,7 @@ impl Painter {
             .render(f, draw_loc);
     }
 
-    fn draw_network_labels<B: backend::Backend>(
+    fn draw_network_labels<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
         let rx_display = &app_state.canvas_data.rx_display;
@@ -970,7 +1006,7 @@ impl Painter {
             .render(f, draw_loc);
     }
 
-    fn draw_temp_table<B: backend::Backend>(
+    fn draw_temp_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
         let temp_sensor_data: &[Vec<String>] = &app_state.canvas_data.temp_sensor_data;
@@ -1068,7 +1104,7 @@ impl Painter {
             .render(f, draw_loc);
     }
 
-    fn draw_disk_table<B: backend::Backend>(
+    fn draw_disk_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
         let disk_data: &[Vec<String>] = &app_state.canvas_data.disk_data;
@@ -1166,7 +1202,7 @@ impl Painter {
             .render(f, draw_loc);
     }
 
-    fn draw_search_field<B: backend::Backend>(
+    fn draw_search_field<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
         let width = max(0, draw_loc.width as i64 - 34) as u64; // TODO: [REFACTOR] Hard coding this is terrible.
@@ -1341,7 +1377,7 @@ impl Painter {
             .render(f, draw_loc);
     }
 
-    fn draw_processes_table<B: backend::Backend>(
+    fn draw_processes_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
         let process_data: &[ConvertedProcessData] = &app_state.canvas_data.finalized_process_data;
@@ -1497,5 +1533,231 @@ impl Painter {
                     .collect::<Vec<_>>()),
             )
             .render(f, draw_loc);
+    }
+
+    fn draw_basic_cpu<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+    ) {
+        let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
+
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(match app_state.current_widget_selected {
+                app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+                _ => self.colours.border_style,
+            })
+            .render(f, draw_loc);
+
+        // This is a bit complicated, but basically, we want to draw SOME number
+        // of columns to draw all CPUs.  Ideally, as well, we want to not have
+        // to ever scroll.
+        // **General logic** - count number of elements in cpu_data.  Then see how
+        // many rows and columns we have in draw_loc (-2 on both sides for border?).
+        // I think what we can do is try to fit in as many in one column as possible.
+        // If not, then add a new column.
+        // Then, from this, split the row space across ALL columns.  From there, generate
+        // the desired lengths.
+
+        let num_cpus = cpu_data.len();
+        let remaining_height = (draw_loc.height - 2) as usize;
+        let required_columns = (num_cpus / remaining_height)
+            + (if num_cpus % remaining_height == 0 {
+                0
+            } else {
+                1
+            });
+
+        // debug!(
+        //     "Num cpus: {}, remaining height: {}, required columns: {}",
+        //     num_cpus, remaining_height, required_columns
+        // );
+
+        if required_columns > 0 {
+            let chunk_vec =
+                vec![Constraint::Percentage((100 / required_columns) as u16); required_columns];
+            let chunks = Layout::default()
+                .constraints(chunk_vec.as_ref())
+                .direction(Direction::Horizontal)
+                .margin(1)
+                .split(draw_loc);
+
+            let num_spaces = 3;
+            // +9 due to 3 + 4 + 2 columns for the CPU name + percentage + bar bounds
+            let allowed_width = max(
+                0,
+                draw_loc.width as i64
+                    - 2
+                    - (num_spaces * (required_columns - 1) + 9 * required_columns) as i64,
+            ) as usize;
+
+            let bar_length = allowed_width / required_columns;
+
+            let cpu_bars = (0..num_cpus)
+                .map(|cpu_index| {
+                    let use_percentage =
+                        if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
+                            cpu_usage.1
+                        } else {
+                            0.0
+                        };
+
+                    let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
+                    format!(
+                        "{:3}[{}{}{:3.0}%]\n",
+                        if cpu_index == 0 && app_state.app_config_fields.show_average_cpu {
+                            "AVG".to_string()
+                        } else {
+                            cpu_index.to_string()
+                        },
+                        "|".repeat(num_bars),
+                        " ".repeat(bar_length - num_bars),
+                        use_percentage.round(),
+                    )
+                })
+                .collect::<Vec<_>>();
+
+            for (current_row, chunk) in chunks.iter().enumerate() {
+                let start_index = (current_row * remaining_height) as usize;
+                let end_index = min(start_index + (draw_loc.height - 2) as usize, num_cpus);
+                let cpu_column: Vec<Text<'_>> = (start_index..end_index)
+                    .map(|cpu_index| {
+                        Text::Styled(
+                            (&cpu_bars[cpu_index]).into(),
+                            self.colours.cpu_colour_styles
+                                [cpu_index as usize % self.colours.cpu_colour_styles.len()],
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                Paragraph::new(cpu_column.iter())
+                    .block(Block::default())
+                    .render(f, *chunk);
+            }
+        }
+    }
+
+    fn draw_basic_memory<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+    ) {
+        let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
+        let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
+
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(match app_state.current_widget_selected {
+                app::WidgetPosition::Mem => self.colours.highlighted_border_style,
+                _ => self.colours.border_style,
+            })
+            .render(f, draw_loc);
+
+        let margined_draw_loc = Layout::default()
+            .constraints([Constraint::Percentage(100)].as_ref())
+            .margin(1)
+            .split(draw_loc);
+
+        // +9 due to 3 + 4 + 2 columns for the mem name + percentage + bar bounds
+        let bar_length = max(0, draw_loc.width as i64 - 2 - 9 as i64) as usize;
+        let ram_use_percentage = if let Some(mem) = mem_data.last() {
+            mem.1
+        } else {
+            0.0
+        };
+        let swap_use_percentage = if let Some(swap) = swap_data.last() {
+            swap.1
+        } else {
+            0.0
+        };
+        let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, bar_length);
+        let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, bar_length);
+        let mem_label = format!(
+            "{:3}[{}{}{:3.0}%]\n",
+            "RAM",
+            "|".repeat(num_bars_ram),
+            " ".repeat(bar_length - num_bars_ram),
+            ram_use_percentage.round(),
+        );
+        let swap_label = format!(
+            "{:3}[{}{}{:3.0}%]\n",
+            "SWP",
+            "|".repeat(num_bars_swap),
+            " ".repeat(bar_length - num_bars_swap),
+            swap_use_percentage.round(),
+        );
+        let memory_text: Vec<Text<'_>> = vec![
+            Text::Styled(mem_label.into(), self.colours.ram_style),
+            Text::Styled(swap_label.into(), self.colours.swap_style),
+        ];
+
+        Paragraph::new(memory_text.iter())
+            .block(Block::default())
+            .render(f, margined_draw_loc[0]);
+    }
+
+    fn draw_basic_network<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+    ) {
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(match app_state.current_widget_selected {
+                app::WidgetPosition::Network => self.colours.highlighted_border_style,
+                _ => self.colours.border_style,
+            })
+            .render(f, draw_loc);
+
+        let rx_data: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
+        let tx_data: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
+
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(match app_state.current_widget_selected {
+                app::WidgetPosition::Mem => self.colours.highlighted_border_style,
+                _ => self.colours.border_style,
+            })
+            .render(f, draw_loc);
+
+        let margined_draw_loc = Layout::default()
+            .constraints([Constraint::Percentage(100)].as_ref())
+            .margin(1)
+            .split(draw_loc);
+
+        // +9 due to 3 + 4 + 2 columns for the mem name + percentage + bar bounds
+        let bar_length = max(0, draw_loc.width as i64 - 2 - 9 as i64) as usize;
+        let rx_use_percentage = if let Some(rx) = rx_data.last() {
+            rx.1
+        } else {
+            0.0
+        };
+        let tx_use_percentage = if let Some(tx) = tx_data.last() {
+            tx.1
+        } else {
+            0.0
+        };
+        let num_bars_rx = calculate_basic_use_bars(rx_use_percentage, bar_length);
+        let num_bars_tx = calculate_basic_use_bars(tx_use_percentage, bar_length);
+        let rx_label = format!(
+            "{:3}[{}{}{:3.0}%]\n",
+            "RX",
+            "|".repeat(num_bars_rx),
+            " ".repeat(bar_length - num_bars_rx),
+            rx_use_percentage.round(),
+        );
+        let tx_label = format!(
+            "{:3}[{}{}{:3.0}%]\n",
+            "TX",
+            "|".repeat(num_bars_tx),
+            " ".repeat(bar_length - num_bars_tx),
+            tx_use_percentage.round(),
+        );
+        let total_rx_label = format!("Total RX: {}\n", &app_state.canvas_data.total_rx_display);
+        let total_tx_label = format!("Total TX: {}", &app_state.canvas_data.total_tx_display);
+        let network_text: Vec<Text<'_>> = vec![
+            Text::Styled(rx_label.into(), self.colours.rx_style),
+            Text::Styled(tx_label.into(), self.colours.tx_style),
+            Text::Styled(total_rx_label.into(), self.colours.rx_total_style),
+            Text::Styled(total_tx_label.into(), self.colours.tx_total_style),
+        ];
+
+        Paragraph::new(network_text.iter())
+            .block(Block::default())
+            .render(f, margined_draw_loc[0]);
     }
 }

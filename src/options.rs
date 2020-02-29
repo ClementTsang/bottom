@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use crate::{
-    app::{self, data_harvester, App},
+    app::{data_harvester, App, WidgetPosition},
     constants::*,
     utils::error::{self, BottomError},
 };
@@ -236,46 +236,32 @@ pub fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config
     }
 }
 
-pub fn get_default_widget(
-    matches: &clap::ArgMatches<'static>, config: &Config,
-) -> app::WidgetPosition {
+pub fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> WidgetPosition {
     if matches.is_present("CPU_WIDGET") {
-        return app::WidgetPosition::Cpu;
+        return WidgetPosition::Cpu;
     } else if matches.is_present("MEM_WIDGET") {
-        return app::WidgetPosition::Mem;
+        return WidgetPosition::Mem;
     } else if matches.is_present("DISK_WIDGET") {
-        return app::WidgetPosition::Disk;
+        return WidgetPosition::Disk;
     } else if matches.is_present("TEMP_WIDGET") {
-        return app::WidgetPosition::Temp;
+        return WidgetPosition::Temp;
     } else if matches.is_present("NET_WIDGET") {
-        return app::WidgetPosition::Network;
+        return WidgetPosition::Network;
     } else if matches.is_present("PROC_WIDGET") {
-        return app::WidgetPosition::Process;
+        return WidgetPosition::Process;
     } else if let Some(flags) = &config.flags {
         if let Some(default_widget) = &flags.default_widget {
-            match default_widget.as_str() {
-                "cpu_default" => {
-                    return app::WidgetPosition::Cpu;
-                }
-                "memory_default" => {
-                    return app::WidgetPosition::Mem;
-                }
-                "processes_default" => {
-                    return app::WidgetPosition::Process;
-                }
-                "network_default" => {
-                    return app::WidgetPosition::Network;
-                }
-                "temperature_default" => {
-                    return app::WidgetPosition::Temp;
-                }
-                "disk_default" => {
-                    return app::WidgetPosition::Disk;
-                }
-                _ => {}
-            }
+            return match default_widget.as_str() {
+                "cpu_default" => WidgetPosition::Cpu,
+                "memory_default" => WidgetPosition::Mem,
+                "processes_default" => WidgetPosition::Process,
+                "network_default" => WidgetPosition::Network,
+                "temperature_default" => WidgetPosition::Temp,
+                "disk_default" => WidgetPosition::Disk,
+                _ => WidgetPosition::Process,
+            };
         }
     }
 
-    app::WidgetPosition::Process
+    WidgetPosition::Process
 }
