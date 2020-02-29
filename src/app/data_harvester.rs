@@ -1,6 +1,7 @@
 //! This is the main file to house data collection functions.
 
 use std::{collections::HashMap, time::Instant};
+
 use sysinfo::{System, SystemExt};
 
 pub mod cpu;

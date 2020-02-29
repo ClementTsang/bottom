@@ -1,15 +1,16 @@
-pub mod data_harvester;
-use data_harvester::{processes, temperature};
 use std::time::Instant;
-
-pub mod data_farmer;
-use data_farmer::*;
-
-use crate::{canvas, constants, utils::error::Result};
-mod process_killer;
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
+use data_farmer::*;
+use data_harvester::{processes, temperature};
+
+use crate::{canvas, constants, utils::error::Result};
+
+pub mod data_farmer;
+pub mod data_harvester;
+mod process_killer;
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
@@ -1031,7 +1032,7 @@ impl App {
 	pub fn kill_highlighted_process(&mut self) -> Result<()> {
 		// Technically unnecessary but this is a good check...
 		if let WidgetPosition::Process = self.current_widget_selected {
-			if let Some(current_selected_processes) = &(self.to_delete_process_list) {
+			if let Some(current_selected_processes) = &self.to_delete_process_list {
 				for pid in &current_selected_processes.1 {
 					process_killer::kill_process_given_pid(*pid)?;
 				}

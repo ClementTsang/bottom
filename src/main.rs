@@ -1,15 +1,22 @@
 #![warn(rust_2018_idioms)]
 
 #[macro_use]
-extern crate log;
-#[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate futures;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
-extern crate futures;
+extern crate log;
 
-use serde::Deserialize;
+use std::{
+	boxed::Box,
+	io::{stdout, Write},
+	panic::{self, PanicInfo},
+	sync::mpsc,
+	thread,
+	time::{Duration, Instant},
+};
 
 use crossterm::{
 	event::{
@@ -21,16 +28,16 @@ use crossterm::{
 	terminal::LeaveAlternateScreen,
 	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 };
-
-use std::{
-	boxed::Box,
-	io::{stdout, Write},
-	panic::{self, PanicInfo},
-	sync::mpsc,
-	thread,
-	time::{Duration, Instant},
-};
+use serde::Deserialize;
 use tui::{backend::CrosstermBackend, Terminal};
+
+use app::{
+	data_harvester::{self, processes::ProcessSorting},
+	App,
+};
+use constants::*;
+use data_conversion::*;
+use utils::error::{self, BottomError};
 
 pub mod app;
 mod utils {
@@ -41,14 +48,6 @@ mod utils {
 mod canvas;
 mod constants;
 mod data_conversion;
-
-use app::{
-	data_harvester::{self, processes::ProcessSorting},
-	App,
-};
-use constants::*;
-use data_conversion::*;
-use utils::error::{self, BottomError};
 
 enum Event<I, J> {
 	KeyInput(I),
@@ -495,20 +494,20 @@ fn get_temperature_option(
 	} else if let Some(flags) = &config.flags {
 		if let Some(temp_type) = &flags.temperature_type {
 			// Give lowest priority to config.
-			match temp_type.as_str() {
+			return match temp_type.as_str() {
 				"fahrenheit" | "f" => {
-					return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
+					Ok(data_harvester::temperature::TemperatureType::Fahrenheit)
 				}
 				"kelvin" | "k" => {
-					return Ok(data_harvester::temperature::TemperatureType::Kelvin);
+					Ok(data_harvester::temperature::TemperatureType::Kelvin)
 				}
 				"celsius" | "c" => {
-					return Ok(data_harvester::temperature::TemperatureType::Celsius);
+					Ok(data_harvester::temperature::TemperatureType::Celsius)
 				}
 				_ => {
-					return Err(BottomError::ConfigError(
+					Err(BottomError::ConfigError(
 						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
-					));
+					))
 				}
 			}
 		}
@@ -714,7 +713,7 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 			painter.colours.set_avg_cpu_colour(avg_cpu_color)?;
 		}
 
-		if let Some(cpu_core_colors) = &(colours.cpu_core_colors) {
+		if let Some(cpu_core_colors) = &colours.cpu_core_colors {
 			painter.colours.set_cpu_colours(cpu_core_colors)?;
 		}
 

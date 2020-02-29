@@ -1,4 +1,3 @@
-use crate::data_harvester::{cpu, disks, mem, network, processes, temperature, Data};
 /// In charge of cleaning, processing, and managing data.  I couldn't think of
 /// a better name for the file.  Since I called data collection "harvesting",
 /// then this is the farmer I guess.
@@ -15,6 +14,8 @@ use crate::data_harvester::{cpu, disks, mem, network, processes, temperature, Da
 /// more points as this is used!
 use std::time::Instant;
 use std::vec::Vec;
+
+use crate::data_harvester::{cpu, disks, mem, network, processes, temperature, Data};
 
 pub type TimeOffset = f64;
 pub type Value = f64;
