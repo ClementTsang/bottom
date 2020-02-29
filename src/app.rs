@@ -693,6 +693,7 @@ impl App {
 
 				self.process_search_state.search_state.char_cursor_position -=
 					UnicodeWidthChar::width(removed_char).unwrap_or(0);
+				self.process_search_state.search_state.cursor_direction = CursorDirection::LEFT;
 
 				self.update_regex();
 				self.update_process_gui = true;
