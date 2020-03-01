@@ -35,6 +35,7 @@ const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 const FORCE_MIN_THRESHOLD: usize = 5;
 
 lazy_static! {
+    static ref SIDE_BORDERS: Borders = Borders::from_bits_truncate(20);
     static ref DEFAULT_TEXT_STYLE: Style = Style::default().fg(Color::Gray);
     static ref DEFAULT_HEADER_STYLE: Style = Style::default().fg(Color::LightBlue);
     static ref DISK_HEADERS_LENS: Vec<usize> = DISK_HEADERS
@@ -392,10 +393,10 @@ impl Painter {
                         self.draw_memory_graph(&mut f, &app_state, rect[0]);
                     }
                     WidgetPosition::Disk => {
-                        self.draw_disk_table(&mut f, app_state, rect[0]);
+                        self.draw_disk_table(&mut f, app_state, rect[0], true);
                     }
                     WidgetPosition::Temp => {
-                        self.draw_temp_table(&mut f, app_state, rect[0]);
+                        self.draw_temp_table(&mut f, app_state, rect[0], true);
                     }
                     WidgetPosition::Network => {
                         self.draw_network_graph(&mut f, &app_state, rect[0]);
@@ -411,10 +412,10 @@ impl Painter {
                                 )
                                 .split(rect[0]);
 
-                            self.draw_processes_table(&mut f, app_state, processes_chunk[0]);
-                            self.draw_search_field(&mut f, app_state, processes_chunk[1]);
+                            self.draw_processes_table(&mut f, app_state, processes_chunk[0], true);
+                            self.draw_search_field(&mut f, app_state, processes_chunk[1], true);
                         } else {
-                            self.draw_processes_table(&mut f, app_state, rect[0]);
+                            self.draw_processes_table(&mut f, app_state, rect[0], true);
                         }
                     }
                 }
@@ -422,41 +423,27 @@ impl Painter {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
 
-                let horizontal_chunks = Layout::default()
-                    .direction(Direction::Horizontal)
+                let vertical_chunks = Layout::default()
+                    .direction(Direction::Vertical)
                     .constraints([
-                        Constraint::Percentage(60),
-                        Constraint::Percentage(40),
+                        Constraint::Length(6),
+                        Constraint::Length(3),
+                        Constraint::Min(5),
                     ].as_ref())
                     .split(f.size());
 
-                let left_chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .margin(1)
-                    .constraints([
-                        Constraint::Percentage(60),
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(20)
-                    ].as_ref())
-                    .split(horizontal_chunks[0]);
+                let middle_chunks= Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([
+                    Constraint::Percentage(50),
+                    Constraint::Percentage(50),
+                ].as_ref())
+                .split(vertical_chunks[1]);
 
-                let right_chunks  = Layout::default()
-                    .direction(Direction::Vertical)
-                    .margin(1)
-                    .constraints([
-                        Constraint::Length(4),
-                        Constraint::Length(6),
-                        Constraint::Min(3),
-                    ].as_ref())
-                    .split(horizontal_chunks[1]);
-
-
-                self.draw_basic_cpu(&mut f, app_state, left_chunks[0]);
-                self.draw_temp_table(&mut f, app_state, left_chunks[1]);
-                self.draw_disk_table(&mut f, app_state, left_chunks[2]);
-                self.draw_basic_memory(&mut f, app_state, right_chunks[0]);
-                self.draw_basic_network(&mut f, app_state, right_chunks[1]);
-                self.draw_process_and_search(&mut f, app_state, right_chunks[2]);
+                self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
+                self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
+                self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
+                self.draw_process_and_search(&mut f, app_state, vertical_chunks[2], false);
             } else {
                 // TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
                 let vertical_chunks = Layout::default()
@@ -540,9 +527,9 @@ impl Painter {
                 self.draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
                 self.draw_network_graph(&mut f, &app_state, network_chunk[0]);
                 self.draw_network_labels(&mut f, app_state, network_chunk[1]);
-                self.draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0]);
-                self.draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1]);
-                self.draw_process_and_search(&mut f, app_state, bottom_chunks[1]);
+                self.draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0], true);
+                self.draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1], true);
+                self.draw_process_and_search(&mut f, app_state, bottom_chunks[1], true);
             }
         })?;
 
@@ -552,7 +539,7 @@ impl Painter {
     }
 
     fn draw_process_and_search<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
         if app_state.is_searching() {
             let processes_chunk = Layout::default()
@@ -574,10 +561,10 @@ impl Painter {
                 )
                 .split(draw_loc);
 
-            self.draw_processes_table(f, app_state, processes_chunk[0]);
-            self.draw_search_field(f, app_state, processes_chunk[1]);
+            self.draw_processes_table(f, app_state, processes_chunk[0], draw_border);
+            self.draw_search_field(f, app_state, processes_chunk[1], draw_border);
         } else {
-            self.draw_processes_table(f, app_state, draw_loc);
+            self.draw_processes_table(f, app_state, draw_loc, draw_border);
         }
     }
 
@@ -1007,7 +994,7 @@ impl Painter {
     }
 
     fn draw_temp_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
         let temp_sensor_data: &[Vec<String>] = &app_state.canvas_data.temp_sensor_data;
 
@@ -1088,7 +1075,11 @@ impl Painter {
                     } else {
                         self.colours.widget_title_style
                     })
-                    .borders(Borders::ALL)
+                    .borders(if draw_border {
+                        Borders::ALL
+                    } else {
+                        Borders::NONE
+                    })
                     .border_style(match app_state.current_widget_selected {
                         app::WidgetPosition::Temp => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
@@ -1105,7 +1096,7 @@ impl Painter {
     }
 
     fn draw_disk_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
         let disk_data: &[Vec<String>] = &app_state.canvas_data.disk_data;
         let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
@@ -1186,7 +1177,11 @@ impl Painter {
                     } else {
                         self.colours.widget_title_style
                     })
-                    .borders(Borders::ALL)
+                    .borders(if draw_border {
+                        Borders::ALL
+                    } else {
+                        Borders::NONE
+                    })
                     .border_style(match app_state.current_widget_selected {
                         app::WidgetPosition::Disk => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
@@ -1203,7 +1198,7 @@ impl Painter {
     }
 
     fn draw_search_field<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
         let width = max(0, draw_loc.width as i64 - 34) as u64; // TODO: [REFACTOR] Hard coding this is terrible.
         let cursor_position = app_state.get_cursor_position();
@@ -1366,7 +1361,11 @@ impl Painter {
         Paragraph::new(search_text.iter())
             .block(
                 Block::default()
-                    .borders(Borders::ALL)
+                    .borders(if draw_border {
+                        Borders::ALL
+                    } else {
+                        Borders::NONE
+                    })
                     .title(&title)
                     .title_style(current_border_style)
                     .border_style(current_border_style),
@@ -1378,7 +1377,7 @@ impl Painter {
     }
 
     fn draw_processes_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
         let process_data: &[ConvertedProcessData] = &app_state.canvas_data.finalized_process_data;
 
@@ -1490,7 +1489,7 @@ impl Painter {
             get_variable_intrinsic_widths(width as u16, &width_ratios, &process_headers_lens);
         let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
-        let title =
+        let title = if draw_border {
             if app_state.is_expanded && !app_state.process_search_state.search_state.is_enabled {
                 const TITLE_BASE: &str = " Processes ── Esc to go back ";
                 let repeat_num = max(
@@ -1505,26 +1504,48 @@ impl Painter {
                 result_title
             } else {
                 " Processes ".to_string()
-            };
+            }
+        } else {
+            String::default()
+        };
 
-        Table::new(process_headers.iter(), process_rows)
-            .block(
-                Block::default()
-                    .title(&title)
-                    .title_style(if app_state.is_expanded {
-                        match app_state.current_widget_selected {
-                            app::WidgetPosition::Process => self.colours.highlighted_border_style,
-                            _ => self.colours.border_style,
-                        }
-                    } else {
-                        self.colours.widget_title_style
-                    })
-                    .borders(Borders::ALL)
-                    .border_style(match app_state.current_widget_selected {
+        let process_block = if draw_border {
+            Block::default()
+                .title(&title)
+                .title_style(if app_state.is_expanded {
+                    match app_state.current_widget_selected {
                         app::WidgetPosition::Process => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
-                    }),
-            )
+                    }
+                } else {
+                    self.colours.widget_title_style
+                })
+                .borders(Borders::ALL)
+                .border_style(match app_state.current_widget_selected {
+                    app::WidgetPosition::Process => self.colours.highlighted_border_style,
+                    _ => self.colours.border_style,
+                })
+        } else {
+            match app_state.current_widget_selected {
+                app::WidgetPosition::Process => Block::default()
+                    .borders(*SIDE_BORDERS)
+                    .border_style(self.colours.highlighted_border_style),
+                _ => Block::default().borders(Borders::NONE),
+            }
+        };
+
+        let margined_draw_loc = Layout::default()
+            .constraints([Constraint::Percentage(100)].as_ref())
+            .horizontal_margin(match app_state.current_widget_selected {
+                app::WidgetPosition::Process => 0,
+                _ if !draw_border => 1,
+                _ => 0,
+            })
+            .direction(Direction::Horizontal)
+            .split(draw_loc);
+
+        Table::new(process_headers.iter(), process_rows)
+            .block(process_block)
             .header_style(self.colours.table_header_style)
             .widths(
                 &(intrinsic_widths
@@ -1532,21 +1553,13 @@ impl Painter {
                     .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                     .collect::<Vec<_>>()),
             )
-            .render(f, draw_loc);
+            .render(f, margined_draw_loc[0]);
     }
 
     fn draw_basic_cpu<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
-
-        Block::default()
-            .borders(Borders::ALL)
-            .border_style(match app_state.current_widget_selected {
-                app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
-                _ => self.colours.border_style,
-            })
-            .render(f, draw_loc);
 
         // This is a bit complicated, but basically, we want to draw SOME number
         // of columns to draw all CPUs.  Ideally, as well, we want to not have
@@ -1558,9 +1571,16 @@ impl Painter {
         // Then, from this, split the row space across ALL columns.  From there, generate
         // the desired lengths.
 
+        if let WidgetPosition::Cpu = app_state.current_widget_selected {
+            Block::default()
+                .borders(*SIDE_BORDERS)
+                .border_style(self.colours.highlighted_border_style)
+                .render(f, draw_loc);
+        }
+
         let num_cpus = cpu_data.len();
-        if draw_loc.height > 2 {
-            let remaining_height = (draw_loc.height - 2) as usize;
+        if draw_loc.height > 0 {
+            let remaining_height = draw_loc.height as usize;
             let required_columns = (num_cpus / remaining_height)
                 + (if num_cpus % remaining_height == 0 {
                     0
@@ -1574,19 +1594,17 @@ impl Painter {
                 let chunks = Layout::default()
                     .constraints(chunk_vec.as_ref())
                     .direction(Direction::Horizontal)
-                    .margin(1)
+                    .horizontal_margin(1)
                     .split(draw_loc);
 
-                let num_spaces = 3;
+                let num_spaces = 2;
                 // +10 due to 4 + 4 + 2 columns for the name & space + percentage + bar bounds
-                let allowed_width = max(
+                let remaining_width = max(
                     0,
-                    draw_loc.width as i64
-                        - 2
-                        - (num_spaces * (required_columns - 1) + 10 * required_columns) as i64,
+                    draw_loc.width as i64 - ((num_spaces + 10) * required_columns) as i64,
                 ) as usize;
 
-                let bar_length = allowed_width / required_columns;
+                let bar_length = remaining_width / required_columns;
 
                 let cpu_bars = (0..num_cpus)
                     .map(|cpu_index| {
@@ -1599,9 +1617,13 @@ impl Painter {
 
                         let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
                         format!(
-                            "{:3} [{}{}{:3.0}%]\n",
-                            if cpu_index == 0 && app_state.app_config_fields.show_average_cpu {
-                                "AVG".to_string()
+                            "{:3}[{}{}{:3.0}%]\n",
+                            if app_state.app_config_fields.show_average_cpu {
+                                if cpu_index == 0 {
+                                    "AVG".to_string()
+                                } else {
+                                    (cpu_index - 1).to_string()
+                                }
                             } else {
                                 cpu_index.to_string()
                             },
@@ -1614,7 +1636,7 @@ impl Painter {
 
                 for (current_row, chunk) in chunks.iter().enumerate() {
                     let start_index = (current_row * remaining_height) as usize;
-                    let end_index = min(start_index + (draw_loc.height - 2) as usize, num_cpus);
+                    let end_index = min(start_index + remaining_height, num_cpus);
                     let cpu_column: Vec<Text<'_>> = (start_index..end_index)
                         .map(|cpu_index| {
                             Text::Styled(
@@ -1638,21 +1660,20 @@ impl Painter {
         let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
         let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
 
-        Block::default()
-            .borders(Borders::ALL)
-            .border_style(match app_state.current_widget_selected {
-                app::WidgetPosition::Mem => self.colours.highlighted_border_style,
-                _ => self.colours.border_style,
-            })
-            .render(f, draw_loc);
-
-        let margined_draw_loc = Layout::default()
+        let margined_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
-            .margin(1)
+            .horizontal_margin(1)
             .split(draw_loc);
 
-        // +10 due to 4 + 4 + 2 columns for the name & space + percentage + bar bounds
-        let bar_length = max(0, draw_loc.width as i64 - 2 - 10 as i64) as usize;
+        if let WidgetPosition::Mem = app_state.current_widget_selected {
+            Block::default()
+                .borders(*SIDE_BORDERS)
+                .border_style(self.colours.highlighted_border_style)
+                .render(f, draw_loc);
+        }
+
+        // +9 due to 3 + 4 + 2 + 2 columns for the name & space + percentage + bar bounds + margin spacing
+        let bar_length = max(0, draw_loc.width as i64 - 11) as usize;
         let ram_use_percentage = if let Some(mem) = mem_data.last() {
             mem.1
         } else {
@@ -1666,91 +1687,67 @@ impl Painter {
         let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, bar_length);
         let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, bar_length);
         let mem_label = format!(
-            "RAM [{}{}{:3.0}%]\n",
+            "RAM[{}{}{:3.0}%]\n",
             "|".repeat(num_bars_ram),
             " ".repeat(bar_length - num_bars_ram),
             ram_use_percentage.round(),
         );
         let swap_label = format!(
-            "SWP [{}{}{:3.0}%]\n",
+            "SWP[{}{}{:3.0}%]",
             "|".repeat(num_bars_swap),
             " ".repeat(bar_length - num_bars_swap),
             swap_use_percentage.round(),
         );
-        let memory_text: Vec<Text<'_>> = vec![
+
+        let mem_text: Vec<Text<'_>> = vec![
             Text::Styled(mem_label.into(), self.colours.ram_style),
             Text::Styled(swap_label.into(), self.colours.swap_style),
         ];
 
-        Paragraph::new(memory_text.iter())
+        Paragraph::new(mem_text.iter())
             .block(Block::default())
-            .render(f, margined_draw_loc[0]);
+            .render(f, margined_loc[0]);
     }
 
     fn draw_basic_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
-        Block::default()
-            .borders(Borders::ALL)
-            .border_style(match app_state.current_widget_selected {
-                app::WidgetPosition::Network => self.colours.highlighted_border_style,
-                _ => self.colours.border_style,
-            })
-            .render(f, draw_loc);
-
-        let rx_data: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
-        let tx_data: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
-
-        Block::default()
-            .borders(Borders::ALL)
-            .border_style(match app_state.current_widget_selected {
-                app::WidgetPosition::Mem => self.colours.highlighted_border_style,
-                _ => self.colours.border_style,
-            })
-            .render(f, draw_loc);
-
-        let margined_draw_loc = Layout::default()
-            .constraints([Constraint::Percentage(100)].as_ref())
-            .margin(1)
+        let margined_loc = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .horizontal_margin(1)
             .split(draw_loc);
 
-        // +9 due to 3 + 4 + 2 columns for the name & space + percentage + bar bounds
-        let bar_length = max(0, draw_loc.width as i64 - 2 - 9 as i64) as usize;
-        let rx_use_percentage = if let Some(rx) = rx_data.last() {
-            rx.1
-        } else {
-            0.0
-        };
-        let tx_use_percentage = if let Some(tx) = tx_data.last() {
-            tx.1
-        } else {
-            0.0
-        };
-        let num_bars_rx = calculate_basic_use_bars(rx_use_percentage, bar_length);
-        let num_bars_tx = calculate_basic_use_bars(tx_use_percentage, bar_length);
-        let rx_label = format!(
-            "RX [{}{}{:3.0}%]\n",
-            "|".repeat(num_bars_rx),
-            " ".repeat(bar_length - num_bars_rx),
-            rx_use_percentage.round(),
-        );
-        let tx_label = format!(
-            "TX [{}{}{:3.0}%]\n",
-            "|".repeat(num_bars_tx),
-            " ".repeat(bar_length - num_bars_tx),
-            tx_use_percentage.round(),
-        );
+        if let WidgetPosition::Network = app_state.current_widget_selected {
+            Block::default()
+                .borders(*SIDE_BORDERS)
+                .border_style(self.colours.highlighted_border_style)
+                .render(f, draw_loc);
+        }
+
+        let rx_label = format!("RX: {}\n", &app_state.canvas_data.rx_display);
+        let tx_label = format!("TX: {}", &app_state.canvas_data.tx_display);
         let total_rx_label = format!("Total RX: {}\n", &app_state.canvas_data.total_rx_display);
         let total_tx_label = format!("Total TX: {}", &app_state.canvas_data.total_tx_display);
-        let network_text: Vec<Text<'_>> = vec![
+
+        let net_text = vec![
             Text::Styled(rx_label.into(), self.colours.rx_style),
             Text::Styled(tx_label.into(), self.colours.tx_style),
+        ];
+
+        let total_net_text = vec![
             Text::Styled(total_rx_label.into(), self.colours.total_rx_style),
             Text::Styled(total_tx_label.into(), self.colours.total_tx_style),
         ];
 
-        Paragraph::new(network_text.iter())
+        Paragraph::new(net_text.iter())
+            .alignment(Alignment::Center)
             .block(Block::default())
-            .render(f, margined_draw_loc[0]);
+            .render(f, margined_loc[0]);
+
+        Paragraph::new(total_net_text.iter())
+            .alignment(Alignment::Center)
+            .block(Block::default())
+            .render(f, margined_loc[1]);
     }
 }
