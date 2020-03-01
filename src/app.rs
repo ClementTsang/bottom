@@ -570,6 +570,10 @@ impl App {
         self.process_search_state.search_state.char_cursor_position
     }
 
+    pub fn move_basic_left(&mut self) {}
+
+    pub fn move_basic_right(&mut self) {}
+
     /// One of two functions allowed to run while in a dialog...
     pub fn on_enter(&mut self) {
         if self.delete_dialog_state.is_showing_dd {

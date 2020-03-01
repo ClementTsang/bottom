@@ -81,7 +81,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
 		(@arg CONFIG_LOCATION: -C --config +takes_value "Sets the location of the config file.  Expects a config file in the TOML format.")
-		(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.")
+		(@arg BASIC_MODE: -b --basic "Hides graphs and uses a more basic look")
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
@@ -361,6 +361,8 @@ fn handle_key_event_or_break(
                 KeyCode::Char('u') => app.clear_search(),
                 KeyCode::Char('a') => app.skip_cursor_beginning(),
                 KeyCode::Char('e') => app.skip_cursor_end(),
+                KeyCode::Char('h') => app.move_basic_left(),
+                KeyCode::Char('l') => app.move_basic_right(),
                 // Can't do now, CTRL+BACKSPACE doesn't work and graphemes
                 // are hard to iter while truncating last (eloquently).
                 // KeyCode::Backspace => app.skip_word_backspace(),
