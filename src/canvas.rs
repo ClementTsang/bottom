@@ -1559,78 +1559,75 @@ impl Painter {
         // the desired lengths.
 
         let num_cpus = cpu_data.len();
-        let remaining_height = (draw_loc.height - 2) as usize;
-        let required_columns = (num_cpus / remaining_height)
-            + (if num_cpus % remaining_height == 0 {
-                0
-            } else {
-                1
-            });
+        if draw_loc.height > 2 {
+            let remaining_height = (draw_loc.height - 2) as usize;
+            let required_columns = (num_cpus / remaining_height)
+                + (if num_cpus % remaining_height == 0 {
+                    0
+                } else {
+                    1
+                });
 
-        // debug!(
-        //     "Num cpus: {}, remaining height: {}, required columns: {}",
-        //     num_cpus, remaining_height, required_columns
-        // );
+            if required_columns > 0 {
+                let chunk_vec =
+                    vec![Constraint::Percentage((100 / required_columns) as u16); required_columns];
+                let chunks = Layout::default()
+                    .constraints(chunk_vec.as_ref())
+                    .direction(Direction::Horizontal)
+                    .margin(1)
+                    .split(draw_loc);
 
-        if required_columns > 0 {
-            let chunk_vec =
-                vec![Constraint::Percentage((100 / required_columns) as u16); required_columns];
-            let chunks = Layout::default()
-                .constraints(chunk_vec.as_ref())
-                .direction(Direction::Horizontal)
-                .margin(1)
-                .split(draw_loc);
+                let num_spaces = 3;
+                // +10 due to 4 + 4 + 2 columns for the name & space + percentage + bar bounds
+                let allowed_width = max(
+                    0,
+                    draw_loc.width as i64
+                        - 2
+                        - (num_spaces * (required_columns - 1) + 10 * required_columns) as i64,
+                ) as usize;
 
-            let num_spaces = 3;
-            // +9 due to 3 + 4 + 2 columns for the CPU name + percentage + bar bounds
-            let allowed_width = max(
-                0,
-                draw_loc.width as i64
-                    - 2
-                    - (num_spaces * (required_columns - 1) + 9 * required_columns) as i64,
-            ) as usize;
+                let bar_length = allowed_width / required_columns;
 
-            let bar_length = allowed_width / required_columns;
-
-            let cpu_bars = (0..num_cpus)
-                .map(|cpu_index| {
-                    let use_percentage =
-                        if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
-                            cpu_usage.1
-                        } else {
-                            0.0
-                        };
-
-                    let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
-                    format!(
-                        "{:3}[{}{}{:3.0}%]\n",
-                        if cpu_index == 0 && app_state.app_config_fields.show_average_cpu {
-                            "AVG".to_string()
-                        } else {
-                            cpu_index.to_string()
-                        },
-                        "|".repeat(num_bars),
-                        " ".repeat(bar_length - num_bars),
-                        use_percentage.round(),
-                    )
-                })
-                .collect::<Vec<_>>();
-
-            for (current_row, chunk) in chunks.iter().enumerate() {
-                let start_index = (current_row * remaining_height) as usize;
-                let end_index = min(start_index + (draw_loc.height - 2) as usize, num_cpus);
-                let cpu_column: Vec<Text<'_>> = (start_index..end_index)
+                let cpu_bars = (0..num_cpus)
                     .map(|cpu_index| {
-                        Text::Styled(
-                            (&cpu_bars[cpu_index]).into(),
-                            self.colours.cpu_colour_styles
-                                [cpu_index as usize % self.colours.cpu_colour_styles.len()],
+                        let use_percentage =
+                            if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
+                                cpu_usage.1
+                            } else {
+                                0.0
+                            };
+
+                        let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
+                        format!(
+                            "{:3} [{}{}{:3.0}%]\n",
+                            if cpu_index == 0 && app_state.app_config_fields.show_average_cpu {
+                                "AVG".to_string()
+                            } else {
+                                cpu_index.to_string()
+                            },
+                            "|".repeat(num_bars),
+                            " ".repeat(bar_length - num_bars),
+                            use_percentage.round(),
                         )
                     })
                     .collect::<Vec<_>>();
-                Paragraph::new(cpu_column.iter())
-                    .block(Block::default())
-                    .render(f, *chunk);
+
+                for (current_row, chunk) in chunks.iter().enumerate() {
+                    let start_index = (current_row * remaining_height) as usize;
+                    let end_index = min(start_index + (draw_loc.height - 2) as usize, num_cpus);
+                    let cpu_column: Vec<Text<'_>> = (start_index..end_index)
+                        .map(|cpu_index| {
+                            Text::Styled(
+                                (&cpu_bars[cpu_index]).into(),
+                                self.colours.cpu_colour_styles
+                                    [cpu_index as usize % self.colours.cpu_colour_styles.len()],
+                            )
+                        })
+                        .collect::<Vec<_>>();
+                    Paragraph::new(cpu_column.iter())
+                        .block(Block::default())
+                        .render(f, *chunk);
+                }
             }
         }
     }
@@ -1654,8 +1651,8 @@ impl Painter {
             .margin(1)
             .split(draw_loc);
 
-        // +9 due to 3 + 4 + 2 columns for the mem name + percentage + bar bounds
-        let bar_length = max(0, draw_loc.width as i64 - 2 - 9 as i64) as usize;
+        // +10 due to 4 + 4 + 2 columns for the name & space + percentage + bar bounds
+        let bar_length = max(0, draw_loc.width as i64 - 2 - 10 as i64) as usize;
         let ram_use_percentage = if let Some(mem) = mem_data.last() {
             mem.1
         } else {
@@ -1669,15 +1666,13 @@ impl Painter {
         let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, bar_length);
         let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, bar_length);
         let mem_label = format!(
-            "{:3}[{}{}{:3.0}%]\n",
-            "RAM",
+            "RAM [{}{}{:3.0}%]\n",
             "|".repeat(num_bars_ram),
             " ".repeat(bar_length - num_bars_ram),
             ram_use_percentage.round(),
         );
         let swap_label = format!(
-            "{:3}[{}{}{:3.0}%]\n",
-            "SWP",
+            "SWP [{}{}{:3.0}%]\n",
             "|".repeat(num_bars_swap),
             " ".repeat(bar_length - num_bars_swap),
             swap_use_percentage.round(),
@@ -1719,7 +1714,7 @@ impl Painter {
             .margin(1)
             .split(draw_loc);
 
-        // +9 due to 3 + 4 + 2 columns for the mem name + percentage + bar bounds
+        // +9 due to 3 + 4 + 2 columns for the name & space + percentage + bar bounds
         let bar_length = max(0, draw_loc.width as i64 - 2 - 9 as i64) as usize;
         let rx_use_percentage = if let Some(rx) = rx_data.last() {
             rx.1
@@ -1734,15 +1729,13 @@ impl Painter {
         let num_bars_rx = calculate_basic_use_bars(rx_use_percentage, bar_length);
         let num_bars_tx = calculate_basic_use_bars(tx_use_percentage, bar_length);
         let rx_label = format!(
-            "{:3}[{}{}{:3.0}%]\n",
-            "RX",
+            "RX [{}{}{:3.0}%]\n",
             "|".repeat(num_bars_rx),
             " ".repeat(bar_length - num_bars_rx),
             rx_use_percentage.round(),
         );
         let tx_label = format!(
-            "{:3}[{}{}{:3.0}%]\n",
-            "TX",
+            "TX [{}{}{:3.0}%]\n",
             "|".repeat(num_bars_tx),
             " ".repeat(bar_length - num_bars_tx),
             tx_use_percentage.round(),
