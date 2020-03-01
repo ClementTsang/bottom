@@ -29,6 +29,7 @@ _Please ensure all are ticked (and actually done):_
 - [ ] Code has been self-reviewed
 - [ ] Code has been tested and no new breakage is introduced
 - [ ] Documentation has been added/updated if needed
+- [ ] No merge conflicts arise from the change
 
 ## Other information
 
