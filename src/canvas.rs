@@ -948,13 +948,13 @@ impl Painter {
                         "Total RX: {:7}",
                         app_state.canvas_data.total_rx_display
                     ))
-                    .style(self.colours.rx_total_style),
+                    .style(self.colours.total_rx_style),
                 Dataset::default()
                     .name(&format!(
                         "Total TX: {:7}",
                         app_state.canvas_data.total_tx_display
                     ))
-                    .style(self.colours.tx_total_style),
+                    .style(self.colours.total_tx_style),
             ])
             .render(f, draw_loc);
     }
@@ -1752,8 +1752,8 @@ impl Painter {
         let network_text: Vec<Text<'_>> = vec![
             Text::Styled(rx_label.into(), self.colours.rx_style),
             Text::Styled(tx_label.into(), self.colours.tx_style),
-            Text::Styled(total_rx_label.into(), self.colours.rx_total_style),
-            Text::Styled(total_tx_label.into(), self.colours.tx_total_style),
+            Text::Styled(total_rx_label.into(), self.colours.total_rx_style),
+            Text::Styled(total_tx_label.into(), self.colours.total_tx_style),
         ];
 
         Paragraph::new(network_text.iter())
