@@ -423,10 +423,19 @@ impl Painter {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
 
+                let cpu_height = (app_state.canvas_data.cpu_data.len() / 4) as u16
+                + (
+                    if app_state.canvas_data.cpu_data.len() % 4 == 0 {
+                        0
+                    } else {
+                        1
+                    }
+                );
+                debug!("C: {}", cpu_height);
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([
-                        Constraint::Length(6),
+                        Constraint::Length(cpu_height),
                         Constraint::Length(3),
                         Constraint::Min(5),
                     ].as_ref())
@@ -1581,75 +1590,75 @@ impl Painter {
         let num_cpus = cpu_data.len();
         if draw_loc.height > 0 {
             let remaining_height = draw_loc.height as usize;
-            let required_columns = (num_cpus / remaining_height)
-                + (if num_cpus % remaining_height == 0 {
-                    0
-                } else {
-                    1
-                });
+            let required_columns = 4;
 
-            if required_columns > 0 {
-                let chunk_vec =
-                    vec![Constraint::Percentage((100 / required_columns) as u16); required_columns];
-                let chunks = Layout::default()
-                    .constraints(chunk_vec.as_ref())
-                    .direction(Direction::Horizontal)
-                    .horizontal_margin(1)
-                    .split(draw_loc);
+            let chunk_vec =
+                vec![Constraint::Percentage((100 / required_columns) as u16); required_columns];
+            let chunks = Layout::default()
+                .constraints(chunk_vec.as_ref())
+                .direction(Direction::Horizontal)
+                .split(draw_loc);
 
-                let num_spaces = 2;
-                // +10 due to 4 + 4 + 2 columns for the name & space + percentage + bar bounds
-                let remaining_width = max(
-                    0,
-                    draw_loc.width as i64 - ((num_spaces + 10) * required_columns) as i64,
-                ) as usize;
+            // +9 due to 3 + 4 + 2 columns for the name & space + percentage + bar bounds
+            let margin_space = 2;
+            let remaining_width = max(
+                0,
+                draw_loc.width as i64
+                    - ((9 + margin_space) * required_columns - margin_space) as i64,
+            ) as usize;
 
-                let bar_length = remaining_width / required_columns;
+            let bar_length = remaining_width / required_columns;
 
-                let cpu_bars = (0..num_cpus)
+            let cpu_bars = (0..num_cpus)
+                .map(|cpu_index| {
+                    let use_percentage =
+                        if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
+                            cpu_usage.1
+                        } else {
+                            0.0
+                        };
+
+                    let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
+                    format!(
+                        "{:3}[{}{}{:3.0}%]\n",
+                        if app_state.app_config_fields.show_average_cpu {
+                            if cpu_index == 0 {
+                                "AVG".to_string()
+                            } else {
+                                (cpu_index - 1).to_string()
+                            }
+                        } else {
+                            cpu_index.to_string()
+                        },
+                        "|".repeat(num_bars),
+                        " ".repeat(bar_length - num_bars),
+                        use_percentage.round(),
+                    )
+                })
+                .collect::<Vec<_>>();
+
+            for (current_row, chunk) in chunks.iter().enumerate() {
+                let start_index = (current_row * remaining_height) as usize;
+                let end_index = min(start_index + remaining_height, num_cpus);
+                let cpu_column: Vec<Text<'_>> = (start_index..end_index)
                     .map(|cpu_index| {
-                        let use_percentage =
-                            if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
-                                cpu_usage.1
-                            } else {
-                                0.0
-                            };
-
-                        let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
-                        format!(
-                            "{:3}[{}{}{:3.0}%]\n",
-                            if app_state.app_config_fields.show_average_cpu {
-                                if cpu_index == 0 {
-                                    "AVG".to_string()
-                                } else {
-                                    (cpu_index - 1).to_string()
-                                }
-                            } else {
-                                cpu_index.to_string()
-                            },
-                            "|".repeat(num_bars),
-                            " ".repeat(bar_length - num_bars),
-                            use_percentage.round(),
+                        Text::Styled(
+                            (&cpu_bars[cpu_index]).into(),
+                            self.colours.cpu_colour_styles
+                                [cpu_index as usize % self.colours.cpu_colour_styles.len()],
                         )
                     })
                     .collect::<Vec<_>>();
 
-                for (current_row, chunk) in chunks.iter().enumerate() {
-                    let start_index = (current_row * remaining_height) as usize;
-                    let end_index = min(start_index + remaining_height, num_cpus);
-                    let cpu_column: Vec<Text<'_>> = (start_index..end_index)
-                        .map(|cpu_index| {
-                            Text::Styled(
-                                (&cpu_bars[cpu_index]).into(),
-                                self.colours.cpu_colour_styles
-                                    [cpu_index as usize % self.colours.cpu_colour_styles.len()],
-                            )
-                        })
-                        .collect::<Vec<_>>();
-                    Paragraph::new(cpu_column.iter())
-                        .block(Block::default())
-                        .render(f, *chunk);
-                }
+                let margined_loc = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Percentage(100)].as_ref())
+                    .horizontal_margin(1)
+                    .split(*chunk);
+
+                Paragraph::new(cpu_column.iter())
+                    .block(Block::default())
+                    .render(f, margined_loc[0]);
             }
         }
     }
@@ -1712,11 +1721,22 @@ impl Painter {
     fn draw_basic_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
     ) {
-        let margined_loc = Layout::default()
+        let divided_loc = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-            .horizontal_margin(1)
             .split(draw_loc);
+
+        let net_loc = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(100)].as_ref())
+            .horizontal_margin(1)
+            .split(divided_loc[0]);
+
+        let total_loc = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(100)].as_ref())
+            .horizontal_margin(1)
+            .split(divided_loc[1]);
 
         if let WidgetPosition::Network = app_state.current_widget_selected {
             Block::default()
@@ -1741,13 +1761,11 @@ impl Painter {
         ];
 
         Paragraph::new(net_text.iter())
-            .alignment(Alignment::Center)
             .block(Block::default())
-            .render(f, margined_loc[0]);
+            .render(f, net_loc[0]);
 
         Paragraph::new(total_net_text.iter())
-            .alignment(Alignment::Center)
             .block(Block::default())
-            .render(f, margined_loc[1]);
+            .render(f, total_loc[0]);
     }
 }
