@@ -1,5 +1,3 @@
-/// This file is meant to house (OS specific) implementations on how to kill processes.
-use crate::utils::error::BottomError;
 use std::process::Command;
 
 // Copied from SO: https://stackoverflow.com/a/55231715
@@ -11,6 +9,9 @@ use winapi::{
 		winnt::{PROCESS_QUERY_INFORMATION, PROCESS_TERMINATE},
 	},
 };
+
+/// This file is meant to house (OS specific) implementations on how to kill processes.
+use crate::utils::error::BottomError;
 
 #[cfg(target_os = "windows")]
 struct Process(HANDLE);

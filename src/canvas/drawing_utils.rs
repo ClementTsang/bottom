@@ -72,11 +72,43 @@ pub fn get_variable_intrinsic_widths(
 
 #[allow(dead_code, unused_variables)]
 pub fn get_search_start_position(
-	num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
-	currently_selected_position: u64, is_resized: bool,
-) -> u64 {
-	//TODO: [Scroll] Gotta fix this too lol
-	0
+	num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
+	current_cursor_position: usize, is_resized: bool,
+) -> usize {
+	if is_resized {
+		*cursor_bar = 0;
+	}
+
+	match cursor_direction {
+		app::CursorDirection::RIGHT => {
+			if current_cursor_position < *cursor_bar + num_columns {
+				// If, using previous_scrolled_position, we can see the element
+				// (so within that and + num_rows) just reuse the current previously scrolled position
+				*cursor_bar
+			} else if current_cursor_position >= num_columns {
+				// Else if the current position past the last element visible in the list, omit
+				// until we can see that element
+				*cursor_bar = current_cursor_position - num_columns;
+				*cursor_bar
+			} else {
+				// Else, if it is not past the last element visible, do not omit anything
+				0
+			}
+		}
+		app::CursorDirection::LEFT => {
+			if current_cursor_position <= *cursor_bar {
+				// If it's past the first element, then show from that element downwards
+				*cursor_bar = current_cursor_position;
+				*cursor_bar
+			} else if current_cursor_position >= *cursor_bar + num_columns {
+				*cursor_bar = current_cursor_position - num_columns;
+				*cursor_bar
+			} else {
+				// Else, don't change what our start position is from whatever it is set to!
+				*cursor_bar
+			}
+		}
+	}
 }
 
 pub fn get_start_position(

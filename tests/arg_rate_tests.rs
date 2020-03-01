@@ -1,6 +1,7 @@
+use std::process::Command;
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
 
 // These tests are mostly here just to ensure that invalid results will be caught when passing arguments...
 

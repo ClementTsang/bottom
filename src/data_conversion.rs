@@ -1,6 +1,10 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
+use std::collections::HashMap;
+
+use constants::*;
+
 use crate::{
 	app::{
 		data_farmer,
@@ -10,8 +14,6 @@ use crate::{
 	constants,
 	utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
-use constants::*;
-use std::collections::HashMap;
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {

@@ -1,6 +1,8 @@
-use crate::utils::{error, gen_util::*};
 use std::collections::HashMap;
+
 use tui::style::{Color, Style};
+
+use crate::utils::{error, gen_util::*};
 
 const GOLDEN_RATIO: f32 = 0.618_034; // Approx, good enough for use (also Clippy gets mad if it's too long)
 pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
