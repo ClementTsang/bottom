@@ -361,8 +361,10 @@ fn handle_key_event_or_break(
                 KeyCode::Char('u') => app.clear_search(),
                 KeyCode::Char('a') => app.skip_cursor_beginning(),
                 KeyCode::Char('e') => app.skip_cursor_end(),
-                KeyCode::Char('h') => app.move_basic_left(),
-                KeyCode::Char('l') => app.move_basic_right(),
+                // KeyCode::Char('j') => {}, // Move down
+                // KeyCode::Char('k') => {}, // Move up
+                // KeyCode::Char('h') => {}, // Move right
+                // KeyCode::Char('l') => {}, // Move left
                 // Can't do now, CTRL+BACKSPACE doesn't work and graphemes
                 // are hard to iter while truncating last (eloquently).
                 // KeyCode::Backspace => app.skip_word_backspace(),

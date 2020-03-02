@@ -23,6 +23,21 @@ pub enum WidgetPosition {
     Network,
     Process,
     ProcessSearch,
+    BasicCpu,
+    BasicMem,
+    BasicNet,
+}
+
+impl WidgetPosition {
+    pub fn is_widget_table(self) -> bool {
+        match self {
+            WidgetPosition::Disk
+            | WidgetPosition::Process
+            | WidgetPosition::ProcessSearch
+            | WidgetPosition::Temp => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -244,6 +259,7 @@ pub struct App {
     pub update_process_gui: bool,
     pub app_scroll_positions: AppScrollState,
     pub current_widget_selected: WidgetPosition,
+    pub last_basic_table_widget_selected: WidgetPosition,
     awaiting_second_char: bool,
     second_char: Option<char>,
     pub dd_err: Option<String>,
@@ -277,6 +293,11 @@ impl App {
             process_sorting_reverse: true,
             update_process_gui: false,
             current_widget_selected,
+            last_basic_table_widget_selected: if current_widget_selected.is_widget_table() {
+                current_widget_selected
+            } else {
+                WidgetPosition::Process
+            },
             app_scroll_positions: AppScrollState::default(),
             awaiting_second_char: false,
             second_char: None,
@@ -567,10 +588,6 @@ impl App {
     pub fn get_char_cursor_position(&self) -> usize {
         self.process_search_state.search_state.char_cursor_position
     }
-
-    pub fn move_basic_left(&mut self) {}
-
-    pub fn move_basic_right(&mut self) {}
 
     /// One of two functions allowed to run while in a dialog...
     pub fn on_enter(&mut self) {
@@ -1051,7 +1068,7 @@ impl App {
         self.to_delete_process_list.clone()
     }
 
-    // For now, these are hard coded --- in the future, they shouldn't be!
+    // TODO: [MODULARITY] Do NOT hard code this in thu future!
     //
     // General idea for now:
     // CPU -(down)> MEM
@@ -1063,13 +1080,24 @@ impl App {
     // PROC_SEARCH -(up)> PROC, -(left)> Network
     pub fn move_widget_selection_left(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            self.current_widget_selected = match self.current_widget_selected {
-                WidgetPosition::Process => WidgetPosition::Network,
-                WidgetPosition::ProcessSearch => WidgetPosition::Network,
-                WidgetPosition::Disk => WidgetPosition::Mem,
-                WidgetPosition::Temp => WidgetPosition::Mem,
-                _ => self.current_widget_selected,
-            };
+            if self.app_config_fields.use_basic_mode {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::BasicNet => WidgetPosition::BasicMem,
+                    WidgetPosition::Process => WidgetPosition::Disk,
+                    WidgetPosition::ProcessSearch => WidgetPosition::Disk,
+                    WidgetPosition::Disk => WidgetPosition::Temp,
+                    WidgetPosition::Temp => WidgetPosition::Process,
+                    _ => self.current_widget_selected,
+                };
+            } else {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::Process => WidgetPosition::Network,
+                    WidgetPosition::ProcessSearch => WidgetPosition::Network,
+                    WidgetPosition::Disk => WidgetPosition::Mem,
+                    WidgetPosition::Temp => WidgetPosition::Mem,
+                    _ => self.current_widget_selected,
+                };
+            }
         }
 
         self.reset_multi_tap_keys();
@@ -1077,11 +1105,22 @@ impl App {
 
     pub fn move_widget_selection_right(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            self.current_widget_selected = match self.current_widget_selected {
-                WidgetPosition::Mem => WidgetPosition::Temp,
-                WidgetPosition::Network => WidgetPosition::Process,
-                _ => self.current_widget_selected,
-            };
+            if self.app_config_fields.use_basic_mode {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::BasicMem => WidgetPosition::BasicNet,
+                    WidgetPosition::Process => WidgetPosition::Temp,
+                    WidgetPosition::ProcessSearch => WidgetPosition::Temp,
+                    WidgetPosition::Disk => WidgetPosition::Process,
+                    WidgetPosition::Temp => WidgetPosition::Disk,
+                    _ => self.current_widget_selected,
+                };
+            } else {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::Mem => WidgetPosition::Temp,
+                    WidgetPosition::Network => WidgetPosition::Process,
+                    _ => self.current_widget_selected,
+                };
+            }
         }
 
         self.reset_multi_tap_keys();
@@ -1089,15 +1128,30 @@ impl App {
 
     pub fn move_widget_selection_up(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            self.current_widget_selected = match self.current_widget_selected {
-                WidgetPosition::Mem => WidgetPosition::Cpu,
-                WidgetPosition::Network => WidgetPosition::Mem,
-                WidgetPosition::Process => WidgetPosition::Disk,
-                WidgetPosition::ProcessSearch => WidgetPosition::Process,
-                WidgetPosition::Temp => WidgetPosition::Cpu,
-                WidgetPosition::Disk => WidgetPosition::Temp,
-                _ => self.current_widget_selected,
-            };
+            if self.app_config_fields.use_basic_mode {
+                if self.current_widget_selected.is_widget_table() {
+                    self.last_basic_table_widget_selected = self.current_widget_selected;
+                }
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::BasicMem => WidgetPosition::BasicCpu,
+                    WidgetPosition::BasicNet => WidgetPosition::BasicCpu,
+                    WidgetPosition::Process => WidgetPosition::BasicMem,
+                    WidgetPosition::ProcessSearch => WidgetPosition::Process,
+                    WidgetPosition::Temp => WidgetPosition::BasicMem,
+                    WidgetPosition::Disk => WidgetPosition::BasicMem,
+                    _ => self.current_widget_selected,
+                };
+            } else {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::Mem => WidgetPosition::Cpu,
+                    WidgetPosition::Network => WidgetPosition::Mem,
+                    WidgetPosition::Process => WidgetPosition::Disk,
+                    WidgetPosition::ProcessSearch => WidgetPosition::Process,
+                    WidgetPosition::Temp => WidgetPosition::Cpu,
+                    WidgetPosition::Disk => WidgetPosition::Temp,
+                    _ => self.current_widget_selected,
+                };
+            }
         } else if self.is_expanded {
             self.current_widget_selected = match self.current_widget_selected {
                 WidgetPosition::ProcessSearch => WidgetPosition::Process,
@@ -1110,20 +1164,36 @@ impl App {
 
     pub fn move_widget_selection_down(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            self.current_widget_selected = match self.current_widget_selected {
-                WidgetPosition::Cpu => WidgetPosition::Mem,
-                WidgetPosition::Mem => WidgetPosition::Network,
-                WidgetPosition::Temp => WidgetPosition::Disk,
-                WidgetPosition::Disk => WidgetPosition::Process,
-                WidgetPosition::Process => {
-                    if self.is_searching() {
-                        WidgetPosition::ProcessSearch
-                    } else {
-                        WidgetPosition::Process
+            if self.app_config_fields.use_basic_mode {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::BasicMem => self.last_basic_table_widget_selected,
+                    WidgetPosition::BasicNet => self.last_basic_table_widget_selected,
+                    WidgetPosition::BasicCpu => WidgetPosition::BasicMem,
+                    WidgetPosition::Process => {
+                        if self.is_searching() {
+                            WidgetPosition::ProcessSearch
+                        } else {
+                            WidgetPosition::Process
+                        }
                     }
-                }
-                _ => self.current_widget_selected,
-            };
+                    _ => self.current_widget_selected,
+                };
+            } else {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::Cpu => WidgetPosition::Mem,
+                    WidgetPosition::Mem => WidgetPosition::Network,
+                    WidgetPosition::Temp => WidgetPosition::Disk,
+                    WidgetPosition::Disk => WidgetPosition::Process,
+                    WidgetPosition::Process => {
+                        if self.is_searching() {
+                            WidgetPosition::ProcessSearch
+                        } else {
+                            WidgetPosition::Process
+                        }
+                    }
+                    _ => self.current_widget_selected,
+                };
+            }
         } else if self.is_expanded {
             self.current_widget_selected = match self.current_widget_selected {
                 WidgetPosition::Process => {
