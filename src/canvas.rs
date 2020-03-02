@@ -416,21 +416,7 @@ impl Painter {
                         self.draw_network_graph(&mut f, &app_state, rect[0]);
                     }
                     WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                        if app_state.is_searching() {
-                            let processes_chunk = Layout::default()
-                                .direction(Direction::Vertical)
-                                .margin(0)
-                                .constraints(
-                                    [Constraint::Percentage(85), Constraint::Percentage(15)]
-                                        .as_ref(),
-                                )
-                                .split(rect[0]);
-
-                            self.draw_processes_table(&mut f, app_state, processes_chunk[0], true);
-                            self.draw_search_field(&mut f, app_state, processes_chunk[1], true);
-                        } else {
-                            self.draw_processes_table(&mut f, app_state, rect[0], true);
-                        }
+                        self.draw_process_and_search(&mut f, app_state, rect[0], true);
                     }
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -566,24 +552,12 @@ impl Painter {
     fn draw_process_and_search<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
+        let search_width = if draw_border { 5 } else { 3 };
+
         if app_state.is_searching() {
             let processes_chunk = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(0)
-                .constraints(
-                    if (draw_loc.height as f64 * 0.25) as u16 >= 4 {
-                        [Constraint::Percentage(75), Constraint::Percentage(25)]
-                    } else {
-                        let required = if draw_loc.height < 10 {
-                            draw_loc.height / 2
-                        } else {
-                            5
-                        };
-                        let remaining = draw_loc.height - required;
-                        [Constraint::Length(remaining), Constraint::Length(required)]
-                    }
-                    .as_ref(),
-                )
+                .constraints([Constraint::Min(0), Constraint::Length(search_width)].as_ref())
                 .split(draw_loc);
 
             self.draw_processes_table(f, app_state, processes_chunk[0], draw_border);
@@ -1338,10 +1312,6 @@ impl Painter {
 
         // Text options shamelessly stolen from VS Code.
         let mut option_text = vec![];
-        for _ in 0..(draw_loc.height - 3) {
-            option_text.push(Text::raw("\n"));
-        }
-
         let case_style = if !app_state.process_search_state.is_ignoring_case {
             self.colours.currently_selected_text_style
         } else {
@@ -1391,6 +1361,7 @@ impl Painter {
         );
 
         let option_row = vec![
+            Text::raw("\n\n"),
             Text::styled(&case_text, case_style),
             Text::raw("     "),
             Text::styled(&whole_text, whole_word_style),
@@ -1401,13 +1372,6 @@ impl Painter {
 
         search_text.extend(query_with_cursor);
         search_text.extend(option_text);
-
-        const TITLE_BASE: &str = " Esc to close ";
-        let repeat_num = max(
-            0,
-            draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-        );
-        let title = format!("{} Esc to close ", "─".repeat(repeat_num as usize));
 
         let current_border_style: Style = if app_state
             .process_search_state
@@ -1420,6 +1384,18 @@ impl Painter {
                 app::WidgetPosition::ProcessSearch => self.colours.highlighted_border_style,
                 _ => self.colours.border_style,
             }
+        };
+
+        let title = if draw_border {
+            const TITLE_BASE: &str = " Esc to close ";
+
+            let repeat_num = max(
+                0,
+                draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+            );
+            format!("{} Esc to close ", "─".repeat(repeat_num as usize))
+        } else {
+            String::new()
         };
 
         let process_search_block = if draw_border {
