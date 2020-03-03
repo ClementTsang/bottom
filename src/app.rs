@@ -292,7 +292,16 @@ impl App {
             process_sorting_type: processes::ProcessSorting::CPU,
             process_sorting_reverse: true,
             update_process_gui: false,
-            current_widget_selected,
+            current_widget_selected: if use_basic_mode {
+                match current_widget_selected {
+                    WidgetPosition::Cpu => WidgetPosition::BasicCpu,
+                    WidgetPosition::Network => WidgetPosition::BasicNet,
+                    WidgetPosition::Mem => WidgetPosition::BasicMem,
+                    _ => current_widget_selected,
+                }
+            } else {
+                current_widget_selected
+            },
             last_basic_table_widget_selected: if current_widget_selected.is_widget_table() {
                 current_widget_selected
             } else {
