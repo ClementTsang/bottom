@@ -134,6 +134,8 @@ Run using `btm`.
 
 - `-C`, `--config` takes in a file path leading to a TOML file.
 
+- `-b`, `--basic` will enable basic mode, removing all graphs from the main interface and condensing data.
+
 ### Keybindings
 
 #### General
