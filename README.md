@@ -75,7 +75,7 @@ sudo dpkg -i bottom_0.2.2_amd64.deb
 
 ### Windows
 
-You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/):
+You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/) (note it may take a while to be available due to moderation/review):
 
 ```bash
 choco install bottom --version=0.2.1
@@ -86,10 +86,10 @@ choco install bottom --version=0.2.1
 You can get release versions using Homebrew:
 
 ```bash
-$ brew tap clementtsang/bottom
-$ brew install bottom
+brew tap clementtsang/bottom
+brew install bottom
 # Or
-$ brew install clementtsang/bottom/bottom
+brew install clementtsang/bottom/bottom
 ```
 
 ## Usage

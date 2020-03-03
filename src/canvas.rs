@@ -1656,6 +1656,7 @@ impl Painter {
 
         let bar_length = remaining_width / REQUIRED_COLUMNS;
 
+        // CPU (and RAM) percent bars are, uh, "heavily" inspired from htop.
         let cpu_bars = (0..num_cpus)
             .map(|cpu_index| {
                 let use_percentage = if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
