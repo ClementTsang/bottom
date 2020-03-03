@@ -435,7 +435,8 @@ impl Painter {
                     .direction(Direction::Vertical)
                     .constraints([
                         Constraint::Length(cpu_height),
-                        Constraint::Length(3),
+                        Constraint::Length(2),
+                        Constraint::Length(2),
                         Constraint::Min(5),
                     ].as_ref())
                     .split(f.size());
@@ -450,10 +451,11 @@ impl Painter {
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
+                self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[2]);
                 if app_state.current_widget_selected.is_widget_table() {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[2], false, app_state.current_widget_selected);
+                    self.draw_specific_table(&mut f, app_state, vertical_chunks[3], false, app_state.current_widget_selected);
                 } else {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[2], false, app_state.last_basic_table_widget_selected);
+                    self.draw_specific_table(&mut f, app_state, vertical_chunks[3], false, app_state.previous_basic_table_selected);
                 }
             } else {
                 // TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
@@ -1809,5 +1811,58 @@ impl Painter {
         Paragraph::new(total_net_text.iter())
             .block(Block::default())
             .render(f, total_loc[0]);
+    }
+
+    fn draw_basic_table_arrows<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect,
+    ) {
+        // Effectively a paragraph with a ton of spacing
+
+        // TODO: [MODULARITY] This is hard coded.  Gross.
+        let (left_table, right_table) = if app_state.current_widget_selected.is_widget_table() {
+            match app_state.current_widget_selected {
+                WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+                    (WidgetPosition::Temp, WidgetPosition::Disk)
+                }
+                WidgetPosition::Disk => (WidgetPosition::Process, WidgetPosition::Temp),
+                WidgetPosition::Temp => (WidgetPosition::Disk, WidgetPosition::Process),
+                _ => (WidgetPosition::Disk, WidgetPosition::Temp),
+            }
+        } else {
+            match app_state.previous_basic_table_selected {
+                WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+                    (WidgetPosition::Temp, WidgetPosition::Disk)
+                }
+                WidgetPosition::Disk => (WidgetPosition::Process, WidgetPosition::Temp),
+                WidgetPosition::Temp => (WidgetPosition::Disk, WidgetPosition::Process),
+                _ => (WidgetPosition::Disk, WidgetPosition::Temp),
+            }
+        };
+
+        let left_name = left_table.get_pretty_name();
+        let right_name = right_table.get_pretty_name();
+
+        let num_spaces = max(
+            0,
+            draw_loc.width as i64 - 2 - 4 - (left_name.len() + right_name.len()) as i64,
+        ) as usize;
+
+        let arrow_text = vec![
+            Text::Styled(
+                format!("\n◄ {}", right_name).into(),
+                self.colours.text_style,
+            ),
+            Text::Raw(" ".repeat(num_spaces).into()),
+            Text::Styled(format!("{} ►", left_name).into(), self.colours.text_style),
+        ];
+
+        let margined_draw_loc = Layout::default()
+            .constraints([Constraint::Percentage(100)].as_ref())
+            .horizontal_margin(1)
+            .split(draw_loc);
+
+        Paragraph::new(arrow_text.iter())
+            .block(Block::default())
+            .render(f, margined_draw_loc[0]);
     }
 }

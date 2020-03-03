@@ -38,6 +38,18 @@ impl WidgetPosition {
             _ => false,
         }
     }
+
+    pub fn get_pretty_name(self) -> String {
+        match self {
+            WidgetPosition::Cpu | WidgetPosition::BasicCpu => "CPU",
+            WidgetPosition::Mem | WidgetPosition::BasicMem => "Memory",
+            WidgetPosition::Disk => "Disks",
+            WidgetPosition::Temp => "Temperature",
+            WidgetPosition::Network | WidgetPosition::BasicNet => "Network",
+            WidgetPosition::Process | WidgetPosition::ProcessSearch => "Processes",
+        }
+        .to_string()
+    }
 }
 
 #[derive(Debug)]
@@ -259,7 +271,7 @@ pub struct App {
     pub update_process_gui: bool,
     pub app_scroll_positions: AppScrollState,
     pub current_widget_selected: WidgetPosition,
-    pub last_basic_table_widget_selected: WidgetPosition,
+    pub previous_basic_table_selected: WidgetPosition,
     awaiting_second_char: bool,
     second_char: Option<char>,
     pub dd_err: Option<String>,
@@ -302,7 +314,7 @@ impl App {
             } else {
                 current_widget_selected
             },
-            last_basic_table_widget_selected: if current_widget_selected.is_widget_table() {
+            previous_basic_table_selected: if current_widget_selected.is_widget_table() {
                 current_widget_selected
             } else {
                 WidgetPosition::Process
@@ -1139,7 +1151,7 @@ impl App {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
                 if self.current_widget_selected.is_widget_table() {
-                    self.last_basic_table_widget_selected = self.current_widget_selected;
+                    self.previous_basic_table_selected = self.current_widget_selected;
                 }
                 self.current_widget_selected = match self.current_widget_selected {
                     WidgetPosition::BasicMem => WidgetPosition::BasicCpu,
@@ -1175,8 +1187,8 @@ impl App {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
                 self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::BasicMem => self.last_basic_table_widget_selected,
-                    WidgetPosition::BasicNet => self.last_basic_table_widget_selected,
+                    WidgetPosition::BasicMem => self.previous_basic_table_selected,
+                    WidgetPosition::BasicNet => self.previous_basic_table_selected,
                     WidgetPosition::BasicCpu => WidgetPosition::BasicMem,
                     WidgetPosition::Process => {
                         if self.is_searching() {
