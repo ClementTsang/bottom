@@ -26,7 +26,7 @@ pub struct ConfigFlags {
     pub regex: Option<bool>,
     pub default_widget: Option<String>,
     pub show_disabled_data: Option<bool>,
-    pub basic_mode: Option<bool>,
+    pub basic: Option<bool>,
     //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -176,8 +176,8 @@ pub fn get_use_basic_mode_option(matches: &clap::ArgMatches<'static>, config: &C
     if matches.is_present("BASIC_MODE") {
         return true;
     } else if let Some(flags) = &config.flags {
-        if let Some(basic_mode) = flags.basic_mode {
-            return basic_mode;
+        if let Some(basic) = flags.basic {
+            return basic;
         }
     }
 

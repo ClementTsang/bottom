@@ -34,6 +34,9 @@
 #default_widget = "network_default"
 #default_widget = "process_default"
 
+# Basic mode
+#basic = true
+
 
 # These are all the components that support custom theming.  Currently, it only
 # supports taking in a string representing a hex colour.  Note that colour support
