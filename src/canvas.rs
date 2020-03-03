@@ -435,6 +435,7 @@ impl Painter {
                     .direction(Direction::Vertical)
                     .constraints([
                         Constraint::Length(cpu_height),
+                        Constraint::Length(1),
                         Constraint::Length(2),
                         Constraint::Length(2),
                         Constraint::Min(5),
@@ -447,15 +448,15 @@ impl Painter {
                     Constraint::Percentage(50),
                     Constraint::Percentage(50),
                 ].as_ref())
-                .split(vertical_chunks[1]);
+                .split(vertical_chunks[2]);
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
-                self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[2]);
+                self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3]);
                 if app_state.current_widget_selected.is_widget_table() {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[3], false, app_state.current_widget_selected);
+                    self.draw_specific_table(&mut f, app_state, vertical_chunks[4], false, app_state.current_widget_selected);
                 } else {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[3], false, app_state.previous_basic_table_selected);
+                    self.draw_specific_table(&mut f, app_state, vertical_chunks[4], false, app_state.previous_basic_table_selected);
                 }
             } else {
                 // TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
