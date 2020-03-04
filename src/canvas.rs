@@ -375,7 +375,7 @@ impl Painter {
                     .constraints([Constraint::Percentage(100)].as_ref())
                     .split(f.size());
                 match &app_state.current_widget_selected {
-                    WidgetPosition::Cpu  | WidgetPosition::BasicCpu=> {
+                    WidgetPosition::Cpu  | WidgetPosition::BasicCpu => {
                         let cpu_chunk = Layout::default()
                             .direction(Direction::Horizontal)
                             .margin(0)
@@ -637,7 +637,9 @@ impl Painter {
                     })
                     .borders(Borders::ALL)
                     .border_style(match app_state.current_widget_selected {
-                        app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+                        WidgetPosition::Cpu | WidgetPosition::BasicCpu => {
+                            self.colours.highlighted_border_style
+                        }
                         _ => self.colours.border_style,
                     }),
             )
@@ -699,7 +701,7 @@ impl Painter {
                 Row::StyledData(
                     cpu_string_row.iter(),
                     match app_state.current_widget_selected {
-                        app::WidgetPosition::Cpu => {
+                        WidgetPosition::Cpu => {
                             if itx as u64
                                 == app_state
                                     .app_scroll_positions
@@ -774,13 +776,13 @@ impl Painter {
                     self.colours.highlighted_border_style
                 } else {
                     match app_state.current_widget_selected {
-                        app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+                        WidgetPosition::Cpu => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
                     }
                 })
                 .borders(Borders::ALL)
                 .border_style(match app_state.current_widget_selected {
-                    app::WidgetPosition::Cpu => self.colours.highlighted_border_style,
+                    WidgetPosition::Cpu => self.colours.highlighted_border_style,
                     _ => self.colours.border_style,
                 }),
         )
@@ -857,7 +859,9 @@ impl Painter {
                     })
                     .borders(Borders::ALL)
                     .border_style(match app_state.current_widget_selected {
-                        app::WidgetPosition::Mem => self.colours.highlighted_border_style,
+                        WidgetPosition::Mem | WidgetPosition::BasicMem => {
+                            self.colours.highlighted_border_style
+                        }
                         _ => self.colours.border_style,
                     }),
             )
@@ -907,7 +911,9 @@ impl Painter {
                     })
                     .borders(Borders::ALL)
                     .border_style(match app_state.current_widget_selected {
-                        app::WidgetPosition::Network => self.colours.highlighted_border_style,
+                        WidgetPosition::Network | WidgetPosition::BasicNet => {
+                            self.colours.highlighted_border_style
+                        }
                         _ => self.colours.border_style,
                     }),
             )
@@ -980,7 +986,7 @@ impl Painter {
         Table::new(NETWORK_HEADERS.iter(), mapped_network)
             .block(Block::default().borders(Borders::ALL).border_style(
                 match app_state.current_widget_selected {
-                    app::WidgetPosition::Network => self.colours.highlighted_border_style,
+                    WidgetPosition::Network => self.colours.highlighted_border_style,
                     _ => self.colours.border_style,
                 },
             ))
@@ -1022,7 +1028,7 @@ impl Painter {
             Row::StyledData(
                 temp_row.iter(),
                 match app_state.current_widget_selected {
-                    app::WidgetPosition::Temp => {
+                    WidgetPosition::Temp => {
                         if temp_row_counter as u64
                             == app_state
                                 .app_scroll_positions
@@ -1074,7 +1080,7 @@ impl Painter {
                 .title(&title)
                 .title_style(if app_state.is_expanded {
                     match app_state.current_widget_selected {
-                        app::WidgetPosition::Temp => self.colours.highlighted_border_style,
+                        WidgetPosition::Temp => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
                     }
                 } else {
@@ -1082,12 +1088,12 @@ impl Painter {
                 })
                 .borders(Borders::ALL)
                 .border_style(match app_state.current_widget_selected {
-                    app::WidgetPosition::Temp => self.colours.highlighted_border_style,
+                    WidgetPosition::Temp => self.colours.highlighted_border_style,
                     _ => self.colours.border_style,
                 })
         } else {
             match app_state.current_widget_selected {
-                app::WidgetPosition::Temp => Block::default()
+                WidgetPosition::Temp => Block::default()
                     .borders(*SIDE_BORDERS)
                     .border_style(self.colours.highlighted_border_style),
                 _ => Block::default().borders(Borders::NONE),
@@ -1097,7 +1103,7 @@ impl Painter {
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
             .horizontal_margin(match app_state.current_widget_selected {
-                app::WidgetPosition::Temp => 0,
+                WidgetPosition::Temp => 0,
                 _ if !draw_border => 1,
                 _ => 0,
             })
@@ -1143,7 +1149,7 @@ impl Painter {
             Row::StyledData(
                 disk.iter(),
                 match app_state.current_widget_selected {
-                    app::WidgetPosition::Disk => {
+                    WidgetPosition::Disk => {
                         if disk_counter as u64
                             == app_state
                                 .app_scroll_positions
@@ -1195,7 +1201,7 @@ impl Painter {
                 .title(&title)
                 .title_style(if app_state.is_expanded {
                     match app_state.current_widget_selected {
-                        app::WidgetPosition::Disk => self.colours.highlighted_border_style,
+                        WidgetPosition::Disk => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
                     }
                 } else {
@@ -1203,12 +1209,12 @@ impl Painter {
                 })
                 .borders(Borders::ALL)
                 .border_style(match app_state.current_widget_selected {
-                    app::WidgetPosition::Disk => self.colours.highlighted_border_style,
+                    WidgetPosition::Disk => self.colours.highlighted_border_style,
                     _ => self.colours.border_style,
                 })
         } else {
             match app_state.current_widget_selected {
-                app::WidgetPosition::Disk => Block::default()
+                WidgetPosition::Disk => Block::default()
                     .borders(*SIDE_BORDERS)
                     .border_style(self.colours.highlighted_border_style),
                 _ => Block::default().borders(Borders::NONE),
@@ -1218,7 +1224,7 @@ impl Painter {
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
             .horizontal_margin(match app_state.current_widget_selected {
-                app::WidgetPosition::Disk => 0,
+                WidgetPosition::Disk => 0,
                 _ if !draw_border => 1,
                 _ => 0,
             })
@@ -1257,7 +1263,7 @@ impl Painter {
         let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
         let mut current_grapheme_posn = 0;
         let query_with_cursor: Vec<Text<'_>> =
-            if let app::WidgetPosition::ProcessSearch = app_state.current_widget_selected {
+            if let WidgetPosition::ProcessSearch = app_state.current_widget_selected {
                 let mut res = grapheme_indices
                     .filter_map(|grapheme| {
                         current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
@@ -1384,7 +1390,7 @@ impl Painter {
             Style::default().fg(Color::Rgb(255, 0, 0))
         } else {
             match app_state.current_widget_selected {
-                app::WidgetPosition::ProcessSearch => self.colours.highlighted_border_style,
+                WidgetPosition::ProcessSearch => self.colours.highlighted_border_style,
                 _ => self.colours.border_style,
             }
         };
@@ -1409,7 +1415,7 @@ impl Painter {
                 .border_style(current_border_style)
         } else {
             match app_state.current_widget_selected {
-                app::WidgetPosition::ProcessSearch => Block::default()
+                WidgetPosition::ProcessSearch => Block::default()
                     .borders(*SIDE_BORDERS)
                     .border_style(current_border_style),
                 _ => Block::default().borders(Borders::NONE),
@@ -1419,7 +1425,7 @@ impl Painter {
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
             .horizontal_margin(match app_state.current_widget_selected {
-                app::WidgetPosition::ProcessSearch => 0,
+                WidgetPosition::ProcessSearch => 0,
                 _ if !draw_border => 1,
                 _ => 0,
             })
@@ -1488,7 +1494,7 @@ impl Painter {
             Row::StyledData(
                 stringified_process_vec.into_iter(),
                 match app_state.current_widget_selected {
-                    app::WidgetPosition::Process => {
+                    WidgetPosition::Process => {
                         if process_counter as u64
                             == app_state
                                 .app_scroll_positions
@@ -1572,7 +1578,7 @@ impl Painter {
                 .title(&title)
                 .title_style(if app_state.is_expanded {
                     match app_state.current_widget_selected {
-                        app::WidgetPosition::Process => self.colours.highlighted_border_style,
+                        WidgetPosition::Process => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
                     }
                 } else {
@@ -1580,12 +1586,12 @@ impl Painter {
                 })
                 .borders(Borders::ALL)
                 .border_style(match app_state.current_widget_selected {
-                    app::WidgetPosition::Process => self.colours.highlighted_border_style,
+                    WidgetPosition::Process => self.colours.highlighted_border_style,
                     _ => self.colours.border_style,
                 })
         } else {
             match app_state.current_widget_selected {
-                app::WidgetPosition::Process => Block::default()
+                WidgetPosition::Process => Block::default()
                     .borders(*SIDE_BORDERS)
                     .border_style(self.colours.highlighted_border_style),
                 _ => Block::default().borders(Borders::NONE),
@@ -1595,7 +1601,7 @@ impl Painter {
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
             .horizontal_margin(match app_state.current_widget_selected {
-                app::WidgetPosition::Process => 0,
+                WidgetPosition::Process => 0,
                 _ if !draw_border => 1,
                 _ => 0,
             })

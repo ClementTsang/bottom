@@ -375,6 +375,12 @@ impl App {
             self.dd_err = None;
         } else if self.is_filtering_or_searching() {
             match self.current_widget_selected {
+                WidgetPosition::Cpu
+                    if self.is_expanded && self.app_config_fields.use_basic_mode =>
+                {
+                    self.current_widget_selected = WidgetPosition::BasicCpu;
+                    self.cpu_state.is_showing_tray = false;
+                }
                 WidgetPosition::Process | WidgetPosition::ProcessSearch => {
                     if self.process_search_state.search_state.is_enabled {
                         self.current_widget_selected = WidgetPosition::Process;
@@ -478,6 +484,10 @@ impl App {
     pub fn on_slash(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget_selected {
+                WidgetPosition::BasicCpu if self.is_expanded => {
+                    self.current_widget_selected = WidgetPosition::Cpu;
+                    self.cpu_state.is_showing_tray = true;
+                }
                 WidgetPosition::Process | WidgetPosition::ProcessSearch => {
                     // Toggle on
                     self.process_search_state.search_state.is_enabled = true;
