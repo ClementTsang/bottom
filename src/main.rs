@@ -6,7 +6,7 @@ extern crate clap;
 extern crate futures;
 #[macro_use]
 extern crate lazy_static;
-#[macro_use]CEvent
+#[macro_use]
 extern crate log;
 
 use std::{
@@ -36,7 +36,7 @@ use app::{
 use constants::*;
 use data_conversion::*;
 use options::*;
-use utils::error::{self};
+use utils::error::{self, BottomError};
 
 pub mod app;
 
@@ -392,250 +392,242 @@ fn create_logger() -> error::Result<()> {
 }
 
 fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
-	use std::{ffi::OsString, fs};
-	let config_path = if let Some(conf_loc) = flag_config_location {
-		OsString::from(conf_loc)
-	} else if cfg!(target_os = "windows") {
-		if let Some(home_path) = dirs::config_dir() {
-			let mut path = home_path;
-			path.push(DEFAULT_WINDOWS_CONFIG_FILE_PATH);
-			path.into_os_string()
-		} else {
-			OsString::new()
-		}
-	} else if let Some(home_path) = dirs::home_dir() {
-		let mut path = home_path;
-		path.push(DEFAULT_UNIX_CONFIG_FILE_PATH);
-		path.into_os_string()
-	} else {
-		OsString::new()
-	};
+    use std::{ffi::OsString, fs};
+    let config_path = if let Some(conf_loc) = flag_config_location {
+        OsString::from(conf_loc)
+    } else if cfg!(target_os = "windows") {
+        if let Some(home_path) = dirs::config_dir() {
+            let mut path = home_path;
+            path.push(DEFAULT_WINDOWS_CONFIG_FILE_PATH);
+            path.into_os_string()
+        } else {
+            OsString::new()
+        }
+    } else if let Some(home_path) = dirs::home_dir() {
+        let mut path = home_path;
+        path.push(DEFAULT_UNIX_CONFIG_FILE_PATH);
+        path.into_os_string()
+    } else {
+        OsString::new()
+    };
 
-	let path = std::path::Path::new(&config_path);
+    let path = std::path::Path::new(&config_path);
 
-	if let Ok(config_string) = fs::read_to_string(path) {
-		Ok(toml::from_str(config_string.as_str())?)
-	} else {
-		if let Some(parent_path) = path.parent() {
-			fs::create_dir_all(parent_path)?;
-		}
-		fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
-		Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
-	}
+    if let Ok(config_string) = fs::read_to_string(path) {
+        Ok(toml::from_str(config_string.as_str())?)
+    } else {
+        if let Some(parent_path) = path.parent() {
+            fs::create_dir_all(parent_path)?;
+        }
+        fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
+        Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
+    }
 }
 
 fn get_update_rate_in_milliseconds(
-	update_rate: &Option<&str>, config: &Config,
+    update_rate: &Option<&str>, config: &Config,
 ) -> error::Result<u128> {
-	let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
-		update_rate.parse::<u128>()?
-	} else if let Some(flags) = &config.flags {
-		if let Some(rate) = flags.rate {
-			rate as u128
-		} else {
-			constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-		}
-	} else {
-		constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
-	};
+    let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
+        update_rate.parse::<u128>()?
+    } else if let Some(flags) = &config.flags {
+        if let Some(rate) = flags.rate {
+            rate as u128
+        } else {
+            constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+        }
+    } else {
+        constants::DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+    };
 
-	if update_rate_in_milliseconds < 250 {
-		return Err(BottomError::InvalidArg(
-			"Please set your update rate to be greater than 250 milliseconds.".to_string(),
-		));
-	} else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
-		return Err(BottomError::InvalidArg(
-			"Please set your update rate to be less than unsigned INT_MAX.".to_string(),
-		));
-	}
+    if update_rate_in_milliseconds < 250 {
+        return Err(BottomError::InvalidArg(
+            "Please set your update rate to be greater than 250 milliseconds.".to_string(),
+        ));
+    } else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
+        return Err(BottomError::InvalidArg(
+            "Please set your update rate to be less than unsigned INT_MAX.".to_string(),
+        ));
+    }
 
-	Ok(update_rate_in_milliseconds)
+    Ok(update_rate_in_milliseconds)
 }
 
 fn get_temperature_option(
-	matches: &clap::ArgMatches<'static>, config: &Config,
+    matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<data_harvester::temperature::TemperatureType> {
-	if matches.is_present("FAHRENHEIT") {
-		return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
-	} else if matches.is_present("KELVIN") {
-		return Ok(data_harvester::temperature::TemperatureType::Kelvin);
-	} else if matches.is_present("CELSIUS") {
-		return Ok(data_harvester::temperature::TemperatureType::Celsius);
-	} else if let Some(flags) = &config.flags {
-		if let Some(temp_type) = &flags.temperature_type {
-			// Give lowest priority to config.
-			return match temp_type.as_str() {
-				"fahrenheit" | "f" => {
-					Ok(data_harvester::temperature::TemperatureType::Fahrenheit)
-				}
-				"kelvin" | "k" => {
-					Ok(data_harvester::temperature::TemperatureType::Kelvin)
-				}
-				"celsius" | "c" => {
-					Ok(data_harvester::temperature::TemperatureType::Celsius)
-				}
-				_ => {
-					Err(BottomError::ConfigError(
-						"Invalid temperature type.  Please have the value be of the form \
+    if matches.is_present("FAHRENHEIT") {
+        return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
+    } else if matches.is_present("KELVIN") {
+        return Ok(data_harvester::temperature::TemperatureType::Kelvin);
+    } else if matches.is_present("CELSIUS") {
+        return Ok(data_harvester::temperature::TemperatureType::Celsius);
+    } else if let Some(flags) = &config.flags {
+        if let Some(temp_type) = &flags.temperature_type {
+            // Give lowest priority to config.
+            return match temp_type.as_str() {
+                "fahrenheit" | "f" => Ok(data_harvester::temperature::TemperatureType::Fahrenheit),
+                "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
+                "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
+                _ => Err(BottomError::ConfigError(
+                    "Invalid temperature type.  Please have the value be of the form \
 						 <kelvin|k|celsius|c|fahrenheit|f>"
-							.to_string(),
-					))
-				}
-			}
-		}
-	}
-	Ok(data_harvester::temperature::TemperatureType::Celsius)
+                        .to_string(),
+                )),
+            };
+        }
+    }
+    Ok(data_harvester::temperature::TemperatureType::Celsius)
 }
 
 fn get_avg_cpu_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-	if matches.is_present("AVG_CPU") {
-		return true;
-	} else if let Some(flags) = &config.flags {
-		if let Some(avg_cpu) = flags.avg_cpu {
-			return avg_cpu;
-		}
-	}
+    if matches.is_present("AVG_CPU") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(avg_cpu) = flags.avg_cpu {
+            return avg_cpu;
+        }
+    }
 
-	false
+    false
 }
 
 fn get_use_dot_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-	if matches.is_present("DOT_MARKER") {
-		return true;
-	} else if let Some(flags) = &config.flags {
-		if let Some(dot_marker) = flags.dot_marker {
-			return dot_marker;
-		}
-	}
-	false
+    if matches.is_present("DOT_MARKER") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(dot_marker) = flags.dot_marker {
+            return dot_marker;
+        }
+    }
+    false
 }
 
 fn get_use_left_legend_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-	if matches.is_present("LEFT_LEGEND") {
-		return true;
-	} else if let Some(flags) = &config.flags {
-		if let Some(left_legend) = flags.left_legend {
-			return left_legend;
-		}
-	}
+    if matches.is_present("LEFT_LEGEND") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(left_legend) = flags.left_legend {
+            return left_legend;
+        }
+    }
 
-	false
+    false
 }
 
 fn get_use_current_cpu_total_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-	if matches.is_present("USE_CURR_USAGE") {
-		return true;
-	} else if let Some(flags) = &config.flags {
-		if let Some(current_usage) = flags.current_usage {
-			return current_usage;
-		}
-	}
+    if matches.is_present("USE_CURR_USAGE") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(current_usage) = flags.current_usage {
+            return current_usage;
+        }
+    }
 
-	false
+    false
 }
 
 fn get_show_disabled_data_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-	if matches.is_present("SHOW_DISABLED_DATA") {
-		return true;
-	} else if let Some(flags) = &config.flags {
-		if let Some(show_disabled_data) = flags.show_disabled_data {
-			return show_disabled_data;
-		}
-	}
+    if matches.is_present("SHOW_DISABLED_DATA") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(show_disabled_data) = flags.show_disabled_data {
+            return show_disabled_data;
+        }
+    }
 
-	false
+    false
 }
 
 fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
-	if matches.is_present("GROUP_PROCESSES") {
-		app.toggle_grouping();
-	} else if let Some(flags) = &config.flags {
-		if let Some(grouping) = flags.group_processes {
-			if grouping {
-				app.toggle_grouping();
-			}
-		}
-	}
+    if matches.is_present("GROUP_PROCESSES") {
+        app.toggle_grouping();
+    } else if let Some(flags) = &config.flags {
+        if let Some(grouping) = flags.group_processes {
+            if grouping {
+                app.toggle_grouping();
+            }
+        }
+    }
 }
 
 fn enable_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
-	if matches.is_present("CASE_SENSITIVE") {
-		app.process_search_state.search_toggle_ignore_case();
-	} else if let Some(flags) = &config.flags {
-		if let Some(case_sensitive) = flags.case_sensitive {
-			if case_sensitive {
-				app.process_search_state.search_toggle_ignore_case();
-			}
-		}
-	}
+    if matches.is_present("CASE_SENSITIVE") {
+        app.process_search_state.search_toggle_ignore_case();
+    } else if let Some(flags) = &config.flags {
+        if let Some(case_sensitive) = flags.case_sensitive {
+            if case_sensitive {
+                app.process_search_state.search_toggle_ignore_case();
+            }
+        }
+    }
 }
 
 fn enable_app_match_whole_word(
-	matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
+    matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
 ) {
-	if matches.is_present("WHOLE_WORD") {
-		app.process_search_state.search_toggle_whole_word();
-	} else if let Some(flags) = &config.flags {
-		if let Some(whole_word) = flags.whole_word {
-			if whole_word {
-				app.process_search_state.search_toggle_whole_word();
-			}
-		}
-	}
+    if matches.is_present("WHOLE_WORD") {
+        app.process_search_state.search_toggle_whole_word();
+    } else if let Some(flags) = &config.flags {
+        if let Some(whole_word) = flags.whole_word {
+            if whole_word {
+                app.process_search_state.search_toggle_whole_word();
+            }
+        }
+    }
 }
 
 fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
-	if matches.is_present("REGEX_DEFAULT") {
-		app.process_search_state.search_toggle_regex();
-	} else if let Some(flags) = &config.flags {
-		if let Some(regex) = flags.regex {
-			if regex {
-				app.process_search_state.search_toggle_regex();
-			}
-		}
-	}
+    if matches.is_present("REGEX_DEFAULT") {
+        app.process_search_state.search_toggle_regex();
+    } else if let Some(flags) = &config.flags {
+        if let Some(regex) = flags.regex {
+            if regex {
+                app.process_search_state.search_toggle_regex();
+            }
+        }
+    }
 }
 
 fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> app::WidgetPosition {
-	if matches.is_present("CPU_WIDGET") {
-		return app::WidgetPosition::Cpu;
-	} else if matches.is_present("MEM_WIDGET") {
-		return app::WidgetPosition::Mem;
-	} else if matches.is_present("DISK_WIDGET") {
-		return app::WidgetPosition::Disk;
-	} else if matches.is_present("TEMP_WIDGET") {
-		return app::WidgetPosition::Temp;
-	} else if matches.is_present("NET_WIDGET") {
-		return app::WidgetPosition::Network;
-	} else if matches.is_present("PROC_WIDGET") {
-		return app::WidgetPosition::Process;
-	} else if let Some(flags) = &config.flags {
-		if let Some(default_widget) = &flags.default_widget {
-			match default_widget.as_str() {
-				"cpu_default" => {
-					return app::WidgetPosition::Cpu;
-				}
-				"memory_default" => {
-					return app::WidgetPosition::Mem;
-				}
-				"processes_default" => {
-					return app::WidgetPosition::Process;
-				}
-				"network_default" => {
-					return app::WidgetPosition::Network;
-				}
-				"temperature_default" => {
-					return app::WidgetPosition::Temp;
-				}
-				"disk_default" => {
-					return app::WidgetPosition::Disk;
-				}
-				_ => {}
-			}
-		}
-	}
+    if matches.is_present("CPU_WIDGET") {
+        return app::WidgetPosition::Cpu;
+    } else if matches.is_present("MEM_WIDGET") {
+        return app::WidgetPosition::Mem;
+    } else if matches.is_present("DISK_WIDGET") {
+        return app::WidgetPosition::Disk;
+    } else if matches.is_present("TEMP_WIDGET") {
+        return app::WidgetPosition::Temp;
+    } else if matches.is_present("NET_WIDGET") {
+        return app::WidgetPosition::Network;
+    } else if matches.is_present("PROC_WIDGET") {
+        return app::WidgetPosition::Process;
+    } else if let Some(flags) = &config.flags {
+        if let Some(default_widget) = &flags.default_widget {
+            match default_widget.as_str() {
+                "cpu_default" => {
+                    return app::WidgetPosition::Cpu;
+                }
+                "memory_default" => {
+                    return app::WidgetPosition::Mem;
+                }
+                "processes_default" => {
+                    return app::WidgetPosition::Process;
+                }
+                "network_default" => {
+                    return app::WidgetPosition::Network;
+                }
+                "temperature_default" => {
+                    return app::WidgetPosition::Temp;
+                }
+                "disk_default" => {
+                    return app::WidgetPosition::Disk;
+                }
+                _ => {}
+            }
+        }
+    }
 
-	app::WidgetPosition::Process
+    app::WidgetPosition::Process
 }
 
 fn try_drawing(
