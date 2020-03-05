@@ -123,7 +123,7 @@ fn main() -> error::Result<()> {
     let mut app = App::new(
         show_average_cpu,
         temperature_type,
-        update_rate_in_milliseconds as u64,
+        update_rate_in_milliseconds,
         use_dot,
         left_legend,
         use_current_cpu_total,
