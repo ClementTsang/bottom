@@ -25,8 +25,7 @@ use crossterm::{
 	},
 	execute,
 	style::Print,
-	terminal::LeaveAlternateScreen,
-	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
+	terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use serde::Deserialize;
 use tui::{backend::CrosstermBackend, Terminal};
@@ -119,7 +118,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg RATE_MILLIS: -r --rate +takes_value "Sets a refresh rate in milliseconds; the minimum is 250ms, defaults to 1000ms.  Smaller values may take more resources.")
 		(@arg LEFT_LEGEND: -l --left_legend "Puts external chart legends on the left side rather than the default right side.")
 		(@arg USE_CURR_USAGE: -u --current_usage "Within Linux, sets a process' CPU usage to be based on the total current CPU usage, rather than assuming 100% usage.")
-		(@arg CONFIG_LOCATION: -C --config +takes_value "Sets the location of the config file.  Expects a config file in the TOML format.")
+		(@arg CONFIG_LOCATION: -C --config +takes_value "Sets the location of the config file.  Expects a config file in the TOML format. If doesn't exist, creates one.")
 		//(@arg BASIC_MODE: -b --basic "Sets bottom to basic mode, not showing graphs and only showing basic tables.") // TODO: [FEATURE] Min mode
 		(@arg GROUP_PROCESSES: -g --group "Groups processes with the same name together on launch.")
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
@@ -426,7 +425,7 @@ fn create_logger() -> error::Result<()> {
 }
 
 fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
-	use std::ffi::OsString;
+	use std::{ffi::OsString, fs};
 	let config_path = if let Some(conf_loc) = flag_config_location {
 		OsString::from(conf_loc)
 	} else if cfg!(target_os = "windows") {
@@ -447,10 +446,14 @@ fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
 
 	let path = std::path::Path::new(&config_path);
 
-	if let Ok(config_str) = std::fs::read_to_string(path) {
-		Ok(toml::from_str(config_str.as_str())?)
+	if let Ok(config_string) = fs::read_to_string(path) {
+		Ok(toml::from_str(config_string.as_str())?)
 	} else {
-		Ok(Config::default())
+		if let Some(parent_path) = path.parent() {
+			fs::create_dir_all(parent_path)?;
+		}
+		fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
+		Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
 	}
 }
 
@@ -506,7 +509,9 @@ fn get_temperature_option(
 				}
 				_ => {
 					Err(BottomError::ConfigError(
-						"Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
+						"Invalid temperature type.  Please have the value be of the form \
+						 <kelvin|k|celsius|c|fahrenheit|f>"
+							.to_string(),
 					))
 				}
 			}
