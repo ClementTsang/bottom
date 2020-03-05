@@ -25,8 +25,7 @@ use crossterm::{
     },
     execute,
     style::Print,
-    terminal::LeaveAlternateScreen,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -53,7 +52,7 @@ mod data_conversion;
 
 pub mod options;
 
-enum Event<I, J> {
+enum BottomEvent<I, J> {
     KeyInput(I),
     MouseInput(J),
     Update(Box<data_harvester::Data>),
@@ -160,7 +159,7 @@ fn main() -> error::Result<()> {
             thread::sleep(Duration::from_millis(
                 constants::STALE_MAX_MILLISECONDS as u64 + 5000,
             ));
-            tx.send(Event::Clean).unwrap();
+            tx.send(BottomEvent::Clean).unwrap();
         });
     }
     // Event loop
@@ -185,7 +184,7 @@ fn main() -> error::Result<()> {
     loop {
         if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
-                Event::KeyInput(event) => {
+                BottomEvent::KeyInput(event) => {
                     if handle_key_event_or_break(event, &mut app, &rtx) {
                         break;
                     }
@@ -195,8 +194,8 @@ fn main() -> error::Result<()> {
                         app.update_process_gui = false;
                     }
                 }
-                Event::MouseInput(event) => handle_mouse_event(event, &mut app),
-                Event::Update(data) => {
+                BottomEvent::MouseInput(event) => handle_mouse_event(event, &mut app),
+                BottomEvent::Update(data) => {
                     app.data_collection.eat_data(&data);
 
                     if !app.is_frozen {
@@ -246,7 +245,7 @@ fn main() -> error::Result<()> {
                         update_final_process_list(&mut app);
                     }
                 }
-                Event::Clean => {
+                BottomEvent::Clean => {
                     app.data_collection
                         .clean_data(constants::STALE_MAX_MILLISECONDS);
                 }
@@ -650,7 +649,9 @@ fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &App) {
 }
 
 fn create_input_thread(
-    tx: std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
+    tx: std::sync::mpsc::Sender<
+        BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
+    >,
 ) {
     thread::spawn(move || loop {
         if poll(Duration::from_millis(20)).is_ok() {
@@ -662,14 +663,14 @@ fn create_input_thread(
                     if let Ok(event) = read() {
                         if let CEvent::Key(key) = event {
                             if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                if tx.send(Event::KeyInput(key)).is_err() {
+                                if tx.send(BottomEvent::KeyInput(key)).is_err() {
                                     return;
                                 }
                                 keyboard_timer = Instant::now();
                             }
                         } else if let CEvent::Mouse(mouse) = event {
                             if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-                                if tx.send(Event::MouseInput(mouse)).is_err() {
+                                if tx.send(BottomEvent::MouseInput(mouse)).is_err() {
                                     return;
                                 }
                                 mouse_timer = Instant::now();
@@ -683,7 +684,9 @@ fn create_input_thread(
 }
 
 fn create_event_thread(
-    tx: std::sync::mpsc::Sender<Event<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
+    tx: std::sync::mpsc::Sender<
+        BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
+    >,
     rrx: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
     update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
 ) {
@@ -702,7 +705,7 @@ fn create_event_thread(
                 }
             }
             futures::executor::block_on(data_state.update_data());
-            let event = Event::Update(Box::from(data_state.data));
+            let event = BottomEvent::Update(Box::from(data_state.data));
             data_state.data = data_harvester::Data::default();
             tx.send(event).unwrap();
             thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
