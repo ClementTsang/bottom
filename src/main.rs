@@ -20,7 +20,7 @@ use std::{
 
 use crossterm::{
     event::{
-        poll, read, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent,
+        poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent,
         KeyModifiers, MouseEvent,
     },
     execute,
@@ -871,14 +871,14 @@ fn create_input_thread(
             loop {
                 if poll(Duration::from_millis(20)).is_ok() {
                     if let Ok(event) = read() {
-                        if let CEvent::Key(key) = event {
+                        if let Event::Key(key) = event {
                             if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
                                 if tx.send(BottomEvent::KeyInput(key)).is_err() {
                                     return;
                                 }
                                 keyboard_timer = Instant::now();
                             }
-                        } else if let CEvent::Mouse(mouse) = event {
+                        } else if let Event::Mouse(mouse) = event {
                             if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
                                 if tx.send(BottomEvent::MouseInput(mouse)).is_err() {
                                     return;
