@@ -25,10 +25,10 @@ before_install:
 before_script:
   - rustup target add $TARGET
   - rustup component add clippy
-  - rustup component add rustfmt
+  #- rustup component add rustfmt
 script:
   - cargo clippy -- -D clippy::all
-  - cargo fmt -- --check
+  #- cargo fmt -- --check
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
 
