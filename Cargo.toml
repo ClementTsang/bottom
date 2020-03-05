@@ -18,7 +18,9 @@ path = "src/main.rs"
 #debug = true
 debug = 1
 opt-level = 3
-lto = true
+#lto = true
+lto = "fat"
+codegen-units = 1
 
 [dependencies]
 chrono = "0.4.10"
