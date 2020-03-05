@@ -1658,8 +1658,7 @@ impl Painter {
             let margin_space = 2;
             let remaining_width = max(
                 0,
-                draw_loc.width as i64
-                    - ((9 + margin_space) * REQUIRED_COLUMNS - margin_space) as i64,
+                draw_loc.width as i64 - ((9 + margin_space) * REQUIRED_COLUMNS) as i64,
             ) as usize;
 
             let bar_length = remaining_width / REQUIRED_COLUMNS;
