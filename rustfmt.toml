@@ -3,7 +3,6 @@ max_width = 100
 newline_style = "Unix"
 reorder_imports = true
 fn_args_layout = "Compressed"
-hard_tabs = true
 merge_derives = true
 reorder_modules = true
 tab_spaces = 4

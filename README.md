@@ -30,6 +30,8 @@ Features of bottom include:
 
 - Maximizing of widgets of interest to take up the entire window.
 
+- Basic mode
+
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
 ## Config files
@@ -75,7 +77,7 @@ sudo dpkg -i bottom_0.2.2_amd64.deb
 
 ### Windows
 
-You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/):
+You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/) (note it may take a while to be available due to moderation/review):
 
 ```bash
 choco install bottom --version=0.2.1
@@ -86,10 +88,10 @@ choco install bottom --version=0.2.1
 You can get release versions using Homebrew:
 
 ```bash
-$ brew tap clementtsang/bottom
-$ brew install bottom
+brew tap clementtsang/bottom
+brew install bottom
 # Or
-$ brew install clementtsang/bottom/bottom
+brew install clementtsang/bottom/bottom
 ```
 
 ## Usage
@@ -133,6 +135,8 @@ Run using `btm`.
 - `-s`, `--show_disabled_data` will show data entries in the graph legends even if the lines for that entry are disabled.
 
 - `-C`, `--config` takes in a file path leading to a TOML file. If doesn't exist, creates one.
+
+- `-b`, `--basic` will enable basic mode, removing all graphs from the main interface and condensing data.
 
 ### Keybindings
 
