@@ -30,6 +30,8 @@ Features of bottom include:
 
 - Maximizing of widgets of interest to take up the entire window.
 
+- Basic mode
+
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
 ## Config files
