@@ -134,7 +134,7 @@ Run using `btm`.
 
 - `-s`, `--show_disabled_data` will show data entries in the graph legends even if the lines for that entry are disabled.
 
-- `-C`, `--config` takes in a file path leading to a TOML file.
+- `-C`, `--config` takes in a file path leading to a TOML file. If doesn't exist, creates one.
 
 - `-b`, `--basic` will enable basic mode, removing all graphs from the main interface and condensing data.
 

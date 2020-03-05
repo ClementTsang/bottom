@@ -20,6 +20,14 @@ _Remove the irrelevant one:_
 
 _Please state how this was tested:_
 
+
+
+_Please tick which platforms this change was tested on:_
+
+- [ ] Windows
+- [ ] macOS
+- [ ] Linux
+
 ## Checklist
 
 _Please ensure all are ticked (and actually done):_

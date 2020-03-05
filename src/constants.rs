@@ -56,3 +56,95 @@ pub const SEARCH_HELP_TEXT: [&str; 13] = [
     "Alt-w/F2       Toggle whether to match the whole word\n",
     "Alt-r/F3       Toggle whether to use regex\n",
 ];
+
+pub const DEFAULT_CONFIG_CONTENT: &str = r##"
+# This is a default config file for bottom.  All of the settings are commented
+# out by default; if you wish to change them uncomment and modify as you see
+# fit.
+
+# This group of options represents a command-line flag/option.  Flags explicitly
+# added when running (ie: btm -a) will override this config file if an option
+# is also set here.
+[flags]
+
+#avg_cpu = true
+#dot_marker = false
+#rate = 1000
+#left_legend = false
+#current_usage = false
+#group_processes = false
+#case_sensitive = false
+#whole_word = true
+#regex = true
+#show_disabled_data = true
+
+# Defaults to Celsius.  Temperature is one of:
+#temperature_type = "k"
+#temperature_type = "f"
+#temperature_type = "c"
+#temperature_type = "kelvin"
+#temperature_type = "fahrenheit"
+#temperature_type = "celsius"
+
+# Defaults to processes.  Default widget is one of:
+#default_widget = "cpu_default"
+#default_widget = "memory_default"
+#default_widget = "disk_default"
+#default_widget = "temperature_default"
+#default_widget = "network_default"
+#default_widget = "process_default"
+
+
+# These are all the components that support custom theming.  Currently, it only
+# supports taking in a string representing a hex colour.  Note that colour support
+# will, at the end of the day, depend on terminal support - for example, the
+# macOS default Terminal does NOT like custom colours and it will glitch out.
+#
+# The default options here are based on gruvbox: https://github.com/morhetz/gruvbox
+[colors]
+
+# Represents the colour of table headers (processes, CPU, disks, temperature).
+#table_header_color="#458588"
+
+# Represents the colour of the label each widget has.
+#widget_title_color="#cc241d"
+
+# Represents the average CPU color
+#avg_cpu_color="#d3869b"
+
+# Represents the colour the core will use in the CPU legend and graph.
+#cpu_core_colors=["#cc241d", "#98971a"]
+
+# Represents the colour RAM will use in the memory legend and graph.
+#ram_color="#fb4934"
+
+# Represents the colour SWAP will use in the memory legend and graph.
+#swap_color="#fabd2f"
+
+# Represents the colour rx will use in the network legend and graph.
+#rx_color="#458588"
+
+# Represents the colour tx will use in the network legend and graph.
+#tx_color="#689d6a"
+
+# Represents the colour of the border of unselected widgets.
+#border_color="#ebdbb2"
+
+# Represents the colour of the border of selected widgets.
+#highlighted_border_color="#fe8019"
+
+# Represents the colour of most text.
+#text_color="#ebdbb2"
+
+# Represents the colour of text that is selected.
+#selected_text_color="#282828"
+
+# Represents the background colour of text that is selected.
+#selected_bg_color="#458588"
+
+# Represents the colour of the lines and text of the graph.
+#graph_color="#ebdbb2"
+
+# Represents the cursor's colour.
+#cursor_color="#458588"
+"##;

@@ -38,7 +38,7 @@ Note some colours may not be compatible with the terminal you are using. For exa
 
 ## Default config locations
 
-bottom will check specific locations by default for a config file.
+bottom will check specific locations by default for a config file. If no file is found, it will be created.
 
 - For Unix-based systems: `$HOME/.config/bottom/bottom.toml`.
 - For Windows: `{FOLDERID_RoamingAppData}\bottom\bottom.toml` (for example, `C:\Users\Clement\AppData\Roaming\bottom\bottom.toml`).
