@@ -55,5 +55,6 @@ assets = [
 ]
 extended-description = """\
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml.
-If one is not specified it will fall back to defaults.
+If one is not specified it will fall back to defaults.  If a config file does not
+exist at the specified or default location, a blank one will be created for the user.
 """
