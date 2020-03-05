@@ -200,7 +200,7 @@ impl Default for AppHelpDialogState {
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.  Don't need to be mutable (set and forget).
 pub struct AppConfigFields {
-    pub update_rate_in_milliseconds: u64,
+    pub update_rate_in_milliseconds: u128,
     pub temperature_type: temperature::TemperatureType,
     pub use_dot: bool,
     pub left_legend: bool,
@@ -296,7 +296,7 @@ impl App {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         show_average_cpu: bool, temperature_type: temperature::TemperatureType,
-        update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
+        update_rate_in_milliseconds: u128, use_dot: bool, left_legend: bool,
         use_current_cpu_total: bool, current_widget_selected: WidgetPosition,
         show_disabled_data: bool, use_basic_mode: bool,
     ) -> App {
