@@ -375,7 +375,7 @@ impl Painter {
                     .constraints([Constraint::Percentage(100)].as_ref())
                     .split(f.size());
                 match &app_state.current_widget_selected {
-                    WidgetPosition::Cpu  | WidgetPosition::BasicCpu => {
+                    WidgetPosition::Cpu | WidgetPosition::BasicCpu => {
                         let cpu_chunk = Layout::default()
                             .direction(Direction::Horizontal)
                             .margin(0)
@@ -385,7 +385,7 @@ impl Painter {
                                 } else {
                                     [Constraint::Percentage(85), Constraint::Percentage(15)]
                                 }
-                                    .as_ref(),
+                                .as_ref(),
                             )
                             .split(rect[0]);
 
@@ -424,7 +424,7 @@ impl Painter {
                 // the same info.
 
                 let cpu_height = (app_state.canvas_data.cpu_data.len() / 4) as u16
-                + (
+                    + (
                     if app_state.canvas_data.cpu_data.len() % 4 == 0 {
                         0
                     } else {
@@ -442,13 +442,13 @@ impl Painter {
                     ].as_ref())
                     .split(f.size());
 
-                let middle_chunks= Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([
-                    Constraint::Percentage(50),
-                    Constraint::Percentage(50),
-                ].as_ref())
-                .split(vertical_chunks[2]);
+                let middle_chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([
+                        Constraint::Percentage(50),
+                        Constraint::Percentage(50),
+                    ].as_ref())
+                    .split(vertical_chunks[2]);
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
@@ -469,7 +469,7 @@ impl Painter {
                             Constraint::Percentage(37),
                             Constraint::Percentage(33),
                         ]
-                        .as_ref(),
+                            .as_ref(),
                     )
                     .split(f.size());
 
@@ -501,7 +501,7 @@ impl Painter {
                         } else {
                             [Constraint::Percentage(85), Constraint::Percentage(15)]
                         }
-                        .as_ref(),
+                            .as_ref(),
                     )
                     .split(vertical_chunks[0]);
 
