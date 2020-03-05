@@ -99,7 +99,6 @@ fn get_matches() -> clap::ArgMatches<'static> {
         .get_matches()
 }
 
-#[allow(deprecated)]
 fn main() -> error::Result<()> {
     create_logger()?;
     let matches = get_matches();
