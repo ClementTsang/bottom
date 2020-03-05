@@ -195,12 +195,11 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
                 "{:3.0}%",
                 (current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
                     / current_data.memory_harvest.mem_total_in_mb as f64)
-                    .round()
             )
             + &format!(
                 "   {:.1}GB/{:.1}GB",
                 current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
-                (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0).round()
+                (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0)
             )
     };
 
@@ -212,12 +211,11 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
                 "{:3.0}%",
                 (current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
                     / current_data.swap_harvest.mem_total_in_mb as f64)
-                    .round()
             )
             + &format!(
                 "   {:.1}GB/{:.1}GB",
                 current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
-                (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0).round()
+                (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0)
             )
     };
 
