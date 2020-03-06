@@ -187,16 +187,21 @@ impl Painter {
 
         terminal.autoresize()?;
         terminal.draw(|mut f| {
+            debug!("{:?}", f.size());
             if app_state.help_dialog_state.is_showing_help {
                 // Only for the help
+
+                // TODO: [RESIZE] Scrolling dialog boxes is ideal.  This is currently VERY temporary!
+                // The width is currently not good and can wrap... causing this to not go so well!
+                let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
+                let border_len = (max(0, f.size().height as i64 - gen_help_len as i64)) as u16 / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
-                    .margin(1)
                     .constraints(
                         [
-                            Constraint::Percentage(20),
-                            Constraint::Percentage(60),
-                            Constraint::Percentage(20),
+                            Constraint::Length(border_len),
+                            Constraint::Length(gen_help_len),
+                            Constraint::Length(border_len),
                         ]
                         .as_ref(),
                     )
@@ -204,13 +209,21 @@ impl Painter {
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
-                    .margin(0)
                     .constraints(
-                        [
-                            Constraint::Percentage(20),
-                            Constraint::Percentage(60),
-                            Constraint::Percentage(20),
-                        ]
+                        if f.size().width < 100 {
+                            // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
+                            [
+                                Constraint::Percentage(0),
+                                Constraint::Percentage(100),
+                                Constraint::Percentage(0),
+                            ]
+                        } else {
+                            [
+                                Constraint::Percentage(20),
+                                Constraint::Percentage(60),
+                                Constraint::Percentage(20),
+                            ]
+                        }
                         .as_ref(),
                     )
                     .split(vertical_dialog_chunk[1]);
@@ -264,7 +277,7 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .constraints(
                         if f.size().width < 100 {
-                            // TODO: [REFACTOR] When we start changing size is currently hard-coded in.
+                            // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
                             [
                                 Constraint::Percentage(5),
                                 Constraint::Percentage(90),

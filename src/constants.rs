@@ -1,15 +1,12 @@
-pub const STALE_MAX_MILLISECONDS: u128 = 60 * 1000;
 // How long to store data.
+pub const STALE_MAX_MILLISECONDS: u128 = 60 * 1000;
 pub const TIME_STARTS_FROM: u64 = 60 * 1000;
 pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 // How fast the screen refreshes
 pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u128 = 1000;
 pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u128 = 1000;
+// Number of colours to generate for the CPU chart/table
 pub const NUM_COLOURS: i32 = 256;
-
-// Config and flags
-pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = ".config/bottom/bottom.toml";
-pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
 // Help text
 pub const GENERAL_HELP_TEXT: [&str; 15] = [
@@ -18,9 +15,9 @@ pub const GENERAL_HELP_TEXT: [&str; 15] = [
     "Esc            Close filters, dialog boxes, etc.\n",
     "Ctrl-r         Reset all data\n",
     "f              Freeze display\n",
-    "Ctrl-Arrow     Move currently selected widget\n",
-    "Shift-Arrow    Move currently selected widget\n",
-    "H/J/K/L        Move currently selected widget up/down/left/right\n",
+    "Ctrl-Arrow     Change your selected widget\n",
+    "Shift-Arrow    Change your selected widget\n",
+    "H/J/K/L        Change your selected widget up/down/left/right\n",
     "Up, k          Move cursor up\n",
     "Down, j        Move cursor down\n",
     "?              Open the help screen\n",
@@ -57,6 +54,11 @@ pub const SEARCH_HELP_TEXT: [&str; 13] = [
     "Alt-r/F3       Toggle whether to use regex\n",
 ];
 
+// Config and flags
+pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = ".config/bottom/bottom.toml";
+pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
+
+// Default config file
 pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # This is a default config file for bottom.  All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see
