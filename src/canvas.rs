@@ -1276,7 +1276,7 @@ impl Painter {
         let current_cursor_position = app_state.get_char_cursor_position();
 
         let start_position: usize = get_search_start_position(
-            num_columns - num_chars_for_text - 4,
+            num_columns - num_chars_for_text - 5,
             &app_state.process_search_state.search_state.cursor_direction,
             &mut app_state.process_search_state.search_state.cursor_bar,
             current_cursor_position,

@@ -945,6 +945,8 @@ impl App {
 
                     self.update_regex();
                     self.update_process_gui = true;
+                    self.process_search_state.search_state.cursor_direction =
+                        CursorDirection::RIGHT;
                 }
             } else {
                 match caught_char {
