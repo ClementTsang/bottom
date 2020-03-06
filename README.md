@@ -210,11 +210,21 @@ Note that `q` is disabled while in the search widget.
 
 - Scrolling with the mouse will scroll through the currently selected list if the widget is a scrollable table.
 
+## Bugs and Requests
+
+Spot an bug?  Have an idea?  Leave an issue that explains what you want in detail and I'll try to take a look.
+
 ## Contribution
 
 Contribution is welcome! Just submit a PR. Note that I develop and test on stable Rust.
 
 If you spot any issue with nobody assigned to it, or it seems like no work has started on it, feel free to try and do it!
+
+### Contributors
+
+Thanks to those who have contributed:
+
+- [shilangyu](https://github.com/shilangyu)
 
 ## Thanks, kudos, and all the like
 
