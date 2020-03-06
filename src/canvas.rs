@@ -187,31 +187,44 @@ impl Painter {
 
         terminal.autoresize()?;
         terminal.draw(|mut f| {
+            debug!("{:?}", f.size());
             if app_state.help_dialog_state.is_showing_help {
                 // Only for the help
+
+                // TODO: [RESIZE] Scrolling dialog boxes is ideal.  This is currently VERY temporary!
+                // The width is currently not good and can wrap... causing this to not go so well!
+                let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
+                let border_len = (max(0, f.size().height as i64 - gen_help_len as i64)) as u16 / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
-                    .margin(1)
                     .constraints(
                         [
-                            Constraint::Percentage(20),
-                            Constraint::Percentage(60),
-                            Constraint::Percentage(20),
+                            Constraint::Length(border_len),
+                            Constraint::Length(gen_help_len),
+                            Constraint::Length(border_len),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
-                    .margin(0)
                     .constraints(
-                        [
-                            Constraint::Percentage(20),
-                            Constraint::Percentage(60),
-                            Constraint::Percentage(20),
-                        ]
-                            .as_ref(),
+                        if f.size().width < 100 {
+                            // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
+                            [
+                                Constraint::Percentage(0),
+                                Constraint::Percentage(100),
+                                Constraint::Percentage(0),
+                            ]
+                        } else {
+                            [
+                                Constraint::Percentage(20),
+                                Constraint::Percentage(60),
+                                Constraint::Percentage(20),
+                            ]
+                        }
+                        .as_ref(),
                     )
                     .split(vertical_dialog_chunk[1]);
 
@@ -232,44 +245,52 @@ impl Painter {
                         app::AppHelpCategory::Process => &self.styled_process_help_text,
                         app::AppHelpCategory::Search => &self.styled_search_help_text,
                     }
-                        .iter(),
+                    .iter(),
                 )
-                    .block(
-                        Block::default()
-                            .title(&help_title)
-                            .title_style(self.colours.border_style)
-                            .style(self.colours.border_style)
-                            .borders(Borders::ALL)
-                            .border_style(self.colours.border_style),
-                    )
-                    .style(self.colours.text_style)
-                    .alignment(Alignment::Left)
-                    .wrap(true)
-                    .render(&mut f, middle_dialog_chunk[1]);
+                .block(
+                    Block::default()
+                        .title(&help_title)
+                        .title_style(self.colours.border_style)
+                        .style(self.colours.border_style)
+                        .borders(Borders::ALL)
+                        .border_style(self.colours.border_style),
+                )
+                .style(self.colours.text_style)
+                .alignment(Alignment::Left)
+                .wrap(true)
+                .render(&mut f, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
+                let bordering = (max(0, f.size().height as i64 - 7) as u16) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
-                    .margin(1)
                     .constraints(
                         [
-                            Constraint::Percentage(35),
-                            Constraint::Percentage(30),
-                            Constraint::Percentage(35),
+                            Constraint::Length(bordering),
+                            Constraint::Length(7),
+                            Constraint::Length(bordering),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
-                    .margin(0)
                     .constraints(
-                        [
-                            Constraint::Percentage(25),
-                            Constraint::Percentage(50),
-                            Constraint::Percentage(25),
-                        ]
-                            .as_ref(),
+                        if f.size().width < 100 {
+                            // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
+                            [
+                                Constraint::Percentage(5),
+                                Constraint::Percentage(90),
+                                Constraint::Percentage(5),
+                            ]
+                        } else {
+                            [
+                                Constraint::Percentage(30),
+                                Constraint::Percentage(40),
+                                Constraint::Percentage(30),
+                            ]
+                        }
+                        .as_ref(),
                     )
                     .split(vertical_dialog_chunk[1]);
 
@@ -306,22 +327,24 @@ impl Painter {
                             if app_state.is_grouped() {
                                 if to_kill_processes.1.len() != 1 {
                                     Text::raw(format!(
-                                        "\nAre you sure you want to kill {} processes with the name {}?",
-                                        to_kill_processes.1.len(), to_kill_processes.0
+                                        "\nKill {} processes with the name {}?",
+                                        to_kill_processes.1.len(),
+                                        to_kill_processes.0
                                     ))
                                 } else {
                                     Text::raw(format!(
-                                        "\nAre you sure you want to kill {} process with the name {}?",
-                                        to_kill_processes.1.len(), to_kill_processes.0
+                                        "\nKill {} process with the name {}?",
+                                        to_kill_processes.1.len(),
+                                        to_kill_processes.0
                                     ))
                                 }
                             } else {
                                 Text::raw(format!(
-                                    "\nAre you sure you want to kill process {} with PID {}?",
+                                    "\nKill process {} with PID {}?",
                                     to_kill_processes.0, first_pid
                                 ))
                             },
-                            Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown.\n\n\n"),
+                            Text::raw("\n\n"),
                             if app_state.delete_dialog_state.is_on_yes {
                                 Text::styled("Yes", self.colours.currently_selected_text_style)
                             } else {
@@ -339,7 +362,8 @@ impl Painter {
                         let repeat_num = max(
                             0,
                             middle_dialog_chunk[1].width as i32
-                                - DD_BASE.chars().count() as i32 - 2,
+                                - DD_BASE.chars().count() as i32
+                                - 2,
                         );
                         let dd_title = format!(
                             " Confirm Kill Process ─{}─ Esc to close ",
@@ -424,39 +448,49 @@ impl Painter {
                 // the same info.
 
                 let cpu_height = (app_state.canvas_data.cpu_data.len() / 4) as u16
-                    + (
-                    if app_state.canvas_data.cpu_data.len() % 4 == 0 {
+                    + (if app_state.canvas_data.cpu_data.len() % 4 == 0 {
                         0
                     } else {
                         1
-                    }
-                );
+                    });
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints([
-                        Constraint::Length(cpu_height),
-                        Constraint::Length(1),
-                        Constraint::Length(2),
-                        Constraint::Length(2),
-                        Constraint::Min(5),
-                    ].as_ref())
+                    .constraints(
+                        [
+                            Constraint::Length(cpu_height),
+                            Constraint::Length(1),
+                            Constraint::Length(2),
+                            Constraint::Length(2),
+                            Constraint::Min(5),
+                        ]
+                        .as_ref(),
+                    )
                     .split(f.size());
 
                 let middle_chunks = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints([
-                        Constraint::Percentage(50),
-                        Constraint::Percentage(50),
-                    ].as_ref())
+                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .split(vertical_chunks[2]);
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
                 self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3]);
                 if app_state.current_widget_selected.is_widget_table() {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[4], false, app_state.current_widget_selected);
+                    self.draw_specific_table(
+                        &mut f,
+                        app_state,
+                        vertical_chunks[4],
+                        false,
+                        app_state.current_widget_selected,
+                    );
                 } else {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[4], false, app_state.previous_basic_table_selected);
+                    self.draw_specific_table(
+                        &mut f,
+                        app_state,
+                        vertical_chunks[4],
+                        false,
+                        app_state.previous_basic_table_selected,
+                    );
                 }
             } else {
                 // TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
@@ -469,7 +503,7 @@ impl Painter {
                             Constraint::Percentage(37),
                             Constraint::Percentage(33),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
 
@@ -501,7 +535,7 @@ impl Painter {
                         } else {
                             [Constraint::Percentage(85), Constraint::Percentage(15)]
                         }
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(vertical_chunks[0]);
 
@@ -520,7 +554,7 @@ impl Painter {
                             let remaining = bottom_chunks[0].height - required;
                             [Constraint::Length(remaining), Constraint::Length(required)]
                         }
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(bottom_chunks[0]);
 
@@ -1247,15 +1281,39 @@ impl Painter {
     fn draw_search_field<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
-        let width = max(0, draw_loc.width as i64 - 34) as u64; // TODO: [REFACTOR] Hard coding this is terrible.
+        let pid_search_text = "Search by PID (Tab for Name): ";
+        let name_search_text = "Search by Name (Tab for PID): ";
+        let grouped_search_text = "Search by Name: ";
+        let num_columns = draw_loc.width as usize;
+
+        let chosen_text = if app_state.is_grouped() {
+            grouped_search_text
+        } else if app_state.process_search_state.is_searching_with_pid {
+            pid_search_text
+        } else {
+            name_search_text
+        };
+
+        let search_title: &str = if chosen_text.len() == min(num_columns / 2, chosen_text.len()) {
+            chosen_text
+        } else if chosen_text.is_empty() {
+            ""
+        } else {
+            "> "
+        };
+
+        let num_chars_for_text = search_title.len();
+
+        let mut search_text = vec![Text::styled(search_title, self.colours.table_header_style)];
+
         let cursor_position = app_state.get_cursor_position();
-        let char_cursor_position = app_state.get_char_cursor_position();
+        let current_cursor_position = app_state.get_char_cursor_position();
 
         let start_position: usize = get_search_start_position(
-            width as usize,
+            num_columns - num_chars_for_text - 5,
             &app_state.process_search_state.search_state.cursor_direction,
             &mut app_state.process_search_state.search_state.cursor_bar,
-            char_cursor_position,
+            current_cursor_position,
             app_state.is_resized,
         );
 
@@ -1304,20 +1362,6 @@ impl Painter {
                     })
                     .collect::<Vec<_>>()
             };
-
-        let mut search_text = vec![if app_state.is_grouped() {
-            Text::styled("Search by Name: ", self.colours.table_header_style)
-        } else if app_state.process_search_state.is_searching_with_pid {
-            Text::styled(
-                "Search by PID (Tab for Name): ",
-                self.colours.table_header_style,
-            )
-        } else {
-            Text::styled(
-                "Search by Name (Tab for PID): ",
-                self.colours.table_header_style,
-            )
-        }];
 
         // Text options shamelessly stolen from VS Code.
         let mut option_text = vec![];
@@ -1658,7 +1702,8 @@ impl Painter {
             let margin_space = 2;
             let remaining_width = max(
                 0,
-                draw_loc.width as i64 - ((9 + margin_space) * REQUIRED_COLUMNS) as i64,
+                draw_loc.width as i64
+                    - ((9 + margin_space) * REQUIRED_COLUMNS - margin_space) as i64,
             ) as usize;
 
             let bar_length = remaining_width / REQUIRED_COLUMNS;

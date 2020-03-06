@@ -70,7 +70,6 @@ pub fn get_variable_intrinsic_widths(
     (resulting_widths, last_index)
 }
 
-#[allow(dead_code, unused_variables)]
 pub fn get_search_start_position(
     num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
     current_cursor_position: usize, is_resized: bool,
