@@ -198,7 +198,7 @@ impl Painter {
                             Constraint::Percentage(60),
                             Constraint::Percentage(20),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
 
@@ -211,7 +211,7 @@ impl Painter {
                             Constraint::Percentage(60),
                             Constraint::Percentage(20),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(vertical_dialog_chunk[1]);
 
@@ -232,44 +232,52 @@ impl Painter {
                         app::AppHelpCategory::Process => &self.styled_process_help_text,
                         app::AppHelpCategory::Search => &self.styled_search_help_text,
                     }
-                        .iter(),
+                    .iter(),
                 )
-                    .block(
-                        Block::default()
-                            .title(&help_title)
-                            .title_style(self.colours.border_style)
-                            .style(self.colours.border_style)
-                            .borders(Borders::ALL)
-                            .border_style(self.colours.border_style),
-                    )
-                    .style(self.colours.text_style)
-                    .alignment(Alignment::Left)
-                    .wrap(true)
-                    .render(&mut f, middle_dialog_chunk[1]);
+                .block(
+                    Block::default()
+                        .title(&help_title)
+                        .title_style(self.colours.border_style)
+                        .style(self.colours.border_style)
+                        .borders(Borders::ALL)
+                        .border_style(self.colours.border_style),
+                )
+                .style(self.colours.text_style)
+                .alignment(Alignment::Left)
+                .wrap(true)
+                .render(&mut f, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
+                let bordering = (max(0, f.size().height as i64 - 7) as u16) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
-                    .margin(1)
                     .constraints(
                         [
-                            Constraint::Percentage(35),
-                            Constraint::Percentage(30),
-                            Constraint::Percentage(35),
+                            Constraint::Length(bordering),
+                            Constraint::Length(7),
+                            Constraint::Length(bordering),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
-                    .margin(0)
                     .constraints(
-                        [
-                            Constraint::Percentage(25),
-                            Constraint::Percentage(50),
-                            Constraint::Percentage(25),
-                        ]
-                            .as_ref(),
+                        if f.size().width < 100 {
+                            // TODO: [REFACTOR] When we start changing size is currently hard-coded in.
+                            [
+                                Constraint::Percentage(5),
+                                Constraint::Percentage(90),
+                                Constraint::Percentage(5),
+                            ]
+                        } else {
+                            [
+                                Constraint::Percentage(30),
+                                Constraint::Percentage(40),
+                                Constraint::Percentage(30),
+                            ]
+                        }
+                        .as_ref(),
                     )
                     .split(vertical_dialog_chunk[1]);
 
@@ -306,22 +314,24 @@ impl Painter {
                             if app_state.is_grouped() {
                                 if to_kill_processes.1.len() != 1 {
                                     Text::raw(format!(
-                                        "\nAre you sure you want to kill {} processes with the name {}?",
-                                        to_kill_processes.1.len(), to_kill_processes.0
+                                        "\nKill {} processes with the name {}?",
+                                        to_kill_processes.1.len(),
+                                        to_kill_processes.0
                                     ))
                                 } else {
                                     Text::raw(format!(
-                                        "\nAre you sure you want to kill {} process with the name {}?",
-                                        to_kill_processes.1.len(), to_kill_processes.0
+                                        "\nKill {} process with the name {}?",
+                                        to_kill_processes.1.len(),
+                                        to_kill_processes.0
                                     ))
                                 }
                             } else {
                                 Text::raw(format!(
-                                    "\nAre you sure you want to kill process {} with PID {}?",
+                                    "\nKill process {} with PID {}?",
                                     to_kill_processes.0, first_pid
                                 ))
                             },
-                            Text::raw("\nNote that if bottom is frozen, it must be unfrozen for changes to be shown.\n\n\n"),
+                            Text::raw("\n\n"),
                             if app_state.delete_dialog_state.is_on_yes {
                                 Text::styled("Yes", self.colours.currently_selected_text_style)
                             } else {
@@ -339,7 +349,8 @@ impl Painter {
                         let repeat_num = max(
                             0,
                             middle_dialog_chunk[1].width as i32
-                                - DD_BASE.chars().count() as i32 - 2,
+                                - DD_BASE.chars().count() as i32
+                                - 2,
                         );
                         let dd_title = format!(
                             " Confirm Kill Process ─{}─ Esc to close ",
@@ -424,39 +435,49 @@ impl Painter {
                 // the same info.
 
                 let cpu_height = (app_state.canvas_data.cpu_data.len() / 4) as u16
-                    + (
-                    if app_state.canvas_data.cpu_data.len() % 4 == 0 {
+                    + (if app_state.canvas_data.cpu_data.len() % 4 == 0 {
                         0
                     } else {
                         1
-                    }
-                );
+                    });
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints([
-                        Constraint::Length(cpu_height),
-                        Constraint::Length(1),
-                        Constraint::Length(2),
-                        Constraint::Length(2),
-                        Constraint::Min(5),
-                    ].as_ref())
+                    .constraints(
+                        [
+                            Constraint::Length(cpu_height),
+                            Constraint::Length(1),
+                            Constraint::Length(2),
+                            Constraint::Length(2),
+                            Constraint::Min(5),
+                        ]
+                        .as_ref(),
+                    )
                     .split(f.size());
 
                 let middle_chunks = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints([
-                        Constraint::Percentage(50),
-                        Constraint::Percentage(50),
-                    ].as_ref())
+                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .split(vertical_chunks[2]);
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
                 self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3]);
                 if app_state.current_widget_selected.is_widget_table() {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[4], false, app_state.current_widget_selected);
+                    self.draw_specific_table(
+                        &mut f,
+                        app_state,
+                        vertical_chunks[4],
+                        false,
+                        app_state.current_widget_selected,
+                    );
                 } else {
-                    self.draw_specific_table(&mut f, app_state, vertical_chunks[4], false, app_state.previous_basic_table_selected);
+                    self.draw_specific_table(
+                        &mut f,
+                        app_state,
+                        vertical_chunks[4],
+                        false,
+                        app_state.previous_basic_table_selected,
+                    );
                 }
             } else {
                 // TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
@@ -469,7 +490,7 @@ impl Painter {
                             Constraint::Percentage(37),
                             Constraint::Percentage(33),
                         ]
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(f.size());
 
@@ -501,7 +522,7 @@ impl Painter {
                         } else {
                             [Constraint::Percentage(85), Constraint::Percentage(15)]
                         }
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(vertical_chunks[0]);
 
@@ -520,7 +541,7 @@ impl Painter {
                             let remaining = bottom_chunks[0].height - required;
                             [Constraint::Length(remaining), Constraint::Length(required)]
                         }
-                            .as_ref(),
+                        .as_ref(),
                     )
                     .split(bottom_chunks[0]);
 
