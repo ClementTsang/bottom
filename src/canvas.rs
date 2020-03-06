@@ -1247,15 +1247,39 @@ impl Painter {
     fn draw_search_field<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
     ) {
-        let width = max(0, draw_loc.width as i64 - 34) as u64; // TODO: [REFACTOR] Hard coding this is terrible.
+        let pid_search_text = "Search by PID (Tab for Name): ";
+        let name_search_text = "Search by Name (Tab for PID): ";
+        let grouped_search_text = "Search by Name: ";
+        let num_columns = draw_loc.width as usize;
+
+        let chosen_text = if app_state.is_grouped() {
+            grouped_search_text
+        } else if app_state.process_search_state.is_searching_with_pid {
+            pid_search_text
+        } else {
+            name_search_text
+        };
+
+        let search_title: &str = if chosen_text.len() == min(num_columns / 2, chosen_text.len()) {
+            chosen_text
+        } else if chosen_text.is_empty() {
+            ""
+        } else {
+            "> "
+        };
+
+        let num_chars_for_text = search_title.len();
+
+        let mut search_text = vec![Text::styled(search_title, self.colours.table_header_style)];
+
         let cursor_position = app_state.get_cursor_position();
-        let char_cursor_position = app_state.get_char_cursor_position();
+        let current_cursor_position = app_state.get_char_cursor_position();
 
         let start_position: usize = get_search_start_position(
-            width as usize,
+            num_columns - num_chars_for_text - 4,
             &app_state.process_search_state.search_state.cursor_direction,
             &mut app_state.process_search_state.search_state.cursor_bar,
-            char_cursor_position,
+            current_cursor_position,
             app_state.is_resized,
         );
 
@@ -1304,20 +1328,6 @@ impl Painter {
                     })
                     .collect::<Vec<_>>()
             };
-
-        let mut search_text = vec![if app_state.is_grouped() {
-            Text::styled("Search by Name: ", self.colours.table_header_style)
-        } else if app_state.process_search_state.is_searching_with_pid {
-            Text::styled(
-                "Search by PID (Tab for Name): ",
-                self.colours.table_header_style,
-            )
-        } else {
-            Text::styled(
-                "Search by Name (Tab for PID): ",
-                self.colours.table_header_style,
-            )
-        }];
 
         // Text options shamelessly stolen from VS Code.
         let mut option_text = vec![];
@@ -1658,7 +1668,8 @@ impl Painter {
             let margin_space = 2;
             let remaining_width = max(
                 0,
-                draw_loc.width as i64 - ((9 + margin_space) * REQUIRED_COLUMNS) as i64,
+                draw_loc.width as i64
+                    - ((9 + margin_space) * REQUIRED_COLUMNS - margin_space) as i64,
             ) as usize;
 
             let bar_length = remaining_width / REQUIRED_COLUMNS;
