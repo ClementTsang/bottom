@@ -45,8 +45,14 @@ pub async fn get_network_data(
 
     let elapsed_time = curr_time.duration_since(prev_net_access_time).as_secs_f64();
 
-    let rx = ((total_rx - *prev_net_rx) as f64 / elapsed_time) as u64;
-    let tx = ((total_tx - *prev_net_tx) as f64 / elapsed_time) as u64;
+    let (rx, tx) = if elapsed_time == 0.0 {
+        (0, 0)
+    } else {
+        (
+            ((total_rx - *prev_net_rx) as f64 / elapsed_time) as u64,
+            ((total_tx - *prev_net_tx) as f64 / elapsed_time) as u64,
+        )
+    };
 
     *prev_net_rx = total_rx;
     *prev_net_tx = total_tx;
