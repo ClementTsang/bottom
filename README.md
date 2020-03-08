@@ -62,7 +62,7 @@ You can get the release versions from the AUR by installing [`bottom`](https://a
 
 ```bash
 yay bottom
-#Or
+# Or
 yay bottom-bin
 ```
 
@@ -77,10 +77,12 @@ sudo dpkg -i bottom_0.2.2_amd64.deb
 
 ### Windows
 
-You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/) (note it may take a while to be available due to moderation/review):
+You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/):
 
 ```bash
-choco install bottom --version=0.2.1
+choco install bottom
+# Or
+choco install bottom --version=0.2.1 # Version may be required for newer releases
 ```
 
 ### macOS
@@ -212,7 +214,7 @@ Note that `q` is disabled while in the search widget.
 
 ## Bugs and Requests
 
-Spot an bug?  Have an idea?  Leave an issue that explains what you want in detail and I'll try to take a look.
+Spot an bug? Have an idea? Leave an issue that explains what you want in detail and I'll try to take a look.
 
 ## Contribution
 
