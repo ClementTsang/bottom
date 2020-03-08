@@ -3,13 +3,14 @@ use std::collections::HashMap;
 
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Borders, Paragraph, Text, Widget},
+    widgets::Text,
     Terminal,
 };
 
 use canvas_colours::*;
+use dialogs::*;
 use widgets::*;
 
 use crate::{
@@ -20,6 +21,7 @@ use crate::{
 };
 
 mod canvas_colours;
+mod dialogs;
 mod drawing_utils;
 mod widgets;
 
@@ -147,8 +149,6 @@ impl Painter {
         terminal.autoresize()?;
         terminal.draw(|mut f| {
             if app_state.help_dialog_state.is_showing_help {
-                // Only for the help
-
                 // TODO: [RESIZE] Scrolling dialog boxes is ideal.  This is currently VERY temporary!
                 // The width is currently not good and can wrap... causing this to not go so well!
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
@@ -186,37 +186,7 @@ impl Painter {
                     )
                     .split(vertical_dialog_chunk[1]);
 
-                const HELP_BASE: &str =
-                    " Help ── 1: General ─── 2: Processes ─── 3: Search ─── Esc to close ";
-                let repeat_num = max(
-                    0,
-                    middle_dialog_chunk[1].width as i32 - HELP_BASE.chars().count() as i32 - 2,
-                );
-                let help_title = format!(
-                    " Help ─{}─ 1: General ─── 2: Processes ─── 3: Search ─── Esc to close ",
-                    "─".repeat(repeat_num as usize)
-                );
-
-                Paragraph::new(
-                    match app_state.help_dialog_state.current_category {
-                        app::AppHelpCategory::General => &self.styled_general_help_text,
-                        app::AppHelpCategory::Process => &self.styled_process_help_text,
-                        app::AppHelpCategory::Search => &self.styled_search_help_text,
-                    }
-                    .iter(),
-                )
-                .block(
-                    Block::default()
-                        .title(&help_title)
-                        .title_style(self.colours.border_style)
-                        .style(self.colours.border_style)
-                        .borders(Borders::ALL)
-                        .border_style(self.colours.border_style),
-                )
-                .style(self.colours.text_style)
-                .alignment(Alignment::Left)
-                .wrap(true)
-                .render(&mut f, middle_dialog_chunk[1]);
+                self.draw_help_dialog(&mut f, app_state, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
                 let bordering = (max(0, f.size().height as i64 - 7) as u16) / 2;
                 let vertical_dialog_chunk = Layout::default()
@@ -253,105 +223,13 @@ impl Painter {
                     .split(vertical_dialog_chunk[1]);
 
                 if let Some(dd_err) = &app_state.dd_err {
-                    let dd_text = [Text::raw(format!(
-                        "\nFailure to properly kill the process - {}",
-                        dd_err
-                    ))];
-
-                    const ERROR_BASE: &str = " Error ── Esc to close ";
-                    let repeat_num = max(
-                        0,
-                        middle_dialog_chunk[1].width as i32 - ERROR_BASE.chars().count() as i32 - 2,
-                    );
-                    let error_title =
-                        format!(" Error ─{}─ Esc to close ", "─".repeat(repeat_num as usize));
-
-                    Paragraph::new(dd_text.iter())
-                        .block(
-                            Block::default()
-                                .title(&error_title)
-                                .title_style(self.colours.border_style)
-                                .style(self.colours.border_style)
-                                .borders(Borders::ALL)
-                                .border_style(self.colours.border_style),
-                        )
-                        .style(self.colours.text_style)
-                        .alignment(Alignment::Center)
-                        .wrap(true)
-                        .render(&mut f, middle_dialog_chunk[1]);
-                } else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
-                    if let Some(first_pid) = to_kill_processes.1.first() {
-                        let dd_text = vec![
-                            if app_state.is_grouped() {
-                                if to_kill_processes.1.len() != 1 {
-                                    Text::raw(format!(
-                                        "\nKill {} processes with the name {}?",
-                                        to_kill_processes.1.len(),
-                                        to_kill_processes.0
-                                    ))
-                                } else {
-                                    Text::raw(format!(
-                                        "\nKill {} process with the name {}?",
-                                        to_kill_processes.1.len(),
-                                        to_kill_processes.0
-                                    ))
-                                }
-                            } else {
-                                Text::raw(format!(
-                                    "\nKill process {} with PID {}?",
-                                    to_kill_processes.0, first_pid
-                                ))
-                            },
-                            Text::raw("\n\n"),
-                            if app_state.delete_dialog_state.is_on_yes {
-                                Text::styled("Yes", self.colours.currently_selected_text_style)
-                            } else {
-                                Text::raw("Yes")
-                            },
-                            Text::raw("                 "),
-                            if app_state.delete_dialog_state.is_on_yes {
-                                Text::raw("No")
-                            } else {
-                                Text::styled("No", self.colours.currently_selected_text_style)
-                            },
-                        ];
-
-                        const DD_BASE: &str = " Confirm Kill Process ── Esc to close ";
-                        let repeat_num = max(
-                            0,
-                            middle_dialog_chunk[1].width as i32
-                                - DD_BASE.chars().count() as i32
-                                - 2,
-                        );
-                        let dd_title = format!(
-                            " Confirm Kill Process ─{}─ Esc to close ",
-                            "─".repeat(repeat_num as usize)
-                        );
-
-                        Paragraph::new(dd_text.iter())
-                            .block(
-                                Block::default()
-                                    .title(&dd_title)
-                                    .title_style(self.colours.border_style)
-                                    .style(self.colours.border_style)
-                                    .borders(Borders::ALL)
-                                    .border_style(self.colours.border_style),
-                            )
-                            .style(self.colours.text_style)
-                            .alignment(Alignment::Center)
-                            .wrap(true)
-                            .render(&mut f, middle_dialog_chunk[1]);
-                    } else {
-                        // This is a bit nasty, but it works well... I guess.
-                        app_state.delete_dialog_state.is_showing_dd = false;
-                    }
+                    self.draw_dd_error_dialog(&mut f, dd_err, middle_dialog_chunk[1]);
                 } else {
                     // This is a bit nasty, but it works well... I guess.
-                    app_state.delete_dialog_state.is_showing_dd = false;
+                    app_state.delete_dialog_state.is_showing_dd =
+                        self.draw_dd_dialog(&mut f, app_state, middle_dialog_chunk[1]);
                 }
             } else if app_state.is_expanded {
-                // TODO: [REF] we should combine this with normal drawing tbh
-
                 let rect = Layout::default()
                     .margin(1)
                     .constraints([Constraint::Percentage(100)].as_ref())

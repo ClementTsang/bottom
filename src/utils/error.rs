@@ -20,6 +20,8 @@ pub enum BottomError {
     FernError(String),
     /// An error to represent errors with the config.
     ConfigError(String),
+    /// An error to represent errors with converting between data types.
+    ConversionError(String),
 }
 
 impl std::fmt::Display for BottomError {
@@ -41,6 +43,9 @@ impl std::fmt::Display for BottomError {
             BottomError::FernError(ref message) => write!(f, "Invalid fern error: {}", message),
             BottomError::ConfigError(ref message) => {
                 write!(f, "Invalid config file error: {}", message)
+            }
+            BottomError::ConversionError(ref message) => {
+                write!(f, "Unable to convert: {}", message)
             }
         }
     }
@@ -85,5 +90,11 @@ impl From<toml::de::Error> for BottomError {
 impl From<fern::InitError> for BottomError {
     fn from(err: fern::InitError) -> Self {
         BottomError::FernError(err.to_string())
+    }
+}
+
+impl From<std::str::Utf8Error> for BottomError {
+    fn from(err: std::str::Utf8Error) -> Self {
+        BottomError::ConversionError(err.to_string())
     }
 }
