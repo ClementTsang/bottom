@@ -10,17 +10,15 @@ Closes: #
 
 ## Type of change
 
-_Remove the irrelevant one:_
+_Remove the irrelevant ones:_
 
 - [x] Bug fix (non-breaking change which fixes an issue)
 - [x] New feature (non-breaking change which adds functionality)
-- [x] Other (something else)
+- [x] Other (something else - please specify if relevant)
 
 ## Test methodology
 
 _Please state how this was tested:_
-
-
 
 _Please tick which platforms this change was tested on:_
 
