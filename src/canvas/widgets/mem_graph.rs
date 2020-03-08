@@ -79,9 +79,7 @@ impl MemGraphWidget for Painter {
                     })
                     .borders(Borders::ALL)
                     .border_style(match app_state.current_widget_selected {
-                        WidgetPosition::Mem | WidgetPosition::BasicMem => {
-                            self.colours.highlighted_border_style
-                        }
+                        WidgetPosition::Mem => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
                     }),
             )

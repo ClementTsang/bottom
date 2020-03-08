@@ -235,7 +235,7 @@ impl Painter {
                     .constraints([Constraint::Percentage(100)].as_ref())
                     .split(f.size());
                 match &app_state.current_widget_selected {
-                    WidgetPosition::Cpu | WidgetPosition::BasicCpu => {
+                    WidgetPosition::Cpu | WidgetPosition::BasicCpu | WidgetPosition::CpuLegend => {
                         let cpu_chunk = Layout::default()
                             .direction(Direction::Horizontal)
                             .margin(0)
@@ -272,7 +272,9 @@ impl Painter {
                     WidgetPosition::Temp => {
                         self.draw_temp_table(&mut f, app_state, rect[0], true);
                     }
-                    WidgetPosition::Network | WidgetPosition::BasicNet => {
+                    WidgetPosition::Network
+                    | WidgetPosition::BasicNet
+                    | WidgetPosition::NetworkLegend => {
                         self.draw_network_graph(&mut f, &app_state, rect[0]);
                     }
                     WidgetPosition::Process | WidgetPosition::ProcessSearch => {

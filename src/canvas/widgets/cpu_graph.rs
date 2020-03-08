@@ -17,7 +17,7 @@ use tui::{
     widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 };
 
-const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show (Space)"];
+const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show"];
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 lazy_static! {
     static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
@@ -92,22 +92,22 @@ impl CpuGraphWidget for Painter {
             " CPU ".to_string()
         };
 
+        let border_style = match app_state.current_widget_selected {
+            WidgetPosition::Cpu => self.colours.highlighted_border_style,
+            _ => self.colours.border_style,
+        };
+
         Chart::default()
             .block(
                 Block::default()
                     .title(&title)
                     .title_style(if app_state.is_expanded {
-                        self.colours.highlighted_border_style
+                        border_style
                     } else {
                         self.colours.widget_title_style
                     })
                     .borders(Borders::ALL)
-                    .border_style(match app_state.current_widget_selected {
-                        WidgetPosition::Cpu | WidgetPosition::BasicCpu => {
-                            self.colours.highlighted_border_style
-                        }
-                        _ => self.colours.border_style,
-                    }),
+                    .border_style(border_style),
             )
             .x_axis(x_axis)
             .y_axis(y_axis)
@@ -167,7 +167,7 @@ impl CpuGraphWidget for Painter {
                 Row::StyledData(
                     cpu_string_row.iter(),
                     match app_state.current_widget_selected {
-                        WidgetPosition::Cpu => {
+                        WidgetPosition::CpuLegend => {
                             if itx as u64
                                 == app_state
                                     .app_scroll_positions
@@ -225,6 +225,11 @@ impl CpuGraphWidget for Painter {
             "".to_string()
         };
 
+        let title_and_border_style = match app_state.current_widget_selected {
+            WidgetPosition::CpuLegend => self.colours.highlighted_border_style,
+            _ => self.colours.border_style,
+        };
+
         // Draw
         Table::new(
             if app_state.cpu_state.is_showing_tray {
@@ -238,19 +243,9 @@ impl CpuGraphWidget for Painter {
         .block(
             Block::default()
                 .title(&title)
-                .title_style(if app_state.is_expanded {
-                    self.colours.highlighted_border_style
-                } else {
-                    match app_state.current_widget_selected {
-                        WidgetPosition::Cpu => self.colours.highlighted_border_style,
-                        _ => self.colours.border_style,
-                    }
-                })
+                .title_style(title_and_border_style)
                 .borders(Borders::ALL)
-                .border_style(match app_state.current_widget_selected {
-                    WidgetPosition::Cpu => self.colours.highlighted_border_style,
-                    _ => self.colours.border_style,
-                }),
+                .border_style(title_and_border_style),
         )
         .header_style(self.colours.table_header_style)
         .widths(

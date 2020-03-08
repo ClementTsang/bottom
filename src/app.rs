@@ -17,10 +17,12 @@ const MAX_SEARCH_LENGTH: usize = 200;
 #[derive(Debug, Clone, Copy)]
 pub enum WidgetPosition {
     Cpu,
+    CpuLegend,
     Mem,
     Disk,
     Temp,
     Network,
+    NetworkLegend,
     Process,
     ProcessSearch,
     BasicCpu,
@@ -34,19 +36,28 @@ impl WidgetPosition {
             WidgetPosition::Disk
             | WidgetPosition::Process
             | WidgetPosition::ProcessSearch
-            | WidgetPosition::Temp => true,
+            | WidgetPosition::Temp
+            | WidgetPosition::CpuLegend => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_widget_graph(self) -> bool {
+        match self {
+            WidgetPosition::Cpu | WidgetPosition::Network | WidgetPosition::Mem => true,
             _ => false,
         }
     }
 
     pub fn get_pretty_name(self) -> String {
+        use WidgetPosition::*;
         match self {
-            WidgetPosition::Cpu | WidgetPosition::BasicCpu => "CPU",
-            WidgetPosition::Mem | WidgetPosition::BasicMem => "Memory",
-            WidgetPosition::Disk => "Disks",
-            WidgetPosition::Temp => "Temperature",
-            WidgetPosition::Network | WidgetPosition::BasicNet => "Network",
-            WidgetPosition::Process | WidgetPosition::ProcessSearch => "Processes",
+            Cpu | BasicCpu | CpuLegend => "CPU",
+            Mem | BasicMem => "Memory",
+            Disk => "Disks",
+            Temp => "Temperature",
+            Network | BasicNet | NetworkLegend => "Network",
+            Process | ProcessSearch => "Processes",
         }
         .to_string()
     }
@@ -375,10 +386,7 @@ impl App {
             self.dd_err = None;
         } else if self.is_filtering_or_searching() {
             match self.current_widget_selected {
-                WidgetPosition::Cpu
-                    if self.is_expanded && self.app_config_fields.use_basic_mode =>
-                {
-                    self.current_widget_selected = WidgetPosition::BasicCpu;
+                WidgetPosition::Cpu | WidgetPosition::CpuLegend => {
                     self.cpu_state.is_showing_tray = false;
                 }
                 WidgetPosition::Process | WidgetPosition::ProcessSearch => {
@@ -386,9 +394,6 @@ impl App {
                         self.current_widget_selected = WidgetPosition::Process;
                         self.process_search_state.search_state.is_enabled = false;
                     }
-                }
-                WidgetPosition::Cpu => {
-                    self.cpu_state.is_showing_tray = false;
                 }
                 WidgetPosition::Mem => {
                     self.mem_state.is_showing_tray = false;
@@ -401,14 +406,22 @@ impl App {
         } else if self.is_expanded {
             self.is_expanded = false;
             self.is_resized = true;
+            if self.app_config_fields.use_basic_mode {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::Cpu | WidgetPosition::CpuLegend => WidgetPosition::BasicCpu,
+                    WidgetPosition::Mem => WidgetPosition::BasicMem,
+                    WidgetPosition::Network => WidgetPosition::BasicNet,
+                    _ => self.current_widget_selected,
+                }
+            }
         }
     }
 
     fn is_filtering_or_searching(&self) -> bool {
         match self.current_widget_selected {
-            WidgetPosition::Cpu => self.cpu_state.is_showing_tray,
-            WidgetPosition::Mem => self.mem_state.is_showing_tray,
-            WidgetPosition::Network => self.net_state.is_showing_tray,
+            WidgetPosition::Cpu | WidgetPosition::CpuLegend => self.cpu_state.is_showing_tray,
+            // WidgetPosition::Mem => self.mem_state.is_showing_tray,
+            // WidgetPosition::Network => self.net_state.is_showing_tray,
             WidgetPosition::Process | WidgetPosition::ProcessSearch => {
                 self.process_search_state.search_state.is_enabled
             }
@@ -464,7 +477,7 @@ impl App {
 
     pub fn on_space(&mut self) {
         match self.current_widget_selected {
-            WidgetPosition::Cpu => {
+            WidgetPosition::CpuLegend => {
                 let curr_posn = self
                     .app_scroll_positions
                     .cpu_scroll_state
@@ -496,8 +509,9 @@ impl App {
                         self.search_with_name();
                     }
                 }
-                WidgetPosition::Cpu => {
+                WidgetPosition::Cpu | WidgetPosition::CpuLegend => {
                     self.cpu_state.is_showing_tray = true;
+                    self.current_widget_selected = WidgetPosition::CpuLegend
                 }
                 // WidgetPosition::Mem => {
                 // 	self.mem_state.is_showing_tray = true;
@@ -648,6 +662,15 @@ impl App {
                 _ => {
                     self.is_expanded = true;
                     self.is_resized = true;
+                }
+            }
+
+            if self.app_config_fields.use_basic_mode {
+                self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::BasicCpu => WidgetPosition::Cpu,
+                    WidgetPosition::BasicMem => WidgetPosition::Mem,
+                    WidgetPosition::BasicNet => WidgetPosition::Network,
+                    _ => self.current_widget_selected,
                 }
             }
         }
@@ -1065,6 +1088,9 @@ impl App {
                     'K' => self.move_widget_selection_up(),
                     'J' => self.move_widget_selection_down(),
                     ' ' => self.on_space(),
+                    '+' => {}
+                    '-' => {}
+                    '=' => {}
                     _ => {}
                 }
 
@@ -1124,12 +1150,28 @@ impl App {
                 };
             } else {
                 self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::Cpu if self.app_config_fields.left_legend => {
+                        WidgetPosition::CpuLegend
+                    }
+                    WidgetPosition::CpuLegend if !self.app_config_fields.left_legend => {
+                        WidgetPosition::Cpu
+                    }
                     WidgetPosition::Process => WidgetPosition::Network,
                     WidgetPosition::ProcessSearch => WidgetPosition::Network,
                     WidgetPosition::Disk => WidgetPosition::Mem,
                     WidgetPosition::Temp => WidgetPosition::Mem,
                     _ => self.current_widget_selected,
                 };
+            }
+        } else if self.is_expanded {
+            self.current_widget_selected = match self.current_widget_selected {
+                WidgetPosition::Cpu if self.app_config_fields.left_legend => {
+                    WidgetPosition::CpuLegend
+                }
+                WidgetPosition::CpuLegend if !self.app_config_fields.left_legend => {
+                    WidgetPosition::Cpu
+                }
+                _ => self.current_widget_selected,
             }
         }
 
@@ -1149,10 +1191,26 @@ impl App {
                 };
             } else {
                 self.current_widget_selected = match self.current_widget_selected {
+                    WidgetPosition::Cpu if !self.app_config_fields.left_legend => {
+                        WidgetPosition::CpuLegend
+                    }
+                    WidgetPosition::CpuLegend if self.app_config_fields.left_legend => {
+                        WidgetPosition::Cpu
+                    }
                     WidgetPosition::Mem => WidgetPosition::Temp,
                     WidgetPosition::Network => WidgetPosition::Process,
                     _ => self.current_widget_selected,
                 };
+            }
+        } else if self.is_expanded {
+            self.current_widget_selected = match self.current_widget_selected {
+                WidgetPosition::Cpu if !self.app_config_fields.left_legend => {
+                    WidgetPosition::CpuLegend
+                }
+                WidgetPosition::CpuLegend if self.app_config_fields.left_legend => {
+                    WidgetPosition::Cpu
+                }
+                _ => self.current_widget_selected,
             }
         }
 
@@ -1213,7 +1271,7 @@ impl App {
                 };
             } else {
                 self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::Cpu => WidgetPosition::Mem,
+                    WidgetPosition::Cpu | WidgetPosition::CpuLegend => WidgetPosition::Mem,
                     WidgetPosition::Mem => WidgetPosition::Network,
                     WidgetPosition::Temp => WidgetPosition::Disk,
                     WidgetPosition::Disk => WidgetPosition::Process,
@@ -1261,7 +1319,7 @@ impl App {
                         .disk_scroll_state
                         .current_scroll_position = 0
                 }
-                WidgetPosition::Cpu => {
+                WidgetPosition::CpuLegend => {
                     self.app_scroll_positions
                         .cpu_scroll_state
                         .current_scroll_position = 0
@@ -1294,7 +1352,7 @@ impl App {
                         .disk_scroll_state
                         .current_scroll_position = self.canvas_data.disk_data.len() as u64 - 1
                 }
-                WidgetPosition::Cpu => {
+                WidgetPosition::CpuLegend => {
                     self.app_scroll_positions
                         .cpu_scroll_state
                         .current_scroll_position = self.canvas_data.cpu_data.len() as u64 - 1;
@@ -1312,7 +1370,7 @@ impl App {
                 WidgetPosition::Process => self.change_process_position(-1),
                 WidgetPosition::Temp => self.change_temp_position(-1),
                 WidgetPosition::Disk => self.change_disk_position(-1),
-                WidgetPosition::Cpu => self.change_cpu_table_position(-1), // TODO: [PO?] Temporary, may change if we add scaling
+                WidgetPosition::CpuLegend => self.change_cpu_table_position(-1), // TODO: [PO?] Temporary, may change if we add scaling
                 _ => {}
             }
             self.app_scroll_positions.scroll_direction = ScrollDirection::UP;
@@ -1326,7 +1384,7 @@ impl App {
                 WidgetPosition::Process => self.change_process_position(1),
                 WidgetPosition::Temp => self.change_temp_position(1),
                 WidgetPosition::Disk => self.change_disk_position(1),
-                WidgetPosition::Cpu => self.change_cpu_table_position(1), // TODO: [PO?] Temporary, may change if we add scaling
+                WidgetPosition::CpuLegend => self.change_cpu_table_position(1), // TODO: [PO?] Temporary, may change if we add scaling
                 _ => {}
             }
             self.app_scroll_positions.scroll_direction = ScrollDirection::DOWN;
@@ -1395,4 +1453,24 @@ impl App {
                 .current_scroll_position = (current_posn as i64 + num_to_change_by) as u64;
         }
     }
+
+    pub fn handle_scroll_up(&mut self) {
+        if self.current_widget_selected.is_widget_graph() {
+            self.zoom_in();
+        } else if self.current_widget_selected.is_widget_table() {
+            self.decrement_position_count();
+        }
+    }
+
+    pub fn handle_scroll_down(&mut self) {
+        if self.current_widget_selected.is_widget_graph() {
+            self.zoom_out();
+        } else if self.current_widget_selected.is_widget_table() {
+            self.increment_position_count();
+        }
+    }
+
+    fn zoom_out(&mut self) {}
+
+    fn zoom_in(&mut self) {}
 }

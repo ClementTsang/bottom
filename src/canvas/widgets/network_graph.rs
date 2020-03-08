@@ -71,9 +71,7 @@ impl NetworkGraphWidget for Painter {
                     })
                     .borders(Borders::ALL)
                     .border_style(match app_state.current_widget_selected {
-                        WidgetPosition::Network | WidgetPosition::BasicNet => {
-                            self.colours.highlighted_border_style
-                        }
+                        WidgetPosition::Network => self.colours.highlighted_border_style,
                         _ => self.colours.border_style,
                     }),
             )

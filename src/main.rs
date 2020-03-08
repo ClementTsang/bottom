@@ -268,8 +268,8 @@ fn main() -> error::Result<()> {
 
 fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     match event {
-        MouseEvent::ScrollUp(_x, _y, _modifiers) => app.decrement_position_count(),
-        MouseEvent::ScrollDown(_x, _y, _modifiers) => app.increment_position_count(),
+        MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
+        MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
         _ => {}
     };
 }
