@@ -37,7 +37,17 @@ impl NetworkGraphWidget for Painter {
         let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
         let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
 
-        let x_axis: Axis<'_, String> = Axis::default().bounds([0.0, 60_000.0]);
+        let display_time_labels = [
+            format!("{}s", app_state.net_state.display_time / 1000),
+            "0s".to_string(),
+        ];
+        let x_axis = Axis::default()
+            .bounds([0.0, app_state.net_state.display_time as f64])
+            .style(self.colours.graph_style)
+            .labels_style(self.colours.graph_style)
+            .labels(&display_time_labels);
+
+            // 0 is offset.
         let y_axis: Axis<'_, &str> = Axis::default()
             .style(self.colours.graph_style)
             .labels_style(self.colours.graph_style)

@@ -187,13 +187,12 @@ fn main() -> error::Result<()> {
                     if handle_key_event_or_break(event, &mut app, &rtx) {
                         break;
                     }
-
-                    if app.update_process_gui {
-                        update_final_process_list(&mut app);
-                        app.update_process_gui = false;
-                    }
+                    handle_force_redraws(&mut app);
                 }
-                BottomEvent::MouseInput(event) => handle_mouse_event(event, &mut app),
+                BottomEvent::MouseInput(event) => {
+                    handle_mouse_event(event, &mut app);
+                    handle_force_redraws(&mut app);
+                }
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(&data);
 
@@ -201,7 +200,11 @@ fn main() -> error::Result<()> {
                         // Convert all data into tui-compliant components
 
                         // Network
-                        let network_data = convert_network_data_points(&app.data_collection);
+                        let network_data = convert_network_data_points(
+                            &app.data_collection,
+                            app.net_state.display_time,
+                            false,
+                        );
                         app.canvas_data.network_data_rx = network_data.rx;
                         app.canvas_data.network_data_tx = network_data.tx;
                         app.canvas_data.rx_display = network_data.rx_display;
@@ -215,8 +218,16 @@ fn main() -> error::Result<()> {
                         // Temperatures
                         app.canvas_data.temp_sensor_data = convert_temp_row(&app);
                         // Memory
-                        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection);
-                        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection);
+                        app.canvas_data.mem_data = convert_mem_data_points(
+                            &app.data_collection,
+                            app.mem_state.display_time,
+                            false,
+                        );
+                        app.canvas_data.swap_data = convert_swap_data_points(
+                            &app.data_collection,
+                            app.mem_state.display_time,
+                            false,
+                        );
                         let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
                         app.canvas_data.mem_label = memory_and_swap_labels.0;
                         app.canvas_data.swap_label = memory_and_swap_labels.1;
@@ -225,6 +236,8 @@ fn main() -> error::Result<()> {
                         app.canvas_data.cpu_data = convert_cpu_data_points(
                             app.app_config_fields.show_average_cpu,
                             &app.data_collection,
+                            app.cpu_state.display_time,
+                            false,
                         );
 
                         // Pre-fill CPU if needed
@@ -558,6 +571,48 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
         )),
     )
     .unwrap();
+}
+
+fn handle_force_redraws(app: &mut App) {
+    if app.force_update_processes {
+        update_final_process_list(app);
+        app.force_update_processes = false;
+    }
+
+    if app.cpu_state.force_update {
+        app.canvas_data.cpu_data = convert_cpu_data_points(
+            app.app_config_fields.show_average_cpu,
+            &app.data_collection,
+            app.cpu_state.display_time,
+            app.is_frozen,
+        );
+        app.cpu_state.force_update = false;
+    }
+
+    if app.mem_state.force_update {
+        app.canvas_data.mem_data = convert_mem_data_points(
+            &app.data_collection,
+            app.mem_state.display_time,
+            app.is_frozen,
+        );
+        app.canvas_data.swap_data = convert_swap_data_points(
+            &app.data_collection,
+            app.mem_state.display_time,
+            app.is_frozen,
+        );
+        app.mem_state.force_update = false;
+    }
+
+    if app.net_state.force_update {
+        let (rx, tx) = get_rx_tx_data_points(
+            &app.data_collection,
+            app.net_state.display_time,
+            app.is_frozen,
+        );
+        app.canvas_data.network_data_rx = rx;
+        app.canvas_data.network_data_tx = tx;
+        app.net_state.force_update = false;
+    }
 }
 
 fn update_final_process_list(app: &mut App) {

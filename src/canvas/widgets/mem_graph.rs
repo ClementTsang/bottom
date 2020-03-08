@@ -3,7 +3,6 @@ use std::cmp::max;
 use crate::{
     app::{App, WidgetPosition},
     canvas::Painter,
-    constants::*,
 };
 
 use tui::{
@@ -22,7 +21,15 @@ impl MemGraphWidget for Painter {
         let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
         let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
 
-        let x_axis: Axis<'_, String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
+        let display_time_labels = [
+            format!("{}s", app_state.mem_state.display_time / 1000),
+            "0s".to_string(),
+        ];
+        let x_axis = Axis::default()
+            .bounds([0.0, app_state.mem_state.display_time as f64])
+            .style(self.colours.graph_style)
+            .labels_style(self.colours.graph_style)
+            .labels(&display_time_labels);
 
         // Offset as the zero value isn't drawn otherwise...
         let y_axis: Axis<'_, &str> = Axis::default()

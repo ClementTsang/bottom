@@ -35,12 +35,12 @@ pub struct DisplayableData {
     pub network_data_tx: Vec<(f64, f64)>,
     pub disk_data: Vec<Vec<String>>,
     pub temp_sensor_data: Vec<Vec<String>>,
+    // Not the final value
     pub process_data: HashMap<u32, ProcessHarvest>,
     // Not the final value
     pub grouped_process_data: Vec<ConvertedProcessData>,
-    // Not the final value
-    pub finalized_process_data: Vec<ConvertedProcessData>,
     // What's actually displayed
+    pub finalized_process_data: Vec<ConvertedProcessData>,
     pub mem_label: String,
     pub swap_label: String,
     pub mem_data: Vec<(f64, f64)>,

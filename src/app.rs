@@ -227,6 +227,8 @@ pub struct NetworkState {
     pub is_showing_rx: bool,
     pub is_showing_tx: bool,
     pub zoom_level: f64,
+    pub display_time: u128,
+    pub force_update: bool,
 }
 
 impl Default for NetworkState {
@@ -236,6 +238,8 @@ impl Default for NetworkState {
             is_showing_rx: true,
             is_showing_tx: true,
             zoom_level: 100.0,
+            display_time: constants::DEFAULT_DISPLAY_MILLISECONDS,
+            force_update: false,
         }
     }
 }
@@ -245,6 +249,8 @@ pub struct CpuState {
     pub is_showing_tray: bool,
     pub zoom_level: f64,
     pub core_show_vec: Vec<bool>,
+    pub display_time: u128,
+    pub force_update: bool,
 }
 
 impl Default for CpuState {
@@ -253,6 +259,8 @@ impl Default for CpuState {
             is_showing_tray: false,
             zoom_level: 100.0,
             core_show_vec: Vec::new(),
+            display_time: constants::DEFAULT_DISPLAY_MILLISECONDS,
+            force_update: false,
         }
     }
 }
@@ -263,6 +271,8 @@ pub struct MemState {
     pub is_showing_ram: bool,
     pub is_showing_swap: bool,
     pub zoom_level: f64,
+    pub display_time: u128,
+    pub force_update: bool,
 }
 
 impl Default for MemState {
@@ -272,6 +282,8 @@ impl Default for MemState {
             is_showing_ram: true,
             is_showing_swap: true,
             zoom_level: 100.0,
+            display_time: constants::DEFAULT_DISPLAY_MILLISECONDS,
+            force_update: false,
         }
     }
 }
@@ -279,7 +291,7 @@ impl Default for MemState {
 pub struct App {
     pub process_sorting_type: processes::ProcessSorting,
     pub process_sorting_reverse: bool,
-    pub update_process_gui: bool,
+    pub force_update_processes: bool,
     pub app_scroll_positions: AppScrollState,
     pub current_widget_selected: WidgetPosition,
     pub previous_basic_table_selected: WidgetPosition,
@@ -305,6 +317,7 @@ pub struct App {
 
 impl App {
     #[allow(clippy::too_many_arguments)]
+    // TODO: [REFACTOR] use builder pattern instead.
     pub fn new(
         show_average_cpu: bool, temperature_type: temperature::TemperatureType,
         update_rate_in_milliseconds: u128, use_dot: bool, left_legend: bool,
@@ -314,7 +327,7 @@ impl App {
         App {
             process_sorting_type: processes::ProcessSorting::CPU,
             process_sorting_reverse: true,
-            update_process_gui: false,
+            force_update_processes: false,
             current_widget_selected: if use_basic_mode {
                 match current_widget_selected {
                     WidgetPosition::Cpu => WidgetPosition::BasicCpu,
@@ -443,7 +456,7 @@ impl App {
         if !self.is_in_dialog() {
             if let WidgetPosition::Process = self.current_widget_selected {
                 self.enable_grouping = !(self.enable_grouping);
-                self.update_process_gui = true;
+                self.force_update_processes = true;
             }
         }
     }
@@ -455,7 +468,7 @@ impl App {
                 if self.is_grouped() {
                     self.search_with_name();
                 } else {
-                    self.update_process_gui = true;
+                    self.force_update_processes = true;
                 }
             }
             WidgetPosition::ProcessSearch => {
@@ -539,14 +552,14 @@ impl App {
     pub fn search_with_pid(&mut self) {
         if !self.is_in_dialog() && self.is_searching() {
             self.process_search_state.is_searching_with_pid = true;
-            self.update_process_gui = true;
+            self.force_update_processes = true;
         }
     }
 
     pub fn search_with_name(&mut self) {
         if !self.is_in_dialog() && self.is_searching() {
             self.process_search_state.is_searching_with_pid = false;
-            self.update_process_gui = true;
+            self.force_update_processes = true;
         }
     }
 
@@ -557,19 +570,19 @@ impl App {
     pub fn toggle_ignore_case(&mut self) {
         self.process_search_state.search_toggle_ignore_case();
         self.update_regex();
-        self.update_process_gui = true;
+        self.force_update_processes = true;
     }
 
     pub fn toggle_search_whole_word(&mut self) {
         self.process_search_state.search_toggle_whole_word();
         self.update_regex();
-        self.update_process_gui = true;
+        self.force_update_processes = true;
     }
 
     pub fn toggle_search_regex(&mut self) {
         self.process_search_state.search_toggle_regex();
         self.update_regex();
-        self.update_process_gui = true;
+        self.force_update_processes = true;
     }
 
     pub fn update_regex(&mut self) {
@@ -703,7 +716,7 @@ impl App {
                     );
 
                     self.update_regex();
-                    self.update_process_gui = true;
+                    self.force_update_processes = true;
                 }
             }
             _ => {}
@@ -720,7 +733,7 @@ impl App {
 
     pub fn clear_search(&mut self) {
         if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-            self.update_process_gui = true;
+            self.force_update_processes = true;
             self.process_search_state.search_state = AppSearchState::reset();
         }
     }
@@ -772,7 +785,7 @@ impl App {
                 self.process_search_state.search_state.cursor_direction = CursorDirection::LEFT;
 
                 self.update_regex();
-                self.update_process_gui = true;
+                self.force_update_processes = true;
             }
         }
     }
@@ -967,7 +980,7 @@ impl App {
                         UnicodeWidthChar::width(caught_char).unwrap_or(0);
 
                     self.update_regex();
-                    self.update_process_gui = true;
+                    self.force_update_processes = true;
                     self.process_search_state.search_state.cursor_direction =
                         CursorDirection::RIGHT;
                 }
@@ -1016,6 +1029,9 @@ impl App {
                     'j' => self.increment_position_count(),
                     'f' => {
                         self.is_frozen = !self.is_frozen;
+                        if self.is_frozen {
+                            self.data_collection.set_frozen_time();
+                        }
                     }
                     'c' => {
                         match self.process_sorting_type {
@@ -1027,7 +1043,7 @@ impl App {
                                 self.process_sorting_reverse = true;
                             }
                         }
-                        self.update_process_gui = true;
+                        self.force_update_processes = true;
                         self.app_scroll_positions
                             .process_scroll_state
                             .current_scroll_position = 0;
@@ -1042,7 +1058,7 @@ impl App {
                                 self.process_sorting_reverse = true;
                             }
                         }
-                        self.update_process_gui = true;
+                        self.force_update_processes = true;
                         self.app_scroll_positions
                             .process_scroll_state
                             .current_scroll_position = 0;
@@ -1059,7 +1075,7 @@ impl App {
                                     self.process_sorting_reverse = false;
                                 }
                             }
-                            self.update_process_gui = true;
+                            self.force_update_processes = true;
                             self.app_scroll_positions
                                 .process_scroll_state
                                 .current_scroll_position = 0;
@@ -1075,7 +1091,7 @@ impl App {
                                 self.process_sorting_reverse = false;
                             }
                         }
-                        self.update_process_gui = true;
+                        self.force_update_processes = true;
                         self.app_scroll_positions
                             .process_scroll_state
                             .current_scroll_position = 0;
@@ -1088,9 +1104,9 @@ impl App {
                     'K' => self.move_widget_selection_up(),
                     'J' => self.move_widget_selection_down(),
                     ' ' => self.on_space(),
-                    '+' => {}
-                    '-' => {}
-                    '=' => {}
+                    '+' => self.zoom_in(),
+                    '-' => self.zoom_out(),
+                    '=' => self.reset_zoom(),
                     _ => {}
                 }
 
@@ -1470,7 +1486,69 @@ impl App {
         }
     }
 
-    fn zoom_out(&mut self) {}
+    fn zoom_out(&mut self) {
+        match self.current_widget_selected {
+            WidgetPosition::Cpu => {
+                if self.cpu_state.display_time < constants::STALE_MAX_MILLISECONDS {
+                    self.cpu_state.display_time += constants::TIME_CHANGE_MILLISECONDS;
+                    self.cpu_state.force_update = true;
+                }
+            }
+            WidgetPosition::Mem => {
+                if self.mem_state.display_time < constants::STALE_MAX_MILLISECONDS {
+                    self.mem_state.display_time += constants::TIME_CHANGE_MILLISECONDS;
+                    self.mem_state.force_update = true;
+                }
+            }
+            WidgetPosition::Network => {
+                if self.net_state.display_time < constants::STALE_MAX_MILLISECONDS {
+                    self.net_state.display_time += constants::TIME_CHANGE_MILLISECONDS;
+                    self.net_state.force_update = true;
+                }
+            }
+            _ => {}
+        }
+    }
 
-    fn zoom_in(&mut self) {}
+    fn zoom_in(&mut self) {
+        match self.current_widget_selected {
+            WidgetPosition::Cpu => {
+                if self.cpu_state.display_time > constants::STALE_MIN_MILLISECONDS {
+                    self.cpu_state.display_time -= constants::TIME_CHANGE_MILLISECONDS;
+                    self.cpu_state.force_update = true;
+                }
+            }
+            WidgetPosition::Mem => {
+                if self.mem_state.display_time > constants::STALE_MIN_MILLISECONDS {
+                    self.mem_state.display_time -= constants::TIME_CHANGE_MILLISECONDS;
+                    self.mem_state.force_update = true;
+                }
+            }
+            WidgetPosition::Network => {
+                if self.net_state.display_time > constants::STALE_MIN_MILLISECONDS {
+                    self.net_state.display_time -= constants::TIME_CHANGE_MILLISECONDS;
+                    self.net_state.force_update = true;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn reset_zoom(&mut self) {
+        match self.current_widget_selected {
+            WidgetPosition::Cpu => {
+                self.cpu_state.display_time = constants::DEFAULT_DISPLAY_MILLISECONDS;
+                self.cpu_state.force_update = true;
+            }
+            WidgetPosition::Mem => {
+                self.mem_state.display_time = constants::DEFAULT_DISPLAY_MILLISECONDS;
+                self.mem_state.force_update = true;
+            }
+            WidgetPosition::Network => {
+                self.net_state.display_time = constants::DEFAULT_DISPLAY_MILLISECONDS;
+                self.net_state.force_update = true;
+            }
+            _ => {}
+        }
+    }
 }

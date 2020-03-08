@@ -41,8 +41,17 @@ impl CpuGraphWidget for Painter {
     fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
-        // CPU usage graph
-        let x_axis: Axis<'_, String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
+        let display_time_labels = [
+            format!("{}s", app_state.cpu_state.display_time / 1000),
+            "0s".to_string(),
+        ];
+        let x_axis = Axis::default()
+            .bounds([0.0, app_state.cpu_state.display_time as f64])
+            .style(self.colours.graph_style)
+            .labels_style(self.colours.graph_style)
+            .labels(&display_time_labels);
+
+        // Note this is offset as otherwise the 0 value is not drawn!
         let y_axis = Axis::default()
             .style(self.colours.graph_style)
             .labels_style(self.colours.graph_style)
