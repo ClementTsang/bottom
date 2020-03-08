@@ -10,6 +10,7 @@ use tui::{
 };
 
 use canvas_colours::*;
+use dialogs::*;
 use widgets::*;
 
 use crate::{
@@ -20,6 +21,7 @@ use crate::{
 };
 
 mod canvas_colours;
+mod dialogs;
 mod drawing_utils;
 mod widgets;
 
