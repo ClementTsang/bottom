@@ -91,20 +91,14 @@ pub fn get_temperature_option(
         if let Some(temp_type) = &flags.temperature_type {
             // Give lowest priority to config.
             return match temp_type.as_str() {
-                "fahrenheit" | "f" => {
-                    Ok(data_harvester::temperature::TemperatureType::Fahrenheit)
-                }
-                "kelvin" | "k" => {
-                    Ok(data_harvester::temperature::TemperatureType::Kelvin)
-                }
-                "celsius" | "c" => {
-                    Ok(data_harvester::temperature::TemperatureType::Celsius)
-                }
-                _ => {
-                    Err(BottomError::ConfigError(
-                        "Invalid temperature type.  Please have the value be of the form <kelvin|k|celsius|c|fahrenheit|f>".to_string()
-                    ))
-                }
+                "fahrenheit" | "f" => Ok(data_harvester::temperature::TemperatureType::Fahrenheit),
+                "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
+                "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
+                _ => Err(BottomError::ConfigError(
+                    "Invalid temperature type.  Please have the value be of the form \
+						 <kelvin|k|celsius|c|fahrenheit|f>"
+                        .to_string(),
+                )),
             };
         }
     }

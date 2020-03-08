@@ -146,7 +146,6 @@ impl Painter {
 
         terminal.autoresize()?;
         terminal.draw(|mut f| {
-            debug!("{:?}", f.size());
             if app_state.help_dialog_state.is_showing_help {
                 // Only for the help
 
