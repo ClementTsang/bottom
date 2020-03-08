@@ -232,6 +232,8 @@ Thanks to those who have contributed:
 
 - This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
 
+- Basic mode inspired by htop's design.
+
 - This application was written with the following libraries, and would otherwise not be possible:
 
   - [backtrace](https://github.com/rust-lang/backtrace-rs)
