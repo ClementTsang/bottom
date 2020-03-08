@@ -8,6 +8,22 @@ pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u128 = 1000;
 // Number of colours to generate for the CPU chart/table
 pub const NUM_COLOURS: i32 = 256;
 
+// Canvas stuff
+// The minimum threshold when resizing tables
+pub const FORCE_MIN_THRESHOLD: usize = 5;
+
+// Side borders
+lazy_static! {
+    pub static ref SIDE_BORDERS: tui::widgets::Borders =
+        tui::widgets::Borders::from_bits_truncate(20);
+    pub static ref DEFAULT_TEXT_STYLE: tui::style::Style =
+        tui::style::Style::default().fg(tui::style::Color::Gray);
+    pub static ref DEFAULT_HEADER_STYLE: tui::style::Style =
+        tui::style::Style::default().fg(tui::style::Color::LightBlue);
+    pub static ref INVALID_REGEX_STYLE: tui::style::Style =
+        tui::style::Style::default().fg(tui::style::Color::Red);
+}
+
 // Help text
 pub const GENERAL_HELP_TEXT: [&str; 15] = [
     "General Keybindings\n\n",
