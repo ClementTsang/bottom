@@ -118,7 +118,7 @@ Run using `btm`.
 
 - `-v`, `--version` displays the version number and exits.
 
-- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>128</sup> - 1. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
+- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>64</sup> - 1. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
 
 - `-l`, `--left_legend` will move external table legends to the left side rather than the right side. Right side is default.
 
@@ -139,6 +139,10 @@ Run using `btm`.
 - `-C`, `--config` takes in a file path leading to a TOML file. If the file doesn't exist, one will be created.
 
 - `-b`, `--basic` will enable basic mode, removing all graphs from the main interface and condensing data.
+
+- `-t`, `--default_time_value` will set the default time interval graphs will display to (in milliseconds). Lowest is 30 seconds, defaults to 60 seconds.
+
+- `-i`, `--time_delta` will set the amount each zoom in/out action will change the time interval of a graph (in milliseconds). Lowest is 1 second, defaults to 15 seconds.
 
 ### Keybindings
 

@@ -27,6 +27,8 @@ pub struct ConfigFlags {
     pub default_widget: Option<String>,
     pub show_disabled_data: Option<bool>,
     pub basic: Option<bool>,
+    pub default_time_value: Option<u64>,
+    pub time_delta: Option<u64>,
     //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -52,12 +54,12 @@ pub struct ConfigColours {
 
 pub fn get_update_rate_in_milliseconds(
     update_rate: &Option<&str>, config: &Config,
-) -> error::Result<u128> {
+) -> error::Result<u64> {
     let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
-        update_rate.parse::<u128>()?
+        update_rate.parse::<u64>()?
     } else if let Some(flags) = &config.flags {
         if let Some(rate) = flags.rate {
-            rate as u128
+            rate
         } else {
             DEFAULT_REFRESH_RATE_IN_MILLISECONDS
         }
@@ -67,11 +69,11 @@ pub fn get_update_rate_in_milliseconds(
 
     if update_rate_in_milliseconds < 250 {
         return Err(BottomError::InvalidArg(
-            "Please set your update rate to be greater than 250 milliseconds.".to_string(),
+            "Please set your update rate to be at least 250 milliseconds.".to_string(),
         ));
-    } else if update_rate_in_milliseconds > u128::from(std::u64::MAX) {
+    } else if update_rate_in_milliseconds as u128 > std::u64::MAX as u128 {
         return Err(BottomError::InvalidArg(
-            "Please set your update rate to be less than unsigned INT_MAX.".to_string(),
+            "Please set your update rate to be at most unsigned INT_MAX.".to_string(),
         ));
     }
 
@@ -176,6 +178,62 @@ pub fn get_use_basic_mode_option(matches: &clap::ArgMatches<'static>, config: &C
     }
 
     false
+}
+
+pub fn get_default_time_value_option(
+    matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<u64> {
+    let default_time = if let Some(default_time_value) = matches.value_of("DEFAULT_TIME_VALUE") {
+        default_time_value.parse::<u64>()?
+    } else if let Some(flags) = &config.flags {
+        if let Some(default_time_value) = flags.default_time_value {
+            default_time_value
+        } else {
+            DEFAULT_TIME_MILLISECONDS
+        }
+    } else {
+        DEFAULT_TIME_MILLISECONDS
+    };
+
+    if default_time < 30000 {
+        return Err(BottomError::InvalidArg(
+            "Please set your default value to be at least 30 seconds.".to_string(),
+        ));
+    } else if default_time as u128 > std::u64::MAX as u128 {
+        return Err(BottomError::InvalidArg(
+            "Please set your default value to be at most unsigned INT_MAX.".to_string(),
+        ));
+    }
+
+    Ok(default_time)
+}
+
+pub fn get_time_interval_option(
+    matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<u64> {
+    let time_interval = if let Some(time_interval) = matches.value_of("TIME_DELTA") {
+        time_interval.parse::<u64>()?
+    } else if let Some(flags) = &config.flags {
+        if let Some(time_interval) = flags.time_delta {
+            time_interval
+        } else {
+            TIME_CHANGE_MILLISECONDS
+        }
+    } else {
+        TIME_CHANGE_MILLISECONDS
+    };
+
+    if time_interval < 1000 {
+        return Err(BottomError::InvalidArg(
+            "Please set your time interval to be at least 1 second.".to_string(),
+        ));
+    } else if time_interval as u128 > std::u64::MAX as u128 {
+        return Err(BottomError::InvalidArg(
+            "Please set your time interval to be at most unsigned INT_MAX.".to_string(),
+        ));
+    }
+
+    Ok(time_interval)
 }
 
 pub fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {

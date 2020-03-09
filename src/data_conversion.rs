@@ -102,7 +102,7 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 }
 
 pub fn convert_cpu_data_points(
-    show_avg_cpu: bool, current_data: &data_farmer::DataCollection, display_time: u128,
+    show_avg_cpu: bool, current_data: &data_farmer::DataCollection, display_time: u64,
     is_frozen: bool,
 ) -> Vec<ConvertedCpuData> {
     let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
@@ -156,7 +156,7 @@ pub fn convert_cpu_data_points(
 }
 
 pub fn convert_mem_data_points(
-    current_data: &data_farmer::DataCollection, display_time: u128, is_frozen: bool,
+    current_data: &data_farmer::DataCollection, display_time: u64, is_frozen: bool,
 ) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = if is_frozen {
@@ -190,7 +190,7 @@ pub fn convert_mem_data_points(
 }
 
 pub fn convert_swap_data_points(
-    current_data: &data_farmer::DataCollection, display_time: u128, is_frozen: bool,
+    current_data: &data_farmer::DataCollection, display_time: u64, is_frozen: bool,
 ) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = if is_frozen {
@@ -260,7 +260,7 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
 }
 
 pub fn get_rx_tx_data_points(
-    current_data: &data_farmer::DataCollection, display_time: u128, is_frozen: bool,
+    current_data: &data_farmer::DataCollection, display_time: u64, is_frozen: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
@@ -275,6 +275,7 @@ pub fn get_rx_tx_data_points(
         current_data.current_instant
     };
 
+    // TODO: [REFACTOR] Can we use combine on this, CPU, and MEM?
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 =
             (display_time as f64 - current_time.duration_since(*time).as_millis() as f64).floor();
@@ -302,7 +303,7 @@ pub fn get_rx_tx_data_points(
 }
 
 pub fn convert_network_data_points(
-    current_data: &data_farmer::DataCollection, display_time: u128, is_frozen: bool,
+    current_data: &data_farmer::DataCollection, display_time: u64, is_frozen: bool,
 ) -> ConvertedNetworkData {
     let (rx, tx) = get_rx_tx_data_points(current_data, display_time, is_frozen);
 

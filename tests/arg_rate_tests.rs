@@ -28,7 +28,9 @@ fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
         .arg("249")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("rate to be greater than 250"));
+        .stderr(predicate::str::contains(
+            "Please set your update rate to be at least 250 milliseconds.",
+        ));
     Ok(())
 }
 
@@ -40,7 +42,7 @@ fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "rate to be less than unsigned INT_MAX.",
+            "Please set your update rate to be at most unsigned INT_MAX.",
         ));
     Ok(())
 }

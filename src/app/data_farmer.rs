@@ -84,12 +84,12 @@ impl DataCollection {
         self.frozen_instant = Some(self.current_instant);
     }
 
-    pub fn clean_data(&mut self, max_time_millis: u128) {
+    pub fn clean_data(&mut self, max_time_millis: u64) {
         let current_time = Instant::now();
 
         let mut remove_index = 0;
         for entry in &self.timed_data_vec {
-            if current_time.duration_since(entry.0).as_millis() >= max_time_millis {
+            if current_time.duration_since(entry.0).as_millis() >= max_time_millis as u128 {
                 remove_index += 1;
             } else {
                 break;

@@ -209,9 +209,10 @@ impl Default for AppHelpDialogState {
 }
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
-/// by config files or launch options.  Don't need to be mutable (set and forget).
+/// by config files or launch options.
+#[derive(Default)]
 pub struct AppConfigFields {
-    pub update_rate_in_milliseconds: u128,
+    pub update_rate_in_milliseconds: u64,
     pub temperature_type: temperature::TemperatureType,
     pub use_dot: bool,
     pub left_legend: bool,
@@ -219,6 +220,8 @@ pub struct AppConfigFields {
     pub use_current_cpu_total: bool,
     pub show_disabled_data: bool,
     pub use_basic_mode: bool,
+    pub default_time_value: u64,
+    pub time_interval: u64,
 }
 
 /// Network specific
@@ -227,7 +230,7 @@ pub struct NetworkState {
     pub is_showing_rx: bool,
     pub is_showing_tx: bool,
     pub zoom_level: f64,
-    pub display_time: u128,
+    pub display_time: u64,
     pub force_update: bool,
 }
 
@@ -238,7 +241,7 @@ impl Default for NetworkState {
             is_showing_rx: true,
             is_showing_tx: true,
             zoom_level: 100.0,
-            display_time: constants::DEFAULT_DISPLAY_MILLISECONDS,
+            display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
         }
     }
@@ -249,7 +252,7 @@ pub struct CpuState {
     pub is_showing_tray: bool,
     pub zoom_level: f64,
     pub core_show_vec: Vec<bool>,
-    pub display_time: u128,
+    pub display_time: u64,
     pub force_update: bool,
 }
 
@@ -259,7 +262,7 @@ impl Default for CpuState {
             is_showing_tray: false,
             zoom_level: 100.0,
             core_show_vec: Vec::new(),
-            display_time: constants::DEFAULT_DISPLAY_MILLISECONDS,
+            display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
         }
     }
@@ -271,7 +274,7 @@ pub struct MemState {
     pub is_showing_ram: bool,
     pub is_showing_swap: bool,
     pub zoom_level: f64,
-    pub display_time: u128,
+    pub display_time: u64,
     pub force_update: bool,
 }
 
@@ -282,7 +285,7 @@ impl Default for MemState {
             is_showing_ram: true,
             is_showing_swap: true,
             zoom_level: 100.0,
-            display_time: constants::DEFAULT_DISPLAY_MILLISECONDS,
+            display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
         }
     }
@@ -320,10 +323,19 @@ impl App {
     // TODO: [REFACTOR] use builder pattern instead.
     pub fn new(
         show_average_cpu: bool, temperature_type: temperature::TemperatureType,
-        update_rate_in_milliseconds: u128, use_dot: bool, left_legend: bool,
+        update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
         use_current_cpu_total: bool, current_widget_selected: WidgetPosition,
-        show_disabled_data: bool, use_basic_mode: bool,
+        show_disabled_data: bool, use_basic_mode: bool, default_time_value: u64,
+        time_interval: u64,
     ) -> App {
+        let mut cpu_state = CpuState::default();
+        let mut mem_state = MemState::default();
+        let mut net_state = NetworkState::default();
+
+        cpu_state.display_time = default_time_value;
+        mem_state.display_time = default_time_value;
+        net_state.display_time = default_time_value;
+
         App {
             process_sorting_type: processes::ProcessSorting::CPU,
             process_sorting_reverse: true,
@@ -365,12 +377,14 @@ impl App {
                 use_current_cpu_total,
                 show_disabled_data,
                 use_basic_mode,
+                default_time_value,
+                time_interval,
             },
             is_expanded: false,
             is_resized: false,
-            cpu_state: CpuState::default(),
-            mem_state: MemState::default(),
-            net_state: NetworkState::default(),
+            cpu_state,
+            mem_state,
+            net_state,
         }
     }
 
@@ -947,7 +961,7 @@ impl App {
             if current_key_press_inst
                 .duration_since(self.last_key_press)
                 .as_millis()
-                > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS
+                > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS as u128
             {
                 self.reset_multi_tap_keys();
             }
@@ -1489,20 +1503,23 @@ impl App {
     fn zoom_out(&mut self) {
         match self.current_widget_selected {
             WidgetPosition::Cpu => {
-                if self.cpu_state.display_time < constants::STALE_MAX_MILLISECONDS {
-                    self.cpu_state.display_time += constants::TIME_CHANGE_MILLISECONDS;
+                let new_time = self.cpu_state.display_time + self.app_config_fields.time_interval;
+                if new_time <= constants::STALE_MAX_MILLISECONDS {
+                    self.cpu_state.display_time = new_time;
                     self.cpu_state.force_update = true;
                 }
             }
             WidgetPosition::Mem => {
-                if self.mem_state.display_time < constants::STALE_MAX_MILLISECONDS {
-                    self.mem_state.display_time += constants::TIME_CHANGE_MILLISECONDS;
+                let new_time = self.mem_state.display_time + self.app_config_fields.time_interval;
+                if new_time <= constants::STALE_MAX_MILLISECONDS {
+                    self.mem_state.display_time = new_time;
                     self.mem_state.force_update = true;
                 }
             }
             WidgetPosition::Network => {
-                if self.net_state.display_time < constants::STALE_MAX_MILLISECONDS {
-                    self.net_state.display_time += constants::TIME_CHANGE_MILLISECONDS;
+                let new_time = self.net_state.display_time + self.app_config_fields.time_interval;
+                if new_time <= constants::STALE_MAX_MILLISECONDS {
+                    self.net_state.display_time = new_time;
                     self.net_state.force_update = true;
                 }
             }
@@ -1513,20 +1530,23 @@ impl App {
     fn zoom_in(&mut self) {
         match self.current_widget_selected {
             WidgetPosition::Cpu => {
-                if self.cpu_state.display_time > constants::STALE_MIN_MILLISECONDS {
-                    self.cpu_state.display_time -= constants::TIME_CHANGE_MILLISECONDS;
+                let new_time = self.cpu_state.display_time - self.app_config_fields.time_interval;
+                if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    self.cpu_state.display_time = new_time;
                     self.cpu_state.force_update = true;
                 }
             }
             WidgetPosition::Mem => {
-                if self.mem_state.display_time > constants::STALE_MIN_MILLISECONDS {
-                    self.mem_state.display_time -= constants::TIME_CHANGE_MILLISECONDS;
+                let new_time = self.mem_state.display_time - self.app_config_fields.time_interval;
+                if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    self.mem_state.display_time = new_time;
                     self.mem_state.force_update = true;
                 }
             }
             WidgetPosition::Network => {
-                if self.net_state.display_time > constants::STALE_MIN_MILLISECONDS {
-                    self.net_state.display_time -= constants::TIME_CHANGE_MILLISECONDS;
+                let new_time = self.net_state.display_time - self.app_config_fields.time_interval;
+                if new_time >= constants::STALE_MIN_MILLISECONDS {
+                    self.net_state.display_time = new_time;
                     self.net_state.force_update = true;
                 }
             }
@@ -1537,15 +1557,15 @@ impl App {
     fn reset_zoom(&mut self) {
         match self.current_widget_selected {
             WidgetPosition::Cpu => {
-                self.cpu_state.display_time = constants::DEFAULT_DISPLAY_MILLISECONDS;
+                self.cpu_state.display_time = self.app_config_fields.default_time_value;
                 self.cpu_state.force_update = true;
             }
             WidgetPosition::Mem => {
-                self.mem_state.display_time = constants::DEFAULT_DISPLAY_MILLISECONDS;
+                self.mem_state.display_time = self.app_config_fields.default_time_value;
                 self.mem_state.force_update = true;
             }
             WidgetPosition::Network => {
-                self.net_state.display_time = constants::DEFAULT_DISPLAY_MILLISECONDS;
+                self.net_state.display_time = self.app_config_fields.default_time_value;
                 self.net_state.force_update = true;
             }
             _ => {}

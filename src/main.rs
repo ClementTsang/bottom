@@ -85,7 +85,9 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
-		(@arg SHOW_DISABLED_DATA: -s --show_disabled_data "Show disabled data entries.")
+        (@arg SHOW_DISABLED_DATA: -s --show_disabled_data "Show disabled data entries.")
+        (@arg DEFAULT_TIME_VALUE: -t --default_time_value +takes_value "Default time value for graphs in milliseconds; minimum is 30s, defaults to 60s.")
+        (@arg TIME_DELTA: -i --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
 		(@group DEFAULT_WIDGET =>
 			(@arg CPU_WIDGET: --cpu_default "Selects the CPU widget to be selected by default.")
 			(@arg MEM_WIDGET: --memory_default "Selects the memory widget to be selected by default.")
@@ -105,7 +107,7 @@ fn main() -> error::Result<()> {
 
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
-    let update_rate_in_milliseconds: u128 =
+    let update_rate_in_milliseconds: u64 =
         get_update_rate_in_milliseconds(&matches.value_of("RATE_MILLIS"), &config)?;
 
     // Set other settings
@@ -117,6 +119,8 @@ fn main() -> error::Result<()> {
     let current_widget_selected = get_default_widget(&matches, &config);
     let show_disabled_data = get_show_disabled_data_option(&matches, &config);
     let use_basic_mode = get_use_basic_mode_option(&matches, &config);
+    let default_time_value = get_default_time_value_option(&matches, &config)?;
+    let time_interval = get_time_interval_option(&matches, &config)?;
 
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = App::new(
@@ -129,6 +133,8 @@ fn main() -> error::Result<()> {
         current_widget_selected,
         show_disabled_data,
         use_basic_mode,
+        default_time_value,
+        time_interval,
     );
 
     enable_app_grouping(&matches, &config, &mut app);
@@ -369,9 +375,9 @@ fn handle_key_event_or_break(
                         app.reset();
                     }
                 }
-                KeyCode::Char('u') => app.clear_search(),
                 KeyCode::Char('a') => app.skip_cursor_beginning(),
                 KeyCode::Char('e') => app.skip_cursor_end(),
+                KeyCode::Char('u') => app.clear_search(),
                 // KeyCode::Char('j') => {}, // Move down
                 // KeyCode::Char('k') => {}, // Move up
                 // KeyCode::Char('h') => {}, // Move right

@@ -1,15 +1,15 @@
 // How long to store data.
-pub const STALE_MAX_MILLISECONDS: u128 = 300 * 1000; // Keep 5 minutes of data.
+pub const STALE_MAX_MILLISECONDS: u64 = 300 * 1000; // Keep 5 minutes of data.
 
 // How much data is SHOWN
-pub const DEFAULT_DISPLAY_MILLISECONDS: u128 = 60 * 1000; // Defaults to 1 min.
-pub const STALE_MIN_MILLISECONDS: u128 = 30 * 1000; // Lowest is 30 seconds
-pub const TIME_CHANGE_MILLISECONDS: u128 = 15 * 1000; // How much to increment each time
+pub const DEFAULT_TIME_MILLISECONDS: u64 = 60 * 1000; // Defaults to 1 min.
+pub const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
+pub const TIME_CHANGE_MILLISECONDS: u64 = 15 * 1000; // How much to increment each time
 
 pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 // How fast the screen refreshes
-pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u128 = 1000;
-pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u128 = 1000;
+pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
+pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 // Number of colours to generate for the CPU chart/table
 pub const NUM_COLOURS: i32 = 256;
 
@@ -30,7 +30,7 @@ lazy_static! {
 }
 
 // Help text
-pub const GENERAL_HELP_TEXT: [&str; 15] = [
+pub const GENERAL_HELP_TEXT: [&str; 18] = [
     "General Keybindings\n\n",
     "q, Ctrl-c      Quit bottom\n",
     "Esc            Close filters, dialog boxes, etc.\n",
@@ -46,6 +46,9 @@ pub const GENERAL_HELP_TEXT: [&str; 15] = [
     "G              Skip to the last entry of a list\n",
     "Enter          Maximize the currently selected widget\n",
     "/              Filter out graph lines (only CPU at the moment)\n",
+    "+              Zoom in (decrease time range)\n",
+    "-              Zoom out (increase time range)\n",
+    "=              Reset zoom\n",
 ];
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
@@ -90,15 +93,34 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # is also set here.
 [flags]
 
+# Whether to display an average cpu entry.
 #avg_cpu = true
+
+# Whether to use dot markers rather than braille.
 #dot_marker = false
+
+# The update rate of the application.
 #rate = 1000
+
+# Whether to put the CPU legend to the left.
 #left_legend = false
+
+# Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
+
+# Whether to group processes with the same name together by default.
 #group_processes = false
+
+# Whether to make process searching case sensitive by default.
 #case_sensitive = false
+
+# Whether to make process searching look for matching the entire word by default.
 #whole_word = true
+
+# Whether to make process searching use regex by default.
 #regex = true
+
+# Whether to show CPU entries in the legend when they are hidden.
 #show_disabled_data = true
 
 # Defaults to Celsius.  Temperature is one of:
@@ -117,6 +139,11 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #default_widget = "network_default"
 #default_widget = "process_default"
 
+# The default time interval (in milliseconds).
+#default_time_value = 60000
+
+# The time delta on each zoom in/out action (in milliseconds).
+# time_delta = 15000
 
 # These are all the components that support custom theming.  Currently, it only
 # supports taking in a string representing a hex colour.  Note that colour support
@@ -132,7 +159,7 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # Represents the colour of the label each widget has.
 #widget_title_color="#cc241d"
 
-# Represents the average CPU color
+# Represents the average CPU color.
 #avg_cpu_color="#d3869b"
 
 # Represents the colour the core will use in the CPU legend and graph.
