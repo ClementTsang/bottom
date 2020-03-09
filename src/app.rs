@@ -222,27 +222,31 @@ pub struct AppConfigFields {
     pub use_basic_mode: bool,
     pub default_time_value: u64,
     pub time_interval: u64,
+    pub hide_time: bool,
+    pub autohide_time: bool,
 }
 
 /// Network specific
-pub struct NetworkState {
+pub struct NetState {
     pub is_showing_tray: bool,
     pub is_showing_rx: bool,
     pub is_showing_tx: bool,
     pub zoom_level: f64,
     pub display_time: u64,
     pub force_update: bool,
+    pub display_time_instant: Option<Instant>,
 }
 
-impl Default for NetworkState {
+impl Default for NetState {
     fn default() -> Self {
-        NetworkState {
+        NetState {
             is_showing_tray: false,
             is_showing_rx: true,
             is_showing_tx: true,
             zoom_level: 100.0,
             display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
+            display_time_instant: None,
         }
     }
 }
@@ -254,6 +258,7 @@ pub struct CpuState {
     pub core_show_vec: Vec<bool>,
     pub display_time: u64,
     pub force_update: bool,
+    pub display_time_instant: Option<Instant>,
 }
 
 impl Default for CpuState {
@@ -264,6 +269,7 @@ impl Default for CpuState {
             core_show_vec: Vec::new(),
             display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
+            display_time_instant: None,
         }
     }
 }
@@ -276,6 +282,7 @@ pub struct MemState {
     pub zoom_level: f64,
     pub display_time: u64,
     pub force_update: bool,
+    pub display_time_instant: Option<Instant>,
 }
 
 impl Default for MemState {
@@ -287,6 +294,7 @@ impl Default for MemState {
             zoom_level: 100.0,
             display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
+            display_time_instant: None,
         }
     }
 }
@@ -315,7 +323,7 @@ pub struct App {
     pub is_resized: bool,
     pub cpu_state: CpuState,
     pub mem_state: MemState,
-    pub net_state: NetworkState,
+    pub net_state: NetState,
 }
 
 impl App {
@@ -330,7 +338,7 @@ impl App {
     ) -> App {
         let mut cpu_state = CpuState::default();
         let mut mem_state = MemState::default();
-        let mut net_state = NetworkState::default();
+        let mut net_state = NetState::default();
 
         cpu_state.display_time = default_time_value;
         mem_state.display_time = default_time_value;
@@ -379,6 +387,8 @@ impl App {
                 use_basic_mode,
                 default_time_value,
                 time_interval,
+                hide_time: false,
+                autohide_time: false,
             },
             is_expanded: false,
             is_resized: false,
@@ -1400,7 +1410,7 @@ impl App {
                 WidgetPosition::Process => self.change_process_position(-1),
                 WidgetPosition::Temp => self.change_temp_position(-1),
                 WidgetPosition::Disk => self.change_disk_position(-1),
-                WidgetPosition::CpuLegend => self.change_cpu_table_position(-1), // TODO: [PO?] Temporary, may change if we add scaling
+                WidgetPosition::CpuLegend => self.change_cpu_table_position(-1),
                 _ => {}
             }
             self.app_scroll_positions.scroll_direction = ScrollDirection::UP;
@@ -1414,7 +1424,7 @@ impl App {
                 WidgetPosition::Process => self.change_process_position(1),
                 WidgetPosition::Temp => self.change_temp_position(1),
                 WidgetPosition::Disk => self.change_disk_position(1),
-                WidgetPosition::CpuLegend => self.change_cpu_table_position(1), // TODO: [PO?] Temporary, may change if we add scaling
+                WidgetPosition::CpuLegend => self.change_cpu_table_position(1),
                 _ => {}
             }
             self.app_scroll_positions.scroll_direction = ScrollDirection::DOWN;
@@ -1507,6 +1517,15 @@ impl App {
                 if new_time <= constants::STALE_MAX_MILLISECONDS {
                     self.cpu_state.display_time = new_time;
                     self.cpu_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.cpu_state.display_time_instant = Some(Instant::now());
+                    }
+                } else if self.cpu_state.display_time != constants::STALE_MAX_MILLISECONDS {
+                    self.cpu_state.display_time = constants::STALE_MAX_MILLISECONDS;
+                    self.cpu_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.cpu_state.display_time_instant = Some(Instant::now());
+                    }
                 }
             }
             WidgetPosition::Mem => {
@@ -1514,6 +1533,15 @@ impl App {
                 if new_time <= constants::STALE_MAX_MILLISECONDS {
                     self.mem_state.display_time = new_time;
                     self.mem_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.mem_state.display_time_instant = Some(Instant::now());
+                    }
+                } else if self.mem_state.display_time != constants::STALE_MAX_MILLISECONDS {
+                    self.mem_state.display_time = constants::STALE_MAX_MILLISECONDS;
+                    self.mem_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.mem_state.display_time_instant = Some(Instant::now());
+                    }
                 }
             }
             WidgetPosition::Network => {
@@ -1521,6 +1549,15 @@ impl App {
                 if new_time <= constants::STALE_MAX_MILLISECONDS {
                     self.net_state.display_time = new_time;
                     self.net_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.net_state.display_time_instant = Some(Instant::now());
+                    }
+                } else if self.net_state.display_time != constants::STALE_MAX_MILLISECONDS {
+                    self.net_state.display_time = constants::STALE_MAX_MILLISECONDS;
+                    self.net_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.net_state.display_time_instant = Some(Instant::now());
+                    }
                 }
             }
             _ => {}
@@ -1534,6 +1571,15 @@ impl App {
                 if new_time >= constants::STALE_MIN_MILLISECONDS {
                     self.cpu_state.display_time = new_time;
                     self.cpu_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.cpu_state.display_time_instant = Some(Instant::now());
+                    }
+                } else if self.cpu_state.display_time != constants::STALE_MIN_MILLISECONDS {
+                    self.cpu_state.display_time = constants::STALE_MIN_MILLISECONDS;
+                    self.cpu_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.cpu_state.display_time_instant = Some(Instant::now());
+                    }
                 }
             }
             WidgetPosition::Mem => {
@@ -1541,6 +1587,15 @@ impl App {
                 if new_time >= constants::STALE_MIN_MILLISECONDS {
                     self.mem_state.display_time = new_time;
                     self.mem_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.mem_state.display_time_instant = Some(Instant::now());
+                    }
+                } else if self.mem_state.display_time != constants::STALE_MIN_MILLISECONDS {
+                    self.mem_state.display_time = constants::STALE_MIN_MILLISECONDS;
+                    self.mem_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.mem_state.display_time_instant = Some(Instant::now());
+                    }
                 }
             }
             WidgetPosition::Network => {
@@ -1548,6 +1603,15 @@ impl App {
                 if new_time >= constants::STALE_MIN_MILLISECONDS {
                     self.net_state.display_time = new_time;
                     self.net_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.net_state.display_time_instant = Some(Instant::now());
+                    }
+                } else if self.net_state.display_time != constants::STALE_MIN_MILLISECONDS {
+                    self.net_state.display_time = constants::STALE_MIN_MILLISECONDS;
+                    self.net_state.force_update = true;
+                    if self.app_config_fields.autohide_time {
+                        self.net_state.display_time_instant = Some(Instant::now());
+                    }
                 }
             }
             _ => {}
@@ -1559,14 +1623,23 @@ impl App {
             WidgetPosition::Cpu => {
                 self.cpu_state.display_time = self.app_config_fields.default_time_value;
                 self.cpu_state.force_update = true;
+                if self.app_config_fields.autohide_time {
+                    self.cpu_state.display_time_instant = Some(Instant::now());
+                }
             }
             WidgetPosition::Mem => {
                 self.mem_state.display_time = self.app_config_fields.default_time_value;
                 self.mem_state.force_update = true;
+                if self.app_config_fields.autohide_time {
+                    self.mem_state.display_time_instant = Some(Instant::now());
+                }
             }
             WidgetPosition::Network => {
                 self.net_state.display_time = self.app_config_fields.default_time_value;
                 self.net_state.force_update = true;
+                if self.app_config_fields.autohide_time {
+                    self.net_state.display_time_instant = Some(Instant::now());
+                }
             }
             _ => {}
         }

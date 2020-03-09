@@ -72,44 +72,47 @@ pub struct Painter {
 impl Painter {
     /// Must be run once before drawing, but after setting colours.
     /// This is to set some remaining styles and text.
-    /// This bypasses some logic checks (size > 2, for example) but this
-    /// assumes that you, the programmer, are sane and do not do stupid things.
-    /// RIGHT?
     pub fn initialize(&mut self) {
         self.is_mac_os = cfg!(target_os = "macos");
 
-        self.styled_general_help_text.push(Text::Styled(
-            GENERAL_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_general_help_text.extend(
-            GENERAL_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
+        if GENERAL_HELP_TEXT.len() > 1 {
+            self.styled_general_help_text.push(Text::Styled(
+                GENERAL_HELP_TEXT[0].into(),
+                self.colours.table_header_style,
+            ));
+            self.styled_general_help_text.extend(
+                GENERAL_HELP_TEXT[1..]
+                    .iter()
+                    .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                    .collect::<Vec<_>>(),
+            );
+        }
 
-        self.styled_process_help_text.push(Text::Styled(
-            PROCESS_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_process_help_text.extend(
-            PROCESS_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
+        if PROCESS_HELP_TEXT.len() > 1 {
+            self.styled_process_help_text.push(Text::Styled(
+                PROCESS_HELP_TEXT[0].into(),
+                self.colours.table_header_style,
+            ));
+            self.styled_process_help_text.extend(
+                PROCESS_HELP_TEXT[1..]
+                    .iter()
+                    .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                    .collect::<Vec<_>>(),
+            );
+        }
 
-        self.styled_search_help_text.push(Text::Styled(
-            SEARCH_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_search_help_text.extend(
-            SEARCH_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
+        if SEARCH_HELP_TEXT.len() > 1 {
+            self.styled_search_help_text.push(Text::Styled(
+                SEARCH_HELP_TEXT[0].into(),
+                self.colours.table_header_style,
+            ));
+            self.styled_search_help_text.extend(
+                SEARCH_HELP_TEXT[1..]
+                    .iter()
+                    .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                    .collect::<Vec<_>>(),
+            );
+        }
     }
 
     pub fn draw_specific_table<B: Backend>(
@@ -260,11 +263,11 @@ impl Painter {
                             0
                         };
 
-                        self.draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
+                        self.draw_cpu_graph(&mut f, app_state, cpu_chunk[graph_index]);
                         self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
                     }
                     WidgetPosition::Mem | WidgetPosition::BasicMem => {
-                        self.draw_memory_graph(&mut f, &app_state, rect[0]);
+                        self.draw_memory_graph(&mut f, app_state, rect[0]);
                     }
                     WidgetPosition::Disk => {
                         self.draw_disk_table(&mut f, app_state, rect[0], true);
@@ -275,7 +278,7 @@ impl Painter {
                     WidgetPosition::Network
                     | WidgetPosition::BasicNet
                     | WidgetPosition::NetworkLegend => {
-                        self.draw_network_graph(&mut f, &app_state, rect[0]);
+                        self.draw_network_graph(&mut f, app_state, rect[0]);
                     }
                     WidgetPosition::Process | WidgetPosition::ProcessSearch => {
                         self.draw_process_and_search(&mut f, app_state, rect[0], true);
@@ -408,10 +411,10 @@ impl Painter {
                     0
                 };
 
-                self.draw_cpu_graph(&mut f, &app_state, cpu_chunk[graph_index]);
+                self.draw_cpu_graph(&mut f, app_state, cpu_chunk[graph_index]);
                 self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
-                self.draw_memory_graph(&mut f, &app_state, middle_chunks[0]);
-                self.draw_network_graph(&mut f, &app_state, network_chunk[0]);
+                self.draw_memory_graph(&mut f, app_state, middle_chunks[0]);
+                self.draw_network_graph(&mut f, app_state, network_chunk[0]);
                 self.draw_network_labels(&mut f, app_state, network_chunk[1]);
                 self.draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0], true);
                 self.draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1], true);

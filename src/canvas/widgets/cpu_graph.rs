@@ -31,25 +31,46 @@ lazy_static! {
 }
 
 pub trait CpuGraphWidget {
-    fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect);
+    fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
     fn draw_cpu_legend<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     );
 }
 
 impl CpuGraphWidget for Painter {
-    fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect) {
+    fn draw_cpu_graph<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+    ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
         let display_time_labels = [
             format!("{}s", app_state.cpu_state.display_time / 1000),
             "0s".to_string(),
         ];
-        let x_axis = Axis::default()
-            .bounds([0.0, app_state.cpu_state.display_time as f64])
-            .style(self.colours.graph_style)
-            .labels_style(self.colours.graph_style)
-            .labels(&display_time_labels);
+        let x_axis = if app_state.app_config_fields.hide_time
+            || app_state.cpu_state.display_time_instant.is_none()
+        {
+            Axis::default().bounds([0.0, app_state.cpu_state.display_time as f64])
+        } else if let Some(time) = app_state.cpu_state.display_time_instant {
+            if std::time::Instant::now().duration_since(time).as_millis()
+                < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
+            {
+                Axis::default()
+                    .bounds([0.0, app_state.cpu_state.display_time as f64])
+                    .style(self.colours.graph_style)
+                    .labels_style(self.colours.graph_style)
+                    .labels(&display_time_labels)
+            } else {
+                app_state.cpu_state.display_time_instant = None;
+                Axis::default().bounds([0.0, app_state.cpu_state.display_time as f64])
+            }
+        } else {
+            Axis::default()
+                .bounds([0.0, app_state.cpu_state.display_time as f64])
+                .style(self.colours.graph_style)
+                .labels_style(self.colours.graph_style)
+                .labels(&display_time_labels)
+        };
 
         // Note this is offset as otherwise the 0 value is not drawn!
         let y_axis = Axis::default()

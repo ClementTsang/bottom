@@ -89,7 +89,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
         (@arg DEFAULT_TIME_VALUE: -t --default_time_value +takes_value "Default time value for graphs in milliseconds; minimum is 30s, defaults to 60s.")
         (@arg TIME_DELTA: -d --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
         (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
-        (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled then this will have no effect.")
+        (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled via --hide_time then this will have no effect.")
         (@group DEFAULT_WIDGET =>
 			(@arg CPU_WIDGET: --cpu_default "Selects the CPU widget to be selected by default.")
 			(@arg MEM_WIDGET: --memory_default "Selects the memory widget to be selected by default.")
@@ -143,6 +143,8 @@ fn main() -> error::Result<()> {
     enable_app_case_sensitive(&matches, &config, &mut app);
     enable_app_match_whole_word(&matches, &config, &mut app);
     enable_app_use_regex(&matches, &config, &mut app);
+    enable_hide_time(&matches, &config, &mut app);
+    enable_autohide_time(&matches, &config, &mut app);
 
     // Set up up tui and crossterm
     let mut stdout_val = stdout();

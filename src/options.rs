@@ -29,6 +29,8 @@ pub struct ConfigFlags {
     pub basic: Option<bool>,
     pub default_time_value: Option<u64>,
     pub time_delta: Option<u64>,
+    pub autohide_time: Option<bool>,
+    pub hide_time: Option<bool>,
     //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -199,9 +201,9 @@ pub fn get_default_time_value_option(
         return Err(BottomError::InvalidArg(
             "Please set your default value to be at least 30 seconds.".to_string(),
         ));
-    } else if default_time as u128 > std::u64::MAX as u128 {
+    } else if default_time as u128 > STALE_MAX_MILLISECONDS as u128 {
         return Err(BottomError::InvalidArg(
-            "Please set your default value to be at most unsigned INT_MAX.".to_string(),
+            "Please set your default value to be at most 10 minutes.".to_string(),
         ));
     }
 
@@ -227,9 +229,9 @@ pub fn get_time_interval_option(
         return Err(BottomError::InvalidArg(
             "Please set your time delta to be at least 1 second.".to_string(),
         ));
-    } else if time_interval > std::u64::MAX as u128 {
+    } else if time_interval > STALE_MAX_MILLISECONDS as u128 {
         return Err(BottomError::InvalidArg(
-            "Please set your time delta to be at most unsigned INT_MAX.".to_string(),
+            "Please set your time delta to be at most 10 minutes.".to_string(),
         ));
     }
 
@@ -283,6 +285,30 @@ pub fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config
         if let Some(regex) = flags.regex {
             if regex {
                 app.process_search_state.search_toggle_regex();
+            }
+        }
+    }
+}
+
+pub fn enable_hide_time(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+    if matches.is_present("HIDE_TIME") {
+        app.app_config_fields.hide_time = true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(hide_time) = flags.hide_time {
+            if hide_time {
+                app.app_config_fields.hide_time = true;
+            }
+        }
+    }
+}
+
+pub fn enable_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+    if matches.is_present("AUTOHIDE_TIME") {
+        app.app_config_fields.autohide_time = true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(autohide_time) = flags.autohide_time {
+            if autohide_time {
+                app.app_config_fields.autohide_time = true;
             }
         }
     }

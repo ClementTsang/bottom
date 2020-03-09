@@ -42,7 +42,7 @@ fn test_large_default_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your default value to be at most unsigned INT_MAX.",
+            "Please set your default value to be at most 10 minutes.",
         ));
     Ok(())
 }
@@ -68,7 +68,7 @@ fn test_large_delta_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your time delta to be at most unsigned INT_MAX.",
+            "Please set your time delta to be at most 10 minutes.",
         ));
     Ok(())
 }

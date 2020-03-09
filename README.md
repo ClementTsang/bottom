@@ -216,6 +216,8 @@ Note that `q` is disabled while in the search widget.
 
 - Scrolling with the mouse will scroll through the currently selected list if the widget is a scrollable table.
 
+- Scrolling on a graph will zoom in (scroll up) or zoom out (scroll down).
+
 ## Bugs and Requests
 
 Spot an bug? Have an idea? Leave an issue that explains what you want in detail and I'll try to take a look.
