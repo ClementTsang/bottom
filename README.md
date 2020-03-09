@@ -142,7 +142,7 @@ Run using `btm`.
 
 - `-t`, `--default_time_value` will set the default time interval graphs will display to (in milliseconds). Lowest is 30 seconds, defaults to 60 seconds.
 
-- `-i`, `--time_delta` will set the amount each zoom in/out action will change the time interval of a graph (in milliseconds). Lowest is 1 second, defaults to 15 seconds.
+- `-d`, `--time_delta` will set the amount each zoom in/out action will change the time interval of a graph (in milliseconds). Lowest is 1 second, defaults to 15 seconds.
 
 ### Keybindings
 

@@ -87,8 +87,10 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
         (@arg SHOW_DISABLED_DATA: -s --show_disabled_data "Show disabled data entries.")
         (@arg DEFAULT_TIME_VALUE: -t --default_time_value +takes_value "Default time value for graphs in milliseconds; minimum is 30s, defaults to 60s.")
-        (@arg TIME_DELTA: -i --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
-		(@group DEFAULT_WIDGET =>
+        (@arg TIME_DELTA: -d --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
+        (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
+        (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled then this will have no effect.")
+        (@group DEFAULT_WIDGET =>
 			(@arg CPU_WIDGET: --cpu_default "Selects the CPU widget to be selected by default.")
 			(@arg MEM_WIDGET: --memory_default "Selects the memory widget to be selected by default.")
 			(@arg DISK_WIDGET: --disk_default "Selects the disk widget to be selected by default.")

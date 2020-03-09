@@ -56,15 +56,15 @@ pub fn get_update_rate_in_milliseconds(
     update_rate: &Option<&str>, config: &Config,
 ) -> error::Result<u64> {
     let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
-        update_rate.parse::<u64>()?
+        update_rate.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
         if let Some(rate) = flags.rate {
-            rate
+            rate as u128
         } else {
-            DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+            DEFAULT_REFRESH_RATE_IN_MILLISECONDS as u128
         }
     } else {
-        DEFAULT_REFRESH_RATE_IN_MILLISECONDS
+        DEFAULT_REFRESH_RATE_IN_MILLISECONDS as u128
     };
 
     if update_rate_in_milliseconds < 250 {
@@ -77,7 +77,7 @@ pub fn get_update_rate_in_milliseconds(
         ));
     }
 
-    Ok(update_rate_in_milliseconds)
+    Ok(update_rate_in_milliseconds as u64)
 }
 
 pub fn get_temperature_option(
@@ -184,15 +184,15 @@ pub fn get_default_time_value_option(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<u64> {
     let default_time = if let Some(default_time_value) = matches.value_of("DEFAULT_TIME_VALUE") {
-        default_time_value.parse::<u64>()?
+        default_time_value.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
         if let Some(default_time_value) = flags.default_time_value {
-            default_time_value
+            default_time_value as u128
         } else {
-            DEFAULT_TIME_MILLISECONDS
+            DEFAULT_TIME_MILLISECONDS as u128
         }
     } else {
-        DEFAULT_TIME_MILLISECONDS
+        DEFAULT_TIME_MILLISECONDS as u128
     };
 
     if default_time < 30000 {
@@ -205,35 +205,35 @@ pub fn get_default_time_value_option(
         ));
     }
 
-    Ok(default_time)
+    Ok(default_time as u64)
 }
 
 pub fn get_time_interval_option(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = matches.value_of("TIME_DELTA") {
-        time_interval.parse::<u64>()?
+        time_interval.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
         if let Some(time_interval) = flags.time_delta {
-            time_interval
+            time_interval as u128
         } else {
-            TIME_CHANGE_MILLISECONDS
+            TIME_CHANGE_MILLISECONDS as u128
         }
     } else {
-        TIME_CHANGE_MILLISECONDS
+        TIME_CHANGE_MILLISECONDS as u128
     };
 
     if time_interval < 1000 {
         return Err(BottomError::InvalidArg(
-            "Please set your time interval to be at least 1 second.".to_string(),
+            "Please set your time delta to be at least 1 second.".to_string(),
         ));
-    } else if time_interval as u128 > std::u64::MAX as u128 {
+    } else if time_interval > std::u64::MAX as u128 {
         return Err(BottomError::InvalidArg(
-            "Please set your time interval to be at most unsigned INT_MAX.".to_string(),
+            "Please set your time delta to be at most unsigned INT_MAX.".to_string(),
         ));
     }
 
-    Ok(time_interval)
+    Ok(time_interval as u64)
 }
 
 pub fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
