@@ -305,10 +305,18 @@ pub fn enable_hide_time(matches: &clap::ArgMatches<'static>, config: &Config, ap
 pub fn enable_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
     if matches.is_present("AUTOHIDE_TIME") {
         app.app_config_fields.autohide_time = true;
+        let time = Some(std::time::Instant::now());
+        app.cpu_state.display_time_instant = time;
+        app.mem_state.display_time_instant = time;
+        app.net_state.display_time_instant = time;
     } else if let Some(flags) = &config.flags {
         if let Some(autohide_time) = flags.autohide_time {
             if autohide_time {
                 app.app_config_fields.autohide_time = true;
+                let time = Some(std::time::Instant::now());
+                app.cpu_state.display_time_instant = time;
+                app.mem_state.display_time_instant = time;
+                app.net_state.display_time_instant = time;
             }
         }
     }

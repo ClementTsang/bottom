@@ -246,7 +246,7 @@ impl Default for NetState {
             zoom_level: 100.0,
             display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
-            display_time_instant: Some(Instant::now()),
+            display_time_instant: None,
         }
     }
 }
@@ -269,7 +269,7 @@ impl Default for CpuState {
             core_show_vec: Vec::new(),
             display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
-            display_time_instant: Some(Instant::now()),
+            display_time_instant: None,
         }
     }
 }
@@ -294,7 +294,7 @@ impl Default for MemState {
             zoom_level: 100.0,
             display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
-            display_time_instant: Some(Instant::now()),
+            display_time_instant: None,
         }
     }
 }
