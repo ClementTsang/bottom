@@ -42,7 +42,7 @@ fn test_large_default_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your default value to be at most 10 minutes.",
+            "Please set your default value to be at most",
         ));
     Ok(())
 }
@@ -55,7 +55,7 @@ fn test_small_default_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your default value to be at least 30 seconds.",
+            "Please set your default value to be at least",
         ));
     Ok(())
 }
@@ -68,7 +68,7 @@ fn test_large_delta_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your time delta to be at most 10 minutes.",
+            "Please set your time delta to be at most",
         ));
     Ok(())
 }
@@ -81,7 +81,7 @@ fn test_small_delta_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your time delta to be at least 1 second.",
+            "Please set your time delta to be at least",
         ));
     Ok(())
 }

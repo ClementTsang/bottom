@@ -199,11 +199,11 @@ pub fn get_default_time_value_option(
 
     if default_time < 30000 {
         return Err(BottomError::InvalidArg(
-            "Please set your default value to be at least 30 seconds.".to_string(),
+            "Please set your default value to be at least 30000 milliseconds.".to_string(),
         ));
     } else if default_time as u128 > STALE_MAX_MILLISECONDS as u128 {
         return Err(BottomError::InvalidArg(
-            "Please set your default value to be at most 10 minutes.".to_string(),
+            format!("Please set your default value to be at most {} milliseconds.", STALE_MAX_MILLISECONDS),
         ));
     }
 
@@ -227,11 +227,11 @@ pub fn get_time_interval_option(
 
     if time_interval < 1000 {
         return Err(BottomError::InvalidArg(
-            "Please set your time delta to be at least 1 second.".to_string(),
+            "Please set your time delta to be at least 1000 milliseconds.".to_string(),
         ));
     } else if time_interval > STALE_MAX_MILLISECONDS as u128 {
         return Err(BottomError::InvalidArg(
-            "Please set your time delta to be at most 10 minutes.".to_string(),
+            format!("Please set your time delta to be at most {} milliseconds.", STALE_MAX_MILLISECONDS),
         ));
     }
 

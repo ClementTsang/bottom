@@ -170,6 +170,12 @@ Run using `btm`.
 
 - `Enter` on a widget to maximize the widget.
 
+- `+` to zoom in (reduce time interval, smallest is 30 seconds).
+
+- `-` to zoom out (increase time interval, largest is 10 minutes).
+
+- `=` to reset zoom.
+
 #### CPU
 
 - `/` to allow for enabling/disabling showing certain cores with `Space`.
