@@ -28,7 +28,61 @@ fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
         .arg("249")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("rate to be greater than 250"));
+        .stderr(predicate::str::contains(
+            "Please set your update rate to be at least 250 milliseconds.",
+        ));
+    Ok(())
+}
+
+#[test]
+fn test_large_default_time() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_os_binary_loc())
+        .arg("-t")
+        .arg("18446744073709551616")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "Please set your default value to be at most",
+        ));
+    Ok(())
+}
+
+#[test]
+fn test_small_default_time() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_os_binary_loc())
+        .arg("-t")
+        .arg("900")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "Please set your default value to be at least",
+        ));
+    Ok(())
+}
+
+#[test]
+fn test_large_delta_time() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_os_binary_loc())
+        .arg("-d")
+        .arg("18446744073709551616")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "Please set your time delta to be at most",
+        ));
+    Ok(())
+}
+
+#[test]
+fn test_small_delta_time() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_os_binary_loc())
+        .arg("-d")
+        .arg("900")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "Please set your time delta to be at least",
+        ));
     Ok(())
 }
 
@@ -40,7 +94,7 @@ fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "rate to be less than unsigned INT_MAX.",
+            "Please set your update rate to be at most unsigned INT_MAX.",
         ));
     Ok(())
 }

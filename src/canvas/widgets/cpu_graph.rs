@@ -17,7 +17,7 @@ use tui::{
     widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 };
 
-const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show (Space)"];
+const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show"];
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 lazy_static! {
     static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
@@ -31,18 +31,50 @@ lazy_static! {
 }
 
 pub trait CpuGraphWidget {
-    fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect);
+    fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
     fn draw_cpu_legend<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     );
 }
 
 impl CpuGraphWidget for Painter {
-    fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect) {
+    fn draw_cpu_graph<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+    ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
-        // CPU usage graph
-        let x_axis: Axis<'_, String> = Axis::default().bounds([0.0, TIME_STARTS_FROM as f64]);
+        let display_time_labels = [
+            format!("{}s", app_state.cpu_state.display_time / 1000),
+            "0s".to_string(),
+        ];
+
+        let x_axis = if app_state.app_config_fields.hide_time
+            || (app_state.app_config_fields.autohide_time
+                && app_state.cpu_state.display_time_instant.is_none())
+        {
+            Axis::default().bounds([0.0, app_state.cpu_state.display_time as f64])
+        } else if let Some(time) = app_state.cpu_state.display_time_instant {
+            if std::time::Instant::now().duration_since(time).as_millis()
+                < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
+            {
+                Axis::default()
+                    .bounds([0.0, app_state.cpu_state.display_time as f64])
+                    .style(self.colours.graph_style)
+                    .labels_style(self.colours.graph_style)
+                    .labels(&display_time_labels)
+            } else {
+                app_state.cpu_state.display_time_instant = None;
+                Axis::default().bounds([0.0, app_state.cpu_state.display_time as f64])
+            }
+        } else {
+            Axis::default()
+                .bounds([0.0, app_state.cpu_state.display_time as f64])
+                .style(self.colours.graph_style)
+                .labels_style(self.colours.graph_style)
+                .labels(&display_time_labels)
+        };
+
+        // Note this is offset as otherwise the 0 value is not drawn!
         let y_axis = Axis::default()
             .style(self.colours.graph_style)
             .labels_style(self.colours.graph_style)
@@ -92,22 +124,22 @@ impl CpuGraphWidget for Painter {
             " CPU ".to_string()
         };
 
+        let border_style = match app_state.current_widget_selected {
+            WidgetPosition::Cpu => self.colours.highlighted_border_style,
+            _ => self.colours.border_style,
+        };
+
         Chart::default()
             .block(
                 Block::default()
                     .title(&title)
                     .title_style(if app_state.is_expanded {
-                        self.colours.highlighted_border_style
+                        border_style
                     } else {
                         self.colours.widget_title_style
                     })
                     .borders(Borders::ALL)
-                    .border_style(match app_state.current_widget_selected {
-                        WidgetPosition::Cpu | WidgetPosition::BasicCpu => {
-                            self.colours.highlighted_border_style
-                        }
-                        _ => self.colours.border_style,
-                    }),
+                    .border_style(border_style),
             )
             .x_axis(x_axis)
             .y_axis(y_axis)
@@ -167,7 +199,7 @@ impl CpuGraphWidget for Painter {
                 Row::StyledData(
                     cpu_string_row.iter(),
                     match app_state.current_widget_selected {
-                        WidgetPosition::Cpu => {
+                        WidgetPosition::CpuLegend => {
                             if itx as u64
                                 == app_state
                                     .app_scroll_positions
@@ -225,6 +257,11 @@ impl CpuGraphWidget for Painter {
             "".to_string()
         };
 
+        let title_and_border_style = match app_state.current_widget_selected {
+            WidgetPosition::CpuLegend => self.colours.highlighted_border_style,
+            _ => self.colours.border_style,
+        };
+
         // Draw
         Table::new(
             if app_state.cpu_state.is_showing_tray {
@@ -238,19 +275,9 @@ impl CpuGraphWidget for Painter {
         .block(
             Block::default()
                 .title(&title)
-                .title_style(if app_state.is_expanded {
-                    self.colours.highlighted_border_style
-                } else {
-                    match app_state.current_widget_selected {
-                        WidgetPosition::Cpu => self.colours.highlighted_border_style,
-                        _ => self.colours.border_style,
-                    }
-                })
+                .title_style(title_and_border_style)
                 .borders(Borders::ALL)
-                .border_style(match app_state.current_widget_selected {
-                    WidgetPosition::Cpu => self.colours.highlighted_border_style,
-                    _ => self.colours.border_style,
-                }),
+                .border_style(title_and_border_style),
         )
         .header_style(self.colours.table_header_style)
         .widths(

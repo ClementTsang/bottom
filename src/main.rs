@@ -85,8 +85,12 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
-		(@arg SHOW_DISABLED_DATA: -s --show_disabled_data "Show disabled data entries.")
-		(@group DEFAULT_WIDGET =>
+        (@arg SHOW_DISABLED_DATA: -s --show_disabled_data "Show disabled data entries.")
+        (@arg DEFAULT_TIME_VALUE: -t --default_time_value +takes_value "Default time value for graphs in milliseconds; minimum is 30s, defaults to 60s.")
+        (@arg TIME_DELTA: -d --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
+        (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
+        (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled via --hide_time then this will have no effect.")
+        (@group DEFAULT_WIDGET =>
 			(@arg CPU_WIDGET: --cpu_default "Selects the CPU widget to be selected by default.")
 			(@arg MEM_WIDGET: --memory_default "Selects the memory widget to be selected by default.")
 			(@arg DISK_WIDGET: --disk_default "Selects the disk widget to be selected by default.")
@@ -105,7 +109,7 @@ fn main() -> error::Result<()> {
 
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
-    let update_rate_in_milliseconds: u128 =
+    let update_rate_in_milliseconds: u64 =
         get_update_rate_in_milliseconds(&matches.value_of("RATE_MILLIS"), &config)?;
 
     // Set other settings
@@ -117,6 +121,8 @@ fn main() -> error::Result<()> {
     let current_widget_selected = get_default_widget(&matches, &config);
     let show_disabled_data = get_show_disabled_data_option(&matches, &config);
     let use_basic_mode = get_use_basic_mode_option(&matches, &config);
+    let default_time_value = get_default_time_value_option(&matches, &config)?;
+    let time_interval = get_time_interval_option(&matches, &config)?;
 
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = App::new(
@@ -129,12 +135,16 @@ fn main() -> error::Result<()> {
         current_widget_selected,
         show_disabled_data,
         use_basic_mode,
+        default_time_value,
+        time_interval,
     );
 
     enable_app_grouping(&matches, &config, &mut app);
     enable_app_case_sensitive(&matches, &config, &mut app);
     enable_app_match_whole_word(&matches, &config, &mut app);
     enable_app_use_regex(&matches, &config, &mut app);
+    enable_hide_time(&matches, &config, &mut app);
+    enable_autohide_time(&matches, &config, &mut app);
 
     // Set up up tui and crossterm
     let mut stdout_val = stdout();
@@ -187,13 +197,12 @@ fn main() -> error::Result<()> {
                     if handle_key_event_or_break(event, &mut app, &rtx) {
                         break;
                     }
-
-                    if app.update_process_gui {
-                        update_final_process_list(&mut app);
-                        app.update_process_gui = false;
-                    }
+                    handle_force_redraws(&mut app);
                 }
-                BottomEvent::MouseInput(event) => handle_mouse_event(event, &mut app),
+                BottomEvent::MouseInput(event) => {
+                    handle_mouse_event(event, &mut app);
+                    handle_force_redraws(&mut app);
+                }
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(&data);
 
@@ -201,7 +210,11 @@ fn main() -> error::Result<()> {
                         // Convert all data into tui-compliant components
 
                         // Network
-                        let network_data = convert_network_data_points(&app.data_collection);
+                        let network_data = convert_network_data_points(
+                            &app.data_collection,
+                            app.net_state.display_time,
+                            false,
+                        );
                         app.canvas_data.network_data_rx = network_data.rx;
                         app.canvas_data.network_data_tx = network_data.tx;
                         app.canvas_data.rx_display = network_data.rx_display;
@@ -215,8 +228,16 @@ fn main() -> error::Result<()> {
                         // Temperatures
                         app.canvas_data.temp_sensor_data = convert_temp_row(&app);
                         // Memory
-                        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection);
-                        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection);
+                        app.canvas_data.mem_data = convert_mem_data_points(
+                            &app.data_collection,
+                            app.mem_state.display_time,
+                            false,
+                        );
+                        app.canvas_data.swap_data = convert_swap_data_points(
+                            &app.data_collection,
+                            app.mem_state.display_time,
+                            false,
+                        );
                         let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
                         app.canvas_data.mem_label = memory_and_swap_labels.0;
                         app.canvas_data.swap_label = memory_and_swap_labels.1;
@@ -225,6 +246,8 @@ fn main() -> error::Result<()> {
                         app.canvas_data.cpu_data = convert_cpu_data_points(
                             app.app_config_fields.show_average_cpu,
                             &app.data_collection,
+                            app.cpu_state.display_time,
+                            false,
                         );
 
                         // Pre-fill CPU if needed
@@ -268,8 +291,8 @@ fn main() -> error::Result<()> {
 
 fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     match event {
-        MouseEvent::ScrollUp(_x, _y, _modifiers) => app.decrement_position_count(),
-        MouseEvent::ScrollDown(_x, _y, _modifiers) => app.increment_position_count(),
+        MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
+        MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
         _ => {}
     };
 }
@@ -356,9 +379,9 @@ fn handle_key_event_or_break(
                         app.reset();
                     }
                 }
-                KeyCode::Char('u') => app.clear_search(),
                 KeyCode::Char('a') => app.skip_cursor_beginning(),
                 KeyCode::Char('e') => app.skip_cursor_end(),
+                KeyCode::Char('u') => app.clear_search(),
                 // KeyCode::Char('j') => {}, // Move down
                 // KeyCode::Char('k') => {}, // Move up
                 // KeyCode::Char('h') => {}, // Move right
@@ -558,6 +581,48 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
         )),
     )
     .unwrap();
+}
+
+fn handle_force_redraws(app: &mut App) {
+    if app.force_update_processes {
+        update_final_process_list(app);
+        app.force_update_processes = false;
+    }
+
+    if app.cpu_state.force_update {
+        app.canvas_data.cpu_data = convert_cpu_data_points(
+            app.app_config_fields.show_average_cpu,
+            &app.data_collection,
+            app.cpu_state.display_time,
+            app.is_frozen,
+        );
+        app.cpu_state.force_update = false;
+    }
+
+    if app.mem_state.force_update {
+        app.canvas_data.mem_data = convert_mem_data_points(
+            &app.data_collection,
+            app.mem_state.display_time,
+            app.is_frozen,
+        );
+        app.canvas_data.swap_data = convert_swap_data_points(
+            &app.data_collection,
+            app.mem_state.display_time,
+            app.is_frozen,
+        );
+        app.mem_state.force_update = false;
+    }
+
+    if app.net_state.force_update {
+        let (rx, tx) = get_rx_tx_data_points(
+            &app.data_collection,
+            app.net_state.display_time,
+            app.is_frozen,
+        );
+        app.canvas_data.network_data_rx = rx;
+        app.canvas_data.network_data_tx = tx;
+        app.net_state.force_update = false;
+    }
 }
 
 fn update_final_process_list(app: &mut App) {

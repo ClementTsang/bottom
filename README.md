@@ -30,7 +30,9 @@ Features of bottom include:
 
 - Maximizing of widgets of interest to take up the entire window.
 
-- Basic mode
+- A minimal mode that focuses less on graphs and more on data, similar to [htop](https://hisham.hm/htop/).
+
+- Zooming in/out to see more/less data.
 
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
@@ -118,7 +120,7 @@ Run using `btm`.
 
 - `-v`, `--version` displays the version number and exits.
 
-- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>128</sup> - 1. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
+- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>64</sup> - 1. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
 
 - `-l`, `--left_legend` will move external table legends to the left side rather than the right side. Right side is default.
 
@@ -139,6 +141,10 @@ Run using `btm`.
 - `-C`, `--config` takes in a file path leading to a TOML file. If the file doesn't exist, one will be created.
 
 - `-b`, `--basic` will enable basic mode, removing all graphs from the main interface and condensing data.
+
+- `-t`, `--default_time_value` will set the default time interval graphs will display to (in milliseconds). Lowest is 30 seconds, defaults to 60 seconds.
+
+- `-d`, `--time_delta` will set the amount each zoom in/out action will change the time interval of a graph (in milliseconds). Lowest is 1 second, defaults to 15 seconds.
 
 ### Keybindings
 
@@ -163,6 +169,12 @@ Run using `btm`.
 - `G` (`Shift-g`) or `End` to jump to the last entry of the current table.
 
 - `Enter` on a widget to maximize the widget.
+
+- `+` to zoom in (reduce time interval, smallest is 30 seconds).
+
+- `-` to zoom out (increase time interval, largest is 10 minutes).
+
+- `=` to reset zoom.
 
 #### CPU
 
@@ -211,6 +223,8 @@ Note that `q` is disabled while in the search widget.
 ### Mouse actions
 
 - Scrolling with the mouse will scroll through the currently selected list if the widget is a scrollable table.
+
+- Scrolling on a graph will zoom in (scroll up) or zoom out (scroll down).
 
 ## Bugs and Requests
 

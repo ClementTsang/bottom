@@ -45,6 +45,7 @@ pub struct TimedData {
 #[derive(Debug)]
 pub struct DataCollection {
     pub current_instant: Instant,
+    pub frozen_instant: Option<Instant>,
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: mem::MemHarvest,
@@ -62,6 +63,7 @@ impl Default for DataCollection {
     fn default() -> Self {
         DataCollection {
             current_instant: Instant::now(),
+            frozen_instant: None,
             timed_data_vec: Vec::default(),
             network_harvest: network::NetworkHarvest::default(),
             memory_harvest: mem::MemHarvest::default(),
@@ -78,12 +80,16 @@ impl Default for DataCollection {
 }
 
 impl DataCollection {
-    pub fn clean_data(&mut self, max_time_millis: u128) {
+    pub fn set_frozen_time(&mut self) {
+        self.frozen_instant = Some(self.current_instant);
+    }
+
+    pub fn clean_data(&mut self, max_time_millis: u64) {
         let current_time = Instant::now();
 
         let mut remove_index = 0;
         for entry in &self.timed_data_vec {
-            if current_time.duration_since(entry.0).as_millis() >= max_time_millis {
+            if current_time.duration_since(entry.0).as_millis() >= max_time_millis as u128 {
                 remove_index += 1;
             } else {
                 break;
