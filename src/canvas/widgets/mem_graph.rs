@@ -31,7 +31,8 @@ impl MemGraphWidget for Painter {
             "0s".to_string(),
         ];
         let x_axis = if app_state.app_config_fields.hide_time
-            || app_state.mem_state.display_time_instant.is_none()
+            || (app_state.app_config_fields.autohide_time
+                && app_state.mem_state.display_time_instant.is_none())
         {
             Axis::default().bounds([0.0, app_state.mem_state.display_time as f64])
         } else if let Some(time) = app_state.mem_state.display_time_instant {

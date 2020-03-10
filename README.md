@@ -30,7 +30,9 @@ Features of bottom include:
 
 - Maximizing of widgets of interest to take up the entire window.
 
-- Basic mode
+- A minimal mode that focuses less on graphs and more on data, similar to [htop](https://hisham.hm/htop/).
+
+- Zooming in/out to see more/less data.
 
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
