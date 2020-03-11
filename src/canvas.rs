@@ -147,6 +147,8 @@ impl Painter {
             self.width = current_width;
         } else if self.height != current_height || self.width != current_width {
             app_state.is_resized = true;
+            self.height = current_height;
+            self.width = current_width;
         }
 
         terminal.autoresize()?;
