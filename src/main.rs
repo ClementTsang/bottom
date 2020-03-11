@@ -242,6 +242,14 @@ fn main() -> error::Result<()> {
                         app.canvas_data.mem_label = memory_and_swap_labels.0;
                         app.canvas_data.swap_label = memory_and_swap_labels.1;
 
+                        // Pre-fill CPU if needed
+                        if first_run {
+                            let cpu_len = app.data_collection.cpu_harvest.len();
+                            app.cpu_state.core_show_vec = vec![true; cpu_len];
+                            app.cpu_state.num_cpus_shown = cpu_len as u64;
+                            first_run = false;
+                        }
+
                         // CPU
                         app.canvas_data.cpu_data = convert_cpu_data_points(
                             app.app_config_fields.show_average_cpu,
@@ -249,14 +257,6 @@ fn main() -> error::Result<()> {
                             app.cpu_state.display_time,
                             false,
                         );
-
-                        // Pre-fill CPU if needed
-                        if first_run {
-                            app.cpu_state.core_show_vec =
-                                vec![true; app.canvas_data.cpu_data.len()];
-                            app.cpu_state.num_cpus_shown = app.canvas_data.cpu_data.len() as u64;
-                            first_run = false;
-                        }
 
                         // Processes
                         let (single, grouped) = convert_process_data(&app.data_collection);
