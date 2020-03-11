@@ -38,6 +38,7 @@ pub struct ConvertedCpuData {
     pub cpu_name: String,
     /// Tuple is time, value
     pub cpu_data: Vec<Point>,
+    pub legend_value: String,
 }
 
 pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
@@ -133,6 +134,8 @@ pub fn convert_cpu_data_points(
                 cpu_data_vector[itx_offset].cpu_name =
                     current_data.cpu_harvest[itx].cpu_name.clone();
             }
+
+            cpu_data_vector[itx_offset].legend_value = format!("{:.0}%", cpu.0.round());
 
             //Insert joiner points
             for &(joiner_offset, joiner_val) in &cpu.1 {
