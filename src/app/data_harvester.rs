@@ -66,6 +66,7 @@ pub struct DataState {
     last_collection_time: Instant,
     total_rx: u64,
     total_tx: u64,
+    show_average_cpu: bool,
 }
 
 impl Default for DataState {
@@ -82,6 +83,7 @@ impl Default for DataState {
             last_collection_time: Instant::now(),
             total_rx: 0,
             total_tx: 0,
+            show_average_cpu: false,
         }
     }
 }
@@ -93,6 +95,10 @@ impl DataState {
 
     pub fn set_use_current_cpu_total(&mut self, use_current_cpu_total: bool) {
         self.use_current_cpu_total = use_current_cpu_total;
+    }
+
+    pub fn set_show_average_cpu(&mut self, show_average_cpu: bool) {
+        self.show_average_cpu = show_average_cpu;
     }
 
     pub fn init(&mut self) {
@@ -116,7 +122,7 @@ impl DataState {
         let current_instant = std::time::Instant::now();
 
         // CPU
-        self.data.cpu = cpu::get_cpu_data_list(&self.sys);
+        self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu);
 
         // Processes.  This is the longest part of the harvesting process... changing this might be
         // good in the future.  What was tried already:

@@ -179,6 +179,7 @@ fn main() -> error::Result<()> {
         use_current_cpu_total,
         update_rate_in_milliseconds as u64,
         app.app_config_fields.temperature_type.clone(),
+        app.app_config_fields.show_average_cpu,
     );
 
     let mut painter = canvas::Painter::default();
@@ -242,21 +243,20 @@ fn main() -> error::Result<()> {
                         app.canvas_data.mem_label = memory_and_swap_labels.0;
                         app.canvas_data.swap_label = memory_and_swap_labels.1;
 
+                        // Pre-fill CPU if needed
+                        if first_run {
+                            let cpu_len = app.data_collection.cpu_harvest.len();
+                            app.cpu_state.core_show_vec = vec![true; cpu_len];
+                            app.cpu_state.num_cpus_shown = cpu_len as u64;
+                            first_run = false;
+                        }
+
                         // CPU
                         app.canvas_data.cpu_data = convert_cpu_data_points(
-                            app.app_config_fields.show_average_cpu,
                             &app.data_collection,
                             app.cpu_state.display_time,
                             false,
                         );
-
-                        // Pre-fill CPU if needed
-                        if first_run {
-                            app.cpu_state.core_show_vec =
-                                vec![true; app.canvas_data.cpu_data.len()];
-                            app.cpu_state.num_cpus_shown = app.canvas_data.cpu_data.len() as u64;
-                            first_run = false;
-                        }
 
                         // Processes
                         let (single, grouped) = convert_process_data(&app.data_collection);
@@ -589,7 +589,6 @@ fn handle_force_redraws(app: &mut App) {
 
     if app.cpu_state.force_update {
         app.canvas_data.cpu_data = convert_cpu_data_points(
-            app.app_config_fields.show_average_cpu,
             &app.data_collection,
             app.cpu_state.display_time,
             app.is_frozen,
@@ -755,6 +754,7 @@ fn create_event_thread(
     >,
     rrx: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
     update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
+    show_average_cpu: bool,
 ) {
     thread::spawn(move || {
         let tx = tx.clone();
@@ -762,6 +762,7 @@ fn create_event_thread(
         data_state.init();
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
+        data_state.set_show_average_cpu(show_average_cpu);
         loop {
             if let Ok(message) = rrx.try_recv() {
                 match message {

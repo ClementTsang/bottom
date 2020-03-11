@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::cmp::max;
 
 use crate::{
@@ -168,45 +169,42 @@ impl CpuGraphWidget for Painter {
         );
 
         let sliced_cpu_data = &cpu_data[start_position as usize..];
-        let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
 
-        for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
-            if app_state.cpu_state.is_showing_tray {
-                stringified_cpu_data.push(vec![
-                    cpu.cpu_name.clone(),
+        let mut offset_scroll_index = (app_state
+            .app_scroll_positions
+            .cpu_scroll_state
+            .current_scroll_position
+            - start_position) as usize;
+        let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
+            let cpu_string_row: Vec<Cow<'_, str>> = if app_state.cpu_state.is_showing_tray {
+                vec![
+                    Cow::Borrowed(&cpu.cpu_name),
                     if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
-                        "[*]".to_string()
+                        "[*]".into()
                     } else {
-                        "[ ]".to_string()
+                        "[ ]".into()
                     },
-                ]);
-            } else if let Some(cpu_data) = cpu.cpu_data.last() {
-                if app_state.app_config_fields.show_disabled_data
-                    || app_state.cpu_state.core_show_vec[itx]
-                {
-                    stringified_cpu_data.push(vec![
-                        cpu.cpu_name.clone(),
-                        format!("{:.0}%", cpu_data.1.round()),
-                    ]);
-                }
-            }
-        }
+                ]
+            } else if app_state.app_config_fields.show_disabled_data
+                || app_state.cpu_state.core_show_vec[itx]
+            {
+                vec![
+                    Cow::Borrowed(&cpu.cpu_name),
+                    Cow::Borrowed(&cpu.legend_value),
+                ]
+            } else {
+                Vec::new()
+            };
 
-        let cpu_rows = stringified_cpu_data
-            .iter()
-            .enumerate()
-            .map(|(itx, cpu_string_row)| {
-                Row::StyledData(
-                    cpu_string_row.iter(),
+            if cpu_string_row.is_empty() {
+                offset_scroll_index += 1;
+                None
+            } else {
+                Some(Row::StyledData(
+                    cpu_string_row.into_iter(),
                     match app_state.current_widget_selected {
                         WidgetPosition::CpuLegend => {
-                            if itx as u64
-                                == app_state
-                                    .app_scroll_positions
-                                    .cpu_scroll_state
-                                    .current_scroll_position
-                                    - start_position
-                            {
+                            if itx == offset_scroll_index {
                                 self.colours.currently_selected_text_style
                             } else if app_state.app_config_fields.show_average_cpu && itx == 0 {
                                 self.colours.avg_colour_style
@@ -226,8 +224,9 @@ impl CpuGraphWidget for Painter {
                             }
                         }
                     },
-                )
-            });
+                ))
+            }
+        });
 
         // Calculate widths
         let width = f64::from(draw_loc.width);
