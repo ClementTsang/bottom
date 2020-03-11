@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::time::Instant;
 
 use unicode_segmentation::GraphemeCursor;
@@ -256,6 +257,7 @@ pub struct CpuState {
     pub is_showing_tray: bool,
     pub zoom_level: f64,
     pub core_show_vec: Vec<bool>,
+    pub num_cpus_shown: u64,
     pub display_time: u64,
     pub force_update: bool,
     pub display_time_instant: Option<Instant>,
@@ -267,6 +269,7 @@ impl Default for CpuState {
             is_showing_tray: false,
             zoom_level: 100.0,
             core_show_vec: Vec::new(),
+            num_cpus_shown: 0,
             display_time: constants::DEFAULT_TIME_MILLISECONDS,
             force_update: false,
             display_time_instant: None,
@@ -425,6 +428,20 @@ impl App {
             match self.current_widget_selected {
                 WidgetPosition::Cpu | WidgetPosition::CpuLegend => {
                     self.cpu_state.is_showing_tray = false;
+                    if self
+                        .app_scroll_positions
+                        .cpu_scroll_state
+                        .current_scroll_position
+                        >= self.cpu_state.num_cpus_shown
+                    {
+                        let new_position = max(0, self.cpu_state.num_cpus_shown as i64 - 1) as u64;
+                        self.app_scroll_positions
+                            .cpu_scroll_state
+                            .current_scroll_position = new_position;
+                        self.app_scroll_positions
+                            .cpu_scroll_state
+                            .previous_scroll_position = 0;
+                    }
                 }
                 WidgetPosition::Process | WidgetPosition::ProcessSearch => {
                     if self.process_search_state.search_state.is_enabled {
@@ -524,6 +541,14 @@ impl App {
                 {
                     self.cpu_state.core_show_vec[curr_posn as usize] =
                         !self.cpu_state.core_show_vec[curr_posn as usize];
+
+                    if !self.app_config_fields.show_disabled_data {
+                        if !self.cpu_state.core_show_vec[curr_posn as usize] {
+                            self.cpu_state.num_cpus_shown -= 1;
+                        } else {
+                            self.cpu_state.num_cpus_shown += 1;
+                        }
+                    }
                 }
             }
             WidgetPosition::Network => {}
@@ -1438,8 +1463,14 @@ impl App {
             .cpu_scroll_state
             .current_scroll_position;
 
+        let cap = if self.is_filtering_or_searching() {
+            self.canvas_data.cpu_data.len() as u64
+        } else {
+            self.cpu_state.num_cpus_shown
+        };
+
         if current_posn as i64 + num_to_change_by >= 0
-            && current_posn as i64 + num_to_change_by < self.canvas_data.cpu_data.len() as i64
+            && current_posn as i64 + num_to_change_by < cap as i64
         {
             self.app_scroll_positions
                 .cpu_scroll_state
