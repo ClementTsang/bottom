@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::cmp::max;
 
 use crate::{
@@ -168,66 +169,73 @@ impl CpuGraphWidget for Painter {
         );
 
         let sliced_cpu_data = &cpu_data[start_position as usize..];
-        let mut stringified_cpu_data: Vec<Vec<String>> = Vec::new();
+        let mut stringified_cpu_data: Vec<Vec<Cow<'_, str>>> = Vec::new();
 
         for (itx, cpu) in sliced_cpu_data.iter().enumerate() {
             if app_state.cpu_state.is_showing_tray {
                 stringified_cpu_data.push(vec![
-                    cpu.cpu_name.clone(),
+                    Cow::Borrowed(&cpu.cpu_name),
                     if app_state.cpu_state.core_show_vec[itx + start_position as usize] {
-                        "[*]".to_string()
+                        "[*]".into()
                     } else {
-                        "[ ]".to_string()
+                        "[ ]".into()
                     },
                 ]);
-            } else if let Some(cpu_data) = cpu.cpu_data.last() {
-                if app_state.app_config_fields.show_disabled_data
-                    || app_state.cpu_state.core_show_vec[itx]
-                {
-                    stringified_cpu_data.push(vec![
-                        cpu.cpu_name.clone(),
-                        format!("{:.0}%", cpu_data.1.round()),
-                    ]);
-                }
+            } else if app_state.app_config_fields.show_disabled_data
+                || app_state.cpu_state.core_show_vec[itx]
+            {
+                stringified_cpu_data.push(vec![
+                    Cow::Borrowed(&cpu.cpu_name),
+                    Cow::Borrowed(&cpu.legend_value),
+                ]);
+            } else {
+                stringified_cpu_data.push(Vec::new());
             }
         }
 
-        let cpu_rows = stringified_cpu_data
-            .iter()
-            .enumerate()
-            .map(|(itx, cpu_string_row)| {
-                Row::StyledData(
-                    cpu_string_row.iter(),
-                    match app_state.current_widget_selected {
-                        WidgetPosition::CpuLegend => {
-                            if itx as u64
-                                == app_state
-                                    .app_scroll_positions
-                                    .cpu_scroll_state
-                                    .current_scroll_position
-                                    - start_position
-                            {
-                                self.colours.currently_selected_text_style
-                            } else if app_state.app_config_fields.show_average_cpu && itx == 0 {
-                                self.colours.avg_colour_style
-                            } else {
-                                self.colours.cpu_colour_styles[itx
-                                    + start_position as usize
-                                        % self.colours.cpu_colour_styles.len()]
-                            }
-                        }
-                        _ => {
-                            if app_state.app_config_fields.show_average_cpu && itx == 0 {
-                                self.colours.avg_colour_style
-                            } else {
-                                self.colours.cpu_colour_styles[itx
-                                    + start_position as usize
-                                        % self.colours.cpu_colour_styles.len()]
-                            }
-                        }
-                    },
-                )
-            });
+        let cpu_rows =
+            stringified_cpu_data
+                .iter()
+                .enumerate()
+                .filter_map(|(itx, cpu_string_row)| {
+                    if cpu_string_row.is_empty() {
+                        None
+                    } else {
+                        Some(Row::StyledData(
+                            cpu_string_row.iter(),
+                            match app_state.current_widget_selected {
+                                WidgetPosition::CpuLegend => {
+                                    if itx as u64
+                                        == app_state
+                                            .app_scroll_positions
+                                            .cpu_scroll_state
+                                            .current_scroll_position
+                                            - start_position
+                                    {
+                                        self.colours.currently_selected_text_style
+                                    } else if app_state.app_config_fields.show_average_cpu
+                                        && itx == 0
+                                    {
+                                        self.colours.avg_colour_style
+                                    } else {
+                                        self.colours.cpu_colour_styles[itx
+                                            + start_position as usize
+                                                % self.colours.cpu_colour_styles.len()]
+                                    }
+                                }
+                                _ => {
+                                    if app_state.app_config_fields.show_average_cpu && itx == 0 {
+                                        self.colours.avg_colour_style
+                                    } else {
+                                        self.colours.cpu_colour_styles[itx
+                                            + start_position as usize
+                                                % self.colours.cpu_colour_styles.len()]
+                                    }
+                                }
+                            },
+                        ))
+                    }
+                });
 
         // Calculate widths
         let width = f64::from(draw_loc.width);
