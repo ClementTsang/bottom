@@ -252,11 +252,9 @@ fn main() -> error::Result<()> {
 
                         // Pre-fill CPU if needed
                         if first_run {
-                            for itx in 0..app.canvas_data.cpu_data.len() {
-                                if app.cpu_state.core_show_vec.len() <= itx {
-                                    app.cpu_state.core_show_vec.push(true);
-                                }
-                            }
+                            app.cpu_state.core_show_vec =
+                                vec![true; app.canvas_data.cpu_data.len()];
+                            app.cpu_state.num_cpus_shown = app.canvas_data.cpu_data.len() as u64;
                             first_run = false;
                         }
 
