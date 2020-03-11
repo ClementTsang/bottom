@@ -103,8 +103,7 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 }
 
 pub fn convert_cpu_data_points(
-    show_avg_cpu: bool, current_data: &data_farmer::DataCollection, display_time: u64,
-    is_frozen: bool,
+    current_data: &data_farmer::DataCollection, display_time: u64, is_frozen: bool,
 ) -> Vec<ConvertedCpuData> {
     let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
     let current_time = if is_frozen {
@@ -116,19 +115,14 @@ pub fn convert_cpu_data_points(
     } else {
         current_data.current_instant
     };
-    let cpu_listing_offset = if show_avg_cpu { 0 } else { 1 };
 
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 =
             (display_time as f64 - current_time.duration_since(*time).as_millis() as f64).floor();
 
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
-            if !show_avg_cpu && itx == 0 {
-                continue;
-            }
-
             // Check if the vector exists yet
-            let itx_offset = itx - cpu_listing_offset;
+            let itx_offset = itx;
             if cpu_data_vector.len() <= itx_offset {
                 cpu_data_vector.push(ConvertedCpuData::default());
                 cpu_data_vector[itx_offset].cpu_name =

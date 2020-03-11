@@ -169,6 +169,12 @@ impl CpuGraphWidget for Painter {
         );
 
         let sliced_cpu_data = &cpu_data[start_position as usize..];
+
+        let mut offset_scroll_index = (app_state
+            .app_scroll_positions
+            .cpu_scroll_state
+            .current_scroll_position
+            - start_position) as usize;
         let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
             let cpu_string_row: Vec<Cow<'_, str>> = if app_state.cpu_state.is_showing_tray {
                 vec![
@@ -191,19 +197,14 @@ impl CpuGraphWidget for Painter {
             };
 
             if cpu_string_row.is_empty() {
+                offset_scroll_index += 1;
                 None
             } else {
                 Some(Row::StyledData(
                     cpu_string_row.into_iter(),
                     match app_state.current_widget_selected {
                         WidgetPosition::CpuLegend => {
-                            if itx as u64
-                                == app_state
-                                    .app_scroll_positions
-                                    .cpu_scroll_state
-                                    .current_scroll_position
-                                    - start_position
-                            {
+                            if itx == offset_scroll_index {
                                 self.colours.currently_selected_text_style
                             } else if app_state.app_config_fields.show_average_cpu && itx == 0 {
                                 self.colours.avg_colour_style
