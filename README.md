@@ -84,7 +84,7 @@ You can get release versions via [Chocolatey](https://chocolatey.org/packages/bo
 ```bash
 choco install bottom
 # Or
-choco install bottom --version=0.2.1 # Version may be required for newer releases
+choco install bottom --version=0.2.2 # Version number may be required for newer releases
 ```
 
 ### macOS
