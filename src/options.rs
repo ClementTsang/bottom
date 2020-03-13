@@ -1,10 +1,16 @@
 use serde::Deserialize;
 
+use std::time::Instant;
+
 use crate::{
-    app::{data_harvester, App, WidgetPosition},
+    app::{data_harvester, App, AppConfigFields, CpuState, MemState, NetState, WidgetPosition},
     constants::*,
     utils::error::{self, BottomError},
 };
+
+// use layout_manager::*;
+
+// mod layout_manager;
 
 #[derive(Default, Deserialize)]
 pub struct Config {
@@ -54,7 +60,64 @@ pub struct ConfigColours {
     pub graph_color: Option<String>,
 }
 
-pub fn get_update_rate_in_milliseconds(
+pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error::Result<App> {
+    let autohide_option = get_autohide_time(&matches, &config);
+    let default_time_value = get_default_time_value(&matches, &config)?;
+    let default_widget = get_default_widget(&matches, &config);
+    let use_basic_mode = get_use_basic_mode(&matches, &config);
+
+    let current_widget_selected = if use_basic_mode {
+        match default_widget {
+            WidgetPosition::Cpu => WidgetPosition::BasicCpu,
+            WidgetPosition::Network => WidgetPosition::BasicNet,
+            WidgetPosition::Mem => WidgetPosition::BasicMem,
+            _ => default_widget,
+        }
+    } else {
+        default_widget
+    };
+
+    let previous_basic_table_selected = if default_widget.is_widget_table() {
+        default_widget
+    } else {
+        WidgetPosition::Process
+    };
+
+    let app_config_fields = AppConfigFields {
+        update_rate_in_milliseconds: get_update_rate_in_milliseconds(
+            &matches.value_of("RATE_MILLIS"),
+            &config,
+        )?,
+        temperature_type: get_temperature(&matches, &config)?,
+        show_average_cpu: get_avg_cpu(&matches, &config),
+        use_dot: get_use_dot(&matches, &config),
+        left_legend: get_use_left_legend(&matches, &config),
+        use_current_cpu_total: get_use_current_cpu_total(&matches, &config),
+        show_disabled_data: get_show_disabled_data(&matches, &config),
+        use_basic_mode,
+        default_time_value,
+        time_interval: get_time_interval(&matches, &config)?,
+        hide_time: get_hide_time(&matches, &config),
+        autohide_time: autohide_option.is_some(),
+    };
+
+    let time_now = if autohide_option.is_some() {
+        Some(Instant::now())
+    } else {
+        None
+    };
+
+    Ok(App::builder()
+        .app_config_fields(app_config_fields)
+        .current_widget_selected(current_widget_selected)
+        .previous_basic_table_selected(previous_basic_table_selected)
+        .cpu_state(CpuState::init(default_time_value, time_now))
+        .mem_state(MemState::init(default_time_value, time_now))
+        .net_state(NetState::init(default_time_value, time_now))
+        .build())
+}
+
+fn get_update_rate_in_milliseconds(
     update_rate: &Option<&str>, config: &Config,
 ) -> error::Result<u64> {
     let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
@@ -82,7 +145,7 @@ pub fn get_update_rate_in_milliseconds(
     Ok(update_rate_in_milliseconds as u64)
 }
 
-pub fn get_temperature_option(
+fn get_temperature(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<data_harvester::temperature::TemperatureType> {
     if matches.is_present("FAHRENHEIT") {
@@ -109,7 +172,7 @@ pub fn get_temperature_option(
     Ok(data_harvester::temperature::TemperatureType::Celsius)
 }
 
-pub fn get_avg_cpu_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_avg_cpu(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("AVG_CPU") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -121,7 +184,7 @@ pub fn get_avg_cpu_option(matches: &clap::ArgMatches<'static>, config: &Config) 
     false
 }
 
-pub fn get_use_dot_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_dot(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("DOT_MARKER") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -132,7 +195,7 @@ pub fn get_use_dot_option(matches: &clap::ArgMatches<'static>, config: &Config) 
     false
 }
 
-pub fn get_use_left_legend_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_left_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("LEFT_LEGEND") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -144,9 +207,7 @@ pub fn get_use_left_legend_option(matches: &clap::ArgMatches<'static>, config: &
     false
 }
 
-pub fn get_use_current_cpu_total_option(
-    matches: &clap::ArgMatches<'static>, config: &Config,
-) -> bool {
+fn get_use_current_cpu_total(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("USE_CURR_USAGE") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -158,7 +219,7 @@ pub fn get_use_current_cpu_total_option(
     false
 }
 
-pub fn get_show_disabled_data_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_show_disabled_data(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("SHOW_DISABLED_DATA") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -170,7 +231,7 @@ pub fn get_show_disabled_data_option(matches: &clap::ArgMatches<'static>, config
     false
 }
 
-pub fn get_use_basic_mode_option(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_basic_mode(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("BASIC_MODE") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -182,7 +243,7 @@ pub fn get_use_basic_mode_option(matches: &clap::ArgMatches<'static>, config: &C
     false
 }
 
-pub fn get_default_time_value_option(
+fn get_default_time_value(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<u64> {
     let default_time = if let Some(default_time_value) = matches.value_of("DEFAULT_TIME_VALUE") {
@@ -202,17 +263,16 @@ pub fn get_default_time_value_option(
             "Please set your default value to be at least 30000 milliseconds.".to_string(),
         ));
     } else if default_time as u128 > STALE_MAX_MILLISECONDS as u128 {
-        return Err(BottomError::InvalidArg(
-            format!("Please set your default value to be at most {} milliseconds.", STALE_MAX_MILLISECONDS),
-        ));
+        return Err(BottomError::InvalidArg(format!(
+            "Please set your default value to be at most {} milliseconds.",
+            STALE_MAX_MILLISECONDS
+        )));
     }
 
     Ok(default_time as u64)
 }
 
-pub fn get_time_interval_option(
-    matches: &clap::ArgMatches<'static>, config: &Config,
-) -> error::Result<u64> {
+fn get_time_interval(matches: &clap::ArgMatches<'static>, config: &Config) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = matches.value_of("TIME_DELTA") {
         time_interval.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
@@ -230,9 +290,10 @@ pub fn get_time_interval_option(
             "Please set your time delta to be at least 1000 milliseconds.".to_string(),
         ));
     } else if time_interval > STALE_MAX_MILLISECONDS as u128 {
-        return Err(BottomError::InvalidArg(
-            format!("Please set your time delta to be at most {} milliseconds.", STALE_MAX_MILLISECONDS),
-        ));
+        return Err(BottomError::InvalidArg(format!(
+            "Please set your time delta to be at most {} milliseconds.",
+            STALE_MAX_MILLISECONDS
+        )));
     }
 
     Ok(time_interval as u64)
@@ -290,39 +351,36 @@ pub fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config
     }
 }
 
-pub fn enable_hide_time(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+fn get_hide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("HIDE_TIME") {
-        app.app_config_fields.hide_time = true;
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(hide_time) = flags.hide_time {
             if hide_time {
-                app.app_config_fields.hide_time = true;
+                return true;
             }
         }
     }
+    false
 }
 
-pub fn enable_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> Option<Instant> {
     if matches.is_present("AUTOHIDE_TIME") {
-        app.app_config_fields.autohide_time = true;
         let time = Some(std::time::Instant::now());
-        app.cpu_state.display_time_instant = time;
-        app.mem_state.display_time_instant = time;
-        app.net_state.display_time_instant = time;
+        return time;
     } else if let Some(flags) = &config.flags {
         if let Some(autohide_time) = flags.autohide_time {
             if autohide_time {
-                app.app_config_fields.autohide_time = true;
                 let time = Some(std::time::Instant::now());
-                app.cpu_state.display_time_instant = time;
-                app.mem_state.display_time_instant = time;
-                app.net_state.display_time_instant = time;
+                return time;
             }
         }
     }
+
+    None
 }
 
-pub fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> WidgetPosition {
+fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> WidgetPosition {
     if matches.is_present("CPU_WIDGET") {
         return WidgetPosition::Cpu;
     } else if matches.is_present("MEM_WIDGET") {

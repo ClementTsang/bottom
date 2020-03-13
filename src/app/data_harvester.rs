@@ -4,6 +4,8 @@ use std::{collections::HashMap, time::Instant};
 
 use sysinfo::{System, SystemExt};
 
+use futures::join;
+
 pub mod cpu;
 pub mod disks;
 pub mod mem;

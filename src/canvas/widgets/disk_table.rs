@@ -1,5 +1,5 @@
+use lazy_static::lazy_static;
 use std::cmp::max;
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},

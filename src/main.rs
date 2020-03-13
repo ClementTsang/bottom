@@ -1,12 +1,6 @@
 #![warn(rust_2018_idioms)]
 
 #[macro_use]
-extern crate clap;
-#[macro_use]
-extern crate futures;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
 extern crate log;
 
 use std::{
@@ -17,6 +11,8 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
+
+use clap::*;
 
 use crossterm::{
     event::{
@@ -109,42 +105,13 @@ fn main() -> error::Result<()> {
 
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
-    let update_rate_in_milliseconds: u64 =
-        get_update_rate_in_milliseconds(&matches.value_of("RATE_MILLIS"), &config)?;
-
-    // Set other settings
-    let temperature_type = get_temperature_option(&matches, &config)?;
-    let show_average_cpu = get_avg_cpu_option(&matches, &config);
-    let use_dot = get_use_dot_option(&matches, &config);
-    let left_legend = get_use_left_legend_option(&matches, &config);
-    let use_current_cpu_total = get_use_current_cpu_total_option(&matches, &config);
-    let current_widget_selected = get_default_widget(&matches, &config);
-    let show_disabled_data = get_show_disabled_data_option(&matches, &config);
-    let use_basic_mode = get_use_basic_mode_option(&matches, &config);
-    let default_time_value = get_default_time_value_option(&matches, &config)?;
-    let time_interval = get_time_interval_option(&matches, &config)?;
-
     // Create "app" struct, which will control most of the program and store settings/state
-    let mut app = App::new(
-        show_average_cpu,
-        temperature_type,
-        update_rate_in_milliseconds,
-        use_dot,
-        left_legend,
-        use_current_cpu_total,
-        current_widget_selected,
-        show_disabled_data,
-        use_basic_mode,
-        default_time_value,
-        time_interval,
-    );
+    let mut app = build_app(&matches, &config)?;
 
     enable_app_grouping(&matches, &config, &mut app);
     enable_app_case_sensitive(&matches, &config, &mut app);
     enable_app_match_whole_word(&matches, &config, &mut app);
     enable_app_use_regex(&matches, &config, &mut app);
-    enable_hide_time(&matches, &config, &mut app);
-    enable_autohide_time(&matches, &config, &mut app);
 
     // Set up up tui and crossterm
     let mut stdout_val = stdout();
@@ -176,8 +143,8 @@ fn main() -> error::Result<()> {
     create_event_thread(
         tx,
         rrx,
-        use_current_cpu_total,
-        update_rate_in_milliseconds as u64,
+        app.app_config_fields.use_current_cpu_total,
+        app.app_config_fields.update_rate_in_milliseconds as u64,
         app.app_config_fields.temperature_type.clone(),
         app.app_config_fields.show_average_cpu,
     );
@@ -213,7 +180,7 @@ fn main() -> error::Result<()> {
                         // Network
                         let network_data = convert_network_data_points(
                             &app.data_collection,
-                            app.net_state.display_time,
+                            app.net_state.current_display_time,
                             false,
                         );
                         app.canvas_data.network_data_rx = network_data.rx;
@@ -231,12 +198,12 @@ fn main() -> error::Result<()> {
                         // Memory
                         app.canvas_data.mem_data = convert_mem_data_points(
                             &app.data_collection,
-                            app.mem_state.display_time,
+                            app.mem_state.current_display_time,
                             false,
                         );
                         app.canvas_data.swap_data = convert_swap_data_points(
                             &app.data_collection,
-                            app.mem_state.display_time,
+                            app.mem_state.current_display_time,
                             false,
                         );
                         let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
@@ -254,7 +221,7 @@ fn main() -> error::Result<()> {
                         // CPU
                         app.canvas_data.cpu_data = convert_cpu_data_points(
                             &app.data_collection,
-                            app.cpu_state.display_time,
+                            app.cpu_state.current_display_time,
                             false,
                         );
 
@@ -590,7 +557,7 @@ fn handle_force_redraws(app: &mut App) {
     if app.cpu_state.force_update {
         app.canvas_data.cpu_data = convert_cpu_data_points(
             &app.data_collection,
-            app.cpu_state.display_time,
+            app.cpu_state.current_display_time,
             app.is_frozen,
         );
         app.cpu_state.force_update = false;
@@ -599,12 +566,12 @@ fn handle_force_redraws(app: &mut App) {
     if app.mem_state.force_update {
         app.canvas_data.mem_data = convert_mem_data_points(
             &app.data_collection,
-            app.mem_state.display_time,
+            app.mem_state.current_display_time,
             app.is_frozen,
         );
         app.canvas_data.swap_data = convert_swap_data_points(
             &app.data_collection,
-            app.mem_state.display_time,
+            app.mem_state.current_display_time,
             app.is_frozen,
         );
         app.mem_state.force_update = false;
@@ -613,7 +580,7 @@ fn handle_force_redraws(app: &mut App) {
     if app.net_state.force_update {
         let (rx, tx) = get_rx_tx_data_points(
             &app.data_collection,
-            app.net_state.display_time,
+            app.net_state.current_display_time,
             app.is_frozen,
         );
         app.canvas_data.network_data_rx = rx;

@@ -42,7 +42,7 @@ For information about config files, see [this document](./docs/config.md) for mo
 
 ## Installation
 
-In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.41 as of writing).
+In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.42 as of writing).
 
 In addition to the below methods, you can manually build from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
 
