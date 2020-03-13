@@ -382,7 +382,10 @@ impl App {
         self.to_delete_process_list = None;
         self.dd_err = None;
 
-        // FIXME: Time is not reset!
+        // Reset zoom
+        self.reset_cpu_zoom();
+        self.reset_mem_zoom();
+        self.reset_net_zoom();
     }
 
     pub fn on_esc(&mut self) {
@@ -1625,29 +1628,35 @@ impl App {
         }
     }
 
+    fn reset_cpu_zoom(&mut self) {
+        self.cpu_state.current_display_time = self.app_config_fields.default_time_value;
+        self.cpu_state.force_update = true;
+        if self.app_config_fields.autohide_time {
+            self.cpu_state.autohide_timer = Some(Instant::now());
+        }
+    }
+
+    fn reset_mem_zoom(&mut self) {
+        self.mem_state.current_display_time = self.app_config_fields.default_time_value;
+        self.mem_state.force_update = true;
+        if self.app_config_fields.autohide_time {
+            self.mem_state.autohide_timer = Some(Instant::now());
+        }
+    }
+
+    fn reset_net_zoom(&mut self) {
+        self.net_state.current_display_time = self.app_config_fields.default_time_value;
+        self.net_state.force_update = true;
+        if self.app_config_fields.autohide_time {
+            self.net_state.autohide_timer = Some(Instant::now());
+        }
+    }
+
     fn reset_zoom(&mut self) {
         match self.current_widget_selected {
-            WidgetPosition::Cpu => {
-                self.cpu_state.current_display_time = self.app_config_fields.default_time_value;
-                self.cpu_state.force_update = true;
-                if self.app_config_fields.autohide_time {
-                    self.cpu_state.autohide_timer = Some(Instant::now());
-                }
-            }
-            WidgetPosition::Mem => {
-                self.mem_state.current_display_time = self.app_config_fields.default_time_value;
-                self.mem_state.force_update = true;
-                if self.app_config_fields.autohide_time {
-                    self.mem_state.autohide_timer = Some(Instant::now());
-                }
-            }
-            WidgetPosition::Network => {
-                self.net_state.current_display_time = self.app_config_fields.default_time_value;
-                self.net_state.force_update = true;
-                if self.app_config_fields.autohide_time {
-                    self.net_state.autohide_timer = Some(Instant::now());
-                }
-            }
+            WidgetPosition::Cpu => self.reset_cpu_zoom(),
+            WidgetPosition::Mem => self.reset_mem_zoom(),
+            WidgetPosition::Network => self.reset_net_zoom(),
             _ => {}
         }
     }
