@@ -42,7 +42,7 @@ For information about config files, see [this document](./docs/config.md) for mo
 
 ## Installation
 
-In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.41 as of writing).
+In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.42 as of writing).
 
 In addition to the below methods, you can manually build from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
 
@@ -257,13 +257,13 @@ Thanks to those who have contributed:
   - [dirs](https://github.com/soc/dirs-rs)
   - [fern](https://github.com/daboross/fern)
   - [futures-rs](https://github.com/rust-lang-nursery/futures-rs)
-  - [futures-timer](https://github.com/rustasync/futures-timer)
   - [heim](https://github.com/heim-rs/heim)
   - [lazy_static](https://github.com/rust-lang-nursery/lazy-static.rs)
   - [log](https://github.com/rust-lang-nursery/log)
+  - [serde](https://github.com/serde-rs/serde)
   - [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
-  - [tokio](https://github.com/tokio-rs/tokio)
   - [toml-rs](https://github.com/alexcrichton/toml-rs)
+  - [typed-builder](https://github.com/idanarye/rust-typed-builder)
   - [tui-rs](https://github.com/fdehau/tui-rs)
   - [unicode-segmentation](https://github.com/unicode-rs/unicode-segmentation)
   - [unicode-width](https://github.com/unicode-rs/unicode-width)

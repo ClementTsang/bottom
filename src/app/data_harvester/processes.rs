@@ -232,9 +232,6 @@ pub fn get_sorted_processes_list(
             }
 
             *prev_pid_stats = new_pid_stats;
-        } else {
-            error!("Unable to properly parse CPU data in Linux.");
-            error!("Result: {:?}", cpu_calc.err());
         }
     } else {
         let process_hashmap = sys.get_processes();

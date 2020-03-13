@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use std::borrow::Cow;
 use std::cmp::max;
 
@@ -45,31 +46,31 @@ impl CpuGraphWidget for Painter {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
         let display_time_labels = [
-            format!("{}s", app_state.cpu_state.display_time / 1000),
+            format!("{}s", app_state.cpu_state.current_display_time / 1000),
             "0s".to_string(),
         ];
 
         let x_axis = if app_state.app_config_fields.hide_time
             || (app_state.app_config_fields.autohide_time
-                && app_state.cpu_state.display_time_instant.is_none())
+                && app_state.cpu_state.autohide_timer.is_none())
         {
-            Axis::default().bounds([0.0, app_state.cpu_state.display_time as f64])
-        } else if let Some(time) = app_state.cpu_state.display_time_instant {
+            Axis::default().bounds([0.0, app_state.cpu_state.current_display_time as f64])
+        } else if let Some(time) = app_state.cpu_state.autohide_timer {
             if std::time::Instant::now().duration_since(time).as_millis()
                 < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
             {
                 Axis::default()
-                    .bounds([0.0, app_state.cpu_state.display_time as f64])
+                    .bounds([0.0, app_state.cpu_state.current_display_time as f64])
                     .style(self.colours.graph_style)
                     .labels_style(self.colours.graph_style)
                     .labels(&display_time_labels)
             } else {
-                app_state.cpu_state.display_time_instant = None;
-                Axis::default().bounds([0.0, app_state.cpu_state.display_time as f64])
+                app_state.cpu_state.autohide_timer = None;
+                Axis::default().bounds([0.0, app_state.cpu_state.current_display_time as f64])
             }
         } else {
             Axis::default()
-                .bounds([0.0, app_state.cpu_state.display_time as f64])
+                .bounds([0.0, app_state.cpu_state.current_display_time as f64])
                 .style(self.colours.graph_style)
                 .labels_style(self.colours.graph_style)
                 .labels(&display_time_labels)

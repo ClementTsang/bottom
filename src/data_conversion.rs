@@ -272,7 +272,7 @@ pub fn get_rx_tx_data_points(
         current_data.current_instant
     };
 
-    // TODO: [REFACTOR] Can we use combine on this, CPU, and MEM?
+    // TODO: [REFACTOR] Can we use collect on this, CPU, and MEM?
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 =
             (display_time as f64 - current_time.duration_since(*time).as_millis() as f64).floor();

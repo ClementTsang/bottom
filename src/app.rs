@@ -4,6 +4,8 @@ use std::time::Instant;
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
+use typed_builder::*;
+
 use data_farmer::*;
 use data_harvester::{processes, temperature};
 
@@ -108,8 +110,8 @@ impl Default for AppScrollState {
 /// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
     pub is_enabled: bool,
-    current_search_query: String,
-    current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
+    pub current_search_query: String,
+    pub current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
     pub is_blank_search: bool,
     pub is_invalid_search: bool,
     pub grapheme_cursor: GraphemeCursor,
@@ -137,10 +139,11 @@ impl Default for AppSearchState {
 
 impl AppSearchState {
     /// Returns a reset but still enabled app search state
-    pub fn reset() -> Self {
-        let mut app_search_state = AppSearchState::default();
-        app_search_state.is_enabled = true;
-        app_search_state
+    pub fn reset(&mut self) {
+        *self = AppSearchState {
+            is_enabled: self.is_enabled,
+            ..AppSearchState::default()
+        }
     }
 
     pub fn is_invalid_or_blank_search(&self) -> bool {
@@ -211,7 +214,6 @@ impl Default for AppHelpDialogState {
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
-#[derive(Default)]
 pub struct AppConfigFields {
     pub update_rate_in_milliseconds: u64,
     pub temperature_type: temperature::TemperatureType,
@@ -233,21 +235,21 @@ pub struct NetState {
     pub is_showing_rx: bool,
     pub is_showing_tx: bool,
     pub zoom_level: f64,
-    pub display_time: u64,
+    pub current_display_time: u64,
     pub force_update: bool,
-    pub display_time_instant: Option<Instant>,
+    pub autohide_timer: Option<Instant>,
 }
 
-impl Default for NetState {
-    fn default() -> Self {
+impl NetState {
+    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
         NetState {
             is_showing_tray: false,
             is_showing_rx: true,
             is_showing_tx: true,
             zoom_level: 100.0,
-            display_time: constants::DEFAULT_TIME_MILLISECONDS,
+            current_display_time,
             force_update: false,
-            display_time_instant: None,
+            autohide_timer,
         }
     }
 }
@@ -258,21 +260,21 @@ pub struct CpuState {
     pub zoom_level: f64,
     pub core_show_vec: Vec<bool>,
     pub num_cpus_shown: u64,
-    pub display_time: u64,
+    pub current_display_time: u64,
     pub force_update: bool,
-    pub display_time_instant: Option<Instant>,
+    pub autohide_timer: Option<Instant>,
 }
 
-impl Default for CpuState {
-    fn default() -> Self {
+impl CpuState {
+    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
         CpuState {
             is_showing_tray: false,
             zoom_level: 100.0,
             core_show_vec: Vec::new(),
             num_cpus_shown: 0,
-            display_time: constants::DEFAULT_TIME_MILLISECONDS,
+            current_display_time,
             force_update: false,
-            display_time_instant: None,
+            autohide_timer,
         }
     }
 }
@@ -283,136 +285,117 @@ pub struct MemState {
     pub is_showing_ram: bool,
     pub is_showing_swap: bool,
     pub zoom_level: f64,
-    pub display_time: u64,
+    pub current_display_time: u64,
     pub force_update: bool,
-    pub display_time_instant: Option<Instant>,
+    pub autohide_timer: Option<Instant>,
 }
 
-impl Default for MemState {
-    fn default() -> Self {
+impl MemState {
+    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
         MemState {
             is_showing_tray: false,
             is_showing_ram: true,
             is_showing_swap: true,
             zoom_level: 100.0,
-            display_time: constants::DEFAULT_TIME_MILLISECONDS,
+            current_display_time,
             force_update: false,
-            display_time_instant: None,
+            autohide_timer,
         }
     }
 }
 
+#[derive(TypedBuilder)]
 pub struct App {
+    #[builder(default=processes::ProcessSorting::CPU, setter(skip))]
     pub process_sorting_type: processes::ProcessSorting,
+
+    #[builder(default = true, setter(skip))]
     pub process_sorting_reverse: bool,
+
+    #[builder(default = false, setter(skip))]
     pub force_update_processes: bool,
+
+    #[builder(default, setter(skip))]
     pub app_scroll_positions: AppScrollState,
-    pub current_widget_selected: WidgetPosition,
-    pub previous_basic_table_selected: WidgetPosition,
+
+    #[builder(default = false, setter(skip))]
     awaiting_second_char: bool,
+
+    #[builder(default, setter(skip))]
     second_char: Option<char>,
+
+    #[builder(default, setter(skip))]
     pub dd_err: Option<String>,
+
+    #[builder(default, setter(skip))]
     to_delete_process_list: Option<(String, Vec<u32>)>,
+
+    #[builder(default = false, setter(skip))]
     pub is_frozen: bool,
+
+    #[builder(default = Instant::now(), setter(skip))]
     last_key_press: Instant,
+
+    #[builder(default, setter(skip))]
     pub canvas_data: canvas::DisplayableData,
+
+    #[builder(default = false)]
     enable_grouping: bool,
+
+    #[builder(default, setter(skip))]
     pub data_collection: DataCollection,
+
+    #[builder(default, setter(skip))]
     pub process_search_state: ProcessSearchState,
+
+    #[builder(default, setter(skip))]
     pub delete_dialog_state: AppDeleteDialogState,
+
+    #[builder(default, setter(skip))]
     pub help_dialog_state: AppHelpDialogState,
-    pub app_config_fields: AppConfigFields,
+
+    #[builder(default = false, setter(skip))]
     pub is_expanded: bool,
+
+    #[builder(default = false, setter(skip))]
     pub is_resized: bool,
+
     pub cpu_state: CpuState,
     pub mem_state: MemState,
     pub net_state: NetState,
+
+    pub app_config_fields: AppConfigFields,
+    pub current_widget_selected: WidgetPosition,
+    pub previous_basic_table_selected: WidgetPosition,
 }
 
 impl App {
-    #[allow(clippy::too_many_arguments)]
-    // TODO: [REFACTOR] use builder pattern instead.
-    pub fn new(
-        show_average_cpu: bool, temperature_type: temperature::TemperatureType,
-        update_rate_in_milliseconds: u64, use_dot: bool, left_legend: bool,
-        use_current_cpu_total: bool, current_widget_selected: WidgetPosition,
-        show_disabled_data: bool, use_basic_mode: bool, default_time_value: u64,
-        time_interval: u64,
-    ) -> App {
-        let mut cpu_state = CpuState::default();
-        let mut mem_state = MemState::default();
-        let mut net_state = NetState::default();
-
-        cpu_state.display_time = default_time_value;
-        mem_state.display_time = default_time_value;
-        net_state.display_time = default_time_value;
-
-        App {
-            process_sorting_type: processes::ProcessSorting::CPU,
-            process_sorting_reverse: true,
-            force_update_processes: false,
-            current_widget_selected: if use_basic_mode {
-                match current_widget_selected {
-                    WidgetPosition::Cpu => WidgetPosition::BasicCpu,
-                    WidgetPosition::Network => WidgetPosition::BasicNet,
-                    WidgetPosition::Mem => WidgetPosition::BasicMem,
-                    _ => current_widget_selected,
-                }
-            } else {
-                current_widget_selected
-            },
-            previous_basic_table_selected: if current_widget_selected.is_widget_table() {
-                current_widget_selected
-            } else {
-                WidgetPosition::Process
-            },
-            app_scroll_positions: AppScrollState::default(),
-            awaiting_second_char: false,
-            second_char: None,
-            dd_err: None,
-            to_delete_process_list: None,
-            is_frozen: false,
-            last_key_press: Instant::now(),
-            canvas_data: canvas::DisplayableData::default(),
-            enable_grouping: false,
-            data_collection: DataCollection::default(),
-            process_search_state: ProcessSearchState::default(),
-            delete_dialog_state: AppDeleteDialogState::default(),
-            help_dialog_state: AppHelpDialogState::default(),
-            app_config_fields: AppConfigFields {
-                show_average_cpu,
-                temperature_type,
-                use_dot,
-                update_rate_in_milliseconds,
-                left_legend,
-                use_current_cpu_total,
-                show_disabled_data,
-                use_basic_mode,
-                default_time_value,
-                time_interval,
-                hide_time: false,
-                autohide_time: false,
-            },
-            is_expanded: false,
-            is_resized: false,
-            cpu_state,
-            mem_state,
-            net_state,
-        }
-    }
-
     pub fn reset(&mut self) {
+        // Reset multi
         self.reset_multi_tap_keys();
+
+        // Reset dialog state
         self.help_dialog_state.is_showing_help = false;
         self.delete_dialog_state.is_showing_dd = false;
-        if self.process_search_state.search_state.is_enabled {
-            self.current_widget_selected = WidgetPosition::Process;
-            self.process_search_state.search_state.is_enabled = false;
-        }
-        self.process_search_state.search_state.current_search_query = String::new();
-        self.process_search_state.is_searching_with_pid = false;
+
+        // Close search and reset it
+        self.process_search_state.search_state.reset();
+        self.force_update_processes = true;
+
+        // Clear current delete list
         self.to_delete_process_list = None;
         self.dd_err = None;
+
+        // Unfreeze.
+        self.is_frozen = false;
+
+        // Reset zoom
+        self.reset_cpu_zoom();
+        self.reset_mem_zoom();
+        self.reset_net_zoom();
+
+        // Reset data
+        self.data_collection.reset();
     }
 
     pub fn on_esc(&mut self) {
@@ -783,7 +766,7 @@ impl App {
     pub fn clear_search(&mut self) {
         if let WidgetPosition::ProcessSearch = self.current_widget_selected {
             self.force_update_processes = true;
-            self.process_search_state.search_state = AppSearchState::reset();
+            self.process_search_state.search_state.reset();
         }
     }
 
@@ -795,7 +778,7 @@ impl App {
                 &self.process_search_state.search_state.current_search_query[start_position..],
                 start_position,
             )
-            .unwrap(); // TODO: [UNWRAP] unwrap in this and walk_back seem sketch
+            .unwrap();
     }
 
     pub fn search_walk_back(&mut self, start_position: usize) {
@@ -1544,50 +1527,53 @@ impl App {
     fn zoom_out(&mut self) {
         match self.current_widget_selected {
             WidgetPosition::Cpu => {
-                let new_time = self.cpu_state.display_time + self.app_config_fields.time_interval;
+                let new_time =
+                    self.cpu_state.current_display_time + self.app_config_fields.time_interval;
                 if new_time <= constants::STALE_MAX_MILLISECONDS {
-                    self.cpu_state.display_time = new_time;
+                    self.cpu_state.current_display_time = new_time;
                     self.cpu_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.cpu_state.display_time_instant = Some(Instant::now());
+                        self.cpu_state.autohide_timer = Some(Instant::now());
                     }
-                } else if self.cpu_state.display_time != constants::STALE_MAX_MILLISECONDS {
-                    self.cpu_state.display_time = constants::STALE_MAX_MILLISECONDS;
+                } else if self.cpu_state.current_display_time != constants::STALE_MAX_MILLISECONDS {
+                    self.cpu_state.current_display_time = constants::STALE_MAX_MILLISECONDS;
                     self.cpu_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.cpu_state.display_time_instant = Some(Instant::now());
+                        self.cpu_state.autohide_timer = Some(Instant::now());
                     }
                 }
             }
             WidgetPosition::Mem => {
-                let new_time = self.mem_state.display_time + self.app_config_fields.time_interval;
+                let new_time =
+                    self.mem_state.current_display_time + self.app_config_fields.time_interval;
                 if new_time <= constants::STALE_MAX_MILLISECONDS {
-                    self.mem_state.display_time = new_time;
+                    self.mem_state.current_display_time = new_time;
                     self.mem_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.mem_state.display_time_instant = Some(Instant::now());
+                        self.mem_state.autohide_timer = Some(Instant::now());
                     }
-                } else if self.mem_state.display_time != constants::STALE_MAX_MILLISECONDS {
-                    self.mem_state.display_time = constants::STALE_MAX_MILLISECONDS;
+                } else if self.mem_state.current_display_time != constants::STALE_MAX_MILLISECONDS {
+                    self.mem_state.current_display_time = constants::STALE_MAX_MILLISECONDS;
                     self.mem_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.mem_state.display_time_instant = Some(Instant::now());
+                        self.mem_state.autohide_timer = Some(Instant::now());
                     }
                 }
             }
             WidgetPosition::Network => {
-                let new_time = self.net_state.display_time + self.app_config_fields.time_interval;
+                let new_time =
+                    self.net_state.current_display_time + self.app_config_fields.time_interval;
                 if new_time <= constants::STALE_MAX_MILLISECONDS {
-                    self.net_state.display_time = new_time;
+                    self.net_state.current_display_time = new_time;
                     self.net_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.net_state.display_time_instant = Some(Instant::now());
+                        self.net_state.autohide_timer = Some(Instant::now());
                     }
-                } else if self.net_state.display_time != constants::STALE_MAX_MILLISECONDS {
-                    self.net_state.display_time = constants::STALE_MAX_MILLISECONDS;
+                } else if self.net_state.current_display_time != constants::STALE_MAX_MILLISECONDS {
+                    self.net_state.current_display_time = constants::STALE_MAX_MILLISECONDS;
                     self.net_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.net_state.display_time_instant = Some(Instant::now());
+                        self.net_state.autohide_timer = Some(Instant::now());
                     }
                 }
             }
@@ -1598,50 +1584,53 @@ impl App {
     fn zoom_in(&mut self) {
         match self.current_widget_selected {
             WidgetPosition::Cpu => {
-                let new_time = self.cpu_state.display_time - self.app_config_fields.time_interval;
+                let new_time =
+                    self.cpu_state.current_display_time - self.app_config_fields.time_interval;
                 if new_time >= constants::STALE_MIN_MILLISECONDS {
-                    self.cpu_state.display_time = new_time;
+                    self.cpu_state.current_display_time = new_time;
                     self.cpu_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.cpu_state.display_time_instant = Some(Instant::now());
+                        self.cpu_state.autohide_timer = Some(Instant::now());
                     }
-                } else if self.cpu_state.display_time != constants::STALE_MIN_MILLISECONDS {
-                    self.cpu_state.display_time = constants::STALE_MIN_MILLISECONDS;
+                } else if self.cpu_state.current_display_time != constants::STALE_MIN_MILLISECONDS {
+                    self.cpu_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
                     self.cpu_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.cpu_state.display_time_instant = Some(Instant::now());
+                        self.cpu_state.autohide_timer = Some(Instant::now());
                     }
                 }
             }
             WidgetPosition::Mem => {
-                let new_time = self.mem_state.display_time - self.app_config_fields.time_interval;
+                let new_time =
+                    self.mem_state.current_display_time - self.app_config_fields.time_interval;
                 if new_time >= constants::STALE_MIN_MILLISECONDS {
-                    self.mem_state.display_time = new_time;
+                    self.mem_state.current_display_time = new_time;
                     self.mem_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.mem_state.display_time_instant = Some(Instant::now());
+                        self.mem_state.autohide_timer = Some(Instant::now());
                     }
-                } else if self.mem_state.display_time != constants::STALE_MIN_MILLISECONDS {
-                    self.mem_state.display_time = constants::STALE_MIN_MILLISECONDS;
+                } else if self.mem_state.current_display_time != constants::STALE_MIN_MILLISECONDS {
+                    self.mem_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
                     self.mem_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.mem_state.display_time_instant = Some(Instant::now());
+                        self.mem_state.autohide_timer = Some(Instant::now());
                     }
                 }
             }
             WidgetPosition::Network => {
-                let new_time = self.net_state.display_time - self.app_config_fields.time_interval;
+                let new_time =
+                    self.net_state.current_display_time - self.app_config_fields.time_interval;
                 if new_time >= constants::STALE_MIN_MILLISECONDS {
-                    self.net_state.display_time = new_time;
+                    self.net_state.current_display_time = new_time;
                     self.net_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.net_state.display_time_instant = Some(Instant::now());
+                        self.net_state.autohide_timer = Some(Instant::now());
                     }
-                } else if self.net_state.display_time != constants::STALE_MIN_MILLISECONDS {
-                    self.net_state.display_time = constants::STALE_MIN_MILLISECONDS;
+                } else if self.net_state.current_display_time != constants::STALE_MIN_MILLISECONDS {
+                    self.net_state.current_display_time = constants::STALE_MIN_MILLISECONDS;
                     self.net_state.force_update = true;
                     if self.app_config_fields.autohide_time {
-                        self.net_state.display_time_instant = Some(Instant::now());
+                        self.net_state.autohide_timer = Some(Instant::now());
                     }
                 }
             }
@@ -1649,29 +1638,35 @@ impl App {
         }
     }
 
+    fn reset_cpu_zoom(&mut self) {
+        self.cpu_state.current_display_time = self.app_config_fields.default_time_value;
+        self.cpu_state.force_update = true;
+        if self.app_config_fields.autohide_time {
+            self.cpu_state.autohide_timer = Some(Instant::now());
+        }
+    }
+
+    fn reset_mem_zoom(&mut self) {
+        self.mem_state.current_display_time = self.app_config_fields.default_time_value;
+        self.mem_state.force_update = true;
+        if self.app_config_fields.autohide_time {
+            self.mem_state.autohide_timer = Some(Instant::now());
+        }
+    }
+
+    fn reset_net_zoom(&mut self) {
+        self.net_state.current_display_time = self.app_config_fields.default_time_value;
+        self.net_state.force_update = true;
+        if self.app_config_fields.autohide_time {
+            self.net_state.autohide_timer = Some(Instant::now());
+        }
+    }
+
     fn reset_zoom(&mut self) {
         match self.current_widget_selected {
-            WidgetPosition::Cpu => {
-                self.cpu_state.display_time = self.app_config_fields.default_time_value;
-                self.cpu_state.force_update = true;
-                if self.app_config_fields.autohide_time {
-                    self.cpu_state.display_time_instant = Some(Instant::now());
-                }
-            }
-            WidgetPosition::Mem => {
-                self.mem_state.display_time = self.app_config_fields.default_time_value;
-                self.mem_state.force_update = true;
-                if self.app_config_fields.autohide_time {
-                    self.mem_state.display_time_instant = Some(Instant::now());
-                }
-            }
-            WidgetPosition::Network => {
-                self.net_state.display_time = self.app_config_fields.default_time_value;
-                self.net_state.force_update = true;
-                if self.app_config_fields.autohide_time {
-                    self.net_state.display_time_instant = Some(Instant::now());
-                }
-            }
+            WidgetPosition::Cpu => self.reset_cpu_zoom(),
+            WidgetPosition::Mem => self.reset_mem_zoom(),
+            WidgetPosition::Network => self.reset_net_zoom(),
             _ => {}
         }
     }

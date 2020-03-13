@@ -80,6 +80,20 @@ impl Default for DataCollection {
 }
 
 impl DataCollection {
+    pub fn reset(&mut self) {
+        self.timed_data_vec = Vec::default();
+        self.network_harvest = network::NetworkHarvest::default();
+        self.memory_harvest = mem::MemHarvest::default();
+        self.swap_harvest = mem::MemHarvest::default();
+        self.cpu_harvest = cpu::CPUHarvest::default();
+        self.process_harvest = Vec::default();
+        self.disk_harvest = Vec::default();
+        self.io_harvest = disks::IOHarvest::default();
+        self.io_labels = Vec::default();
+        self.io_prev = Vec::default();
+        self.temp_harvest = Vec::default();
+    }
+
     pub fn set_frozen_time(&mut self) {
         self.frozen_instant = Some(self.current_instant);
     }
