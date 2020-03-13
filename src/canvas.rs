@@ -129,9 +129,7 @@ impl Painter {
         }
     }
 
-    // TODO: [REFACTOR] We should clean this up tbh
     // TODO: [FEATURE] Auto-resizing dialog sizes.
-    #[allow(clippy::cognitive_complexity)]
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
     ) -> error::Result<()> {
@@ -139,9 +137,6 @@ impl Painter {
         let current_height = terminal_size.height;
         let current_width = terminal_size.width;
 
-        // TODO: [OPT] we might be able to add an argument s.t. if there is
-        // no resize AND it's not a data update (or process refresh/search/etc.)
-        // then just... don't draw again!
         if self.height == 0 && self.width == 0 {
             self.height = current_height;
             self.width = current_width;
@@ -336,7 +331,6 @@ impl Painter {
                     );
                 }
             } else {
-                // TODO: [TUI] Change this back to a more even 33/33/34 when TUI releases
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .margin(1)

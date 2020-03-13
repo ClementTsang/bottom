@@ -108,6 +108,7 @@ fn main() -> error::Result<()> {
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(&matches, &config)?;
 
+    // TODO: [REFACTOR] Change this
     enable_app_grouping(&matches, &config, &mut app);
     enable_app_case_sensitive(&matches, &config, &mut app);
     enable_app_match_whole_word(&matches, &config, &mut app);
@@ -133,7 +134,7 @@ fn main() -> error::Result<()> {
         let tx = tx.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::from_millis(
-                constants::STALE_MAX_MILLISECONDS as u64 + 5000,
+                constants::STALE_MAX_MILLISECONDS + 5000,
             ));
             tx.send(BottomEvent::Clean).unwrap();
         });
@@ -144,7 +145,7 @@ fn main() -> error::Result<()> {
         tx,
         rrx,
         app.app_config_fields.use_current_cpu_total,
-        app.app_config_fields.update_rate_in_milliseconds as u64,
+        app.app_config_fields.update_rate_in_milliseconds,
         app.app_config_fields.temperature_type.clone(),
         app.app_config_fields.show_average_cpu,
     );

@@ -778,7 +778,7 @@ impl App {
                 &self.process_search_state.search_state.current_search_query[start_position..],
                 start_position,
             )
-            .unwrap(); // TODO: [UNWRAP] unwrap in this and walk_back seem sketch
+            .unwrap();
     }
 
     pub fn search_walk_back(&mut self, start_position: usize) {
