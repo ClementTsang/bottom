@@ -61,7 +61,7 @@ pub struct ConfigColours {
 }
 
 pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error::Result<App> {
-    let autohide_option = get_autohide_time(&matches, &config);
+    let autohide_time = get_autohide_time(&matches, &config);
     let default_time_value = get_default_time_value(&matches, &config)?;
     let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
@@ -84,24 +84,21 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
     };
 
     let app_config_fields = AppConfigFields {
-        update_rate_in_milliseconds: get_update_rate_in_milliseconds(
-            &matches.value_of("RATE_MILLIS"),
-            &config,
-        )?,
-        temperature_type: get_temperature(&matches, &config)?,
-        show_average_cpu: get_avg_cpu(&matches, &config),
-        use_dot: get_use_dot(&matches, &config),
-        left_legend: get_use_left_legend(&matches, &config),
-        use_current_cpu_total: get_use_current_cpu_total(&matches, &config),
-        show_disabled_data: get_show_disabled_data(&matches, &config),
+        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)?,
+        temperature_type: get_temperature(matches, config)?,
+        show_average_cpu: get_avg_cpu(matches, config),
+        use_dot: get_use_dot(matches, config),
+        left_legend: get_use_left_legend(matches, config),
+        use_current_cpu_total: get_use_current_cpu_total(matches, config),
+        show_disabled_data: get_show_disabled_data(matches, config),
         use_basic_mode,
         default_time_value,
-        time_interval: get_time_interval(&matches, &config)?,
-        hide_time: get_hide_time(&matches, &config),
-        autohide_time: autohide_option.is_some(),
+        time_interval: get_time_interval(matches, config)?,
+        hide_time: get_hide_time(matches, config),
+        autohide_time,
     };
 
-    let time_now = if autohide_option.is_some() {
+    let time_now = if autohide_time {
         Some(Instant::now())
     } else {
         None
@@ -118,9 +115,9 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
 }
 
 fn get_update_rate_in_milliseconds(
-    update_rate: &Option<&str>, config: &Config,
+    matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<u64> {
-    let update_rate_in_milliseconds = if let Some(update_rate) = update_rate {
+    let update_rate_in_milliseconds = if let Some(update_rate) = matches.value_of("RATE_MILLIS") {
         update_rate.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
         if let Some(rate) = flags.rate {
@@ -364,20 +361,18 @@ fn get_hide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     false
 }
 
-fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> Option<Instant> {
+fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("AUTOHIDE_TIME") {
-        let time = Some(std::time::Instant::now());
-        return time;
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(autohide_time) = flags.autohide_time {
             if autohide_time {
-                let time = Some(std::time::Instant::now());
-                return time;
+                return true;
             }
         }
     }
 
-    None
+    false
 }
 
 fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> WidgetPosition {
