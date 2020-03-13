@@ -110,8 +110,8 @@ impl Default for AppScrollState {
 /// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
     pub is_enabled: bool,
-    current_search_query: String,
-    current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
+    pub current_search_query: String,
+    pub current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
     pub is_blank_search: bool,
     pub is_invalid_search: bool,
     pub grapheme_cursor: GraphemeCursor,
@@ -139,10 +139,11 @@ impl Default for AppSearchState {
 
 impl AppSearchState {
     /// Returns a reset but still enabled app search state
-    pub fn reset() -> Self {
-        let mut app_search_state = AppSearchState::default();
-        app_search_state.is_enabled = true;
-        app_search_state
+    pub fn reset(&mut self) {
+        *self = AppSearchState {
+            is_enabled: self.is_enabled,
+            ..AppSearchState::default()
+        }
     }
 
     pub fn is_invalid_or_blank_search(&self) -> bool {
@@ -370,22 +371,31 @@ pub struct App {
 
 impl App {
     pub fn reset(&mut self) {
+        // Reset multi
         self.reset_multi_tap_keys();
+
+        // Reset dialog state
         self.help_dialog_state.is_showing_help = false;
         self.delete_dialog_state.is_showing_dd = false;
-        if self.process_search_state.search_state.is_enabled {
-            self.current_widget_selected = WidgetPosition::Process;
-            self.process_search_state.search_state.is_enabled = false;
-        }
-        self.process_search_state.search_state.current_search_query = String::new();
-        self.process_search_state.is_searching_with_pid = false;
+
+        // Close search and reset it
+        self.process_search_state.search_state.reset();
+        self.force_update_processes = true;
+
+        // Clear current delete list
         self.to_delete_process_list = None;
         self.dd_err = None;
+
+        // Unfreeze.
+        self.is_frozen = false;
 
         // Reset zoom
         self.reset_cpu_zoom();
         self.reset_mem_zoom();
         self.reset_net_zoom();
+
+        // Reset data
+        self.data_collection.reset();
     }
 
     pub fn on_esc(&mut self) {
@@ -756,7 +766,7 @@ impl App {
     pub fn clear_search(&mut self) {
         if let WidgetPosition::ProcessSearch = self.current_widget_selected {
             self.force_update_processes = true;
-            self.process_search_state.search_state = AppSearchState::reset();
+            self.process_search_state.search_state.reset();
         }
     }
 
