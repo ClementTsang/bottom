@@ -8,14 +8,15 @@ use crate::{
     utils::error::{self, BottomError},
 };
 
-// use layout_manager::*;
+use layout_manager::*;
 
-// mod layout_manager;
+mod layout_manager;
 
 #[derive(Default, Deserialize)]
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
+    pub row: Option<Vec<Row>>,
 }
 
 #[derive(Default, Deserialize)]
@@ -66,6 +67,8 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
     let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
 
+    get_layout(config);
+
     let current_widget_selected = if use_basic_mode {
         match default_widget {
             WidgetPosition::Cpu => WidgetPosition::BasicCpu,
@@ -112,6 +115,12 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
         .mem_state(MemState::init(default_time_value, time_now))
         .net_state(NetState::init(default_time_value, time_now))
         .build())
+}
+
+fn get_layout(config: &Config) {
+    if let Some(rows) = &config.row {
+        for row in rows {}
+    }
 }
 
 fn get_update_rate_in_milliseconds(

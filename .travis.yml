@@ -9,7 +9,7 @@ os:
 jobs:
   allow_failures:
     - rust: nightly
-    - env: TARGET=x86_64-pc-windows-gnu # Seems to cause problems.  TODO: Add test for it, but keep allow fail.
+    - env: TARGET=x86_64-pc-windows-gnu # Seems to cause problems.
   fast_finish: true
 branches:
   only:
