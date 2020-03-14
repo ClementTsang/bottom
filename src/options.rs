@@ -3,14 +3,17 @@ use serde::Deserialize;
 use std::time::Instant;
 
 use crate::{
-    app::{data_harvester, App, AppConfigFields, CpuState, MemState, NetState, WidgetPosition},
+    app::{
+        data_harvester, layout_manager::*, App, AppConfigFields, CpuState, MemState, NetState,
+        WidgetPosition,
+    },
     constants::*,
     utils::error::{self, BottomError},
 };
 
-use layout_manager::*;
+use layout_options::*;
 
-mod layout_manager;
+mod layout_options;
 
 #[derive(Default, Deserialize)]
 pub struct Config {
@@ -67,7 +70,8 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
     let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
 
-    get_layout(config);
+    // TODO: This does nothing rn
+    get_layout(config)?;
 
     let current_widget_selected = if use_basic_mode {
         match default_widget {
@@ -117,10 +121,20 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
         .build())
 }
 
-fn get_layout(config: &Config) {
-    if let Some(rows) = &config.row {
-        for row in rows {}
-    }
+fn get_layout(config: &Config) -> error::Result<()> {
+    let bottom_layout = if let Some(rows) = &config.row {
+        BottomLayout {
+            rows: rows
+                .iter()
+                .map(|row| row.convert_row_to_bottom_row())
+                .collect::<error::Result<Vec<_>>>()?,
+        }
+    } else {
+        // Populate with a default.
+        BottomLayout::default()
+    };
+
+    Ok(())
 }
 
 fn get_update_rate_in_milliseconds(
