@@ -70,7 +70,7 @@ before_deploy:
         strip btm;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
           tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
-          tar -czvf bottom_source_code.tar.gz ./src ./Cargo.toml LICENSE tests README.md;
+          tar -czvf bottom_required_files.tar.gz ./src ./Cargo.toml LICENSE README.md;
         cargo install cargo-deb;
         cargo deb;
         cp ./target/debian/bottom_*.deb .;
