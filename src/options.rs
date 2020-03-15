@@ -1,5 +1,4 @@
 use serde::Deserialize;
-
 use std::time::Instant;
 
 use crate::{
@@ -69,9 +68,7 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
     let default_time_value = get_default_time_value(&matches, &config)?;
     let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
-
-    // TODO: This does nothing rn
-    get_layout(config)?;
+    let widget_layout = get_layout(config)?;
 
     let current_widget_selected = if use_basic_mode {
         match default_widget {
@@ -121,20 +118,29 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
         .build())
 }
 
-fn get_layout(config: &Config) -> error::Result<()> {
-    let bottom_layout = if let Some(rows) = &config.row {
+fn get_layout(config: &Config) -> error::Result<BottomLayout> {
+    let mut bottom_layout = if let Some(rows) = &config.row {
+        let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
+        let mut total_height_ratio = 0;
         BottomLayout {
             rows: rows
                 .iter()
-                .map(|row| row.convert_row_to_bottom_row())
+                .map(|row| row.convert_row_to_bottom_row(&mut iter_id, &mut total_height_ratio))
                 .collect::<error::Result<Vec<_>>>()?,
+            total_height_ratio,
         }
     } else {
         // Populate with a default.
         BottomLayout::default()
     };
 
-    Ok(())
+    if config.row.is_some() {
+        debug!("Bottom layout: \n{:?}", bottom_layout);
+        bottom_layout.get_movement_mappings();
+        debug!("Bottom layout after: \n{:?}", bottom_layout);
+    }
+
+    Ok(bottom_layout)
 }
 
 fn get_update_rate_in_milliseconds(

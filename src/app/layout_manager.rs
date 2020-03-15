@@ -1,66 +1,285 @@
 use crate::error::{BottomError, Result};
+use std::collections::BTreeMap;
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
 #[derive(Debug)]
 pub struct BottomLayout {
     pub rows: Vec<BottomRow>,
+    pub total_height_ratio: u64,
+}
+
+type WidgetMappings = (u64, BTreeMap<u64, u64>);
+type ColumnMappings = (u64, BTreeMap<u64, WidgetMappings>);
+impl BottomLayout {
+    #[allow(clippy::cognitive_complexity)]
+    pub fn get_movement_mappings(&mut self) {
+        // Now we need to create the correct mapping for moving from a specific
+        // widget to another
+
+        let mut layout_mapping: BTreeMap<u64, ColumnMappings> = BTreeMap::new();
+        let mut total_height = 0;
+        for row in &self.rows {
+            total_height += row.row_ratio;
+            let mut row_width = 0;
+            let mut row_mapping: BTreeMap<u64, WidgetMappings> = BTreeMap::new();
+            let mut is_valid_row = false;
+            for col in &row.children {
+                let mut col_height = 0;
+                let mut col_mapping: BTreeMap<u64, u64> = BTreeMap::new();
+                let mut is_valid_col = false;
+                row_width += col.width_ratio;
+
+                for widget in &col.children {
+                    col_height += widget.height_ratio;
+
+                    match widget.widget_type {
+                        BottomWidgetType::Empty => {}
+                        _ => {
+                            is_valid_col = true;
+                            col_mapping.insert(
+                                col_height * 100 / col.total_widget_ratio,
+                                widget.widget_id,
+                            );
+                        }
+                    }
+                }
+                if is_valid_col {
+                    row_mapping.insert(
+                        row_width * 100 / row.total_col_ratio,
+                        (row.total_col_ratio, col_mapping),
+                    );
+                    is_valid_row = true;
+                }
+            }
+            if is_valid_row {
+                layout_mapping.insert(
+                    total_height * 100 / self.total_height_ratio,
+                    (self.total_height_ratio, row_mapping),
+                );
+            }
+        }
+
+        debug!("Map: {:?}", layout_mapping);
+
+        // Now pass through a second time; this time we want to build up
+        // our neighbour profile.
+        let mut height_cursor = 0;
+        for row in &mut self.rows {
+            let mut col_cursor = 0;
+            height_cursor += row.row_ratio;
+            let height_percentage = height_cursor * 100 / self.total_height_ratio;
+
+            debug!("Height percentage: {}", height_percentage);
+
+            for col in &mut row.children {
+                let mut widget_cursor = 0;
+                col_cursor += col.width_ratio;
+                let col_percentage = col_cursor * 100 / row.total_col_ratio;
+
+                debug!("Col percentage: {}", col_percentage);
+
+                for widget in &mut col.children {
+                    debug!("Current widget: {:?}", widget.widget_type);
+                    widget_cursor += widget.height_ratio;
+
+                    // Bail if empty.
+                    if let BottomWidgetType::Empty = widget.widget_type {
+                        continue;
+                    }
+
+                    let widget_percentage = widget_cursor * 100 / col.total_widget_ratio;
+
+                    if let Some(row) = layout_mapping.get(&height_percentage) {
+                        // Check right in same row
+                        if let Some(to_right) = row.1.range(col_percentage + 1..).next() {
+                            if let Some(right_neighbour) =
+                                (to_right.1).1.range(..widget_percentage).next_back()
+                            {
+                                widget.right_neighbour = Some(*right_neighbour.1);
+                                debug!("Set right neighbour to: {:?}", widget.right_neighbour);
+                            } else if let Some(right_neighbour) =
+                                (to_right.1).1.range(widget_percentage..).next_back()
+                            {
+                                widget.right_neighbour = Some(*right_neighbour.1);
+                                debug!("Set right neighbour to: {:?}", widget.right_neighbour);
+                            }
+                        }
+
+                        // Check left in same row
+                        if let Some(to_left) = row.1.range(..col_percentage).next_back() {
+                            // Similar logic to checking for right neighbours.
+                            if let Some(left_neighbour) =
+                                (to_left.1).1.range(..widget_percentage).next_back()
+                            {
+                                widget.left_neighbour = Some(*left_neighbour.1);
+                                debug!("Set left neighbour to: {:?}", widget.left_neighbour);
+                            } else if let Some(left_neighbour) =
+                                (to_left.1).1.range(widget_percentage..).next_back()
+                            {
+                                widget.left_neighbour = Some(*left_neighbour.1);
+                                debug!("Set left neighbour to: {:?}", widget.left_neighbour);
+                            }
+                        }
+
+                        // Check up/down within same row;
+                        // else check up/down with other rows
+                        if let Some(col) = row.1.get(&col_percentage) {
+                            if let Some(to_up) = col.1.range(..widget_percentage).next_back() {
+                                // In this case, then we can simply just set this immediately!
+                                widget.up_neighbour = Some(*to_up.1);
+                                debug!("Set up neighbour to {:?}", widget.up_neighbour);
+                            } else if let Some(next_row_up) =
+                                layout_mapping.range(..height_percentage).next_back()
+                            {
+                                // Try to get the closest widget in the same
+                                // column vicinity, then get the one nearest
+                                // at the bottom of this column stack!
+
+                                if let Some(column_candidate) =
+                                    (next_row_up.1).1.range(..col_percentage).next_back()
+                                {
+                                    if let Some(result) =
+                                        ((column_candidate).1).1.iter().next_back()
+                                    {
+                                        widget.up_neighbour = Some(*result.1);
+                                        debug!("Set up neighbour to {:?}", widget.up_neighbour);
+                                    }
+                                } else if let Some(column_candidate) =
+                                    (next_row_up.1).1.range(col_percentage..).next_back()
+                                {
+                                    if let Some(result) =
+                                        ((column_candidate).1).1.iter().next_back()
+                                    {
+                                        widget.up_neighbour = Some(*result.1);
+                                        debug!("Set up neighbour to {:?}", widget.up_neighbour);
+                                    }
+                                }
+                            }
+
+                            if let Some(to_down) = col.1.range(widget_percentage + 1..).next() {
+                                widget.down_neighbour = Some(*to_down.1);
+                                debug!("Set down neighbour to {:?}", widget.down_neighbour);
+                            } else if let Some(next_row_down) =
+                                layout_mapping.range(height_percentage + 1..).next()
+                            {
+                                if let Some(column_candidate) =
+                                    (next_row_down.1).1.range(..col_percentage).next_back()
+                                {
+                                    if let Some(result) = ((column_candidate).1).1.iter().next() {
+                                        widget.down_neighbour = Some(*result.1);
+                                        debug!("Set down neighbour to {:?}", widget.down_neighbour);
+                                    }
+                                } else if let Some(column_candidate) =
+                                    (next_row_down.1).1.range(col_percentage..).next_back()
+                                {
+                                    if let Some(result) = ((column_candidate).1).1.iter().next() {
+                                        widget.down_neighbour = Some(*result.1);
+                                        debug!("Set down neighbour to {:?}", widget.down_neighbour);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl Default for BottomLayout {
     fn default() -> Self {
         BottomLayout {
+            total_height_ratio: 10,
             rows: vec![
                 BottomRow {
-                    ratio: 1,
+                    total_col_ratio: 1,
+                    row_ratio: 3,
                     children: vec![BottomCol {
-                        ratio: 1,
+                        total_widget_ratio: 1,
+                        width_ratio: 1,
                         children: vec![BottomWidget {
-                            ratio: 1,
+                            height_ratio: 1,
                             widget_type: BottomWidgetType::Cpu,
+                            widget_id: 1,
+                            left_neighbour: None,
+                            right_neighbour: None,
+                            up_neighbour: None,
+                            down_neighbour: Some(11),
                         }],
                     }],
                 },
                 BottomRow {
-                    ratio: 1,
+                    total_col_ratio: 7,
+                    row_ratio: 4,
                     children: vec![
                         BottomCol {
-                            ratio: 4,
+                            total_widget_ratio: 1,
+                            width_ratio: 4,
                             children: vec![BottomWidget {
-                                ratio: 1,
+                                height_ratio: 1,
                                 widget_type: BottomWidgetType::Mem,
+                                widget_id: 11,
+                                left_neighbour: None,
+                                right_neighbour: Some(12),
+                                up_neighbour: Some(1),
+                                down_neighbour: Some(21),
                             }],
                         },
                         BottomCol {
-                            ratio: 3,
+                            total_widget_ratio: 2,
+                            width_ratio: 3,
                             children: vec![
                                 BottomWidget {
-                                    ratio: 1,
+                                    height_ratio: 1,
                                     widget_type: BottomWidgetType::Temp,
+                                    widget_id: 12,
+                                    left_neighbour: Some(11),
+                                    right_neighbour: None,
+                                    up_neighbour: Some(2),
+                                    down_neighbour: Some(13),
                                 },
                                 BottomWidget {
-                                    ratio: 1,
+                                    height_ratio: 1,
                                     widget_type: BottomWidgetType::Disk,
+                                    widget_id: 13,
+                                    left_neighbour: Some(11),
+                                    right_neighbour: None,
+                                    up_neighbour: Some(12),
+                                    down_neighbour: Some(22),
                                 },
                             ],
                         },
                     ],
                 },
                 BottomRow {
-                    ratio: 1,
+                    total_col_ratio: 2,
+                    row_ratio: 3,
                     children: vec![
                         BottomCol {
-                            ratio: 1,
+                            total_widget_ratio: 1,
+                            width_ratio: 1,
                             children: vec![BottomWidget {
-                                ratio: 1,
+                                height_ratio: 1,
                                 widget_type: BottomWidgetType::Net,
+                                widget_id: 21,
+                                left_neighbour: None,
+                                right_neighbour: Some(22),
+                                up_neighbour: Some(11),
+                                down_neighbour: None,
                             }],
                         },
                         BottomCol {
-                            ratio: 1,
+                            total_widget_ratio: 1,
+                            width_ratio: 1,
                             children: vec![BottomWidget {
-                                ratio: 1,
+                                height_ratio: 1,
                                 widget_type: BottomWidgetType::Proc,
+                                widget_id: 22,
+                                left_neighbour: Some(21),
+                                right_neighbour: None,
+                                up_neighbour: Some(13),
+                                down_neighbour: None,
                             }],
                         },
                     ],
@@ -73,8 +292,9 @@ impl Default for BottomLayout {
 /// Represents a single row in the layout.
 #[derive(Debug)]
 pub struct BottomRow {
-    pub ratio: u64,
+    pub row_ratio: u64,
     pub children: Vec<BottomCol>,
+    pub total_col_ratio: u64,
 }
 
 /// Represents a single column in the layout.  We assume that even if the column
@@ -82,15 +302,21 @@ pub struct BottomRow {
 /// a widget, as per the config, for simplicity's sake).
 #[derive(Debug)]
 pub struct BottomCol {
-    pub ratio: u64,
+    pub width_ratio: u64,
     pub children: Vec<BottomWidget>,
+    pub total_widget_ratio: u64,
 }
 
-/// Represents a single widget + length.
-#[derive(Debug)]
+/// Represents a single widget.
+#[derive(Debug, Default)]
 pub struct BottomWidget {
-    pub ratio: u64,
+    pub height_ratio: u64,
     pub widget_type: BottomWidgetType,
+    pub widget_id: u64,
+    pub left_neighbour: Option<u64>,
+    pub right_neighbour: Option<u64>,
+    pub up_neighbour: Option<u64>,
+    pub down_neighbour: Option<u64>,
 }
 
 #[derive(Debug)]
@@ -102,6 +328,12 @@ pub enum BottomWidgetType {
     Proc,
     Temp,
     Disk,
+}
+
+impl Default for BottomWidgetType {
+    fn default() -> Self {
+        BottomWidgetType::Empty
+    }
 }
 
 impl std::str::FromStr for BottomWidgetType {
