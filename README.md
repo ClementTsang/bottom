@@ -30,9 +30,9 @@ Features of bottom include:
 
 - Maximizing of widgets of interest to take up the entire window.
 
-- A minimal mode that focuses less on graphs and more on data, similar to [htop](https://hisham.hm/htop/).
+- A minimal mode that focuses less on charts and more on data, similar to [htop](https://hisham.hm/htop/).
 
-- Zooming in/out to see more/less data.
+- Zooming in/out by time to see more/less data.
 
 More details about each widget and compatibility can be found [here](./docs/widgets.md).
 
@@ -136,15 +136,15 @@ Run using `btm`.
 
 - `--cpu_default`, `--memory_default`, `--disk_default`, `--temperature_default`, `--network_default`, `--process_default` will select the corresponding widget on startup. By default the process widget is selected.
 
-- `-s`, `--show_disabled_data` will show data entries in the graph legends even if the lines for that entry are disabled.
+- `-s`, `--show_disabled_data` will show data entries in the chart legends even if the lines for that entry are disabled.
 
 - `-C`, `--config` takes in a file path leading to a TOML file. If the file doesn't exist, one will be created.
 
-- `-b`, `--basic` will enable basic mode, removing all graphs from the main interface and condensing data.
+- `-b`, `--basic` will enable basic mode, removing all charts from the main interface and condensing data.
 
-- `-t`, `--default_time_value` will set the default time interval graphs will display to (in milliseconds). Lowest is 30 seconds, defaults to 60 seconds.
+- `-t`, `--default_time_value` will set the default time interval charts will display to (in milliseconds). Lowest is 30 seconds, defaults to 60 seconds.
 
-- `-d`, `--time_delta` will set the amount each zoom in/out action will change the time interval of a graph (in milliseconds). Lowest is 1 second, defaults to 15 seconds.
+- `-d`, `--time_delta` will set the amount each zoom in/out action will change the time interval of a chart (in milliseconds). Lowest is 1 second, defaults to 15 seconds.
 
 ### Keybindings
 
@@ -154,11 +154,11 @@ Run using `btm`.
 
 - `Esc` to close a dialog window, widget, or exit maximized mode.
 
-- `Ctrl-r` to reset the screen and reset all collected data.
+- `Ctrl-r` to reset the screen and all collected data.
 
 - `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
 
-- `Ctrl/Shift`-arrow or `H/J/K/L` to navigate between widgets. **Note that on macOS, some keybindings may collide with existing ones; `H/J/K/L` should work however.**
+- `Ctrl/Shift`-arrow or `H/J/K/L` to navigate between widgets. **Note that on macOS, some keybindings may conflict with existing ones; `H/J/K/L` should work however.**
 
 - `Up` or `k` and `Down` or `j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
 
@@ -178,11 +178,11 @@ Run using `btm`.
 
 #### CPU
 
-- `/` to allow for enabling/disabling showing certain cores with `Space`.
+- `/` to allow for enabling/disabling showing certain cores on the chart with `Space`.
 
 #### Processes
 
-- `dd` to kill the selected process
+- `dd` to kill the selected process.
 
 - `c` to sort by CPU usage. Sorts in descending order by default. Press again to reverse sorting order.
 
@@ -192,7 +192,7 @@ Run using `btm`.
 
 - `n` to sort by process name. Sorts in ascending order by default. Press again to reverse sorting order.
 
-- `Tab` to group together processes with the same name. Disables PID sorting. `dd` will now kill all processes covered by that name.
+- `Tab` to group together processes with the same name. This disables PID sorting. `dd` will now kill all processes covered by that name.
 
 - `Ctrl-f` or `/` to open the search widget.
 
@@ -224,7 +224,7 @@ Note that `q` is disabled while in the search widget.
 
 - Scrolling with the mouse will scroll through the currently selected list if the widget is a scrollable table.
 
-- Scrolling on a graph will zoom in (scroll up) or zoom out (scroll down).
+- Scrolling on a chart will zoom in (scroll up) or zoom out (scroll down).
 
 ## Bugs and Requests
 
