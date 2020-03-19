@@ -1,5 +1,4 @@
-use std::cmp::max;
-use std::time::Instant;
+use std::{cmp::max, collections::HashMap, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
@@ -8,6 +7,7 @@ use typed_builder::*;
 
 use data_farmer::*;
 use data_harvester::{processes, temperature};
+use layout_manager::*;
 
 use crate::{canvas, constants, utils::error::Result};
 
@@ -368,6 +368,9 @@ pub struct App {
     pub app_config_fields: AppConfigFields,
     pub current_widget_selected: WidgetPosition,
     pub previous_basic_table_selected: WidgetPosition,
+    pub widget_layout: BottomLayout, // FIXME: We can remove this!
+    pub widget_map: HashMap<u64, BottomWidget>,
+    pub current_widget_id: u64,
 }
 
 impl App {
@@ -559,12 +562,6 @@ impl App {
                     self.cpu_state.is_showing_tray = true;
                     self.current_widget_selected = WidgetPosition::CpuLegend
                 }
-                // WidgetPosition::Mem => {
-                // 	self.mem_state.is_showing_tray = true;
-                // }
-                // WidgetPosition::Network => {
-                // 	self.net_state.is_showing_tray = true;
-                // }
                 _ => {}
             }
         }
@@ -1176,16 +1173,6 @@ impl App {
         self.to_delete_process_list.clone()
     }
 
-    // TODO: [MODULARITY] Do NOT hard code this in thu future!
-    //
-    // General idea for now:
-    // CPU -(down)> MEM
-    // MEM -(down)> Network, -(right)> TEMP
-    // TEMP -(down)> Disk, -(left)> MEM, -(up)> CPU
-    // Disk -(down)> Processes, -(left)> MEM, -(up)> TEMP
-    // Network -(up)> MEM, -(right)> PROC
-    // PROC -(up)> Disk, -(down)> PROC_SEARCH, -(left)> Network
-    // PROC_SEARCH -(up)> PROC, -(left)> Network
     pub fn move_widget_selection_left(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
@@ -1197,20 +1184,10 @@ impl App {
                     WidgetPosition::Temp => WidgetPosition::Process,
                     _ => self.current_widget_selected,
                 };
-            } else {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::Cpu if self.app_config_fields.left_legend => {
-                        WidgetPosition::CpuLegend
-                    }
-                    WidgetPosition::CpuLegend if !self.app_config_fields.left_legend => {
-                        WidgetPosition::Cpu
-                    }
-                    WidgetPosition::Process => WidgetPosition::Network,
-                    WidgetPosition::ProcessSearch => WidgetPosition::Network,
-                    WidgetPosition::Disk => WidgetPosition::Mem,
-                    WidgetPosition::Temp => WidgetPosition::Mem,
-                    _ => self.current_widget_selected,
-                };
+            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget_id) {
+                if let Some(new_widget_id) = current_widget.left_neighbour {
+                    self.current_widget_id = new_widget_id;
+                }
             }
         } else if self.is_expanded {
             self.current_widget_selected = match self.current_widget_selected {
@@ -1238,18 +1215,10 @@ impl App {
                     WidgetPosition::Temp => WidgetPosition::Disk,
                     _ => self.current_widget_selected,
                 };
-            } else {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::Cpu if !self.app_config_fields.left_legend => {
-                        WidgetPosition::CpuLegend
-                    }
-                    WidgetPosition::CpuLegend if self.app_config_fields.left_legend => {
-                        WidgetPosition::Cpu
-                    }
-                    WidgetPosition::Mem => WidgetPosition::Temp,
-                    WidgetPosition::Network => WidgetPosition::Process,
-                    _ => self.current_widget_selected,
-                };
+            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget_id) {
+                if let Some(new_widget_id) = current_widget.right_neighbour {
+                    self.current_widget_id = new_widget_id;
+                }
             }
         } else if self.is_expanded {
             self.current_widget_selected = match self.current_widget_selected {
@@ -1281,16 +1250,10 @@ impl App {
                     WidgetPosition::Disk => WidgetPosition::BasicMem,
                     _ => self.current_widget_selected,
                 };
-            } else {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::Mem => WidgetPosition::Cpu,
-                    WidgetPosition::Network => WidgetPosition::Mem,
-                    WidgetPosition::Process => WidgetPosition::Disk,
-                    WidgetPosition::ProcessSearch => WidgetPosition::Process,
-                    WidgetPosition::Temp => WidgetPosition::Cpu,
-                    WidgetPosition::Disk => WidgetPosition::Temp,
-                    _ => self.current_widget_selected,
-                };
+            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget_id) {
+                if let Some(new_widget_id) = current_widget.up_neighbour {
+                    self.current_widget_id = new_widget_id;
+                }
             }
         } else if self.is_expanded {
             self.current_widget_selected = match self.current_widget_selected {
@@ -1318,21 +1281,10 @@ impl App {
                     }
                     _ => self.current_widget_selected,
                 };
-            } else {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::Cpu | WidgetPosition::CpuLegend => WidgetPosition::Mem,
-                    WidgetPosition::Mem => WidgetPosition::Network,
-                    WidgetPosition::Temp => WidgetPosition::Disk,
-                    WidgetPosition::Disk => WidgetPosition::Process,
-                    WidgetPosition::Process => {
-                        if self.is_searching() {
-                            WidgetPosition::ProcessSearch
-                        } else {
-                            WidgetPosition::Process
-                        }
-                    }
-                    _ => self.current_widget_selected,
-                };
+            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget_id) {
+                if let Some(new_widget_id) = current_widget.down_neighbour {
+                    self.current_widget_id = new_widget_id;
+                }
             }
         } else if self.is_expanded {
             self.current_widget_selected = match self.current_widget_selected {

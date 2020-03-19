@@ -1,32 +1,46 @@
 use crate::error::{BottomError, Result};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct BottomLayout {
     pub rows: Vec<BottomRow>,
-    pub total_height_ratio: u64,
+    pub total_height_ratio: u32,
 }
 
-type WidgetMappings = (u64, BTreeMap<u64, u64>);
-type ColumnMappings = (u64, BTreeMap<u64, WidgetMappings>);
+type WidgetMappings = (u32, BTreeMap<u32, u64>);
+type ColumnMappings = (u32, BTreeMap<u32, WidgetMappings>);
 impl BottomLayout {
+    pub fn convert_to_hashmap(&self) -> HashMap<u64, BottomWidget> {
+        let mut return_map: HashMap<u64, BottomWidget> = HashMap::new();
+
+        for row in &self.rows {
+            for col in &row.children {
+                for widget in &col.children {
+                    return_map.insert(widget.widget_id, widget.clone());
+                }
+            }
+        }
+
+        return_map
+    }
+
     #[allow(clippy::cognitive_complexity)]
     pub fn get_movement_mappings(&mut self) {
         // Now we need to create the correct mapping for moving from a specific
         // widget to another
 
-        let mut layout_mapping: BTreeMap<u64, ColumnMappings> = BTreeMap::new();
+        let mut layout_mapping: BTreeMap<u32, ColumnMappings> = BTreeMap::new();
         let mut total_height = 0;
         for row in &self.rows {
             total_height += row.row_ratio;
             let mut row_width = 0;
-            let mut row_mapping: BTreeMap<u64, WidgetMappings> = BTreeMap::new();
+            let mut row_mapping: BTreeMap<u32, WidgetMappings> = BTreeMap::new();
             let mut is_valid_row = false;
             for col in &row.children {
                 let mut col_height = 0;
-                let mut col_mapping: BTreeMap<u64, u64> = BTreeMap::new();
+                let mut col_mapping: BTreeMap<u32, u64> = BTreeMap::new();
                 let mut is_valid_col = false;
                 row_width += col.width_ratio;
 
@@ -60,7 +74,7 @@ impl BottomLayout {
             }
         }
 
-        debug!("Map: {:?}", layout_mapping);
+        // debug!("Map: {:?}", layout_mapping);
 
         // Now pass through a second time; this time we want to build up
         // our neighbour profile.
@@ -70,17 +84,14 @@ impl BottomLayout {
             height_cursor += row.row_ratio;
             let height_percentage = height_cursor * 100 / self.total_height_ratio;
 
-            debug!("Height percentage: {}", height_percentage);
+            // debug!("Height percentage: {}", height_percentage);
 
             for col in &mut row.children {
                 let mut widget_cursor = 0;
                 col_cursor += col.width_ratio;
                 let col_percentage = col_cursor * 100 / row.total_col_ratio;
 
-                debug!("Col percentage: {}", col_percentage);
-
                 for widget in &mut col.children {
-                    debug!("Current widget: {:?}", widget.widget_type);
                     widget_cursor += widget.height_ratio;
 
                     // Bail if empty.
@@ -97,12 +108,12 @@ impl BottomLayout {
                                 (to_right.1).1.range(..widget_percentage).next_back()
                             {
                                 widget.right_neighbour = Some(*right_neighbour.1);
-                                debug!("Set right neighbour to: {:?}", widget.right_neighbour);
+                            // debug!("Set right neighbour to: {:?}", widget.right_neighbour);
                             } else if let Some(right_neighbour) =
                                 (to_right.1).1.range(widget_percentage..).next_back()
                             {
                                 widget.right_neighbour = Some(*right_neighbour.1);
-                                debug!("Set right neighbour to: {:?}", widget.right_neighbour);
+                                // debug!("Set right neighbour to: {:?}", widget.right_neighbour);
                             }
                         }
 
@@ -113,12 +124,12 @@ impl BottomLayout {
                                 (to_left.1).1.range(..widget_percentage).next_back()
                             {
                                 widget.left_neighbour = Some(*left_neighbour.1);
-                                debug!("Set left neighbour to: {:?}", widget.left_neighbour);
+                            // debug!("Set left neighbour to: {:?}", widget.left_neighbour);
                             } else if let Some(left_neighbour) =
                                 (to_left.1).1.range(widget_percentage..).next_back()
                             {
                                 widget.left_neighbour = Some(*left_neighbour.1);
-                                debug!("Set left neighbour to: {:?}", widget.left_neighbour);
+                                // debug!("Set left neighbour to: {:?}", widget.left_neighbour);
                             }
                         }
 
@@ -128,7 +139,7 @@ impl BottomLayout {
                             if let Some(to_up) = col.1.range(..widget_percentage).next_back() {
                                 // In this case, then we can simply just set this immediately!
                                 widget.up_neighbour = Some(*to_up.1);
-                                debug!("Set up neighbour to {:?}", widget.up_neighbour);
+                            // debug!("Set up neighbour to {:?}", widget.up_neighbour);
                             } else if let Some(next_row_up) =
                                 layout_mapping.range(..height_percentage).next_back()
                             {
@@ -143,7 +154,7 @@ impl BottomLayout {
                                         ((column_candidate).1).1.iter().next_back()
                                     {
                                         widget.up_neighbour = Some(*result.1);
-                                        debug!("Set up neighbour to {:?}", widget.up_neighbour);
+                                        // debug!("Set up neighbour to {:?}", widget.up_neighbour);
                                     }
                                 } else if let Some(column_candidate) =
                                     (next_row_up.1).1.range(col_percentage..).next_back()
@@ -152,14 +163,14 @@ impl BottomLayout {
                                         ((column_candidate).1).1.iter().next_back()
                                     {
                                         widget.up_neighbour = Some(*result.1);
-                                        debug!("Set up neighbour to {:?}", widget.up_neighbour);
+                                        // debug!("Set up neighbour to {:?}", widget.up_neighbour);
                                     }
                                 }
                             }
 
                             if let Some(to_down) = col.1.range(widget_percentage + 1..).next() {
                                 widget.down_neighbour = Some(*to_down.1);
-                                debug!("Set down neighbour to {:?}", widget.down_neighbour);
+                            // debug!("Set down neighbour to {:?}", widget.down_neighbour);
                             } else if let Some(next_row_down) =
                                 layout_mapping.range(height_percentage + 1..).next()
                             {
@@ -168,14 +179,14 @@ impl BottomLayout {
                                 {
                                     if let Some(result) = ((column_candidate).1).1.iter().next() {
                                         widget.down_neighbour = Some(*result.1);
-                                        debug!("Set down neighbour to {:?}", widget.down_neighbour);
+                                        // debug!("Set down neighbour to {:?}", widget.down_neighbour);
                                     }
                                 } else if let Some(column_candidate) =
                                     (next_row_down.1).1.range(col_percentage..).next_back()
                                 {
                                     if let Some(result) = ((column_candidate).1).1.iter().next() {
                                         widget.down_neighbour = Some(*result.1);
-                                        debug!("Set down neighbour to {:?}", widget.down_neighbour);
+                                        // debug!("Set down neighbour to {:?}", widget.down_neighbour);
                                     }
                                 }
                             }
@@ -290,27 +301,27 @@ impl Default for BottomLayout {
 }
 
 /// Represents a single row in the layout.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct BottomRow {
-    pub row_ratio: u64,
+    pub row_ratio: u32,
     pub children: Vec<BottomCol>,
-    pub total_col_ratio: u64,
+    pub total_col_ratio: u32,
 }
 
 /// Represents a single column in the layout.  We assume that even if the column
 /// contains only ONE element, it is still a column (rather than either a col or
 /// a widget, as per the config, for simplicity's sake).
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct BottomCol {
-    pub width_ratio: u64,
+    pub width_ratio: u32,
     pub children: Vec<BottomWidget>,
-    pub total_widget_ratio: u64,
+    pub total_widget_ratio: u32,
 }
 
 /// Represents a single widget.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct BottomWidget {
-    pub height_ratio: u64,
+    pub height_ratio: u32,
     pub widget_type: BottomWidgetType,
     pub widget_id: u64,
     pub left_neighbour: Option<u64>,
@@ -319,7 +330,7 @@ pub struct BottomWidget {
     pub down_neighbour: Option<u64>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BottomWidgetType {
     Empty,
     Cpu,
@@ -328,6 +339,21 @@ pub enum BottomWidgetType {
     Proc,
     Temp,
     Disk,
+}
+
+impl BottomWidgetType {
+    pub fn get_pretty_name(&self) -> &str {
+        use BottomWidgetType::*;
+        match self {
+            Cpu => "CPU",
+            Mem => "Memory",
+            Net => "Network",
+            Proc => "Processes",
+            Temp => "Temperature",
+            Disk => "Disks",
+            _ => "",
+        }
+    }
 }
 
 impl Default for BottomWidgetType {

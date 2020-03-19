@@ -7,13 +7,13 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 #[serde(rename = "row")]
 pub struct Row {
-    pub ratio: Option<u64>,
+    pub ratio: Option<u32>,
     pub child: Option<Vec<RowChildren>>,
 }
 
 impl Row {
     pub fn convert_row_to_bottom_row(
-        &self, iter_id: &mut u64, total_height_ratio: &mut u64,
+        &self, iter_id: &mut u64, total_height_ratio: &mut u32,
     ) -> Result<BottomRow> {
         // In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
@@ -94,7 +94,7 @@ impl Row {
 pub enum RowChildren {
     Widget(FinalWidget),
     Col {
-        ratio: Option<u64>,
+        ratio: Option<u32>,
         child: Vec<FinalWidget>,
     },
 }
@@ -102,7 +102,7 @@ pub enum RowChildren {
 /// Represents a widget.
 #[derive(Deserialize, Debug)]
 pub struct FinalWidget {
-    pub ratio: Option<u64>,
+    pub ratio: Option<u32>,
     #[serde(rename = "type")]
     pub widget_type: String,
 }

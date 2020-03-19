@@ -9,7 +9,7 @@ use crate::{
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 };
@@ -24,6 +24,8 @@ lazy_static! {
 }
 
 pub trait NetworkGraphWidget {
+    fn draw_network<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
+
     fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     );
@@ -34,6 +36,23 @@ pub trait NetworkGraphWidget {
 }
 
 impl NetworkGraphWidget for Painter {
+    fn draw_network<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect) {
+        let network_chunk = Layout::default()
+            .direction(Direction::Vertical)
+            .margin(0)
+            .constraints(
+                [
+                    Constraint::Length(draw_loc.height - 5),
+                    Constraint::Length(5),
+                ]
+                .as_ref(),
+            )
+            .split(draw_loc);
+
+        self.draw_network_graph(f, app_state, network_chunk[0]);
+        self.draw_network_labels(f, app_state, network_chunk[1]);
+    }
+
     fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {

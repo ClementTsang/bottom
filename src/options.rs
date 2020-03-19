@@ -69,6 +69,8 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
     let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
     let widget_layout = get_layout(config)?;
+    let widget_map = widget_layout.convert_to_hashmap();
+    let initial_widget_id: u64 = 0; // TODO [MODULARITY]: Add this
 
     let current_widget_selected = if use_basic_mode {
         match default_widget {
@@ -115,6 +117,9 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
         .cpu_state(CpuState::init(default_time_value, time_now))
         .mem_state(MemState::init(default_time_value, time_now))
         .net_state(NetState::init(default_time_value, time_now))
+        .widget_layout(widget_layout)
+        .widget_map(widget_map)
+        .current_widget_id(initial_widget_id)
         .build())
 }
 
@@ -135,9 +140,7 @@ fn get_layout(config: &Config) -> error::Result<BottomLayout> {
     };
 
     if config.row.is_some() {
-        debug!("Bottom layout: \n{:?}", bottom_layout);
         bottom_layout.get_movement_mappings();
-        debug!("Bottom layout after: \n{:?}", bottom_layout);
     }
 
     Ok(bottom_layout)

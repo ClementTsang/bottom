@@ -156,7 +156,7 @@ fn main() -> error::Result<()> {
         return Err(config_check);
     }
     painter.colours.generate_remaining_cpu_colours();
-    painter.initialize();
+    painter.initialize(&app);
 
     let mut first_run = true;
     loop {

@@ -14,7 +14,7 @@ use crate::{
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 };
@@ -33,6 +33,7 @@ lazy_static! {
 }
 
 pub trait CpuGraphWidget {
+    fn draw_cpu<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
     fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
     fn draw_cpu_legend<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
@@ -40,6 +41,35 @@ pub trait CpuGraphWidget {
 }
 
 impl CpuGraphWidget for Painter {
+    fn draw_cpu<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect) {
+        let legend_index = if app_state.app_config_fields.left_legend {
+            0
+        } else {
+            1
+        };
+        let graph_index = if app_state.app_config_fields.left_legend {
+            1
+        } else {
+            0
+        };
+
+        let cpu_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .margin(0)
+            .constraints(
+                if app_state.app_config_fields.left_legend {
+                    [Constraint::Percentage(15), Constraint::Percentage(85)]
+                } else {
+                    [Constraint::Percentage(85), Constraint::Percentage(15)]
+                }
+                .as_ref(),
+            )
+            .split(draw_loc);
+
+        self.draw_cpu_graph(f, app_state, cpu_chunks[graph_index]);
+        self.draw_cpu_legend(f, app_state, cpu_chunks[legend_index]);
+    }
+
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
