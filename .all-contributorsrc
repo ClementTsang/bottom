@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "shilangyu",
+      "name": "Marcin Wojnarowski",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/29288116?v=4",
+      "profile": "http://shilangyu.github.io",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "bottom",
+  "projectOwner": "ClementTsang",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
