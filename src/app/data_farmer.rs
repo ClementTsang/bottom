@@ -144,9 +144,10 @@ impl DataCollection {
         &mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
     ) {
         // Memory
-        let mem_percent = harvested_data.memory.mem_used_in_mb as f64
-            / harvested_data.memory.mem_total_in_mb as f64
-            * 100.0;
+        let mem_percent = match harvested_data.memory.mem_total_in_mb {
+            0 => 0f64,
+            total => (harvested_data.memory.mem_used_in_mb as f64) / (total as f64) * 100.0,
+        };
         let mem_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
             generate_joining_points(*time, last_pt.mem_data.0, harvested_time, mem_percent)
         } else {
@@ -157,9 +158,10 @@ impl DataCollection {
 
         // Swap
         if harvested_data.swap.mem_total_in_mb > 0 {
-            let swap_percent = harvested_data.swap.mem_used_in_mb as f64
-                / harvested_data.swap.mem_total_in_mb as f64
-                * 100.0;
+            let swap_percent = match harvested_data.swap.mem_total_in_mb {
+                0 => 0f64,
+                total => (harvested_data.swap.mem_used_in_mb as f64) / (total as f64) * 100.0,
+            };
             let swap_joining_pt = if let Some((time, last_pt)) = self.timed_data_vec.last() {
                 generate_joining_points(*time, last_pt.swap_data.0, harvested_time, swap_percent)
             } else {
