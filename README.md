@@ -241,6 +241,7 @@ If you spot any issue with nobody assigned to it, or it seems like no work has s
 Thanks to those who have contributed:
 
 - [shilangyu](https://github.com/shilangyu)
+- [mqudsi](https://github.com/mqudsi)
 
 ## Thanks, kudos, and all the like
 
