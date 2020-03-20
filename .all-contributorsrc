@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "mqudsi",
+      "name": "Mahmoud Al-Qudsi",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/606923?v=4",
+      "profile": "http://neosmart.net/",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "bottom",
+  "projectOwner": "ClementTsang",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
