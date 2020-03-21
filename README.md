@@ -88,6 +88,12 @@ choco install bottom
 choco install bottom --version=0.2.2 # Version number may be required for newer releases
 ```
 
+Or via `scoop`:
+
+```bash
+scoop install bottom
+```
+
 ### macOS
 
 You can get release versions using Homebrew:
