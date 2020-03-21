@@ -33,27 +33,37 @@ lazy_static! {
 }
 
 pub trait CpuGraphWidget {
-    fn draw_cpu<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
-    fn draw_cpu_graph<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
+    fn draw_cpu<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    );
+    fn draw_cpu_graph<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    );
     fn draw_cpu_legend<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl CpuGraphWidget for Painter {
-    fn draw_cpu<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect) {
+    fn draw_cpu<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    ) {
         if draw_loc.width < 35 {
-            self.draw_cpu_graph(f, app_state, draw_loc);
+            // FIXME: We may have to move if we are currently selecting the legend...
+
+            // if current selected is legend
+            // if app_state.app_config_fields.left_legend {
+            //     // Move right to chart
+            // } else {
+            //     // Move left to chart
+            // }
+
+            self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
         } else {
-            let legend_index = if app_state.app_config_fields.left_legend {
-                0
+            let (legend_index, graph_index) = if app_state.app_config_fields.left_legend {
+                (0, 1)
             } else {
-                1
-            };
-            let graph_index = if app_state.app_config_fields.left_legend {
-                1
-            } else {
-                0
+                (1, 0)
             };
 
             let cpu_chunks = Layout::default()
@@ -69,13 +79,13 @@ impl CpuGraphWidget for Painter {
                 )
                 .split(draw_loc);
 
-            self.draw_cpu_graph(f, app_state, cpu_chunks[graph_index]);
-            self.draw_cpu_legend(f, app_state, cpu_chunks[legend_index]);
+            self.draw_cpu_graph(f, app_state, cpu_chunks[graph_index], widget_id);
+            self.draw_cpu_legend(f, app_state, cpu_chunks[legend_index], widget_id);
         }
     }
 
     fn draw_cpu_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
@@ -160,9 +170,10 @@ impl CpuGraphWidget for Painter {
             " CPU ".to_string()
         };
 
-        let border_style = match app_state.current_widget_selected {
-            WidgetPosition::Cpu => self.colours.highlighted_border_style,
-            _ => self.colours.border_style,
+        let border_style = if app_state.current_widget_id == widget_id {
+            self.colours.highlighted_border_style
+        } else {
+            self.colours.border_style
         };
 
         Chart::default()
@@ -184,7 +195,7 @@ impl CpuGraphWidget for Painter {
     }
 
     fn draw_cpu_legend<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
@@ -237,27 +248,20 @@ impl CpuGraphWidget for Painter {
             } else {
                 Some(Row::StyledData(
                     cpu_string_row.into_iter(),
-                    match app_state.current_widget_selected {
-                        WidgetPosition::CpuLegend => {
-                            if itx == offset_scroll_index {
-                                self.colours.currently_selected_text_style
-                            } else if app_state.app_config_fields.show_average_cpu && itx == 0 {
-                                self.colours.avg_colour_style
-                            } else {
-                                self.colours.cpu_colour_styles[itx
-                                    + start_position as usize
-                                        % self.colours.cpu_colour_styles.len()]
-                            }
+                    if app_state.current_widget_id == widget_id {
+                        if itx == offset_scroll_index {
+                            self.colours.currently_selected_text_style
+                        } else if app_state.app_config_fields.show_average_cpu && itx == 0 {
+                            self.colours.avg_colour_style
+                        } else {
+                            self.colours.cpu_colour_styles[itx
+                                + start_position as usize % self.colours.cpu_colour_styles.len()]
                         }
-                        _ => {
-                            if app_state.app_config_fields.show_average_cpu && itx == 0 {
-                                self.colours.avg_colour_style
-                            } else {
-                                self.colours.cpu_colour_styles[itx
-                                    + start_position as usize
-                                        % self.colours.cpu_colour_styles.len()]
-                            }
-                        }
+                    } else if app_state.app_config_fields.show_average_cpu && itx == 0 {
+                        self.colours.avg_colour_style
+                    } else {
+                        self.colours.cpu_colour_styles
+                            [itx + start_position as usize % self.colours.cpu_colour_styles.len()]
                     },
                 ))
             }

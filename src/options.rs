@@ -63,14 +63,15 @@ pub struct ConfigColours {
     pub graph_color: Option<String>,
 }
 
-pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error::Result<App> {
+pub fn build_app(
+    matches: &clap::ArgMatches<'static>, config: &Config, widget_layout: &BottomLayout,
+) -> error::Result<App> {
     let autohide_time = get_autohide_time(&matches, &config);
     let default_time_value = get_default_time_value(&matches, &config)?;
     let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
-    let widget_layout = get_layout(config)?;
     let widget_map = widget_layout.convert_to_hashmap();
-    let initial_widget_id: u64 = 0; // TODO [MODULARITY]: Add this
+    let initial_widget_id: u64 = 1; // TODO [MODULARITY]: Add this
 
     let current_widget_selected = if use_basic_mode {
         match default_widget {
@@ -117,13 +118,12 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
         .cpu_state(CpuState::init(default_time_value, time_now))
         .mem_state(MemState::init(default_time_value, time_now))
         .net_state(NetState::init(default_time_value, time_now))
-        .widget_layout(widget_layout)
         .widget_map(widget_map)
         .current_widget_id(initial_widget_id)
         .build())
 }
 
-fn get_layout(config: &Config) -> error::Result<BottomLayout> {
+pub fn get_widget_layout(config: &Config) -> error::Result<BottomLayout> {
     let mut bottom_layout = if let Some(rows) = &config.row {
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;

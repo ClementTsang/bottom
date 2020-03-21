@@ -1,7 +1,7 @@
 use std::cmp::max;
 
 use crate::{
-    app::{App, WidgetPosition},
+    app::{App},
     canvas::Painter,
     constants::*,
 };
@@ -15,13 +15,13 @@ use tui::{
 
 pub trait MemGraphWidget {
     fn draw_memory_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl MemGraphWidget for Painter {
     fn draw_memory_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,widget_id: u64,
     ) {
         let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
         let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
@@ -110,10 +110,11 @@ impl MemGraphWidget for Painter {
                         self.colours.widget_title_style
                     })
                     .borders(Borders::ALL)
-                    .border_style(match app_state.current_widget_selected {
-                        WidgetPosition::Mem => self.colours.highlighted_border_style,
-                        _ => self.colours.border_style,
-                    }),
+                    .border_style(if app_state.current_widget_id == widget_id {
+                       self.colours.highlighted_border_style} else {
+                        self.colours.border_style
+                       }
+             ),
             )
             .x_axis(x_axis)
             .y_axis(y_axis)

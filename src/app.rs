@@ -368,7 +368,6 @@ pub struct App {
     pub app_config_fields: AppConfigFields,
     pub current_widget_selected: WidgetPosition,
     pub previous_basic_table_selected: WidgetPosition,
-    pub widget_layout: BottomLayout, // FIXME: We can remove this!
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget_id: u64,
 }
@@ -1266,6 +1265,7 @@ impl App {
     }
 
     pub fn move_widget_selection_down(&mut self) {
+        debug!("Current widget: {}", self.current_widget_id);
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
                 self.current_widget_selected = match self.current_widget_selected {
@@ -1283,6 +1283,7 @@ impl App {
                 };
             } else if let Some(current_widget) = self.widget_map.get(&self.current_widget_id) {
                 if let Some(new_widget_id) = current_widget.down_neighbour {
+                    debug!("new curr widget id: {}", new_widget_id);
                     self.current_widget_id = new_widget_id;
                 }
             }

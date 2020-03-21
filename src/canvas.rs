@@ -3,8 +3,7 @@ use std::collections::HashMap;
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
+    layout::{Constraint, Direction, Layout},
     widgets::Text,
     Terminal,
 };
@@ -18,7 +17,6 @@ use crate::{
         self,
         data_harvester::processes::ProcessHarvest,
         layout_manager::{BottomLayout, BottomWidgetType},
-        WidgetPosition,
     },
     constants::*,
     data_conversion::{ConvertedCpuData, ConvertedProcessData},
@@ -73,7 +71,7 @@ pub struct Painter {
 impl Painter {
     /// Must be run once before drawing, but after setting colours.
     /// This is to set some remaining styles and text.
-    pub fn initialize(&mut self, app_state: &app::App) {
+    pub fn initialize(&mut self, widget_layout: BottomLayout) {
         self.is_mac_os = cfg!(target_os = "macos");
 
         if GENERAL_HELP_TEXT.len() > 1 {
@@ -123,10 +121,10 @@ impl Painter {
         self.col_constraints = Vec::new();
         self.widget_constraints = Vec::new();
 
-        app_state.widget_layout.rows.iter().for_each(|row| {
+        widget_layout.rows.iter().for_each(|row| {
             self.row_constraints.push(Constraint::Ratio(
                 row.row_ratio,
-                app_state.widget_layout.total_height_ratio,
+                self.widget_layout.total_height_ratio,
             ));
 
             let mut new_col_constraints = Vec::new();
@@ -145,24 +143,24 @@ impl Painter {
             });
             self.widget_constraints.push(new_widget_constraints);
             self.col_constraints.push(new_col_constraints);
-
-            self.widget_layout = app_state.widget_layout.clone();
         });
+
+        self.widget_layout = widget_layout;
     }
 
-    pub fn draw_specific_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
-        widget_selected: WidgetPosition,
-    ) {
-        match widget_selected {
-            WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                self.draw_process_and_search(f, app_state, draw_loc, draw_border)
-            }
-            WidgetPosition::Temp => self.draw_temp_table(f, app_state, draw_loc, draw_border),
-            WidgetPosition::Disk => self.draw_disk_table(f, app_state, draw_loc, draw_border),
-            _ => {}
-        }
-    }
+    // pub fn draw_specific_table<B: Backend>(
+    //     &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
+    //     widget_selected: WidgetPosition,
+    // ) {
+    //     match widget_selected {
+    //         WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+    //             self.draw_process_and_search(f, app_state, draw_loc, draw_border)
+    //         }
+    //         WidgetPosition::Temp => self.draw_temp_table(f, app_state, draw_loc, draw_border),
+    //         WidgetPosition::Disk => self.draw_disk_table(f, app_state, draw_loc, draw_border),
+    //         _ => {}
+    //     }
+    // }
 
     // TODO: [FEATURE] Auto-resizing dialog sizes.
     pub fn draw_data<B: Backend>(
@@ -267,57 +265,36 @@ impl Painter {
                         self.draw_dd_dialog(&mut f, app_state, middle_dialog_chunk[1]);
                 }
             } else if app_state.is_expanded {
-                let rect = Layout::default()
-                    .margin(1)
-                    .constraints([Constraint::Percentage(100)].as_ref())
-                    .split(f.size());
-                match &app_state.current_widget_selected {
-                    WidgetPosition::Cpu | WidgetPosition::BasicCpu | WidgetPosition::CpuLegend => {
-                        let cpu_chunk = Layout::default()
-                            .direction(Direction::Horizontal)
-                            .margin(0)
-                            .constraints(
-                                if app_state.app_config_fields.left_legend {
-                                    [Constraint::Percentage(15), Constraint::Percentage(85)]
-                                } else {
-                                    [Constraint::Percentage(85), Constraint::Percentage(15)]
-                                }
-                                .as_ref(),
-                            )
-                            .split(rect[0]);
-
-                        let legend_index = if app_state.app_config_fields.left_legend {
-                            0
-                        } else {
-                            1
-                        };
-                        let graph_index = if app_state.app_config_fields.left_legend {
-                            1
-                        } else {
-                            0
-                        };
-
-                        self.draw_cpu_graph(&mut f, app_state, cpu_chunk[graph_index]);
-                        self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
-                    }
-                    WidgetPosition::Mem | WidgetPosition::BasicMem => {
-                        self.draw_memory_graph(&mut f, app_state, rect[0]);
-                    }
-                    WidgetPosition::Disk => {
-                        self.draw_disk_table(&mut f, app_state, rect[0], true);
-                    }
-                    WidgetPosition::Temp => {
-                        self.draw_temp_table(&mut f, app_state, rect[0], true);
-                    }
-                    WidgetPosition::Network
-                    | WidgetPosition::BasicNet
-                    | WidgetPosition::NetworkLegend => {
-                        self.draw_network_graph(&mut f, app_state, rect[0]);
-                    }
-                    WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                        self.draw_process_and_search(&mut f, app_state, rect[0], true);
-                    }
-                }
+                // FIXME
+                // let rect = Layout::default()
+                //     .margin(1)
+                //     .constraints([Constraint::Percentage(100)].as_ref())
+                //     .split(f.size());
+                // match &app_state.current_widget_selected {
+                //     WidgetPosition::Cpu | WidgetPosition::BasicCpu | WidgetPosition::CpuLegend => {
+                //         if let Some(widget) = app_state.widget_map.get(&app_state.current_widget_id)
+                //         {
+                //             self.draw_cpu(&mut f, app_state, rect[0], widget);
+                //         }
+                //     }
+                //     WidgetPosition::Mem | WidgetPosition::BasicMem => {
+                //         self.draw_memory_graph(&mut f, app_state, rect[0]);
+                //     }
+                //     WidgetPosition::Disk => {
+                //         self.draw_disk_table(&mut f, app_state, rect[0], true);
+                //     }
+                //     WidgetPosition::Temp => {
+                //         self.draw_temp_table(&mut f, app_state, rect[0], true);
+                //     }
+                //     WidgetPosition::Network
+                //     | WidgetPosition::BasicNet
+                //     | WidgetPosition::NetworkLegend => {
+                //         self.draw_network_graph(&mut f, app_state, rect[0]);
+                //     }
+                //     WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+                //         self.draw_process_and_search(&mut f, app_state, rect[0], true);
+                //     }
+                // }
             } else if app_state.app_config_fields.use_basic_mode {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
@@ -350,23 +327,23 @@ impl Painter {
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
                 self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3]);
-                if app_state.current_widget_selected.is_widget_table() {
-                    self.draw_specific_table(
-                        &mut f,
-                        app_state,
-                        vertical_chunks[4],
-                        false,
-                        app_state.current_widget_selected,
-                    );
-                } else {
-                    self.draw_specific_table(
-                        &mut f,
-                        app_state,
-                        vertical_chunks[4],
-                        false,
-                        app_state.previous_basic_table_selected,
-                    );
-                }
+            // if app_state.current_widget_selected.is_widget_table() {
+            //     self.draw_specific_table(
+            //         &mut f,
+            //         app_state,
+            //         vertical_chunks[4],
+            //         false,
+            //         app_state.current_widget_selected,
+            //     );
+            // } else {
+            //     self.draw_specific_table(
+            //         &mut f,
+            //         app_state,
+            //         vertical_chunks[4],
+            //         false,
+            //         app_state.previous_basic_table_selected,
+            //     );
+            // }
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.
                 let row_draw_locs = Layout::default()
@@ -408,34 +385,40 @@ impl Painter {
                                             &mut f,
                                             app_state,
                                             widget_draw_locs[widget_itx],
+                                            widget.widget_id,
                                         ),
                                         Mem => self.draw_memory_graph(
                                             &mut f,
                                             app_state,
                                             widget_draw_locs[widget_itx],
+                                            widget.widget_id,
                                         ),
                                         Net => self.draw_network(
                                             &mut f,
                                             app_state,
                                             widget_draw_locs[widget_itx],
+                                            widget.widget_id,
                                         ),
                                         Temp => self.draw_temp_table(
                                             &mut f,
                                             app_state,
                                             widget_draw_locs[widget_itx],
                                             true,
+                                            widget.widget_id,
                                         ),
                                         Disk => self.draw_disk_table(
                                             &mut f,
                                             app_state,
                                             widget_draw_locs[widget_itx],
                                             true,
+                                            widget.widget_id,
                                         ),
                                         Proc => self.draw_process_and_search(
                                             &mut f,
                                             app_state,
                                             widget_draw_locs[widget_itx],
                                             true,
+                                            widget.widget_id,
                                         ),
                                     }
                                 }

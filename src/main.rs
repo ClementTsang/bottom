@@ -105,8 +105,11 @@ fn main() -> error::Result<()> {
 
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
+    // Get widget layout separately
+    let widget_layout = get_widget_layout(&config)?;
+
     // Create "app" struct, which will control most of the program and store settings/state
-    let mut app = build_app(&matches, &config)?;
+    let mut app = build_app(&matches, &config, &widget_layout)?;
 
     // TODO: [REFACTOR] Change this
     enable_app_grouping(&matches, &config, &mut app);
@@ -156,7 +159,7 @@ fn main() -> error::Result<()> {
         return Err(config_check);
     }
     painter.colours.generate_remaining_cpu_colours();
-    painter.initialize(&app);
+    painter.initialize(widget_layout);
 
     let mut first_run = true;
     loop {

@@ -8,7 +8,7 @@ use tui::{
 };
 
 use crate::{
-    app::{self, WidgetPosition},
+    app::{self},
     canvas::{
         drawing_utils::{get_start_position, get_variable_intrinsic_widths},
         Painter,
@@ -28,12 +28,14 @@ lazy_static! {
 pub trait DiskTableWidget {
     fn draw_disk_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     );
 }
 
 impl DiskTableWidget for Painter {
     fn draw_disk_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     ) {
         let disk_data: &[Vec<String>] = &app_state.canvas_data.disk_data;
         let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
@@ -57,25 +59,24 @@ impl DiskTableWidget for Painter {
         let disk_rows = sliced_vec.iter().map(|disk| {
             Row::StyledData(
                 disk.iter(),
-                match app_state.current_widget_selected {
-                    WidgetPosition::Disk => {
-                        if disk_counter as u64
-                            == app_state
-                                .app_scroll_positions
-                                .disk_scroll_state
-                                .current_scroll_position
-                                - start_position
-                        {
-                            disk_counter = -1;
-                            self.colours.currently_selected_text_style
-                        } else {
-                            if disk_counter >= 0 {
-                                disk_counter += 1;
-                            }
-                            self.colours.text_style
+                if app_state.current_widget_id == widget_id {
+                    if disk_counter as u64
+                        == app_state
+                            .app_scroll_positions
+                            .disk_scroll_state
+                            .current_scroll_position
+                            - start_position
+                    {
+                        disk_counter = -1;
+                        self.colours.currently_selected_text_style
+                    } else {
+                        if disk_counter >= 0 {
+                            disk_counter += 1;
                         }
+                        self.colours.text_style
                     }
-                    _ => self.colours.text_style,
+                } else {
+                    self.colours.text_style
                 },
             )
         });
@@ -105,37 +106,36 @@ impl DiskTableWidget for Painter {
             " Disk ".to_string()
         };
 
+        let border_and_title_style = if app_state.current_widget_id == widget_id {
+            self.colours.highlighted_border_style
+        } else {
+            self.colours.border_style
+        };
+
         let disk_block = if draw_border {
             Block::default()
                 .title(&title)
                 .title_style(if app_state.is_expanded {
-                    match app_state.current_widget_selected {
-                        WidgetPosition::Disk => self.colours.highlighted_border_style,
-                        _ => self.colours.border_style,
-                    }
+                    border_and_title_style
                 } else {
                     self.colours.widget_title_style
                 })
                 .borders(Borders::ALL)
-                .border_style(match app_state.current_widget_selected {
-                    WidgetPosition::Disk => self.colours.highlighted_border_style,
-                    _ => self.colours.border_style,
-                })
+                .border_style(border_and_title_style)
+        } else if app_state.current_widget_id == widget_id {
+            Block::default()
+                .borders(*SIDE_BORDERS)
+                .border_style(self.colours.highlighted_border_style)
         } else {
-            match app_state.current_widget_selected {
-                WidgetPosition::Disk => Block::default()
-                    .borders(*SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style),
-                _ => Block::default().borders(Borders::NONE),
-            }
+            Block::default().borders(Borders::NONE)
         };
 
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
-            .horizontal_margin(match app_state.current_widget_selected {
-                WidgetPosition::Disk => 0,
-                _ if !draw_border => 1,
-                _ => 0,
+            .horizontal_margin(if app_state.current_widget_id == widget_id || draw_border {
+                0
+            } else {
+                1
             })
             .direction(Direction::Horizontal)
             .split(draw_loc);

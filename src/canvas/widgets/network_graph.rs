@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use std::cmp::max;
 
 use crate::{
-    app::{App, WidgetPosition},
+    app::App,
     canvas::{drawing_utils::get_variable_intrinsic_widths, Painter},
     constants::*,
 };
@@ -24,19 +24,23 @@ lazy_static! {
 }
 
 pub trait NetworkGraphWidget {
-    fn draw_network<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
+    fn draw_network<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    );
 
     fn draw_network_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
 
     fn draw_network_labels<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl NetworkGraphWidget for Painter {
-    fn draw_network<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect) {
+    fn draw_network<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    ) {
         let network_chunk = Layout::default()
             .direction(Direction::Vertical)
             .margin(0)
@@ -49,12 +53,12 @@ impl NetworkGraphWidget for Painter {
             )
             .split(draw_loc);
 
-        self.draw_network_graph(f, app_state, network_chunk[0]);
-        self.draw_network_labels(f, app_state, network_chunk[1]);
+        self.draw_network_graph(f, app_state, network_chunk[0], widget_id);
+        self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
     }
 
     fn draw_network_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
         let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
@@ -122,9 +126,10 @@ impl NetworkGraphWidget for Painter {
                         self.colours.widget_title_style
                     })
                     .borders(Borders::ALL)
-                    .border_style(match app_state.current_widget_selected {
-                        WidgetPosition::Network => self.colours.highlighted_border_style,
-                        _ => self.colours.border_style,
+                    .border_style(if app_state.current_widget_id == widget_id {
+                        self.colours.highlighted_border_style
+                    } else {
+                        self.colours.border_style
                     }),
             )
             .x_axis(x_axis)
@@ -165,7 +170,7 @@ impl NetworkGraphWidget for Painter {
     }
 
     fn draw_network_labels<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let rx_display = &app_state.canvas_data.rx_display;
         let tx_display = &app_state.canvas_data.tx_display;
@@ -195,9 +200,10 @@ impl NetworkGraphWidget for Painter {
         // Draw
         Table::new(NETWORK_HEADERS.iter(), mapped_network)
             .block(Block::default().borders(Borders::ALL).border_style(
-                match app_state.current_widget_selected {
-                    WidgetPosition::Network => self.colours.highlighted_border_style,
-                    _ => self.colours.border_style,
+                if app_state.current_widget_id == widget_id {
+                    self.colours.highlighted_border_style
+                } else {
+                    self.colours.border_style
                 },
             ))
             .header_style(self.colours.table_header_style)

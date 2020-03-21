@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 
 use crate::{
-    app::{self, App, WidgetPosition},
+    app::{self, App},
     canvas::{
         drawing_utils::{
             get_search_start_position, get_start_position, get_variable_intrinsic_widths,
@@ -25,20 +25,24 @@ use unicode_width::UnicodeWidthStr;
 pub trait ProcessTableWidget {
     fn draw_process_and_search<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     );
 
     fn draw_processes_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     );
 
     fn draw_search_field<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     );
 }
 
 impl ProcessTableWidget for Painter {
     fn draw_process_and_search<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     ) {
         let search_width = if draw_border { 5 } else { 3 };
 
@@ -48,15 +52,16 @@ impl ProcessTableWidget for Painter {
                 .constraints([Constraint::Min(0), Constraint::Length(search_width)].as_ref())
                 .split(draw_loc);
 
-            self.draw_processes_table(f, app_state, processes_chunk[0], draw_border);
-            self.draw_search_field(f, app_state, processes_chunk[1], draw_border);
+            self.draw_processes_table(f, app_state, processes_chunk[0], draw_border, widget_id);
+            self.draw_search_field(f, app_state, processes_chunk[1], draw_border, widget_id);
         } else {
-            self.draw_processes_table(f, app_state, draw_loc, draw_border);
+            self.draw_processes_table(f, app_state, draw_loc, draw_border, widget_id);
         }
     }
 
     fn draw_processes_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     ) {
         let process_data: &[ConvertedProcessData] = &app_state.canvas_data.finalized_process_data;
 
@@ -108,25 +113,24 @@ impl ProcessTableWidget for Painter {
             ];
             Row::StyledData(
                 stringified_process_vec.into_iter(),
-                match app_state.current_widget_selected {
-                    WidgetPosition::Process => {
-                        if process_counter as u64
-                            == app_state
-                                .app_scroll_positions
-                                .process_scroll_state
-                                .current_scroll_position
-                                - start_position
-                        {
-                            process_counter = -1;
-                            self.colours.currently_selected_text_style
-                        } else {
-                            if process_counter >= 0 {
-                                process_counter += 1;
-                            }
-                            self.colours.text_style
+                if app_state.current_widget_id == widget_id {
+                    if process_counter as u64
+                        == app_state
+                            .app_scroll_positions
+                            .process_scroll_state
+                            .current_scroll_position
+                            - start_position
+                    {
+                        process_counter = -1;
+                        self.colours.currently_selected_text_style
+                    } else {
+                        if process_counter >= 0 {
+                            process_counter += 1;
                         }
+                        self.colours.text_style
                     }
-                    _ => self.colours.text_style,
+                } else {
+                    self.colours.text_style
                 },
             )
         });
@@ -188,37 +192,36 @@ impl ProcessTableWidget for Painter {
             String::default()
         };
 
+        let border_and_title_style = if app_state.current_widget_id == widget_id {
+            self.colours.highlighted_border_style
+        } else {
+            self.colours.border_style
+        };
+
         let process_block = if draw_border {
             Block::default()
                 .title(&title)
                 .title_style(if app_state.is_expanded {
-                    match app_state.current_widget_selected {
-                        WidgetPosition::Process => self.colours.highlighted_border_style,
-                        _ => self.colours.border_style,
-                    }
+                    border_and_title_style
                 } else {
                     self.colours.widget_title_style
                 })
                 .borders(Borders::ALL)
-                .border_style(match app_state.current_widget_selected {
-                    WidgetPosition::Process => self.colours.highlighted_border_style,
-                    _ => self.colours.border_style,
-                })
+                .border_style(border_and_title_style)
+        } else if app_state.current_widget_id == widget_id {
+            Block::default()
+                .borders(*SIDE_BORDERS)
+                .border_style(self.colours.highlighted_border_style)
         } else {
-            match app_state.current_widget_selected {
-                WidgetPosition::Process => Block::default()
-                    .borders(*SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style),
-                _ => Block::default().borders(Borders::NONE),
-            }
+            Block::default().borders(Borders::NONE)
         };
 
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
-            .horizontal_margin(match app_state.current_widget_selected {
-                WidgetPosition::Process => 0,
-                _ if !draw_border => 1,
-                _ => 0,
+            .horizontal_margin(if app_state.current_widget_id == widget_id || draw_border {
+                0
+            } else {
+                1
             })
             .direction(Direction::Horizontal)
             .split(draw_loc);
@@ -237,6 +240,7 @@ impl ProcessTableWidget for Painter {
 
     fn draw_search_field<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     ) {
         let pid_search_text = "Search by PID (Tab for Name): ";
         let name_search_text = "Search by Name (Tab for PID): ";
@@ -277,48 +281,47 @@ impl ProcessTableWidget for Painter {
         let query = app_state.get_current_search_query().as_str();
         let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
         let mut current_grapheme_posn = 0;
-        let query_with_cursor: Vec<Text<'_>> =
-            if let WidgetPosition::ProcessSearch = app_state.current_widget_selected {
-                let mut res = grapheme_indices
-                    .filter_map(|grapheme| {
-                        current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
+        let query_with_cursor: Vec<Text<'_>> = if app_state.current_widget_id == widget_id {
+            let mut res = grapheme_indices
+                .filter_map(|grapheme| {
+                    current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
 
-                        if current_grapheme_posn <= start_position {
-                            None
+                    if current_grapheme_posn <= start_position {
+                        None
+                    } else {
+                        let styled = if grapheme.0 == cursor_position {
+                            Text::styled(grapheme.1, self.colours.currently_selected_text_style)
                         } else {
-                            let styled = if grapheme.0 == cursor_position {
-                                Text::styled(grapheme.1, self.colours.currently_selected_text_style)
-                            } else {
-                                Text::styled(grapheme.1, self.colours.text_style)
-                            };
-                            Some(styled)
-                        }
-                    })
-                    .collect::<Vec<_>>();
+                            Text::styled(grapheme.1, self.colours.text_style)
+                        };
+                        Some(styled)
+                    }
+                })
+                .collect::<Vec<_>>();
 
-                if cursor_position >= query.len() {
-                    res.push(Text::styled(
-                        " ",
-                        self.colours.currently_selected_text_style,
-                    ))
-                }
+            if cursor_position >= query.len() {
+                res.push(Text::styled(
+                    " ",
+                    self.colours.currently_selected_text_style,
+                ))
+            }
 
-                res
-            } else {
-                // This is easier - we just need to get a range of graphemes, rather than
-                // dealing with possibly inserting a cursor (as none is shown!)
-                grapheme_indices
-                    .filter_map(|grapheme| {
-                        current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
-                        if current_grapheme_posn <= start_position {
-                            None
-                        } else {
-                            let styled = Text::styled(grapheme.1, self.colours.text_style);
-                            Some(styled)
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            };
+            res
+        } else {
+            // This is easier - we just need to get a range of graphemes, rather than
+            // dealing with possibly inserting a cursor (as none is shown!)
+            grapheme_indices
+                .filter_map(|grapheme| {
+                    current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
+                    if current_grapheme_posn <= start_position {
+                        None
+                    } else {
+                        let styled = Text::styled(grapheme.1, self.colours.text_style);
+                        Some(styled)
+                    }
+                })
+                .collect::<Vec<_>>()
+        };
 
         // Text options shamelessly stolen from VS Code.
         let mut option_text = vec![];
@@ -389,11 +392,10 @@ impl ProcessTableWidget for Painter {
             .is_invalid_search
         {
             *INVALID_REGEX_STYLE
+        } else if app_state.current_widget_id == widget_id {
+            self.colours.highlighted_border_style
         } else {
-            match app_state.current_widget_selected {
-                WidgetPosition::ProcessSearch => self.colours.highlighted_border_style,
-                _ => self.colours.border_style,
-            }
+            self.colours.border_style
         };
 
         let title = if draw_border {
@@ -414,21 +416,20 @@ impl ProcessTableWidget for Painter {
                 .title_style(current_border_style)
                 .borders(Borders::ALL)
                 .border_style(current_border_style)
+        } else if app_state.current_widget_id == widget_id {
+            Block::default()
+                .borders(*SIDE_BORDERS)
+                .border_style(current_border_style)
         } else {
-            match app_state.current_widget_selected {
-                WidgetPosition::ProcessSearch => Block::default()
-                    .borders(*SIDE_BORDERS)
-                    .border_style(current_border_style),
-                _ => Block::default().borders(Borders::NONE),
-            }
+            Block::default().borders(Borders::NONE)
         };
 
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
-            .horizontal_margin(match app_state.current_widget_selected {
-                WidgetPosition::ProcessSearch => 0,
-                _ if !draw_border => 1,
-                _ => 0,
+            .horizontal_margin(if app_state.current_widget_id == widget_id || draw_border {
+                0
+            } else {
+                1
             })
             .direction(Direction::Horizontal)
             .split(draw_loc);

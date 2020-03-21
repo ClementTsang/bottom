@@ -9,7 +9,7 @@ use tui::{
 };
 
 use crate::{
-    app::{self, WidgetPosition},
+    app,
     canvas::{
         drawing_utils::{get_start_position, get_variable_intrinsic_widths},
         Painter,
@@ -28,12 +28,14 @@ lazy_static! {
 pub trait TempTableWidget {
     fn draw_temp_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     );
 }
 
 impl TempTableWidget for Painter {
     fn draw_temp_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     ) {
         let temp_sensor_data: &[Vec<String>] = &app_state.canvas_data.temp_sensor_data;
 
@@ -58,25 +60,24 @@ impl TempTableWidget for Painter {
         let temperature_rows = sliced_vec.iter().map(|temp_row| {
             Row::StyledData(
                 temp_row.iter(),
-                match app_state.current_widget_selected {
-                    WidgetPosition::Temp => {
-                        if temp_row_counter as u64
-                            == app_state
-                                .app_scroll_positions
-                                .temp_scroll_state
-                                .current_scroll_position
-                                - start_position
-                        {
-                            temp_row_counter = -1;
-                            self.colours.currently_selected_text_style
-                        } else {
-                            if temp_row_counter >= 0 {
-                                temp_row_counter += 1;
-                            }
-                            self.colours.text_style
+                if app_state.current_widget_id == widget_id {
+                    if temp_row_counter as u64
+                        == app_state
+                            .app_scroll_positions
+                            .temp_scroll_state
+                            .current_scroll_position
+                            - start_position
+                    {
+                        temp_row_counter = -1;
+                        self.colours.currently_selected_text_style
+                    } else {
+                        if temp_row_counter >= 0 {
+                            temp_row_counter += 1;
                         }
+                        self.colours.text_style
                     }
-                    _ => self.colours.text_style,
+                } else {
+                    self.colours.text_style
                 },
             )
         });
@@ -110,33 +111,34 @@ impl TempTableWidget for Painter {
             Block::default()
                 .title(&title)
                 .title_style(if app_state.is_expanded {
-                    match app_state.current_widget_selected {
-                        WidgetPosition::Temp => self.colours.highlighted_border_style,
-                        _ => self.colours.border_style,
+                    if app_state.current_widget_id == widget_id {
+                        self.colours.highlighted_border_style
+                    } else {
+                        self.colours.border_style
                     }
                 } else {
                     self.colours.widget_title_style
                 })
                 .borders(Borders::ALL)
-                .border_style(match app_state.current_widget_selected {
-                    WidgetPosition::Temp => self.colours.highlighted_border_style,
-                    _ => self.colours.border_style,
+                .border_style(if app_state.current_widget_id == widget_id {
+                    self.colours.highlighted_border_style
+                } else {
+                    self.colours.border_style
                 })
+        } else if app_state.current_widget_id == widget_id {
+            Block::default()
+                .borders(*SIDE_BORDERS)
+                .border_style(self.colours.highlighted_border_style)
         } else {
-            match app_state.current_widget_selected {
-                WidgetPosition::Temp => Block::default()
-                    .borders(*SIDE_BORDERS)
-                    .border_style(self.colours.highlighted_border_style),
-                _ => Block::default().borders(Borders::NONE),
-            }
+            Block::default().borders(Borders::NONE)
         };
 
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
-            .horizontal_margin(match app_state.current_widget_selected {
-                WidgetPosition::Temp => 0,
-                _ if !draw_border => 1,
-                _ => 0,
+            .horizontal_margin(if app_state.current_widget_id == widget_id || draw_border {
+                0
+            } else {
+                1
             })
             .direction(Direction::Horizontal)
             .split(draw_loc);
