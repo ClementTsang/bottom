@@ -56,7 +56,7 @@ pub const GENERAL_HELP_TEXT: [&str; 18] = [
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
     "Process Keybindings\n\n",
-    "dd             Kill the highlighted process\n",
+    "dd, Delete     Kill the highlighted process\n",
     "c              Sort by CPU usage\n",
     "m              Sort by memory usage\n",
     "p              Sort by PID\n",

@@ -1,5 +1,5 @@
 use crate::error::{BottomError, Result};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
@@ -12,20 +12,6 @@ pub struct BottomLayout {
 type WidgetMappings = (u32, BTreeMap<u32, u64>);
 type ColumnMappings = (u32, BTreeMap<u32, WidgetMappings>);
 impl BottomLayout {
-    pub fn convert_to_hashmap(&self) -> HashMap<u64, BottomWidget> {
-        let mut return_map: HashMap<u64, BottomWidget> = HashMap::new();
-
-        for row in &self.rows {
-            for col in &row.children {
-                for widget in &col.children {
-                    return_map.insert(widget.widget_id, widget.clone());
-                }
-            }
-        }
-
-        return_map
-    }
-
     #[allow(clippy::cognitive_complexity)]
     pub fn get_movement_mappings(&mut self) {
         // Now we need to create the correct mapping for moving from a specific

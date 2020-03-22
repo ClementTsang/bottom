@@ -111,12 +111,6 @@ fn main() -> error::Result<()> {
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(&matches, &config, &widget_layout)?;
 
-    // TODO: [REFACTOR] Change this
-    enable_app_grouping(&matches, &config, &mut app);
-    enable_app_case_sensitive(&matches, &config, &mut app);
-    enable_app_match_whole_word(&matches, &config, &mut app);
-    enable_app_use_regex(&matches, &config, &mut app);
-
     // Set up up tui and crossterm
     let mut stdout_val = stdout();
     execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
@@ -184,7 +178,7 @@ fn main() -> error::Result<()> {
                         // Network
                         let network_data = convert_network_data_points(
                             &app.data_collection,
-                            app.net_state.current_display_time,
+                            app.net_state.longest_display_time,
                             false,
                         );
                         app.canvas_data.network_data_rx = network_data.rx;
@@ -199,15 +193,16 @@ fn main() -> error::Result<()> {
 
                         // Temperatures
                         app.canvas_data.temp_sensor_data = convert_temp_row(&app);
+
                         // Memory
                         app.canvas_data.mem_data = convert_mem_data_points(
                             &app.data_collection,
-                            app.mem_state.current_display_time,
+                            app.mem_state.longest_display_time,
                             false,
                         );
                         app.canvas_data.swap_data = convert_swap_data_points(
                             &app.data_collection,
-                            app.mem_state.current_display_time,
+                            app.mem_state.longest_display_time,
                             false,
                         );
                         let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
@@ -217,15 +212,18 @@ fn main() -> error::Result<()> {
                         // Pre-fill CPU if needed
                         if first_run {
                             let cpu_len = app.data_collection.cpu_harvest.len();
-                            app.cpu_state.core_show_vec = vec![true; cpu_len];
-                            app.cpu_state.num_cpus_shown = cpu_len as u64;
+                            app.cpu_state.widget_states.values_mut().for_each(|state| {
+                                state.core_show_vec = vec![true; cpu_len];
+                                state.num_cpus_shown = cpu_len;
+                            });
+                            app.cpu_state.num_cpus_total = cpu_len;
                             first_run = false;
                         }
 
                         // CPU
                         app.canvas_data.cpu_data = convert_cpu_data_points(
                             &app.data_collection,
-                            app.cpu_state.current_display_time,
+                            app.cpu_state.longest_display_time,
                             false,
                         );
 
@@ -233,7 +231,7 @@ fn main() -> error::Result<()> {
                         let (single, grouped) = convert_process_data(&app.data_collection);
                         app.canvas_data.process_data = single;
                         app.canvas_data.grouped_process_data = grouped;
-                        update_final_process_list(&mut app);
+                        update_all_process_lists(&mut app);
                     }
                 }
                 BottomEvent::Clean => {
@@ -553,57 +551,79 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
 }
 
 fn handle_force_redraws(app: &mut App) {
-    if app.force_update_processes {
-        update_final_process_list(app);
-        app.force_update_processes = false;
+    // Currently we use an Option... because we might want to future-proof this
+    // if we eventually get widget-specific redrawing!
+    if app.proc_state.force_update_all {
+        update_all_process_lists(app);
+        app.proc_state.force_update_all = false;
+    } else if let Some(widget_id) = app.proc_state.force_update {
+        update_final_process_list(app, widget_id);
+        app.proc_state.force_update = None;
     }
 
-    if app.cpu_state.force_update {
+    if app.cpu_state.force_update.is_some() {
         app.canvas_data.cpu_data = convert_cpu_data_points(
             &app.data_collection,
-            app.cpu_state.current_display_time,
+            app.cpu_state.longest_display_time,
             app.is_frozen,
         );
-        app.cpu_state.force_update = false;
+        app.cpu_state.force_update = None;
     }
 
-    if app.mem_state.force_update {
+    if app.mem_state.force_update.is_some() {
         app.canvas_data.mem_data = convert_mem_data_points(
             &app.data_collection,
-            app.mem_state.current_display_time,
+            app.mem_state.longest_display_time,
             app.is_frozen,
         );
         app.canvas_data.swap_data = convert_swap_data_points(
             &app.data_collection,
-            app.mem_state.current_display_time,
+            app.mem_state.longest_display_time,
             app.is_frozen,
         );
-        app.mem_state.force_update = false;
+        app.mem_state.force_update = None;
     }
 
-    if app.net_state.force_update {
+    if app.net_state.force_update.is_some() {
         let (rx, tx) = get_rx_tx_data_points(
             &app.data_collection,
-            app.net_state.current_display_time,
+            app.net_state.longest_display_time,
             app.is_frozen,
         );
         app.canvas_data.network_data_rx = rx;
         app.canvas_data.network_data_tx = tx;
-        app.net_state.force_update = false;
+        app.net_state.force_update = None;
     }
 }
 
-fn update_final_process_list(app: &mut App) {
+fn update_all_process_lists(app: &mut App) {
+    let widget_ids = app
+        .proc_state
+        .widget_states
+        .keys()
+        .cloned()
+        .collect::<Vec<_>>();
+
+    widget_ids.into_iter().for_each(|widget_id| {
+        update_final_process_list(app, widget_id);
+    });
+}
+
+fn update_final_process_list(app: &mut App, widget_id: u64) {
+    let is_invalid_or_blank = match app.proc_state.widget_states.get(&widget_id) {
+        Some(process_state) => process_state
+            .process_search_state
+            .search_state
+            .is_invalid_or_blank_search(),
+        None => false,
+    };
+
     let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
         app.canvas_data
             .grouped_process_data
             .iter()
             .filter(|process| {
-                if app
-                    .process_search_state
-                    .search_state
-                    .is_invalid_or_blank_search()
-                {
+                if is_invalid_or_blank {
                     return true;
                 } else if let Some(matcher_result) = app.get_current_regex_matcher() {
                     if let Ok(matcher) = matcher_result {
@@ -616,20 +636,20 @@ fn update_final_process_list(app: &mut App) {
             .cloned()
             .collect::<Vec<_>>()
     } else {
+        let is_searching_with_pid = match app.proc_state.widget_states.get(&widget_id) {
+            Some(process_state) => process_state.process_search_state.is_searching_with_pid,
+            None => false,
+        };
+
         app.canvas_data
             .process_data
             .iter()
             .filter_map(|(_pid, process)| {
                 let mut result = true;
-
-                if !app
-                    .process_search_state
-                    .search_state
-                    .is_invalid_or_blank_search()
-                {
+                if !is_invalid_or_blank {
                     if let Some(matcher_result) = app.get_current_regex_matcher() {
                         if let Ok(matcher) = matcher_result {
-                            if app.process_search_state.is_searching_with_pid {
+                            if is_searching_with_pid {
                                 result = matcher.is_match(&process.pid.to_string());
                             } else {
                                 result = matcher.is_match(&process.name);
@@ -654,6 +674,8 @@ fn update_final_process_list(app: &mut App) {
     };
 
     sort_process_data(&mut filtered_process_data, app);
+
+    // FIXME: Fix this shit, gotta split into a hashmap
     app.canvas_data.finalized_process_data = filtered_process_data;
 }
 

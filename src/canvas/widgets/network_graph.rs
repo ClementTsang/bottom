@@ -60,113 +60,115 @@ impl NetworkGraphWidget for Painter {
     fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
-        let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
+        if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
+            let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
+            let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
 
-        let display_time_labels = [
-            format!("{}s", app_state.net_state.current_display_time / 1000),
-            "0s".to_string(),
-        ];
-        let x_axis = if app_state.app_config_fields.hide_time
-            || (app_state.app_config_fields.autohide_time
-                && app_state.net_state.autohide_timer.is_none())
-        {
-            Axis::default().bounds([0.0, app_state.net_state.current_display_time as f64])
-        } else if let Some(time) = app_state.net_state.autohide_timer {
-            if std::time::Instant::now().duration_since(time).as_millis()
-                < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
+            let display_time_labels = [
+                format!("{}s", network_widget_state.current_display_time / 1000),
+                "0s".to_string(),
+            ];
+            let x_axis = if app_state.app_config_fields.hide_time
+                || (app_state.app_config_fields.autohide_time
+                    && network_widget_state.autohide_timer.is_none())
             {
+                Axis::default().bounds([0.0, network_widget_state.current_display_time as f64])
+            } else if let Some(time) = network_widget_state.autohide_timer {
+                if std::time::Instant::now().duration_since(time).as_millis()
+                    < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
+                {
+                    Axis::default()
+                        .bounds([0.0, network_widget_state.current_display_time as f64])
+                        .style(self.colours.graph_style)
+                        .labels_style(self.colours.graph_style)
+                        .labels(&display_time_labels)
+                } else {
+                    network_widget_state.autohide_timer = None;
+                    Axis::default().bounds([0.0, network_widget_state.current_display_time as f64])
+                }
+            } else {
                 Axis::default()
-                    .bounds([0.0, app_state.net_state.current_display_time as f64])
+                    .bounds([0.0, network_widget_state.current_display_time as f64])
                     .style(self.colours.graph_style)
                     .labels_style(self.colours.graph_style)
                     .labels(&display_time_labels)
-            } else {
-                app_state.net_state.autohide_timer = None;
-                Axis::default().bounds([0.0, app_state.net_state.current_display_time as f64])
-            }
-        } else {
-            Axis::default()
-                .bounds([0.0, app_state.net_state.current_display_time as f64])
+            };
+
+            // 0 is offset.
+            let y_axis: Axis<'_, &str> = Axis::default()
                 .style(self.colours.graph_style)
                 .labels_style(self.colours.graph_style)
-                .labels(&display_time_labels)
-        };
+                .bounds([-0.5, 30_f64])
+                .labels(&["0B", "1KiB", "1MiB", "1GiB"]);
 
-        // 0 is offset.
-        let y_axis: Axis<'_, &str> = Axis::default()
-            .style(self.colours.graph_style)
-            .labels_style(self.colours.graph_style)
-            .bounds([-0.5, 30_f64])
-            .labels(&["0B", "1KiB", "1MiB", "1GiB"]);
+            let title = if app_state.is_expanded {
+                const TITLE_BASE: &str = " Network ── Esc to go back ";
+                let repeat_num = max(
+                    0,
+                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+                );
+                let result_title = format!(
+                    " Network ─{}─ Esc to go back ",
+                    "─".repeat(repeat_num as usize)
+                );
 
-        let title = if app_state.is_expanded {
-            const TITLE_BASE: &str = " Network ── Esc to go back ";
-            let repeat_num = max(
-                0,
-                draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-            );
-            let result_title = format!(
-                " Network ─{}─ Esc to go back ",
-                "─".repeat(repeat_num as usize)
-            );
+                result_title
+            } else {
+                " Network ".to_string()
+            };
 
-            result_title
-        } else {
-            " Network ".to_string()
-        };
-
-        Chart::default()
-            .block(
-                Block::default()
-                    .title(&title)
-                    .title_style(if app_state.is_expanded {
-                        self.colours.highlighted_border_style
-                    } else {
-                        self.colours.widget_title_style
-                    })
-                    .borders(Borders::ALL)
-                    .border_style(if app_state.current_widget_id == widget_id {
-                        self.colours.highlighted_border_style
-                    } else {
-                        self.colours.border_style
-                    }),
-            )
-            .x_axis(x_axis)
-            .y_axis(y_axis)
-            .datasets(&[
-                Dataset::default()
-                    .name(&format!("RX: {:7}", app_state.canvas_data.rx_display))
-                    .marker(if app_state.app_config_fields.use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(self.colours.rx_style)
-                    .data(&network_data_rx),
-                Dataset::default()
-                    .name(&format!("TX: {:7}", app_state.canvas_data.tx_display))
-                    .marker(if app_state.app_config_fields.use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(self.colours.tx_style)
-                    .data(&network_data_tx),
-                Dataset::default()
-                    .name(&format!(
-                        "Total RX: {:7}",
-                        app_state.canvas_data.total_rx_display
-                    ))
-                    .style(self.colours.total_rx_style),
-                Dataset::default()
-                    .name(&format!(
-                        "Total TX: {:7}",
-                        app_state.canvas_data.total_tx_display
-                    ))
-                    .style(self.colours.total_tx_style),
-            ])
-            .render(f, draw_loc);
+            Chart::default()
+                .block(
+                    Block::default()
+                        .title(&title)
+                        .title_style(if app_state.is_expanded {
+                            self.colours.highlighted_border_style
+                        } else {
+                            self.colours.widget_title_style
+                        })
+                        .borders(Borders::ALL)
+                        .border_style(if app_state.current_widget.widget_id == widget_id {
+                            self.colours.highlighted_border_style
+                        } else {
+                            self.colours.border_style
+                        }),
+                )
+                .x_axis(x_axis)
+                .y_axis(y_axis)
+                .datasets(&[
+                    Dataset::default()
+                        .name(&format!("RX: {:7}", app_state.canvas_data.rx_display))
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.rx_style)
+                        .data(&network_data_rx),
+                    Dataset::default()
+                        .name(&format!("TX: {:7}", app_state.canvas_data.tx_display))
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.tx_style)
+                        .data(&network_data_tx),
+                    Dataset::default()
+                        .name(&format!(
+                            "Total RX: {:7}",
+                            app_state.canvas_data.total_rx_display
+                        ))
+                        .style(self.colours.total_rx_style),
+                    Dataset::default()
+                        .name(&format!(
+                            "Total TX: {:7}",
+                            app_state.canvas_data.total_tx_display
+                        ))
+                        .style(self.colours.total_tx_style),
+                ])
+                .render(f, draw_loc);
+        }
     }
 
     fn draw_network_labels<B: Backend>(
@@ -200,7 +202,7 @@ impl NetworkGraphWidget for Painter {
         // Draw
         Table::new(NETWORK_HEADERS.iter(), mapped_network)
             .block(Block::default().borders(Borders::ALL).border_style(
-                if app_state.current_widget_id == widget_id {
+                if app_state.current_widget.widget_id == widget_id {
                     self.colours.highlighted_border_style
                 } else {
                     self.colours.border_style

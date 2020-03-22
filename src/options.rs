@@ -1,10 +1,12 @@
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::{
     app::{
-        data_harvester, layout_manager::*, App, AppConfigFields, CpuState, MemState, NetState,
-        WidgetPosition,
+        data_harvester, layout_manager::*, App, AppConfigFields, CpuState, CpuWidgetState,
+        DiskState, DiskWidgetState, MemState, MemWidgetState, NetState, NetWidgetState, ProcState,
+        ProcWidgetState, TempState, TempWidgetState, WidgetPosition,
     },
     constants::*,
     utils::error::{self, BottomError},
@@ -70,8 +72,74 @@ pub fn build_app(
     let default_time_value = get_default_time_value(&matches, &config)?;
     let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
-    let widget_map = widget_layout.convert_to_hashmap();
-    let initial_widget_id: u64 = 1; // TODO [MODULARITY]: Add this
+
+    // For processes
+    let is_grouped = get_app_grouping(matches, config);
+    let is_case_sensitive = get_app_case_sensitive(matches, config);
+    let is_match_whole_word = get_app_match_whole_word(matches, config);
+    let is_use_regex = get_app_use_regex(matches, config);
+
+    let mut widget_map = HashMap::new();
+    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
+    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
+    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
+    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
+    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
+    let mut disk_state_map: HashMap<u64, DiskWidgetState> = HashMap::new();
+
+    let autohide_timer = if autohide_time {
+        Some(Instant::now())
+    } else {
+        None
+    };
+
+    for row in &widget_layout.rows {
+        for col in &row.children {
+            for widget in &col.children {
+                widget_map.insert(widget.widget_id, widget.clone());
+                match widget.widget_type {
+                    BottomWidgetType::Cpu => {
+                        cpu_state_map.insert(
+                            widget.widget_id,
+                            CpuWidgetState::init(default_time_value, autohide_timer),
+                        );
+                    }
+                    BottomWidgetType::Mem => {
+                        mem_state_map.insert(
+                            widget.widget_id,
+                            MemWidgetState::init(default_time_value, autohide_timer),
+                        );
+                    }
+                    BottomWidgetType::Net => {
+                        net_state_map.insert(
+                            widget.widget_id,
+                            NetWidgetState::init(default_time_value, autohide_timer),
+                        );
+                    }
+                    BottomWidgetType::Proc => {
+                        proc_state_map.insert(
+                            widget.widget_id,
+                            ProcWidgetState::init(
+                                is_case_sensitive,
+                                is_match_whole_word,
+                                is_use_regex,
+                                is_grouped,
+                            ),
+                        );
+                    }
+                    BottomWidgetType::Disk => {
+                        disk_state_map.insert(widget.widget_id, DiskWidgetState::init());
+                    }
+                    BottomWidgetType::Temp => {
+                        temp_state_map.insert(widget.widget_id, TempWidgetState::init());
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    let initial_widget_id: u64 = 1; // FIXME [MODULARITY]: Add this
 
     let current_widget_selected = if use_basic_mode {
         match default_widget {
@@ -105,21 +173,18 @@ pub fn build_app(
         autohide_time,
     };
 
-    let time_now = if autohide_time {
-        Some(Instant::now())
-    } else {
-        None
-    };
-
     Ok(App::builder()
         .app_config_fields(app_config_fields)
         .current_widget_selected(current_widget_selected)
         .previous_basic_table_selected(previous_basic_table_selected)
-        .cpu_state(CpuState::init(default_time_value, time_now))
-        .mem_state(MemState::init(default_time_value, time_now))
-        .net_state(NetState::init(default_time_value, time_now))
+        .cpu_state(CpuState::init(default_time_value, cpu_state_map))
+        .mem_state(MemState::init(default_time_value, mem_state_map))
+        .net_state(NetState::init(default_time_value, net_state_map))
+        .proc_state(ProcState::init(proc_state_map))
+        .disk_state(DiskState::init(disk_state_map))
+        .temp_state(TempState::init(temp_state_map))
+        .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
-        .current_widget_id(initial_widget_id)
         .build())
 }
 
@@ -328,56 +393,56 @@ fn get_time_interval(matches: &clap::ArgMatches<'static>, config: &Config) -> er
     Ok(time_interval as u64)
 }
 
-pub fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+pub fn get_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("GROUP_PROCESSES") {
-        app.toggle_grouping();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(grouping) = flags.group_processes {
             if grouping {
-                app.toggle_grouping();
+                return true;
             }
         }
     }
+    false
 }
 
-pub fn enable_app_case_sensitive(
-    matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
-) {
+pub fn get_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("CASE_SENSITIVE") {
-        app.process_search_state.search_toggle_ignore_case();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(case_sensitive) = flags.case_sensitive {
             if case_sensitive {
-                app.process_search_state.search_toggle_ignore_case();
+                return true;
             }
         }
     }
+    false
 }
 
-pub fn enable_app_match_whole_word(
-    matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
-) {
+pub fn get_app_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("WHOLE_WORD") {
-        app.process_search_state.search_toggle_whole_word();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(whole_word) = flags.whole_word {
             if whole_word {
-                app.process_search_state.search_toggle_whole_word();
+                return true;
             }
         }
     }
+    false
 }
 
-pub fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+pub fn get_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("REGEX_DEFAULT") {
-        app.process_search_state.search_toggle_regex();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(regex) = flags.regex {
             if regex {
-                app.process_search_state.search_toggle_regex();
+                return true;
             }
         }
     }
+    false
 }
 
 fn get_hide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
