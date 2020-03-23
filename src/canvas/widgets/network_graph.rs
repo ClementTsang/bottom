@@ -46,7 +46,7 @@ impl NetworkGraphWidget for Painter {
             .margin(0)
             .constraints(
                 [
-                    Constraint::Length(draw_loc.height - 5),
+                    Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
                     Constraint::Length(5),
                 ]
                 .as_ref(),
@@ -72,23 +72,24 @@ impl NetworkGraphWidget for Painter {
                 || (app_state.app_config_fields.autohide_time
                     && network_widget_state.autohide_timer.is_none())
             {
-                Axis::default().bounds([0.0, network_widget_state.current_display_time as f64])
+                Axis::default().bounds([-(network_widget_state.current_display_time as f64), 0.0])
             } else if let Some(time) = network_widget_state.autohide_timer {
                 if std::time::Instant::now().duration_since(time).as_millis()
                     < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
                 {
                     Axis::default()
-                        .bounds([0.0, network_widget_state.current_display_time as f64])
+                        .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
                         .labels_style(self.colours.graph_style)
                         .labels(&display_time_labels)
                 } else {
                     network_widget_state.autohide_timer = None;
-                    Axis::default().bounds([0.0, network_widget_state.current_display_time as f64])
+                    Axis::default()
+                        .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                 }
             } else {
                 Axis::default()
-                    .bounds([0.0, network_widget_state.current_display_time as f64])
+                    .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
                     .labels_style(self.colours.graph_style)
                     .labels(&display_time_labels)

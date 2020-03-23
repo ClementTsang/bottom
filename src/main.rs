@@ -147,13 +147,13 @@ fn main() -> error::Result<()> {
         app.app_config_fields.show_average_cpu,
     );
 
-    let mut painter = canvas::Painter::default();
+    let mut painter = canvas::Painter::init(widget_layout);
     if let Err(config_check) = generate_config_colours(&config, &mut painter) {
         cleanup_terminal(&mut terminal)?;
         return Err(config_check);
     }
     painter.colours.generate_remaining_cpu_colours();
-    painter.initialize(widget_layout);
+    painter.complete_painter_init();
 
     let mut first_run = true;
     loop {
@@ -176,11 +176,7 @@ fn main() -> error::Result<()> {
                         // Convert all data into tui-compliant components
 
                         // Network
-                        let network_data = convert_network_data_points(
-                            &app.data_collection,
-                            app.net_state.longest_display_time,
-                            false,
-                        );
+                        let network_data = convert_network_data_points(&app.data_collection, false);
                         app.canvas_data.network_data_rx = network_data.rx;
                         app.canvas_data.network_data_tx = network_data.tx;
                         app.canvas_data.rx_display = network_data.rx_display;
@@ -195,16 +191,10 @@ fn main() -> error::Result<()> {
                         app.canvas_data.temp_sensor_data = convert_temp_row(&app);
 
                         // Memory
-                        app.canvas_data.mem_data = convert_mem_data_points(
-                            &app.data_collection,
-                            app.mem_state.longest_display_time,
-                            false,
-                        );
-                        app.canvas_data.swap_data = convert_swap_data_points(
-                            &app.data_collection,
-                            app.mem_state.longest_display_time,
-                            false,
-                        );
+                        app.canvas_data.mem_data =
+                            convert_mem_data_points(&app.data_collection, false);
+                        app.canvas_data.swap_data =
+                            convert_swap_data_points(&app.data_collection, false);
                         let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
                         app.canvas_data.mem_label = memory_and_swap_labels.0;
                         app.canvas_data.swap_label = memory_and_swap_labels.1;
@@ -221,11 +211,8 @@ fn main() -> error::Result<()> {
                         }
 
                         // CPU
-                        app.canvas_data.cpu_data = convert_cpu_data_points(
-                            &app.data_collection,
-                            app.cpu_state.longest_display_time,
-                            false,
-                        );
+                        app.canvas_data.cpu_data =
+                            convert_cpu_data_points(&app.data_collection, false);
 
                         // Processes
                         let (single, grouped) = convert_process_data(&app.data_collection);
@@ -293,19 +280,13 @@ fn handle_key_event_or_break(
             KeyCode::Backspace => app.on_backspace(),
             KeyCode::Delete => app.on_delete(),
             KeyCode::F(1) => {
-                if app.is_in_search_widget() {
-                    app.toggle_ignore_case();
-                }
+                app.toggle_ignore_case();
             }
             KeyCode::F(2) => {
-                if app.is_in_search_widget() {
-                    app.toggle_search_whole_word();
-                }
+                app.toggle_search_whole_word();
             }
             KeyCode::F(3) => {
-                if app.is_in_search_widget() {
-                    app.toggle_search_regex();
-                }
+                app.toggle_search_regex();
             }
             _ => {}
         }
@@ -314,19 +295,13 @@ fn handle_key_event_or_break(
         if let KeyModifiers::ALT = event.modifiers {
             match event.code {
                 KeyCode::Char('c') | KeyCode::Char('C') => {
-                    if app.is_in_search_widget() {
-                        app.toggle_ignore_case();
-                    }
+                    app.toggle_ignore_case();
                 }
                 KeyCode::Char('w') | KeyCode::Char('W') => {
-                    if app.is_in_search_widget() {
-                        app.toggle_search_whole_word();
-                    }
+                    app.toggle_search_whole_word();
                 }
                 KeyCode::Char('r') | KeyCode::Char('R') => {
-                    if app.is_in_search_widget() {
-                        app.toggle_search_regex();
-                    }
+                    app.toggle_search_regex();
                 }
                 _ => {}
             }
@@ -562,34 +537,18 @@ fn handle_force_redraws(app: &mut App) {
     }
 
     if app.cpu_state.force_update.is_some() {
-        app.canvas_data.cpu_data = convert_cpu_data_points(
-            &app.data_collection,
-            app.cpu_state.longest_display_time,
-            app.is_frozen,
-        );
+        app.canvas_data.cpu_data = convert_cpu_data_points(&app.data_collection, app.is_frozen);
         app.cpu_state.force_update = None;
     }
 
     if app.mem_state.force_update.is_some() {
-        app.canvas_data.mem_data = convert_mem_data_points(
-            &app.data_collection,
-            app.mem_state.longest_display_time,
-            app.is_frozen,
-        );
-        app.canvas_data.swap_data = convert_swap_data_points(
-            &app.data_collection,
-            app.mem_state.longest_display_time,
-            app.is_frozen,
-        );
+        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection, app.is_frozen);
+        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection, app.is_frozen);
         app.mem_state.force_update = None;
     }
 
     if app.net_state.force_update.is_some() {
-        let (rx, tx) = get_rx_tx_data_points(
-            &app.data_collection,
-            app.net_state.longest_display_time,
-            app.is_frozen,
-        );
+        let (rx, tx) = get_rx_tx_data_points(&app.data_collection, app.is_frozen);
         app.canvas_data.network_data_rx = rx;
         app.canvas_data.network_data_tx = tx;
         app.net_state.force_update = None;

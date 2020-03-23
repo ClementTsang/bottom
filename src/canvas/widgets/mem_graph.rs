@@ -31,23 +31,23 @@ impl MemGraphWidget for Painter {
                 || (app_state.app_config_fields.autohide_time
                     && mem_widget_state.autohide_timer.is_none())
             {
-                Axis::default().bounds([0.0, mem_widget_state.current_display_time as f64])
+                Axis::default().bounds([-(mem_widget_state.current_display_time as f64), 0.0])
             } else if let Some(time) = mem_widget_state.autohide_timer {
                 if std::time::Instant::now().duration_since(time).as_millis()
                     < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
                 {
                     Axis::default()
-                        .bounds([0.0, mem_widget_state.current_display_time as f64])
+                        .bounds([-(mem_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
                         .labels_style(self.colours.graph_style)
                         .labels(&display_time_labels)
                 } else {
                     mem_widget_state.autohide_timer = None;
-                    Axis::default().bounds([0.0, mem_widget_state.current_display_time as f64])
+                    Axis::default().bounds([-(mem_widget_state.current_display_time as f64), 0.0])
                 }
             } else {
                 Axis::default()
-                    .bounds([0.0, mem_widget_state.current_display_time as f64])
+                    .bounds([-(mem_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
                     .labels_style(self.colours.graph_style)
                     .labels(&display_time_labels)

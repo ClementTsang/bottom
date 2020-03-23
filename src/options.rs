@@ -139,7 +139,7 @@ pub fn build_app(
         }
     }
 
-    let initial_widget_id: u64 = 1; // FIXME [MODULARITY]: Add this
+    let initial_widget_id: u64 = 1; // FIXME [MODULARITY]: Add this to control initial widget
 
     let current_widget_selected = if use_basic_mode {
         match default_widget {
@@ -177,9 +177,9 @@ pub fn build_app(
         .app_config_fields(app_config_fields)
         .current_widget_selected(current_widget_selected)
         .previous_basic_table_selected(previous_basic_table_selected)
-        .cpu_state(CpuState::init(default_time_value, cpu_state_map))
-        .mem_state(MemState::init(default_time_value, mem_state_map))
-        .net_state(NetState::init(default_time_value, net_state_map))
+        .cpu_state(CpuState::init(cpu_state_map))
+        .mem_state(MemState::init(mem_state_map))
+        .net_state(NetState::init(net_state_map))
         .proc_state(ProcState::init(proc_state_map))
         .disk_state(DiskState::init(disk_state_map))
         .temp_state(TempState::init(temp_state_map))
@@ -201,7 +201,7 @@ pub fn get_widget_layout(config: &Config) -> error::Result<BottomLayout> {
         }
     } else {
         // Populate with a default.
-        BottomLayout::default()
+        BottomLayout::init_default()
     };
 
     if config.row.is_some() {

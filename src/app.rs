@@ -259,7 +259,7 @@ impl ProcWidgetState {
         self.process_search_state.search_state.char_cursor_position
     }
 
-    pub fn is_searching(&self) -> bool {
+    pub fn is_search_enabled(&self) -> bool {
         self.process_search_state.search_state.is_enabled
     }
 
@@ -372,15 +372,13 @@ impl NetWidgetState {
 }
 
 pub struct NetState {
-    pub longest_display_time: u64,
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, NetWidgetState>,
 }
 
 impl NetState {
-    pub fn init(longest_display_time: u64, widget_states: HashMap<u64, NetWidgetState>) -> Self {
+    pub fn init(widget_states: HashMap<u64, NetWidgetState>) -> Self {
         NetState {
-            longest_display_time,
             force_update: None,
             widget_states,
         }
@@ -412,16 +410,14 @@ impl CpuWidgetState {
 }
 
 pub struct CpuState {
-    pub longest_display_time: u64,
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, CpuWidgetState>,
     pub num_cpus_total: usize,
 }
 
 impl CpuState {
-    pub fn init(longest_display_time: u64, widget_states: HashMap<u64, CpuWidgetState>) -> Self {
+    pub fn init(widget_states: HashMap<u64, CpuWidgetState>) -> Self {
         CpuState {
-            longest_display_time,
             force_update: None,
             widget_states,
             num_cpus_total: 0,
@@ -444,15 +440,13 @@ impl MemWidgetState {
 }
 
 pub struct MemState {
-    pub longest_display_time: u64,
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, MemWidgetState>,
 }
 
 impl MemState {
-    pub fn init(longest_display_time: u64, widget_states: HashMap<u64, MemWidgetState>) -> Self {
+    pub fn init(widget_states: HashMap<u64, MemWidgetState>) -> Self {
         MemState {
-            longest_display_time,
             force_update: None,
             widget_states,
         }
@@ -614,7 +608,6 @@ impl App {
             self.dd_err = None;
         } else if self.is_filtering_or_searching() {
             match self.current_widget.widget_type {
-                // This may be missing logic for CpuLegend and Search...
                 BottomWidgetType::Cpu => {
                     if let Some(cpu_widget_state) = self
                         .cpu_state
@@ -638,16 +631,12 @@ impl App {
                         .widget_states
                         .get_mut(&self.current_widget.widget_id)
                     {
-                        if current_proc_state
-                            .process_search_state
-                            .search_state
-                            .is_enabled
-                        {
-                            self.current_widget_selected = WidgetPosition::Process;
+                        if current_proc_state.is_search_enabled() {
                             current_proc_state
                                 .process_search_state
                                 .search_state
                                 .is_enabled = false;
+                            current_proc_state.is_on_search = false;
                         }
                     }
                 }
@@ -664,6 +653,18 @@ impl App {
                     _ => self.current_widget_selected,
                 }
             }
+        }
+    }
+
+    pub fn is_in_search_widget(&self) -> bool {
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .widget_states
+            .get(&self.current_widget.widget_id)
+        {
+            proc_widget_state.is_on_search
+        } else {
+            false
         }
     }
 
@@ -778,7 +779,7 @@ impl App {
     pub fn on_slash(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
-                // FIXME: BASIC
+                // FIXME: BASIC ON SLASH
                 // WidgetPosition::BasicCpu if self.is_expanded => {
                 //     self.current_widget_selected = WidgetPosition::Cpu;
                 //     self.cpu_state.is_showing_tray = true;
@@ -812,14 +813,6 @@ impl App {
                 }
                 _ => {}
             }
-        }
-    }
-
-    pub fn is_in_search_widget(&self) -> bool {
-        if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-            true
-        } else {
-            false
         }
     }
 
@@ -867,11 +860,13 @@ impl App {
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            proc_widget_state
-                .process_search_state
-                .search_toggle_ignore_case();
-            proc_widget_state.update_regex();
-            self.proc_state.force_update = Some(self.current_widget.widget_id);
+            if proc_widget_state.is_on_search && proc_widget_state.is_search_enabled() {
+                proc_widget_state
+                    .process_search_state
+                    .search_toggle_ignore_case();
+                proc_widget_state.update_regex();
+                self.proc_state.force_update = Some(self.current_widget.widget_id);
+            }
         }
     }
 
@@ -881,11 +876,13 @@ impl App {
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            proc_widget_state
-                .process_search_state
-                .search_toggle_whole_word();
-            proc_widget_state.update_regex();
-            self.proc_state.force_update = Some(self.current_widget.widget_id);
+            if proc_widget_state.is_on_search && proc_widget_state.is_search_enabled() {
+                proc_widget_state
+                    .process_search_state
+                    .search_toggle_whole_word();
+                proc_widget_state.update_regex();
+                self.proc_state.force_update = Some(self.current_widget.widget_id);
+            }
         }
     }
 
@@ -895,9 +892,11 @@ impl App {
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            proc_widget_state.process_search_state.search_toggle_regex();
-            proc_widget_state.update_regex();
-            self.proc_state.force_update = Some(self.current_widget.widget_id);
+            if proc_widget_state.is_on_search && proc_widget_state.is_search_enabled() {
+                proc_widget_state.process_search_state.search_toggle_regex();
+                proc_widget_state.update_regex();
+                self.proc_state.force_update = Some(self.current_widget.widget_id);
+            }
         }
     }
 
@@ -924,8 +923,19 @@ impl App {
         } else if !self.is_in_dialog() {
             // Pop-out mode.  We ignore if in process search.
 
-            match self.current_widget_selected {
-                WidgetPosition::ProcessSearch => {}
+            match self.current_widget.widget_type {
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get(&self.current_widget.widget_id)
+                    {
+                        if !proc_widget_state.is_on_search {
+                            self.is_expanded = true;
+                            self.is_resized = true;
+                        }
+                    }
+                }
                 _ => {
                     self.is_expanded = true;
                     self.is_resized = true;
@@ -1302,7 +1312,7 @@ impl App {
                     .get_mut(&self.current_widget.widget_id)
                 {
                     if proc_widget_state.is_on_search
-                        && proc_widget_state.is_searching()
+                        && proc_widget_state.is_search_enabled()
                         && UnicodeWidthStr::width(
                             proc_widget_state
                                 .process_search_state
@@ -1344,122 +1354,116 @@ impl App {
                             .process_search_state
                             .search_state
                             .cursor_direction = CursorDirection::RIGHT;
+
+                        return;
                     }
                 }
-            } else {
-                match caught_char {
-                    '/' => {
-                        self.on_slash();
-                    }
-                    'd' => {
-                        if let WidgetPosition::Process = self.current_widget_selected {
-                            let mut is_first_d = true;
-                            if let Some(second_char) = self.second_char {
-                                if self.awaiting_second_char && second_char == 'd' {
-                                    is_first_d = false;
-                                    self.awaiting_second_char = false;
-                                    self.second_char = None;
+            }
+            self.handle_char(caught_char);
+        } else if self.help_dialog_state.is_showing_help {
+            match caught_char {
+                '1' => self.help_dialog_state.current_category = AppHelpCategory::General,
+                '2' => self.help_dialog_state.current_category = AppHelpCategory::Process,
+                '3' => self.help_dialog_state.current_category = AppHelpCategory::Search,
+                _ => {}
+            }
+        }
+    }
 
-                                    self.start_dd();
-                                }
-                            }
+    fn handle_char(&mut self, caught_char: char) {
+        match caught_char {
+            '/' => {
+                self.on_slash();
+            }
+            'd' => {
+                if let WidgetPosition::Process = self.current_widget_selected {
+                    let mut is_first_d = true;
+                    if let Some(second_char) = self.second_char {
+                        if self.awaiting_second_char && second_char == 'd' {
+                            is_first_d = false;
+                            self.awaiting_second_char = false;
+                            self.second_char = None;
 
-                            if is_first_d {
-                                self.awaiting_second_char = true;
-                                self.second_char = Some('d');
-                            }
+                            self.start_dd();
                         }
                     }
-                    'g' => {
-                        let mut is_first_g = true;
-                        if let Some(second_char) = self.second_char {
-                            if self.awaiting_second_char && second_char == 'g' {
-                                is_first_g = false;
-                                self.awaiting_second_char = false;
-                                self.second_char = None;
-                                self.skip_to_first();
-                            }
-                        }
 
-                        if is_first_g {
-                            self.awaiting_second_char = true;
-                            self.second_char = Some('g');
+                    if is_first_d {
+                        self.awaiting_second_char = true;
+                        self.second_char = Some('d');
+                    }
+                }
+            }
+            'g' => {
+                let mut is_first_g = true;
+                if let Some(second_char) = self.second_char {
+                    if self.awaiting_second_char && second_char == 'g' {
+                        is_first_g = false;
+                        self.awaiting_second_char = false;
+                        self.second_char = None;
+                        self.skip_to_first();
+                    }
+                }
+
+                if is_first_g {
+                    self.awaiting_second_char = true;
+                    self.second_char = Some('g');
+                }
+            }
+            'G' => self.skip_to_last(),
+            'k' => self.decrement_position_count(),
+            'j' => self.increment_position_count(),
+            'f' => {
+                self.is_frozen = !self.is_frozen;
+                if self.is_frozen {
+                    self.data_collection.set_frozen_time();
+                }
+            }
+            'c' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    match self.process_sorting_type {
+                        processes::ProcessSorting::CPU => {
+                            self.process_sorting_reverse = !self.process_sorting_reverse
+                        }
+                        _ => {
+                            self.process_sorting_type = processes::ProcessSorting::CPU;
+                            self.process_sorting_reverse = true;
                         }
                     }
-                    'G' => self.skip_to_last(),
-                    'k' => self.decrement_position_count(),
-                    'j' => self.increment_position_count(),
-                    'f' => {
-                        self.is_frozen = !self.is_frozen;
-                        if self.is_frozen {
-                            self.data_collection.set_frozen_time();
+                    self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    self.skip_to_first();
+                }
+            }
+            'm' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    match self.process_sorting_type {
+                        processes::ProcessSorting::MEM => {
+                            self.process_sorting_reverse = !self.process_sorting_reverse
+                        }
+                        _ => {
+                            self.process_sorting_type = processes::ProcessSorting::MEM;
+                            self.process_sorting_reverse = true;
                         }
                     }
-                    'c' => {
-                        if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    self.skip_to_first();
+                }
+            }
+            'p' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get(&self.current_widget.widget_id)
+                    {
+                        // Skip if grouped
+                        if !proc_widget_state.is_grouped {
                             match self.process_sorting_type {
-                                processes::ProcessSorting::CPU => {
+                                processes::ProcessSorting::PID => {
                                     self.process_sorting_reverse = !self.process_sorting_reverse
                                 }
                                 _ => {
-                                    self.process_sorting_type = processes::ProcessSorting::CPU;
-                                    self.process_sorting_reverse = true;
-                                }
-                            }
-                            self.proc_state.force_update = Some(self.current_widget.widget_id);
-                            self.skip_to_first();
-                        }
-                    }
-                    'm' => {
-                        if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                            match self.process_sorting_type {
-                                processes::ProcessSorting::MEM => {
-                                    self.process_sorting_reverse = !self.process_sorting_reverse
-                                }
-                                _ => {
-                                    self.process_sorting_type = processes::ProcessSorting::MEM;
-                                    self.process_sorting_reverse = true;
-                                }
-                            }
-                            self.proc_state.force_update = Some(self.current_widget.widget_id);
-                            self.skip_to_first();
-                        }
-                    }
-                    'p' => {
-                        if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                            if let Some(proc_widget_state) = self
-                                .proc_state
-                                .widget_states
-                                .get(&self.current_widget.widget_id)
-                            {
-                                // Skip if grouped
-                                if !proc_widget_state.is_grouped {
-                                    match self.process_sorting_type {
-                                        processes::ProcessSorting::PID => {
-                                            self.process_sorting_reverse =
-                                                !self.process_sorting_reverse
-                                        }
-                                        _ => {
-                                            self.process_sorting_type =
-                                                processes::ProcessSorting::PID;
-                                            self.process_sorting_reverse = false;
-                                        }
-                                    }
-                                    self.proc_state.force_update =
-                                        Some(self.current_widget.widget_id);
-                                    self.skip_to_first();
-                                }
-                            }
-                        }
-                    }
-                    'n' => {
-                        if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                            match self.process_sorting_type {
-                                processes::ProcessSorting::NAME => {
-                                    self.process_sorting_reverse = !self.process_sorting_reverse
-                                }
-                                _ => {
-                                    self.process_sorting_type = processes::ProcessSorting::NAME;
+                                    self.process_sorting_type = processes::ProcessSorting::PID;
                                     self.process_sorting_reverse = false;
                                 }
                             }
@@ -1467,32 +1471,40 @@ impl App {
                             self.skip_to_first();
                         }
                     }
-                    '?' => {
-                        self.help_dialog_state.is_showing_help = true;
-                    }
-                    'H' => self.move_widget_selection_left(),
-                    'L' => self.move_widget_selection_right(),
-                    'K' => self.move_widget_selection_up(),
-                    'J' => self.move_widget_selection_down(),
-                    ' ' => self.on_space(),
-                    '+' => self.zoom_in(),
-                    '-' => self.zoom_out(),
-                    '=' => self.reset_zoom(),
-                    _ => {}
-                }
-
-                if let Some(second_char) = self.second_char {
-                    if self.awaiting_second_char && caught_char != second_char {
-                        self.awaiting_second_char = false;
-                    }
                 }
             }
-        } else if self.help_dialog_state.is_showing_help {
-            match caught_char {
-                '1' => self.help_dialog_state.current_category = AppHelpCategory::General,
-                '2' => self.help_dialog_state.current_category = AppHelpCategory::Process,
-                '3' => self.help_dialog_state.current_category = AppHelpCategory::Search,
-                _ => {}
+            'n' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    match self.process_sorting_type {
+                        processes::ProcessSorting::NAME => {
+                            self.process_sorting_reverse = !self.process_sorting_reverse
+                        }
+                        _ => {
+                            self.process_sorting_type = processes::ProcessSorting::NAME;
+                            self.process_sorting_reverse = false;
+                        }
+                    }
+                    self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    self.skip_to_first();
+                }
+            }
+            '?' => {
+                self.help_dialog_state.is_showing_help = true;
+            }
+            'H' => self.move_widget_selection_left(),
+            'L' => self.move_widget_selection_right(),
+            'K' => self.move_widget_selection_up(),
+            'J' => self.move_widget_selection_down(),
+            ' ' => self.on_space(),
+            '+' => self.zoom_in(),
+            '-' => self.zoom_out(),
+            '=' => self.reset_zoom(),
+            _ => {}
+        }
+
+        if let Some(second_char) = self.second_char {
+            if self.awaiting_second_char && caught_char != second_char {
+                self.awaiting_second_char = false;
             }
         }
     }
@@ -1517,14 +1529,31 @@ impl App {
     pub fn move_widget_selection_left(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::BasicNet => WidgetPosition::BasicMem,
-                    WidgetPosition::Process => WidgetPosition::Disk,
-                    WidgetPosition::ProcessSearch => WidgetPosition::Disk,
-                    WidgetPosition::Disk => WidgetPosition::Temp,
-                    WidgetPosition::Temp => WidgetPosition::Process,
-                    _ => self.current_widget_selected,
-                };
+                // FIXME: Basic movement
+            } else if let BottomWidgetType::Cpu = self.current_widget.widget_type {
+                if let Some(cpu_widget_state) = self
+                    .cpu_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    if !self.app_config_fields.left_legend && cpu_widget_state.is_on_tray {
+                        cpu_widget_state.is_on_tray = false;
+                        self.reset_multi_tap_keys();
+                        return;
+                    } else if self.app_config_fields.left_legend && !cpu_widget_state.is_on_tray {
+                        cpu_widget_state.is_on_tray = true;
+                        self.reset_multi_tap_keys();
+                        return;
+                    }
+                }
+
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.down_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+                }
             } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
             {
                 if let Some(new_widget_id) = current_widget.left_neighbour {
@@ -1534,15 +1563,7 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            self.current_widget_selected = match self.current_widget_selected {
-                WidgetPosition::Cpu if self.app_config_fields.left_legend => {
-                    WidgetPosition::CpuLegend
-                }
-                WidgetPosition::CpuLegend if !self.app_config_fields.left_legend => {
-                    WidgetPosition::Cpu
-                }
-                _ => self.current_widget_selected,
-            }
+            // FIXME: Expanded movement logic
         }
 
         self.reset_multi_tap_keys();
@@ -1551,14 +1572,31 @@ impl App {
     pub fn move_widget_selection_right(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::BasicMem => WidgetPosition::BasicNet,
-                    WidgetPosition::Process => WidgetPosition::Temp,
-                    WidgetPosition::ProcessSearch => WidgetPosition::Temp,
-                    WidgetPosition::Disk => WidgetPosition::Process,
-                    WidgetPosition::Temp => WidgetPosition::Disk,
-                    _ => self.current_widget_selected,
-                };
+                // FIXME: Basic movement
+            } else if let BottomWidgetType::Cpu = self.current_widget.widget_type {
+                if let Some(cpu_widget_state) = self
+                    .cpu_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    if self.app_config_fields.left_legend && cpu_widget_state.is_on_tray {
+                        cpu_widget_state.is_on_tray = false;
+                        self.reset_multi_tap_keys();
+                        return;
+                    } else if !self.app_config_fields.left_legend && !cpu_widget_state.is_on_tray {
+                        cpu_widget_state.is_on_tray = true;
+                        self.reset_multi_tap_keys();
+                        return;
+                    }
+                }
+
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.down_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+                }
             } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
             {
                 if let Some(new_widget_id) = current_widget.right_neighbour {
@@ -1568,15 +1606,7 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            self.current_widget_selected = match self.current_widget_selected {
-                WidgetPosition::Cpu if !self.app_config_fields.left_legend => {
-                    WidgetPosition::CpuLegend
-                }
-                WidgetPosition::CpuLegend if self.app_config_fields.left_legend => {
-                    WidgetPosition::Cpu
-                }
-                _ => self.current_widget_selected,
-            }
+            // FIXME: Expanded movement logic
         }
 
         self.reset_multi_tap_keys();
@@ -1585,18 +1615,27 @@ impl App {
     pub fn move_widget_selection_up(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
-                if self.current_widget_selected.is_widget_table() {
-                    self.previous_basic_table_selected = self.current_widget_selected;
+                // FIXME: Basic movement
+            } else if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    if proc_widget_state.is_on_search {
+                        proc_widget_state.is_on_search = false;
+                        self.reset_multi_tap_keys();
+                        return;
+                    }
                 }
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::BasicMem => WidgetPosition::BasicCpu,
-                    WidgetPosition::BasicNet => WidgetPosition::BasicCpu,
-                    WidgetPosition::Process => WidgetPosition::BasicMem,
-                    WidgetPosition::ProcessSearch => WidgetPosition::Process,
-                    WidgetPosition::Temp => WidgetPosition::BasicMem,
-                    WidgetPosition::Disk => WidgetPosition::BasicMem,
-                    _ => self.current_widget_selected,
-                };
+
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.up_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+                }
             } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
             {
                 if let Some(new_widget_id) = current_widget.up_neighbour {
@@ -1606,10 +1645,7 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            self.current_widget_selected = match self.current_widget_selected {
-                WidgetPosition::ProcessSearch => WidgetPosition::Process,
-                _ => self.current_widget_selected,
-            };
+            // FIXME: Expanded movement logic
         }
 
         self.reset_multi_tap_keys();
@@ -1618,19 +1654,27 @@ impl App {
     pub fn move_widget_selection_down(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
-                // self.current_widget_selected = match self.current_widget_selected {
-                //     WidgetPosition::BasicMem => self.previous_basic_table_selected,
-                //     WidgetPosition::BasicNet => self.previous_basic_table_selected,
-                //     WidgetPosition::BasicCpu => WidgetPosition::BasicMem,
-                //     WidgetPosition::Process => {
-                //         if self.is_searching() {
-                //             WidgetPosition::ProcessSearch
-                //         } else {
-                //             WidgetPosition::Process
-                //         }
-                //     }
-                //     _ => self.current_widget_selected,
-                // };
+                // FIXME: Basic movement
+            } else if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    if !proc_widget_state.is_on_search {
+                        proc_widget_state.is_on_search = true;
+                        self.reset_multi_tap_keys();
+                        return;
+                    }
+                }
+
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.down_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+                }
             } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
             {
                 if let Some(new_widget_id) = current_widget.down_neighbour {
@@ -1640,17 +1684,7 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    if proc_widget_state.is_searching() {
-                        proc_widget_state.is_on_search = true;
-                    }
-                }
-            }
+            // FIXME: Expanded movement logic
         }
 
         self.reset_multi_tap_keys();
@@ -1708,6 +1742,7 @@ impl App {
         }
     }
 
+    // FIXME: If you go from CPU to CPU Legend then to another widget, then back it selects CPU LEGEND!
     pub fn skip_to_last(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
@@ -1780,11 +1815,11 @@ impl App {
 
     pub fn decrement_position_count(&mut self) {
         if !self.is_in_dialog() {
-            match self.current_widget_selected {
-                WidgetPosition::Process => self.change_process_position(-1),
-                WidgetPosition::Temp => self.change_temp_position(-1),
-                WidgetPosition::Disk => self.change_disk_position(-1),
-                WidgetPosition::CpuLegend => self.change_cpu_table_position(-1),
+            match self.current_widget.widget_type {
+                BottomWidgetType::Proc => self.change_process_position(-1),
+                BottomWidgetType::Temp => self.change_temp_position(-1),
+                BottomWidgetType::Disk => self.change_disk_position(-1),
+                BottomWidgetType::Cpu => self.change_cpu_table_position(-1),
                 _ => {}
             }
             self.reset_multi_tap_keys();
@@ -1793,11 +1828,11 @@ impl App {
 
     pub fn increment_position_count(&mut self) {
         if !self.is_in_dialog() {
-            match self.current_widget_selected {
-                WidgetPosition::Process => self.change_process_position(1),
-                WidgetPosition::Temp => self.change_temp_position(1),
-                WidgetPosition::Disk => self.change_disk_position(1),
-                WidgetPosition::CpuLegend => self.change_cpu_table_position(1),
+            match self.current_widget.widget_type {
+                BottomWidgetType::Proc => self.change_process_position(1),
+                BottomWidgetType::Temp => self.change_temp_position(1),
+                BottomWidgetType::Disk => self.change_disk_position(1),
+                BottomWidgetType::Cpu => self.change_cpu_table_position(1),
                 _ => {}
             }
             self.reset_multi_tap_keys();
@@ -1811,25 +1846,27 @@ impl App {
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            let current_posn = cpu_widget_state.scroll_state.current_scroll_position;
+            if cpu_widget_state.is_on_tray {
+                let current_posn = cpu_widget_state.scroll_state.current_scroll_position;
 
-            let cap = if is_filtering_or_searching {
-                self.canvas_data.cpu_data.len()
-            } else {
-                cpu_widget_state.num_cpus_shown
-            };
+                let cap = if is_filtering_or_searching {
+                    self.canvas_data.cpu_data.len()
+                } else {
+                    cpu_widget_state.num_cpus_shown
+                };
 
-            if current_posn as i64 + num_to_change_by >= 0
-                && current_posn as i64 + num_to_change_by < cap as i64
-            {
-                cpu_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as u64;
-            }
+                if current_posn as i64 + num_to_change_by >= 0
+                    && current_posn as i64 + num_to_change_by < cap as i64
+                {
+                    cpu_widget_state.scroll_state.current_scroll_position =
+                        (current_posn as i64 + num_to_change_by) as u64;
+                }
 
-            if num_to_change_by < 0 {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
-            } else {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                if num_to_change_by < 0 {
+                    cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                } else {
+                    cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                }
             }
         }
     }
@@ -1906,24 +1943,24 @@ impl App {
     }
 
     pub fn handle_scroll_up(&mut self) {
-        if self.current_widget_selected.is_widget_graph() {
+        if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_in();
-        } else if self.current_widget_selected.is_widget_table() {
+        } else if self.current_widget.widget_type.is_widget_table() {
             self.decrement_position_count();
         }
     }
 
     pub fn handle_scroll_down(&mut self) {
-        if self.current_widget_selected.is_widget_graph() {
+        if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_out();
-        } else if self.current_widget_selected.is_widget_table() {
+        } else if self.current_widget.widget_type.is_widget_table() {
             self.increment_position_count();
         }
     }
 
     fn zoom_out(&mut self) {
-        match self.current_widget_selected {
-            WidgetPosition::Cpu => {
+        match self.current_widget.widget_type {
+            BottomWidgetType::Cpu => {
                 if let Some(cpu_widget_state) = self
                     .cpu_state
                     .widget_states
@@ -1948,7 +1985,7 @@ impl App {
                     }
                 }
             }
-            WidgetPosition::Mem => {
+            BottomWidgetType::Mem => {
                 if let Some(mem_widget_state) = self
                     .mem_state
                     .widget_states
@@ -1973,7 +2010,7 @@ impl App {
                     }
                 }
             }
-            WidgetPosition::Network => {
+            BottomWidgetType::Net => {
                 if let Some(net_widget_state) = self
                     .net_state
                     .widget_states

@@ -49,14 +49,14 @@ impl CpuGraphWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if draw_loc.width < 35 {
-            // FIXME: We may have to move if we are currently selecting the legend...
-
-            // if current selected is legend
-            // if app_state.app_config_fields.left_legend {
-            //     // Move right to chart
-            // } else {
-            //     // Move left to chart
-            // }
+            if let Some(cpu_widget_state) = app_state
+                .cpu_state
+                .widget_states
+                .get_mut(&app_state.current_widget.widget_id)
+            {
+                cpu_widget_state.is_on_tray = false;
+                cpu_widget_state.is_showing_tray = false;
+            }
 
             self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
         } else {
@@ -99,23 +99,23 @@ impl CpuGraphWidget for Painter {
                 || (app_state.app_config_fields.autohide_time
                     && cpu_widget_state.autohide_timer.is_none())
             {
-                Axis::default().bounds([0.0, cpu_widget_state.current_display_time as f64])
+                Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
             } else if let Some(time) = cpu_widget_state.autohide_timer {
                 if std::time::Instant::now().duration_since(time).as_millis()
                     < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
                 {
                     Axis::default()
-                        .bounds([0.0, cpu_widget_state.current_display_time as f64])
+                        .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
                         .labels_style(self.colours.graph_style)
                         .labels(&display_time_labels)
                 } else {
                     cpu_widget_state.autohide_timer = None;
-                    Axis::default().bounds([0.0, cpu_widget_state.current_display_time as f64])
+                    Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                 }
             } else {
                 Axis::default()
-                    .bounds([0.0, cpu_widget_state.current_display_time as f64])
+                    .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
                     .labels_style(self.colours.graph_style)
                     .labels(&display_time_labels)

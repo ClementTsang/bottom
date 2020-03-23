@@ -51,7 +51,6 @@ pub struct DisplayableData {
     pub cpu_data: Vec<ConvertedCpuData>,
 }
 
-#[derive(Default)]
 /// Handles the canvas' state.  TODO: [OPT] implement this.
 pub struct Painter {
     pub colours: CanvasColours,
@@ -69,9 +68,57 @@ pub struct Painter {
 }
 
 impl Painter {
+    pub fn init(widget_layout: BottomLayout) -> Self {
+        // Now for modularity; we have to also initialize the base layouts!
+        // We want to do this ONCE and reuse; after this we can just construct
+        // based on the console size.
+
+        let mut row_constraints = Vec::new();
+        let mut col_constraints = Vec::new();
+        let mut widget_constraints = Vec::new();
+
+        widget_layout.rows.iter().for_each(|row| {
+            row_constraints.push(Constraint::Ratio(
+                row.row_ratio,
+                widget_layout.total_height_ratio,
+            ));
+
+            let mut new_col_constraints = Vec::new();
+            let mut new_widget_constraints = Vec::new();
+            row.children.iter().for_each(|col| {
+                new_col_constraints.push(Constraint::Ratio(col.width_ratio, row.total_col_ratio));
+
+                let mut new_new_widget_constraints = Vec::new();
+                col.children.iter().for_each(|widget| {
+                    new_new_widget_constraints.push(Constraint::Ratio(
+                        widget.height_ratio,
+                        col.total_widget_ratio,
+                    ));
+                });
+                new_widget_constraints.push(new_new_widget_constraints);
+            });
+            widget_constraints.push(new_widget_constraints);
+            col_constraints.push(new_col_constraints);
+        });
+
+        Painter {
+            colours: CanvasColours::default(),
+            height: 0,
+            width: 0,
+            styled_general_help_text: Vec::new(),
+            styled_process_help_text: Vec::new(),
+            styled_search_help_text: Vec::new(),
+            is_mac_os: false,
+            row_constraints,
+            col_constraints,
+            widget_constraints,
+            widget_layout,
+        }
+    }
+
     /// Must be run once before drawing, but after setting colours.
     /// This is to set some remaining styles and text.
-    pub fn initialize(&mut self, widget_layout: BottomLayout) {
+    pub fn complete_painter_init(&mut self) {
         self.is_mac_os = cfg!(target_os = "macos");
 
         if GENERAL_HELP_TEXT.len() > 1 {
@@ -112,40 +159,6 @@ impl Painter {
                     .collect::<Vec<_>>(),
             );
         }
-
-        // Now for modularity; we have to also initialize the base layouts!
-        // We want to do this ONCE and reuse; after this we can just construct
-        // based on the console size.
-
-        self.row_constraints = Vec::new();
-        self.col_constraints = Vec::new();
-        self.widget_constraints = Vec::new();
-
-        widget_layout.rows.iter().for_each(|row| {
-            self.row_constraints.push(Constraint::Ratio(
-                row.row_ratio,
-                self.widget_layout.total_height_ratio,
-            ));
-
-            let mut new_col_constraints = Vec::new();
-            let mut new_widget_constraints = Vec::new();
-            row.children.iter().for_each(|col| {
-                new_col_constraints.push(Constraint::Ratio(col.width_ratio, row.total_col_ratio));
-
-                let mut new_new_widget_constraints = Vec::new();
-                col.children.iter().for_each(|widget| {
-                    new_new_widget_constraints.push(Constraint::Ratio(
-                        widget.height_ratio,
-                        col.total_widget_ratio,
-                    ));
-                });
-                new_widget_constraints.push(new_new_widget_constraints);
-            });
-            self.widget_constraints.push(new_widget_constraints);
-            self.col_constraints.push(new_col_constraints);
-        });
-
-        self.widget_layout = widget_layout;
     }
 
     // pub fn draw_specific_table<B: Backend>(
@@ -265,7 +278,7 @@ impl Painter {
                         self.draw_dd_dialog(&mut f, app_state, middle_dialog_chunk[1]);
                 }
             } else if app_state.is_expanded {
-                // FIXME
+                // FIXME: Expanded canvas logic
                 // let rect = Layout::default()
                 //     .margin(1)
                 //     .constraints([Constraint::Percentage(100)].as_ref())
@@ -347,7 +360,7 @@ impl Painter {
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.
                 let row_draw_locs = Layout::default()
-                    .margin(1)
+                    .margin(0)
                     .constraints(self.row_constraints.as_ref())
                     .direction(Direction::Vertical)
                     .split(f.size());

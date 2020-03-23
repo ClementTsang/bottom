@@ -46,7 +46,7 @@ impl ProcessTableWidget for Painter {
     ) {
         if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
             let search_width = if draw_border { 5 } else { 3 };
-            if process_widget_state.is_searching() {
+            if process_widget_state.is_search_enabled() {
                 let processes_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([Constraint::Min(0), Constraint::Length(search_width)].as_ref())

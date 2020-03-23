@@ -182,16 +182,14 @@ impl BottomLayout {
             }
         }
     }
-}
 
-impl Default for BottomLayout {
-    fn default() -> Self {
+    pub fn init_default() -> Self {
         BottomLayout {
-            total_height_ratio: 10,
+            total_height_ratio: 100,
             rows: vec![
                 BottomRow {
                     total_col_ratio: 1,
-                    row_ratio: 3,
+                    row_ratio: 30,
                     children: vec![BottomCol {
                         total_widget_ratio: 1,
                         width_ratio: 1,
@@ -208,7 +206,7 @@ impl Default for BottomLayout {
                 },
                 BottomRow {
                     total_col_ratio: 7,
-                    row_ratio: 4,
+                    row_ratio: 40,
                     children: vec![
                         BottomCol {
                             total_widget_ratio: 1,
@@ -233,7 +231,7 @@ impl Default for BottomLayout {
                                     widget_id: 12,
                                     left_neighbour: Some(11),
                                     right_neighbour: None,
-                                    up_neighbour: Some(2),
+                                    up_neighbour: Some(1),
                                     down_neighbour: Some(13),
                                 },
                                 BottomWidget {
@@ -251,7 +249,7 @@ impl Default for BottomLayout {
                 },
                 BottomRow {
                     total_col_ratio: 2,
-                    row_ratio: 3,
+                    row_ratio: 30,
                     children: vec![
                         BottomCol {
                             total_widget_ratio: 1,
@@ -328,6 +326,22 @@ pub enum BottomWidgetType {
 }
 
 impl BottomWidgetType {
+    pub fn is_widget_table(&self) -> bool {
+        use BottomWidgetType::*;
+        match self {
+            Disk | Proc | Temp => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_widget_graph(&self) -> bool {
+        use BottomWidgetType::*;
+        match self {
+            Cpu | Net | Mem => true,
+            _ => false,
+        }
+    }
+
     pub fn get_pretty_name(&self) -> &str {
         use BottomWidgetType::*;
         match self {
