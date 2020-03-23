@@ -43,7 +43,7 @@ pub struct DisplayableData {
     // Not the final value
     pub grouped_process_data: Vec<ConvertedProcessData>,
     // What's actually displayed
-    pub finalized_process_data: Vec<ConvertedProcessData>,
+    pub finalized_process_data: HashMap<u64, Vec<ConvertedProcessData>>,
     pub mem_label: String,
     pub swap_label: String,
     pub mem_data: Vec<(f64, f64)>,
@@ -72,6 +72,8 @@ impl Painter {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
+
+        debug!("Map: {:?}", widget_layout);
 
         let mut row_constraints = Vec::new();
         let mut col_constraints = Vec::new();

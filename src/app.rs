@@ -222,6 +222,8 @@ pub struct ProcWidgetState {
     pub is_grouped: bool,
     pub is_on_search: bool,
     pub scroll_state: AppScrollWidgetState,
+    pub process_sorting_type: processes::ProcessSorting,
+    pub process_sorting_reverse: bool,
 }
 
 impl ProcWidgetState {
@@ -245,6 +247,8 @@ impl ProcWidgetState {
             is_grouped,
             is_on_search: false,
             scroll_state: AppScrollWidgetState::default(),
+            process_sorting_type: processes::ProcessSorting::CPU,
+            process_sorting_reverse: true,
         }
     }
 
@@ -499,12 +503,6 @@ impl DiskState {
 
 #[derive(TypedBuilder)]
 pub struct App {
-    #[builder(default=processes::ProcessSorting::CPU, setter(skip))]
-    pub process_sorting_type: processes::ProcessSorting,
-
-    #[builder(default = true, setter(skip))]
-    pub process_sorting_reverse: bool,
-
     #[builder(default = false, setter(skip))]
     awaiting_second_char: bool,
 
@@ -737,12 +735,8 @@ impl App {
 
     /// I don't like this, but removing it causes a bunch of breakage.
     /// Use ``proc_widget_state.is_grouped`` if possible!
-    pub fn is_grouped(&self) -> bool {
-        if let Some(proc_widget_state) = self
-            .proc_state
-            .widget_states
-            .get(&self.current_widget.widget_id)
-        {
+    pub fn is_grouped(&self, widget_id: u64) -> bool {
+        if let Some(proc_widget_state) = self.proc_state.widget_states.get(&widget_id) {
             proc_widget_state.is_grouped
         } else {
             false
@@ -1053,13 +1047,9 @@ impl App {
     }
 
     pub fn get_current_regex_matcher(
-        &self,
+        &self, widget_id: u64,
     ) -> &Option<std::result::Result<regex::Regex, regex::Error>> {
-        match self
-            .proc_state
-            .widget_states
-            .get(&self.current_widget.widget_id)
-        {
+        match self.proc_state.widget_states.get(&widget_id) {
             Some(proc_widget_state) => {
                 &proc_widget_state
                     .process_search_state
@@ -1254,35 +1244,41 @@ impl App {
             .widget_states
             .get(&self.current_widget.widget_id)
         {
-            if proc_widget_state.scroll_state.current_scroll_position
-                < self.canvas_data.finalized_process_data.len() as u64
+            if let Some(corresponding_filtered_process_list) = self
+                .canvas_data
+                .finalized_process_data
+                .get(&self.current_widget.widget_id)
             {
-                let current_process = if self.is_grouped() {
-                    let group_pids = &self.canvas_data.finalized_process_data
-                        [proc_widget_state.scroll_state.current_scroll_position as usize]
-                        .group_pids;
+                if proc_widget_state.scroll_state.current_scroll_position
+                    < self.canvas_data.finalized_process_data.len() as u64
+                {
+                    let current_process = if self.is_grouped(self.current_widget.widget_id) {
+                        let group_pids = &corresponding_filtered_process_list
+                            [proc_widget_state.scroll_state.current_scroll_position as usize]
+                            .group_pids;
 
-                    let mut ret = ("".to_string(), group_pids.clone());
+                        let mut ret = ("".to_string(), group_pids.clone());
 
-                    for pid in group_pids {
-                        if let Some(process) = self.canvas_data.process_data.get(&pid) {
-                            ret.0 = process.name.clone();
-                            break;
+                        for pid in group_pids {
+                            if let Some(process) = self.canvas_data.process_data.get(&pid) {
+                                ret.0 = process.name.clone();
+                                break;
+                            }
                         }
-                    }
-                    ret
-                } else {
-                    let process = self.canvas_data.finalized_process_data
-                        [proc_widget_state.scroll_state.current_scroll_position as usize]
-                        .clone();
-                    (process.name.clone(), vec![process.pid])
-                };
+                        ret
+                    } else {
+                        let process = corresponding_filtered_process_list
+                            [proc_widget_state.scroll_state.current_scroll_position as usize]
+                            .clone();
+                        (process.name.clone(), vec![process.pid])
+                    };
 
-                self.to_delete_process_list = Some(current_process);
-                self.delete_dialog_state.is_showing_dd = true;
+                    self.to_delete_process_list = Some(current_process);
+                    self.delete_dialog_state.is_showing_dd = true;
+                }
+
+                self.reset_multi_tap_keys();
             }
-
-            self.reset_multi_tap_keys();
         }
     }
 
@@ -1421,32 +1417,49 @@ impl App {
             }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                    match self.process_sorting_type {
-                        processes::ProcessSorting::CPU => {
-                            self.process_sorting_reverse = !self.process_sorting_reverse
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        match proc_widget_state.process_sorting_type {
+                            processes::ProcessSorting::CPU => {
+                                proc_widget_state.process_sorting_reverse =
+                                    !proc_widget_state.process_sorting_reverse
+                            }
+                            _ => {
+                                proc_widget_state.process_sorting_type =
+                                    processes::ProcessSorting::CPU;
+                                proc_widget_state.process_sorting_reverse = true;
+                            }
                         }
-                        _ => {
-                            self.process_sorting_type = processes::ProcessSorting::CPU;
-                            self.process_sorting_reverse = true;
-                        }
+                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+
+                        self.skip_to_first();
                     }
-                    self.proc_state.force_update = Some(self.current_widget.widget_id);
-                    self.skip_to_first();
                 }
             }
             'm' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                    match self.process_sorting_type {
-                        processes::ProcessSorting::MEM => {
-                            self.process_sorting_reverse = !self.process_sorting_reverse
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        match proc_widget_state.process_sorting_type {
+                            processes::ProcessSorting::MEM => {
+                                proc_widget_state.process_sorting_reverse =
+                                    !proc_widget_state.process_sorting_reverse
+                            }
+                            _ => {
+                                proc_widget_state.process_sorting_type =
+                                    processes::ProcessSorting::MEM;
+                                proc_widget_state.process_sorting_reverse = true;
+                            }
                         }
-                        _ => {
-                            self.process_sorting_type = processes::ProcessSorting::MEM;
-                            self.process_sorting_reverse = true;
-                        }
+                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                        self.skip_to_first();
                     }
-                    self.proc_state.force_update = Some(self.current_widget.widget_id);
-                    self.skip_to_first();
                 }
             }
             'p' => {
@@ -1454,17 +1467,19 @@ impl App {
                     if let Some(proc_widget_state) = self
                         .proc_state
                         .widget_states
-                        .get(&self.current_widget.widget_id)
+                        .get_mut(&self.current_widget.widget_id)
                     {
                         // Skip if grouped
                         if !proc_widget_state.is_grouped {
-                            match self.process_sorting_type {
+                            match proc_widget_state.process_sorting_type {
                                 processes::ProcessSorting::PID => {
-                                    self.process_sorting_reverse = !self.process_sorting_reverse
+                                    proc_widget_state.process_sorting_reverse =
+                                        !proc_widget_state.process_sorting_reverse
                                 }
                                 _ => {
-                                    self.process_sorting_type = processes::ProcessSorting::PID;
-                                    self.process_sorting_reverse = false;
+                                    proc_widget_state.process_sorting_type =
+                                        processes::ProcessSorting::PID;
+                                    proc_widget_state.process_sorting_reverse = false;
                                 }
                             }
                             self.proc_state.force_update = Some(self.current_widget.widget_id);
@@ -1475,17 +1490,25 @@ impl App {
             }
             'n' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                    match self.process_sorting_type {
-                        processes::ProcessSorting::NAME => {
-                            self.process_sorting_reverse = !self.process_sorting_reverse
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        match proc_widget_state.process_sorting_type {
+                            processes::ProcessSorting::NAME => {
+                                proc_widget_state.process_sorting_reverse =
+                                    !proc_widget_state.process_sorting_reverse
+                            }
+                            _ => {
+                                proc_widget_state.process_sorting_type =
+                                    processes::ProcessSorting::NAME;
+                                proc_widget_state.process_sorting_reverse = false;
+                            }
                         }
-                        _ => {
-                            self.process_sorting_type = processes::ProcessSorting::NAME;
-                            self.process_sorting_reverse = false;
-                        }
+                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                        self.skip_to_first();
                     }
-                    self.proc_state.force_update = Some(self.current_widget.widget_id);
-                    self.skip_to_first();
                 }
             }
             '?' => {

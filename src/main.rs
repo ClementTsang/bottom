@@ -228,14 +228,6 @@ fn main() -> error::Result<()> {
             }
         }
 
-        // Quick fix for tab updating the table headers
-        if let data_harvester::processes::ProcessSorting::PID = &app.process_sorting_type {
-            if app.is_grouped() {
-                app.process_sorting_type = data_harvester::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
-                app.process_sorting_reverse = true;
-            }
-        }
-
         try_drawing(&mut terminal, &mut app, &mut painter)?;
     }
 
@@ -577,14 +569,14 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         None => false,
     };
 
-    let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
+    let filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped(widget_id) {
         app.canvas_data
             .grouped_process_data
             .iter()
             .filter(|process| {
                 if is_invalid_or_blank {
                     return true;
-                } else if let Some(matcher_result) = app.get_current_regex_matcher() {
+                } else if let Some(matcher_result) = app.get_current_regex_matcher(widget_id) {
                     if let Ok(matcher) = matcher_result {
                         return matcher.is_match(&process.name);
                     }
@@ -606,7 +598,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             .filter_map(|(_pid, process)| {
                 let mut result = true;
                 if !is_invalid_or_blank {
-                    if let Some(matcher_result) = app.get_current_regex_matcher() {
+                    if let Some(matcher_result) = app.get_current_regex_matcher(widget_id) {
                         if let Ok(matcher) = matcher_result {
                             if is_searching_with_pid {
                                 result = matcher.is_match(&process.pid.to_string());
@@ -632,33 +624,71 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             .collect::<Vec<_>>()
     };
 
-    sort_process_data(&mut filtered_process_data, app);
+    // Quick fix for tab updating the table headers
+    if let Some(proc_widget_state) = app.proc_state.widget_states.get_mut(&widget_id) {
+        if let data_harvester::processes::ProcessSorting::PID =
+            proc_widget_state.process_sorting_type
+        {
+            if proc_widget_state.is_grouped {
+                proc_widget_state.process_sorting_type =
+                    data_harvester::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
+                proc_widget_state.process_sorting_reverse = true;
+            }
+        }
 
-    // FIXME: Fix this shit, gotta split into a hashmap
-    app.canvas_data.finalized_process_data = filtered_process_data;
+        let mut resulting_processes = filtered_process_data;
+        sort_process_data(&mut resulting_processes, proc_widget_state);
+
+        app.canvas_data
+            .finalized_process_data
+            .insert(widget_id, resulting_processes);
+    }
 }
 
-fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &App) {
+fn sort_process_data(
+    to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
+) {
     to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(&a.name, &b.name, false));
 
-    match app.process_sorting_type {
+    match proc_widget_state.process_sorting_type {
         ProcessSorting::CPU => {
             to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(a.cpu_usage, b.cpu_usage, app.process_sorting_reverse)
+                utils::gen_util::get_ordering(
+                    a.cpu_usage,
+                    b.cpu_usage,
+                    proc_widget_state.process_sorting_reverse,
+                )
             });
         }
         ProcessSorting::MEM => {
             to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(a.mem_usage, b.mem_usage, app.process_sorting_reverse)
+                utils::gen_util::get_ordering(
+                    a.mem_usage,
+                    b.mem_usage,
+                    proc_widget_state.process_sorting_reverse,
+                )
             });
         }
-        ProcessSorting::NAME => to_sort_vec.sort_by(|a, b| {
-            utils::gen_util::get_ordering(&a.name, &b.name, app.process_sorting_reverse)
-        }),
-        ProcessSorting::PID => {
-            if !app.is_grouped() {
+        ProcessSorting::NAME => {
+            // Don't repeat if false...
+            if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(a.pid, b.pid, app.process_sorting_reverse)
+                    utils::gen_util::get_ordering(
+                        &a.name,
+                        &b.name,
+                        proc_widget_state.process_sorting_reverse,
+                    )
+                })
+            }
+        }
+        ProcessSorting::PID => {
+            if !proc_widget_state.is_grouped {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        a.pid,
+                        b.pid,
+                        proc_widget_state.process_sorting_reverse,
+                    )
                 });
             }
         }

@@ -27,7 +27,7 @@ impl KillDialog for Painter {
         if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
             if let Some(first_pid) = to_kill_processes.1.first() {
                 let dd_text = vec![
-                    if app_state.is_grouped() {
+                    if app_state.is_grouped(app_state.current_widget.widget_id) {
                         if to_kill_processes.1.len() != 1 {
                             Text::raw(format!(
                                 "\nKill {} processes with the name {}?",

@@ -61,6 +61,7 @@ impl BottomLayout {
         }
 
         // debug!("Map: {:?}", layout_mapping);
+        // FIXME: Slightly broken, see demo
 
         // Now pass through a second time; this time we want to build up
         // our neighbour profile.
