@@ -57,13 +57,13 @@ before_deploy:
       rustup target add x86_64-pc-windows-msvc;
       cargo build --release --target x86_64-pc-windows-msvc;
       strip "./target/x86_64-pc-windows-msvc/release/btm";
-      mv "./target/x86_64-pc-windows-msvc/release/btm" "./target/x86_64-pc-windows-msvc/release/btm.exe";
-      zip bottom_x86_64-pc-windows-msvc.zip "./target/x86_64-pc-windows-msvc/release/btm.exe";
+      mv "./target/x86_64-pc-windows-msvc/release/btm" "btm.exe";
+      zip bottom_x86_64-pc-windows-msvc.zip "btm.exe";
       rustup target add i686-pc-windows-msvc;
       cargo build --release --target i686-pc-windows-msvc;
       strip "./target/i686-pc-windows-msvc/release/btm";
-      mv "./target/i686-pc-windows-msvc/release/btm" "./target/i686-pc-windows-msvc/release/btm.exe";
-      zip bottom_i686-pc-windows-msvc.zip "./target/i686-pc-windows-msvc/release/btm.exe";
+      mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
+      zip bottom_i686-pc-windows-msvc.zip "btm.exe";
     else
         cargo build --release;
         cp ./target/release/btm btm;
