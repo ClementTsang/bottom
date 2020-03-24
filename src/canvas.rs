@@ -73,8 +73,6 @@ impl Painter {
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
 
-        debug!("Map: {:?}", widget_layout);
-
         let mut row_constraints = Vec::new();
         let mut col_constraints = Vec::new();
         let mut widget_constraints = Vec::new();

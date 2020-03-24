@@ -639,6 +639,8 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         let mut resulting_processes = filtered_process_data;
         sort_process_data(&mut resulting_processes, proc_widget_state);
 
+        // FIXME: We may want to also check if the current cursor position is valid
+
         app.canvas_data
             .finalized_process_data
             .insert(widget_id, resulting_processes);

@@ -1571,7 +1571,7 @@ impl App {
                 }
 
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(new_widget_id) = current_widget.down_neighbour {
+                    if let Some(new_widget_id) = current_widget.left_neighbour {
                         if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                             self.current_widget = new_widget.clone();
                         }
@@ -1614,7 +1614,7 @@ impl App {
                 }
 
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(new_widget_id) = current_widget.down_neighbour {
+                    if let Some(new_widget_id) = current_widget.right_neighbour {
                         if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                             self.current_widget = new_widget.clone();
                         }
@@ -1645,7 +1645,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    if proc_widget_state.is_on_search {
+                    if proc_widget_state.is_search_enabled() && proc_widget_state.is_on_search {
                         proc_widget_state.is_on_search = false;
                         self.reset_multi_tap_keys();
                         return;
@@ -1684,7 +1684,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    if !proc_widget_state.is_on_search {
+                    if proc_widget_state.is_search_enabled() && !proc_widget_state.is_on_search {
                         proc_widget_state.is_on_search = true;
                         self.reset_multi_tap_keys();
                         return;
