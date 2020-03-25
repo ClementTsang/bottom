@@ -33,11 +33,21 @@ impl BottomLayout {
                     match widget.widget_type {
                         BottomWidgetType::Empty => {}
                         _ => {
+                            debug!(
+                                "Col vals: {:?}, adding widget.height_ratio: {}",
+                                (
+                                    col_height * 100 / col.total_widget_ratio,
+                                    (col_height + widget.height_ratio) * 100
+                                        / col.total_widget_ratio,
+                                ),
+                                widget.height_ratio
+                            );
                             is_valid_col = true;
                             col_mapping.insert(
                                 (
                                     col_height * 100 / col.total_widget_ratio,
-                                    (col_height + col.width_ratio) * 100 / col.total_widget_ratio,
+                                    (col_height + widget.height_ratio) * 100
+                                        / col.total_widget_ratio,
                                 ),
                                 widget.widget_id,
                             );
@@ -114,43 +124,85 @@ impl BottomLayout {
                         layout_mapping.get(&(height_percentage_start, height_percentage_end))
                     {
                         // Check right in same row
-                        if let Some(to_right) =
-                            current_row.1.range((col_percentage_start + 1, 0)..).next()
+                        if let Some(to_right_col) = current_row
+                            .1
+                            .range((col_percentage_end, col_percentage_end)..)
+                            .next()
                         {
-                            if let Some(right_neighbour) = (to_right.1)
+                            let mut current_best_distance = 0;
+                            let mut current_best_widget_id = widget.widget_id;
+
+                            debug!(
+                                "widget range: {:?}",
+                                (to_right_col.1).1.range(
+                                    (0, widget_percentage_start)..(widget_percentage_end, 100)
+                                )
+                            );
+
+                            for widget_position in (to_right_col.1)
                                 .1
-                                .range(..(widget_percentage_start, 0))
-                                .next_back()
+                                .range((0, widget_percentage_start)..(widget_percentage_end, 100))
                             {
-                                widget.right_neighbour = Some(*right_neighbour.1);
-                            } else if let Some(right_neighbour) = (to_right.1)
-                                .1
-                                .range((widget_percentage_start, widget_percentage_end)..)
-                                .next()
-                            {
-                                widget.right_neighbour = Some(*right_neighbour.1);
+                                let candidate_start = (widget_position.0).0;
+                                let candidate_end = (widget_position.0).1;
+
+                                let candidate_distance =
+                                    if candidate_start < widget_percentage_start {
+                                        candidate_end - widget_percentage_start
+                                    } else if candidate_end < widget_percentage_end {
+                                        candidate_end - candidate_start
+                                    } else {
+                                        widget_percentage_end - candidate_start
+                                    };
+
+                                debug!(
+                                    "Candidate distance for widget ID {} = {}",
+                                    *(widget_position.1),
+                                    candidate_distance
+                                );
+
+                                if current_best_distance < candidate_distance {
+                                    current_best_distance = candidate_distance;
+                                    current_best_widget_id = *(widget_position.1);
+                                }
+                            }
+                            if current_best_distance > 0 {
+                                widget.right_neighbour = Some(current_best_widget_id);
                             }
                         }
 
                         // Check left in same row
-                        if let Some(to_left) = current_row
+                        if let Some(to_left_col) = current_row
                             .1
                             .range(..(col_percentage_start, col_percentage_end))
                             .next_back()
                         {
-                            // Similar logic to checking for right neighbours.
-                            if let Some(left_neighbour) = (to_left.1)
+                            let mut current_best_distance = 0;
+                            let mut current_best_widget_id = widget.widget_id;
+
+                            for widget_position in (to_left_col.1)
                                 .1
-                                .range(..(widget_percentage_start, 0))
-                                .next_back()
+                                .range((0, widget_percentage_start)..(widget_percentage_end, 100))
                             {
-                                widget.left_neighbour = Some(*left_neighbour.1);
-                            } else if let Some(left_neighbour) = (to_left.1)
-                                .1
-                                .range((widget_percentage_start, widget_percentage_end)..)
-                                .next()
-                            {
-                                widget.left_neighbour = Some(*left_neighbour.1);
+                                let candidate_start = (widget_position.0).0;
+                                let candidate_end = (widget_position.0).1;
+
+                                let candidate_distance =
+                                    if candidate_start < widget_percentage_start {
+                                        candidate_end - widget_percentage_start
+                                    } else if candidate_end < widget_percentage_end {
+                                        candidate_end - candidate_start
+                                    } else {
+                                        widget_percentage_end - candidate_start
+                                    };
+
+                                if current_best_distance < candidate_distance {
+                                    current_best_distance = candidate_distance;
+                                    current_best_widget_id = *(widget_position.1);
+                                }
+                            }
+                            if current_best_distance > 0 {
+                                widget.left_neighbour = Some(current_best_widget_id);
                             }
                         }
 
@@ -177,12 +229,12 @@ impl BottomLayout {
                                 // We want to get the widget with the highest percentage WITHIN our two ranges
                                 let mut current_best_distance = 0;
                                 let mut current_best_widget_id = widget.widget_id;
-                                for widget_col in (next_row_up.1)
+                                for col_position in (next_row_up.1)
                                     .1
                                     .range((0, col_percentage_start)..(col_percentage_end, 100))
                                 {
-                                    let candidate_start = (widget_col.0).0;
-                                    let candidate_end = (widget_col.0).1;
+                                    let candidate_start = (col_position.0).0;
+                                    let candidate_end = (col_position.0).1;
 
                                     let candidate_distance =
                                         if candidate_start < col_percentage_start {
@@ -195,7 +247,7 @@ impl BottomLayout {
 
                                     if current_best_distance < candidate_distance {
                                         if let Some(current_best_widget) =
-                                            (widget_col.1).1.iter().next_back()
+                                            (col_position.1).1.iter().next_back()
                                         {
                                             current_best_distance = candidate_distance;
                                             current_best_widget_id = *(current_best_widget.1);
@@ -225,12 +277,12 @@ impl BottomLayout {
                                 let mut current_best_distance = 0;
                                 let mut current_best_widget_id = widget.widget_id;
 
-                                for widget_col in (next_row_down.1)
+                                for col_position in (next_row_down.1)
                                     .1
                                     .range((0, col_percentage_start)..(col_percentage_end, 100))
                                 {
-                                    let candidate_start = (widget_col.0).0;
-                                    let candidate_end = (widget_col.0).1;
+                                    let candidate_start = (col_position.0).0;
+                                    let candidate_end = (col_position.0).1;
 
                                     let candidate_distance =
                                         if candidate_start < col_percentage_start {
@@ -243,7 +295,7 @@ impl BottomLayout {
 
                                     if current_best_distance < candidate_distance {
                                         if let Some(current_best_widget) =
-                                            (widget_col.1).1.iter().next()
+                                            (col_position.1).1.iter().next()
                                         {
                                             current_best_distance = candidate_distance;
                                             current_best_widget_id = *(current_best_widget.1);
