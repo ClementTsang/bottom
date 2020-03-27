@@ -46,7 +46,7 @@ unicode-width = "0.1.7"
 winapi = "0.3.8"
 
 [dev-dependencies]
-assert_cmd = "0.12"
+assert_cmd = "1.0"
 predicates = "1"
 
 [package.metadata.deb]
