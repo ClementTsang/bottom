@@ -95,45 +95,47 @@ pub fn build_app(
 
     for row in &widget_layout.rows {
         for col in &row.children {
-            for widget in &col.children {
-                widget_map.insert(widget.widget_id, widget.clone());
-                match widget.widget_type {
-                    BottomWidgetType::Cpu => {
-                        cpu_state_map.insert(
-                            widget.widget_id,
-                            CpuWidgetState::init(default_time_value, autohide_timer),
-                        );
+            for col_row in &col.children {
+                for widget in &col_row.children {
+                    widget_map.insert(widget.widget_id, widget.clone());
+                    match widget.widget_type {
+                        BottomWidgetType::Cpu => {
+                            cpu_state_map.insert(
+                                widget.widget_id,
+                                CpuWidgetState::init(default_time_value, autohide_timer),
+                            );
+                        }
+                        BottomWidgetType::Mem => {
+                            mem_state_map.insert(
+                                widget.widget_id,
+                                MemWidgetState::init(default_time_value, autohide_timer),
+                            );
+                        }
+                        BottomWidgetType::Net => {
+                            net_state_map.insert(
+                                widget.widget_id,
+                                NetWidgetState::init(default_time_value, autohide_timer),
+                            );
+                        }
+                        BottomWidgetType::Proc => {
+                            proc_state_map.insert(
+                                widget.widget_id,
+                                ProcWidgetState::init(
+                                    is_case_sensitive,
+                                    is_match_whole_word,
+                                    is_use_regex,
+                                    is_grouped,
+                                ),
+                            );
+                        }
+                        BottomWidgetType::Disk => {
+                            disk_state_map.insert(widget.widget_id, DiskWidgetState::init());
+                        }
+                        BottomWidgetType::Temp => {
+                            temp_state_map.insert(widget.widget_id, TempWidgetState::init());
+                        }
+                        _ => {}
                     }
-                    BottomWidgetType::Mem => {
-                        mem_state_map.insert(
-                            widget.widget_id,
-                            MemWidgetState::init(default_time_value, autohide_timer),
-                        );
-                    }
-                    BottomWidgetType::Net => {
-                        net_state_map.insert(
-                            widget.widget_id,
-                            NetWidgetState::init(default_time_value, autohide_timer),
-                        );
-                    }
-                    BottomWidgetType::Proc => {
-                        proc_state_map.insert(
-                            widget.widget_id,
-                            ProcWidgetState::init(
-                                is_case_sensitive,
-                                is_match_whole_word,
-                                is_use_regex,
-                                is_grouped,
-                            ),
-                        );
-                    }
-                    BottomWidgetType::Disk => {
-                        disk_state_map.insert(widget.widget_id, DiskWidgetState::init());
-                    }
-                    BottomWidgetType::Temp => {
-                        temp_state_map.insert(widget.widget_id, TempWidgetState::init());
-                    }
-                    _ => {}
                 }
             }
         }
@@ -188,25 +190,36 @@ pub fn build_app(
         .build())
 }
 
-pub fn get_widget_layout(config: &Config) -> error::Result<BottomLayout> {
-    let mut bottom_layout = if let Some(rows) = &config.row {
+pub fn get_widget_layout(
+    matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<BottomLayout> {
+    let left_legend = get_use_left_legend(matches, config);
+
+    let bottom_layout = if let Some(rows) = &config.row {
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
-        BottomLayout {
+        let mut ret_bottom_layout = BottomLayout {
             rows: rows
                 .iter()
-                .map(|row| row.convert_row_to_bottom_row(&mut iter_id, &mut total_height_ratio))
+                .map(|row| {
+                    row.convert_row_to_bottom_row(
+                        &mut iter_id,
+                        &mut total_height_ratio,
+                        left_legend,
+                    )
+                })
                 .collect::<error::Result<Vec<_>>>()?,
-            total_height_ratio,
-        }
+            total_row_height_ratio: total_height_ratio,
+        };
+        ret_bottom_layout.get_movement_mappings();
+
+        debug!("ret_bottom_layout: {:?}", ret_bottom_layout);
+
+        ret_bottom_layout
     } else {
         // Populate with a default.
-        BottomLayout::init_default()
+        BottomLayout::init_default(left_legend)
     };
-
-    if config.row.is_some() {
-        bottom_layout.get_movement_mappings();
-    }
 
     Ok(bottom_layout)
 }

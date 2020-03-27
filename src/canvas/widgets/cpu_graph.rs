@@ -14,7 +14,7 @@ use crate::{
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Rect},
     terminal::Frame,
     widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 };
@@ -33,9 +33,6 @@ lazy_static! {
 }
 
 pub trait CpuGraphWidget {
-    fn draw_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
@@ -45,45 +42,6 @@ pub trait CpuGraphWidget {
 }
 
 impl CpuGraphWidget for Painter {
-    fn draw_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    ) {
-        if draw_loc.width < 35 {
-            if let Some(cpu_widget_state) = app_state
-                .cpu_state
-                .widget_states
-                .get_mut(&app_state.current_widget.widget_id)
-            {
-                cpu_widget_state.is_on_tray = false;
-                cpu_widget_state.is_showing_tray = false;
-            }
-
-            self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
-        } else {
-            let (legend_index, graph_index) = if app_state.app_config_fields.left_legend {
-                (0, 1)
-            } else {
-                (1, 0)
-            };
-
-            let cpu_chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .margin(0)
-                .constraints(
-                    if app_state.app_config_fields.left_legend {
-                        [Constraint::Percentage(15), Constraint::Percentage(85)]
-                    } else {
-                        [Constraint::Percentage(85), Constraint::Percentage(15)]
-                    }
-                    .as_ref(),
-                )
-                .split(draw_loc);
-
-            self.draw_cpu_graph(f, app_state, cpu_chunks[graph_index], widget_id);
-            self.draw_cpu_legend(f, app_state, cpu_chunks[legend_index], widget_id);
-        }
-    }
-
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
@@ -171,9 +129,7 @@ impl CpuGraphWidget for Painter {
                 " CPU ".to_string()
             };
 
-            let border_style = if app_state.current_widget.widget_id == widget_id
-                && !cpu_widget_state.is_on_tray
-            {
+            let border_style = if app_state.current_widget.widget_id == widget_id {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style
@@ -294,12 +250,11 @@ impl CpuGraphWidget for Painter {
                 "".to_string()
             };
 
-            let title_and_border_style =
-                if app_state.current_widget.widget_id == widget_id && cpu_widget_state.is_on_tray {
-                    self.colours.highlighted_border_style
-                } else {
-                    self.colours.border_style
-                };
+            let title_and_border_style = if app_state.current_widget.widget_id == widget_id {
+                self.colours.highlighted_border_style
+            } else {
+                self.colours.border_style
+            };
 
             // Draw
             Table::new(

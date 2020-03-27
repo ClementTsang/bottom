@@ -13,7 +13,7 @@ pub struct Row {
 
 impl Row {
     pub fn convert_row_to_bottom_row(
-        &self, iter_id: &mut u64, total_height_ratio: &mut u32,
+        &self, iter_id: &mut u64, total_height_ratio: &mut u32, left_legend: bool,
     ) -> Result<BottomRow> {
         // In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
@@ -30,46 +30,230 @@ impl Row {
                         *iter_id += 1;
                         let width_ratio = widget.ratio.unwrap_or(1);
                         total_col_ratio += width_ratio;
-                        children.push(BottomCol {
-                            total_widget_ratio: 1,
-                            width_ratio,
-                            children: vec![BottomWidget {
-                                height_ratio: 1,
-                                widget_type: widget.widget_type.parse::<BottomWidgetType>()?,
-                                widget_id: *iter_id,
-                                ..BottomWidget::default()
-                            }],
-                        });
-                    }
-                    RowChildren::Col { ratio, child } => {
-                        let width_ratio = ratio.unwrap_or(1);
-                        total_col_ratio += width_ratio;
-                        let mut total_widget_ratio = 0;
-
-                        let widget_children = child
-                            .iter()
-                            .map(|column_child| {
-                                let parsed_widget_type =
-                                    column_child.widget_type.parse::<BottomWidgetType>();
+                        let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
+                        children.push(match widget_type {
+                            BottomWidgetType::Cpu => {
+                                let iter_old_id = *iter_id;
                                 *iter_id += 1;
-                                let height_ratio = column_child.ratio.unwrap_or(1);
-                                total_widget_ratio += height_ratio;
-                                match parsed_widget_type {
-                                    Ok(widget_type) => Ok(BottomWidget {
-                                        height_ratio,
+                                BottomCol {
+                                    total_col_row_ratio: 1,
+                                    col_width_ratio: width_ratio,
+                                    children: if left_legend {
+                                        vec![BottomColRow {
+                                            col_row_height_ratio: 1,
+                                            total_widget_ratio: 20,
+                                            children: vec![
+                                                BottomWidget {
+                                                    width_ratio: 3,
+                                                    widget_type: BottomWidgetType::CpuLegend,
+                                                    widget_id: iter_old_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                                BottomWidget {
+                                                    width_ratio: 17,
+                                                    widget_type: BottomWidgetType::Cpu,
+                                                    widget_id: *iter_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                            ],
+                                            ..BottomColRow::default()
+                                        }]
+                                    } else {
+                                        vec![BottomColRow {
+                                            col_row_height_ratio: 1,
+                                            total_widget_ratio: 20,
+                                            children: vec![
+                                                BottomWidget {
+                                                    width_ratio: 17,
+                                                    widget_type: BottomWidgetType::Cpu,
+                                                    widget_id: iter_old_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                                BottomWidget {
+                                                    width_ratio: 3,
+                                                    widget_type: BottomWidgetType::CpuLegend,
+                                                    widget_id: *iter_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                            ],
+                                            ..BottomColRow::default()
+                                        }]
+                                    },
+                                }
+                            }
+                            BottomWidgetType::Proc => {
+                                let iter_old_id = *iter_id;
+                                *iter_id += 1;
+                                BottomCol {
+                                    total_col_row_ratio: 2,
+                                    col_width_ratio: width_ratio,
+                                    children: vec![
+                                        BottomColRow {
+                                            col_row_height_ratio: 1,
+                                            total_widget_ratio: 1,
+                                            children: vec![BottomWidget {
+                                                width_ratio: 1,
+                                                widget_type: BottomWidgetType::Proc,
+                                                widget_id: iter_old_id,
+                                                ..BottomWidget::default()
+                                            }],
+                                            take_all_space: true,
+                                            ..BottomColRow::default()
+                                        },
+                                        BottomColRow {
+                                            col_row_height_ratio: 1,
+                                            total_widget_ratio: 1,
+                                            children: vec![BottomWidget {
+                                                width_ratio: 1,
+                                                widget_type: BottomWidgetType::ProcSearch,
+                                                widget_id: *iter_id,
+                                                ..BottomWidget::default()
+                                            }],
+                                            hard_height: Some(5),
+                                            ..BottomColRow::default()
+                                        },
+                                    ],
+                                }
+                            }
+                            _ => BottomCol {
+                                total_col_row_ratio: 1,
+                                col_width_ratio: width_ratio,
+                                children: vec![BottomColRow {
+                                    col_row_height_ratio: 1,
+                                    total_widget_ratio: 1,
+                                    children: vec![BottomWidget {
+                                        width_ratio: 1,
                                         widget_type,
                                         widget_id: *iter_id,
                                         ..BottomWidget::default()
-                                    }),
-                                    Err(err) => Err(err),
+                                    }],
+                                    ..BottomColRow::default()
+                                }],
+                            },
+                        });
+                    }
+                    RowChildren::Col { ratio, child } => {
+                        let col_width_ratio = ratio.unwrap_or(1);
+                        total_col_ratio += col_width_ratio;
+                        let mut total_col_row_ratio = 0;
+                        let mut contains_proc = false;
+
+                        let mut col_row_children = Vec::new();
+
+                        for column_child in child {
+                            let widget_type =
+                                column_child.widget_type.parse::<BottomWidgetType>()?;
+                            *iter_id += 1;
+                            let col_row_height_ratio = column_child.ratio.unwrap_or(1);
+                            total_col_row_ratio += col_row_height_ratio;
+
+                            match widget_type {
+                                BottomWidgetType::Cpu => {
+                                    let iter_old_id = *iter_id;
+                                    *iter_id += 1;
+                                    if left_legend {
+                                        col_row_children.push(BottomColRow {
+                                            col_row_height_ratio,
+                                            total_widget_ratio: 20,
+                                            children: vec![
+                                                BottomWidget {
+                                                    width_ratio: 3,
+                                                    widget_type: BottomWidgetType::CpuLegend,
+                                                    widget_id: iter_old_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                                BottomWidget {
+                                                    width_ratio: 17,
+                                                    widget_type: BottomWidgetType::Cpu,
+                                                    widget_id: *iter_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                            ],
+                                            ..BottomColRow::default()
+                                        });
+                                    } else {
+                                        col_row_children.push(BottomColRow {
+                                            col_row_height_ratio,
+                                            total_widget_ratio: 20,
+                                            children: vec![
+                                                BottomWidget {
+                                                    width_ratio: 17,
+                                                    widget_type: BottomWidgetType::Cpu,
+                                                    widget_id: iter_old_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                                BottomWidget {
+                                                    width_ratio: 3,
+                                                    widget_type: BottomWidgetType::CpuLegend,
+                                                    widget_id: *iter_id,
+                                                    ..BottomWidget::default()
+                                                },
+                                            ],
+                                            ..BottomColRow::default()
+                                        });
+                                    }
                                 }
-                            })
-                            .collect::<Result<Vec<BottomWidget>>>()?;
+                                BottomWidgetType::Proc => {
+                                    contains_proc = true;
+                                    let iter_old_id = *iter_id;
+                                    *iter_id += 1;
+                                    col_row_children.push(BottomColRow {
+                                        col_row_height_ratio,
+                                        total_widget_ratio: 1,
+                                        children: vec![BottomWidget {
+                                            width_ratio: 1,
+                                            widget_type: BottomWidgetType::Proc,
+                                            widget_id: iter_old_id,
+                                            ..BottomWidget::default()
+                                        }],
+                                        take_all_space: true,
+                                        ..BottomColRow::default()
+                                    });
+                                    col_row_children.push(BottomColRow {
+                                        col_row_height_ratio,
+                                        total_widget_ratio: 1,
+                                        children: vec![BottomWidget {
+                                            width_ratio: 1,
+                                            widget_type: BottomWidgetType::ProcSearch,
+                                            widget_id: *iter_id,
+                                            ..BottomWidget::default()
+                                        }],
+                                        hard_height: Some(5),
+                                        ..BottomColRow::default()
+                                    });
+                                }
+                                _ => col_row_children.push(BottomColRow {
+                                    col_row_height_ratio,
+                                    total_widget_ratio: 1,
+                                    children: vec![BottomWidget {
+                                        width_ratio: 1,
+                                        widget_type,
+                                        widget_id: *iter_id,
+                                        ..BottomWidget::default()
+                                    }],
+                                    ..BottomColRow::default()
+                                }),
+                            }
+                        }
+
+                        if contains_proc {
+                            // Must adjust ratios to work with proc
+                            total_col_row_ratio *= 2;
+                            for child in &mut col_row_children {
+                                // Multiply all non-proc or proc-search ratios by 2
+                                if !child.children.is_empty() {
+                                    match child.children[0].widget_type {
+                                        BottomWidgetType::Proc | BottomWidgetType::ProcSearch => {}
+                                        _ => child.col_row_height_ratio *= 2,
+                                    }
+                                }
+                            }
+                        }
 
                         children.push(BottomCol {
-                            total_widget_ratio,
-                            width_ratio,
-                            children: widget_children,
+                            total_col_row_ratio,
+                            col_width_ratio,
+                            children: col_row_children,
                         });
                     }
                 }
@@ -78,7 +262,7 @@ impl Row {
 
         Ok(BottomRow {
             total_col_ratio,
-            row_ratio,
+            row_height_ratio: row_ratio,
             children,
         })
     }

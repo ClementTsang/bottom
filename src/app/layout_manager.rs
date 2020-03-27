@@ -6,11 +6,12 @@ use std::collections::BTreeMap;
 #[derive(Clone, Debug)]
 pub struct BottomLayout {
     pub rows: Vec<BottomRow>,
-    pub total_height_ratio: u32,
+    pub total_row_height_ratio: u32,
 }
 
 type WidgetMappings = (u32, BTreeMap<(u32, u32), u64>);
-type ColumnMappings = (u32, BTreeMap<(u32, u32), WidgetMappings>);
+type ColumnRowMappings = (u32, BTreeMap<(u32, u32), WidgetMappings>);
+type ColumnMappings = (u32, BTreeMap<(u32, u32), ColumnRowMappings>);
 
 impl BottomLayout {
     #[allow(clippy::cognitive_complexity)]
@@ -29,346 +30,551 @@ impl BottomLayout {
         let mut total_height = 0;
         for row in &self.rows {
             let mut row_width = 0;
-            let mut row_mapping: BTreeMap<(u32, u32), WidgetMappings> = BTreeMap::new();
+            let mut row_mapping: BTreeMap<(u32, u32), ColumnRowMappings> = BTreeMap::new();
             let mut is_valid_row = false;
             for col in &row.children {
-                let mut col_height = 0;
-                let mut col_mapping: BTreeMap<(u32, u32), u64> = BTreeMap::new();
+                let mut col_row_height = 0;
+                let mut col_mapping: BTreeMap<(u32, u32), WidgetMappings> = BTreeMap::new();
                 let mut is_valid_col = false;
 
-                for widget in &col.children {
-                    match widget.widget_type {
-                        BottomWidgetType::Empty => {}
-                        _ => {
-                            is_valid_col = true;
-                            col_mapping.insert(
-                                (
-                                    col_height * 100 / col.total_widget_ratio,
-                                    (col_height + widget.height_ratio) * 100
-                                        / col.total_widget_ratio,
-                                ),
-                                widget.widget_id,
-                            );
+                for col_row in &col.children {
+                    let mut widget_width = 0;
+                    let mut col_row_mapping: BTreeMap<(u32, u32), u64> = BTreeMap::new();
+                    let mut is_valid_col_row = false;
+                    for widget in &col_row.children {
+                        match widget.widget_type {
+                            BottomWidgetType::Empty => {}
+                            _ => {
+                                is_valid_col_row = true;
+                                col_row_mapping.insert(
+                                    (
+                                        widget_width * 100 / col_row.total_widget_ratio,
+                                        (widget_width + widget.width_ratio) * 100
+                                            / col_row.total_widget_ratio,
+                                    ),
+                                    widget.widget_id,
+                                );
+                            }
                         }
+                        widget_width += widget.width_ratio;
+                    }
+                    if is_valid_col_row {
+                        col_mapping.insert(
+                            (
+                                col_row_height * 100 / col.total_col_row_ratio,
+                                (col_row_height + col_row.col_row_height_ratio) * 100
+                                    / col.total_col_row_ratio,
+                            ),
+                            (col.total_col_row_ratio, col_row_mapping),
+                        );
+                        is_valid_col = true;
                     }
 
-                    col_height += widget.height_ratio;
+                    col_row_height += col_row.col_row_height_ratio;
                 }
                 if is_valid_col {
                     row_mapping.insert(
                         (
                             row_width * 100 / row.total_col_ratio,
-                            (row_width + col.width_ratio) * 100 / row.total_col_ratio,
+                            (row_width + col.col_width_ratio) * 100 / row.total_col_ratio,
                         ),
                         (row.total_col_ratio, col_mapping),
                     );
                     is_valid_row = true;
                 }
 
-                row_width += col.width_ratio;
+                row_width += col.col_width_ratio;
             }
             if is_valid_row {
                 layout_mapping.insert(
                     (
-                        total_height * 100 / self.total_height_ratio,
-                        (total_height + row.row_ratio) * 100 / self.total_height_ratio,
+                        total_height * 100 / self.total_row_height_ratio,
+                        (total_height + row.row_height_ratio) * 100 / self.total_row_height_ratio,
                     ),
-                    (self.total_height_ratio, row_mapping),
+                    (self.total_row_height_ratio, row_mapping),
                 );
             }
-            total_height += row.row_ratio;
+            total_height += row.row_height_ratio;
         }
 
         // Now pass through a second time; this time we want to build up
         // our neighbour profile.
         let mut height_cursor = 0;
         for row in &mut self.rows {
-            // Avoid dbz
-            if self.total_height_ratio == 0 {
-                continue;
-            }
-
             let mut col_cursor = 0;
-            let height_percentage_start = height_cursor * 100 / self.total_height_ratio;
-            let height_percentage_end =
-                (height_cursor + row.row_ratio) * 100 / self.total_height_ratio;
+            let row_height_percentage_start = height_cursor * 100 / self.total_row_height_ratio;
+            let row_height_percentage_end =
+                (height_cursor + row.row_height_ratio) * 100 / self.total_row_height_ratio;
 
             for col in &mut row.children {
-                // Avoid dbz
-                if row.total_col_ratio == 0 {
-                    continue;
-                }
+                let mut col_row_cursor = 0;
+                let col_width_percentage_start = col_cursor * 100 / row.total_col_ratio;
+                let col_width_percentage_end =
+                    (col_cursor + col.col_width_ratio) * 100 / row.total_col_ratio;
 
-                let mut widget_cursor = 0;
-                let col_percentage_start = col_cursor * 100 / row.total_col_ratio;
-                let col_percentage_end = (col_cursor + col.width_ratio) * 100 / row.total_col_ratio;
+                for col_row in &mut col.children {
+                    let mut widget_cursor = 0;
+                    let col_row_height_percentage_start =
+                        col_row_cursor * 100 / col.total_col_row_ratio;
+                    let col_row_height_percentage_end =
+                        (col_row_cursor + col_row.col_row_height_ratio) * 100
+                            / col.total_col_row_ratio;
 
-                for widget in &mut col.children {
-                    // Bail if empty.
-                    if let BottomWidgetType::Empty = widget.widget_type {
-                        continue;
-                    }
-
-                    // Avoid dbz
-                    if col.total_widget_ratio == 0 {
-                        continue;
-                    }
-
-                    let widget_percentage_start = widget_cursor * 100 / col.total_widget_ratio;
-                    let widget_percentage_end =
-                        (widget_cursor + widget.height_ratio) * 100 / col.total_widget_ratio;
-
-                    if let Some(current_row) =
-                        layout_mapping.get(&(height_percentage_start, height_percentage_end))
-                    {
-                        // Check right in same row
-                        if let Some(to_right_col) = current_row
-                            .1
-                            .range((col_percentage_end, col_percentage_end)..)
-                            .next()
-                        {
-                            let mut current_best_distance = 0;
-                            let mut current_best_widget_id = widget.widget_id;
-
-                            for widget_position in &(to_right_col.1).1 {
-                                let candidate_start = (widget_position.0).0;
-                                let candidate_end = (widget_position.0).1;
-
-                                if is_intersecting(
-                                    (widget_percentage_start, widget_percentage_end),
-                                    (candidate_start, candidate_end),
-                                ) {
-                                    let candidate_distance =
-                                        if candidate_start < widget_percentage_start {
-                                            candidate_end - widget_percentage_start
-                                        } else if candidate_end < widget_percentage_end {
-                                            candidate_end - candidate_start
-                                        } else {
-                                            widget_percentage_end - candidate_start
-                                        };
-
-                                    if current_best_distance < candidate_distance {
-                                        current_best_distance = candidate_distance + 1;
-                                        current_best_widget_id = *(widget_position.1);
-                                    }
-                                }
-                            }
-                            if current_best_distance > 0 {
-                                widget.right_neighbour = Some(current_best_widget_id);
-                            }
+                    for widget in &mut col_row.children {
+                        // Bail if empty.
+                        if let BottomWidgetType::Empty = widget.widget_type {
+                            continue;
                         }
 
-                        // Check left in same row
-                        if let Some(to_left_col) = current_row
-                            .1
-                            .range(..(col_percentage_start, col_percentage_end))
-                            .next_back()
+                        let widget_width_percentage_start =
+                            widget_cursor * 100 / col_row.total_widget_ratio;
+                        let widget_percentage_end =
+                            (widget_cursor + widget.width_ratio) * 100 / col_row.total_widget_ratio;
+
+                        if let Some(current_row) = layout_mapping
+                            .get(&(row_height_percentage_start, row_height_percentage_end))
                         {
-                            let mut current_best_distance = 0;
-                            let mut current_best_widget_id = widget.widget_id;
-
-                            for widget_position in &(to_left_col.1).1 {
-                                let candidate_start = (widget_position.0).0;
-                                let candidate_end = (widget_position.0).1;
-
-                                if is_intersecting(
-                                    (widget_percentage_start, widget_percentage_end),
-                                    (candidate_start, candidate_end),
-                                ) {
-                                    let candidate_distance =
-                                        if candidate_start < widget_percentage_start {
-                                            candidate_end - widget_percentage_start
-                                        } else if candidate_end < widget_percentage_end {
-                                            candidate_end - candidate_start
-                                        } else {
-                                            widget_percentage_end - candidate_start
-                                        };
-
-                                    if current_best_distance < candidate_distance {
-                                        current_best_distance = candidate_distance + 1;
-                                        current_best_widget_id = *(widget_position.1);
-                                    }
-                                }
-                            }
-                            if current_best_distance > 0 {
-                                widget.left_neighbour = Some(current_best_widget_id);
-                            }
-                        }
-
-                        // Check up/down within same row;
-                        // else check up/down with other rows
-                        if let Some(current_col) = current_row
-                            .1
-                            .get(&(col_percentage_start, col_percentage_end))
-                        {
-                            if let Some(to_up) = current_col
+                            // First check for within the same col_row for left and right
+                            if let Some(current_col) = current_row
                                 .1
-                                .range(..(widget_percentage_start, widget_percentage_start))
-                                .next_back()
+                                .get(&(col_width_percentage_start, col_width_percentage_end))
                             {
-                                // In this case, then we can simply just set this immediately!
-                                widget.up_neighbour = Some(*to_up.1);
-                            } else if let Some(next_row_up) = layout_mapping
-                                .range(..(height_percentage_start, height_percentage_start))
-                                .next_back()
+                                if let Some(current_col_row) = current_col.1.get(&(
+                                    col_row_height_percentage_start,
+                                    col_row_height_percentage_end,
+                                )) {
+                                    // Left
+                                    debug!(
+                                        "Left: {:?} using ..{:?}",
+                                        current_col_row.1.range(
+                                            ..(
+                                                widget_width_percentage_start,
+                                                widget_width_percentage_start,
+                                            ),
+                                        ),
+                                        (
+                                            widget_width_percentage_start,
+                                            widget_width_percentage_start,
+                                        )
+                                    );
+                                    if let Some(to_left_widget) = current_col_row
+                                        .1
+                                        .range(
+                                            ..(
+                                                widget_width_percentage_start,
+                                                widget_width_percentage_start,
+                                            ),
+                                        )
+                                        .next_back()
+                                    {
+                                        widget.left_neighbour = Some(*to_left_widget.1);
+                                    }
+
+                                    // Right
+                                    debug!(
+                                        "Right: {:?} using {:?}..",
+                                        current_col_row.1.range(
+                                            (widget_percentage_end, widget_percentage_end)..
+                                        ),
+                                        (widget_percentage_end, widget_percentage_end)
+                                    );
+                                    if let Some(to_right_neighbour) = current_col_row
+                                        .1
+                                        .range((widget_percentage_end, widget_percentage_end)..)
+                                        .next()
+                                    {
+                                        widget.right_neighbour = Some(*to_right_neighbour.1);
+                                    }
+                                }
+                            }
+
+                            debug!("Current row: {:?}", current_row);
+                            debug!(
+                                "to_left_col: {:?}, using ..{:?}",
+                                current_row.1.range(
+                                    ..(col_width_percentage_start, col_width_percentage_start),
+                                ),
+                                (col_width_percentage_start, col_width_percentage_start)
+                            );
+
+                            if widget.left_neighbour.is_none() {
+                                if let Some(to_left_col) = current_row
+                                    .1
+                                    .range(
+                                        ..(col_width_percentage_start, col_width_percentage_start),
+                                    )
+                                    .next_back()
+                                {
+                                    // Check left in same row
+                                    let mut current_best_distance = 0;
+                                    let mut current_best_widget_id = widget.widget_id;
+
+                                    for widget_position in &(to_left_col.1).1 {
+                                        let candidate_start = (widget_position.0).0;
+                                        let candidate_end = (widget_position.0).1;
+
+                                        debug!(
+                                            "Do they intersect?  Col_row: {:?}, candidate: {:?}",
+                                            (
+                                                col_row_height_percentage_start,
+                                                col_row_height_percentage_end,
+                                            ),
+                                            (candidate_start, candidate_end)
+                                        );
+
+                                        if is_intersecting(
+                                            (
+                                                col_row_height_percentage_start,
+                                                col_row_height_percentage_end,
+                                            ),
+                                            (candidate_start, candidate_end),
+                                        ) {
+                                            let candidate_distance = if candidate_start
+                                                < col_row_height_percentage_start
+                                            {
+                                                candidate_end - col_row_height_percentage_start
+                                            } else if candidate_end < col_row_height_percentage_end
+                                            {
+                                                candidate_end - candidate_start
+                                            } else {
+                                                col_row_height_percentage_end - candidate_start
+                                            };
+
+                                            if current_best_distance < candidate_distance {
+                                                if let Some(widget) =
+                                                    (widget_position.1).1.iter().next_back()
+                                                {
+                                                    current_best_distance = candidate_distance + 1;
+                                                    current_best_widget_id = *(widget.1);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if current_best_distance > 0 {
+                                        widget.left_neighbour = Some(current_best_widget_id);
+                                    }
+                                }
+                            }
+
+                            if widget.right_neighbour.is_none() {
+                                if let Some(to_right_col) = current_row
+                                    .1
+                                    .range((col_width_percentage_end, col_width_percentage_end)..)
+                                    .next()
+                                {
+                                    // Check right in same row
+                                    let mut current_best_distance = 0;
+                                    let mut current_best_widget_id = widget.widget_id;
+
+                                    for widget_position in &(to_right_col.1).1 {
+                                        let candidate_start = (widget_position.0).0;
+                                        let candidate_end = (widget_position.0).1;
+
+                                        if is_intersecting(
+                                            (
+                                                col_row_height_percentage_start,
+                                                col_row_height_percentage_end,
+                                            ),
+                                            (candidate_start, candidate_end),
+                                        ) {
+                                            let candidate_distance = if candidate_start
+                                                < col_row_height_percentage_start
+                                            {
+                                                candidate_end - col_row_height_percentage_start
+                                            } else if candidate_end < col_row_height_percentage_end
+                                            {
+                                                candidate_end - candidate_start
+                                            } else {
+                                                col_row_height_percentage_end - candidate_start
+                                            };
+
+                                            if current_best_distance < candidate_distance {
+                                                if let Some(widget) =
+                                                    (widget_position.1).1.iter().next()
+                                                {
+                                                    current_best_distance = candidate_distance + 1;
+                                                    current_best_widget_id = *(widget.1);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if current_best_distance > 0 {
+                                        widget.right_neighbour = Some(current_best_widget_id);
+                                    }
+                                }
+                            }
+
+                            // Check up/down within same row;
+                            // else check up/down with other rows
+                            if let Some(current_col) = current_row
+                                .1
+                                .get(&(col_width_percentage_start, col_width_percentage_end))
                             {
-                                let col_percentage_end =
-                                    (col_cursor + col.width_ratio) * 100 / row.total_col_ratio;
+                                if let Some(to_up) = current_col
+                                    .1
+                                    .range(
+                                        ..(
+                                            col_row_height_percentage_start,
+                                            col_row_height_percentage_start,
+                                        ),
+                                    )
+                                    .next_back()
+                                {
+                                    // In this case, then we can simply just set this immediately!
+                                    if let Some(widget_val) = (to_up.1).1.iter().next() {
+                                        widget.up_neighbour = Some(*widget_val.1);
+                                    }
+                                } else if let Some(next_row_up) = layout_mapping
+                                    .range(
+                                        ..(
+                                            row_height_percentage_start,
+                                            row_height_percentage_start,
+                                        ),
+                                    )
+                                    .next_back()
+                                {
+                                    let col_percentage_end = (col_cursor + col.col_width_ratio)
+                                        * 100
+                                        / row.total_col_ratio;
 
-                                // We want to get the widget with the highest percentage WITHIN our two ranges
-                                let mut current_best_distance = 0;
-                                let mut current_best_widget_id = widget.widget_id;
-                                for col_position in &(next_row_up.1).1 {
-                                    let candidate_start = (col_position.0).0;
-                                    let candidate_end = (col_position.0).1;
+                                    // We want to get the widget with the highest percentage WITHIN our two ranges
+                                    let mut current_best_distance = 0;
+                                    let mut current_best_widget_id = widget.widget_id;
+                                    for col_position in &(next_row_up.1).1 {
+                                        let candidate_start = (col_position.0).0;
+                                        let candidate_end = (col_position.0).1;
 
-                                    if is_intersecting(
-                                        (col_percentage_start, col_percentage_end),
-                                        (candidate_start, candidate_end),
-                                    ) {
-                                        let candidate_distance =
-                                            if candidate_start < col_percentage_start {
-                                                candidate_end - col_percentage_start
+                                        if is_intersecting(
+                                            (col_row_height_percentage_start, col_percentage_end),
+                                            (candidate_start, candidate_end),
+                                        ) {
+                                            let candidate_distance = if candidate_start
+                                                < col_row_height_percentage_start
+                                            {
+                                                candidate_end - col_row_height_percentage_start
                                             } else if candidate_end < col_percentage_end {
                                                 candidate_end - candidate_start
                                             } else {
                                                 col_percentage_end - candidate_start
                                             };
 
-                                        if current_best_distance < candidate_distance {
-                                            if let Some(current_best_widget) =
-                                                (col_position.1).1.iter().next_back()
-                                            {
-                                                current_best_distance = candidate_distance + 1;
-                                                current_best_widget_id = *(current_best_widget.1);
+                                            if current_best_distance < candidate_distance {
+                                                if let Some(current_best_widget) =
+                                                    (col_position.1).1.iter().next_back()
+                                                {
+                                                    if let Some(widget) =
+                                                        (current_best_widget.1).1.iter().next()
+                                                    {
+                                                        current_best_distance =
+                                                            candidate_distance + 1;
+                                                        current_best_widget_id = *(widget.1);
+                                                    }
+                                                }
                                             }
                                         }
                                     }
+
+                                    if current_best_distance > 0 {
+                                        widget.up_neighbour = Some(current_best_widget_id);
+                                    }
                                 }
 
-                                if current_best_distance > 0 {
-                                    widget.up_neighbour = Some(current_best_widget_id);
-                                }
-                            }
+                                if let Some(to_down) = current_col
+                                    .1
+                                    .range(
+                                        (
+                                            col_row_height_percentage_start + 1,
+                                            col_row_height_percentage_start + 1,
+                                        )..,
+                                    )
+                                    .next()
+                                {
+                                    if let Some(widget_val) = (to_down.1).1.iter().next() {
+                                        widget.down_neighbour = Some(*widget_val.1);
+                                    }
+                                } else if let Some(next_row_down) = layout_mapping
+                                    .range(
+                                        (
+                                            row_height_percentage_start + 1,
+                                            row_height_percentage_start + 1,
+                                        )..,
+                                    )
+                                    .next()
+                                {
+                                    let col_percentage_end = (col_cursor + col.col_width_ratio)
+                                        * 100
+                                        / row.total_col_ratio;
 
-                            if let Some(to_down) = current_col
-                                .1
-                                .range((widget_percentage_start + 1, widget_percentage_start + 1)..)
-                                .next()
-                            {
-                                widget.down_neighbour = Some(*to_down.1);
-                            } else if let Some(next_row_down) = layout_mapping
-                                .range((height_percentage_start + 1, height_percentage_start + 1)..)
-                                .next()
-                            {
-                                let col_percentage_end =
-                                    (col_cursor + col.width_ratio) * 100 / row.total_col_ratio;
+                                    // We want to get the widget with the highest percentage WITHIN our two ranges
+                                    let mut current_best_distance = 0;
+                                    let mut current_best_widget_id = widget.widget_id;
 
-                                // We want to get the widget with the highest percentage WITHIN our two ranges
-                                let mut current_best_distance = 0;
-                                let mut current_best_widget_id = widget.widget_id;
+                                    for col_position in &(next_row_down.1).1 {
+                                        let candidate_start = (col_position.0).0;
+                                        let candidate_end = (col_position.0).1;
 
-                                for col_position in &(next_row_down.1).1 {
-                                    let candidate_start = (col_position.0).0;
-                                    let candidate_end = (col_position.0).1;
-
-                                    if is_intersecting(
-                                        (col_percentage_start, col_percentage_end),
-                                        (candidate_start, candidate_end),
-                                    ) {
-                                        let candidate_distance =
-                                            if candidate_start < col_percentage_start {
-                                                candidate_end - col_percentage_start
+                                        if is_intersecting(
+                                            (col_row_height_percentage_start, col_percentage_end),
+                                            (candidate_start, candidate_end),
+                                        ) {
+                                            let candidate_distance = if candidate_start
+                                                < col_row_height_percentage_start
+                                            {
+                                                candidate_end - col_row_height_percentage_start
                                             } else if candidate_end < col_percentage_end {
                                                 candidate_end - candidate_start
                                             } else {
                                                 col_percentage_end - candidate_start
                                             };
 
-                                        if current_best_distance < candidate_distance {
-                                            if let Some(current_best_widget) =
-                                                (col_position.1).1.iter().next()
-                                            {
-                                                current_best_distance = candidate_distance + 1;
-                                                current_best_widget_id = *(current_best_widget.1);
+                                            if current_best_distance < candidate_distance {
+                                                if let Some(current_best_widget) =
+                                                    (col_position.1).1.iter().next()
+                                                {
+                                                    if let Some(widget) =
+                                                        (current_best_widget.1).1.iter().next()
+                                                    {
+                                                        current_best_distance =
+                                                            candidate_distance + 1;
+                                                        current_best_widget_id = *(widget.1);
+                                                    }
+                                                }
                                             }
                                         }
                                     }
-                                }
 
-                                if current_best_distance > 0 {
-                                    widget.down_neighbour = Some(current_best_widget_id);
+                                    if current_best_distance > 0 {
+                                        widget.down_neighbour = Some(current_best_widget_id);
+                                    }
                                 }
                             }
                         }
+                        widget_cursor += widget.width_ratio;
                     }
-                    widget_cursor += widget.height_ratio;
+                    col_row_cursor += col_row.col_row_height_ratio;
                 }
-                col_cursor += col.width_ratio;
+                col_cursor += col.col_width_ratio;
             }
-            height_cursor += row.row_ratio;
+            height_cursor += row.row_height_ratio;
         }
     }
 
-    pub fn init_default() -> Self {
+    pub fn init_basic_default(_left_legend: bool) -> Self {
         BottomLayout {
-            total_height_ratio: 100,
+            total_row_height_ratio: 0,
+            rows: vec![],
+        }
+    }
+
+    pub fn init_default(left_legend: bool) -> Self {
+        BottomLayout {
+            total_row_height_ratio: 100,
             rows: vec![
                 BottomRow {
                     total_col_ratio: 1,
-                    row_ratio: 30,
+                    row_height_ratio: 30,
                     children: vec![BottomCol {
-                        total_widget_ratio: 1,
-                        width_ratio: 1,
-                        children: vec![BottomWidget {
-                            height_ratio: 1,
-                            widget_type: BottomWidgetType::Cpu,
-                            widget_id: 1,
-                            left_neighbour: None,
-                            right_neighbour: None,
-                            up_neighbour: None,
-                            down_neighbour: Some(11),
+                        total_col_row_ratio: 1,
+                        col_width_ratio: 1,
+                        children: vec![BottomColRow {
+                            col_row_height_ratio: 1,
+                            total_widget_ratio: 20,
+                            children: if left_legend {
+                                vec![
+                                    BottomWidget {
+                                        width_ratio: 3,
+                                        widget_type: BottomWidgetType::CpuLegend,
+                                        widget_id: 1,
+                                        down_neighbour: Some(11),
+                                        right_neighbour: Some(2),
+                                        ..BottomWidget::default()
+                                    },
+                                    BottomWidget {
+                                        width_ratio: 17,
+                                        widget_type: BottomWidgetType::Cpu,
+                                        widget_id: 2,
+                                        down_neighbour: Some(12),
+                                        left_neighbour: Some(1),
+                                        ..BottomWidget::default()
+                                    },
+                                ]
+                            } else {
+                                vec![
+                                    BottomWidget {
+                                        width_ratio: 17,
+                                        widget_type: BottomWidgetType::Cpu,
+                                        widget_id: 1,
+                                        down_neighbour: Some(11),
+                                        right_neighbour: Some(2),
+                                        ..BottomWidget::default()
+                                    },
+                                    BottomWidget {
+                                        width_ratio: 3,
+                                        widget_type: BottomWidgetType::CpuLegend,
+                                        widget_id: 2,
+                                        down_neighbour: Some(12),
+                                        left_neighbour: Some(1),
+                                        ..BottomWidget::default()
+                                    },
+                                ]
+                            },
+                            ..BottomColRow::default()
                         }],
                     }],
                 },
                 BottomRow {
                     total_col_ratio: 7,
-                    row_ratio: 40,
+                    row_height_ratio: 40,
                     children: vec![
                         BottomCol {
-                            total_widget_ratio: 1,
-                            width_ratio: 4,
-                            children: vec![BottomWidget {
-                                height_ratio: 1,
-                                widget_type: BottomWidgetType::Mem,
-                                widget_id: 11,
-                                left_neighbour: None,
-                                right_neighbour: Some(12),
-                                up_neighbour: Some(1),
-                                down_neighbour: Some(21),
+                            total_col_row_ratio: 1,
+                            col_width_ratio: 4,
+                            children: vec![BottomColRow {
+                                col_row_height_ratio: 1,
+                                total_widget_ratio: 1,
+                                children: vec![BottomWidget {
+                                    width_ratio: 1,
+                                    widget_type: BottomWidgetType::Mem,
+                                    widget_id: 11,
+                                    right_neighbour: Some(12),
+                                    up_neighbour: Some(1),
+                                    down_neighbour: Some(21),
+                                    ..BottomWidget::default()
+                                }],
+                                ..BottomColRow::default()
                             }],
                         },
                         BottomCol {
-                            total_widget_ratio: 2,
-                            width_ratio: 3,
+                            total_col_row_ratio: 2,
+                            col_width_ratio: 3,
                             children: vec![
-                                BottomWidget {
-                                    height_ratio: 1,
-                                    widget_type: BottomWidgetType::Temp,
-                                    widget_id: 12,
-                                    left_neighbour: Some(11),
-                                    right_neighbour: None,
-                                    up_neighbour: Some(1),
-                                    down_neighbour: Some(13),
+                                BottomColRow {
+                                    col_row_height_ratio: 1,
+                                    total_widget_ratio: 2,
+                                    children: vec![BottomWidget {
+                                        width_ratio: 1,
+                                        widget_type: BottomWidgetType::Temp,
+                                        widget_id: 12,
+                                        left_neighbour: Some(11),
+                                        up_neighbour: Some(1),
+                                        down_neighbour: Some(13),
+                                        ..BottomWidget::default()
+                                    }],
+                                    ..BottomColRow::default()
                                 },
-                                BottomWidget {
-                                    height_ratio: 1,
-                                    widget_type: BottomWidgetType::Disk,
-                                    widget_id: 13,
-                                    left_neighbour: Some(11),
-                                    right_neighbour: None,
-                                    up_neighbour: Some(12),
-                                    down_neighbour: Some(22),
+                                BottomColRow {
+                                    col_row_height_ratio: 1,
+                                    total_widget_ratio: 1,
+                                    children: vec![BottomWidget {
+                                        width_ratio: 1,
+                                        widget_type: BottomWidgetType::Disk,
+                                        widget_id: 13,
+                                        left_neighbour: Some(11),
+                                        up_neighbour: Some(12),
+                                        down_neighbour: Some(22),
+                                        ..BottomWidget::default()
+                                    }],
+                                    ..BottomColRow::default()
                                 },
                             ],
                         },
@@ -376,33 +582,57 @@ impl BottomLayout {
                 },
                 BottomRow {
                     total_col_ratio: 2,
-                    row_ratio: 30,
+                    row_height_ratio: 30,
                     children: vec![
                         BottomCol {
-                            total_widget_ratio: 1,
-                            width_ratio: 1,
-                            children: vec![BottomWidget {
-                                height_ratio: 1,
-                                widget_type: BottomWidgetType::Net,
-                                widget_id: 21,
-                                left_neighbour: None,
-                                right_neighbour: Some(22),
-                                up_neighbour: Some(11),
-                                down_neighbour: None,
+                            total_col_row_ratio: 1,
+                            col_width_ratio: 1,
+                            children: vec![BottomColRow {
+                                col_row_height_ratio: 1,
+                                total_widget_ratio: 1,
+                                children: vec![BottomWidget {
+                                    width_ratio: 1,
+                                    widget_type: BottomWidgetType::Net,
+                                    widget_id: 21,
+                                    right_neighbour: Some(22),
+                                    up_neighbour: Some(11),
+                                    ..BottomWidget::default()
+                                }],
+                                ..BottomColRow::default()
                             }],
                         },
                         BottomCol {
-                            total_widget_ratio: 1,
-                            width_ratio: 1,
-                            children: vec![BottomWidget {
-                                height_ratio: 1,
-                                widget_type: BottomWidgetType::Proc,
-                                widget_id: 22,
-                                left_neighbour: Some(21),
-                                right_neighbour: None,
-                                up_neighbour: Some(13),
-                                down_neighbour: None,
-                            }],
+                            total_col_row_ratio: 1,
+                            col_width_ratio: 1,
+                            children: vec![
+                                BottomColRow {
+                                    col_row_height_ratio: 1,
+                                    total_widget_ratio: 1,
+                                    children: vec![BottomWidget {
+                                        width_ratio: 1,
+                                        widget_type: BottomWidgetType::Proc,
+                                        widget_id: 22,
+                                        left_neighbour: Some(21),
+                                        up_neighbour: Some(13),
+                                        down_neighbour: Some(23),
+                                        ..BottomWidget::default()
+                                    }],
+                                    ..BottomColRow::default()
+                                },
+                                BottomColRow {
+                                    col_row_height_ratio: 1,
+                                    total_widget_ratio: 1,
+                                    children: vec![BottomWidget {
+                                        width_ratio: 1,
+                                        widget_type: BottomWidgetType::ProcSearch,
+                                        widget_id: 23,
+                                        up_neighbour: Some(22),
+                                        left_neighbour: Some(21),
+                                        ..BottomWidget::default()
+                                    }],
+                                    ..BottomColRow::default()
+                                },
+                            ],
                         },
                     ],
                 },
@@ -414,7 +644,7 @@ impl BottomLayout {
 /// Represents a single row in the layout.
 #[derive(Clone, Debug)]
 pub struct BottomRow {
-    pub row_ratio: u32,
+    pub row_height_ratio: u32,
     pub children: Vec<BottomCol>,
     pub total_col_ratio: u32,
 }
@@ -424,15 +654,24 @@ pub struct BottomRow {
 /// a widget, as per the config, for simplicity's sake).
 #[derive(Clone, Debug)]
 pub struct BottomCol {
-    pub width_ratio: u32,
+    pub col_width_ratio: u32,
+    pub children: Vec<BottomColRow>,
+    pub total_col_row_ratio: u32,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct BottomColRow {
+    pub col_row_height_ratio: u32,
     pub children: Vec<BottomWidget>,
     pub total_widget_ratio: u32,
+    pub hard_height: Option<u16>,
+    pub take_all_space: bool,
 }
 
 /// Represents a single widget.
 #[derive(Debug, Default, Clone)]
 pub struct BottomWidget {
-    pub height_ratio: u32,
+    pub width_ratio: u32,
     pub widget_type: BottomWidgetType,
     pub widget_id: u64,
     pub left_neighbour: Option<u64>,
@@ -445,9 +684,11 @@ pub struct BottomWidget {
 pub enum BottomWidgetType {
     Empty,
     Cpu,
+    CpuLegend,
     Mem,
     Net,
     Proc,
+    ProcSearch,
     Temp,
     Disk,
 }

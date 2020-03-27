@@ -106,7 +106,7 @@ fn main() -> error::Result<()> {
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
     // Get widget layout separately
-    let widget_layout = get_widget_layout(&config)?;
+    let widget_layout = get_widget_layout(&matches, &config)?;
 
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(&matches, &config, &widget_layout)?;

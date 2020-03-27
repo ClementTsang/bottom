@@ -54,7 +54,6 @@ pub struct DisplayableData {
 /// Handles the canvas' state.  TODO: [OPT] implement this.
 pub struct Painter {
     pub colours: CanvasColours,
-
     height: u16,
     width: u16,
     styled_general_help_text: Vec<Text<'static>>,
@@ -63,7 +62,8 @@ pub struct Painter {
     is_mac_os: bool,
     row_constraints: Vec<Constraint>,
     col_constraints: Vec<Vec<Constraint>>,
-    widget_constraints: Vec<Vec<Vec<Constraint>>>,
+    col_row_constraints: Vec<Vec<Vec<Constraint>>>,
+    layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
     widget_layout: BottomLayout,
 }
 
@@ -75,29 +75,50 @@ impl Painter {
 
         let mut row_constraints = Vec::new();
         let mut col_constraints = Vec::new();
-        let mut widget_constraints = Vec::new();
+        let mut col_row_constraints = Vec::new();
+        let mut layout_constraints = Vec::new();
 
         widget_layout.rows.iter().for_each(|row| {
             row_constraints.push(Constraint::Ratio(
-                row.row_ratio,
-                widget_layout.total_height_ratio,
+                row.row_height_ratio,
+                widget_layout.total_row_height_ratio,
             ));
 
             let mut new_col_constraints = Vec::new();
             let mut new_widget_constraints = Vec::new();
+            let mut new_col_row_constraints = Vec::new();
             row.children.iter().for_each(|col| {
-                new_col_constraints.push(Constraint::Ratio(col.width_ratio, row.total_col_ratio));
+                new_col_constraints
+                    .push(Constraint::Ratio(col.col_width_ratio, row.total_col_ratio));
 
+                let mut new_new_col_row_constraints = Vec::new();
                 let mut new_new_widget_constraints = Vec::new();
-                col.children.iter().for_each(|widget| {
-                    new_new_widget_constraints.push(Constraint::Ratio(
-                        widget.height_ratio,
-                        col.total_widget_ratio,
-                    ));
+                col.children.iter().for_each(|col_row| {
+                    if let Some(hard_height) = col_row.hard_height {
+                        new_new_col_row_constraints.push(Constraint::Length(hard_height));
+                    } else if col_row.take_all_space {
+                        new_new_col_row_constraints.push(Constraint::Min(0));
+                    } else {
+                        new_new_col_row_constraints.push(Constraint::Ratio(
+                            col_row.col_row_height_ratio,
+                            col.total_col_row_ratio,
+                        ));
+                    }
+
+                    let mut new_new_new_widget_constraints = Vec::new();
+                    col_row.children.iter().for_each(|widget| {
+                        new_new_new_widget_constraints.push(Constraint::Ratio(
+                            widget.width_ratio,
+                            col_row.total_widget_ratio,
+                        ));
+                    });
+                    new_new_widget_constraints.push(new_new_new_widget_constraints);
                 });
+                new_col_row_constraints.push(new_new_col_row_constraints);
                 new_widget_constraints.push(new_new_widget_constraints);
             });
-            widget_constraints.push(new_widget_constraints);
+            col_row_constraints.push(new_col_row_constraints);
+            layout_constraints.push(new_widget_constraints);
             col_constraints.push(new_col_constraints);
         });
 
@@ -111,7 +132,8 @@ impl Painter {
             is_mac_os: false,
             row_constraints,
             col_constraints,
-            widget_constraints,
+            col_row_constraints,
+            layout_constraints,
             widget_layout,
         }
     }
@@ -278,36 +300,80 @@ impl Painter {
                         self.draw_dd_dialog(&mut f, app_state, middle_dialog_chunk[1]);
                 }
             } else if app_state.is_expanded {
-                // FIXME: Expanded canvas logic
-                // let rect = Layout::default()
-                //     .margin(1)
-                //     .constraints([Constraint::Percentage(100)].as_ref())
-                //     .split(f.size());
-                // match &app_state.current_widget_selected {
-                //     WidgetPosition::Cpu | WidgetPosition::BasicCpu | WidgetPosition::CpuLegend => {
-                //         if let Some(widget) = app_state.widget_map.get(&app_state.current_widget_id)
-                //         {
-                //             self.draw_cpu(&mut f, app_state, rect[0], widget);
-                //         }
-                //     }
-                //     WidgetPosition::Mem | WidgetPosition::BasicMem => {
-                //         self.draw_memory_graph(&mut f, app_state, rect[0]);
-                //     }
-                //     WidgetPosition::Disk => {
-                //         self.draw_disk_table(&mut f, app_state, rect[0], true);
-                //     }
-                //     WidgetPosition::Temp => {
-                //         self.draw_temp_table(&mut f, app_state, rect[0], true);
-                //     }
-                //     WidgetPosition::Network
-                //     | WidgetPosition::BasicNet
-                //     | WidgetPosition::NetworkLegend => {
-                //         self.draw_network_graph(&mut f, app_state, rect[0]);
-                //     }
-                //     WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                //         self.draw_process_and_search(&mut f, app_state, rect[0], true);
-                //     }
-                // }
+                let rect = Layout::default()
+                    .margin(0)
+                    .constraints([Constraint::Percentage(100)].as_ref())
+                    .split(f.size());
+                match &app_state.current_widget.widget_type {
+                    BottomWidgetType::Cpu => {
+                        self.draw_cpu_graph(
+                            &mut f,
+                            app_state,
+                            rect[0],
+                            app_state.current_widget.widget_id,
+                        );
+                    }
+                    BottomWidgetType::CpuLegend if rect[0].width >= 35 => {
+                        self.draw_cpu_legend(
+                            &mut f,
+                            app_state,
+                            rect[0],
+                            app_state.current_widget.widget_id,
+                        );
+                    }
+                    BottomWidgetType::CpuLegend => {
+                        // Too small... don't draw, and if we were on it, move!
+                        if app_state.app_config_fields.left_legend {
+                            app_state.move_widget_selection_right();
+                        } else {
+                            app_state.move_widget_selection_left();
+                        }
+                    }
+                    BottomWidgetType::Mem => {
+                        self.draw_memory_graph(
+                            &mut f,
+                            app_state,
+                            rect[0],
+                            app_state.current_widget.widget_id,
+                        );
+                    }
+                    BottomWidgetType::Disk => {
+                        self.draw_disk_table(
+                            &mut f,
+                            app_state,
+                            rect[0],
+                            true,
+                            app_state.current_widget.widget_id,
+                        );
+                    }
+                    BottomWidgetType::Temp => {
+                        self.draw_temp_table(
+                            &mut f,
+                            app_state,
+                            rect[0],
+                            true,
+                            app_state.current_widget.widget_id,
+                        );
+                    }
+                    BottomWidgetType::Net => {
+                        self.draw_network_graph(
+                            &mut f,
+                            app_state,
+                            rect[0],
+                            app_state.current_widget.widget_id,
+                        );
+                    }
+                    BottomWidgetType::Proc => {
+                        self.draw_process_and_search(
+                            &mut f,
+                            app_state,
+                            rect[0],
+                            true,
+                            app_state.current_widget.widget_id,
+                        );
+                    }
+                    _ => {}
+                }
             } else if app_state.app_config_fields.use_basic_mode {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
@@ -375,66 +441,112 @@ impl Painter {
                             .split(row_draw_locs[itx])
                     })
                     .collect::<Vec<_>>();
+                let col_row_draw_locs = self
+                    .col_row_constraints
+                    .iter()
+                    .enumerate()
+                    .map(|(col_itx, col_row_constraints)| {
+                        col_row_constraints
+                            .iter()
+                            .enumerate()
+                            .map(|(itx, col_row_constraint)| {
+                                Layout::default()
+                                    .constraints(col_row_constraint.as_ref())
+                                    .direction(Direction::Vertical)
+                                    .split(col_draw_locs[col_itx][itx])
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
 
                 // Now... draw!
-                self.widget_constraints.iter().enumerate().for_each(
+                self.layout_constraints.iter().enumerate().for_each(
                     |(row_itx, col_constraint_vec)| {
                         col_constraint_vec.iter().enumerate().for_each(
-                            |(col_itx, widget_constraints)| {
-                                let widget_draw_locs = Layout::default()
-                                    .constraints(widget_constraints.as_ref())
-                                    .direction(Direction::Vertical)
-                                    .split(col_draw_locs[row_itx][col_itx]);
+                            |(col_itx, col_row_constraint_vec)| {
+                                col_row_constraint_vec.iter().enumerate().for_each(
+                                    |(col_row_itx, widget_constraints)| {
+                                        let widget_draw_locs = Layout::default()
+                                            .constraints(widget_constraints.as_ref())
+                                            .direction(Direction::Horizontal)
+                                            .split(
+                                                col_row_draw_locs[row_itx][col_itx][col_row_itx],
+                                            );
 
-                                for (widget_itx, widget) in self.widget_layout.rows[row_itx]
-                                    .children[col_itx]
-                                    .children
-                                    .iter()
-                                    .enumerate()
-                                {
-                                    match widget.widget_type {
-                                        Empty => {}
-                                        Cpu => self.draw_cpu(
-                                            &mut f,
-                                            app_state,
-                                            widget_draw_locs[widget_itx],
-                                            widget.widget_id,
-                                        ),
-                                        Mem => self.draw_memory_graph(
-                                            &mut f,
-                                            app_state,
-                                            widget_draw_locs[widget_itx],
-                                            widget.widget_id,
-                                        ),
-                                        Net => self.draw_network(
-                                            &mut f,
-                                            app_state,
-                                            widget_draw_locs[widget_itx],
-                                            widget.widget_id,
-                                        ),
-                                        Temp => self.draw_temp_table(
-                                            &mut f,
-                                            app_state,
-                                            widget_draw_locs[widget_itx],
-                                            true,
-                                            widget.widget_id,
-                                        ),
-                                        Disk => self.draw_disk_table(
-                                            &mut f,
-                                            app_state,
-                                            widget_draw_locs[widget_itx],
-                                            true,
-                                            widget.widget_id,
-                                        ),
-                                        Proc => self.draw_process_and_search(
-                                            &mut f,
-                                            app_state,
-                                            widget_draw_locs[widget_itx],
-                                            true,
-                                            widget.widget_id,
-                                        ),
-                                    }
-                                }
+                                        for (widget_itx, widget) in self.widget_layout.rows[row_itx]
+                                            .children[col_itx]
+                                            .children[col_row_itx]
+                                            .children
+                                            .iter()
+                                            .enumerate()
+                                        {
+                                            match widget.widget_type {
+                                                Empty => {}
+                                                Cpu => self.draw_cpu_graph(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    widget.widget_id,
+                                                ),
+                                                CpuLegend
+                                                    if widget_draw_locs[widget_itx].width >= 35 =>
+                                                {
+                                                    self.draw_cpu_legend(
+                                                        &mut f,
+                                                        app_state,
+                                                        widget_draw_locs[widget_itx],
+                                                        widget.widget_id,
+                                                    )
+                                                }
+                                                CpuLegend => {
+                                                    if widget.widget_id
+                                                        == app_state.current_widget.widget_id
+                                                    {
+                                                        if app_state.app_config_fields.left_legend {
+                                                            app_state.move_widget_selection_right();
+                                                        } else {
+                                                            app_state.move_widget_selection_left();
+                                                        }
+                                                    }
+                                                }
+                                                Mem => self.draw_memory_graph(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    widget.widget_id,
+                                                ),
+                                                Net => self.draw_network(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    widget.widget_id,
+                                                ),
+                                                Temp => self.draw_temp_table(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    true,
+                                                    widget.widget_id,
+                                                ),
+                                                Disk => self.draw_disk_table(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    true,
+                                                    widget.widget_id,
+                                                ),
+                                                Proc => self.draw_process_and_search(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    true,
+                                                    widget.widget_id,
+                                                ),
+                                                _ => {}
+                                            }
+                                        }
+                                    },
+                                );
                             },
                         );
                     },
