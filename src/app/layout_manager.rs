@@ -143,20 +143,6 @@ impl BottomLayout {
                                     col_row_height_percentage_start,
                                     col_row_height_percentage_end,
                                 )) {
-                                    // Left
-                                    debug!(
-                                        "Left: {:?} using ..{:?}",
-                                        current_col_row.1.range(
-                                            ..(
-                                                widget_width_percentage_start,
-                                                widget_width_percentage_start,
-                                            ),
-                                        ),
-                                        (
-                                            widget_width_percentage_start,
-                                            widget_width_percentage_start,
-                                        )
-                                    );
                                     if let Some(to_left_widget) = current_col_row
                                         .1
                                         .range(
@@ -171,13 +157,6 @@ impl BottomLayout {
                                     }
 
                                     // Right
-                                    debug!(
-                                        "Right: {:?} using {:?}..",
-                                        current_col_row.1.range(
-                                            (widget_percentage_end, widget_percentage_end)..
-                                        ),
-                                        (widget_percentage_end, widget_percentage_end)
-                                    );
                                     if let Some(to_right_neighbour) = current_col_row
                                         .1
                                         .range((widget_percentage_end, widget_percentage_end)..)
@@ -187,15 +166,6 @@ impl BottomLayout {
                                     }
                                 }
                             }
-
-                            debug!("Current row: {:?}", current_row);
-                            debug!(
-                                "to_left_col: {:?}, using ..{:?}",
-                                current_row.1.range(
-                                    ..(col_width_percentage_start, col_width_percentage_start),
-                                ),
-                                (col_width_percentage_start, col_width_percentage_start)
-                            );
 
                             if widget.left_neighbour.is_none() {
                                 if let Some(to_left_col) = current_row
@@ -212,15 +182,6 @@ impl BottomLayout {
                                     for widget_position in &(to_left_col.1).1 {
                                         let candidate_start = (widget_position.0).0;
                                         let candidate_end = (widget_position.0).1;
-
-                                        debug!(
-                                            "Do they intersect?  Col_row: {:?}, candidate: {:?}",
-                                            (
-                                                col_row_height_percentage_start,
-                                                col_row_height_percentage_end,
-                                            ),
-                                            (candidate_start, candidate_end)
-                                        );
 
                                         if is_intersecting(
                                             (
@@ -333,10 +294,6 @@ impl BottomLayout {
                                     )
                                     .next_back()
                                 {
-                                    let col_percentage_end = (col_cursor + col.col_width_ratio)
-                                        * 100
-                                        / row.total_col_ratio;
-
                                     // We want to get the widget with the highest percentage WITHIN our two ranges
                                     let mut current_best_distance = 0;
                                     let mut current_best_widget_id = widget.widget_id;
@@ -345,18 +302,17 @@ impl BottomLayout {
                                         let candidate_end = (col_position.0).1;
 
                                         if is_intersecting(
-                                            (col_row_height_percentage_start, col_percentage_end),
+                                            (col_width_percentage_start, col_width_percentage_end),
                                             (candidate_start, candidate_end),
                                         ) {
-                                            let candidate_distance = if candidate_start
-                                                < col_row_height_percentage_start
-                                            {
-                                                candidate_end - col_row_height_percentage_start
-                                            } else if candidate_end < col_percentage_end {
-                                                candidate_end - candidate_start
-                                            } else {
-                                                col_percentage_end - candidate_start
-                                            };
+                                            let candidate_distance =
+                                                if candidate_start < col_width_percentage_start {
+                                                    candidate_end - col_width_percentage_start
+                                                } else if candidate_end < col_width_percentage_end {
+                                                    candidate_end - candidate_start
+                                                } else {
+                                                    col_width_percentage_end - candidate_start
+                                                };
 
                                             if current_best_distance < candidate_distance {
                                                 if let Some(current_best_widget) =
@@ -401,10 +357,6 @@ impl BottomLayout {
                                     )
                                     .next()
                                 {
-                                    let col_percentage_end = (col_cursor + col.col_width_ratio)
-                                        * 100
-                                        / row.total_col_ratio;
-
                                     // We want to get the widget with the highest percentage WITHIN our two ranges
                                     let mut current_best_distance = 0;
                                     let mut current_best_widget_id = widget.widget_id;
@@ -414,18 +366,17 @@ impl BottomLayout {
                                         let candidate_end = (col_position.0).1;
 
                                         if is_intersecting(
-                                            (col_row_height_percentage_start, col_percentage_end),
+                                            (col_width_percentage_start, col_width_percentage_end),
                                             (candidate_start, candidate_end),
                                         ) {
-                                            let candidate_distance = if candidate_start
-                                                < col_row_height_percentage_start
-                                            {
-                                                candidate_end - col_row_height_percentage_start
-                                            } else if candidate_end < col_percentage_end {
-                                                candidate_end - candidate_start
-                                            } else {
-                                                col_percentage_end - candidate_start
-                                            };
+                                            let candidate_distance =
+                                                if candidate_start < col_width_percentage_start {
+                                                    candidate_end - col_width_percentage_start
+                                                } else if candidate_end < col_width_percentage_end {
+                                                    candidate_end - candidate_start
+                                                } else {
+                                                    col_width_percentage_end - candidate_start
+                                                };
 
                                             if current_best_distance < candidate_distance {
                                                 if let Some(current_best_widget) =

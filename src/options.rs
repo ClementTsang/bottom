@@ -213,8 +213,6 @@ pub fn get_widget_layout(
         };
         ret_bottom_layout.get_movement_mappings();
 
-        debug!("ret_bottom_layout: {:?}", ret_bottom_layout);
-
         ret_bottom_layout
     } else {
         // Populate with a default.
