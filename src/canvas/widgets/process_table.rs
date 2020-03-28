@@ -52,7 +52,13 @@ impl ProcessTableWidget for Painter {
                     .split(draw_loc);
 
                 self.draw_processes_table(f, app_state, processes_chunk[0], draw_border, widget_id);
-                self.draw_search_field(f, app_state, processes_chunk[1], draw_border, widget_id);
+                self.draw_search_field(
+                    f,
+                    app_state,
+                    processes_chunk[1],
+                    draw_border,
+                    widget_id + 1,
+                );
             } else {
                 self.draw_processes_table(f, app_state, draw_loc, draw_border, widget_id);
             }
@@ -76,8 +82,7 @@ impl ProcessTableWidget for Painter {
                 // We also need to move the list - we can
                 // do so by hiding some elements!
                 let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
-                let is_on_widget = widget_id == app_state.current_widget.widget_id
-                    && !proc_widget_state.is_on_search;
+                let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
                 let position = get_start_position(
                     num_rows,
@@ -244,14 +249,15 @@ impl ProcessTableWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
-        if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+        if let Some(proc_widget_state) =
+            app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
+        {
             let pid_search_text = "Search by PID (Tab for Name): ";
             let name_search_text = "Search by Name (Tab for PID): ";
             let grouped_search_text = "Search by Name: ";
             let num_columns = draw_loc.width as usize;
 
-            let is_on_widget =
-                widget_id == app_state.current_widget.widget_id && proc_widget_state.is_on_search;
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
             let chosen_text = if proc_widget_state.is_grouped {
                 grouped_search_text
@@ -337,16 +343,17 @@ impl ProcessTableWidget for Painter {
             };
 
             // Text options shamelessly stolen from VS Code.
-            let mut option_text = vec![];
-            let case_style = if !proc_widget_state.process_search_state.is_ignoring_case {
-                self.colours.currently_selected_text_style
-            } else {
-                self.colours.text_style
-            };
+            let case_style =
+                if !proc_widget_state.process_search_state.is_ignoring_case && is_on_widget {
+                    self.colours.currently_selected_text_style
+                } else {
+                    self.colours.text_style
+                };
 
             let whole_word_style = if proc_widget_state
                 .process_search_state
                 .is_searching_whole_word
+                && is_on_widget
             {
                 self.colours.currently_selected_text_style
             } else {
@@ -356,12 +363,14 @@ impl ProcessTableWidget for Painter {
             let regex_style = if proc_widget_state
                 .process_search_state
                 .is_searching_with_regex
+                && is_on_widget
             {
                 self.colours.currently_selected_text_style
             } else {
                 self.colours.text_style
             };
 
+            let mut option_text = vec![];
             let case_text = format!(
                 "Match Case ({})[{}]",
                 if self.is_mac_os { "F1" } else { "Alt+C" },

@@ -157,7 +157,8 @@ impl CpuGraphWidget for Painter {
     fn draw_cpu_legend<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
+        if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))
+        {
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
             let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;

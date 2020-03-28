@@ -220,7 +220,6 @@ impl ProcessSearchState {
 pub struct ProcWidgetState {
     pub process_search_state: ProcessSearchState,
     pub is_grouped: bool,
-    pub is_on_search: bool,
     pub scroll_state: AppScrollWidgetState,
     pub process_sorting_type: processes::ProcessSorting,
     pub process_sorting_reverse: bool,
@@ -245,7 +244,6 @@ impl ProcWidgetState {
         ProcWidgetState {
             process_search_state,
             is_grouped,
-            is_on_search: false,
             scroll_state: AppScrollWidgetState::default(),
             process_sorting_type: processes::ProcessSorting::CPU,
             process_sorting_reverse: true,
@@ -632,7 +630,21 @@ impl App {
                                 .process_search_state
                                 .search_state
                                 .is_enabled = false;
-                            current_proc_state.is_on_search = false;
+                        }
+                    }
+                }
+                BottomWidgetType::ProcSearch => {
+                    if let Some(current_proc_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
+                    {
+                        if current_proc_state.is_search_enabled() {
+                            current_proc_state
+                                .process_search_state
+                                .search_state
+                                .is_enabled = false;
+                            self.move_widget_selection_up();
                         }
                     }
                 }
@@ -653,15 +665,10 @@ impl App {
     }
 
     pub fn is_in_search_widget(&self) -> bool {
-        if let Some(proc_widget_state) = self
-            .proc_state
-            .widget_states
-            .get(&self.current_widget.widget_id)
-        {
-            proc_widget_state.is_on_search
-        } else {
-            false
-        }
+        matches!(
+            self.current_widget.widget_type,
+            BottomWidgetType::ProcSearch
+        )
     }
 
     fn is_filtering_or_searching(&self) -> bool {
@@ -691,6 +698,20 @@ impl App {
                     false
                 }
             }
+            BottomWidgetType::ProcSearch => {
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get(&(self.current_widget.widget_id - 1))
+                {
+                    proc_widget_state
+                        .process_search_state
+                        .search_state
+                        .is_enabled
+                } else {
+                    false
+                }
+            }
             _ => false,
         }
     }
@@ -706,13 +727,15 @@ impl App {
 
     pub fn on_tab(&mut self) {
         // Disallow usage whilst in a dialog and only in processes
+
+        let is_in_search_widget = self.is_in_search_widget();
         if !self.is_in_dialog() {
             if let Some(proc_widget_state) = self
                 .proc_state
                 .widget_states
                 .get_mut(&self.current_widget.widget_id)
             {
-                if proc_widget_state.is_on_search {
+                if is_in_search_widget {
                     if !proc_widget_state.is_grouped {
                         if proc_widget_state.process_search_state.is_searching_with_pid {
                             self.search_with_name();
@@ -787,10 +810,10 @@ impl App {
                             .process_search_state
                             .search_state
                             .is_enabled = true;
-                        proc_widget_state.is_on_search = true;
                         if proc_widget_state.is_grouped {
                             self.search_with_name();
                         }
+                        self.move_widget_selection_down();
                     }
                 }
                 BottomWidgetType::Cpu => {
@@ -817,7 +840,7 @@ impl App {
             if let Some(proc_widget_state) = self
                 .proc_state
                 .widget_states
-                .get_mut(&self.current_widget.widget_id)
+                .get_mut(&(self.current_widget.widget_id - 1))
             {
                 if proc_widget_state
                     .process_search_state
@@ -825,7 +848,7 @@ impl App {
                     .is_enabled
                 {
                     proc_widget_state.process_search_state.is_searching_with_pid = true;
-                    self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                 }
             }
         }
@@ -836,7 +859,7 @@ impl App {
             if let Some(proc_widget_state) = self
                 .proc_state
                 .widget_states
-                .get_mut(&self.current_widget.widget_id)
+                .get_mut(&(self.current_widget.widget_id - 1))
             {
                 if proc_widget_state
                     .process_search_state
@@ -844,54 +867,57 @@ impl App {
                     .is_enabled
                 {
                     proc_widget_state.process_search_state.is_searching_with_pid = false;
-                    self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                 }
             }
         }
     }
 
     pub fn toggle_ignore_case(&mut self) {
+        let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .proc_state
             .widget_states
-            .get_mut(&self.current_widget.widget_id)
+            .get_mut(&(self.current_widget.widget_id - 1))
         {
-            if proc_widget_state.is_on_search && proc_widget_state.is_search_enabled() {
+            if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state
                     .process_search_state
                     .search_toggle_ignore_case();
                 proc_widget_state.update_regex();
-                self.proc_state.force_update = Some(self.current_widget.widget_id);
+                self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
             }
         }
     }
 
     pub fn toggle_search_whole_word(&mut self) {
+        let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .proc_state
             .widget_states
-            .get_mut(&self.current_widget.widget_id)
+            .get_mut(&(self.current_widget.widget_id - 1))
         {
-            if proc_widget_state.is_on_search && proc_widget_state.is_search_enabled() {
+            if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state
                     .process_search_state
                     .search_toggle_whole_word();
                 proc_widget_state.update_regex();
-                self.proc_state.force_update = Some(self.current_widget.widget_id);
+                self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
             }
         }
     }
 
     pub fn toggle_search_regex(&mut self) {
+        let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .proc_state
             .widget_states
-            .get_mut(&self.current_widget.widget_id)
+            .get_mut(&(self.current_widget.widget_id - 1))
         {
-            if proc_widget_state.is_on_search && proc_widget_state.is_search_enabled() {
+            if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.process_search_state.search_toggle_regex();
                 proc_widget_state.update_regex();
-                self.proc_state.force_update = Some(self.current_widget.widget_id);
+                self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
             }
         }
     }
@@ -920,18 +946,7 @@ impl App {
             // Pop-out mode.  We ignore if in process search.
 
             match self.current_widget.widget_type {
-                BottomWidgetType::Proc => {
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .widget_states
-                        .get(&self.current_widget.widget_id)
-                    {
-                        if !proc_widget_state.is_on_search {
-                            self.is_expanded = true;
-                            self.is_resized = true;
-                        }
-                    }
-                }
+                BottomWidgetType::ProcSearch => {}
                 _ => {
                     self.is_expanded = true;
                     self.is_resized = true;
@@ -950,13 +965,14 @@ impl App {
     }
 
     pub fn on_delete(&mut self) {
-        if let BottomWidgetType::Proc = self.current_widget.widget_type {
+        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+            let is_in_search_widget = self.is_in_search_widget();
             if let Some(proc_widget_state) = self
                 .proc_state
                 .widget_states
-                .get_mut(&self.current_widget.widget_id)
+                .get_mut(&(self.current_widget.widget_id - 1))
             {
-                if proc_widget_state.is_on_search {
+                if is_in_search_widget {
                     if proc_widget_state
                         .process_search_state
                         .search_state
@@ -988,7 +1004,7 @@ impl App {
                         );
 
                         proc_widget_state.update_regex();
-                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                        self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                     }
                 } else {
                     self.start_dd()
@@ -998,13 +1014,14 @@ impl App {
     }
 
     pub fn on_backspace(&mut self) {
-        if let BottomWidgetType::Proc = self.current_widget.widget_type {
+        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+            let is_in_search_widget = self.is_in_search_widget();
             if let Some(proc_widget_state) = self
                 .proc_state
                 .widget_states
-                .get_mut(&self.current_widget.widget_id)
+                .get_mut(&(self.current_widget.widget_id - 1))
             {
-                if proc_widget_state.is_on_search
+                if is_in_search_widget
                     && proc_widget_state
                         .process_search_state
                         .search_state
@@ -1042,7 +1059,7 @@ impl App {
                         .cursor_direction = CursorDirection::LEFT;
 
                     proc_widget_state.update_regex();
-                    self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                 }
             }
         }
@@ -1082,13 +1099,14 @@ impl App {
 
     pub fn on_left_key(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+                let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
                     .proc_state
                     .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if proc_widget_state.is_on_search {
+                    if is_in_search_widget {
                         let prev_cursor = proc_widget_state.get_cursor_position();
                         proc_widget_state.search_walk_back(proc_widget_state.get_cursor_position());
                         if proc_widget_state.get_cursor_position() < prev_cursor {
@@ -1116,13 +1134,14 @@ impl App {
 
     pub fn on_right_key(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+                let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
                     .proc_state
                     .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if proc_widget_state.is_on_search {
+                    if is_in_search_widget {
                         let prev_cursor = proc_widget_state.get_cursor_position();
                         proc_widget_state
                             .search_walk_forward(proc_widget_state.get_cursor_position());
@@ -1151,13 +1170,14 @@ impl App {
 
     pub fn skip_cursor_beginning(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+                let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
                     .proc_state
                     .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if proc_widget_state.is_on_search {
+                    if is_in_search_widget {
                         proc_widget_state
                             .process_search_state
                             .search_state
@@ -1186,13 +1206,14 @@ impl App {
 
     pub fn skip_cursor_end(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+                let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
                     .proc_state
                     .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if proc_widget_state.is_on_search {
+                    if is_in_search_widget {
                         proc_widget_state
                             .process_search_state
                             .search_state
@@ -1230,13 +1251,15 @@ impl App {
     }
 
     pub fn clear_search(&mut self) {
-        if let Some(proc_widget_state) = self
-            .proc_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            proc_widget_state.clear_search();
-            self.proc_state.force_update = Some(self.current_widget.widget_id);
+        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+            if let Some(proc_widget_state) = self
+                .proc_state
+                .widget_states
+                .get_mut(&(self.current_widget.widget_id - 1))
+            {
+                proc_widget_state.clear_search();
+                self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
+            }
         }
     }
 
@@ -1303,13 +1326,14 @@ impl App {
             }
             self.last_key_press = current_key_press_inst;
 
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+                let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
                     .proc_state
                     .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut(&(self.current_widget.widget_id - 1))
                 {
-                    if proc_widget_state.is_on_search
+                    if is_in_search_widget
                         && proc_widget_state.is_search_enabled()
                         && UnicodeWidthStr::width(
                             proc_widget_state
@@ -1347,7 +1371,7 @@ impl App {
                             UnicodeWidthChar::width(caught_char).unwrap_or(0);
 
                         proc_widget_state.update_regex();
-                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                        self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                         proc_widget_state
                             .process_search_state
                             .search_state
@@ -1601,31 +1625,27 @@ impl App {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
                 // FIXME: Basic movement
-            } else if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    if proc_widget_state.is_search_enabled() && proc_widget_state.is_on_search {
-                        proc_widget_state.is_on_search = false;
-                        self.reset_multi_tap_keys();
-                        return;
-                    }
-                }
-
-                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(new_widget_id) = current_widget.up_neighbour {
-                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                            self.current_widget = new_widget.clone();
-                        }
-                    }
-                }
             } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
             {
                 if let Some(new_widget_id) = current_widget.up_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        self.current_widget = new_widget.clone();
+                        if let BottomWidgetType::ProcSearch = new_widget.widget_type {
+                            if let Some(proc_widget_state) =
+                                self.proc_state.widget_states.get(&(new_widget_id - 1))
+                            {
+                                if proc_widget_state.is_search_enabled() {
+                                    self.current_widget = new_widget.clone();
+                                } else if let Some(next_new_widget_id) = new_widget.up_neighbour {
+                                    if let Some(next_new_widget) =
+                                        self.widget_map.get(&next_new_widget_id)
+                                    {
+                                        self.current_widget = next_new_widget.clone();
+                                    }
+                                }
+                            }
+                        } else {
+                            self.current_widget = new_widget.clone();
+                        }
                     }
                 }
             }
@@ -1641,31 +1661,27 @@ impl App {
         if !self.is_in_dialog() && !self.is_expanded {
             if self.app_config_fields.use_basic_mode {
                 // FIXME: Basic movement
-            } else if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    if proc_widget_state.is_search_enabled() && !proc_widget_state.is_on_search {
-                        proc_widget_state.is_on_search = true;
-                        self.reset_multi_tap_keys();
-                        return;
-                    }
-                }
-
-                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(new_widget_id) = current_widget.down_neighbour {
-                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                            self.current_widget = new_widget.clone();
-                        }
-                    }
-                }
             } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
             {
                 if let Some(new_widget_id) = current_widget.down_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        self.current_widget = new_widget.clone();
+                        if let BottomWidgetType::ProcSearch = new_widget.widget_type {
+                            if let Some(proc_widget_state) =
+                                self.proc_state.widget_states.get(&(new_widget_id - 1))
+                            {
+                                if proc_widget_state.is_search_enabled() {
+                                    self.current_widget = new_widget.clone();
+                                } else if let Some(next_new_widget_id) = new_widget.down_neighbour {
+                                    if let Some(next_new_widget) =
+                                        self.widget_map.get(&next_new_widget_id)
+                                    {
+                                        self.current_widget = next_new_widget.clone();
+                                    }
+                                }
+                            }
+                        } else {
+                            self.current_widget = new_widget.clone();
+                        }
                     }
                 }
             }

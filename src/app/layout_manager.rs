@@ -553,7 +553,7 @@ impl BottomLayout {
                             }],
                         },
                         BottomCol {
-                            total_col_row_ratio: 1,
+                            total_col_row_ratio: 2,
                             col_width_ratio: 1,
                             children: vec![
                                 BottomColRow {
@@ -568,6 +568,7 @@ impl BottomLayout {
                                         down_neighbour: Some(23),
                                         ..BottomWidget::default()
                                     }],
+                                    take_all_space: true,
                                     ..BottomColRow::default()
                                 },
                                 BottomColRow {
@@ -581,6 +582,7 @@ impl BottomLayout {
                                         left_neighbour: Some(21),
                                         ..BottomWidget::default()
                                     }],
+                                    hard_height: Some(5),
                                     ..BottomColRow::default()
                                 },
                             ],

@@ -94,8 +94,8 @@ impl Painter {
                 let mut new_new_col_row_constraints = Vec::new();
                 let mut new_new_widget_constraints = Vec::new();
                 col.children.iter().for_each(|col_row| {
-                    if let Some(hard_height) = col_row.hard_height {
-                        new_new_col_row_constraints.push(Constraint::Length(hard_height));
+                    if col_row.hard_height.is_some() {
+                        new_new_col_row_constraints.push(Constraint::Length(0));
                     } else if col_row.take_all_space {
                         new_new_col_row_constraints.push(Constraint::Min(0));
                     } else {
@@ -313,21 +313,13 @@ impl Painter {
                             app_state.current_widget.widget_id,
                         );
                     }
-                    BottomWidgetType::CpuLegend if rect[0].width >= 35 => {
+                    BottomWidgetType::CpuLegend if rect[0].width >= 5 => {
                         self.draw_cpu_legend(
                             &mut f,
                             app_state,
                             rect[0],
                             app_state.current_widget.widget_id,
                         );
-                    }
-                    BottomWidgetType::CpuLegend => {
-                        // Too small... don't draw, and if we were on it, move!
-                        if app_state.app_config_fields.left_legend {
-                            app_state.move_widget_selection_right();
-                        } else {
-                            app_state.move_widget_selection_left();
-                        }
                     }
                     BottomWidgetType::Mem => {
                         self.draw_memory_graph(
@@ -364,7 +356,7 @@ impl Painter {
                         );
                     }
                     BottomWidgetType::Proc => {
-                        self.draw_process_and_search(
+                        self.draw_processes_table(
                             &mut f,
                             app_state,
                             rect[0],
@@ -489,7 +481,7 @@ impl Painter {
                                                     widget.widget_id,
                                                 ),
                                                 CpuLegend
-                                                    if widget_draw_locs[widget_itx].width >= 35 =>
+                                                    if widget_draw_locs[widget_itx].width >= 5 =>
                                                 {
                                                     self.draw_cpu_legend(
                                                         &mut f,
@@ -497,17 +489,6 @@ impl Painter {
                                                         widget_draw_locs[widget_itx],
                                                         widget.widget_id,
                                                     )
-                                                }
-                                                CpuLegend => {
-                                                    if widget.widget_id
-                                                        == app_state.current_widget.widget_id
-                                                    {
-                                                        if app_state.app_config_fields.left_legend {
-                                                            app_state.move_widget_selection_right();
-                                                        } else {
-                                                            app_state.move_widget_selection_left();
-                                                        }
-                                                    }
                                                 }
                                                 Mem => self.draw_memory_graph(
                                                     &mut f,
