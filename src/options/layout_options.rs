@@ -46,13 +46,15 @@ impl Row {
                                                 BottomWidget {
                                                     width_ratio: 3,
                                                     widget_type: BottomWidgetType::CpuLegend,
-                                                    widget_id: iter_old_id,
+                                                    widget_id: *iter_id,
+                                                    canvas_handle_height: true,
                                                     ..BottomWidget::default()
                                                 },
                                                 BottomWidget {
                                                     width_ratio: 17,
                                                     widget_type: BottomWidgetType::Cpu,
-                                                    widget_id: *iter_id,
+                                                    widget_id: iter_old_id,
+                                                    flex_grow: true,
                                                     ..BottomWidget::default()
                                                 },
                                             ],
@@ -67,12 +69,14 @@ impl Row {
                                                     width_ratio: 17,
                                                     widget_type: BottomWidgetType::Cpu,
                                                     widget_id: iter_old_id,
+                                                    flex_grow: true,
                                                     ..BottomWidget::default()
                                                 },
                                                 BottomWidget {
                                                     width_ratio: 3,
                                                     widget_type: BottomWidgetType::CpuLegend,
                                                     widget_id: *iter_id,
+                                                    canvas_handle_height: true,
                                                     ..BottomWidget::default()
                                                 },
                                             ],
@@ -97,7 +101,7 @@ impl Row {
                                                 widget_id: iter_old_id,
                                                 ..BottomWidget::default()
                                             }],
-                                            take_all_space: true,
+                                            flex_grow: true,
                                             ..BottomColRow::default()
                                         },
                                         BottomColRow {
@@ -109,7 +113,7 @@ impl Row {
                                                 widget_id: *iter_id,
                                                 ..BottomWidget::default()
                                             }],
-                                            hard_height: Some(5),
+                                            canvas_handle_height: true,
                                             ..BottomColRow::default()
                                         },
                                     ],
@@ -159,13 +163,15 @@ impl Row {
                                                 BottomWidget {
                                                     width_ratio: 3,
                                                     widget_type: BottomWidgetType::CpuLegend,
-                                                    widget_id: iter_old_id,
+                                                    widget_id: *iter_id,
+                                                    canvas_handle_height: true,
                                                     ..BottomWidget::default()
                                                 },
                                                 BottomWidget {
                                                     width_ratio: 17,
                                                     widget_type: BottomWidgetType::Cpu,
-                                                    widget_id: *iter_id,
+                                                    widget_id: iter_old_id,
+                                                    flex_grow: true,
                                                     ..BottomWidget::default()
                                                 },
                                             ],
@@ -180,12 +186,14 @@ impl Row {
                                                     width_ratio: 17,
                                                     widget_type: BottomWidgetType::Cpu,
                                                     widget_id: iter_old_id,
+                                                    flex_grow: true,
                                                     ..BottomWidget::default()
                                                 },
                                                 BottomWidget {
                                                     width_ratio: 3,
                                                     widget_type: BottomWidgetType::CpuLegend,
                                                     widget_id: *iter_id,
+                                                    canvas_handle_height: true,
                                                     ..BottomWidget::default()
                                                 },
                                             ],
@@ -206,7 +214,7 @@ impl Row {
                                             widget_id: iter_old_id,
                                             ..BottomWidget::default()
                                         }],
-                                        take_all_space: true,
+                                        flex_grow: true,
                                         ..BottomColRow::default()
                                     });
                                     col_row_children.push(BottomColRow {
@@ -218,7 +226,7 @@ impl Row {
                                             widget_id: *iter_id,
                                             ..BottomWidget::default()
                                         }],
-                                        hard_height: Some(5),
+                                        canvas_handle_height: true,
                                         ..BottomColRow::default()
                                     });
                                 }

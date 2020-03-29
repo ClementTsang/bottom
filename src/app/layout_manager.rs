@@ -435,17 +435,19 @@ impl BottomLayout {
                                     BottomWidget {
                                         width_ratio: 3,
                                         widget_type: BottomWidgetType::CpuLegend,
-                                        widget_id: 1,
+                                        widget_id: 2,
                                         down_neighbour: Some(11),
-                                        right_neighbour: Some(2),
+                                        right_neighbour: Some(1),
+                                        canvas_handle_height: true,
                                         ..BottomWidget::default()
                                     },
                                     BottomWidget {
                                         width_ratio: 17,
                                         widget_type: BottomWidgetType::Cpu,
-                                        widget_id: 2,
+                                        widget_id: 1,
                                         down_neighbour: Some(12),
-                                        left_neighbour: Some(1),
+                                        left_neighbour: Some(2),
+                                        flex_grow: true,
                                         ..BottomWidget::default()
                                     },
                                 ]
@@ -457,6 +459,7 @@ impl BottomLayout {
                                         widget_id: 1,
                                         down_neighbour: Some(11),
                                         right_neighbour: Some(2),
+                                        flex_grow: true,
                                         ..BottomWidget::default()
                                     },
                                     BottomWidget {
@@ -465,6 +468,7 @@ impl BottomLayout {
                                         widget_id: 2,
                                         down_neighbour: Some(12),
                                         left_neighbour: Some(1),
+                                        canvas_handle_height: true,
                                         ..BottomWidget::default()
                                     },
                                 ]
@@ -568,7 +572,7 @@ impl BottomLayout {
                                         down_neighbour: Some(23),
                                         ..BottomWidget::default()
                                     }],
-                                    take_all_space: true,
+                                    flex_grow: true,
                                     ..BottomColRow::default()
                                 },
                                 BottomColRow {
@@ -582,7 +586,7 @@ impl BottomLayout {
                                         left_neighbour: Some(21),
                                         ..BottomWidget::default()
                                     }],
-                                    hard_height: Some(5),
+                                    canvas_handle_height: true,
                                     ..BottomColRow::default()
                                 },
                             ],
@@ -617,8 +621,8 @@ pub struct BottomColRow {
     pub col_row_height_ratio: u32,
     pub children: Vec<BottomWidget>,
     pub total_widget_ratio: u32,
-    pub hard_height: Option<u16>,
-    pub take_all_space: bool,
+    pub canvas_handle_height: bool,
+    pub flex_grow: bool,
 }
 
 /// Represents a single widget.
@@ -631,6 +635,8 @@ pub struct BottomWidget {
     pub right_neighbour: Option<u64>,
     pub up_neighbour: Option<u64>,
     pub down_neighbour: Option<u64>,
+    pub canvas_handle_height: bool,
+    pub flex_grow: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -650,7 +656,7 @@ impl BottomWidgetType {
     pub fn is_widget_table(&self) -> bool {
         use BottomWidgetType::*;
         match self {
-            Disk | Proc | Temp => true,
+            Disk | Proc | Temp | CpuLegend => true,
             _ => false,
         }
     }

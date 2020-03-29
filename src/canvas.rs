@@ -94,9 +94,9 @@ impl Painter {
                 let mut new_new_col_row_constraints = Vec::new();
                 let mut new_new_widget_constraints = Vec::new();
                 col.children.iter().for_each(|col_row| {
-                    if col_row.hard_height.is_some() {
+                    if col_row.canvas_handle_height {
                         new_new_col_row_constraints.push(Constraint::Length(0));
-                    } else if col_row.take_all_space {
+                    } else if col_row.flex_grow {
                         new_new_col_row_constraints.push(Constraint::Min(0));
                     } else {
                         new_new_col_row_constraints.push(Constraint::Ratio(
@@ -107,10 +107,16 @@ impl Painter {
 
                     let mut new_new_new_widget_constraints = Vec::new();
                     col_row.children.iter().for_each(|widget| {
-                        new_new_new_widget_constraints.push(Constraint::Ratio(
-                            widget.width_ratio,
-                            col_row.total_widget_ratio,
-                        ));
+                        if widget.canvas_handle_height {
+                            new_new_new_widget_constraints.push(Constraint::Length(0));
+                        } else if widget.flex_grow {
+                            new_new_new_widget_constraints.push(Constraint::Min(0));
+                        } else {
+                            new_new_new_widget_constraints.push(Constraint::Ratio(
+                                widget.width_ratio,
+                                col_row.total_widget_ratio,
+                            ));
+                        }
                     });
                     new_new_widget_constraints.push(new_new_new_widget_constraints);
                 });
@@ -305,65 +311,58 @@ impl Painter {
                     .constraints([Constraint::Percentage(100)].as_ref())
                     .split(f.size());
                 match &app_state.current_widget.widget_type {
-                    BottomWidgetType::Cpu => {
-                        self.draw_cpu_graph(
-                            &mut f,
-                            app_state,
-                            rect[0],
-                            app_state.current_widget.widget_id,
-                        );
-                    }
-                    BottomWidgetType::CpuLegend if rect[0].width >= 5 => {
-                        self.draw_cpu_legend(
-                            &mut f,
-                            app_state,
-                            rect[0],
-                            app_state.current_widget.widget_id,
-                        );
-                    }
-                    BottomWidgetType::Mem => {
-                        self.draw_memory_graph(
-                            &mut f,
-                            app_state,
-                            rect[0],
-                            app_state.current_widget.widget_id,
-                        );
-                    }
-                    BottomWidgetType::Disk => {
-                        self.draw_disk_table(
-                            &mut f,
-                            app_state,
-                            rect[0],
-                            true,
-                            app_state.current_widget.widget_id,
-                        );
-                    }
-                    BottomWidgetType::Temp => {
-                        self.draw_temp_table(
-                            &mut f,
-                            app_state,
-                            rect[0],
-                            true,
-                            app_state.current_widget.widget_id,
-                        );
-                    }
-                    BottomWidgetType::Net => {
-                        self.draw_network_graph(
-                            &mut f,
-                            app_state,
-                            rect[0],
-                            app_state.current_widget.widget_id,
-                        );
-                    }
-                    BottomWidgetType::Proc => {
-                        self.draw_processes_table(
-                            &mut f,
-                            app_state,
-                            rect[0],
-                            true,
-                            app_state.current_widget.widget_id,
-                        );
-                    }
+                    Cpu => self.draw_cpu(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    CpuLegend => self.draw_cpu(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id - 1,
+                    ),
+                    Mem => self.draw_memory_graph(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    Disk => self.draw_disk_table(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id,
+                    ),
+                    Temp => self.draw_temp_table(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id,
+                    ),
+                    Net => self.draw_network_graph(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    Proc => self.draw_process_and_search(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id,
+                    ),
+                    ProcSearch => self.draw_process_and_search(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id - 1,
+                    ),
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -474,22 +473,12 @@ impl Painter {
                                         {
                                             match widget.widget_type {
                                                 Empty => {}
-                                                Cpu => self.draw_cpu_graph(
+                                                Cpu => self.draw_cpu(
                                                     &mut f,
                                                     app_state,
                                                     widget_draw_locs[widget_itx],
                                                     widget.widget_id,
                                                 ),
-                                                CpuLegend
-                                                    if widget_draw_locs[widget_itx].width >= 5 =>
-                                                {
-                                                    self.draw_cpu_legend(
-                                                        &mut f,
-                                                        app_state,
-                                                        widget_draw_locs[widget_itx],
-                                                        widget.widget_id,
-                                                    )
-                                                }
                                                 Mem => self.draw_memory_graph(
                                                     &mut f,
                                                     app_state,

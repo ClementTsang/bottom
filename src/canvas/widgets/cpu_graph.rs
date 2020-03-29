@@ -14,7 +14,7 @@ use crate::{
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
 };
@@ -33,6 +33,9 @@ lazy_static! {
 }
 
 pub trait CpuGraphWidget {
+    fn draw_cpu<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    );
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
@@ -42,6 +45,55 @@ pub trait CpuGraphWidget {
 }
 
 impl CpuGraphWidget for Painter {
+    fn draw_cpu<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    ) {
+        debug!("Draw loc: {}", draw_loc.width as f64 * 0.15);
+        if draw_loc.width as f64 * 0.15 <= 6.0 {
+            // Skip drawing legend
+            if app_state.current_widget.widget_id == (widget_id + 1) {
+                if app_state.app_config_fields.left_legend {
+                    app_state.move_widget_selection_right();
+                } else {
+                    app_state.move_widget_selection_left();
+                }
+            }
+            self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
+            if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
+                cpu_widget_state.is_legend_hidden = true;
+            }
+        } else {
+            let (graph_index, legend_index, constraints) =
+                if app_state.app_config_fields.left_legend {
+                    (
+                        1,
+                        0,
+                        [Constraint::Percentage(15), Constraint::Percentage(85)],
+                    )
+                } else {
+                    (
+                        0,
+                        1,
+                        [Constraint::Percentage(85), Constraint::Percentage(15)],
+                    )
+                };
+
+            let partitioned_draw_loc = Layout::default()
+                .margin(0)
+                .direction(Direction::Horizontal)
+                .constraints(constraints.as_ref())
+                .split(draw_loc);
+
+            self.draw_cpu_graph(f, app_state, partitioned_draw_loc[graph_index], widget_id);
+            self.draw_cpu_legend(
+                f,
+                app_state,
+                partitioned_draw_loc[legend_index],
+                widget_id + 1,
+            );
+        }
+    }
+
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
@@ -159,6 +211,7 @@ impl CpuGraphWidget for Painter {
     ) {
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))
         {
+            cpu_widget_state.is_legend_hidden = false;
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
             let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;

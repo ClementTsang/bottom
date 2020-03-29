@@ -389,6 +389,7 @@ impl NetState {
 
 pub struct CpuWidgetState {
     pub current_display_time: u64,
+    pub is_legend_hidden: bool,
     pub is_showing_tray: bool,
     pub core_show_vec: Vec<bool>,
     pub num_cpus_shown: usize,
@@ -400,6 +401,7 @@ impl CpuWidgetState {
     pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
         CpuWidgetState {
             current_display_time,
+            is_legend_hidden: false,
             is_showing_tray: false,
             core_show_vec: Vec::new(),
             num_cpus_shown: 0,
@@ -1583,15 +1585,59 @@ impl App {
             {
                 if let Some(new_widget_id) = current_widget.left_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        self.current_widget = new_widget.clone();
+                        match new_widget.widget_type {
+                            BottomWidgetType::CpuLegend => {
+                                if let Some(cpu_widget_state) =
+                                    self.cpu_state.widget_states.get(&(new_widget_id - 1))
+                                {
+                                    if cpu_widget_state.is_legend_hidden {
+                                        if let Some(next_new_widget_id) = new_widget.left_neighbour
+                                        {
+                                            if let Some(next_new_widget) =
+                                                self.widget_map.get(&next_new_widget_id)
+                                            {
+                                                self.current_widget = next_new_widget.clone();
+                                            }
+                                        }
+                                    } else {
+                                        self.current_widget = new_widget.clone();
+                                    }
+                                }
+                            }
+                            _ => self.current_widget = new_widget.clone(),
+                        }
                     }
                 }
             }
         } else if self.is_expanded {
-            // FIXME: Expanded movement logic
             if self.app_config_fields.left_legend {
-                if let BottomWidgetType::Cpu = self.current_widget.widget_type {}
+                if let BottomWidgetType::Cpu = self.current_widget.widget_type {
+                    if let Some(current_widget) =
+                        self.widget_map.get(&self.current_widget.widget_id)
+                    {
+                        if let Some(cpu_widget_state) = self
+                            .cpu_state
+                            .widget_states
+                            .get(&self.current_widget.widget_id)
+                        {
+                            if !cpu_widget_state.is_legend_hidden {
+                                if let Some(new_widget_id) = current_widget.left_neighbour {
+                                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                                        self.current_widget = new_widget.clone();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             } else if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.left_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+                }
             }
         }
 
@@ -1606,15 +1652,59 @@ impl App {
             {
                 if let Some(new_widget_id) = current_widget.right_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        self.current_widget = new_widget.clone();
+                        match new_widget.widget_type {
+                            BottomWidgetType::CpuLegend => {
+                                if let Some(cpu_widget_state) =
+                                    self.cpu_state.widget_states.get(&(new_widget_id - 1))
+                                {
+                                    if cpu_widget_state.is_legend_hidden {
+                                        if let Some(next_new_widget_id) = new_widget.right_neighbour
+                                        {
+                                            if let Some(next_new_widget) =
+                                                self.widget_map.get(&next_new_widget_id)
+                                            {
+                                                self.current_widget = next_new_widget.clone();
+                                            }
+                                        }
+                                    } else {
+                                        self.current_widget = new_widget.clone();
+                                    }
+                                }
+                            }
+                            _ => self.current_widget = new_widget.clone(),
+                        }
                     }
                 }
             }
         } else if self.is_expanded {
-            // FIXME: Expanded movement logic
             if self.app_config_fields.left_legend {
-                if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {}
+                if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
+                    if let Some(current_widget) =
+                        self.widget_map.get(&self.current_widget.widget_id)
+                    {
+                        if let Some(new_widget_id) = current_widget.right_neighbour {
+                            if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                                self.current_widget = new_widget.clone();
+                            }
+                        }
+                    }
+                }
             } else if let BottomWidgetType::Cpu = self.current_widget.widget_type {
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(cpu_widget_state) = self
+                        .cpu_state
+                        .widget_states
+                        .get(&self.current_widget.widget_id)
+                    {
+                        if !cpu_widget_state.is_legend_hidden {
+                            if let Some(new_widget_id) = current_widget.right_neighbour {
+                                if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                                    self.current_widget = new_widget.clone();
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -1650,8 +1740,15 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            // FIXME: Expanded movement logic
-            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {}
+            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.up_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+                }
+            }
         }
 
         self.reset_multi_tap_keys();
@@ -1686,8 +1783,23 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            // FIXME: Expanded movement logic
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {}
+            if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.down_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            if let Some(proc_widget_state) = self
+                                .proc_state
+                                .widget_states
+                                .get(&self.current_widget.widget_id)
+                            {
+                                if proc_widget_state.is_search_enabled() {
+                                    self.current_widget = new_widget.clone();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         self.reset_multi_tap_keys();
@@ -1841,7 +1953,7 @@ impl App {
         if let Some(cpu_widget_state) = self
             .cpu_state
             .widget_states
-            .get_mut(&self.current_widget.widget_id)
+            .get_mut(&(self.current_widget.widget_id - 1))
         {
             let current_posn = cpu_widget_state.scroll_state.current_scroll_position;
 
