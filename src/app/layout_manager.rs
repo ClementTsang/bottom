@@ -650,6 +650,10 @@ pub enum BottomWidgetType {
     ProcSearch,
     Temp,
     Disk,
+    BasicCpu,
+    BasicMem,
+    BasicNet,
+    BasicTables,
 }
 
 impl BottomWidgetType {

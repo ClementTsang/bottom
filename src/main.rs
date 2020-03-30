@@ -639,10 +639,17 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         let mut resulting_processes = filtered_process_data;
         sort_process_data(&mut resulting_processes, proc_widget_state);
 
-        // FIXME: We may want to also check if the current cursor position is valid
+        if proc_widget_state.scroll_state.current_scroll_position
+            >= resulting_processes.len() as u64
+        {
+            proc_widget_state.scroll_state.current_scroll_position =
+                resulting_processes.len() as u64 - 1;
+            proc_widget_state.scroll_state.previous_scroll_position = 0;
+            proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::DOWN;
+        }
 
         app.canvas_data
-            .finalized_process_data
+            .finalized_process_data_map
             .insert(widget_id, resulting_processes);
     }
 }

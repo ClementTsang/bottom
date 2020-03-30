@@ -1,7 +1,7 @@
 use std::cmp::max;
 
 use crate::{
-    app::{App, WidgetPosition},
+    app::{layout_manager::BottomWidgetType, App},
     canvas::Painter,
 };
 
@@ -25,25 +25,19 @@ impl BasicTableArrows for Painter {
         // Effectively a paragraph with a ton of spacing
 
         // TODO: [MODULARITY] This is hard coded.  Gross.
-        let (left_table, right_table) = if app_state.current_widget_selected.is_widget_table() {
-            match app_state.current_widget_selected {
-                WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                    (WidgetPosition::Temp, WidgetPosition::Disk)
+        let (left_table, right_table) =
+            if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
+                match basic_table_widget_state.currently_displayed_widget_type {
+                    BottomWidgetType::Proc | BottomWidgetType::ProcSearch => {
+                        (BottomWidgetType::Temp, BottomWidgetType::Disk)
+                    }
+                    BottomWidgetType::Disk => (BottomWidgetType::Proc, BottomWidgetType::Temp),
+                    BottomWidgetType::Temp => (BottomWidgetType::Disk, BottomWidgetType::Proc),
+                    _ => (BottomWidgetType::Disk, BottomWidgetType::Temp),
                 }
-                WidgetPosition::Disk => (WidgetPosition::Process, WidgetPosition::Temp),
-                WidgetPosition::Temp => (WidgetPosition::Disk, WidgetPosition::Process),
-                _ => (WidgetPosition::Disk, WidgetPosition::Temp),
-            }
-        } else {
-            match app_state.previous_basic_table_selected {
-                WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                    (WidgetPosition::Temp, WidgetPosition::Disk)
-                }
-                WidgetPosition::Disk => (WidgetPosition::Process, WidgetPosition::Temp),
-                WidgetPosition::Temp => (WidgetPosition::Disk, WidgetPosition::Process),
-                _ => (WidgetPosition::Disk, WidgetPosition::Temp),
-            }
-        };
+            } else {
+                (BottomWidgetType::Disk, BottomWidgetType::Temp)
+            };
 
         let left_name = left_table.get_pretty_name();
         let right_name = right_table.get_pretty_name();

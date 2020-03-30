@@ -43,7 +43,7 @@ pub struct DisplayableData {
     // Not the final value
     pub grouped_process_data: Vec<ConvertedProcessData>,
     // What's actually displayed
-    pub finalized_process_data: HashMap<u64, Vec<ConvertedProcessData>>,
+    pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>,
     pub mem_label: String,
     pub swap_label: String,
     pub mem_data: Vec<(f64, f64)>,
@@ -393,9 +393,10 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .split(vertical_chunks[2]);
-                self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
-                self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
-                self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
+                //FIXME: Basic mode: Canvas!
+                self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
+                self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);
+                self.draw_basic_network(&mut f, app_state, middle_chunks[1], 3);
                 self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3]);
             // if app_state.current_widget_selected.is_widget_table() {
             //     self.draw_specific_table(

@@ -70,8 +70,10 @@ impl ProcessTableWidget for Painter {
         widget_id: u64,
     ) {
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
-            if let Some(process_data) =
-                &app_state.canvas_data.finalized_process_data.get(&widget_id)
+            if let Some(process_data) = &app_state
+                .canvas_data
+                .finalized_process_data_map
+                .get(&widget_id)
             {
                 // Admittedly this is kinda a hack... but we need to:
                 // * Scroll

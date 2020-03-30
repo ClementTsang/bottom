@@ -6,7 +6,7 @@ use crate::{
     app::{
         data_harvester, layout_manager::*, App, AppConfigFields, CpuState, CpuWidgetState,
         DiskState, DiskWidgetState, MemState, MemWidgetState, NetState, NetWidgetState, ProcState,
-        ProcWidgetState, TempState, TempWidgetState, WidgetPosition,
+        ProcWidgetState, TempState, TempWidgetState,
     },
     constants::*,
     utils::error::{self, BottomError},
@@ -70,7 +70,6 @@ pub fn build_app(
 ) -> error::Result<App> {
     let autohide_time = get_autohide_time(&matches, &config);
     let default_time_value = get_default_time_value(&matches, &config)?;
-    let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
 
     // For processes
@@ -143,23 +142,6 @@ pub fn build_app(
 
     let initial_widget_id: u64 = 1; // FIXME [MODULARITY]: Add this to control initial widget
 
-    let current_widget_selected = if use_basic_mode {
-        match default_widget {
-            WidgetPosition::Cpu => WidgetPosition::BasicCpu,
-            WidgetPosition::Network => WidgetPosition::BasicNet,
-            WidgetPosition::Mem => WidgetPosition::BasicMem,
-            _ => default_widget,
-        }
-    } else {
-        default_widget
-    };
-
-    let previous_basic_table_selected = if default_widget.is_widget_table() {
-        default_widget
-    } else {
-        WidgetPosition::Process
-    };
-
     let app_config_fields = AppConfigFields {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)?,
         temperature_type: get_temperature(matches, config)?,
@@ -177,14 +159,13 @@ pub fn build_app(
 
     Ok(App::builder()
         .app_config_fields(app_config_fields)
-        .current_widget_selected(current_widget_selected)
-        .previous_basic_table_selected(previous_basic_table_selected)
         .cpu_state(CpuState::init(cpu_state_map))
         .mem_state(MemState::init(mem_state_map))
         .net_state(NetState::init(net_state_map))
         .proc_state(ProcState::init(proc_state_map))
         .disk_state(DiskState::init(disk_state_map))
         .temp_state(TempState::init(temp_state_map))
+        .basic_table_widget_state(None)
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
         .build())
@@ -481,34 +462,4 @@ fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
     }
 
     false
-}
-
-fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> WidgetPosition {
-    if matches.is_present("CPU_WIDGET") {
-        return WidgetPosition::Cpu;
-    } else if matches.is_present("MEM_WIDGET") {
-        return WidgetPosition::Mem;
-    } else if matches.is_present("DISK_WIDGET") {
-        return WidgetPosition::Disk;
-    } else if matches.is_present("TEMP_WIDGET") {
-        return WidgetPosition::Temp;
-    } else if matches.is_present("NET_WIDGET") {
-        return WidgetPosition::Network;
-    } else if matches.is_present("PROC_WIDGET") {
-        return WidgetPosition::Process;
-    } else if let Some(flags) = &config.flags {
-        if let Some(default_widget) = &flags.default_widget {
-            return match default_widget.as_str() {
-                "cpu_default" => WidgetPosition::Cpu,
-                "memory_default" => WidgetPosition::Mem,
-                "processes_default" => WidgetPosition::Process,
-                "network_default" => WidgetPosition::Network,
-                "temperature_default" => WidgetPosition::Temp,
-                "disk_default" => WidgetPosition::Disk,
-                _ => WidgetPosition::Process,
-            };
-        }
-    }
-
-    WidgetPosition::Process
 }

@@ -9,7 +9,10 @@ use data_farmer::*;
 use data_harvester::{processes, temperature};
 use layout_manager::*;
 
-use crate::{canvas, constants, utils::error::Result};
+use crate::{
+    canvas, constants,
+    utils::error::{BottomError, Result},
+};
 
 pub mod data_farmer;
 pub mod data_harvester;
@@ -17,55 +20,6 @@ pub mod layout_manager;
 mod process_killer;
 
 const MAX_SEARCH_LENGTH: usize = 200;
-
-#[derive(Debug, Clone, Copy)]
-pub enum WidgetPosition {
-    Cpu,
-    CpuLegend,
-    Mem,
-    Disk,
-    Temp,
-    Network,
-    NetworkLegend,
-    Process,
-    ProcessSearch,
-    BasicCpu,
-    BasicMem,
-    BasicNet,
-}
-
-impl WidgetPosition {
-    pub fn is_widget_table(self) -> bool {
-        match self {
-            WidgetPosition::Disk
-            | WidgetPosition::Process
-            | WidgetPosition::ProcessSearch
-            | WidgetPosition::Temp
-            | WidgetPosition::CpuLegend => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_widget_graph(self) -> bool {
-        match self {
-            WidgetPosition::Cpu | WidgetPosition::Network | WidgetPosition::Mem => true,
-            _ => false,
-        }
-    }
-
-    pub fn get_pretty_name(self) -> String {
-        use WidgetPosition::*;
-        match self {
-            Cpu | BasicCpu | CpuLegend => "CPU",
-            Mem | BasicMem => "Memory",
-            Disk => "Disks",
-            Temp => "Temperature",
-            Network | BasicNet | NetworkLegend => "Network",
-            Process | ProcessSearch => "Processes",
-        }
-        .to_string()
-    }
-}
 
 #[derive(Debug)]
 pub enum ScrollDirection {
@@ -499,6 +453,13 @@ impl DiskState {
     }
 }
 
+pub struct BasicTableWidgetState {
+    // Since this is intended (currently) to only be used for ONE widget, that's
+    // how it's going to be written.  If we want to allow for multiple of these,
+    // then we can expand outwards with a normal BasicTableState and a hashmap
+    pub currently_displayed_widget_type: BottomWidgetType,
+}
+
 #[derive(TypedBuilder)]
 pub struct App {
     #[builder(default = false, setter(skip))]
@@ -544,9 +505,9 @@ pub struct App {
     pub temp_state: TempState,
     pub disk_state: DiskState,
 
+    pub basic_table_widget_state: Option<BasicTableWidgetState>,
+
     pub app_config_fields: AppConfigFields,
-    pub current_widget_selected: WidgetPosition,
-    pub previous_basic_table_selected: WidgetPosition,
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget: BottomWidget,
 }
@@ -656,12 +617,7 @@ impl App {
             self.is_expanded = false;
             self.is_resized = true;
             if self.app_config_fields.use_basic_mode {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::Cpu | WidgetPosition::CpuLegend => WidgetPosition::BasicCpu,
-                    WidgetPosition::Mem => WidgetPosition::BasicMem,
-                    WidgetPosition::Network => WidgetPosition::BasicNet,
-                    _ => self.current_widget_selected,
-                }
+                // FIXME: BASIC MODE ON ESC
             }
         }
     }
@@ -956,12 +912,7 @@ impl App {
             }
 
             if self.app_config_fields.use_basic_mode {
-                self.current_widget_selected = match self.current_widget_selected {
-                    WidgetPosition::BasicCpu => WidgetPosition::Cpu,
-                    WidgetPosition::BasicMem => WidgetPosition::Mem,
-                    WidgetPosition::BasicNet => WidgetPosition::Network,
-                    _ => self.current_widget_selected,
-                }
+                // FIXME: BASIC MODE ON ENTER
             }
         }
     }
@@ -1083,19 +1034,13 @@ impl App {
 
     pub fn on_up_key(&mut self) {
         if !self.is_in_dialog() {
-            if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-            } else {
-                self.decrement_position_count();
-            }
+            self.decrement_position_count();
         }
     }
 
     pub fn on_down_key(&mut self) {
         if !self.is_in_dialog() {
-            if let WidgetPosition::ProcessSearch = self.current_widget_selected {
-            } else {
-                self.increment_position_count();
-            }
+            self.increment_position_count();
         }
     }
 
@@ -1273,11 +1218,11 @@ impl App {
         {
             if let Some(corresponding_filtered_process_list) = self
                 .canvas_data
-                .finalized_process_data
+                .finalized_process_data_map
                 .get(&self.current_widget.widget_id)
             {
                 if proc_widget_state.scroll_state.current_scroll_position
-                    < self.canvas_data.finalized_process_data.len() as u64
+                    < self.canvas_data.finalized_process_data_map.len() as u64
                 {
                     let current_process = if self.is_grouped(self.current_widget.widget_id) {
                         let group_pids = &corresponding_filtered_process_list
@@ -1400,7 +1345,7 @@ impl App {
                 self.on_slash();
             }
             'd' => {
-                if let WidgetPosition::Process = self.current_widget_selected {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     let mut is_first_d = true;
                     if let Some(second_char) = self.second_char {
                         if self.awaiting_second_char && second_char == 'd' {
@@ -1561,16 +1506,20 @@ impl App {
     }
 
     pub fn kill_highlighted_process(&mut self) -> Result<()> {
-        // Technically unnecessary but this is a good check...
-        if let WidgetPosition::Process = self.current_widget_selected {
+        if let BottomWidgetType::Proc = self.current_widget.widget_type {
             if let Some(current_selected_processes) = &self.to_delete_process_list {
                 for pid in &current_selected_processes.1 {
                     process_killer::kill_process_given_pid(*pid)?;
                 }
             }
             self.to_delete_process_list = None;
+            Ok(())
+        } else {
+            Err(BottomError::GenericError(
+                "Cannot kill processes if the current widget is not the Process widget!"
+                    .to_string(),
+            ))
         }
-        Ok(())
     }
 
     pub fn get_to_delete_processes(&self) -> Option<(String, Vec<u32>)> {
@@ -1864,10 +1813,17 @@ impl App {
                         .widget_states
                         .get_mut(&self.current_widget.widget_id)
                     {
-                        if !self.canvas_data.finalized_process_data.is_empty() {
-                            proc_widget_state.scroll_state.current_scroll_position =
-                                self.canvas_data.finalized_process_data.len() as u64 - 1;
-                            proc_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                        if let Some(finalized_process_data) = self
+                            .canvas_data
+                            .finalized_process_data_map
+                            .get(&self.current_widget.widget_id)
+                        {
+                            if !self.canvas_data.finalized_process_data_map.is_empty() {
+                                proc_widget_state.scroll_state.current_scroll_position =
+                                    finalized_process_data.len() as u64 - 1;
+                                proc_widget_state.scroll_state.scroll_direction =
+                                    ScrollDirection::DOWN;
+                            }
                         }
                     }
                 }
@@ -1986,12 +1942,17 @@ impl App {
         {
             let current_posn = proc_widget_state.scroll_state.current_scroll_position;
 
-            if current_posn as i64 + num_to_change_by >= 0
-                && current_posn as i64 + num_to_change_by
-                    < self.canvas_data.finalized_process_data.len() as i64
+            if let Some(finalized_process_data) = self
+                .canvas_data
+                .finalized_process_data_map
+                .get(&self.current_widget.widget_id)
             {
-                proc_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as u64;
+                if current_posn as i64 + num_to_change_by >= 0
+                    && current_posn as i64 + num_to_change_by < finalized_process_data.len() as i64
+                {
+                    proc_widget_state.scroll_state.current_scroll_position =
+                        (current_posn as i64 + num_to_change_by) as u64;
+                }
             }
 
             if num_to_change_by < 0 {
