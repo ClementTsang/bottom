@@ -14,9 +14,8 @@ _Remove the irrelevant ones:_
 
 - [x] _Bug fix (non-breaking change which fixes an issue)_
 - [x] _New feature (non-breaking change which adds functionality)_
+- [x] _Breaking change (if this change causes breakage or new behaviour, please state what)_
 - [x] _Other (something else - please specify if relevant):_
-
-_Does this change cause some breakage or new behaviour?  If so, what?_
 
 ## Test methodology
 
