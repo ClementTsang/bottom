@@ -16,6 +16,8 @@ _Remove the irrelevant ones:_
 - [x] _New feature (non-breaking change which adds functionality)_
 - [x] _Other (something else - please specify if relevant):_
 
+_Does this change cause some breakage or new behaviour?  If so, what?_
+
 ## Test methodology
 
 _Please state how this was tested:_
@@ -31,7 +33,7 @@ _Please tick which platforms this change was tested on:_
 _Please ensure all are ticked (and actually done):_
 
 - [ ] _Change has been tested to work_
-- [ ] _Areas your change affects has been linted using rustfmt_
+- [ ] _Areas your change affects have been linted using rustfmt_
 - [ ] _Code has been self-reviewed_
 - [ ] _Code has been tested and no new breakage is introduced_
 - [ ] _Documentation has been added/updated if needed_
