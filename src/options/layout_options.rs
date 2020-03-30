@@ -35,105 +35,85 @@ impl Row {
                             BottomWidgetType::Cpu => {
                                 let iter_old_id = *iter_id;
                                 *iter_id += 1;
-                                BottomCol {
-                                    total_col_row_ratio: 1,
-                                    col_width_ratio: width_ratio,
-                                    children: if left_legend {
-                                        vec![BottomColRow {
-                                            col_row_height_ratio: 1,
-                                            total_widget_ratio: 20,
-                                            children: vec![
-                                                BottomWidget {
-                                                    width_ratio: 3,
-                                                    widget_type: BottomWidgetType::CpuLegend,
-                                                    widget_id: *iter_id,
-                                                    canvas_handle_height: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                                BottomWidget {
-                                                    width_ratio: 17,
-                                                    widget_type: BottomWidgetType::Cpu,
-                                                    widget_id: iter_old_id,
-                                                    flex_grow: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                            ],
-                                            ..BottomColRow::default()
-                                        }]
+                                BottomCol::builder()
+                                    .total_col_row_ratio(1)
+                                    .col_width_ratio(width_ratio)
+                                    .children(if left_legend {
+                                        vec![BottomColRow::builder()
+                                            .total_widget_ratio(20)
+                                            .children(vec![
+                                                BottomWidget::builder()
+                                                    .width_ratio(3)
+                                                    .widget_type(BottomWidgetType::CpuLegend)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_height(true)
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .width_ratio(17)
+                                                    .widget_type(BottomWidgetType::Cpu)
+                                                    .widget_id(iter_old_id)
+                                                    .flex_grow(true)
+                                                    .build(),
+                                            ])
+                                            .build()]
                                     } else {
-                                        vec![BottomColRow {
-                                            col_row_height_ratio: 1,
-                                            total_widget_ratio: 20,
-                                            children: vec![
-                                                BottomWidget {
-                                                    width_ratio: 17,
-                                                    widget_type: BottomWidgetType::Cpu,
-                                                    widget_id: iter_old_id,
-                                                    flex_grow: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                                BottomWidget {
-                                                    width_ratio: 3,
-                                                    widget_type: BottomWidgetType::CpuLegend,
-                                                    widget_id: *iter_id,
-                                                    canvas_handle_height: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                            ],
-                                            ..BottomColRow::default()
-                                        }]
-                                    },
-                                }
+                                        vec![BottomColRow::builder()
+                                            .total_widget_ratio(20)
+                                            .children(vec![
+                                                BottomWidget::builder()
+                                                    .width_ratio(17)
+                                                    .widget_type(BottomWidgetType::Cpu)
+                                                    .widget_id(iter_old_id)
+                                                    .flex_grow(true)
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .width_ratio(3)
+                                                    .widget_type(BottomWidgetType::CpuLegend)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_height(true)
+                                                    .build(),
+                                            ])
+                                            .build()]
+                                    })
+                                    .build()
                             }
                             BottomWidgetType::Proc => {
                                 let iter_old_id = *iter_id;
                                 *iter_id += 1;
-                                BottomCol {
-                                    total_col_row_ratio: 2,
-                                    col_width_ratio: width_ratio,
-                                    children: vec![
-                                        BottomColRow {
-                                            col_row_height_ratio: 1,
-                                            total_widget_ratio: 1,
-                                            children: vec![BottomWidget {
-                                                width_ratio: 1,
-                                                widget_type: BottomWidgetType::Proc,
-                                                widget_id: iter_old_id,
-                                                ..BottomWidget::default()
-                                            }],
-                                            flex_grow: true,
-                                            ..BottomColRow::default()
-                                        },
-                                        BottomColRow {
-                                            col_row_height_ratio: 1,
-                                            total_widget_ratio: 1,
-                                            children: vec![BottomWidget {
-                                                width_ratio: 1,
-                                                widget_type: BottomWidgetType::ProcSearch,
-                                                widget_id: *iter_id,
-                                                ..BottomWidget::default()
-                                            }],
-                                            canvas_handle_height: true,
-                                            ..BottomColRow::default()
-                                        },
-                                    ],
-                                }
+                                BottomCol::builder()
+                                    .total_col_row_ratio(2)
+                                    .col_width_ratio(width_ratio)
+                                    .children(vec![
+                                        BottomColRow::builder()
+                                            .total_widget_ratio(1)
+                                            .children(vec![BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::Proc)
+                                                .widget_id(iter_old_id)
+                                                .build()])
+                                            .flex_grow(true)
+                                            .build(),
+                                        BottomColRow::builder()
+                                            .total_widget_ratio(1)
+                                            .children(vec![BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::ProcSearch)
+                                                .widget_id(*iter_id)
+                                                .build()])
+                                            .canvas_handle_height(true)
+                                            .build(),
+                                    ])
+                                    .build()
                             }
-                            _ => BottomCol {
-                                total_col_row_ratio: 1,
-                                col_width_ratio: width_ratio,
-                                children: vec![BottomColRow {
-                                    col_row_height_ratio: 1,
-                                    total_widget_ratio: 1,
-                                    children: vec![BottomWidget {
-                                        width_ratio: 1,
-                                        widget_type,
-                                        widget_id: *iter_id,
-                                        ..BottomWidget::default()
-                                    }],
-                                    ..BottomColRow::default()
-                                }],
-                            },
+                            _ => BottomCol::builder()
+                                .total_col_row_ratio(1)
+                                .col_width_ratio(width_ratio)
+                                .children(vec![BottomColRow::builder()
+                                    .total_widget_ratio(1)
+                                    .children(vec![BottomWidget::builder()
+                                        .widget_type(widget_type)
+                                        .widget_id(*iter_id)
+                                        .build()])
+                                    .build()])
+                                .build(),
                         });
                     }
                     RowChildren::Col { ratio, child } => {
@@ -156,91 +136,86 @@ impl Row {
                                     let iter_old_id = *iter_id;
                                     *iter_id += 1;
                                     if left_legend {
-                                        col_row_children.push(BottomColRow {
-                                            col_row_height_ratio,
-                                            total_widget_ratio: 20,
-                                            children: vec![
-                                                BottomWidget {
-                                                    width_ratio: 3,
-                                                    widget_type: BottomWidgetType::CpuLegend,
-                                                    widget_id: *iter_id,
-                                                    canvas_handle_height: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                                BottomWidget {
-                                                    width_ratio: 17,
-                                                    widget_type: BottomWidgetType::Cpu,
-                                                    widget_id: iter_old_id,
-                                                    flex_grow: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                            ],
-                                            ..BottomColRow::default()
-                                        });
+                                        col_row_children.push(
+                                            BottomColRow::builder()
+                                                .col_row_height_ratio(col_row_height_ratio)
+                                                .total_widget_ratio(20)
+                                                .children(vec![
+                                                    BottomWidget::builder()
+                                                        .width_ratio(3)
+                                                        .widget_type(BottomWidgetType::CpuLegend)
+                                                        .widget_id(*iter_id)
+                                                        .canvas_handle_height(true)
+                                                        .build(),
+                                                    BottomWidget::builder()
+                                                        .width_ratio(17)
+                                                        .widget_type(BottomWidgetType::Cpu)
+                                                        .widget_id(iter_old_id)
+                                                        .flex_grow(true)
+                                                        .build(),
+                                                ])
+                                                .build(),
+                                        );
                                     } else {
-                                        col_row_children.push(BottomColRow {
-                                            col_row_height_ratio,
-                                            total_widget_ratio: 20,
-                                            children: vec![
-                                                BottomWidget {
-                                                    width_ratio: 17,
-                                                    widget_type: BottomWidgetType::Cpu,
-                                                    widget_id: iter_old_id,
-                                                    flex_grow: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                                BottomWidget {
-                                                    width_ratio: 3,
-                                                    widget_type: BottomWidgetType::CpuLegend,
-                                                    widget_id: *iter_id,
-                                                    canvas_handle_height: true,
-                                                    ..BottomWidget::default()
-                                                },
-                                            ],
-                                            ..BottomColRow::default()
-                                        });
+                                        col_row_children.push(
+                                            BottomColRow::builder()
+                                                .col_row_height_ratio(col_row_height_ratio)
+                                                .total_widget_ratio(20)
+                                                .children(vec![
+                                                    BottomWidget::builder()
+                                                        .width_ratio(17)
+                                                        .widget_type(BottomWidgetType::Cpu)
+                                                        .widget_id(iter_old_id)
+                                                        .flex_grow(true)
+                                                        .build(),
+                                                    BottomWidget::builder()
+                                                        .width_ratio(3)
+                                                        .widget_type(BottomWidgetType::CpuLegend)
+                                                        .widget_id(*iter_id)
+                                                        .canvas_handle_height(true)
+                                                        .build(),
+                                                ])
+                                                .build(),
+                                        );
                                     }
                                 }
                                 BottomWidgetType::Proc => {
                                     contains_proc = true;
                                     let iter_old_id = *iter_id;
                                     *iter_id += 1;
-                                    col_row_children.push(BottomColRow {
-                                        col_row_height_ratio,
-                                        total_widget_ratio: 1,
-                                        children: vec![BottomWidget {
-                                            width_ratio: 1,
-                                            widget_type: BottomWidgetType::Proc,
-                                            widget_id: iter_old_id,
-                                            ..BottomWidget::default()
-                                        }],
-                                        flex_grow: true,
-                                        ..BottomColRow::default()
-                                    });
-                                    col_row_children.push(BottomColRow {
-                                        col_row_height_ratio,
-                                        total_widget_ratio: 1,
-                                        children: vec![BottomWidget {
-                                            width_ratio: 1,
-                                            widget_type: BottomWidgetType::ProcSearch,
-                                            widget_id: *iter_id,
-                                            ..BottomWidget::default()
-                                        }],
-                                        canvas_handle_height: true,
-                                        ..BottomColRow::default()
-                                    });
+                                    col_row_children.push(
+                                        BottomColRow::builder()
+                                            .col_row_height_ratio(col_row_height_ratio)
+                                            .total_widget_ratio(1)
+                                            .children(vec![BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::Proc)
+                                                .widget_id(iter_old_id)
+                                                .build()])
+                                            .flex_grow(true)
+                                            .build(),
+                                    );
+                                    col_row_children.push(
+                                        BottomColRow::builder()
+                                            .col_row_height_ratio(col_row_height_ratio)
+                                            .total_widget_ratio(1)
+                                            .children(vec![BottomWidget::builder()
+                                                .widget_type(BottomWidgetType::ProcSearch)
+                                                .widget_id(*iter_id)
+                                                .build()])
+                                            .canvas_handle_height(true)
+                                            .build(),
+                                    );
                                 }
-                                _ => col_row_children.push(BottomColRow {
-                                    col_row_height_ratio,
-                                    total_widget_ratio: 1,
-                                    children: vec![BottomWidget {
-                                        width_ratio: 1,
-                                        widget_type,
-                                        widget_id: *iter_id,
-                                        ..BottomWidget::default()
-                                    }],
-                                    ..BottomColRow::default()
-                                }),
+                                _ => col_row_children.push(
+                                    BottomColRow::builder()
+                                        .col_row_height_ratio(col_row_height_ratio)
+                                        .total_widget_ratio(1)
+                                        .children(vec![BottomWidget::builder()
+                                            .widget_type(widget_type)
+                                            .widget_id(*iter_id)
+                                            .build()])
+                                        .build(),
+                                ),
                             }
                         }
 
@@ -258,21 +233,23 @@ impl Row {
                             }
                         }
 
-                        children.push(BottomCol {
-                            total_col_row_ratio,
-                            col_width_ratio,
-                            children: col_row_children,
-                        });
+                        children.push(
+                            BottomCol::builder()
+                                .total_col_row_ratio(total_col_row_ratio)
+                                .col_width_ratio(col_width_ratio)
+                                .children(col_row_children)
+                                .build(),
+                        );
                     }
                 }
             }
         }
 
-        Ok(BottomRow {
-            total_col_ratio,
-            row_height_ratio: row_ratio,
-            children,
-        })
+        Ok(BottomRow::builder()
+            .total_col_ratio(total_col_ratio)
+            .row_height_ratio(row_ratio)
+            .children(children)
+            .build())
     }
 }
 

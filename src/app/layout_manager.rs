@@ -1,5 +1,6 @@
 use crate::error::{BottomError, Result};
 use std::collections::BTreeMap;
+use typed_builder::*;
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
@@ -421,221 +422,229 @@ impl BottomLayout {
         BottomLayout {
             total_row_height_ratio: 100,
             rows: vec![
-                BottomRow {
-                    total_col_ratio: 1,
-                    row_height_ratio: 30,
-                    children: vec![BottomCol {
-                        total_col_row_ratio: 1,
-                        col_width_ratio: 1,
-                        children: vec![BottomColRow {
-                            col_row_height_ratio: 1,
-                            total_widget_ratio: 20,
-                            children: if left_legend {
+                BottomRow::builder()
+                    .total_col_ratio(1)
+                    .row_height_ratio(30)
+                    .children(vec![BottomCol::builder()
+                        .total_col_row_ratio(1)
+                        .children(vec![BottomColRow::builder()
+                            .total_widget_ratio(20)
+                            .children(if left_legend {
                                 vec![
-                                    BottomWidget {
-                                        width_ratio: 3,
-                                        widget_type: BottomWidgetType::CpuLegend,
-                                        widget_id: 2,
-                                        down_neighbour: Some(11),
-                                        right_neighbour: Some(1),
-                                        canvas_handle_height: true,
-                                        ..BottomWidget::default()
-                                    },
-                                    BottomWidget {
-                                        width_ratio: 17,
-                                        widget_type: BottomWidgetType::Cpu,
-                                        widget_id: 1,
-                                        down_neighbour: Some(12),
-                                        left_neighbour: Some(2),
-                                        flex_grow: true,
-                                        ..BottomWidget::default()
-                                    },
+                                    BottomWidget::builder()
+                                        .width_ratio(3)
+                                        .widget_type(BottomWidgetType::CpuLegend)
+                                        .widget_id(2)
+                                        .down_neighbour(Some(11))
+                                        .right_neighbour(Some(1))
+                                        .canvas_handle_height(true)
+                                        .build(),
+                                    BottomWidget::builder()
+                                        .width_ratio(17)
+                                        .widget_type(BottomWidgetType::Cpu)
+                                        .widget_id(1)
+                                        .down_neighbour(Some(12))
+                                        .left_neighbour(Some(2))
+                                        .flex_grow(true)
+                                        .build(),
                                 ]
                             } else {
                                 vec![
-                                    BottomWidget {
-                                        width_ratio: 17,
-                                        widget_type: BottomWidgetType::Cpu,
-                                        widget_id: 1,
-                                        down_neighbour: Some(11),
-                                        right_neighbour: Some(2),
-                                        flex_grow: true,
-                                        ..BottomWidget::default()
-                                    },
-                                    BottomWidget {
-                                        width_ratio: 3,
-                                        widget_type: BottomWidgetType::CpuLegend,
-                                        widget_id: 2,
-                                        down_neighbour: Some(12),
-                                        left_neighbour: Some(1),
-                                        canvas_handle_height: true,
-                                        ..BottomWidget::default()
-                                    },
+                                    BottomWidget::builder()
+                                        .width_ratio(17)
+                                        .widget_type(BottomWidgetType::Cpu)
+                                        .widget_id(1)
+                                        .down_neighbour(Some(11))
+                                        .right_neighbour(Some(2))
+                                        .flex_grow(true)
+                                        .build(),
+                                    BottomWidget::builder()
+                                        .width_ratio(3)
+                                        .widget_type(BottomWidgetType::CpuLegend)
+                                        .widget_id(2)
+                                        .down_neighbour(Some(12))
+                                        .left_neighbour(Some(1))
+                                        .canvas_handle_height(true)
+                                        .build(),
                                 ]
-                            },
-                            ..BottomColRow::default()
-                        }],
-                    }],
-                },
-                BottomRow {
-                    total_col_ratio: 7,
-                    row_height_ratio: 40,
-                    children: vec![
-                        BottomCol {
-                            total_col_row_ratio: 1,
-                            col_width_ratio: 4,
-                            children: vec![BottomColRow {
-                                col_row_height_ratio: 1,
-                                total_widget_ratio: 1,
-                                children: vec![BottomWidget {
-                                    width_ratio: 1,
-                                    widget_type: BottomWidgetType::Mem,
-                                    widget_id: 11,
-                                    right_neighbour: Some(12),
-                                    up_neighbour: Some(1),
-                                    down_neighbour: Some(21),
-                                    ..BottomWidget::default()
-                                }],
-                                ..BottomColRow::default()
-                            }],
-                        },
-                        BottomCol {
-                            total_col_row_ratio: 2,
-                            col_width_ratio: 3,
-                            children: vec![
-                                BottomColRow {
-                                    col_row_height_ratio: 1,
-                                    total_widget_ratio: 2,
-                                    children: vec![BottomWidget {
-                                        width_ratio: 1,
-                                        widget_type: BottomWidgetType::Temp,
-                                        widget_id: 12,
-                                        left_neighbour: Some(11),
-                                        up_neighbour: Some(1),
-                                        down_neighbour: Some(13),
-                                        ..BottomWidget::default()
-                                    }],
-                                    ..BottomColRow::default()
-                                },
-                                BottomColRow {
-                                    col_row_height_ratio: 1,
-                                    total_widget_ratio: 1,
-                                    children: vec![BottomWidget {
-                                        width_ratio: 1,
-                                        widget_type: BottomWidgetType::Disk,
-                                        widget_id: 13,
-                                        left_neighbour: Some(11),
-                                        up_neighbour: Some(12),
-                                        down_neighbour: Some(22),
-                                        ..BottomWidget::default()
-                                    }],
-                                    ..BottomColRow::default()
-                                },
-                            ],
-                        },
-                    ],
-                },
-                BottomRow {
-                    total_col_ratio: 2,
-                    row_height_ratio: 30,
-                    children: vec![
-                        BottomCol {
-                            total_col_row_ratio: 1,
-                            col_width_ratio: 1,
-                            children: vec![BottomColRow {
-                                col_row_height_ratio: 1,
-                                total_widget_ratio: 1,
-                                children: vec![BottomWidget {
-                                    width_ratio: 1,
-                                    widget_type: BottomWidgetType::Net,
-                                    widget_id: 21,
-                                    right_neighbour: Some(22),
-                                    up_neighbour: Some(11),
-                                    ..BottomWidget::default()
-                                }],
-                                ..BottomColRow::default()
-                            }],
-                        },
-                        BottomCol {
-                            total_col_row_ratio: 2,
-                            col_width_ratio: 1,
-                            children: vec![
-                                BottomColRow {
-                                    col_row_height_ratio: 1,
-                                    total_widget_ratio: 1,
-                                    children: vec![BottomWidget {
-                                        width_ratio: 1,
-                                        widget_type: BottomWidgetType::Proc,
-                                        widget_id: 22,
-                                        left_neighbour: Some(21),
-                                        up_neighbour: Some(13),
-                                        down_neighbour: Some(23),
-                                        ..BottomWidget::default()
-                                    }],
-                                    flex_grow: true,
-                                    ..BottomColRow::default()
-                                },
-                                BottomColRow {
-                                    col_row_height_ratio: 1,
-                                    total_widget_ratio: 1,
-                                    children: vec![BottomWidget {
-                                        width_ratio: 1,
-                                        widget_type: BottomWidgetType::ProcSearch,
-                                        widget_id: 23,
-                                        up_neighbour: Some(22),
-                                        left_neighbour: Some(21),
-                                        ..BottomWidget::default()
-                                    }],
-                                    canvas_handle_height: true,
-                                    ..BottomColRow::default()
-                                },
-                            ],
-                        },
-                    ],
-                },
+                            })
+                            .build()])
+                        .build()])
+                    .build(),
+                BottomRow::builder()
+                    .total_col_ratio(7)
+                    .row_height_ratio(40)
+                    .children(vec![
+                        BottomCol::builder()
+                            .total_col_row_ratio(1)
+                            .col_width_ratio(4)
+                            .children(vec![BottomColRow::builder()
+                                .total_widget_ratio(1)
+                                .children(vec![BottomWidget::builder()
+                                    .widget_type(BottomWidgetType::Mem)
+                                    .widget_id(11)
+                                    .right_neighbour(Some(12))
+                                    .up_neighbour(Some(1))
+                                    .down_neighbour(Some(21))
+                                    .build()])
+                                .build()])
+                            .build(),
+                        BottomCol::builder()
+                            .total_col_row_ratio(2)
+                            .col_width_ratio(3)
+                            .children(vec![
+                                BottomColRow::builder()
+                                    .col_row_height_ratio(1)
+                                    .total_widget_ratio(2)
+                                    .children(vec![BottomWidget::builder()
+                                        .widget_type(BottomWidgetType::Temp)
+                                        .widget_id(12)
+                                        .left_neighbour(Some(11))
+                                        .up_neighbour(Some(1))
+                                        .down_neighbour(Some(13))
+                                        .build()])
+                                    .build(),
+                                BottomColRow::builder()
+                                    .col_row_height_ratio(1)
+                                    .total_widget_ratio(1)
+                                    .children(vec![BottomWidget::builder()
+                                        .widget_type(BottomWidgetType::Disk)
+                                        .widget_id(13)
+                                        .left_neighbour(Some(11))
+                                        .up_neighbour(Some(12))
+                                        .down_neighbour(Some(22))
+                                        .build()])
+                                    .build(),
+                            ])
+                            .build(),
+                    ])
+                    .build(),
+                BottomRow::builder()
+                    .total_col_ratio(2)
+                    .row_height_ratio(30)
+                    .children(vec![
+                        BottomCol::builder()
+                            .total_col_row_ratio(1)
+                            .children(vec![BottomColRow::builder()
+                                .col_row_height_ratio(1)
+                                .total_widget_ratio(1)
+                                .children(vec![BottomWidget::builder()
+                                    .widget_type(BottomWidgetType::Net)
+                                    .widget_id(21)
+                                    .right_neighbour(Some(22))
+                                    .up_neighbour(Some(11))
+                                    .build()])
+                                .build()])
+                            .build(),
+                        BottomCol::builder()
+                            .total_col_row_ratio(2)
+                            .children(vec![
+                                BottomColRow::builder()
+                                    .col_row_height_ratio(1)
+                                    .total_widget_ratio(1)
+                                    .children(vec![BottomWidget::builder()
+                                        .widget_type(BottomWidgetType::Proc)
+                                        .widget_id(22)
+                                        .left_neighbour(Some(21))
+                                        .up_neighbour(Some(13))
+                                        .down_neighbour(Some(23))
+                                        .build()])
+                                    .flex_grow(true)
+                                    .build(),
+                                BottomColRow::builder()
+                                    .col_row_height_ratio(1)
+                                    .total_widget_ratio(1)
+                                    .children(vec![BottomWidget::builder()
+                                        .widget_type(BottomWidgetType::ProcSearch)
+                                        .widget_id(23)
+                                        .up_neighbour(Some(22))
+                                        .left_neighbour(Some(21))
+                                        .build()])
+                                    .canvas_handle_height(true)
+                                    .build(),
+                            ])
+                            .build(),
+                    ])
+                    .build(),
             ],
         }
     }
 }
 
 /// Represents a single row in the layout.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, TypedBuilder)]
 pub struct BottomRow {
-    pub row_height_ratio: u32,
     pub children: Vec<BottomCol>,
     pub total_col_ratio: u32,
+
+    #[builder(default = 1)]
+    pub row_height_ratio: u32,
+
+    #[builder(default = false)]
+    pub canvas_handle_height: bool,
+
+    #[builder(default = false)]
+    pub flex_grow: bool,
 }
 
 /// Represents a single column in the layout.  We assume that even if the column
 /// contains only ONE element, it is still a column (rather than either a col or
 /// a widget, as per the config, for simplicity's sake).
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, TypedBuilder)]
 pub struct BottomCol {
-    pub col_width_ratio: u32,
     pub children: Vec<BottomColRow>,
     pub total_col_row_ratio: u32,
+
+    #[builder(default = 1)]
+    pub col_width_ratio: u32,
+
+    #[builder(default = false)]
+    pub canvas_handle_height: bool,
+
+    #[builder(default = false)]
+    pub flex_grow: bool,
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, TypedBuilder)]
 pub struct BottomColRow {
-    pub col_row_height_ratio: u32,
     pub children: Vec<BottomWidget>,
     pub total_widget_ratio: u32,
+
+    #[builder(default = 1)]
+    pub col_row_height_ratio: u32,
+
+    #[builder(default = false)]
     pub canvas_handle_height: bool,
+
+    #[builder(default = false)]
     pub flex_grow: bool,
 }
 
 /// Represents a single widget.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, TypedBuilder)]
 pub struct BottomWidget {
-    pub width_ratio: u32,
     pub widget_type: BottomWidgetType,
     pub widget_id: u64,
+
+    #[builder(default = 1)]
+    pub width_ratio: u32,
+
+    #[builder(default = None)]
     pub left_neighbour: Option<u64>,
+
+    #[builder(default = None)]
     pub right_neighbour: Option<u64>,
+
+    #[builder(default = None)]
     pub up_neighbour: Option<u64>,
+
+    #[builder(default = None)]
     pub down_neighbour: Option<u64>,
+
+    #[builder(default = false)]
     pub canvas_handle_height: bool,
+
+    #[builder(default = false)]
     pub flex_grow: bool,
 }
 
