@@ -36,7 +36,6 @@ impl Row {
                                 let iter_old_id = *iter_id;
                                 *iter_id += 1;
                                 BottomCol::builder()
-                                    .total_col_row_ratio(1)
                                     .col_width_ratio(width_ratio)
                                     .children(if left_legend {
                                         vec![BottomColRow::builder()
@@ -46,7 +45,7 @@ impl Row {
                                                     .width_ratio(3)
                                                     .widget_type(BottomWidgetType::CpuLegend)
                                                     .widget_id(*iter_id)
-                                                    .canvas_handle_height(true)
+                                                    .canvas_handle_width(true)
                                                     .build(),
                                                 BottomWidget::builder()
                                                     .width_ratio(17)
@@ -70,7 +69,7 @@ impl Row {
                                                     .width_ratio(3)
                                                     .widget_type(BottomWidgetType::CpuLegend)
                                                     .widget_id(*iter_id)
-                                                    .canvas_handle_height(true)
+                                                    .canvas_handle_width(true)
                                                     .build(),
                                             ])
                                             .build()]
@@ -85,7 +84,6 @@ impl Row {
                                     .col_width_ratio(width_ratio)
                                     .children(vec![
                                         BottomColRow::builder()
-                                            .total_widget_ratio(1)
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::Proc)
                                                 .widget_id(iter_old_id)
@@ -93,7 +91,6 @@ impl Row {
                                             .flex_grow(true)
                                             .build(),
                                         BottomColRow::builder()
-                                            .total_widget_ratio(1)
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
                                                 .widget_id(*iter_id)
@@ -104,10 +101,8 @@ impl Row {
                                     .build()
                             }
                             _ => BottomCol::builder()
-                                .total_col_row_ratio(1)
                                 .col_width_ratio(width_ratio)
                                 .children(vec![BottomColRow::builder()
-                                    .total_widget_ratio(1)
                                     .children(vec![BottomWidget::builder()
                                         .widget_type(widget_type)
                                         .widget_id(*iter_id)
@@ -145,7 +140,7 @@ impl Row {
                                                         .width_ratio(3)
                                                         .widget_type(BottomWidgetType::CpuLegend)
                                                         .widget_id(*iter_id)
-                                                        .canvas_handle_height(true)
+                                                        .canvas_handle_width(true)
                                                         .build(),
                                                     BottomWidget::builder()
                                                         .width_ratio(17)
@@ -172,7 +167,7 @@ impl Row {
                                                         .width_ratio(3)
                                                         .widget_type(BottomWidgetType::CpuLegend)
                                                         .widget_id(*iter_id)
-                                                        .canvas_handle_height(true)
+                                                        .canvas_handle_width(true)
                                                         .build(),
                                                 ])
                                                 .build(),
@@ -186,7 +181,6 @@ impl Row {
                                     col_row_children.push(
                                         BottomColRow::builder()
                                             .col_row_height_ratio(col_row_height_ratio)
-                                            .total_widget_ratio(1)
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::Proc)
                                                 .widget_id(iter_old_id)
@@ -197,7 +191,6 @@ impl Row {
                                     col_row_children.push(
                                         BottomColRow::builder()
                                             .col_row_height_ratio(col_row_height_ratio)
-                                            .total_widget_ratio(1)
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
                                                 .widget_id(*iter_id)
@@ -209,7 +202,6 @@ impl Row {
                                 _ => col_row_children.push(
                                     BottomColRow::builder()
                                         .col_row_height_ratio(col_row_height_ratio)
-                                        .total_widget_ratio(1)
                                         .children(vec![BottomWidget::builder()
                                             .widget_type(widget_type)
                                             .widget_id(*iter_id)

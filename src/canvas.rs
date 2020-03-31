@@ -79,17 +79,25 @@ impl Painter {
         let mut layout_constraints = Vec::new();
 
         widget_layout.rows.iter().for_each(|row| {
-            row_constraints.push(Constraint::Ratio(
-                row.row_height_ratio,
-                widget_layout.total_row_height_ratio,
-            ));
+            if row.canvas_handle_height {
+                row_constraints.push(Constraint::Length(0));
+            } else {
+                row_constraints.push(Constraint::Ratio(
+                    row.row_height_ratio,
+                    widget_layout.total_row_height_ratio,
+                ));
+            }
 
             let mut new_col_constraints = Vec::new();
             let mut new_widget_constraints = Vec::new();
             let mut new_col_row_constraints = Vec::new();
             row.children.iter().for_each(|col| {
-                new_col_constraints
-                    .push(Constraint::Ratio(col.col_width_ratio, row.total_col_ratio));
+                if col.canvas_handle_width {
+                    new_col_constraints.push(Constraint::Length(0));
+                } else {
+                    new_col_constraints
+                        .push(Constraint::Ratio(col.col_width_ratio, row.total_col_ratio));
+                }
 
                 let mut new_new_col_row_constraints = Vec::new();
                 let mut new_new_widget_constraints = Vec::new();
@@ -107,7 +115,7 @@ impl Painter {
 
                     let mut new_new_new_widget_constraints = Vec::new();
                     col_row.children.iter().for_each(|widget| {
-                        if widget.canvas_handle_height {
+                        if widget.canvas_handle_width {
                             new_new_new_widget_constraints.push(Constraint::Length(0));
                         } else if widget.flex_grow {
                             new_new_new_widget_constraints.push(Constraint::Min(0));
@@ -323,7 +331,7 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id - 1,
                     ),
-                    Mem => self.draw_memory_graph(
+                    Mem | BasicMem => self.draw_memory_graph(
                         &mut f,
                         app_state,
                         rect[0],
@@ -393,28 +401,37 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .split(vertical_chunks[2]);
-                //FIXME: Basic mode: Canvas!
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1], 3);
                 self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3]);
-            // if app_state.current_widget_selected.is_widget_table() {
-            //     self.draw_specific_table(
-            //         &mut f,
-            //         app_state,
-            //         vertical_chunks[4],
-            //         false,
-            //         app_state.current_widget_selected,
-            //     );
-            // } else {
-            //     self.draw_specific_table(
-            //         &mut f,
-            //         app_state,
-            //         vertical_chunks[4],
-            //         false,
-            //         app_state.previous_basic_table_selected,
-            //     );
-            // }
+                if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
+                    let widget_id = basic_table_widget_state.currently_displayed_widget_id;
+                    match basic_table_widget_state.currently_displayed_widget_type {
+                        Disk => self.draw_disk_table(
+                            &mut f,
+                            app_state,
+                            vertical_chunks[4],
+                            false,
+                            widget_id,
+                        ),
+                        Proc => self.draw_process_and_search(
+                            &mut f,
+                            app_state,
+                            vertical_chunks[4],
+                            false,
+                            widget_id,
+                        ),
+                        Temp => self.draw_temp_table(
+                            &mut f,
+                            app_state,
+                            vertical_chunks[4],
+                            false,
+                            widget_id,
+                        ),
+                        _ => {}
+                    }
+                }
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.
                 let row_draw_locs = Layout::default()

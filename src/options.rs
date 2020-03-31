@@ -4,9 +4,9 @@ use std::time::Instant;
 
 use crate::{
     app::{
-        data_harvester, layout_manager::*, App, AppConfigFields, CpuState, CpuWidgetState,
-        DiskState, DiskWidgetState, MemState, MemWidgetState, NetState, NetWidgetState, ProcState,
-        ProcWidgetState, TempState, TempWidgetState,
+        data_harvester, layout_manager::*, App, AppConfigFields, BasicTableWidgetState, CpuState,
+        CpuWidgetState, DiskState, DiskWidgetState, MemState, MemWidgetState, NetState,
+        NetWidgetState, ProcState, ProcWidgetState, TempState, TempWidgetState,
     },
     constants::*,
     utils::error::{self, BottomError},
@@ -140,7 +140,18 @@ pub fn build_app(
         }
     }
 
-    let initial_widget_id: u64 = 1; // FIXME [MODULARITY]: Add this to control initial widget
+    let initial_widget_id: u64 = 1; // FIXME: [MODULARITY]: Add this to control initial widget
+                                    // FIXME: [MODULARITY] Don't collect if not added!
+
+    let basic_table_widget_state = if use_basic_mode {
+        Some(BasicTableWidgetState {
+            currently_displayed_widget_type: BottomWidgetType::Proc,
+            currently_displayed_widget_id: 5,
+            widget_id: 100,
+        })
+    } else {
+        None
+    };
 
     let app_config_fields = AppConfigFields {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)?,
@@ -165,7 +176,7 @@ pub fn build_app(
         .proc_state(ProcState::init(proc_state_map))
         .disk_state(DiskState::init(disk_state_map))
         .temp_state(TempState::init(temp_state_map))
-        .basic_table_widget_state(None)
+        .basic_table_widget_state(basic_table_widget_state)
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
         .build())
@@ -195,8 +206,9 @@ pub fn get_widget_layout(
         ret_bottom_layout.get_movement_mappings();
 
         ret_bottom_layout
+    } else if get_use_basic_mode(matches, config) {
+        BottomLayout::init_basic_default()
     } else {
-        // Populate with a default.
         BottomLayout::init_default(left_legend)
     };
 

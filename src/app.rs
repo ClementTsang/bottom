@@ -458,6 +458,8 @@ pub struct BasicTableWidgetState {
     // how it's going to be written.  If we want to allow for multiple of these,
     // then we can expand outwards with a normal BasicTableState and a hashmap
     pub currently_displayed_widget_type: BottomWidgetType,
+    pub currently_displayed_widget_id: u64,
+    pub widget_id: i64,
 }
 
 #[derive(TypedBuilder)]
@@ -616,9 +618,6 @@ impl App {
         } else if self.is_expanded {
             self.is_expanded = false;
             self.is_resized = true;
-            if self.app_config_fields.use_basic_mode {
-                // FIXME: BASIC MODE ON ESC
-            }
         }
     }
 
@@ -752,11 +751,6 @@ impl App {
     pub fn on_slash(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
-                // FIXME: BASIC ON SLASH
-                // WidgetPosition::BasicCpu if self.is_expanded => {
-                //     self.current_widget_selected = WidgetPosition::Cpu;
-                //     self.cpu_state.is_showing_tray = true;
-                // }
                 BottomWidgetType::Proc => {
                     // Toggle on
                     if let Some(proc_widget_state) = self
@@ -900,7 +894,7 @@ impl App {
             } else {
                 self.delete_dialog_state.is_showing_dd = false;
             }
-        } else if !self.is_in_dialog() {
+        } else if !self.is_in_dialog() && !self.app_config_fields.use_basic_mode {
             // Pop-out mode.  We ignore if in process search.
 
             match self.current_widget.widget_type {
@@ -909,10 +903,6 @@ impl App {
                     self.is_expanded = true;
                     self.is_resized = true;
                 }
-            }
-
-            if self.app_config_fields.use_basic_mode {
-                // FIXME: BASIC MODE ON ENTER
             }
         }
     }
@@ -1528,10 +1518,7 @@ impl App {
 
     pub fn move_widget_selection_left(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            if self.app_config_fields.use_basic_mode {
-                // FIXME: Basic movement
-            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
-            {
+            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                 if let Some(new_widget_id) = current_widget.left_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                         match new_widget.widget_type {
@@ -1552,6 +1539,22 @@ impl App {
                                         self.current_widget = new_widget.clone();
                                     }
                                 }
+                            }
+                            BottomWidgetType::Temp
+                            | BottomWidgetType::Proc
+                            | BottomWidgetType::ProcSearch
+                            | BottomWidgetType::Disk
+                                if self.basic_table_widget_state.is_some() =>
+                            {
+                                if let Some(basic_table_widget_state) =
+                                    &mut self.basic_table_widget_state
+                                {
+                                    basic_table_widget_state.currently_displayed_widget_id =
+                                        new_widget_id;
+                                    basic_table_widget_state.currently_displayed_widget_type =
+                                        new_widget.widget_type.clone();
+                                }
+                                self.current_widget = new_widget.clone();
                             }
                             _ => self.current_widget = new_widget.clone(),
                         }
@@ -1595,10 +1598,7 @@ impl App {
 
     pub fn move_widget_selection_right(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            if self.app_config_fields.use_basic_mode {
-                // FIXME: Basic movement
-            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
-            {
+            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                 if let Some(new_widget_id) = current_widget.right_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                         match new_widget.widget_type {
@@ -1620,7 +1620,25 @@ impl App {
                                     }
                                 }
                             }
-                            _ => self.current_widget = new_widget.clone(),
+                            BottomWidgetType::Temp
+                            | BottomWidgetType::Proc
+                            | BottomWidgetType::ProcSearch
+                            | BottomWidgetType::Disk
+                                if self.basic_table_widget_state.is_some() =>
+                            {
+                                if let Some(basic_table_widget_state) =
+                                    &mut self.basic_table_widget_state
+                                {
+                                    basic_table_widget_state.currently_displayed_widget_id =
+                                        new_widget_id;
+                                    basic_table_widget_state.currently_displayed_widget_type =
+                                        new_widget.widget_type.clone();
+                                }
+                                self.current_widget = new_widget.clone();
+                            }
+                            _ => {
+                                self.current_widget = new_widget.clone();
+                            }
                         }
                     }
                 }
@@ -1662,19 +1680,28 @@ impl App {
 
     pub fn move_widget_selection_up(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            if self.app_config_fields.use_basic_mode {
-                // FIXME: Basic movement
-            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
-            {
+            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                 if let Some(new_widget_id) = current_widget.up_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        if let BottomWidgetType::ProcSearch = new_widget.widget_type {
-                            if let Some(proc_widget_state) =
-                                self.proc_state.widget_states.get(&(new_widget_id - 1))
-                            {
-                                if proc_widget_state.is_search_enabled() {
-                                    self.current_widget = new_widget.clone();
-                                } else if let Some(next_new_widget_id) = new_widget.up_neighbour {
+                        match new_widget.widget_type {
+                            BottomWidgetType::ProcSearch => {
+                                if let Some(proc_widget_state) =
+                                    self.proc_state.widget_states.get(&(new_widget_id - 1))
+                                {
+                                    if proc_widget_state.is_search_enabled() {
+                                        self.current_widget = new_widget.clone();
+                                    } else if let Some(next_new_widget_id) = new_widget.up_neighbour
+                                    {
+                                        if let Some(next_new_widget) =
+                                            self.widget_map.get(&next_new_widget_id)
+                                        {
+                                            self.current_widget = next_new_widget.clone();
+                                        }
+                                    }
+                                }
+                            }
+                            BottomWidgetType::BasicTables => {
+                                if let Some(next_new_widget_id) = new_widget.up_neighbour {
                                     if let Some(next_new_widget) =
                                         self.widget_map.get(&next_new_widget_id)
                                     {
@@ -1682,8 +1709,9 @@ impl App {
                                     }
                                 }
                             }
-                        } else {
-                            self.current_widget = new_widget.clone();
+                            _ => {
+                                self.current_widget = new_widget.clone();
+                            }
                         }
                     }
                 }
@@ -1705,28 +1733,43 @@ impl App {
 
     pub fn move_widget_selection_down(&mut self) {
         if !self.is_in_dialog() && !self.is_expanded {
-            if self.app_config_fields.use_basic_mode {
-                // FIXME: Basic movement
-            } else if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id)
-            {
+            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                 if let Some(new_widget_id) = current_widget.down_neighbour {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        if let BottomWidgetType::ProcSearch = new_widget.widget_type {
-                            if let Some(proc_widget_state) =
-                                self.proc_state.widget_states.get(&(new_widget_id - 1))
-                            {
-                                if proc_widget_state.is_search_enabled() {
-                                    self.current_widget = new_widget.clone();
-                                } else if let Some(next_new_widget_id) = new_widget.down_neighbour {
-                                    if let Some(next_new_widget) =
-                                        self.widget_map.get(&next_new_widget_id)
+                        match new_widget.widget_type {
+                            BottomWidgetType::ProcSearch => {
+                                if let Some(proc_widget_state) =
+                                    self.proc_state.widget_states.get(&(new_widget_id - 1))
+                                {
+                                    if proc_widget_state.is_search_enabled() {
+                                        self.current_widget = new_widget.clone();
+                                    } else if let Some(next_new_widget_id) =
+                                        new_widget.down_neighbour
                                     {
+                                        if let Some(next_new_widget) =
+                                            self.widget_map.get(&next_new_widget_id)
+                                        {
+                                            self.current_widget = next_new_widget.clone();
+                                        }
+                                    }
+                                }
+                            }
+                            BottomWidgetType::BasicTables => {
+                                // This means we're in basic mode.  As such, then
+                                // we want to move DOWN to the currently shown widget
+                                if let Some(basic_table_widget_state) =
+                                    &self.basic_table_widget_state
+                                {
+                                    if let Some(next_new_widget) = self.widget_map.get(
+                                        &basic_table_widget_state.currently_displayed_widget_id,
+                                    ) {
                                         self.current_widget = next_new_widget.clone();
                                     }
                                 }
                             }
-                        } else {
-                            self.current_widget = new_widget.clone();
+                            _ => {
+                                self.current_widget = new_widget.clone();
+                            }
                         }
                     }
                 }

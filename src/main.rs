@@ -86,14 +86,8 @@ fn get_matches() -> clap::ArgMatches<'static> {
         (@arg TIME_DELTA: -d --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
         (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
         (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled via --hide_time then this will have no effect.")
-        (@group DEFAULT_WIDGET =>
-			(@arg CPU_WIDGET: --cpu_default "Selects the CPU widget to be selected by default.")
-			(@arg MEM_WIDGET: --memory_default "Selects the memory widget to be selected by default.")
-			(@arg DISK_WIDGET: --disk_default "Selects the disk widget to be selected by default.")
-			(@arg TEMP_WIDGET: --temperature_default "Selects the temp widget to be selected by default.")
-			(@arg NET_WIDGET: --network_default "Selects the network widget to be selected by default.")
-			(@arg PROC_WIDGET: --process_default "Selects the process widget to be selected by default.  This is the default if nothing is set.")
-		)
+        (@arg DEFAULT_WIDGET_TYPE: --default_widget_type +takes_value "The default widget type to select by default.")
+        (@arg DEFAULT_WIDGET_NUM: --default_widget_num +takes_value "Which one of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.")
 		//(@arg TURNED_OFF_CPUS: -t ... +takes_value "Hides CPU data points by default") // TODO: [FEATURE] Enable disabling cores in config/flags
 	)
         .get_matches()
@@ -643,7 +637,11 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             >= resulting_processes.len() as u64
         {
             proc_widget_state.scroll_state.current_scroll_position =
-                resulting_processes.len() as u64 - 1;
+                if resulting_processes.len() > 1 {
+                    resulting_processes.len() as u64 - 1
+                } else {
+                    0
+                };
             proc_widget_state.scroll_state.previous_scroll_position = 0;
             proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::DOWN;
         }
