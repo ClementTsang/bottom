@@ -139,17 +139,3 @@ fn test_conflicting_temps() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
-#[test]
-fn test_conflicting_default_widget() -> Result<(), Box<dyn std::error::Error>> {
-    Command::new(get_os_binary_loc())
-        .arg("--cpu_default")
-        .arg("--disk_default")
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "cannot be used with one or more of the other specified arguments",
-        ));
-
-    Ok(())
-}
