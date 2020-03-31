@@ -48,7 +48,6 @@ impl CpuGraphWidget for Painter {
     fn draw_cpu<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        debug!("Draw loc: {}", draw_loc.width as f64 * 0.15);
         if draw_loc.width as f64 * 0.15 <= 6.0 {
             // Skip drawing legend
             if app_state.current_widget.widget_id == (widget_id + 1) {

@@ -13,7 +13,9 @@ pub struct Row {
 
 impl Row {
     pub fn convert_row_to_bottom_row(
-        &self, iter_id: &mut u64, total_height_ratio: &mut u32, left_legend: bool,
+        &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
+        default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
+        left_legend: bool,
     ) -> Result<BottomRow> {
         // In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
@@ -31,6 +33,24 @@ impl Row {
                         let width_ratio = widget.ratio.unwrap_or(1);
                         total_col_ratio += width_ratio;
                         let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
+
+                        if let Some(default_widget_type_val) = default_widget_type {
+                            if *default_widget_type_val == widget_type && *default_widget_count > 0
+                            {
+                                *default_widget_count -= 1;
+                                if *default_widget_count == 0 {
+                                    *default_widget_id = *iter_id;
+                                }
+                            }
+                        } else {
+                            // Check default flag
+                            if let Some(default_widget_flag) = widget.default {
+                                if default_widget_flag {
+                                    *default_widget_id = *iter_id;
+                                }
+                            }
+                        }
+
                         children.push(match widget_type {
                             BottomWidgetType::Cpu => {
                                 let iter_old_id = *iter_id;
@@ -119,12 +139,30 @@ impl Row {
 
                         let mut col_row_children = Vec::new();
 
-                        for column_child in child {
-                            let widget_type =
-                                column_child.widget_type.parse::<BottomWidgetType>()?;
+                        for widget in child {
+                            let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
                             *iter_id += 1;
-                            let col_row_height_ratio = column_child.ratio.unwrap_or(1);
+                            let col_row_height_ratio = widget.ratio.unwrap_or(1);
                             total_col_row_ratio += col_row_height_ratio;
+
+                            if let Some(default_widget_type_val) = default_widget_type {
+                                if *default_widget_type_val == widget_type
+                                    && *default_widget_count > 0
+                                {
+                                    *default_widget_count -= 1;
+                                    if *default_widget_count == 0 {
+                                        *default_widget_id = *iter_id;
+                                    }
+                                }
+                            } else {
+                                // Check default flag
+                                if let Some(default_widget_flag) = widget.default {
+                                    if default_widget_flag {
+                                        debug!("Default widget id: {}", *iter_id);
+                                        *default_widget_id = *iter_id;
+                                    }
+                                }
+                            }
 
                             match widget_type {
                                 BottomWidgetType::Cpu => {
@@ -266,4 +304,5 @@ pub struct FinalWidget {
     pub ratio: Option<u32>,
     #[serde(rename = "type")]
     pub widget_type: String,
+    pub default: Option<bool>,
 }

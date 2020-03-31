@@ -87,7 +87,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
         (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
         (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled via --hide_time then this will have no effect.")
         (@arg DEFAULT_WIDGET_TYPE: --default_widget_type +takes_value "The default widget type to select by default.")
-        (@arg DEFAULT_WIDGET_NUM: --default_widget_num +takes_value "Which one of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.")
+        (@arg DEFAULT_WIDGET_COUNT: --default_widget_count +takes_value "Which number of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.")
 		//(@arg TURNED_OFF_CPUS: -t ... +takes_value "Hides CPU data points by default") // TODO: [FEATURE] Enable disabling cores in config/flags
 	)
         .get_matches()
@@ -100,10 +100,10 @@ fn main() -> error::Result<()> {
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
     // Get widget layout separately
-    let widget_layout = get_widget_layout(&matches, &config)?;
+    let (widget_layout, default_widget_id) = get_widget_layout(&matches, &config)?;
 
     // Create "app" struct, which will control most of the program and store settings/state
-    let mut app = build_app(&matches, &config, &widget_layout)?;
+    let mut app = build_app(&matches, &config, &widget_layout, default_widget_id)?;
 
     // Set up up tui and crossterm
     let mut stdout_val = stdout();

@@ -1,5 +1,8 @@
 use lazy_static::lazy_static;
 
+// Default widget ID
+pub const DEFAULT_WIDGET_ID: u64 = 56709;
+
 // How long to store data.
 pub const STALE_MAX_MILLISECONDS: u64 = 600 * 1000; // Keep 10 minutes of data.
 

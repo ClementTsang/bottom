@@ -42,6 +42,8 @@ pub struct ConfigFlags {
     pub time_delta: Option<u64>,
     pub autohide_time: Option<bool>,
     pub hide_time: Option<bool>,
+    pub default_widget_type: Option<String>,
+    pub default_widget_count: Option<u64>,
     //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -67,6 +69,7 @@ pub struct ConfigColours {
 
 pub fn build_app(
     matches: &clap::ArgMatches<'static>, config: &Config, widget_layout: &BottomLayout,
+    default_widget_id: u64,
 ) -> error::Result<App> {
     let autohide_time = get_autohide_time(&matches, &config);
     let default_time_value = get_default_time_value(&matches, &config)?;
@@ -140,13 +143,13 @@ pub fn build_app(
         }
     }
 
-    let initial_widget_id: u64 = 1; // FIXME: [MODULARITY]: Add this to control initial widget
-                                    // FIXME: [MODULARITY] Don't collect if not added!
+    // FIXME: [MODULARITY] Don't collect if not added!
+    let initial_widget_id: u64 = default_widget_id;
 
     let basic_table_widget_state = if use_basic_mode {
         Some(BasicTableWidgetState {
             currently_displayed_widget_type: BottomWidgetType::Proc,
-            currently_displayed_widget_id: 5,
+            currently_displayed_widget_id: DEFAULT_WIDGET_ID,
             widget_id: 100,
         })
     } else {
@@ -184,12 +187,16 @@ pub fn build_app(
 
 pub fn get_widget_layout(
     matches: &clap::ArgMatches<'static>, config: &Config,
-) -> error::Result<BottomLayout> {
+) -> error::Result<(BottomLayout, u64)> {
     let left_legend = get_use_left_legend(matches, config);
+    let (default_widget_type, mut default_widget_count) =
+        get_default_widget_and_count(matches, config)?;
+    let mut default_widget_id = 1;
 
     let bottom_layout = if let Some(rows) = &config.row {
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
+
         let mut ret_bottom_layout = BottomLayout {
             rows: rows
                 .iter()
@@ -197,6 +204,9 @@ pub fn get_widget_layout(
                     row.convert_row_to_bottom_row(
                         &mut iter_id,
                         &mut total_height_ratio,
+                        &mut default_widget_id,
+                        &default_widget_type,
+                        &mut default_widget_count,
                         left_legend,
                     )
                 })
@@ -207,12 +217,14 @@ pub fn get_widget_layout(
 
         ret_bottom_layout
     } else if get_use_basic_mode(matches, config) {
+        default_widget_id = DEFAULT_WIDGET_ID;
         BottomLayout::init_basic_default()
     } else {
+        default_widget_id = DEFAULT_WIDGET_ID;
         BottomLayout::init_default(left_legend)
     };
 
-    Ok(bottom_layout)
+    Ok((bottom_layout, default_widget_id))
 }
 
 fn get_update_rate_in_milliseconds(
@@ -474,4 +486,54 @@ fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
     }
 
     false
+}
+
+fn get_default_widget_and_count(
+    matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<(Option<BottomWidgetType>, u64)> {
+    let widget_type = if let Some(widget_type) = matches.value_of("DEFAULT_WIDGET_TYPE") {
+        let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+        if let BottomWidgetType::Empty = parsed_widget {
+            None
+        } else {
+            Some(parsed_widget)
+        }
+    } else if let Some(flags) = &config.flags {
+        if let Some(widget_type) = &flags.default_widget_type {
+            let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+            if let BottomWidgetType::Empty = parsed_widget {
+                None
+            } else {
+                Some(parsed_widget)
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    if widget_type.is_some() {
+        let widget_count = if let Some(widget_count) = matches.value_of("DEFAULT_WIDGET_COUNT") {
+            widget_count.parse::<u128>()?
+        } else if let Some(flags) = &config.flags {
+            if let Some(widget_count) = flags.default_widget_count {
+                widget_count as u128
+            } else {
+                1 as u128
+            }
+        } else {
+            1 as u128
+        };
+
+        if widget_count > std::u64::MAX as u128 {
+            Err(BottomError::InvalidArg(
+                "Please set your update rate to be at most unsigned INT_MAX.".to_string(),
+            ))
+        } else {
+            Ok((widget_type, widget_count as u64))
+        }
+    } else {
+        Ok((None, 1))
+    }
 }

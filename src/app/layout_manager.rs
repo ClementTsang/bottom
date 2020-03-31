@@ -2,6 +2,8 @@ use crate::error::{BottomError, Result};
 use std::collections::BTreeMap;
 use typed_builder::*;
 
+use crate::constants::DEFAULT_WIDGET_ID;
+
 /// Represents a more usable representation of the layout, derived from the
 /// config.
 #[derive(Clone, Debug)]
@@ -485,7 +487,7 @@ impl BottomLayout {
                                     .widget_id(4)
                                     .up_neighbour(Some(100))
                                     .left_neighbour(Some(7))
-                                    .right_neighbour(Some(5))
+                                    .right_neighbour(Some(DEFAULT_WIDGET_ID))
                                     .build()])
                                 .build()])
                             .build(),
@@ -497,9 +499,9 @@ impl BottomLayout {
                                     .children(vec![BottomWidget::builder()
                                         .canvas_handle_width(true)
                                         .widget_type(BottomWidgetType::Proc)
-                                        .widget_id(5)
+                                        .widget_id(DEFAULT_WIDGET_ID)
                                         .up_neighbour(Some(100))
-                                        .down_neighbour(Some(6))
+                                        .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                                         .left_neighbour(Some(4))
                                         .right_neighbour(Some(7))
                                         .build()])
@@ -509,8 +511,8 @@ impl BottomLayout {
                                     .children(vec![BottomWidget::builder()
                                         .canvas_handle_width(true)
                                         .widget_type(BottomWidgetType::ProcSearch)
-                                        .widget_id(6)
-                                        .up_neighbour(Some(5))
+                                        .widget_id(DEFAULT_WIDGET_ID + 1)
+                                        .up_neighbour(Some(DEFAULT_WIDGET_ID))
                                         .left_neighbour(Some(4))
                                         .right_neighbour(Some(7))
                                         .build()])
@@ -526,7 +528,7 @@ impl BottomLayout {
                                     .widget_type(BottomWidgetType::Temp)
                                     .widget_id(7)
                                     .up_neighbour(Some(100))
-                                    .left_neighbour(Some(5))
+                                    .left_neighbour(Some(DEFAULT_WIDGET_ID))
                                     .right_neighbour(Some(4))
                                     .build()])
                                 .build()])
@@ -626,7 +628,7 @@ impl BottomLayout {
                                         .widget_id(13)
                                         .left_neighbour(Some(11))
                                         .up_neighbour(Some(12))
-                                        .down_neighbour(Some(22))
+                                        .down_neighbour(Some(DEFAULT_WIDGET_ID))
                                         .build()])
                                     .build(),
                             ])
@@ -643,7 +645,7 @@ impl BottomLayout {
                                 .children(vec![BottomWidget::builder()
                                     .widget_type(BottomWidgetType::Net)
                                     .widget_id(21)
-                                    .right_neighbour(Some(22))
+                                    .right_neighbour(Some(DEFAULT_WIDGET_ID))
                                     .up_neighbour(Some(11))
                                     .build()])
                                 .build()])
@@ -655,10 +657,10 @@ impl BottomLayout {
                                     .col_row_height_ratio(1)
                                     .children(vec![BottomWidget::builder()
                                         .widget_type(BottomWidgetType::Proc)
-                                        .widget_id(22)
+                                        .widget_id(DEFAULT_WIDGET_ID)
                                         .left_neighbour(Some(21))
                                         .up_neighbour(Some(13))
-                                        .down_neighbour(Some(23))
+                                        .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                                         .build()])
                                     .flex_grow(true)
                                     .build(),
@@ -666,8 +668,8 @@ impl BottomLayout {
                                     .col_row_height_ratio(1)
                                     .children(vec![BottomWidget::builder()
                                         .widget_type(BottomWidgetType::ProcSearch)
-                                        .widget_id(23)
-                                        .up_neighbour(Some(22))
+                                        .widget_id(DEFAULT_WIDGET_ID + 1)
+                                        .up_neighbour(Some(DEFAULT_WIDGET_ID))
                                         .left_neighbour(Some(21))
                                         .build()])
                                     .canvas_handle_height(true)
@@ -764,7 +766,7 @@ pub struct BottomWidget {
     pub flex_grow: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum BottomWidgetType {
     Empty,
     Cpu,
