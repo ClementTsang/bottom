@@ -386,14 +386,15 @@ impl BottomLayout {
                                             (target_start_width, target_end_width),
                                             (candidate_start, candidate_end),
                                         ) {
-                                            let candidate_distance =
-                                                if candidate_start < col_width_percentage_start {
-                                                    candidate_end - col_width_percentage_start
-                                                } else if candidate_end < col_width_percentage_end {
-                                                    candidate_end - candidate_start
-                                                } else {
-                                                    col_width_percentage_end - candidate_start
-                                                };
+                                            let candidate_distance = if candidate_start
+                                                < target_start_width
+                                            {
+                                                candidate_end - target_start_width
+                                            } else if candidate_end < widget_width_percentage_end {
+                                                candidate_end - candidate_start
+                                            } else {
+                                                widget_width_percentage_end - candidate_start
+                                            };
 
                                             if current_best_distance < candidate_distance {
                                                 if let Some(current_best_widget) =
