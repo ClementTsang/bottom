@@ -269,13 +269,15 @@ impl ProcessTableWidget for Painter {
                 name_search_text
             };
 
-            let search_title: &str = if chosen_text.len() == min(num_columns / 2, chosen_text.len())
-            {
+            let small_mode = chosen_text.len() != min(num_columns / 2, chosen_text.len());
+            let search_title: &str = if !small_mode {
                 chosen_text
             } else if chosen_text.is_empty() {
                 ""
+            } else if proc_widget_state.process_search_state.is_searching_with_pid {
+                "p> "
             } else {
-                "> "
+                "n> "
             };
 
             let num_chars_for_text = search_title.len();
@@ -345,17 +347,15 @@ impl ProcessTableWidget for Painter {
             };
 
             // Text options shamelessly stolen from VS Code.
-            let case_style =
-                if !proc_widget_state.process_search_state.is_ignoring_case && is_on_widget {
-                    self.colours.currently_selected_text_style
-                } else {
-                    self.colours.text_style
-                };
+            let case_style = if !proc_widget_state.process_search_state.is_ignoring_case {
+                self.colours.currently_selected_text_style
+            } else {
+                self.colours.text_style
+            };
 
             let whole_word_style = if proc_widget_state
                 .process_search_state
                 .is_searching_whole_word
-                && is_on_widget
             {
                 self.colours.currently_selected_text_style
             } else {
@@ -365,7 +365,6 @@ impl ProcessTableWidget for Painter {
             let regex_style = if proc_widget_state
                 .process_search_state
                 .is_searching_with_regex
-                && is_on_widget
             {
                 self.colours.currently_selected_text_style
             } else {
@@ -374,47 +373,33 @@ impl ProcessTableWidget for Painter {
 
             let mut option_text = vec![];
             let case_text = format!(
-                "Match Case ({})[{}]",
+                "{}({})",
+                if small_mode { "Case" } else { "Match Case " },
                 if self.is_mac_os { "F1" } else { "Alt+C" },
-                if !proc_widget_state.process_search_state.is_ignoring_case {
-                    "*"
-                } else {
-                    " "
-                }
             );
 
             let whole_text = format!(
-                "Match Whole Word ({})[{}]",
-                if self.is_mac_os { "F2" } else { "Alt+W" },
-                if proc_widget_state
-                    .process_search_state
-                    .is_searching_whole_word
-                {
-                    "*"
+                "{}({})",
+                if small_mode {
+                    "Whole"
                 } else {
-                    " "
-                }
+                    "Match Whole Word "
+                },
+                if self.is_mac_os { "F2" } else { "Alt+W" },
             );
 
             let regex_text = format!(
-                "Use Regex ({})[{}]",
+                "{}({})",
+                if small_mode { "Regex" } else { "Use Regex " },
                 if self.is_mac_os { "F3" } else { "Alt+R" },
-                if proc_widget_state
-                    .process_search_state
-                    .is_searching_with_regex
-                {
-                    "*"
-                } else {
-                    " "
-                }
             );
 
             let option_row = vec![
                 Text::raw("\n\n"),
                 Text::styled(&case_text, case_style),
-                Text::raw("     "),
+                Text::raw(if small_mode { "  " } else { "     " }),
                 Text::styled(&whole_text, whole_word_style),
-                Text::raw("     "),
+                Text::raw(if small_mode { "  " } else { "     " }),
                 Text::styled(&regex_text, regex_style),
             ];
             option_text.extend(option_row);
