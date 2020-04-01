@@ -584,6 +584,23 @@ impl App {
                         }
                     }
                 }
+                BottomWidgetType::CpuLegend => {
+                    if let Some(cpu_widget_state) = self
+                        .cpu_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
+                    {
+                        cpu_widget_state.is_showing_tray = false;
+                        if cpu_widget_state.scroll_state.current_scroll_position
+                            >= cpu_widget_state.num_cpus_shown as u64
+                        {
+                            let new_position =
+                                max(0, cpu_widget_state.num_cpus_shown as i64 - 1) as u64;
+                            cpu_widget_state.scroll_state.current_scroll_position = new_position;
+                            cpu_widget_state.scroll_state.previous_scroll_position = 0;
+                        }
+                    }
+                }
                 BottomWidgetType::Proc => {
                     if let Some(current_proc_state) = self
                         .proc_state
@@ -641,6 +658,17 @@ impl App {
                     false
                 }
             }
+            BottomWidgetType::CpuLegend => {
+                if let Some(cpu_widget_state) = self
+                    .cpu_state
+                    .widget_states
+                    .get(&(self.current_widget.widget_id - 1))
+                {
+                    cpu_widget_state.is_showing_tray
+                } else {
+                    false
+                }
+            }
             BottomWidgetType::Proc => {
                 if let Some(proc_widget_state) = self
                     .proc_state
@@ -690,7 +718,7 @@ impl App {
             if let Some(proc_widget_state) = self
                 .proc_state
                 .widget_states
-                .get_mut(&self.current_widget.widget_id)
+                .get_mut(&(self.current_widget.widget_id - 1))
             {
                 if is_in_search_widget {
                     if !proc_widget_state.is_grouped {
@@ -723,11 +751,11 @@ impl App {
 
     /// "On space" if we don't want to treat is as a character.
     pub fn on_space(&mut self) {
-        if let BottomWidgetType::Cpu = self.current_widget.widget_type {
+        if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
             if let Some(cpu_widget_state) = self
                 .cpu_state
                 .widget_states
-                .get_mut(&self.current_widget.widget_id)
+                .get_mut(&(self.current_widget.widget_id - 1))
             {
                 let curr_posn = cpu_widget_state.scroll_state.current_scroll_position;
                 if cpu_widget_state.is_showing_tray
@@ -773,6 +801,20 @@ impl App {
                         .cpu_state
                         .widget_states
                         .get_mut(&self.current_widget.widget_id)
+                    {
+                        cpu_widget_state.is_showing_tray = true;
+                        if self.app_config_fields.left_legend {
+                            self.move_widget_selection_left();
+                        } else {
+                            self.move_widget_selection_right();
+                        }
+                    }
+                }
+                BottomWidgetType::CpuLegend => {
+                    if let Some(cpu_widget_state) = self
+                        .cpu_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
                     {
                         cpu_widget_state.is_showing_tray = true;
                         if self.app_config_fields.left_legend {
