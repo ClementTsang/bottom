@@ -143,6 +143,10 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
 
+# Override layout default widget
+#default_widget_type = "proc"
+#default_widget_count = 1
+
 # These are all the components that support custom theming.  Currently, it only
 # supports taking in a string representing a hex colour.  Note that colour support
 # will, at the end of the day, depend on terminal support - for example, the
@@ -197,26 +201,26 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #cursor_color="#458588"
 
 # The default widget layout:
-# [[row]]
-#   ratio=30
-#   [[row.child]]
-#   type="cpu"
-# [[row]]
-#     ratio=40
-#     [[row.child]]
-#       ratio=4
-#       type="mem"
-#     [[row.child]]
-#       ratio=3
-#       [[row.child.child]]
-#         type="temp"
-#       [[row.child.child]]
-#         type="disk"
-# [[row]]
-#   ratio=30
-#   [[row.child]]
-#     type="net"
-#   [[row.child]]
-#     type="proc"
-#     default=true
+#[[row]]
+#  ratio=30
+#  [[row.child]]
+#  type="cpu"
+#[[row]]
+#    ratio=40
+#    [[row.child]]
+#      ratio=4
+#      type="mem"
+#    [[row.child]]
+#      ratio=3
+#      [[row.child.child]]
+#        type="temp"
+#      [[row.child.child]]
+#        type="disk"
+#[[row]]
+#  ratio=30
+#  [[row.child]]
+#    type="net"
+#  [[row.child]]
+#    type="proc"
+#    default=true
 "##;

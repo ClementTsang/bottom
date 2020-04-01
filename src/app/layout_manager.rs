@@ -309,17 +309,38 @@ impl BottomLayout {
                                         let candidate_start = (col_position.0).0;
                                         let candidate_end = (col_position.0).1;
 
+                                        let (target_start_width, target_end_width) =
+                                            if col_row_children_len > 1 {
+                                                (
+                                                    col_width_percentage_start
+                                                        + widget_width_percentage_start
+                                                            * (col_width_percentage_end
+                                                                - col_width_percentage_start)
+                                                            / 100,
+                                                    col_width_percentage_start
+                                                        + widget_width_percentage_end
+                                                            * (col_width_percentage_end
+                                                                - col_width_percentage_start)
+                                                            / 100,
+                                                )
+                                            } else {
+                                                (
+                                                    col_width_percentage_start,
+                                                    col_width_percentage_end,
+                                                )
+                                            };
+
                                         if is_intersecting(
-                                            (col_width_percentage_start, col_width_percentage_end),
+                                            (target_start_width, target_end_width),
                                             (candidate_start, candidate_end),
                                         ) {
                                             let candidate_distance =
-                                                if candidate_start < col_width_percentage_start {
-                                                    candidate_end - col_width_percentage_start
-                                                } else if candidate_end < col_width_percentage_end {
+                                                if candidate_start < target_start_width {
+                                                    candidate_end - target_start_width
+                                                } else if candidate_end < target_end_width {
                                                     candidate_end - candidate_start
                                                 } else {
-                                                    col_width_percentage_end - candidate_start
+                                                    target_end_width - candidate_start
                                                 };
 
                                             if current_best_distance < candidate_distance {
@@ -371,8 +392,16 @@ impl BottomLayout {
                                     let (target_start_width, target_end_width) =
                                         if col_row_children_len > 1 {
                                             (
-                                                widget_width_percentage_start,
-                                                widget_width_percentage_end,
+                                                col_width_percentage_start
+                                                    + widget_width_percentage_start
+                                                        * (col_width_percentage_end
+                                                            - col_width_percentage_start)
+                                                        / 100,
+                                                col_width_percentage_start
+                                                    + widget_width_percentage_end
+                                                        * (col_width_percentage_end
+                                                            - col_width_percentage_start)
+                                                        / 100,
                                             )
                                         } else {
                                             (col_width_percentage_start, col_width_percentage_end)

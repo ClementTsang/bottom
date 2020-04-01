@@ -36,6 +36,45 @@ Supported named colours are one of the following: `Reset, Black, Red, Green, Yel
 
 Note some colours may not be compatible with the terminal you are using. For example, macOS's default Terminal does not play nice with many colours.
 
+## Layout
+
+As of 0.3.0, bottom supports custom layouts. Layouts are in the TOML specification, and are arranged by row -> column -> row. For example, the default layout:
+
+```toml
+[[row]]
+  ratio=30
+  [[row.child]]
+  type="cpu"
+[[row]]
+    ratio=40
+    [[row.child]]
+      ratio=4
+      type="mem"
+    [[row.child]]
+      ratio=3
+      [[row.child.child]]
+        type="temp"
+      [[row.child.child]]
+        type="disk"
+[[row]]
+  ratio=30
+  [[row.child]]
+    type="net"
+  [[row.child]]
+    type="proc"
+    default=true
+```
+
+Valid types are:
+
+- `cpu`
+- `mem`
+- `proc`
+- `net`
+- `temp`
+- `disk`
+- `empty`
+
 ## Default config locations
 
 bottom will check specific locations by default for a config file. If no file is found, it will be created.

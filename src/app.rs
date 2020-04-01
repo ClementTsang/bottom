@@ -1603,8 +1603,7 @@ impl App {
                                 {
                                     if proc_widget_state.is_search_enabled() {
                                         self.current_widget = new_widget.clone();
-                                    } else if let Some(next_new_widget_id) =
-                                        new_widget.left_neighbour
+                                    } else if let Some(next_new_widget_id) = new_widget.up_neighbour
                                     {
                                         if let Some(next_new_widget) =
                                             self.widget_map.get(&next_new_widget_id)
@@ -1700,8 +1699,7 @@ impl App {
                                 {
                                     if proc_widget_state.is_search_enabled() {
                                         self.current_widget = new_widget.clone();
-                                    } else if let Some(next_new_widget_id) =
-                                        new_widget.right_neighbour
+                                    } else if let Some(next_new_widget_id) = new_widget.up_neighbour
                                     {
                                         if let Some(next_new_widget) =
                                             self.widget_map.get(&next_new_widget_id)
@@ -1765,12 +1763,10 @@ impl App {
                                     self.cpu_state.widget_states.get(&(new_widget_id - 1))
                                 {
                                     if cpu_widget_state.is_legend_hidden {
-                                        if let Some(next_new_widget_id) = new_widget.up_neighbour {
-                                            if let Some(next_new_widget) =
-                                                self.widget_map.get(&next_new_widget_id)
-                                            {
-                                                self.current_widget = next_new_widget.clone();
-                                            }
+                                        if let Some(next_new_widget) =
+                                            self.widget_map.get(&(new_widget_id - 1))
+                                        {
+                                            self.current_widget = next_new_widget.clone();
                                         }
                                     } else {
                                         self.current_widget = new_widget.clone();
@@ -1835,13 +1831,10 @@ impl App {
                                     self.cpu_state.widget_states.get(&(new_widget_id - 1))
                                 {
                                     if cpu_widget_state.is_legend_hidden {
-                                        if let Some(next_new_widget_id) = new_widget.down_neighbour
+                                        if let Some(next_new_widget) =
+                                            self.widget_map.get(&(new_widget_id - 1))
                                         {
-                                            if let Some(next_new_widget) =
-                                                self.widget_map.get(&next_new_widget_id)
-                                            {
-                                                self.current_widget = next_new_widget.clone();
-                                            }
+                                            self.current_widget = next_new_widget.clone();
                                         }
                                     } else {
                                         self.current_widget = new_widget.clone();
