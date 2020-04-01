@@ -528,7 +528,7 @@ fn get_default_widget_and_count(
 
         if widget_count > std::u64::MAX as u128 {
             Err(BottomError::InvalidArg(
-                "Please set your update rate to be at most unsigned INT_MAX.".to_string(),
+                "Please set your widget count to be at most unsigned INT_MAX.".to_string(),
             ))
         } else {
             Ok((widget_type, widget_count as u64))

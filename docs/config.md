@@ -8,7 +8,6 @@ One use of a config file is to set boot flags to execute without having to state
 - These options are generally the same as the long names as other flags (ex: `case_sensitive = true`).
 - Note that if a flag and an option conflict, the flag has higher precedence (ex: if the `-c` and `temperature_type = kelvin` both exist, the Celsius temperature type is ultimately chosen).
 - For temperature type, use `temperature_type = "kelvin|k|celsius|c|fahrenheit|f"`.
-- For default widgets, use `default_widget = "cpu_default|memory_default|disk_default|temperature_default|network_default|process_default"`.
 
 ## Colours
 
