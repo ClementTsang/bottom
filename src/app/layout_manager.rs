@@ -122,6 +122,7 @@ impl BottomLayout {
                     let col_row_height_percentage_end =
                         (col_row_cursor + col_row.col_row_height_ratio) * 100
                             / col.total_col_row_ratio;
+                    let col_row_children_len = col_row.children.len();
 
                     for widget in &mut col_row.children {
                         // Bail if empty.
@@ -131,7 +132,7 @@ impl BottomLayout {
 
                         let widget_width_percentage_start =
                             widget_cursor * 100 / col_row.total_widget_ratio;
-                        let widget_percentage_end =
+                        let widget_width_percentage_end =
                             (widget_cursor + widget.width_ratio) * 100 / col_row.total_widget_ratio;
 
                         if let Some(current_row) = layout_mapping
@@ -162,7 +163,12 @@ impl BottomLayout {
                                     // Right
                                     if let Some(to_right_neighbour) = current_col_row
                                         .1
-                                        .range((widget_percentage_end, widget_percentage_end)..)
+                                        .range(
+                                            (
+                                                widget_width_percentage_end,
+                                                widget_width_percentage_end,
+                                            )..,
+                                        )
                                         .next()
                                     {
                                         widget.right_neighbour = Some(*to_right_neighbour.1);
@@ -297,7 +303,6 @@ impl BottomLayout {
                                     )
                                     .next_back()
                                 {
-                                    // We want to get the widget with the highest percentage WITHIN our two ranges
                                     let mut current_best_distance = 0;
                                     let mut current_best_widget_id = widget.widget_id;
                                     for col_position in &(next_row_up.1).1 {
@@ -360,16 +365,25 @@ impl BottomLayout {
                                     )
                                     .next()
                                 {
-                                    // We want to get the widget with the highest percentage WITHIN our two ranges
                                     let mut current_best_distance = 0;
                                     let mut current_best_widget_id = widget.widget_id;
+
+                                    let (target_start_width, target_end_width) =
+                                        if col_row_children_len > 1 {
+                                            (
+                                                widget_width_percentage_start,
+                                                widget_width_percentage_end,
+                                            )
+                                        } else {
+                                            (col_width_percentage_start, col_width_percentage_end)
+                                        };
 
                                     for col_position in &(next_row_down.1).1 {
                                         let candidate_start = (col_position.0).0;
                                         let candidate_end = (col_position.0).1;
 
                                         if is_intersecting(
-                                            (col_width_percentage_start, col_width_percentage_end),
+                                            (target_start_width, target_end_width),
                                             (candidate_start, candidate_end),
                                         ) {
                                             let candidate_distance =

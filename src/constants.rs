@@ -137,14 +137,6 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #temperature_type = "fahrenheit"
 #temperature_type = "celsius"
 
-# Defaults to processes.  Default widget is one of:
-#default_widget = "cpu_default"
-#default_widget = "memory_default"
-#default_widget = "disk_default"
-#default_widget = "temperature_default"
-#default_widget = "network_default"
-#default_widget = "process_default"
-
 # The default time interval (in milliseconds).
 #default_time_value = 60000
 
@@ -203,4 +195,28 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 
 # Represents the cursor's colour.
 #cursor_color="#458588"
+
+# The default widget layout:
+# [[row]]
+#   ratio=30
+#   [[row.child]]
+#   type="cpu"
+# [[row]]
+#     ratio=40
+#     [[row.child]]
+#       ratio=4
+#       type="mem"
+#     [[row.child]]
+#       ratio=3
+#       [[row.child.child]]
+#         type="temp"
+#       [[row.child.child]]
+#         type="disk"
+# [[row]]
+#   ratio=30
+#   [[row.child]]
+#     type="net"
+#   [[row.child]]
+#     type="proc"
+#     default=true
 "##;

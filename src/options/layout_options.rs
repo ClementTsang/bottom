@@ -158,7 +158,6 @@ impl Row {
                                 // Check default flag
                                 if let Some(default_widget_flag) = widget.default {
                                     if default_widget_flag {
-                                        debug!("Default widget id: {}", *iter_id);
                                         *default_widget_id = *iter_id;
                                     }
                                 }

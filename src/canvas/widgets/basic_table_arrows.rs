@@ -23,8 +23,6 @@ impl BasicTableArrows for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         // Effectively a paragraph with a ton of spacing
-
-        // TODO: [MODULARITY] This is hard coded.  Gross.
         let (left_table, right_table) =
             if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
                 match basic_table_widget_state.currently_displayed_widget_type {
