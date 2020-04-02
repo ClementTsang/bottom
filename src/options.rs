@@ -95,11 +95,46 @@ pub fn build_app(
         None
     };
 
+    let (default_widget_type_option, _) = get_default_widget_and_count(matches, config)?;
+    let mut initial_widget_id: u64 = default_widget_id;
+    let mut initial_widget_type = BottomWidgetType::Proc;
+    let is_custom_layout = config.row.is_some();
+
     for row in &widget_layout.rows {
         for col in &row.children {
             for col_row in &col.children {
                 for widget in &col_row.children {
                     widget_map.insert(widget.widget_id, widget.clone());
+                    if let Some(default_widget_type) = &default_widget_type_option {
+                        if !is_custom_layout || use_basic_mode {
+                            match widget.widget_type {
+                                BottomWidgetType::BasicCpu => {
+                                    if let BottomWidgetType::Cpu = *default_widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = BottomWidgetType::Cpu;
+                                    }
+                                }
+                                BottomWidgetType::BasicMem => {
+                                    if let BottomWidgetType::Mem = *default_widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = BottomWidgetType::Cpu;
+                                    }
+                                }
+                                BottomWidgetType::BasicNet => {
+                                    if let BottomWidgetType::Net = *default_widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = BottomWidgetType::Cpu;
+                                    }
+                                }
+                                _ => {
+                                    if *default_widget_type == widget.widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = widget.widget_type.clone();
+                                    }
+                                }
+                            }
+                        }
+                    }
                     match widget.widget_type {
                         BottomWidgetType::Cpu => {
                             cpu_state_map.insert(
@@ -144,13 +179,20 @@ pub fn build_app(
     }
 
     // FIXME: [MODULARITY] Don't collect if not added!
-    let initial_widget_id: u64 = default_widget_id;
-
     let basic_table_widget_state = if use_basic_mode {
-        Some(BasicTableWidgetState {
-            currently_displayed_widget_type: BottomWidgetType::Proc,
-            currently_displayed_widget_id: DEFAULT_WIDGET_ID,
-            widget_id: 100,
+        Some(match initial_widget_type {
+            BottomWidgetType::Proc | BottomWidgetType::Disk | BottomWidgetType::Temp => {
+                BasicTableWidgetState {
+                    currently_displayed_widget_type: initial_widget_type,
+                    currently_displayed_widget_id: initial_widget_id,
+                    widget_id: 100,
+                }
+            }
+            _ => BasicTableWidgetState {
+                currently_displayed_widget_type: BottomWidgetType::Proc,
+                currently_displayed_widget_id: DEFAULT_WIDGET_ID,
+                widget_id: 100,
+            },
         })
     } else {
         None
@@ -193,7 +235,10 @@ pub fn get_widget_layout(
         get_default_widget_and_count(matches, config)?;
     let mut default_widget_id = 1;
 
-    let bottom_layout = if let Some(rows) = &config.row {
+    let bottom_layout = if get_use_basic_mode(matches, config) {
+        default_widget_id = DEFAULT_WIDGET_ID;
+        BottomLayout::init_basic_default()
+    } else if let Some(rows) = &config.row {
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
 
@@ -216,9 +261,6 @@ pub fn get_widget_layout(
         ret_bottom_layout.get_movement_mappings();
 
         ret_bottom_layout
-    } else if get_use_basic_mode(matches, config) {
-        default_widget_id = DEFAULT_WIDGET_ID;
-        BottomLayout::init_basic_default()
     } else {
         default_widget_id = DEFAULT_WIDGET_ID;
         BottomLayout::init_default(left_legend)
