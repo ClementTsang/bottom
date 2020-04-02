@@ -1,7 +1,7 @@
 use std::cmp::max;
 
 use crate::{
-    app::{App, WidgetPosition},
+    app::App,
     canvas::{drawing_utils::*, Painter},
     constants::*,
 };
@@ -15,13 +15,13 @@ use tui::{
 
 pub trait MemBasicWidget {
     fn draw_basic_memory<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl MemBasicWidget for Painter {
     fn draw_basic_memory<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
         let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
@@ -31,7 +31,7 @@ impl MemBasicWidget for Painter {
             .horizontal_margin(1)
             .split(draw_loc);
 
-        if let WidgetPosition::BasicMem = app_state.current_widget_selected {
+        if app_state.current_widget.widget_id == widget_id {
             Block::default()
                 .borders(*SIDE_BORDERS)
                 .border_style(self.colours.highlighted_border_style)

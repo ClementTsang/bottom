@@ -3,8 +3,7 @@ use std::collections::HashMap;
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
+    layout::{Constraint, Direction, Layout},
     widgets::Text,
     Terminal,
 };
@@ -14,7 +13,11 @@ use dialogs::*;
 use widgets::*;
 
 use crate::{
-    app::{self, data_harvester::processes::ProcessHarvest, WidgetPosition},
+    app::{
+        self,
+        data_harvester::processes::ProcessHarvest,
+        layout_manager::{BottomLayout, BottomWidgetType},
+    },
     constants::*,
     data_conversion::{ConvertedCpuData, ConvertedProcessData},
     utils::error,
@@ -40,7 +43,7 @@ pub struct DisplayableData {
     // Not the final value
     pub grouped_process_data: Vec<ConvertedProcessData>,
     // What's actually displayed
-    pub finalized_process_data: Vec<ConvertedProcessData>,
+    pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>,
     pub mem_label: String,
     pub swap_label: String,
     pub mem_data: Vec<(f64, f64)>,
@@ -48,31 +51,110 @@ pub struct DisplayableData {
     pub cpu_data: Vec<ConvertedCpuData>,
 }
 
-#[allow(dead_code)]
-#[derive(Default)]
 /// Handles the canvas' state.  TODO: [OPT] implement this.
 pub struct Painter {
+    pub colours: CanvasColours,
     height: u16,
     width: u16,
-    vertical_dialog_chunk: Vec<Rect>,
-    middle_dialog_chunk: Vec<Rect>,
-    vertical_chunks: Vec<Rect>,
-    middle_chunks: Vec<Rect>,
-    middle_divided_chunk_2: Vec<Rect>,
-    bottom_chunks: Vec<Rect>,
-    cpu_chunk: Vec<Rect>,
-    network_chunk: Vec<Rect>,
-    pub colours: CanvasColours,
-    pub styled_general_help_text: Vec<Text<'static>>,
-    pub styled_process_help_text: Vec<Text<'static>>,
-    pub styled_search_help_text: Vec<Text<'static>>,
+    styled_general_help_text: Vec<Text<'static>>,
+    styled_process_help_text: Vec<Text<'static>>,
+    styled_search_help_text: Vec<Text<'static>>,
     is_mac_os: bool,
+    row_constraints: Vec<Constraint>,
+    col_constraints: Vec<Vec<Constraint>>,
+    col_row_constraints: Vec<Vec<Vec<Constraint>>>,
+    layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
+    widget_layout: BottomLayout,
 }
 
 impl Painter {
+    pub fn init(widget_layout: BottomLayout) -> Self {
+        // Now for modularity; we have to also initialize the base layouts!
+        // We want to do this ONCE and reuse; after this we can just construct
+        // based on the console size.
+
+        let mut row_constraints = Vec::new();
+        let mut col_constraints = Vec::new();
+        let mut col_row_constraints = Vec::new();
+        let mut layout_constraints = Vec::new();
+
+        widget_layout.rows.iter().for_each(|row| {
+            if row.canvas_handle_height {
+                row_constraints.push(Constraint::Length(0));
+            } else {
+                row_constraints.push(Constraint::Ratio(
+                    row.row_height_ratio,
+                    widget_layout.total_row_height_ratio,
+                ));
+            }
+
+            let mut new_col_constraints = Vec::new();
+            let mut new_widget_constraints = Vec::new();
+            let mut new_col_row_constraints = Vec::new();
+            row.children.iter().for_each(|col| {
+                if col.canvas_handle_width {
+                    new_col_constraints.push(Constraint::Length(0));
+                } else {
+                    new_col_constraints
+                        .push(Constraint::Ratio(col.col_width_ratio, row.total_col_ratio));
+                }
+
+                let mut new_new_col_row_constraints = Vec::new();
+                let mut new_new_widget_constraints = Vec::new();
+                col.children.iter().for_each(|col_row| {
+                    if col_row.canvas_handle_height {
+                        new_new_col_row_constraints.push(Constraint::Length(0));
+                    } else if col_row.flex_grow {
+                        new_new_col_row_constraints.push(Constraint::Min(0));
+                    } else {
+                        new_new_col_row_constraints.push(Constraint::Ratio(
+                            col_row.col_row_height_ratio,
+                            col.total_col_row_ratio,
+                        ));
+                    }
+
+                    let mut new_new_new_widget_constraints = Vec::new();
+                    col_row.children.iter().for_each(|widget| {
+                        if widget.canvas_handle_width {
+                            new_new_new_widget_constraints.push(Constraint::Length(0));
+                        } else if widget.flex_grow {
+                            new_new_new_widget_constraints.push(Constraint::Min(0));
+                        } else {
+                            new_new_new_widget_constraints.push(Constraint::Ratio(
+                                widget.width_ratio,
+                                col_row.total_widget_ratio,
+                            ));
+                        }
+                    });
+                    new_new_widget_constraints.push(new_new_new_widget_constraints);
+                });
+                new_col_row_constraints.push(new_new_col_row_constraints);
+                new_widget_constraints.push(new_new_widget_constraints);
+            });
+            col_row_constraints.push(new_col_row_constraints);
+            layout_constraints.push(new_widget_constraints);
+            col_constraints.push(new_col_constraints);
+        });
+
+        Painter {
+            colours: CanvasColours::default(),
+            height: 0,
+            width: 0,
+            styled_general_help_text: Vec::new(),
+            styled_process_help_text: Vec::new(),
+            styled_search_help_text: Vec::new(),
+            is_mac_os: false,
+            row_constraints,
+            col_constraints,
+            col_row_constraints,
+            layout_constraints,
+            widget_layout,
+        }
+    }
+
     /// Must be run once before drawing, but after setting colours.
     /// This is to set some remaining styles and text.
-    pub fn initialize(&mut self) {
+    pub fn complete_painter_init(&mut self) {
         self.is_mac_os = cfg!(target_os = "macos");
 
         if GENERAL_HELP_TEXT.len() > 1 {
@@ -115,24 +197,26 @@ impl Painter {
         }
     }
 
-    pub fn draw_specific_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
-        widget_selected: WidgetPosition,
-    ) {
-        match widget_selected {
-            WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                self.draw_process_and_search(f, app_state, draw_loc, draw_border)
-            }
-            WidgetPosition::Temp => self.draw_temp_table(f, app_state, draw_loc, draw_border),
-            WidgetPosition::Disk => self.draw_disk_table(f, app_state, draw_loc, draw_border),
-            _ => {}
-        }
-    }
+    // pub fn draw_specific_table<B: Backend>(
+    //     &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
+    //     widget_selected: WidgetPosition,
+    // ) {
+    //     match widget_selected {
+    //         WidgetPosition::Process | WidgetPosition::ProcessSearch => {
+    //             self.draw_process_and_search(f, app_state, draw_loc, draw_border)
+    //         }
+    //         WidgetPosition::Temp => self.draw_temp_table(f, app_state, draw_loc, draw_border),
+    //         WidgetPosition::Disk => self.draw_disk_table(f, app_state, draw_loc, draw_border),
+    //         _ => {}
+    //     }
+    // }
 
     // TODO: [FEATURE] Auto-resizing dialog sizes.
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
     ) -> error::Result<()> {
+        use BottomWidgetType::*;
+
         let terminal_size = terminal.size()?;
         let current_height = terminal_size.height;
         let current_width = terminal_size.width;
@@ -231,55 +315,63 @@ impl Painter {
                 }
             } else if app_state.is_expanded {
                 let rect = Layout::default()
-                    .margin(1)
+                    .margin(0)
                     .constraints([Constraint::Percentage(100)].as_ref())
                     .split(f.size());
-                match &app_state.current_widget_selected {
-                    WidgetPosition::Cpu | WidgetPosition::BasicCpu | WidgetPosition::CpuLegend => {
-                        let cpu_chunk = Layout::default()
-                            .direction(Direction::Horizontal)
-                            .margin(0)
-                            .constraints(
-                                if app_state.app_config_fields.left_legend {
-                                    [Constraint::Percentage(15), Constraint::Percentage(85)]
-                                } else {
-                                    [Constraint::Percentage(85), Constraint::Percentage(15)]
-                                }
-                                .as_ref(),
-                            )
-                            .split(rect[0]);
-
-                        let legend_index = if app_state.app_config_fields.left_legend {
-                            0
-                        } else {
-                            1
-                        };
-                        let graph_index = if app_state.app_config_fields.left_legend {
-                            1
-                        } else {
-                            0
-                        };
-
-                        self.draw_cpu_graph(&mut f, app_state, cpu_chunk[graph_index]);
-                        self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
-                    }
-                    WidgetPosition::Mem | WidgetPosition::BasicMem => {
-                        self.draw_memory_graph(&mut f, app_state, rect[0]);
-                    }
-                    WidgetPosition::Disk => {
-                        self.draw_disk_table(&mut f, app_state, rect[0], true);
-                    }
-                    WidgetPosition::Temp => {
-                        self.draw_temp_table(&mut f, app_state, rect[0], true);
-                    }
-                    WidgetPosition::Network
-                    | WidgetPosition::BasicNet
-                    | WidgetPosition::NetworkLegend => {
-                        self.draw_network_graph(&mut f, app_state, rect[0]);
-                    }
-                    WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-                        self.draw_process_and_search(&mut f, app_state, rect[0], true);
-                    }
+                match &app_state.current_widget.widget_type {
+                    Cpu => self.draw_cpu(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    CpuLegend => self.draw_cpu(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id - 1,
+                    ),
+                    Mem | BasicMem => self.draw_memory_graph(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    Disk => self.draw_disk_table(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id,
+                    ),
+                    Temp => self.draw_temp_table(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id,
+                    ),
+                    Net => self.draw_network_graph(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    Proc => self.draw_process_and_search(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id,
+                    ),
+                    ProcSearch => self.draw_process_and_search(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id - 1,
+                    ),
+                    _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
                 // Basic mode.  This basically removes all graphs but otherwise
@@ -309,112 +401,144 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .split(vertical_chunks[2]);
-                self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0]);
-                self.draw_basic_memory(&mut f, app_state, middle_chunks[0]);
-                self.draw_basic_network(&mut f, app_state, middle_chunks[1]);
+                self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
+                self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);
+                self.draw_basic_network(&mut f, app_state, middle_chunks[1], 3);
                 self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3]);
-                if app_state.current_widget_selected.is_widget_table() {
-                    self.draw_specific_table(
-                        &mut f,
-                        app_state,
-                        vertical_chunks[4],
-                        false,
-                        app_state.current_widget_selected,
-                    );
-                } else {
-                    self.draw_specific_table(
-                        &mut f,
-                        app_state,
-                        vertical_chunks[4],
-                        false,
-                        app_state.previous_basic_table_selected,
-                    );
+                if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
+                    let widget_id = basic_table_widget_state.currently_displayed_widget_id;
+                    match basic_table_widget_state.currently_displayed_widget_type {
+                        Disk => self.draw_disk_table(
+                            &mut f,
+                            app_state,
+                            vertical_chunks[4],
+                            false,
+                            widget_id,
+                        ),
+                        Proc => self.draw_process_and_search(
+                            &mut f,
+                            app_state,
+                            vertical_chunks[4],
+                            false,
+                            widget_id,
+                        ),
+                        Temp => self.draw_temp_table(
+                            &mut f,
+                            app_state,
+                            vertical_chunks[4],
+                            false,
+                            widget_id,
+                        ),
+                        _ => {}
+                    }
                 }
             } else {
-                let vertical_chunks = Layout::default()
+                // Draws using the passed in (or default) layout.  NOT basic so far.
+                let row_draw_locs = Layout::default()
+                    .margin(0)
+                    .constraints(self.row_constraints.as_ref())
                     .direction(Direction::Vertical)
-                    .margin(1)
-                    .constraints(
-                        [
-                            Constraint::Percentage(30),
-                            Constraint::Percentage(37),
-                            Constraint::Percentage(33),
-                        ]
-                        .as_ref(),
-                    )
                     .split(f.size());
+                let col_draw_locs = self
+                    .col_constraints
+                    .iter()
+                    .enumerate()
+                    .map(|(itx, col_constraint)| {
+                        Layout::default()
+                            .constraints(col_constraint.as_ref())
+                            .direction(Direction::Horizontal)
+                            .split(row_draw_locs[itx])
+                    })
+                    .collect::<Vec<_>>();
+                let col_row_draw_locs = self
+                    .col_row_constraints
+                    .iter()
+                    .enumerate()
+                    .map(|(col_itx, col_row_constraints)| {
+                        col_row_constraints
+                            .iter()
+                            .enumerate()
+                            .map(|(itx, col_row_constraint)| {
+                                Layout::default()
+                                    .constraints(col_row_constraint.as_ref())
+                                    .direction(Direction::Vertical)
+                                    .split(col_draw_locs[col_itx][itx])
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>();
 
-                let middle_chunks = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .margin(0)
-                    .constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
-                    .split(vertical_chunks[1]);
+                // Now... draw!
+                self.layout_constraints.iter().enumerate().for_each(
+                    |(row_itx, col_constraint_vec)| {
+                        col_constraint_vec.iter().enumerate().for_each(
+                            |(col_itx, col_row_constraint_vec)| {
+                                col_row_constraint_vec.iter().enumerate().for_each(
+                                    |(col_row_itx, widget_constraints)| {
+                                        let widget_draw_locs = Layout::default()
+                                            .constraints(widget_constraints.as_ref())
+                                            .direction(Direction::Horizontal)
+                                            .split(
+                                                col_row_draw_locs[row_itx][col_itx][col_row_itx],
+                                            );
 
-                let middle_divided_chunk_2 = Layout::default()
-                    .direction(Direction::Vertical)
-                    .margin(0)
-                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-                    .split(middle_chunks[1]);
-
-                let bottom_chunks = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .margin(0)
-                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-                    .split(vertical_chunks[2]);
-
-                // Component specific chunks
-                let cpu_chunk = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .margin(0)
-                    .constraints(
-                        if app_state.app_config_fields.left_legend {
-                            [Constraint::Percentage(15), Constraint::Percentage(85)]
-                        } else {
-                            [Constraint::Percentage(85), Constraint::Percentage(15)]
-                        }
-                        .as_ref(),
-                    )
-                    .split(vertical_chunks[0]);
-
-                let network_chunk = Layout::default()
-                    .direction(Direction::Vertical)
-                    .margin(0)
-                    .constraints(
-                        if (bottom_chunks[0].height as f64 * 0.25) as u16 >= 4 {
-                            [Constraint::Percentage(75), Constraint::Percentage(25)]
-                        } else {
-                            let required = if bottom_chunks[0].height < 10 {
-                                bottom_chunks[0].height / 2
-                            } else {
-                                5
-                            };
-                            let remaining = bottom_chunks[0].height - required;
-                            [Constraint::Length(remaining), Constraint::Length(required)]
-                        }
-                        .as_ref(),
-                    )
-                    .split(bottom_chunks[0]);
-
-                // Default chunk index based on left or right legend setting
-                let legend_index = if app_state.app_config_fields.left_legend {
-                    0
-                } else {
-                    1
-                };
-                let graph_index = if app_state.app_config_fields.left_legend {
-                    1
-                } else {
-                    0
-                };
-
-                self.draw_cpu_graph(&mut f, app_state, cpu_chunk[graph_index]);
-                self.draw_cpu_legend(&mut f, app_state, cpu_chunk[legend_index]);
-                self.draw_memory_graph(&mut f, app_state, middle_chunks[0]);
-                self.draw_network_graph(&mut f, app_state, network_chunk[0]);
-                self.draw_network_labels(&mut f, app_state, network_chunk[1]);
-                self.draw_temp_table(&mut f, app_state, middle_divided_chunk_2[0], true);
-                self.draw_disk_table(&mut f, app_state, middle_divided_chunk_2[1], true);
-                self.draw_process_and_search(&mut f, app_state, bottom_chunks[1], true);
+                                        for (widget_itx, widget) in self.widget_layout.rows[row_itx]
+                                            .children[col_itx]
+                                            .children[col_row_itx]
+                                            .children
+                                            .iter()
+                                            .enumerate()
+                                        {
+                                            match widget.widget_type {
+                                                Empty => {}
+                                                Cpu => self.draw_cpu(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    widget.widget_id,
+                                                ),
+                                                Mem => self.draw_memory_graph(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    widget.widget_id,
+                                                ),
+                                                Net => self.draw_network(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    widget.widget_id,
+                                                ),
+                                                Temp => self.draw_temp_table(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    true,
+                                                    widget.widget_id,
+                                                ),
+                                                Disk => self.draw_disk_table(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    true,
+                                                    widget.widget_id,
+                                                ),
+                                                Proc => self.draw_process_and_search(
+                                                    &mut f,
+                                                    app_state,
+                                                    widget_draw_locs[widget_itx],
+                                                    true,
+                                                    widget.widget_id,
+                                                ),
+                                                _ => {}
+                                            }
+                                        }
+                                    },
+                                );
+                            },
+                        );
+                    },
+                );
             }
         })?;
 

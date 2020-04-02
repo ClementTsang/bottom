@@ -1,21 +1,26 @@
 use serde::Deserialize;
-
+use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::{
-    app::{data_harvester, App, AppConfigFields, CpuState, MemState, NetState, WidgetPosition},
+    app::{
+        data_harvester, layout_manager::*, App, AppConfigFields, BasicTableWidgetState, CpuState,
+        CpuWidgetState, DiskState, DiskWidgetState, MemState, MemWidgetState, NetState,
+        NetWidgetState, ProcState, ProcWidgetState, TempState, TempWidgetState,
+    },
     constants::*,
     utils::error::{self, BottomError},
 };
 
-// use layout_manager::*;
+use layout_options::*;
 
-// mod layout_manager;
+mod layout_options;
 
 #[derive(Default, Deserialize)]
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
+    pub row: Option<Vec<Row>>,
 }
 
 #[derive(Default, Deserialize)]
@@ -37,6 +42,8 @@ pub struct ConfigFlags {
     pub time_delta: Option<u64>,
     pub autohide_time: Option<bool>,
     pub hide_time: Option<bool>,
+    pub default_widget_type: Option<String>,
+    pub default_widget_count: Option<u64>,
     //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -60,27 +67,135 @@ pub struct ConfigColours {
     pub graph_color: Option<String>,
 }
 
-pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error::Result<App> {
+pub fn build_app(
+    matches: &clap::ArgMatches<'static>, config: &Config, widget_layout: &BottomLayout,
+    default_widget_id: u64,
+) -> error::Result<App> {
     let autohide_time = get_autohide_time(&matches, &config);
     let default_time_value = get_default_time_value(&matches, &config)?;
-    let default_widget = get_default_widget(&matches, &config);
     let use_basic_mode = get_use_basic_mode(&matches, &config);
 
-    let current_widget_selected = if use_basic_mode {
-        match default_widget {
-            WidgetPosition::Cpu => WidgetPosition::BasicCpu,
-            WidgetPosition::Network => WidgetPosition::BasicNet,
-            WidgetPosition::Mem => WidgetPosition::BasicMem,
-            _ => default_widget,
-        }
+    // For processes
+    let is_grouped = get_app_grouping(matches, config);
+    let is_case_sensitive = get_app_case_sensitive(matches, config);
+    let is_match_whole_word = get_app_match_whole_word(matches, config);
+    let is_use_regex = get_app_use_regex(matches, config);
+
+    let mut widget_map = HashMap::new();
+    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
+    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
+    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
+    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
+    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
+    let mut disk_state_map: HashMap<u64, DiskWidgetState> = HashMap::new();
+
+    let autohide_timer = if autohide_time {
+        Some(Instant::now())
     } else {
-        default_widget
+        None
     };
 
-    let previous_basic_table_selected = if default_widget.is_widget_table() {
-        default_widget
+    let (default_widget_type_option, _) = get_default_widget_and_count(matches, config)?;
+    let mut initial_widget_id: u64 = default_widget_id;
+    let mut initial_widget_type = BottomWidgetType::Proc;
+    let is_custom_layout = config.row.is_some();
+
+    for row in &widget_layout.rows {
+        for col in &row.children {
+            for col_row in &col.children {
+                for widget in &col_row.children {
+                    widget_map.insert(widget.widget_id, widget.clone());
+                    if let Some(default_widget_type) = &default_widget_type_option {
+                        if !is_custom_layout || use_basic_mode {
+                            match widget.widget_type {
+                                BottomWidgetType::BasicCpu => {
+                                    if let BottomWidgetType::Cpu = *default_widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = BottomWidgetType::Cpu;
+                                    }
+                                }
+                                BottomWidgetType::BasicMem => {
+                                    if let BottomWidgetType::Mem = *default_widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = BottomWidgetType::Cpu;
+                                    }
+                                }
+                                BottomWidgetType::BasicNet => {
+                                    if let BottomWidgetType::Net = *default_widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = BottomWidgetType::Cpu;
+                                    }
+                                }
+                                _ => {
+                                    if *default_widget_type == widget.widget_type {
+                                        initial_widget_id = widget.widget_id;
+                                        initial_widget_type = widget.widget_type.clone();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    match widget.widget_type {
+                        BottomWidgetType::Cpu => {
+                            cpu_state_map.insert(
+                                widget.widget_id,
+                                CpuWidgetState::init(default_time_value, autohide_timer),
+                            );
+                        }
+                        BottomWidgetType::Mem => {
+                            mem_state_map.insert(
+                                widget.widget_id,
+                                MemWidgetState::init(default_time_value, autohide_timer),
+                            );
+                        }
+                        BottomWidgetType::Net => {
+                            net_state_map.insert(
+                                widget.widget_id,
+                                NetWidgetState::init(default_time_value, autohide_timer),
+                            );
+                        }
+                        BottomWidgetType::Proc => {
+                            proc_state_map.insert(
+                                widget.widget_id,
+                                ProcWidgetState::init(
+                                    is_case_sensitive,
+                                    is_match_whole_word,
+                                    is_use_regex,
+                                    is_grouped,
+                                ),
+                            );
+                        }
+                        BottomWidgetType::Disk => {
+                            disk_state_map.insert(widget.widget_id, DiskWidgetState::init());
+                        }
+                        BottomWidgetType::Temp => {
+                            temp_state_map.insert(widget.widget_id, TempWidgetState::init());
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+
+    // FIXME: [MODULARITY] Don't collect if not added!
+    let basic_table_widget_state = if use_basic_mode {
+        Some(match initial_widget_type {
+            BottomWidgetType::Proc | BottomWidgetType::Disk | BottomWidgetType::Temp => {
+                BasicTableWidgetState {
+                    currently_displayed_widget_type: initial_widget_type,
+                    currently_displayed_widget_id: initial_widget_id,
+                    widget_id: 100,
+                }
+            }
+            _ => BasicTableWidgetState {
+                currently_displayed_widget_type: BottomWidgetType::Proc,
+                currently_displayed_widget_id: DEFAULT_WIDGET_ID,
+                widget_id: 100,
+            },
+        })
     } else {
-        WidgetPosition::Process
+        None
     };
 
     let app_config_fields = AppConfigFields {
@@ -98,20 +213,60 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &Config) -> error:
         autohide_time,
     };
 
-    let time_now = if autohide_time {
-        Some(Instant::now())
-    } else {
-        None
-    };
-
     Ok(App::builder()
         .app_config_fields(app_config_fields)
-        .current_widget_selected(current_widget_selected)
-        .previous_basic_table_selected(previous_basic_table_selected)
-        .cpu_state(CpuState::init(default_time_value, time_now))
-        .mem_state(MemState::init(default_time_value, time_now))
-        .net_state(NetState::init(default_time_value, time_now))
+        .cpu_state(CpuState::init(cpu_state_map))
+        .mem_state(MemState::init(mem_state_map))
+        .net_state(NetState::init(net_state_map))
+        .proc_state(ProcState::init(proc_state_map))
+        .disk_state(DiskState::init(disk_state_map))
+        .temp_state(TempState::init(temp_state_map))
+        .basic_table_widget_state(basic_table_widget_state)
+        .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
+        .widget_map(widget_map)
         .build())
+}
+
+pub fn get_widget_layout(
+    matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<(BottomLayout, u64)> {
+    let left_legend = get_use_left_legend(matches, config);
+    let (default_widget_type, mut default_widget_count) =
+        get_default_widget_and_count(matches, config)?;
+    let mut default_widget_id = 1;
+
+    let bottom_layout = if get_use_basic_mode(matches, config) {
+        default_widget_id = DEFAULT_WIDGET_ID;
+        BottomLayout::init_basic_default()
+    } else if let Some(rows) = &config.row {
+        let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
+        let mut total_height_ratio = 0;
+
+        let mut ret_bottom_layout = BottomLayout {
+            rows: rows
+                .iter()
+                .map(|row| {
+                    row.convert_row_to_bottom_row(
+                        &mut iter_id,
+                        &mut total_height_ratio,
+                        &mut default_widget_id,
+                        &default_widget_type,
+                        &mut default_widget_count,
+                        left_legend,
+                    )
+                })
+                .collect::<error::Result<Vec<_>>>()?,
+            total_row_height_ratio: total_height_ratio,
+        };
+        ret_bottom_layout.get_movement_mappings();
+
+        ret_bottom_layout
+    } else {
+        default_widget_id = DEFAULT_WIDGET_ID;
+        BottomLayout::init_default(left_legend)
+    };
+
+    Ok((bottom_layout, default_widget_id))
 }
 
 fn get_update_rate_in_milliseconds(
@@ -296,56 +451,56 @@ fn get_time_interval(matches: &clap::ArgMatches<'static>, config: &Config) -> er
     Ok(time_interval as u64)
 }
 
-pub fn enable_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+pub fn get_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("GROUP_PROCESSES") {
-        app.toggle_grouping();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(grouping) = flags.group_processes {
             if grouping {
-                app.toggle_grouping();
+                return true;
             }
         }
     }
+    false
 }
 
-pub fn enable_app_case_sensitive(
-    matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
-) {
+pub fn get_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("CASE_SENSITIVE") {
-        app.process_search_state.search_toggle_ignore_case();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(case_sensitive) = flags.case_sensitive {
             if case_sensitive {
-                app.process_search_state.search_toggle_ignore_case();
+                return true;
             }
         }
     }
+    false
 }
 
-pub fn enable_app_match_whole_word(
-    matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App,
-) {
+pub fn get_app_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("WHOLE_WORD") {
-        app.process_search_state.search_toggle_whole_word();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(whole_word) = flags.whole_word {
             if whole_word {
-                app.process_search_state.search_toggle_whole_word();
+                return true;
             }
         }
     }
+    false
 }
 
-pub fn enable_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config, app: &mut App) {
+pub fn get_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("REGEX_DEFAULT") {
-        app.process_search_state.search_toggle_regex();
+        return true;
     } else if let Some(flags) = &config.flags {
         if let Some(regex) = flags.regex {
             if regex {
-                app.process_search_state.search_toggle_regex();
+                return true;
             }
         }
     }
+    false
 }
 
 fn get_hide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
@@ -375,32 +530,52 @@ fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
     false
 }
 
-fn get_default_widget(matches: &clap::ArgMatches<'static>, config: &Config) -> WidgetPosition {
-    if matches.is_present("CPU_WIDGET") {
-        return WidgetPosition::Cpu;
-    } else if matches.is_present("MEM_WIDGET") {
-        return WidgetPosition::Mem;
-    } else if matches.is_present("DISK_WIDGET") {
-        return WidgetPosition::Disk;
-    } else if matches.is_present("TEMP_WIDGET") {
-        return WidgetPosition::Temp;
-    } else if matches.is_present("NET_WIDGET") {
-        return WidgetPosition::Network;
-    } else if matches.is_present("PROC_WIDGET") {
-        return WidgetPosition::Process;
-    } else if let Some(flags) = &config.flags {
-        if let Some(default_widget) = &flags.default_widget {
-            return match default_widget.as_str() {
-                "cpu_default" => WidgetPosition::Cpu,
-                "memory_default" => WidgetPosition::Mem,
-                "processes_default" => WidgetPosition::Process,
-                "network_default" => WidgetPosition::Network,
-                "temperature_default" => WidgetPosition::Temp,
-                "disk_default" => WidgetPosition::Disk,
-                _ => WidgetPosition::Process,
-            };
+fn get_default_widget_and_count(
+    matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<(Option<BottomWidgetType>, u64)> {
+    let widget_type = if let Some(widget_type) = matches.value_of("DEFAULT_WIDGET_TYPE") {
+        let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+        if let BottomWidgetType::Empty = parsed_widget {
+            None
+        } else {
+            Some(parsed_widget)
         }
-    }
+    } else if let Some(flags) = &config.flags {
+        if let Some(widget_type) = &flags.default_widget_type {
+            let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
+            if let BottomWidgetType::Empty = parsed_widget {
+                None
+            } else {
+                Some(parsed_widget)
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
-    WidgetPosition::Process
+    if widget_type.is_some() {
+        let widget_count = if let Some(widget_count) = matches.value_of("DEFAULT_WIDGET_COUNT") {
+            widget_count.parse::<u128>()?
+        } else if let Some(flags) = &config.flags {
+            if let Some(widget_count) = flags.default_widget_count {
+                widget_count as u128
+            } else {
+                1 as u128
+            }
+        } else {
+            1 as u128
+        };
+
+        if widget_count > std::u64::MAX as u128 {
+            Err(BottomError::InvalidArg(
+                "Please set your widget count to be at most unsigned INT_MAX.".to_string(),
+            ))
+        } else {
+            Ok((widget_type, widget_count as u64))
+        }
+    } else {
+        Ok((None, 1))
+    }
 }

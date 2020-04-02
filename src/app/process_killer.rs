@@ -21,7 +21,7 @@ impl Process {
     fn open(pid: DWORD) -> Result<Process, String> {
         let pc = unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, 0, pid) };
         if pc.is_null() {
-            return Err("!OpenProcess".to_string());
+            return Err("OpenProcess".to_string());
         }
         Ok(Process(pc))
     }

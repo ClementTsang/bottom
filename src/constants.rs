@@ -1,5 +1,8 @@
 use lazy_static::lazy_static;
 
+// Default widget ID
+pub const DEFAULT_WIDGET_ID: u64 = 56709;
+
 // How long to store data.
 pub const STALE_MAX_MILLISECONDS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
@@ -56,7 +59,7 @@ pub const GENERAL_HELP_TEXT: [&str; 18] = [
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
     "Process Keybindings\n\n",
-    "dd             Kill the highlighted process\n",
+    "dd, Delete     Kill the highlighted process\n",
     "c              Sort by CPU usage\n",
     "m              Sort by memory usage\n",
     "p              Sort by PID\n",
@@ -134,19 +137,15 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #temperature_type = "fahrenheit"
 #temperature_type = "celsius"
 
-# Defaults to processes.  Default widget is one of:
-#default_widget = "cpu_default"
-#default_widget = "memory_default"
-#default_widget = "disk_default"
-#default_widget = "temperature_default"
-#default_widget = "network_default"
-#default_widget = "process_default"
-
 # The default time interval (in milliseconds).
 #default_time_value = 60000
 
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
+
+# Override layout default widget
+#default_widget_type = "proc"
+#default_widget_count = 1
 
 # These are all the components that support custom theming.  Currently, it only
 # supports taking in a string representing a hex colour.  Note that colour support
@@ -200,4 +199,28 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 
 # Represents the cursor's colour.
 #cursor_color="#458588"
+
+# The default widget layout:
+#[[row]]
+#  ratio=30
+#  [[row.child]]
+#  type="cpu"
+#[[row]]
+#    ratio=40
+#    [[row.child]]
+#      ratio=4
+#      type="mem"
+#    [[row.child]]
+#      ratio=3
+#      [[row.child.child]]
+#        type="temp"
+#      [[row.child.child]]
+#        type="disk"
+#[[row]]
+#  ratio=30
+#  [[row.child]]
+#    type="net"
+#  [[row.child]]
+#    type="proc"
+#    default=true
 "##;

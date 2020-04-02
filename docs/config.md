@@ -8,7 +8,6 @@ One use of a config file is to set boot flags to execute without having to state
 - These options are generally the same as the long names as other flags (ex: `case_sensitive = true`).
 - Note that if a flag and an option conflict, the flag has higher precedence (ex: if the `-c` and `temperature_type = kelvin` both exist, the Celsius temperature type is ultimately chosen).
 - For temperature type, use `temperature_type = "kelvin|k|celsius|c|fahrenheit|f"`.
-- For default widgets, use `default_widget = "cpu_default|memory_default|disk_default|temperature_default|network_default|process_default"`.
 
 ## Colours
 
@@ -35,6 +34,45 @@ Supported named colours are one of the following: `Reset, Black, Red, Green, Yel
 | Selected text background colour | The background colour of text that is selected | `scroll_entry_bg_color="#458588"`                      |
 
 Note some colours may not be compatible with the terminal you are using. For example, macOS's default Terminal does not play nice with many colours.
+
+## Layout
+
+As of 0.3.0, bottom supports custom layouts. Layouts are in the TOML specification, and are arranged by row -> column -> row. For example, the default layout:
+
+```toml
+[[row]]
+  ratio=30
+  [[row.child]]
+  type="cpu"
+[[row]]
+    ratio=40
+    [[row.child]]
+      ratio=4
+      type="mem"
+    [[row.child]]
+      ratio=3
+      [[row.child.child]]
+        type="temp"
+      [[row.child.child]]
+        type="disk"
+[[row]]
+  ratio=30
+  [[row.child]]
+    type="net"
+  [[row.child]]
+    type="proc"
+    default=true
+```
+
+Valid types are:
+
+- `cpu`
+- `mem`
+- `proc`
+- `net`
+- `temp`
+- `disk`
+- `empty`
 
 ## Default config locations
 

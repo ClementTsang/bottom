@@ -141,14 +141,28 @@ fn test_conflicting_temps() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn test_conflicting_default_widget() -> Result<(), Box<dyn std::error::Error>> {
+fn test_invalid_default_widget_1() -> Result<(), Box<dyn std::error::Error>> {
     Command::new(get_os_binary_loc())
-        .arg("--cpu_default")
-        .arg("--disk_default")
+        .arg("--default_widget_type")
+        .arg("fake_widget")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Invalid widget type"));
+
+    Ok(())
+}
+
+#[test]
+fn test_invalid_default_widget_2() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_os_binary_loc())
+        .arg("--default_widget_type")
+        .arg("cpu")
+        .arg("--default_widget_count")
+        .arg("18446744073709551616")
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "cannot be used with one or more of the other specified arguments",
+            "Please set your widget count to be at most unsigned INT_MAX",
         ));
 
     Ok(())

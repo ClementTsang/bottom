@@ -1,8 +1,4 @@
-use crate::{
-    app::{App, WidgetPosition},
-    canvas::Painter,
-    constants::*,
-};
+use crate::{app::App, canvas::Painter, constants::*};
 
 use tui::{
     backend::Backend,
@@ -13,13 +9,13 @@ use tui::{
 
 pub trait NetworkBasicWidget {
     fn draw_basic_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl NetworkBasicWidget for Painter {
     fn draw_basic_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let divided_loc = Layout::default()
             .direction(Direction::Horizontal)
@@ -38,7 +34,7 @@ impl NetworkBasicWidget for Painter {
             .horizontal_margin(1)
             .split(divided_loc[1]);
 
-        if let WidgetPosition::BasicNet = app_state.current_widget_selected {
+        if app_state.current_widget.widget_id == widget_id {
             Block::default()
                 .borders(*SIDE_BORDERS)
                 .border_style(self.colours.highlighted_border_style)

@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 
 use crate::{
-    app::{App, WidgetPosition},
+    app::App,
     canvas::{drawing_utils::*, Painter},
     constants::*,
     data_conversion::ConvertedCpuData,
@@ -15,12 +15,14 @@ use tui::{
 };
 
 pub trait CpuBasicWidget {
-    fn draw_basic_cpu<B: Backend>(&self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect);
+    fn draw_basic_cpu<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    );
 }
 
 impl CpuBasicWidget for Painter {
     fn draw_basic_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data;
 
@@ -34,7 +36,7 @@ impl CpuBasicWidget for Painter {
         // Then, from this, split the row space across ALL columns.  From there, generate
         // the desired lengths.
 
-        if let WidgetPosition::BasicCpu = app_state.current_widget_selected {
+        if app_state.current_widget.widget_id == widget_id {
             Block::default()
                 .borders(*SIDE_BORDERS)
                 .border_style(self.colours.highlighted_border_style)

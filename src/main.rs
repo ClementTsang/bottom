@@ -86,14 +86,8 @@ fn get_matches() -> clap::ArgMatches<'static> {
         (@arg TIME_DELTA: -d --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
         (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
         (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled via --hide_time then this will have no effect.")
-        (@group DEFAULT_WIDGET =>
-			(@arg CPU_WIDGET: --cpu_default "Selects the CPU widget to be selected by default.")
-			(@arg MEM_WIDGET: --memory_default "Selects the memory widget to be selected by default.")
-			(@arg DISK_WIDGET: --disk_default "Selects the disk widget to be selected by default.")
-			(@arg TEMP_WIDGET: --temperature_default "Selects the temp widget to be selected by default.")
-			(@arg NET_WIDGET: --network_default "Selects the network widget to be selected by default.")
-			(@arg PROC_WIDGET: --process_default "Selects the process widget to be selected by default.  This is the default if nothing is set.")
-		)
+        (@arg DEFAULT_WIDGET_TYPE: --default_widget_type +takes_value "The default widget type to select by default.")
+        (@arg DEFAULT_WIDGET_COUNT: --default_widget_count +takes_value "Which number of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.")
 		//(@arg TURNED_OFF_CPUS: -t ... +takes_value "Hides CPU data points by default") // TODO: [FEATURE] Enable disabling cores in config/flags
 	)
         .get_matches()
@@ -105,14 +99,11 @@ fn main() -> error::Result<()> {
 
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
-    // Create "app" struct, which will control most of the program and store settings/state
-    let mut app = build_app(&matches, &config)?;
+    // Get widget layout separately
+    let (widget_layout, default_widget_id) = get_widget_layout(&matches, &config)?;
 
-    // TODO: [REFACTOR] Change this
-    enable_app_grouping(&matches, &config, &mut app);
-    enable_app_case_sensitive(&matches, &config, &mut app);
-    enable_app_match_whole_word(&matches, &config, &mut app);
-    enable_app_use_regex(&matches, &config, &mut app);
+    // Create "app" struct, which will control most of the program and store settings/state
+    let mut app = build_app(&matches, &config, &widget_layout, default_widget_id)?;
 
     // Set up up tui and crossterm
     let mut stdout_val = stdout();
@@ -150,13 +141,13 @@ fn main() -> error::Result<()> {
         app.app_config_fields.show_average_cpu,
     );
 
-    let mut painter = canvas::Painter::default();
+    let mut painter = canvas::Painter::init(widget_layout);
     if let Err(config_check) = generate_config_colours(&config, &mut painter) {
         cleanup_terminal(&mut terminal)?;
         return Err(config_check);
     }
     painter.colours.generate_remaining_cpu_colours();
-    painter.initialize();
+    painter.complete_painter_init();
 
     let mut first_run = true;
     loop {
@@ -179,11 +170,7 @@ fn main() -> error::Result<()> {
                         // Convert all data into tui-compliant components
 
                         // Network
-                        let network_data = convert_network_data_points(
-                            &app.data_collection,
-                            app.net_state.current_display_time,
-                            false,
-                        );
+                        let network_data = convert_network_data_points(&app.data_collection, false);
                         app.canvas_data.network_data_rx = network_data.rx;
                         app.canvas_data.network_data_tx = network_data.tx;
                         app.canvas_data.rx_display = network_data.rx_display;
@@ -196,17 +183,12 @@ fn main() -> error::Result<()> {
 
                         // Temperatures
                         app.canvas_data.temp_sensor_data = convert_temp_row(&app);
+
                         // Memory
-                        app.canvas_data.mem_data = convert_mem_data_points(
-                            &app.data_collection,
-                            app.mem_state.current_display_time,
-                            false,
-                        );
-                        app.canvas_data.swap_data = convert_swap_data_points(
-                            &app.data_collection,
-                            app.mem_state.current_display_time,
-                            false,
-                        );
+                        app.canvas_data.mem_data =
+                            convert_mem_data_points(&app.data_collection, false);
+                        app.canvas_data.swap_data =
+                            convert_swap_data_points(&app.data_collection, false);
                         let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
                         app.canvas_data.mem_label = memory_and_swap_labels.0;
                         app.canvas_data.swap_label = memory_and_swap_labels.1;
@@ -214,37 +196,29 @@ fn main() -> error::Result<()> {
                         // Pre-fill CPU if needed
                         if first_run {
                             let cpu_len = app.data_collection.cpu_harvest.len();
-                            app.cpu_state.core_show_vec = vec![true; cpu_len];
-                            app.cpu_state.num_cpus_shown = cpu_len as u64;
+                            app.cpu_state.widget_states.values_mut().for_each(|state| {
+                                state.core_show_vec = vec![true; cpu_len];
+                                state.num_cpus_shown = cpu_len;
+                            });
+                            app.cpu_state.num_cpus_total = cpu_len;
                             first_run = false;
                         }
 
                         // CPU
-                        app.canvas_data.cpu_data = convert_cpu_data_points(
-                            &app.data_collection,
-                            app.cpu_state.current_display_time,
-                            false,
-                        );
+                        app.canvas_data.cpu_data =
+                            convert_cpu_data_points(&app.data_collection, false);
 
                         // Processes
                         let (single, grouped) = convert_process_data(&app.data_collection);
                         app.canvas_data.process_data = single;
                         app.canvas_data.grouped_process_data = grouped;
-                        update_final_process_list(&mut app);
+                        update_all_process_lists(&mut app);
                     }
                 }
                 BottomEvent::Clean => {
                     app.data_collection
                         .clean_data(constants::STALE_MAX_MILLISECONDS);
                 }
-            }
-        }
-
-        // Quick fix for tab updating the table headers
-        if let data_harvester::processes::ProcessSorting::PID = &app.process_sorting_type {
-            if app.is_grouped() {
-                app.process_sorting_type = data_harvester::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
-                app.process_sorting_reverse = true;
             }
         }
 
@@ -292,19 +266,13 @@ fn handle_key_event_or_break(
             KeyCode::Backspace => app.on_backspace(),
             KeyCode::Delete => app.on_delete(),
             KeyCode::F(1) => {
-                if app.is_in_search_widget() {
-                    app.toggle_ignore_case();
-                }
+                app.toggle_ignore_case();
             }
             KeyCode::F(2) => {
-                if app.is_in_search_widget() {
-                    app.toggle_search_whole_word();
-                }
+                app.toggle_search_whole_word();
             }
             KeyCode::F(3) => {
-                if app.is_in_search_widget() {
-                    app.toggle_search_regex();
-                }
+                app.toggle_search_regex();
             }
             _ => {}
         }
@@ -313,19 +281,13 @@ fn handle_key_event_or_break(
         if let KeyModifiers::ALT = event.modifiers {
             match event.code {
                 KeyCode::Char('c') | KeyCode::Char('C') => {
-                    if app.is_in_search_widget() {
-                        app.toggle_ignore_case();
-                    }
+                    app.toggle_ignore_case();
                 }
                 KeyCode::Char('w') | KeyCode::Char('W') => {
-                    if app.is_in_search_widget() {
-                        app.toggle_search_whole_word();
-                    }
+                    app.toggle_search_whole_word();
                 }
                 KeyCode::Char('r') | KeyCode::Char('R') => {
-                    if app.is_in_search_widget() {
-                        app.toggle_search_regex();
-                    }
+                    app.toggle_search_regex();
                 }
                 _ => {}
             }
@@ -550,59 +512,65 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
 }
 
 fn handle_force_redraws(app: &mut App) {
-    if app.force_update_processes {
-        update_final_process_list(app);
-        app.force_update_processes = false;
+    // Currently we use an Option... because we might want to future-proof this
+    // if we eventually get widget-specific redrawing!
+    if app.proc_state.force_update_all {
+        update_all_process_lists(app);
+        app.proc_state.force_update_all = false;
+    } else if let Some(widget_id) = app.proc_state.force_update {
+        update_final_process_list(app, widget_id);
+        app.proc_state.force_update = None;
     }
 
-    if app.cpu_state.force_update {
-        app.canvas_data.cpu_data = convert_cpu_data_points(
-            &app.data_collection,
-            app.cpu_state.current_display_time,
-            app.is_frozen,
-        );
-        app.cpu_state.force_update = false;
+    if app.cpu_state.force_update.is_some() {
+        app.canvas_data.cpu_data = convert_cpu_data_points(&app.data_collection, app.is_frozen);
+        app.cpu_state.force_update = None;
     }
 
-    if app.mem_state.force_update {
-        app.canvas_data.mem_data = convert_mem_data_points(
-            &app.data_collection,
-            app.mem_state.current_display_time,
-            app.is_frozen,
-        );
-        app.canvas_data.swap_data = convert_swap_data_points(
-            &app.data_collection,
-            app.mem_state.current_display_time,
-            app.is_frozen,
-        );
-        app.mem_state.force_update = false;
+    if app.mem_state.force_update.is_some() {
+        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection, app.is_frozen);
+        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection, app.is_frozen);
+        app.mem_state.force_update = None;
     }
 
-    if app.net_state.force_update {
-        let (rx, tx) = get_rx_tx_data_points(
-            &app.data_collection,
-            app.net_state.current_display_time,
-            app.is_frozen,
-        );
+    if app.net_state.force_update.is_some() {
+        let (rx, tx) = get_rx_tx_data_points(&app.data_collection, app.is_frozen);
         app.canvas_data.network_data_rx = rx;
         app.canvas_data.network_data_tx = tx;
-        app.net_state.force_update = false;
+        app.net_state.force_update = None;
     }
 }
 
-fn update_final_process_list(app: &mut App) {
-    let mut filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped() {
+fn update_all_process_lists(app: &mut App) {
+    let widget_ids = app
+        .proc_state
+        .widget_states
+        .keys()
+        .cloned()
+        .collect::<Vec<_>>();
+
+    widget_ids.into_iter().for_each(|widget_id| {
+        update_final_process_list(app, widget_id);
+    });
+}
+
+fn update_final_process_list(app: &mut App, widget_id: u64) {
+    let is_invalid_or_blank = match app.proc_state.widget_states.get(&widget_id) {
+        Some(process_state) => process_state
+            .process_search_state
+            .search_state
+            .is_invalid_or_blank_search(),
+        None => false,
+    };
+
+    let filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped(widget_id) {
         app.canvas_data
             .grouped_process_data
             .iter()
             .filter(|process| {
-                if app
-                    .process_search_state
-                    .search_state
-                    .is_invalid_or_blank_search()
-                {
+                if is_invalid_or_blank {
                     return true;
-                } else if let Some(matcher_result) = app.get_current_regex_matcher() {
+                } else if let Some(matcher_result) = app.get_current_regex_matcher(widget_id) {
                     if let Ok(matcher) = matcher_result {
                         return matcher.is_match(&process.name);
                     }
@@ -613,20 +581,20 @@ fn update_final_process_list(app: &mut App) {
             .cloned()
             .collect::<Vec<_>>()
     } else {
+        let is_searching_with_pid = match app.proc_state.widget_states.get(&widget_id) {
+            Some(process_state) => process_state.process_search_state.is_searching_with_pid,
+            None => false,
+        };
+
         app.canvas_data
             .process_data
             .iter()
             .filter_map(|(_pid, process)| {
                 let mut result = true;
-
-                if !app
-                    .process_search_state
-                    .search_state
-                    .is_invalid_or_blank_search()
-                {
-                    if let Some(matcher_result) = app.get_current_regex_matcher() {
+                if !is_invalid_or_blank {
+                    if let Some(matcher_result) = app.get_current_regex_matcher(widget_id) {
                         if let Ok(matcher) = matcher_result {
-                            if app.process_search_state.is_searching_with_pid {
+                            if is_searching_with_pid {
                                 result = matcher.is_match(&process.pid.to_string());
                             } else {
                                 result = matcher.is_match(&process.name);
@@ -650,31 +618,84 @@ fn update_final_process_list(app: &mut App) {
             .collect::<Vec<_>>()
     };
 
-    sort_process_data(&mut filtered_process_data, app);
-    app.canvas_data.finalized_process_data = filtered_process_data;
+    // Quick fix for tab updating the table headers
+    if let Some(proc_widget_state) = app.proc_state.widget_states.get_mut(&widget_id) {
+        if let data_harvester::processes::ProcessSorting::PID =
+            proc_widget_state.process_sorting_type
+        {
+            if proc_widget_state.is_grouped {
+                proc_widget_state.process_sorting_type =
+                    data_harvester::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
+                proc_widget_state.process_sorting_reverse = true;
+            }
+        }
+
+        let mut resulting_processes = filtered_process_data;
+        sort_process_data(&mut resulting_processes, proc_widget_state);
+
+        if proc_widget_state.scroll_state.current_scroll_position
+            >= resulting_processes.len() as u64
+        {
+            proc_widget_state.scroll_state.current_scroll_position =
+                if resulting_processes.len() > 1 {
+                    resulting_processes.len() as u64 - 1
+                } else {
+                    0
+                };
+            proc_widget_state.scroll_state.previous_scroll_position = 0;
+            proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::DOWN;
+        }
+
+        app.canvas_data
+            .finalized_process_data_map
+            .insert(widget_id, resulting_processes);
+    }
 }
 
-fn sort_process_data(to_sort_vec: &mut Vec<ConvertedProcessData>, app: &App) {
+fn sort_process_data(
+    to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
+) {
     to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(&a.name, &b.name, false));
 
-    match app.process_sorting_type {
+    match proc_widget_state.process_sorting_type {
         ProcessSorting::CPU => {
             to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(a.cpu_usage, b.cpu_usage, app.process_sorting_reverse)
+                utils::gen_util::get_ordering(
+                    a.cpu_usage,
+                    b.cpu_usage,
+                    proc_widget_state.process_sorting_reverse,
+                )
             });
         }
         ProcessSorting::MEM => {
             to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(a.mem_usage, b.mem_usage, app.process_sorting_reverse)
+                utils::gen_util::get_ordering(
+                    a.mem_usage,
+                    b.mem_usage,
+                    proc_widget_state.process_sorting_reverse,
+                )
             });
         }
-        ProcessSorting::NAME => to_sort_vec.sort_by(|a, b| {
-            utils::gen_util::get_ordering(&a.name, &b.name, app.process_sorting_reverse)
-        }),
-        ProcessSorting::PID => {
-            if !app.is_grouped() {
+        ProcessSorting::NAME => {
+            // Don't repeat if false...
+            if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(a.pid, b.pid, app.process_sorting_reverse)
+                    utils::gen_util::get_ordering(
+                        &a.name,
+                        &b.name,
+                        proc_widget_state.process_sorting_reverse,
+                    )
+                })
+            }
+        }
+        ProcessSorting::PID => {
+            if !proc_widget_state.is_grouped {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        a.pid,
+                        b.pid,
+                        proc_widget_state.process_sorting_reverse,
+                    )
                 });
             }
         }
