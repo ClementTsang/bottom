@@ -361,6 +361,8 @@ fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
         OsString::new()
     };
 
+    debug!("Config path: {:?}", config_path);
+
     let path = std::path::Path::new(&config_path);
 
     if let Ok(config_string) = fs::read_to_string(path) {
