@@ -14,54 +14,31 @@ This documentation is relevant to version 0.3.0. Please refer to [release branch
 ## Table of Contents
 
 - [Installation](#installation)
-
   - [Manual](#manual)
-
   - [Cargo](#cargo)
-
   - [AUR](#aur)
-
   - [Debian (and Debian-based)](#debian)
-
   - [Homebrew](#homebrew)
-
   - [Scoop](#scoop)
-
   - [Chocolatey](#chocolatey)
-
 - [Usage](#usage)
-
   - [Flags](#flags)
-
   - [Options](#options)
-
 - [Keybindings](#keybindings)
-
   - [General](#general)
   - [CPU bindings](#cpu-bindings)
   - [Process bindings](#process-bindings)
   - [Process search bindings](#process-search-bindings)
-
 - [Features](#features)
-
   - [Process filtering](#process-filtering)
-
   - [Zoom](#zoom)
-
   - [Maximizing](#maximizing)
-
   - [Config files](#config-files)
-
     - [Config flags](#config-flags)
-
     - [Theming](#theming)
-
     - [Layout](#layout)
-
   - [Compatibility](#compatibility)
-
-- [Contributors](#contributors)
-
+- [Contribution](#contribution)
 - [Thanks](#thanks)
 
 ## Installation
@@ -70,7 +47,7 @@ Note that binaries are built on the stable version of Rust, and I mainly test an
 
 ### Manual
 
-Clone from this repo or from [Releases](https://github.com/ClementTsang/bottom/releases), and build with `cargo build --release`.
+Clone from this repo or from [Releases](https://github.com/ClementTsang/bottom/releases), and build with `cargo build --release`. You may also want to strip the binary after.
 
 ### Cargo
 
@@ -157,23 +134,23 @@ Run using `btm`.
 
 #### General
 
-|                                                    |                                                                                             |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `q`, `Ctrl-c`                                      | Quit bottom                                                                                 |
-| `Esc`                                              | Close dialog windows, search, widgets, or exit maximized mode                               |
-| `Ctrl-r`                                           | Reset display and any collected data                                                        |
-| `f`                                                | Freeze/unfreeze updating with new data                                                      |
-| `Ctrl`-arrow key<br>`Shift`-arrow key<br>`H/J/K/L` | Move to a different widget (on macOS some keybindings may conflict)                         |
-| `Up`,`k`                                           | Scroll up in tables                                                                         |
-| `Down`, `j`                                        | Scroll down in tables                                                                       |
-| `?`                                                | Open help menu                                                                              |
-| `gg`, `Home`                                       | Jump to the first entry of a table                                                          |
-| `Shift-g`, `End`                                   | Jump to the last entry of a table                                                           |
-| `Enter`                                            | Maximize widget                                                                             |
-| `+`                                                | Zoom in on a chart                                                                          |
-| `-`                                                | Zoom out on a chart                                                                         |
-| `=`                                                | Reset zoom                                                                                  |
-| Mouse scroll                                       | Table: Scrolls through the list Chart: Zooms in or out by scrolling up or down respectively |
+|                                                    |                                                                                                |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `q`, `Ctrl-c`                                      | Quit bottom                                                                                    |
+| `Esc`                                              | Close dialog windows, search, widgets, or exit maximized mode                                  |
+| `Ctrl-r`                                           | Reset display and any collected data                                                           |
+| `f`                                                | Freeze/unfreeze updating with new data                                                         |
+| `Ctrl`-arrow key<br>`Shift`-arrow key<br>`H/J/K/L` | Move to a different widget (on macOS some keybindings may conflict)                            |
+| `Up`,`k`                                           | Scroll up in tables                                                                            |
+| `Down`, `j`                                        | Scroll down in tables                                                                          |
+| `?`                                                | Open help menu                                                                                 |
+| `gg`, `Home`                                       | Jump to the first entry of a table                                                             |
+| `Shift-g`, `End`                                   | Jump to the last entry of a table                                                              |
+| `Enter`                                            | Maximize widget                                                                                |
+| `+`                                                | Zoom in on a chart                                                                             |
+| `-`                                                | Zoom out on a chart                                                                            |
+| `=`                                                | Reset zoom                                                                                     |
+| Mouse scroll                                       | Table: Scrolls through the list<br>Chart: Zooms in or out by scrolling up or down respectively |
 
 #### CPU bindings
 
@@ -183,7 +160,7 @@ Run using `btm`.
 | `Space` | Toggle enabled/disabled cores                |
 | `Esc`   | Exit filtering mode                          |
 
-#### Processes bindings
+#### Process bindings
 
 |               |                                                            |
 | ------------- | ---------------------------------------------------------- |
@@ -382,13 +359,15 @@ and get the following CPU donut:
 
 ### Compatibility
 
+The current compatibility of widgets with operating systems from personal testing:
+
 | OS      | CPU | Memory | Disks | Temperature | Processes/Search | Networks |
 | ------- | --- | ------ | ----- | ----------- | ---------------- | -------- |
 | Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
 | Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        |
 | macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
 
-## Contributors
+## Contribution
 
 Contribution is always welcome - just submit a PR! Note that I currently develop and test on stable Rust.
 
