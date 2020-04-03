@@ -7,47 +7,70 @@
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
-![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Terminal: Kitty Terminal, Font: IBM Plex Mono, OS: Arch Linux. Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._
+![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
-## Features
+This documentation is relevant to version 0.3.0. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ version.
 
-Features of bottom include:
+## Table of Contents
 
-- CPU widget to show a visual representation of per-core (and optionally average) usage.
+- [Installation](#installation)
 
-- Memory widget to show a visual representation of both RAM and SWAP usage.
+  - [Manual](#manual)
 
-- Networks widget to show a log-based visual representation of network usage.
+  - [Cargo](#cargo)
 
-- Sortable and searchable process widget. Searching supports regex, and you can search by PID and process name.
+  - [AUR](#aur)
 
-- Disks widget to display usage and I/O per second.
+  - [Debian (and Debian-based)](#debian)
 
-- Temperature widget to monitor detected sensors in your system.
+  - [Homebrew](#homebrew)
 
-- Flags to customize the display.
+  - [Scoop](#scoop)
 
-- Config file support for custom colours and default options.
+  - [Chocolatey](#chocolatey)
 
-- Maximizing of widgets of interest to take up the entire window.
+- [Usage](#usage)
 
-- A minimal mode that focuses less on charts and more on data, similar to [htop](https://hisham.hm/htop/).
+  - [Flags](#flags)
 
-- Zooming in/out by time to see more/less data.
+  - [Options](#options)
 
-More details about each widget and compatibility can be found [here](./docs/widgets.md).
+- [Keybindings](#keybindings)
 
-## Config files
+  - [General](#general)
+  - [CPU bindings](#cpu-bindings)
+  - [Process bindings](#process-bindings)
+  - [Process search bindings](#process-search-bindings)
 
-For information about config files, see [this document](./docs/config.md) for more details, and this [config](./sample_configs/demo_config.toml) for an example.
+- [Features](#features)
+
+  - [Process filtering](#process-filtering)
+
+  - [Zoom](#zoom)
+
+  - [Maximizing](#maximizing)
+
+  - [Config files](#config-files)
+
+    - [Config flags](#config-flags)
+
+    - [Theming](#theming)
+
+    - [Layout](#layout)
+
+  - [Compatibility](#compatibility)
+
+- [Contributors](#contributors)
+
+- [Thanks](#thanks)
 
 ## Installation
 
-In all cases you can install the in-development version by cloning from this repo and using `cargo build --release`. This is built and tested with Rust Stable (1.42 as of writing).
+Note that binaries are built on the stable version of Rust, and I mainly test and release for 64-bit.
 
-In addition to the below methods, you can manually build from the [Releases](https://github.com/ClementTsang/bottom/releases) page by downloading and building.
+### Manual
 
-I officially support and test 64-bit versions of [Tier 1](https://forge.rust-lang.org/release/platform-support.html) Rust targets. I will try to build and release 32-bit versions for Linux and Windows, but as of now, I will not be testing 32-bit for validity beyond building.
+Clone from this repo or from [Releases](https://github.com/ClementTsang/bottom/releases), and build with `cargo build --release`.
 
 ### Cargo
 
@@ -55,21 +78,16 @@ I officially support and test 64-bit versions of [Tier 1](https://forge.rust-lan
 cargo install bottom
 ```
 
-### Linux
-
-Installation methods on a per-distro basis:
-
-#### Arch Linux
-
-You can get the release versions from the AUR by installing [`bottom`](https://aur.archlinux.org/packages/bottom/) or [`bottom-bin`](https://aur.archlinux.org/packages/bottom-bin/). For example, using `yay`:
+### AUR
 
 ```bash
 yay bottom
-# Or
+
+# If you instead want the binary version:
 yay bottom-bin
 ```
 
-#### Debian (and anything based on it, like Ubuntu)
+### Debian
 
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
@@ -78,174 +96,303 @@ curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.2/bottom_0
 sudo dpkg -i bottom_0.2.2_amd64.deb
 ```
 
-### Windows
-
-You can get release versions via [Chocolatey](https://chocolatey.org/packages/bottom/):
+### Homebrew
 
 ```bash
-choco install bottom
-# Or
-choco install bottom --version=0.2.2 # Version number may be required for newer releases
+brew tap clementtsang/bottom
+brew install bottom
+
+# If you need to be more specific, use:
+brew install clementtsang/bottom/bottom
 ```
 
-Or via `scoop`:
+### Scoop
 
 ```bash
 scoop install bottom
 ```
 
-### macOS
-
-You can get release versions using Homebrew:
+### Chocolatey
 
 ```bash
-brew tap clementtsang/bottom
-brew install bottom
-# Or
-brew install clementtsang/bottom/bottom
+choco install bottom
+
+# Version number may be required for newer releases:
+choco install bottom --version=0.2.2
 ```
 
 ## Usage
 
 Run using `btm`.
 
-### Command line options
+### Flags
 
-- `-h`, `--help` shows the help screen and exits.
+```
+-h, --help                      Prints help information, including flags and options
+-a, --avg_cpu                   Shows the average CPU usage in addition to per-core
+-m, --dot-marker                Uses a dot marker instead of the default braille marker
+-c, --celsius                   Displays the temperature type in Celsius [default]
+-f, --fahrenheit                Displays the temperature type in Fahrenheit
+-k, --kelvin                    Displays the temperature type in Kelvin
+-l, --left_legend               Displays the CPU legend to the left rather than the right
+-u, --current_usage             Sets process CPU usage to be based on current total CPU usage
+-g, --group                     Groups together processes with the same name by default
+-S, --case_sensitive            Search defaults to matching cases
+-W, --whole                     Search defaults to searching for the whole word
+-R, --regex                     Search defaults to using regex
+-s, --show_disabled_data        Shows disabled CPU entries in the CPU legend
+-b, --basic                     Enables basic mode, removing charts and condensing data
+```
 
-- `-a`, `--avg_cpu` enables also showing the average CPU usage in addition to per-core CPU usage.
+### Options
 
-- `-m`, `--dot-marker` uses a dot marker instead of the default braille marker.
-
-- Temperature units (you can only use one at a time):
-
-  - `-c`, `--celsius` displays the temperature type in Celsius. This is the default.
-
-  - `-f`, `--fahrenheit` displays the temperature type in Fahrenheit.
-
-  - `-k`, `--kelvin` displays the temperature type in Kelvin.
-
-- `-v`, `--version` displays the version number and exits.
-
-- `-r <RATE>`, `--rate <RATE>` will set the refresh rate in _milliseconds_. Lowest it can go is 250ms, the highest it can go is 2<sup>64</sup> - 1. Defaults to 1000ms, and lower values may take more resources due to more frequent polling of data, and may be less accurate in some circumstances.
-
-- `-l`, `--left_legend` will move external table legends to the left side rather than the right side. Right side is default.
-
-- `-u`, `--current_usage` will make a process' CPU usage be based on the current total CPU usage, rather than assuming 100% CPU usage.
-
-- `-g`, `--group` will group together processes with the same name by default (equivalent to pressing `Tab`).
-
-- `-S`, `--case_sensitive` will default to matching case.
-
-- `-W`, `--whole` will default to searching for the world word.
-
-- `-R`, `--regex` will default to using regex.
-
-- `--cpu_default`, `--memory_default`, `--disk_default`, `--temperature_default`, `--network_default`, `--process_default` will select the corresponding widget on startup. By default the process widget is selected.
-
-- `-s`, `--show_disabled_data` will show data entries in the chart legends even if the lines for that entry are disabled.
-
-- `-C`, `--config` takes in a file path leading to a TOML file. If the file doesn't exist, one will be created.
-
-- `-b`, `--basic` will enable basic mode, removing all charts from the main interface and condensing data.
-
-- `-t`, `--default_time_value` will set the default time interval charts will display to (in milliseconds). Lowest is 30 seconds, defaults to 60 seconds.
-
-- `-d`, `--time_delta` will set the amount each zoom in/out action will change the time interval of a chart (in milliseconds). Lowest is 1 second, defaults to 15 seconds.
+```
+-r, --rate <MS>                 Set the refresh rate in milliseconds [default: 1000]
+-C, --config <PATH>             Use the specified config file; if it does not exist it is automatically created
+-t, --default_time_value <MS>   Sets the default time interval for charts in milliseconds [default: 60000]
+-d, --time_delta <MS>           Sets the default amount each zoom in/out action changes by in milliseconds [default: 15000]
+```
 
 ### Keybindings
 
 #### General
 
-- `q`, `Ctrl-c` to quit. Note if you are currently in the search widget, `q` will not work so you can still type.
+|                                                    |                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `q`, `Ctrl-c`                                      | Quit bottom                                                                                 |
+| `Esc`                                              | Close dialog windows, search, widgets, or exit maximized mode                               |
+| `Ctrl-r`                                           | Reset display and any collected data                                                        |
+| `f`                                                | Freeze/unfreeze updating with new data                                                      |
+| `Ctrl`-arrow key<br>`Shift`-arrow key<br>`H/J/K/L` | Move to a different widget (on macOS some keybindings may conflict)                         |
+| `Up`,`k`                                           | Scroll up in tables                                                                         |
+| `Down`, `j`                                        | Scroll down in tables                                                                       |
+| `?`                                                | Open help menu                                                                              |
+| `gg`, `Home`                                       | Jump to the first entry of a table                                                          |
+| `Shift-g`, `End`                                   | Jump to the last entry of a table                                                           |
+| `Enter`                                            | Maximize widget                                                                             |
+| `+`                                                | Zoom in on a chart                                                                          |
+| `-`                                                | Zoom out on a chart                                                                         |
+| `=`                                                | Reset zoom                                                                                  |
+| Mouse scroll                                       | Table: Scrolls through the list Chart: Zooms in or out by scrolling up or down respectively |
 
-- `Esc` to close a dialog window, widget, or exit maximized mode.
+#### CPU bindings
 
-- `Ctrl-r` to reset the screen and all collected data.
+|         |                                              |
+| ------- | -------------------------------------------- |
+| `/`     | Open filtering for showing certain CPU cores |
+| `Space` | Toggle enabled/disabled cores                |
+| `Esc`   | Exit filtering mode                          |
 
-- `f` to freeze the screen from updating with new data. Press `f` again to unfreeze. Note that monitoring will still continue in the background.
+#### Processes bindings
 
-- `Ctrl/Shift`-arrow or `H/J/K/L` to navigate between widgets. **Note that on macOS, some keybindings may conflict with existing ones; `H/J/K/L` should work however.**
+|               |                                                            |
+| ------------- | ---------------------------------------------------------- |
+| `dd`          | Kill the selected process                                  |
+| `c`           | Sort by CPU usage, press again to reverse sorting order    |
+| `m`           | Sort by memory usage, press again to reverse sorting order |
+| `p`           | Sort by PID name, press again to reverse sorting order     |
+| `n`           | Sort by process name, press again to reverse sorting order |
+| `Tab`         | Group/un-group processes with the same name                |
+| `Ctrl-f`, `/` | Open process search widget                                 |
 
-- `Up` or `k` and `Down` or `j` scrolls through the list if the widget is a table (Temperature, Disks, Processes).
+#### Process search bindings
 
-- `?` to get a help screen explaining the controls. Note all controls except `Esc` to close the dialog will be disabled while this is open.
+|              |                                              |
+| ------------ | -------------------------------------------- |
+| `Tab`        | Toggle between searching by PID or name      |
+| `Esc`        | Close the search widget (retains the filter) |
+| `Ctrl-a`     | Skip to the start of the search query        |
+| `Ctrl-e`     | Skip to the end of the search query          |
+| `Alt-c`/`F1` | Toggle matching case                         |
+| `Alt-w`/`F2` | Toggle matching the entire word              |
+| `Alt-r`/`F3` | Toggle using regex                           |
 
-- `gg` or `Home` to jump to the first entry of the current table.
+## Features
 
-- `G` (`Shift-g`) or `End` to jump to the last entry of the current table.
+As yet _another_ process/system visualization and management application, bottom supports the typical features:
 
-- `Enter` on a widget to maximize the widget.
+- CPU, memory, and network usage visualization
 
-- `+` to zoom in (reduce time interval, smallest is 30 seconds).
+- Display information about disk capacity and I/O per second
 
-- `-` to zoom out (increase time interval, largest is 10 minutes).
+- Display temperatures from sensors
 
-- `=` to reset zoom.
+- Process management (process killing _is_ all you need, right?)
 
-#### CPU
+It also aims to be:
 
-- `/` to allow for enabling/disabling showing certain cores on the chart with `Space`.
+- Lightweight
 
-#### Processes
+- Cross-platform - supports Linux, Windows, and macOS
 
-- `dd` to kill the selected process.
+In addition to these things, bottom also currently has the following features:
 
-- `c` to sort by CPU usage. Sorts in descending order by default. Press again to reverse sorting order.
+### Process filtering
 
-- `m` to sort by memory usage. Sorts in descending order by default. Press again to reverse sorting order.
+On any process widget, hit `/` to bring up a search bar. If your layout has
+multiple process widgets, note this search is independent of other widgets. Searching
+supports regex, matching case, and matching entire words. Use `Tab` to toggle between
+searching by PID and by process name.
 
-- `p` to sort by PID. Sorts in ascending order by default. Press again to reverse sorting order.
+### Zoom
 
-- `n` to sort by process name. Sorts in ascending order by default. Press again to reverse sorting order.
+Using the +/- keys or the scroll wheel will move adjust the current time intervals of the currently selected widget. Widgets
+can hold different time intervals independently.
 
-- `Tab` to group together processes with the same name. This disables PID sorting. `dd` will now kill all processes covered by that name.
+### Maximizing
 
-- `Ctrl-f` or `/` to open the search widget.
+Only care about the CPU widget right now? Then go to the widget and hit `Enter` to make it take
+up the entire drawing area.
 
-#### Search widget
+### Config files
 
-- `Tab` to switch between searching for PID and name respectively.
+bottom supports reading from a config file to customize its behaviour and look. By default, bottom will look at `~/.config/bottom/bottom.toml` or `C:\Users\<USER>\AppData\Roaming\bottom\bottom.toml` on Unix and Windows systems respectively.
 
-- `Esc` to close.
+Note that if a config file does not exist at either the default location or the passed in location via `-C` or `--config`, one is automatically created with no settings applied.
 
-- `Ctrl-a` and `Ctrl-e` to jump to the start and end of the search bar respectively.
+#### Config flags
 
-- `Ctrl-u` to clear the current search query.
+The following options can be set under `[flags]` to achieve the same effect as passing in a flag on runtime. Note that if a flag is given, it will override the config file.
 
-- `Backspace` to delete one character behind the current cursor position.
+These are the following supported flag config values:
+| Field | Type |
+|------------------------|---------------------------------------------------------------------------------------|
+| `avg_cpu` | Boolean |
+| `dot_marker` | Boolean |
+| `left_legend` | Boolean |
+| `current_usage` | Boolean |
+| `group_processes` | Boolean |
+| `case_sensitive` | Boolean |
+| `whole_word` | Boolean |
+| `regex` | Boolean |
+| `show_disabled_data` | Boolean |
+| `basic` | Boolean |
+| `rate` | Unsigned Int (represents milliseconds) |
+| `default_time_value` | Unsigned Int (represents milliseconds) |
+| `time_delta` | Unsigned Int (represents milliseconds) |
+| `temperature_type` | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"]) |
+| `default_widget_type` | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) |
+| `default_widget_count` | Unsigned Int (represents which `default_widget_type`) |
 
-- `Delete` to delete one character at the current cursor position.
+#### Theming
 
-- `Left` and `Right` arrow keys to move the cursor within the search bar.
+The config file can be used to set custom colours for parts of the application under the `[colors]` object. The following labels are customizable with strings that are hex colours, RGB colours, or specific named colours.
 
-- `Alt-c/F1` to toggle ignoring case.
+Supported named colours are one of the following strings: `Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, LightYellow, LightBlue, LightMagenta, LightCyan, White`.
 
-- `Alt-w/F2` to toggle matching the entire word.
+| Labels                          | Details                                        | Example                                                 |
+| ------------------------------- | ---------------------------------------------- | ------------------------------------------------------- |
+| Table header colours            | Colour of table headers                        | `table_header_color="255, 255, 255"`                    |
+| CPU colour per core             | Colour of each core. Read in order.            | `cpu_core_colors=["#ffffff", "white", "255, 255, 255"]` |
+| Average CPU colour              | The average CPU color                          | `avg_cpu_color="White"`                                 |
+| RAM                             | The colour RAM will use                        | `ram_color="#ffffff"`                                   |
+| SWAP                            | The colour SWAP will use                       | `swap_color="#ffffff"`                                  |
+| RX                              | The colour rx will use                         | `rx_color="#ffffff"`                                    |
+| TX                              | The colour tx will use                         | `tx_color="#ffffff"`                                    |
+| Widget title colour             | The colour of the label each widget has        | `widget_title_color="#ffffff"`                          |
+| Border colour                   | The colour of the border of unselected widgets | `border_color="#ffffff"`                                |
+| Selected border colour          | The colour of the border of selected widgets   | `highlighted_border_color="#ffffff"`                    |
+| Text colour                     | The colour of most text                        | `text_color="#ffffff"`                                  |
+| Graph colour                    | The colour of the lines and text of the graph  | `graph_color="#ffffff"`                                 |
+| Cursor colour                   | The cursor's colour                            | `cursor_color="#ffffff"`                                |
+| Selected text colour            | The colour of text that is selected            | `scroll_entry_text_color="#ffffff"`                     |
+| Selected text background colour | The background colour of text that is selected | `scroll_entry_bg_color="#ffffff"`                       |
 
-- `Alt-r/F3` to toggle using regex.
+#### Layout
 
-Note that `q` is disabled while in the search widget.
+bottom supports customizable layouts via the config file. Currently, layouts are controlled by using TOML objects and arrays.
 
-### Mouse actions
+For example, given the sample layout:
 
-- Scrolling with the mouse will scroll through the currently selected list if the widget is a scrollable table.
+```toml
+[[row]]
+  [[row.child]]
+  type="cpu"
+[[row]]
+    ratio=2
+    [[row.child]]
+      ratio=4
+      type="mem"
+    [[row.child]]
+      ratio=3
+      [[row.child.child]]
+        type="temp"
+      [[row.child.child]]
+        type="disk"
+```
 
-- Scrolling on a chart will zoom in (scroll up) or zoom out (scroll down).
+This would give a layout that has two rows, with a 1:2 ratio. The first row has only the CPU widget.
+The second row is split into two columns with a 4:3 ratio. The first column contains the memory widget.
+The second column is split into two rows with a 1:1 ratio. The first is the temperature widget, the second is the disk widget.
 
-## Bugs and Requests
+This is what the layout would look like when run:
 
-Spot an bug? Have an idea? Leave an issue that explains what you want in detail and I'll try to take a look.
+![Sample layout.](assets/sample_layout.png)
 
-## Contribution
+Each `[[row]]` represents a _row_ in the layout. A row can have any number of `child` values. Each `[[row.child]]`
+represents either a _column or a widget_. A column can have any number of `child` values as well. Each `[[row.child.child]]`
+represents a _widget_. A widget is represented by having a `type` field set to a string.
 
-Contribution is welcome! Just submit a PR. Note that I develop and test on stable Rust.
+The following `type` values are supported:
+| | |
+|---------|--------------------------|
+| `cpu` | CPU chart and legend |
+| `mem` | Memory chart |
+| `proc` | Process table and search |
+| `net` | Network chart and legend |
+| `temp` | Temperature table |
+| `disk` | Disk table |
+| `empty` | An empty space |
 
-If you spot any issue with nobody assigned to it, or it seems like no work has started on it, feel free to try and do it!
+Each component of the layout accepts a `ratio` value. If this is not set, it defaults to 1.
 
-## Contributors ✨
+For an example, look at the [default config](./sample_configs/default_config.toml), which contains the default layout.
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+...and yes, you can have duplicate widgets. This means you could do something like:
+
+```toml
+[[row]]
+  ratio=1
+  [[row.child]]
+  type="cpu"
+  [[row.child]]
+  type="cpu"
+  [[row.child]]
+  type="cpu"
+[[row]]
+  ratio=1
+  [[row.child]]
+  type="cpu"
+  [[row.child]]
+  type="empty"
+  [[row.child]]
+  type="cpu"
+[[row]]
+  ratio=1
+  [[row.child]]
+  type="cpu"
+  [[row.child]]
+  type="cpu"
+  [[row.child]]
+  type="cpu"
+```
+
+and get the following CPU donut:
+![CPU donut](./assets/cpu_layout.png)
+
+### Compatibility
+
+| OS      | CPU | Memory | Disks | Temperature | Processes/Search | Networks |
+| ------- | --- | ------ | ----- | ----------- | ---------------- | -------- |
+| Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
+| Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        |
+| macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
+
+## Contributors
+
+Contribution is always welcome - just submit a PR! Note that I currently develop and test on stable Rust.
+
+Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -259,33 +406,16 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+## Thanks
 
-## Thanks, kudos, and all the like
+- This project is very much inspired by both
+  [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
 
-- This project is very much inspired by both [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
+- Basic mode is heavily inspired by [htop's](https://hisham.hm/htop/) design.
 
-- Basic mode inspired by [htop's](https://hisham.hm/htop/) design.
-
-- This application was written with the following libraries, and would otherwise not be possible:
-
-  - [backtrace](https://github.com/rust-lang/backtrace-rs)
-  - [chrono](https://github.com/chronotope/chrono)
-  - [clap](https://github.com/clap-rs/clap)
-  - [crossterm](https://github.com/TimonPost/crossterm)
-  - [dirs](https://github.com/soc/dirs-rs)
-  - [fern](https://github.com/daboross/fern)
-  - [futures-rs](https://github.com/rust-lang-nursery/futures-rs)
-  - [heim](https://github.com/heim-rs/heim)
-  - [lazy_static](https://github.com/rust-lang-nursery/lazy-static.rs)
-  - [log](https://github.com/rust-lang-nursery/log)
-  - [serde](https://github.com/serde-rs/serde)
-  - [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
-  - [toml-rs](https://github.com/alexcrichton/toml-rs)
-  - [typed-builder](https://github.com/idanarye/rust-typed-builder)
-  - [tui-rs](https://github.com/fdehau/tui-rs)
-  - [unicode-segmentation](https://github.com/unicode-rs/unicode-segmentation)
-  - [unicode-width](https://github.com/unicode-rs/unicode-width)
-  - [winapi](https://github.com/retep998/winapi-rs)
+- This application was written with many, _many_ libraries, and built on the
+  work of many talented people. This application would be impossible
+  without their work.

@@ -100,7 +100,7 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 [flags]
 
 # Whether to display an average cpu entry.
-#avg_cpu = true
+#avg_cpu = false
 
 # Whether to use dot markers rather than braille.
 #dot_marker = false
@@ -121,13 +121,13 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #case_sensitive = false
 
 # Whether to make process searching look for matching the entire word by default.
-#whole_word = true
+#whole_word = false
 
 # Whether to make process searching use regex by default.
-#regex = true
+#regex = false
 
 # Whether to show CPU entries in the legend when they are hidden.
-#show_disabled_data = true
+#show_disabled_data = false
 
 # Defaults to Celsius.  Temperature is one of:
 #temperature_type = "k"
@@ -147,58 +147,67 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #default_widget_type = "proc"
 #default_widget_count = 1
 
-# These are all the components that support custom theming.  Currently, it only
-# supports taking in a string representing a hex colour.  Note that colour support
+# Use basic mode
+#basic = false
+
+##########################################################
+
+# These are all the components that support custom theming.  Note that colour support
 # will, at the end of the day, depend on terminal support - for example, the
 # macOS default Terminal does NOT like custom colours and it will glitch out.
-#
-# The default options here are based on gruvbox: https://github.com/morhetz/gruvbox
 [colors]
 
 # Represents the colour of table headers (processes, CPU, disks, temperature).
-#table_header_color="#458588"
+#table_header_color="LightBlue"
 
 # Represents the colour of the label each widget has.
-#widget_title_color="#cc241d"
+#widget_title_color="Gray"
 
 # Represents the average CPU color.
-#avg_cpu_color="#d3869b"
+#avg_cpu_color="Red"
 
 # Represents the colour the core will use in the CPU legend and graph.
-#cpu_core_colors=["#cc241d", "#98971a"]
+#cpu_core_colors=["LightMagenta", "LightYellow", "LightCyan", "LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
 
 # Represents the colour RAM will use in the memory legend and graph.
-#ram_color="#fb4934"
+#ram_color="LightMagenta"
 
 # Represents the colour SWAP will use in the memory legend and graph.
-#swap_color="#fabd2f"
+#swap_color="LightYellow"
 
 # Represents the colour rx will use in the network legend and graph.
-#rx_color="#458588"
+#rx_color="LightCyan"
 
 # Represents the colour tx will use in the network legend and graph.
-#tx_color="#689d6a"
+#tx_color="LightGreen"
 
 # Represents the colour of the border of unselected widgets.
-#border_color="#ebdbb2"
+#border_color="Gray"
 
 # Represents the colour of the border of selected widgets.
-#highlighted_border_color="#fe8019"
+#highlighted_border_color="LightBlue"
 
 # Represents the colour of most text.
-#text_color="#ebdbb2"
+#text_color="Gray"
 
 # Represents the colour of text that is selected.
-#selected_text_color="#282828"
+#selected_text_color="Black"
 
 # Represents the background colour of text that is selected.
-#selected_bg_color="#458588"
+#selected_bg_color="Cyan"
 
 # Represents the colour of the lines and text of the graph.
-#graph_color="#ebdbb2"
+#graph_color="Gray"
 
-# Represents the cursor's colour.
-#cursor_color="#458588"
+##########################################################
+
+# Layout - layouts follow a pattern like this:
+# [[row]] represents a row in the application.
+# [[row.child]] represents either a widget or a column.
+# [[row.child.child]] represents a widget.
+#
+# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
+# All layout components have a ratio value - if this is not set, then it defaults to 1. 
 
 # The default widget layout:
 #[[row]]

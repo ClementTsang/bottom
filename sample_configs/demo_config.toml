@@ -12,18 +12,11 @@ left_legend = false
 current_usage = false
 group_processes = false
 case_sensitive = false
-whole_word = true
+whole_word = false
 regex = true
-
-# Default widget is one of:
-default_widget = "cpu_default"
-#default_widget = "memory_default"
-#default_widget = "disk_default"
-#default_widget = "temperature_default"
-#default_widget = "network_default"
-#default_widget = "process_default"
-
 show_disabled_data = true
+default_widget_type = "cpu"
+default_widget_count = 1
 
 [colors]
 # Based on gruvbox: https://github.com/morhetz/gruvbox
