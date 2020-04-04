@@ -1,13 +1,10 @@
 //! This is the main file to house data collection functions.
 
-use std::{
-    collections::{HashMap, HashSet},
-    time::Instant,
-};
+use std::{collections::HashMap, time::Instant};
 
 use sysinfo::{System, SystemExt};
 
-use crate::app::layout_manager::BottomWidgetType::{self, *};
+use crate::app::layout_manager::UsedWidgets;
 
 use futures::join;
 
@@ -74,7 +71,7 @@ pub struct DataCollector {
     total_rx: u64,
     total_tx: u64,
     show_average_cpu: bool,
-    widgets_to_harvest: HashSet<BottomWidgetType>,
+    widgets_to_harvest: UsedWidgets,
 }
 
 impl Default for DataCollector {
@@ -92,7 +89,7 @@ impl Default for DataCollector {
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
-            widgets_to_harvest: HashSet::default(),
+            widgets_to_harvest: UsedWidgets::default(),
         }
     }
 }
@@ -105,8 +102,8 @@ impl DataCollector {
         self.data.first_run_cleanup();
     }
 
-    pub fn set_collected_data(&mut self, used_widget_set: HashSet<BottomWidgetType>) {
-        self.widgets_to_harvest = used_widget_set;
+    pub fn set_collected_data(&mut self, used_widgets: UsedWidgets) {
+        self.widgets_to_harvest = used_widgets;
     }
 
     pub fn set_temperature_type(&mut self, temperature_type: temperature::TemperatureType) {
@@ -122,32 +119,30 @@ impl DataCollector {
     }
 
     pub async fn update_data(&mut self) {
-        if self.widgets_to_harvest.get(&Cpu).is_some()
-            | self.widgets_to_harvest.get(&BasicCpu).is_some()
-        {
+        if self.widgets_to_harvest.use_cpu {
             self.sys.refresh_cpu();
         }
 
         if cfg!(not(target_os = "linux")) {
-            if self.widgets_to_harvest.get(&Proc).is_some() {
+            if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
-            if self.widgets_to_harvest.get(&Temp).is_some() {
+            if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
         }
-        if cfg!(target_os = "windows") && self.widgets_to_harvest.get(&Net).is_some() {
+        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
             self.sys.refresh_networks();
         }
 
         let current_instant = std::time::Instant::now();
 
         // CPU
-        if self.widgets_to_harvest.get(&Cpu).is_some() {
+        if self.widgets_to_harvest.use_cpu {
             self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu);
         }
 
-        if self.widgets_to_harvest.get(&Proc).is_some() {
+        if self.widgets_to_harvest.use_proc {
             // Processes.  This is the longest part of the harvesting process... changing this might be
             // good in the future.  What was tried already:
             // * Splitting the internal part into multiple scoped threads (dropped by ~.01 seconds, but upped usage)
@@ -171,18 +166,17 @@ impl DataCollector {
             &mut self.total_rx,
             &mut self.total_tx,
             current_instant,
-            self.widgets_to_harvest.get(&Net).is_some(),
+            self.widgets_to_harvest.use_net,
         );
-        let mem_data_fut = mem::get_mem_data_list(self.widgets_to_harvest.get(&Mem).is_some());
-        let swap_data_fut = mem::get_swap_data_list(self.widgets_to_harvest.get(&Mem).is_some());
-        let disk_data_fut =
-            disks::get_disk_usage_list(self.widgets_to_harvest.get(&Disk).is_some());
-        let disk_io_usage_fut =
-            disks::get_io_usage_list(false, self.widgets_to_harvest.get(&Disk).is_some());
+
+        let mem_data_fut = mem::get_mem_data_list(self.widgets_to_harvest.use_mem);
+        let swap_data_fut = mem::get_swap_data_list(self.widgets_to_harvest.use_mem);
+        let disk_data_fut = disks::get_disk_usage_list(self.widgets_to_harvest.use_disk);
+        let disk_io_usage_fut = disks::get_io_usage_list(false, self.widgets_to_harvest.use_disk);
         let temp_data_fut = temperature::get_temperature_data(
             &self.sys,
             &self.temperature_type,
-            self.widgets_to_harvest.get(&Temp).is_some(),
+            self.widgets_to_harvest.use_temp,
         );
 
         let (net_data, mem_res, swap_res, disk_res, io_res, temp_res) = join!(

@@ -5,7 +5,6 @@ extern crate log;
 
 use std::{
     boxed::Box,
-    collections::HashSet,
     io::{stdout, Write},
     panic::{self, PanicInfo},
     sync::mpsc,
@@ -28,7 +27,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 use app::{
     data_harvester::{self, processes::ProcessSorting},
-    layout_manager::BottomWidgetType,
+    layout_manager::UsedWidgets,
     App,
 };
 use constants::*;
@@ -141,7 +140,7 @@ fn main() -> error::Result<()> {
         app.app_config_fields.update_rate_in_milliseconds,
         app.app_config_fields.temperature_type.clone(),
         app.app_config_fields.show_average_cpu,
-        app.used_widget_set.clone(),
+        app.used_widgets.clone(),
     );
 
     let mut painter = canvas::Painter::init(widget_layout);
@@ -173,49 +172,62 @@ fn main() -> error::Result<()> {
                         // Convert all data into tui-compliant components
 
                         // Network
-                        let network_data = convert_network_data_points(&app.data_collection, false);
-                        app.canvas_data.network_data_rx = network_data.rx;
-                        app.canvas_data.network_data_tx = network_data.tx;
-                        app.canvas_data.rx_display = network_data.rx_display;
-                        app.canvas_data.tx_display = network_data.tx_display;
-                        app.canvas_data.total_rx_display = network_data.total_rx_display;
-                        app.canvas_data.total_tx_display = network_data.total_tx_display;
-
-                        // Disk
-                        app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
-
-                        // Temperatures
-                        app.canvas_data.temp_sensor_data = convert_temp_row(&app);
-
-                        // Memory
-                        app.canvas_data.mem_data =
-                            convert_mem_data_points(&app.data_collection, false);
-                        app.canvas_data.swap_data =
-                            convert_swap_data_points(&app.data_collection, false);
-                        let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
-                        app.canvas_data.mem_label = memory_and_swap_labels.0;
-                        app.canvas_data.swap_label = memory_and_swap_labels.1;
-
-                        // Pre-fill CPU if needed
-                        if first_run {
-                            let cpu_len = app.data_collection.cpu_harvest.len();
-                            app.cpu_state.widget_states.values_mut().for_each(|state| {
-                                state.core_show_vec = vec![true; cpu_len];
-                                state.num_cpus_shown = cpu_len;
-                            });
-                            app.cpu_state.num_cpus_total = cpu_len;
-                            first_run = false;
+                        if app.used_widgets.use_net {
+                            let network_data =
+                                convert_network_data_points(&app.data_collection, false);
+                            app.canvas_data.network_data_rx = network_data.rx;
+                            app.canvas_data.network_data_tx = network_data.tx;
+                            app.canvas_data.rx_display = network_data.rx_display;
+                            app.canvas_data.tx_display = network_data.tx_display;
+                            app.canvas_data.total_rx_display = network_data.total_rx_display;
+                            app.canvas_data.total_tx_display = network_data.total_tx_display;
                         }
 
-                        // CPU
-                        app.canvas_data.cpu_data =
-                            convert_cpu_data_points(&app.data_collection, false);
+                        // Disk
+                        if app.used_widgets.use_disk {
+                            app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
+                        }
+
+                        // Temperatures
+                        if app.used_widgets.use_temp {
+                            app.canvas_data.temp_sensor_data = convert_temp_row(&app);
+                        }
+
+                        // Memory
+                        if app.used_widgets.use_mem {
+                            app.canvas_data.mem_data =
+                                convert_mem_data_points(&app.data_collection, false);
+                            app.canvas_data.swap_data =
+                                convert_swap_data_points(&app.data_collection, false);
+                            let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
+                            app.canvas_data.mem_label = memory_and_swap_labels.0;
+                            app.canvas_data.swap_label = memory_and_swap_labels.1;
+                        }
+
+                        // Pre-fill CPU if needed
+                        if app.used_widgets.use_cpu {
+                            if first_run {
+                                let cpu_len = app.data_collection.cpu_harvest.len();
+                                app.cpu_state.widget_states.values_mut().for_each(|state| {
+                                    state.core_show_vec = vec![true; cpu_len];
+                                    state.num_cpus_shown = cpu_len;
+                                });
+                                app.cpu_state.num_cpus_total = cpu_len;
+                                first_run = false;
+                            }
+
+                            // CPU
+                            app.canvas_data.cpu_data =
+                                convert_cpu_data_points(&app.data_collection, false);
+                        }
 
                         // Processes
-                        let (single, grouped) = convert_process_data(&app.data_collection);
-                        app.canvas_data.process_data = single;
-                        app.canvas_data.grouped_process_data = grouped;
-                        update_all_process_lists(&mut app);
+                        if app.used_widgets.use_proc {
+                            let (single, grouped) = convert_process_data(&app.data_collection);
+                            app.canvas_data.process_data = single;
+                            app.canvas_data.grouped_process_data = grouped;
+                            update_all_process_lists(&mut app);
+                        }
                     }
                 }
                 BottomEvent::Clean => {
@@ -746,7 +758,7 @@ fn create_event_thread(
     >,
     rrx: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
     update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
-    show_average_cpu: bool, used_widget_set: HashSet<BottomWidgetType>,
+    show_average_cpu: bool, used_widget_set: UsedWidgets,
 ) {
     thread::spawn(move || {
         let tx = tx.clone();

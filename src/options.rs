@@ -217,6 +217,18 @@ pub fn build_app(
         autohide_time,
     };
 
+    let used_widgets = UsedWidgets {
+        use_cpu: used_widget_set.get(&BottomWidgetType::Cpu).is_some()
+            || used_widget_set.get(&BottomWidgetType::BasicCpu).is_some(),
+        use_mem: used_widget_set.get(&BottomWidgetType::Mem).is_some()
+            || used_widget_set.get(&BottomWidgetType::BasicMem).is_some(),
+        use_net: used_widget_set.get(&BottomWidgetType::Net).is_some()
+            || used_widget_set.get(&BottomWidgetType::BasicNet).is_some(),
+        use_proc: used_widget_set.get(&BottomWidgetType::Proc).is_some(),
+        use_disk: used_widget_set.get(&BottomWidgetType::Disk).is_some(),
+        use_temp: used_widget_set.get(&BottomWidgetType::Temp).is_some(),
+    };
+
     Ok(App::builder()
         .app_config_fields(app_config_fields)
         .cpu_state(CpuState::init(cpu_state_map))
@@ -228,7 +240,7 @@ pub fn build_app(
         .basic_table_widget_state(basic_table_widget_state)
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
-        .used_widget_set(used_widget_set)
+        .used_widgets(used_widgets)
         .build())
 }
 
