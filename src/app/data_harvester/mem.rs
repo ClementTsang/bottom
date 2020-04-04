@@ -15,21 +15,33 @@ impl Default for MemHarvest {
     }
 }
 
-pub async fn get_mem_data_list() -> crate::utils::error::Result<MemHarvest> {
+pub async fn get_mem_data_list(
+    actually_get: bool,
+) -> crate::utils::error::Result<Option<MemHarvest>> {
+    if !actually_get {
+        return Ok(None);
+    }
+
     let memory = heim::memory::memory().await?;
 
-    Ok(MemHarvest {
+    Ok(Some(MemHarvest {
         mem_total_in_mb: memory.total().get::<information::megabyte>(),
         mem_used_in_mb: memory.total().get::<information::megabyte>()
             - memory.available().get::<information::megabyte>(),
-    })
+    }))
 }
 
-pub async fn get_swap_data_list() -> crate::utils::error::Result<MemHarvest> {
+pub async fn get_swap_data_list(
+    actually_get: bool,
+) -> crate::utils::error::Result<Option<MemHarvest>> {
+    if !actually_get {
+        return Ok(None);
+    }
+
     let memory = heim::memory::swap().await?;
 
-    Ok(MemHarvest {
+    Ok(Some(MemHarvest {
         mem_total_in_mb: memory.total().get::<information::megabyte>(),
         mem_used_in_mb: memory.used().get::<information::megabyte>(),
-    })
+    }))
 }

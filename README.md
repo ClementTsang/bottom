@@ -213,7 +213,7 @@ searching by PID and by process name.
 
 ### Zoom
 
-Using the +/- keys or the scroll wheel will move adjust the current time intervals of the currently selected widget. Widgets
+Using the `+`/`-` keys or the scroll wheel will move adjust the current time intervals of the currently selected widget. Widgets
 can hold different time intervals independently.
 
 ### Maximizing

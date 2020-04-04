@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
 use crate::{
@@ -100,6 +100,8 @@ pub fn build_app(
     let mut initial_widget_type = BottomWidgetType::Proc;
     let is_custom_layout = config.row.is_some();
 
+    let mut used_widget_set = HashSet::new();
+
     for row in &widget_layout.rows {
         for col in &row.children {
             for col_row in &col.children {
@@ -135,6 +137,9 @@ pub fn build_app(
                             }
                         }
                     }
+
+                    used_widget_set.insert(widget.widget_type.clone());
+
                     match widget.widget_type {
                         BottomWidgetType::Cpu => {
                             cpu_state_map.insert(
@@ -178,7 +183,6 @@ pub fn build_app(
         }
     }
 
-    // FIXME: [MODULARITY] Don't collect if not added!
     let basic_table_widget_state = if use_basic_mode {
         Some(match initial_widget_type {
             BottomWidgetType::Proc | BottomWidgetType::Disk | BottomWidgetType::Temp => {
@@ -213,6 +217,18 @@ pub fn build_app(
         autohide_time,
     };
 
+    let used_widgets = UsedWidgets {
+        use_cpu: used_widget_set.get(&BottomWidgetType::Cpu).is_some()
+            || used_widget_set.get(&BottomWidgetType::BasicCpu).is_some(),
+        use_mem: used_widget_set.get(&BottomWidgetType::Mem).is_some()
+            || used_widget_set.get(&BottomWidgetType::BasicMem).is_some(),
+        use_net: used_widget_set.get(&BottomWidgetType::Net).is_some()
+            || used_widget_set.get(&BottomWidgetType::BasicNet).is_some(),
+        use_proc: used_widget_set.get(&BottomWidgetType::Proc).is_some(),
+        use_disk: used_widget_set.get(&BottomWidgetType::Disk).is_some(),
+        use_temp: used_widget_set.get(&BottomWidgetType::Temp).is_some(),
+    };
+
     Ok(App::builder()
         .app_config_fields(app_config_fields)
         .cpu_state(CpuState::init(cpu_state_map))
@@ -224,6 +240,7 @@ pub fn build_app(
         .basic_table_widget_state(basic_table_widget_state)
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
+        .used_widgets(used_widgets)
         .build())
 }
 

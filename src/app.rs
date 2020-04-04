@@ -512,6 +512,7 @@ pub struct App {
     pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget: BottomWidget,
+    pub used_widgets: UsedWidgets,
 }
 
 impl App {

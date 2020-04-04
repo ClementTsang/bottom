@@ -864,7 +864,7 @@ pub struct BottomWidget {
     pub flex_grow: bool,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum BottomWidgetType {
     Empty,
     Cpu,
@@ -937,4 +937,14 @@ impl std::str::FromStr for BottomWidgetType {
             ))),
         }
     }
+}
+
+#[derive(Clone, Default)]
+pub struct UsedWidgets {
+    pub use_cpu: bool,
+    pub use_mem: bool,
+    pub use_net: bool,
+    pub use_proc: bool,
+    pub use_disk: bool,
+    pub use_temp: bool,
 }
