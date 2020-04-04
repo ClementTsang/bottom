@@ -33,6 +33,7 @@ This documentation is relevant to version 0.3.0. Please refer to [release branch
   - [Process filtering](#process-filtering)
   - [Zoom](#zoom)
   - [Maximizing](#maximizing)
+  - [Basic mode](#basic-mode)
   - [Config files](#config-files)
     - [Config flags](#config-flags)
     - [Theming](#theming)
@@ -213,13 +214,24 @@ searching by PID and by process name.
 
 ### Zoom
 
-Using the `+`/`-` keys or the scroll wheel will move adjust the current time intervals of the currently selected widget. Widgets
-can hold different time intervals independently.
+Using the `+`/`-` keys or the scroll wheel will move adjust the current time intervals of the currently selected widget.
+Widgets can hold different time intervals independently. These time intervals can be adjusted using the
+`-t`/`--default_time_value` and `-d`/`--time_delta` options, or their corresponding config options.
 
 ### Maximizing
 
 Only care about the CPU widget right now? Then go to the widget and hit `Enter` to make it take
 up the entire drawing area.
+
+### Basic mode
+
+Using the `-b` or `--basic_mode` (or their corresponding config options) will open bottom in basic mode.
+There are no charts or expanded mode when using this, and tables are condensed such that only one table is displayed
+at a time.
+
+![basic mode image](assets/basic_mode.png)
+
+Note custom layouts are currently not available when this is used.
 
 ### Config files
 
@@ -304,7 +316,7 @@ The second column is split into two rows with a 1:1 ratio. The first is the temp
 
 This is what the layout would look like when run:
 
-![Sample layout.](assets/sample_layout.png)
+![Sample layout](assets/sample_layout.png)
 
 Each `[[row]]` represents a _row_ in the layout. A row can have any number of `child` values. Each `[[row.child]]`
 represents either a _column or a widget_. A column can have any number of `child` values as well. Each `[[row.child.child]]`
