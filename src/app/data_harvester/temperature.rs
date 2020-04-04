@@ -24,8 +24,12 @@ impl Default for TemperatureType {
 }
 
 pub async fn get_temperature_data(
-    sys: &System, temp_type: &TemperatureType,
-) -> crate::utils::error::Result<Vec<TempHarvest>> {
+    sys: &System, temp_type: &TemperatureType, actually_get: bool,
+) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
+    if !actually_get {
+        return Ok(None);
+    }
+
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
     if cfg!(target_os = "linux") {
@@ -86,7 +90,7 @@ pub async fn get_temperature_data(
             .unwrap_or(Ordering::Equal)
     });
 
-    Ok(temperature_vec)
+    Ok(Some(temperature_vec))
 }
 
 fn convert_celsius_to_kelvin(celsius: f32) -> f32 {

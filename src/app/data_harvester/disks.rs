@@ -18,7 +18,13 @@ pub struct IOData {
 
 pub type IOHarvest = std::collections::HashMap<String, IOData>;
 
-pub async fn get_io_usage_list(get_physical: bool) -> crate::utils::error::Result<IOHarvest> {
+pub async fn get_io_usage_list(
+    get_physical: bool, actually_get: bool,
+) -> crate::utils::error::Result<Option<IOHarvest>> {
+    if !actually_get {
+        return Ok(None);
+    }
+
     let mut io_hash: std::collections::HashMap<String, IOData> = std::collections::HashMap::new();
     if get_physical {
         let mut physical_counter_stream = heim::disk::io_counters_physical();
@@ -48,10 +54,16 @@ pub async fn get_io_usage_list(get_physical: bool) -> crate::utils::error::Resul
         }
     }
 
-    Ok(io_hash)
+    Ok(Some(io_hash))
 }
 
-pub async fn get_disk_usage_list() -> crate::utils::error::Result<Vec<DiskHarvest>> {
+pub async fn get_disk_usage_list(
+    actually_get: bool,
+) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
+    if !actually_get {
+        return Ok(None);
+    }
+
     let mut vec_disks: Vec<DiskHarvest> = Vec::new();
     let mut partitions_stream = heim::disk::partitions_physical();
 
@@ -81,5 +93,5 @@ pub async fn get_disk_usage_list() -> crate::utils::error::Result<Vec<DiskHarves
 
     vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
 
-    Ok(vec_disks)
+    Ok(Some(vec_disks))
 }

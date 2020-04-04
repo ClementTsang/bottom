@@ -1,8 +1,13 @@
 //! This is the main file to house data collection functions.
 
-use std::{collections::HashMap, time::Instant};
+use std::{
+    collections::{HashMap, HashSet},
+    time::Instant,
+};
 
 use sysinfo::{System, SystemExt};
+
+use crate::app::layout_manager::BottomWidgetType::{self, *};
 
 use futures::join;
 
@@ -56,7 +61,7 @@ impl Data {
     }
 }
 
-pub struct DataState {
+pub struct DataCollector {
     pub data: Data,
     sys: System,
     prev_pid_stats: HashMap<String, (f64, Instant)>,
@@ -69,11 +74,12 @@ pub struct DataState {
     total_rx: u64,
     total_tx: u64,
     show_average_cpu: bool,
+    widgets_to_harvest: HashSet<BottomWidgetType>,
 }
 
-impl Default for DataState {
+impl Default for DataCollector {
     fn default() -> Self {
-        DataState {
+        DataCollector {
             data: Data::default(),
             sys: System::new_all(),
             prev_pid_stats: HashMap::new(),
@@ -86,11 +92,23 @@ impl Default for DataState {
             total_rx: 0,
             total_tx: 0,
             show_average_cpu: false,
+            widgets_to_harvest: HashSet::default(),
         }
     }
 }
 
-impl DataState {
+impl DataCollector {
+    pub fn init(&mut self) {
+        self.mem_total_kb = self.sys.get_total_memory();
+        futures::executor::block_on(self.update_data());
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        self.data.first_run_cleanup();
+    }
+
+    pub fn set_collected_data(&mut self, used_widget_set: HashSet<BottomWidgetType>) {
+        self.widgets_to_harvest = used_widget_set;
+    }
+
     pub fn set_temperature_type(&mut self, temperature_type: temperature::TemperatureType) {
         self.temperature_type = temperature_type;
     }
@@ -103,42 +121,47 @@ impl DataState {
         self.show_average_cpu = show_average_cpu;
     }
 
-    pub fn init(&mut self) {
-        self.mem_total_kb = self.sys.get_total_memory();
-        futures::executor::block_on(self.update_data());
-        std::thread::sleep(std::time::Duration::from_millis(250));
-        self.data.first_run_cleanup();
-    }
-
     pub async fn update_data(&mut self) {
-        self.sys.refresh_system();
+        if self.widgets_to_harvest.get(&Cpu).is_some()
+            | self.widgets_to_harvest.get(&BasicCpu).is_some()
+        {
+            self.sys.refresh_cpu();
+        }
 
         if cfg!(not(target_os = "linux")) {
-            self.sys.refresh_processes();
-            self.sys.refresh_components();
+            if self.widgets_to_harvest.get(&Proc).is_some() {
+                self.sys.refresh_processes();
+            }
+            if self.widgets_to_harvest.get(&Temp).is_some() {
+                self.sys.refresh_components();
+            }
         }
-        if cfg!(target_os = "windows") {
+        if cfg!(target_os = "windows") && self.widgets_to_harvest.get(&Net).is_some() {
             self.sys.refresh_networks();
         }
 
         let current_instant = std::time::Instant::now();
 
         // CPU
-        self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu);
+        if self.widgets_to_harvest.get(&Cpu).is_some() {
+            self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu);
+        }
 
-        // Processes.  This is the longest part of the harvesting process... changing this might be
-        // good in the future.  What was tried already:
-        // * Splitting the internal part into multiple scoped threads (dropped by ~.01 seconds, but upped usage)
-        if let Ok(process_list) = processes::get_sorted_processes_list(
-            &self.sys,
-            &mut self.prev_idle,
-            &mut self.prev_non_idle,
-            &mut self.prev_pid_stats,
-            self.use_current_cpu_total,
-            self.mem_total_kb,
-            current_instant,
-        ) {
-            self.data.list_of_processes = process_list;
+        if self.widgets_to_harvest.get(&Proc).is_some() {
+            // Processes.  This is the longest part of the harvesting process... changing this might be
+            // good in the future.  What was tried already:
+            // * Splitting the internal part into multiple scoped threads (dropped by ~.01 seconds, but upped usage)
+            if let Ok(process_list) = processes::get_sorted_processes_list(
+                &self.sys,
+                &mut self.prev_idle,
+                &mut self.prev_non_idle,
+                &mut self.prev_pid_stats,
+                self.use_current_cpu_total,
+                self.mem_total_kb,
+                current_instant,
+            ) {
+                self.data.list_of_processes = process_list;
+            }
         }
 
         // ASYNC
@@ -148,13 +171,19 @@ impl DataState {
             &mut self.total_rx,
             &mut self.total_tx,
             current_instant,
+            self.widgets_to_harvest.get(&Net).is_some(),
         );
-
-        let mem_data_fut = mem::get_mem_data_list();
-        let swap_data_fut = mem::get_swap_data_list();
-        let disk_data_fut = disks::get_disk_usage_list();
-        let disk_io_usage_fut = disks::get_io_usage_list(false);
-        let temp_data_fut = temperature::get_temperature_data(&self.sys, &self.temperature_type);
+        let mem_data_fut = mem::get_mem_data_list(self.widgets_to_harvest.get(&Mem).is_some());
+        let swap_data_fut = mem::get_swap_data_list(self.widgets_to_harvest.get(&Mem).is_some());
+        let disk_data_fut =
+            disks::get_disk_usage_list(self.widgets_to_harvest.get(&Disk).is_some());
+        let disk_io_usage_fut =
+            disks::get_io_usage_list(false, self.widgets_to_harvest.get(&Disk).is_some());
+        let temp_data_fut = temperature::get_temperature_data(
+            &self.sys,
+            &self.temperature_type,
+            self.widgets_to_harvest.get(&Temp).is_some(),
+        );
 
         let (net_data, mem_res, swap_res, disk_res, io_res, temp_res) = join!(
             network_data_fut,
@@ -166,27 +195,40 @@ impl DataState {
         );
 
         // After async
-        self.data.network = net_data;
-        self.total_rx = self.data.network.total_rx;
-        self.total_tx = self.data.network.total_tx;
+        if let Some(net_data) = net_data {
+            self.data.network = net_data;
+            self.total_rx = self.data.network.total_rx;
+            self.total_tx = self.data.network.total_tx;
+        }
 
         if let Ok(memory) = mem_res {
-            self.data.memory = memory;
+            if let Some(memory) = memory {
+                self.data.memory = memory;
+            }
         }
 
         if let Ok(swap) = swap_res {
-            self.data.swap = swap;
+            if let Some(swap) = swap {
+                self.data.swap = swap;
+            }
         }
 
         if let Ok(disks) = disk_res {
-            self.data.disks = disks;
+            if let Some(disks) = disks {
+                self.data.disks = disks;
+            }
         }
+
         if let Ok(io) = io_res {
-            self.data.io = io;
+            if let Some(io) = io {
+                self.data.io = io;
+            }
         }
 
         if let Ok(temp) = temp_res {
-            self.data.temperature_sensors = temp;
+            if let Some(temp) = temp {
+                self.data.temperature_sensors = temp;
+            }
         }
 
         // Update time

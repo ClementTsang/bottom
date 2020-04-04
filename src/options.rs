@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
 use crate::{
@@ -100,6 +100,8 @@ pub fn build_app(
     let mut initial_widget_type = BottomWidgetType::Proc;
     let is_custom_layout = config.row.is_some();
 
+    let mut used_widget_set = HashSet::new();
+
     for row in &widget_layout.rows {
         for col in &row.children {
             for col_row in &col.children {
@@ -135,6 +137,9 @@ pub fn build_app(
                             }
                         }
                     }
+
+                    used_widget_set.insert(widget.widget_type.clone());
+
                     match widget.widget_type {
                         BottomWidgetType::Cpu => {
                             cpu_state_map.insert(
@@ -178,7 +183,6 @@ pub fn build_app(
         }
     }
 
-    // FIXME: [MODULARITY] Don't collect if not added!
     let basic_table_widget_state = if use_basic_mode {
         Some(match initial_widget_type {
             BottomWidgetType::Proc | BottomWidgetType::Disk | BottomWidgetType::Temp => {
@@ -224,6 +228,7 @@ pub fn build_app(
         .basic_table_widget_state(basic_table_widget_state)
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
+        .used_widget_set(used_widget_set)
         .build())
 }
 

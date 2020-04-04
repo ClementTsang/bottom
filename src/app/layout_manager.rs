@@ -864,7 +864,7 @@ pub struct BottomWidget {
     pub flex_grow: bool,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum BottomWidgetType {
     Empty,
     Cpu,

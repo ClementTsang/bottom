@@ -1,4 +1,8 @@
-use std::{cmp::max, collections::HashMap, time::Instant};
+use std::{
+    cmp::max,
+    collections::{HashMap, HashSet},
+    time::Instant,
+};
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
@@ -512,6 +516,7 @@ pub struct App {
     pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget: BottomWidget,
+    pub used_widget_set: HashSet<BottomWidgetType>,
 }
 
 impl App {

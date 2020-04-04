@@ -5,6 +5,7 @@ extern crate log;
 
 use std::{
     boxed::Box,
+    collections::HashSet,
     io::{stdout, Write},
     panic::{self, PanicInfo},
     sync::mpsc,
@@ -27,6 +28,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 use app::{
     data_harvester::{self, processes::ProcessSorting},
+    layout_manager::BottomWidgetType,
     App,
 };
 use constants::*;
@@ -139,6 +141,7 @@ fn main() -> error::Result<()> {
         app.app_config_fields.update_rate_in_milliseconds,
         app.app_config_fields.temperature_type.clone(),
         app.app_config_fields.show_average_cpu,
+        app.used_widget_set.clone(),
     );
 
     let mut painter = canvas::Painter::init(widget_layout);
@@ -743,15 +746,16 @@ fn create_event_thread(
     >,
     rrx: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
     update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
-    show_average_cpu: bool,
+    show_average_cpu: bool, used_widget_set: HashSet<BottomWidgetType>,
 ) {
     thread::spawn(move || {
         let tx = tx.clone();
-        let mut data_state = data_harvester::DataState::default();
-        data_state.init();
+        let mut data_state = data_harvester::DataCollector::default();
+        data_state.set_collected_data(used_widget_set);
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_show_average_cpu(show_average_cpu);
+        data_state.init();
         loop {
             if let Ok(message) = rrx.try_recv() {
                 match message {
