@@ -48,7 +48,22 @@ Note that binaries are built on the stable version of Rust, and I mainly test an
 
 ### Manual
 
-Clone from this repo or from [Releases](https://github.com/ClementTsang/bottom/releases), and build with `cargo build --release`. You may also want to strip the binary after.
+A few ways to go about doing this:
+
+```bash
+# Clone and install all via Cargo
+cargo install --git https://github.com/ClementTsang/bottom
+
+# Clone and install manually
+git clone https://github.com/ClementTsang/bottom
+cd bottom
+cargo install --path .
+
+# Download from releases and install
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.2/bottom_source_code.tar.gz
+tar -xzvf bottom_source_code.tar.gz
+cargo install --path .
+```
 
 ### Cargo
 
