@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 
 use crate::{
-    app::{self, App},
+    app::{self, App, ProcWidgetState},
     canvas::{
         drawing_utils::{
             get_search_start_position, get_start_position, get_variable_intrinsic_widths,
@@ -18,7 +18,7 @@ use tui::{
     widgets::{Block, Borders, Paragraph, Row, Table, Text, Widget},
 };
 
-use unicode_segmentation::UnicodeSegmentation;
+use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
 pub trait ProcessTableWidget {
@@ -251,24 +251,74 @@ impl ProcessTableWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
-        if let Some(proc_widget_state) =
-            app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
-        {
+        fn get_prompt_text<'a>(proc_widget_state: &ProcWidgetState) -> &'a str {
             let pid_search_text = "Search by PID (Tab for Name): ";
             let name_search_text = "Search by Name (Tab for PID): ";
             let grouped_search_text = "Search by Name: ";
-            let num_columns = draw_loc.width as usize;
 
-            let is_on_widget = widget_id == app_state.current_widget.widget_id;
-
-            let chosen_text = if proc_widget_state.is_grouped {
+            if proc_widget_state.is_grouped {
                 grouped_search_text
             } else if proc_widget_state.process_search_state.is_searching_with_pid {
                 pid_search_text
             } else {
                 name_search_text
-            };
+            }
+        }
 
+        fn build_query<'a>(
+            is_on_widget: bool, grapheme_indices: GraphemeIndices<'a>, start_position: usize,
+            cursor_position: usize, query: &str, currently_selected_text_style: tui::style::Style,
+            text_style: tui::style::Style,
+        ) -> Vec<Text<'a>> {
+            let mut current_grapheme_posn = 0;
+
+            if is_on_widget {
+                let mut res = grapheme_indices
+                    .filter_map(|grapheme| {
+                        current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
+
+                        if current_grapheme_posn <= start_position {
+                            None
+                        } else {
+                            let styled = if grapheme.0 == cursor_position {
+                                Text::styled(grapheme.1, currently_selected_text_style)
+                            } else {
+                                Text::styled(grapheme.1, text_style)
+                            };
+                            Some(styled)
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                if cursor_position >= query.len() {
+                    res.push(Text::styled(" ", currently_selected_text_style))
+                }
+
+                res
+            } else {
+                // This is easier - we just need to get a range of graphemes, rather than
+                // dealing with possibly inserting a cursor (as none is shown!)
+                grapheme_indices
+                    .filter_map(|grapheme| {
+                        current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
+                        if current_grapheme_posn <= start_position {
+                            None
+                        } else {
+                            let styled = Text::styled(grapheme.1, text_style);
+                            Some(styled)
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            }
+        }
+
+        if let Some(proc_widget_state) =
+            app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
+        {
+            let chosen_text = get_prompt_text(&proc_widget_state);
+
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let num_columns = draw_loc.width as usize;
             let small_mode = chosen_text.len() != min(num_columns / 2, chosen_text.len());
             let search_title: &str = if !small_mode {
                 chosen_text
@@ -303,48 +353,15 @@ impl ProcessTableWidget for Painter {
 
             let query = proc_widget_state.get_current_search_query().as_str();
             let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
-            let mut current_grapheme_posn = 0;
-            let query_with_cursor: Vec<Text<'_>> = if is_on_widget {
-                let mut res = grapheme_indices
-                    .filter_map(|grapheme| {
-                        current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
-
-                        if current_grapheme_posn <= start_position {
-                            None
-                        } else {
-                            let styled = if grapheme.0 == cursor_position {
-                                Text::styled(grapheme.1, self.colours.currently_selected_text_style)
-                            } else {
-                                Text::styled(grapheme.1, self.colours.text_style)
-                            };
-                            Some(styled)
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-                if cursor_position >= query.len() {
-                    res.push(Text::styled(
-                        " ",
-                        self.colours.currently_selected_text_style,
-                    ))
-                }
-
-                res
-            } else {
-                // This is easier - we just need to get a range of graphemes, rather than
-                // dealing with possibly inserting a cursor (as none is shown!)
-                grapheme_indices
-                    .filter_map(|grapheme| {
-                        current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
-                        if current_grapheme_posn <= start_position {
-                            None
-                        } else {
-                            let styled = Text::styled(grapheme.1, self.colours.text_style);
-                            Some(styled)
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            };
+            let query_with_cursor: Vec<Text<'_>> = build_query(
+                is_on_widget,
+                grapheme_indices,
+                start_position,
+                cursor_position,
+                query,
+                self.colours.currently_selected_text_style,
+                self.colours.text_style,
+            );
 
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.process_search_state.is_ignoring_case {

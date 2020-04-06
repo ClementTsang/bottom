@@ -1620,38 +1620,40 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            if self.app_config_fields.left_legend {
-                if let BottomWidgetType::Cpu = self.current_widget.widget_type {
-                    if let Some(current_widget) =
-                        self.widget_map.get(&self.current_widget.widget_id)
+            self.handle_left_expanded_cpu_movement();
+        }
+
+        self.reset_multi_tap_keys();
+    }
+
+    fn handle_left_expanded_cpu_movement(&mut self) {
+        if self.app_config_fields.left_legend {
+            if let BottomWidgetType::Cpu = self.current_widget.widget_type {
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(cpu_widget_state) = self
+                        .cpu_state
+                        .widget_states
+                        .get(&self.current_widget.widget_id)
                     {
-                        if let Some(cpu_widget_state) = self
-                            .cpu_state
-                            .widget_states
-                            .get(&self.current_widget.widget_id)
-                        {
-                            if !cpu_widget_state.is_legend_hidden {
-                                if let Some(new_widget_id) = current_widget.left_neighbour {
-                                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                                        self.current_widget = new_widget.clone();
-                                    }
+                        if !cpu_widget_state.is_legend_hidden {
+                            if let Some(new_widget_id) = current_widget.left_neighbour {
+                                if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                                    self.current_widget = new_widget.clone();
                                 }
                             }
                         }
                     }
                 }
-            } else if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
-                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(new_widget_id) = current_widget.left_neighbour {
-                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                            self.current_widget = new_widget.clone();
-                        }
+            }
+        } else if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
+            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                if let Some(new_widget_id) = current_widget.left_neighbour {
+                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                        self.current_widget = new_widget.clone();
                     }
                 }
             }
         }
-
-        self.reset_multi_tap_keys();
     }
 
     pub fn move_widget_selection_right(&mut self) {
@@ -1719,11 +1721,31 @@ impl App {
                 }
             }
         } else if self.is_expanded {
-            if self.app_config_fields.left_legend {
-                if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
-                    if let Some(current_widget) =
-                        self.widget_map.get(&self.current_widget.widget_id)
-                    {
+            self.handle_right_expanded_cpu_movement();
+        }
+
+        self.reset_multi_tap_keys();
+    }
+
+    fn handle_right_expanded_cpu_movement(&mut self) {
+        if self.app_config_fields.left_legend {
+            if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
+                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                    if let Some(new_widget_id) = current_widget.right_neighbour {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+                }
+            }
+        } else if let BottomWidgetType::Cpu = self.current_widget.widget_type {
+            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
+                if let Some(cpu_widget_state) = self
+                    .cpu_state
+                    .widget_states
+                    .get(&self.current_widget.widget_id)
+                {
+                    if !cpu_widget_state.is_legend_hidden {
                         if let Some(new_widget_id) = current_widget.right_neighbour {
                             if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                                 self.current_widget = new_widget.clone();
@@ -1731,26 +1753,8 @@ impl App {
                         }
                     }
                 }
-            } else if let BottomWidgetType::Cpu = self.current_widget.widget_type {
-                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(cpu_widget_state) = self
-                        .cpu_state
-                        .widget_states
-                        .get(&self.current_widget.widget_id)
-                    {
-                        if !cpu_widget_state.is_legend_hidden {
-                            if let Some(new_widget_id) = current_widget.right_neighbour {
-                                if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                                    self.current_widget = new_widget.clone();
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
-
-        self.reset_multi_tap_keys();
     }
 
     pub fn move_widget_selection_up(&mut self) {
