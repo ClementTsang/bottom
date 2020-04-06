@@ -35,8 +35,8 @@ pub async fn get_network_data(
     if cfg!(target_os = "windows") {
         let networks = sys.get_networks();
         for (_, network) in networks {
-            total_rx += network.get_total_income();
-            total_tx += network.get_total_outcome();
+            total_rx += network.get_total_received();
+            total_tx += network.get_total_transmitted();
         }
     } else {
         while let Some(io) = io_data.next().await {
