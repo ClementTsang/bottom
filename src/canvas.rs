@@ -4,9 +4,9 @@ use std::collections::HashMap;
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
     widgets::Text,
-    Terminal,
+    Frame, Terminal,
 };
 
 use canvas_colours::*;
@@ -17,7 +17,8 @@ use crate::{
     app::{
         self,
         data_harvester::processes::ProcessHarvest,
-        layout_manager::{BottomLayout, BottomWidgetType},
+        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
+        App,
     },
     constants::*,
     data_conversion::{ConvertedCpuData, ConvertedProcessData},
@@ -66,6 +67,7 @@ pub struct Painter {
     col_row_constraints: Vec<Vec<Vec<Constraint>>>,
     layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
     widget_layout: BottomLayout,
+    derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
 }
 
 impl Painter {
@@ -150,6 +152,7 @@ impl Painter {
             col_row_constraints,
             layout_constraints,
             widget_layout,
+            derived_widget_draw_locs: Vec::new(),
         }
     }
 
@@ -435,114 +438,135 @@ impl Painter {
                 }
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.
-                let row_draw_locs = Layout::default()
-                    .margin(0)
-                    .constraints(self.row_constraints.as_ref())
-                    .direction(Direction::Vertical)
-                    .split(f.size());
-                let col_draw_locs = self
-                    .col_constraints
-                    .iter()
-                    .zip(&row_draw_locs)
-                    .map(|(col_constraint, row_draw_loc)| {
-                        Layout::default()
-                            .constraints(col_constraint.as_ref())
-                            .direction(Direction::Horizontal)
-                            .split(*row_draw_loc)
-                    })
-                    .collect::<Vec<_>>();
-                let col_row_draw_locs = self
-                    .col_row_constraints
-                    .iter()
-                    .zip(&col_draw_locs)
-                    .map(|(col_row_constraints, row_draw_loc)| {
-                        col_row_constraints
-                            .iter()
-                            .zip(row_draw_loc)
-                            .map(|(col_row_constraint, col_draw_loc)| {
-                                Layout::default()
-                                    .constraints(col_row_constraint.as_ref())
-                                    .direction(Direction::Vertical)
-                                    .split(*col_draw_loc)
-                            })
-                            .collect::<Vec<_>>()
-                    })
-                    .collect::<Vec<_>>();
+                if self.derived_widget_draw_locs.is_empty() || app_state.is_resized {
+                    debug!("Calculating draw locs");
+                    let row_draw_locs = Layout::default()
+                        .margin(0)
+                        .constraints(self.row_constraints.as_ref())
+                        .direction(Direction::Vertical)
+                        .split(f.size());
+                    let col_draw_locs = self
+                        .col_constraints
+                        .iter()
+                        .zip(&row_draw_locs)
+                        .map(|(col_constraint, row_draw_loc)| {
+                            Layout::default()
+                                .constraints(col_constraint.as_ref())
+                                .direction(Direction::Horizontal)
+                                .split(*row_draw_loc)
+                        })
+                        .collect::<Vec<_>>();
+                    let col_row_draw_locs = self
+                        .col_row_constraints
+                        .iter()
+                        .zip(&col_draw_locs)
+                        .map(|(col_row_constraints, row_draw_loc)| {
+                            col_row_constraints
+                                .iter()
+                                .zip(row_draw_loc)
+                                .map(|(col_row_constraint, col_draw_loc)| {
+                                    Layout::default()
+                                        .constraints(col_row_constraint.as_ref())
+                                        .direction(Direction::Vertical)
+                                        .split(*col_draw_loc)
+                                })
+                                .collect::<Vec<_>>()
+                        })
+                        .collect::<Vec<_>>();
 
-                // Now... draw!
-                izip!(
-                    &self.layout_constraints,
-                    col_row_draw_locs,
-                    &self.widget_layout.rows
-                )
-                .for_each(|(row_constraint_vec, row_draw_loc, cols)| {
-                    izip!(row_constraint_vec, row_draw_loc, &cols.children).for_each(
-                        |(col_constraint_vec, col_draw_loc, col_rows)| {
-                            izip!(col_constraint_vec, col_draw_loc, &col_rows.children).for_each(
-                                |(col_row_constraint_vec, col_row_draw_loc, widgets)| {
-                                    // Note that col_row_constraint_vec CONTAINS the widget constraints
-                                    let widget_draw_locs = Layout::default()
-                                        .constraints(col_row_constraint_vec.as_ref())
-                                        .direction(Direction::Horizontal)
-                                        .split(col_row_draw_loc);
+                    // Now... draw!
+                    let mut new_derived_widget_draw_locs = Vec::new();
+                    izip!(
+                        &self.layout_constraints,
+                        col_row_draw_locs,
+                        &self.widget_layout.rows
+                    )
+                    .for_each(|(row_constraint_vec, row_draw_loc, cols)| {
+                        let mut derived_row_draw_locs = Vec::new();
+                        izip!(row_constraint_vec, row_draw_loc, &cols.children).for_each(
+                            |(col_constraint_vec, col_draw_loc, col_rows)| {
+                                let mut derived_col_draw_locs = Vec::new();
+                                izip!(col_constraint_vec, col_draw_loc, &col_rows.children)
+                                    .for_each(
+                                        |(col_row_constraint_vec, col_row_draw_loc, widgets)| {
+                                            // Note that col_row_constraint_vec CONTAINS the widget constraints
+                                            let widget_draw_locs = Layout::default()
+                                                .constraints(col_row_constraint_vec.as_ref())
+                                                .direction(Direction::Horizontal)
+                                                .split(col_row_draw_loc);
 
-                                    for (widget, widget_draw_loc) in
-                                        widgets.children.iter().zip(widget_draw_locs)
-                                    {
-                                        match widget.widget_type {
-                                            Empty => {}
-                                            Cpu => self.draw_cpu(
+                                            self.draw_widgets_with_constraints(
                                                 &mut f,
                                                 app_state,
-                                                widget_draw_loc,
-                                                widget.widget_id,
-                                            ),
-                                            Mem => self.draw_memory_graph(
+                                                widgets,
+                                                &widget_draw_locs,
+                                            );
+
+                                            derived_col_draw_locs.push(widget_draw_locs);
+                                        },
+                                    );
+                                derived_row_draw_locs.push(derived_col_draw_locs);
+                            },
+                        );
+                        new_derived_widget_draw_locs.push(derived_row_draw_locs);
+                    });
+                    self.derived_widget_draw_locs = new_derived_widget_draw_locs;
+                } else {
+                    self.widget_layout
+                        .rows
+                        .iter()
+                        .zip(&self.derived_widget_draw_locs)
+                        .for_each(|(cols, row_layout)| {
+                            cols.children.iter().zip(row_layout).for_each(
+                                |(col_rows, col_row_layout)| {
+                                    col_rows.children.iter().zip(col_row_layout).for_each(
+                                        |(widgets, widget_draw_locs)| {
+                                            self.draw_widgets_with_constraints(
                                                 &mut f,
                                                 app_state,
-                                                widget_draw_loc,
-                                                widget.widget_id,
-                                            ),
-                                            Net => self.draw_network(
-                                                &mut f,
-                                                app_state,
-                                                widget_draw_loc,
-                                                widget.widget_id,
-                                            ),
-                                            Temp => self.draw_temp_table(
-                                                &mut f,
-                                                app_state,
-                                                widget_draw_loc,
-                                                true,
-                                                widget.widget_id,
-                                            ),
-                                            Disk => self.draw_disk_table(
-                                                &mut f,
-                                                app_state,
-                                                widget_draw_loc,
-                                                true,
-                                                widget.widget_id,
-                                            ),
-                                            Proc => self.draw_process_and_search(
-                                                &mut f,
-                                                app_state,
-                                                widget_draw_loc,
-                                                true,
-                                                widget.widget_id,
-                                            ),
-                                            _ => {}
-                                        }
-                                    }
+                                                widgets,
+                                                &widget_draw_locs,
+                                            );
+                                        },
+                                    );
                                 },
                             );
-                        },
-                    );
-                });
+                        });
+                }
             }
         })?;
 
         app_state.is_resized = false;
 
         Ok(())
+    }
+
+    fn draw_widgets_with_constraints<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, widgets: &BottomColRow,
+        widget_draw_locs: &[Rect],
+    ) {
+        use BottomWidgetType::*;
+        for (widget, widget_draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
+            match &widget.widget_type {
+                Empty => {}
+                Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
+                Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
+                Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
+                Temp => {
+                    self.draw_temp_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
+                }
+                Disk => {
+                    self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
+                }
+                Proc => self.draw_process_and_search(
+                    f,
+                    app_state,
+                    *widget_draw_loc,
+                    true,
+                    widget.widget_id,
+                ),
+                _ => {}
+            }
+        }
     }
 }
