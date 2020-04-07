@@ -246,15 +246,13 @@ impl CpuGraphWidget for Painter {
                                 "[ ]".into()
                             },
                         ]
+                    } else if show_disabled_data || *cpu_core_show_vec {
+                        vec![
+                            Cow::Borrowed(&cpu.cpu_name),
+                            Cow::Borrowed(&cpu.legend_value),
+                        ]
                     } else {
-                        if show_disabled_data || *cpu_core_show_vec {
-                            vec![
-                                Cow::Borrowed(&cpu.cpu_name),
-                                Cow::Borrowed(&cpu.legend_value),
-                            ]
-                        } else {
-                            Vec::new()
-                        }
+                        Vec::new()
                     }
                 } else {
                     Vec::new()
