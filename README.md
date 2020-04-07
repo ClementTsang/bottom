@@ -60,7 +60,7 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.2/bottom_source_code.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.3.0/bottom_source_code.tar.gz
 tar -xzvf bottom_source_code.tar.gz
 cargo install --path .
 ```
@@ -85,8 +85,8 @@ yay bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.2.2/bottom_0.2.2_amd64.deb
-sudo dpkg -i bottom_0.2.2_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.3.0/bottom_0.3.0_amd64.deb
+sudo dpkg -i bottom_0.3.0_amd64.deb
 ```
 
 ### Homebrew
@@ -111,7 +111,7 @@ scoop install bottom
 choco install bottom
 
 # Version number may be required for newer releases:
-choco install bottom --version=0.2.2
+choco install bottom --version=0.3.0
 ```
 
 ## Usage
