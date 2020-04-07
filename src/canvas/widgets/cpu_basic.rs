@@ -97,34 +97,38 @@ impl CpuBasicWidget for Painter {
             let mut row_counter = num_cpus;
             let mut start_index = 0;
             for (itx, chunk) in chunks.iter().enumerate() {
-                let to_divide = REQUIRED_COLUMNS - itx;
-                let how_many_cpus = min(
-                    remaining_height,
-                    (row_counter / to_divide) + (if row_counter % to_divide == 0 { 0 } else { 1 }),
-                );
-                row_counter -= how_many_cpus;
-                let end_index = min(start_index + how_many_cpus, num_cpus);
-                let cpu_column: Vec<Text<'_>> = (start_index..end_index)
-                    .map(|cpu_index| {
-                        Text::Styled(
-                            (&cpu_bars[cpu_index]).into(),
-                            self.colours.cpu_colour_styles
-                                [cpu_index as usize % self.colours.cpu_colour_styles.len()],
-                        )
-                    })
-                    .collect::<Vec<_>>();
+                // Explicitly check... don't want an accidental DBZ or underflow
+                if REQUIRED_COLUMNS > itx {
+                    let to_divide = REQUIRED_COLUMNS - itx;
+                    let how_many_cpus = min(
+                        remaining_height,
+                        (row_counter / to_divide)
+                            + (if row_counter % to_divide == 0 { 0 } else { 1 }),
+                    );
+                    row_counter -= how_many_cpus;
+                    let end_index = min(start_index + how_many_cpus, num_cpus);
+                    let cpu_column: Vec<Text<'_>> = (start_index..end_index)
+                        .map(|cpu_index| {
+                            Text::Styled(
+                                (&cpu_bars[cpu_index]).into(),
+                                self.colours.cpu_colour_styles
+                                    [cpu_index as usize % self.colours.cpu_colour_styles.len()],
+                            )
+                        })
+                        .collect::<Vec<_>>();
 
-                start_index += how_many_cpus;
+                    start_index += how_many_cpus;
 
-                let margined_loc = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Percentage(100)].as_ref())
-                    .horizontal_margin(1)
-                    .split(*chunk);
+                    let margined_loc = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([Constraint::Percentage(100)].as_ref())
+                        .horizontal_margin(1)
+                        .split(*chunk);
 
-                Paragraph::new(cpu_column.iter())
-                    .block(Block::default())
-                    .render(f, margined_loc[0]);
+                    Paragraph::new(cpu_column.iter())
+                        .block(Block::default())
+                        .render(f, margined_loc[0]);
+                }
             }
         }
     }

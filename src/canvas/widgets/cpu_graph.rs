@@ -141,10 +141,11 @@ impl CpuGraphWidget for Painter {
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
             let dataset_vector: Vec<Dataset<'_>> = cpu_data
                 .iter()
+                .zip(&cpu_widget_state.core_show_vec)
                 .enumerate()
                 .rev()
-                .filter_map(|(itx, cpu)| {
-                    if cpu_widget_state.core_show_vec[itx] {
+                .filter_map(|(itx, (cpu, cpu_show_vec))| {
+                    if *cpu_show_vec {
                         Some(
                             Dataset::default()
                                 .marker(if use_dot {
@@ -231,20 +232,30 @@ impl CpuGraphWidget for Painter {
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
-                let cpu_string_row: Vec<Cow<'_, str>> = if cpu_widget_state.is_showing_tray {
-                    vec![
-                        Cow::Borrowed(&cpu.cpu_name),
-                        if cpu_widget_state.core_show_vec[itx + start_position as usize] {
-                            "[*]".into()
+                let cpu_string_row: Vec<Cow<'_, str>> = if let Some(cpu_core_show_vec) =
+                    cpu_widget_state
+                        .core_show_vec
+                        .get(itx + start_position as usize)
+                {
+                    if cpu_widget_state.is_showing_tray {
+                        vec![
+                            Cow::Borrowed(&cpu.cpu_name),
+                            if *cpu_core_show_vec {
+                                "[*]".into()
+                            } else {
+                                "[ ]".into()
+                            },
+                        ]
+                    } else {
+                        if show_disabled_data || *cpu_core_show_vec {
+                            vec![
+                                Cow::Borrowed(&cpu.cpu_name),
+                                Cow::Borrowed(&cpu.legend_value),
+                            ]
                         } else {
-                            "[ ]".into()
-                        },
-                    ]
-                } else if show_disabled_data || cpu_widget_state.core_show_vec[itx] {
-                    vec![
-                        Cow::Borrowed(&cpu.cpu_name),
-                        Cow::Borrowed(&cpu.legend_value),
-                    ]
+                            Vec::new()
+                        }
+                    }
                 } else {
                     Vec::new()
                 };
