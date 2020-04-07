@@ -1,4 +1,5 @@
 use crate::app;
+use itertools::izip;
 
 /// A somewhat jury-rigged solution to simulate a variable intrinsic layout for
 /// table widths.  Note that this will do one main pass to try to properly
@@ -20,20 +21,24 @@ pub fn get_variable_intrinsic_widths(
         .map(|&desired_width_ratio| (desired_width_ratio * total_width as f64) as i32)
         .collect::<Vec<_>>();
 
-    for (itx, desired_width) in desired_widths.into_iter().enumerate() {
-        resulting_widths[itx] = if desired_width < width_thresholds[itx] as i32 {
+    for (desired_width, resulting_width, width_threshold) in izip!(
+        desired_widths.into_iter(),
+        resulting_widths.iter_mut(),
+        width_thresholds
+    ) {
+        *resulting_width = if desired_width < *width_threshold as i32 {
             // Try to take threshold, else, 0
-            if remaining_width < width_thresholds[itx] as i32 {
+            if remaining_width < *width_threshold as i32 {
                 0
             } else {
-                remaining_width -= width_thresholds[itx] as i32;
-                width_thresholds[itx] as u16
+                remaining_width -= *width_threshold as i32;
+                *width_threshold as u16
             }
         } else {
             // Take as large as possible
             if remaining_width < desired_width {
                 // Check the biggest chunk possible
-                if remaining_width < width_thresholds[itx] as i32 {
+                if remaining_width < *width_threshold as i32 {
                     0
                 } else {
                     let temp_width = remaining_width;
@@ -46,7 +51,7 @@ pub fn get_variable_intrinsic_widths(
             }
         };
 
-        if resulting_widths[itx] == 0 {
+        if *resulting_width == 0 {
             break;
         } else {
             last_index += 1;

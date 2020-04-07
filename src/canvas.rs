@@ -1,3 +1,4 @@
+use itertools::izip;
 use std::cmp::max;
 use std::collections::HashMap;
 
@@ -442,103 +443,101 @@ impl Painter {
                 let col_draw_locs = self
                     .col_constraints
                     .iter()
-                    .enumerate()
-                    .map(|(itx, col_constraint)| {
+                    .zip(&row_draw_locs)
+                    .map(|(col_constraint, row_draw_loc)| {
                         Layout::default()
                             .constraints(col_constraint.as_ref())
                             .direction(Direction::Horizontal)
-                            .split(row_draw_locs[itx])
+                            .split(*row_draw_loc)
                     })
                     .collect::<Vec<_>>();
                 let col_row_draw_locs = self
                     .col_row_constraints
                     .iter()
-                    .enumerate()
-                    .map(|(col_itx, col_row_constraints)| {
+                    .zip(&col_draw_locs)
+                    .map(|(col_row_constraints, row_draw_loc)| {
                         col_row_constraints
                             .iter()
-                            .enumerate()
-                            .map(|(itx, col_row_constraint)| {
+                            .zip(row_draw_loc)
+                            .map(|(col_row_constraint, col_draw_loc)| {
                                 Layout::default()
                                     .constraints(col_row_constraint.as_ref())
                                     .direction(Direction::Vertical)
-                                    .split(col_draw_locs[col_itx][itx])
+                                    .split(*col_draw_loc)
                             })
                             .collect::<Vec<_>>()
                     })
                     .collect::<Vec<_>>();
 
                 // Now... draw!
-                self.layout_constraints.iter().enumerate().for_each(
-                    |(row_itx, col_constraint_vec)| {
-                        col_constraint_vec.iter().enumerate().for_each(
-                            |(col_itx, col_row_constraint_vec)| {
-                                col_row_constraint_vec.iter().enumerate().for_each(
-                                    |(col_row_itx, widget_constraints)| {
-                                        let widget_draw_locs = Layout::default()
-                                            .constraints(widget_constraints.as_ref())
-                                            .direction(Direction::Horizontal)
-                                            .split(
-                                                col_row_draw_locs[row_itx][col_itx][col_row_itx],
-                                            );
+                izip!(
+                    &self.layout_constraints,
+                    col_row_draw_locs,
+                    &self.widget_layout.rows
+                )
+                .for_each(|(row_constraint_vec, row_draw_loc, cols)| {
+                    izip!(row_constraint_vec, row_draw_loc, &cols.children).for_each(
+                        |(col_constraint_vec, col_draw_loc, col_rows)| {
+                            izip!(col_constraint_vec, col_draw_loc, &col_rows.children).for_each(
+                                |(col_row_constraint_vec, col_row_draw_loc, widgets)| {
+                                    // Note that col_row_constraint_vec CONTAINS the widget constraints
+                                    let widget_draw_locs = Layout::default()
+                                        .constraints(col_row_constraint_vec.as_ref())
+                                        .direction(Direction::Horizontal)
+                                        .split(col_row_draw_loc);
 
-                                        for (widget_itx, widget) in self.widget_layout.rows[row_itx]
-                                            .children[col_itx]
-                                            .children[col_row_itx]
-                                            .children
-                                            .iter()
-                                            .enumerate()
-                                        {
-                                            match widget.widget_type {
-                                                Empty => {}
-                                                Cpu => self.draw_cpu(
-                                                    &mut f,
-                                                    app_state,
-                                                    widget_draw_locs[widget_itx],
-                                                    widget.widget_id,
-                                                ),
-                                                Mem => self.draw_memory_graph(
-                                                    &mut f,
-                                                    app_state,
-                                                    widget_draw_locs[widget_itx],
-                                                    widget.widget_id,
-                                                ),
-                                                Net => self.draw_network(
-                                                    &mut f,
-                                                    app_state,
-                                                    widget_draw_locs[widget_itx],
-                                                    widget.widget_id,
-                                                ),
-                                                Temp => self.draw_temp_table(
-                                                    &mut f,
-                                                    app_state,
-                                                    widget_draw_locs[widget_itx],
-                                                    true,
-                                                    widget.widget_id,
-                                                ),
-                                                Disk => self.draw_disk_table(
-                                                    &mut f,
-                                                    app_state,
-                                                    widget_draw_locs[widget_itx],
-                                                    true,
-                                                    widget.widget_id,
-                                                ),
-                                                Proc => self.draw_process_and_search(
-                                                    &mut f,
-                                                    app_state,
-                                                    widget_draw_locs[widget_itx],
-                                                    true,
-                                                    widget.widget_id,
-                                                ),
-                                                _ => {}
-                                            }
+                                    for (widget, widget_draw_loc) in
+                                        widgets.children.iter().zip(widget_draw_locs)
+                                    {
+                                        match widget.widget_type {
+                                            Empty => {}
+                                            Cpu => self.draw_cpu(
+                                                &mut f,
+                                                app_state,
+                                                widget_draw_loc,
+                                                widget.widget_id,
+                                            ),
+                                            Mem => self.draw_memory_graph(
+                                                &mut f,
+                                                app_state,
+                                                widget_draw_loc,
+                                                widget.widget_id,
+                                            ),
+                                            Net => self.draw_network(
+                                                &mut f,
+                                                app_state,
+                                                widget_draw_loc,
+                                                widget.widget_id,
+                                            ),
+                                            Temp => self.draw_temp_table(
+                                                &mut f,
+                                                app_state,
+                                                widget_draw_loc,
+                                                true,
+                                                widget.widget_id,
+                                            ),
+                                            Disk => self.draw_disk_table(
+                                                &mut f,
+                                                app_state,
+                                                widget_draw_loc,
+                                                true,
+                                                widget.widget_id,
+                                            ),
+                                            Proc => self.draw_process_and_search(
+                                                &mut f,
+                                                app_state,
+                                                widget_draw_loc,
+                                                true,
+                                                widget.widget_id,
+                                            ),
+                                            _ => {}
                                         }
-                                    },
-                                );
-                            },
-                        );
-                    },
-                );
+                                    }
+                                },
+                            );
+                        },
+                    );
+                });
             }
         })?;
 

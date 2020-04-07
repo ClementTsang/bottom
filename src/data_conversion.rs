@@ -68,36 +68,36 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
 
 pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<String>> {
     let mut disk_vector: Vec<Vec<String>> = Vec::new();
-    for (itx, disk) in current_data.disk_harvest.iter().enumerate() {
-        let io_activity = if current_data.io_labels.len() > itx {
-            let converted_read = get_simple_byte_values(current_data.io_labels[itx].0, false);
-            let converted_write = get_simple_byte_values(current_data.io_labels[itx].1, false);
-            (
+    current_data
+        .disk_harvest
+        .iter()
+        .zip(&current_data.io_labels_and_prev)
+        .for_each(|(disk, (io_label, _io_prev))| {
+            let converted_read = get_simple_byte_values(io_label.0, false);
+            let converted_write = get_simple_byte_values(io_label.1, false);
+            let io_activity = (
                 format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
                 format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
-            )
-        } else {
-            ("0B/s".to_string(), "0B/s".to_string())
-        };
+            );
 
-        let converted_free_space = get_simple_byte_values(disk.free_space, false);
-        let converted_total_space = get_simple_byte_values(disk.total_space, false);
-        disk_vector.push(vec![
-            disk.name.to_string(),
-            disk.mount_point.to_string(),
-            format!(
-                "{:.0}%",
-                disk.used_space as f64 / disk.total_space as f64 * 100_f64
-            ),
-            format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1),
-            format!(
-                "{:.*}{}",
-                0, converted_total_space.0, converted_total_space.1
-            ),
-            io_activity.0,
-            io_activity.1,
-        ]);
-    }
+            let converted_free_space = get_simple_byte_values(disk.free_space, false);
+            let converted_total_space = get_simple_byte_values(disk.total_space, false);
+            disk_vector.push(vec![
+                disk.name.to_string(),
+                disk.mount_point.to_string(),
+                format!(
+                    "{:.0}%",
+                    disk.used_space as f64 / disk.total_space as f64 * 100_f64
+                ),
+                format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1),
+                format!(
+                    "{:.*}{}",
+                    0, converted_total_space.0, converted_total_space.1
+                ),
+                io_activity.0,
+                io_activity.1,
+            ]);
+        });
 
     disk_vector
 }
@@ -121,26 +121,28 @@ pub fn convert_cpu_data_points(
 
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
             // Check if the vector exists yet
-            let itx_offset = itx;
-            if cpu_data_vector.len() <= itx_offset {
-                cpu_data_vector.push(ConvertedCpuData::default());
-                cpu_data_vector[itx_offset].cpu_name =
-                    current_data.cpu_harvest[itx].cpu_name.clone();
+            if cpu_data_vector.len() <= itx {
+                let mut new_cpu_data = ConvertedCpuData::default();
+                new_cpu_data.cpu_name = if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
+                {
+                    cpu_harvest.cpu_name.clone()
+                } else {
+                    String::default()
+                };
+                cpu_data_vector.push(new_cpu_data);
             }
 
-            cpu_data_vector[itx_offset].legend_value = format!("{:.0}%", cpu.0.round());
+            if let Some(cpu_data) = cpu_data_vector.get_mut(itx) {
+                cpu_data.legend_value = format!("{:.0}%", cpu.0.round());
 
-            //Insert joiner points
-            for &(joiner_offset, joiner_val) in &cpu.1 {
-                let offset_time = time_from_start + joiner_offset as f64;
-                cpu_data_vector[itx_offset]
-                    .cpu_data
-                    .push((-offset_time, joiner_val));
+                //Insert joiner points
+                for &(joiner_offset, joiner_val) in &cpu.1 {
+                    let offset_time = time_from_start + joiner_offset as f64;
+                    cpu_data.cpu_data.push((-offset_time, joiner_val));
+                }
+
+                cpu_data.cpu_data.push((-time_from_start, cpu.0));
             }
-
-            cpu_data_vector[itx_offset]
-                .cpu_data
-                .push((-time_from_start, cpu.0));
         }
 
         if *time == current_time {
@@ -269,7 +271,6 @@ pub fn get_rx_tx_data_points(
         current_data.current_instant
     };
 
-    // TODO: [REFACTOR] Can we use collect on this, CPU, and MEM?
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 

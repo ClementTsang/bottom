@@ -54,8 +54,7 @@ pub struct DataCollection {
     pub process_harvest: Vec<processes::ProcessHarvest>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IOHarvest,
-    pub io_labels: Vec<(u64, u64)>,
-    io_prev: Vec<(u64, u64)>,
+    pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
 }
 
@@ -72,8 +71,7 @@ impl Default for DataCollection {
             process_harvest: Vec::default(),
             disk_harvest: Vec::default(),
             io_harvest: disks::IOHarvest::default(),
-            io_labels: Vec::default(),
-            io_prev: Vec::default(),
+            io_labels_and_prev: Vec::default(),
             temp_harvest: Vec::default(),
         }
     }
@@ -89,8 +87,7 @@ impl DataCollection {
         self.process_harvest = Vec::default();
         self.disk_harvest = Vec::default();
         self.io_harvest = disks::IOHarvest::default();
-        self.io_labels = Vec::default();
-        self.io_prev = Vec::default();
+        self.io_labels_and_prev = Vec::default();
         self.temp_harvest = Vec::default();
     }
 
@@ -219,20 +216,18 @@ impl DataCollection {
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
         // it probably doesn't matter anyways.
-        for (itx, cpu) in harvested_data.cpu.iter().enumerate() {
-            let cpu_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-                generate_joining_points(
-                    *time,
-                    last_pt.cpu_data[itx].0,
-                    harvested_time,
-                    cpu.cpu_usage,
-                )
-            } else {
-                Vec::new()
-            };
-
-            let cpu_pt = (cpu.cpu_usage, cpu_joining_pts);
-            new_entry.cpu_data.push(cpu_pt);
+        if let Some((time, last_pt)) = self.timed_data_vec.last() {
+            for (cpu, last_pt_data) in harvested_data.cpu.iter().zip(&last_pt.cpu_data) {
+                let cpu_joining_pts =
+                    generate_joining_points(*time, last_pt_data.0, harvested_time, cpu.cpu_usage);
+                let cpu_pt = (cpu.cpu_usage, cpu_joining_pts);
+                new_entry.cpu_data.push(cpu_pt);
+            }
+        } else {
+            for cpu in harvested_data.cpu.iter() {
+                let cpu_pt = (cpu.cpu_usage, Vec::new());
+                new_entry.cpu_data.push(cpu_pt);
+            }
         }
 
         self.cpu_harvest = harvested_data.cpu.clone();
@@ -257,19 +252,16 @@ impl DataCollection {
                     let io_r_pt = io.read_bytes;
                     let io_w_pt = io.write_bytes;
 
-                    if self.io_labels.len() <= itx {
-                        self.io_prev.push((io_r_pt, io_w_pt));
-                        self.io_labels.push((0, 0));
-                    } else {
-                        let r_rate = ((io_r_pt - self.io_prev[itx].0) as f64
-                            / time_since_last_harvest)
-                            .round() as u64;
-                        let w_rate = ((io_w_pt - self.io_prev[itx].1) as f64
-                            / time_since_last_harvest)
-                            .round() as u64;
+                    if self.io_labels_and_prev.len() <= itx {
+                        self.io_labels_and_prev.push(((0, 0), (io_r_pt, io_w_pt)));
+                    } else if let Some((io_curr, io_prev)) = self.io_labels_and_prev.get_mut(itx) {
+                        let r_rate =
+                            ((io_r_pt - io_prev.0) as f64 / time_since_last_harvest).round() as u64;
+                        let w_rate =
+                            ((io_w_pt - io_prev.1) as f64 / time_since_last_harvest).round() as u64;
 
-                        self.io_labels[itx] = (r_rate, w_rate);
-                        self.io_prev[itx] = (io_r_pt, io_w_pt);
+                        *io_curr = (r_rate, w_rate);
+                        *io_prev = (io_r_pt, io_w_pt);
                     }
                 }
             }

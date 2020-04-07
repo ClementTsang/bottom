@@ -583,6 +583,7 @@ impl App {
                             cpu_widget_state.scroll_state.current_scroll_position = new_position;
                             cpu_widget_state.scroll_state.previous_scroll_position = 0;
                         }
+                        self.is_resized = true;
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -600,6 +601,7 @@ impl App {
                             cpu_widget_state.scroll_state.current_scroll_position = new_position;
                             cpu_widget_state.scroll_state.previous_scroll_position = 0;
                         }
+                        self.is_resized = true;
                     }
                 }
                 BottomWidgetType::Proc => {
@@ -614,6 +616,7 @@ impl App {
                                 .search_state
                                 .is_enabled = false;
                         }
+                        self.is_resized = true;
                     }
                 }
                 BottomWidgetType::ProcSearch => {
@@ -629,6 +632,7 @@ impl App {
                                 .is_enabled = false;
                             self.move_widget_selection_up();
                         }
+                        self.is_resized = true;
                     }
                 }
                 _ => {}
@@ -1943,7 +1947,7 @@ impl App {
                     if let Some(cpu_widget_state) = self
                         .cpu_state
                         .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut(&(self.current_widget.widget_id - 1))
                     {
                         cpu_widget_state.scroll_state.current_scroll_position = 0;
                         cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
@@ -2010,7 +2014,7 @@ impl App {
                     if let Some(cpu_widget_state) = self
                         .cpu_state
                         .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut(&(self.current_widget.widget_id - 1))
                     {
                         let cap = if is_filtering_or_searching {
                             self.canvas_data.cpu_data.len()
