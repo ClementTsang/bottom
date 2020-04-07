@@ -17,7 +17,6 @@ type ColumnRowMappings = (u32, BTreeMap<(u32, u32), WidgetMappings>);
 type ColumnMappings = (u32, BTreeMap<(u32, u32), ColumnRowMappings>);
 
 impl BottomLayout {
-    #[allow(clippy::cognitive_complexity)]
     pub fn get_movement_mappings(&mut self) {
         fn is_intersecting(a: (u32, u32), b: (u32, u32)) -> bool {
             a.0 >= b.0 && a.1 <= b.1
