@@ -28,10 +28,8 @@ before_install:
 before_script:
   - rustup target add $TARGET
   - rustup component add clippy
-  #- rustup component add rustfmt
 script:
   - cargo clippy -- -D clippy::all
-  #- cargo fmt -- --check
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
 
@@ -70,7 +68,7 @@ before_deploy:
         strip btm;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
           tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
-          tar -czvf bottom_required_files.tar.gz ./src ./Cargo.toml LICENSE README.md;
+          tar -czvf bottom_required_files.tar.gz ./src ./Cargo.toml ./Cargo.lock LICENSE README.md;
         cargo install cargo-deb;
         cargo deb;
         cp ./target/debian/bottom_*.deb .;
