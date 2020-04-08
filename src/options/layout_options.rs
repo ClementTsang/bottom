@@ -222,7 +222,6 @@ impl Row {
                                                 .widget_type(BottomWidgetType::Proc)
                                                 .widget_id(iter_old_id)
                                                 .build()])
-                                            .flex_grow(true)
                                             .build(),
                                     );
                                     col_row_children.push(
@@ -255,7 +254,7 @@ impl Row {
                                 // Multiply all non-proc or proc-search ratios by 2
                                 if !child.children.is_empty() {
                                     match child.children[0].widget_type {
-                                        BottomWidgetType::Proc | BottomWidgetType::ProcSearch => {}
+                                        BottomWidgetType::ProcSearch => {}
                                         _ => child.col_row_height_ratio *= 2,
                                     }
                                 }
