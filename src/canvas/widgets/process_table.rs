@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+use std::cmp::max;
 
 use crate::{
     app::{self, App, ProcWidgetState},
@@ -319,12 +319,14 @@ impl ProcessTableWidget for Painter {
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let num_columns = draw_loc.width as usize;
-            let small_mode = chosen_text.len() != min(num_columns / 2, chosen_text.len());
+            let small_mode = num_columns < 70;
             let search_title: &str = if !small_mode {
                 chosen_text
             } else if chosen_text.is_empty() {
                 ""
-            } else if proc_widget_state.process_search_state.is_searching_with_pid {
+            } else if proc_widget_state.process_search_state.is_searching_with_pid
+                && !proc_widget_state.is_grouped
+            {
                 "p> "
             } else {
                 "n> "
