@@ -734,17 +734,15 @@ impl App {
                         }
                     }
                 }
-            } else {
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
-                {
-                    // Toggles process widget grouping state
-                    proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
-                    if proc_widget_state.is_grouped {
-                        self.search_with_name();
-                    }
+            } else if let Some(proc_widget_state) = self
+                .proc_state
+                .widget_states
+                .get_mut(&self.current_widget.widget_id)
+            {
+                // Toggles process widget grouping state
+                proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
+                if proc_widget_state.is_grouped {
+                    self.search_with_name();
                 }
             }
         }
