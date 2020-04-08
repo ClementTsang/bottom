@@ -439,7 +439,6 @@ impl Painter {
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_resized {
-                    debug!("Calculating draw locs");
                     let row_draw_locs = Layout::default()
                         .margin(0)
                         .constraints(self.row_constraints.as_ref())
