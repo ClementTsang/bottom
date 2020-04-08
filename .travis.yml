@@ -11,9 +11,9 @@ jobs:
     - rust: nightly
     - env: TARGET=x86_64-pc-windows-gnu # Seems to cause problems.
   fast_finish: true
-branches:
-  only:
-    - master
+# branches:
+#   only:
+#     - master
 
 before_install:
   - export RUST_BACKTRACE=1
@@ -94,5 +94,4 @@ deploy:
     tags: true
     condition: "$TRAVIS_RUST_VERSION = stable"
     repo: ClementTsang/bottom
-    branch: master
   draft: true
