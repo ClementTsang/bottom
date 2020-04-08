@@ -670,7 +670,9 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 fn sort_process_data(
     to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
 ) {
-    to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(&a.name, &b.name, false));
+    to_sort_vec.sort_by(|a, b| {
+        utils::gen_util::get_ordering(&a.name.to_lowercase(), &b.name.to_lowercase(), false)
+    });
 
     match proc_widget_state.process_sorting_type {
         ProcessSorting::CPU => {
@@ -696,8 +698,8 @@ fn sort_process_data(
             if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {
                     utils::gen_util::get_ordering(
-                        &a.name,
-                        &b.name,
+                        &a.name.to_lowercase(),
+                        &b.name.to_lowercase(),
                         proc_widget_state.process_sorting_reverse,
                     )
                 })
