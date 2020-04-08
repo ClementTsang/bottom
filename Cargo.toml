@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
@@ -18,7 +18,6 @@ path = "src/main.rs"
 #debug = true
 debug = 1
 opt-level = 3
-#lto = true
 lto = "fat"
 codegen-units = 1
 
