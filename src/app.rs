@@ -720,12 +720,12 @@ impl App {
 
         let is_in_search_widget = self.is_in_search_widget();
         if !self.is_in_dialog() {
-            if let Some(proc_widget_state) = self
-                .proc_state
-                .widget_states
-                .get_mut(&(self.current_widget.widget_id - 1))
-            {
-                if is_in_search_widget {
+            if is_in_search_widget {
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get_mut(&(self.current_widget.widget_id - 1))
+                {
                     if !proc_widget_state.is_grouped {
                         if proc_widget_state.process_search_state.is_searching_with_pid {
                             self.search_with_name();
@@ -733,12 +733,16 @@ impl App {
                             self.search_with_pid();
                         }
                     }
-                } else {
-                    // Toggles process widget grouping state
-                    proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
-                    if proc_widget_state.is_grouped {
-                        self.search_with_name();
-                    }
+                }
+            } else if let Some(proc_widget_state) = self
+                .proc_state
+                .widget_states
+                .get_mut(&self.current_widget.widget_id)
+            {
+                // Toggles process widget grouping state
+                proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
+                if proc_widget_state.is_grouped {
+                    self.search_with_name();
                 }
             }
         }
