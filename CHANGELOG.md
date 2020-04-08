@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#40](https://github.com/ClementTsang/bottom/issues/40): Rewrote README to be more clear and explicit.
 
+- [#109](https://github.com/ClementTsang/bottom/issues/109): Sorting processes by name is case-insensitive.
+
 ### Bug Fixes
 
 - [#33](https://github.com/ClementTsang/bottom/issues/33): Fix bug with search and graphemes bigger than a byte crashing due to the cursor.
