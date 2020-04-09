@@ -49,6 +49,7 @@ notifications:
 
 before_deploy:
   - cargo install --path . --target $TARGET
+  - cargo update
   - |
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
       choco install zip;
