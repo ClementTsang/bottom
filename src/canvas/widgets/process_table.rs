@@ -115,10 +115,10 @@ impl ProcessTableWidget for Painter {
                         process.name.clone(),
                         format!("{:.1}%", process.cpu_usage),
                         format!("{:.1}%", process.mem_usage),
-                        process.total_read.to_string(),
-                        process.total_write.to_string(),
                         format!("{}/s", process.read_per_sec),
                         format!("{}/s", process.write_per_sec),
+                        process.total_read.to_string(),
+                        process.total_write.to_string(),
                     ];
                     Row::StyledData(
                         stringified_process_vec.into_iter(),
@@ -174,10 +174,10 @@ impl ProcessTableWidget for Painter {
                     name,
                     cpu,
                     mem,
-                    total_read,
-                    total_write,
                     rps,
                     wps,
+                    total_read,
+                    total_write,
                 ];
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
