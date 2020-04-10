@@ -115,8 +115,8 @@ impl ProcessTableWidget for Painter {
                         process.name.clone(),
                         format!("{:.1}%", process.cpu_usage),
                         format!("{:.1}%", process.mem_usage),
-                        format!("{}/s", process.read_per_sec),
-                        format!("{}/s", process.write_per_sec),
+                        process.read_per_sec.to_string(),
+                        process.write_per_sec.to_string(),
                         process.total_read.to_string(),
                         process.total_write.to_string(),
                     ];

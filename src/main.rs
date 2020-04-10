@@ -624,8 +624,8 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                 let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
                 let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
 
-                let read_per_sec = format!("{:.*}{}", 0, converted_rps.0, converted_rps.1);
-                let write_per_sec = format!("{:.*}{}", 0, converted_wps.0, converted_wps.1);
+                let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
+                let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
                 let total_read =
                     format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
                 let total_write = format!(
