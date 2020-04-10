@@ -38,6 +38,18 @@ pub struct ConvertedProcessData {
 }
 
 #[derive(Clone, Default, Debug)]
+pub struct SingleProcessData {
+    pub pid: u32,
+    pub cpu_usage: f64,
+    pub mem_usage: f64,
+    pub group_pids: Vec<u32>,
+    pub read_per_sec: u64,
+    pub write_per_sec: u64,
+    pub total_read: u64,
+    pub total_write: u64,
+}
+
+#[derive(Clone, Default, Debug)]
 pub struct ConvertedCpuData {
     pub cpu_name: String,
     /// Tuple is time, value
@@ -342,29 +354,24 @@ pub fn convert_process_data(
     let mut single_list: HashMap<u32, ProcessHarvest> = HashMap::new();
 
     // cpu, mem, pids
-    let mut grouped_hashmap: HashMap<String, (u32, f64, f64, Vec<u32>, u64, u64, u64, u64)> =
-        std::collections::HashMap::new();
+    let mut grouped_hashmap: HashMap<String, SingleProcessData> = std::collections::HashMap::new();
 
     // Go through every single process in the list... and build a hashmap + single list
     for process in &(current_data).process_harvest {
-        let entry = grouped_hashmap.entry(process.name.clone()).or_insert((
-            process.pid,
-            0.0,
-            0.0,
-            Vec::new(),
-            0,
-            0,
-            0,
-            0,
-        ));
+        let entry = grouped_hashmap
+            .entry(process.name.clone())
+            .or_insert(SingleProcessData {
+                pid: process.pid,
+                ..SingleProcessData::default()
+            });
 
-        (*entry).1 += process.cpu_usage_percent;
-        (*entry).2 += process.mem_usage_percent;
-        (*entry).3.push(process.pid);
-        (*entry).4 += process.read_bytes_per_sec;
-        (*entry).5 += process.write_bytes_per_sec;
-        (*entry).6 += process.total_read_bytes;
-        (*entry).7 += process.total_write_bytes;
+        (*entry).cpu_usage += process.cpu_usage_percent;
+        (*entry).mem_usage += process.mem_usage_percent;
+        (*entry).group_pids.push(process.pid);
+        (*entry).read_per_sec += process.read_bytes_per_sec;
+        (*entry).write_per_sec += process.write_bytes_per_sec;
+        (*entry).total_read += process.total_read_bytes;
+        (*entry).total_write += process.total_write_bytes;
 
         single_list.insert(process.pid, process.clone());
     }
@@ -373,10 +380,10 @@ pub fn convert_process_data(
         .iter()
         .map(|(name, process_details)| {
             let p = process_details.clone();
-            let converted_rps = get_exact_byte_values(p.4, false);
-            let converted_wps = get_exact_byte_values(p.5, false);
-            let converted_total_read = get_exact_byte_values(p.6, false);
-            let converted_total_write = get_exact_byte_values(p.7, false);
+            let converted_rps = get_exact_byte_values(p.read_per_sec, false);
+            let converted_wps = get_exact_byte_values(p.write_per_sec, false);
+            let converted_total_read = get_exact_byte_values(p.total_read, false);
+            let converted_total_write = get_exact_byte_values(p.total_write, false);
 
             let read_per_sec = format!("{:.*}{}", 1, converted_rps.0, converted_rps.1);
             let write_per_sec = format!("{:.*}{}", 1, converted_wps.0, converted_wps.1);
@@ -387,11 +394,11 @@ pub fn convert_process_data(
             );
 
             ConvertedProcessData {
-                pid: p.0,
+                pid: p.pid,
                 name: name.to_string(),
-                cpu_usage: p.1,
-                mem_usage: p.2,
-                group_pids: p.3,
+                cpu_usage: p.cpu_usage,
+                mem_usage: p.mem_usage,
+                group_pids: p.group_pids,
                 read_per_sec,
                 write_per_sec,
                 total_read,
