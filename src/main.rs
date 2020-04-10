@@ -570,6 +570,7 @@ fn update_all_process_lists(app: &mut App) {
 }
 
 fn update_final_process_list(app: &mut App, widget_id: u64) {
+    use utils::gen_util::get_exact_byte_values;
     let is_invalid_or_blank = match app.proc_state.widget_states.get(&widget_id) {
         Some(process_state) => process_state
             .process_search_state
@@ -618,6 +619,20 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                     }
                 }
 
+                let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
+                let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
+                let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
+                let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
+
+                let read_per_sec = format!("{:.*}{}", 1, converted_rps.0, converted_rps.1);
+                let write_per_sec = format!("{:.*}{}", 1, converted_wps.0, converted_wps.1);
+                let total_read =
+                    format!("{:.*}{}", 1, converted_total_read.0, converted_total_read.1);
+                let total_write = format!(
+                    "{:.*}{}",
+                    1, converted_total_write.0, converted_total_write.1
+                );
+
                 if result {
                     return Some(ConvertedProcessData {
                         pid: process.pid,
@@ -625,6 +640,10 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                         cpu_usage: process.cpu_usage_percent,
                         mem_usage: process.mem_usage_percent,
                         group_pids: vec![process.pid],
+                        read_per_sec,
+                        write_per_sec,
+                        total_read,
+                        total_write,
                     });
                 }
 

@@ -61,7 +61,7 @@ impl Data {
 pub struct DataCollector {
     pub data: Data,
     sys: System,
-    prev_pid_stats: HashMap<String, (f64, Instant)>,
+    prev_pid_stats: HashMap<u32, processes::PrevProcDetails>,
     prev_idle: f64,
     prev_non_idle: f64,
     mem_total_kb: u64,
@@ -146,15 +146,23 @@ impl DataCollector {
             // Processes.  This is the longest part of the harvesting process... changing this might be
             // good in the future.  What was tried already:
             // * Splitting the internal part into multiple scoped threads (dropped by ~.01 seconds, but upped usage)
-            if let Ok(process_list) = processes::get_sorted_processes_list(
-                &self.sys,
-                &mut self.prev_idle,
-                &mut self.prev_non_idle,
-                &mut self.prev_pid_stats,
-                self.use_current_cpu_total,
-                self.mem_total_kb,
-                current_instant,
-            ) {
+            if let Ok(process_list) = if cfg!(target_os = "linux") {
+                processes::linux_get_processes_list(
+                    &mut self.prev_idle,
+                    &mut self.prev_non_idle,
+                    &mut self.prev_pid_stats,
+                    self.use_current_cpu_total,
+                    current_instant
+                        .duration_since(self.last_collection_time)
+                        .as_secs(),
+                )
+            } else {
+                processes::windows_macos_get_processes_list(
+                    &self.sys,
+                    self.use_current_cpu_total,
+                    self.mem_total_kb,
+                )
+            } {
                 self.data.list_of_processes = process_list;
             }
         }
