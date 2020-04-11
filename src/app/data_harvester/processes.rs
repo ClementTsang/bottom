@@ -375,22 +375,28 @@ pub fn windows_macos_get_processes_list(
 }
 
 fn convert_process_status_to_char(status: ProcessStatus) -> char {
-    match status {
-        ProcessStatus::Run => 'R',
-        ProcessStatus::Sleep => 'S',
-        ProcessStatus::Idle => 'D',
-        ProcessStatus::Zombie => 'Z',
-        #[cfg(target_os = "linux")]
-        ProcessStatus::Stop => 'T',
-        #[cfg(target_os = "linux")]
-        ProcessStatus::Tracing => 't',
-        ProcessStatus::Dead => 'X',
-        #[cfg(target_os = "linux")]
-        ProcessStatus::Wakekill => 'K',
-        #[cfg(target_os = "linux")]
-        ProcessStatus::Waking => 'W',
-        #[cfg(target_os = "linux")]
-        ProcessStatus::Parked => 'P',
-        _ => '?',
+    if cfg!(target_os = "linux") {
+        match status {
+            ProcessStatus::Run => 'R',
+            ProcessStatus::Sleep => 'S',
+            ProcessStatus::Idle => 'D',
+            ProcessStatus::Zombie => 'Z',
+            ProcessStatus::Stop => 'T',
+            ProcessStatus::Tracing => 't',
+            ProcessStatus::Dead => 'X',
+            ProcessStatus::Wakekill => 'K',
+            ProcessStatus::Waking => 'W',
+            ProcessStatus::Parked => 'P',
+            _ => '?',
+        }
+    } else {
+        match status {
+            ProcessStatus::Run => 'R',
+            ProcessStatus::Sleep => 'S',
+            ProcessStatus::Idle => 'D',
+            ProcessStatus::Zombie => 'Z',
+            ProcessStatus::Dead => 'X',
+            _ => '?',
+        }
     }
 }
