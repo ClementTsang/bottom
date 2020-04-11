@@ -4,7 +4,7 @@ use std::{
     process::Command,
 };
 
-use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
+use sysinfo::{ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
 
 use crate::utils::error;
 
@@ -32,6 +32,8 @@ pub struct ProcessHarvest {
     pub write_bytes_per_sec: u64,
     pub total_read_bytes: u64,
     pub total_write_bytes: u64,
+    pub process_state: String,
+    pub process_state_char: char,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -126,7 +128,7 @@ fn get_process_io(path: &PathBuf) -> std::io::Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
 
-fn get_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
+fn get_linux_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
     // Represents read_bytes and write_bytes
     (
         io_stats[4].parse::<u64>().unwrap_or(0),
@@ -138,16 +140,27 @@ fn get_process_stats(path: &PathBuf) -> std::io::Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
 
-fn get_process_cpu_stats(stats: &[&str]) -> f64 {
-    // utime + stime (matches top)
-    stats[13].parse::<f64>().unwrap_or(0_f64) + stats[14].parse::<f64>().unwrap_or(0_f64)
+fn get_linux_process_state(proc_stats: &[&str]) -> (char, String) {
+    if let Some(first_char) = proc_stats[2].chars().collect::<Vec<char>>().first() {
+        (
+            *first_char,
+            ProcessStatus::from(*first_char).to_string().to_string(),
+        )
+    } else {
+        ('?', String::default())
+    }
 }
 
 /// Note that cpu_fraction should be represented WITHOUT the x100 factor!
-fn linux_cpu_usage(
+fn get_linux_cpu_usage(
     proc_stats: &[&str], cpu_usage: f64, cpu_fraction: f64, before_proc_val: f64,
     use_current_cpu_total: bool,
 ) -> std::io::Result<(f64, f64)> {
+    fn get_process_cpu_stats(stats: &[&str]) -> f64 {
+        // utime + stime (matches top)
+        stats[13].parse::<f64>().unwrap_or(0_f64) + stats[14].parse::<f64>().unwrap_or(0_f64)
+    }
+
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let after_proc_val = get_process_cpu_stats(&proc_stats);
 
@@ -193,7 +206,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
     let proc_stats = stat_results.split_whitespace().collect::<Vec<&str>>();
     let io_stats = io_results.split_whitespace().collect::<Vec<&str>>();
 
-    let (cpu_usage_percent, after_proc_val) = linux_cpu_usage(
+    let (cpu_usage_percent, after_proc_val) = get_linux_cpu_usage(
         &proc_stats,
         cpu_usage,
         cpu_fraction,
@@ -201,7 +214,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
         use_current_cpu_total,
     )?;
 
-    let (total_read_bytes, total_write_bytes) = get_process_io_usage(&io_stats);
+    let (total_read_bytes, total_write_bytes) = get_linux_process_io_usage(&io_stats);
     let read_bytes_per_sec = if time_difference_in_secs == 0 {
         0
     } else {
@@ -219,6 +232,8 @@ fn convert_ps<S: core::hash::BuildHasher>(
 
     new_pid_stats.insert(pid, new_pid_stat);
 
+    let (process_state_char, process_state) = get_linux_process_state(&proc_stats);
+
     Ok(ProcessHarvest {
         pid,
         name,
@@ -228,6 +243,8 @@ fn convert_ps<S: core::hash::BuildHasher>(
         total_write_bytes,
         read_bytes_per_sec,
         write_bytes_per_sec,
+        process_state,
+        process_state_char,
     })
 }
 
@@ -331,8 +348,26 @@ pub fn windows_macos_get_processes_list(
             write_bytes_per_sec: disk_usage.written_bytes,
             total_read_bytes: disk_usage.total_read_bytes,
             total_write_bytes: disk_usage.total_written_bytes,
+            process_state: process_val.status().to_string().to_string(),
+            process_state_char: convert_process_status_to_char(&process_val.status()),
         });
     }
 
     Ok(process_vector)
+}
+
+fn convert_process_status_to_char(status: &ProcessStatus) -> char {
+    match status {
+        ProcessStatus::Run => 'R',
+        ProcessStatus::Sleep => 'S',
+        ProcessStatus::Idle => 'D',
+        ProcessStatus::Zombie => 'Z',
+        ProcessStatus::Stop => 'T',
+        ProcessStatus::Tracing => 't',
+        ProcessStatus::Dead => 'X',
+        ProcessStatus::Wakekill => 'K',
+        ProcessStatus::Waking => 'W',
+        ProcessStatus::Parked => 'P',
+        _ => '?',
+    }
 }
