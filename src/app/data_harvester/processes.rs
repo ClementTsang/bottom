@@ -201,38 +201,56 @@ fn convert_ps<S: core::hash::BuildHasher>(
         PrevProcDetails::new(pid)
     };
 
-    let stat_results = get_process_stats(&new_pid_stat.proc_stat_path)?;
-    let io_results = get_process_io(&new_pid_stat.proc_io_path)?;
-    let proc_stats = stat_results.split_whitespace().collect::<Vec<&str>>();
-    let io_stats = io_results.split_whitespace().collect::<Vec<&str>>();
+    let (cpu_usage_percent, process_state_char, process_state) =
+        if let Ok(stat_results) = get_process_stats(&new_pid_stat.proc_stat_path) {
+            let proc_stats = stat_results.split_whitespace().collect::<Vec<&str>>();
+            let (process_state_char, process_state) = get_linux_process_state(&proc_stats);
 
-    let (cpu_usage_percent, after_proc_val) = get_linux_cpu_usage(
-        &proc_stats,
-        cpu_usage,
-        cpu_fraction,
-        new_pid_stat.cpu_time,
-        use_current_cpu_total,
-    )?;
+            let (cpu_usage_percent, after_proc_val) = get_linux_cpu_usage(
+                &proc_stats,
+                cpu_usage,
+                cpu_fraction,
+                new_pid_stat.cpu_time,
+                use_current_cpu_total,
+            )?;
+            new_pid_stat.cpu_time = after_proc_val;
 
-    let (total_read_bytes, total_write_bytes) = get_linux_process_io_usage(&io_stats);
-    let read_bytes_per_sec = if time_difference_in_secs == 0 {
-        0
-    } else {
-        (total_write_bytes - new_pid_stat.total_write_bytes) / time_difference_in_secs
-    };
-    let write_bytes_per_sec = if time_difference_in_secs == 0 {
-        0
-    } else {
-        (total_read_bytes - new_pid_stat.total_read_bytes) / time_difference_in_secs
-    };
+            (cpu_usage_percent, process_state_char, process_state)
+        } else {
+            (0.0, '?', String::new())
+        };
 
-    new_pid_stat.total_read_bytes = total_read_bytes;
-    new_pid_stat.total_write_bytes = total_write_bytes;
-    new_pid_stat.cpu_time = after_proc_val;
+    // This can fail if permission is denied!
+    let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
+        if let Ok(io_results) = get_process_io(&new_pid_stat.proc_io_path) {
+            let io_stats = io_results.split_whitespace().collect::<Vec<&str>>();
+
+            let (total_read_bytes, total_write_bytes) = get_linux_process_io_usage(&io_stats);
+            let read_bytes_per_sec = if time_difference_in_secs == 0 {
+                0
+            } else {
+                (total_write_bytes - new_pid_stat.total_write_bytes) / time_difference_in_secs
+            };
+            let write_bytes_per_sec = if time_difference_in_secs == 0 {
+                0
+            } else {
+                (total_read_bytes - new_pid_stat.total_read_bytes) / time_difference_in_secs
+            };
+
+            new_pid_stat.total_read_bytes = total_read_bytes;
+            new_pid_stat.total_write_bytes = total_write_bytes;
+
+            (
+                total_read_bytes,
+                total_write_bytes,
+                read_bytes_per_sec,
+                write_bytes_per_sec,
+            )
+        } else {
+            (0, 0, 0, 0)
+        };
 
     new_pid_stats.insert(pid, new_pid_stat);
-
-    let (process_state_char, process_state) = get_linux_process_state(&proc_stats);
 
     Ok(ProcessHarvest {
         pid,
