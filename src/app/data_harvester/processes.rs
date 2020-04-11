@@ -367,14 +367,14 @@ pub fn windows_macos_get_processes_list(
             total_read_bytes: disk_usage.total_read_bytes,
             total_write_bytes: disk_usage.total_written_bytes,
             process_state: process_val.status().to_string().to_string(),
-            process_state_char: convert_process_status_to_char(&process_val.status()),
+            process_state_char: convert_process_status_to_char(process_val.status()),
         });
     }
 
     Ok(process_vector)
 }
 
-fn convert_process_status_to_char(status: &ProcessStatus) -> char {
+fn convert_process_status_to_char(status: ProcessStatus) -> char {
     match status {
         ProcessStatus::Run => 'R',
         ProcessStatus::Sleep => 'S',
