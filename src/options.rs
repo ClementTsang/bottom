@@ -227,6 +227,7 @@ pub fn build_app(
         use_proc: used_widget_set.get(&BottomWidgetType::Proc).is_some(),
         use_disk: used_widget_set.get(&BottomWidgetType::Disk).is_some(),
         use_temp: used_widget_set.get(&BottomWidgetType::Temp).is_some(),
+        use_battery: used_widget_set.get(&BottomWidgetType::Battery).is_some(),
     };
 
     Ok(App::builder()

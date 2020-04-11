@@ -878,6 +878,7 @@ pub enum BottomWidgetType {
     BasicMem,
     BasicNet,
     BasicTables,
+    Battery,
 }
 
 impl BottomWidgetType {
@@ -926,10 +927,11 @@ impl std::str::FromStr for BottomWidgetType {
             "cpu" => Ok(BottomWidgetType::Cpu),
             "mem" => Ok(BottomWidgetType::Mem),
             "net" => Ok(BottomWidgetType::Net),
-            "proc" => Ok(BottomWidgetType::Proc),
+            "proc" | "processes" => Ok(BottomWidgetType::Proc),
             "temp" => Ok(BottomWidgetType::Temp),
             "disk" => Ok(BottomWidgetType::Disk),
             "empty" => Ok(BottomWidgetType::Empty),
+            "battery" | "batt" => Ok(BottomWidgetType::Battery),
             _ => Err(BottomError::ConfigError(format!(
                 "Invalid widget type: {}",
                 s
@@ -946,4 +948,5 @@ pub struct UsedWidgets {
     pub use_proc: bool,
     pub use_disk: bool,
     pub use_temp: bool,
+    pub use_battery: bool,
 }

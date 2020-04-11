@@ -4,10 +4,13 @@ use std::{collections::HashMap, time::Instant};
 
 use sysinfo::{System, SystemExt};
 
+use battery::{Battery, Manager};
+
 use crate::app::layout_manager::UsedWidgets;
 
 use futures::join;
 
+pub mod battery_harvester;
 pub mod cpu;
 pub mod disks;
 pub mod mem;
@@ -26,6 +29,7 @@ pub struct Data {
     pub disks: Vec<disks::DiskHarvest>,
     pub io: disks::IOHarvest,
     pub last_collection_time: Instant,
+    pub battery_harvest: Vec<battery_harvester::BatteryHarvest>,
 }
 
 impl Default for Data {
@@ -40,6 +44,7 @@ impl Default for Data {
             io: disks::IOHarvest::default(),
             network: network::NetworkHarvest::default(),
             last_collection_time: Instant::now(),
+            battery_harvest: Vec::default(),
         }
     }
 }
@@ -72,6 +77,8 @@ pub struct DataCollector {
     total_tx: u64,
     show_average_cpu: bool,
     widgets_to_harvest: UsedWidgets,
+    battery_manager: Option<Manager>,
+    battery_list: Option<Vec<Battery>>,
 }
 
 impl Default for DataCollector {
@@ -90,6 +97,8 @@ impl Default for DataCollector {
             total_tx: 0,
             show_average_cpu: false,
             widgets_to_harvest: UsedWidgets::default(),
+            battery_manager: None,
+            battery_list: None,
         }
     }
 }
@@ -97,6 +106,16 @@ impl Default for DataCollector {
 impl DataCollector {
     pub fn init(&mut self) {
         self.mem_total_kb = self.sys.get_total_memory();
+
+        if self.widgets_to_harvest.use_battery {
+            if let Ok(battery_manager) = Manager::new() {
+                if let Ok(batteries) = battery_manager.batteries() {
+                    self.battery_list = Some(batteries.filter_map(Result::ok).collect());
+                }
+                self.battery_manager = Some(battery_manager);
+            }
+        }
+
         futures::executor::block_on(self.update_data());
         std::thread::sleep(std::time::Duration::from_millis(250));
         self.data.first_run_cleanup();
@@ -140,6 +159,13 @@ impl DataCollector {
         // CPU
         if self.widgets_to_harvest.use_cpu {
             self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu);
+        }
+
+        // Batteries
+        if let Some(battery_manager) = &self.battery_manager {
+            if let Some(battery_list) = &mut self.battery_list {
+                battery_harvester::refresh_batteries(&battery_manager, battery_list);
+            }
         }
 
         if self.widgets_to_harvest.use_proc {
