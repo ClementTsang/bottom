@@ -1,11 +1,14 @@
+use std::path::PathBuf;
+
+#[cfg(target_os = "linux")]
 use std::{
     collections::{hash_map::RandomState, HashMap},
-    path::PathBuf,
     process::Command,
 };
 
 use sysinfo::{ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
 
+#[cfg(target_os = "linux")]
 use crate::utils::error;
 
 #[derive(Clone)]
@@ -56,6 +59,7 @@ impl PrevProcDetails {
     }
 }
 
+#[cfg(target_os = "linux")]
 fn cpu_usage_calculation(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
 ) -> error::Result<(f64, f64)> {
@@ -124,10 +128,12 @@ fn cpu_usage_calculation(
     Ok((result, cpu_percentage))
 }
 
+#[cfg(target_os = "linux")]
 fn get_process_io(path: &PathBuf) -> std::io::Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
 
+#[cfg(target_os = "linux")]
 fn get_linux_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
     // Represents read_bytes and write_bytes
     (
@@ -136,10 +142,12 @@ fn get_linux_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
     )
 }
 
+#[cfg(target_os = "linux")]
 fn get_process_stats(path: &PathBuf) -> std::io::Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
 
+#[cfg(target_os = "linux")]
 fn get_linux_process_state(proc_stats: &[&str]) -> (char, String) {
     if let Some(first_char) = proc_stats[2].chars().collect::<Vec<char>>().first() {
         (
@@ -152,6 +160,7 @@ fn get_linux_process_state(proc_stats: &[&str]) -> (char, String) {
 }
 
 /// Note that cpu_fraction should be represented WITHOUT the x100 factor!
+#[cfg(target_os = "linux")]
 fn get_linux_cpu_usage(
     proc_stats: &[&str], cpu_usage: f64, cpu_fraction: f64, before_proc_val: f64,
     use_current_cpu_total: bool,
@@ -177,6 +186,7 @@ fn get_linux_cpu_usage(
     }
 }
 
+#[cfg(target_os = "linux")]
 fn convert_ps<S: core::hash::BuildHasher>(
     process: &str, cpu_usage: f64, cpu_fraction: f64,
     prev_pid_stats: &mut HashMap<u32, PrevProcDetails, S>,
@@ -266,6 +276,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
     })
 }
 
+#[cfg(target_os = "linux")]
 pub fn linux_get_processes_list(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     prev_pid_stats: &mut HashMap<u32, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
@@ -376,27 +387,39 @@ pub fn windows_macos_get_processes_list(
 
 fn convert_process_status_to_char(status: ProcessStatus) -> char {
     if cfg!(target_os = "linux") {
-        match status {
-            ProcessStatus::Run => 'R',
-            ProcessStatus::Sleep => 'S',
-            ProcessStatus::Idle => 'D',
-            ProcessStatus::Zombie => 'Z',
-            ProcessStatus::Stop => 'T',
-            ProcessStatus::Tracing => 't',
-            ProcessStatus::Dead => 'X',
-            ProcessStatus::Wakekill => 'K',
-            ProcessStatus::Waking => 'W',
-            ProcessStatus::Parked => 'P',
-            _ => '?',
+        #[cfg(target_os = "linux")]
+        {
+            match status {
+                ProcessStatus::Run => 'R',
+                ProcessStatus::Sleep => 'S',
+                ProcessStatus::Idle => 'D',
+                ProcessStatus::Zombie => 'Z',
+                ProcessStatus::Stop => 'T',
+                ProcessStatus::Tracing => 't',
+                ProcessStatus::Dead => 'X',
+                ProcessStatus::Wakekill => 'K',
+                ProcessStatus::Waking => 'W',
+                ProcessStatus::Parked => 'P',
+                _ => '?',
+            }
         }
+        '?'
+    } else if cfg!(target_os = "macos") {
+        #[cfg(target_os = "macos")]
+        {
+            match status {
+                ProcessStatus::Run => 'R',
+                ProcessStatus::Sleep => 'S',
+                ProcessStatus::Idle => 'D',
+                ProcessStatus::Zombie => 'Z',
+                ProcessStatus::Dead => 'X',
+                _ => '?',
+            }
+        }
+        '?'
     } else {
         match status {
             ProcessStatus::Run => 'R',
-            ProcessStatus::Sleep => 'S',
-            ProcessStatus::Idle => 'D',
-            ProcessStatus::Zombie => 'Z',
-            ProcessStatus::Dead => 'X',
-            _ => '?',
         }
     }
 }

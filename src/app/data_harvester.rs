@@ -1,6 +1,9 @@
 //! This is the main file to house data collection functions.
 
-use std::{collections::HashMap, time::Instant};
+use std::time::Instant;
+
+#[cfg(target_os = "linux")]
+use std::collections::HashMap;
 
 use sysinfo::{System, SystemExt};
 
@@ -61,8 +64,11 @@ impl Data {
 pub struct DataCollector {
     pub data: Data,
     sys: System,
+    #[cfg(target_os = "linux")]
     prev_pid_stats: HashMap<u32, processes::PrevProcDetails>,
+    #[cfg(target_os = "linux")]
     prev_idle: f64,
+    #[cfg(target_os = "linux")]
     prev_non_idle: f64,
     mem_total_kb: u64,
     temperature_type: temperature::TemperatureType,
@@ -79,8 +85,11 @@ impl Default for DataCollector {
         DataCollector {
             data: Data::default(),
             sys: System::new_all(),
+            #[cfg(target_os = "linux")]
             prev_pid_stats: HashMap::new(),
+            #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
+            #[cfg(target_os = "linux")]
             prev_non_idle: 0_f64,
             mem_total_kb: 0,
             temperature_type: temperature::TemperatureType::Celsius,
@@ -147,15 +156,22 @@ impl DataCollector {
             // good in the future.  What was tried already:
             // * Splitting the internal part into multiple scoped threads (dropped by ~.01 seconds, but upped usage)
             if let Ok(process_list) = if cfg!(target_os = "linux") {
-                processes::linux_get_processes_list(
-                    &mut self.prev_idle,
-                    &mut self.prev_non_idle,
-                    &mut self.prev_pid_stats,
-                    self.use_current_cpu_total,
-                    current_instant
-                        .duration_since(self.last_collection_time)
-                        .as_secs(),
-                )
+                #[cfg(target_os = "linux")]
+                {
+                    processes::linux_get_processes_list(
+                        &mut self.prev_idle,
+                        &mut self.prev_non_idle,
+                        &mut self.prev_pid_stats,
+                        self.use_current_cpu_total,
+                        current_instant
+                            .duration_since(self.last_collection_time)
+                            .as_secs(),
+                    )
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    Ok(Vec::new())
+                }
             } else {
                 processes::windows_macos_get_processes_list(
                     &self.sys,
