@@ -115,6 +115,10 @@ impl ProcessTableWidget for Painter {
                         process.name.clone(),
                         format!("{:.1}%", process.cpu_usage),
                         format!("{:.1}%", process.mem_usage),
+                        process.read_per_sec.to_string(),
+                        process.write_per_sec.to_string(),
+                        process.total_read.to_string(),
+                        process.total_write.to_string(),
                     ];
                     Row::StyledData(
                         stringified_process_vec.into_iter(),
@@ -147,6 +151,10 @@ impl ProcessTableWidget for Painter {
                 let mut name = "Name(n)".to_string();
                 let mut cpu = "CPU%(c)".to_string();
                 let mut mem = "Mem%(m)".to_string();
+                let rps = "R/s".to_string();
+                let wps = "W/s".to_string();
+                let total_read = "Read".to_string();
+                let total_write = "Write".to_string();
 
                 let direction_val = if proc_widget_state.process_sorting_reverse {
                     "▼".to_string()
@@ -161,7 +169,16 @@ impl ProcessTableWidget for Painter {
                     ProcessSorting::NAME => name += &direction_val,
                 };
 
-                let process_headers = [pid_or_name, name, cpu, mem];
+                let process_headers = [
+                    pid_or_name,
+                    name,
+                    cpu,
+                    mem,
+                    rps,
+                    wps,
+                    total_read,
+                    total_write,
+                ];
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
                     .map(|entry| entry.len())
@@ -169,7 +186,7 @@ impl ProcessTableWidget for Painter {
 
                 // Calculate widths
                 let width = f64::from(draw_loc.width);
-                let width_ratios = [0.2, 0.4, 0.2, 0.2];
+                let width_ratios = [0.1, 0.3, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
                 let variable_intrinsic_results = get_variable_intrinsic_widths(
                     width as u16,
                     &width_ratios,

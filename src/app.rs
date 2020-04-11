@@ -743,6 +743,8 @@ impl App {
                 proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
                 if proc_widget_state.is_grouped {
                     self.search_with_name();
+                } else {
+                    self.proc_state.force_update = Some(self.current_widget.widget_id);
                 }
             }
         }
