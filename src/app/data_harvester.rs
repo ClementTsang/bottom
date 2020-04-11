@@ -164,7 +164,8 @@ impl DataCollector {
         // Batteries
         if let Some(battery_manager) = &self.battery_manager {
             if let Some(battery_list) = &mut self.battery_list {
-                battery_harvester::refresh_batteries(&battery_manager, battery_list);
+                self.data.battery_harvest =
+                    battery_harvester::refresh_batteries(&battery_manager, battery_list);
             }
         }
 

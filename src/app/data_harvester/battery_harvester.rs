@@ -1,19 +1,44 @@
-use battery::{Battery, Manager};
+use battery::{
+    units::{electric_potential::volt, power::watt, ratio::percent, time::second, Time},
+    Battery, Manager,
+};
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct BatteryHarvest {
-    charge_percent: u64,
-    is_charging: bool,
-    secs_until_full: u64,
-    secs_until_empty: u64,
-    power_consumption_rate: f64,
-    voltage: u64,
+    charge_percent: f64,
+    secs_until_full: Option<f64>,
+    secs_until_empty: Option<f64>,
+    power_consumption_rate_watts: f64,
+    voltage: f64,
 }
 
-pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) {
-    for battery in batteries {
-        if manager.refresh(battery).is_ok() {
-            debug!("Battery: {:?}", battery);
-        }
+fn convert_optional_time_to_optional_seconds(optional_time: Option<Time>) -> Option<f64> {
+    if let Some(time) = optional_time {
+        Some(f64::from(time.get::<second>()))
+    } else {
+        None
     }
+}
+
+pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<BatteryHarvest> {
+    batteries
+        .iter_mut()
+        .filter_map(|battery| {
+            if manager.refresh(battery).is_ok() {
+                Some(BatteryHarvest {
+                    secs_until_full: convert_optional_time_to_optional_seconds(
+                        battery.time_to_full(),
+                    ),
+                    secs_until_empty: convert_optional_time_to_optional_seconds(
+                        battery.time_to_empty(),
+                    ),
+                    charge_percent: f64::from(battery.state_of_charge().get::<percent>()),
+                    voltage: f64::from(battery.voltage().get::<volt>()),
+                    power_consumption_rate_watts: f64::from(battery.energy_rate().get::<watt>()),
+                })
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>()
 }

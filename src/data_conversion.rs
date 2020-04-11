@@ -409,3 +409,5 @@ pub fn convert_process_data(
 
     (single_list, grouped_list)
 }
+
+pub fn convert_battery_harvest(current_data: &data_farmer::DataCollection) {}

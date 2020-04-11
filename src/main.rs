@@ -228,6 +228,11 @@ fn main() -> error::Result<()> {
                             app.canvas_data.grouped_process_data = grouped;
                             update_all_process_lists(&mut app);
                         }
+
+                        // Battery
+                        if app.used_widgets.use_battery {
+                            convert_battery_harvest(&app.data_collection);
+                        }
                     }
                 }
                 BottomEvent::Clean => {
