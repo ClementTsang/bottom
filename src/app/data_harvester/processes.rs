@@ -380,11 +380,16 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
         ProcessStatus::Sleep => 'S',
         ProcessStatus::Idle => 'D',
         ProcessStatus::Zombie => 'Z',
+        #[cfg(target_os = "linux")]
         ProcessStatus::Stop => 'T',
+        #[cfg(target_os = "linux")]
         ProcessStatus::Tracing => 't',
         ProcessStatus::Dead => 'X',
+        #[cfg(target_os = "linux")]
         ProcessStatus::Wakekill => 'K',
+        #[cfg(target_os = "linux")]
         ProcessStatus::Waking => 'W',
+        #[cfg(target_os = "linux")]
         ProcessStatus::Parked => 'P',
         _ => '?',
     }
