@@ -11,9 +11,10 @@ jobs:
     - rust: nightly
     - env: TARGET=x86_64-pc-windows-gnu # Seems to cause problems.
   fast_finish: true
-# branches:
-#   only:
-#     - master
+branches:
+  only:
+    - master
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 before_install:
   - export RUST_BACKTRACE=1
