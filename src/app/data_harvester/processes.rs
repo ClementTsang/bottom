@@ -1,12 +1,16 @@
+use std::path::PathBuf;
+use sysinfo::ProcessStatus;
+
+#[cfg(target_os = "linux")]
+use crate::utils::error;
+#[cfg(target_os = "linux")]
 use std::{
     collections::{hash_map::RandomState, HashMap},
-    path::PathBuf,
     process::Command,
 };
 
+#[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
-
-use crate::utils::error;
 
 #[derive(Clone)]
 pub enum ProcessSorting {
@@ -32,6 +36,8 @@ pub struct ProcessHarvest {
     pub write_bytes_per_sec: u64,
     pub total_read_bytes: u64,
     pub total_write_bytes: u64,
+    pub process_state: String,
+    pub process_state_char: char,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -54,6 +60,7 @@ impl PrevProcDetails {
     }
 }
 
+#[cfg(target_os = "linux")]
 fn cpu_usage_calculation(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
 ) -> error::Result<(f64, f64)> {
@@ -122,11 +129,13 @@ fn cpu_usage_calculation(
     Ok((result, cpu_percentage))
 }
 
+#[cfg(target_os = "linux")]
 fn get_process_io(path: &PathBuf) -> std::io::Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
 
-fn get_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
+#[cfg(target_os = "linux")]
+fn get_linux_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
     // Represents read_bytes and write_bytes
     (
         io_stats[4].parse::<u64>().unwrap_or(0),
@@ -134,20 +143,34 @@ fn get_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
     )
 }
 
+#[cfg(target_os = "linux")]
 fn get_process_stats(path: &PathBuf) -> std::io::Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
 
-fn get_process_cpu_stats(stats: &[&str]) -> f64 {
-    // utime + stime (matches top)
-    stats[13].parse::<f64>().unwrap_or(0_f64) + stats[14].parse::<f64>().unwrap_or(0_f64)
+#[cfg(target_os = "linux")]
+fn get_linux_process_state(proc_stats: &[&str]) -> (char, String) {
+    if let Some(first_char) = proc_stats[2].chars().collect::<Vec<char>>().first() {
+        (
+            *first_char,
+            ProcessStatus::from(*first_char).to_string().to_string(),
+        )
+    } else {
+        ('?', String::default())
+    }
 }
 
 /// Note that cpu_fraction should be represented WITHOUT the x100 factor!
-fn linux_cpu_usage(
+#[cfg(target_os = "linux")]
+fn get_linux_cpu_usage(
     proc_stats: &[&str], cpu_usage: f64, cpu_fraction: f64, before_proc_val: f64,
     use_current_cpu_total: bool,
 ) -> std::io::Result<(f64, f64)> {
+    fn get_process_cpu_stats(stats: &[&str]) -> f64 {
+        // utime + stime (matches top)
+        stats[13].parse::<f64>().unwrap_or(0_f64) + stats[14].parse::<f64>().unwrap_or(0_f64)
+    }
+
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let after_proc_val = get_process_cpu_stats(&proc_stats);
 
@@ -164,6 +187,7 @@ fn linux_cpu_usage(
     }
 }
 
+#[cfg(target_os = "linux")]
 fn convert_ps<S: core::hash::BuildHasher>(
     process: &str, cpu_usage: f64, cpu_fraction: f64,
     prev_pid_stats: &mut HashMap<u32, PrevProcDetails, S>,
@@ -188,34 +212,54 @@ fn convert_ps<S: core::hash::BuildHasher>(
         PrevProcDetails::new(pid)
     };
 
-    let stat_results = get_process_stats(&new_pid_stat.proc_stat_path)?;
-    let io_results = get_process_io(&new_pid_stat.proc_io_path)?;
-    let proc_stats = stat_results.split_whitespace().collect::<Vec<&str>>();
-    let io_stats = io_results.split_whitespace().collect::<Vec<&str>>();
+    let (cpu_usage_percent, process_state_char, process_state) =
+        if let Ok(stat_results) = get_process_stats(&new_pid_stat.proc_stat_path) {
+            let proc_stats = stat_results.split_whitespace().collect::<Vec<&str>>();
+            let (process_state_char, process_state) = get_linux_process_state(&proc_stats);
 
-    let (cpu_usage_percent, after_proc_val) = linux_cpu_usage(
-        &proc_stats,
-        cpu_usage,
-        cpu_fraction,
-        new_pid_stat.cpu_time,
-        use_current_cpu_total,
-    )?;
+            let (cpu_usage_percent, after_proc_val) = get_linux_cpu_usage(
+                &proc_stats,
+                cpu_usage,
+                cpu_fraction,
+                new_pid_stat.cpu_time,
+                use_current_cpu_total,
+            )?;
+            new_pid_stat.cpu_time = after_proc_val;
 
-    let (total_read_bytes, total_write_bytes) = get_process_io_usage(&io_stats);
-    let read_bytes_per_sec = if time_difference_in_secs == 0 {
-        0
-    } else {
-        (total_write_bytes - new_pid_stat.total_write_bytes) / time_difference_in_secs
-    };
-    let write_bytes_per_sec = if time_difference_in_secs == 0 {
-        0
-    } else {
-        (total_read_bytes - new_pid_stat.total_read_bytes) / time_difference_in_secs
-    };
+            (cpu_usage_percent, process_state_char, process_state)
+        } else {
+            (0.0, '?', String::new())
+        };
 
-    new_pid_stat.total_read_bytes = total_read_bytes;
-    new_pid_stat.total_write_bytes = total_write_bytes;
-    new_pid_stat.cpu_time = after_proc_val;
+    // This can fail if permission is denied!
+    let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
+        if let Ok(io_results) = get_process_io(&new_pid_stat.proc_io_path) {
+            let io_stats = io_results.split_whitespace().collect::<Vec<&str>>();
+
+            let (total_read_bytes, total_write_bytes) = get_linux_process_io_usage(&io_stats);
+            let read_bytes_per_sec = if time_difference_in_secs == 0 {
+                0
+            } else {
+                (total_write_bytes - new_pid_stat.total_write_bytes) / time_difference_in_secs
+            };
+            let write_bytes_per_sec = if time_difference_in_secs == 0 {
+                0
+            } else {
+                (total_read_bytes - new_pid_stat.total_read_bytes) / time_difference_in_secs
+            };
+
+            new_pid_stat.total_read_bytes = total_read_bytes;
+            new_pid_stat.total_write_bytes = total_write_bytes;
+
+            (
+                total_read_bytes,
+                total_write_bytes,
+                read_bytes_per_sec,
+                write_bytes_per_sec,
+            )
+        } else {
+            (0, 0, 0, 0)
+        };
 
     new_pid_stats.insert(pid, new_pid_stat);
 
@@ -228,9 +272,12 @@ fn convert_ps<S: core::hash::BuildHasher>(
         total_write_bytes,
         read_bytes_per_sec,
         write_bytes_per_sec,
+        process_state,
+        process_state_char,
     })
 }
 
+#[cfg(target_os = "linux")]
 pub fn linux_get_processes_list(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     prev_pid_stats: &mut HashMap<u32, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
@@ -279,6 +326,7 @@ pub fn linux_get_processes_list(
     }
 }
 
+#[cfg(not(target_os = "linux"))]
 pub fn windows_macos_get_processes_list(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
@@ -331,8 +379,33 @@ pub fn windows_macos_get_processes_list(
             write_bytes_per_sec: disk_usage.written_bytes,
             total_read_bytes: disk_usage.total_read_bytes,
             total_write_bytes: disk_usage.total_written_bytes,
+            process_state: process_val.status().to_string().to_string(),
+            process_state_char: convert_process_status_to_char(process_val.status()),
         });
     }
 
     Ok(process_vector)
+}
+
+#[allow(unused_variables)]
+#[cfg(not(target_os = "linux"))]
+fn convert_process_status_to_char(status: ProcessStatus) -> char {
+    if cfg!(target_os = "macos") {
+        #[cfg(target_os = "macos")]
+        {
+            match status {
+                ProcessStatus::Run => 'R',
+                ProcessStatus::Sleep => 'S',
+                ProcessStatus::Idle => 'D',
+                ProcessStatus::Zombie => 'Z',
+                _ => '?',
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            '?'
+        }
+    } else {
+        'R'
+    }
 }
