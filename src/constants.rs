@@ -158,7 +158,7 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 [colors]
 
 # Represents the colour of table headers (processes, CPU, disks, temperature).
-#table_header_color="LightBlue"
+#table_header_color="Cyan"
 
 # Represents the colour of the label each widget has.
 #widget_title_color="Gray"
@@ -185,7 +185,7 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #border_color="Gray"
 
 # Represents the colour of the border of selected widgets.
-#highlighted_border_color="LightBlue"
+#highlighted_border_color="Cyan"
 
 # Represents the colour of most text.
 #text_color="Gray"

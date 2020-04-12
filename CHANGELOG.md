@@ -5,13 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.4.0] - Unreleased
 
 ### Features
 
 - [#58](https://github.com/ClementTsang/bottom/issues/58): I/O stats per process
 
 - [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process
+
+### Changes
+
+- Changed default colours for highlighted borders and table headers to cyan - this is mostly to deal with Powershell colour conflicts.
 
 ## [0.3.0] - 2020-04-07
 
