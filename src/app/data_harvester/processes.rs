@@ -1,15 +1,16 @@
 use std::path::PathBuf;
+use sysinfo::ProcessStatus;
 
+#[cfg(target_os = "linux")]
+use crate::utils::error;
 #[cfg(target_os = "linux")]
 use std::{
     collections::{hash_map::RandomState, HashMap},
     process::Command,
 };
 
-use sysinfo::{ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
-
-#[cfg(target_os = "linux")]
-use crate::utils::error;
+#[cfg(not(target_os = "linux"))]
+use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
 #[derive(Clone)]
 pub enum ProcessSorting {
@@ -325,6 +326,7 @@ pub fn linux_get_processes_list(
     }
 }
 
+#[cfg(not(target_os = "linux"))]
 pub fn windows_macos_get_processes_list(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
@@ -385,26 +387,10 @@ pub fn windows_macos_get_processes_list(
     Ok(process_vector)
 }
 
+#[allow(unused_variables)]
+#[cfg(not(target_os = "linux"))]
 fn convert_process_status_to_char(status: ProcessStatus) -> char {
-    if cfg!(target_os = "linux") {
-        #[cfg(target_os = "linux")]
-        {
-            match status {
-                ProcessStatus::Run => 'R',
-                ProcessStatus::Sleep => 'S',
-                ProcessStatus::Idle => 'D',
-                ProcessStatus::Zombie => 'Z',
-                ProcessStatus::Stop => 'T',
-                ProcessStatus::Tracing => 't',
-                ProcessStatus::Dead => 'X',
-                ProcessStatus::Wakekill => 'K',
-                ProcessStatus::Waking => 'W',
-                ProcessStatus::Parked => 'P',
-                _ => '?',
-            }
-        }
-        '?'
-    } else if cfg!(target_os = "macos") {
+    if cfg!(target_os = "macos") {
         #[cfg(target_os = "macos")]
         {
             match status {
@@ -416,10 +402,11 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 _ => '?',
             }
         }
-        '?'
-    } else {
-        match status {
-            ProcessStatus::Run => 'R',
+        #[cfg(not(target_os = "macos"))]
+        {
+            '?'
         }
+    } else {
+        'R'
     }
 }

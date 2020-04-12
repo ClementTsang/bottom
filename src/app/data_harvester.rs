@@ -173,11 +173,18 @@ impl DataCollector {
                     Ok(Vec::new())
                 }
             } else {
-                processes::windows_macos_get_processes_list(
-                    &self.sys,
-                    self.use_current_cpu_total,
-                    self.mem_total_kb,
-                )
+                #[cfg(not(target_os = "linux"))]
+                {
+                    processes::windows_macos_get_processes_list(
+                        &self.sys,
+                        self.use_current_cpu_total,
+                        self.mem_total_kb,
+                    )
+                }
+                #[cfg(target_os = "linux")]
+                {
+                    Ok(Vec::new())
+                }
             } {
                 self.data.list_of_processes = process_list;
             }
