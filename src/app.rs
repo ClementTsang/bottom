@@ -1265,7 +1265,7 @@ impl App {
                 .get(&self.current_widget.widget_id)
             {
                 if proc_widget_state.scroll_state.current_scroll_position
-                    < self.canvas_data.finalized_process_data_map.len() as u64
+                    < corresponding_filtered_process_list.len() as u64
                 {
                     let current_process = if self.is_grouped(self.current_widget.widget_id) {
                         let group_pids = &corresponding_filtered_process_list

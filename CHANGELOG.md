@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Changed default colours for highlighted borders and table headers to cyan - this is mostly to deal with Powershell colour conflicts.
 
+### Bug Fixes
+
+- Fixed `dd` not working on non-first entries.
+
 ## [0.3.0] - 2020-04-07
 
 ### Features
