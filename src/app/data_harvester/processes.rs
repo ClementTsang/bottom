@@ -398,7 +398,6 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
                 ProcessStatus::Sleep => 'S',
                 ProcessStatus::Idle => 'D',
                 ProcessStatus::Zombie => 'Z',
-                ProcessStatus::Dead => 'X',
                 _ => '?',
             }
         }
