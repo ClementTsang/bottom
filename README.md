@@ -238,7 +238,7 @@ Widgets can hold different time intervals independently. These time intervals ca
 
 ### Maximizing
 
-Only care about the CPU widget right now? Then go to the widget and hit `Enter` to make it take
+Only care about one specific widget? You can go to that widget and hit `Enter` to make that widget take
 up the entire drawing area.
 
 ### Basic mode
