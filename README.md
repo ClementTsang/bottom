@@ -108,6 +108,8 @@ scoop install bottom
 
 ### Chocolatey
 
+Choco package located [here](https://chocolatey.org/packages/bottom).
+
 ```bash
 choco install bottom
 
