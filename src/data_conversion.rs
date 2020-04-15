@@ -15,6 +15,9 @@ use crate::{
 type Point = (f64, f64);
 
 #[derive(Default, Debug)]
+pub struct ConvertedBatteryData {}
+
+#[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
     pub rx: Vec<Point>,
     pub tx: Vec<Point>,
@@ -410,4 +413,12 @@ pub fn convert_process_data(
     (single_list, grouped_list)
 }
 
-pub fn convert_battery_harvest(current_data: &data_farmer::DataCollection) {}
+pub fn convert_battery_harvest(
+    current_data: &data_farmer::DataCollection,
+) -> Vec<ConvertedBatteryData> {
+    current_data
+        .battery_harvest
+        .iter()
+        .map(|battery_harvest| ConvertedBatteryData {})
+        .collect()
+}

@@ -15,7 +15,9 @@
 use std::time::Instant;
 use std::vec::Vec;
 
-use crate::data_harvester::{cpu, disks, mem, network, processes, temperature, Data};
+use crate::data_harvester::{
+    battery_harvester, cpu, disks, mem, network, processes, temperature, Data,
+};
 
 pub type TimeOffset = f64;
 pub type Value = f64;
@@ -56,6 +58,7 @@ pub struct DataCollection {
     pub io_harvest: disks::IOHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
+    pub battery_harvest: Vec<battery_harvester::BatteryHarvest>,
 }
 
 impl Default for DataCollection {
@@ -73,6 +76,7 @@ impl Default for DataCollection {
             io_harvest: disks::IOHarvest::default(),
             io_labels_and_prev: Vec::default(),
             temp_harvest: Vec::default(),
+            battery_harvest: Vec::default(),
         }
     }
 }
@@ -89,6 +93,7 @@ impl DataCollection {
         self.io_harvest = disks::IOHarvest::default();
         self.io_labels_and_prev = Vec::default();
         self.temp_harvest = Vec::default();
+        self.battery_harvest = Vec::default();
     }
 
     pub fn set_frozen_time(&mut self) {
@@ -115,22 +120,43 @@ impl DataCollection {
         let mut new_entry = TimedData::default();
 
         // Network
-        self.eat_network(&harvested_data, harvested_time, &mut new_entry);
+        if let Some(network) = &harvested_data.network {
+            self.eat_network(network, harvested_time, &mut new_entry);
+        }
 
         // Memory and Swap
-        self.eat_memory_and_swap(&harvested_data, harvested_time, &mut new_entry);
+        if let Some(memory) = &harvested_data.memory {
+            if let Some(swap) = &harvested_data.swap {
+                self.eat_memory_and_swap(memory, swap, harvested_time, &mut new_entry);
+            }
+        }
 
         // CPU
-        self.eat_cpu(&harvested_data, harvested_time, &mut new_entry);
+        if let Some(cpu) = &harvested_data.cpu {
+            self.eat_cpu(cpu, harvested_time, &mut new_entry);
+        }
 
         // Temp
-        self.eat_temp(&harvested_data);
+        if let Some(temperature_sensors) = &harvested_data.temperature_sensors {
+            self.eat_temp(temperature_sensors);
+        }
 
         // Disks
-        self.eat_disks(&harvested_data, harvested_time);
+        if let Some(disks) = &harvested_data.disks {
+            if let Some(io) = &harvested_data.io {
+                self.eat_disks(disks, io, harvested_time);
+            }
+        }
 
         // Processes
-        self.eat_proc(&harvested_data);
+        if let Some(list_of_processes) = &harvested_data.list_of_processes {
+            self.eat_proc(list_of_processes);
+        }
+
+        // Battery
+        if let Some(list_of_batteries) = &harvested_data.list_of_batteries {
+            self.eat_battery(list_of_batteries);
+        }
 
         // And we're done eating.  Update time and push the new entry!
         self.current_instant = harvested_time;
@@ -138,12 +164,13 @@ impl DataCollection {
     }
 
     fn eat_memory_and_swap(
-        &mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
+        &mut self, memory: &mem::MemHarvest, swap: &mem::MemHarvest, harvested_time: Instant,
+        new_entry: &mut TimedData,
     ) {
         // Memory
-        let mem_percent = match harvested_data.memory.mem_total_in_mb {
+        let mem_percent = match memory.mem_total_in_mb {
             0 => 0f64,
-            total => (harvested_data.memory.mem_used_in_mb as f64) / (total as f64) * 100.0,
+            total => (memory.mem_used_in_mb as f64) / (total as f64) * 100.0,
         };
         let mem_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
             generate_joining_points(*time, last_pt.mem_data.0, harvested_time, mem_percent)
@@ -154,10 +181,10 @@ impl DataCollection {
         new_entry.mem_data = mem_pt;
 
         // Swap
-        if harvested_data.swap.mem_total_in_mb > 0 {
-            let swap_percent = match harvested_data.swap.mem_total_in_mb {
+        if swap.mem_total_in_mb > 0 {
+            let swap_percent = match swap.mem_total_in_mb {
                 0 => 0f64,
-                total => (harvested_data.swap.mem_used_in_mb as f64) / (total as f64) * 100.0,
+                total => (swap.mem_used_in_mb as f64) / (total as f64) * 100.0,
             };
             let swap_joining_pt = if let Some((time, last_pt)) = self.timed_data_vec.last() {
                 generate_joining_points(*time, last_pt.swap_data.0, harvested_time, swap_percent)
@@ -169,16 +196,17 @@ impl DataCollection {
         }
 
         // In addition copy over latest data for easy reference
-        self.memory_harvest = harvested_data.memory.clone();
-        self.swap_harvest = harvested_data.swap.clone();
+        self.memory_harvest = memory.clone();
+        self.swap_harvest = swap.clone();
     }
 
     fn eat_network(
-        &mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
+        &mut self, network: &network::NetworkHarvest, harvested_time: Instant,
+        new_entry: &mut TimedData,
     ) {
         // RX
-        let logged_rx_val = if harvested_data.network.rx as f64 > 0.0 {
-            (harvested_data.network.rx as f64).log(2.0)
+        let logged_rx_val = if network.rx as f64 > 0.0 {
+            (network.rx as f64).log(2.0)
         } else {
             0.0
         };
@@ -192,8 +220,8 @@ impl DataCollection {
         new_entry.rx_data = rx_pt;
 
         // TX
-        let logged_tx_val = if harvested_data.network.tx as f64 > 0.0 {
-            (harvested_data.network.tx as f64).log(2.0)
+        let logged_tx_val = if network.tx as f64 > 0.0 {
+            (network.tx as f64).log(2.0)
         } else {
             0.0
         };
@@ -207,47 +235,49 @@ impl DataCollection {
         new_entry.tx_data = tx_pt;
 
         // In addition copy over latest data for easy reference
-        self.network_harvest = harvested_data.network.clone();
+        self.network_harvest = network.clone();
     }
 
     fn eat_cpu(
-        &mut self, harvested_data: &Data, harvested_time: Instant, new_entry: &mut TimedData,
+        &mut self, cpu: &cpu::CPUHarvest, harvested_time: Instant, new_entry: &mut TimedData,
     ) {
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
         // it probably doesn't matter anyways.
         if let Some((time, last_pt)) = self.timed_data_vec.last() {
-            for (cpu, last_pt_data) in harvested_data.cpu.iter().zip(&last_pt.cpu_data) {
+            for (cpu, last_pt_data) in cpu.iter().zip(&last_pt.cpu_data) {
                 let cpu_joining_pts =
                     generate_joining_points(*time, last_pt_data.0, harvested_time, cpu.cpu_usage);
                 let cpu_pt = (cpu.cpu_usage, cpu_joining_pts);
                 new_entry.cpu_data.push(cpu_pt);
             }
         } else {
-            for cpu in harvested_data.cpu.iter() {
+            for cpu in cpu.iter() {
                 let cpu_pt = (cpu.cpu_usage, Vec::new());
                 new_entry.cpu_data.push(cpu_pt);
             }
         }
 
-        self.cpu_harvest = harvested_data.cpu.clone();
+        self.cpu_harvest = cpu.clone();
     }
 
-    fn eat_temp(&mut self, harvested_data: &Data) {
+    fn eat_temp(&mut self, temperature_sensors: &Vec<temperature::TempHarvest>) {
         // TODO: [PO] To implement
-        self.temp_harvest = harvested_data.temperature_sensors.clone();
+        self.temp_harvest = temperature_sensors.clone();
     }
 
-    fn eat_disks(&mut self, harvested_data: &Data, harvested_time: Instant) {
+    fn eat_disks(
+        &mut self, disks: &Vec<disks::DiskHarvest>, io: &disks::IOHarvest, harvested_time: Instant,
+    ) {
         // TODO: [PO] To implement
 
         let time_since_last_harvest = harvested_time
             .duration_since(self.current_instant)
             .as_secs_f64();
 
-        for (itx, device) in harvested_data.disks.iter().enumerate() {
+        for (itx, device) in disks.iter().enumerate() {
             if let Some(trim) = device.name.split('/').last() {
-                let io_device = harvested_data.io.get(trim);
+                let io_device = io.get(trim);
                 if let Some(io) = io_device {
                     let io_r_pt = io.read_bytes;
                     let io_w_pt = io.write_bytes;
@@ -267,12 +297,16 @@ impl DataCollection {
             }
         }
 
-        self.disk_harvest = harvested_data.disks.clone();
-        self.io_harvest = harvested_data.io.clone();
+        self.disk_harvest = disks.clone();
+        self.io_harvest = io.clone();
     }
 
-    fn eat_proc(&mut self, harvested_data: &Data) {
-        self.process_harvest = harvested_data.list_of_processes.clone();
+    fn eat_proc(&mut self, list_of_processes: &Vec<processes::ProcessHarvest>) {
+        self.process_harvest = list_of_processes.clone();
+    }
+
+    fn eat_battery(&mut self, list_of_batteries: &Vec<battery_harvester::BatteryHarvest>) {
+        self.battery_harvest = list_of_batteries.clone();
     }
 }
 
