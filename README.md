@@ -199,6 +199,15 @@ Run using `btm`.
 | `Alt-c`/`F1` | Toggle matching case                         |
 | `Alt-w`/`F2` | Toggle matching the entire word              |
 | `Alt-r`/`F3` | Toggle using regex                           |
+| `Left`       | Move cursor left                             |
+| `Right`      | Move cursor right                            |
+
+#### Battery widget bindings
+
+|         |                            |
+| ------- | -------------------------- |
+| `Left`  | Go to the next battery     |
+| `Right` | Go to the previous battery |
 
 ## Features
 
@@ -213,6 +222,8 @@ As yet _another_ process/system visualization and management application, bottom
 - Display information regarding processes, like CPU, memory, and I/O usage
 
 - Process management (process killing _is_ all you need, right?)
+
+- Battery statistics
 
 It also aims to be:
 
@@ -342,13 +353,14 @@ represents a _widget_. A widget is represented by having a `type` field set to a
 The following `type` values are supported:
 | | |
 |---------|--------------------------|
-| `cpu` | CPU chart and legend |
-| `mem` | Memory chart |
-| `proc` | Process table and search |
-| `net` | Network chart and legend |
-| `temp` | Temperature table |
-| `disk` | Disk table |
-| `empty` | An empty space |
+| `"cpu"` | CPU chart and legend |
+| `"mem", "memory"` | Memory chart |
+| `"net", "network"` | Network chart and legend |
+| `"proc", "process", "processes"` | Process table and search |
+| `"temp", "temperature"` | Temperature table |
+| `"disk"` | Disk table |
+| `"empty"` | An empty space |
+| `"battery", "batt"` | Battery statistics |
 
 Each component of the layout accepts a `ratio` value. If this is not set, it defaults to 1.
 

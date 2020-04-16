@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#55](https://github.com/ClementTsang/bottom/issues/55): Battery monitoring widget
 
+### Changes
+
+- Updated the widget type keyword list to accept the following keywords as existing types:
+  - `"memory"`
+  - `"network"`
+  - `"process"`
+  - `"processes"`
+  - `"temperature"`
+
 ### Bug Fixes
 
 - Fixed bug where a single empty row as a layout would crash without a proper warning.
