@@ -6,7 +6,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Rect},
     terminal::Frame,
-    widgets::{Block, Borders, Row, Table, Tabs, Widget},
+    widgets::{Block, Borders, Paragraph, Row, Table, Tabs, Text, Widget},
 };
 
 pub trait BatteryDisplayWidget {
@@ -43,7 +43,7 @@ impl BatteryDisplayWidget for Painter {
                 self.colours.border_style
             };
 
-            let mut battery_block = Block::default()
+            let battery_block = Block::default()
                 .title(&title)
                 .title_style(if app_state.is_expanded {
                     border_and_title_style
@@ -79,27 +79,34 @@ impl BatteryDisplayWidget for Painter {
                     .header_style(self.colours.table_header_style)
                     .widths([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                     .render(f, draw_loc);
-
-                if app_state.canvas_data.battery_data.len() > 1 {
-                    Tabs::default()
-                        .block(battery_block)
-                        .titles(
-                            (app_state
-                                .canvas_data
-                                .battery_data
-                                .iter()
-                                .map(|battery| &battery.battery_name))
-                            .collect::<Vec<_>>()
-                            .as_ref(),
-                        )
-                        .divider(tui::symbols::line::VERTICAL)
-                        .style(self.colours.text_style)
-                        .highlight_style(self.colours.currently_selected_text_style)
-                        .select(battery_widget_state.currently_selected_battery_index)
-                        .render(f, draw_loc);
-                }
             } else {
-                battery_block.render(f, draw_loc);
+                Paragraph::new(
+                    [Text::Styled(
+                        "No data found for this battery".into(),
+                        self.colours.text_style,
+                    )]
+                    .iter(),
+                )
+                .block(battery_block)
+                .render(f, draw_loc);
+            }
+            if app_state.canvas_data.battery_data.len() > 1 {
+                Tabs::default()
+                    .block(battery_block)
+                    .titles(
+                        (app_state
+                            .canvas_data
+                            .battery_data
+                            .iter()
+                            .map(|battery| &battery.battery_name))
+                        .collect::<Vec<_>>()
+                        .as_ref(),
+                    )
+                    .divider(tui::symbols::line::VERTICAL)
+                    .style(self.colours.text_style)
+                    .highlight_style(self.colours.currently_selected_text_style)
+                    .select(battery_widget_state.currently_selected_battery_index)
+                    .render(f, draw_loc);
             }
         }
     }

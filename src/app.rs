@@ -1135,13 +1135,15 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if let Some(battery_widget_state) = self
-                        .battery_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
-                    {
-                        if battery_widget_state.currently_selected_battery_index > 0 {
-                            battery_widget_state.currently_selected_battery_index -= 1;
+                    if !self.canvas_data.battery_data.is_empty() {
+                        if let Some(battery_widget_state) = self
+                            .battery_state
+                            .widget_states
+                            .get_mut(&self.current_widget.widget_id)
+                        {
+                            if battery_widget_state.currently_selected_battery_index > 0 {
+                                battery_widget_state.currently_selected_battery_index -= 1;
+                            }
                         }
                     }
                 }
@@ -1185,15 +1187,18 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    let battery_count = self.canvas_data.battery_data.len();
-                    if let Some(battery_widget_state) = self
-                        .battery_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
-                    {
-                        if battery_widget_state.currently_selected_battery_index < battery_count - 1
+                    if !self.canvas_data.battery_data.is_empty() {
+                        let battery_count = self.canvas_data.battery_data.len();
+                        if let Some(battery_widget_state) = self
+                            .battery_state
+                            .widget_states
+                            .get_mut(&self.current_widget.widget_id)
                         {
-                            battery_widget_state.currently_selected_battery_index += 1;
+                            if battery_widget_state.currently_selected_battery_index
+                                < battery_count - 1
+                            {
+                                battery_widget_state.currently_selected_battery_index += 1;
+                            }
                         }
                     }
                 }
