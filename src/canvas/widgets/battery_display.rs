@@ -90,7 +90,7 @@ impl BatteryDisplayWidget for Painter {
                         item.iter(),
                         if itx == 0 {
                             let colour_index =
-                                std::cmp::min(0, (100.0 / charge_percentage).floor() - 1.0)
+                                std::cmp::min(0, (100.0 / charge_percentage).floor() as i64 - 1)
                                     as usize;
                             *self
                                 .colours
