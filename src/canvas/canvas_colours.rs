@@ -24,6 +24,8 @@ pub struct CanvasColours {
     pub text_style: Style,
     pub widget_title_style: Style,
     pub graph_style: Style,
+    // Full, Medium, Low
+    pub battery_bar_styles: Vec<Style>,
 }
 
 impl Default for CanvasColours {
@@ -48,6 +50,12 @@ impl Default for CanvasColours {
             text_style: Style::default().fg(text_colour),
             widget_title_style: Style::default().fg(text_colour),
             graph_style: Style::default().fg(text_colour),
+            battery_bar_styles: vec![
+                Style::default().fg(Color::Green),
+                Style::default().fg(Color::Green),
+                Style::default().fg(Color::Yellow),
+                Style::default().fg(Color::Red),
+            ],
         }
     }
 }
@@ -148,6 +156,16 @@ impl CanvasColours {
 
     pub fn set_graph_colour(&mut self, colour: &str) -> error::Result<()> {
         self.graph_style = get_style_from_config(colour)?;
+        Ok(())
+    }
+
+    pub fn set_battery_colours(&mut self, colours: &[String]) -> error::Result<()> {
+        let generated_colours: Result<Vec<_>, _> = colours
+            .iter()
+            .map(|colour| get_style_from_config(colour))
+            .collect();
+
+        self.battery_bar_styles = generated_colours?;
         Ok(())
     }
 }

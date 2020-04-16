@@ -497,6 +497,10 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
         if let Some(graph_color) = &colours.graph_color {
             painter.colours.set_graph_colour(graph_color)?;
         }
+
+        if let Some(battery_colors) = &colours.battery_colors {
+            painter.colours.set_battery_colours(battery_colors)?;
+        }
     }
 
     Ok(())

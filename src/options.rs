@@ -61,6 +61,7 @@ pub struct ConfigColours {
     pub selected_bg_color: Option<String>,
     pub widget_title_color: Option<String>,
     pub graph_color: Option<String>,
+    pub battery_colors: Option<Vec<String>>,
 }
 
 pub fn build_app(

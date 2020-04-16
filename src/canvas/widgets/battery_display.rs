@@ -73,19 +73,33 @@ impl BatteryDisplayWidget for Painter {
                 );
 
                 let battery_items = vec![
-                    vec!["Charge %", &bars],
-                    vec!["Consumption", &battery_details.watt_consumption],
+                    ["Charge %", &bars],
+                    ["Consumption", &battery_details.watt_consumption],
                     if let Some(duration_until_full) = &battery_details.duration_until_full {
-                        vec!["Time to full", duration_until_full]
+                        ["Time to full", duration_until_full]
                     } else if let Some(duration_until_empty) = &battery_details.duration_until_empty
                     {
-                        vec!["Time to empty", duration_until_empty]
+                        ["Time to empty", duration_until_empty]
                     } else {
-                        vec!["Time to full", "N/A"]
+                        ["Time to full/empty", "N/A"]
                     },
                 ];
 
-                let battery_rows = battery_items.iter().map(|item| Row::Data(item.iter()));
+                let battery_rows = battery_items.iter().enumerate().map(|(itx, item)| {
+                    Row::StyledData(
+                        item.iter(),
+                        if itx == 0 {
+                            let colour_index = (100.0 / charge_percentage).round() as usize;
+                            *self
+                                .colours
+                                .battery_bar_styles
+                                .get(colour_index)
+                                .unwrap_or(&self.colours.text_style)
+                        } else {
+                            self.colours.text_style
+                        },
+                    )
+                });
 
                 // Draw
                 Table::new([""].iter(), battery_rows)
