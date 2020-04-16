@@ -29,6 +29,7 @@ This documentation is relevant to version 0.3.0. Please refer to [release branch
   - [CPU bindings](#cpu-bindings)
   - [Process bindings](#process-bindings)
   - [Process search bindings](#process-search-bindings)
+  - [Battery bindings](#battery-bindings)
 - [Features](#features)
   - [Process filtering](#process-filtering)
   - [Zoom](#zoom)
@@ -202,7 +203,7 @@ Run using `btm`.
 | `Left`       | Move cursor left                             |
 | `Right`      | Move cursor right                            |
 
-#### Battery widget bindings
+#### Battery bindings
 
 |         |                            |
 | ------- | -------------------------- |
