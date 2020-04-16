@@ -1104,33 +1104,48 @@ impl App {
 
     pub fn on_left_key(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-                let is_in_search_widget = self.is_in_search_widget();
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&(self.current_widget.widget_id - 1))
-                {
-                    if is_in_search_widget {
-                        let prev_cursor = proc_widget_state.get_cursor_position();
-                        proc_widget_state.search_walk_back(proc_widget_state.get_cursor_position());
-                        if proc_widget_state.get_cursor_position() < prev_cursor {
-                            let str_slice = &proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .current_search_query
-                                [proc_widget_state.get_cursor_position()..prev_cursor];
+            match self.current_widget.widget_type {
+                BottomWidgetType::ProcSearch => {
+                    let is_in_search_widget = self.is_in_search_widget();
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
+                    {
+                        if is_in_search_widget {
+                            let prev_cursor = proc_widget_state.get_cursor_position();
                             proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .char_cursor_position -= UnicodeWidthStr::width(str_slice);
-                            proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .cursor_direction = CursorDirection::LEFT;
+                                .search_walk_back(proc_widget_state.get_cursor_position());
+                            if proc_widget_state.get_cursor_position() < prev_cursor {
+                                let str_slice = &proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .current_search_query
+                                    [proc_widget_state.get_cursor_position()..prev_cursor];
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .char_cursor_position -= UnicodeWidthStr::width(str_slice);
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .cursor_direction = CursorDirection::LEFT;
+                            }
                         }
                     }
                 }
+                BottomWidgetType::Battery => {
+                    if let Some(battery_widget_state) = self
+                        .battery_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        if battery_widget_state.currently_selected_battery_index > 0 {
+                            battery_widget_state.currently_selected_battery_index -= 1;
+                        }
+                    }
+                }
+                _ => {}
             }
         } else if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
             self.delete_dialog_state.is_on_yes = true;
@@ -1139,34 +1154,50 @@ impl App {
 
     pub fn on_right_key(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-                let is_in_search_widget = self.is_in_search_widget();
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&(self.current_widget.widget_id - 1))
-                {
-                    if is_in_search_widget {
-                        let prev_cursor = proc_widget_state.get_cursor_position();
-                        proc_widget_state
-                            .search_walk_forward(proc_widget_state.get_cursor_position());
-                        if proc_widget_state.get_cursor_position() > prev_cursor {
-                            let str_slice = &proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .current_search_query
-                                [prev_cursor..proc_widget_state.get_cursor_position()];
+            match self.current_widget.widget_type {
+                BottomWidgetType::ProcSearch => {
+                    let is_in_search_widget = self.is_in_search_widget();
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
+                    {
+                        if is_in_search_widget {
+                            let prev_cursor = proc_widget_state.get_cursor_position();
                             proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .char_cursor_position += UnicodeWidthStr::width(str_slice);
-                            proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .cursor_direction = CursorDirection::RIGHT;
+                                .search_walk_forward(proc_widget_state.get_cursor_position());
+                            if proc_widget_state.get_cursor_position() > prev_cursor {
+                                let str_slice = &proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .current_search_query
+                                    [prev_cursor..proc_widget_state.get_cursor_position()];
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .char_cursor_position += UnicodeWidthStr::width(str_slice);
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .cursor_direction = CursorDirection::RIGHT;
+                            }
                         }
                     }
                 }
+                BottomWidgetType::Battery => {
+                    let battery_count = self.canvas_data.battery_data.len();
+                    if let Some(battery_widget_state) = self
+                        .battery_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        if battery_widget_state.currently_selected_battery_index < battery_count - 1
+                        {
+                            battery_widget_state.currently_selected_battery_index += 1;
+                        }
+                    }
+                }
+                _ => {}
             }
         } else if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
             self.delete_dialog_state.is_on_yes = false;

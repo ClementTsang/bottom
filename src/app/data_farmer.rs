@@ -239,7 +239,7 @@ impl DataCollection {
     }
 
     fn eat_cpu(
-        &mut self, cpu: &cpu::CPUHarvest, harvested_time: Instant, new_entry: &mut TimedData,
+        &mut self, cpu: &[cpu::CPUData], harvested_time: Instant, new_entry: &mut TimedData,
     ) {
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
@@ -258,16 +258,16 @@ impl DataCollection {
             }
         }
 
-        self.cpu_harvest = cpu.clone();
+        self.cpu_harvest = cpu.to_vec();
     }
 
-    fn eat_temp(&mut self, temperature_sensors: &Vec<temperature::TempHarvest>) {
+    fn eat_temp(&mut self, temperature_sensors: &[temperature::TempHarvest]) {
         // TODO: [PO] To implement
-        self.temp_harvest = temperature_sensors.clone();
+        self.temp_harvest = temperature_sensors.to_vec();
     }
 
     fn eat_disks(
-        &mut self, disks: &Vec<disks::DiskHarvest>, io: &disks::IOHarvest, harvested_time: Instant,
+        &mut self, disks: &[disks::DiskHarvest], io: &disks::IOHarvest, harvested_time: Instant,
     ) {
         // TODO: [PO] To implement
 
@@ -297,16 +297,16 @@ impl DataCollection {
             }
         }
 
-        self.disk_harvest = disks.clone();
+        self.disk_harvest = disks.to_vec();
         self.io_harvest = io.clone();
     }
 
-    fn eat_proc(&mut self, list_of_processes: &Vec<processes::ProcessHarvest>) {
-        self.process_harvest = list_of_processes.clone();
+    fn eat_proc(&mut self, list_of_processes: &[processes::ProcessHarvest]) {
+        self.process_harvest = list_of_processes.to_vec();
     }
 
-    fn eat_battery(&mut self, list_of_batteries: &Vec<battery_harvester::BatteryHarvest>) {
-        self.battery_harvest = list_of_batteries.clone();
+    fn eat_battery(&mut self, list_of_batteries: &[battery_harvester::BatteryHarvest]) {
+        self.battery_harvest = list_of_batteries.to_vec();
     }
 }
 
