@@ -432,22 +432,32 @@ pub fn convert_battery_harvest(
             watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
             duration_until_empty: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
                 let time = chrono::Duration::seconds(secs_till_empty);
+                let num_minutes = time.num_minutes() - time.num_hours() * 60;
+                let num_seconds = time.num_seconds() - time.num_minutes() * 60;
                 Some(format!(
-                    "{} hours, {} minutes, {} seconds",
+                    "{} hour{}, {} minute{}, {} second{}",
                     time.num_hours(),
-                    time.num_minutes() - time.num_hours() * 60,
-                    time.num_seconds() - time.num_minutes() * 60
+                    if time.num_hours() == 1 { "" } else { "s" },
+                    num_minutes,
+                    if num_minutes == 1 { "" } else { "s" },
+                    num_seconds,
+                    if num_seconds == 1 { "" } else { "s" },
                 ))
             } else {
                 None
             },
             duration_until_full: if let Some(secs_till_full) = battery_harvest.secs_until_full {
                 let time = chrono::Duration::seconds(secs_till_full);
+                let num_minutes = time.num_minutes() - time.num_hours() * 60;
+                let num_seconds = time.num_seconds() - time.num_minutes() * 60;
                 Some(format!(
-                    "{} hours, {} minutes, {} seconds",
+                    "{} hour{}, {} minute{}, {} second{}",
                     time.num_hours(),
-                    time.num_minutes() - time.num_hours() * 60,
-                    time.num_seconds() - time.num_minutes() * 60
+                    if time.num_hours() == 1 { "" } else { "s" },
+                    num_minutes,
+                    if num_minutes == 1 { "" } else { "s" },
+                    num_seconds,
+                    if num_seconds == 1 { "" } else { "s" },
                 ))
             } else {
                 None
