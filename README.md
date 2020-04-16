@@ -39,6 +39,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Config flags](#config-flags)
     - [Theming](#theming)
     - [Layout](#layout)
+  - [Battery](#battery)
   - [Compatibility](#compatibility)
 - [Contribution](#contribution)
 - [Bug reports and feature requests](#bug-reports-and-feature-requests)
@@ -227,8 +228,6 @@ As yet _another_ process/system visualization and management application, bottom
 
 - Process management (process killing _is_ all you need, right?)
 
-- Battery statistics (must be enabled manually by using a [layout](#layout))
-
 It also aims to be:
 
 - Lightweight
@@ -403,15 +402,45 @@ For an example, look at the [default config](./sample_configs/default_config.tom
 and get the following CPU donut:
 ![CPU donut](./assets/cpu_layout.png)
 
+### Battery
+
+You can get battery statistics (charge, time to fill/discharge, and consumption in watts) via the battery widget.
+Since this is only useful for devices like laptops, it is off by default. Currently, the only way to use it is to set it
+as a widget via [layouts](#layout).
+
+So with this slightly silly layout:
+
+```toml
+[[row]]
+  ratio=1
+  [[row.child]]
+  type="batt"
+[[row]]
+    ratio=2
+    [[row.child]]
+      ratio=4
+      type="batt"
+    [[row.child]]
+      ratio=3
+      [[row.child.child]]
+        type="cpu"
+      [[row.child.child]]
+        type="batt"
+```
+
+You get this:
+
+![Battery example](assets/battery.png)
+
 ### Compatibility
 
 The current compatibility of widgets with operating systems from personal testing:
 
-| OS      | CPU | Memory | Disks | Temperature | Processes/Search | Networks |
-| ------- | --- | ------ | ----- | ----------- | ---------------- | -------- |
-| Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
-| Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        |
-| macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
+| OS      | CPU | Memory | Disks | Temperature | Processes/Search | Networks | Battery                                      |
+| ------- | --- | ------ | ----- | ----------- | ---------------- | -------- | -------------------------------------------- |
+| Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
+| Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        | ✓ (seems to have issues with dual batteries) |
+| macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
 
 ## Contribution
 
