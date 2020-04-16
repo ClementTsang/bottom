@@ -89,7 +89,9 @@ impl BatteryDisplayWidget for Painter {
                     Row::StyledData(
                         item.iter(),
                         if itx == 0 {
-                            let colour_index = (100.0 / charge_percentage).round() as usize;
+                            let colour_index =
+                                std::cmp::min(0, (100.0 / charge_percentage).floor() - 1.0)
+                                    as usize;
                             *self
                                 .colours
                                 .battery_bar_styles
