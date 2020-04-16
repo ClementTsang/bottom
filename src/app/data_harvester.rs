@@ -112,9 +112,12 @@ impl DataCollector {
         if self.widgets_to_harvest.use_battery {
             if let Ok(battery_manager) = Manager::new() {
                 if let Ok(batteries) = battery_manager.batteries() {
-                    self.battery_list = Some(batteries.filter_map(Result::ok).collect());
+                    let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();
+                    if !battery_list.is_empty() {
+                        self.battery_list = Some(battery_list);
+                        self.battery_manager = Some(battery_manager);
+                    }
                 }
-                self.battery_manager = Some(battery_manager);
             }
         }
 
