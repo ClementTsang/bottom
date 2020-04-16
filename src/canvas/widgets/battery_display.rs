@@ -120,24 +120,24 @@ impl BatteryDisplayWidget for Painter {
                 .block(battery_block)
                 .render(f, draw_loc);
             }
-            if app_state.canvas_data.battery_data.len() > 1 {
-                Tabs::default()
-                    .block(battery_block)
-                    .titles(
-                        (app_state
-                            .canvas_data
-                            .battery_data
-                            .iter()
-                            .map(|battery| &battery.battery_name))
-                        .collect::<Vec<_>>()
-                        .as_ref(),
-                    )
-                    .divider(tui::symbols::line::VERTICAL)
-                    .style(self.colours.text_style)
-                    .highlight_style(self.colours.currently_selected_text_style)
-                    .select(battery_widget_state.currently_selected_battery_index)
-                    .render(f, draw_loc);
-            }
+            // if app_state.canvas_data.battery_data.len() > 1 {
+            Tabs::default()
+                .block(battery_block)
+                .titles(
+                    (app_state
+                        .canvas_data
+                        .battery_data
+                        .iter()
+                        .map(|battery| &battery.battery_name))
+                    .collect::<Vec<_>>()
+                    .as_ref(),
+                )
+                .divider(tui::symbols::line::VERTICAL)
+                .style(self.colours.text_style)
+                .highlight_style(self.colours.currently_selected_text_style)
+                .select(battery_widget_state.currently_selected_battery_index)
+                .render(f, draw_loc);
+            // }
         }
     }
 }
