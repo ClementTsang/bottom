@@ -17,7 +17,7 @@ type Point = (f64, f64);
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
     pub battery_name: String,
-    pub charge_percentage: String,
+    pub charge_percentage: f64,
     pub watt_consumption: String,
     pub duration_until_full: Option<String>,
     pub duration_until_empty: Option<String>,
@@ -428,7 +428,7 @@ pub fn convert_battery_harvest(
         .enumerate()
         .map(|(itx, battery_harvest)| ConvertedBatteryData {
             battery_name: format!("Battery {}", itx),
-            charge_percentage: format!("{}%", battery_harvest.charge_percent),
+            charge_percentage: battery_harvest.charge_percent,
             watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
             duration_until_empty: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
                 let time = chrono::Duration::seconds(secs_till_empty);

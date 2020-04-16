@@ -1,6 +1,9 @@
 use std::cmp::max;
 
-use crate::{app::App, canvas::Painter};
+use crate::{
+    app::App,
+    canvas::{drawing_utils::calculate_basic_use_bars, Painter},
+};
 
 use tui::{
     backend::Backend,
@@ -58,8 +61,19 @@ impl BatteryDisplayWidget for Painter {
                 .battery_data
                 .get(battery_widget_state.currently_selected_battery_index)
             {
+                // Assuming a 50/50 split in width
+                let bar_length = max(0, (draw_loc.width as i64 - 4) / 2) as usize;
+                let charge_percentage = battery_details.charge_percentage;
+                let num_bars = calculate_basic_use_bars(charge_percentage, bar_length);
+                let bars = format!(
+                    "[{}{}{:3.0}%]\n",
+                    "|".repeat(num_bars),
+                    " ".repeat(bar_length - num_bars),
+                    charge_percentage,
+                );
+
                 let battery_items = vec![
-                    vec!["Charge Percent", &battery_details.charge_percentage],
+                    vec!["Charge %", &bars],
                     vec!["Consumption", &battery_details.watt_consumption],
                     if let Some(duration_until_full) = &battery_details.duration_until_full {
                         vec!["Time to full", duration_until_full]

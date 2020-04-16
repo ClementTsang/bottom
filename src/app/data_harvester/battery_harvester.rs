@@ -5,7 +5,7 @@ use battery::{
 
 #[derive(Debug, Clone)]
 pub struct BatteryHarvest {
-    pub charge_percent: u64,
+    pub charge_percent: f64,
     pub secs_until_full: Option<i64>,
     pub secs_until_empty: Option<i64>,
     pub power_consumption_rate_watts: f64,
@@ -31,7 +31,7 @@ pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<Ba
                     secs_until_empty: convert_optional_time_to_optional_seconds(
                         battery.time_to_empty(),
                     ),
-                    charge_percent: f64::from(battery.state_of_charge().get::<percent>()) as u64,
+                    charge_percent: f64::from(battery.state_of_charge().get::<percent>()),
                     power_consumption_rate_watts: f64::from(battery.energy_rate().get::<watt>()),
                 })
             } else {

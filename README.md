@@ -224,7 +224,7 @@ As yet _another_ process/system visualization and management application, bottom
 
 - Process management (process killing _is_ all you need, right?)
 
-- Battery statistics
+- Battery statistics (must be enabled manually by using a [layout](#layout))
 
 It also aims to be:
 
@@ -361,7 +361,7 @@ The following `type` values are supported:
 | `"temp", "temperature"` | Temperature table |
 | `"disk"` | Disk table |
 | `"empty"` | An empty space |
-| `"battery", "batt"` | Battery statistics |
+| `"batt", "battery"` | Battery statistics |
 
 Each component of the layout accepts a `ratio` value. If this is not set, it defaults to 1.
 
