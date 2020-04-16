@@ -97,7 +97,6 @@ pub fn build_app(
     let mut initial_widget_id: u64 = default_widget_id;
     let mut initial_widget_type = Proc;
     let is_custom_layout = config.row.is_some();
-
     let mut used_widget_set = HashSet::new();
 
     for row in &widget_layout.rows {
@@ -275,9 +274,16 @@ pub fn get_widget_layout(
                 .collect::<error::Result<Vec<_>>>()?,
             total_row_height_ratio: total_height_ratio,
         };
-        ret_bottom_layout.get_movement_mappings();
 
-        ret_bottom_layout
+        // Confirm that we have at least ONE widget - if we don't, go back to default!
+        if iter_id > 0 {
+            ret_bottom_layout.get_movement_mappings();
+            ret_bottom_layout
+        } else {
+            return Err(error::BottomError::ConfigError(
+                "Invalid layout - please have at least one widget.".to_string(),
+            ));
+        }
     } else {
         default_widget_id = DEFAULT_WIDGET_ID;
         BottomLayout::init_default(left_legend)
