@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#55](https://github.com/ClementTsang/bottom/issues/55): Battery monitoring widget
 
+- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process
+
 ### Changes
+
+- Changed default colours for highlighted borders and table headers to cyan - this is mostly to deal with Powershell colour conflicts.
 
 - Updated the widget type keyword list to accept the following keywords as existing types:
   - `"memory"`
@@ -23,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `"temperature"`
 
 ### Bug Fixes
+
+- Fixed `dd` not working on non-first entries.
 
 - Fixed bug where a single empty row as a layout would crash without a proper warning.
   The behaviour now errors out with a more helpful message.
