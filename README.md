@@ -9,7 +9,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 
 ![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
-This documentation is relevant to version 0.3.0. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ version.
+**Note**: This documentation is relevant to version 0.4.0 and may refer to in-development features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
 ## Table of Contents
 
@@ -41,15 +41,16 @@ This documentation is relevant to version 0.3.0. Please refer to [release branch
     - [Layout](#layout)
   - [Compatibility](#compatibility)
 - [Contribution](#contribution)
+- [Bug reports and feature requests](#bug-reports-and-feature-requests)
 - [Thanks](#thanks)
 
 ## Installation
 
-Note that binaries are built on the stable version of Rust, and I mainly test and release for 64-bit.
+Note that binaries are built on the stable version of Rust, and I mainly test and release for 64-bit. As such, support beyond these is not guaranteed.
 
 ### Manual
 
-A few ways to go about doing this:
+There are a few ways to go about doing this:
 
 ```bash
 # Clone and install all via Cargo
@@ -107,6 +108,8 @@ scoop install bottom
 ```
 
 ### Chocolatey
+
+Choco package located [here](https://chocolatey.org/packages/bottom).
 
 ```bash
 choco install bottom
@@ -243,13 +246,13 @@ searching by PID and by process name.
 
 ### Zoom
 
-Using the `+`/`-` keys or the scroll wheel will move adjust the current time intervals of the currently selected widget.
+Using the `+`/`-` keys or the scroll wheel will move adjust the current time intervals of the currently selected widget, and `=` to reset the zoom levels to the default.
 Widgets can hold different time intervals independently. These time intervals can be adjusted using the
 `-t`/`--default_time_value` and `-d`/`--time_delta` options, or their corresponding config options.
 
 ### Maximizing
 
-Only care about the CPU widget right now? Then go to the widget and hit `Enter` to make it take
+Only care about one specific widget? You can go to that widget and hit `Enter` to make that widget take
 up the entire drawing area.
 
 ### Basic mode
@@ -430,6 +433,11 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+## Bug reports and feature requests
+
+Feel free to submit feature ideas and bug reports on [GitHub](https://github.com/ClementTsang/bottom/issues).
+Please try to follow the given issue templates.
 
 ## Thanks
 

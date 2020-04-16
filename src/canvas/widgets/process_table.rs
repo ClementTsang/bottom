@@ -119,6 +119,7 @@ impl ProcessTableWidget for Painter {
                         process.write_per_sec.to_string(),
                         process.total_read.to_string(),
                         process.total_write.to_string(),
+                        process.process_states.to_string(),
                     ];
                     Row::StyledData(
                         stringified_process_vec.into_iter(),
@@ -155,6 +156,7 @@ impl ProcessTableWidget for Painter {
                 let wps = "W/s".to_string();
                 let total_read = "Read".to_string();
                 let total_write = "Write".to_string();
+                let process_state = "State".to_string();
 
                 let direction_val = if proc_widget_state.process_sorting_reverse {
                     "▼".to_string()
@@ -178,6 +180,7 @@ impl ProcessTableWidget for Painter {
                     wps,
                     total_read,
                     total_write,
+                    process_state,
                 ];
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
@@ -186,7 +189,7 @@ impl ProcessTableWidget for Painter {
 
                 // Calculate widths
                 let width = f64::from(draw_loc.width);
-                let width_ratios = [0.1, 0.3, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
+                let width_ratios = [0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
                 let variable_intrinsic_results = get_variable_intrinsic_widths(
                     width as u16,
                     &width_ratios,

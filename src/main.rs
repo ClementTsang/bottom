@@ -654,6 +654,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                         write_per_sec,
                         total_read,
                         total_write,
+                        process_states: process.process_state.clone(),
                     });
                 }
 

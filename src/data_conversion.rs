@@ -44,6 +44,7 @@ pub struct ConvertedProcessData {
     pub write_per_sec: String,
     pub total_read: String,
     pub total_write: String,
+    pub process_states: String,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -56,6 +57,7 @@ pub struct SingleProcessData {
     pub write_per_sec: u64,
     pub total_read: u64,
     pub total_write: u64,
+    pub process_state: String,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -381,6 +383,7 @@ pub fn convert_process_data(
         (*entry).write_per_sec += process.write_bytes_per_sec;
         (*entry).total_read += process.total_read_bytes;
         (*entry).total_write += process.total_write_bytes;
+        (*entry).process_state.push(process.process_state_char);
 
         single_list.insert(process.pid, process.clone());
     }
@@ -412,6 +415,7 @@ pub fn convert_process_data(
                 write_per_sec,
                 total_read,
                 total_write,
+                process_states: p.process_state,
             }
         })
         .collect::<Vec<_>>();
