@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#58](https://github.com/ClementTsang/bottom/issues/58): I/O stats per process
 
+- [#55](https://github.com/ClementTsang/bottom/issues/55): Battery monitoring widget
+
 ## [0.3.0] - 2020-04-07
 
 ### Features

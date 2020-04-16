@@ -452,7 +452,6 @@ impl DiskState {
         DiskState { widget_states }
     }
 }
-
 pub struct BasicTableWidgetState {
     // Since this is intended (currently) to only be used for ONE widget, that's
     // how it's going to be written.  If we want to allow for multiple of these,
@@ -460,6 +459,21 @@ pub struct BasicTableWidgetState {
     pub currently_displayed_widget_type: BottomWidgetType,
     pub currently_displayed_widget_id: u64,
     pub widget_id: i64,
+}
+
+#[derive(Default)]
+pub struct BatteryWidgetState {
+    pub currently_selected_battery_index: usize,
+}
+
+pub struct BatteryState {
+    pub widget_states: HashMap<u64, BatteryWidgetState>,
+}
+
+impl BatteryState {
+    pub fn init(widget_states: HashMap<u64, BatteryWidgetState>) -> Self {
+        BatteryState { widget_states }
+    }
 }
 
 #[derive(TypedBuilder)]
@@ -506,6 +520,7 @@ pub struct App {
     pub proc_state: ProcState,
     pub temp_state: TempState,
     pub disk_state: DiskState,
+    pub battery_state: BatteryState,
 
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
 

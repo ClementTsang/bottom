@@ -1,4 +1,5 @@
 pub mod basic_table_arrows;
+pub mod battery_display;
 pub mod cpu_basic;
 pub mod cpu_graph;
 pub mod disk_table;
@@ -10,6 +11,7 @@ pub mod process_table;
 pub mod temp_table;
 
 pub use basic_table_arrows::BasicTableArrows;
+pub use battery_display::BatteryDisplayWidget;
 pub use cpu_basic::CpuBasicWidget;
 pub use cpu_graph::CpuGraphWidget;
 pub use disk_table::DiskTableWidget;

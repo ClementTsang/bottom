@@ -15,7 +15,13 @@ use crate::{
 type Point = (f64, f64);
 
 #[derive(Default, Debug)]
-pub struct ConvertedBatteryData {}
+pub struct ConvertedBatteryData {
+    pub battery_name: String,
+    pub charge_percentage: String,
+    pub watt_consumption: String,
+    pub duration_until_full: Option<String>,
+    pub duration_until_empty: Option<String>,
+}
 
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
@@ -419,6 +425,39 @@ pub fn convert_battery_harvest(
     current_data
         .battery_harvest
         .iter()
-        .map(|battery_harvest| ConvertedBatteryData {})
+        .enumerate()
+        .map(|(itx, battery_harvest)| ConvertedBatteryData {
+            battery_name: format!("Battery {}", itx),
+            charge_percentage: format!("{}%", battery_harvest.charge_percent),
+            watt_consumption: format!("{}W", battery_harvest.power_consumption_rate_watts),
+            duration_until_empty: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
+                let time = chrono::Duration::seconds(secs_till_empty);
+                Some(
+                    format!(
+                        "{} hours, {} minutes, {} seconds",
+                        time.num_hours(),
+                        time.num_minutes() - time.num_hours() * 60,
+                        time.num_seconds() - time.num_minutes() * 60
+                    )
+                    .into(),
+                )
+            } else {
+                None
+            },
+            duration_until_full: if let Some(secs_till_full) = battery_harvest.secs_until_full {
+                let time = chrono::Duration::seconds(secs_till_full);
+                Some(
+                    format!(
+                        "{} hours, {} minutes, {} seconds",
+                        time.num_hours(),
+                        time.num_minutes() - time.num_hours() * 60,
+                        time.num_seconds() - time.num_minutes() * 60
+                    )
+                    .into(),
+                )
+            } else {
+                None
+            },
+        })
         .collect()
 }

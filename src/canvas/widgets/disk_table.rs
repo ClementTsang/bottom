@@ -8,7 +8,7 @@ use tui::{
 };
 
 use crate::{
-    app::{self},
+    app,
     canvas::{
         drawing_utils::{get_start_position, get_variable_intrinsic_widths},
         Painter,

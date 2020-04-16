@@ -231,7 +231,8 @@ fn main() -> error::Result<()> {
 
                         // Battery
                         if app.used_widgets.use_battery {
-                            convert_battery_harvest(&app.data_collection);
+                            app.canvas_data.battery_data =
+                                convert_battery_harvest(&app.data_collection);
                         }
                     }
                 }
