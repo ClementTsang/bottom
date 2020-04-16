@@ -51,10 +51,12 @@ impl Default for CanvasColours {
             widget_title_style: Style::default().fg(text_colour),
             graph_style: Style::default().fg(text_colour),
             battery_bar_styles: vec![
-                Style::default().fg(Color::Green),
-                Style::default().fg(Color::Green),
-                Style::default().fg(Color::Yellow),
                 Style::default().fg(Color::Red),
+                Style::default().fg(Color::Yellow),
+                Style::default().fg(Color::Yellow),
+                Style::default().fg(Color::Green),
+                Style::default().fg(Color::Green),
+                Style::default().fg(Color::Green),
             ],
         }
     }
@@ -160,12 +162,18 @@ impl CanvasColours {
     }
 
     pub fn set_battery_colours(&mut self, colours: &[String]) -> error::Result<()> {
-        let generated_colours: Result<Vec<_>, _> = colours
-            .iter()
-            .map(|colour| get_style_from_config(colour))
-            .collect();
+        if colours.is_empty() {
+            Err(error::BottomError::ConfigError(
+                "Battery colour list must have at least one colour!".to_string(),
+            ))
+        } else {
+            let generated_colours: Result<Vec<_>, _> = colours
+                .iter()
+                .map(|colour| get_style_from_config(colour))
+                .collect();
 
-        self.battery_bar_styles = generated_colours?;
-        Ok(())
+            self.battery_bar_styles = generated_colours?;
+            Ok(())
+        }
     }
 }

@@ -199,6 +199,9 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # Represents the colour of the lines and text of the graph.
 #graph_color="Gray"
 
+# Represents the colours of the battery based on charge
+#battery_color = ["red", "yellow", "yellow", "green", "green", "green"]
+
 ##########################################################
 
 # Layout - layouts follow a pattern like this:
