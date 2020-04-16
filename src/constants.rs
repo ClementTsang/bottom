@@ -200,7 +200,7 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #graph_color="Gray"
 
 # Represents the colours of the battery based on charge
-#battery_color = ["red", "yellow", "yellow", "green", "green", "green"]
+#battery_colors = ["red", "yellow", "yellow", "green", "green", "green"]
 
 ##########################################################
 
