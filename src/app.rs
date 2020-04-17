@@ -452,7 +452,6 @@ impl DiskState {
         DiskState { widget_states }
     }
 }
-
 pub struct BasicTableWidgetState {
     // Since this is intended (currently) to only be used for ONE widget, that's
     // how it's going to be written.  If we want to allow for multiple of these,
@@ -460,6 +459,21 @@ pub struct BasicTableWidgetState {
     pub currently_displayed_widget_type: BottomWidgetType,
     pub currently_displayed_widget_id: u64,
     pub widget_id: i64,
+}
+
+#[derive(Default)]
+pub struct BatteryWidgetState {
+    pub currently_selected_battery_index: usize,
+}
+
+pub struct BatteryState {
+    pub widget_states: HashMap<u64, BatteryWidgetState>,
+}
+
+impl BatteryState {
+    pub fn init(widget_states: HashMap<u64, BatteryWidgetState>) -> Self {
+        BatteryState { widget_states }
+    }
 }
 
 #[derive(TypedBuilder)]
@@ -506,6 +520,7 @@ pub struct App {
     pub proc_state: ProcState,
     pub temp_state: TempState,
     pub disk_state: DiskState,
+    pub battery_state: BatteryState,
 
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
 
@@ -1089,33 +1104,50 @@ impl App {
 
     pub fn on_left_key(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-                let is_in_search_widget = self.is_in_search_widget();
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&(self.current_widget.widget_id - 1))
-                {
-                    if is_in_search_widget {
-                        let prev_cursor = proc_widget_state.get_cursor_position();
-                        proc_widget_state.search_walk_back(proc_widget_state.get_cursor_position());
-                        if proc_widget_state.get_cursor_position() < prev_cursor {
-                            let str_slice = &proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .current_search_query
-                                [proc_widget_state.get_cursor_position()..prev_cursor];
+            match self.current_widget.widget_type {
+                BottomWidgetType::ProcSearch => {
+                    let is_in_search_widget = self.is_in_search_widget();
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
+                    {
+                        if is_in_search_widget {
+                            let prev_cursor = proc_widget_state.get_cursor_position();
                             proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .char_cursor_position -= UnicodeWidthStr::width(str_slice);
-                            proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .cursor_direction = CursorDirection::LEFT;
+                                .search_walk_back(proc_widget_state.get_cursor_position());
+                            if proc_widget_state.get_cursor_position() < prev_cursor {
+                                let str_slice = &proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .current_search_query
+                                    [proc_widget_state.get_cursor_position()..prev_cursor];
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .char_cursor_position -= UnicodeWidthStr::width(str_slice);
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .cursor_direction = CursorDirection::LEFT;
+                            }
                         }
                     }
                 }
+                BottomWidgetType::Battery => {
+                    if !self.canvas_data.battery_data.is_empty() {
+                        if let Some(battery_widget_state) = self
+                            .battery_state
+                            .widget_states
+                            .get_mut(&self.current_widget.widget_id)
+                        {
+                            if battery_widget_state.currently_selected_battery_index > 0 {
+                                battery_widget_state.currently_selected_battery_index -= 1;
+                            }
+                        }
+                    }
+                }
+                _ => {}
             }
         } else if self.delete_dialog_state.is_showing_dd && !self.delete_dialog_state.is_on_yes {
             self.delete_dialog_state.is_on_yes = true;
@@ -1124,34 +1156,53 @@ impl App {
 
     pub fn on_right_key(&mut self) {
         if !self.is_in_dialog() {
-            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-                let is_in_search_widget = self.is_in_search_widget();
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&(self.current_widget.widget_id - 1))
-                {
-                    if is_in_search_widget {
-                        let prev_cursor = proc_widget_state.get_cursor_position();
-                        proc_widget_state
-                            .search_walk_forward(proc_widget_state.get_cursor_position());
-                        if proc_widget_state.get_cursor_position() > prev_cursor {
-                            let str_slice = &proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .current_search_query
-                                [prev_cursor..proc_widget_state.get_cursor_position()];
+            match self.current_widget.widget_type {
+                BottomWidgetType::ProcSearch => {
+                    let is_in_search_widget = self.is_in_search_widget();
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
+                    {
+                        if is_in_search_widget {
+                            let prev_cursor = proc_widget_state.get_cursor_position();
                             proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .char_cursor_position += UnicodeWidthStr::width(str_slice);
-                            proc_widget_state
-                                .process_search_state
-                                .search_state
-                                .cursor_direction = CursorDirection::RIGHT;
+                                .search_walk_forward(proc_widget_state.get_cursor_position());
+                            if proc_widget_state.get_cursor_position() > prev_cursor {
+                                let str_slice = &proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .current_search_query
+                                    [prev_cursor..proc_widget_state.get_cursor_position()];
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .char_cursor_position += UnicodeWidthStr::width(str_slice);
+                                proc_widget_state
+                                    .process_search_state
+                                    .search_state
+                                    .cursor_direction = CursorDirection::RIGHT;
+                            }
                         }
                     }
                 }
+                BottomWidgetType::Battery => {
+                    if !self.canvas_data.battery_data.is_empty() {
+                        let battery_count = self.canvas_data.battery_data.len();
+                        if let Some(battery_widget_state) = self
+                            .battery_state
+                            .widget_states
+                            .get_mut(&self.current_widget.widget_id)
+                        {
+                            if battery_widget_state.currently_selected_battery_index
+                                < battery_count - 1
+                            {
+                                battery_widget_state.currently_selected_battery_index += 1;
+                            }
+                        }
+                    }
+                }
+                _ => {}
             }
         } else if self.delete_dialog_state.is_showing_dd && self.delete_dialog_state.is_on_yes {
             self.delete_dialog_state.is_on_yes = false;

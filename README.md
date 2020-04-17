@@ -29,6 +29,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [CPU bindings](#cpu-bindings)
   - [Process bindings](#process-bindings)
   - [Process search bindings](#process-search-bindings)
+  - [Battery bindings](#battery-bindings)
 - [Features](#features)
   - [Process filtering](#process-filtering)
   - [Zoom](#zoom)
@@ -38,6 +39,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Config flags](#config-flags)
     - [Theming](#theming)
     - [Layout](#layout)
+  - [Battery](#battery)
   - [Compatibility](#compatibility)
 - [Contribution](#contribution)
 - [Bug reports and feature requests](#bug-reports-and-feature-requests)
@@ -202,6 +204,15 @@ Run using `btm`.
 | `Alt-c`/`F1` | Toggle matching case                         |
 | `Alt-w`/`F2` | Toggle matching the entire word              |
 | `Alt-r`/`F3` | Toggle using regex                           |
+| `Left`       | Move cursor left                             |
+| `Right`      | Move cursor right                            |
+
+#### Battery bindings
+
+|         |                            |
+| ------- | -------------------------- |
+| `Left`  | Go to the next battery     |
+| `Right` | Go to the previous battery |
 
 ## Features
 
@@ -289,23 +300,24 @@ The config file can be used to set custom colours for parts of the application u
 
 Supported named colours are one of the following strings: `Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, LightYellow, LightBlue, LightMagenta, LightCyan, White`.
 
-| Labels                          | Details                                        | Example                                                 |
-| ------------------------------- | ---------------------------------------------- | ------------------------------------------------------- |
-| Table header colours            | Colour of table headers                        | `table_header_color="255, 255, 255"`                    |
-| CPU colour per core             | Colour of each core. Read in order.            | `cpu_core_colors=["#ffffff", "white", "255, 255, 255"]` |
-| Average CPU colour              | The average CPU color                          | `avg_cpu_color="White"`                                 |
-| RAM                             | The colour RAM will use                        | `ram_color="#ffffff"`                                   |
-| SWAP                            | The colour SWAP will use                       | `swap_color="#ffffff"`                                  |
-| RX                              | The colour rx will use                         | `rx_color="#ffffff"`                                    |
-| TX                              | The colour tx will use                         | `tx_color="#ffffff"`                                    |
-| Widget title colour             | The colour of the label each widget has        | `widget_title_color="#ffffff"`                          |
-| Border colour                   | The colour of the border of unselected widgets | `border_color="#ffffff"`                                |
-| Selected border colour          | The colour of the border of selected widgets   | `highlighted_border_color="#ffffff"`                    |
-| Text colour                     | The colour of most text                        | `text_color="#ffffff"`                                  |
-| Graph colour                    | The colour of the lines and text of the graph  | `graph_color="#ffffff"`                                 |
-| Cursor colour                   | The cursor's colour                            | `cursor_color="#ffffff"`                                |
-| Selected text colour            | The colour of text that is selected            | `scroll_entry_text_color="#ffffff"`                     |
-| Selected text background colour | The background colour of text that is selected | `scroll_entry_bg_color="#ffffff"`                       |
+| Labels                          | Details                                               | Example                                                 |
+| ------------------------------- | ----------------------------------------------------- | ------------------------------------------------------- |
+| Table header colours            | Colour of table headers                               | `table_header_color="255, 255, 255"`                    |
+| CPU colour per core             | Colour of each core. Read in order.                   | `cpu_core_colors=["#ffffff", "white", "255, 255, 255"]` |
+| Average CPU colour              | The average CPU color                                 | `avg_cpu_color="White"`                                 |
+| RAM                             | The colour RAM will use                               | `ram_color="#ffffff"`                                   |
+| SWAP                            | The colour SWAP will use                              | `swap_color="#ffffff"`                                  |
+| RX                              | The colour rx will use                                | `rx_color="#ffffff"`                                    |
+| TX                              | The colour tx will use                                | `tx_color="#ffffff"`                                    |
+| Widget title colour             | The colour of the label each widget has               | `widget_title_color="#ffffff"`                          |
+| Border colour                   | The colour of the border of unselected widgets        | `border_color="#ffffff"`                                |
+| Selected border colour          | The colour of the border of selected widgets          | `highlighted_border_color="#ffffff"`                    |
+| Text colour                     | The colour of most text                               | `text_color="#ffffff"`                                  |
+| Graph colour                    | The colour of the lines and text of the graph         | `graph_color="#ffffff"`                                 |
+| Cursor colour                   | The cursor's colour                                   | `cursor_color="#ffffff"`                                |
+| Selected text colour            | The colour of text that is selected                   | `scroll_entry_text_color="#ffffff"`                     |
+| Selected text background colour | The background colour of text that is selected        | `scroll_entry_bg_color="#ffffff"`                       |
+| Battery bar colours             | Colour used is based on percentage and no. of colours | `battery_colours=["green", "yellow", "red"]`            |
 
 #### Layout
 
@@ -345,13 +357,14 @@ represents a _widget_. A widget is represented by having a `type` field set to a
 The following `type` values are supported:
 | | |
 |---------|--------------------------|
-| `cpu` | CPU chart and legend |
-| `mem` | Memory chart |
-| `proc` | Process table and search |
-| `net` | Network chart and legend |
-| `temp` | Temperature table |
-| `disk` | Disk table |
-| `empty` | An empty space |
+| `"cpu"` | CPU chart and legend |
+| `"mem", "memory"` | Memory chart |
+| `"net", "network"` | Network chart and legend |
+| `"proc", "process", "processes"` | Process table and search |
+| `"temp", "temperature"` | Temperature table |
+| `"disk"` | Disk table |
+| `"empty"` | An empty space |
+| `"batt", "battery"` | Battery statistics |
 
 Each component of the layout accepts a `ratio` value. If this is not set, it defaults to 1.
 
@@ -389,15 +402,45 @@ For an example, look at the [default config](./sample_configs/default_config.tom
 and get the following CPU donut:
 ![CPU donut](./assets/cpu_layout.png)
 
+### Battery
+
+You can get battery statistics (charge, time to fill/discharge, and consumption in watts) via the battery widget.
+Since this is only useful for devices like laptops, it is off by default. Currently, the only way to use it is to set it
+as a widget via [layouts](#layout).
+
+So with this slightly silly layout:
+
+```toml
+[[row]]
+  ratio=1
+  [[row.child]]
+  type="batt"
+[[row]]
+    ratio=2
+    [[row.child]]
+      ratio=4
+      type="batt"
+    [[row.child]]
+      ratio=3
+      [[row.child.child]]
+        type="cpu"
+      [[row.child.child]]
+        type="batt"
+```
+
+You get this:
+
+![Battery example](assets/battery.png)
+
 ### Compatibility
 
 The current compatibility of widgets with operating systems from personal testing:
 
-| OS      | CPU | Memory | Disks | Temperature | Processes/Search | Networks |
-| ------- | --- | ------ | ----- | ----------- | ---------------- | -------- |
-| Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
-| Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        |
-| macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        |
+| OS      | CPU | Memory | Disks | Temperature | Processes/Search | Networks | Battery                                      |
+| ------- | --- | ------ | ----- | ----------- | ---------------- | -------- | -------------------------------------------- |
+| Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
+| Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        | ✓ (seems to have issues with dual batteries) |
+| macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
 
 ## Contribution
 

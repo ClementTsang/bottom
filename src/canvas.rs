@@ -21,7 +21,7 @@ use crate::{
         App,
     },
     constants::*,
-    data_conversion::{ConvertedCpuData, ConvertedProcessData},
+    data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
     utils::error,
 };
 
@@ -51,6 +51,7 @@ pub struct DisplayableData {
     pub mem_data: Vec<(f64, f64)>,
     pub swap_data: Vec<(f64, f64)>,
     pub cpu_data: Vec<ConvertedCpuData>,
+    pub battery_data: Vec<ConvertedBatteryData>,
 }
 
 /// Handles the canvas' state.  TODO: [OPT] implement this.
@@ -200,20 +201,6 @@ impl Painter {
             );
         }
     }
-
-    // pub fn draw_specific_table<B: Backend>(
-    //     &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
-    //     widget_selected: WidgetPosition,
-    // ) {
-    //     match widget_selected {
-    //         WidgetPosition::Process | WidgetPosition::ProcessSearch => {
-    //             self.draw_process_and_search(f, app_state, draw_loc, draw_border)
-    //         }
-    //         WidgetPosition::Temp => self.draw_temp_table(f, app_state, draw_loc, draw_border),
-    //         WidgetPosition::Disk => self.draw_disk_table(f, app_state, draw_loc, draw_border),
-    //         _ => {}
-    //     }
-    // }
 
     // TODO: [FEATURE] Auto-resizing dialog sizes.
     pub fn draw_data<B: Backend>(
@@ -374,6 +361,12 @@ impl Painter {
                         rect[0],
                         true,
                         app_state.current_widget.widget_id - 1,
+                    ),
+                    Battery => self.draw_battery_display(
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
                     ),
                     _ => {}
                 }
@@ -564,6 +557,9 @@ impl Painter {
                     true,
                     widget.widget_id,
                 ),
+                Battery => {
+                    self.draw_battery_display(f, app_state, *widget_draw_loc, widget.widget_id)
+                }
                 _ => {}
             }
         }

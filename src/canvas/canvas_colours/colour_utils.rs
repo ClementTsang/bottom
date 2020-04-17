@@ -186,7 +186,7 @@ fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
     Err(error::BottomError::GenericError(format!(
         "Color {} is not a supported config colour.  bottom supports the following named colours as strings: \
 		Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, \
-		LightYellow, LightBlue,	LightMagenta, LightCyan, White",
+		LightYellow, LightBlue, LightMagenta, LightCyan, White",
         color_name
     )))
 }

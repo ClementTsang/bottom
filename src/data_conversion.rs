@@ -15,6 +15,15 @@ use crate::{
 type Point = (f64, f64);
 
 #[derive(Default, Debug)]
+pub struct ConvertedBatteryData {
+    pub battery_name: String,
+    pub charge_percentage: f64,
+    pub watt_consumption: String,
+    pub duration_until_full: Option<String>,
+    pub duration_until_empty: Option<String>,
+}
+
+#[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
     pub rx: Vec<Point>,
     pub tx: Vec<Point>,
@@ -412,4 +421,51 @@ pub fn convert_process_data(
         .collect::<Vec<_>>();
 
     (single_list, grouped_list)
+}
+
+pub fn convert_battery_harvest(
+    current_data: &data_farmer::DataCollection,
+) -> Vec<ConvertedBatteryData> {
+    current_data
+        .battery_harvest
+        .iter()
+        .enumerate()
+        .map(|(itx, battery_harvest)| ConvertedBatteryData {
+            battery_name: format!("Battery {}", itx),
+            charge_percentage: battery_harvest.charge_percent,
+            watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
+            duration_until_empty: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
+                let time = chrono::Duration::seconds(secs_till_empty);
+                let num_minutes = time.num_minutes() - time.num_hours() * 60;
+                let num_seconds = time.num_seconds() - time.num_minutes() * 60;
+                Some(format!(
+                    "{} hour{}, {} minute{}, {} second{}",
+                    time.num_hours(),
+                    if time.num_hours() == 1 { "" } else { "s" },
+                    num_minutes,
+                    if num_minutes == 1 { "" } else { "s" },
+                    num_seconds,
+                    if num_seconds == 1 { "" } else { "s" },
+                ))
+            } else {
+                None
+            },
+            duration_until_full: if let Some(secs_till_full) = battery_harvest.secs_until_full {
+                let time = chrono::Duration::seconds(secs_till_full);
+                let num_minutes = time.num_minutes() - time.num_hours() * 60;
+                let num_seconds = time.num_seconds() - time.num_minutes() * 60;
+                Some(format!(
+                    "{} hour{}, {} minute{}, {} second{}",
+                    time.num_hours(),
+                    if time.num_hours() == 1 { "" } else { "s" },
+                    num_minutes,
+                    if num_minutes == 1 { "" } else { "s" },
+                    num_seconds,
+                    if num_seconds == 1 { "" } else { "s" },
+                ))
+            } else {
+                None
+            },
+        })
+        .collect()
 }

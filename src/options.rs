@@ -3,11 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
 use crate::{
-    app::{
-        data_harvester, layout_manager::*, App, AppConfigFields, BasicTableWidgetState, CpuState,
-        CpuWidgetState, DiskState, DiskWidgetState, MemState, MemWidgetState, NetState,
-        NetWidgetState, ProcState, ProcWidgetState, TempState, TempWidgetState,
-    },
+    app::{layout_manager::*, *},
     constants::*,
     utils::error::{self, BottomError},
 };
@@ -65,12 +61,14 @@ pub struct ConfigColours {
     pub selected_bg_color: Option<String>,
     pub widget_title_color: Option<String>,
     pub graph_color: Option<String>,
+    pub battery_colors: Option<Vec<String>>,
 }
 
 pub fn build_app(
     matches: &clap::ArgMatches<'static>, config: &Config, widget_layout: &BottomLayout,
     default_widget_id: u64,
 ) -> error::Result<App> {
+    use BottomWidgetType::*;
     let autohide_time = get_autohide_time(&matches, &config);
     let default_time_value = get_default_time_value(&matches, &config)?;
     let use_basic_mode = get_use_basic_mode(&matches, &config);
@@ -88,6 +86,7 @@ pub fn build_app(
     let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
     let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
     let mut disk_state_map: HashMap<u64, DiskWidgetState> = HashMap::new();
+    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
 
     let autohide_timer = if autohide_time {
         Some(Instant::now())
@@ -97,9 +96,8 @@ pub fn build_app(
 
     let (default_widget_type_option, _) = get_default_widget_and_count(matches, config)?;
     let mut initial_widget_id: u64 = default_widget_id;
-    let mut initial_widget_type = BottomWidgetType::Proc;
+    let mut initial_widget_type = Proc;
     let is_custom_layout = config.row.is_some();
-
     let mut used_widget_set = HashSet::new();
 
     for row in &widget_layout.rows {
@@ -110,22 +108,22 @@ pub fn build_app(
                     if let Some(default_widget_type) = &default_widget_type_option {
                         if !is_custom_layout || use_basic_mode {
                             match widget.widget_type {
-                                BottomWidgetType::BasicCpu => {
-                                    if let BottomWidgetType::Cpu = *default_widget_type {
+                                BasicCpu => {
+                                    if let Cpu = *default_widget_type {
                                         initial_widget_id = widget.widget_id;
-                                        initial_widget_type = BottomWidgetType::Cpu;
+                                        initial_widget_type = Cpu;
                                     }
                                 }
-                                BottomWidgetType::BasicMem => {
-                                    if let BottomWidgetType::Mem = *default_widget_type {
+                                BasicMem => {
+                                    if let Mem = *default_widget_type {
                                         initial_widget_id = widget.widget_id;
-                                        initial_widget_type = BottomWidgetType::Cpu;
+                                        initial_widget_type = Cpu;
                                     }
                                 }
-                                BottomWidgetType::BasicNet => {
-                                    if let BottomWidgetType::Net = *default_widget_type {
+                                BasicNet => {
+                                    if let Net = *default_widget_type {
                                         initial_widget_id = widget.widget_id;
-                                        initial_widget_type = BottomWidgetType::Cpu;
+                                        initial_widget_type = Cpu;
                                     }
                                 }
                                 _ => {
@@ -141,25 +139,25 @@ pub fn build_app(
                     used_widget_set.insert(widget.widget_type.clone());
 
                     match widget.widget_type {
-                        BottomWidgetType::Cpu => {
+                        Cpu => {
                             cpu_state_map.insert(
                                 widget.widget_id,
                                 CpuWidgetState::init(default_time_value, autohide_timer),
                             );
                         }
-                        BottomWidgetType::Mem => {
+                        Mem => {
                             mem_state_map.insert(
                                 widget.widget_id,
                                 MemWidgetState::init(default_time_value, autohide_timer),
                             );
                         }
-                        BottomWidgetType::Net => {
+                        Net => {
                             net_state_map.insert(
                                 widget.widget_id,
                                 NetWidgetState::init(default_time_value, autohide_timer),
                             );
                         }
-                        BottomWidgetType::Proc => {
+                        Proc => {
                             proc_state_map.insert(
                                 widget.widget_id,
                                 ProcWidgetState::init(
@@ -170,13 +168,18 @@ pub fn build_app(
                                 ),
                             );
                         }
-                        BottomWidgetType::Disk => {
+                        Disk => {
                             disk_state_map.insert(widget.widget_id, DiskWidgetState::init());
                         }
-                        BottomWidgetType::Temp => {
+                        Temp => {
                             temp_state_map.insert(widget.widget_id, TempWidgetState::init());
                         }
-                        _ => {}
+                        Battery => {
+                            battery_state_map
+                                .insert(widget.widget_id, BatteryWidgetState::default());
+                        }
+                        Empty | BasicCpu | BasicMem | BasicNet | BasicTables | ProcSearch
+                        | CpuLegend => {}
                     }
                 }
             }
@@ -185,15 +188,13 @@ pub fn build_app(
 
     let basic_table_widget_state = if use_basic_mode {
         Some(match initial_widget_type {
-            BottomWidgetType::Proc | BottomWidgetType::Disk | BottomWidgetType::Temp => {
-                BasicTableWidgetState {
-                    currently_displayed_widget_type: initial_widget_type,
-                    currently_displayed_widget_id: initial_widget_id,
-                    widget_id: 100,
-                }
-            }
+            Proc | Disk | Temp => BasicTableWidgetState {
+                currently_displayed_widget_type: initial_widget_type,
+                currently_displayed_widget_id: initial_widget_id,
+                widget_id: 100,
+            },
             _ => BasicTableWidgetState {
-                currently_displayed_widget_type: BottomWidgetType::Proc,
+                currently_displayed_widget_type: Proc,
                 currently_displayed_widget_id: DEFAULT_WIDGET_ID,
                 widget_id: 100,
             },
@@ -218,15 +219,13 @@ pub fn build_app(
     };
 
     let used_widgets = UsedWidgets {
-        use_cpu: used_widget_set.get(&BottomWidgetType::Cpu).is_some()
-            || used_widget_set.get(&BottomWidgetType::BasicCpu).is_some(),
-        use_mem: used_widget_set.get(&BottomWidgetType::Mem).is_some()
-            || used_widget_set.get(&BottomWidgetType::BasicMem).is_some(),
-        use_net: used_widget_set.get(&BottomWidgetType::Net).is_some()
-            || used_widget_set.get(&BottomWidgetType::BasicNet).is_some(),
-        use_proc: used_widget_set.get(&BottomWidgetType::Proc).is_some(),
-        use_disk: used_widget_set.get(&BottomWidgetType::Disk).is_some(),
-        use_temp: used_widget_set.get(&BottomWidgetType::Temp).is_some(),
+        use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
+        use_mem: used_widget_set.get(&Mem).is_some() || used_widget_set.get(&BasicMem).is_some(),
+        use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
+        use_proc: used_widget_set.get(&Proc).is_some(),
+        use_disk: used_widget_set.get(&Disk).is_some(),
+        use_temp: used_widget_set.get(&Temp).is_some(),
+        use_battery: used_widget_set.get(&Battery).is_some(),
     };
 
     Ok(App::builder()
@@ -237,6 +236,7 @@ pub fn build_app(
         .proc_state(ProcState::init(proc_state_map))
         .disk_state(DiskState::init(disk_state_map))
         .temp_state(TempState::init(temp_state_map))
+        .battery_state(BatteryState::init(battery_state_map))
         .basic_table_widget_state(basic_table_widget_state)
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
@@ -275,9 +275,16 @@ pub fn get_widget_layout(
                 .collect::<error::Result<Vec<_>>>()?,
             total_row_height_ratio: total_height_ratio,
         };
-        ret_bottom_layout.get_movement_mappings();
 
-        ret_bottom_layout
+        // Confirm that we have at least ONE widget - if we don't, go back to default!
+        if iter_id > 0 {
+            ret_bottom_layout.get_movement_mappings();
+            ret_bottom_layout
+        } else {
+            return Err(error::BottomError::ConfigError(
+                "Invalid layout - please have at least one widget.".to_string(),
+            ));
+        }
     } else {
         default_widget_id = DEFAULT_WIDGET_ID;
         BottomLayout::init_default(left_legend)

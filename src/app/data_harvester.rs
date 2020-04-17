@@ -7,10 +7,13 @@ use std::collections::HashMap;
 
 use sysinfo::{System, SystemExt};
 
+use battery::{Battery, Manager};
+
 use crate::app::layout_manager::UsedWidgets;
 
 use futures::join;
 
+pub mod battery_harvester;
 pub mod cpu;
 pub mod disks;
 pub mod mem;
@@ -20,44 +23,48 @@ pub mod temperature;
 
 #[derive(Clone, Debug)]
 pub struct Data {
-    pub cpu: cpu::CPUHarvest,
-    pub memory: mem::MemHarvest,
-    pub swap: mem::MemHarvest,
-    pub temperature_sensors: Vec<temperature::TempHarvest>,
-    pub network: network::NetworkHarvest,
-    pub list_of_processes: Vec<processes::ProcessHarvest>,
-    pub disks: Vec<disks::DiskHarvest>,
-    pub io: disks::IOHarvest,
     pub last_collection_time: Instant,
+    pub cpu: Option<cpu::CPUHarvest>,
+    pub memory: Option<mem::MemHarvest>,
+    pub swap: Option<mem::MemHarvest>,
+    pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
+    pub network: Option<network::NetworkHarvest>,
+    pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
+    pub disks: Option<Vec<disks::DiskHarvest>>,
+    pub io: Option<disks::IOHarvest>,
+    pub list_of_batteries: Option<Vec<battery_harvester::BatteryHarvest>>,
 }
 
 impl Default for Data {
     fn default() -> Self {
         Data {
-            cpu: cpu::CPUHarvest::default(),
-            memory: mem::MemHarvest::default(),
-            swap: mem::MemHarvest::default(),
-            temperature_sensors: Vec::default(),
-            list_of_processes: Vec::default(),
-            disks: Vec::default(),
-            io: disks::IOHarvest::default(),
-            network: network::NetworkHarvest::default(),
             last_collection_time: Instant::now(),
+            cpu: None,
+            memory: None,
+            swap: None,
+            temperature_sensors: None,
+            list_of_processes: None,
+            disks: None,
+            io: None,
+            network: None,
+            list_of_batteries: None,
         }
     }
 }
 
 impl Data {
     pub fn first_run_cleanup(&mut self) {
-        self.io = disks::IOHarvest::default();
-        self.temperature_sensors = Vec::new();
-        self.list_of_processes = Vec::new();
-        self.disks = Vec::new();
+        self.io = None;
+        self.temperature_sensors = None;
+        self.list_of_processes = None;
+        self.disks = None;
+        self.memory = None;
+        self.swap = None;
+        self.cpu = None;
 
-        self.network.first_run_cleanup();
-        self.memory = mem::MemHarvest::default();
-        self.swap = mem::MemHarvest::default();
-        self.cpu = cpu::CPUHarvest::default();
+        if let Some(network) = &mut self.network {
+            network.first_run_cleanup();
+        }
     }
 }
 
@@ -78,6 +85,8 @@ pub struct DataCollector {
     total_tx: u64,
     show_average_cpu: bool,
     widgets_to_harvest: UsedWidgets,
+    battery_manager: Option<Manager>,
+    battery_list: Option<Vec<Battery>>,
 }
 
 impl Default for DataCollector {
@@ -99,6 +108,8 @@ impl Default for DataCollector {
             total_tx: 0,
             show_average_cpu: false,
             widgets_to_harvest: UsedWidgets::default(),
+            battery_manager: None,
+            battery_list: None,
         }
     }
 }
@@ -106,6 +117,19 @@ impl Default for DataCollector {
 impl DataCollector {
     pub fn init(&mut self) {
         self.mem_total_kb = self.sys.get_total_memory();
+
+        if self.widgets_to_harvest.use_battery {
+            if let Ok(battery_manager) = Manager::new() {
+                if let Ok(batteries) = battery_manager.batteries() {
+                    let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();
+                    if !battery_list.is_empty() {
+                        self.battery_list = Some(battery_list);
+                        self.battery_manager = Some(battery_manager);
+                    }
+                }
+            }
+        }
+
         futures::executor::block_on(self.update_data());
         std::thread::sleep(std::time::Duration::from_millis(250));
         self.data.first_run_cleanup();
@@ -148,7 +172,17 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu);
+            self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
+        }
+
+        // Batteries
+        if let Some(battery_manager) = &self.battery_manager {
+            if let Some(battery_list) = &mut self.battery_list {
+                self.data.list_of_batteries = Some(battery_harvester::refresh_batteries(
+                    &battery_manager,
+                    battery_list,
+                ));
+            }
         }
 
         if self.widgets_to_harvest.use_proc {
@@ -186,7 +220,7 @@ impl DataCollector {
                     Ok(Vec::new())
                 }
             } {
-                self.data.list_of_processes = process_list;
+                self.data.list_of_processes = Some(process_list);
             }
         }
 
@@ -221,39 +255,29 @@ impl DataCollector {
 
         // After async
         if let Some(net_data) = net_data {
-            self.data.network = net_data;
-            self.total_rx = self.data.network.total_rx;
-            self.total_tx = self.data.network.total_tx;
+            self.total_rx = net_data.total_rx;
+            self.total_tx = net_data.total_tx;
+            self.data.network = Some(net_data);
         }
 
         if let Ok(memory) = mem_res {
-            if let Some(memory) = memory {
-                self.data.memory = memory;
-            }
+            self.data.memory = memory;
         }
 
         if let Ok(swap) = swap_res {
-            if let Some(swap) = swap {
-                self.data.swap = swap;
-            }
+            self.data.swap = swap;
         }
 
         if let Ok(disks) = disk_res {
-            if let Some(disks) = disks {
-                self.data.disks = disks;
-            }
+            self.data.disks = disks;
         }
 
         if let Ok(io) = io_res {
-            if let Some(io) = io {
-                self.data.io = io;
-            }
+            self.data.io = io;
         }
 
         if let Ok(temp) = temp_res {
-            if let Some(temp) = temp {
-                self.data.temperature_sensors = temp;
-            }
+            self.data.temperature_sensors = temp;
         }
 
         // Update time

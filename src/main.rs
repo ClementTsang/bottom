@@ -228,6 +228,12 @@ fn main() -> error::Result<()> {
                             app.canvas_data.grouped_process_data = grouped;
                             update_all_process_lists(&mut app);
                         }
+
+                        // Battery
+                        if app.used_widgets.use_battery {
+                            app.canvas_data.battery_data =
+                                convert_battery_harvest(&app.data_collection);
+                        }
                     }
                 }
                 BottomEvent::Clean => {
@@ -490,6 +496,10 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 
         if let Some(graph_color) = &colours.graph_color {
             painter.colours.set_graph_colour(graph_color)?;
+        }
+
+        if let Some(battery_colors) = &colours.battery_colors {
+            painter.colours.set_battery_colours(battery_colors)?;
         }
     }
 
