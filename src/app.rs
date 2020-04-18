@@ -90,6 +90,7 @@ pub struct AppConfigFields {
     pub time_interval: u64,
     pub hide_time: bool,
     pub autohide_time: bool,
+    pub use_old_network_legend: bool,
 }
 
 /// AppSearchState deals with generic searching (I might do this in the future).

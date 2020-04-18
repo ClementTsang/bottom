@@ -42,20 +42,24 @@ impl NetworkGraphWidget for Painter {
     fn draw_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let network_chunk = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(0)
-            .constraints(
-                [
-                    Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
-                    Constraint::Length(5),
-                ]
-                .as_ref(),
-            )
-            .split(draw_loc);
+        if app_state.app_config_fields.use_old_network_legend {
+            let network_chunk = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(0)
+                .constraints(
+                    [
+                        Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
+                        Constraint::Length(5),
+                    ]
+                    .as_ref(),
+                )
+                .split(draw_loc);
 
-        self.draw_network_graph(f, app_state, network_chunk[0], widget_id);
-        self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
+            self.draw_network_graph(f, app_state, network_chunk[0], widget_id);
+            self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
+        } else {
+            self.draw_network_graph(f, app_state, draw_loc, widget_id);
+        }
     }
 
     fn draw_network_graph<B: Backend>(
@@ -119,6 +123,12 @@ impl NetworkGraphWidget for Painter {
                 " Network ".to_string()
             };
 
+            let legend_constraints = if app_state.app_config_fields.use_old_network_legend {
+                (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
+            } else {
+                (Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))
+            };
+
             f.render_widget(
                 Chart::default()
                     .block(
@@ -169,7 +179,8 @@ impl NetworkGraphWidget for Painter {
                                 app_state.canvas_data.total_tx_display
                             ))
                             .style(self.colours.total_tx_style),
-                    ]),
+                    ])
+                    .hidden_legend_constraints(legend_constraints),
                 draw_loc,
             );
         }

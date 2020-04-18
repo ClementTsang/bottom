@@ -4,7 +4,7 @@ use crate::{app::App, canvas::Painter, constants::*};
 
 use tui::{
     backend::Backend,
-    layout::Rect,
+    layout::{Constraint, Rect},
     symbols::Marker,
     terminal::Frame,
     widgets::{Axis, Block, Borders, Chart, Dataset},
@@ -117,7 +117,8 @@ impl MemGraphWidget for Painter {
                     )
                     .x_axis(x_axis)
                     .y_axis(y_axis)
-                    .datasets(&mem_canvas_vec),
+                    .datasets(&mem_canvas_vec)
+                    .hidden_legend_constraints((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
                 draw_loc,
             );
         }

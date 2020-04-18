@@ -11,6 +11,7 @@ pub const STANDARD_FIRST_COLOUR: Color = Color::LightMagenta;
 pub const STANDARD_SECOND_COLOUR: Color = Color::LightYellow;
 pub const STANDARD_THIRD_COLOUR: Color = Color::LightCyan;
 pub const STANDARD_FOURTH_COLOUR: Color = Color::LightGreen;
+pub const STANDARD_HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 
 lazy_static! {

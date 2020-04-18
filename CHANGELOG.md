@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- Changed default colours for highlighted borders and table headers to cyan - this is mostly to deal with Powershell colour conflicts.
+- Changed default colours for highlighted borders and table headers to light blue - this is mostly to deal with Powershell colour conflicts.
 
 - Updated the widget type keyword list to accept the following keywords as existing types:
 
