@@ -15,7 +15,7 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Borders, Paragraph, Row, Table, Text, Widget},
+    widgets::{Block, Borders, Paragraph, Row, Table, Text},
 };
 
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
@@ -253,16 +253,20 @@ impl ProcessTableWidget for Painter {
                     .direction(Direction::Horizontal)
                     .split(draw_loc);
 
-                Table::new(process_headers.iter(), process_rows)
-                    .block(process_block)
-                    .header_style(self.colours.table_header_style)
-                    .widths(
-                        &(intrinsic_widths
-                            .iter()
-                            .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                            .collect::<Vec<_>>()),
-                    )
-                    .render(f, margined_draw_loc[0]);
+                f.render_widget(
+                    Table::new(process_headers.iter(), process_rows)
+                        .block(process_block)
+                        .header_style(self.colours.table_header_style)
+                        .widths(
+                            &(intrinsic_widths
+                                .iter()
+                                .map(|calculated_width| {
+                                    Constraint::Length(*calculated_width as u16)
+                                })
+                                .collect::<Vec<_>>()),
+                        ),
+                    margined_draw_loc[0],
+                );
             }
         }
     }
@@ -490,12 +494,14 @@ impl ProcessTableWidget for Painter {
                 .direction(Direction::Horizontal)
                 .split(draw_loc);
 
-            Paragraph::new(search_text.iter())
-                .block(process_search_block)
-                .style(self.colours.text_style)
-                .alignment(Alignment::Left)
-                .wrap(false)
-                .render(f, margined_draw_loc[0]);
+            f.render_widget(
+                Paragraph::new(search_text.iter())
+                    .block(process_search_block)
+                    .style(self.colours.text_style)
+                    .alignment(Alignment::Left)
+                    .wrap(false),
+                margined_draw_loc[0],
+            );
         }
     }
 }

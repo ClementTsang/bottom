@@ -4,7 +4,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text, Widget},
+    widgets::{Block, Paragraph, Text},
 };
 
 pub trait NetworkBasicWidget {
@@ -35,10 +35,12 @@ impl NetworkBasicWidget for Painter {
             .split(divided_loc[1]);
 
         if app_state.current_widget.widget_id == widget_id {
-            Block::default()
-                .borders(*SIDE_BORDERS)
-                .border_style(self.colours.highlighted_border_style)
-                .render(f, draw_loc);
+            f.render_widget(
+                Block::default()
+                    .borders(*SIDE_BORDERS)
+                    .border_style(self.colours.highlighted_border_style),
+                draw_loc,
+            );
         }
 
         let rx_label = format!("RX: {}\n", &app_state.canvas_data.rx_display);
@@ -56,12 +58,14 @@ impl NetworkBasicWidget for Painter {
             Text::Styled(total_tx_label.into(), self.colours.total_tx_style),
         ];
 
-        Paragraph::new(net_text.iter())
-            .block(Block::default())
-            .render(f, net_loc[0]);
+        f.render_widget(
+            Paragraph::new(net_text.iter()).block(Block::default()),
+            net_loc[0],
+        );
 
-        Paragraph::new(total_net_text.iter())
-            .block(Block::default())
-            .render(f, total_loc[0]);
+        f.render_widget(
+            Paragraph::new(total_net_text.iter()).block(Block::default()),
+            total_loc[0],
+        );
     }
 }

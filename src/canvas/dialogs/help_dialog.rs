@@ -4,7 +4,7 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
     terminal::Frame,
-    widgets::{Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph},
 };
 
 use crate::{
@@ -33,25 +33,27 @@ impl HelpDialog for Painter {
             "─".repeat(repeat_num as usize)
         );
 
-        Paragraph::new(
-            match app_state.help_dialog_state.current_category {
-                AppHelpCategory::General => &self.styled_general_help_text,
-                AppHelpCategory::Process => &self.styled_process_help_text,
-                AppHelpCategory::Search => &self.styled_search_help_text,
-            }
-            .iter(),
-        )
-        .block(
-            Block::default()
-                .title(&help_title)
-                .title_style(self.colours.border_style)
-                .style(self.colours.border_style)
-                .borders(Borders::ALL)
-                .border_style(self.colours.border_style),
-        )
-        .style(self.colours.text_style)
-        .alignment(Alignment::Left)
-        .wrap(true)
-        .render(f, draw_loc);
+        f.render_widget(
+            Paragraph::new(
+                match app_state.help_dialog_state.current_category {
+                    AppHelpCategory::General => &self.styled_general_help_text,
+                    AppHelpCategory::Process => &self.styled_process_help_text,
+                    AppHelpCategory::Search => &self.styled_search_help_text,
+                }
+                .iter(),
+            )
+            .block(
+                Block::default()
+                    .title(&help_title)
+                    .title_style(self.colours.border_style)
+                    .style(self.colours.border_style)
+                    .borders(Borders::ALL)
+                    .border_style(self.colours.border_style),
+            )
+            .style(self.colours.text_style)
+            .alignment(Alignment::Left)
+            .wrap(true),
+            draw_loc,
+        );
     }
 }

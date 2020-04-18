@@ -5,8 +5,9 @@ use crate::{app::App, canvas::Painter, constants::*};
 use tui::{
     backend::Backend,
     layout::Rect,
+    symbols::Marker,
     terminal::Frame,
-    widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Widget},
+    widgets::{Axis, Block, Borders, Chart, Dataset},
 };
 
 pub trait MemGraphWidget {
@@ -97,26 +98,28 @@ impl MemGraphWidget for Painter {
                 " Memory ".to_string()
             };
 
-            Chart::default()
-                .block(
-                    Block::default()
-                        .title(&title)
-                        .title_style(if app_state.is_expanded {
-                            self.colours.highlighted_border_style
-                        } else {
-                            self.colours.widget_title_style
-                        })
-                        .borders(Borders::ALL)
-                        .border_style(if app_state.current_widget.widget_id == widget_id {
-                            self.colours.highlighted_border_style
-                        } else {
-                            self.colours.border_style
-                        }),
-                )
-                .x_axis(x_axis)
-                .y_axis(y_axis)
-                .datasets(&mem_canvas_vec)
-                .render(f, draw_loc);
+            f.render_widget(
+                Chart::default()
+                    .block(
+                        Block::default()
+                            .title(&title)
+                            .title_style(if app_state.is_expanded {
+                                self.colours.highlighted_border_style
+                            } else {
+                                self.colours.widget_title_style
+                            })
+                            .borders(Borders::ALL)
+                            .border_style(if app_state.current_widget.widget_id == widget_id {
+                                self.colours.highlighted_border_style
+                            } else {
+                                self.colours.border_style
+                            }),
+                    )
+                    .x_axis(x_axis)
+                    .y_axis(y_axis)
+                    .datasets(&mem_canvas_vec),
+                draw_loc,
+            );
         }
     }
 }

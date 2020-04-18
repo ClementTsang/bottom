@@ -5,7 +5,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Borders, Row, Table, Widget},
+    widgets::{Block, Borders, Row, Table},
 };
 
 use crate::{
@@ -139,16 +139,18 @@ impl TempTableWidget for Painter {
                 .split(draw_loc);
 
             // Draw
-            Table::new(TEMP_HEADERS.iter(), temperature_rows)
-                .block(temp_block)
-                .header_style(self.colours.table_header_style)
-                .widths(
-                    &(intrinsic_widths
-                        .iter()
-                        .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                        .collect::<Vec<_>>()),
-                )
-                .render(f, margined_draw_loc[0]);
+            f.render_widget(
+                Table::new(TEMP_HEADERS.iter(), temperature_rows)
+                    .block(temp_block)
+                    .header_style(self.colours.table_header_style)
+                    .widths(
+                        &(intrinsic_widths
+                            .iter()
+                            .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+                            .collect::<Vec<_>>()),
+                    ),
+                margined_draw_loc[0],
+            );
         }
     }
 }

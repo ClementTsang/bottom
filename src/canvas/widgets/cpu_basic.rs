@@ -11,7 +11,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text, Widget},
+    widgets::{Block, Paragraph, Text},
 };
 
 pub trait CpuBasicWidget {
@@ -37,10 +37,12 @@ impl CpuBasicWidget for Painter {
         // the desired lengths.
 
         if app_state.current_widget.widget_id == widget_id {
-            Block::default()
-                .borders(*SIDE_BORDERS)
-                .border_style(self.colours.highlighted_border_style)
-                .render(f, draw_loc);
+            f.render_widget(
+                Block::default()
+                    .borders(*SIDE_BORDERS)
+                    .border_style(self.colours.highlighted_border_style),
+                draw_loc,
+            );
         }
 
         let num_cpus = cpu_data.len();
@@ -125,9 +127,10 @@ impl CpuBasicWidget for Painter {
                         .horizontal_margin(1)
                         .split(*chunk);
 
-                    Paragraph::new(cpu_column.iter())
-                        .block(Block::default())
-                        .render(f, margined_loc[0]);
+                    f.render_widget(
+                        Paragraph::new(cpu_column.iter()).block(Block::default()),
+                        margined_loc[0],
+                    );
                 }
             }
         }

@@ -15,8 +15,9 @@ use crate::{
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
+    symbols::Marker,
     terminal::Frame,
-    widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
+    widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
 const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show"];
@@ -187,22 +188,24 @@ impl CpuGraphWidget for Painter {
                 self.colours.border_style
             };
 
-            Chart::default()
-                .block(
-                    Block::default()
-                        .title(&title)
-                        .title_style(if app_state.is_expanded {
-                            border_style
-                        } else {
-                            self.colours.widget_title_style
-                        })
-                        .borders(Borders::ALL)
-                        .border_style(border_style),
-                )
-                .x_axis(x_axis)
-                .y_axis(y_axis)
-                .datasets(&dataset_vector)
-                .render(f, draw_loc);
+            f.render_widget(
+                Chart::default()
+                    .block(
+                        Block::default()
+                            .title(&title)
+                            .title_style(if app_state.is_expanded {
+                                border_style
+                            } else {
+                                self.colours.widget_title_style
+                            })
+                            .borders(Borders::ALL)
+                            .border_style(border_style),
+                    )
+                    .x_axis(x_axis)
+                    .y_axis(y_axis)
+                    .datasets(&dataset_vector),
+                draw_loc,
+            );
         }
     }
 
@@ -319,30 +322,32 @@ impl CpuGraphWidget for Painter {
             };
 
             // Draw
-            Table::new(
-                if cpu_widget_state.is_showing_tray {
-                    CPU_SELECT_LEGEND_HEADER
-                } else {
-                    CPU_LEGEND_HEADER
-                }
-                .iter(),
-                cpu_rows,
-            )
-            .block(
-                Block::default()
-                    .title(&title)
-                    .title_style(title_and_border_style)
-                    .borders(Borders::ALL)
-                    .border_style(title_and_border_style),
-            )
-            .header_style(self.colours.table_header_style)
-            .widths(
-                &(intrinsic_widths
-                    .iter()
-                    .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                    .collect::<Vec<_>>()),
-            )
-            .render(f, draw_loc);
+            f.render_widget(
+                Table::new(
+                    if cpu_widget_state.is_showing_tray {
+                        CPU_SELECT_LEGEND_HEADER
+                    } else {
+                        CPU_LEGEND_HEADER
+                    }
+                    .iter(),
+                    cpu_rows,
+                )
+                .block(
+                    Block::default()
+                        .title(&title)
+                        .title_style(title_and_border_style)
+                        .borders(Borders::ALL)
+                        .border_style(title_and_border_style),
+                )
+                .header_style(self.colours.table_header_style)
+                .widths(
+                    &(intrinsic_widths
+                        .iter()
+                        .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+                        .collect::<Vec<_>>()),
+                ),
+                draw_loc,
+            );
         }
     }
 }

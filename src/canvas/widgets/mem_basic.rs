@@ -10,7 +10,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text, Widget},
+    widgets::{Block, Paragraph, Text},
 };
 
 pub trait MemBasicWidget {
@@ -32,10 +32,12 @@ impl MemBasicWidget for Painter {
             .split(draw_loc);
 
         if app_state.current_widget.widget_id == widget_id {
-            Block::default()
-                .borders(*SIDE_BORDERS)
-                .border_style(self.colours.highlighted_border_style)
-                .render(f, draw_loc);
+            f.render_widget(
+                Block::default()
+                    .borders(*SIDE_BORDERS)
+                    .border_style(self.colours.highlighted_border_style),
+                draw_loc,
+            );
         }
 
         // +9 due to 3 + 4 + 2 + 2 columns for the name & space + percentage + bar bounds + margin spacing
@@ -70,8 +72,9 @@ impl MemBasicWidget for Painter {
             Text::Styled(swap_label.into(), self.colours.swap_style),
         ];
 
-        Paragraph::new(mem_text.iter())
-            .block(Block::default())
-            .render(f, margined_loc[0]);
+        f.render_widget(
+            Paragraph::new(mem_text.iter()).block(Block::default()),
+            margined_loc[0],
+        );
     }
 }

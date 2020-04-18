@@ -9,7 +9,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text, Widget},
+    widgets::{Block, Paragraph, Text},
 };
 
 pub trait BasicTableArrows {
@@ -59,8 +59,9 @@ impl BasicTableArrows for Painter {
             .horizontal_margin(1)
             .split(draw_loc);
 
-        Paragraph::new(arrow_text.iter())
-            .block(Block::default())
-            .render(f, margined_draw_loc[0]);
+        f.render_widget(
+            Paragraph::new(arrow_text.iter()).block(Block::default()),
+            margined_draw_loc[0],
+        );
     }
 }
