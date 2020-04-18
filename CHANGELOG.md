@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   - Use custom legend-hiding to stop hiding legends for memory and network widgets.
 
+  - In addition, changed to using only legends within the graph for network. The old legend style can still be used via the `--use_old_network_legend` flag or `use_old_network_legend = true` option.
+
 ### Bug Fixes
 
 - Fixed `dd` not working on non-first entries.
