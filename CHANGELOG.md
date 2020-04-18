@@ -20,11 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed default colours for highlighted borders and table headers to cyan - this is mostly to deal with Powershell colour conflicts.
 
 - Updated the widget type keyword list to accept the following keywords as existing types:
+
   - `"memory"`
   - `"network"`
   - `"process"`
   - `"processes"`
   - `"temperature"`
+
+- [#117](https://github.com/ClementTsang/bottom/issues/117): Update tui to 0.9:
+
+  - Use custom legend-hiding to stop hiding legends for memory and network widgets.
 
 ### Bug Fixes
 
@@ -60,10 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#40](https://github.com/ClementTsang/bottom/issues/40): Rewrote README to be more clear and explicit.
 
 - [#109](https://github.com/ClementTsang/bottom/issues/109): Sorting processes by name is case-insensitive.
-
-- [#117](https://github.com/ClementTsang/bottom/issues/117): Update tui to 0.9:
-
-  - Use custom legend-hiding to stop hiding legends for memory and network widgets.
 
 ### Bug Fixes
 
