@@ -140,6 +140,8 @@ Run using `btm`.
 -R, --regex                     Search defaults to using regex
 -s, --show_disabled_data        Shows disabled CPU entries in the CPU legend
 -b, --basic                     Enables basic mode, removing charts and condensing data
+    --autohide_time             Automatically hide the time scaling in graphs after being shown for a brief moment when
+                                zoomed in/out.  If time is disabled via --hide_time then this will have no effect.
     --use_old_network_legend    Use the older (pre-0.4) network legend which is separate from the network chart
     --hide_table_gap            Hides the spacing between table headers and data
 ```
@@ -151,6 +153,8 @@ Run using `btm`.
 -C, --config <PATH>             Use the specified config file; if it does not exist it is automatically created
 -t, --default_time_value <MS>   Sets the default time interval for charts in milliseconds [default: 60000]
 -d, --time_delta <MS>           Sets the default amount each zoom in/out action changes by in milliseconds [default: 15000]
+--default_widget_count <COUNT>  Which number of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.
+--default_widget_type <TYPE>    The default widget type to select by default.
 ```
 
 ### Keybindings
