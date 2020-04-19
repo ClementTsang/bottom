@@ -31,6 +31,7 @@ pub trait NetworkGraphWidget {
 
     fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        hide_legend: bool,
     );
 
     fn draw_network_labels<B: Backend>(
@@ -55,15 +56,16 @@ impl NetworkGraphWidget for Painter {
                 )
                 .split(draw_loc);
 
-            self.draw_network_graph(f, app_state, network_chunk[0], widget_id);
+            self.draw_network_graph(f, app_state, network_chunk[0], widget_id, true);
             self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
         } else {
-            self.draw_network_graph(f, app_state, draw_loc, widget_id);
+            self.draw_network_graph(f, app_state, draw_loc, widget_id, false);
         }
     }
 
     fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        hide_legend: bool,
     ) {
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
             let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
@@ -123,10 +125,66 @@ impl NetworkGraphWidget for Painter {
                 " Network ".to_string()
             };
 
-            let legend_constraints = if app_state.app_config_fields.use_old_network_legend {
+            let legend_constraints = if hide_legend {
                 (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
             } else {
                 (Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))
+            };
+
+            let dataset = if app_state.app_config_fields.use_old_network_legend && !hide_legend {
+                vec![
+                    Dataset::default()
+                        .name(format!("RX: {:7}", app_state.canvas_data.rx_display))
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.rx_style)
+                        .data(&network_data_rx),
+                    Dataset::default()
+                        .name(format!("TX: {:7}", app_state.canvas_data.tx_display))
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.tx_style)
+                        .data(&network_data_tx),
+                    Dataset::default()
+                        .name(format!(
+                            "Total RX: {:7}",
+                            app_state.canvas_data.total_rx_display
+                        ))
+                        .style(self.colours.total_rx_style),
+                    Dataset::default()
+                        .name(format!(
+                            "Total TX: {:7}",
+                            app_state.canvas_data.total_tx_display
+                        ))
+                        .style(self.colours.total_tx_style),
+                ]
+            } else {
+                vec![
+                    Dataset::default()
+                        .name(&app_state.canvas_data.rx_display)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.rx_style)
+                        .data(&network_data_rx),
+                    Dataset::default()
+                        .name(&app_state.canvas_data.tx_display)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.tx_style)
+                        .data(&network_data_tx),
+                ]
             };
 
             f.render_widget(
@@ -148,26 +206,7 @@ impl NetworkGraphWidget for Painter {
                     )
                     .x_axis(x_axis)
                     .y_axis(y_axis)
-                    .datasets(&[
-                        Dataset::default()
-                            .name(&app_state.canvas_data.rx_display)
-                            .marker(if app_state.app_config_fields.use_dot {
-                                Marker::Dot
-                            } else {
-                                Marker::Braille
-                            })
-                            .style(self.colours.rx_style)
-                            .data(&network_data_rx),
-                        Dataset::default()
-                            .name(&app_state.canvas_data.tx_display)
-                            .marker(if app_state.app_config_fields.use_dot {
-                                Marker::Dot
-                            } else {
-                                Marker::Braille
-                            })
-                            .style(self.colours.tx_style)
-                            .data(&network_data_tx),
-                    ])
+                    .datasets(&dataset)
                     .hidden_legend_constraints(legend_constraints),
                 draw_loc,
             );

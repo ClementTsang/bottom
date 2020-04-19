@@ -347,6 +347,7 @@ impl Painter {
                         app_state,
                         rect[0],
                         app_state.current_widget.widget_id,
+                        false,
                     ),
                     Proc => self.draw_process_and_search(
                         &mut f,
