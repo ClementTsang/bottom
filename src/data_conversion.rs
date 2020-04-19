@@ -29,8 +29,8 @@ pub struct ConvertedNetworkData {
     pub tx: Vec<Point>,
     pub rx_display: String,
     pub tx_display: String,
-    pub total_rx_display: String,
-    pub total_tx_display: String,
+    pub total_rx_display: Option<String>,
+    pub total_tx_display: Option<String>,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -324,7 +324,7 @@ pub fn get_rx_tx_data_points(
 }
 
 pub fn convert_network_data_points(
-    current_data: &data_farmer::DataCollection, is_frozen: bool,
+    current_data: &data_farmer::DataCollection, is_frozen: bool, need_four_points: bool,
 ) -> ConvertedNetworkData {
     let (rx, tx) = get_rx_tx_data_points(current_data, is_frozen);
 
@@ -335,27 +335,55 @@ pub fn convert_network_data_points(
 
     rx_converted_result = get_exact_byte_values(current_data.network_harvest.rx, false);
     total_rx_converted_result = get_exact_byte_values(current_data.network_harvest.total_rx, false);
-    let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
-    let total_rx_display = format!(
-        "{:.*}{}",
-        1, total_rx_converted_result.0, total_rx_converted_result.1
-    );
 
     tx_converted_result = get_exact_byte_values(current_data.network_harvest.tx, false);
     total_tx_converted_result = get_exact_byte_values(current_data.network_harvest.total_tx, false);
-    let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
-    let total_tx_display = format!(
-        "{:.*}{}",
-        1, total_tx_converted_result.0, total_tx_converted_result.1
-    );
 
-    ConvertedNetworkData {
-        rx,
-        tx,
-        rx_display,
-        tx_display,
-        total_rx_display,
-        total_tx_display,
+    if need_four_points {
+        let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
+        let total_rx_display = Some(format!(
+            "{:.*}{}",
+            1, total_rx_converted_result.0, total_rx_converted_result.1
+        ));
+        let tx_display = format!("{:.*}{}", 1, tx_converted_result.0, tx_converted_result.1);
+        let total_tx_display = Some(format!(
+            "{:.*}{}",
+            1, total_tx_converted_result.0, total_tx_converted_result.1
+        ));
+        ConvertedNetworkData {
+            rx,
+            tx,
+            rx_display,
+            tx_display,
+            total_rx_display,
+            total_tx_display,
+        }
+    } else {
+        let rx_display = format!(
+            "RX: {:<9} All: {:<9}",
+            format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1),
+            format!(
+                "{:.1}{:3}",
+                total_rx_converted_result.0, total_rx_converted_result.1
+            )
+        );
+        let tx_display = format!(
+            "TX: {:<9} All: {:<9}",
+            format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1),
+            format!(
+                "{:.1}{:3}",
+                total_tx_converted_result.0, total_tx_converted_result.1
+            )
+        );
+
+        ConvertedNetworkData {
+            rx,
+            tx,
+            rx_display,
+            tx_display,
+            total_rx_display: None,
+            total_tx_display: None,
+        }
     }
 }
 

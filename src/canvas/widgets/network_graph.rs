@@ -150,7 +150,7 @@ impl NetworkGraphWidget for Painter {
                     .y_axis(y_axis)
                     .datasets(&[
                         Dataset::default()
-                            .name(&format!("RX: {:7}", app_state.canvas_data.rx_display))
+                            .name(&app_state.canvas_data.rx_display)
                             .marker(if app_state.app_config_fields.use_dot {
                                 Marker::Dot
                             } else {
@@ -159,7 +159,7 @@ impl NetworkGraphWidget for Painter {
                             .style(self.colours.rx_style)
                             .data(&network_data_rx),
                         Dataset::default()
-                            .name(&format!("TX: {:7}", app_state.canvas_data.tx_display))
+                            .name(&app_state.canvas_data.tx_display)
                             .marker(if app_state.app_config_fields.use_dot {
                                 Marker::Dot
                             } else {
@@ -167,18 +167,6 @@ impl NetworkGraphWidget for Painter {
                             })
                             .style(self.colours.tx_style)
                             .data(&network_data_tx),
-                        Dataset::default()
-                            .name(&format!(
-                                "Total RX: {:7}",
-                                app_state.canvas_data.total_rx_display
-                            ))
-                            .style(self.colours.total_rx_style),
-                        Dataset::default()
-                            .name(&format!(
-                                "Total TX: {:7}",
-                                app_state.canvas_data.total_tx_display
-                            ))
-                            .style(self.colours.total_tx_style),
                     ])
                     .hidden_legend_constraints(legend_constraints),
                 draw_loc,
