@@ -346,7 +346,7 @@ impl CpuGraphWidget for Painter {
                         .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                         .collect::<Vec<_>>()),
                 )
-                .header_gap(0),
+                .header_gap(app_state.app_config_fields.table_gap),
                 draw_loc,
             );
         }

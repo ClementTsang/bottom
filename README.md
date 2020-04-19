@@ -140,6 +140,8 @@ Run using `btm`.
 -R, --regex                     Search defaults to using regex
 -s, --show_disabled_data        Shows disabled CPU entries in the CPU legend
 -b, --basic                     Enables basic mode, removing charts and condensing data
+    --use_old_network_legend    Use the older (pre-0.4) network legend which is separate from the network chart
+    --hide_table_gap            Hides the spacing between table headers and data
 ```
 
 ### Options
@@ -287,6 +289,8 @@ These are the following supported flag config values:
 | `regex` | Boolean |
 | `show_disabled_data` | Boolean |
 | `basic` | Boolean |
+| `hide_table_count`| Boolean |
+| `use_old_network_legend`| Boolean |
 | `rate` | Unsigned Int (represents milliseconds) |
 | `default_time_value` | Unsigned Int (represents milliseconds) |
 | `time_delta` | Unsigned Int (represents milliseconds) |

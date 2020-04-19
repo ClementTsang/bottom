@@ -265,7 +265,7 @@ impl ProcessTableWidget for Painter {
                                 })
                                 .collect::<Vec<_>>()),
                         )
-                        .header_gap(0),
+                        .header_gap(app_state.app_config_fields.table_gap),
                     margined_draw_loc[0],
                 );
             }

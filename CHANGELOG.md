@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - In addition, changed to using only legends within the graph for network, as well as redesigned the legend.
     The old legend style can still be used via the `--use_old_network_legend` flag or `use_old_network_legend = true` option.
 
-  - Removed header gap on tables.
+  - Allow for option to hide the header gap on tables.
 
 ### Bug Fixes
 

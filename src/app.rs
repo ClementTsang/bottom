@@ -91,6 +91,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
+    pub table_gap: u16
 }
 
 /// AppSearchState deals with generic searching (I might do this in the future).
