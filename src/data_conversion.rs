@@ -160,15 +160,8 @@ pub fn convert_cpu_data_points(
             }
 
             if let Some(cpu_data) = cpu_data_vector.get_mut(itx) {
-                cpu_data.legend_value = format!("{:.0}%", cpu.0.round());
-
-                //Insert joiner points
-                for &(joiner_offset, joiner_val) in &cpu.1 {
-                    let offset_time = time_from_start + joiner_offset as f64;
-                    cpu_data.cpu_data.push((-offset_time, joiner_val));
-                }
-
-                cpu_data.cpu_data.push((-time_from_start, cpu.0));
+                cpu_data.legend_value = format!("{:.0}%", cpu.round());
+                cpu_data.cpu_data.push((-time_from_start, *cpu));
             }
         }
 
@@ -197,13 +190,7 @@ pub fn convert_mem_data_points(
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 
-        //Insert joiner points
-        for &(joiner_offset, joiner_val) in &data.mem_data.1 {
-            let offset_time = time_from_start + joiner_offset as f64;
-            result.push((-offset_time, joiner_val));
-        }
-
-        result.push((-time_from_start, data.mem_data.0));
+        result.push((-time_from_start, data.mem_data));
 
         if *time == current_time {
             break;
@@ -229,14 +216,7 @@ pub fn convert_swap_data_points(
 
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-
-        //Insert joiner points
-        for &(joiner_offset, joiner_val) in &data.swap_data.1 {
-            let offset_time = time_from_start + joiner_offset as f64;
-            result.push((-offset_time, joiner_val));
-        }
-
-        result.push((-time_from_start, data.swap_data.0));
+        result.push((-time_from_start, data.swap_data));
 
         if *time == current_time {
             break;
@@ -300,20 +280,8 @@ pub fn get_rx_tx_data_points(
 
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-
-        //Insert joiner points
-        for &(joiner_offset, joiner_val) in &data.rx_data.1 {
-            let offset_time = time_from_start + joiner_offset as f64;
-            rx.push((-offset_time, joiner_val));
-        }
-
-        for &(joiner_offset, joiner_val) in &data.tx_data.1 {
-            let offset_time = time_from_start + joiner_offset as f64;
-            tx.push((-offset_time, joiner_val));
-        }
-
-        rx.push((-time_from_start, data.rx_data.0));
-        tx.push((-time_from_start, data.tx_data.0));
+        rx.push((-time_from_start, data.rx_data));
+        tx.push((-time_from_start, data.tx_data));
 
         if *time == current_time {
             break;

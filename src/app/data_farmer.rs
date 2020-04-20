@@ -21,18 +21,14 @@ use crate::data_harvester::{
 
 pub type TimeOffset = f64;
 pub type Value = f64;
-pub type JoinedDataPoints = (Value, Vec<(TimeOffset, Value)>);
 
 #[derive(Debug, Default)]
 pub struct TimedData {
-    pub rx_data: JoinedDataPoints,
-    pub tx_data: JoinedDataPoints,
-    pub cpu_data: Vec<JoinedDataPoints>,
-    pub mem_data: JoinedDataPoints,
-    pub swap_data: JoinedDataPoints,
-    // Unused for now
-    // pub io_data : JoinedDataPoints
-    // pub temp_data: JoinedDataPoints,
+    pub rx_data: Value,
+    pub tx_data: Value,
+    pub cpu_data: Vec<Value>,
+    pub mem_data: Value,
+    pub swap_data: Value,
 }
 
 /// AppCollection represents the pooled data stored within the main app
@@ -121,19 +117,19 @@ impl DataCollection {
 
         // Network
         if let Some(network) = &harvested_data.network {
-            self.eat_network(network, harvested_time, &mut new_entry);
+            self.eat_network(network, &mut new_entry);
         }
 
         // Memory and Swap
         if let Some(memory) = &harvested_data.memory {
             if let Some(swap) = &harvested_data.swap {
-                self.eat_memory_and_swap(memory, swap, harvested_time, &mut new_entry);
+                self.eat_memory_and_swap(memory, swap, &mut new_entry);
             }
         }
 
         // CPU
         if let Some(cpu) = &harvested_data.cpu {
-            self.eat_cpu(cpu, harvested_time, &mut new_entry);
+            self.eat_cpu(cpu, &mut new_entry);
         }
 
         // Temp
@@ -164,7 +160,7 @@ impl DataCollection {
     }
 
     fn eat_memory_and_swap(
-        &mut self, memory: &mem::MemHarvest, swap: &mem::MemHarvest, harvested_time: Instant,
+        &mut self, memory: &mem::MemHarvest, swap: &mem::MemHarvest, 
         new_entry: &mut TimedData,
     ) {
         // Memory
@@ -172,13 +168,7 @@ impl DataCollection {
             0 => 0f64,
             total => (memory.mem_used_in_mb as f64) / (total as f64) * 100.0,
         };
-        let mem_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-            generate_joining_points(*time, last_pt.mem_data.0, harvested_time, mem_percent)
-        } else {
-            Vec::new()
-        };
-        let mem_pt = (mem_percent, mem_joining_pts);
-        new_entry.mem_data = mem_pt;
+        new_entry.mem_data = mem_percent;
 
         // Swap
         if swap.mem_total_in_mb > 0 {
@@ -186,13 +176,7 @@ impl DataCollection {
                 0 => 0f64,
                 total => (swap.mem_used_in_mb as f64) / (total as f64) * 100.0,
             };
-            let swap_joining_pt = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-                generate_joining_points(*time, last_pt.swap_data.0, harvested_time, swap_percent)
-            } else {
-                Vec::new()
-            };
-            let swap_pt = (swap_percent, swap_joining_pt);
-            new_entry.swap_data = swap_pt;
+            new_entry.swap_data = swap_percent;
         }
 
         // In addition copy over latest data for easy reference
@@ -201,7 +185,7 @@ impl DataCollection {
     }
 
     fn eat_network(
-        &mut self, network: &network::NetworkHarvest, harvested_time: Instant,
+        &mut self, network: &network::NetworkHarvest,
         new_entry: &mut TimedData,
     ) {
         // RX
@@ -210,14 +194,7 @@ impl DataCollection {
         } else {
             0.0
         };
-
-        let rx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-            generate_joining_points(*time, last_pt.rx_data.0, harvested_time, logged_rx_val)
-        } else {
-            Vec::new()
-        };
-        let rx_pt = (logged_rx_val, rx_joining_pts);
-        new_entry.rx_data = rx_pt;
+        new_entry.rx_data = logged_rx_val;
 
         // TX
         let logged_tx_val = if network.tx as f64 > 0.0 {
@@ -225,38 +202,20 @@ impl DataCollection {
         } else {
             0.0
         };
-
-        let tx_joining_pts = if let Some((time, last_pt)) = self.timed_data_vec.last() {
-            generate_joining_points(*time, last_pt.tx_data.0, harvested_time, logged_tx_val)
-        } else {
-            Vec::new()
-        };
-        let tx_pt = (logged_tx_val, tx_joining_pts);
-        new_entry.tx_data = tx_pt;
+        new_entry.tx_data = logged_tx_val;
 
         // In addition copy over latest data for easy reference
         self.network_harvest = network.clone();
     }
 
     fn eat_cpu(
-        &mut self, cpu: &[cpu::CPUData], harvested_time: Instant, new_entry: &mut TimedData,
+        &mut self, cpu: &[cpu::CPUData],  new_entry: &mut TimedData,
     ) {
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
         // it probably doesn't matter anyways.
-        if let Some((time, last_pt)) = self.timed_data_vec.last() {
-            for (cpu, last_pt_data) in cpu.iter().zip(&last_pt.cpu_data) {
-                let cpu_joining_pts =
-                    generate_joining_points(*time, last_pt_data.0, harvested_time, cpu.cpu_usage);
-                let cpu_pt = (cpu.cpu_usage, cpu_joining_pts);
-                new_entry.cpu_data.push(cpu_pt);
-            }
-        } else {
-            for cpu in cpu.iter() {
-                let cpu_pt = (cpu.cpu_usage, Vec::new());
-                new_entry.cpu_data.push(cpu_pt);
-            }
-        }
+        cpu.iter()
+            .for_each(|cpu| new_entry.cpu_data.push(cpu.cpu_usage));
 
         self.cpu_harvest = cpu.to_vec();
     }
@@ -308,37 +267,4 @@ impl DataCollection {
     fn eat_battery(&mut self, list_of_batteries: &[battery_harvester::BatteryHarvest]) {
         self.battery_harvest = list_of_batteries.to_vec();
     }
-}
-
-pub fn generate_joining_points(
-    start_x: Instant, start_y: f64, end_x: Instant, end_y: f64,
-) -> Vec<(TimeOffset, Value)> {
-    let mut points: Vec<(TimeOffset, Value)> = Vec::new();
-
-    // Convert time floats first:
-    let tmp_time_diff = (end_x).duration_since(start_x).as_millis() as f64;
-    let time_difference = if tmp_time_diff == 0.0 {
-        0.001
-    } else {
-        tmp_time_diff
-    };
-    let value_difference = end_y - start_y;
-
-    // Let's generate... about this many points!
-    let num_points = std::cmp::min(
-        std::cmp::max(
-            (value_difference.abs() / time_difference * 2000.0) as u64,
-            50,
-        ),
-        2000,
-    );
-
-    for itx in (0..num_points).step_by(2) {
-        points.push((
-            time_difference - (itx as f64 / num_points as f64 * time_difference),
-            start_y + (itx as f64 / num_points as f64 * value_difference),
-        ));
-    }
-
-    points
 }

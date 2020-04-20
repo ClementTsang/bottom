@@ -146,7 +146,7 @@ impl CpuGraphWidget for Painter {
                 .enumerate()
                 .rev()
                 .filter_map(|(itx, (cpu, cpu_show_vec))| {
-                    if *cpu_show_vec {
+                    if *cpu_show_vec && !cpu.cpu_data.is_empty() {
                         Some(
                             Dataset::default()
                                 .marker(if use_dot {
@@ -160,7 +160,8 @@ impl CpuGraphWidget for Painter {
                                     self.colours.cpu_colour_styles
                                         [itx % self.colours.cpu_colour_styles.len()]
                                 })
-                                .data(&cpu.cpu_data[..]),
+                                .data(&cpu.cpu_data[..])
+                                .graph_type(tui::widgets::GraphType::Line),
                         )
                     } else {
                         None
