@@ -217,7 +217,7 @@ impl CpuGraphWidget for Painter {
             cpu_widget_state.is_legend_hidden = false;
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
-            let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+            let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
             let start_position = get_start_position(
                 num_rows,
                 &cpu_widget_state.scroll_state.scroll_direction,
@@ -225,13 +225,13 @@ impl CpuGraphWidget for Painter {
                 cpu_widget_state.scroll_state.current_scroll_position,
                 app_state.is_resized,
             );
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
             let sliced_cpu_data = &cpu_data[start_position as usize..];
 
             let mut offset_scroll_index =
                 (cpu_widget_state.scroll_state.current_scroll_position - start_position) as usize;
             let show_disabled_data = app_state.app_config_fields.show_disabled_data;
-            let current_widget_id = app_state.current_widget.widget_id;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
@@ -267,7 +267,7 @@ impl CpuGraphWidget for Painter {
                 } else {
                     Some(Row::StyledData(
                         cpu_string_row.into_iter(),
-                        if current_widget_id == widget_id {
+                        if is_on_widget {
                             if itx == offset_scroll_index {
                                 self.colours.currently_selected_text_style
                             } else if show_avg_cpu && itx == 0 {
@@ -315,10 +315,13 @@ impl CpuGraphWidget for Painter {
                 "".to_string()
             };
 
-            let title_and_border_style = if app_state.current_widget.widget_id == widget_id {
-                self.colours.highlighted_border_style
+            let (border_and_title_style, highlight_style) = if is_on_widget {
+                (
+                    self.colours.highlighted_border_style,
+                    self.colours.currently_selected_text_style,
+                )
             } else {
-                self.colours.border_style
+                (self.colours.border_style, self.colours.text_style)
             };
 
             // Draw
@@ -335,11 +338,12 @@ impl CpuGraphWidget for Painter {
                 .block(
                     Block::default()
                         .title(&title)
-                        .title_style(title_and_border_style)
+                        .title_style(border_and_title_style)
                         .borders(Borders::ALL)
-                        .border_style(title_and_border_style),
+                        .border_style(border_and_title_style),
                 )
                 .header_style(self.colours.table_header_style)
+                .highlight_style(highlight_style)
                 .widths(
                     &(intrinsic_widths
                         .iter()

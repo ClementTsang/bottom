@@ -3,6 +3,8 @@ use std::{cmp::max, collections::HashMap, time::Instant};
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
+use tui::widgets::TableState;
+
 use typed_builder::*;
 
 use data_farmer::*;
@@ -47,6 +49,7 @@ pub struct AppScrollWidgetState {
     pub current_scroll_position: u64,
     pub previous_scroll_position: u64,
     pub scroll_direction: ScrollDirection,
+    pub table_state: TableState,
 }
 
 #[derive(Default)]
@@ -91,7 +94,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
-    pub table_gap: u16
+    pub table_gap: u16,
 }
 
 /// AppSearchState deals with generic searching (I might do this in the future).

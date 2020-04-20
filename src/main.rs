@@ -145,7 +145,7 @@ fn main() -> error::Result<()> {
         app.used_widgets.clone(),
     );
 
-    let mut painter = canvas::Painter::init(widget_layout);
+    let mut painter = canvas::Painter::init(widget_layout, app.app_config_fields.table_gap);
     if let Err(config_check) = generate_config_colours(&config, &mut painter) {
         cleanup_terminal(&mut terminal)?;
         return Err(config_check);

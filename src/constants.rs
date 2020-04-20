@@ -151,7 +151,10 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #basic = false
 
 # Use the old network legend style
-#use_old_network_legend = true
+#use_old_network_legend = false
+
+# Remove space in tables
+#hide_table_gap = false
 
 ##########################################################
 

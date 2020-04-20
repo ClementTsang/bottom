@@ -69,10 +69,11 @@ pub struct Painter {
     layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
     widget_layout: BottomLayout,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
+    table_height_offset: i64,
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout) -> Self {
+    pub fn init(widget_layout: BottomLayout, table_gap: u16) -> Self {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -154,6 +155,7 @@ impl Painter {
             layout_constraints,
             widget_layout,
             derived_widget_draw_locs: Vec::new(),
+            table_height_offset: 4 + table_gap as i64,
         }
     }
 

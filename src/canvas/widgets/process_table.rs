@@ -83,7 +83,7 @@ impl ProcessTableWidget for Painter {
                 // hit the process we've currently scrolled to.
                 // We also need to move the list - we can
                 // do so by hiding some elements!
-                let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+                let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
                 let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
                 let position = get_start_position(
@@ -102,43 +102,32 @@ impl ProcessTableWidget for Painter {
                 };
 
                 let sliced_vec = &process_data[start_position as usize..];
-                let mut process_counter: i64 = 0;
+                let proc_table_state = &mut proc_widget_state.scroll_state.table_state;
+                proc_table_state.select(Some(
+                    (proc_widget_state.scroll_state.current_scroll_position - start_position)
+                        as usize,
+                ));
 
                 // Draw!
+                let is_proc_widget_grouped = proc_widget_state.is_grouped;
                 let process_rows = sliced_vec.iter().map(|process| {
-                    let stringified_process_vec: Vec<String> = vec![
-                        if proc_widget_state.is_grouped {
-                            process.group_pids.len().to_string()
-                        } else {
-                            process.pid.to_string()
-                        },
-                        process.name.clone(),
-                        format!("{:.1}%", process.cpu_usage),
-                        format!("{:.1}%", process.mem_usage),
-                        process.read_per_sec.to_string(),
-                        process.write_per_sec.to_string(),
-                        process.total_read.to_string(),
-                        process.total_write.to_string(),
-                        process.process_states.to_string(),
-                    ];
-                    Row::StyledData(
-                        stringified_process_vec.into_iter(),
-                        if is_on_widget {
-                            if process_counter as u64
-                                == proc_widget_state.scroll_state.current_scroll_position
-                                    - start_position
-                            {
-                                process_counter = -1;
-                                self.colours.currently_selected_text_style
+                    Row::Data(
+                        vec![
+                            if is_proc_widget_grouped {
+                                process.group_pids.len().to_string()
                             } else {
-                                if process_counter >= 0 {
-                                    process_counter += 1;
-                                }
-                                self.colours.text_style
-                            }
-                        } else {
-                            self.colours.text_style
-                        },
+                                process.pid.to_string()
+                            },
+                            process.name.clone(),
+                            format!("{:.1}%", process.cpu_usage),
+                            format!("{:.1}%", process.mem_usage),
+                            process.read_per_sec.to_string(),
+                            process.write_per_sec.to_string(),
+                            process.total_read.to_string(),
+                            process.total_write.to_string(),
+                            process.process_states.to_string(),
+                        ]
+                        .into_iter(),
                     )
                 });
 
@@ -223,10 +212,13 @@ impl ProcessTableWidget for Painter {
                     String::default()
                 };
 
-                let border_and_title_style = if is_on_widget {
-                    self.colours.highlighted_border_style
+                let (border_and_title_style, highlight_style) = if is_on_widget {
+                    (
+                        self.colours.highlighted_border_style,
+                        self.colours.currently_selected_text_style,
+                    )
                 } else {
-                    self.colours.border_style
+                    (self.colours.border_style, self.colours.text_style)
                 };
 
                 let process_block = if draw_border {
@@ -253,10 +245,12 @@ impl ProcessTableWidget for Painter {
                     .direction(Direction::Horizontal)
                     .split(draw_loc);
 
-                f.render_widget(
+                f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)
                         .header_style(self.colours.table_header_style)
+                        .highlight_style(highlight_style)
+                        .style(self.colours.text_style)
                         .widths(
                             &(intrinsic_widths
                                 .iter()
@@ -267,6 +261,7 @@ impl ProcessTableWidget for Painter {
                         )
                         .header_gap(app_state.app_config_fields.table_gap),
                     margined_draw_loc[0],
+                    proc_table_state,
                 );
             }
         }

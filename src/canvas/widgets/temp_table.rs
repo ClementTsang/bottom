@@ -40,7 +40,7 @@ impl TempTableWidget for Painter {
         if let Some(temp_widget_state) = app_state.temp_state.widget_states.get_mut(&widget_id) {
             let temp_sensor_data: &mut [Vec<String>] = &mut app_state.canvas_data.temp_sensor_data;
 
-            let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+            let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
             let start_position = get_start_position(
                 num_rows,
                 &temp_widget_state.scroll_state.scroll_direction,
@@ -48,32 +48,14 @@ impl TempTableWidget for Painter {
                 temp_widget_state.scroll_state.current_scroll_position,
                 app_state.is_resized,
             );
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let temp_table_state = &mut temp_widget_state.scroll_state.table_state;
+            temp_table_state.select(Some(
+                (temp_widget_state.scroll_state.current_scroll_position - start_position) as usize,
+            ));
 
             let sliced_vec = &temp_sensor_data[start_position as usize..];
-            let mut temp_row_counter: i64 = 0;
-            let current_widget_id = app_state.current_widget.widget_id;
-
-            let temperature_rows = sliced_vec.iter().map(|temp_row| {
-                Row::StyledData(
-                    temp_row.iter(),
-                    if current_widget_id == widget_id {
-                        if temp_row_counter as u64
-                            == temp_widget_state.scroll_state.current_scroll_position
-                                - start_position
-                        {
-                            temp_row_counter = -1;
-                            self.colours.currently_selected_text_style
-                        } else {
-                            if temp_row_counter >= 0 {
-                                temp_row_counter += 1;
-                            }
-                            self.colours.text_style
-                        }
-                    } else {
-                        self.colours.text_style
-                    },
-                )
-            });
+            let temperature_rows = sliced_vec.iter().map(|temp_row| Row::Data(temp_row.iter()));
 
             // Calculate widths
             let width = f64::from(draw_loc.width);
@@ -100,25 +82,22 @@ impl TempTableWidget for Painter {
                 " Temperatures ".to_string()
             };
 
+            let (border_and_title_style, highlight_style) = if is_on_widget {
+                (
+                    self.colours.highlighted_border_style,
+                    self.colours.currently_selected_text_style,
+                )
+            } else {
+                (self.colours.border_style, self.colours.text_style)
+            };
+
             let temp_block = if draw_border {
                 Block::default()
                     .title(&title)
-                    .title_style(if app_state.is_expanded {
-                        if app_state.current_widget.widget_id == widget_id {
-                            self.colours.highlighted_border_style
-                        } else {
-                            self.colours.border_style
-                        }
-                    } else {
-                        self.colours.widget_title_style
-                    })
+                    .title_style(border_and_title_style)
                     .borders(Borders::ALL)
-                    .border_style(if app_state.current_widget.widget_id == widget_id {
-                        self.colours.highlighted_border_style
-                    } else {
-                        self.colours.border_style
-                    })
-            } else if app_state.current_widget.widget_id == widget_id {
+                    .border_style(border_and_title_style)
+            } else if is_on_widget {
                 Block::default()
                     .borders(*SIDE_BORDERS)
                     .border_style(self.colours.highlighted_border_style)
@@ -128,21 +107,17 @@ impl TempTableWidget for Painter {
 
             let margined_draw_loc = Layout::default()
                 .constraints([Constraint::Percentage(100)].as_ref())
-                .horizontal_margin(
-                    if app_state.current_widget.widget_id == widget_id || draw_border {
-                        0
-                    } else {
-                        1
-                    },
-                )
+                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                 .direction(Direction::Horizontal)
                 .split(draw_loc);
 
             // Draw
-            f.render_widget(
+            f.render_stateful_widget(
                 Table::new(TEMP_HEADERS.iter(), temperature_rows)
                     .block(temp_block)
                     .header_style(self.colours.table_header_style)
+                    .highlight_style(highlight_style)
+                    .style(self.colours.text_style)
                     .widths(
                         &(intrinsic_widths
                             .iter()
@@ -151,6 +126,7 @@ impl TempTableWidget for Painter {
                     )
                     .header_gap(app_state.app_config_fields.table_gap),
                 margined_draw_loc[0],
+                temp_table_state,
             );
         }
     }
