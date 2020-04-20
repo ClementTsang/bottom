@@ -40,6 +40,8 @@ pub struct ConfigFlags {
     pub hide_time: Option<bool>,
     pub default_widget_type: Option<String>,
     pub default_widget_count: Option<u64>,
+    pub use_old_network_legend: Option<bool>,
+    pub hide_table_gap : Option<bool>,
     //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -216,6 +218,8 @@ pub fn build_app(
         time_interval: get_time_interval(matches, config)?,
         hide_time: get_hide_time(matches, config),
         autohide_time,
+        use_old_network_legend: get_use_old_network_legend(matches, config),
+        table_gap: if get_hide_table_gap(matches, config){0}else{1},
     };
 
     let used_widgets = UsedWidgets {
@@ -603,3 +607,30 @@ fn get_default_widget_and_count(
         Ok((None, 1))
     }
 }
+
+pub fn get_use_old_network_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("USE_OLD_NETWORK_LEGEND") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(use_old_network_legend) = flags.use_old_network_legend {
+            if use_old_network_legend {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("HIDE_TABLE_GAP") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(hide_table_gap) = flags.hide_table_gap {
+            if hide_table_gap {
+                return true;
+            }
+        }
+    }
+    false
+}
+

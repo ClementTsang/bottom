@@ -4,9 +4,10 @@ use crate::{app::App, canvas::Painter, constants::*};
 
 use tui::{
     backend::Backend,
-    layout::Rect,
+    layout::{Constraint, Rect},
+    symbols::Marker,
     terminal::Frame,
-    widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Widget},
+    widgets::{Axis, Block, Borders, Chart, Dataset},
 };
 
 pub trait MemGraphWidget {
@@ -60,26 +61,37 @@ impl MemGraphWidget for Painter {
                 .bounds([-0.5, 100.5])
                 .labels(&["0%", "100%"]);
 
-            let mem_canvas_vec: Vec<Dataset<'_>> = vec![
-                Dataset::default()
-                    .name(&app_state.canvas_data.mem_label)
-                    .marker(if app_state.app_config_fields.use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(self.colours.ram_style)
-                    .data(&mem_data),
-                Dataset::default()
-                    .name(&app_state.canvas_data.swap_label)
-                    .marker(if app_state.app_config_fields.use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(self.colours.swap_style)
-                    .data(&swap_data),
-            ];
+            let mut mem_canvas_vec: Vec<Dataset<'_>> = vec![];
+
+            if !mem_data.is_empty() {
+                mem_canvas_vec.push(
+                    Dataset::default()
+                        .name(&app_state.canvas_data.mem_label)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.ram_style)
+                        .data(&mem_data)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
+            }
+
+            if !swap_data.is_empty() {
+                mem_canvas_vec.push(
+                    Dataset::default()
+                        .name(&app_state.canvas_data.swap_label)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.swap_style)
+                        .data(&swap_data)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
+            }
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Memory ── Esc to go back ";
@@ -97,26 +109,29 @@ impl MemGraphWidget for Painter {
                 " Memory ".to_string()
             };
 
-            Chart::default()
-                .block(
-                    Block::default()
-                        .title(&title)
-                        .title_style(if app_state.is_expanded {
-                            self.colours.highlighted_border_style
-                        } else {
-                            self.colours.widget_title_style
-                        })
-                        .borders(Borders::ALL)
-                        .border_style(if app_state.current_widget.widget_id == widget_id {
-                            self.colours.highlighted_border_style
-                        } else {
-                            self.colours.border_style
-                        }),
-                )
-                .x_axis(x_axis)
-                .y_axis(y_axis)
-                .datasets(&mem_canvas_vec)
-                .render(f, draw_loc);
+            f.render_widget(
+                Chart::default()
+                    .block(
+                        Block::default()
+                            .title(&title)
+                            .title_style(if app_state.is_expanded {
+                                self.colours.highlighted_border_style
+                            } else {
+                                self.colours.widget_title_style
+                            })
+                            .borders(Borders::ALL)
+                            .border_style(if app_state.current_widget.widget_id == widget_id {
+                                self.colours.highlighted_border_style
+                            } else {
+                                self.colours.border_style
+                            }),
+                    )
+                    .x_axis(x_axis)
+                    .y_axis(y_axis)
+                    .datasets(&mem_canvas_vec)
+                    .hidden_legend_constraints((Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))),
+                draw_loc,
+            );
         }
     }
 }

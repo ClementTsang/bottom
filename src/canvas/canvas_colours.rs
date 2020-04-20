@@ -35,8 +35,10 @@ impl Default for CanvasColours {
         CanvasColours {
             currently_selected_text_colour: Color::Black,
             currently_selected_bg_colour: Color::Cyan,
-            currently_selected_text_style: Style::default().fg(Color::Black).bg(Color::Cyan),
-            table_header_style: Style::default().fg(Color::Cyan),
+            currently_selected_text_style: Style::default()
+                .fg(Color::Black)
+                .bg(STANDARD_HIGHLIGHT_COLOUR),
+            table_header_style: Style::default().fg(STANDARD_HIGHLIGHT_COLOUR),
             ram_style: Style::default().fg(STANDARD_FIRST_COLOUR),
             swap_style: Style::default().fg(STANDARD_SECOND_COLOUR),
             rx_style: Style::default().fg(STANDARD_FIRST_COLOUR),
@@ -46,7 +48,7 @@ impl Default for CanvasColours {
             avg_colour_style: Style::default().fg(AVG_COLOUR),
             cpu_colour_styles: Vec::new(),
             border_style: Style::default().fg(text_colour),
-            highlighted_border_style: Style::default().fg(Color::Cyan),
+            highlighted_border_style: Style::default().fg(STANDARD_HIGHLIGHT_COLOUR),
             text_style: Style::default().fg(text_colour),
             widget_title_style: Style::default().fg(text_colour),
             graph_style: Style::default().fg(text_colour),
@@ -103,15 +105,15 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_rx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.total_rx_style = get_style_from_config(colour)?;
-        Ok(())
-    }
+    // pub fn set_rx_total_colour(&mut self, colour: &str) -> error::Result<()> {
+    //     self.total_rx_style = get_style_from_config(colour)?;
+    //     Ok(())
+    // }
 
-    pub fn set_tx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.total_tx_style = get_style_from_config(colour)?;
-        Ok(())
-    }
+    // pub fn set_tx_total_colour(&mut self, colour: &str) -> error::Result<()> {
+    //     self.total_tx_style = get_style_from_config(colour)?;
+    //     Ok(())
+    // }
 
     pub fn set_avg_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
         self.avg_colour_style = get_style_from_config(colour)?;

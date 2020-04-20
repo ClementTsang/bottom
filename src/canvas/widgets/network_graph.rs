@@ -10,8 +10,9 @@ use crate::{
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
+    symbols::Marker,
     terminal::Frame,
-    widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
+    widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
 const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
@@ -30,6 +31,7 @@ pub trait NetworkGraphWidget {
 
     fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        hide_legend: bool,
     );
 
     fn draw_network_labels<B: Backend>(
@@ -41,24 +43,29 @@ impl NetworkGraphWidget for Painter {
     fn draw_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let network_chunk = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(0)
-            .constraints(
-                [
-                    Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
-                    Constraint::Length(5),
-                ]
-                .as_ref(),
-            )
-            .split(draw_loc);
+        if app_state.app_config_fields.use_old_network_legend {
+            let network_chunk = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(0)
+                .constraints(
+                    [
+                        Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
+                        Constraint::Length(5),
+                    ]
+                    .as_ref(),
+                )
+                .split(draw_loc);
 
-        self.draw_network_graph(f, app_state, network_chunk[0], widget_id);
-        self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
+            self.draw_network_graph(f, app_state, network_chunk[0], widget_id, true);
+            self.draw_network_labels(f, app_state, network_chunk[1], widget_id);
+        } else {
+            self.draw_network_graph(f, app_state, draw_loc, widget_id, false);
+        }
     }
 
     fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        hide_legend: bool,
     ) {
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
             let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
@@ -118,57 +125,122 @@ impl NetworkGraphWidget for Painter {
                 " Network ".to_string()
             };
 
-            Chart::default()
-                .block(
-                    Block::default()
-                        .title(&title)
-                        .title_style(if app_state.is_expanded {
-                            self.colours.highlighted_border_style
-                        } else {
-                            self.colours.widget_title_style
-                        })
-                        .borders(Borders::ALL)
-                        .border_style(if app_state.current_widget.widget_id == widget_id {
-                            self.colours.highlighted_border_style
-                        } else {
-                            self.colours.border_style
-                        }),
-                )
-                .x_axis(x_axis)
-                .y_axis(y_axis)
-                .datasets(&[
+            let legend_constraints = if hide_legend {
+                (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
+            } else {
+                (Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))
+            };
+
+            let dataset = if app_state.app_config_fields.use_old_network_legend && !hide_legend {
+                let mut ret_val = vec![];
+
+                if !network_data_rx.is_empty() {
+                    ret_val.push(
+                        Dataset::default()
+                            .name(format!("RX: {:7}", app_state.canvas_data.rx_display))
+                            .marker(if app_state.app_config_fields.use_dot {
+                                Marker::Dot
+                            } else {
+                                Marker::Braille
+                            })
+                            .style(self.colours.rx_style)
+                            .data(&network_data_rx)
+                            .graph_type(tui::widgets::GraphType::Line),
+                    );
+                }
+
+                if !network_data_tx.is_empty() {
+                    ret_val.push(
+                        Dataset::default()
+                            .name(format!("TX: {:7}", app_state.canvas_data.tx_display))
+                            .marker(if app_state.app_config_fields.use_dot {
+                                Marker::Dot
+                            } else {
+                                Marker::Braille
+                            })
+                            .style(self.colours.tx_style)
+                            .data(&network_data_tx)
+                            .graph_type(tui::widgets::GraphType::Line),
+                    );
+                    ret_val.push(
+                        Dataset::default()
+                            .name(format!(
+                                "Total RX: {:7}",
+                                app_state.canvas_data.total_rx_display
+                            ))
+                            .style(self.colours.total_rx_style),
+                    );
+                }
+
+                ret_val.push(
                     Dataset::default()
-                        .name(&format!("RX: {:7}", app_state.canvas_data.rx_display))
-                        .marker(if app_state.app_config_fields.use_dot {
-                            Marker::Dot
-                        } else {
-                            Marker::Braille
-                        })
-                        .style(self.colours.rx_style)
-                        .data(&network_data_rx),
-                    Dataset::default()
-                        .name(&format!("TX: {:7}", app_state.canvas_data.tx_display))
-                        .marker(if app_state.app_config_fields.use_dot {
-                            Marker::Dot
-                        } else {
-                            Marker::Braille
-                        })
-                        .style(self.colours.tx_style)
-                        .data(&network_data_tx),
-                    Dataset::default()
-                        .name(&format!(
-                            "Total RX: {:7}",
-                            app_state.canvas_data.total_rx_display
-                        ))
-                        .style(self.colours.total_rx_style),
-                    Dataset::default()
-                        .name(&format!(
+                        .name(format!(
                             "Total TX: {:7}",
                             app_state.canvas_data.total_tx_display
                         ))
                         .style(self.colours.total_tx_style),
-                ])
-                .render(f, draw_loc);
+                );
+
+                ret_val
+            } else {
+                let mut ret_val = vec![];
+
+                if !network_data_rx.is_empty() {
+                    ret_val.push(
+                        Dataset::default()
+                            .name(&app_state.canvas_data.rx_display)
+                            .marker(if app_state.app_config_fields.use_dot {
+                                Marker::Dot
+                            } else {
+                                Marker::Braille
+                            })
+                            .style(self.colours.rx_style)
+                            .data(&network_data_rx)
+                            .graph_type(tui::widgets::GraphType::Line),
+                    );
+                }
+
+                if !network_data_tx.is_empty() {
+                    ret_val.push(
+                        Dataset::default()
+                            .name(&app_state.canvas_data.tx_display)
+                            .marker(if app_state.app_config_fields.use_dot {
+                                Marker::Dot
+                            } else {
+                                Marker::Braille
+                            })
+                            .style(self.colours.tx_style)
+                            .data(&network_data_tx)
+                            .graph_type(tui::widgets::GraphType::Line),
+                    );
+                }
+
+                ret_val
+            };
+
+            f.render_widget(
+                Chart::default()
+                    .block(
+                        Block::default()
+                            .title(&title)
+                            .title_style(if app_state.is_expanded {
+                                self.colours.highlighted_border_style
+                            } else {
+                                self.colours.widget_title_style
+                            })
+                            .borders(Borders::ALL)
+                            .border_style(if app_state.current_widget.widget_id == widget_id {
+                                self.colours.highlighted_border_style
+                            } else {
+                                self.colours.border_style
+                            }),
+                    )
+                    .x_axis(x_axis)
+                    .y_axis(y_axis)
+                    .datasets(&dataset)
+                    .hidden_legend_constraints(legend_constraints),
+                draw_loc,
+            );
         }
     }
 
@@ -201,22 +273,24 @@ impl NetworkGraphWidget for Painter {
         let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
         // Draw
-        Table::new(NETWORK_HEADERS.iter(), mapped_network)
-            .block(Block::default().borders(Borders::ALL).border_style(
-                if app_state.current_widget.widget_id == widget_id {
-                    self.colours.highlighted_border_style
-                } else {
-                    self.colours.border_style
-                },
-            ))
-            .header_style(self.colours.table_header_style)
-            .style(self.colours.text_style)
-            .widths(
-                &(intrinsic_widths
-                    .iter()
-                    .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                    .collect::<Vec<_>>()),
-            )
-            .render(f, draw_loc);
+        f.render_widget(
+            Table::new(NETWORK_HEADERS.iter(), mapped_network)
+                .block(Block::default().borders(Borders::ALL).border_style(
+                    if app_state.current_widget.widget_id == widget_id {
+                        self.colours.highlighted_border_style
+                    } else {
+                        self.colours.border_style
+                    },
+                ))
+                .header_style(self.colours.table_header_style)
+                .style(self.colours.text_style)
+                .widths(
+                    &(intrinsic_widths
+                        .iter()
+                        .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+                        .collect::<Vec<_>>()),
+                ),
+            draw_loc,
+        );
     }
 }

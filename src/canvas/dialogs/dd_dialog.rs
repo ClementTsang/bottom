@@ -4,7 +4,7 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
     terminal::Frame,
-    widgets::{Block, Borders, Paragraph, Text, Widget},
+    widgets::{Block, Borders, Paragraph, Text},
 };
 
 use crate::{app::App, canvas::Painter};
@@ -70,19 +70,21 @@ impl KillDialog for Painter {
                     "─".repeat(repeat_num as usize)
                 );
 
-                Paragraph::new(dd_text.iter())
-                    .block(
-                        Block::default()
-                            .title(&dd_title)
-                            .title_style(self.colours.border_style)
-                            .style(self.colours.border_style)
-                            .borders(Borders::ALL)
-                            .border_style(self.colours.border_style),
-                    )
-                    .style(self.colours.text_style)
-                    .alignment(Alignment::Center)
-                    .wrap(true)
-                    .render(f, draw_loc);
+                f.render_widget(
+                    Paragraph::new(dd_text.iter())
+                        .block(
+                            Block::default()
+                                .title(&dd_title)
+                                .title_style(self.colours.border_style)
+                                .style(self.colours.border_style)
+                                .borders(Borders::ALL)
+                                .border_style(self.colours.border_style),
+                        )
+                        .style(self.colours.text_style)
+                        .alignment(Alignment::Center)
+                        .wrap(true),
+                    draw_loc,
+                );
 
                 return true;
             }
@@ -106,18 +108,20 @@ impl KillDialog for Painter {
         );
         let error_title = format!(" Error ─{}─ Esc to close ", "─".repeat(repeat_num as usize));
 
-        Paragraph::new(dd_text.iter())
-            .block(
-                Block::default()
-                    .title(&error_title)
-                    .title_style(self.colours.border_style)
-                    .style(self.colours.border_style)
-                    .borders(Borders::ALL)
-                    .border_style(self.colours.border_style),
-            )
-            .style(self.colours.text_style)
-            .alignment(Alignment::Center)
-            .wrap(true)
-            .render(f, draw_loc);
+        f.render_widget(
+            Paragraph::new(dd_text.iter())
+                .block(
+                    Block::default()
+                        .title(&error_title)
+                        .title_style(self.colours.border_style)
+                        .style(self.colours.border_style)
+                        .borders(Borders::ALL)
+                        .border_style(self.colours.border_style),
+                )
+                .style(self.colours.text_style)
+                .alignment(Alignment::Center)
+                .wrap(true),
+            draw_loc,
+        );
     }
 }

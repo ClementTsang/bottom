@@ -89,6 +89,8 @@ fn get_matches() -> clap::ArgMatches<'static> {
         (@arg AUTOHIDE_TIME: --autohide_time "Automatically hide the time scaling in graphs after being shown for a brief moment when zoomed in/out.  If time is disabled via --hide_time then this will have no effect.")
         (@arg DEFAULT_WIDGET_TYPE: --default_widget_type +takes_value "The default widget type to select by default.")
         (@arg DEFAULT_WIDGET_COUNT: --default_widget_count +takes_value "Which number of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.")
+        (@arg USE_OLD_NETWORK_LEGEND: --use_old_network_legend "Use the older (pre-0.4) network widget legend.")
+        (@arg HIDE_TABLE_GAP: --hide_table_gap "Hides the spacing between the table headers and entries.")
 		//(@arg TURNED_OFF_CPUS: -t ... +takes_value "Hides CPU data points by default") // TODO: [FEATURE] Enable disabling cores in config/flags
 	)
         .get_matches()
@@ -143,7 +145,7 @@ fn main() -> error::Result<()> {
         app.used_widgets.clone(),
     );
 
-    let mut painter = canvas::Painter::init(widget_layout);
+    let mut painter = canvas::Painter::init(widget_layout, app.app_config_fields.table_gap);
     if let Err(config_check) = generate_config_colours(&config, &mut painter) {
         cleanup_terminal(&mut terminal)?;
         return Err(config_check);
@@ -173,14 +175,22 @@ fn main() -> error::Result<()> {
 
                         // Network
                         if app.used_widgets.use_net {
-                            let network_data =
-                                convert_network_data_points(&app.data_collection, false);
+                            let network_data = convert_network_data_points(
+                                &app.data_collection,
+                                false,
+                                app.app_config_fields.use_basic_mode
+                                    || app.app_config_fields.use_old_network_legend,
+                            );
                             app.canvas_data.network_data_rx = network_data.rx;
                             app.canvas_data.network_data_tx = network_data.tx;
                             app.canvas_data.rx_display = network_data.rx_display;
                             app.canvas_data.tx_display = network_data.tx_display;
-                            app.canvas_data.total_rx_display = network_data.total_rx_display;
-                            app.canvas_data.total_tx_display = network_data.total_tx_display;
+                            if let Some(total_rx_display) = network_data.total_rx_display {
+                                app.canvas_data.total_rx_display = total_rx_display;
+                            }
+                            if let Some(total_tx_display) = network_data.total_tx_display {
+                                app.canvas_data.total_tx_display = total_tx_display;
+                            }
                         }
 
                         // Disk
@@ -462,13 +472,13 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
             painter.colours.set_tx_colour(tx_color)?;
         }
 
-        if let Some(rx_total_color) = &colours.rx_total_color {
-            painter.colours.set_rx_total_colour(rx_total_color)?;
-        }
+        // if let Some(rx_total_color) = &colours.rx_total_color {
+        //     painter.colours.set_rx_total_colour(rx_total_color)?;
+        // }
 
-        if let Some(tx_total_color) = &colours.tx_total_color {
-            painter.colours.set_tx_total_colour(tx_total_color)?;
-        }
+        // if let Some(tx_total_color) = &colours.tx_total_color {
+        //     painter.colours.set_tx_total_colour(tx_total_color)?;
+        // }
 
         if let Some(table_header_color) = &colours.table_header_color {
             painter

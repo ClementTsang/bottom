@@ -15,8 +15,9 @@ use crate::{
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
+    symbols::Marker,
     terminal::Frame,
-    widgets::{Axis, Block, Borders, Chart, Dataset, Marker, Row, Table, Widget},
+    widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
 const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show"];
@@ -145,7 +146,7 @@ impl CpuGraphWidget for Painter {
                 .enumerate()
                 .rev()
                 .filter_map(|(itx, (cpu, cpu_show_vec))| {
-                    if *cpu_show_vec {
+                    if *cpu_show_vec && !cpu.cpu_data.is_empty() {
                         Some(
                             Dataset::default()
                                 .marker(if use_dot {
@@ -159,7 +160,8 @@ impl CpuGraphWidget for Painter {
                                     self.colours.cpu_colour_styles
                                         [itx % self.colours.cpu_colour_styles.len()]
                                 })
-                                .data(&cpu.cpu_data[..]),
+                                .data(&cpu.cpu_data[..])
+                                .graph_type(tui::widgets::GraphType::Line),
                         )
                     } else {
                         None
@@ -187,22 +189,24 @@ impl CpuGraphWidget for Painter {
                 self.colours.border_style
             };
 
-            Chart::default()
-                .block(
-                    Block::default()
-                        .title(&title)
-                        .title_style(if app_state.is_expanded {
-                            border_style
-                        } else {
-                            self.colours.widget_title_style
-                        })
-                        .borders(Borders::ALL)
-                        .border_style(border_style),
-                )
-                .x_axis(x_axis)
-                .y_axis(y_axis)
-                .datasets(&dataset_vector)
-                .render(f, draw_loc);
+            f.render_widget(
+                Chart::default()
+                    .block(
+                        Block::default()
+                            .title(&title)
+                            .title_style(if app_state.is_expanded {
+                                border_style
+                            } else {
+                                self.colours.widget_title_style
+                            })
+                            .borders(Borders::ALL)
+                            .border_style(border_style),
+                    )
+                    .x_axis(x_axis)
+                    .y_axis(y_axis)
+                    .datasets(&dataset_vector),
+                draw_loc,
+            );
         }
     }
 
@@ -214,7 +218,7 @@ impl CpuGraphWidget for Painter {
             cpu_widget_state.is_legend_hidden = false;
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
-            let num_rows = max(0, i64::from(draw_loc.height) - 5) as u64;
+            let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
             let start_position = get_start_position(
                 num_rows,
                 &cpu_widget_state.scroll_state.scroll_direction,
@@ -222,13 +226,13 @@ impl CpuGraphWidget for Painter {
                 cpu_widget_state.scroll_state.current_scroll_position,
                 app_state.is_resized,
             );
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
             let sliced_cpu_data = &cpu_data[start_position as usize..];
 
             let mut offset_scroll_index =
                 (cpu_widget_state.scroll_state.current_scroll_position - start_position) as usize;
             let show_disabled_data = app_state.app_config_fields.show_disabled_data;
-            let current_widget_id = app_state.current_widget.widget_id;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
@@ -264,7 +268,7 @@ impl CpuGraphWidget for Painter {
                 } else {
                     Some(Row::StyledData(
                         cpu_string_row.into_iter(),
-                        if current_widget_id == widget_id {
+                        if is_on_widget {
                             if itx == offset_scroll_index {
                                 self.colours.currently_selected_text_style
                             } else if show_avg_cpu && itx == 0 {
@@ -312,37 +316,44 @@ impl CpuGraphWidget for Painter {
                 "".to_string()
             };
 
-            let title_and_border_style = if app_state.current_widget.widget_id == widget_id {
-                self.colours.highlighted_border_style
+            let (border_and_title_style, highlight_style) = if is_on_widget {
+                (
+                    self.colours.highlighted_border_style,
+                    self.colours.currently_selected_text_style,
+                )
             } else {
-                self.colours.border_style
+                (self.colours.border_style, self.colours.text_style)
             };
 
             // Draw
-            Table::new(
-                if cpu_widget_state.is_showing_tray {
-                    CPU_SELECT_LEGEND_HEADER
-                } else {
-                    CPU_LEGEND_HEADER
-                }
-                .iter(),
-                cpu_rows,
-            )
-            .block(
-                Block::default()
-                    .title(&title)
-                    .title_style(title_and_border_style)
-                    .borders(Borders::ALL)
-                    .border_style(title_and_border_style),
-            )
-            .header_style(self.colours.table_header_style)
-            .widths(
-                &(intrinsic_widths
-                    .iter()
-                    .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                    .collect::<Vec<_>>()),
-            )
-            .render(f, draw_loc);
+            f.render_widget(
+                Table::new(
+                    if cpu_widget_state.is_showing_tray {
+                        CPU_SELECT_LEGEND_HEADER
+                    } else {
+                        CPU_LEGEND_HEADER
+                    }
+                    .iter(),
+                    cpu_rows,
+                )
+                .block(
+                    Block::default()
+                        .title(&title)
+                        .title_style(border_and_title_style)
+                        .borders(Borders::ALL)
+                        .border_style(border_and_title_style),
+                )
+                .header_style(self.colours.table_header_style)
+                .highlight_style(highlight_style)
+                .widths(
+                    &(intrinsic_widths
+                        .iter()
+                        .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+                        .collect::<Vec<_>>()),
+                )
+                .header_gap(app_state.app_config_fields.table_gap),
+                draw_loc,
+            );
         }
     }
 }

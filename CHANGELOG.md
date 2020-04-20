@@ -17,14 +17,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- Changed default colours for highlighted borders and table headers to cyan - this is mostly to deal with Powershell colour conflicts.
+- Changed default colours for highlighted borders and table headers to light blue - this is mostly to deal with Powershell colour conflicts.
 
 - Updated the widget type keyword list to accept the following keywords as existing types:
+
   - `"memory"`
   - `"network"`
   - `"process"`
   - `"processes"`
   - `"temperature"`
+
+- Removed an (undocumented) feature in allowing modifying total RX/TX colours. This is mainly due to the legend change.
+
+- [#117](https://github.com/ClementTsang/bottom/issues/117): Update tui to 0.9:
+
+  - Use custom legend-hiding to stop hiding legends for memory and network widgets.
+
+  - In addition, changed to using only legends within the graph for network, as well as redesigned the legend.
+    The old legend style can still be used via the `--use_old_network_legend` flag or `use_old_network_legend = true` config option.
+
+  - Allow for option to hide the header gap on tables via `--hide_table_gap` or `hide_table_gap = true`.
+
+  - Switch to stateful widget style for tables.
+
+  - Switch to using tui-rs' new built in linear interpolation rather than doing it manually.
 
 ### Bug Fixes
 

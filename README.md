@@ -126,29 +126,35 @@ Run using `btm`.
 ### Flags
 
 ```
--h, --help                      Prints help information, including flags and options
--a, --avg_cpu                   Shows the average CPU usage in addition to per-core
--m, --dot-marker                Uses a dot marker instead of the default braille marker
--c, --celsius                   Displays the temperature type in Celsius [default]
--f, --fahrenheit                Displays the temperature type in Fahrenheit
--k, --kelvin                    Displays the temperature type in Kelvin
--l, --left_legend               Displays the CPU legend to the left rather than the right
--u, --current_usage             Sets process CPU usage to be based on current total CPU usage
--g, --group                     Groups together processes with the same name by default
--S, --case_sensitive            Search defaults to matching cases
--W, --whole                     Search defaults to searching for the whole word
--R, --regex                     Search defaults to using regex
--s, --show_disabled_data        Shows disabled CPU entries in the CPU legend
--b, --basic                     Enables basic mode, removing charts and condensing data
+-h, --help                          Prints help information, including flags and options
+-a, --avg_cpu                       Shows the average CPU usage in addition to per-core
+-m, --dot-marker                    Uses a dot marker instead of the default braille marker
+-c, --celsius                       Displays the temperature type in Celsius [default]
+-f, --fahrenheit                    Displays the temperature type in Fahrenheit
+-k, --kelvin                        Displays the temperature type in Kelvin
+-l, --left_legend                   Displays the CPU legend to the left rather than the right
+-u, --current_usage                 Sets process CPU usage to be based on current total CPU usage
+-g, --group                         Groups together processes with the same name by default
+-S, --case_sensitive                Search defaults to matching cases
+-W, --whole                         Search defaults to searching for the whole word
+-R, --regex                         Search defaults to using regex
+-s, --show_disabled_data            Shows disabled CPU entries in the CPU legend
+-b, --basic                         Enables basic mode, removing charts and condensing data
+    --autohide_time                 Automatically hide the time scaling in graphs after being shown for a brief moment when
+                                    zoomed in/out.  If time is disabled via --hide_time then this will have no effect.
+    --use_old_network_legend        Use the older (pre-0.4) network legend which is separate from the network chart
+    --hide_table_gap                Hides the spacing between table headers and data
 ```
 
 ### Options
 
 ```
--r, --rate <MS>                 Set the refresh rate in milliseconds [default: 1000]
--C, --config <PATH>             Use the specified config file; if it does not exist it is automatically created
--t, --default_time_value <MS>   Sets the default time interval for charts in milliseconds [default: 60000]
--d, --time_delta <MS>           Sets the default amount each zoom in/out action changes by in milliseconds [default: 15000]
+-r, --rate <MS>                     Set the refresh rate in milliseconds [default: 1000]
+-C, --config <PATH>                 Use the specified config file; if it does not exist it is automatically created
+-t, --default_time_value <MS>       Sets the default time interval for charts in milliseconds [default: 60000]
+-d, --time_delta <MS>               Sets the default amount each zoom in/out action changes by in milliseconds [default: 15000]
+    --default_widget_count <COUNT>  Which number of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.
+    --default_widget_type <TYPE>    The default widget type to select by default.
 ```
 
 ### Keybindings
@@ -287,6 +293,8 @@ These are the following supported flag config values:
 | `regex` | Boolean |
 | `show_disabled_data` | Boolean |
 | `basic` | Boolean |
+| `hide_table_count`| Boolean |
+| `use_old_network_legend`| Boolean |
 | `rate` | Unsigned Int (represents milliseconds) |
 | `default_time_value` | Unsigned Int (represents milliseconds) |
 | `time_delta` | Unsigned Int (represents milliseconds) |
