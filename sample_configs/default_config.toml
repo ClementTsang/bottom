@@ -59,6 +59,12 @@
 # Use basic mode
 #basic = false
 
+# Use the old network legend style
+#use_old_network_legend = false
+
+# Remove space in tables
+#hide_table_gap = false
+
 ##########################################################
 
 # These are all the components that support custom theming.  Note that colour support
@@ -103,10 +109,13 @@
 #selected_text_color="Black"
 
 # Represents the background colour of text that is selected.
-#selected_bg_color="Cyan"
+#selected_bg_color="LightBlue"
 
 # Represents the colour of the lines and text of the graph.
 #graph_color="Gray"
+
+# Represents the colours of the battery based on charge
+#battery_colors = ["red", "yellow", "yellow", "green", "green", "green"]
 
 ##########################################################
 
@@ -120,24 +129,24 @@
 
 # The default widget layout:
 #[[row]]
-# ratio=30
-# [[row.child]]
-# type="cpu"
+#  ratio=30
+#  [[row.child]]
+#  type="cpu"
 #[[row]]
-#   ratio=40
-#   [[row.child]]
-#     ratio=4
-#     type="mem"
-#   [[row.child]]
-#     ratio=3
-#     [[row.child.child]]
-#       type="temp"
-#     [[row.child.child]]
-#       type="disk"
+#    ratio=40
+#    [[row.child]]
+#      ratio=4
+#      type="mem"
+#    [[row.child]]
+#      ratio=3
+#      [[row.child.child]]
+#        type="temp"
+#      [[row.child.child]]
+#        type="disk"
 #[[row]]
-# ratio=30
-# [[row.child]]
-#   type="net"
-# [[row.child]]
-#   type="proc"
-#   default=true
+#  ratio=30
+#  [[row.child]]
+#    type="net"
+#  [[row.child]]
+#    type="proc"
+#    default=true
