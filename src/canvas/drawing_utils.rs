@@ -1,7 +1,6 @@
 use crate::app;
 use itertools::izip;
 
-// TODO: Reverse intrinsic?
 /// A somewhat jury-rigged solution to simulate a variable intrinsic layout for
 /// table widths.  Note that this will do one main pass to try to properly
 /// allocate widths.  This will thus potentially cut off latter elements
