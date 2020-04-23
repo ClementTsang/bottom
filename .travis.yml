@@ -49,6 +49,7 @@ notifications:
     on_success: never
 
 before_deploy:
+  - rustup update
   - cargo install --path . --target $TARGET
   - cargo update
   - |
