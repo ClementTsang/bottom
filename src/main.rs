@@ -108,6 +108,12 @@ fn main() -> error::Result<()> {
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(&matches, &config, &widget_layout, default_widget_id)?;
 
+    // Create painter and set colours.
+    let mut painter = canvas::Painter::init(widget_layout, app.app_config_fields.table_gap);
+    generate_config_colours(&config, &mut painter)?;
+    painter.colours.generate_remaining_cpu_colours();
+    painter.complete_painter_init();
+
     // Set up up tui and crossterm
     let mut stdout_val = stdout();
     execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
@@ -144,14 +150,6 @@ fn main() -> error::Result<()> {
         app.app_config_fields.show_average_cpu,
         app.used_widgets.clone(),
     );
-
-    let mut painter = canvas::Painter::init(widget_layout, app.app_config_fields.table_gap);
-    if let Err(config_check) = generate_config_colours(&config, &mut painter) {
-        cleanup_terminal(&mut terminal)?;
-        return Err(config_check);
-    }
-    painter.colours.generate_remaining_cpu_colours();
-    painter.complete_painter_init();
 
     let mut first_run = true;
     loop {

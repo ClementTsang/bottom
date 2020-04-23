@@ -166,7 +166,8 @@ impl CanvasColours {
     pub fn set_battery_colours(&mut self, colours: &[String]) -> error::Result<()> {
         if colours.is_empty() {
             Err(error::BottomError::ConfigError(
-                "Battery colour list must have at least one colour!".to_string(),
+                "invalid colour config: battery colour list must have at least one colour!"
+                    .to_string(),
             ))
         } else {
             let generated_colours: Result<Vec<_>, _> = colours

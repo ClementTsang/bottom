@@ -96,17 +96,34 @@ pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
 }
 
 pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
+    fn hex_err(hex: &str) -> error::Result<u8> {
+        Err(
+            error::BottomError::ConfigError(format!(
+                "invalid color hex: error when parsing hex value {}.  It must be a valid 7 character hex string of the (ie: \"#112233\")."
+            , hex))
+        )
+    }
+
     fn convert_hex_to_rgb(hex: &str) -> error::Result<(u8, u8, u8)> {
-        if hex.len() == 7 && &hex[0..1] == "#" {
-            let r = u8::from_str_radix(&hex[1..3], 16)?;
-            let g = u8::from_str_radix(&hex[3..5], 16)?;
-            let b = u8::from_str_radix(&hex[5..7], 16)?;
+        let hex_components: Vec<char> = hex.chars().collect();
+
+        if hex_components.len() == 7 {
+            let mut r_string = hex_components[1].to_string();
+            r_string.push(hex_components[2]);
+            let mut g_string = hex_components[3].to_string();
+            g_string.push(hex_components[4]);
+            let mut b_string = hex_components[5].to_string();
+            b_string.push(hex_components[6]);
+
+            let r = u8::from_str_radix(&r_string, 16).or_else(|_err| hex_err(hex))?;
+            let g = u8::from_str_radix(&g_string, 16).or_else(|_err| hex_err(hex))?;
+            let b = u8::from_str_radix(&b_string, 16).or_else(|_err| hex_err(hex))?;
 
             return Ok((r, g, b));
         }
 
-        Err(error::BottomError::GenericError(format!(
-            "Colour hex {} is not of valid length.  It must be a 7 character string of the form \"#112233\".",
+        Err(error::BottomError::ConfigError(format!(
+            "invalid color hex: value {} is not of valid length.  It must be a 7 character string of the form \"#112233\".",
             hex
         )))
     }
@@ -125,8 +142,8 @@ pub fn get_style_from_config(input_val: &str) -> error::Result<Style> {
             get_style_from_color_name(input_val)
         }
     } else {
-        Err(error::BottomError::GenericError(format!(
-            "Colour input {} is not valid.",
+        Err(error::BottomError::ConfigError(format!(
+            "invalid color: value {} is not valid.",
             input_val
         )))
     }
@@ -142,8 +159,8 @@ pub fn get_colour_from_config(input_val: &str) -> error::Result<Color> {
             convert_name_to_color(input_val)
         }
     } else {
-        Err(error::BottomError::GenericError(format!(
-            "Colour input {} is not valid.",
+        Err(error::BottomError::ConfigError(format!(
+            "invalid color: value {} is not valid.",
             input_val
         )))
     }
@@ -154,10 +171,18 @@ pub fn get_style_from_hex(hex: &str) -> error::Result<Style> {
 }
 
 fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
-    let rgb_list = rgb_str.split(',');
+    let rgb_list = rgb_str.split(',').collect::<Vec<&str>>();
+    if rgb_list.len() != 3 {
+        return Err(error::BottomError::ConfigError(format!(
+            "invalid RGB color: value {} is not of valid length.  It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
+            rgb_str
+        )));
+    }
+
     let rgb = rgb_list
+        .iter()
         .filter_map(|val| {
-            if let Ok(res) = val.to_string().trim().parse::<u8>() {
+            if let Ok(res) = (*(*val)).to_string().trim().parse::<u8>() {
                 Some(res)
             } else {
                 None
@@ -167,8 +192,8 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
     if rgb.len() == 3 {
         Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
     } else {
-        Err(error::BottomError::GenericError(format!(
-            "RGB colour {} is not of valid length.  It must be a comma separated value with 3 integers from 0 to 255, like \"255, 0, 155\".",
+        Err(error::BottomError::ConfigError(format!(
+            "invalid RGB color: value {} contained invalid RGB values.  It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
             rgb_str
         )))
     }
@@ -184,8 +209,8 @@ fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
         return Ok(*color);
     }
 
-    Err(error::BottomError::GenericError(format!(
-        "Color {} is not a supported config colour.  bottom supports the following named colours as strings: \
+    Err(error::BottomError::ConfigError(format!(
+        "invalid named color: value {} is not a supported named colour.  The following are supported strings: \
 		Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, \
 		LightYellow, LightBlue, LightMagenta, LightCyan, White",
         color_name

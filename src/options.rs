@@ -41,7 +41,7 @@ pub struct ConfigFlags {
     pub default_widget_type: Option<String>,
     pub default_widget_count: Option<u64>,
     pub use_old_network_legend: Option<bool>,
-    pub hide_table_gap : Option<bool>,
+    pub hide_table_gap: Option<bool>,
     //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
@@ -219,7 +219,11 @@ pub fn build_app(
         hide_time: get_hide_time(matches, config),
         autohide_time,
         use_old_network_legend: get_use_old_network_legend(matches, config),
-        table_gap: if get_hide_table_gap(matches, config){0}else{1},
+        table_gap: if get_hide_table_gap(matches, config) {
+            0
+        } else {
+            1
+        },
     };
 
     let used_widgets = UsedWidgets {
@@ -286,7 +290,7 @@ pub fn get_widget_layout(
             ret_bottom_layout
         } else {
             return Err(error::BottomError::ConfigError(
-                "Invalid layout - please have at least one widget.".to_string(),
+                "invalid layout config: please have at least one widget.".to_string(),
             ));
         }
     } else {
@@ -342,7 +346,7 @@ fn get_temperature(
                 "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
                 "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
                 _ => Err(BottomError::ConfigError(
-                    "Invalid temperature type.  Please have the value be of the form \
+                    "invalid temperature type: please have the value be of the form \
 						 <kelvin|k|celsius|c|fahrenheit|f>"
                         .to_string(),
                 )),
@@ -633,4 +637,3 @@ pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) 
     }
     false
 }
-

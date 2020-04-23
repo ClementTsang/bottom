@@ -28,24 +28,24 @@ impl std::fmt::Display for BottomError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             BottomError::InvalidIO(ref message) => {
-                write!(f, "Encountered an IO exception: {}", message)
+                write!(f, "encountered an IO exception: {}", message)
             }
             BottomError::InvalidArg(ref message) => write!(f, "Invalid argument: {}", message),
             BottomError::InvalidHeim(ref message) => write!(
                 f,
-                "Invalid error during data collection due to Heim: {}",
+                "invalid error during data collection due to heim: {}",
                 message
             ),
             BottomError::CrosstermError(ref message) => {
-                write!(f, "Invalid error due to Crossterm: {}", message)
+                write!(f, "invalid error due to Crossterm: {}", message)
             }
             BottomError::GenericError(ref message) => write!(f, "{}", message),
             BottomError::FernError(ref message) => write!(f, "Invalid fern error: {}", message),
             BottomError::ConfigError(ref message) => {
-                write!(f, "Invalid config file error: {}", message)
+                write!(f, "invalid config file error: {}", message)
             }
             BottomError::ConversionError(ref message) => {
-                write!(f, "Unable to convert: {}", message)
+                write!(f, "unable to convert: {}", message)
             }
         }
     }

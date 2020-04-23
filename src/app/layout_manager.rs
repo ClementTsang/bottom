@@ -929,11 +929,11 @@ impl std::str::FromStr for BottomWidgetType {
             "net" | "network" => Ok(BottomWidgetType::Net),
             "proc" | "process" | "processes" => Ok(BottomWidgetType::Proc),
             "temp" | "temperature" => Ok(BottomWidgetType::Temp),
-            "disk"  => Ok(BottomWidgetType::Disk),
+            "disk" => Ok(BottomWidgetType::Disk),
             "empty" => Ok(BottomWidgetType::Empty),
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
             _ => Err(BottomError::ConfigError(format!(
-                "Invalid widget type: {}",
+                "invalid widget type: {}",
                 s
             ))),
         }
