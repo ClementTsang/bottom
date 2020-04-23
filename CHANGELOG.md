@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed an (undocumented) feature in allowing modifying total RX/TX colours. This is mainly due to the legend change.
 
+- Updated error messages to be a bit more consistent/helpful.
+
 - [#117](https://github.com/ClementTsang/bottom/issues/117): Update tui to 0.9:
 
   - Use custom legend-hiding to stop hiding legends for memory and network widgets.
@@ -48,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed bug where a single empty row as a layout would crash without a proper warning.
   The behaviour now errors out with a more helpful message.
+
+### Other
+
+- Updated tests and added config testing.
 
 ## [0.3.0] - 2020-04-07
 
