@@ -136,7 +136,7 @@ fn test_invalid_default_widget_1() -> Result<(), Box<dyn std::error::Error>> {
         .arg("fake_widget")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("Invalid widget type"));
+        .stderr(predicate::str::contains("invalid widget type"));
 
     Ok(())
 }
