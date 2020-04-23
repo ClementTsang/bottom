@@ -182,7 +182,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
     let rgb = rgb_list
         .iter()
         .filter_map(|val| {
-            if let Ok(res) = val.to_string().trim().parse::<u8>() {
+            if let Ok(res) = (*(*val)).to_string().trim().parse::<u8>() {
                 Some(res)
             } else {
                 None
