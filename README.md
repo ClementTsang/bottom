@@ -7,6 +7,8 @@
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
+<!--TODO: Update recording for 0.4-->
+
 ![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
 **Note**: This documentation is relevant to version 0.4.0 and may refer to in-development features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
