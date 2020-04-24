@@ -91,7 +91,7 @@ impl ProcessTableWidget for Painter {
                     &proc_widget_state.scroll_state.scroll_direction,
                     &mut proc_widget_state.scroll_state.previous_scroll_position,
                     proc_widget_state.scroll_state.current_scroll_position,
-                    app_state.is_resized,
+                    app_state.is_force_redraw,
                 );
 
                 // Sanity check
@@ -370,7 +370,7 @@ impl ProcessTableWidget for Painter {
                     .search_state
                     .cursor_bar,
                 current_cursor_position,
-                app_state.is_resized,
+                app_state.is_force_redraw,
             );
 
             let query = proc_widget_state.get_current_search_query().as_str();

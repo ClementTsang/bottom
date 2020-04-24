@@ -64,18 +64,14 @@ pub enum AppHelpCategory {
     Search,
 }
 
+#[derive(Default)]
 pub struct AppHelpDialogState {
     pub is_showing_help: bool,
-    pub current_category: AppHelpCategory,
-}
-
-impl Default for AppHelpDialogState {
-    fn default() -> Self {
-        AppHelpDialogState {
-            is_showing_help: false,
-            current_category: AppHelpCategory::General,
-        }
-    }
+    pub scroll_state: ParagraphScrollState,
+    pub general_index: u16,
+    pub process_index: u16,
+    pub search_index: u16,
+    pub battery_index: u16,
 }
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
@@ -481,6 +477,12 @@ impl BatteryState {
     }
 }
 
+#[derive(Default)]
+pub struct ParagraphScrollState {
+    pub current_scroll_index: u16,
+    pub max_scroll_index: u16,
+}
+
 #[derive(TypedBuilder)]
 pub struct App {
     #[builder(default = false, setter(skip))]
@@ -517,7 +519,7 @@ pub struct App {
     pub is_expanded: bool,
 
     #[builder(default = false, setter(skip))]
-    pub is_resized: bool,
+    pub is_force_redraw: bool,
 
     pub cpu_state: CpuState,
     pub mem_state: MemState,
@@ -581,11 +583,11 @@ impl App {
         self.reset_multi_tap_keys();
         if self.is_in_dialog() {
             self.help_dialog_state.is_showing_help = false;
-            self.help_dialog_state.current_category = AppHelpCategory::General;
             self.delete_dialog_state.is_showing_dd = false;
             self.delete_dialog_state.is_on_yes = false;
             self.to_delete_process_list = None;
             self.dd_err = None;
+            self.is_force_redraw = true;
         } else if self.is_filtering_or_searching() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Cpu => {
@@ -603,7 +605,7 @@ impl App {
                             cpu_widget_state.scroll_state.current_scroll_position = new_position;
                             cpu_widget_state.scroll_state.previous_scroll_position = 0;
                         }
-                        self.is_resized = true;
+                        self.is_force_redraw = true;
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -621,7 +623,7 @@ impl App {
                             cpu_widget_state.scroll_state.current_scroll_position = new_position;
                             cpu_widget_state.scroll_state.previous_scroll_position = 0;
                         }
-                        self.is_resized = true;
+                        self.is_force_redraw = true;
                     }
                 }
                 BottomWidgetType::Proc => {
@@ -636,7 +638,7 @@ impl App {
                                 .search_state
                                 .is_enabled = false;
                         }
-                        self.is_resized = true;
+                        self.is_force_redraw = true;
                     }
                 }
                 BottomWidgetType::ProcSearch => {
@@ -652,14 +654,14 @@ impl App {
                                 .is_enabled = false;
                             self.move_widget_selection_up();
                         }
-                        self.is_resized = true;
+                        self.is_force_redraw = true;
                     }
                 }
                 _ => {}
             }
         } else if self.is_expanded {
             self.is_expanded = false;
-            self.is_resized = true;
+            self.is_force_redraw = true;
         }
     }
 
@@ -974,7 +976,7 @@ impl App {
                 BottomWidgetType::ProcSearch => {}
                 _ => {
                     self.is_expanded = true;
-                    self.is_resized = true;
+                    self.is_force_redraw = true;
                 }
             }
         }
@@ -1098,13 +1100,19 @@ impl App {
     pub fn on_up_key(&mut self) {
         if !self.is_in_dialog() {
             self.decrement_position_count();
+        } else if self.help_dialog_state.is_showing_help {
+            self.help_scroll_up();
         }
+        self.reset_multi_tap_keys();
     }
 
     pub fn on_down_key(&mut self) {
         if !self.is_in_dialog() {
             self.increment_position_count();
+        } else if self.help_dialog_state.is_showing_help {
+            self.help_scroll_down();
         }
+        self.reset_multi_tap_keys();
     }
 
     pub fn on_left_key(&mut self) {
@@ -1428,10 +1436,15 @@ impl App {
             }
             self.handle_char(caught_char);
         } else if self.help_dialog_state.is_showing_help {
+            // TODO: Seems weird that we have it like this; it would be better to make this
+            // more obvious that we are separating dialog logic and normal logic IMO.
+            // This is even more so as most logic already checks for dialog state.
             match caught_char {
-                '1' => self.help_dialog_state.current_category = AppHelpCategory::General,
-                '2' => self.help_dialog_state.current_category = AppHelpCategory::Process,
-                '3' => self.help_dialog_state.current_category = AppHelpCategory::Search,
+                '1' => self.help_scroll_to_or_max(self.help_dialog_state.general_index),
+                '2' => self.help_scroll_to_or_max(self.help_dialog_state.process_index),
+                '3' => self.help_scroll_to_or_max(self.help_dialog_state.search_index),
+                '4' => self.help_scroll_to_or_max(self.help_dialog_state.battery_index),
+                'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }
         }
@@ -1478,8 +1491,8 @@ impl App {
                 }
             }
             'G' => self.skip_to_last(),
-            'k' => self.decrement_position_count(),
-            'j' => self.increment_position_count(),
+            'k' => self.on_up_key(),
+            'j' => self.on_down_key(),
             'f' => {
                 self.is_frozen = !self.is_frozen;
                 if self.is_frozen {
@@ -1584,6 +1597,7 @@ impl App {
             }
             '?' => {
                 self.help_dialog_state.is_showing_help = true;
+                self.is_force_redraw = true;
             }
             'H' => self.move_widget_selection_left(),
             'L' => self.move_widget_selection_right(),
@@ -2019,6 +2033,8 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
+        } else {
+            self.help_dialog_state.scroll_state.current_scroll_index = 0;
         }
     }
 
@@ -2093,6 +2109,12 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
+        } else {
+            self.help_dialog_state.scroll_state.current_scroll_index = self
+                .help_dialog_state
+                .scroll_state
+                .max_scroll_index
+                .saturating_sub(1);
         }
     }
 
@@ -2105,7 +2127,6 @@ impl App {
                 BottomWidgetType::CpuLegend => self.change_cpu_table_position(-1),
                 _ => {}
             }
-            self.reset_multi_tap_keys();
         }
     }
 
@@ -2118,7 +2139,6 @@ impl App {
                 BottomWidgetType::CpuLegend => self.change_cpu_table_position(1),
                 _ => {}
             }
-            self.reset_multi_tap_keys();
         }
     }
 
@@ -2228,8 +2248,33 @@ impl App {
         }
     }
 
+    fn help_scroll_up(&mut self) {
+        if self.help_dialog_state.scroll_state.current_scroll_index > 0 {
+            self.help_dialog_state.scroll_state.current_scroll_index -= 1;
+        }
+    }
+
+    fn help_scroll_down(&mut self) {
+        if self.help_dialog_state.scroll_state.current_scroll_index + 1
+            < self.help_dialog_state.scroll_state.max_scroll_index
+        {
+            self.help_dialog_state.scroll_state.current_scroll_index += 1;
+        }
+    }
+
+    fn help_scroll_to_or_max(&mut self, new_position: u16) {
+        if new_position < self.help_dialog_state.scroll_state.max_scroll_index {
+            self.help_dialog_state.scroll_state.current_scroll_index = new_position;
+        } else {
+            self.help_dialog_state.scroll_state.current_scroll_index =
+                self.help_dialog_state.scroll_state.max_scroll_index - 1;
+        }
+    }
+
     pub fn handle_scroll_up(&mut self) {
-        if self.current_widget.widget_type.is_widget_graph() {
+        if self.help_dialog_state.is_showing_help {
+            self.help_scroll_up();
+        } else if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_in();
         } else if self.current_widget.widget_type.is_widget_table() {
             self.decrement_position_count();
@@ -2237,7 +2282,9 @@ impl App {
     }
 
     pub fn handle_scroll_down(&mut self) {
-        if self.current_widget.widget_type.is_widget_graph() {
+        if self.help_dialog_state.is_showing_help {
+            self.help_scroll_down();
+        } else if self.current_widget.widget_type.is_widget_graph() {
             self.zoom_out();
         } else if self.current_widget.widget_type.is_widget_table() {
             self.increment_position_count();

@@ -78,9 +78,9 @@ pub fn get_variable_intrinsic_widths(
 
 pub fn get_search_start_position(
     num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
-    current_cursor_position: usize, is_resized: bool,
+    current_cursor_position: usize, is_force_redraw: bool,
 ) -> usize {
-    if is_resized {
+    if is_force_redraw {
         *cursor_bar = 0;
     }
 
@@ -118,9 +118,9 @@ pub fn get_search_start_position(
 
 pub fn get_start_position(
     num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
-    currently_selected_position: u64, is_resized: bool,
+    currently_selected_position: u64, is_force_redraw: bool,
 ) -> u64 {
-    if is_resized {
+    if is_force_redraw {
         *scroll_position_bar = 0;
     }
 

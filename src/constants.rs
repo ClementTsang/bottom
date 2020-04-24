@@ -36,17 +36,27 @@ lazy_static! {
 }
 
 // Help text
+pub const NUM_CATEGORIES: u16 = 5;
+
+pub const HELP_CONTENTS_TEXT: [&str; 5] = [
+    "Press the corresponding numbers to jump to the section:\n",
+    "1 - General Keybindings\n",
+    "2 - Process Keybindings\n",
+    "3 - Search Keybindings\n",
+    "4 - Battery Keybindings",
+];
+
 pub const GENERAL_HELP_TEXT: [&str; 18] = [
-    "General Keybindings\n\n",
+    "1 - General Keybindings\n",
     "q, Ctrl-c      Quit bottom\n",
     "Esc            Close filters, dialog boxes, etc.\n",
     "Ctrl-r         Reset all data\n",
     "f              Freeze display\n",
-    "Ctrl-Arrow     Change your selected widget\n",
+    "Ctrl-Arrow     \n",
     "Shift-Arrow    Change your selected widget\n",
-    "H/J/K/L        Change your selected widget up/down/left/right\n",
-    "Up, k          Move cursor up\n",
-    "Down, j        Move cursor down\n",
+    "H/J/K/L        \n",
+    "Up, k          Scroll up\n",
+    "Down, j        Scroll down\n",
     "?              Open the help screen\n",
     "gg             Skip to the first entry of a list\n",
     "G              Skip to the last entry of a list\n",
@@ -54,22 +64,22 @@ pub const GENERAL_HELP_TEXT: [&str; 18] = [
     "/              Filter out graph lines (only CPU at the moment)\n",
     "+              Zoom in (decrease time range)\n",
     "-              Zoom out (increase time range)\n",
-    "=              Reset zoom\n",
+    "=              Reset zoom",
 ];
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
-    "Process Keybindings\n\n",
+    "2 - Process Keybindings\n",
     "dd, Delete     Kill the highlighted process\n",
     "c              Sort by CPU usage\n",
     "m              Sort by memory usage\n",
     "p              Sort by PID\n",
     "n              Sort by process name\n",
     "Tab            Group together processes with the same name\n",
-    "Ctrl-f, /      Open up the search widget\n",
+    "Ctrl-f, /      Open up the search widget",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 13] = [
-    "Search Keybindings\n\n",
+    "3 - Search Keybindings\n",
     "Tab            Toggle between searching for PID and name.\n",
     "Esc            Close search widget\n",
     "Ctrl-a         Skip to the start of search widget\n",
@@ -81,7 +91,13 @@ pub const SEARCH_HELP_TEXT: [&str; 13] = [
     "Right          Move cursor right\n",
     "Alt-c/F1       Toggle whether to ignore case\n",
     "Alt-w/F2       Toggle whether to match the whole word\n",
-    "Alt-r/F3       Toggle whether to use regex\n",
+    "Alt-r/F3       Toggle whether to use regex",
+];
+
+pub const BATTERY_HELP_TEXT: [&str; 3] = [
+    "4 - Battery Keybindings\n",
+    "Left           Go to previous battery\n",
+    "Right          Go to next battery",
 ];
 
 // Config and flags
