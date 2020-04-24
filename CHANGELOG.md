@@ -27,11 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `"processes"`
   - `"temperature"`
 
-- Removed an (undocumented) feature in allowing modifying total RX/TX colours. This is mainly due to the legend change.
-
-- Updated error messages to be a bit more consistent/helpful.
-
 - [#117](https://github.com/ClementTsang/bottom/issues/117): Update tui to 0.9:
+
+  - Removed an (undocumented) feature in allowing modifying total RX/TX colours. This is mainly due to the legend change.
 
   - Use custom legend-hiding to stop hiding legends for memory and network widgets.
 
@@ -40,9 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   - Allow for option to hide the header gap on tables via `--hide_table_gap` or `hide_table_gap = true`.
 
-  - Switch to stateful widget style for tables.
+- [#126](https://github.com/ClementTsang/bottom/pull/126): Updated error messages to be a bit more consistent/helpful.
 
-  - Switch to using tui-rs' new built in linear interpolation rather than doing it manually.
+- Redesigned help menu to allow for scrolling.
 
 ### Bug Fixes
 
@@ -51,9 +49,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bug where a single empty row as a layout would crash without a proper warning.
   The behaviour now errors out with a more helpful message.
 
-### Other
+### Development changes
 
-- Updated tests and added config testing.
+- Switch to stateful widget style for tables.
+
+- Switch to using tui-rs' new built in linear interpolation rather than doing it manually.
+
+- Updated arg tests and added config testing.
+
+- More refactoring.
 
 ## [0.3.0] - 2020-04-07
 

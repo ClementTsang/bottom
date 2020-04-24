@@ -114,17 +114,6 @@ fn main() -> error::Result<()> {
     painter.colours.generate_remaining_cpu_colours();
     painter.complete_painter_init();
 
-    // Set up up tui and crossterm
-    let mut stdout_val = stdout();
-    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
-    enable_raw_mode()?;
-
-    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
-    terminal.hide_cursor()?;
-
-    // Set panic hook
-    panic::set_hook(Box::new(|info| panic_hook(info)));
-
     // Set up input handling
     let (tx, rx) = mpsc::channel();
     create_input_thread(tx.clone());
@@ -150,6 +139,17 @@ fn main() -> error::Result<()> {
         app.app_config_fields.show_average_cpu,
         app.used_widgets.clone(),
     );
+
+    // Set up up tui and crossterm
+    let mut stdout_val = stdout();
+    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
+    enable_raw_mode()?;
+
+    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
+    terminal.hide_cursor()?;
+
+    // Set panic hook
+    panic::set_hook(Box::new(|info| panic_hook(info)));
 
     let mut first_run = true;
     loop {

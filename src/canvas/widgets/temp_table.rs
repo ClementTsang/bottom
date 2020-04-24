@@ -46,7 +46,7 @@ impl TempTableWidget for Painter {
                 &temp_widget_state.scroll_state.scroll_direction,
                 &mut temp_widget_state.scroll_state.previous_scroll_position,
                 temp_widget_state.scroll_state.current_scroll_position,
-                app_state.is_resized,
+                app_state.is_force_redraw,
             );
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let temp_table_state = &mut temp_widget_state.scroll_state.table_state;

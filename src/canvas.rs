@@ -59,9 +59,7 @@ pub struct Painter {
     pub colours: CanvasColours,
     height: u16,
     width: u16,
-    styled_general_help_text: Vec<Text<'static>>,
-    styled_process_help_text: Vec<Text<'static>>,
-    styled_search_help_text: Vec<Text<'static>>,
+    styled_help_text: Vec<Text<'static>>,
     is_mac_os: bool,
     row_constraints: Vec<Constraint>,
     col_constraints: Vec<Vec<Constraint>>,
@@ -145,9 +143,7 @@ impl Painter {
             colours: CanvasColours::default(),
             height: 0,
             width: 0,
-            styled_general_help_text: Vec::new(),
-            styled_process_help_text: Vec::new(),
-            styled_search_help_text: Vec::new(),
+            styled_help_text: Vec::new(),
             is_mac_os: false,
             row_constraints,
             col_constraints,
@@ -164,44 +160,79 @@ impl Painter {
     pub fn complete_painter_init(&mut self) {
         self.is_mac_os = cfg!(target_os = "macos");
 
-        if GENERAL_HELP_TEXT.len() > 1 {
-            self.styled_general_help_text.push(Text::Styled(
-                GENERAL_HELP_TEXT[0].into(),
-                self.colours.table_header_style,
-            ));
-            self.styled_general_help_text.extend(
-                GENERAL_HELP_TEXT[1..]
-                    .iter()
-                    .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                    .collect::<Vec<_>>(),
-            );
-        }
+        // Init help text:
+        // ToC
+        self.styled_help_text.extend(
+            HELP_CONTENTS_TEXT
+                .iter()
+                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                .collect::<Vec<_>>(),
+        );
 
-        if PROCESS_HELP_TEXT.len() > 1 {
-            self.styled_process_help_text.push(Text::Styled(
-                PROCESS_HELP_TEXT[0].into(),
-                self.colours.table_header_style,
-            ));
-            self.styled_process_help_text.extend(
-                PROCESS_HELP_TEXT[1..]
-                    .iter()
-                    .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                    .collect::<Vec<_>>(),
-            );
-        }
+        // General
+        self.styled_help_text.push(Text::Raw("\n\n".into()));
+        self.styled_help_text.push(Text::Styled(
+            GENERAL_HELP_TEXT[0].into(),
+            self.colours.table_header_style,
+        ));
+        self.styled_help_text.extend(
+            GENERAL_HELP_TEXT[1..]
+                .iter()
+                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                .collect::<Vec<_>>(),
+        );
 
-        if SEARCH_HELP_TEXT.len() > 1 {
-            self.styled_search_help_text.push(Text::Styled(
-                SEARCH_HELP_TEXT[0].into(),
-                self.colours.table_header_style,
-            ));
-            self.styled_search_help_text.extend(
-                SEARCH_HELP_TEXT[1..]
-                    .iter()
-                    .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                    .collect::<Vec<_>>(),
-            );
-        }
+        // CPU
+        self.styled_help_text.push(Text::Raw("\n\n".into()));
+        self.styled_help_text.push(Text::Styled(
+            CPU_HELP_TEXT[0].into(),
+            self.colours.table_header_style,
+        ));
+        self.styled_help_text.extend(
+            CPU_HELP_TEXT[1..]
+                .iter()
+                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                .collect::<Vec<_>>(),
+        );
+
+        // Proc
+        self.styled_help_text.push(Text::Raw("\n\n".into()));
+        self.styled_help_text.push(Text::Styled(
+            PROCESS_HELP_TEXT[0].into(),
+            self.colours.table_header_style,
+        ));
+        self.styled_help_text.extend(
+            PROCESS_HELP_TEXT[1..]
+                .iter()
+                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                .collect::<Vec<_>>(),
+        );
+
+        // Proc Search
+        self.styled_help_text.push(Text::Raw("\n\n".into()));
+        self.styled_help_text.push(Text::Styled(
+            SEARCH_HELP_TEXT[0].into(),
+            self.colours.table_header_style,
+        ));
+        self.styled_help_text.extend(
+            SEARCH_HELP_TEXT[1..]
+                .iter()
+                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                .collect::<Vec<_>>(),
+        );
+
+        // Battery
+        self.styled_help_text.push(Text::Raw("\n\n".into()));
+        self.styled_help_text.push(Text::Styled(
+            BATTERY_HELP_TEXT[0].into(),
+            self.colours.table_header_style,
+        ));
+        self.styled_help_text.extend(
+            BATTERY_HELP_TEXT[1..]
+                .iter()
+                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                .collect::<Vec<_>>(),
+        );
     }
 
     // TODO: [FEATURE] Auto-resizing dialog sizes.
@@ -214,11 +245,10 @@ impl Painter {
         let current_height = terminal_size.height;
         let current_width = terminal_size.width;
 
-        if self.height == 0 && self.width == 0 {
-            self.height = current_height;
-            self.width = current_width;
-        } else if self.height != current_height || self.width != current_width {
-            app_state.is_resized = true;
+        if (self.height == 0 && self.width == 0)
+            || (self.height != current_height || self.width != current_width)
+        {
+            app_state.is_force_redraw = true;
             self.height = current_height;
             self.width = current_width;
         }
@@ -434,7 +464,7 @@ impl Painter {
                 }
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.
-                if self.derived_widget_draw_locs.is_empty() || app_state.is_resized {
+                if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
                     let row_draw_locs = Layout::default()
                         .margin(0)
                         .constraints(self.row_constraints.as_ref())
@@ -531,7 +561,7 @@ impl Painter {
             }
         })?;
 
-        app_state.is_resized = false;
+        app_state.is_force_redraw = false;
 
         Ok(())
     }

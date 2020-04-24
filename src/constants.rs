@@ -36,52 +36,76 @@ lazy_static! {
 }
 
 // Help text
+pub const NUM_CATEGORIES: u16 = 6;
+
+pub const HELP_CONTENTS_TEXT: [&str; 6] = [
+    "Press the corresponding numbers to jump to the section, or scroll:\n",
+    "1 - General bindings\n",
+    "2 - CPU bindings\n",
+    "3 - Process bindings\n",
+    "4 - Process search bindings\n",
+    "5 - Battery bindings",
+];
+
 pub const GENERAL_HELP_TEXT: [&str; 18] = [
-    "General Keybindings\n\n",
-    "q, Ctrl-c      Quit bottom\n",
-    "Esc            Close filters, dialog boxes, etc.\n",
-    "Ctrl-r         Reset all data\n",
-    "f              Freeze display\n",
-    "Ctrl-Arrow     Change your selected widget\n",
-    "Shift-Arrow    Change your selected widget\n",
-    "H/J/K/L        Change your selected widget up/down/left/right\n",
-    "Up, k          Move cursor up\n",
-    "Down, j        Move cursor down\n",
-    "?              Open the help screen\n",
-    "gg             Skip to the first entry of a list\n",
-    "G              Skip to the last entry of a list\n",
+    "1 - General bindings\n",
+    "q, Ctrl-c      Quit\n",
+    "Esc            Close dialog windows, search, widgets, or exit maximized mode\n",
+    "Ctrl-r         Reset display and any collected data\n",
+    "f              Freeze/unfreeze updating with new data\n",
+    "Ctrl-Arrow     \n",
+    "Shift-Arrow    Move to a different widget\n",
+    "H/J/K/L        \n",
+    "Up, k          Scroll up\n",
+    "Down, j        Scroll down\n",
+    "?              Open help menu\n",
+    "gg             Jump to the first entry\n",
+    "G              Jump to the last entry\n",
     "Enter          Maximize the currently selected widget\n",
-    "/              Filter out graph lines (only CPU at the moment)\n",
-    "+              Zoom in (decrease time range)\n",
-    "-              Zoom out (increase time range)\n",
+    "+              Zoom in on chart (decrease time range)\n",
+    "-              Zoom out on chart (increase time range)\n",
     "=              Reset zoom\n",
+    "Mouse scroll   Scroll through the tables or zoom in/out of charts by scrolling up/down",
+];
+
+pub const CPU_HELP_TEXT: [&str; 4] = [
+    "2 - CPU bindings\n",
+    "/              Open filtering for showing certain CPU cores\n",
+    "Space          Toggle enabled/disabled cores\n",
+    "Esc            Exit filtering mode",
 ];
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
-    "Process Keybindings\n\n",
-    "dd, Delete     Kill the highlighted process\n",
-    "c              Sort by CPU usage\n",
+    "3 - Process bindings\n",
+    "dd             Kill the selected process\n",
+    "c              Sort by memory usage, press again to reverse sorting order\n",
     "m              Sort by memory usage\n",
-    "p              Sort by PID\n",
-    "n              Sort by process name\n",
-    "Tab            Group together processes with the same name\n",
-    "Ctrl-f, /      Open up the search widget\n",
+    "p              Sort by PID name, press again to reverse sorting order\n",
+    "n              Sort by process name, press again to reverse sorting order\n",
+    "Tab            Group/un-group processes with the same name\n",
+    "Ctrl-f, /      Open process search widget",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 13] = [
-    "Search Keybindings\n\n",
-    "Tab            Toggle between searching for PID and name.\n",
-    "Esc            Close search widget\n",
-    "Ctrl-a         Skip to the start of search widget\n",
-    "Ctrl-e         Skip to the end of search widget\n",
+    "4 - Process search bindings\n",
+    "Tab            Toggle between searching for PID and name\n",
+    "Esc            Close the search widget (retains the filter)\n",
+    "Ctrl-a         Skip to the start of the search query\n",
+    "Ctrl-e         Skip to the end of the search query\n",
     "Ctrl-u         Clear the current search query\n",
     "Backspace      Delete the character behind the cursor\n",
     "Delete         Delete the character at the cursor\n",
+    "Alt-c/F1       Toggle matching case\n",
+    "Alt-w/F2       Toggle matching the entire word\n",
+    "Alt-r/F3       Toggle using regex\n",
     "Left           Move cursor left\n",
-    "Right          Move cursor right\n",
-    "Alt-c/F1       Toggle whether to ignore case\n",
-    "Alt-w/F2       Toggle whether to match the whole word\n",
-    "Alt-r/F3       Toggle whether to use regex\n",
+    "Right          Move cursor right",
+];
+
+pub const BATTERY_HELP_TEXT: [&str; 3] = [
+    "5 - Battery bindings\n",
+    "Left           Go to previous battery\n",
+    "Right          Go to next battery",
 ];
 
 // Config and flags

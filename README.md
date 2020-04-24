@@ -7,6 +7,8 @@
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
+<!--TODO: Update recording for 0.4-->
+
 ![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
 **Note**: This documentation is relevant to version 0.4.0 and may refer to in-development features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
@@ -163,19 +165,19 @@ Run using `btm`.
 
 |                                                    |                                                                                                |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `q`, `Ctrl-c`                                      | Quit bottom                                                                                    |
+| `q`, `Ctrl-c`                                      | Quit                                                                                           |
 | `Esc`                                              | Close dialog windows, search, widgets, or exit maximized mode                                  |
 | `Ctrl-r`                                           | Reset display and any collected data                                                           |
 | `f`                                                | Freeze/unfreeze updating with new data                                                         |
 | `Ctrl`-arrow key<br>`Shift`-arrow key<br>`H/J/K/L` | Move to a different widget (on macOS some keybindings may conflict)                            |
-| `Up`,`k`                                           | Scroll up in tables                                                                            |
-| `Down`, `j`                                        | Scroll down in tables                                                                          |
+| `Up`,`k`                                           | Scroll up                                                                                      |
+| `Down`, `j`                                        | Scroll down                                                                                    |
 | `?`                                                | Open help menu                                                                                 |
-| `gg`, `Home`                                       | Jump to the first entry of a table                                                             |
-| `Shift-g`, `End`                                   | Jump to the last entry of a table                                                              |
-| `Enter`                                            | Maximize widget                                                                                |
-| `+`                                                | Zoom in on a chart                                                                             |
-| `-`                                                | Zoom out on a chart                                                                            |
+| `gg`, `Home`                                       | Jump to the first entry                                                                        |
+| `Shift-g`, `End`                                   | Jump to the last entry                                                                         |
+| `Enter`                                            | Maximize the currently selected widget                                                         |
+| `+`                                                | Zoom in on chart (decrease time range)                                                         |
+| `-`                                                | Zoom out on chart (increase time range)                                                        |
 | `=`                                                | Reset zoom                                                                                     |
 | Mouse scroll                                       | Table: Scrolls through the list<br>Chart: Zooms in or out by scrolling up or down respectively |
 
@@ -207,6 +209,9 @@ Run using `btm`.
 | `Esc`        | Close the search widget (retains the filter) |
 | `Ctrl-a`     | Skip to the start of the search query        |
 | `Ctrl-e`     | Skip to the end of the search query          |
+| `Ctrl-u`     | Clear the current search query               |
+| `Backspace`  | Delete the character behind the cursor       |
+| `Delete`     | Delete the character at the cursor           |
 | `Alt-c`/`F1` | Toggle matching case                         |
 | `Alt-w`/`F2` | Toggle matching the entire word              |
 | `Alt-r`/`F3` | Toggle using regex                           |
