@@ -182,6 +182,19 @@ impl Painter {
                 .collect::<Vec<_>>(),
         );
 
+        // CPU
+        self.styled_help_text.push(Text::Raw("\n\n".into()));
+        self.styled_help_text.push(Text::Styled(
+            CPU_HELP_TEXT[0].into(),
+            self.colours.table_header_style,
+        ));
+        self.styled_help_text.extend(
+            CPU_HELP_TEXT[1..]
+                .iter()
+                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                .collect::<Vec<_>>(),
+        );
+
         // Proc
         self.styled_help_text.push(Text::Raw("\n\n".into()));
         self.styled_help_text.push(Text::Styled(

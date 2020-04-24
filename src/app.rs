@@ -69,6 +69,7 @@ pub struct AppHelpDialogState {
     pub is_showing_help: bool,
     pub scroll_state: ParagraphScrollState,
     pub general_index: u16,
+    pub cpu_index: u16,
     pub process_index: u16,
     pub search_index: u16,
     pub battery_index: u16,
@@ -1441,9 +1442,10 @@ impl App {
             // This is even more so as most logic already checks for dialog state.
             match caught_char {
                 '1' => self.help_scroll_to_or_max(self.help_dialog_state.general_index),
-                '2' => self.help_scroll_to_or_max(self.help_dialog_state.process_index),
-                '3' => self.help_scroll_to_or_max(self.help_dialog_state.search_index),
-                '4' => self.help_scroll_to_or_max(self.help_dialog_state.battery_index),
+                '2' => self.help_scroll_to_or_max(self.help_dialog_state.cpu_index),
+                '3' => self.help_scroll_to_or_max(self.help_dialog_state.process_index),
+                '4' => self.help_scroll_to_or_max(self.help_dialog_state.search_index),
+                '5' => self.help_scroll_to_or_max(self.help_dialog_state.battery_index),
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }

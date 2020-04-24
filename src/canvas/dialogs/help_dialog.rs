@@ -49,11 +49,23 @@ impl HelpDialog for Painter {
                     UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
             });
 
-            // Processes
-            app_state.help_dialog_state.process_index =
+            // CPU
+            app_state.help_dialog_state.cpu_index =
                 (constants::HELP_CONTENTS_TEXT.len() + constants::GENERAL_HELP_TEXT.len()) as u16
                     + 2
                     + overflow_buffer;
+            constants::CPU_HELP_TEXT.iter().for_each(|text_line| {
+                overflow_buffer +=
+                    UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
+            });
+
+            // Processes
+            app_state.help_dialog_state.process_index = (constants::HELP_CONTENTS_TEXT.len()
+                + constants::GENERAL_HELP_TEXT.len()
+                + constants::CPU_HELP_TEXT.len())
+                as u16
+                + 3
+                + overflow_buffer;
             constants::PROCESS_HELP_TEXT.iter().for_each(|text_line| {
                 overflow_buffer +=
                     UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
@@ -62,9 +74,10 @@ impl HelpDialog for Painter {
             // Search
             app_state.help_dialog_state.search_index = (constants::HELP_CONTENTS_TEXT.len()
                 + constants::GENERAL_HELP_TEXT.len()
+                + constants::CPU_HELP_TEXT.len()
                 + constants::PROCESS_HELP_TEXT.len())
                 as u16
-                + 3
+                + 4
                 + overflow_buffer;
             constants::SEARCH_HELP_TEXT.iter().for_each(|text_line| {
                 overflow_buffer +=
@@ -74,10 +87,11 @@ impl HelpDialog for Painter {
             // Battery
             app_state.help_dialog_state.battery_index = (constants::HELP_CONTENTS_TEXT.len()
                 + constants::GENERAL_HELP_TEXT.len()
+                + constants::CPU_HELP_TEXT.len()
                 + constants::PROCESS_HELP_TEXT.len()
                 + constants::SEARCH_HELP_TEXT.len())
                 as u16
-                + 4
+                + 5
                 + overflow_buffer;
             constants::BATTERY_HELP_TEXT.iter().for_each(|text_line| {
                 overflow_buffer +=
@@ -86,9 +100,9 @@ impl HelpDialog for Painter {
 
             app_state.help_dialog_state.scroll_state.max_scroll_index =
                 (self.styled_help_text.len() as u16
-                    + (constants::NUM_CATEGORIES - 1)
+                    + (constants::NUM_CATEGORIES - 3)
                     + overflow_buffer)
-                    .saturating_sub(draw_loc.height + 1);
+                    .saturating_sub(draw_loc.height);
 
             // Fix if over-scrolled
             if app_state
