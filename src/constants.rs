@@ -36,8 +36,6 @@ lazy_static! {
 }
 
 // Help text
-pub const NUM_CATEGORIES: u16 = 6;
-
 pub const HELP_CONTENTS_TEXT: [&str; 6] = [
     "Press the corresponding numbers to jump to the section, or scroll:\n",
     "1 - General bindings\n",
@@ -107,6 +105,17 @@ pub const BATTERY_HELP_TEXT: [&str; 3] = [
     "Left           Go to previous battery\n",
     "Right          Go to next battery",
 ];
+
+lazy_static! {
+    pub static ref HELP_TEXT: Vec<Vec<&'static str>> = vec![
+        HELP_CONTENTS_TEXT.to_vec(),
+        GENERAL_HELP_TEXT.to_vec(),
+        CPU_HELP_TEXT.to_vec(),
+        PROCESS_HELP_TEXT.to_vec(),
+        SEARCH_HELP_TEXT.to_vec(),
+        BATTERY_HELP_TEXT.to_vec(),
+    ];
+}
 
 // Config and flags
 pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = ".config/bottom/bottom.toml";

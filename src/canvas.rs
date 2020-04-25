@@ -161,81 +161,34 @@ impl Painter {
         self.is_mac_os = cfg!(target_os = "macos");
 
         // Init help text:
-        // ToC
-        self.styled_help_text.extend(
-            HELP_CONTENTS_TEXT
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
-
-        // General
-        self.styled_help_text.push(Text::Raw("\n\n".into()));
-        self.styled_help_text.push(Text::Styled(
-            GENERAL_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_help_text.extend(
-            GENERAL_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
-
-        // CPU
-        self.styled_help_text.push(Text::Raw("\n\n".into()));
-        self.styled_help_text.push(Text::Styled(
-            CPU_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_help_text.extend(
-            CPU_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
-
-        // Proc
-        self.styled_help_text.push(Text::Raw("\n\n".into()));
-        self.styled_help_text.push(Text::Styled(
-            PROCESS_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_help_text.extend(
-            PROCESS_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
-
-        // Proc Search
-        self.styled_help_text.push(Text::Raw("\n\n".into()));
-        self.styled_help_text.push(Text::Styled(
-            SEARCH_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_help_text.extend(
-            SEARCH_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
-
-        // Battery
-        self.styled_help_text.push(Text::Raw("\n\n".into()));
-        self.styled_help_text.push(Text::Styled(
-            BATTERY_HELP_TEXT[0].into(),
-            self.colours.table_header_style,
-        ));
-        self.styled_help_text.extend(
-            BATTERY_HELP_TEXT[1..]
-                .iter()
-                .map(|&text| Text::Styled(text.into(), self.colours.text_style))
-                .collect::<Vec<_>>(),
-        );
+        (*HELP_TEXT).iter().enumerate().for_each(|(itx, section)| {
+            if itx == 0 {
+                self.styled_help_text.extend(
+                    section
+                        .iter()
+                        .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                        .collect::<Vec<_>>(),
+                );
+            } else {
+                // Not required check but it runs only a few times... so whatever ig, prevents me from
+                // being dumb and leaving a help text section only one line long.
+                if section.len() > 1 {
+                    self.styled_help_text.push(Text::Raw("\n\n".into()));
+                    self.styled_help_text.push(Text::Styled(
+                        section[0].into(),
+                        self.colours.table_header_style,
+                    ));
+                    self.styled_help_text.extend(
+                        section[1..]
+                            .iter()
+                            .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                            .collect::<Vec<_>>(),
+                    );
+                }
+            }
+        });
     }
 
-    // TODO: [FEATURE] Auto-resizing dialog sizes.
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
     ) -> error::Result<()> {
@@ -256,8 +209,6 @@ impl Painter {
         terminal.autoresize()?;
         terminal.draw(|mut f| {
             if app_state.help_dialog_state.is_showing_help {
-                // TODO: [RESIZE] Scrolling dialog boxes is ideal.  This is currently VERY temporary!
-                // The width is currently not good and can wrap... causing this to not go so well!
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = (max(0, f.size().height as i64 - gen_help_len as i64)) as u16 / 2;
                 let vertical_dialog_chunk = Layout::default()
