@@ -582,11 +582,16 @@ impl App {
     pub fn on_esc(&mut self) {
         self.reset_multi_tap_keys();
         if self.is_in_dialog() {
-            self.help_dialog_state.is_showing_help = false;
-            self.delete_dialog_state.is_showing_dd = false;
-            self.delete_dialog_state.is_on_yes = false;
-            self.to_delete_process_list = None;
-            self.dd_err = None;
+            if self.help_dialog_state.is_showing_help {
+                self.help_dialog_state.is_showing_help = false;
+                self.help_dialog_state.scroll_state.current_scroll_index = 0;
+            } else {
+                self.delete_dialog_state.is_showing_dd = false;
+                self.delete_dialog_state.is_on_yes = false;
+                self.to_delete_process_list = None;
+                self.dd_err = None;
+            }
+
             self.is_force_redraw = true;
         } else if self.is_filtering_or_searching() {
             match self.current_widget.widget_type {
