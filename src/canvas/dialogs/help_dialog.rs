@@ -32,75 +32,43 @@ impl HelpDialog for Painter {
             // We must also recalculate how many lines are wrapping to properly get scrolling to work on
             // small terminal sizes... oh joy.
 
-            // TODO: Make this more automated and easier to add.
-
             let mut overflow_buffer = 0;
             let paragraph_width = draw_loc.width - 2;
-            constants::HELP_CONTENTS_TEXT.iter().for_each(|text_line| {
-                overflow_buffer +=
-                    UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
-            });
+            let mut prev_section_len = 0;
 
-            // General
-            app_state.help_dialog_state.general_index =
-                constants::HELP_CONTENTS_TEXT.len() as u16 + 1 + overflow_buffer;
-            constants::GENERAL_HELP_TEXT.iter().for_each(|text_line| {
-                overflow_buffer +=
-                    UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
-            });
+            constants::HELP_TEXT
+                .iter()
+                .enumerate()
+                .for_each(|(itx, section)| {
+                    let mut buffer = 0;
 
-            // CPU
-            app_state.help_dialog_state.cpu_index =
-                (constants::HELP_CONTENTS_TEXT.len() + constants::GENERAL_HELP_TEXT.len()) as u16
-                    + 2
-                    + overflow_buffer;
-            constants::CPU_HELP_TEXT.iter().for_each(|text_line| {
-                overflow_buffer +=
-                    UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
-            });
+                    if itx == 0 {
+                        section.iter().for_each(|text_line| {
+                            buffer += UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16
+                                / paragraph_width;
+                        });
 
-            // Processes
-            app_state.help_dialog_state.process_index = (constants::HELP_CONTENTS_TEXT.len()
-                + constants::GENERAL_HELP_TEXT.len()
-                + constants::CPU_HELP_TEXT.len())
-                as u16
-                + 3
-                + overflow_buffer;
-            constants::PROCESS_HELP_TEXT.iter().for_each(|text_line| {
-                overflow_buffer +=
-                    UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
-            });
+                        app_state.help_dialog_state.index_shortcuts[itx] = 0;
+                        prev_section_len = section.len() as u16 + buffer;
+                        overflow_buffer += buffer;
+                    } else {
+                        section.iter().for_each(|text_line| {
+                            buffer += UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16
+                                / paragraph_width;
+                        });
 
-            // Search
-            app_state.help_dialog_state.search_index = (constants::HELP_CONTENTS_TEXT.len()
-                + constants::GENERAL_HELP_TEXT.len()
-                + constants::CPU_HELP_TEXT.len()
-                + constants::PROCESS_HELP_TEXT.len())
-                as u16
-                + 4
-                + overflow_buffer;
-            constants::SEARCH_HELP_TEXT.iter().for_each(|text_line| {
-                overflow_buffer +=
-                    UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
-            });
-
-            // Battery
-            app_state.help_dialog_state.battery_index = (constants::HELP_CONTENTS_TEXT.len()
-                + constants::GENERAL_HELP_TEXT.len()
-                + constants::CPU_HELP_TEXT.len()
-                + constants::PROCESS_HELP_TEXT.len()
-                + constants::SEARCH_HELP_TEXT.len())
-                as u16
-                + 5
-                + overflow_buffer;
-            constants::BATTERY_HELP_TEXT.iter().for_each(|text_line| {
-                overflow_buffer +=
-                    UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16 / paragraph_width;
-            });
+                        app_state.help_dialog_state.index_shortcuts[itx] =
+                            app_state.help_dialog_state.index_shortcuts[itx - 1]
+                                + 1
+                                + prev_section_len;
+                        prev_section_len = section.len() as u16 + buffer;
+                        overflow_buffer += buffer;
+                    }
+                });
 
             app_state.help_dialog_state.scroll_state.max_scroll_index =
                 (self.styled_help_text.len() as u16
-                    + (constants::NUM_CATEGORIES - 3)
+                    + (constants::HELP_TEXT.len() as u16 - 3)
                     + overflow_buffer)
                     .saturating_sub(draw_loc.height);
 

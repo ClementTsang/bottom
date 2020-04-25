@@ -42,7 +42,6 @@ pub struct ConfigFlags {
     pub default_widget_count: Option<u64>,
     pub use_old_network_legend: Option<bool>,
     pub hide_table_gap: Option<bool>,
-    //disabled_cpu_cores: Option<Vec<u64>>, // TODO: [FEATURE] Enable disabling cores in config/flags
 }
 
 #[derive(Default, Deserialize)]

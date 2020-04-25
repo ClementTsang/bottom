@@ -58,21 +58,20 @@ pub struct AppDeleteDialogState {
     pub is_on_yes: bool, // Defaults to "No"
 }
 
-pub enum AppHelpCategory {
-    General,
-    Process,
-    Search,
-}
-
-#[derive(Default)]
 pub struct AppHelpDialogState {
     pub is_showing_help: bool,
     pub scroll_state: ParagraphScrollState,
-    pub general_index: u16,
-    pub cpu_index: u16,
-    pub process_index: u16,
-    pub search_index: u16,
-    pub battery_index: u16,
+    pub index_shortcuts: Vec<u16>,
+}
+
+impl Default for AppHelpDialogState {
+    fn default() -> Self {
+        AppHelpDialogState {
+            is_showing_help: false,
+            scroll_state: ParagraphScrollState::default(),
+            index_shortcuts: vec![0; constants::HELP_TEXT.len()],
+        }
+    }
 }
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
@@ -583,11 +582,16 @@ impl App {
     pub fn on_esc(&mut self) {
         self.reset_multi_tap_keys();
         if self.is_in_dialog() {
-            self.help_dialog_state.is_showing_help = false;
-            self.delete_dialog_state.is_showing_dd = false;
-            self.delete_dialog_state.is_on_yes = false;
-            self.to_delete_process_list = None;
-            self.dd_err = None;
+            if self.help_dialog_state.is_showing_help {
+                self.help_dialog_state.is_showing_help = false;
+                self.help_dialog_state.scroll_state.current_scroll_index = 0;
+            } else {
+                self.delete_dialog_state.is_showing_dd = false;
+                self.delete_dialog_state.is_on_yes = false;
+                self.to_delete_process_list = None;
+                self.dd_err = None;
+            }
+
             self.is_force_redraw = true;
         } else if self.is_filtering_or_searching() {
             match self.current_widget.widget_type {
@@ -1441,11 +1445,11 @@ impl App {
             // more obvious that we are separating dialog logic and normal logic IMO.
             // This is even more so as most logic already checks for dialog state.
             match caught_char {
-                '1' => self.help_scroll_to_or_max(self.help_dialog_state.general_index),
-                '2' => self.help_scroll_to_or_max(self.help_dialog_state.cpu_index),
-                '3' => self.help_scroll_to_or_max(self.help_dialog_state.process_index),
-                '4' => self.help_scroll_to_or_max(self.help_dialog_state.search_index),
-                '5' => self.help_scroll_to_or_max(self.help_dialog_state.battery_index),
+                '1' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[1]),
+                '2' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[2]),
+                '3' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[3]),
+                '4' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[4]),
+                '5' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[5]),
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }

@@ -91,7 +91,6 @@ fn get_matches() -> clap::ArgMatches<'static> {
         (@arg DEFAULT_WIDGET_COUNT: --default_widget_count +takes_value "Which number of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.")
         (@arg USE_OLD_NETWORK_LEGEND: --use_old_network_legend "Use the older (pre-0.4) network widget legend.")
         (@arg HIDE_TABLE_GAP: --hide_table_gap "Hides the spacing between the table headers and entries.")
-		//(@arg TURNED_OFF_CPUS: -t ... +takes_value "Hides CPU data points by default") // TODO: [FEATURE] Enable disabling cores in config/flags
 	)
         .get_matches()
 }
