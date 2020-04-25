@@ -40,7 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#126](https://github.com/ClementTsang/bottom/pull/126): Updated error messages to be a bit more consistent/helpful.
 
-- Redesigned help menu to allow for scrolling.
+- [#127](https://github.com/ClementTsang/bottom/pull/127): Redesigned help menu to allow for scrolling.
+
+- [#128](https://github.com/ClementTsang/bottom/pull/128): Improved search filtering options.
 
 ### Bug Fixes
 
@@ -56,8 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switch to stateful widget style for tables.
 
 - Updated arg tests and added config testing.
-
-- More refactoring.
 
 ## [0.3.0] - 2020-04-07
 
