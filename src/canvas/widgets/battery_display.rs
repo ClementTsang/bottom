@@ -83,6 +83,7 @@ impl BatteryDisplayWidget for Painter {
                     } else {
                         ["Time to full/empty", "N/A"]
                     },
+                    ["Health %", &battery_details.health],
                 ];
 
                 let battery_rows = battery_items.iter().enumerate().map(|(itx, item)| {

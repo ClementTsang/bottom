@@ -21,6 +21,7 @@ pub struct ConvertedBatteryData {
     pub watt_consumption: String,
     pub duration_until_full: Option<String>,
     pub duration_until_empty: Option<String>,
+    pub health: String,
 }
 
 #[derive(Default, Debug)]
@@ -462,6 +463,7 @@ pub fn convert_battery_harvest(
             } else {
                 None
             },
+            health: format!("{:.2}%", battery_harvest.health_percent)
         })
         .collect()
 }
