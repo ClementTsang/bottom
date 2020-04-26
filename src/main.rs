@@ -1,5 +1,6 @@
 #![warn(rust_2018_idioms)]
 
+#[allow(unused_imports)]
 #[macro_use]
 extern crate log;
 
@@ -114,24 +115,27 @@ fn main() -> error::Result<()> {
     painter.complete_painter_init();
 
     // Set up input handling
-    let (tx, rx) = mpsc::channel();
-    create_input_thread(tx.clone());
+    let (sender, receiver) = mpsc::channel();
+    create_input_thread(sender.clone());
 
     // Cleaning loop
     {
-        let tx = tx.clone();
+        let cleaning_sender = sender.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::from_millis(
                 constants::STALE_MAX_MILLISECONDS + 5000,
             ));
-            tx.send(BottomEvent::Clean).unwrap();
+            if cleaning_sender.send(BottomEvent::Clean).is_err() {
+                break;
+            }
         });
     }
+
     // Event loop
-    let (rtx, rrx) = mpsc::channel();
+    let (reset_sender, reset_receiver) = mpsc::channel();
     create_event_thread(
-        tx,
-        rrx,
+        sender.clone(),
+        reset_receiver,
         app.app_config_fields.use_current_cpu_total,
         app.app_config_fields.update_rate_in_milliseconds,
         app.app_config_fields.temperature_type.clone(),
@@ -152,10 +156,10 @@ fn main() -> error::Result<()> {
 
     let mut first_run = true;
     loop {
-        if let Ok(recv) = rx.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
+        if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
                 BottomEvent::KeyInput(event) => {
-                    if handle_key_event_or_break(event, &mut app, &rtx) {
+                    if handle_key_event_or_break(event, &mut app, &reset_sender) {
                         break;
                     }
                     handle_force_redraws(&mut app);
@@ -250,6 +254,7 @@ fn main() -> error::Result<()> {
             }
         }
 
+        // TODO: [OPT] Should not draw if no change (ie: scroll max)
         try_drawing(&mut terminal, &mut app, &mut painter)?;
     }
 
@@ -266,7 +271,7 @@ fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, rtx: &std::sync::mpsc::Sender<ResetEvent>,
+    event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<ResetEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
@@ -331,7 +336,7 @@ fn handle_key_event_or_break(
                 KeyCode::Up => app.move_widget_selection_up(),
                 KeyCode::Down => app.move_widget_selection_down(),
                 KeyCode::Char('r') => {
-                    if rtx.send(ResetEvent::Reset).is_ok() {
+                    if reset_sender.send(ResetEvent::Reset).is_ok() {
                         app.reset();
                     }
                 }
@@ -408,7 +413,6 @@ fn try_drawing(
 ) -> error::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
-        error!("{}", err);
         return Err(err);
     }
 
@@ -757,32 +761,30 @@ fn sort_process_data(
 }
 
 fn create_input_thread(
-    tx: std::sync::mpsc::Sender<
+    sender: std::sync::mpsc::Sender<
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
 ) {
-    thread::spawn(move || loop {
-        if poll(Duration::from_millis(20)).is_ok() {
-            let mut mouse_timer = Instant::now();
-            let mut keyboard_timer = Instant::now();
+    thread::spawn(move || {
+        let mut mouse_timer = Instant::now();
+        let mut keyboard_timer = Instant::now();
 
-            loop {
-                if poll(Duration::from_millis(20)).is_ok() {
-                    if let Ok(event) = read() {
-                        if let Event::Key(key) = event {
-                            if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                if tx.send(BottomEvent::KeyInput(key)).is_err() {
-                                    return;
-                                }
-                                keyboard_timer = Instant::now();
+        loop {
+            if poll(Duration::from_millis(20)).is_ok() {
+                if let Ok(event) = read() {
+                    if let Event::Key(key) = event {
+                        if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+                            if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                                return;
                             }
-                        } else if let Event::Mouse(mouse) = event {
-                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-                                if tx.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                    return;
-                                }
-                                mouse_timer = Instant::now();
+                            keyboard_timer = Instant::now();
+                        }
+                    } else if let Event::Mouse(mouse) = event {
+                        if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+                            if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                return;
                             }
+                            mouse_timer = Instant::now();
                         }
                     }
                 }
@@ -792,15 +794,14 @@ fn create_input_thread(
 }
 
 fn create_event_thread(
-    tx: std::sync::mpsc::Sender<
+    sender: std::sync::mpsc::Sender<
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
-    rrx: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
+    reset_receiver: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
     update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
     show_average_cpu: bool, used_widget_set: UsedWidgets,
 ) {
     thread::spawn(move || {
-        let tx = tx.clone();
         let mut data_state = data_harvester::DataCollector::default();
         data_state.set_collected_data(used_widget_set);
         data_state.set_temperature_type(temp_type);
@@ -808,7 +809,7 @@ fn create_event_thread(
         data_state.set_show_average_cpu(show_average_cpu);
         data_state.init();
         loop {
-            if let Ok(message) = rrx.try_recv() {
+            if let Ok(message) = reset_receiver.try_recv() {
                 match message {
                     ResetEvent::Reset => {
                         data_state.data.first_run_cleanup();
@@ -818,7 +819,9 @@ fn create_event_thread(
             futures::executor::block_on(data_state.update_data());
             let event = BottomEvent::Update(Box::from(data_state.data));
             data_state.data = data_harvester::Data::default();
-            tx.send(event).unwrap();
+            if sender.send(event).is_err() {
+                break;
+            }
             thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
         }
     });
