@@ -134,7 +134,7 @@ fn main() -> error::Result<()> {
     // Event loop
     let (reset_sender, reset_receiver) = mpsc::channel();
     create_event_thread(
-        sender.clone(),
+        sender,
         reset_receiver,
         app.app_config_fields.use_current_cpu_total,
         app.app_config_fields.update_rate_in_milliseconds,
