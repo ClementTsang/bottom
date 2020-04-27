@@ -11,7 +11,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 
 ![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
-**Note**: This documentation is relevant to version 0.4.0 and may refer to in-development features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
+**Note**: This documentation is relevant to version 0.4.0 and may refer to in-development or unreleased features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
 ## Table of Contents
 
@@ -53,13 +53,13 @@ Note that binaries are built on the stable version of Rust, and I mainly test an
 
 ### Manual
 
-There are a few ways to go about doing this:
+There are a few ways to go about doing this. For example:
 
 ```bash
-# Clone and install all via Cargo
+# Clone and install the newest master version all via Cargo
 cargo install --git https://github.com/ClementTsang/bottom
 
-# Clone and install manually
+# Clone from master and install manually
 git clone https://github.com/ClementTsang/bottom
 cd bottom
 cargo install --path .
@@ -81,7 +81,7 @@ cargo install bottom
 ```bash
 yay bottom
 
-# If you instead want the binary version:
+# If you instead want a pre-built binary:
 yay bottom-bin
 ```
 
@@ -245,18 +245,18 @@ It also aims to be:
 
 - Cross-platform - supports Linux, Windows, and macOS
 
-In addition to these things, bottom also currently has the following features:
+In addition, bottom also currently has the following features:
 
 ### Process filtering
 
-On any process widget, hit `/` to bring up a search bar. If your layout has
+On any process widget, hit `/` to bring up a search bar. If the layout has
 multiple process widgets, note this search is independent of other widgets. Searching
 supports regex, matching case, and matching entire words. Use `Tab` to toggle between
 searching by PID and by process name.
 
 ### Zoom
 
-Using the `+`/`-` keys or the scroll wheel will move adjust the current time intervals of the currently selected widget, and `=` to reset the zoom levels to the default.
+Using the `+`/`-` keys or the scroll wheel will move the current time intervals of the currently selected widget, and `=` to reset the zoom levels to the default.
 Widgets can hold different time intervals independently. These time intervals can be adjusted using the
 `-t`/`--default_time_value` and `-d`/`--time_delta` options, or their corresponding config options.
 
