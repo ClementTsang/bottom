@@ -42,6 +42,7 @@ pub struct ConfigFlags {
     pub default_widget_count: Option<u64>,
     pub use_old_network_legend: Option<bool>,
     pub hide_table_gap: Option<bool>,
+    pub battery: Option<bool>,
 }
 
 #[derive(Default, Deserialize)]
@@ -630,6 +631,19 @@ pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) 
     } else if let Some(flags) = &config.flags {
         if let Some(hide_table_gap) = flags.hide_table_gap {
             if hide_table_gap {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+pub fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("BATTERY") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(battery) = flags.battery {
+            if battery {
                 return true;
             }
         }

@@ -418,8 +418,8 @@ and get the following CPU donut:
 ### Battery
 
 You can get battery statistics (charge, time to fill/discharge, consumption in watts, and battery health) via the battery widget.
-Since this is only useful for devices like laptops, it is off by default. Currently, the only way to use it is to set it
-as a widget via [layouts](#layout).
+
+Since this is only useful for devices like laptops, it is off by default. You can either enable the widget in the default layout via the `--battery` flag, or by specifying the widget in a [layout](#layout).
 
 So with this slightly silly layout:
 
