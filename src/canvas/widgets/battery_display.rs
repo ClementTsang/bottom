@@ -3,6 +3,7 @@ use std::cmp::max;
 use crate::{
     app::App,
     canvas::{drawing_utils::calculate_basic_use_bars, Painter},
+    constants::*,
 };
 
 use tui::{
@@ -14,17 +15,20 @@ use tui::{
 
 pub trait BatteryDisplayWidget {
     fn draw_battery_display<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     );
 }
 
 impl BatteryDisplayWidget for Painter {
     fn draw_battery_display<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
     ) {
         if let Some(battery_widget_state) =
             app_state.battery_state.widget_states.get_mut(&widget_id)
         {
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
                 let repeat_num = max(
@@ -40,21 +44,29 @@ impl BatteryDisplayWidget for Painter {
                 " Battery ".to_string()
             };
 
-            let border_and_title_style = if app_state.current_widget.widget_id == widget_id {
+            let border_and_title_style = if is_on_widget {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style
             };
 
-            let battery_block = Block::default()
-                .title(&title)
-                .title_style(if app_state.is_expanded {
-                    border_and_title_style
-                } else {
-                    self.colours.widget_title_style
-                })
-                .borders(Borders::ALL)
-                .border_style(border_and_title_style);
+            let battery_block = if draw_border {
+                Block::default()
+                    .title(&title)
+                    .title_style(if app_state.is_expanded {
+                        border_and_title_style
+                    } else {
+                        self.colours.widget_title_style
+                    })
+                    .borders(Borders::ALL)
+                    .border_style(border_and_title_style)
+            } else if is_on_widget {
+                Block::default()
+                    .borders(*SIDE_BORDERS)
+                    .border_style(self.colours.highlighted_border_style)
+            } else {
+                Block::default().borders(Borders::NONE)
+            };
 
             if let Some(battery_details) = app_state
                 .canvas_data

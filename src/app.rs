@@ -1213,6 +1213,7 @@ impl App {
                             | BottomWidgetType::Proc
                             | BottomWidgetType::ProcSearch
                             | BottomWidgetType::Disk
+                            | BottomWidgetType::Battery
                                 if self.basic_table_widget_state.is_some() =>
                             {
                                 if let Some(basic_table_widget_state) =
@@ -1311,6 +1312,7 @@ impl App {
                             | BottomWidgetType::Proc
                             | BottomWidgetType::ProcSearch
                             | BottomWidgetType::Disk
+                            | BottomWidgetType::Battery
                                 if self.basic_table_widget_state.is_some() =>
                             {
                                 if let Some(basic_table_widget_state) =

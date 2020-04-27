@@ -94,7 +94,11 @@ impl TempTableWidget for Painter {
             let temp_block = if draw_border {
                 Block::default()
                     .title(&title)
-                    .title_style(border_and_title_style)
+                    .title_style(if app_state.is_expanded {
+                        border_and_title_style
+                    } else {
+                        self.colours.widget_title_style
+                    })
                     .borders(Borders::ALL)
                     .border_style(border_and_title_style)
             } else if is_on_widget {

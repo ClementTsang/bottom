@@ -23,19 +23,38 @@ impl BasicTableArrows for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         // Effectively a paragraph with a ton of spacing
-        let (left_table, right_table) =
-            if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
-                match basic_table_widget_state.currently_displayed_widget_type {
-                    BottomWidgetType::Proc | BottomWidgetType::ProcSearch => {
-                        (BottomWidgetType::Temp, BottomWidgetType::Disk)
-                    }
-                    BottomWidgetType::Disk => (BottomWidgetType::Proc, BottomWidgetType::Temp),
-                    BottomWidgetType::Temp => (BottomWidgetType::Disk, BottomWidgetType::Proc),
-                    _ => (BottomWidgetType::Disk, BottomWidgetType::Temp),
-                }
-            } else {
-                (BottomWidgetType::Disk, BottomWidgetType::Temp)
-            };
+        let (left_table, right_table) = (
+            {
+                app_state
+                    .current_widget
+                    .left_neighbour
+                    .and_then(|left_widget_id| {
+                        Some(
+                            app_state
+                                .widget_map
+                                .get(&left_widget_id)
+                                .and_then(|left_widget| Some(&left_widget.widget_type))
+                                .unwrap_or_else(|| &BottomWidgetType::Temp),
+                        )
+                    })
+                    .unwrap_or_else(|| &BottomWidgetType::Temp)
+            },
+            {
+                app_state
+                    .current_widget
+                    .right_neighbour
+                    .and_then(|right_widget_id| {
+                        Some(
+                            app_state
+                                .widget_map
+                                .get(&right_widget_id)
+                                .and_then(|right_widget| Some(&right_widget.widget_type))
+                                .unwrap_or_else(|| &BottomWidgetType::Disk),
+                        )
+                    })
+                    .unwrap_or_else(|| &BottomWidgetType::Disk)
+            },
+        );
 
         let left_name = left_table.get_pretty_name();
         let right_name = right_table.get_pretty_name();
@@ -46,12 +65,9 @@ impl BasicTableArrows for Painter {
         ) as usize;
 
         let arrow_text = vec![
-            Text::Styled(
-                format!("\n◄ {}", right_name).into(),
-                self.colours.text_style,
-            ),
+            Text::Styled(format!("\n◄ {}", left_name).into(), self.colours.text_style),
             Text::Raw(" ".repeat(num_spaces).into()),
-            Text::Styled(format!("{} ►", left_name).into(), self.colours.text_style),
+            Text::Styled(format!("{} ►", right_name).into(), self.colours.text_style),
         ];
 
         let margined_draw_loc = Layout::default()
