@@ -28,14 +28,12 @@ impl BasicTableArrows for Painter {
                 app_state
                     .current_widget
                     .left_neighbour
-                    .and_then(|left_widget_id| {
-                        Some(
-                            app_state
-                                .widget_map
-                                .get(&left_widget_id)
-                                .and_then(|left_widget| Some(&left_widget.widget_type))
-                                .unwrap_or_else(|| &BottomWidgetType::Temp),
-                        )
+                    .map(|left_widget_id| {
+                        app_state
+                            .widget_map
+                            .get(&left_widget_id)
+                            .map(|left_widget| &left_widget.widget_type)
+                            .unwrap_or_else(|| &BottomWidgetType::Temp)
                     })
                     .unwrap_or_else(|| &BottomWidgetType::Temp)
             },
@@ -43,14 +41,12 @@ impl BasicTableArrows for Painter {
                 app_state
                     .current_widget
                     .right_neighbour
-                    .and_then(|right_widget_id| {
-                        Some(
-                            app_state
-                                .widget_map
-                                .get(&right_widget_id)
-                                .and_then(|right_widget| Some(&right_widget.widget_type))
-                                .unwrap_or_else(|| &BottomWidgetType::Disk),
-                        )
+                    .map(|right_widget_id| {
+                        app_state
+                            .widget_map
+                            .get(&right_widget_id)
+                            .map(|right_widget| &right_widget.widget_type)
+                            .unwrap_or_else(|| &BottomWidgetType::Disk)
                     })
                     .unwrap_or_else(|| &BottomWidgetType::Disk)
             },

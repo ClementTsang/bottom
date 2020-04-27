@@ -323,13 +323,15 @@ impl BottomLayout {
                                         }
                                     }
                                 } else {
-                                    let mut up_range = layout_mapping.range(
-                                        ..(
-                                            row_height_percentage_start,
-                                            row_height_percentage_start,
-                                        ),
-                                    );
-                                    while let Some(next_row_up) = up_range.next_back() {
+                                    for next_row_up in layout_mapping
+                                        .range(
+                                            ..(
+                                                row_height_percentage_start,
+                                                row_height_percentage_start,
+                                            ),
+                                        )
+                                        .rev()
+                                    {
                                         let mut current_best_distance = 0;
                                         let mut current_best_widget_id = widget.widget_id;
                                         let (target_start_width, target_end_width) =
@@ -439,13 +441,12 @@ impl BottomLayout {
                                         }
                                     }
                                 } else {
-                                    let mut down_range = layout_mapping.range(
+                                    for next_row_down in layout_mapping.range(
                                         (
                                             row_height_percentage_start + 1,
                                             row_height_percentage_start + 1,
                                         )..,
-                                    );
-                                    while let Some(next_row_down) = down_range.next() {
+                                    ) {
                                         let mut current_best_distance = 0;
                                         let mut current_best_widget_id = widget.widget_id;
                                         let (target_start_width, target_end_width) =
