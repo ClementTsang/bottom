@@ -35,13 +35,16 @@ log = "0.4.8"
 regex = "1.3"
 sysinfo = "0.14"
 toml = "0.5.6"
-tui = {version = "0.9", features = ["crossterm"], default-features = false }
 typed-builder = "0.5.1"
 lazy_static = "1.4.0"
 backtrace = "0.3"
 serde = {version = "1.0", features = ["derive"] }
 unicode-segmentation = "1.6.0"
 unicode-width = "0.1.7"
+
+# TODO: If tui-rs doesn't update by the time we want to push, we'll have to manually re-add linear interpolation again...
+# tui = {version = "0.9", features = ["crossterm"], default-features = false }
+tui = {git = "https://github.com/ClementTsang/tui-rs", features = ["crossterm"], default-features = false }
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.8"
