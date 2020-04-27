@@ -143,20 +143,21 @@ Run using `btm`.
 -s, --show_disabled_data            Shows disabled CPU entries in the CPU legend
 -b, --basic                         Enables basic mode, removing charts and condensing data
     --autohide_time                 Automatically hide the time scaling in graphs after being shown for a brief moment when
-                                    zoomed in/out.  If time is disabled via --hide_time then this will have no effect.
+                                    zoomed in/out.  If time is disabled via --hide_time then this will have no effect
     --use_old_network_legend        Use the older (pre-0.4) network legend which is separate from the network chart
     --hide_table_gap                Hides the spacing between table headers and data
+    --battery                       Displays the battery widget for default and basic layouts
 ```
 
 ### Options
 
 ```
 -r, --rate <MS>                     Set the refresh rate in milliseconds [default: 1000]
--C, --config <PATH>                 Use the specified config file; if it does not exist it is automatically created
+-C, --config <PATH>                 Use the specified config file; if it does not exist it is automatically created [default: see section on config files]
 -t, --default_time_value <MS>       Sets the default time interval for charts in milliseconds [default: 60000]
 -d, --time_delta <MS>               Sets the default amount each zoom in/out action changes by in milliseconds [default: 15000]
-    --default_widget_count <COUNT>  Which number of the selected widget type to select, from left to right, top to bottom.  Defaults to 1.
-    --default_widget_type <TYPE>    The default widget type to select by default.
+    --default_widget_count <COUNT>  Which number of the selected widget type to select, from left to right, top to bottom [default: 1]
+    --default_widget_type <TYPE>    The default widget type to select by default [default: "process"]
 ```
 
 ### Keybindings
@@ -418,8 +419,8 @@ and get the following CPU donut:
 ### Battery
 
 You can get battery statistics (charge, time to fill/discharge, consumption in watts, and battery health) via the battery widget.
-Since this is only useful for devices like laptops, it is off by default. Currently, the only way to use it is to set it
-as a widget via [layouts](#layout).
+
+Since this is only useful for devices like laptops, it is off by default. You can either enable the widget in the default layout via the `--battery` flag, or by specifying the widget in a [layout](#layout).
 
 So with this slightly silly layout:
 

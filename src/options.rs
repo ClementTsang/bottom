@@ -42,6 +42,7 @@ pub struct ConfigFlags {
     pub default_widget_count: Option<u64>,
     pub use_old_network_legend: Option<bool>,
     pub hide_table_gap: Option<bool>,
+    pub battery: Option<bool>,
 }
 
 #[derive(Default, Deserialize)]
@@ -261,7 +262,7 @@ pub fn get_widget_layout(
 
     let bottom_layout = if get_use_basic_mode(matches, config) {
         default_widget_id = DEFAULT_WIDGET_ID;
-        BottomLayout::init_basic_default()
+        BottomLayout::init_basic_default(get_use_battery(matches, config))
     } else if let Some(rows) = &config.row {
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
@@ -283,7 +284,7 @@ pub fn get_widget_layout(
             total_row_height_ratio: total_height_ratio,
         };
 
-        // Confirm that we have at least ONE widget - if we don't, go back to default!
+        // Confirm that we have at least ONE widget - if not, error out!
         if iter_id > 0 {
             ret_bottom_layout.get_movement_mappings();
             ret_bottom_layout
@@ -294,7 +295,7 @@ pub fn get_widget_layout(
         }
     } else {
         default_widget_id = DEFAULT_WIDGET_ID;
-        BottomLayout::init_default(left_legend)
+        BottomLayout::init_default(left_legend, get_use_battery(matches, config))
     };
 
     Ok((bottom_layout, default_widget_id))
@@ -630,6 +631,19 @@ pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) 
     } else if let Some(flags) = &config.flags {
         if let Some(hide_table_gap) = flags.hide_table_gap {
             if hide_table_gap {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+pub fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("BATTERY") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(battery) = flags.battery {
+            if battery {
                 return true;
             }
         }

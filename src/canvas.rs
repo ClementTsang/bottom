@@ -350,6 +350,7 @@ impl Painter {
                         &mut f,
                         app_state,
                         rect[0],
+                        true,
                         app_state.current_widget.widget_id,
                     ),
                     _ => {}
@@ -404,6 +405,13 @@ impl Painter {
                             widget_id,
                         ),
                         Temp => self.draw_temp_table(
+                            &mut f,
+                            app_state,
+                            vertical_chunks[4],
+                            false,
+                            widget_id,
+                        ),
+                        Battery => self.draw_battery_display(
                             &mut f,
                             app_state,
                             vertical_chunks[4],
@@ -541,9 +549,13 @@ impl Painter {
                     true,
                     widget.widget_id,
                 ),
-                Battery => {
-                    self.draw_battery_display(f, app_state, *widget_draw_loc, widget.widget_id)
-                }
+                Battery => self.draw_battery_display(
+                    f,
+                    app_state,
+                    *widget_draw_loc,
+                    true,
+                    widget.widget_id,
+                ),
                 _ => {}
             }
         }
