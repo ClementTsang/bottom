@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
-- [#58](https://github.com/ClementTsang/bottom/issues/58): I/O stats per process
+- [#58](https://github.com/ClementTsang/bottom/issues/58): I/O stats per process.
 
-- [#55](https://github.com/ClementTsang/bottom/issues/55): Battery monitoring widget
+- [#55](https://github.com/ClementTsang/bottom/issues/55): Battery monitoring widget.
 
-- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process
+- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process.
 
 ### Changes
 
@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed bug where a single empty row as a layout would crash without a proper warning.
   The behaviour now errors out with a more helpful message.
+
+- Fixed bug where empty widgets in layout would cause widget movement to not work properly when moving vertically.
 
 ### Development changes
 
