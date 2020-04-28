@@ -1012,6 +1012,12 @@ impl App {
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }
+        } else if self.delete_dialog_state.is_showing_dd {
+            match caught_char {
+                'h' | 'j' => self.on_left_key(),
+                'k' | 'l' => self.on_right_key(),
+                _ => {}
+            }
         }
     }
 
