@@ -53,9 +53,12 @@ Note that binaries are built on the stable version of Rust, and I mainly test an
 
 ### Manual
 
-There are a few ways to go about doing this. For example:
+There are a few ways to go about doing this (note you will need the current version of stable Rust). For example:
 
 ```bash
+# Update Rust on the stable channel
+rustup update stable
+
 # Clone and install the newest master version all via Cargo
 cargo install --git https://github.com/ClementTsang/bottom
 
