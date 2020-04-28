@@ -73,8 +73,7 @@ impl MemGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.ram_style)
-                        .data(&mem_data)
-                        .graph_type(tui::widgets::GraphType::Line),
+                        .data(&mem_data), // .graph_type(tui::widgets::GraphType::Line),
                 );
             }
 
@@ -88,8 +87,7 @@ impl MemGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.swap_style)
-                        .data(&swap_data)
-                        .graph_type(tui::widgets::GraphType::Line),
+                        .data(&swap_data), // .graph_type(tui::widgets::GraphType::Line),
                 );
             }
 

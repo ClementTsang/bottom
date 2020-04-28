@@ -55,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Switch to stateful widget style for tables.
 
-- Switch to using tui-rs' new built in linear interpolation rather than doing it manually.
-
 - Updated arg tests and added config testing.
 
 - More refactoring.

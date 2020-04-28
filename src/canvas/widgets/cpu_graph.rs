@@ -161,7 +161,7 @@ impl CpuGraphWidget for Painter {
                                         [itx % self.colours.cpu_colour_styles.len()]
                                 })
                                 .data(&cpu.cpu_data[..])
-                                .graph_type(tui::widgets::GraphType::Line),
+                                // .graph_type(tui::widgets::GraphType::Line),
                         )
                     } else {
                         None
