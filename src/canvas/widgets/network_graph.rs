@@ -144,8 +144,7 @@ impl NetworkGraphWidget for Painter {
                                 Marker::Braille
                             })
                             .style(self.colours.rx_style)
-                            .data(&network_data_rx)
-                            .graph_type(tui::widgets::GraphType::Line),
+                            .data(&network_data_rx), // .graph_type(tui::widgets::GraphType::Line),
                     );
                 }
 
