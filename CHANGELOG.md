@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Redesigned help menu to allow for scrolling.
 
+- [#134](https://github.com/ClementTsang/bottom/pull/134): Added `hjkl` movement to delete dialog.
+
 ### Bug Fixes
 
 - Fixed `dd` not working on non-first entries.
