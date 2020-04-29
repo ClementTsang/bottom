@@ -45,7 +45,7 @@ pub const HELP_CONTENTS_TEXT: [&str; 6] = [
     "5 - Battery bindings",
 ];
 
-pub const GENERAL_HELP_TEXT: [&str; 18] = [
+pub const GENERAL_HELP_TEXT: [&str; 20] = [
     "1 - General bindings\n",
     "q, Ctrl-c      Quit\n",
     "Esc            Close dialog windows, search, widgets, or exit maximized mode\n",
@@ -54,8 +54,10 @@ pub const GENERAL_HELP_TEXT: [&str; 18] = [
     "Ctrl-Arrow     \n",
     "Shift-Arrow    Move to a different widget\n",
     "H/J/K/L        \n",
-    "Up, k          Scroll up\n",
-    "Down, j        Scroll down\n",
+    "Left, h        Move left within widget\n",
+    "Down, j        Move down within widget\n",
+    "Up, k          Move up within widget\n",
+    "Right, l       Move right within widget\n",
     "?              Open help menu\n",
     "gg             Jump to the first entry\n",
     "G              Jump to the last entry\n",
