@@ -44,7 +44,6 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Battery](#battery)
   - [Compatibility](#compatibility)
 - [Contribution](#contribution)
-- [Bug reports and feature requests](#bug-reports-and-feature-requests)
 - [Thanks](#thanks)
 
 ## Installation
