@@ -37,7 +37,7 @@ _If relevant, see if the following have been met:_
 - [ ] _Code has been self-reviewed_
 - [ ] _Code has been tested and no new breakage is introduced unless intended_
 - [ ] _Passes CI tests_
-- [ ] _Documentation has been added/updated if needed_
+- [ ] _Documentation has been added/updated if needed (README, help menu, etc.)_
 - [ ] _No merge conflicts arise from the change_
 
 ## Other information

@@ -463,7 +463,7 @@ The current compatibility of widgets with operating systems from personal testin
 
 ## Contribution
 
-Contribution is always welcome - just submit a PR! Note that I currently develop and test on stable Rust.
+Contribution is always welcome - please take a look at [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to help.
 
 Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
@@ -482,11 +482,6 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
-
-## Bug reports and feature requests
-
-Feel free to submit feature ideas and bug reports on [GitHub](https://github.com/ClementTsang/bottom/issues).
-Please try to follow the given issue templates.
 
 ## Thanks
 

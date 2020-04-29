@@ -27,6 +27,8 @@ _If relevant, please provide information on:_
 
 **Shell:**
 
+**bottom version (use `btm -V`):**
+
 **Any other relevant information (more details are always good!):**
 
 ## Additional context
