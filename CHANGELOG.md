@@ -40,9 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#126](https://github.com/ClementTsang/bottom/pull/126): Updated error messages to be a bit more consistent/helpful.
 
-- Redesigned help menu to allow for scrolling.
+- [#70](https://github.com/ClementTsang/bottom/issues/70): Redesigned help menu to allow for scrolling.
 
 - [#134](https://github.com/ClementTsang/bottom/pull/134): Added `hjkl` movement to delete dialog.
+
+- [#59](https://github.com/ClementTsang/bottom/issues/59): Redesigned search menu and query.
 
 ### Bug Fixes
 
@@ -57,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Switch to stateful widget style for tables.
 
-- Updated arg tests and added config testing.
+- [#38](https://github.com/ClementTsang/bottom/issues/38): Updated arg tests and added config testing.
 
 - More refactoring.
 
