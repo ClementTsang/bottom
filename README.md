@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom)
 [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 [![tokei](https://tokei.rs/b1/github/ClementTsang/bottom?category=code)](https://github.com/ClementTsang/bottom)
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
@@ -44,6 +44,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Battery](#battery)
   - [Compatibility](#compatibility)
 - [Contribution](#contribution)
+  - [Contributors](#contributors)
 - [Thanks](#thanks)
 
 ## Installation
@@ -463,6 +464,8 @@ The current compatibility of widgets with operating systems from personal testin
 ## Contribution
 
 Contribution is always welcome - please take a look at [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to help.
+
+### Contributors
 
 Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
