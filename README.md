@@ -226,10 +226,10 @@ Run using `btm`.
 
 #### Battery bindings
 
-|         |                            |
-| ------- | -------------------------- |
-| `Left`  | Go to the next battery     |
-| `Right` | Go to the previous battery |
+|                |                            |
+| -------------- | -------------------------- |
+| `Left, Alt-h`  | Go to the next battery     |
+| `Right, Alt-l` | Go to the previous battery |
 
 ## Features
 
@@ -255,9 +255,9 @@ In addition, bottom also currently has the following features:
 
 ### Process filtering
 
-On any process widget, hit `/` to bring up a search bar. If the layout has
-multiple process widgets, note this search is independent of other widgets. Searching
-supports regex, matching case, and matching entire words. Use `Tab` to toggle between
+<!--FIXME: [QUERY] Update this documentation...-->
+
+On any process widget, hit `/` to bring up a search bar. If the layout has multiple process widgets, note this search is independent of other widgets. Searching supports regex, matching case, and matching entire words. Use `Tab` to toggle between
 searching by PID and by process name.
 
 ### Zoom

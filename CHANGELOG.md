@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process.
 
+- [#134](https://github.com/ClementTsang/bottom/pull/134): `hjkl` movement to delete dialog (credit to [andys8](https://github.com/andys8)).
+
+- [#59](https://github.com/ClementTsang/bottom/issues/59): `Alt-h` and `Alt-l` to move left/right in query (and rest of the app actually).
+
 ### Changes
 
 - Changed default colours for highlighted borders and table headers to light blue - this is mostly to deal with Powershell colour conflicts.
@@ -41,8 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#126](https://github.com/ClementTsang/bottom/pull/126): Updated error messages to be a bit more consistent/helpful.
 
 - [#70](https://github.com/ClementTsang/bottom/issues/70): Redesigned help menu to allow for scrolling.
-
-- [#134](https://github.com/ClementTsang/bottom/pull/134): Added `hjkl` movement to delete dialog.
 
 - [#59](https://github.com/ClementTsang/bottom/issues/59): Moved maximization key to `e`, renamed feature to _expanding_ the widget. Done to allow for the `<Enter>` key to be used later for a more intuitive usage.
 

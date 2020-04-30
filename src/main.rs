@@ -323,6 +323,8 @@ fn handle_key_event_or_break(
                 KeyCode::Char('r') | KeyCode::Char('R') => {
                     app.toggle_search_regex();
                 }
+                KeyCode::Char('h') => app.on_left_key(),
+                KeyCode::Char('l') => app.on_right_key(),
                 _ => {}
             }
         } else if let KeyModifiers::CONTROL = event.modifiers {

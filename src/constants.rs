@@ -52,7 +52,7 @@ pub const HELP_CONTENTS_TEXT: [&str; 6] = [
 pub const GENERAL_HELP_TEXT: [&str; 20] = [
     "1 - General bindings\n",
     "q, Ctrl-c      Quit\n",
-    "Esc            Close dialog windows, search, widgets, or exit maximized mode\n",
+    "Esc            Close dialog windows, search, widgets, or exit expanded mode\n",
     "Ctrl-r         Reset display and any collected data\n",
     "f              Freeze/unfreeze updating with new data\n",
     "Ctrl-Arrow     \n",
@@ -90,6 +90,7 @@ pub const PROCESS_HELP_TEXT: [&str; 8] = [
     "Ctrl-f, /      Open process search widget",
 ];
 
+// FIXME: [QUERY] This likely needs to be updated.
 pub const SEARCH_HELP_TEXT: [&str; 13] = [
     "4 - Process search bindings\n",
     "Tab            Toggle between searching for PID and name\n",
@@ -102,8 +103,8 @@ pub const SEARCH_HELP_TEXT: [&str; 13] = [
     "Alt-c/F1       Toggle matching case\n",
     "Alt-w/F2       Toggle matching the entire word\n",
     "Alt-r/F3       Toggle using regex\n",
-    "Left           Move cursor left\n",
-    "Right          Move cursor right",
+    "Left, Alt-h    Move cursor left\n",
+    "Right, Alt-l   Move cursor right",
 ];
 
 pub const BATTERY_HELP_TEXT: [&str; 3] = [
