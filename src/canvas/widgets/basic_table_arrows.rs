@@ -1,7 +1,10 @@
 use std::cmp::max;
 
 use crate::{
-    app::{layout_manager::BottomWidgetType, App},
+    app::{
+        layout_manager::{BottomWidget, BottomWidgetType},
+        App,
+    },
     canvas::Painter,
 };
 
@@ -14,19 +17,18 @@ use tui::{
 
 pub trait BasicTableArrows {
     fn draw_basic_table_arrows<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect, current_table: &BottomWidget,
     );
 }
 
 impl BasicTableArrows for Painter {
     fn draw_basic_table_arrows<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect, current_table: &BottomWidget,
     ) {
         // Effectively a paragraph with a ton of spacing
         let (left_table, right_table) = (
             {
-                app_state
-                    .current_widget
+                current_table
                     .left_neighbour
                     .map(|left_widget_id| {
                         app_state
@@ -38,8 +40,7 @@ impl BasicTableArrows for Painter {
                     .unwrap_or_else(|| &BottomWidgetType::Temp)
             },
             {
-                app_state
-                    .current_widget
+                current_table
                     .right_neighbour
                     .map(|right_widget_id| {
                         app_state
