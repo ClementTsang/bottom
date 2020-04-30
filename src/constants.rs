@@ -27,6 +27,10 @@ pub const FORCE_MIN_THRESHOLD: usize = 5;
 lazy_static! {
     pub static ref SIDE_BORDERS: tui::widgets::Borders =
         tui::widgets::Borders::from_bits_truncate(20);
+    pub static ref TOP_LEFT_RIGHT: tui::widgets::Borders =
+        tui::widgets::Borders::from_bits_truncate(22);
+    pub static ref BOTTOM_LEFT_RIGHT: tui::widgets::Borders =
+        tui::widgets::Borders::from_bits_truncate(28);
     pub static ref DEFAULT_TEXT_STYLE: tui::style::Style =
         tui::style::Style::default().fg(tui::style::Color::Gray);
     pub static ref DEFAULT_HEADER_STYLE: tui::style::Style =
