@@ -533,16 +533,6 @@ impl App {
             } else {
                 self.delete_dialog_state.is_showing_dd = false;
             }
-        } else if !self.is_in_dialog() && !self.app_config_fields.use_basic_mode {
-            // Pop-out mode.  We ignore if in process search.
-
-            match self.current_widget.widget_type {
-                BottomWidgetType::ProcSearch => {}
-                _ => {
-                    self.is_expanded = true;
-                    self.is_force_redraw = true;
-                }
-            }
         }
     }
 
@@ -1178,6 +1168,7 @@ impl App {
             '+' => self.zoom_in(),
             '-' => self.zoom_out(),
             '=' => self.reset_zoom(),
+            'e' => self.expand_widget(),
             _ => {}
         }
 
@@ -1207,6 +1198,20 @@ impl App {
 
     pub fn get_to_delete_processes(&self) -> Option<(String, Vec<u32>)> {
         self.to_delete_process_list.clone()
+    }
+
+    fn expand_widget(&mut self) {
+        if !self.is_in_dialog() && !self.app_config_fields.use_basic_mode {
+            // Pop-out mode.  We ignore if in process search.
+
+            match self.current_widget.widget_type {
+                BottomWidgetType::ProcSearch => {}
+                _ => {
+                    self.is_expanded = true;
+                    self.is_force_redraw = true;
+                }
+            }
+        }
     }
 
     pub fn move_widget_selection_left(&mut self) {

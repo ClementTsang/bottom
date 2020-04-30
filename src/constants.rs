@@ -65,7 +65,7 @@ pub const GENERAL_HELP_TEXT: [&str; 20] = [
     "?              Open help menu\n",
     "gg             Jump to the first entry\n",
     "G              Jump to the last entry\n",
-    "Enter          Maximize the currently selected widget\n",
+    "e              Expand the currently selected widget\n",
     "+              Zoom in on chart (decrease time range)\n",
     "-              Zoom out on chart (increase time range)\n",
     "=              Reset zoom\n",

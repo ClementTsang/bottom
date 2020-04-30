@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#134](https://github.com/ClementTsang/bottom/pull/134): Added `hjkl` movement to delete dialog.
 
+- [#59](https://github.com/ClementTsang/bottom/issues/59): Moved maximization key to `e`, renamed feature to _expanding_ the widget. Done to allow for the `<Enter>` key to be used later for a more intuitive usage.
+
 - [#59](https://github.com/ClementTsang/bottom/issues/59): Redesigned search menu and query.
 
 ### Bug Fixes

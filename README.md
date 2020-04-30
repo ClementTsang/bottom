@@ -9,7 +9,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 
 <!--TODO: Update recording for 0.4-->
 
-![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
+![Quick demo recording showing off searching, expanding, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
 **Note**: This documentation is relevant to version 0.4.0 and may refer to in-development or unreleased features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
@@ -35,7 +35,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 - [Features](#features)
   - [Process filtering](#process-filtering)
   - [Zoom](#zoom)
-  - [Maximizing](#maximizing)
+  - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
   - [Config files](#config-files)
     - [Config flags](#config-flags)
@@ -170,7 +170,7 @@ Run using `btm`.
 |                                                    |                                                                              |
 | -------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `q`, `Ctrl-c`                                      | Quit                                                                         |
-| `Esc`                                              | Close dialog windows, search, widgets, or exit maximized mode                |
+| `Esc`                                              | Close dialog windows, search, widgets, or exit expanded mode                 |
 | `Ctrl-r`                                           | Reset display and any collected data                                         |
 | `f`                                                | Freeze/unfreeze updating with new data                                       |
 | `Ctrl`-arrow key<br>`Shift`-arrow key<br>`H/J/K/L` | Move to a different widget (on macOS some keybindings may conflict)          |
@@ -181,7 +181,7 @@ Run using `btm`.
 | `?`                                                | Open help menu                                                               |
 | `gg`, `Home`                                       | Jump to the first entry                                                      |
 | `Shift-g`, `End`                                   | Jump to the last entry                                                       |
-| `Enter`                                            | Maximize the currently selected widget                                       |
+| `e`                                                | Expand the currently selected widget                                         |
 | `+`                                                | Zoom in on chart (decrease time range)                                       |
 | `-`                                                | Zoom out on chart (increase time range)                                      |
 | `=`                                                | Reset zoom                                                                   |
@@ -266,9 +266,9 @@ Using the `+`/`-` keys or the scroll wheel will move the current time intervals 
 Widgets can hold different time intervals independently. These time intervals can be adjusted using the
 `-t`/`--default_time_value` and `-d`/`--time_delta` options, or their corresponding config options.
 
-### Maximizing
+### Expand
 
-Only care about one specific widget? You can go to that widget and hit `Enter` to make that widget take
+Only care about one specific widget? You can go to that widget and hit `e` to make that widget expand and take
 up the entire drawing area.
 
 ### Basic mode
