@@ -1,7 +1,6 @@
 # Contribution
 
-If you want to contribute to this project - first of all, thank you! I'm glad to see
-interest in it!
+If you want to contribute to this project - first of all, thank you! I'm glad to see interest in it!
 
 Here are some notes about how to contribute to bottom (structure is based on the official
 [Rust contribution guidelines](https://github.com/rust-lang/rust/blob/master/CONTRIBUTING.md)):
@@ -13,30 +12,24 @@ Here are some notes about how to contribute to bottom (structure is based on the
 
 ## Feature reports
 
-Feature suggestions can be submitted via [GitHub Issues](https://github.com/ClementTsang/bottom/issues) using the "feature" tag.
-Prior to submission, please look to see if this has already been suggested or solved; if it has and is not resolved,
-it would be better to comment on the relevant report.
+Feature suggestions can be submitted using the "feature" tag.  Prior to submission, please look to see if this has already been suggested or solved; if it has and is not resolved, it would be better to comment on the relevant report.
 
-Within your feature report, try to answer the given prompts - in particular, state the specific feature you want and if possible,
-please state why you want this added to the program.
+Within your feature report, try to answer the given prompts - in particular, state the specific feature you want and if possible, please state why you want this added to the program.
 
 ## Bug reports
 
-Bug reports can be submitted via [GitHub Issues](https://github.com/ClementTsang/bottom/issues) using the "bug" tag.
-Prior to submission, please look to see if this has already been reported or solved; if it has and is not resolved,
-it would be better to comment on the relevant report.
+Bug reports can be submitted using the "bug" tag.  Prior to submission, please look to see if this has already been reported or solved; if it has and is not resolved, it would be better to comment on the relevant report.
 
-Within your bug report, try to answer the given prompts. Be as specific as possible - describe your bug to the best of your ability, how
-to replicate it, and provide information like screenshots, OS and terminal. It can be very useful to help whoever is dealing with the issue!
+Within your bug report, try to answer the given prompts. Be as specific as possible - describe your bug to the best of your ability, how to replicate it, and provide information like screenshots, OS and terminal. It can be very useful to help whoever is dealing with the issue!
 
 ## Other types of reports
 
 For reports/suggestions that don't fit the definition of a feature or bug, try to use the other tags:
 
-- documentation: If you note a typo, or want to suggest something to do with the documentation of bottom, use this.
-- question: If you have a question, and not really a suggestion or request, then use this tag.
-- ci, investigative, refactoring: Generally, these are for internal use to track issues in order to manage GitHub Projects, and won't be the appropriate topic for a report.
-- other: If your suggestion doesn't fit those categories, then use this.
+- `documentation`: If you note a typo, or want to suggest something to do with the documentation of bottom, use this.
+- `question`: If you have a question, and not really a suggestion or request, then use this tag.
+- `ci`, `investigative`, `refactoring`: Generally, these are for internal use to track issues in order to manage GitHub Projects, and won't be the appropriate topic for a report.
+- `other`: If your suggestion or issue doesn't fit those categories, then use this.
 
 ## Pull requests
 
@@ -69,5 +62,4 @@ And in regards to the pull request process:
 
 - If all looks good, then request someone with write access (so basically me, [@ClementTsang](https://github.com/ClementTsang)) to give your code a review. If it's fine, then I'll merge!
 
-- Please use the [pull request template](https://github.com/ClementTsang/bottom/blob/master/.github/pull_request_template.md) to
-  help you in this process.
+- Please use the [pull request template](https://github.com/ClementTsang/bottom/blob/master/.github/pull_request_template.md) to help you.
