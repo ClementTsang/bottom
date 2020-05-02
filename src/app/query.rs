@@ -9,6 +9,8 @@ use crate::{
 use std::collections::VecDeque;
 
 const DELIMITER_LIST: [char; 5] = ['=', '>', '<', '(', ')'];
+const AND_LIST: [&str; 2] = ["and", "&&"];
+const OR_LIST: [&str; 2] = ["or", "||"];
 
 /// I only separated this as otherwise, the states.rs file gets huge... and this should
 /// belong in another file anyways, IMO.
@@ -47,12 +49,12 @@ impl ProcessQuery for ProcWidgetState {
             let mut rhs: Option<Box<Or>> = None;
 
             while let Some(queue_top) = query.front() {
-                if queue_top.to_lowercase() == "and" {
+                if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
                     rhs = Some(Box::new(process_or(query)?));
 
                     if let Some(queue_next) = query.front() {
-                        if queue_next.to_lowercase() == "and" {
+                        if AND_LIST.contains(&queue_next.to_lowercase().as_str()) {
                             // Must merge LHS and RHS
                             lhs = Or {
                                 lhs: Prefix {
@@ -80,12 +82,12 @@ impl ProcessQuery for ProcWidgetState {
             let mut rhs: Option<Box<Prefix>> = None;
 
             while let Some(queue_top) = query.front() {
-                if queue_top.to_lowercase() == "or" {
+                if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
                     rhs = Some(Box::new(process_prefix(query)?));
 
                     if let Some(queue_next) = query.front() {
-                        if queue_next.to_lowercase() == "or" {
+                        if OR_LIST.contains(&queue_next.to_lowercase().as_str()) {
                             // Must merge LHS and RHS
                             lhs = Prefix {
                                 and: Some(Box::new(And {
@@ -213,7 +215,65 @@ impl ProcessQuery for ProcWidgetState {
                                 }
 
                                 if let Some(condition) = condition {
-                                    if let Some(value) = value {
+                                    if let Some(read_value) = value {
+                                        // Now we want to check one last thing - is there a unit?
+                                        // If no unit, assume base.
+                                        // Furthermore, base must be PEEKED at initially, and will
+                                        // require (likely) prefix_type specific checks
+                                        // Lastly, if it *is* a unit, remember to POP!
+
+                                        let mut value = read_value;
+
+                                        match prefix_type {
+                                            PrefixType::Rps
+                                            | PrefixType::Wps
+                                            | PrefixType::TRead
+                                            | PrefixType::TWrite => {
+                                                if let Some(potential_unit) = query.front() {
+                                                    match potential_unit.as_str() {
+                                                        "TB" => {
+                                                            value *= 1_000_000_000_000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "TiB" => {
+                                                            value *= 1_099_511_627_776.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "GB" => {
+                                                            value *= 1_000_000_000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "GiB" => {
+                                                            value *= 1_073_741_824.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "MB" => {
+                                                            value *= 1_000_000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "MiB" => {
+                                                            value *= 1_048_576.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "KB" => {
+                                                            value *= 1000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "KiB" => {
+                                                            value *= 1024.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "B" => {
+                                                            // Just gotta pop.
+                                                            query.pop_front();
+                                                        }
+                                                        _ => {}
+                                                    }
+                                                }
+                                            }
+                                            _ => {}
+                                        }
+
                                         return Ok(Prefix {
                                             and: None,
                                             regex_prefix: None,

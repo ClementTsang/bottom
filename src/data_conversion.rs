@@ -446,10 +446,10 @@ pub fn convert_process_data(
             write_per_sec,
             total_read,
             total_write,
-            rps_f64: converted_rps.0,
-            wps_f64: converted_wps.0,
-            tr_f64: converted_total_read.0,
-            tw_f64: converted_total_write.0,
+            rps_f64: process.read_bytes_per_sec as f64,
+            wps_f64: process.write_bytes_per_sec as f64,
+            tr_f64: process.total_read_bytes as f64,
+            tw_f64: process.total_write_bytes as f64,
             process_states: process.process_state.to_owned(),
         });
     }
@@ -481,10 +481,10 @@ pub fn convert_process_data(
                 write_per_sec,
                 total_read,
                 total_write,
-                rps_f64: converted_rps.0,
-                wps_f64: converted_wps.0,
-                tr_f64: converted_total_read.0,
-                tw_f64: converted_total_write.0,
+                rps_f64: p.read_per_sec as f64,
+                wps_f64: p.write_per_sec as f64,
+                tr_f64: p.total_read as f64,
+                tw_f64: p.total_write as f64,
                 process_states: p.process_state,
             }
         })
