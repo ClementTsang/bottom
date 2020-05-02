@@ -1,3 +1,4 @@
+#[cfg(debug_assertions)]
 pub fn init_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {

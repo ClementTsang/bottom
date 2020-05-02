@@ -98,7 +98,10 @@ fn get_matches() -> clap::ArgMatches<'static> {
 }
 
 fn main() -> error::Result<()> {
-    create_logger()?;
+    #[cfg(debug_assertions)]
+    {
+        utils::logging::init_logger()?;
+    }
     let matches = get_matches();
 
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
@@ -314,15 +317,9 @@ fn handle_key_event_or_break(
         // Otherwise, track the modifier as well...
         if let KeyModifiers::ALT = event.modifiers {
             match event.code {
-                KeyCode::Char('c') | KeyCode::Char('C') => {
-                    app.toggle_ignore_case();
-                }
-                KeyCode::Char('w') | KeyCode::Char('W') => {
-                    app.toggle_search_whole_word();
-                }
-                KeyCode::Char('r') | KeyCode::Char('R') => {
-                    app.toggle_search_regex();
-                }
+                KeyCode::Char('c') | KeyCode::Char('C') => app.toggle_ignore_case(),
+                KeyCode::Char('w') | KeyCode::Char('W') => app.toggle_search_whole_word(),
+                KeyCode::Char('r') | KeyCode::Char('R') => app.toggle_search_regex(),
                 KeyCode::Char('h') => app.on_left_key(),
                 KeyCode::Char('l') => app.on_right_key(),
                 _ => {}
@@ -368,13 +365,6 @@ fn handle_key_event_or_break(
     }
 
     false
-}
-
-fn create_logger() -> error::Result<()> {
-    if cfg!(debug_assertions) {
-        utils::logging::init_logger()?;
-    }
-    Ok(())
 }
 
 fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
@@ -594,7 +584,6 @@ fn update_all_process_lists(app: &mut App) {
 }
 
 fn update_final_process_list(app: &mut App, widget_id: u64) {
-    use utils::gen_util::get_exact_byte_values;
     let is_invalid_or_blank = match app.proc_state.widget_states.get(&widget_id) {
         Some(process_state) => process_state
             .process_search_state
@@ -603,77 +592,43 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         None => false,
     };
 
+    let process_filter = app.get_process_filter(widget_id);
     let filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped(widget_id) {
         app.canvas_data
             .grouped_process_data
             .iter()
             .filter(|process| {
                 if is_invalid_or_blank {
-                    return true;
-                } else if let Some(matcher_result) = app.get_current_regex_matcher(widget_id) {
-                    if let Ok(matcher) = matcher_result {
-                        return matcher.is_match(&process.name);
-                    }
+                    true
+                } else if let Some(process_filter) = process_filter {
+                    process_filter.check(process)
+                } else {
+                    true
                 }
-
-                true
             })
             .cloned()
             .collect::<Vec<_>>()
     } else {
-        let is_searching_with_pid = match app.proc_state.widget_states.get(&widget_id) {
-            Some(process_state) => process_state.process_search_state.is_searching_with_pid,
-            None => false,
-        };
-
         app.canvas_data
             .process_data
             .iter()
-            .filter_map(|(_pid, process)| {
+            .filter_map(|process| {
                 let mut result = true;
                 if !is_invalid_or_blank {
-                    if let Some(matcher_result) = app.get_current_regex_matcher(widget_id) {
-                        if let Ok(matcher) = matcher_result {
-                            if is_searching_with_pid {
-                                result = matcher.is_match(&process.pid.to_string());
-                            } else {
-                                result = matcher.is_match(&process.name);
-                            }
-                        }
-                    }
+                    result = if let Some(process_filter) = process_filter {
+                        process_filter.check(&process)
+                    } else {
+                        true
+                    };
                 }
-
-                let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
-                let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
-                let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
-                let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
-
-                let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-                let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-                let total_read =
-                    format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
-                let total_write = format!(
-                    "{:.*}{}",
-                    0, converted_total_write.0, converted_total_write.1
-                );
 
                 if result {
-                    return Some(ConvertedProcessData {
-                        pid: process.pid,
-                        name: process.name.clone(),
-                        cpu_usage: process.cpu_usage_percent,
-                        mem_usage: process.mem_usage_percent,
-                        group_pids: vec![process.pid],
-                        read_per_sec,
-                        write_per_sec,
-                        total_read,
-                        total_write,
-                        process_states: process.process_state.clone(),
-                    });
+                    return Some(process);
+                } else {
+                    None
                 }
-
-                None
             })
+            .cloned()
             .collect::<Vec<_>>()
     };
 

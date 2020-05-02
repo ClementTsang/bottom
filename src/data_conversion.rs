@@ -4,11 +4,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    app::{
-        data_farmer,
-        data_harvester::{self, processes::ProcessHarvest},
-        App,
-    },
+    app::{data_farmer, data_harvester, App},
     utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
 
@@ -45,6 +41,10 @@ pub struct ConvertedProcessData {
     pub write_per_sec: String,
     pub total_read: String,
     pub total_write: String,
+    pub rps_f64: f64,
+    pub wps_f64: f64,
+    pub tr_f64: f64,
+    pub tw_f64: f64,
     pub process_states: String,
 }
 
@@ -399,8 +399,8 @@ pub fn convert_network_data_points(
 
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
-) -> (HashMap<u32, ProcessHarvest>, Vec<ConvertedProcessData>) {
-    let mut single_list: HashMap<u32, ProcessHarvest> = HashMap::new();
+) -> (Vec<ConvertedProcessData>, Vec<ConvertedProcessData>) {
+    let mut single_list = Vec::new();
 
     // cpu, mem, pids
     let mut grouped_hashmap: HashMap<String, SingleProcessData> = std::collections::HashMap::new();
@@ -423,7 +423,35 @@ pub fn convert_process_data(
         (*entry).total_write += process.total_write_bytes;
         (*entry).process_state.push(process.process_state_char);
 
-        single_list.insert(process.pid, process.clone());
+        let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
+        let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
+        let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
+        let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
+
+        let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
+        let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
+        let total_read = format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
+        let total_write = format!(
+            "{:.*}{}",
+            0, converted_total_write.0, converted_total_write.1
+        );
+
+        single_list.push(ConvertedProcessData {
+            pid: process.pid,
+            name: process.name.to_string(),
+            cpu_usage: process.cpu_usage_percent,
+            mem_usage: process.mem_usage_percent,
+            group_pids: vec![process.pid],
+            read_per_sec,
+            write_per_sec,
+            total_read,
+            total_write,
+            rps_f64: converted_rps.0,
+            wps_f64: converted_wps.0,
+            tr_f64: converted_total_read.0,
+            tw_f64: converted_total_write.0,
+            process_states: process.process_state.to_owned(),
+        });
     }
 
     let grouped_list: Vec<ConvertedProcessData> = grouped_hashmap
@@ -453,6 +481,10 @@ pub fn convert_process_data(
                 write_per_sec,
                 total_read,
                 total_write,
+                rps_f64: converted_rps.0,
+                wps_f64: converted_wps.0,
+                tr_f64: converted_total_read.0,
+                tw_f64: converted_total_write.0,
                 process_states: p.process_state,
             }
         })

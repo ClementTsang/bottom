@@ -16,7 +16,6 @@ use widgets::*;
 use crate::{
     app::{
         self,
-        data_harvester::processes::ProcessHarvest,
         layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
         App,
     },
@@ -41,7 +40,7 @@ pub struct DisplayableData {
     pub disk_data: Vec<Vec<String>>,
     pub temp_sensor_data: Vec<Vec<String>>,
     // Not the final value
-    pub process_data: HashMap<u32, ProcessHarvest>,
+    pub process_data: Vec<ConvertedProcessData>,
     // Not the final value
     pub grouped_process_data: Vec<ConvertedProcessData>,
     // What's actually displayed

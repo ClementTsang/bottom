@@ -19,6 +19,7 @@ pub mod data_farmer;
 pub mod data_harvester;
 pub mod layout_manager;
 mod process_killer;
+pub mod query;
 pub mod states;
 
 const MAX_SEARCH_LENGTH: usize = 200;
@@ -307,19 +308,6 @@ impl App {
         let is_in_search_widget = self.is_in_search_widget();
         if !self.is_in_dialog() {
             if is_in_search_widget {
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get_mut(&(self.current_widget.widget_id - 1))
-                {
-                    if !proc_widget_state.is_grouped {
-                        if proc_widget_state.process_search_state.is_searching_with_pid {
-                            self.search_with_name();
-                        } else {
-                            self.search_with_pid();
-                        }
-                    }
-                }
             } else if let Some(proc_widget_state) = self
                 .proc_state
                 .widget_states
@@ -327,11 +315,7 @@ impl App {
             {
                 // Toggles process widget grouping state
                 proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
-                if proc_widget_state.is_grouped {
-                    self.search_with_name();
-                } else {
-                    self.proc_state.force_update = Some(self.current_widget.widget_id);
-                }
+                self.proc_state.force_update = Some(self.current_widget.widget_id);
             }
         }
     }
@@ -387,9 +371,6 @@ impl App {
                             .process_search_state
                             .search_state
                             .is_enabled = true;
-                        if proc_widget_state.is_grouped {
-                            self.search_with_name();
-                        }
                         self.move_widget_selection_down();
                     }
                 }
@@ -426,44 +407,6 @@ impl App {
         }
     }
 
-    pub fn search_with_pid(&mut self) {
-        if !self.is_in_dialog() {
-            if let Some(proc_widget_state) = self
-                .proc_state
-                .widget_states
-                .get_mut(&(self.current_widget.widget_id - 1))
-            {
-                if proc_widget_state
-                    .process_search_state
-                    .search_state
-                    .is_enabled
-                {
-                    proc_widget_state.process_search_state.is_searching_with_pid = true;
-                    self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
-                }
-            }
-        }
-    }
-
-    pub fn search_with_name(&mut self) {
-        if !self.is_in_dialog() {
-            if let Some(proc_widget_state) = self
-                .proc_state
-                .widget_states
-                .get_mut(&(self.current_widget.widget_id - 1))
-            {
-                if proc_widget_state
-                    .process_search_state
-                    .search_state
-                    .is_enabled
-                {
-                    proc_widget_state.process_search_state.is_searching_with_pid = false;
-                    self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
-                }
-            }
-        }
-    }
-
     pub fn toggle_ignore_case(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
@@ -475,7 +418,7 @@ impl App {
                 proc_widget_state
                     .process_search_state
                     .search_toggle_ignore_case();
-                proc_widget_state.update_regex();
+                proc_widget_state.update_query();
                 self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
             }
         }
@@ -492,7 +435,7 @@ impl App {
                 proc_widget_state
                     .process_search_state
                     .search_toggle_whole_word();
-                proc_widget_state.update_regex();
+                proc_widget_state.update_query();
                 self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
             }
         }
@@ -507,7 +450,7 @@ impl App {
         {
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.process_search_state.search_toggle_regex();
-                proc_widget_state.update_regex();
+                proc_widget_state.update_query();
                 self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
             }
         }
@@ -575,7 +518,7 @@ impl App {
                             true,
                         );
 
-                        proc_widget_state.update_regex();
+                        proc_widget_state.update_query();
                         self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                     }
                 } else {
@@ -630,24 +573,18 @@ impl App {
                         .search_state
                         .cursor_direction = CursorDirection::LEFT;
 
-                    proc_widget_state.update_regex();
+                    proc_widget_state.update_query();
                     self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                 }
             }
         }
     }
 
-    pub fn get_current_regex_matcher(
-        &self, widget_id: u64,
-    ) -> &Option<std::result::Result<regex::Regex, regex::Error>> {
-        match self.proc_state.widget_states.get(&widget_id) {
-            Some(proc_widget_state) => {
-                &proc_widget_state
-                    .process_search_state
-                    .search_state
-                    .current_regex
-            }
-            None => &None,
+    pub fn get_process_filter(&self, widget_id: u64) -> &Option<query::Query> {
+        if let Some(process_widget_state) = self.proc_state.widget_states.get(&widget_id) {
+            &process_widget_state.process_search_state.search_state.query
+        } else {
+            &None
         }
     }
 
@@ -872,6 +809,8 @@ impl App {
     }
 
     pub fn start_dd(&mut self) {
+        self.reset_multi_tap_keys();
+
         if let Some(proc_widget_state) = self
             .proc_state
             .widget_states
@@ -885,32 +824,25 @@ impl App {
                 if proc_widget_state.scroll_state.current_scroll_position
                     < corresponding_filtered_process_list.len() as u64
                 {
-                    let current_process = if self.is_grouped(self.current_widget.widget_id) {
-                        let group_pids = &corresponding_filtered_process_list
-                            [proc_widget_state.scroll_state.current_scroll_position as usize]
-                            .group_pids;
-
-                        let mut ret = ("".to_string(), group_pids.clone());
-
-                        for pid in group_pids {
-                            if let Some(process) = self.canvas_data.process_data.get(&pid) {
-                                ret.0 = process.name.clone();
-                                break;
-                            }
+                    let current_process: (String, Vec<u32>);
+                    if self.is_grouped(self.current_widget.widget_id) {
+                        if let Some(process) = &corresponding_filtered_process_list
+                            .get(proc_widget_state.scroll_state.current_scroll_position as usize)
+                        {
+                            current_process = (process.name.to_string(), process.group_pids.clone())
+                        } else {
+                            return;
                         }
-                        ret
                     } else {
                         let process = corresponding_filtered_process_list
                             [proc_widget_state.scroll_state.current_scroll_position as usize]
                             .clone();
-                        (process.name.clone(), vec![process.pid])
+                        current_process = (process.name.clone(), vec![process.pid])
                     };
 
                     self.to_delete_process_list = Some(current_process);
                     self.delete_dialog_state.is_showing_dd = true;
                 }
-
-                self.reset_multi_tap_keys();
             }
         }
     }
@@ -977,7 +909,7 @@ impl App {
                             .char_cursor_position +=
                             UnicodeWidthChar::width(caught_char).unwrap_or(0);
 
-                        proc_widget_state.update_regex();
+                        proc_widget_state.update_query();
                         self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                         proc_widget_state
                             .process_search_state

@@ -1,4 +1,4 @@
-use std::result;
+use std::{borrow::Cow, result};
 
 /// A type alias for handling errors related to Bottom.
 pub type Result<T> = result::Result<T, BottomError>;
@@ -22,6 +22,8 @@ pub enum BottomError {
     ConfigError(String),
     /// An error to represent errors with converting between data types.
     ConversionError(String),
+    /// An error to represent errors with querying.
+    QueryError(Cow<'static, str>),
 }
 
 impl std::fmt::Display for BottomError {
@@ -46,6 +48,9 @@ impl std::fmt::Display for BottomError {
             }
             BottomError::ConversionError(ref message) => {
                 write!(f, "unable to convert: {}", message)
+            }
+            BottomError::QueryError(ref _message) => {
+                write!(f, "invalid query - this should not be shown!")
             }
         }
     }
@@ -96,5 +101,11 @@ impl From<fern::InitError> for BottomError {
 impl From<std::str::Utf8Error> for BottomError {
     fn from(err: std::str::Utf8Error) -> Self {
         BottomError::ConversionError(err.to_string())
+    }
+}
+
+impl From<regex::Error> for BottomError {
+    fn from(err: regex::Error) -> Self {
+        BottomError::QueryError(err.to_string().into())
     }
 }

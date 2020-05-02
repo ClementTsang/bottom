@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - Unreleased
+
+### Features
+
+- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).
+
 ## [0.4.0] - Unreleased
 
 ### Features
@@ -12,8 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#58](https://github.com/ClementTsang/bottom/issues/58): I/O stats per process.
 
 - [#55](https://github.com/ClementTsang/bottom/issues/55): Battery monitoring widget.
-
-- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process.
 
 - [#134](https://github.com/ClementTsang/bottom/pull/134): `hjkl` movement to delete dialog (credit to [andys8](https://github.com/andys8)).
 
