@@ -185,7 +185,7 @@ impl Prefix {
     pub fn check(&self, process: &ConvertedProcessData) -> bool {
         fn matches_condition(condition: &QueryComparison, lhs: f64, rhs: f64) -> bool {
             match condition {
-                QueryComparison::Equal => lhs == rhs,
+                QueryComparison::Equal => (lhs - rhs).abs() < f64::EPSILON,
                 QueryComparison::Less => lhs < rhs,
                 QueryComparison::Greater => lhs > rhs,
                 QueryComparison::LessOrEqual => lhs <= rhs,

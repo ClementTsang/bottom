@@ -612,20 +612,15 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         app.canvas_data
             .process_data
             .iter()
-            .filter_map(|process| {
-                let mut result = true;
+            .filter(|process| {
                 if !is_invalid_or_blank {
-                    result = if let Some(process_filter) = process_filter {
+                    if let Some(process_filter) = process_filter {
                         process_filter.check(&process)
                     } else {
                         true
-                    };
-                }
-
-                if result {
-                    return Some(process);
+                    }
                 } else {
-                    None
+                    true
                 }
             })
             .cloned()
