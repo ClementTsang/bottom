@@ -40,15 +40,15 @@ lazy_static! {
 // Help text
 pub const HELP_CONTENTS_TEXT: [&str; 6] = [
     "Press the corresponding numbers to jump to the section, or scroll:\n",
-    "1 - General bindings\n",
-    "2 - CPU bindings\n",
-    "3 - Process bindings\n",
-    "4 - Process search bindings\n",
-    "5 - Battery bindings",
+    "1 - General\n",
+    "2 - CPU widget\n",
+    "3 - Process widget\n",
+    "4 - Process search widget\n",
+    "5 - Battery widget",
 ];
 
 pub const GENERAL_HELP_TEXT: [&str; 20] = [
-    "1 - General bindings\n",
+    "1 - General\n",
     "q, Ctrl-c      Quit\n",
     "Esc            Close dialog windows, search, widgets, or exit expanded mode\n",
     "Ctrl-r         Reset display and any collected data\n",
@@ -71,14 +71,14 @@ pub const GENERAL_HELP_TEXT: [&str; 20] = [
 ];
 
 pub const CPU_HELP_TEXT: [&str; 4] = [
-    "2 - CPU bindings\n",
+    "2 - CPU widget\n",
     "/              Open filtering for showing certain CPU cores\n",
     "Space          Toggle enabled/disabled cores\n",
     "Esc            Exit filtering mode",
 ];
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
-    "3 - Process bindings\n",
+    "3 - Process widget\n",
     "dd             Kill the selected process\n",
     "c              Sort by memory usage, press again to reverse sorting order\n",
     "m              Sort by memory usage\n",
@@ -88,9 +88,8 @@ pub const PROCESS_HELP_TEXT: [&str; 8] = [
     "Ctrl-f, /      Open process search widget",
 ];
 
-// FIXME: [QUERY] This likely needs to be updated.
-pub const SEARCH_HELP_TEXT: [&str; 13] = [
-    "4 - Process search bindings\n",
+pub const SEARCH_HELP_TEXT: [&str; 40] = [
+    "4 - Process search widget\n",
     "Tab            Toggle between searching for PID and name\n",
     "Esc            Close the search widget (retains the filter)\n",
     "Ctrl-a         Skip to the start of the search query\n",
@@ -102,11 +101,38 @@ pub const SEARCH_HELP_TEXT: [&str; 13] = [
     "Alt-w/F2       Toggle matching the entire word\n",
     "Alt-r/F3       Toggle using regex\n",
     "Left, Alt-h    Move cursor left\n",
-    "Right, Alt-l   Move cursor right",
+    "Right, Alt-l   Move cursor right\n",
+    "Search keywords\n",
+    "pid\n",
+    "cpu\n",
+    "mem\n",
+    "pid\n",
+    "read\n",
+    "write\n",
+    "tread\n",
+    "twrite\n\n",
+    "\nComparison operators\n",
+    "=\n",
+    ">\n",
+    "<\n",
+    ">=\n",
+    "<=\n",
+    "\nLogical operators\n",
+    "and/&&\n",
+    "or/||\n",
+    "\nSupported units\n",
+    "B\n",
+    "KB\n",
+    "MB\n",
+    "TB\n",
+    "KiB\n",
+    "MiB\n",
+    "GiB\n",
+    "TiB\n",
 ];
 
 pub const BATTERY_HELP_TEXT: [&str; 3] = [
-    "5 - Battery bindings\n",
+    "5 - Battery widget\n",
     "Left           Go to previous battery\n",
     "Right          Go to next battery",
 ];

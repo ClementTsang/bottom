@@ -468,10 +468,10 @@ impl std::str::FromStr for PrefixType {
         match lower_case.as_str() {
             "cpu" => Ok(Cpu),
             "mem" => Ok(Mem),
-            "r" => Ok(Rps),
-            "w" => Ok(Wps),
-            "read" => Ok(TRead),
-            "write" => Ok(TWrite),
+            "read" => Ok(Rps),
+            "write" => Ok(Wps),
+            "tread" => Ok(TRead),
+            "twrite" => Ok(TWrite),
             "pid" => Ok(Pid),
             _ => Ok(Name),
         }

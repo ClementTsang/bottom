@@ -32,8 +32,13 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Process bindings](#process-bindings)
   - [Process search bindings](#process-search-bindings)
   - [Battery bindings](#battery-bindings)
+  - [Process searching keywords](#process-searching-keywords)
+    - [Supported keywords](#supported-keywords)
+    - [Supported comparison operators](#supported-comparison-operators)
+    - [Supported logical operators](#supported-logical-operators)
+    - [Supported units](#supported-units)
 - [Features](#features)
-  - [Process filtering](#process-filtering)
+  - [Process searching](#process-searching)
   - [Zoom](#zoom)
   - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
@@ -231,6 +236,53 @@ Run using `btm`.
 | `Left, Alt-h`  | Go to the next battery     |
 | `Right, Alt-l` | Go to the previous battery |
 
+### Process searching keywords
+
+Note none of the keywords are case sensitive. Furthermore, if you want to search a reserved keyword, surround the text in quotes - for example, `"And" or "Or"` would be a valid search.
+
+#### Supported keywords
+
+|          |                 |                                                                                 |
+| -------- | --------------- | ------------------------------------------------------------------------------- |
+| `pid`    | `pid: 1044`     | Matches by PID; supports regex and requiring matching the entire PID            |
+| `cpu`    | `cpu > 0.5`     | Matches the condition for the CPU column; supports comparison operators         |
+| `mem`    | `mem < 0.5`     | Matches the condition for the memory column; supports comparison operators      |
+| `read`   | `read = 1`      | Matches the condition for the read/s column; supports comparison operators      |
+| `write`  | `write >= 1`    | Matches the condition for the write/s column; supports comparison operators     |
+| `tread`  | `tread <= 1024` | Matches the condition for the total read column; supports comparison operators  |
+| `twrite` | `twrite > 1024` | Matches the condition for the total write column; supports comparison operators |
+
+#### Supported comparison operators
+
+|      |                                                                |
+| ---- | -------------------------------------------------------------- |
+| `=`  | Checks if the values are equal                                 |
+| `>`  | Checks if the left value is strictly greater than the right    |
+| `<`  | Checks if the left value is strictly less than the right       |
+| `>=` | Checks if the left value is greater than or equal to the right |
+| `<=` | Checks if the left value is less than or equal to the right    |
+
+#### Supported logical operators
+
+|                    |                                              |                                                         |
+| ------------------ | -------------------------------------------- | ------------------------------------------------------- |
+| `and, &&, <Space>` | `<CONDITION 1> and/&&/<Space> <CONDITION 2>` | Will require both conditions to be true to match        |
+| `or, ||`           | `<CONDITION 1> or/|| <CONDITION 2>`          | Will require at least one condition to be true to match |
+
+#### Supported units
+
+|       |           |
+| ----- | --------- |
+| `B`   | Bytes     |
+| `KB`  | Kilobytes |
+| `MB`  | Megabytes |
+| `GB`  | Gigabytes |
+| `TB`  | Terabytes |
+| `KiB` | Kibibytes |
+| `MiB` | Mebibytes |
+| `GiB` | Gibibytes |
+| `TiB` | Tebibytes |
+
 ## Features
 
 As yet _another_ process/system visualization and management application, bottom supports the typical features:
@@ -253,12 +305,29 @@ It also aims to be:
 
 In addition, bottom also currently has the following features:
 
-### Process filtering
+### Process searching
 
-<!--FIXME: [QUERY] Update this documentation...-->
+On any process widget, hit `/` to bring up a search bar. If the layout has multiple process widgets, note this search is independent of other widgets.
 
-On any process widget, hit `/` to bring up a search bar. If the layout has multiple process widgets, note this search is independent of other widgets. Searching supports regex, matching case, and matching entire words. Use `Tab` to toggle between
-searching by PID and by process name.
+![search bar image](assets/search_empty.png)
+
+By default, just typing in something will search by process name:
+
+![a simple search](assets/simple_search.png)
+
+This simple search can be refined by matching by case, matching the entire word, or by using regex:
+
+![a slightly better search](assets/simple_advanced_search.png)
+
+Now let's say you want to search for two things: luckily, we have the `AND` and `OR` logical operators:
+
+![logical operator demo](assets/or_search.png)
+
+Furthermore, one is able to refine their searches by CPU usage, memory usage, PID, and more. For example:
+
+![using cpu filter](assets/search_cpu_filter.png)
+
+One can see all available keywords and query options [here](#process-searching-keywords).
 
 ### Zoom
 
