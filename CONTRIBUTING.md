@@ -42,6 +42,9 @@ If you want to help contribute by submitting a PR, by all means, I'm open! In re
 
   - You can check clippy using `cargo +nightly clippy`.
 
+- You may notice that I have fern and log as dependencies; this is mostly for easy debugging via the `debug!()` macro. It writes to the
+  `debug.log` file that will automatically be created if you run in debug mode (so `cargo run`).
+
 And in regards to the pull request process:
 
 - Create a personal fork of the process and PR that, as per the [fork and pull method](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-collaborative-development-models).

@@ -3,13 +3,13 @@
 [![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom)
 [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 [![tokei](https://tokei.rs/b1/github/ClementTsang/bottom?category=code)](https://github.com/ClementTsang/bottom)
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
 <!--TODO: Update recording for 0.4-->
 
-![Quick demo recording showing off searching, maximizing, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
+![Quick demo recording showing off searching, expanding, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
 **Note**: This documentation is relevant to version 0.4.0 and may refer to in-development or unreleased features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
@@ -32,10 +32,15 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Process bindings](#process-bindings)
   - [Process search bindings](#process-search-bindings)
   - [Battery bindings](#battery-bindings)
+  - [Process searching keywords](#process-searching-keywords)
+    - [Supported keywords](#supported-keywords)
+    - [Supported comparison operators](#supported-comparison-operators)
+    - [Supported logical operators](#supported-logical-operators)
+    - [Supported units](#supported-units)
 - [Features](#features)
-  - [Process filtering](#process-filtering)
+  - [Process searching](#process-searching)
   - [Zoom](#zoom)
-  - [Maximizing](#maximizing)
+  - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
   - [Config files](#config-files)
     - [Config flags](#config-flags)
@@ -44,6 +49,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Battery](#battery)
   - [Compatibility](#compatibility)
 - [Contribution](#contribution)
+  - [Contributors](#contributors)
 - [Thanks](#thanks)
 
 ## Installation
@@ -169,7 +175,7 @@ Run using `btm`.
 |                                                    |                                                                              |
 | -------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `q`, `Ctrl-c`                                      | Quit                                                                         |
-| `Esc`                                              | Close dialog windows, search, widgets, or exit maximized mode                |
+| `Esc`                                              | Close dialog windows, search, widgets, or exit expanded mode                 |
 | `Ctrl-r`                                           | Reset display and any collected data                                         |
 | `f`                                                | Freeze/unfreeze updating with new data                                       |
 | `Ctrl`-arrow key<br>`Shift`-arrow key<br>`H/J/K/L` | Move to a different widget (on macOS some keybindings may conflict)          |
@@ -180,7 +186,7 @@ Run using `btm`.
 | `?`                                                | Open help menu                                                               |
 | `gg`, `Home`                                       | Jump to the first entry                                                      |
 | `Shift-g`, `End`                                   | Jump to the last entry                                                       |
-| `Enter`                                            | Maximize the currently selected widget                                       |
+| `e`                                                | Expand the currently selected widget                                         |
 | `+`                                                | Zoom in on chart (decrease time range)                                       |
 | `-`                                                | Zoom out on chart (increase time range)                                      |
 | `=`                                                | Reset zoom                                                                   |
@@ -225,10 +231,57 @@ Run using `btm`.
 
 #### Battery bindings
 
-|         |                            |
-| ------- | -------------------------- |
-| `Left`  | Go to the next battery     |
-| `Right` | Go to the previous battery |
+|                |                            |
+| -------------- | -------------------------- |
+| `Left, Alt-h`  | Go to the next battery     |
+| `Right, Alt-l` | Go to the previous battery |
+
+### Process searching keywords
+
+Note none of the keywords are case sensitive. Furthermore, if you want to search a reserved keyword, surround the text in quotes - for example, `"And" or "Or"` would be a valid search.
+
+#### Supported keywords
+
+|          |                 |                                                                                 |
+| -------- | --------------- | ------------------------------------------------------------------------------- |
+| `pid`    | `pid: 1044`     | Matches by PID; supports regex and requiring matching the entire PID            |
+| `cpu`    | `cpu > 0.5`     | Matches the condition for the CPU column; supports comparison operators         |
+| `mem`    | `mem < 0.5`     | Matches the condition for the memory column; supports comparison operators      |
+| `read`   | `read = 1`      | Matches the condition for the read/s column; supports comparison operators      |
+| `write`  | `write >= 1`    | Matches the condition for the write/s column; supports comparison operators     |
+| `tread`  | `tread <= 1024` | Matches the condition for the total read column; supports comparison operators  |
+| `twrite` | `twrite > 1024` | Matches the condition for the total write column; supports comparison operators |
+
+#### Supported comparison operators
+
+|      |                                                                |
+| ---- | -------------------------------------------------------------- |
+| `=`  | Checks if the values are equal                                 |
+| `>`  | Checks if the left value is strictly greater than the right    |
+| `<`  | Checks if the left value is strictly less than the right       |
+| `>=` | Checks if the left value is greater than or equal to the right |
+| `<=` | Checks if the left value is less than or equal to the right    |
+
+#### Supported logical operators
+
+|                    |                                              |                                                     |
+| ------------------ | -------------------------------------------- | ----------------------------------------------------|
+| `and, &&, <Space>` | `<CONDITION 1> and/&&/<Space> <CONDITION 2>` | Requires both conditions to be true to match        |
+| `or, \|\|`           | `<CONDITION 1> or/\|\| <CONDITION 2>`          | Requires at least one condition to be true to match |
+
+#### Supported units
+
+|       |           |
+| ----- | --------- |
+| `B`   | Bytes     |
+| `KB`  | Kilobytes |
+| `MB`  | Megabytes |
+| `GB`  | Gigabytes |
+| `TB`  | Terabytes |
+| `KiB` | Kibibytes |
+| `MiB` | Mebibytes |
+| `GiB` | Gibibytes |
+| `TiB` | Tebibytes |
 
 ## Features
 
@@ -252,12 +305,29 @@ It also aims to be:
 
 In addition, bottom also currently has the following features:
 
-### Process filtering
+### Process searching
 
-On any process widget, hit `/` to bring up a search bar. If the layout has
-multiple process widgets, note this search is independent of other widgets. Searching
-supports regex, matching case, and matching entire words. Use `Tab` to toggle between
-searching by PID and by process name.
+On any process widget, hit `/` to bring up a search bar. If the layout has multiple process widgets, note this search is independent of other widgets.
+
+![search bar image](assets/search_empty.png)
+
+By default, just typing in something will search by process name:
+
+![a simple search](assets/simple_search.png)
+
+This simple search can be refined by matching by case, matching the entire word, or by using regex:
+
+![a slightly better search](assets/simple_advanced_search.png)
+
+Now let's say you want to search for two things: luckily, we have the `AND` and `OR` logical operators:
+
+![logical operator demo](assets/or_search.png)
+
+Furthermore, one is able to refine their searches by CPU usage, memory usage, PID, and more. For example:
+
+![using cpu filter](assets/search_cpu_filter.png)
+
+One can see all available keywords and query options [here](#process-searching-keywords).
 
 ### Zoom
 
@@ -265,9 +335,9 @@ Using the `+`/`-` keys or the scroll wheel will move the current time intervals 
 Widgets can hold different time intervals independently. These time intervals can be adjusted using the
 `-t`/`--default_time_value` and `-d`/`--time_delta` options, or their corresponding config options.
 
-### Maximizing
+### Expand
 
-Only care about one specific widget? You can go to that widget and hit `Enter` to make that widget take
+Only care about one specific widget? You can go to that widget and hit `e` to make that widget expand and take
 up the entire drawing area.
 
 ### Basic mode
@@ -463,6 +533,8 @@ The current compatibility of widgets with operating systems from personal testin
 ## Contribution
 
 Contribution is always welcome - please take a look at [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to help.
+
+### Contributors
 
 Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 

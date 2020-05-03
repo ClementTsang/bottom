@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - Unreleased
+
+### Features
+
+- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).
+
 ## [0.4.0] - Unreleased
 
 ### Features
@@ -13,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#55](https://github.com/ClementTsang/bottom/issues/55): Battery monitoring widget.
 
-- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process.
+- [#134](https://github.com/ClementTsang/bottom/pull/134): `hjkl` movement to delete dialog (credit to [andys8](https://github.com/andys8)).
+
+- [#59](https://github.com/ClementTsang/bottom/issues/59): `Alt-h` and `Alt-l` to move left/right in query (and rest of the app actually).
 
 ### Changes
 
@@ -42,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#70](https://github.com/ClementTsang/bottom/issues/70): Redesigned help menu to allow for scrolling.
 
-- [#134](https://github.com/ClementTsang/bottom/pull/134): Added `hjkl` movement to delete dialog.
+- [#59](https://github.com/ClementTsang/bottom/issues/59): Moved maximization key to `e`, renamed feature to _expanding_ the widget. Done to allow for the `<Enter>` key to be used later for a more intuitive usage.
 
 - [#59](https://github.com/ClementTsang/bottom/issues/59): Redesigned search menu and query.
 

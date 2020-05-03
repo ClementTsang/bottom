@@ -4,7 +4,11 @@ use unicode_segmentation::GraphemeCursor;
 
 use tui::widgets::TableState;
 
-use crate::{app::layout_manager::BottomWidgetType, constants, data_harvester::processes};
+use crate::{
+    app::{layout_manager::BottomWidgetType, query::*},
+    constants,
+    data_harvester::processes,
+};
 
 #[derive(Debug)]
 pub enum ScrollDirection {
@@ -61,7 +65,6 @@ impl Default for AppHelpDialogState {
 pub struct AppSearchState {
     pub is_enabled: bool,
     pub current_search_query: String,
-    pub current_regex: Option<std::result::Result<regex::Regex, regex::Error>>,
     pub is_blank_search: bool,
     pub is_invalid_search: bool,
     pub grapheme_cursor: GraphemeCursor,
@@ -69,6 +72,9 @@ pub struct AppSearchState {
     pub cursor_bar: usize,
     /// This represents the position in terms of CHARACTERS, not graphemes
     pub char_cursor_position: usize,
+    /// The query
+    pub query: Option<Query>,
+    pub error_message: Option<String>,
 }
 
 impl Default for AppSearchState {
@@ -76,13 +82,14 @@ impl Default for AppSearchState {
         AppSearchState {
             is_enabled: false,
             current_search_query: String::default(),
-            current_regex: None,
             is_invalid_search: false,
             is_blank_search: true,
             grapheme_cursor: GraphemeCursor::new(0, 0, true),
             cursor_direction: CursorDirection::RIGHT,
             cursor_bar: 0,
             char_cursor_position: 0,
+            query: None,
+            error_message: None,
         }
     }
 }
@@ -104,7 +111,6 @@ impl AppSearchState {
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
     pub search_state: AppSearchState,
-    pub is_searching_with_pid: bool,
     pub is_ignoring_case: bool,
     pub is_searching_whole_word: bool,
     pub is_searching_with_regex: bool,
@@ -114,7 +120,6 @@ impl Default for ProcessSearchState {
     fn default() -> Self {
         ProcessSearchState {
             search_state: AppSearchState::default(),
-            is_searching_with_pid: false,
             is_ignoring_case: true,
             is_searching_whole_word: false,
             is_searching_with_regex: false,
@@ -188,48 +193,28 @@ impl ProcWidgetState {
         &self.process_search_state.search_state.current_search_query
     }
 
-    pub fn update_regex(&mut self) {
+    pub fn update_query(&mut self) {
         if self
             .process_search_state
             .search_state
             .current_search_query
             .is_empty()
         {
-            self.process_search_state.search_state.is_invalid_search = false;
             self.process_search_state.search_state.is_blank_search = true;
+            self.process_search_state.search_state.is_invalid_search = false;
+            self.process_search_state.search_state.error_message = None;
         } else {
-            let regex_string = &self.process_search_state.search_state.current_search_query;
-            let escaped_regex: String;
-            let final_regex_string = &format!(
-                "{}{}{}{}",
-                if self.process_search_state.is_searching_whole_word {
-                    "^"
-                } else {
-                    ""
-                },
-                if self.process_search_state.is_ignoring_case {
-                    "(?i)"
-                } else {
-                    ""
-                },
-                if !self.process_search_state.is_searching_with_regex {
-                    escaped_regex = regex::escape(regex_string);
-                    &escaped_regex
-                } else {
-                    regex_string
-                },
-                if self.process_search_state.is_searching_whole_word {
-                    "$"
-                } else {
-                    ""
-                },
-            );
-
-            let new_regex = regex::Regex::new(final_regex_string);
-            self.process_search_state.search_state.is_blank_search = false;
-            self.process_search_state.search_state.is_invalid_search = new_regex.is_err();
-
-            self.process_search_state.search_state.current_regex = Some(new_regex);
+            let parsed_query = self.parse_query();
+            if let Ok(parsed_query) = parsed_query {
+                self.process_search_state.search_state.query = Some(parsed_query);
+                self.process_search_state.search_state.is_blank_search = false;
+                self.process_search_state.search_state.is_invalid_search = false;
+                self.process_search_state.search_state.error_message = None;
+            } else if let Err(err) = parsed_query {
+                self.process_search_state.search_state.is_blank_search = false;
+                self.process_search_state.search_state.is_invalid_search = true;
+                self.process_search_state.search_state.error_message = Some(err.to_string());
+            }
         }
         self.scroll_state.previous_scroll_position = 0;
         self.scroll_state.current_scroll_position = 0;
