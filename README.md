@@ -264,10 +264,10 @@ Note none of the keywords are case sensitive. Furthermore, if you want to search
 
 #### Supported logical operators
 
-|                    |                                              |                                                         |
-| ------------------ | -------------------------------------------- | ------------------------------------------------------- |
-| `and, &&, <Space>` | `<CONDITION 1> and/&&/<Space> <CONDITION 2>` | Will require both conditions to be true to match        |
-| `or, ||`           | `<CONDITION 1> or/|| <CONDITION 2>`          | Will require at least one condition to be true to match |
+|                    |                                              |                                                     |
+| ------------------ | -------------------------------------------- | ----------------------------------------------------|
+| `and, &&, <Space>` | `<CONDITION 1> and/&&/<Space> <CONDITION 2>` | Requires both conditions to be true to match        |
+| `or, \|\|`           | `<CONDITION 1> or/\|\| <CONDITION 2>`          | Requires at least one condition to be true to match |
 
 #### Supported units
 
