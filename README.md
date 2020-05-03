@@ -238,11 +238,15 @@ Run using `btm`.
 
 ### Process searching keywords
 
-Note none of the keywords are case sensitive. Furthermore, if you want to search a reserved keyword, surround the text in quotes - for example, `"And" or "Or"` would be a valid search.
+- Note none of the keywords are case sensitive.
+- Use brackets to logically group together parts of the search.
+- Furthermore, if you want to search a reserved keyword, surround the text in quotes - for example, `"or" or "(sd-pam)"` would be a valid search:
+
+![quote searching](assets/quote_search.png)
 
 #### Supported keywords
 
-|          |                 |                                                                                 |
+| Keywords | Example         | Description                                                                     |
 | -------- | --------------- | ------------------------------------------------------------------------------- |
 | `pid`    | `pid: 1044`     | Matches by PID; supports regex and requiring matching the entire PID            |
 | `cpu`    | `cpu > 0.5`     | Matches the condition for the CPU column; supports comparison operators         |
@@ -254,36 +258,42 @@ Note none of the keywords are case sensitive. Furthermore, if you want to search
 
 #### Supported comparison operators
 
-|      |                                                                |
-| ---- | -------------------------------------------------------------- |
-| `=`  | Checks if the values are equal                                 |
-| `>`  | Checks if the left value is strictly greater than the right    |
-| `<`  | Checks if the left value is strictly less than the right       |
-| `>=` | Checks if the left value is greater than or equal to the right |
-| `<=` | Checks if the left value is less than or equal to the right    |
+| Keywords | Description                                                    |
+| -------- | -------------------------------------------------------------- |
+| `=`      | Checks if the values are equal                                 |
+| `>`      | Checks if the left value is strictly greater than the right    |
+| `<`      | Checks if the left value is strictly less than the right       |
+| `>=`     | Checks if the left value is greater than or equal to the right |
+| `<=`     | Checks if the left value is less than or equal to the right    |
 
 #### Supported logical operators
 
 Note that the `and` operator takes precedence over the `or` operator.
 
-|                    |                                              |                                                     |
+| Keywords           | Usage                                        | Description                                         |
 | ------------------ | -------------------------------------------- | --------------------------------------------------- |
 | `and, &&, <Space>` | `<CONDITION 1> and/&&/<Space> <CONDITION 2>` | Requires both conditions to be true to match        |
 | `or, \|\|`         | `<CONDITION 1> or/\|\| <CONDITION 2>`        | Requires at least one condition to be true to match |
 
 #### Supported units
 
-|       |           |
-| ----- | --------- |
-| `B`   | Bytes     |
-| `KB`  | Kilobytes |
-| `MB`  | Megabytes |
-| `GB`  | Gigabytes |
-| `TB`  | Terabytes |
-| `KiB` | Kibibytes |
-| `MiB` | Mebibytes |
-| `GiB` | Gibibytes |
-| `TiB` | Tebibytes |
+| Keywords | Description |
+| -------- | ----------- |
+| `B`      | Bytes       |
+| `KB`     | Kilobytes   |
+| `MB`     | Megabytes   |
+| `GB`     | Gigabytes   |
+| `TB`     | Terabytes   |
+| `KiB`    | Kibibytes   |
+| `MiB`    | Mebibytes   |
+| `GiB`    | Gibibytes   |
+| `TiB`    | Tebibytes   |
+
+#### Other syntax
+
+| Keywords | Usage                                                | Description                |
+| -------- | ---------------------------------------------------- | -------------------------- |
+| `()`     | `(<CONDITION 1> AND <CONDITION 2>) OR <CONDITION 3>` | Group together a condition |
 
 ## Features
 
