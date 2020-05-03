@@ -104,6 +104,16 @@ impl From<std::str::Utf8Error> for BottomError {
 
 impl From<regex::Error> for BottomError {
     fn from(err: regex::Error) -> Self {
-        BottomError::QueryError(err.to_string().into())
+        // We only really want the last part of it... so we'll do it the ugly way:
+        let err_str = err.to_string();
+        let error = err_str.split('\n').map(|s| s.trim()).collect::<Vec<_>>();
+
+        BottomError::QueryError(
+            format!(
+                "Regex error: {}",
+                error.last().unwrap_or(&"".to_string().as_str())
+            )
+            .into(),
+        )
     }
 }
