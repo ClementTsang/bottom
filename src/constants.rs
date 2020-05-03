@@ -35,8 +35,6 @@ lazy_static! {
         tui::style::Style::default().fg(tui::style::Color::Gray);
     pub static ref DEFAULT_HEADER_STYLE: tui::style::Style =
         tui::style::Style::default().fg(tui::style::Color::LightBlue);
-    pub static ref INVALID_REGEX_STYLE: tui::style::Style =
-        tui::style::Style::default().fg(tui::style::Color::Red);
 }
 
 // Help text

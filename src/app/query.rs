@@ -39,9 +39,25 @@ pub trait ProcessQuery {
 impl ProcessQuery for ProcWidgetState {
     fn parse_query(&self) -> Result<Query> {
         fn process_string_to_filter(query: &mut VecDeque<String>) -> Result<Query> {
-            Ok(Query {
-                query: process_and(query)?,
-            })
+            let mut lhs: And = process_and(query)?;
+
+            while query.front().is_some() {
+                let rhs = Some(Box::new(process_or(query)?));
+
+                lhs = And {
+                    lhs: Or {
+                        lhs: Prefix {
+                            and: Some(Box::from(lhs)),
+                            compare_prefix: None,
+                            regex_prefix: None,
+                        },
+                        rhs: None,
+                    },
+                    rhs,
+                };
+            }
+
+            Ok(Query { query: lhs })
         }
 
         fn process_and(query: &mut VecDeque<String>) -> Result<And> {
@@ -113,6 +129,10 @@ impl ProcessQuery for ProcWidgetState {
         fn process_prefix(query: &mut VecDeque<String>) -> Result<Prefix> {
             if let Some(queue_top) = query.pop_front() {
                 if queue_top == "(" {
+                    if query.front().is_none() {
+                        return Err(QueryError("Missing closing parentheses".into()));
+                    }
+
                     // Get content within bracket; and check if paren is complete
                     let and = process_and(query)?;
                     if let Some(close_paren) = query.pop_front() {
@@ -190,6 +210,8 @@ impl ProcessQuery for ProcWidgetState {
                                     condition = Some(QueryComparison::Equal);
                                     if let Some(queue_next) = query.pop_front() {
                                         value = queue_next.parse::<f64>().ok();
+                                    } else {
+                                        return Err(QueryError("Missing value".into()));
                                     }
                                 } else if content == ">" || content == "<" {
                                     // We also have to check if the next string is an "="...
@@ -202,6 +224,8 @@ impl ProcessQuery for ProcWidgetState {
                                             });
                                             if let Some(queue_next_next) = query.pop_front() {
                                                 value = queue_next_next.parse::<f64>().ok();
+                                            } else {
+                                                return Err(QueryError("Missing value".into()));
                                             }
                                         } else {
                                             condition = Some(if content == ">" {
@@ -211,6 +235,8 @@ impl ProcessQuery for ProcWidgetState {
                                             });
                                             value = queue_next.parse::<f64>().ok();
                                         }
+                                    } else {
+                                        return Err(QueryError("Missing value".into()));
                                     }
                                 }
 
@@ -286,11 +312,13 @@ impl ProcessQuery for ProcWidgetState {
                                 }
                             }
                         }
+                    } else {
+                        return Err(QueryError("Missing argument for search prefix".into()));
                     }
                 }
             }
 
-            Err(QueryError("Failed to parse comparator.".into()))
+            Err(QueryError("Invalid search".into()))
         }
 
         let mut split_query = VecDeque::new();

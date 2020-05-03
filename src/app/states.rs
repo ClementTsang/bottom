@@ -74,6 +74,7 @@ pub struct AppSearchState {
     pub char_cursor_position: usize,
     /// The query
     pub query: Option<Query>,
+    pub error_message: Option<String>,
 }
 
 impl Default for AppSearchState {
@@ -88,6 +89,7 @@ impl Default for AppSearchState {
             cursor_bar: 0,
             char_cursor_position: 0,
             query: None,
+            error_message: None,
         }
     }
 }
@@ -198,15 +200,21 @@ impl ProcWidgetState {
             .current_search_query
             .is_empty()
         {
-            self.process_search_state.search_state.is_invalid_search = false;
             self.process_search_state.search_state.is_blank_search = true;
-        } else if let Ok(parsed_query) = self.parse_query() {
-            self.process_search_state.search_state.query = Some(parsed_query);
-            self.process_search_state.search_state.is_blank_search = false;
             self.process_search_state.search_state.is_invalid_search = false;
+            self.process_search_state.search_state.error_message = None;
         } else {
-            self.process_search_state.search_state.is_blank_search = false;
-            self.process_search_state.search_state.is_invalid_search = true;
+            let parsed_query = self.parse_query();
+            if let Ok(parsed_query) = parsed_query {
+                self.process_search_state.search_state.query = Some(parsed_query);
+                self.process_search_state.search_state.is_blank_search = false;
+                self.process_search_state.search_state.is_invalid_search = false;
+                self.process_search_state.search_state.error_message = None;
+            } else if let Err(err) = parsed_query {
+                self.process_search_state.search_state.is_blank_search = false;
+                self.process_search_state.search_state.is_invalid_search = true;
+                self.process_search_state.search_state.error_message = Some(err.to_string());
+            }
         }
         self.scroll_state.previous_scroll_position = 0;
         self.scroll_state.current_scroll_position = 0;

@@ -44,7 +44,7 @@ impl ProcessTableWidget for Painter {
         widget_id: u64,
     ) {
         if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
-            let search_height = if draw_border { 3 } else { 2 };
+            let search_height = if draw_border { 4 } else { 3 };
             if process_widget_state.is_search_enabled() {
                 let processes_chunk = Layout::default()
                     .direction(Direction::Vertical)
@@ -335,9 +335,6 @@ impl ProcessTableWidget for Painter {
             let search_title = "> ";
 
             let num_chars_for_text = search_title.len();
-
-            let mut search_text = vec![Text::styled(search_title, self.colours.table_header_style)];
-
             let cursor_position = proc_widget_state.get_cursor_position();
             let current_cursor_position = proc_widget_state.get_char_cursor_position();
             let is_search_enabled = proc_widget_state.is_search_enabled();
@@ -356,6 +353,14 @@ impl ProcessTableWidget for Painter {
                 app_state.is_force_redraw,
             );
 
+            let mut search_text = vec![Text::styled(
+                search_title,
+                if is_on_widget {
+                    self.colours.table_header_style
+                } else {
+                    self.colours.text_style
+                },
+            )];
             let query = proc_widget_state.get_current_search_query().as_str();
             let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
             let query_with_cursor: Vec<Text<'_>> = build_query(
@@ -367,6 +372,8 @@ impl ProcessTableWidget for Painter {
                 self.colours.currently_selected_text_style,
                 self.colours.text_style,
             );
+
+            // TODO: [QUERY] Make text/border go red if error?
 
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.process_search_state.is_ignoring_case {
@@ -393,31 +400,43 @@ impl ProcessTableWidget for Painter {
                 self.colours.text_style
             };
 
-            let mut option_text = vec![];
-            let case_text = format!("Case({})", if self.is_mac_os { "F1" } else { "Alt+C" },);
-            let whole_text = format!("Whole({})", if self.is_mac_os { "F2" } else { "Alt+W" },);
-            let regex_text = format!("Regex({})", if self.is_mac_os { "F3" } else { "Alt+R" },);
-
-            let option_row = vec![
+            let option_text = vec![
                 Text::raw("\n"),
-                Text::styled(&case_text, case_style),
+                Text::styled(
+                    format!("Case({})", if self.is_mac_os { "F1" } else { "Alt+C" }),
+                    case_style,
+                ),
                 Text::raw("  "),
-                Text::styled(&whole_text, whole_word_style),
+                Text::styled(
+                    format!("Whole({})", if self.is_mac_os { "F2" } else { "Alt+W" }),
+                    whole_word_style,
+                ),
                 Text::raw("  "),
-                Text::styled(&regex_text, regex_style),
+                Text::styled(
+                    format!("Regex({})", if self.is_mac_os { "F3" } else { "Alt+R" }),
+                    regex_style,
+                ),
             ];
-            option_text.extend(option_row);
 
             search_text.extend(query_with_cursor);
+            search_text.push(Text::styled(
+                format!(
+                    "\n{}",
+                    if let Some(err) = &proc_widget_state
+                        .process_search_state
+                        .search_state
+                        .error_message
+                    {
+                        err.as_str()
+                    } else {
+                        ""
+                    }
+                ),
+                self.colours.invalid_query_style,
+            ));
             search_text.extend(option_text);
 
-            let current_border_style = if proc_widget_state
-                .process_search_state
-                .search_state
-                .is_invalid_search
-            {
-                *INVALID_REGEX_STYLE
-            } else if is_on_processes {
+            let current_border_style = if is_on_processes {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style

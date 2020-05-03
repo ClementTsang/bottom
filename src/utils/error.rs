@@ -49,9 +49,7 @@ impl std::fmt::Display for BottomError {
             BottomError::ConversionError(ref message) => {
                 write!(f, "unable to convert: {}", message)
             }
-            BottomError::QueryError(ref _message) => {
-                write!(f, "invalid query - this should not be shown!")
-            }
+            BottomError::QueryError(ref message) => write!(f, "{}", message),
         }
     }
 }
