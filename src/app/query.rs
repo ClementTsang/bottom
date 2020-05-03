@@ -8,7 +8,7 @@ use crate::{
 };
 use std::collections::VecDeque;
 
-const DELIMITER_LIST: [char; 5] = ['=', '>', '<', '(', ')'];
+const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
 const AND_LIST: [&str; 2] = ["and", "&&"];
 const OR_LIST: [&str; 2] = ["or", "||"];
 
@@ -94,13 +94,13 @@ impl ProcessQuery for ProcWidgetState {
         }
 
         fn process_or(query: &mut VecDeque<String>) -> Result<Or> {
-            let mut lhs = process_prefix(query)?;
+            let mut lhs = process_prefix(query, false)?;
             let mut rhs: Option<Box<Prefix>> = None;
 
             while let Some(queue_top) = query.front() {
                 if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
-                    rhs = Some(Box::new(process_prefix(query)?));
+                    rhs = Some(Box::new(process_prefix(query, false)?));
 
                     if let Some(queue_next) = query.front() {
                         if OR_LIST.contains(&queue_next.to_lowercase().as_str()) {
@@ -126,9 +126,10 @@ impl ProcessQuery for ProcWidgetState {
             Ok(Or { lhs, rhs })
         }
 
-        fn process_prefix(query: &mut VecDeque<String>) -> Result<Prefix> {
+        fn process_prefix(query: &mut VecDeque<String>, inside_quotations: bool) -> Result<Prefix> {
             if let Some(queue_top) = query.pop_front() {
-                if queue_top == "(" {
+                // debug!("QT: {}", queue_top);
+                if !inside_quotations && queue_top == "(" {
                     if query.front().is_none() {
                         return Err(QueryError("Missing closing parentheses".into()));
                     }
@@ -148,11 +149,37 @@ impl ProcessQuery for ProcWidgetState {
                     } else {
                         return Err(QueryError("Missing closing parentheses".into()));
                     }
-                } else if queue_top == ")" {
+                } else if !inside_quotations && queue_top == ")" {
                     // This is actually caught by the regex creation, but it seems a bit
                     // sloppy to leave that up to that to do so...
 
                     return Err(QueryError("Missing opening parentheses".into()));
+                } else if !inside_quotations && queue_top == "\"" {
+                    // Similar to parentheses, trap and check for missing closing quotes.  Note, however, that we
+                    // will DIRECTLY call another process_prefix call...
+
+                    let prefix = process_prefix(query, true)?;
+                    if let Some(close_paren) = query.pop_front() {
+                        if close_paren.to_lowercase() == "\"" {
+                            return Ok(prefix);
+                        } else {
+                            return Err(QueryError("Missing closing quotation".into()));
+                        }
+                    } else {
+                        return Err(QueryError("Missing closing quotation".into()));
+                    }
+                } else if inside_quotations && queue_top == "\"" {
+                    // This means we hit something like "".  Return an empty prefix, and to deal with
+                    // the close quote checker, add one to the top of the stack.  Ugly fix but whatever.
+                    query.push_front("\"".to_string());
+                    return Ok(Prefix {
+                        and: None,
+                        regex_prefix: Some((
+                            PrefixType::Name,
+                            StringQuery::Value(String::default()),
+                        )),
+                        compare_prefix: None,
+                    });
                 } else {
                     //  Get prefix type...
                     let prefix_type = queue_top.parse::<PrefixType>()?;
@@ -164,15 +191,35 @@ impl ProcessQuery for ProcWidgetState {
 
                     if let Some(content) = content {
                         match &prefix_type {
-                            PrefixType::Name => {
+                            PrefixType::Name if !inside_quotations => {
+                                return Ok(Prefix {
+                                    and: None,
+                                    regex_prefix: Some((prefix_type, StringQuery::Value(content))),
+                                    compare_prefix: None,
+                                })
+                            }
+                            PrefixType::Name if inside_quotations => {
+                                // If *this* is the case, then we must peek until we see a closing quote and add it all together...
+
+                                let mut final_content = content;
+                                while let Some(next_str) = query.front() {
+                                    if next_str == "\"" {
+                                        // Stop!
+                                        break;
+                                    } else {
+                                        final_content.push_str(next_str);
+                                        query.pop_front();
+                                    }
+                                }
+
                                 return Ok(Prefix {
                                     and: None,
                                     regex_prefix: Some((
                                         prefix_type,
-                                        StringQuery::Value(content.trim_matches('\"').to_owned()),
+                                        StringQuery::Value(final_content),
                                     )),
                                     compare_prefix: None,
-                                })
+                                });
                             }
                             PrefixType::Pid => {
                                 // We have to check if someone put an "="...
@@ -206,7 +253,6 @@ impl ProcessQuery for ProcWidgetState {
                                 let mut value: Option<f64> = None;
 
                                 if content == "=" {
-                                    // TODO: Do we want to allow just an empty space to work here too?  ie: cpu 5?
                                     condition = Some(QueryComparison::Equal);
                                     if let Some(queue_next) = query.pop_front() {
                                         value = queue_next.parse::<f64>().ok();
