@@ -7,7 +7,7 @@
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
-<!--TODO: Update recording for 0.4-->
+<!--FIXME: Update recording for 0.4-->
 
 ![Quick demo recording showing off searching, expanding, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
 
@@ -264,10 +264,12 @@ Note none of the keywords are case sensitive. Furthermore, if you want to search
 
 #### Supported logical operators
 
+Note that the `and` operator takes precedence over the `or` operator.
+
 |                    |                                              |                                                     |
-| ------------------ | -------------------------------------------- | ----------------------------------------------------|
+| ------------------ | -------------------------------------------- | --------------------------------------------------- |
 | `and, &&, <Space>` | `<CONDITION 1> and/&&/<Space> <CONDITION 2>` | Requires both conditions to be true to match        |
-| `or, \|\|`           | `<CONDITION 1> or/\|\| <CONDITION 2>`          | Requires at least one condition to be true to match |
+| `or, \|\|`         | `<CONDITION 1> or/\|\| <CONDITION 2>`        | Requires at least one condition to be true to match |
 
 #### Supported units
 
