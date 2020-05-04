@@ -472,7 +472,7 @@ Each component of the layout accepts a `ratio` value. If this is not set, it def
 
 For an example, look at the [default config](./sample_configs/default_config.toml), which contains the default layout.
 
-...and yes, you can have duplicate widgets. This means you could do something like:
+And if your heart desires, you can have duplicate widgets. This means you could do something like:
 
 ```toml
 [[row]]
