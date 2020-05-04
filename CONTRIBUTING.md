@@ -12,13 +12,13 @@ Here are some notes about how to contribute to bottom (structure is based on the
 
 ## Feature reports
 
-Feature suggestions can be submitted using the "feature" tag.  Prior to submission, please look to see if this has already been suggested or solved; if it has and is not resolved, it would be better to comment on the relevant report.
+Feature suggestions can be submitted using the "feature" tag. Prior to submission, please look to see if this has already been suggested or solved; if it has and is not resolved, it would be better to comment on the relevant report.
 
 Within your feature report, try to answer the given prompts - in particular, state the specific feature you want and if possible, please state why you want this added to the program.
 
 ## Bug reports
 
-Bug reports can be submitted using the "bug" tag.  Prior to submission, please look to see if this has already been reported or solved; if it has and is not resolved, it would be better to comment on the relevant report.
+Bug reports can be submitted using the "bug" tag. Prior to submission, please look to see if this has already been reported or solved; if it has and is not resolved, it would be better to comment on the relevant report.
 
 Within your bug report, try to answer the given prompts. Be as specific as possible - describe your bug to the best of your ability, how to replicate it, and provide information like screenshots, OS and terminal. It can be very useful to help whoever is dealing with the issue!
 
@@ -36,7 +36,7 @@ For reports/suggestions that don't fit the definition of a feature or bug, try t
 If you want to help contribute by submitting a PR, by all means, I'm open! In regards to the development process:
 
 - I develop primarily using _stable_ Rust. That is, whatever is the most up-to-date stable version you can get via running
-  `rustup update stable`.
+  `rustup update stable`. However, as of writing, I do support a MSRV of 1.40.0.
 
 - I use both [clippy](https://github.com/rust-lang/rust-clippy) and [rustfmt](https://github.com/rust-lang/rustfmt) in development (with some settings, see [clippy.toml](./clippy.toml) and [rustfmt.toml](rustfmt.toml)). Note clippy must pass to pass CI.
 

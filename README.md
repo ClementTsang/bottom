@@ -56,10 +56,10 @@ Note that binaries are built on the stable version of Rust, and I mainly test an
 
 ### Manual
 
-There are a few ways to go about doing this (note you may need the current version of stable Rust, as I develop using the most recent version of stable). For example:
+There are a few ways to go about doing this. Note that the MSRV is 1.40.0. For example:
 
 ```bash
-# Update Rust on the stable channel
+# If required, update Rust on the stable channel, or at least MSRV
 rustup update stable
 
 # Clone and install the newest master version all via Cargo
@@ -71,7 +71,7 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.3.0/bottom_source_code.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.0/bottom_source_code.tar.gz
 tar -xzvf bottom_source_code.tar.gz
 cargo install --path .
 ```
@@ -96,8 +96,8 @@ yay bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.3.0/bottom_0.3.0_amd64.deb
-sudo dpkg -i bottom_0.3.0_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.0/bottom_0.4.0_amd64.deb
+sudo dpkg -i bottom_0.4.0_amd64.deb
 ```
 
 ### Homebrew
@@ -124,7 +124,7 @@ Choco package located [here](https://chocolatey.org/packages/bottom).
 choco install bottom
 
 # Version number may be required for newer releases:
-choco install bottom --version=0.3.0
+choco install bottom --version=0.4.0
 ```
 
 ## Usage

@@ -363,8 +363,6 @@ impl ProcessTableWidget for Painter {
                 self.colours.text_style,
             );
 
-            // FIXME: [QUERY] Make text/border go red if error?
-
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.process_search_state.is_ignoring_case {
                 self.colours.currently_selected_text_style

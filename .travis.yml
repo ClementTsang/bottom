@@ -1,5 +1,7 @@
 language: rust
 rust:
+  # MSRV
+  - 1.40.0
   - stable
   - beta
 os:
@@ -7,9 +9,6 @@ os:
   - osx
   - windows
 jobs:
-  allow_failures:
-    - rust: nightly
-    - env: TARGET=x86_64-pc-windows-gnu # Seems to cause problems.
   fast_finish: true
 branches:
   only:
@@ -49,7 +48,6 @@ notifications:
     on_success: never
 
 before_deploy:
-  - rustup update
   - cargo install --path . --target $TARGET
   - cargo update
   - |

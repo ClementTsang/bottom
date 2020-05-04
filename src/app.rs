@@ -231,10 +231,10 @@ impl App {
     }
 
     pub fn is_in_search_widget(&self) -> bool {
-        matches!(
-            self.current_widget.widget_type,
-            BottomWidgetType::ProcSearch
-        )
+        match self.current_widget.widget_type {
+            BottomWidgetType::ProcSearch => true,
+            _ => false,
+        }
     }
 
     fn is_filtering_or_searching(&self) -> bool {

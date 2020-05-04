@@ -65,11 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Development changes
 
-- Switch to stateful widget style for tables.
-
 - [#38](https://github.com/ClementTsang/bottom/issues/38): Updated arg tests and added config testing.
 
-- More refactoring.
+- Add MSRV, starting with 1.40.0.
 
 ## [0.3.0] - 2020-04-07
 
