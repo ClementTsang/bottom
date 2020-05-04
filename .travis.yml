@@ -11,10 +11,10 @@ os:
 jobs:
   fast_finish: true
   exclude:
-    - rust: beta
-      branch: /^\d+\.\d+(\.\d+)?(-\S*)?$/
-    - rust: 1.40.0
-      branch: /^\d+\.\d+(\.\d+)?(-\S*)?$/
+    - if: tag IS present
+      rust: beta
+    - if: tag IS present
+      rust: 1.40.0
 branches:
   only:
     - master
@@ -41,15 +41,12 @@ script:
       cargo test --verbose --target $TARGET;
     fi
 
-# Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work
-cache:
-  directories:
-    - /home/travis/.cargo
-
-# But don't cache the cargo registry.
 before_cache:
   - rm -rf /home/travis/.cargo/git
   - rm -rf /home/travis/.cargo/registry
+cache:
+  directories:
+    - /home/travis/.cargo
 
 notifications:
   email:
