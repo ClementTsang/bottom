@@ -329,15 +329,17 @@ By default, just typing in something will search by process name:
 
 This simple search can be refined by matching by case, matching the entire word, or by using regex:
 
-![a slightly better search](assets/simple_advanced_search.png)
+![a slightly better search](assets/regex_search.png)
 
-Now let's say you want to search for two things: luckily, we have the `AND` and `OR` logical operators:
+Now let's say you want to search for two things - luckily, we have the `AND` and `OR` logical operators:
 
 ![logical operator demo](assets/or_search.png)
 
+![logical operator demo](assets/and_or_search.png)
+
 Furthermore, one is able to refine their searches by CPU usage, memory usage, PID, and more. For example:
 
-![using cpu filter](assets/search_cpu_filter.png)
+![using cpu filter](assets/usage_search.png)
 
 One can see all available keywords and query options [here](#process-searching-keywords).
 
