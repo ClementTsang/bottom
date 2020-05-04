@@ -508,29 +508,7 @@ and get the following CPU donut:
 
 You can get battery statistics (charge, time to fill/discharge, consumption in watts, and battery health) via the battery widget.
 
-Since this is only useful for devices like laptops, it is off by default. You can either enable the widget in the default layout via the `--battery` flag, or by specifying the widget in a [layout](#layout).
-
-So with this slightly silly layout:
-
-```toml
-[[row]]
-  ratio=1
-  [[row.child]]
-  type="batt"
-[[row]]
-    ratio=2
-    [[row.child]]
-      ratio=4
-      type="batt"
-    [[row.child]]
-      ratio=3
-      [[row.child.child]]
-        type="cpu"
-      [[row.child.child]]
-        type="batt"
-```
-
-You get this:
+Since this is only useful for devices like laptops, it is off by default. You can either enable the widget in the default layout via the `--battery` flag, or by specifying the widget in a [layout](#layout):
 
 ![Battery example](assets/battery.png)
 
