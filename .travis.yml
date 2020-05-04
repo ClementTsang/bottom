@@ -10,6 +10,11 @@ os:
   - windows
 jobs:
   fast_finish: true
+  exclude:
+    - rust: beta
+      branch: /^\d+\.\d+(\.\d+)?(-\S*)?$/
+    - rust: 1.40.0
+      branch: /^\d+\.\d+(\.\d+)?(-\S*)?$/
 branches:
   only:
     - master
