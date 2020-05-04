@@ -9,8 +9,9 @@ use crate::{
 use std::collections::VecDeque;
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
-const AND_LIST: [&str; 2] = ["and", "&&"];
+
 const OR_LIST: [&str; 2] = ["or", "||"];
+const AND_LIST: [&str; 2] = ["and", "&&"];
 
 /// I only separated this as otherwise, the states.rs file gets huge... and this should
 /// belong in another file anyways, IMO.
@@ -39,15 +40,15 @@ pub trait ProcessQuery {
 impl ProcessQuery for ProcWidgetState {
     fn parse_query(&self) -> Result<Query> {
         fn process_string_to_filter(query: &mut VecDeque<String>) -> Result<Query> {
-            let mut lhs: And = process_and(query)?;
+            let mut lhs: Or = process_or(query)?;
 
             while query.front().is_some() {
-                let rhs = Some(Box::new(process_or(query)?));
+                let rhs = Some(Box::new(process_and(query)?));
 
-                lhs = And {
-                    lhs: Or {
+                lhs = Or {
+                    lhs: And {
                         lhs: Prefix {
-                            and: Some(Box::from(lhs)),
+                            or: Some(Box::from(lhs)),
                             compare_prefix: None,
                             regex_prefix: None,
                         },
@@ -60,21 +61,21 @@ impl ProcessQuery for ProcWidgetState {
             Ok(Query { query: lhs })
         }
 
-        fn process_and(query: &mut VecDeque<String>) -> Result<And> {
-            let mut lhs = process_or(query)?;
-            let mut rhs: Option<Box<Or>> = None;
+        fn process_or(query: &mut VecDeque<String>) -> Result<Or> {
+            let mut lhs = process_and(query)?;
+            let mut rhs: Option<Box<And>> = None;
 
             while let Some(queue_top) = query.front() {
-                if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
+                if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
-                    rhs = Some(Box::new(process_or(query)?));
+                    rhs = Some(Box::new(process_and(query)?));
 
                     if let Some(queue_next) = query.front() {
-                        if AND_LIST.contains(&queue_next.to_lowercase().as_str()) {
+                        if OR_LIST.contains(&queue_next.to_lowercase().as_str()) {
                             // Must merge LHS and RHS
-                            lhs = Or {
+                            lhs = And {
                                 lhs: Prefix {
-                                    and: Some(Box::new(And { lhs, rhs })),
+                                    or: Some(Box::new(Or { lhs, rhs })),
                                     regex_prefix: None,
                                     compare_prefix: None,
                                 },
@@ -90,24 +91,24 @@ impl ProcessQuery for ProcWidgetState {
                 }
             }
 
-            Ok(And { lhs, rhs })
+            Ok(Or { lhs, rhs })
         }
 
-        fn process_or(query: &mut VecDeque<String>) -> Result<Or> {
+        fn process_and(query: &mut VecDeque<String>) -> Result<And> {
             let mut lhs = process_prefix(query, false)?;
             let mut rhs: Option<Box<Prefix>> = None;
 
             while let Some(queue_top) = query.front() {
-                if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
+                if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
                     rhs = Some(Box::new(process_prefix(query, false)?));
 
                     if let Some(queue_next) = query.front() {
-                        if OR_LIST.contains(&queue_next.to_lowercase().as_str()) {
+                        if AND_LIST.contains(&queue_next.to_lowercase().as_str()) {
                             // Must merge LHS and RHS
                             lhs = Prefix {
-                                and: Some(Box::new(And {
-                                    lhs: Or { lhs, rhs },
+                                or: Some(Box::new(Or {
+                                    lhs: And { lhs, rhs },
                                     rhs: None,
                                 })),
                                 regex_prefix: None,
@@ -123,7 +124,7 @@ impl ProcessQuery for ProcWidgetState {
                 }
             }
 
-            Ok(Or { lhs, rhs })
+            Ok(And { lhs, rhs })
         }
 
         fn process_prefix(query: &mut VecDeque<String>, inside_quotations: bool) -> Result<Prefix> {
@@ -134,11 +135,11 @@ impl ProcessQuery for ProcWidgetState {
                     }
 
                     // Get content within bracket; and check if paren is complete
-                    let and = process_and(query)?;
+                    let or = process_or(query)?;
                     if let Some(close_paren) = query.pop_front() {
                         if close_paren.to_lowercase() == ")" {
                             return Ok(Prefix {
-                                and: Some(Box::new(and)),
+                                or: Some(Box::new(or)),
                                 regex_prefix: None,
                                 compare_prefix: None,
                             });
@@ -172,7 +173,7 @@ impl ProcessQuery for ProcWidgetState {
                     // the close quote checker, add one to the top of the stack.  Ugly fix but whatever.
                     query.push_front("\"".to_string());
                     return Ok(Prefix {
-                        and: None,
+                        or: None,
                         regex_prefix: Some((
                             PrefixType::Name,
                             StringQuery::Value(String::default()),
@@ -192,7 +193,7 @@ impl ProcessQuery for ProcWidgetState {
                         match &prefix_type {
                             PrefixType::Name if !inside_quotations => {
                                 return Ok(Prefix {
-                                    and: None,
+                                    or: None,
                                     regex_prefix: Some((prefix_type, StringQuery::Value(content))),
                                     compare_prefix: None,
                                 })
@@ -212,7 +213,7 @@ impl ProcessQuery for ProcWidgetState {
                                 }
 
                                 return Ok(Prefix {
-                                    and: None,
+                                    or: None,
                                     regex_prefix: Some((
                                         prefix_type,
                                         StringQuery::Value(final_content),
@@ -226,7 +227,7 @@ impl ProcessQuery for ProcWidgetState {
                                     // Check next string if possible
                                     if let Some(queue_next) = query.pop_front() {
                                         return Ok(Prefix {
-                                            and: None,
+                                            or: None,
                                             regex_prefix: Some((
                                                 prefix_type,
                                                 StringQuery::Value(queue_next),
@@ -236,7 +237,7 @@ impl ProcessQuery for ProcWidgetState {
                                     }
                                 } else {
                                     return Ok(Prefix {
-                                        and: None,
+                                        or: None,
                                         regex_prefix: Some((
                                             prefix_type,
                                             StringQuery::Value(content),
@@ -346,7 +347,7 @@ impl ProcessQuery for ProcWidgetState {
                                         }
 
                                         return Ok(Prefix {
-                                            and: None,
+                                            or: None,
                                             regex_prefix: None,
                                             compare_prefix: Some((
                                                 prefix_type,
@@ -398,7 +399,8 @@ impl ProcessQuery for ProcWidgetState {
 
 #[derive(Debug)]
 pub struct Query {
-    pub query: And,
+    /// Remember, AND > OR, but and must come after or then.
+    pub query: Or,
 }
 
 impl Query {
@@ -419,45 +421,9 @@ impl Query {
 }
 
 #[derive(Debug)]
-pub struct And {
-    pub lhs: Or,
-    pub rhs: Option<Box<Or>>,
-}
-
-impl And {
-    pub fn process_regexes(
-        &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
-        is_searching_with_regex: bool,
-    ) -> Result<()> {
-        self.lhs.process_regexes(
-            is_searching_whole_word,
-            is_ignoring_case,
-            is_searching_with_regex,
-        )?;
-        if let Some(rhs) = &mut self.rhs {
-            rhs.process_regexes(
-                is_searching_whole_word,
-                is_ignoring_case,
-                is_searching_with_regex,
-            )?;
-        }
-
-        Ok(())
-    }
-
-    pub fn check(&self, process: &ConvertedProcessData) -> bool {
-        if let Some(rhs) = &self.rhs {
-            self.lhs.check(process) && rhs.check(process)
-        } else {
-            self.lhs.check(process)
-        }
-    }
-}
-
-#[derive(Debug)]
 pub struct Or {
-    pub lhs: Prefix,
-    pub rhs: Option<Box<Prefix>>,
+    pub lhs: And,
+    pub rhs: Option<Box<And>>,
 }
 
 impl Or {
@@ -484,6 +450,42 @@ impl Or {
     pub fn check(&self, process: &ConvertedProcessData) -> bool {
         if let Some(rhs) = &self.rhs {
             self.lhs.check(process) || rhs.check(process)
+        } else {
+            self.lhs.check(process)
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct And {
+    pub lhs: Prefix,
+    pub rhs: Option<Box<Prefix>>,
+}
+
+impl And {
+    pub fn process_regexes(
+        &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
+        is_searching_with_regex: bool,
+    ) -> Result<()> {
+        self.lhs.process_regexes(
+            is_searching_whole_word,
+            is_ignoring_case,
+            is_searching_with_regex,
+        )?;
+        if let Some(rhs) = &mut self.rhs {
+            rhs.process_regexes(
+                is_searching_whole_word,
+                is_ignoring_case,
+                is_searching_with_regex,
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn check(&self, process: &ConvertedProcessData) -> bool {
+        if let Some(rhs) = &self.rhs {
+            self.lhs.check(process) && rhs.check(process)
         } else {
             self.lhs.check(process)
         }
@@ -525,7 +527,7 @@ impl std::str::FromStr for PrefixType {
 
 #[derive(Debug)]
 pub struct Prefix {
-    pub and: Option<Box<And>>,
+    pub or: Option<Box<Or>>,
     pub regex_prefix: Option<(PrefixType, StringQuery)>,
     pub compare_prefix: Option<(PrefixType, NumericalQuery)>,
 }
@@ -535,8 +537,8 @@ impl Prefix {
         &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
         is_searching_with_regex: bool,
     ) -> Result<()> {
-        if let Some(and) = &mut self.and {
-            return and.process_regexes(
+        if let Some(or) = &mut self.or {
+            return or.process_regexes(
                 is_searching_whole_word,
                 is_ignoring_case,
                 is_searching_with_regex,
@@ -586,7 +588,7 @@ impl Prefix {
             }
         }
 
-        if let Some(and) = &self.and {
+        if let Some(and) = &self.or {
             and.check(process)
         } else if let Some((prefix_type, query_content)) = &self.regex_prefix {
             if let StringQuery::Regex(r) = query_content {
