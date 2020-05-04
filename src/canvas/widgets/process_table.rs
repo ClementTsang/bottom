@@ -44,7 +44,7 @@ impl ProcessTableWidget for Painter {
         widget_id: u64,
     ) {
         if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
-            let search_height = if draw_border { 4 } else { 3 };
+            let search_height = if draw_border { 5 } else { 3 };
             if process_widget_state.is_search_enabled() {
                 let processes_chunk = Layout::default()
                     .direction(Direction::Vertical)
@@ -85,9 +85,6 @@ impl ProcessTableWidget for Painter {
                 // do so by hiding some elements!
                 let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
                 let is_on_widget = widget_id == app_state.current_widget.widget_id;
-                let is_on_processes =
-                    is_on_widget || (widget_id + 1 == app_state.current_widget.widget_id);
-                let is_search_enabled = proc_widget_state.is_search_enabled();
 
                 let position = get_start_position(
                     num_rows,
@@ -215,7 +212,7 @@ impl ProcessTableWidget for Painter {
                     String::default()
                 };
 
-                let (border_and_title_style, highlight_style) = if is_on_processes {
+                let (border_and_title_style, highlight_style) = if is_on_widget {
                     (
                         self.colours.highlighted_border_style,
                         self.colours.currently_selected_text_style,
@@ -232,11 +229,7 @@ impl ProcessTableWidget for Painter {
                         } else {
                             self.colours.widget_title_style
                         })
-                        .borders(if is_search_enabled {
-                            *TOP_LEFT_RIGHT
-                        } else {
-                            Borders::ALL
-                        })
+                        .borders(Borders::ALL)
                         .border_style(border_and_title_style)
                 } else if is_on_widget {
                     Block::default()
@@ -329,15 +322,12 @@ impl ProcessTableWidget for Painter {
             app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
         {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let is_on_processes =
-                is_on_widget || (widget_id - 1 == app_state.current_widget.widget_id);
             let num_columns = draw_loc.width as usize;
             let search_title = "> ";
 
             let num_chars_for_text = search_title.len();
             let cursor_position = proc_widget_state.get_cursor_position();
             let current_cursor_position = proc_widget_state.get_char_cursor_position();
-            let is_search_enabled = proc_widget_state.is_search_enabled();
 
             let start_position: usize = get_search_start_position(
                 num_columns - num_chars_for_text - 5,
@@ -436,19 +426,35 @@ impl ProcessTableWidget for Painter {
             ));
             search_text.extend(option_text);
 
-            let current_border_style = if is_on_processes {
+            let current_border_style = if proc_widget_state
+                .process_search_state
+                .search_state
+                .is_invalid_search
+            {
+                self.colours.invalid_query_style
+            } else if is_on_widget {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style
             };
 
+            let title = if draw_border {
+                const TITLE_BASE: &str = " Esc to close ";
+
+                let repeat_num = max(
+                    0,
+                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
+                );
+                format!("{} Esc to close ", "─".repeat(repeat_num as usize))
+            } else {
+                String::new()
+            };
+
             let process_search_block = if draw_border {
                 Block::default()
-                    .borders(if is_search_enabled {
-                        *BOTTOM_LEFT_RIGHT
-                    } else {
-                        Borders::ALL
-                    })
+                    .title(&title)
+                    .title_style(current_border_style)
+                    .borders(Borders::ALL)
                     .border_style(current_border_style)
             } else if is_on_widget {
                 Block::default()

@@ -128,7 +128,6 @@ impl ProcessQuery for ProcWidgetState {
 
         fn process_prefix(query: &mut VecDeque<String>, inside_quotations: bool) -> Result<Prefix> {
             if let Some(queue_top) = query.pop_front() {
-                // debug!("QT: {}", queue_top);
                 if !inside_quotations && queue_top == "(" {
                     if query.front().is_none() {
                         return Err(QueryError("Missing closing parentheses".into()));
