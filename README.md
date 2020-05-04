@@ -7,9 +7,7 @@
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
-<!--FIXME: Update recording for 0.4-->
-
-![Quick demo recording showing off searching, expanding, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.2.0.
+![Quick demo recording showing off searching, expanding, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.4.0.
 
 **Note**: This documentation is relevant to version 0.4.0 and may refer to in-development or unreleased features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
@@ -329,15 +327,17 @@ By default, just typing in something will search by process name:
 
 This simple search can be refined by matching by case, matching the entire word, or by using regex:
 
-![a slightly better search](assets/simple_advanced_search.png)
+![a slightly better search](assets/regex_search.png)
 
-Now let's say you want to search for two things: luckily, we have the `AND` and `OR` logical operators:
+Now let's say you want to search for two things - luckily, we have the `AND` and `OR` logical operators:
 
 ![logical operator demo](assets/or_search.png)
 
+![logical operator demo](assets/and_or_search.png)
+
 Furthermore, one is able to refine their searches by CPU usage, memory usage, PID, and more. For example:
 
-![using cpu filter](assets/search_cpu_filter.png)
+![using cpu filter](assets/usage_search.png)
 
 One can see all available keywords and query options [here](#process-searching-keywords).
 
@@ -470,7 +470,7 @@ Each component of the layout accepts a `ratio` value. If this is not set, it def
 
 For an example, look at the [default config](./sample_configs/default_config.toml), which contains the default layout.
 
-...and yes, you can have duplicate widgets. This means you could do something like:
+And if your heart desires, you can have duplicate widgets. This means you could do something like:
 
 ```toml
 [[row]]
@@ -506,29 +506,7 @@ and get the following CPU donut:
 
 You can get battery statistics (charge, time to fill/discharge, consumption in watts, and battery health) via the battery widget.
 
-Since this is only useful for devices like laptops, it is off by default. You can either enable the widget in the default layout via the `--battery` flag, or by specifying the widget in a [layout](#layout).
-
-So with this slightly silly layout:
-
-```toml
-[[row]]
-  ratio=1
-  [[row.child]]
-  type="batt"
-[[row]]
-    ratio=2
-    [[row.child]]
-      ratio=4
-      type="batt"
-    [[row.child]]
-      ratio=3
-      [[row.child.child]]
-        type="cpu"
-      [[row.child.child]]
-        type="batt"
-```
-
-You get this:
+Since this is only useful for devices like laptops, it is off by default. You can either enable the widget in the default layout via the `--battery` flag, or by specifying the widget in a [layout](#layout):
 
 ![Battery example](assets/battery.png)
 

@@ -1,10 +1,7 @@
 [flags]
 avg_cpu = true
-dot_marker = false
 
 # Temperature is one of:
-#temperature_type = "k"
-#temperature_type = "f"
 temperature_type = "c"
 
 rate = 1000
