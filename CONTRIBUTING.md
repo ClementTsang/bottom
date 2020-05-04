@@ -38,6 +38,8 @@ If you want to help contribute by submitting a PR, by all means, I'm open! In re
 - I develop primarily using _stable_ Rust. That is, whatever is the most up-to-date stable version you can get via running
   `rustup update stable`. However, as of writing, I do support a MSRV of 1.40.0.
 
+  - Note that `cargo test` will fail on anything lower than 1.43.0 due to it using a then-introduced env variable.
+
 - I use both [clippy](https://github.com/rust-lang/rust-clippy) and [rustfmt](https://github.com/rust-lang/rustfmt) in development (with some settings, see [clippy.toml](./clippy.toml) and [rustfmt.toml](rustfmt.toml)). Note clippy must pass to pass CI.
 
   - You can check clippy using `cargo +nightly clippy`.
