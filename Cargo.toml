@@ -15,7 +15,6 @@ name = "btm"
 path = "src/main.rs"
 
 [profile.release]
-#debug = true
 debug = 1
 opt-level = 3
 lto = "fat"

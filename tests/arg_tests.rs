@@ -7,7 +7,16 @@ use std::process::Command;
 //======================RATES======================//
 
 fn get_binary_location() -> String {
-    env!("CARGO_BIN_EXE_btm").to_string()
+    // env!("CARGO_BIN_EXE_btm").to_string()
+    if cfg!(target_os = "linux") {
+        "./target/x86_64-unknown-linux-gnu/debug/btm".to_string()
+    } else if cfg!(target_os = "windows") {
+        "./target/x86_64-pc-windows-msvc/debug/btm".to_string()
+    } else if cfg!(target_os = "macos") {
+        "./target/x86_64-apple-darwin/debug/btm".to_string()
+    } else {
+        "".to_string()
+    }
 }
 
 #[test]
