@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).
 
-## [0.4.0] - Unreleased
+## [0.4.0] - 2020-05-04
 
 ### Features
 
