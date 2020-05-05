@@ -40,25 +40,37 @@ pub trait ProcessQuery {
 impl ProcessQuery for ProcWidgetState {
     fn parse_query(&self) -> Result<Query> {
         fn process_string_to_filter(query: &mut VecDeque<String>) -> Result<Query> {
-            let mut lhs: Or = process_or(query)?;
+            let lhs = process_or(query)?;
+            let mut and_query = And {
+                lhs: Prefix {
+                    or: Some(Box::from(lhs)),
+                    compare_prefix: None,
+                    regex_prefix: None,
+                },
+                rhs: None,
+            };
 
             while query.front().is_some() {
-                let rhs = Some(Box::new(process_and(query)?));
+                let rhs = process_or(query)?;
 
-                lhs = Or {
-                    lhs: And {
-                        lhs: Prefix {
-                            or: Some(Box::from(lhs)),
-                            compare_prefix: None,
-                            regex_prefix: None,
-                        },
-                        rhs: None,
+                and_query = And {
+                    lhs: Prefix {
+                        or: Some(Box::from(Or {
+                            lhs: and_query,
+                            rhs: None,
+                        })),
+                        compare_prefix: None,
+                        regex_prefix: None,
                     },
-                    rhs,
-                };
+                    rhs: Some(Box::from(Prefix {
+                        or: Some(Box::from(rhs)),
+                        compare_prefix: None,
+                        regex_prefix: None,
+                    })),
+                }
             }
 
-            Ok(Query { query: lhs })
+            Ok(Query { query: and_query })
         }
 
         fn process_or(query: &mut VecDeque<String>) -> Result<Or> {
@@ -129,6 +141,7 @@ impl ProcessQuery for ProcWidgetState {
 
         fn process_prefix(query: &mut VecDeque<String>, inside_quotations: bool) -> Result<Prefix> {
             if let Some(queue_top) = query.pop_front() {
+                // debug!("QT: {:?}", queue_top);
                 if !inside_quotations && queue_top == "(" {
                     if query.front().is_none() {
                         return Err(QueryError("Missing closing parentheses".into()));
@@ -302,40 +315,40 @@ impl ProcessQuery for ProcWidgetState {
                                             | PrefixType::TRead
                                             | PrefixType::TWrite => {
                                                 if let Some(potential_unit) = query.front() {
-                                                    match potential_unit.as_str() {
-                                                        "TB" => {
+                                                    match potential_unit.to_lowercase().as_str() {
+                                                        "tb" => {
                                                             value *= 1_000_000_000_000.0;
                                                             query.pop_front();
                                                         }
-                                                        "TiB" => {
+                                                        "tib" => {
                                                             value *= 1_099_511_627_776.0;
                                                             query.pop_front();
                                                         }
-                                                        "GB" => {
+                                                        "gb" => {
                                                             value *= 1_000_000_000.0;
                                                             query.pop_front();
                                                         }
-                                                        "GiB" => {
+                                                        "gib" => {
                                                             value *= 1_073_741_824.0;
                                                             query.pop_front();
                                                         }
-                                                        "MB" => {
+                                                        "mb" => {
                                                             value *= 1_000_000.0;
                                                             query.pop_front();
                                                         }
-                                                        "MiB" => {
+                                                        "mib" => {
                                                             value *= 1_048_576.0;
                                                             query.pop_front();
                                                         }
-                                                        "KB" => {
+                                                        "kb" => {
                                                             value *= 1000.0;
                                                             query.pop_front();
                                                         }
-                                                        "KiB" => {
+                                                        "kib" => {
                                                             value *= 1024.0;
                                                             query.pop_front();
                                                         }
-                                                        "B" => {
+                                                        "b" => {
                                                             // Just gotta pop.
                                                             query.pop_front();
                                                         }
@@ -400,7 +413,7 @@ impl ProcessQuery for ProcWidgetState {
 #[derive(Debug)]
 pub struct Query {
     /// Remember, AND > OR, but and must come after or then.
-    pub query: Or,
+    pub query: And,
 }
 
 impl Query {
