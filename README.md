@@ -59,7 +59,7 @@ Note that binaries are built on the stable version of Rust, and I mainly test an
 There are a few ways to go about doing this. Note that the MSRV is 1.40.0. For example:
 
 ```bash
-# If required, update Rust on the stable channel, or at least MSRV
+# If required, update Rust on the stable channel
 rustup update stable
 
 # Clone and install the newest master version all via Cargo
@@ -522,7 +522,7 @@ The current compatibility of widgets with operating systems from personal testin
 
 ## Contribution
 
-Contribution is always welcome - please take a look at [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to help.
+Contribution is always welcome! Please take a look at [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to help.
 
 ### Contributors
 
@@ -542,6 +542,7 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Thanks
