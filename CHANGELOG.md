@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).
 
+## [0.4.1] - 2020-05-05
+
+### Bug Fixes
+
+- [#146](https://github.com/ClementTsang/bottom/pull/146): Fixed a typo in the help menu (credit to [HarHarLinks](https://github.com/HarHarLinks)).
+
 ## [0.4.0] - 2020-05-04
 
 ### Features

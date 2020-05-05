@@ -9,7 +9,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 
 ![Quick demo recording showing off searching, expanding, and process killing.](assets/summary_and_search.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.4.0.
 
-**Note**: This documentation is relevant to version 0.4.0 and may refer to in-development or unreleased features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
+**Note**: This documentation is relevant to version 0.4.1 and may refer to in-development or unreleased features, especially if you are reading this on the master branch. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
 ## Table of Contents
 
@@ -71,7 +71,7 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.0/bottom_source_code.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.1/bottom_source_code.tar.gz
 tar -xzvf bottom_source_code.tar.gz
 cargo install --path .
 ```
@@ -96,8 +96,8 @@ yay bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.0/bottom_0.4.0_amd64.deb
-sudo dpkg -i bottom_0.4.0_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.1/bottom_0.4.1_amd64.deb
+sudo dpkg -i bottom_0.4.1_amd64.deb
 ```
 
 ### Homebrew
@@ -123,8 +123,8 @@ Choco package located [here](https://chocolatey.org/packages/bottom).
 ```bash
 choco install bottom
 
-# Version number may be required for newer releases:
-choco install bottom --version=0.4.0
+# Version number may be required for newer releases, if available:
+choco install bottom --version=0.4.1
 ```
 
 ## Usage
