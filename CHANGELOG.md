@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#59](https://github.com/ClementTsang/bottom/issues/59): `Alt-h` and `Alt-l` to move left/right in query (and rest of the app actually).
 
+- [#59](https://github.com/ClementTsang/bottom/issues/59): Added a more advanced querying system.
+
 ### Changes
 
 - Changed default colours for highlighted borders and table headers to light blue - this is mostly to deal with Powershell colour conflicts.
