@@ -80,8 +80,8 @@ pub const CPU_HELP_TEXT: [&str; 4] = [
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
     "3 - Process widget\n",
     "dd             Kill the selected process\n",
-    "c              Sort by processor usage, press again to reverse sorting order\n",
-    "m              Sort by memory usage\n",
+    "c              Sort by CPU usage, press again to reverse sorting order\n",
+    "m              Sort by memory usage, press again to reverse sorting order\n",
     "p              Sort by PID name, press again to reverse sorting order\n",
     "n              Sort by process name, press again to reverse sorting order\n",
     "Tab            Group/un-group processes with the same name\n",
