@@ -21,8 +21,10 @@ impl HelpDialog for Painter {
     fn draw_help_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
-        let repeat_num = usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2);
-        let help_title = format!(" Help ─{}─ Esc to close ", "─".repeat(repeat_num));
+        let help_title = format!(
+            " Help ─{}─ Esc to close ",
+            "─".repeat(usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2))
+        );
 
         if app_state.is_force_redraw {
             // We must also recalculate how many lines are wrapping to properly get scrolling to work on

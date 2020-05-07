@@ -81,11 +81,10 @@ impl ProcessTableWidget for Painter {
                 // hit the process we've currently scrolled to.
                 // We also need to move the list - we can
                 // do so by hiding some elements!
-                let num_rows = draw_loc.height.saturating_sub(self.table_height_offset) as u64;
                 let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
                 let position = get_start_position(
-                    num_rows,
+                    draw_loc.height.saturating_sub(self.table_height_offset) as u64,
                     &proc_widget_state.scroll_state.scroll_direction,
                     &mut proc_widget_state.scroll_state.previous_scroll_position,
                     proc_widget_state.scroll_state.current_scroll_position,
@@ -193,14 +192,13 @@ impl ProcessTableWidget for Painter {
                             .is_enabled
                     {
                         const TITLE_BASE: &str = " Processes ── Esc to go back ";
-                        let repeat_num = usize::from(draw_loc.width)
-                            .saturating_sub(TITLE_BASE.chars().count() + 2);
-                        let result_title = format!(
+                        format!(
                             " Processes ─{}─ Esc to go back ",
-                            "─".repeat(repeat_num )
-                        );
-
-                        result_title
+                            "─".repeat(
+                                usize::from(draw_loc.width)
+                                    .saturating_sub(TITLE_BASE.chars().count() + 2)
+                            )
+                        )
                     } else {
                         " Processes ".to_string()
                     }

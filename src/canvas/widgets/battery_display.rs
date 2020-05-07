@@ -29,10 +29,12 @@ impl BatteryDisplayWidget for Painter {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
-                let repeat_num =
-                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
-                let result_title = format!(" Battery ─{}─ Esc to go back ", "─".repeat(repeat_num));
-                result_title
+                format!(
+                    " Battery ─{}─ Esc to go back ",
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                    )
+                )
             } else {
                 " Battery ".to_string()
             };

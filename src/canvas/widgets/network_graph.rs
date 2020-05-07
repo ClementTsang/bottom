@@ -111,14 +111,12 @@ impl NetworkGraphWidget for Painter {
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Network ── Esc to go back ";
-                let repeat_num =
-                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
-                let result_title = format!(
+                format!(
                     " Network ─{}─ Esc to go back ",
-                    "─".repeat(repeat_num)
-                );
-
-                result_title
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                    )
+                )
             } else {
                 " Network ".to_string()
             };
