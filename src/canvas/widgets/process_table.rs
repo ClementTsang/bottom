@@ -197,7 +197,7 @@ impl ProcessTableWidget for Painter {
                             .saturating_sub(TITLE_BASE.chars().count() + 2);
                         let result_title = format!(
                             " Processes ─{}─ Esc to go back ",
-                            "─".repeat(repeat_num as usize)
+                            "─".repeat(repeat_num )
                         );
 
                         result_title
@@ -437,7 +437,7 @@ impl ProcessTableWidget for Painter {
 
                 let repeat_num =
                     usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
-                format!("{} Esc to close ", "─".repeat(repeat_num as usize))
+                format!("{} Esc to close ", "─".repeat(repeat_num))
             } else {
                 String::new()
             };

@@ -70,7 +70,7 @@ impl DiskTableWidget for Painter {
                     usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
                 let result_title = format!(
                     " Disk ─{}─ Esc to go back ",
-                    "─".repeat(repeat_num as usize)
+                    "─".repeat(repeat_num)
                 );
                 result_title
             } else if app_state.app_config_fields.use_basic_mode {

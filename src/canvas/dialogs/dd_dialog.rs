@@ -63,7 +63,7 @@ impl KillDialog for Painter {
                     usize::from(draw_loc.width).saturating_sub(DD_BASE.chars().count() + 2);
                 let dd_title = format!(
                     " Confirm Kill Process ─{}─ Esc to close ",
-                    "─".repeat(repeat_num as usize)
+                    "─".repeat(repeat_num)
                 );
 
                 f.render_widget(
@@ -100,7 +100,7 @@ impl KillDialog for Painter {
 
         let repeat_num =
             usize::from(draw_loc.width).saturating_sub(DD_ERROR_BASE.chars().count() + 2);
-        let error_title = format!(" Error ─{}─ Esc to close ", "─".repeat(repeat_num as usize));
+        let error_title = format!(" Error ─{}─ Esc to close ", "─".repeat(repeat_num));
 
         f.render_widget(
             Paragraph::new(dd_text.iter())

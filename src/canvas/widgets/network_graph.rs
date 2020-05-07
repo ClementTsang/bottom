@@ -115,7 +115,7 @@ impl NetworkGraphWidget for Painter {
                     usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
                 let result_title = format!(
                     " Network ─{}─ Esc to go back ",
-                    "─".repeat(repeat_num as usize)
+                    "─".repeat(repeat_num)
                 );
 
                 result_title

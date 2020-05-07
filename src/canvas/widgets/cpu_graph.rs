@@ -173,7 +173,7 @@ impl CpuGraphWidget for Painter {
                 let repeat_num =
                     usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
                 let result_title =
-                    format!(" CPU ─{}─ Esc to go back ", "─".repeat(repeat_num as usize));
+                    format!(" CPU ─{}─ Esc to go back ", "─".repeat(repeat_num));
 
                 result_title
             } else {
@@ -304,7 +304,7 @@ impl CpuGraphWidget for Painter {
                 const TITLE_BASE: &str = " Esc to close ";
                 let repeat_num =
                     usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
-                let result_title = format!("{} Esc to close ", "─".repeat(repeat_num as usize));
+                let result_title = format!("{} Esc to close ", "─".repeat(repeat_num));
 
                 result_title
             } else {
