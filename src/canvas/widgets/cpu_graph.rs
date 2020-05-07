@@ -170,14 +170,12 @@ impl CpuGraphWidget for Painter {
 
             let title = if app_state.is_expanded && !cpu_widget_state.is_showing_tray {
                 const TITLE_BASE: &str = " CPU ── Esc to go back ";
-                let repeat_num = max(
-                    0,
-                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-                );
-                let result_title =
-                    format!(" CPU ─{}─ Esc to go back ", "─".repeat(repeat_num as usize));
-
-                result_title
+                format!(
+                    " CPU ─{}─ Esc to go back ",
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                    )
+                )
             } else {
                 " CPU ".to_string()
             };
@@ -217,9 +215,8 @@ impl CpuGraphWidget for Painter {
             cpu_widget_state.is_legend_hidden = false;
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
-            let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
             let start_position = get_start_position(
-                num_rows,
+                draw_loc.height.saturating_sub(self.table_height_offset) as u64,
                 &cpu_widget_state.scroll_state.scroll_direction,
                 &mut cpu_widget_state.scroll_state.previous_scroll_position,
                 cpu_widget_state.scroll_state.current_scroll_position,
@@ -304,13 +301,12 @@ impl CpuGraphWidget for Painter {
 
             let title = if cpu_widget_state.is_showing_tray {
                 const TITLE_BASE: &str = " Esc to close ";
-                let repeat_num = max(
-                    0,
-                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-                );
-                let result_title = format!("{} Esc to close ", "─".repeat(repeat_num as usize));
-
-                result_title
+                format!(
+                    "{} Esc to close ",
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                    )
+                )
             } else {
                 "".to_string()
             };

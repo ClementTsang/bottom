@@ -1,5 +1,4 @@
 use itertools::izip;
-use std::cmp::max;
 use std::collections::HashMap;
 
 use tui::{
@@ -66,7 +65,7 @@ pub struct Painter {
     layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
     widget_layout: BottomLayout,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
-    table_height_offset: i64,
+    table_height_offset: u16,
 }
 
 impl Painter {
@@ -150,7 +149,7 @@ impl Painter {
             layout_constraints,
             widget_layout,
             derived_widget_draw_locs: Vec::new(),
-            table_height_offset: 4 + table_gap as i64,
+            table_height_offset: 4 + table_gap,
         }
     }
 
@@ -209,7 +208,7 @@ impl Painter {
         terminal.draw(|mut f| {
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
-                let border_len = (max(0, f.size().height as i64 - gen_help_len as i64)) as u16 / 2;
+                let border_len = f.size().height.saturating_sub(gen_help_len) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -245,7 +244,7 @@ impl Painter {
 
                 self.draw_help_dialog(&mut f, app_state, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
-                let bordering = (max(0, f.size().height as i64 - 7) as u16) / 2;
+                let bordering = f.size().height.saturating_sub(7) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(

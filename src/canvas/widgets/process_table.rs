@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use crate::{
     app::{self, App},
     canvas::{
@@ -83,11 +81,10 @@ impl ProcessTableWidget for Painter {
                 // hit the process we've currently scrolled to.
                 // We also need to move the list - we can
                 // do so by hiding some elements!
-                let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
                 let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
                 let position = get_start_position(
-                    num_rows,
+                    draw_loc.height.saturating_sub(self.table_height_offset) as u64,
                     &proc_widget_state.scroll_state.scroll_direction,
                     &mut proc_widget_state.scroll_state.previous_scroll_position,
                     proc_widget_state.scroll_state.current_scroll_position,
@@ -96,7 +93,7 @@ impl ProcessTableWidget for Painter {
 
                 // Sanity check
                 let start_position = if position >= process_data.len() as u64 {
-                    std::cmp::max(0, process_data.len() as i64 - 1) as u64
+                    process_data.len().saturating_sub(1) as u64
                 } else {
                     position
                 };
@@ -195,16 +192,13 @@ impl ProcessTableWidget for Painter {
                             .is_enabled
                     {
                         const TITLE_BASE: &str = " Processes ── Esc to go back ";
-                        let repeat_num = max(
-                            0,
-                            draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-                        );
-                        let result_title = format!(
+                        format!(
                             " Processes ─{}─ Esc to go back ",
-                            "─".repeat(repeat_num as usize)
-                        );
-
-                        result_title
+                            "─".repeat(
+                                usize::from(draw_loc.width)
+                                    .saturating_sub(TITLE_BASE.chars().count() + 2)
+                            )
+                        )
                     } else {
                         " Processes ".to_string()
                     }
@@ -439,11 +433,9 @@ impl ProcessTableWidget for Painter {
             let title = if draw_border {
                 const TITLE_BASE: &str = " Esc to close ";
 
-                let repeat_num = max(
-                    0,
-                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-                );
-                format!("{} Esc to close ", "─".repeat(repeat_num as usize))
+                let repeat_num =
+                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
+                format!("{} Esc to close ", "─".repeat(repeat_num))
             } else {
                 String::new()
             };
