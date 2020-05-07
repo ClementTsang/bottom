@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use crate::{
     app::{
         layout_manager::{BottomWidget, BottomWidgetType},
@@ -56,10 +54,9 @@ impl BasicTableArrows for Painter {
         let left_name = left_table.get_pretty_name();
         let right_name = right_table.get_pretty_name();
 
-        let num_spaces = max(
-            0,
-            draw_loc.width as i64 - 2 - 4 - (left_name.len() + right_name.len()) as i64,
-        ) as usize;
+        let num_spaces = usize::from(draw_loc.width)
+            .saturating_sub(6 + left_name.len() + right_name.len())
+            as usize;
 
         let arrow_text = vec![
             Text::Styled(format!("\n◄ {}", left_name).into(), self.colours.text_style),

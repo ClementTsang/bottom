@@ -40,7 +40,7 @@ impl TempTableWidget for Painter {
         if let Some(temp_widget_state) = app_state.temp_state.widget_states.get_mut(&widget_id) {
             let temp_sensor_data: &mut [Vec<String>] = &mut app_state.canvas_data.temp_sensor_data;
 
-            let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
+            let num_rows = draw_loc.height.saturating_sub(self.table_height_offset) as u64;
             let start_position = get_start_position(
                 num_rows,
                 &temp_widget_state.scroll_state.scroll_direction,
@@ -66,10 +66,8 @@ impl TempTableWidget for Painter {
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Temperatures ── Esc to go back ";
-                let repeat_num = max(
-                    0,
-                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-                );
+                let repeat_num =
+                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
                 let result_title = format!(
                     " Temperatures ─{}─ Esc to go back ",
                     "─".repeat(repeat_num as usize)

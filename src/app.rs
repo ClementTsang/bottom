@@ -1,4 +1,4 @@
-use std::{cmp::max, collections::HashMap, time::Instant};
+use std::{collections::HashMap, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
@@ -166,7 +166,7 @@ impl App {
                             >= cpu_widget_state.num_cpus_shown as u64
                         {
                             let new_position =
-                                max(0, cpu_widget_state.num_cpus_shown as i64 - 1) as u64;
+                                cpu_widget_state.num_cpus_shown.saturating_sub(1) as u64;
                             cpu_widget_state.scroll_state.current_scroll_position = new_position;
                             cpu_widget_state.scroll_state.previous_scroll_position = 0;
                         }
@@ -184,7 +184,7 @@ impl App {
                             >= cpu_widget_state.num_cpus_shown as u64
                         {
                             let new_position =
-                                max(0, cpu_widget_state.num_cpus_shown as i64 - 1) as u64;
+                                cpu_widget_state.num_cpus_shown.saturating_sub(1) as u64;
                             cpu_widget_state.scroll_state.current_scroll_position = new_position;
                             cpu_widget_state.scroll_state.previous_scroll_position = 0;
                         }

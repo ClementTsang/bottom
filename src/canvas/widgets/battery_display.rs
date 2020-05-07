@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use crate::{
     app::App,
     canvas::{drawing_utils::calculate_basic_use_bars, Painter},
@@ -31,10 +29,8 @@ impl BatteryDisplayWidget for Painter {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
-                let repeat_num = max(
-                    0,
-                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-                );
+                let repeat_num =
+                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
                 let result_title = format!(
                     " Battery ─{}─ Esc to go back ",
                     "─".repeat(repeat_num as usize)
@@ -74,7 +70,7 @@ impl BatteryDisplayWidget for Painter {
                 .get(battery_widget_state.currently_selected_battery_index)
             {
                 // Assuming a 50/50 split in width
-                let bar_length = max(0, (draw_loc.width as i64 - 2) / 2 - 8) as usize;
+                let bar_length = (draw_loc.width.saturating_sub(2) / 2).saturating_sub(8) as usize;
                 let charge_percentage = battery_details.charge_percentage;
                 let num_bars = calculate_basic_use_bars(charge_percentage, bar_length);
                 let bars = format!(

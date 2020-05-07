@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
@@ -61,10 +59,8 @@ impl KillDialog for Painter {
                     },
                 ];
 
-                let repeat_num = max(
-                    0,
-                    draw_loc.width as i32 - DD_BASE.chars().count() as i32 - 2,
-                );
+                let repeat_num =
+                    usize::from(draw_loc.width).saturating_sub(DD_BASE.chars().count() + 2);
                 let dd_title = format!(
                     " Confirm Kill Process ─{}─ Esc to close ",
                     "─".repeat(repeat_num as usize)
@@ -102,10 +98,8 @@ impl KillDialog for Painter {
             dd_err
         ))];
 
-        let repeat_num = max(
-            0,
-            draw_loc.width as i32 - DD_ERROR_BASE.chars().count() as i32 - 2,
-        );
+        let repeat_num =
+            usize::from(draw_loc.width).saturating_sub(DD_ERROR_BASE.chars().count() + 2);
         let error_title = format!(" Error ─{}─ Esc to close ", "─".repeat(repeat_num as usize));
 
         f.render_widget(

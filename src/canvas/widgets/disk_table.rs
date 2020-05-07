@@ -39,7 +39,7 @@ impl DiskTableWidget for Painter {
     ) {
         if let Some(disk_widget_state) = app_state.disk_state.widget_states.get_mut(&widget_id) {
             let disk_data: &mut [Vec<String>] = &mut app_state.canvas_data.disk_data;
-            let num_rows = max(0, i64::from(draw_loc.height) - self.table_height_offset) as u64;
+            let num_rows = draw_loc.height.saturating_sub(self.table_height_offset) as u64;
             let start_position = get_start_position(
                 num_rows,
                 &disk_widget_state.scroll_state.scroll_direction,
@@ -66,10 +66,8 @@ impl DiskTableWidget for Painter {
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Disk ── Esc to go back ";
-                let repeat_num = max(
-                    0,
-                    draw_loc.width as i32 - TITLE_BASE.chars().count() as i32 - 2,
-                );
+                let repeat_num =
+                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
                 let result_title = format!(
                     " Disk ─{}─ Esc to go back ",
                     "─".repeat(repeat_num as usize)

@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+use std::cmp::min;
 
 use crate::{
     app::App,
@@ -58,12 +58,10 @@ impl CpuBasicWidget for Painter {
                 .split(draw_loc);
 
             // +9 due to 3 + 4 + 2 columns for the name & space + percentage + bar bounds
-            let margin_space = 2;
-            let remaining_width = max(
-                0,
-                draw_loc.width as i64
-                    - ((9 + margin_space) * REQUIRED_COLUMNS - margin_space) as i64,
-            ) as usize;
+            const MARGIN_SPACE: usize = 2;
+            let remaining_width = usize::from(draw_loc.width)
+                .saturating_sub((9 + MARGIN_SPACE) * REQUIRED_COLUMNS - MARGIN_SPACE)
+                as usize;
 
             let bar_length = remaining_width / REQUIRED_COLUMNS;
 

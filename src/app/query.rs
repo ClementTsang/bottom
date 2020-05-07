@@ -412,7 +412,7 @@ impl ProcessQuery for ProcWidgetState {
 
 #[derive(Debug)]
 pub struct Query {
-    /// Remember, AND > OR, but and must come after or then.
+    /// Remember, AND > OR, but AND must come after OR when we parse.
     pub query: And,
 }
 

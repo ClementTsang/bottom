@@ -1,4 +1,3 @@
-use std::cmp::max;
 use unicode_width::UnicodeWidthStr;
 
 use tui::{
@@ -22,10 +21,7 @@ impl HelpDialog for Painter {
     fn draw_help_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
-        let repeat_num = max(
-            0,
-            draw_loc.width as i32 - HELP_BASE.chars().count() as i32 - 2,
-        );
+        let repeat_num = usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2);
         let help_title = format!(" Help ─{}─ Esc to close ", "─".repeat(repeat_num as usize));
 
         if app_state.is_force_redraw {
