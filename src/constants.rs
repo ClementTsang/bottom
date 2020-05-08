@@ -120,7 +120,7 @@ pub const SEARCH_HELP_TEXT: [&str; 43] = [
     "<=             ex: cpu <= 1\n",
     "\n",
     "Logical operators:\n",
-    "and/&&         ex: btm and cpu > 1 and mem > 1\n",
+    "and/&&/<Space> ex: btm and cpu > 1 and mem > 1\n",
     "or/||          ex: btm or firefox\n",
     "\n",
     "Supported units:\n",

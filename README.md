@@ -268,10 +268,10 @@ Run using `btm`.
 
 Note that the `and` operator takes precedence over the `or` operator.
 
-| Keywords   | Usage                                 | Description                                         |
-| ---------- | ------------------------------------- | --------------------------------------------------- |
-| `and, &&`  | `<CONDITION 1> and/&&<CONDITION 2>`   | Requires both conditions to be true to match        |
-| `or, \|\|` | `<CONDITION 1> or/\|\| <CONDITION 2>` | Requires at least one condition to be true to match |
+| Keywords           | Usage                                        | Description                                         |
+| ------------------ | -------------------------------------------- | --------------------------------------------------- |
+| `and, &&, <Space>` | `<CONDITION 1> and/&&/<Space> <CONDITION 2>` | Requires both conditions to be true to match        |
+| `or, \|\|`         | `<CONDITION 1> or/\|\| <CONDITION 2>`        | Requires at least one condition to be true to match |
 
 #### Supported units
 

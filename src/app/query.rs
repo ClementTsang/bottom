@@ -9,7 +9,6 @@ use crate::{
 use std::collections::VecDeque;
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
-
 const OR_LIST: [&str; 2] = ["or", "||"];
 const AND_LIST: [&str; 2] = ["and", "&&"];
 
@@ -111,26 +110,24 @@ impl ProcessQuery for ProcWidgetState {
             let mut rhs: Option<Box<Prefix>> = None;
 
             while let Some(queue_top) = query.front() {
-                if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
+                if queue_top == ")" {
+                    break;
+                } else if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
-                    rhs = Some(Box::new(process_prefix(query, false)?));
+                }
+                rhs = Some(Box::new(process_prefix(query, false)?));
 
-                    if let Some(queue_next) = query.front() {
-                        if AND_LIST.contains(&queue_next.to_lowercase().as_str()) {
-                            // Must merge LHS and RHS
-                            lhs = Prefix {
-                                or: Some(Box::new(Or {
-                                    lhs: And { lhs, rhs },
-                                    rhs: None,
-                                })),
-                                regex_prefix: None,
-                                compare_prefix: None,
-                            };
-                            rhs = None;
-                        }
-                    } else {
-                        break;
-                    }
+                if query.front().is_some() {
+                    // Must merge LHS and RHS
+                    lhs = Prefix {
+                        or: Some(Box::new(Or {
+                            lhs: And { lhs, rhs },
+                            rhs: None,
+                        })),
+                        regex_prefix: None,
+                        compare_prefix: None,
+                    };
+                    rhs = None;
                 } else {
                     break;
                 }
