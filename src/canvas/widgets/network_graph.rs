@@ -94,6 +94,8 @@ impl NetworkGraphWidget for Painter {
                     Axis::default()
                         .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                 }
+            } else if draw_loc.height < 7 {
+                Axis::default().bounds([-(network_widget_state.current_display_time as f64), 0.0])
             } else {
                 Axis::default()
                     .bounds([-(network_widget_state.current_display_time as f64), 0.0])

@@ -9,7 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
-- [#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).
+- ~~[#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).~~
+
+- Moving down the CPU list will show only the corresponding graph.
+
+### Changes
+
+- Automatically hide time axis labels if the window gets too small.
+
+### Bug Fixes
+
+- The `<Space>` character can be used as an "AND" again (properly) in queries. For example:
+
+```bash
+(btm cpu > 0) (discord mem > 0)
+```
+
+is equivalent to:
+
+```bash
+(btm AND cpu > 0) AND (discord AND mem > 0)
+```
 
 ## [0.4.1] - 2020-05-05
 
