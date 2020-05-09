@@ -51,9 +51,13 @@ impl DiskTableWidget for Painter {
             disk_table_state.select(Some(
                 (disk_widget_state.scroll_state.current_scroll_position - start_position) as usize,
             ));
-
             let sliced_vec = &mut disk_data[start_position as usize..];
             let disk_rows = sliced_vec.iter().map(|disk| Row::Data(disk.iter()));
+            let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+                0
+            } else {
+                app_state.app_config_fields.table_gap
+            };
 
             // Calculate widths
             // TODO: [PRETTY] Ellipsis on strings?
@@ -123,7 +127,7 @@ impl DiskTableWidget for Painter {
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),
                     )
-                    .header_gap(app_state.app_config_fields.table_gap),
+                    .header_gap(table_gap),
                 margined_draw_loc[0],
                 disk_table_state,
             );

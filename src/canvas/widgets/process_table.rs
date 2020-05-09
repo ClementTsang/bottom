@@ -104,6 +104,11 @@ impl ProcessTableWidget for Painter {
                     (proc_widget_state.scroll_state.current_scroll_position - start_position)
                         as usize,
                 ));
+                let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+                    0
+                } else {
+                    app_state.app_config_fields.table_gap
+                };
 
                 // Draw!
                 let is_proc_widget_grouped = proc_widget_state.is_grouped;
@@ -253,7 +258,7 @@ impl ProcessTableWidget for Painter {
                                 })
                                 .collect::<Vec<_>>()),
                         )
-                        .header_gap(app_state.app_config_fields.table_gap),
+                        .header_gap(table_gap),
                     margined_draw_loc[0],
                     proc_table_state,
                 );

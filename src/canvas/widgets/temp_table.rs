@@ -52,9 +52,13 @@ impl TempTableWidget for Painter {
             temp_table_state.select(Some(
                 (temp_widget_state.scroll_state.current_scroll_position - start_position) as usize,
             ));
-
             let sliced_vec = &temp_sensor_data[start_position as usize..];
             let temperature_rows = sliced_vec.iter().map(|temp_row| Row::Data(temp_row.iter()));
+            let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+                0
+            } else {
+                app_state.app_config_fields.table_gap
+            };
 
             // Calculate widths
             let width = f64::from(draw_loc.width);
@@ -123,7 +127,7 @@ impl TempTableWidget for Painter {
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),
                     )
-                    .header_gap(app_state.app_config_fields.table_gap),
+                    .header_gap(table_gap),
                 margined_draw_loc[0],
                 temp_table_state,
             );
