@@ -555,3 +555,5 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 - This application was written with many, _many_ libraries, and built on the
   work of many talented people. This application would be impossible
   without their work.
+
+- And of course, thanks to all contributors!
