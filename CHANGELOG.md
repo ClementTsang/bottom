@@ -9,13 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
-- ~~[#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).~~
+- TODO: ~~[#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).~~
 
-- Moving down the CPU list will show only the corresponding graph.
+- TODO: ~~Moving down the CPU list will show only the corresponding graph.~~
 
 ### Changes
 
-- Automatically hide time axis labels if the window gets too small.
+- Automatically hide time axis labels if the widget gets too small.
+
+- Automatically hide table gap if the widget gets too small.
 
 ### Bug Fixes
 

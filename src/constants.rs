@@ -23,6 +23,10 @@ pub const NUM_COLOURS: i32 = 256;
 // The minimum threshold when resizing tables
 pub const FORCE_MIN_THRESHOLD: usize = 5;
 
+// Limits for when we should stop showing table gaps/labels (anything less means not shown)
+pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
+pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
+
 // Side borders
 lazy_static! {
     pub static ref SIDE_BORDERS: tui::widgets::Borders =
