@@ -123,6 +123,8 @@ impl CpuGraphWidget for Painter {
                     cpu_widget_state.autohide_timer = None;
                     Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                 }
+            } else if draw_loc.height < 7 {
+                Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
             } else {
                 Axis::default()
                     .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
