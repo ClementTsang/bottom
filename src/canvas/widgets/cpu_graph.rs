@@ -148,7 +148,7 @@ impl CpuGraphWidget for Painter {
                 .enumerate()
                 .rev()
                 .filter_map(|(itx, (cpu, cpu_show_vec))| {
-                    if *cpu_show_vec && !cpu.cpu_data.is_empty() {
+                    if *cpu_show_vec  {
                         Some(
                             Dataset::default()
                                 .marker(if use_dot {
