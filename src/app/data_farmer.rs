@@ -231,21 +231,24 @@ impl DataCollection {
         for (itx, device) in disks.iter().enumerate() {
             if let Some(trim) = device.name.split('/').last() {
                 let io_device = io.get(trim);
-                if let Some(io) = io_device {
-                    let io_r_pt = io.read_bytes;
-                    let io_w_pt = io.write_bytes;
+                let (io_r_pt, io_w_pt) = if let Some(io) = io_device {
+                    (io.read_bytes, io.write_bytes)
+                } else {
+                    (0, 0)
+                };
 
-                    if self.io_labels_and_prev.len() <= itx {
-                        self.io_labels_and_prev.push(((0, 0), (io_r_pt, io_w_pt)));
-                    } else if let Some((io_curr, io_prev)) = self.io_labels_and_prev.get_mut(itx) {
-                        let r_rate =
-                            ((io_r_pt - io_prev.0) as f64 / time_since_last_harvest).round() as u64;
-                        let w_rate =
-                            ((io_w_pt - io_prev.1) as f64 / time_since_last_harvest).round() as u64;
+                if self.io_labels_and_prev.len() <= itx {
+                    self.io_labels_and_prev.push(((0, 0), (io_r_pt, io_w_pt)));
+                } else if let Some((io_curr, io_prev)) = self.io_labels_and_prev.get_mut(itx) {
+                    let r_rate = ((io_r_pt.saturating_sub(io_prev.0)) as f64
+                        / time_since_last_harvest)
+                        .round() as u64;
+                    let w_rate = ((io_w_pt.saturating_sub(io_prev.1)) as f64
+                        / time_since_last_harvest)
+                        .round() as u64;
 
-                        *io_curr = (r_rate, w_rate);
-                        *io_prev = (io_r_pt, io_w_pt);
-                    }
+                    *io_curr = (r_rate, w_rate);
+                    *io_prev = (io_r_pt, io_w_pt);
                 }
             }
         }
