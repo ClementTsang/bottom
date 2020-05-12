@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TODO: ~~Moving down the CPU list will show only the corresponding graph.~~
 
-## [0.4.2] - Unreleased
+## [0.4.2] - 2020-05-11
 
 ### Changes
 
@@ -36,6 +36,8 @@ is equivalent to:
 ```
 
 - [#151](https://github.com/ClementTsang/bottom/issues/151) - Fixed an issue where if the drive I/O label didn't match any disk, the entire disk widget would display nothing.
+
+- Display SWAP and MEM legends even if the total amount is 0 to avoid a weird blank spot in the legend.
 
 ## [0.4.1] - 2020-05-05
 
