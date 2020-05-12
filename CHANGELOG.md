@@ -35,6 +35,8 @@ is equivalent to:
 (btm AND cpu > 0) AND (discord AND mem > 0)
 ```
 
+- [#151](https://github.com/ClementTsang/bottom/issues/151) - Fixed an issue where if the drive I/O label didn't match any disk, the entire disk widget would display nothing.
+
 ## [0.4.1] - 2020-05-05
 
 ### Bug Fixes

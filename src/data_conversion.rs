@@ -225,37 +225,37 @@ pub fn convert_swap_data_points(
 }
 
 pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String, String) {
-    let mem_label = if current_data.memory_harvest.mem_total_in_mb == 0 {
-        "".to_string()
-    } else {
-        "RAM:".to_string()
-            + &format!(
-                "{:3.0}%",
-                (current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
-                    / current_data.memory_harvest.mem_total_in_mb as f64)
-            )
-            + &format!(
-                "   {:.1}GB/{:.1}GB",
-                current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
-                (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0)
-            )
-    };
+    let mem_label = "RAM:".to_string()
+        + &format!(
+            "{:3.0}%",
+            if current_data.memory_harvest.mem_total_in_mb == 0 {
+                0.0
+            } else {
+                current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
+                    / current_data.memory_harvest.mem_total_in_mb as f64
+            }
+        )
+        + &format!(
+            "   {:.1}GB/{:.1}GB",
+            current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
+            (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0)
+        );
 
-    let swap_label = if current_data.swap_harvest.mem_total_in_mb == 0 {
-        "".to_string()
-    } else {
-        "SWP:".to_string()
-            + &format!(
-                "{:3.0}%",
-                (current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
-                    / current_data.swap_harvest.mem_total_in_mb as f64)
-            )
-            + &format!(
-                "   {:.1}GB/{:.1}GB",
-                current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
-                (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0)
-            )
-    };
+    let swap_label = "SWP:".to_string()
+        + &format!(
+            "{:3.0}%",
+            if current_data.swap_harvest.mem_total_in_mb == 0 {
+                0.0
+            } else {
+                current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
+                    / current_data.swap_harvest.mem_total_in_mb as f64
+            }
+        )
+        + &format!(
+            "   {:.1}GB/{:.1}GB",
+            current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
+            (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0)
+        );
 
     (mem_label, swap_label)
 }
