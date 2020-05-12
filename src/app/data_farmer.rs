@@ -237,8 +237,8 @@ impl DataCollection {
                     lazy_static! {
                         static ref DISK_REGEX: Regex = Regex::new(r"disk\d+").unwrap();
                     }
-                    if let Some(disk_trim) = DISK_REGEX.split(trim).next() {
-                        io.get(disk_trim)
+                    if let Some(disk_trim) = DISK_REGEX.find(trim) {
+                        io.get(disk_trim.as_str())
                     } else {
                         None
                     }
