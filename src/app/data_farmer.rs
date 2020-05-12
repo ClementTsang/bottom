@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 /// In charge of cleaning, processing, and managing data.  I couldn't think of
 /// a better name for the file.  Since I called data collection "harvesting",
 /// then this is the farmer I guess.
@@ -12,12 +13,12 @@
 /// call the purging function.  Failure to do so *will* result in a growing
 /// memory usage and higher CPU usage - you will be trying to process more and
 /// more points as this is used!
-use std::time::Instant;
-use std::vec::Vec;
+use std::{time::Instant, vec::Vec};
 
 use crate::data_harvester::{
     battery_harvester, cpu, disks, mem, network, processes, temperature, Data,
 };
+use regex::Regex;
 
 pub type TimeOffset = f64;
 pub type Value = f64;
@@ -230,7 +231,20 @@ impl DataCollection {
 
         for (itx, device) in disks.iter().enumerate() {
             if let Some(trim) = device.name.split('/').last() {
-                let io_device = io.get(trim);
+                let io_device = if cfg!(target_os = "macos") {
+                    // Must trim one level further!
+
+                    lazy_static! {
+                        static ref DISK_REGEX: Regex = Regex::new(r"disk\d+").unwrap();
+                    }
+                    if let Some(disk_trim) = DISK_REGEX.split(trim).next() {
+                        io.get(disk_trim)
+                    } else {
+                        None
+                    }
+                } else {
+                    io.get(trim)
+                };
                 let (io_r_pt, io_w_pt) = if let Some(io) = io_device {
                     (io.read_bytes, io.write_bytes)
                 } else {
