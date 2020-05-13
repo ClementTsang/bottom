@@ -288,8 +288,7 @@ pub fn linux_get_processes_list(
         .output()?;
     let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
     let split_string = ps_stdout.split('\n');
-    let cpu_calc = cpu_usage_calculation(prev_idle, prev_non_idle);
-    if let Ok((cpu_usage, cpu_fraction)) = cpu_calc {
+    if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let process_list = split_string.collect::<Vec<&str>>();
 
         let mut new_pid_stats = HashMap::new();
@@ -362,7 +361,9 @@ pub fn windows_macos_get_processes_list(
         } else {
             process_val.cpu_usage() as f64 / num_cpus
         };
-        let process_cpu_usage = if use_current_cpu_total {
+        let process_cpu_usage = if pcu < 0.0 {
+            0.0
+        } else if use_current_cpu_total {
             pcu / cpu_usage
         } else {
             pcu

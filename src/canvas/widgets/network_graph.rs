@@ -132,37 +132,39 @@ impl NetworkGraphWidget for Painter {
             let dataset = if app_state.app_config_fields.use_old_network_legend && !hide_legend {
                 let mut ret_val = vec![];
 
-                    ret_val.push(
-                        Dataset::default()
-                            .name(format!("RX: {:7}", app_state.canvas_data.rx_display))
-                            .marker(if app_state.app_config_fields.use_dot {
-                                Marker::Dot
-                            } else {
-                                Marker::Braille
-                            })
-                            .style(self.colours.rx_style)
-                            .data(&network_data_rx).graph_type(tui::widgets::GraphType::Line),
-                    );
+                ret_val.push(
+                    Dataset::default()
+                        .name(format!("RX: {:7}", app_state.canvas_data.rx_display))
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.rx_style)
+                        .data(&network_data_rx)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
 
-                    ret_val.push(
-                        Dataset::default()
-                            .name(format!("TX: {:7}", app_state.canvas_data.tx_display))
-                            .marker(if app_state.app_config_fields.use_dot {
-                                Marker::Dot
-                            } else {
-                                Marker::Braille
-                            })
-                            .style(self.colours.tx_style)
-                            .data(&network_data_tx).graph_type(tui::widgets::GraphType::Line),
-                    );
-                    ret_val.push(
-                        Dataset::default()
-                            .name(format!(
-                                "Total RX: {:7}",
-                                app_state.canvas_data.total_rx_display
-                            ))
-                            .style(self.colours.total_rx_style),
-                    );
+                ret_val.push(
+                    Dataset::default()
+                        .name(format!("TX: {:7}", app_state.canvas_data.tx_display))
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.tx_style)
+                        .data(&network_data_tx)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
+                ret_val.push(
+                    Dataset::default()
+                        .name(format!(
+                            "Total RX: {:7}",
+                            app_state.canvas_data.total_rx_display
+                        ))
+                        .style(self.colours.total_rx_style),
+                );
 
                 ret_val.push(
                     Dataset::default()
@@ -177,29 +179,31 @@ impl NetworkGraphWidget for Painter {
             } else {
                 let mut ret_val = vec![];
 
-                    ret_val.push(
-                        Dataset::default()
-                            .name(&app_state.canvas_data.rx_display)
-                            .marker(if app_state.app_config_fields.use_dot {
-                                Marker::Dot
-                            } else {
-                                Marker::Braille
-                            })
-                            .style(self.colours.rx_style)
-                            .data(&network_data_rx).graph_type(tui::widgets::GraphType::Line),
-                    );
+                ret_val.push(
+                    Dataset::default()
+                        .name(&app_state.canvas_data.rx_display)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.rx_style)
+                        .data(&network_data_rx)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
 
-                    ret_val.push(
-                        Dataset::default()
-                            .name(&app_state.canvas_data.tx_display)
-                            .marker(if app_state.app_config_fields.use_dot {
-                                Marker::Dot
-                            } else {
-                                Marker::Braille
-                            })
-                            .style(self.colours.tx_style)
-                            .data(&network_data_tx).graph_type(tui::widgets::GraphType::Line),
-                    );
+                ret_val.push(
+                    Dataset::default()
+                        .name(&app_state.canvas_data.tx_display)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.tx_style)
+                        .data(&network_data_tx)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
 
                 ret_val
             };
