@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TODO: ~~Moving down the CPU list will show only the corresponding graph.~~
 
+## [0.4.3] - 2020-05-15
+
+### Other
+
+- Update sysinfo version that fixes an overflow issue.
+
 ## [0.4.2] - 2020-05-11
 
 ### Changes
