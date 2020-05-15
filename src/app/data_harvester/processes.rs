@@ -361,9 +361,7 @@ pub fn windows_macos_get_processes_list(
         } else {
             process_val.cpu_usage() as f64 / num_cpus
         };
-        let process_cpu_usage = if pcu < 0.0 {
-            0.0
-        } else if use_current_cpu_total {
+        let process_cpu_usage = if use_current_cpu_total {
             pcu / cpu_usage
         } else {
             pcu
