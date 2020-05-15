@@ -219,10 +219,14 @@ fn main() -> error::Result<()> {
                             app.canvas_data.swap_label = memory_and_swap_labels.1;
                         }
 
-                        // Pre-fill CPU if needed
                         if app.used_widgets.use_cpu {
+                            // CPU
+                            app.canvas_data.cpu_data =
+                                convert_cpu_data_points(&app.data_collection, false);
+
+                            // Pre-fill CPU if needed
                             if first_run {
-                                let cpu_len = app.data_collection.cpu_harvest.len();
+                                let cpu_len = app.canvas_data.cpu_data.len();
                                 app.cpu_state.widget_states.values_mut().for_each(|state| {
                                     state.core_show_vec = vec![true; cpu_len];
                                     state.num_cpus_shown = cpu_len;
@@ -230,10 +234,6 @@ fn main() -> error::Result<()> {
                                 app.cpu_state.num_cpus_total = cpu_len;
                                 first_run = false;
                             }
-
-                            // CPU
-                            app.canvas_data.cpu_data =
-                                convert_cpu_data_points(&app.data_collection, false);
                         }
 
                         // Processes

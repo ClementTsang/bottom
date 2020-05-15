@@ -339,8 +339,9 @@ impl App {
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
                 let curr_posn = cpu_widget_state.scroll_state.current_scroll_position;
-                if cpu_widget_state.is_showing_tray
-                    && curr_posn < self.data_collection.cpu_harvest.len() as u64
+                if curr_posn != 0
+                    && cpu_widget_state.is_showing_tray
+                    && curr_posn < self.canvas_data.cpu_data.len() as u64
                 {
                     cpu_widget_state.core_show_vec[curr_posn as usize] =
                         !cpu_widget_state.core_show_vec[curr_posn as usize];

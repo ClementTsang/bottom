@@ -22,6 +22,9 @@ use tui::{
 
 const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show"];
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
+const AVG_POSITION: usize = 1;
+const ALL_POSITION: usize = 0;
+
 lazy_static! {
     static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
         .iter()
@@ -142,34 +145,64 @@ impl CpuGraphWidget for Painter {
 
             let use_dot = app_state.app_config_fields.use_dot;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-            let dataset_vector: Vec<Dataset<'_>> = cpu_data
-                .iter()
-                .zip(&cpu_widget_state.core_show_vec)
-                .enumerate()
-                .rev()
-                .filter_map(|(itx, (cpu, cpu_show_vec))| {
-                    if *cpu_show_vec {
-                        Some(
-                            Dataset::default()
-                                .marker(if use_dot {
-                                    Marker::Dot
-                                } else {
-                                    Marker::Braille
-                                })
-                                .style(if show_avg_cpu && itx == 0 {
-                                    self.colours.avg_colour_style
-                                } else {
-                                    self.colours.cpu_colour_styles
-                                        [itx % self.colours.cpu_colour_styles.len()]
-                                })
-                                .data(&cpu.cpu_data[..])
-                                .graph_type(tui::widgets::GraphType::Line),
+            let dataset_vector: Vec<Dataset<'_>> =
+                if cpu_widget_state.scroll_state.current_scroll_position == ALL_POSITION as u64 {
+                    cpu_data
+                        .iter()
+                        .zip(&cpu_widget_state.core_show_vec)
+                        .enumerate()
+                        .rev()
+                        .filter_map(|(itx, (cpu, cpu_show_vec))| {
+                            if *cpu_show_vec {
+                                Some(
+                                    Dataset::default()
+                                        .marker(if use_dot {
+                                            Marker::Dot
+                                        } else {
+                                            Marker::Braille
+                                        })
+                                        .style(if show_avg_cpu && itx == AVG_POSITION {
+                                            self.colours.avg_colour_style
+                                        } else {
+                                            self.colours.cpu_colour_styles
+                                                [itx % self.colours.cpu_colour_styles.len()]
+                                        })
+                                        .data(&cpu.cpu_data[..])
+                                        .graph_type(tui::widgets::GraphType::Line),
+                                )
+                            } else {
+                                None
+                            }
+                        })
+                        .collect()
+                } else {
+                    vec![Dataset::default()
+                        .marker(if use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(
+                            if show_avg_cpu
+                                && cpu_widget_state.scroll_state.current_scroll_position as usize
+                                    == AVG_POSITION
+                            {
+                                self.colours.avg_colour_style
+                            } else {
+                                self.colours.cpu_colour_styles[cpu_widget_state
+                                    .scroll_state
+                                    .current_scroll_position
+                                    as usize
+                                    % self.colours.cpu_colour_styles.len()]
+                            },
                         )
-                    } else {
-                        None
-                    }
-                })
-                .collect();
+                        .data(
+                            &cpu_data
+                                [cpu_widget_state.scroll_state.current_scroll_position as usize]
+                                .cpu_data[..],
+                        )
+                        .graph_type(tui::widgets::GraphType::Line)]
+                };
 
             let title = if app_state.is_expanded && !cpu_widget_state.is_showing_tray {
                 const TITLE_BASE: &str = " CPU ── Esc to go back ";
@@ -240,7 +273,12 @@ impl CpuGraphWidget for Painter {
                         .core_show_vec
                         .get(itx + start_position as usize)
                 {
-                    if cpu_widget_state.is_showing_tray {
+                    if itx + start_position as usize == ALL_POSITION {
+                        vec![
+                            Cow::Borrowed(&cpu.cpu_name),
+                            Cow::Borrowed(&cpu.legend_value),
+                        ]
+                    } else if cpu_widget_state.is_showing_tray {
                         vec![
                             Cow::Borrowed(&cpu.cpu_name),
                             if *cpu_core_show_vec {
@@ -270,14 +308,14 @@ impl CpuGraphWidget for Painter {
                         if is_on_widget {
                             if itx == offset_scroll_index {
                                 self.colours.currently_selected_text_style
-                            } else if show_avg_cpu && itx == 0 {
+                            } else if show_avg_cpu && itx == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else {
                                 self.colours.cpu_colour_styles[itx
                                     + start_position as usize
                                         % self.colours.cpu_colour_styles.len()]
                             }
-                        } else if show_avg_cpu && itx == 0 {
+                        } else if show_avg_cpu && itx == AVG_POSITION {
                             self.colours.avg_colour_style
                         } else {
                             self.colours.cpu_colour_styles[itx

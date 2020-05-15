@@ -327,9 +327,10 @@ pub fn linux_get_processes_list(
 
 #[cfg(not(target_os = "linux"))]
 pub fn windows_macos_get_processes_list(
-    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
+    sys: &mut System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
+    let mut restart_sysinfo = false;
 
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
@@ -362,6 +363,15 @@ pub fn windows_macos_get_processes_list(
             process_val.cpu_usage() as f64 / num_cpus
         };
         let process_cpu_usage = if pcu < 0.0 {
+            // This is a bit of a hack... but currently PCU can return a value < 0 due to
+            // an underflow bug if it's running too long.
+            // So... let's forcefully restart sysinfo!
+            restart_sysinfo = true;
+
+            // I could implement a way to re-grab data, but it seems too much of a hassle
+            // (gotta set recursive call bounds and whatnot)... I think
+            // it's fine to just give back 0 until the next harvest.
+
             0.0
         } else if use_current_cpu_total {
             pcu / cpu_usage
@@ -383,6 +393,10 @@ pub fn windows_macos_get_processes_list(
             process_state: process_val.status().to_string().to_string(),
             process_state_char: convert_process_status_to_char(process_val.status()),
         });
+    }
+
+    if restart_sysinfo {
+        *sys = System::new_all();
     }
 
     Ok(process_vector)
