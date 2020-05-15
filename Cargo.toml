@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
@@ -24,7 +24,7 @@ codegen-units = 1
 battery = "0.7.5"
 crossterm = "0.17"
 chrono = "0.4.11"
-clap = "2.33.0"
+clap = "2.33.1"
 dirs = "2.0.2"
 futures = "0.3.5"
 heim = "0.0.10"
