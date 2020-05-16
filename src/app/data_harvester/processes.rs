@@ -373,6 +373,9 @@ pub fn windows_macos_get_processes_list(
         process_vector.push(ProcessHarvest {
             pid: process_val.pid() as u32,
             name,
+            mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
+            cpu_usage_percent: process_cpu_usage,
+            read_bytes_per_sec: disk_usage.read_bytes,
             write_bytes_per_sec: disk_usage.written_bytes,
             total_read_bytes: disk_usage.total_read_bytes,
             total_write_bytes: disk_usage.total_written_bytes,
