@@ -20,9 +20,9 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CPUHarvest {
         });
     }
 
-    for cpu in cpu_data {
+    for (itx, cpu) in cpu_data.iter().enumerate() {
         cpu_vec.push(CPUData {
-            cpu_name: cpu.get_name().to_uppercase(),
+            cpu_name: format!("CPU{}", itx),
             cpu_usage: f64::from(cpu.get_cpu_usage()),
         });
     }

@@ -154,7 +154,7 @@ pub fn convert_cpu_data_points(
                 let mut new_cpu_data = ConvertedCpuData::default();
                 new_cpu_data.cpu_name = if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
                 {
-                    cpu_harvest.cpu_name.clone()
+                    cpu_harvest.cpu_name.to_string()
                 } else {
                     String::default()
                 };

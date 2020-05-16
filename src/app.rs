@@ -268,22 +268,19 @@ impl App {
 
     pub fn on_slash(&mut self) {
         if !self.is_in_dialog() {
-            match self.current_widget.widget_type {
-                BottomWidgetType::Proc => {
-                    // Toggle on
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
-                    {
-                        proc_widget_state
-                            .process_search_state
-                            .search_state
-                            .is_enabled = true;
-                        self.move_widget_selection_down();
-                    }
+            if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                // Toggle on
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    proc_widget_state
+                        .process_search_state
+                        .search_state
+                        .is_enabled = true;
+                    self.move_widget_selection_down();
                 }
-                _ => {}
             }
         }
     }
