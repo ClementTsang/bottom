@@ -32,7 +32,6 @@ pub struct ConfigFlags {
     pub whole_word: Option<bool>,
     pub regex: Option<bool>,
     pub default_widget: Option<String>,
-    pub show_disabled_data: Option<bool>,
     pub basic: Option<bool>,
     pub default_time_value: Option<u64>,
     pub time_delta: Option<u64>,
@@ -212,7 +211,6 @@ pub fn build_app(
         use_dot: get_use_dot(matches, config),
         left_legend: get_use_left_legend(matches, config),
         use_current_cpu_total: get_use_current_cpu_total(matches, config),
-        show_disabled_data: get_show_disabled_data(matches, config),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config)?,
@@ -397,18 +395,6 @@ fn get_use_current_cpu_total(matches: &clap::ArgMatches<'static>, config: &Confi
     } else if let Some(flags) = &config.flags {
         if let Some(current_usage) = flags.current_usage {
             return current_usage;
-        }
-    }
-
-    false
-}
-
-fn get_show_disabled_data(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("SHOW_DISABLED_DATA") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(show_disabled_data) = flags.show_disabled_data {
-            return show_disabled_data;
         }
     }
 

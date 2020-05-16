@@ -83,7 +83,6 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
-        (@arg SHOW_DISABLED_DATA: -s --show_disabled_data "Show disabled data entries.")
         (@arg DEFAULT_TIME_VALUE: -t --default_time_value +takes_value "Default time value for graphs in milliseconds; minimum is 30s, defaults to 60s.")
         (@arg TIME_DELTA: -d --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
         (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
@@ -158,7 +157,6 @@ fn main() -> error::Result<()> {
     // Set panic hook
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
-    let mut first_run = true;
     loop {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
@@ -223,17 +221,6 @@ fn main() -> error::Result<()> {
                             // CPU
                             app.canvas_data.cpu_data =
                                 convert_cpu_data_points(&app.data_collection, false);
-
-                            // Pre-fill CPU if needed
-                            if first_run {
-                                let cpu_len = app.canvas_data.cpu_data.len();
-                                app.cpu_state.widget_states.values_mut().for_each(|state| {
-                                    state.core_show_vec = vec![true; cpu_len];
-                                    state.num_cpus_shown = cpu_len;
-                                });
-                                app.cpu_state.num_cpus_total = cpu_len;
-                                first_run = false;
-                            }
                         }
 
                         // Processes

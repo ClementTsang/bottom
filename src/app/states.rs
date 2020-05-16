@@ -296,9 +296,6 @@ impl NetState {
 pub struct CpuWidgetState {
     pub current_display_time: u64,
     pub is_legend_hidden: bool,
-    pub is_showing_tray: bool,
-    pub core_show_vec: Vec<bool>,
-    pub num_cpus_shown: usize,
     pub autohide_timer: Option<Instant>,
     pub scroll_state: AppScrollWidgetState,
 }
@@ -308,9 +305,6 @@ impl CpuWidgetState {
         CpuWidgetState {
             current_display_time,
             is_legend_hidden: false,
-            is_showing_tray: false,
-            core_show_vec: Vec::new(),
-            num_cpus_shown: 0,
             autohide_timer,
             scroll_state: AppScrollWidgetState::default(),
         }
@@ -320,7 +314,6 @@ impl CpuWidgetState {
 pub struct CpuState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, CpuWidgetState>,
-    pub num_cpus_total: usize,
 }
 
 impl CpuState {
@@ -328,7 +321,6 @@ impl CpuState {
         CpuState {
             force_update: None,
             widget_states,
-            num_cpus_total: 0,
         }
     }
 }
