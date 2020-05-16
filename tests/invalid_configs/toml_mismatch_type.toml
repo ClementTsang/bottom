@@ -1,2 +1,2 @@
 [flags]
-avg_cpu = "test"
+basic = "test"
