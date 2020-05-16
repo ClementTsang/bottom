@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   - `show_disabled_data` option and flag is removed.
 
+- Average CPU is now on by _default_. You can disable it via `-a, --hide_avg_cpu` or `hide_avg_cpu = true`.
+
 ## [0.4.3] - 2020-05-15
 
 ### Other

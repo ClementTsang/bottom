@@ -67,7 +67,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(version: crate_version!())
 		(author: crate_authors!())
 		(about: crate_description!())
-		(@arg AVG_CPU: -a --avg_cpu "Enables showing the average CPU usage.")
+		(@arg HIDE_AVG_CPU: -a --hide_avg_cpu "Enables showing the average CPU usage.")
 		(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.")
 		(@group TEMPERATURE_TYPE =>
 			(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
@@ -142,7 +142,7 @@ fn main() -> error::Result<()> {
         app.app_config_fields.use_current_cpu_total,
         app.app_config_fields.update_rate_in_milliseconds,
         app.app_config_fields.temperature_type.clone(),
-        app.app_config_fields.show_average_cpu,
+        app.app_config_fields.hide_average_cpu,
         app.used_widgets.clone(),
     );
 
