@@ -330,8 +330,6 @@ pub fn windows_macos_get_processes_list(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
-    let mut restart_sysinfo = false;
-
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
     let num_cpus = sys.get_processors().len() as f64;
@@ -386,10 +384,6 @@ pub fn windows_macos_get_processes_list(
             process_state: process_val.status().to_string().to_string(),
             process_state_char: convert_process_status_to_char(process_val.status()),
         });
-    }
-
-    if restart_sysinfo {
-        *sys = System::new_all();
     }
 
     Ok(process_vector)
