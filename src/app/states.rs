@@ -298,6 +298,7 @@ pub struct CpuWidgetState {
     pub is_legend_hidden: bool,
     pub autohide_timer: Option<Instant>,
     pub scroll_state: AppScrollWidgetState,
+    pub is_multi_graph_mode: bool,
 }
 
 impl CpuWidgetState {
@@ -307,6 +308,7 @@ impl CpuWidgetState {
             is_legend_hidden: false,
             autohide_timer,
             scroll_state: AppScrollWidgetState::default(),
+            is_multi_graph_mode: false,
         }
     }
 }

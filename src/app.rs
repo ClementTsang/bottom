@@ -238,17 +238,30 @@ impl App {
     pub fn on_tab(&mut self) {
         // Disallow usage whilst in a dialog and only in processes
 
-        let is_in_search_widget = self.is_in_search_widget();
         if !self.is_in_dialog() {
-            if is_in_search_widget {
-            } else if let Some(proc_widget_state) = self
-                .proc_state
-                .widget_states
-                .get_mut(&self.current_widget.widget_id)
-            {
-                // Toggles process widget grouping state
-                proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
-                self.proc_state.force_update = Some(self.current_widget.widget_id);
+            match self.current_widget.widget_type {
+                BottomWidgetType::Cpu => {
+                    if let Some(cpu_widget_state) = self
+                        .cpu_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        cpu_widget_state.is_multi_graph_mode =
+                            !cpu_widget_state.is_multi_graph_mode;
+                    }
+                }
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .widget_states
+                        .get_mut(&self.current_widget.widget_id)
+                    {
+                        // Toggles process widget grouping state
+                        proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
+                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    }
+                }
+                _ => {}
             }
         }
     }

@@ -38,14 +38,11 @@ backtrace = "0.3"
 serde = {version = "1.0", features = ["derive"] }
 unicode-segmentation = "1.6.0"
 unicode-width = "0.1.7"
+tui = {version = "0.9", features = ["crossterm"], default-features = false }
 
 # For debugging only...
 fern = "0.6.0"
 log = "0.4.8"
-
-tui = {version = "0.9", features = ["crossterm"], default-features = false }
-# tui = {git = "https://github.com/ClementTsang/tui-rs", features = ["crossterm"], default-features = false }
-
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.8"

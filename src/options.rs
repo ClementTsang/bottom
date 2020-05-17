@@ -21,7 +21,7 @@ pub struct Config {
 
 #[derive(Default, Deserialize)]
 pub struct ConfigFlags {
-    pub hide_average_cpu: Option<bool>,
+    pub hide_avg_cpu: Option<bool>,
     pub dot_marker: Option<bool>,
     pub temperature_type: Option<String>,
     pub rate: Option<u64>,
@@ -361,7 +361,7 @@ fn get_show_average_cpu(matches: &clap::ArgMatches<'static>, config: &Config) ->
     if matches.is_present("HIDE_AVG_CPU") {
         return false;
     } else if let Some(flags) = &config.flags {
-        if let Some(avg_cpu) = flags.hide_average_cpu {
+        if let Some(avg_cpu) = flags.hide_avg_cpu {
             return avg_cpu;
         }
     }

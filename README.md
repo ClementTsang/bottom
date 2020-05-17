@@ -191,11 +191,9 @@ Run using `btm`.
 
 #### CPU bindings
 
-|         |                                              |
-| ------- | -------------------------------------------- |
-| `/`     | Open filtering for showing certain CPU cores |
-| `Space` | Toggle enabled/disabled cores                |
-| `Esc`   | Exit filtering mode                          |
+|              |                                                                       |
+| ------------ | --------------------------------------------------------------------- |
+| Mouse scroll | Scrolling over an CPU core/average shows only that entry on the chart |
 
 #### Process bindings
 
