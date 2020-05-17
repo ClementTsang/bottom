@@ -327,7 +327,7 @@ pub fn linux_get_processes_list(
 
 #[cfg(not(target_os = "linux"))]
 pub fn windows_macos_get_processes_list(
-    sys: &mut System, use_current_cpu_total: bool, mem_total_kb: u64,
+    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let mut restart_sysinfo = false;

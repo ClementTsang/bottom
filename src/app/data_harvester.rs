@@ -210,7 +210,7 @@ impl DataCollector {
                 #[cfg(not(target_os = "linux"))]
                 {
                     processes::windows_macos_get_processes_list(
-                        &mut self.sys,
+                        &self.sys,
                         self.use_current_cpu_total,
                         self.mem_total_kb,
                     )
