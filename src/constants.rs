@@ -74,11 +74,9 @@ pub const GENERAL_HELP_TEXT: [&str; 20] = [
     "Mouse scroll   Scroll through the tables or zoom in/out of charts by scrolling up/down",
 ];
 
-pub const CPU_HELP_TEXT: [&str; 4] = [
+pub const CPU_HELP_TEXT: [&str; 2] = [
     "2 - CPU widget\n",
-    "/              Open filtering for showing certain CPU cores\n",
-    "Space          Toggle enabled/disabled cores\n",
-    "Esc            Exit filtering mode",
+    "Mouse scroll   Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
 pub const PROCESS_HELP_TEXT: [&str; 8] = [
@@ -170,8 +168,8 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # is also set here.
 [flags]
 
-# Whether to display an average cpu entry.
-#avg_cpu = false
+# Whether to hide the average cpu entry.
+#hide_avg_cpu = false
 
 # Whether to use dot markers rather than braille.
 #dot_marker = false
@@ -196,9 +194,6 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 
 # Whether to make process searching use regex by default.
 #regex = false
-
-# Whether to show CPU entries in the legend when they are hidden.
-#show_disabled_data = false
 
 # Defaults to Celsius.  Temperature is one of:
 #temperature_type = "k"

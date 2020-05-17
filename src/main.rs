@@ -67,7 +67,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(version: crate_version!())
 		(author: crate_authors!())
 		(about: crate_description!())
-		(@arg AVG_CPU: -a --avg_cpu "Enables showing the average CPU usage.")
+		(@arg HIDE_AVG_CPU: -a --hide_avg_cpu "Hides the average CPU usage.")
 		(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.")
 		(@group TEMPERATURE_TYPE =>
 			(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
@@ -83,7 +83,6 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(@arg CASE_SENSITIVE: -S --case_sensitive "Match case when searching by default.")
 		(@arg WHOLE_WORD: -W --whole_word "Match whole word when searching by default.")
 		(@arg REGEX_DEFAULT: -R --regex "Use regex in searching by default.")
-        (@arg SHOW_DISABLED_DATA: -s --show_disabled_data "Show disabled data entries.")
         (@arg DEFAULT_TIME_VALUE: -t --default_time_value +takes_value "Default time value for graphs in milliseconds; minimum is 30s, defaults to 60s.")
         (@arg TIME_DELTA: -d --time_delta +takes_value "The amount changed upon zooming in/out in milliseconds; minimum is 1s, defaults to 15s.")
         (@arg HIDE_TIME: --hide_time "Completely hide the time scaling")
@@ -158,7 +157,6 @@ fn main() -> error::Result<()> {
     // Set panic hook
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
-    let mut first_run = true;
     loop {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
@@ -219,18 +217,7 @@ fn main() -> error::Result<()> {
                             app.canvas_data.swap_label = memory_and_swap_labels.1;
                         }
 
-                        // Pre-fill CPU if needed
                         if app.used_widgets.use_cpu {
-                            if first_run {
-                                let cpu_len = app.data_collection.cpu_harvest.len();
-                                app.cpu_state.widget_states.values_mut().for_each(|state| {
-                                    state.core_show_vec = vec![true; cpu_len];
-                                    state.num_cpus_shown = cpu_len;
-                                });
-                                app.cpu_state.num_cpus_total = cpu_len;
-                                first_run = false;
-                            }
-
                             // CPU
                             app.canvas_data.cpu_data =
                                 convert_cpu_data_points(&app.data_collection, false);
@@ -444,6 +431,10 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 
         if let Some(avg_cpu_color) = &colours.avg_cpu_color {
             painter.colours.set_avg_cpu_colour(avg_cpu_color)?;
+        }
+
+        if let Some(all_cpu_color) = &colours.all_cpu_color {
+            painter.colours.set_all_cpu_colour(all_cpu_color)?;
         }
 
         if let Some(cpu_core_colors) = &colours.cpu_core_colors {

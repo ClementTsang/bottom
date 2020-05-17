@@ -330,7 +330,6 @@ pub fn windows_macos_get_processes_list(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
-
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
     let num_cpus = sys.get_processors().len() as f64;
@@ -372,7 +371,11 @@ pub fn windows_macos_get_processes_list(
         process_vector.push(ProcessHarvest {
             pid: process_val.pid() as u32,
             name,
-            mem_usage_percent: process_val.memory() as f64 * 100.0 / mem_total_kb as f64,
+            mem_usage_percent: if mem_total_kb > 0 {
+                process_val.memory() as f64 * 100.0 / mem_total_kb as f64
+            } else {
+                0.0
+            },
             cpu_usage_percent: process_cpu_usage,
             read_bytes_per_sec: disk_usage.read_bytes,
             write_bytes_per_sec: disk_usage.written_bytes,

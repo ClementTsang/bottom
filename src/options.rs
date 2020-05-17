@@ -21,7 +21,7 @@ pub struct Config {
 
 #[derive(Default, Deserialize)]
 pub struct ConfigFlags {
-    pub avg_cpu: Option<bool>,
+    pub hide_avg_cpu: Option<bool>,
     pub dot_marker: Option<bool>,
     pub temperature_type: Option<String>,
     pub rate: Option<u64>,
@@ -32,7 +32,6 @@ pub struct ConfigFlags {
     pub whole_word: Option<bool>,
     pub regex: Option<bool>,
     pub default_widget: Option<String>,
-    pub show_disabled_data: Option<bool>,
     pub basic: Option<bool>,
     pub default_time_value: Option<u64>,
     pub time_delta: Option<u64>,
@@ -48,6 +47,7 @@ pub struct ConfigFlags {
 #[derive(Default, Deserialize)]
 pub struct ConfigColours {
     pub table_header_color: Option<String>,
+    pub all_cpu_color: Option<String>,
     pub avg_cpu_color: Option<String>,
     pub cpu_core_colors: Option<Vec<String>>,
     pub ram_color: Option<String>,
@@ -208,11 +208,10 @@ pub fn build_app(
     let app_config_fields = AppConfigFields {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)?,
         temperature_type: get_temperature(matches, config)?,
-        show_average_cpu: get_avg_cpu(matches, config),
+        show_average_cpu: get_show_average_cpu(matches, config),
         use_dot: get_use_dot(matches, config),
         left_legend: get_use_left_legend(matches, config),
         use_current_cpu_total: get_use_current_cpu_total(matches, config),
-        show_disabled_data: get_show_disabled_data(matches, config),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config)?,
@@ -356,16 +355,19 @@ fn get_temperature(
     Ok(data_harvester::temperature::TemperatureType::Celsius)
 }
 
-fn get_avg_cpu(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("AVG_CPU") {
-        return true;
+/// Yes, this function gets whether to show average CPU (true) or not (false)
+fn get_show_average_cpu(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    // FIXME: Update the demo config file and default config files!  Need to remove
+    // old options and change to hide_avg_cpu option.
+    if matches.is_present("HIDE_AVG_CPU") {
+        return false;
     } else if let Some(flags) = &config.flags {
-        if let Some(avg_cpu) = flags.avg_cpu {
+        if let Some(avg_cpu) = flags.hide_avg_cpu {
             return avg_cpu;
         }
     }
 
-    false
+    true
 }
 
 fn get_use_dot(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
@@ -397,18 +399,6 @@ fn get_use_current_cpu_total(matches: &clap::ArgMatches<'static>, config: &Confi
     } else if let Some(flags) = &config.flags {
         if let Some(current_usage) = flags.current_usage {
             return current_usage;
-        }
-    }
-
-    false
-}
-
-fn get_show_disabled_data(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("SHOW_DISABLED_DATA") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(show_disabled_data) = flags.show_disabled_data {
-            return show_disabled_data;
         }
     }
 

@@ -66,6 +66,7 @@ pub struct ConvertedCpuData {
     pub cpu_name: String,
     /// Tuple is time, value
     pub cpu_data: Vec<Point>,
+    /// Represents the value displayed on the legend.
     pub legend_value: String,
 }
 
@@ -153,7 +154,7 @@ pub fn convert_cpu_data_points(
                 let mut new_cpu_data = ConvertedCpuData::default();
                 new_cpu_data.cpu_name = if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
                 {
-                    cpu_harvest.cpu_name.clone()
+                    cpu_harvest.cpu_name.to_string()
                 } else {
                     String::default()
                 };
@@ -171,7 +172,13 @@ pub fn convert_cpu_data_points(
         }
     }
 
-    cpu_data_vector
+    let mut extended_vec = vec![ConvertedCpuData {
+        cpu_name: "All".to_string(),
+        cpu_data: vec![],
+        legend_value: String::new(),
+    }];
+    extended_vec.extend(cpu_data_vector);
+    extended_vec
 }
 
 pub fn convert_mem_data_points(

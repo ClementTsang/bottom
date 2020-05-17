@@ -3,7 +3,6 @@
 [![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom)
 [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 [![tokei](https://tokei.rs/b1/github/ClementTsang/bottom?category=code)](https://github.com/ClementTsang/bottom)
-[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors)
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
@@ -135,7 +134,7 @@ Run using `btm`.
 
 ```
 -h, --help                          Prints help information, including flags and options
--a, --avg_cpu                       Shows the average CPU usage in addition to per-core
+-a, --hide_avg_cpu                  Hides the average CPU usage
 -m, --dot-marker                    Uses a dot marker instead of the default braille marker
 -c, --celsius                       Displays the temperature type in Celsius [default]
 -f, --fahrenheit                    Displays the temperature type in Fahrenheit
@@ -192,11 +191,9 @@ Run using `btm`.
 
 #### CPU bindings
 
-|         |                                              |
-| ------- | -------------------------------------------- |
-| `/`     | Open filtering for showing certain CPU cores |
-| `Space` | Toggle enabled/disabled cores                |
-| `Esc`   | Exit filtering mode                          |
+|              |                                                                       |
+| ------------ | --------------------------------------------------------------------- |
+| Mouse scroll | Scrolling over an CPU core/average shows only that entry on the chart |
 
 #### Process bindings
 
@@ -375,7 +372,7 @@ The following options can be set under `[flags]` to achieve the same effect as p
 These are the following supported flag config values:
 | Field | Type |
 |------------------------|---------------------------------------------------------------------------------------|
-| `avg_cpu` | Boolean |
+| `hide_avg_cpu` | Boolean |
 | `dot_marker` | Boolean |
 | `left_legend` | Boolean |
 | `current_usage` | Boolean |
@@ -405,6 +402,7 @@ Supported named colours are one of the following strings: `Reset, Black, Red, Gr
 | Table header colours            | Colour of table headers                               | `table_header_color="255, 255, 255"`                    |
 | CPU colour per core             | Colour of each core. Read in order.                   | `cpu_core_colors=["#ffffff", "white", "255, 255, 255"]` |
 | Average CPU colour              | The average CPU color                                 | `avg_cpu_color="White"`                                 |
+| All CPUs colour                 | The colour for the "All" CPU label                    | `all_cpu_color="White"`                                 |
 | RAM                             | The colour RAM will use                               | `ram_color="#ffffff"`                                   |
 | SWAP                            | The colour SWAP will use                              | `swap_color="#ffffff"`                                  |
 | RX                              | The colour rx will use                                | `rx_color="#ffffff"`                                    |

@@ -17,6 +17,7 @@ pub struct CanvasColours {
     pub tx_style: Style,
     pub total_rx_style: Style,
     pub total_tx_style: Style,
+    pub all_colour_style: Style,
     pub avg_colour_style: Style,
     pub cpu_colour_styles: Vec<Style>,
     pub border_style: Style,
@@ -46,6 +47,7 @@ impl Default for CanvasColours {
             tx_style: Style::default().fg(STANDARD_SECOND_COLOUR),
             total_rx_style: Style::default().fg(STANDARD_THIRD_COLOUR),
             total_tx_style: Style::default().fg(STANDARD_FOURTH_COLOUR),
+            all_colour_style: Style::default().fg(ALL_COLOUR),
             avg_colour_style: Style::default().fg(AVG_COLOUR),
             cpu_colour_styles: Vec::new(),
             border_style: Style::default().fg(text_colour),
@@ -119,6 +121,11 @@ impl CanvasColours {
 
     pub fn set_avg_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
         self.avg_colour_style = get_style_from_config(colour)?;
+        Ok(())
+    }
+
+    pub fn set_all_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
+        self.all_colour_style = get_style_from_config(colour)?;
         Ok(())
     }
 

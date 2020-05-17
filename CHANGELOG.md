@@ -11,7 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TODO: ~~[#114](https://github.com/ClementTsang/bottom/pull/114): Process state per process (originally in 0.4.0, moved to later).~~
 
-- TODO: ~~Moving down the CPU list will show only the corresponding graph.~~
+### Changes
+
+- Removal of the `/` CPU core showing in the chart. It felt clunky to use, was not really useful, and hard to work with with large core counts.
+  Furthermore:
+
+  - `show_disabled_data` option and flag is removed.
+
+- Average CPU is now on by _default_. You can disable it via `-a, --hide_avg_cpu` or `hide_avg_cpu = true`.
 
 ## [0.4.3] - 2020-05-15
 
