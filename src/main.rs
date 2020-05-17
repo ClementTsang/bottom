@@ -67,7 +67,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
 		(version: crate_version!())
 		(author: crate_authors!())
 		(about: crate_description!())
-		(@arg HIDE_AVG_CPU: -a --hide_avg_cpu "Enables showing the average CPU usage.")
+		(@arg HIDE_AVG_CPU: -a --hide_avg_cpu "Hides the average CPU usage.")
 		(@arg DOT_MARKER: -m --dot_marker "Use a dot marker instead of the default braille marker.")
 		(@group TEMPERATURE_TYPE =>
 			(@arg KELVIN : -k --kelvin "Sets the temperature type to Kelvin.")
@@ -431,6 +431,10 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 
         if let Some(avg_cpu_color) = &colours.avg_cpu_color {
             painter.colours.set_avg_cpu_colour(avg_cpu_color)?;
+        }
+
+        if let Some(all_cpu_color) = &colours.all_cpu_color {
+            painter.colours.set_all_cpu_colour(all_cpu_color)?;
         }
 
         if let Some(cpu_core_colors) = &colours.cpu_core_colors {

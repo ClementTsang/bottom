@@ -47,6 +47,7 @@ pub struct ConfigFlags {
 #[derive(Default, Deserialize)]
 pub struct ConfigColours {
     pub table_header_color: Option<String>,
+    pub all_cpu_color: Option<String>,
     pub avg_cpu_color: Option<String>,
     pub cpu_core_colors: Option<Vec<String>>,
     pub ram_color: Option<String>,

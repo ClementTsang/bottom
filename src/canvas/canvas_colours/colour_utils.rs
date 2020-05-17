@@ -13,6 +13,7 @@ pub const STANDARD_THIRD_COLOUR: Color = Color::LightCyan;
 pub const STANDARD_FOURTH_COLOUR: Color = Color::LightGreen;
 pub const STANDARD_HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
+pub const ALL_COLOUR: Color = Color::Green;
 
 lazy_static! {
     static ref COLOR_NAME_LOOKUP_TABLE: HashMap<&'static str, Color> = [

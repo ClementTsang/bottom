@@ -193,7 +193,7 @@ pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 #whole_word = false
 
 # Whether to make process searching use regex by default.
-#regex = falsep
+#regex = false
 
 # Defaults to Celsius.  Temperature is one of:
 #temperature_type = "k"

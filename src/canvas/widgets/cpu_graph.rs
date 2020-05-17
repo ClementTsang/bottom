@@ -261,21 +261,22 @@ impl CpuGraphWidget for Painter {
                 } else {
                     Some(Row::StyledData(
                         cpu_string_row.into_iter(),
-                        if is_on_widget {
-                            if itx == offset_scroll_index {
-                                self.colours.currently_selected_text_style
-                            } else if show_avg_cpu && itx == AVG_POSITION {
+                        if is_on_widget && itx == offset_scroll_index {
+                            self.colours.currently_selected_text_style
+                        } else if itx == ALL_POSITION {
+                            self.colours.all_colour_style
+                        } else if show_avg_cpu {
+                            if itx == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else {
-                                self.colours.cpu_colour_styles[itx
-                                    + start_position as usize
-                                        % self.colours.cpu_colour_styles.len()]
+                                self.colours.cpu_colour_styles[itx + start_position as usize
+                                    - AVG_POSITION
+                                    - 1 % self.colours.cpu_colour_styles.len()]
                             }
-                        } else if show_avg_cpu && itx == AVG_POSITION {
-                            self.colours.avg_colour_style
                         } else {
-                            self.colours.cpu_colour_styles[itx
-                                + start_position as usize % self.colours.cpu_colour_styles.len()]
+                            self.colours.cpu_colour_styles[itx + start_position as usize
+                                - ALL_POSITION
+                                - 1 % self.colours.cpu_colour_styles.len()]
                         },
                     ))
                 }
