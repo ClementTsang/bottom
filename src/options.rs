@@ -208,7 +208,7 @@ pub fn build_app(
     let app_config_fields = AppConfigFields {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)?,
         temperature_type: get_temperature(matches, config)?,
-        hide_average_cpu: get_show_average_cpu(matches, config),
+        show_average_cpu: get_show_average_cpu(matches, config),
         use_dot: get_use_dot(matches, config),
         left_legend: get_use_left_legend(matches, config),
         use_current_cpu_total: get_use_current_cpu_total(matches, config),

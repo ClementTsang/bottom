@@ -146,7 +146,7 @@ impl CpuGraphWidget for Painter {
                 .labels(&["0%", "100%"]);
 
             let use_dot = app_state.app_config_fields.use_dot;
-            let show_avg_cpu = app_state.app_config_fields.hide_average_cpu;
+            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
             let dataset_vector: Vec<Dataset<'_>> = if let Ok(current_scroll_position) =
                 usize::try_from(cpu_widget_state.scroll_state.current_scroll_position)
             {
@@ -247,7 +247,7 @@ impl CpuGraphWidget for Painter {
 
             let mut offset_scroll_index =
                 (cpu_widget_state.scroll_state.current_scroll_position - start_position) as usize;
-            let show_avg_cpu = app_state.app_config_fields.hide_average_cpu;
+            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
                 let cpu_string_row: Vec<Cow<'_, str>> = vec![

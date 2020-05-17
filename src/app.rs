@@ -31,7 +31,7 @@ pub struct AppConfigFields {
     pub temperature_type: temperature::TemperatureType,
     pub use_dot: bool,
     pub left_legend: bool,
-    pub hide_average_cpu: bool,
+    pub show_average_cpu: bool,
     pub use_current_cpu_total: bool,
     pub use_basic_mode: bool,
     pub default_time_value: u64,
