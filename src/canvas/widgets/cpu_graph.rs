@@ -260,7 +260,7 @@ impl CpuGraphWidget for Painter {
                 } else {
                     Some(Row::StyledData(
                         cpu_string_row.into_iter(),
-                        if is_on_widget && itx == offset_scroll_index {
+                        if itx == offset_scroll_index {
                             self.colours.currently_selected_text_style
                         } else if itx == ALL_POSITION {
                             self.colours.all_colour_style

@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Average CPU is now on by _default_. You can disable it via `-a, --hide_avg_cpu` or `hide_avg_cpu = true`.
 
+- Make highlighted CPU persist even if widget is not selected - this should help make it easier to know what CPU you are looking at
+  even if you aren't currently on the CPU widget.
+
 ## [0.4.3] - 2020-05-15
 
 ### Other
