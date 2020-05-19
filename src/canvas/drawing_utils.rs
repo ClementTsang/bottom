@@ -117,9 +117,9 @@ pub fn get_search_start_position(
 }
 
 pub fn get_start_position(
-    num_rows: u64, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut u64,
-    currently_selected_position: u64, is_force_redraw: bool,
-) -> u64 {
+    num_rows: usize, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut usize,
+    currently_selected_position: usize, is_force_redraw: bool,
+) -> usize {
     if is_force_redraw {
         *scroll_position_bar = 0;
     }

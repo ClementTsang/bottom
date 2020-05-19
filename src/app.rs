@@ -713,12 +713,12 @@ impl App {
                 .get(&self.current_widget.widget_id)
             {
                 if proc_widget_state.scroll_state.current_scroll_position
-                    < corresponding_filtered_process_list.len() as u64
+                    < corresponding_filtered_process_list.len()
                 {
                     let current_process: (String, Vec<u32>);
                     if self.is_grouped(self.current_widget.widget_id) {
                         if let Some(process) = &corresponding_filtered_process_list
-                            .get(proc_widget_state.scroll_state.current_scroll_position as usize)
+                            .get(proc_widget_state.scroll_state.current_scroll_position)
                         {
                             current_process = (process.name.to_string(), process.group_pids.clone())
                         } else {
@@ -726,7 +726,7 @@ impl App {
                         }
                     } else {
                         let process = corresponding_filtered_process_list
-                            [proc_widget_state.scroll_state.current_scroll_position as usize]
+                            [proc_widget_state.scroll_state.current_scroll_position]
                             .clone();
                         current_process = (process.name.clone(), vec![process.pid])
                     };
@@ -1455,7 +1455,7 @@ impl App {
                         {
                             if !self.canvas_data.finalized_process_data_map.is_empty() {
                                 proc_widget_state.scroll_state.current_scroll_position =
-                                    finalized_process_data.len() as u64 - 1;
+                                    finalized_process_data.len() - 1;
                                 proc_widget_state.scroll_state.scroll_direction =
                                     ScrollDirection::DOWN;
                             }
@@ -1470,7 +1470,7 @@ impl App {
                     {
                         if !self.canvas_data.temp_sensor_data.is_empty() {
                             temp_widget_state.scroll_state.current_scroll_position =
-                                self.canvas_data.temp_sensor_data.len() as u64 - 1;
+                                self.canvas_data.temp_sensor_data.len() - 1;
                             temp_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
                         }
                     }
@@ -1483,7 +1483,7 @@ impl App {
                     {
                         if !self.canvas_data.disk_data.is_empty() {
                             disk_widget_state.scroll_state.current_scroll_position =
-                                self.canvas_data.disk_data.len() as u64 - 1;
+                                self.canvas_data.disk_data.len() - 1;
                             disk_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
                         }
                     }
@@ -1494,7 +1494,7 @@ impl App {
                         .widget_states
                         .get_mut(&(self.current_widget.widget_id - 1))
                     {
-                        let cap = self.canvas_data.cpu_data.len() as u64;
+                        let cap = self.canvas_data.cpu_data.len();
                         if cap > 0 {
                             cpu_widget_state.scroll_state.current_scroll_position = cap - 1;
                             cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
@@ -1550,7 +1550,7 @@ impl App {
                 && current_posn as i64 + num_to_change_by < cap as i64
             {
                 cpu_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as u64;
+                    (current_posn as i64 + num_to_change_by) as usize;
             }
 
             if num_to_change_by < 0 {
@@ -1578,7 +1578,7 @@ impl App {
                     && current_posn as i64 + num_to_change_by < finalized_process_data.len() as i64
                 {
                     proc_widget_state.scroll_state.current_scroll_position =
-                        (current_posn as i64 + num_to_change_by) as u64;
+                        (current_posn as i64 + num_to_change_by) as usize;
                 }
             }
 
@@ -1603,7 +1603,7 @@ impl App {
                     < self.canvas_data.temp_sensor_data.len() as i64
             {
                 temp_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as u64;
+                    (current_posn as i64 + num_to_change_by) as usize;
             }
 
             if num_to_change_by < 0 {
@@ -1626,7 +1626,7 @@ impl App {
                 && current_posn as i64 + num_to_change_by < self.canvas_data.disk_data.len() as i64
             {
                 disk_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as u64;
+                    (current_posn as i64 + num_to_change_by) as usize;
             }
 
             if num_to_change_by < 0 {

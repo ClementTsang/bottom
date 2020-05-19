@@ -40,7 +40,7 @@ impl DiskTableWidget for Painter {
         if let Some(disk_widget_state) = app_state.disk_state.widget_states.get_mut(&widget_id) {
             let disk_data: &mut [Vec<String>] = &mut app_state.canvas_data.disk_data;
             let start_position = get_start_position(
-                draw_loc.height.saturating_sub(self.table_height_offset) as u64,
+                usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
                 &disk_widget_state.scroll_state.scroll_direction,
                 &mut disk_widget_state.scroll_state.previous_scroll_position,
                 disk_widget_state.scroll_state.current_scroll_position,
@@ -49,9 +49,9 @@ impl DiskTableWidget for Painter {
             let is_on_widget = app_state.current_widget.widget_id == widget_id;
             let disk_table_state = &mut disk_widget_state.scroll_state.table_state;
             disk_table_state.select(Some(
-                (disk_widget_state.scroll_state.current_scroll_position - start_position) as usize,
+                disk_widget_state.scroll_state.current_scroll_position - start_position,
             ));
-            let sliced_vec = &mut disk_data[start_position as usize..];
+            let sliced_vec = &mut disk_data[start_position..];
             let disk_rows = sliced_vec.iter().map(|disk| Row::Data(disk.iter()));
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0

@@ -47,7 +47,7 @@ impl CpuBasicWidget for Painter {
 
         let num_cpus = cpu_data.len();
         if draw_loc.height > 0 {
-            let remaining_height = draw_loc.height as usize;
+            let remaining_height = usize::from(draw_loc.height);
             const REQUIRED_COLUMNS: usize = 4;
 
             let chunk_vec =
@@ -60,8 +60,7 @@ impl CpuBasicWidget for Painter {
             // +9 due to 3 + 4 + 2 columns for the name & space + percentage + bar bounds
             const MARGIN_SPACE: usize = 2;
             let remaining_width = usize::from(draw_loc.width)
-                .saturating_sub((9 + MARGIN_SPACE) * REQUIRED_COLUMNS - MARGIN_SPACE)
-                as usize;
+                .saturating_sub((9 + MARGIN_SPACE) * REQUIRED_COLUMNS - MARGIN_SPACE);
 
             let bar_length = remaining_width / REQUIRED_COLUMNS;
 
@@ -112,7 +111,7 @@ impl CpuBasicWidget for Painter {
                             Text::Styled(
                                 (&cpu_bars[cpu_index]).into(),
                                 self.colours.cpu_colour_styles
-                                    [cpu_index as usize % self.colours.cpu_colour_styles.len()],
+                                    [cpu_index % self.colours.cpu_colour_styles.len()],
                             )
                         })
                         .collect::<Vec<_>>();

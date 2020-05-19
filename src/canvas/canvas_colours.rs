@@ -130,7 +130,7 @@ impl CanvasColours {
     }
 
     pub fn set_cpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
-        let max_amount = std::cmp::min(colours.len(), NUM_COLOURS as usize);
+        let max_amount = std::cmp::min(colours.len(), NUM_COLOURS);
         for (itx, colour) in colours.iter().enumerate() {
             if itx >= max_amount {
                 break;
@@ -141,7 +141,7 @@ impl CanvasColours {
     }
 
     pub fn generate_remaining_cpu_colours(&mut self) {
-        let remaining_num_colours = NUM_COLOURS - self.cpu_colour_styles.len() as i32;
+        let remaining_num_colours = NUM_COLOURS.saturating_sub(self.cpu_colour_styles.len());
         self.cpu_colour_styles
             .extend(gen_n_styles(remaining_num_colours));
     }
