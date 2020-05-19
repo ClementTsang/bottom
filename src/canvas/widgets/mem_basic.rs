@@ -39,7 +39,7 @@ impl MemBasicWidget for Painter {
         }
 
         // +9 due to 3 + 4 + 2 + 2 columns for the name & space + percentage + bar bounds + margin spacing
-        let bar_length = draw_loc.width.saturating_sub(11) as usize;
+        let bar_length = usize::from(draw_loc.width.saturating_sub(11));
         let ram_use_percentage = if let Some(mem) = mem_data.last() {
             mem.1
         } else {

@@ -84,7 +84,7 @@ impl ProcessTableWidget for Painter {
                 let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
                 let position = get_start_position(
-                    draw_loc.height.saturating_sub(self.table_height_offset) as u64,
+                    usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
                     &proc_widget_state.scroll_state.scroll_direction,
                     &mut proc_widget_state.scroll_state.previous_scroll_position,
                     proc_widget_state.scroll_state.current_scroll_position,
@@ -92,17 +92,16 @@ impl ProcessTableWidget for Painter {
                 );
 
                 // Sanity check
-                let start_position = if position >= process_data.len() as u64 {
-                    process_data.len().saturating_sub(1) as u64
+                let start_position = if position >= process_data.len() {
+                    process_data.len().saturating_sub(1)
                 } else {
                     position
                 };
 
-                let sliced_vec = &process_data[start_position as usize..];
+                let sliced_vec = &process_data[start_position..];
                 let proc_table_state = &mut proc_widget_state.scroll_state.table_state;
                 proc_table_state.select(Some(
-                    (proc_widget_state.scroll_state.current_scroll_position - start_position)
-                        as usize,
+                    proc_widget_state.scroll_state.current_scroll_position - start_position,
                 ));
                 let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                     0
@@ -321,7 +320,7 @@ impl ProcessTableWidget for Painter {
             app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
         {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let num_columns = draw_loc.width as usize;
+            let num_columns = usize::from(draw_loc.width);
             let search_title = "> ";
 
             let num_chars_for_text = search_title.len();

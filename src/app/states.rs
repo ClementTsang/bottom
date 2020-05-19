@@ -33,8 +33,8 @@ pub enum CursorDirection {
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
 #[derive(Default)]
 pub struct AppScrollWidgetState {
-    pub current_scroll_position: u64,
-    pub previous_scroll_position: u64,
+    pub current_scroll_position: usize,
+    pub previous_scroll_position: usize,
     pub scroll_direction: ScrollDirection,
     pub table_state: TableState,
 }

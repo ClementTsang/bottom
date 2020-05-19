@@ -185,7 +185,6 @@ impl CpuGraphWidget for Painter {
                             self.colours.cpu_colour_styles[cpu_widget_state
                                 .scroll_state
                                 .current_scroll_position
-                                as usize
                                 % self.colours.cpu_colour_styles.len()]
                         })
                         .data(&cpu.cpu_data[..])
@@ -235,7 +234,7 @@ impl CpuGraphWidget for Painter {
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
             let start_position = get_start_position(
-                draw_loc.height.saturating_sub(self.table_height_offset) as u64,
+                usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
                 &cpu_widget_state.scroll_state.scroll_direction,
                 &mut cpu_widget_state.scroll_state.previous_scroll_position,
                 cpu_widget_state.scroll_state.current_scroll_position,
@@ -243,10 +242,10 @@ impl CpuGraphWidget for Painter {
             );
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
-            let sliced_cpu_data = &cpu_data[start_position as usize..];
+            let sliced_cpu_data = &cpu_data[start_position..];
 
             let mut offset_scroll_index =
-                (cpu_widget_state.scroll_state.current_scroll_position - start_position) as usize;
+                cpu_widget_state.scroll_state.current_scroll_position - start_position;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
@@ -269,12 +268,12 @@ impl CpuGraphWidget for Painter {
                             if itx == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else {
-                                self.colours.cpu_colour_styles[itx + start_position as usize
+                                self.colours.cpu_colour_styles[itx + start_position
                                     - AVG_POSITION
                                     - 1 % self.colours.cpu_colour_styles.len()]
                             }
                         } else {
-                            self.colours.cpu_colour_styles[itx + start_position as usize
+                            self.colours.cpu_colour_styles[itx + start_position
                                 - ALL_POSITION
                                 - 1 % self.colours.cpu_colour_styles.len()]
                         },

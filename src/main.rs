@@ -633,12 +633,10 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         let mut resulting_processes = filtered_process_data;
         sort_process_data(&mut resulting_processes, proc_widget_state);
 
-        if proc_widget_state.scroll_state.current_scroll_position
-            >= resulting_processes.len() as u64
-        {
+        if proc_widget_state.scroll_state.current_scroll_position >= resulting_processes.len() {
             proc_widget_state.scroll_state.current_scroll_position =
                 if resulting_processes.len() > 1 {
-                    resulting_processes.len() as u64 - 1
+                    resulting_processes.len() - 1
                 } else {
                     0
                 };

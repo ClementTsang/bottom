@@ -42,7 +42,7 @@ lazy_static! {
 
 /// Generates random colours.  Strategy found from
 /// https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
-pub fn gen_n_styles(num_to_gen: i32) -> Vec<Style> {
+pub fn gen_n_styles(num_to_gen: usize) -> Vec<Style> {
     fn gen_hsv(h: f32) -> f32 {
         let new_val = h + GOLDEN_RATIO;
         if new_val > 1.0 {

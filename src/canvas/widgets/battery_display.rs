@@ -69,7 +69,8 @@ impl BatteryDisplayWidget for Painter {
                 .get(battery_widget_state.currently_selected_battery_index)
             {
                 // Assuming a 50/50 split in width
-                let bar_length = (draw_loc.width.saturating_sub(2) / 2).saturating_sub(8) as usize;
+                let bar_length =
+                    usize::from((draw_loc.width.saturating_sub(2) / 2).saturating_sub(8));
                 let charge_percentage = battery_details.charge_percentage;
                 let num_bars = calculate_basic_use_bars(charge_percentage, bar_length);
                 let bars = format!(

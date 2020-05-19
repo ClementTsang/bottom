@@ -17,7 +17,7 @@ pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
 pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 // Number of colours to generate for the CPU chart/table
-pub const NUM_COLOURS: i32 = 256;
+pub const NUM_COLOURS: usize = 256;
 
 // Canvas stuff
 // The minimum threshold when resizing tables

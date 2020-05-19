@@ -41,7 +41,7 @@ impl TempTableWidget for Painter {
             let temp_sensor_data: &mut [Vec<String>] = &mut app_state.canvas_data.temp_sensor_data;
 
             let start_position = get_start_position(
-                draw_loc.height.saturating_sub(self.table_height_offset) as u64,
+                usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
                 &temp_widget_state.scroll_state.scroll_direction,
                 &mut temp_widget_state.scroll_state.previous_scroll_position,
                 temp_widget_state.scroll_state.current_scroll_position,
@@ -50,9 +50,9 @@ impl TempTableWidget for Painter {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let temp_table_state = &mut temp_widget_state.scroll_state.table_state;
             temp_table_state.select(Some(
-                (temp_widget_state.scroll_state.current_scroll_position - start_position) as usize,
+                temp_widget_state.scroll_state.current_scroll_position - start_position,
             ));
-            let sliced_vec = &temp_sensor_data[start_position as usize..];
+            let sliced_vec = &temp_sensor_data[start_position..];
             let temperature_rows = sliced_vec.iter().map(|temp_row| Row::Data(temp_row.iter()));
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
