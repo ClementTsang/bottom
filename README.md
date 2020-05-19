@@ -300,7 +300,7 @@ As yet _another_ process/system visualization and management application, bottom
 
 - Display temperatures from sensors
 
-- Display information regarding processes, like CPU, memory, and I/O usage
+- Display information regarding processes, like CPU, memory, I/O usage, and process state
 
 - Process management (process killing _is_ all you need, right?)
 
