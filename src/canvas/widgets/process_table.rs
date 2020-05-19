@@ -146,7 +146,7 @@ impl ProcessTableWidget for Painter {
                 let wps = "W/s".to_string();
                 let total_read = "Read".to_string();
                 let total_write = "Write".to_string();
-                // let process_state = "State".to_string();
+                let process_state = "State".to_string();
 
                 let direction_val = if proc_widget_state.process_sorting_reverse {
                     "▼".to_string()
@@ -161,17 +161,30 @@ impl ProcessTableWidget for Painter {
                     ProcessSorting::NAME => name += &direction_val,
                 };
 
-                let process_headers = [
-                    pid_or_name,
-                    name,
-                    cpu,
-                    mem,
-                    rps,
-                    wps,
-                    total_read,
-                    total_write,
-                    // process_state,
-                ];
+                let process_headers = if proc_widget_state.is_grouped {
+                    vec![
+                        pid_or_name,
+                        name,
+                        cpu,
+                        mem,
+                        rps,
+                        wps,
+                        total_read,
+                        total_write,
+                    ]
+                } else {
+                    vec![
+                        pid_or_name,
+                        name,
+                        cpu,
+                        mem,
+                        rps,
+                        wps,
+                        total_read,
+                        total_write,
+                        process_state,
+                    ]
+                };
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
                     .map(|entry| entry.len())
@@ -179,7 +192,11 @@ impl ProcessTableWidget for Painter {
 
                 // Calculate widths
                 let width = f64::from(draw_loc.width);
-                let width_ratios = [0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15];
+                let width_ratios = if proc_widget_state.is_grouped {
+                    vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
+                } else {
+                    vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+                };
                 let variable_intrinsic_results = get_variable_intrinsic_widths(
                     width as u16,
                     &width_ratios,
