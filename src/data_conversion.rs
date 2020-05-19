@@ -383,7 +383,6 @@ pub fn convert_process_data(
         (*entry).write_per_sec += process.write_bytes_per_sec;
         (*entry).total_read += process.total_read_bytes;
         (*entry).total_write += process.total_write_bytes;
-        (*entry).process_state.push(process.process_state_char);
 
         let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
         let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
