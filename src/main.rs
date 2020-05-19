@@ -635,11 +635,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 
         if proc_widget_state.scroll_state.current_scroll_position >= resulting_processes.len() {
             proc_widget_state.scroll_state.current_scroll_position =
-                if resulting_processes.len() > 1 {
-                    resulting_processes.len() - 1
-                } else {
-                    0
-                };
+                resulting_processes.len().saturating_sub(1);
             proc_widget_state.scroll_state.previous_scroll_position = 0;
             proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::DOWN;
         }
