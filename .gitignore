@@ -7,7 +7,6 @@
 
 # Stuff to really ignore
 *.log
-.vscode
 rust-unmangle
 *.svg
 *.data
