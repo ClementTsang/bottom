@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Make highlighted CPU persist even if widget is not selected - this should help make it easier to know what CPU you are looking at
     even if you aren't currently on the CPU widget.
 
+### Bug Fixes
+
+- Fixed a bug where bottom would incorrectly read the wrong values to calculate the read/write columns for processes in Linux.
+
 ## [0.4.3] - 2020-05-15
 
 ### Other

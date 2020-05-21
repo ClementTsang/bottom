@@ -138,8 +138,8 @@ fn get_process_io(path: &PathBuf) -> std::io::Result<String> {
 fn get_linux_process_io_usage(io_stats: &[&str]) -> (u64, u64) {
     // Represents read_bytes and write_bytes
     (
-        io_stats[4].parse::<u64>().unwrap_or(0),
-        io_stats[5].parse::<u64>().unwrap_or(0),
+        io_stats[9].parse::<u64>().unwrap_or(0),
+        io_stats[11].parse::<u64>().unwrap_or(0),
     )
 }
 
@@ -240,12 +240,14 @@ fn convert_ps<S: core::hash::BuildHasher>(
             let read_bytes_per_sec = if time_difference_in_secs == 0 {
                 0
             } else {
-                (total_write_bytes - new_pid_stat.total_write_bytes) / time_difference_in_secs
+                total_read_bytes.saturating_sub(new_pid_stat.total_read_bytes)
+                    / time_difference_in_secs
             };
             let write_bytes_per_sec = if time_difference_in_secs == 0 {
                 0
             } else {
-                (total_read_bytes - new_pid_stat.total_read_bytes) / time_difference_in_secs
+                total_write_bytes.saturating_sub(new_pid_stat.total_write_bytes)
+                    / time_difference_in_secs
             };
 
             new_pid_stat.total_read_bytes = total_read_bytes;
