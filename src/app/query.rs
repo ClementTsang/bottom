@@ -77,6 +77,7 @@ impl ProcessQuery for ProcWidgetState {
             let mut rhs: Option<Box<And>> = None;
 
             while let Some(queue_top) = query.front() {
+                debug!("OR QT: {:?}", queue_top);
                 if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
                     rhs = Some(Box::new(process_and(query)?));
@@ -110,6 +111,7 @@ impl ProcessQuery for ProcWidgetState {
             let mut rhs: Option<Box<Prefix>> = None;
 
             while let Some(queue_top) = query.front() {
+                debug!("AND QT: {:?}", queue_top);
                 if queue_top == ")" {
                     break;
                 } else if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
@@ -138,7 +140,7 @@ impl ProcessQuery for ProcWidgetState {
 
         fn process_prefix(query: &mut VecDeque<String>, inside_quotations: bool) -> Result<Prefix> {
             if let Some(queue_top) = query.pop_front() {
-                // debug!("QT: {:?}", queue_top);
+                debug!("Prefix QT: {:?}", queue_top);
                 if !inside_quotations && queue_top == "(" {
                     if query.front().is_none() {
                         return Err(QueryError("Missing closing parentheses".into()));
@@ -407,7 +409,6 @@ impl ProcessQuery for ProcWidgetState {
     }
 }
 
-#[derive(Debug)]
 pub struct Query {
     /// Remember, AND > OR, but AND must come after OR when we parse.
     pub query: And,
@@ -430,7 +431,12 @@ impl Query {
     }
 }
 
-#[derive(Debug)]
+impl std::fmt::Debug for Query {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{:?}", self.query))
+    }
+}
+
 pub struct Or {
     pub lhs: And,
     pub rhs: Option<Box<And>>,
@@ -466,7 +472,15 @@ impl Or {
     }
 }
 
-#[derive(Debug)]
+impl std::fmt::Debug for Or {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.rhs {
+            Some(rhs) => f.write_fmt(format_args!("({:?} OR {:?})", self.lhs, rhs)),
+            None => f.write_fmt(format_args!("{:?}", self.lhs)),
+        }
+    }
+}
+
 pub struct And {
     pub lhs: Prefix,
     pub rhs: Option<Box<Prefix>>,
@@ -498,6 +512,15 @@ impl And {
             self.lhs.check(process) && rhs.check(process)
         } else {
             self.lhs.check(process)
+        }
+    }
+}
+
+impl std::fmt::Debug for And {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.rhs {
+            Some(rhs) => f.write_fmt(format_args!("({:?} AND {:?})", self.lhs, rhs)),
+            None => f.write_fmt(format_args!("{:?}", self.lhs)),
         }
     }
 }
@@ -535,7 +558,6 @@ impl std::str::FromStr for PrefixType {
     }
 }
 
-#[derive(Debug)]
 pub struct Prefix {
     pub or: Option<Box<Or>>,
     pub regex_prefix: Option<(PrefixType, StringQuery)>,
@@ -646,6 +668,20 @@ impl Prefix {
             }
         } else {
             true
+        }
+    }
+}
+
+impl std::fmt::Debug for Prefix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(or) = &self.or {
+            f.write_fmt(format_args!("{:?}", or))
+        } else if let Some(regex_prefix) = &self.regex_prefix {
+            f.write_fmt(format_args!("{:?}", regex_prefix))
+        } else if let Some(compare_prefix) = &self.compare_prefix {
+            f.write_fmt(format_args!("{:?}", compare_prefix))
+        } else {
+            f.write_fmt(format_args!(""))
         }
     }
 }
