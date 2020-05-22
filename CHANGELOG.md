@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a bug where bottom would incorrectly read the wrong values to calculate the read/write columns for processes in Linux.
 
+- Fixed a bug where OR operations in the process query wouldn't work for process names.
+
 ## [0.4.3] - 2020-05-15
 
 ### Other

@@ -7,8 +7,10 @@ use crate::{
     },
 };
 use std::collections::VecDeque;
+use std::fmt::Debug;
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
+const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
 const OR_LIST: [&str; 2] = ["or", "||"];
 const AND_LIST: [&str; 2] = ["and", "&&"];
 
@@ -40,36 +42,13 @@ impl ProcessQuery for ProcWidgetState {
     fn parse_query(&self) -> Result<Query> {
         fn process_string_to_filter(query: &mut VecDeque<String>) -> Result<Query> {
             let lhs = process_or(query)?;
-            let mut and_query = And {
-                lhs: Prefix {
-                    or: Some(Box::from(lhs)),
-                    compare_prefix: None,
-                    regex_prefix: None,
-                },
-                rhs: None,
-            };
+            let mut list_of_ors = vec![lhs];
 
             while query.front().is_some() {
-                let rhs = process_or(query)?;
-
-                and_query = And {
-                    lhs: Prefix {
-                        or: Some(Box::from(Or {
-                            lhs: and_query,
-                            rhs: None,
-                        })),
-                        compare_prefix: None,
-                        regex_prefix: None,
-                    },
-                    rhs: Some(Box::from(Prefix {
-                        or: Some(Box::from(rhs)),
-                        compare_prefix: None,
-                        regex_prefix: None,
-                    })),
-                }
+                list_of_ors.push(process_or(query)?);
             }
 
-            Ok(Query { query: and_query })
+            Ok(Query { query: list_of_ors })
         }
 
         fn process_or(query: &mut VecDeque<String>) -> Result<Or> {
@@ -77,7 +56,7 @@ impl ProcessQuery for ProcWidgetState {
             let mut rhs: Option<Box<And>> = None;
 
             while let Some(queue_top) = query.front() {
-                debug!("OR QT: {:?}", queue_top);
+                // debug!("OR QT: {:?}", queue_top);
                 if OR_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
                     rhs = Some(Box::new(process_and(query)?));
@@ -98,6 +77,8 @@ impl ProcessQuery for ProcWidgetState {
                     } else {
                         break;
                     }
+                } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
+                    return Err(QueryError("Comparison not valid here".into()));
                 } else {
                     break;
                 }
@@ -111,25 +92,32 @@ impl ProcessQuery for ProcWidgetState {
             let mut rhs: Option<Box<Prefix>> = None;
 
             while let Some(queue_top) = query.front() {
-                debug!("AND QT: {:?}", queue_top);
-                if queue_top == ")" {
-                    break;
-                } else if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
+                // debug!("AND QT: {:?}", queue_top);
+                if AND_LIST.contains(&queue_top.to_lowercase().as_str()) {
                     query.pop_front();
-                }
-                rhs = Some(Box::new(process_prefix(query, false)?));
 
-                if query.front().is_some() {
-                    // Must merge LHS and RHS
-                    lhs = Prefix {
-                        or: Some(Box::new(Or {
-                            lhs: And { lhs, rhs },
-                            rhs: None,
-                        })),
-                        regex_prefix: None,
-                        compare_prefix: None,
-                    };
-                    rhs = None;
+                    rhs = Some(Box::new(process_prefix(query, false)?));
+
+                    if let Some(next_queue_top) = query.front() {
+                        if AND_LIST.contains(&next_queue_top.to_lowercase().as_str()) {
+                            // Must merge LHS and RHS
+                            lhs = Prefix {
+                                or: Some(Box::new(Or {
+                                    lhs: And { lhs, rhs },
+                                    rhs: None,
+                                })),
+                                regex_prefix: None,
+                                compare_prefix: None,
+                            };
+                            rhs = None;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
+                    return Err(QueryError("Comparison not valid here".into()));
                 } else {
                     break;
                 }
@@ -138,116 +126,135 @@ impl ProcessQuery for ProcWidgetState {
             Ok(And { lhs, rhs })
         }
 
-        fn process_prefix(query: &mut VecDeque<String>, inside_quotations: bool) -> Result<Prefix> {
+        fn process_prefix(query: &mut VecDeque<String>, inside_quotation: bool) -> Result<Prefix> {
             if let Some(queue_top) = query.pop_front() {
-                debug!("Prefix QT: {:?}", queue_top);
-                if !inside_quotations && queue_top == "(" {
-                    if query.front().is_none() {
-                        return Err(QueryError("Missing closing parentheses".into()));
-                    }
+                // debug!("Prefix QT: {:?}", queue_top);
 
-                    // Get content within bracket; and check if paren is complete
-                    let or = process_or(query)?;
-                    if let Some(close_paren) = query.pop_front() {
-                        if close_paren.to_lowercase() == ")" {
-                            return Ok(Prefix {
-                                or: Some(Box::new(or)),
-                                regex_prefix: None,
-                                compare_prefix: None,
-                            });
+                if inside_quotation {
+                    if queue_top == "\"" {
+                        // This means we hit something like "".  Return an empty prefix, and to deal with
+                        // the close quote checker, add one to the top of the stack.  Ugly fix but whatever.
+                        query.push_front("\"".to_string());
+                        return Ok(Prefix {
+                            or: None,
+                            regex_prefix: Some((
+                                PrefixType::Name,
+                                StringQuery::Value(String::default()),
+                            )),
+                            compare_prefix: None,
+                        });
+                    } else {
+                        let mut quoted_string = queue_top;
+                        while let Some(next_str) = query.front() {
+                            if next_str == "\"" {
+                                // Stop!
+                                break;
+                            } else {
+                                quoted_string.push_str(next_str);
+                                query.pop_front();
+                            }
+                        }
+                        return Ok(Prefix {
+                            or: None,
+                            regex_prefix: Some((
+                                PrefixType::Name,
+                                StringQuery::Value(quoted_string),
+                            )),
+                            compare_prefix: None,
+                        });
+                    }
+                } else {
+                    if queue_top == "(" {
+                        if query.is_empty() {
+                            return Err(QueryError("Missing closing parentheses".into()));
+                        }
+
+                        let mut list_of_ors = VecDeque::new();
+
+                        while let Some(in_paren_query_top) = query.front() {
+                            if in_paren_query_top != ")" {
+                                list_of_ors.push_back(process_or(query)?);
+                            } else {
+                                break;
+                            }
+                        }
+
+                        // Ensure not empty
+                        if list_of_ors.is_empty() {
+                            return Err(QueryError("No values within parentheses group".into()));
+                        }
+
+                        // Now convert this back to a OR...
+                        let mut returned_or = Or {
+                            lhs: And {
+                                lhs: Prefix {
+                                    or: Some(Box::new(list_of_ors.pop_front().unwrap())),
+                                    compare_prefix: None,
+                                    regex_prefix: None,
+                                },
+                                rhs: None,
+                            },
+                            rhs: None,
+                        };
+                        list_of_ors.into_iter().for_each(|rhs| {
+                            returned_or = Or {
+                                lhs: And {
+                                    lhs: Prefix {
+                                        or: Some(Box::new(returned_or.clone())),
+                                        compare_prefix: None,
+                                        regex_prefix: None,
+                                    },
+                                    rhs: Some(Box::new(Prefix {
+                                        or: Some(Box::new(rhs)),
+                                        compare_prefix: None,
+                                        regex_prefix: None,
+                                    })),
+                                },
+                                rhs: None,
+                            };
+                        });
+
+                        if let Some(close_paren) = query.pop_front() {
+                            if close_paren == ")" {
+                                return Ok(Prefix {
+                                    or: Some(Box::new(returned_or)),
+                                    regex_prefix: None,
+                                    compare_prefix: None,
+                                });
+                            } else {
+                                return Err(QueryError("Missing closing parentheses".into()));
+                            }
                         } else {
                             return Err(QueryError("Missing closing parentheses".into()));
                         }
-                    } else {
-                        return Err(QueryError("Missing closing parentheses".into()));
-                    }
-                } else if !inside_quotations && queue_top == ")" {
-                    // This is actually caught by the regex creation, but it seems a bit
-                    // sloppy to leave that up to that to do so...
+                    } else if queue_top == ")" {
+                        return Err(QueryError("Missing opening parentheses".into()));
+                    } else if queue_top == "\"" {
+                        // Similar to parentheses, trap and check for missing closing quotes.  Note, however, that we
+                        // will DIRECTLY call another process_prefix call...
 
-                    return Err(QueryError("Missing opening parentheses".into()));
-                } else if !inside_quotations && queue_top == "\"" {
-                    // Similar to parentheses, trap and check for missing closing quotes.  Note, however, that we
-                    // will DIRECTLY call another process_prefix call...
-
-                    let prefix = process_prefix(query, true)?;
-                    if let Some(close_paren) = query.pop_front() {
-                        if close_paren.to_lowercase() == "\"" {
-                            return Ok(prefix);
+                        let prefix = process_prefix(query, true)?;
+                        if let Some(close_paren) = query.pop_front() {
+                            if close_paren == "\"" {
+                                return Ok(prefix);
+                            } else {
+                                return Err(QueryError("Missing closing quotation".into()));
+                            }
                         } else {
                             return Err(QueryError("Missing closing quotation".into()));
                         }
                     } else {
-                        return Err(QueryError("Missing closing quotation".into()));
-                    }
-                } else if inside_quotations && queue_top == "\"" {
-                    // This means we hit something like "".  Return an empty prefix, and to deal with
-                    // the close quote checker, add one to the top of the stack.  Ugly fix but whatever.
-                    query.push_front("\"".to_string());
-                    return Ok(Prefix {
-                        or: None,
-                        regex_prefix: Some((
-                            PrefixType::Name,
-                            StringQuery::Value(String::default()),
-                        )),
-                        compare_prefix: None,
-                    });
-                } else {
-                    //  Get prefix type...
-                    let prefix_type = queue_top.parse::<PrefixType>()?;
-                    let content = if let PrefixType::Name = prefix_type {
-                        Some(queue_top)
-                    } else {
-                        query.pop_front()
-                    };
+                        //  Get prefix type...
+                        let prefix_type = queue_top.parse::<PrefixType>()?;
+                        let content = if let PrefixType::Name = prefix_type {
+                            Some(queue_top)
+                        } else {
+                            query.pop_front()
+                        };
 
-                    if let Some(content) = content {
-                        match &prefix_type {
-                            PrefixType::Name if !inside_quotations => {
-                                return Ok(Prefix {
-                                    or: None,
-                                    regex_prefix: Some((prefix_type, StringQuery::Value(content))),
-                                    compare_prefix: None,
-                                })
-                            }
-                            PrefixType::Name if inside_quotations => {
-                                // If *this* is the case, then we must peek until we see a closing quote and add it all together...
-
-                                let mut final_content = content;
-                                while let Some(next_str) = query.front() {
-                                    if next_str == "\"" {
-                                        // Stop!
-                                        break;
-                                    } else {
-                                        final_content.push_str(next_str);
-                                        query.pop_front();
-                                    }
-                                }
-
-                                return Ok(Prefix {
-                                    or: None,
-                                    regex_prefix: Some((
-                                        prefix_type,
-                                        StringQuery::Value(final_content),
-                                    )),
-                                    compare_prefix: None,
-                                });
-                            }
-                            PrefixType::Pid => {
-                                // We have to check if someone put an "="...
-                                if content == "=" {
-                                    // Check next string if possible
-                                    if let Some(queue_next) = query.pop_front() {
-                                        return Ok(Prefix {
-                                            or: None,
-                                            regex_prefix: Some((
-                                                prefix_type,
-                                                StringQuery::Value(queue_next),
-                                            )),
-                                            compare_prefix: None,
-                                        });
-                                    }
-                                } else {
+                        if let Some(content) = content {
+                            match &prefix_type {
+                                PrefixType::Name => {
                                     return Ok(Prefix {
                                         or: None,
                                         regex_prefix: Some((
@@ -255,128 +262,157 @@ impl ProcessQuery for ProcWidgetState {
                                             StringQuery::Value(content),
                                         )),
                                         compare_prefix: None,
-                                    });
+                                    })
                                 }
-                            }
-                            _ => {
-                                // Now we gotta parse the content... yay.
-
-                                let mut condition: Option<QueryComparison> = None;
-                                let mut value: Option<f64> = None;
-
-                                if content == "=" {
-                                    condition = Some(QueryComparison::Equal);
-                                    if let Some(queue_next) = query.pop_front() {
-                                        value = queue_next.parse::<f64>().ok();
-                                    } else {
-                                        return Err(QueryError("Missing value".into()));
-                                    }
-                                } else if content == ">" || content == "<" {
-                                    // We also have to check if the next string is an "="...
-                                    if let Some(queue_next) = query.pop_front() {
-                                        if queue_next == "=" {
-                                            condition = Some(if content == ">" {
-                                                QueryComparison::GreaterOrEqual
-                                            } else {
-                                                QueryComparison::LessOrEqual
+                                PrefixType::Pid => {
+                                    // We have to check if someone put an "="...
+                                    if content == "=" {
+                                        // Check next string if possible
+                                        if let Some(queue_next) = query.pop_front() {
+                                            return Ok(Prefix {
+                                                or: None,
+                                                regex_prefix: Some((
+                                                    prefix_type,
+                                                    StringQuery::Value(queue_next),
+                                                )),
+                                                compare_prefix: None,
                                             });
-                                            if let Some(queue_next_next) = query.pop_front() {
-                                                value = queue_next_next.parse::<f64>().ok();
-                                            } else {
-                                                return Err(QueryError("Missing value".into()));
-                                            }
-                                        } else {
-                                            condition = Some(if content == ">" {
-                                                QueryComparison::Greater
-                                            } else {
-                                                QueryComparison::Less
-                                            });
-                                            value = queue_next.parse::<f64>().ok();
                                         }
                                     } else {
-                                        return Err(QueryError("Missing value".into()));
-                                    }
-                                }
-
-                                if let Some(condition) = condition {
-                                    if let Some(read_value) = value {
-                                        // Now we want to check one last thing - is there a unit?
-                                        // If no unit, assume base.
-                                        // Furthermore, base must be PEEKED at initially, and will
-                                        // require (likely) prefix_type specific checks
-                                        // Lastly, if it *is* a unit, remember to POP!
-
-                                        let mut value = read_value;
-
-                                        match prefix_type {
-                                            PrefixType::Rps
-                                            | PrefixType::Wps
-                                            | PrefixType::TRead
-                                            | PrefixType::TWrite => {
-                                                if let Some(potential_unit) = query.front() {
-                                                    match potential_unit.to_lowercase().as_str() {
-                                                        "tb" => {
-                                                            value *= 1_000_000_000_000.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "tib" => {
-                                                            value *= 1_099_511_627_776.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "gb" => {
-                                                            value *= 1_000_000_000.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "gib" => {
-                                                            value *= 1_073_741_824.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "mb" => {
-                                                            value *= 1_000_000.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "mib" => {
-                                                            value *= 1_048_576.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "kb" => {
-                                                            value *= 1000.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "kib" => {
-                                                            value *= 1024.0;
-                                                            query.pop_front();
-                                                        }
-                                                        "b" => {
-                                                            // Just gotta pop.
-                                                            query.pop_front();
-                                                        }
-                                                        _ => {}
-                                                    }
-                                                }
-                                            }
-                                            _ => {}
-                                        }
-
                                         return Ok(Prefix {
                                             or: None,
-                                            regex_prefix: None,
-                                            compare_prefix: Some((
+                                            regex_prefix: Some((
                                                 prefix_type,
-                                                NumericalQuery { condition, value },
+                                                StringQuery::Value(content),
                                             )),
+                                            compare_prefix: None,
                                         });
                                     }
                                 }
+                                _ => {
+                                    // Now we gotta parse the content... yay.
+
+                                    let mut condition: Option<QueryComparison> = None;
+                                    let mut value: Option<f64> = None;
+
+                                    if content == "=" {
+                                        condition = Some(QueryComparison::Equal);
+                                        if let Some(queue_next) = query.pop_front() {
+                                            value = queue_next.parse::<f64>().ok();
+                                        } else {
+                                            return Err(QueryError("Missing value".into()));
+                                        }
+                                    } else if content == ">" || content == "<" {
+                                        // We also have to check if the next string is an "="...
+                                        if let Some(queue_next) = query.pop_front() {
+                                            if queue_next == "=" {
+                                                condition = Some(if content == ">" {
+                                                    QueryComparison::GreaterOrEqual
+                                                } else {
+                                                    QueryComparison::LessOrEqual
+                                                });
+                                                if let Some(queue_next_next) = query.pop_front() {
+                                                    value = queue_next_next.parse::<f64>().ok();
+                                                } else {
+                                                    return Err(QueryError("Missing value".into()));
+                                                }
+                                            } else {
+                                                condition = Some(if content == ">" {
+                                                    QueryComparison::Greater
+                                                } else {
+                                                    QueryComparison::Less
+                                                });
+                                                value = queue_next.parse::<f64>().ok();
+                                            }
+                                        } else {
+                                            return Err(QueryError("Missing value".into()));
+                                        }
+                                    }
+
+                                    if let Some(condition) = condition {
+                                        if let Some(read_value) = value {
+                                            // Now we want to check one last thing - is there a unit?
+                                            // If no unit, assume base.
+                                            // Furthermore, base must be PEEKED at initially, and will
+                                            // require (likely) prefix_type specific checks
+                                            // Lastly, if it *is* a unit, remember to POP!
+
+                                            let mut value = read_value;
+
+                                            match prefix_type {
+                                                PrefixType::Rps
+                                                | PrefixType::Wps
+                                                | PrefixType::TRead
+                                                | PrefixType::TWrite => {
+                                                    if let Some(potential_unit) = query.front() {
+                                                        match potential_unit.to_lowercase().as_str()
+                                                        {
+                                                            "tb" => {
+                                                                value *= 1_000_000_000_000.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "tib" => {
+                                                                value *= 1_099_511_627_776.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "gb" => {
+                                                                value *= 1_000_000_000.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "gib" => {
+                                                                value *= 1_073_741_824.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "mb" => {
+                                                                value *= 1_000_000.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "mib" => {
+                                                                value *= 1_048_576.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "kb" => {
+                                                                value *= 1000.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "kib" => {
+                                                                value *= 1024.0;
+                                                                query.pop_front();
+                                                            }
+                                                            "b" => {
+                                                                // Just gotta pop.
+                                                                query.pop_front();
+                                                            }
+                                                            _ => {}
+                                                        }
+                                                    }
+                                                }
+                                                _ => {}
+                                            }
+
+                                            return Ok(Prefix {
+                                                or: None,
+                                                regex_prefix: None,
+                                                compare_prefix: Some((
+                                                    prefix_type,
+                                                    NumericalQuery { condition, value },
+                                                )),
+                                            });
+                                        }
+                                    }
+                                }
                             }
+                        } else {
+                            return Err(QueryError("Missing argument for search prefix".into()));
                         }
-                    } else {
-                        return Err(QueryError("Missing argument for search prefix".into()));
                     }
                 }
+            } else if inside_quotation {
+                // Uh oh, it's empty with quotes!
+                return Err(QueryError("Missing closing quotation".into()));
             }
 
-            Err(QueryError("Invalid search".into()))
+            Err(QueryError("Invalid query".into()))
         }
 
         let mut split_query = VecDeque::new();
@@ -411,7 +447,7 @@ impl ProcessQuery for ProcWidgetState {
 
 pub struct Query {
     /// Remember, AND > OR, but AND must come after OR when we parse.
-    pub query: And,
+    pub query: Vec<Or>,
 }
 
 impl Query {
@@ -419,24 +455,29 @@ impl Query {
         &mut self, is_searching_whole_word: bool, is_ignoring_case: bool,
         is_searching_with_regex: bool,
     ) -> Result<()> {
-        self.query.process_regexes(
-            is_searching_whole_word,
-            is_ignoring_case,
-            is_searching_with_regex,
-        )
+        for or in &mut self.query {
+            or.process_regexes(
+                is_searching_whole_word,
+                is_ignoring_case,
+                is_searching_with_regex,
+            )?;
+        }
+
+        Ok(())
     }
 
     pub fn check(&self, process: &ConvertedProcessData) -> bool {
-        self.query.check(process)
+        self.query.iter().all(|ok| ok.check(process))
     }
 }
 
-impl std::fmt::Debug for Query {
+impl Debug for Query {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?}", self.query))
     }
 }
 
+#[derive(Default, Clone)]
 pub struct Or {
     pub lhs: And,
     pub rhs: Option<Box<And>>,
@@ -472,7 +513,7 @@ impl Or {
     }
 }
 
-impl std::fmt::Debug for Or {
+impl Debug for Or {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.rhs {
             Some(rhs) => f.write_fmt(format_args!("({:?} OR {:?})", self.lhs, rhs)),
@@ -481,6 +522,7 @@ impl std::fmt::Debug for Or {
     }
 }
 
+#[derive(Default, Clone)]
 pub struct And {
     pub lhs: Prefix,
     pub rhs: Option<Box<Prefix>>,
@@ -516,7 +558,7 @@ impl And {
     }
 }
 
-impl std::fmt::Debug for And {
+impl Debug for And {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.rhs {
             Some(rhs) => f.write_fmt(format_args!("({:?} AND {:?})", self.lhs, rhs)),
@@ -525,7 +567,7 @@ impl std::fmt::Debug for And {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PrefixType {
     Pid,
     Cpu,
@@ -558,6 +600,7 @@ impl std::str::FromStr for PrefixType {
     }
 }
 
+#[derive(Default, Clone)]
 pub struct Prefix {
     pub or: Option<Box<Or>>,
     pub regex_prefix: Option<(PrefixType, StringQuery)>,
@@ -667,12 +710,13 @@ impl Prefix {
                 _ => true,
             }
         } else {
+            // Somehow we have an empty condition... oh well.  Return true.
             true
         }
     }
 }
 
-impl std::fmt::Debug for Prefix {
+impl Debug for Prefix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(or) = &self.or {
             f.write_fmt(format_args!("{:?}", or))
@@ -686,7 +730,7 @@ impl std::fmt::Debug for Prefix {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum QueryComparison {
     Equal,
     Less,
@@ -695,13 +739,13 @@ pub enum QueryComparison {
     GreaterOrEqual,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StringQuery {
     Value(String),
     Regex(regex::Regex),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NumericalQuery {
     pub condition: QueryComparison,
     pub value: f64,

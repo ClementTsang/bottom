@@ -205,7 +205,7 @@ impl ProcWidgetState {
             self.process_search_state.search_state.error_message = None;
         } else {
             let parsed_query = self.parse_query();
-            debug!("Parsed query: {:?}", parsed_query);
+            // debug!("Parsed query: {:#?}", parsed_query);
 
             if let Ok(parsed_query) = parsed_query {
                 self.process_search_state.search_state.query = Some(parsed_query);
