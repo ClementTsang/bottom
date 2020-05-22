@@ -163,98 +163,118 @@ impl ProcessQuery for ProcWidgetState {
                             compare_prefix: None,
                         });
                     }
-                } else {
-                    if queue_top == "(" {
-                        if query.is_empty() {
-                            return Err(QueryError("Missing closing parentheses".into()));
+                } else if queue_top == "(" {
+                    if query.is_empty() {
+                        return Err(QueryError("Missing closing parentheses".into()));
+                    }
+
+                    let mut list_of_ors = VecDeque::new();
+
+                    while let Some(in_paren_query_top) = query.front() {
+                        if in_paren_query_top != ")" {
+                            list_of_ors.push_back(process_or(query)?);
+                        } else {
+                            break;
                         }
+                    }
 
-                        let mut list_of_ors = VecDeque::new();
+                    // Ensure not empty
+                    if list_of_ors.is_empty() {
+                        return Err(QueryError("No values within parentheses group".into()));
+                    }
 
-                        while let Some(in_paren_query_top) = query.front() {
-                            if in_paren_query_top != ")" {
-                                list_of_ors.push_back(process_or(query)?);
-                            } else {
-                                break;
-                            }
-                        }
-
-                        // Ensure not empty
-                        if list_of_ors.is_empty() {
-                            return Err(QueryError("No values within parentheses group".into()));
-                        }
-
-                        // Now convert this back to a OR...
-                        let mut returned_or = Or {
+                    // Now convert this back to a OR...
+                    let mut returned_or = Or {
+                        lhs: And {
+                            lhs: Prefix {
+                                or: Some(Box::new(list_of_ors.pop_front().unwrap())),
+                                compare_prefix: None,
+                                regex_prefix: None,
+                            },
+                            rhs: None,
+                        },
+                        rhs: None,
+                    };
+                    list_of_ors.into_iter().for_each(|rhs| {
+                        returned_or = Or {
                             lhs: And {
                                 lhs: Prefix {
-                                    or: Some(Box::new(list_of_ors.pop_front().unwrap())),
+                                    or: Some(Box::new(returned_or.clone())),
                                     compare_prefix: None,
                                     regex_prefix: None,
                                 },
-                                rhs: None,
+                                rhs: Some(Box::new(Prefix {
+                                    or: Some(Box::new(rhs)),
+                                    compare_prefix: None,
+                                    regex_prefix: None,
+                                })),
                             },
                             rhs: None,
                         };
-                        list_of_ors.into_iter().for_each(|rhs| {
-                            returned_or = Or {
-                                lhs: And {
-                                    lhs: Prefix {
-                                        or: Some(Box::new(returned_or.clone())),
-                                        compare_prefix: None,
-                                        regex_prefix: None,
-                                    },
-                                    rhs: Some(Box::new(Prefix {
-                                        or: Some(Box::new(rhs)),
-                                        compare_prefix: None,
-                                        regex_prefix: None,
-                                    })),
-                                },
-                                rhs: None,
-                            };
-                        });
+                    });
 
-                        if let Some(close_paren) = query.pop_front() {
-                            if close_paren == ")" {
-                                return Ok(Prefix {
-                                    or: Some(Box::new(returned_or)),
-                                    regex_prefix: None,
-                                    compare_prefix: None,
-                                });
-                            } else {
-                                return Err(QueryError("Missing closing parentheses".into()));
-                            }
+                    if let Some(close_paren) = query.pop_front() {
+                        if close_paren == ")" {
+                            return Ok(Prefix {
+                                or: Some(Box::new(returned_or)),
+                                regex_prefix: None,
+                                compare_prefix: None,
+                            });
                         } else {
                             return Err(QueryError("Missing closing parentheses".into()));
                         }
-                    } else if queue_top == ")" {
-                        return Err(QueryError("Missing opening parentheses".into()));
-                    } else if queue_top == "\"" {
-                        // Similar to parentheses, trap and check for missing closing quotes.  Note, however, that we
-                        // will DIRECTLY call another process_prefix call...
+                    } else {
+                        return Err(QueryError("Missing closing parentheses".into()));
+                    }
+                } else if queue_top == ")" {
+                    return Err(QueryError("Missing opening parentheses".into()));
+                } else if queue_top == "\"" {
+                    // Similar to parentheses, trap and check for missing closing quotes.  Note, however, that we
+                    // will DIRECTLY call another process_prefix call...
 
-                        let prefix = process_prefix(query, true)?;
-                        if let Some(close_paren) = query.pop_front() {
-                            if close_paren == "\"" {
-                                return Ok(prefix);
-                            } else {
-                                return Err(QueryError("Missing closing quotation".into()));
-                            }
+                    let prefix = process_prefix(query, true)?;
+                    if let Some(close_paren) = query.pop_front() {
+                        if close_paren == "\"" {
+                            return Ok(prefix);
                         } else {
                             return Err(QueryError("Missing closing quotation".into()));
                         }
                     } else {
-                        //  Get prefix type...
-                        let prefix_type = queue_top.parse::<PrefixType>()?;
-                        let content = if let PrefixType::Name = prefix_type {
-                            Some(queue_top)
-                        } else {
-                            query.pop_front()
-                        };
+                        return Err(QueryError("Missing closing quotation".into()));
+                    }
+                } else {
+                    //  Get prefix type...
+                    let prefix_type = queue_top.parse::<PrefixType>()?;
+                    let content = if let PrefixType::Name = prefix_type {
+                        Some(queue_top)
+                    } else {
+                        query.pop_front()
+                    };
 
-                        if let Some(content) = content {
-                            match &prefix_type {
-                                PrefixType::Name => {
+                    if let Some(content) = content {
+                        match &prefix_type {
+                            PrefixType::Name => {
+                                return Ok(Prefix {
+                                    or: None,
+                                    regex_prefix: Some((prefix_type, StringQuery::Value(content))),
+                                    compare_prefix: None,
+                                })
+                            }
+                            PrefixType::Pid => {
+                                // We have to check if someone put an "="...
+                                if content == "=" {
+                                    // Check next string if possible
+                                    if let Some(queue_next) = query.pop_front() {
+                                        return Ok(Prefix {
+                                            or: None,
+                                            regex_prefix: Some((
+                                                prefix_type,
+                                                StringQuery::Value(queue_next),
+                                            )),
+                                            compare_prefix: None,
+                                        });
+                                    }
+                                } else {
                                     return Ok(Prefix {
                                         or: None,
                                         regex_prefix: Some((
@@ -262,149 +282,123 @@ impl ProcessQuery for ProcWidgetState {
                                             StringQuery::Value(content),
                                         )),
                                         compare_prefix: None,
-                                    })
+                                    });
                                 }
-                                PrefixType::Pid => {
-                                    // We have to check if someone put an "="...
-                                    if content == "=" {
-                                        // Check next string if possible
-                                        if let Some(queue_next) = query.pop_front() {
-                                            return Ok(Prefix {
-                                                or: None,
-                                                regex_prefix: Some((
-                                                    prefix_type,
-                                                    StringQuery::Value(queue_next),
-                                                )),
-                                                compare_prefix: None,
+                            }
+                            _ => {
+                                // Now we gotta parse the content... yay.
+
+                                let mut condition: Option<QueryComparison> = None;
+                                let mut value: Option<f64> = None;
+
+                                if content == "=" {
+                                    condition = Some(QueryComparison::Equal);
+                                    if let Some(queue_next) = query.pop_front() {
+                                        value = queue_next.parse::<f64>().ok();
+                                    } else {
+                                        return Err(QueryError("Missing value".into()));
+                                    }
+                                } else if content == ">" || content == "<" {
+                                    // We also have to check if the next string is an "="...
+                                    if let Some(queue_next) = query.pop_front() {
+                                        if queue_next == "=" {
+                                            condition = Some(if content == ">" {
+                                                QueryComparison::GreaterOrEqual
+                                            } else {
+                                                QueryComparison::LessOrEqual
                                             });
+                                            if let Some(queue_next_next) = query.pop_front() {
+                                                value = queue_next_next.parse::<f64>().ok();
+                                            } else {
+                                                return Err(QueryError("Missing value".into()));
+                                            }
+                                        } else {
+                                            condition = Some(if content == ">" {
+                                                QueryComparison::Greater
+                                            } else {
+                                                QueryComparison::Less
+                                            });
+                                            value = queue_next.parse::<f64>().ok();
                                         }
                                     } else {
+                                        return Err(QueryError("Missing value".into()));
+                                    }
+                                }
+
+                                if let Some(condition) = condition {
+                                    if let Some(read_value) = value {
+                                        // Now we want to check one last thing - is there a unit?
+                                        // If no unit, assume base.
+                                        // Furthermore, base must be PEEKED at initially, and will
+                                        // require (likely) prefix_type specific checks
+                                        // Lastly, if it *is* a unit, remember to POP!
+
+                                        let mut value = read_value;
+
+                                        match prefix_type {
+                                            PrefixType::Rps
+                                            | PrefixType::Wps
+                                            | PrefixType::TRead
+                                            | PrefixType::TWrite => {
+                                                if let Some(potential_unit) = query.front() {
+                                                    match potential_unit.to_lowercase().as_str() {
+                                                        "tb" => {
+                                                            value *= 1_000_000_000_000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "tib" => {
+                                                            value *= 1_099_511_627_776.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "gb" => {
+                                                            value *= 1_000_000_000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "gib" => {
+                                                            value *= 1_073_741_824.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "mb" => {
+                                                            value *= 1_000_000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "mib" => {
+                                                            value *= 1_048_576.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "kb" => {
+                                                            value *= 1000.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "kib" => {
+                                                            value *= 1024.0;
+                                                            query.pop_front();
+                                                        }
+                                                        "b" => {
+                                                            // Just gotta pop.
+                                                            query.pop_front();
+                                                        }
+                                                        _ => {}
+                                                    }
+                                                }
+                                            }
+                                            _ => {}
+                                        }
+
                                         return Ok(Prefix {
                                             or: None,
-                                            regex_prefix: Some((
+                                            regex_prefix: None,
+                                            compare_prefix: Some((
                                                 prefix_type,
-                                                StringQuery::Value(content),
+                                                NumericalQuery { condition, value },
                                             )),
-                                            compare_prefix: None,
                                         });
                                     }
                                 }
-                                _ => {
-                                    // Now we gotta parse the content... yay.
-
-                                    let mut condition: Option<QueryComparison> = None;
-                                    let mut value: Option<f64> = None;
-
-                                    if content == "=" {
-                                        condition = Some(QueryComparison::Equal);
-                                        if let Some(queue_next) = query.pop_front() {
-                                            value = queue_next.parse::<f64>().ok();
-                                        } else {
-                                            return Err(QueryError("Missing value".into()));
-                                        }
-                                    } else if content == ">" || content == "<" {
-                                        // We also have to check if the next string is an "="...
-                                        if let Some(queue_next) = query.pop_front() {
-                                            if queue_next == "=" {
-                                                condition = Some(if content == ">" {
-                                                    QueryComparison::GreaterOrEqual
-                                                } else {
-                                                    QueryComparison::LessOrEqual
-                                                });
-                                                if let Some(queue_next_next) = query.pop_front() {
-                                                    value = queue_next_next.parse::<f64>().ok();
-                                                } else {
-                                                    return Err(QueryError("Missing value".into()));
-                                                }
-                                            } else {
-                                                condition = Some(if content == ">" {
-                                                    QueryComparison::Greater
-                                                } else {
-                                                    QueryComparison::Less
-                                                });
-                                                value = queue_next.parse::<f64>().ok();
-                                            }
-                                        } else {
-                                            return Err(QueryError("Missing value".into()));
-                                        }
-                                    }
-
-                                    if let Some(condition) = condition {
-                                        if let Some(read_value) = value {
-                                            // Now we want to check one last thing - is there a unit?
-                                            // If no unit, assume base.
-                                            // Furthermore, base must be PEEKED at initially, and will
-                                            // require (likely) prefix_type specific checks
-                                            // Lastly, if it *is* a unit, remember to POP!
-
-                                            let mut value = read_value;
-
-                                            match prefix_type {
-                                                PrefixType::Rps
-                                                | PrefixType::Wps
-                                                | PrefixType::TRead
-                                                | PrefixType::TWrite => {
-                                                    if let Some(potential_unit) = query.front() {
-                                                        match potential_unit.to_lowercase().as_str()
-                                                        {
-                                                            "tb" => {
-                                                                value *= 1_000_000_000_000.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "tib" => {
-                                                                value *= 1_099_511_627_776.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "gb" => {
-                                                                value *= 1_000_000_000.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "gib" => {
-                                                                value *= 1_073_741_824.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "mb" => {
-                                                                value *= 1_000_000.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "mib" => {
-                                                                value *= 1_048_576.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "kb" => {
-                                                                value *= 1000.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "kib" => {
-                                                                value *= 1024.0;
-                                                                query.pop_front();
-                                                            }
-                                                            "b" => {
-                                                                // Just gotta pop.
-                                                                query.pop_front();
-                                                            }
-                                                            _ => {}
-                                                        }
-                                                    }
-                                                }
-                                                _ => {}
-                                            }
-
-                                            return Ok(Prefix {
-                                                or: None,
-                                                regex_prefix: None,
-                                                compare_prefix: Some((
-                                                    prefix_type,
-                                                    NumericalQuery { condition, value },
-                                                )),
-                                            });
-                                        }
-                                    }
-                                }
                             }
-                        } else {
-                            return Err(QueryError("Missing argument for search prefix".into()));
                         }
+                    } else {
+                        return Err(QueryError("Missing argument for search prefix".into()));
                     }
                 }
             } else if inside_quotation {
