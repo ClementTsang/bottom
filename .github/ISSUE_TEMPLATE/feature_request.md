@@ -2,7 +2,7 @@
 name: Feature request
 about: Got a good idea that hasn't already been mentioned?  Suggest it!
 title: ""
-labels: "enhancement"
+labels: "feature"
 assignees: ""
 ---
 
