@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- Removal of the `/` CPU core showing in the chart. It felt clunky to use, was not really useful, and hard to work with with large core counts.
+- [#156](https://github.com/ClementTsang/bottom/issues/156) - Removal of the `/` CPU core showing in the chart. It felt clunky to use, was not really useful, and hard to work with with large core counts.
 
   Furthermore:
 
@@ -22,14 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   - Average CPU is now on by _default_. You can disable it via `-a, --hide_avg_cpu` or `hide_avg_cpu = true`.
 
-  - Make highlighted CPU persist even if widget is not selected - this should help make it easier to know what CPU you are looking at
-    even if you aren't currently on the CPU widget.
+  - Make highlighted CPU persist even if widget is not selected - this should help make it easier to know what CPU you are looking at even if you aren't currently on the CPU widget.
 
 ### Bug Fixes
 
-- Fixed a bug where bottom would incorrectly read the wrong values to calculate the read/write columns for processes in Linux.
+- [#164](https://github.com/ClementTsang/bottom/issues/164) - Fixed a bug where bottom would incorrectly read the wrong values to calculate the read/write columns for processes in Linux.
 
-- Fixed a bug where OR operations in the process query wouldn't work for process names.
+- [#165](https://github.com/ClementTsang/bottom/issues/165) - Fixed a bug where OR operations in the process query wouldn't properly for some cases.
+
+- The process query should hopefully be a bit more usable now.  There were issues with how spaces (which are treated as an AND if it was between keywords, so something like `btm cpu > 0 mem > 0` would look for a process named `btm` with cpu usage > 0 and mem usage > 0).  This has been hopefully improved.
 
 ## [0.4.3] - 2020-05-15
 
