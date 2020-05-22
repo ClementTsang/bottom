@@ -184,7 +184,7 @@ impl ProcessQuery for ProcWidgetState {
                     }
 
                     // Now convert this back to a OR...
-                    let mut returned_or = Or {
+                    let initial_or = Or {
                         lhs: And {
                             lhs: Prefix {
                                 or: Some(Box::new(list_of_ors.pop_front().unwrap())),
@@ -195,22 +195,20 @@ impl ProcessQuery for ProcWidgetState {
                         },
                         rhs: None,
                     };
-                    list_of_ors.into_iter().for_each(|rhs| {
-                        returned_or = Or {
-                            lhs: And {
-                                lhs: Prefix {
-                                    or: Some(Box::new(returned_or.clone())),
-                                    compare_prefix: None,
-                                    regex_prefix: None,
-                                },
-                                rhs: Some(Box::new(Prefix {
-                                    or: Some(Box::new(rhs)),
-                                    compare_prefix: None,
-                                    regex_prefix: None,
-                                })),
+                    let returned_or = list_of_ors.into_iter().fold(initial_or, |lhs, rhs| Or {
+                        lhs: And {
+                            lhs: Prefix {
+                                or: Some(Box::new(lhs)),
+                                compare_prefix: None,
+                                regex_prefix: None,
                             },
-                            rhs: None,
-                        };
+                            rhs: Some(Box::new(Prefix {
+                                or: Some(Box::new(rhs)),
+                                compare_prefix: None,
+                                regex_prefix: None,
+                            })),
+                        },
+                        rhs: None,
                     });
 
                     if let Some(close_paren) = query.pop_front() {
@@ -471,7 +469,7 @@ impl Debug for Query {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Or {
     pub lhs: And,
     pub rhs: Option<Box<And>>,
@@ -516,7 +514,7 @@ impl Debug for Or {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct And {
     pub lhs: Prefix,
     pub rhs: Option<Box<Prefix>>,
@@ -561,7 +559,7 @@ impl Debug for And {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum PrefixType {
     Pid,
     Cpu,
@@ -594,7 +592,7 @@ impl std::str::FromStr for PrefixType {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Prefix {
     pub or: Option<Box<Or>>,
     pub regex_prefix: Option<(PrefixType, StringQuery)>,
@@ -724,7 +722,7 @@ impl Debug for Prefix {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum QueryComparison {
     Equal,
     Less,
@@ -733,13 +731,13 @@ pub enum QueryComparison {
     GreaterOrEqual,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum StringQuery {
     Value(String),
     Regex(regex::Regex),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NumericalQuery {
     pub condition: QueryComparison,
     pub value: f64,
