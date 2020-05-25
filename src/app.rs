@@ -1001,7 +1001,14 @@ impl App {
             '+' => self.zoom_in(),
             '-' => self.zoom_out(),
             '=' => self.reset_zoom(),
-            'e' => self.expand_widget(),
+            'e' => {
+                if self.is_expanded {
+                    self.is_expanded = false;
+                    self.is_force_redraw = true;
+                } else {
+                    self.expand_widget()
+                }
+            }
             _ => {}
         }
 
