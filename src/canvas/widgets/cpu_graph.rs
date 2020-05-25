@@ -46,54 +46,68 @@ pub trait CpuGraphWidget {
     fn draw_cpu_legend<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     );
+    fn draw_multi_cpu_graph<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    );
 }
 
 impl CpuGraphWidget for Painter {
     fn draw_cpu<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        if draw_loc.width as f64 * 0.15 <= 6.0 {
-            // Skip drawing legend
-            if app_state.current_widget.widget_id == (widget_id + 1) {
-                if app_state.app_config_fields.left_legend {
-                    app_state.move_widget_selection_right();
-                } else {
-                    app_state.move_widget_selection_left();
-                }
-            }
-            self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
-            if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
-                cpu_widget_state.is_legend_hidden = true;
-            }
+        let cpu_widget_state = match app_state.cpu_state.widget_states.get_mut(&widget_id) {
+            Some(it) => it,
+            _ => return,
+        };
+        let is_multi_graph = cpu_widget_state.is_multi_graph_mode;
+        if is_multi_graph {
+            self.draw_multi_cpu_graph(f, app_state, draw_loc, widget_id);
         } else {
-            let (graph_index, legend_index, constraints) =
-                if app_state.app_config_fields.left_legend {
-                    (
-                        1,
-                        0,
-                        [Constraint::Percentage(15), Constraint::Percentage(85)],
-                    )
-                } else {
-                    (
-                        0,
-                        1,
-                        [Constraint::Percentage(85), Constraint::Percentage(15)],
-                    )
-                };
+            if draw_loc.width as f64 * 0.15 <= 6.0 {
+                // Skip drawing legend
+                if app_state.current_widget.widget_id == (widget_id + 1) {
+                    if app_state.app_config_fields.left_legend {
+                        app_state.move_widget_selection_right();
+                    } else {
+                        app_state.move_widget_selection_left();
+                    }
+                }
+                self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
+                if let Some(cpu_widget_state) =
+                    app_state.cpu_state.widget_states.get_mut(&widget_id)
+                {
+                    cpu_widget_state.is_legend_hidden = true;
+                }
+            } else {
+                let (graph_index, legend_index, constraints) =
+                    if app_state.app_config_fields.left_legend {
+                        (
+                            1,
+                            0,
+                            [Constraint::Percentage(15), Constraint::Percentage(85)],
+                        )
+                    } else {
+                        (
+                            0,
+                            1,
+                            [Constraint::Percentage(85), Constraint::Percentage(15)],
+                        )
+                    };
 
-            let partitioned_draw_loc = Layout::default()
-                .margin(0)
-                .direction(Direction::Horizontal)
-                .constraints(constraints.as_ref())
-                .split(draw_loc);
+                let partitioned_draw_loc = Layout::default()
+                    .margin(0)
+                    .direction(Direction::Horizontal)
+                    .constraints(constraints.as_ref())
+                    .split(draw_loc);
 
-            self.draw_cpu_graph(f, app_state, partitioned_draw_loc[graph_index], widget_id);
-            self.draw_cpu_legend(
-                f,
-                app_state,
-                partitioned_draw_loc[legend_index],
-                widget_id + 1,
-            );
+                self.draw_cpu_graph(f, app_state, partitioned_draw_loc[graph_index], widget_id);
+                self.draw_cpu_legend(
+                    f,
+                    app_state,
+                    partitioned_draw_loc[legend_index],
+                    widget_id + 1,
+                );
+            }
         }
     }
 
@@ -102,127 +116,136 @@ impl CpuGraphWidget for Painter {
     ) {
         use std::convert::TryFrom;
 
-        if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
-            let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
-
-            let display_time_labels = [
-                format!("{}s", cpu_widget_state.current_display_time / 1000),
-                "0s".to_string(),
-            ];
-
-            let x_axis = if app_state.app_config_fields.hide_time
-                || (app_state.app_config_fields.autohide_time
-                    && cpu_widget_state.autohide_timer.is_none())
+        let cpu_widget_state = match app_state.cpu_state.widget_states.get_mut(&widget_id) {
+            Some(it) => it,
+            _ => return,
+        };
+        let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
+        let border_style = if app_state.current_widget.widget_id == widget_id {
+            self.colours.highlighted_border_style
+        } else {
+            self.colours.border_style
+        };
+        let display_time_labels = [
+            format!("{}s", cpu_widget_state.current_display_time / 1000),
+            "0s".to_string(),
+        ];
+        let x_axis = if app_state.app_config_fields.hide_time
+            || (app_state.app_config_fields.autohide_time
+                && cpu_widget_state.autohide_timer.is_none())
+        {
+            Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+        } else if let Some(time) = cpu_widget_state.autohide_timer {
+            if std::time::Instant::now().duration_since(time).as_millis()
+                < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
             {
-                Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
-            } else if let Some(time) = cpu_widget_state.autohide_timer {
-                if std::time::Instant::now().duration_since(time).as_millis()
-                    < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
-                {
-                    Axis::default()
-                        .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
-                        .style(self.colours.graph_style)
-                        .labels_style(self.colours.graph_style)
-                        .labels(&display_time_labels)
-                } else {
-                    cpu_widget_state.autohide_timer = None;
-                    Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
-                }
-            } else if draw_loc.height < TIME_LABEL_HEIGHT_LIMIT {
-                Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
-            } else {
                 Axis::default()
                     .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
                     .labels_style(self.colours.graph_style)
                     .labels(&display_time_labels)
-            };
-
-            // Note this is offset as otherwise the 0 value is not drawn!
-            let y_axis = Axis::default()
+            } else {
+                cpu_widget_state.autohide_timer = None;
+                Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+            }
+        } else if draw_loc.height < TIME_LABEL_HEIGHT_LIMIT {
+            Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+        } else {
+            Axis::default()
+                .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                 .style(self.colours.graph_style)
                 .labels_style(self.colours.graph_style)
-                .bounds([-0.5, 100.5])
-                .labels(&["0%", "100%"]);
+                .labels(&display_time_labels)
+        };
 
-            let use_dot = app_state.app_config_fields.use_dot;
-            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-            let dataset_vector: Vec<Dataset<'_>> = if let Ok(current_scroll_position) =
-                usize::try_from(cpu_widget_state.scroll_state.current_scroll_position)
-            {
-                if current_scroll_position == ALL_POSITION {
-                    cpu_data
-                        .iter()
-                        .enumerate()
-                        .rev()
-                        .map(|(itx, cpu)| {
-                            Dataset::default()
-                                .marker(if use_dot {
-                                    Marker::Dot
-                                } else {
-                                    Marker::Braille
-                                })
-                                .style(if show_avg_cpu && itx == AVG_POSITION {
-                                    self.colours.avg_colour_style
-                                } else {
-                                    self.colours.cpu_colour_styles
-                                        [itx % self.colours.cpu_colour_styles.len()]
-                                })
-                                .data(&cpu.cpu_data[..])
-                                .graph_type(tui::widgets::GraphType::Line)
-                        })
-                        .collect()
-                } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
-                    vec![Dataset::default()
-                        .marker(if use_dot {
-                            Marker::Dot
-                        } else {
-                            Marker::Braille
-                        })
-                        .style(if show_avg_cpu && current_scroll_position == AVG_POSITION {
-                            self.colours.avg_colour_style
-                        } else {
-                            self.colours.cpu_colour_styles[cpu_widget_state
-                                .scroll_state
-                                .current_scroll_position
-                                % self.colours.cpu_colour_styles.len()]
-                        })
-                        .data(&cpu.cpu_data[..])
-                        .graph_type(tui::widgets::GraphType::Line)]
-                } else {
-                    vec![]
-                }
+        // Note this is offset as otherwise the 0 value is not drawn!
+        let y_axis = Axis::default()
+            .style(self.colours.graph_style)
+            .labels_style(self.colours.graph_style)
+            .bounds([-0.5, 100.5])
+            .labels(&["0%", "100%"]);
+
+        let use_dot = app_state.app_config_fields.use_dot;
+        let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
+        let dataset_vector: Vec<Dataset<'_>> = if let Ok(current_scroll_position) =
+            usize::try_from(cpu_widget_state.scroll_state.current_scroll_position)
+        {
+            if current_scroll_position == ALL_POSITION {
+                cpu_data
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .map(|(itx, cpu)| {
+                        Dataset::default()
+                            .marker(if use_dot {
+                                Marker::Dot
+                            } else {
+                                Marker::Braille
+                            })
+                            .style(if show_avg_cpu && itx == AVG_POSITION {
+                                self.colours.avg_colour_style
+                            } else {
+                                self.colours.cpu_colour_styles
+                                    [itx % self.colours.cpu_colour_styles.len()]
+                            })
+                            .data(&cpu.cpu_data[..])
+                            .graph_type(tui::widgets::GraphType::Line)
+                    })
+                    .collect()
+            } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
+                vec![Dataset::default()
+                    .marker(if use_dot {
+                        Marker::Dot
+                    } else {
+                        Marker::Braille
+                    })
+                    .style(if show_avg_cpu && current_scroll_position == AVG_POSITION {
+                        self.colours.avg_colour_style
+                    } else {
+                        self.colours.cpu_colour_styles[cpu_widget_state
+                            .scroll_state
+                            .current_scroll_position
+                            % self.colours.cpu_colour_styles.len()]
+                    })
+                    .data(&cpu.cpu_data[..])
+                    .graph_type(tui::widgets::GraphType::Line)]
             } else {
                 vec![]
-            };
+            }
+        } else {
+            vec![]
+        };
 
-            let title = " CPU ".to_string();
+        let title = if app_state.is_expanded {
+            const TITLE_BASE: &str = " CPU ── Esc to go back ";
+            format!(
+                " CPU ─{}─ Esc to go back ",
+                "─".repeat(
+                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                )
+            )
+        } else {
+            " CPU ".to_string()
+        };
 
-            let border_style = if app_state.current_widget.widget_id == widget_id {
-                self.colours.highlighted_border_style
-            } else {
-                self.colours.border_style
-            };
-
-            f.render_widget(
-                Chart::default()
-                    .block(
-                        Block::default()
-                            .title(&title)
-                            .title_style(if app_state.is_expanded {
-                                border_style
-                            } else {
-                                self.colours.widget_title_style
-                            })
-                            .borders(Borders::ALL)
-                            .border_style(border_style),
-                    )
-                    .x_axis(x_axis)
-                    .y_axis(y_axis)
-                    .datasets(&dataset_vector),
-                draw_loc,
-            );
-        }
+        f.render_widget(
+            Chart::default()
+                .block(
+                    Block::default()
+                        .title(&title)
+                        .title_style(if app_state.is_expanded {
+                            border_style
+                        } else {
+                            self.colours.widget_title_style
+                        })
+                        .borders(Borders::ALL)
+                        .border_style(border_style),
+                )
+                .x_axis(x_axis)
+                .y_axis(y_axis)
+                .datasets(&dataset_vector),
+            draw_loc,
+        );
     }
 
     fn draw_cpu_legend<B: Backend>(
@@ -232,7 +255,6 @@ impl CpuGraphWidget for Painter {
         {
             cpu_widget_state.is_legend_hidden = false;
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
-
             let start_position = get_start_position(
                 usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
                 &cpu_widget_state.scroll_state.scroll_direction,
@@ -241,13 +263,10 @@ impl CpuGraphWidget for Painter {
                 app_state.is_force_redraw,
             );
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
-
             let sliced_cpu_data = &cpu_data[start_position..];
-
             let mut offset_scroll_index =
                 cpu_widget_state.scroll_state.current_scroll_position - start_position;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
                 let cpu_string_row: Vec<Cow<'_, str>> = vec![
                     Cow::Borrowed(&cpu.cpu_name),
@@ -303,7 +322,7 @@ impl CpuGraphWidget for Painter {
                 Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
                     .block(
                         Block::default()
-                            .title_style(border_and_title_style)
+                            // .title_style(border_and_title_style)
                             .borders(Borders::ALL)
                             .border_style(border_and_title_style),
                     )
@@ -318,6 +337,132 @@ impl CpuGraphWidget for Painter {
                     .header_gap(app_state.app_config_fields.table_gap),
                 draw_loc,
             );
+        }
+    }
+
+    fn draw_multi_cpu_graph<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+    ) {
+        let cpu_widget_state = match app_state.cpu_state.widget_states.get_mut(&widget_id) {
+            Some(it) => it,
+            _ => return,
+        };
+        let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
+        let border_style = if app_state.current_widget.widget_id == widget_id {
+            self.colours.highlighted_border_style
+        } else {
+            self.colours.border_style
+        };
+        let title = if app_state.is_expanded {
+            const TITLE_BASE: &str = " CPU ── Esc to go back ";
+            format!(
+                " CPU ─{}─ Esc to go back ",
+                "─".repeat(
+                    usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                )
+            )
+        } else {
+            " CPU ".to_string()
+        };
+        let block = Block::default()
+            .title(&title)
+            .title_style(if app_state.is_expanded {
+                border_style
+            } else {
+                self.colours.widget_title_style
+            })
+            .borders(Borders::ALL)
+            .border_style(border_style);
+        f.render_widget(block, draw_loc);
+
+        let x_axis: Axis<'_, &str> = Axis::default()
+            .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+            .style(self.colours.graph_style)
+            .labels(&["", ""]);
+        let y_axis: Axis<'_, &str> = Axis::default()
+            .bounds([-0.5, 100.5])
+            .style(self.colours.graph_style)
+            .labels(&["", ""]);
+
+        // Now let's create n-datasets
+        let use_dot = app_state.app_config_fields.use_dot;
+        let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
+        let hidden_cpu_offset = if show_avg_cpu { 2 } else { 1 };
+        let sliced_data = cpu_data[hidden_cpu_offset..].as_ref();
+        let dataset_set: Vec<[Dataset<'_>; 1]> = sliced_data
+            .iter()
+            .enumerate()
+            .map(|(itx, cpu)| {
+                [Dataset::default()
+                    .marker(if use_dot {
+                        Marker::Dot
+                    } else {
+                        Marker::Braille
+                    })
+                    .style(
+                        self.colours.cpu_colour_styles
+                            [(itx + hidden_cpu_offset) % self.colours.cpu_colour_styles.len()],
+                    )
+                    .data(&cpu.cpu_data[..])
+                    .graph_type(tui::widgets::GraphType::Line)]
+            })
+            .collect();
+
+        // Now let's divide up our drawing area --- we have to answer some questions:
+        // - How many graphs can we fit per row?
+        // - How many graphs can we fit on the screen at once, given our widget size?
+        // - How are we to potentially adjust how big each graph is?
+        // Unfortunately, we need to pick at least *one* of these to figure out the rest.
+        // Similarly to basic mode, we'll use 4.  Most core counts I can think of are usually
+        // going to be multiples of 4 anyways.
+        //
+        // Question - do we want to show average in this case?  I feel like it isn't necessary.
+        // I also like their approach to dealing with how many graphs they can fit on the screen
+        // at once before scrolling - they don't deal with it at all and just cram them in.
+        //
+        // I love it.
+
+        const CPUS_PER_ROW: usize = 4;
+        const CPU_ROW_CONSTRAINTS: [Constraint; 4] = [
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+        ];
+        let num_rows = (dataset_set.len() - 1) / CPUS_PER_ROW + 1;
+        let cpu_col_constraints: Vec<Constraint> = (0..num_rows)
+            .map(|_| Constraint::Ratio(1, num_rows as u32))
+            .collect();
+        debug!(
+            "Num rows: {}, cpu_col_constraints: {:?}",
+            num_rows, cpu_col_constraints
+        );
+        // Also pre-process the drawing chunks:
+        let draw_locs: Vec<Vec<Rect>> = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(cpu_col_constraints.as_ref())
+            .vertical_margin(1)
+            .split(draw_loc)
+            .into_iter()
+            .map(|area| {
+                Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints(CPU_ROW_CONSTRAINTS.as_ref())
+                    .horizontal_margin(3)
+                    .split(area)
+            })
+            .collect();
+
+        for (row, row_draw_loc) in dataset_set[..].chunks(CPUS_PER_ROW).zip(draw_locs) {
+            for (col, col_draw_loc) in row.iter().zip(row_draw_loc) {
+                f.render_widget(
+                    Chart::default()
+                        .x_axis(x_axis.clone())
+                        .y_axis(y_axis.clone())
+                        .datasets(col),
+                    col_draw_loc,
+                );
+            }
         }
     }
 }

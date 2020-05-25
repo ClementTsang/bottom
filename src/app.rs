@@ -250,6 +250,16 @@ impl App {
                             !cpu_widget_state.is_multi_graph_mode;
                     }
                 }
+                BottomWidgetType::CpuLegend => {
+                    if let Some(cpu_widget_state) = self
+                        .cpu_state
+                        .widget_states
+                        .get_mut(&(self.current_widget.widget_id - 1))
+                    {
+                        cpu_widget_state.is_multi_graph_mode =
+                            !cpu_widget_state.is_multi_graph_mode;
+                    }
+                }
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
                         .proc_state
