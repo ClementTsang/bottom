@@ -1090,7 +1090,7 @@ impl App {
                                                 self.current_widget = next_new_widget.clone();
                                             }
                                         }
-                                    } else {
+                                    } else if !cpu_widget_state.is_multi_graph_mode {
                                         self.current_widget = new_widget.clone();
                                     }
                                 }
@@ -1111,6 +1111,7 @@ impl App {
                                     }
                                 }
                             }
+
                             _ => self.current_widget = new_widget.clone(),
                         }
                     }
@@ -1189,7 +1190,7 @@ impl App {
                                                 self.current_widget = next_new_widget.clone();
                                             }
                                         }
-                                    } else {
+                                    } else if !cpu_widget_state.is_multi_graph_mode {
                                         self.current_widget = new_widget.clone();
                                     }
                                 }
@@ -1210,7 +1211,6 @@ impl App {
                                     }
                                 }
                             }
-
                             _ => {
                                 self.current_widget = new_widget.clone();
                             }
@@ -1265,7 +1265,11 @@ impl App {
                                 if let Some(cpu_widget_state) =
                                     self.cpu_state.widget_states.get(&(new_widget_id - 1))
                                 {
-                                    if cpu_widget_state.is_legend_hidden {
+                                    // If it is hidden or multi-graph mode, always move into the main
+                                    // widget territory.
+                                    if cpu_widget_state.is_legend_hidden
+                                        || cpu_widget_state.is_multi_graph_mode
+                                    {
                                         if let Some(next_new_widget) =
                                             self.widget_map.get(&(new_widget_id - 1))
                                         {
@@ -1333,7 +1337,11 @@ impl App {
                                 if let Some(cpu_widget_state) =
                                     self.cpu_state.widget_states.get(&(new_widget_id - 1))
                                 {
-                                    if cpu_widget_state.is_legend_hidden {
+                                    // If it is hidden or multi-graph mode, always move into the main
+                                    // widget territory.
+                                    if cpu_widget_state.is_legend_hidden
+                                        || cpu_widget_state.is_multi_graph_mode
+                                    {
                                         if let Some(next_new_widget) =
                                             self.widget_map.get(&(new_widget_id - 1))
                                         {
