@@ -19,6 +19,7 @@ use crate::data_harvester::{
     battery_harvester, cpu, disks, mem, network, processes, temperature, Data,
 };
 use regex::Regex;
+use sysinfo::LoadAvg;
 
 pub type TimeOffset = f64;
 pub type Value = f64;
@@ -28,6 +29,7 @@ pub struct TimedData {
     pub rx_data: Value,
     pub tx_data: Value,
     pub cpu_data: Vec<Value>,
+    pub avg_cpu_data: Value,
     pub mem_data: Value,
     pub swap_data: Value,
 }
@@ -50,12 +52,14 @@ pub struct DataCollection {
     pub memory_harvest: mem::MemHarvest,
     pub swap_harvest: mem::MemHarvest,
     pub cpu_harvest: cpu::CPUHarvest,
+    pub avg_cpu_harvest: cpu::CPUData,
     pub process_harvest: Vec<processes::ProcessHarvest>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IOHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
     pub battery_harvest: Vec<battery_harvester::BatteryHarvest>,
+    pub load_avg: LoadAvg,
 }
 
 impl Default for DataCollection {
@@ -68,12 +72,14 @@ impl Default for DataCollection {
             memory_harvest: mem::MemHarvest::default(),
             swap_harvest: mem::MemHarvest::default(),
             cpu_harvest: cpu::CPUHarvest::default(),
+            avg_cpu_harvest: cpu::CPUData::default(),
             process_harvest: Vec::default(),
             disk_harvest: Vec::default(),
             io_harvest: disks::IOHarvest::default(),
             io_labels_and_prev: Vec::default(),
             temp_harvest: Vec::default(),
             battery_harvest: Vec::default(),
+            load_avg: LoadAvg::default(),
         }
     }
 }
@@ -91,6 +97,7 @@ impl DataCollection {
         self.io_labels_and_prev = Vec::default();
         self.temp_harvest = Vec::default();
         self.battery_harvest = Vec::default();
+        self.load_avg = LoadAvg::default();
     }
 
     pub fn set_frozen_time(&mut self) {
@@ -131,6 +138,14 @@ impl DataCollection {
         // CPU
         if let Some(cpu) = &harvested_data.cpu {
             self.eat_cpu(cpu, &mut new_entry);
+        }
+
+        if let Some(load_avg) = &harvested_data.load_avg {
+            self.load_avg = load_avg.clone();
+        }
+
+        if let Some(avg_cpu) = &harvested_data.avg_cpu {
+            self.eat_avg_cpu(avg_cpu, &mut new_entry);
         }
 
         // Temp
@@ -213,6 +228,11 @@ impl DataCollection {
             .for_each(|cpu| new_entry.cpu_data.push(cpu.cpu_usage));
 
         self.cpu_harvest = cpu.to_vec();
+    }
+
+    fn eat_avg_cpu(&mut self, avg_cpu: &cpu::CPUData, new_entry: &mut TimedData) {
+        new_entry.avg_cpu_data = avg_cpu.cpu_usage;
+        self.avg_cpu_harvest = avg_cpu.clone();
     }
 
     fn eat_temp(&mut self, temperature_sensors: &[temperature::TempHarvest]) {

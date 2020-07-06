@@ -8,7 +8,9 @@ use crate::{
     utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
 };
 
-type Point = (f64, f64);
+type Time = f64;
+type Value = f64;
+type Point = (Time, Value);
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
@@ -129,6 +131,31 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
         });
 
     disk_vector
+}
+
+pub fn convert_avg_cpu_data_point(
+    current_data: &data_farmer::DataCollection, is_frozen: bool,
+) -> ConvertedCpuData {
+    let current_time = if is_frozen {
+        if let Some(frozen_instant) = current_data.frozen_instant {
+            frozen_instant
+        } else {
+            current_data.current_instant
+        }
+    } else {
+        current_data.current_instant
+    };
+
+    let mut avg_new_cpu_data = ConvertedCpuData::default();
+    avg_new_cpu_data.cpu_name = current_data.avg_cpu_harvest.cpu_name.to_string();
+    for (time, data) in &current_data.timed_data_vec {
+        let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
+        avg_new_cpu_data.legend_value = format!("{:.0}%", data.avg_cpu_data.round());
+        avg_new_cpu_data
+            .cpu_data
+            .push((-time_from_start, data.avg_cpu_data));
+    }
+    avg_new_cpu_data
 }
 
 pub fn convert_cpu_data_points(

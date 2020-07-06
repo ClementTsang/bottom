@@ -17,7 +17,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     terminal::Frame,
-    widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
+    widgets::{Axis, Block, Borders, Chart, Dataset, Paragraph, Row, Table, Text},
 };
 
 const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show"];
@@ -48,6 +48,7 @@ pub trait CpuGraphWidget {
     );
     fn draw_multi_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        avg_on_left: bool,
     );
 }
 
@@ -61,53 +62,49 @@ impl CpuGraphWidget for Painter {
         };
         let is_multi_graph = cpu_widget_state.is_multi_graph_mode;
         if is_multi_graph {
-            self.draw_multi_cpu_graph(f, app_state, draw_loc, widget_id);
-        } else {
-            if draw_loc.width as f64 * 0.15 <= 6.0 {
-                // Skip drawing legend
-                if app_state.current_widget.widget_id == (widget_id + 1) {
-                    if app_state.app_config_fields.left_legend {
-                        app_state.move_widget_selection_right();
-                    } else {
-                        app_state.move_widget_selection_left();
-                    }
+            self.draw_multi_cpu_graph(f, app_state, draw_loc, widget_id, true);
+        } else if draw_loc.width as f64 * 0.15 <= 6.0 {
+            // Skip drawing legend
+            if app_state.current_widget.widget_id == (widget_id + 1) {
+                if app_state.app_config_fields.left_legend {
+                    app_state.move_widget_selection_right();
+                } else {
+                    app_state.move_widget_selection_left();
                 }
-                self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
-                if let Some(cpu_widget_state) =
-                    app_state.cpu_state.widget_states.get_mut(&widget_id)
-                {
-                    cpu_widget_state.is_legend_hidden = true;
-                }
-            } else {
-                let (graph_index, legend_index, constraints) =
-                    if app_state.app_config_fields.left_legend {
-                        (
-                            1,
-                            0,
-                            [Constraint::Percentage(15), Constraint::Percentage(85)],
-                        )
-                    } else {
-                        (
-                            0,
-                            1,
-                            [Constraint::Percentage(85), Constraint::Percentage(15)],
-                        )
-                    };
-
-                let partitioned_draw_loc = Layout::default()
-                    .margin(0)
-                    .direction(Direction::Horizontal)
-                    .constraints(constraints.as_ref())
-                    .split(draw_loc);
-
-                self.draw_cpu_graph(f, app_state, partitioned_draw_loc[graph_index], widget_id);
-                self.draw_cpu_legend(
-                    f,
-                    app_state,
-                    partitioned_draw_loc[legend_index],
-                    widget_id + 1,
-                );
             }
+            self.draw_cpu_graph(f, app_state, draw_loc, widget_id);
+            if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
+                cpu_widget_state.is_legend_hidden = true;
+            }
+        } else {
+            let (graph_index, legend_index, constraints) =
+                if app_state.app_config_fields.left_legend {
+                    (
+                        1,
+                        0,
+                        [Constraint::Percentage(15), Constraint::Percentage(85)],
+                    )
+                } else {
+                    (
+                        0,
+                        1,
+                        [Constraint::Percentage(85), Constraint::Percentage(15)],
+                    )
+                };
+
+            let partitioned_draw_loc = Layout::default()
+                .margin(0)
+                .direction(Direction::Horizontal)
+                .constraints(constraints.as_ref())
+                .split(draw_loc);
+
+            self.draw_cpu_graph(f, app_state, partitioned_draw_loc[graph_index], widget_id);
+            self.draw_cpu_legend(
+                f,
+                app_state,
+                partitioned_draw_loc[legend_index],
+                widget_id + 1,
+            );
         }
     }
 
@@ -342,12 +339,16 @@ impl CpuGraphWidget for Painter {
 
     fn draw_multi_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        avg_on_left: bool,
     ) {
         let cpu_widget_state = match app_state.cpu_state.widget_states.get_mut(&widget_id) {
             Some(it) => it,
             _ => return,
         };
         let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
+        let avg_data: &mut ConvertedCpuData = &mut app_state.canvas_data.avg_cpu_data;
+        let load_avg = &app_state.canvas_data.load_avg;
+        let cpu_info = &app_state.canvas_data.cpu_info;
         let border_style = if app_state.current_widget.widget_id == widget_id {
             self.colours.highlighted_border_style
         } else {
@@ -375,6 +376,17 @@ impl CpuGraphWidget for Painter {
             .border_style(border_style);
         f.render_widget(block, draw_loc);
 
+        const SMALL_SIDE: Constraint = Constraint::Percentage(25);
+        const LARGE_SIDE: Constraint = Constraint::Percentage(75);
+        let draw_locs = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(if avg_on_left {
+                [LARGE_SIDE, SMALL_SIDE]
+            } else {
+                [SMALL_SIDE, LARGE_SIDE]
+            })
+            .split(draw_loc);
+
         let x_axis: Axis<'_, &str> = Axis::default()
             .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
             .style(self.colours.graph_style)
@@ -386,83 +398,145 @@ impl CpuGraphWidget for Painter {
 
         // Now let's create n-datasets
         let use_dot = app_state.app_config_fields.use_dot;
-        let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-        let hidden_cpu_offset = if show_avg_cpu { 2 } else { 1 };
-        let sliced_data = cpu_data[hidden_cpu_offset..].as_ref();
-        let dataset_set: Vec<[Dataset<'_>; 1]> = sliced_data
-            .iter()
-            .enumerate()
-            .map(|(itx, cpu)| {
-                [Dataset::default()
-                    .marker(if use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(
-                        self.colours.cpu_colour_styles
-                            [(itx + hidden_cpu_offset) % self.colours.cpu_colour_styles.len()],
-                    )
-                    .data(&cpu.cpu_data[..])
-                    .graph_type(tui::widgets::GraphType::Line)]
-            })
-            .collect();
+        // let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
+        // let hidden_cpu_offset = if show_avg_cpu { 2 } else { 1 };
+        // let sliced_data = cpu_data[hidden_cpu_offset..].as_ref();
+        // let dataset_set: Vec<(&str, [Dataset<'_>; 1])> = sliced_data
+        //     .iter()
+        //     .enumerate()
+        //     .map(|(itx, cpu)| {
+        //         (
+        //             cpu.cpu_name.as_str(),
+        //             [Dataset::default()
+        //                 .marker(if use_dot {
+        //                     Marker::Dot
+        //                 } else {
+        //                     Marker::Braille
+        //                 })
+        //                 .style(
+        //                     self.colours.cpu_colour_styles
+        //                         [itx % self.colours.cpu_colour_styles.len()],
+        //                 )
+        //                 .data(&cpu.cpu_data[..])
+        //                 .graph_type(tui::widgets::GraphType::Line)],
+        //         )
+        //     })
+        //     .collect();
 
-        // Now let's divide up our drawing area --- we have to answer some questions:
-        // - How many graphs can we fit per row?
-        // - How many graphs can we fit on the screen at once, given our widget size?
-        // - How are we to potentially adjust how big each graph is?
-        // Unfortunately, we need to pick at least *one* of these to figure out the rest.
-        // Similarly to basic mode, we'll use 4.  Most core counts I can think of are usually
-        // going to be multiples of 4 anyways.
-        //
-        // Question - do we want to show average in this case?  I feel like it isn't necessary.
-        // I also like their approach to dealing with how many graphs they can fit on the screen
-        // at once before scrolling - they don't deal with it at all and just cram them in.
-        //
-        // I love it.
+        // const CPUS_PER_ROW: usize = 4;
+        // let num_rows = (dataset_set.len() - 1) / CPUS_PER_ROW + 1;
 
-        const CPUS_PER_ROW: usize = 4;
-        const CPU_ROW_CONSTRAINTS: [Constraint; 4] = [
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-        ];
-        let num_rows = (dataset_set.len() - 1) / CPUS_PER_ROW + 1;
-        let cpu_col_constraints: Vec<Constraint> = (0..num_rows)
-            .map(|_| Constraint::Ratio(1, num_rows as u32))
-            .collect();
-        debug!(
-            "Num rows: {}, cpu_col_constraints: {:?}",
-            num_rows, cpu_col_constraints
-        );
-        // Also pre-process the drawing chunks:
-        let draw_locs: Vec<Vec<Rect>> = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(cpu_col_constraints.as_ref())
+        let (chart_draw_loc, side_draw_loc) = if avg_on_left {
+            (draw_locs[0], draw_locs[1])
+        } else {
+            (draw_locs[1], draw_locs[0])
+        };
+
+        // let chart_draw_locs = Layout::default()
+        //     .direction(Direction::Vertical)
+        //     .constraints(vec![Constraint::Ratio(1, num_rows as u32); num_rows].as_ref())
+        //     .vertical_margin(1)
+        //     .split(chart_draw_loc)
+        //     .into_iter()
+        //     .map(|area| {
+        //         Layout::default()
+        //             .direction(Direction::Horizontal)
+        //             .constraints(vec![Constraint::Percentage(25); 4].as_ref())
+        //             .split(area)
+        //             .into_iter()
+        //             .map(|rect| {
+        //                 Layout::default()
+        //                     .constraints([Constraint::Percentage(100)].as_ref())
+        //                     .horizontal_margin(1)
+        //                     .split(rect)[0]
+        //             })
+        //             .collect()
+        //     })
+        //     .collect::<Vec<Vec<Rect>>>();
+
+        // for (row, row_draw_loc) in dataset_set[..].chunks(CPUS_PER_ROW).zip(chart_draw_locs) {
+        //     for (col, col_draw_loc) in row.iter().zip(row_draw_loc) {
+        //         f.render_widget(
+        //             Chart::default()
+        //                 .x_axis(x_axis.clone())
+        //                 .y_axis(y_axis.clone())
+        //                 .datasets(&col.1),
+        //             col_draw_loc,
+        //         );
+        //     }
+        // }
+
+        let side_draw_loc = Layout::default()
             .vertical_margin(1)
-            .split(draw_loc)
-            .into_iter()
-            .map(|area| {
-                Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(CPU_ROW_CONSTRAINTS.as_ref())
-                    .horizontal_margin(3)
-                    .split(area)
-            })
-            .collect();
+            .constraints([Constraint::Percentage(100)])
+            .split(side_draw_loc)[0];
+        let side_block = Block::default().borders(if avg_on_left {
+            Borders::LEFT
+        } else {
+            Borders::RIGHT
+        });
+        f.render_widget(side_block, side_draw_loc);
 
-        for (row, row_draw_loc) in dataset_set[..].chunks(CPUS_PER_ROW).zip(draw_locs) {
-            for (col, col_draw_loc) in row.iter().zip(row_draw_loc) {
-                f.render_widget(
-                    Chart::default()
-                        .x_axis(x_axis.clone())
-                        .y_axis(y_axis.clone())
-                        .datasets(col),
-                    col_draw_loc,
-                );
-            }
-        }
+        // TODO: Remove newlines if not enough space.
+        // TODO: What is shown should be configurable eventually... but evaluating what is shown on each run kinda sucks.  Is there a way to determine what is needed to display, ONCE?
+        let cpu_items = [
+            Text::Styled(
+                format!("AVG: {}\n", &avg_data.legend_value).into(),
+                self.colours.avg_colour_style,
+            ),
+            Text::Styled(
+                format!("CPU: {}\n", cpu_info.name).into(),
+                self.colours.text_style,
+            ),
+            Text::Styled(format!("Utilization:\n").into(), self.colours.text_style),
+            Text::Styled(format!("Frequency:\n").into(), self.colours.text_style),
+            // Text::Styled(format!("Processes").into(), self.colours.text_style),
+            // Text::Styled(format!("Threads").into(), self.colours.text_style),
+            // Text::Styled(format!("Cores").into(), self.colours.text_style),
+            // Text::Styled(format!("Logical Cores").into(), self.colours.text_style),
+            Text::Raw("\n".into()),
+            Text::Styled(format!("Uptime:\n").into(), self.colours.text_style),
+            Text::Styled(
+                format!(
+                    "Load AVG: {}, {}, {}", // TODO: Test this on Windows...
+                    load_avg.one, load_avg.five, load_avg.fifteen
+                )
+                .into(),
+                self.colours.text_style,
+            ),
+        ];
+
+        // Now let's also draw the average CPU chart and details...
+        let side_locs = Layout::default()
+            .horizontal_margin(2)
+            .constraints([
+                // Just for future reference (or for anyone else wondering what the
+                // heck this does), this trick allows you to basically set a flex length
+                // with another hard constraint.
+                Constraint::Min(0),
+                Constraint::Length(cpu_items.len() as u16),
+            ])
+            .split(side_draw_loc);
+        let avg_dataset = (
+            avg_data.cpu_name.as_str(),
+            [Dataset::default()
+                .marker(if use_dot {
+                    Marker::Dot
+                } else {
+                    Marker::Braille
+                })
+                .style(self.colours.avg_colour_style)
+                .data(&avg_data.cpu_data[..])
+                .graph_type(tui::widgets::GraphType::Line)],
+        );
+        f.render_widget(
+            Chart::default()
+                .x_axis(x_axis.clone())
+                .y_axis(y_axis.clone())
+                .datasets(&avg_dataset.1),
+            side_locs[0],
+        );
+
+        f.render_widget(Paragraph::new(cpu_items.iter()).wrap(true), side_locs[1]);
     }
 }

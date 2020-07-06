@@ -54,6 +54,7 @@ enum BottomEvent<I, J> {
     KeyInput(I),
     MouseInput(J),
     Update(Box<data_harvester::Data>),
+    OneTimeEvent(data_harvester::OneTimeInfo),
     Clean,
 }
 
@@ -221,6 +222,10 @@ fn main() -> error::Result<()> {
                             // CPU
                             app.canvas_data.cpu_data =
                                 convert_cpu_data_points(&app.data_collection, false);
+                            app.canvas_data.avg_cpu_data =
+                                convert_avg_cpu_data_point(&app.data_collection, app.is_frozen);
+
+                            app.canvas_data.load_avg = app.data_collection.load_avg.clone();
                         }
 
                         // Processes
@@ -241,6 +246,10 @@ fn main() -> error::Result<()> {
                 BottomEvent::Clean => {
                     app.data_collection
                         .clean_data(constants::STALE_MAX_MILLISECONDS);
+                }
+                BottomEvent::OneTimeEvent(event) => {
+                    // As the name suggests, this should only ever happen... once.
+                    app.canvas_data.cpu_info = event.cpu_info;
                 }
             }
         }
@@ -544,6 +553,8 @@ fn handle_force_redraws(app: &mut App) {
 
     if app.cpu_state.force_update.is_some() {
         app.canvas_data.cpu_data = convert_cpu_data_points(&app.data_collection, app.is_frozen);
+        app.canvas_data.avg_cpu_data =
+            convert_avg_cpu_data_point(&app.data_collection, app.is_frozen);
         app.cpu_state.force_update = None;
     }
 
@@ -746,21 +757,28 @@ fn create_event_thread(
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_show_average_cpu(show_average_cpu);
         data_state.init();
-        loop {
-            if let Ok(message) = reset_receiver.try_recv() {
-                match message {
-                    ResetEvent::Reset => {
-                        data_state.data.first_run_cleanup();
+
+        // We want this one-time event to go through first... this is how we'll grab some data once.
+        if sender
+            .send(BottomEvent::OneTimeEvent(data_state.get_one_time_info()))
+            .is_ok()
+        {
+            loop {
+                if let Ok(message) = reset_receiver.try_recv() {
+                    match message {
+                        ResetEvent::Reset => {
+                            data_state.data.first_run_cleanup();
+                        }
                     }
                 }
+                futures::executor::block_on(data_state.update_data());
+                let event = BottomEvent::Update(Box::from(data_state.data));
+                data_state.data = data_harvester::Data::default();
+                if sender.send(event).is_err() {
+                    break;
+                }
+                thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
             }
-            futures::executor::block_on(data_state.update_data());
-            let event = BottomEvent::Update(Box::from(data_state.data));
-            data_state.data = data_harvester::Data::default();
-            if sender.send(event).is_err() {
-                break;
-            }
-            thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
         }
     });
 }

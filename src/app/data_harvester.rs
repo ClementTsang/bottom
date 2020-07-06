@@ -5,7 +5,7 @@ use std::time::Instant;
 #[cfg(target_os = "linux")]
 use std::collections::HashMap;
 
-use sysinfo::{System, SystemExt};
+use sysinfo::{LoadAvg, System, SystemExt};
 
 use battery::{Battery, Manager};
 
@@ -19,12 +19,19 @@ pub mod disks;
 pub mod mem;
 pub mod network;
 pub mod processes;
+pub mod system;
 pub mod temperature;
+
+#[derive(Default)]
+pub struct OneTimeInfo {
+    pub cpu_info: cpu::CPUInfo,
+}
 
 #[derive(Clone, Debug)]
 pub struct Data {
     pub last_collection_time: Instant,
     pub cpu: Option<cpu::CPUHarvest>,
+    pub avg_cpu: Option<cpu::CPUData>,
     pub memory: Option<mem::MemHarvest>,
     pub swap: Option<mem::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
@@ -33,6 +40,7 @@ pub struct Data {
     pub disks: Option<Vec<disks::DiskHarvest>>,
     pub io: Option<disks::IOHarvest>,
     pub list_of_batteries: Option<Vec<battery_harvester::BatteryHarvest>>,
+    pub load_avg: Option<LoadAvg>,
 }
 
 impl Default for Data {
@@ -40,6 +48,7 @@ impl Default for Data {
         Data {
             last_collection_time: Instant::now(),
             cpu: None,
+            avg_cpu: None,
             memory: None,
             swap: None,
             temperature_sensors: None,
@@ -48,6 +57,7 @@ impl Default for Data {
             io: None,
             network: None,
             list_of_batteries: None,
+            load_avg: None,
         }
     }
 }
@@ -135,6 +145,16 @@ impl DataCollector {
         self.data.first_run_cleanup();
     }
 
+    pub fn get_one_time_info(&self) -> OneTimeInfo {
+        OneTimeInfo {
+            cpu_info: self.get_cpu_info(),
+        }
+    }
+
+    fn get_cpu_info(&self) -> cpu::CPUInfo {
+        cpu::get_cpu_info(&self.sys)
+    }
+
     pub fn set_collected_data(&mut self, used_widgets: UsedWidgets) {
         self.widgets_to_harvest = used_widgets;
     }
@@ -172,7 +192,13 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
+            let (cpu, avg) = cpu::get_cpu_data_list(&self.sys, self.show_average_cpu);
+            self.data.cpu = Some(cpu);
+            self.data.avg_cpu = Some(avg);
+
+            // This is snuck in here as well as you would *probably* care about load average only
+            // if you grab CPU data... THIS IS SUBJECT TO CHANGE!
+            self.data.load_avg = Some(system::get_load_average(&self.sys));
         }
 
         // Batteries

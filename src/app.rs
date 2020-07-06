@@ -251,10 +251,17 @@ impl App {
                     }
                 }
                 BottomWidgetType::CpuLegend => {
+                    // Must also switch to the proper CPU widget...
+                    if self.app_config_fields.left_legend {
+                        self.move_widget_selection_right();
+                    } else {
+                        self.move_widget_selection_left();
+                    }
+
                     if let Some(cpu_widget_state) = self
                         .cpu_state
                         .widget_states
-                        .get_mut(&(self.current_widget.widget_id - 1))
+                        .get_mut(&self.current_widget.widget_id)
                     {
                         cpu_widget_state.is_multi_graph_mode =
                             !cpu_widget_state.is_multi_graph_mode;
@@ -1133,7 +1140,9 @@ impl App {
                         .widget_states
                         .get(&self.current_widget.widget_id)
                     {
-                        if !cpu_widget_state.is_legend_hidden {
+                        if !cpu_widget_state.is_multi_graph_mode
+                            && !cpu_widget_state.is_legend_hidden
+                        {
                             if let Some(new_widget_id) = current_widget.left_neighbour {
                                 if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                                     self.current_widget = new_widget.clone();
@@ -1243,7 +1252,7 @@ impl App {
                     .widget_states
                     .get(&self.current_widget.widget_id)
                 {
-                    if !cpu_widget_state.is_legend_hidden {
+                    if !cpu_widget_state.is_multi_graph_mode && !cpu_widget_state.is_legend_hidden {
                         if let Some(new_widget_id) = current_widget.right_neighbour {
                             if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                                 self.current_widget = new_widget.clone();

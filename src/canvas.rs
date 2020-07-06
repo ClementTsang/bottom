@@ -8,6 +8,8 @@ use tui::{
     Frame, Terminal,
 };
 
+use sysinfo::LoadAvg;
+
 use canvas_colours::*;
 use dialogs::*;
 use widgets::*;
@@ -20,6 +22,7 @@ use crate::{
     },
     constants::*,
     data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
+    data_harvester::cpu::CPUInfo,
     utils::error,
 };
 
@@ -49,7 +52,10 @@ pub struct DisplayableData {
     pub mem_data: Vec<(f64, f64)>,
     pub swap_data: Vec<(f64, f64)>,
     pub cpu_data: Vec<ConvertedCpuData>,
+    pub avg_cpu_data: ConvertedCpuData,
     pub battery_data: Vec<ConvertedBatteryData>,
+    pub cpu_info: CPUInfo,
+    pub load_avg: LoadAvg,
 }
 
 /// Handles the canvas' state.  TODO: [OPT] implement this.
