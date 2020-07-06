@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - Unreleased
 
+## [0.4.4] - 2020-07-06
+
 ### Features
 
 - [#114](https://github.com/ClementTsang/bottom/pull/114): Show process state per process (originally in 0.4.0, moved to later). This only
@@ -30,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#165](https://github.com/ClementTsang/bottom/issues/165) - Fixed a bug where OR operations in the process query wouldn't properly for some cases.
 
-- The process query should hopefully be a bit more usable now.  There were issues with how spaces (which are treated as an AND if it was between keywords, so something like `btm cpu > 0 mem > 0` would look for a process named `btm` with cpu usage > 0 and mem usage > 0).  This has been hopefully improved.
+- The process query should hopefully be a bit more usable now. There were issues with how spaces (which are treated as an AND if it was between keywords, so something like `btm cpu > 0 mem > 0` would look for a process named `btm` with cpu usage > 0 and mem usage > 0). This has been hopefully improved.
 
 ## [0.4.3] - 2020-05-15
 
