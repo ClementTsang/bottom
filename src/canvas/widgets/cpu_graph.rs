@@ -100,8 +100,6 @@ impl CpuGraphWidget for Painter {
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        use std::convert::TryFrom;
-
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
@@ -147,51 +145,46 @@ impl CpuGraphWidget for Painter {
 
             let use_dot = app_state.app_config_fields.use_dot;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-            let dataset_vector: Vec<Dataset<'_>> = if let Ok(current_scroll_position) =
-                usize::try_from(cpu_widget_state.scroll_state.current_scroll_position)
-            {
-                if current_scroll_position == ALL_POSITION {
-                    cpu_data
-                        .iter()
-                        .enumerate()
-                        .rev()
-                        .map(|(itx, cpu)| {
-                            Dataset::default()
-                                .marker(if use_dot {
-                                    Marker::Dot
-                                } else {
-                                    Marker::Braille
-                                })
-                                .style(if show_avg_cpu && itx == AVG_POSITION {
-                                    self.colours.avg_colour_style
-                                } else {
-                                    self.colours.cpu_colour_styles
-                                        [itx % self.colours.cpu_colour_styles.len()]
-                                })
-                                .data(&cpu.cpu_data[..])
-                                .graph_type(tui::widgets::GraphType::Line)
-                        })
-                        .collect()
-                } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
-                    vec![Dataset::default()
-                        .marker(if use_dot {
-                            Marker::Dot
-                        } else {
-                            Marker::Braille
-                        })
-                        .style(if show_avg_cpu && current_scroll_position == AVG_POSITION {
-                            self.colours.avg_colour_style
-                        } else {
-                            self.colours.cpu_colour_styles[cpu_widget_state
-                                .scroll_state
-                                .current_scroll_position
-                                % self.colours.cpu_colour_styles.len()]
-                        })
-                        .data(&cpu.cpu_data[..])
-                        .graph_type(tui::widgets::GraphType::Line)]
-                } else {
-                    vec![]
-                }
+            let current_scroll_position = cpu_widget_state.scroll_state.current_scroll_position;
+            let dataset_vector: Vec<Dataset<'_>> = if current_scroll_position == ALL_POSITION {
+                cpu_data
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .map(|(itx, cpu)| {
+                        Dataset::default()
+                            .marker(if use_dot {
+                                Marker::Dot
+                            } else {
+                                Marker::Braille
+                            })
+                            .style(if show_avg_cpu && itx == AVG_POSITION {
+                                self.colours.avg_colour_style
+                            } else {
+                                self.colours.cpu_colour_styles
+                                    [itx % self.colours.cpu_colour_styles.len()]
+                            })
+                            .data(&cpu.cpu_data[..])
+                            .graph_type(tui::widgets::GraphType::Line)
+                    })
+                    .collect()
+            } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
+                vec![Dataset::default()
+                    .marker(if use_dot {
+                        Marker::Dot
+                    } else {
+                        Marker::Braille
+                    })
+                    .style(if show_avg_cpu && current_scroll_position == AVG_POSITION {
+                        self.colours.avg_colour_style
+                    } else {
+                        self.colours.cpu_colour_styles[cpu_widget_state
+                            .scroll_state
+                            .current_scroll_position
+                            % self.colours.cpu_colour_styles.len()]
+                    })
+                    .data(&cpu.cpu_data[..])
+                    .graph_type(tui::widgets::GraphType::Line)]
             } else {
                 vec![]
             };
