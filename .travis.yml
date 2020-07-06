@@ -34,7 +34,10 @@ before_script:
   - rustup target add $TARGET
   - rustup component add clippy
 script:
-  - cargo clippy -- -D clippy::all
+  - |
+    if [[ $TRAVIS_RUST_VERSION != "1.40.0" ]]; then
+      cargo clippy -- -D clippy::all
+    fi
   - cargo build --verbose --target $TARGET
   - |
     if [[ $TRAVIS_RUST_VERSION != "1.40.0" ]]; then
