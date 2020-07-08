@@ -43,7 +43,7 @@ script:
     if [[ $TRAVIS_RUST_VERSION != "1.40.0" ]]; then
       cargo test --verbose --target $TARGET;
     fi
-  - cargo install --path . --target $TARGET
+  - cargo install --path . --target $TARGET --locked
 
 before_cache:
   - rm -rf /home/travis/.cargo/git
