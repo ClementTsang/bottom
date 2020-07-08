@@ -43,6 +43,7 @@ script:
     if [[ $TRAVIS_RUST_VERSION != "1.40.0" ]]; then
       cargo test --verbose --target $TARGET;
     fi
+  - cargo install --path . --target $TARGET
 
 before_cache:
   - rm -rf /home/travis/.cargo/git
@@ -56,7 +57,6 @@ notifications:
     on_success: never
 
 before_deploy:
-  - cargo install --path . --target $TARGET
   - cargo update
   - |
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
