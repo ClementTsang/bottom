@@ -85,6 +85,9 @@ cargo install --path .
 
 ```bash
 cargo install bottom
+
+# OR, --locked may be required due to how cargo install works
+cargo install bottom --locked
 ```
 
 ### AUR
