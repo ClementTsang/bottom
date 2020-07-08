@@ -130,7 +130,7 @@ dependencies = [
 
 [[package]]
 name = "bottom"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "assert_cmd",
  "backtrace",
