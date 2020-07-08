@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - Unreleased
 
+## [0.4.5] - 2020-07-08
+
+- No changes here, just an uptick for Crates.io using the wrong Cargo.lock.
+
 ## [0.4.4] - 2020-07-06
 
 ### Features
