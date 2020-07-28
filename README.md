@@ -93,10 +93,10 @@ cargo install bottom --locked
 ### AUR
 
 ```bash
-yay bottom
+yay -S bottom
 
 # If you instead want a pre-built binary:
-yay bottom-bin
+yay -S bottom-bin
 ```
 
 ### Debian
