@@ -393,6 +393,7 @@ These are the following supported flag config values:
 | `basic` | Boolean |
 | `hide_table_count`| Boolean |
 | `use_old_network_legend`| Boolean |
+| `battery` | Boolean |
 | `rate` | Unsigned Int (represents milliseconds) |
 | `default_time_value` | Unsigned Int (represents milliseconds) |
 | `time_delta` | Unsigned Int (represents milliseconds) |
