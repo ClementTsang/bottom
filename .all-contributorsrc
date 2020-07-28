@@ -41,6 +41,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "svenstaro",
+      "name": "Sven-Hendrik Haase",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/1664?v=4",
+      "profile": "https://svenstaro.org",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
