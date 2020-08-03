@@ -147,6 +147,7 @@ pub struct ProcWidgetState {
     pub scroll_state: AppScrollWidgetState,
     pub process_sorting_type: processes::ProcessSorting,
     pub process_sorting_reverse: bool,
+    pub is_using_full_path: bool,
 }
 
 impl ProcWidgetState {
@@ -171,6 +172,7 @@ impl ProcWidgetState {
             scroll_state: AppScrollWidgetState::default(),
             process_sorting_type: processes::ProcessSorting::CPU,
             process_sorting_reverse: true,
+            is_using_full_path: false, // TODO: Default false for now.
         }
     }
 
@@ -262,6 +264,14 @@ impl ProcState {
             force_update: None,
             force_update_all: false,
         }
+    }
+
+    pub fn get_mut_proc_widget_state(&mut self, widget_id: u64) -> Option<&mut ProcWidgetState> {
+        self.widget_states.get_mut(&widget_id)
+    }
+
+    pub fn get_proc_widget_state(&mut self, widget_id: u64) -> Option<&ProcWidgetState> {
+        self.widget_states.get(&widget_id)
     }
 }
 

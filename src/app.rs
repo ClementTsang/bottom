@@ -956,6 +956,20 @@ impl App {
                     }
                 }
             }
+            'P' => {
+                // FIXME: For now... I guess.  I don't know what key to use.
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    // TODO: Update all of these checks
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .get_mut_proc_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.is_using_full_path =
+                            !proc_widget_state.is_using_full_path;
+                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    }
+                }
+            }
             'n' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self

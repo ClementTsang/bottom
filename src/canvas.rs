@@ -40,8 +40,6 @@ pub struct DisplayableData {
     pub temp_sensor_data: Vec<Vec<String>>,
     // Not the final value
     pub process_data: Vec<ConvertedProcessData>,
-    // Not the final value
-    pub grouped_process_data: Vec<ConvertedProcessData>,
     // What's actually displayed
     pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>,
     pub mem_label: String,

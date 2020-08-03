@@ -31,7 +31,7 @@ impl HelpDialog for Painter {
             // small terminal sizes... oh joy.
 
             let mut overflow_buffer = 0;
-            let paragraph_width = draw_loc.width - 2;
+            let paragraph_width = std::cmp::max(draw_loc.width.saturating_sub(2), 1);
             let mut prev_section_len = 0;
 
             constants::HELP_TEXT

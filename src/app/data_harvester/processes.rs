@@ -32,6 +32,7 @@ pub struct ProcessHarvest {
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
     pub name: String,
+    pub path: String,
     pub read_bytes_per_sec: u64,
     pub write_bytes_per_sec: u64,
     pub total_read_bytes: u64,
@@ -46,6 +47,7 @@ pub struct PrevProcDetails {
     pub total_write_bytes: u64,
     pub cpu_time: f64,
     pub proc_stat_path: PathBuf,
+    pub proc_exe_path: PathBuf,
     pub proc_io_path: PathBuf,
 }
 
@@ -54,6 +56,7 @@ impl PrevProcDetails {
         let pid_string = pid.to_string();
         PrevProcDetails {
             proc_io_path: PathBuf::from(format!("/proc/{}/io", pid_string)),
+            proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid_string)),
             proc_stat_path: PathBuf::from(format!("/proc/{}/stat", pid_string)),
             ..PrevProcDetails::default()
         }
@@ -174,7 +177,9 @@ fn get_linux_cpu_usage(
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let after_proc_val = get_process_cpu_stats(&proc_stats);
 
-    if use_current_cpu_total {
+    if cpu_usage == 0.0 {
+        Ok((0_f64, after_proc_val))
+    } else if use_current_cpu_total {
         Ok((
             (after_proc_val - before_proc_val) / cpu_usage * 100_f64,
             after_proc_val,
@@ -200,11 +205,12 @@ fn convert_ps<S: core::hash::BuildHasher>(
         .parse::<u32>()
         .unwrap_or(0);
     let name = (&process[11..61]).trim().to_string();
-    let mem_usage_percent = (&process[62..])
+    let mem_usage_percent = (&process[61..67])
         .trim()
         .to_string()
         .parse::<f64>()
         .unwrap_or(0_f64);
+    let path = (&process[67..]).trim().to_string();
 
     let mut new_pid_stat = if let Some(prev_proc_stats) = prev_pid_stats.remove(&pid) {
         prev_proc_stats
@@ -265,9 +271,11 @@ fn convert_ps<S: core::hash::BuildHasher>(
 
     new_pid_stats.insert(pid, new_pid_stat);
 
+    // TODO: Is there a way to re-use these stats so I don't have to do so many syscalls?
     Ok(ProcessHarvest {
         pid,
         name,
+        path,
         mem_usage_percent,
         cpu_usage_percent,
         total_read_bytes,
@@ -286,7 +294,7 @@ pub fn linux_get_processes_list(
     time_difference_in_secs: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let ps_result = Command::new("ps")
-        .args(&["-axo", "pid:10,comm:50,%mem:5", "--noheader"])
+        .args(&["-axo", "pid:10,comm:50,%mem:5,args:50", "--noheader"])
         .output()?;
     let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
     let split_string = ps_stdout.split('\n');
@@ -331,6 +339,7 @@ pub fn linux_get_processes_list(
 pub fn windows_macos_get_processes_list(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+    // FIXME: develop this for windows
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
@@ -357,12 +366,12 @@ pub fn windows_macos_get_processes_list(
             process_val.name().to_string()
         };
 
-        let pcu = if cfg!(target_os = "windows") {
+        let pcu = if cfg!(target_os = "windows") || num_cpus == 0 {
             process_val.cpu_usage() as f64
         } else {
             process_val.cpu_usage() as f64 / num_cpus
         };
-        let process_cpu_usage = if use_current_cpu_total {
+        let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0 {
             pcu / cpu_usage
         } else {
             pcu

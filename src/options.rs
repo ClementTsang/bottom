@@ -357,8 +357,6 @@ fn get_temperature(
 
 /// Yes, this function gets whether to show average CPU (true) or not (false)
 fn get_show_average_cpu(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    // FIXME: Update the demo config file and default config files!  Need to remove
-    // old options and change to hide_avg_cpu option.
     if matches.is_present("HIDE_AVG_CPU") {
         return false;
     } else if let Some(flags) = &config.flags {
