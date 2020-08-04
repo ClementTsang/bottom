@@ -581,7 +581,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
     };
     let is_grouped = app.is_grouped(widget_id);
 
-    if let Some(proc_widget_state) = app.proc_state.get_mut_proc_widget_state(widget_id) {
+    if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
         app.canvas_data.process_data = convert_process_data(
             &app.data_collection,
             if is_grouped {
@@ -595,9 +595,6 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                 ProcessNamingType::Name
             },
         );
-    } else {
-        // TODO: Probably good to make this function throw Results?
-        return;
     }
 
     let process_filter = app.get_process_filter(widget_id);
@@ -620,7 +617,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         .collect::<Vec<_>>();
 
     // Quick fix for tab updating the table headers
-    if let Some(proc_widget_state) = app.proc_state.get_mut_proc_widget_state(widget_id) {
+    if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
         if let data_harvester::processes::ProcessSorting::PID =
             proc_widget_state.process_sorting_type
         {

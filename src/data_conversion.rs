@@ -419,13 +419,10 @@ pub fn convert_process_data(
 
             current_data.process_harvest.iter().for_each(|process| {
                 let entry = grouped_hashmap
-                    .entry(
-                        match name_type {
-                            ProcessNamingType::Name => process.name.to_string(),
-                            ProcessNamingType::Path => process.path.to_string(),
-                        }
-                        .clone(),
-                    )
+                    .entry(match name_type {
+                        ProcessNamingType::Name => process.name.to_string(),
+                        ProcessNamingType::Path => process.path.to_string(),
+                    })
                     .or_insert(SingleProcessData {
                         pid: process.pid,
                         ..SingleProcessData::default()

@@ -149,8 +149,7 @@ impl App {
                 BottomWidgetType::Proc => {
                     if let Some(current_proc_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         if current_proc_state.is_search_enabled() {
                             current_proc_state
@@ -164,8 +163,7 @@ impl App {
                 BottomWidgetType::ProcSearch => {
                     if let Some(current_proc_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&(self.current_widget.widget_id - 1))
+                        .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if current_proc_state.is_search_enabled() {
                             current_proc_state
@@ -243,8 +241,7 @@ impl App {
                 BottomWidgetType::Cpu => {
                     if let Some(cpu_widget_state) = self
                         .cpu_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         cpu_widget_state.is_multi_graph_mode =
                             !cpu_widget_state.is_multi_graph_mode;
@@ -253,8 +250,7 @@ impl App {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         // Toggles process widget grouping state
                         proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
@@ -285,8 +281,7 @@ impl App {
                 // Toggle on
                 if let Some(proc_widget_state) = self
                     .proc_state
-                    .widget_states
-                    .get_mut(&self.current_widget.widget_id)
+                    .get_mut_widget_state(self.current_widget.widget_id)
                 {
                     proc_widget_state
                         .process_search_state
@@ -504,8 +499,7 @@ impl App {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&(self.current_widget.widget_id - 1))
+                        .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
                             let prev_cursor = proc_widget_state.get_cursor_position();
@@ -533,8 +527,7 @@ impl App {
                     if !self.canvas_data.battery_data.is_empty() {
                         if let Some(battery_widget_state) = self
                             .battery_state
-                            .widget_states
-                            .get_mut(&self.current_widget.widget_id)
+                            .get_mut_widget_state(self.current_widget.widget_id)
                         {
                             if battery_widget_state.currently_selected_battery_index > 0 {
                                 battery_widget_state.currently_selected_battery_index -= 1;
@@ -556,8 +549,7 @@ impl App {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&(self.current_widget.widget_id - 1))
+                        .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
                             let prev_cursor = proc_widget_state.get_cursor_position();
@@ -586,8 +578,7 @@ impl App {
                         let battery_count = self.canvas_data.battery_data.len();
                         if let Some(battery_widget_state) = self
                             .battery_state
-                            .widget_states
-                            .get_mut(&self.current_widget.widget_id)
+                            .get_mut_widget_state(self.current_widget.widget_id)
                         {
                             if battery_widget_state.currently_selected_battery_index
                                 < battery_count - 1
@@ -887,8 +878,7 @@ impl App {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
                             processes::ProcessSorting::CPU => {
@@ -911,8 +901,7 @@ impl App {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
                             processes::ProcessSorting::MEM => {
@@ -934,8 +923,7 @@ impl App {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         // Skip if grouped
                         if !proc_widget_state.is_grouped {
@@ -957,12 +945,11 @@ impl App {
                 }
             }
             'P' => {
-                // FIXME: For now... I guess.  I don't know what key to use.
+                // FIXME: For now... I guess.  I don't know what key to use.  Also, update docs +help!
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                    // TODO: Update all of these checks
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .get_mut_proc_widget_state(self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         proc_widget_state.is_using_full_path =
                             !proc_widget_state.is_using_full_path;
@@ -974,8 +961,7 @@ impl App {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
                             processes::ProcessSorting::NAME => {
@@ -1385,8 +1371,7 @@ impl App {
                         if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                             if let Some(proc_widget_state) = self
                                 .proc_state
-                                .widget_states
-                                .get(&self.current_widget.widget_id)
+                                .get_widget_state(self.current_widget.widget_id)
                             {
                                 if proc_widget_state.is_search_enabled() {
                                     self.current_widget = new_widget.clone();
@@ -1407,8 +1392,7 @@ impl App {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         proc_widget_state.scroll_state.current_scroll_position = 0;
                         proc_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
@@ -1417,8 +1401,7 @@ impl App {
                 BottomWidgetType::Temp => {
                     if let Some(temp_widget_state) = self
                         .temp_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         temp_widget_state.scroll_state.current_scroll_position = 0;
                         temp_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
@@ -1427,8 +1410,7 @@ impl App {
                 BottomWidgetType::Disk => {
                     if let Some(disk_widget_state) = self
                         .disk_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         disk_widget_state.scroll_state.current_scroll_position = 0;
                         disk_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
@@ -1437,8 +1419,7 @@ impl App {
                 BottomWidgetType::CpuLegend => {
                     if let Some(cpu_widget_state) = self
                         .cpu_state
-                        .widget_states
-                        .get_mut(&(self.current_widget.widget_id - 1))
+                        .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         cpu_widget_state.scroll_state.current_scroll_position = 0;
                         cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
@@ -1459,8 +1440,7 @@ impl App {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
                         .proc_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         if let Some(finalized_process_data) = self
                             .canvas_data
@@ -1479,8 +1459,7 @@ impl App {
                 BottomWidgetType::Temp => {
                     if let Some(temp_widget_state) = self
                         .temp_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         if !self.canvas_data.temp_sensor_data.is_empty() {
                             temp_widget_state.scroll_state.current_scroll_position =
@@ -1492,8 +1471,7 @@ impl App {
                 BottomWidgetType::Disk => {
                     if let Some(disk_widget_state) = self
                         .disk_state
-                        .widget_states
-                        .get_mut(&self.current_widget.widget_id)
+                        .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         if !self.canvas_data.disk_data.is_empty() {
                             disk_widget_state.scroll_state.current_scroll_position =
@@ -1505,8 +1483,7 @@ impl App {
                 BottomWidgetType::CpuLegend => {
                     if let Some(cpu_widget_state) = self
                         .cpu_state
-                        .widget_states
-                        .get_mut(&(self.current_widget.widget_id - 1))
+                        .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         let cap = self.canvas_data.cpu_data.len();
                         if cap > 0 {
@@ -1578,8 +1555,7 @@ impl App {
     fn change_process_position(&mut self, num_to_change_by: i64) {
         if let Some(proc_widget_state) = self
             .proc_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
+            .get_mut_widget_state(self.current_widget.widget_id)
         {
             let current_posn = proc_widget_state.scroll_state.current_scroll_position;
 

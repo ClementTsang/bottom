@@ -139,7 +139,11 @@ impl ProcessTableWidget for Painter {
                     "PID(p)"
                 }
                 .to_string();
-                let mut name = "Name(n)".to_string();
+                let mut identifier = if proc_widget_state.is_using_full_path {
+                    "Command(n)".to_string()
+                } else {
+                    "Name(n)".to_string()
+                };
                 let mut cpu = "CPU%(c)".to_string();
                 let mut mem = "Mem%(m)".to_string();
                 let rps = "R/s".to_string();
@@ -158,13 +162,13 @@ impl ProcessTableWidget for Painter {
                     ProcessSorting::CPU => cpu += &direction_val,
                     ProcessSorting::MEM => mem += &direction_val,
                     ProcessSorting::PID => pid_or_name += &direction_val,
-                    ProcessSorting::NAME => name += &direction_val,
+                    ProcessSorting::NAME => identifier += &direction_val,
                 };
 
                 let process_headers = if proc_widget_state.is_grouped {
                     vec![
                         pid_or_name,
-                        name,
+                        identifier,
                         cpu,
                         mem,
                         rps,
@@ -175,7 +179,7 @@ impl ProcessTableWidget for Painter {
                 } else {
                     vec![
                         pid_or_name,
-                        name,
+                        identifier,
                         cpu,
                         mem,
                         rps,
