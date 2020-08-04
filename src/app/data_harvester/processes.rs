@@ -364,14 +364,21 @@ pub fn windows_macos_get_processes_list(
         } else {
             process_val.name().to_string()
         };
-        let path = process_val.cmd().join(" ");
+        let path = {
+            let path = process_val.cmd().join(" ");
+            if path.is_empty() {
+                name.to_string()
+            } else {
+                path
+            }
+        };
 
-        let pcu = if cfg!(target_os = "windows") || num_cpus == 0 {
+        let pcu = if cfg!(target_os = "windows") || num_cpus == 0.0 {
             process_val.cpu_usage() as f64
         } else {
             process_val.cpu_usage() as f64 / num_cpus
         };
-        let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0 {
+        let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
             pcu / cpu_usage
         } else {
             pcu
