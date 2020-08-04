@@ -199,18 +199,18 @@ fn convert_ps<S: core::hash::BuildHasher>(
     new_pid_stats: &mut HashMap<u32, PrevProcDetails, S>, use_current_cpu_total: bool,
     time_difference_in_secs: u64,
 ) -> std::io::Result<ProcessHarvest> {
-    let pid = (&process[..11])
+    let pid = (&process[..10])
         .trim()
         .to_string()
         .parse::<u32>()
         .unwrap_or(0);
     let name = (&process[11..111]).trim().to_string();
-    let mem_usage_percent = (&process[111..116])
+    let mem_usage_percent = (&process[112..116])
         .trim()
         .to_string()
         .parse::<f64>()
         .unwrap_or(0_f64);
-    let path = (&process[116..]).trim().to_string();
+    let path = (&process[117..]).trim().to_string();
 
     let mut new_pid_stat = if let Some(prev_proc_stats) = prev_pid_stats.remove(&pid) {
         prev_proc_stats
