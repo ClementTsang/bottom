@@ -204,13 +204,13 @@ fn convert_ps<S: core::hash::BuildHasher>(
         .to_string()
         .parse::<u32>()
         .unwrap_or(0);
-    let name = (&process[11..61]).trim().to_string();
-    let mem_usage_percent = (&process[61..67])
+    let name = (&process[11..111]).trim().to_string();
+    let mem_usage_percent = (&process[111..116])
         .trim()
         .to_string()
         .parse::<f64>()
         .unwrap_or(0_f64);
-    let path = (&process[67..]).trim().to_string();
+    let path = (&process[116..]).trim().to_string();
 
     let mut new_pid_stat = if let Some(prev_proc_stats) = prev_pid_stats.remove(&pid) {
         prev_proc_stats
@@ -294,7 +294,7 @@ pub fn linux_get_processes_list(
     time_difference_in_secs: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let ps_result = Command::new("ps")
-        .args(&["-axo", "pid:10,comm:50,%mem:5,args:50", "--noheader"])
+        .args(&["-axo", "pid:10,comm:100,%mem:5,args:100", "--noheader"])
         .output()?;
     let ps_stdout = String::from_utf8_lossy(&ps_result.stdout);
     let split_string = ps_stdout.split('\n');
@@ -339,7 +339,6 @@ pub fn linux_get_processes_list(
 pub fn windows_macos_get_processes_list(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    // FIXME: develop this for windows
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
@@ -365,6 +364,7 @@ pub fn windows_macos_get_processes_list(
         } else {
             process_val.name().to_string()
         };
+        let path = process_val.cmd().join(" ");
 
         let pcu = if cfg!(target_os = "windows") || num_cpus == 0 {
             process_val.cpu_usage() as f64
@@ -382,6 +382,7 @@ pub fn windows_macos_get_processes_list(
         process_vector.push(ProcessHarvest {
             pid: process_val.pid() as u32,
             name,
+            path,
             mem_usage_percent: if mem_total_kb > 0 {
                 process_val.memory() as f64 * 100.0 / mem_total_kb as f64
             } else {
