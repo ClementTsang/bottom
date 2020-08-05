@@ -670,7 +670,7 @@ fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::NAME => {
+        ProcessSorting::IDENTIFIER => {
             // Don't repeat if false...
             if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {

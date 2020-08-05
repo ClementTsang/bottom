@@ -495,6 +495,15 @@ impl App {
     pub fn on_left_key(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        proc_widget_state.current_column_index =
+                            proc_widget_state.current_column_index.saturating_sub(1);
+                    }
+                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
@@ -545,6 +554,16 @@ impl App {
     pub fn on_right_key(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
+                BottomWidgetType::Proc => {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        if proc_widget_state.current_column_index < proc_widget_state.num_columns {
+                            proc_widget_state.current_column_index += 1;
+                        }
+                    }
+                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
@@ -964,13 +983,13 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::NAME => {
+                            processes::ProcessSorting::IDENTIFIER => {
                                 proc_widget_state.process_sorting_reverse =
                                     !proc_widget_state.process_sorting_reverse
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::NAME;
+                                    processes::ProcessSorting::IDENTIFIER;
                                 proc_widget_state.process_sorting_reverse = false;
                             }
                         }

@@ -17,7 +17,7 @@ pub enum ProcessSorting {
     CPU,
     MEM,
     PID,
-    NAME,
+    IDENTIFIER,
 }
 
 impl Default for ProcessSorting {

@@ -133,7 +133,7 @@ impl ProcessTableWidget for Painter {
                 });
 
                 use app::data_harvester::processes::ProcessSorting;
-                let mut pid_or_name = if proc_widget_state.is_grouped {
+                let mut pid_or_count = if proc_widget_state.is_grouped {
                     "Count"
                 } else {
                     "PID(p)"
@@ -161,13 +161,14 @@ impl ProcessTableWidget for Painter {
                 match proc_widget_state.process_sorting_type {
                     ProcessSorting::CPU => cpu += &direction_val,
                     ProcessSorting::MEM => mem += &direction_val,
-                    ProcessSorting::PID => pid_or_name += &direction_val,
-                    ProcessSorting::NAME => identifier += &direction_val,
+                    ProcessSorting::PID => pid_or_count += &direction_val,
+                    ProcessSorting::IDENTIFIER => identifier += &direction_val,
                 };
 
+                // TODO: Gonna have to figure out how to do left/right GUI notation.
                 let process_headers = if proc_widget_state.is_grouped {
                     vec![
-                        pid_or_name,
+                        pid_or_count,
                         identifier,
                         cpu,
                         mem,
@@ -178,7 +179,7 @@ impl ProcessTableWidget for Painter {
                     ]
                 } else {
                     vec![
-                        pid_or_name,
+                        pid_or_count,
                         identifier,
                         cpu,
                         mem,
@@ -189,6 +190,7 @@ impl ProcessTableWidget for Painter {
                         process_state,
                     ]
                 };
+                proc_widget_state.num_columns = process_headers.len();
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
                     .map(|entry| entry.len())

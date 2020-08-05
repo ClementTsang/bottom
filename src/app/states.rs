@@ -148,6 +148,8 @@ pub struct ProcWidgetState {
     pub process_sorting_type: processes::ProcessSorting,
     pub process_sorting_reverse: bool,
     pub is_using_full_path: bool,
+    pub current_column_index: usize,
+    pub num_columns: usize,
 }
 
 impl ProcWidgetState {
@@ -173,6 +175,8 @@ impl ProcWidgetState {
             process_sorting_type: processes::ProcessSorting::CPU,
             process_sorting_reverse: true,
             is_using_full_path: false,
+            current_column_index: 0,
+            num_columns: 1,
         }
     }
 
