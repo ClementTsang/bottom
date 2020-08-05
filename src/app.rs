@@ -964,7 +964,6 @@ impl App {
                 }
             }
             'P' => {
-                // FIXME: For now... I guess.  I don't know what key to use.  Also, update docs +help!
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
                         .proc_state

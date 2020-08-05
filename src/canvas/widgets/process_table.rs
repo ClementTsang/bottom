@@ -198,10 +198,20 @@ impl ProcessTableWidget for Painter {
 
                 // Calculate widths
                 let width = f64::from(draw_loc.width);
+
+                // TODO: This is a hacky work-around for now.
                 let width_ratios = if proc_widget_state.is_grouped {
-                    vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
+                    if proc_widget_state.is_using_full_path {
+                        vec![0.1, 0.7, 0.05, 0.05, 0.025, 0.025, 0.025, 0.025]
+                    } else {
+                        vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
+                    }
                 } else {
-                    vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+                    if proc_widget_state.is_using_full_path {
+                        vec![0.1, 0.7, 0.05, 0.05, 0.02, 0.02, 0.02, 0.02, 0.02]
+                    } else {
+                        vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+                    }
                 };
                 let variable_intrinsic_results = get_variable_intrinsic_widths(
                     width as u16,
