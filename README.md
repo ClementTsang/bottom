@@ -206,15 +206,16 @@ Run using `btm`.
 
 #### Process bindings
 
-|               |                                                            |
-| ------------- | ---------------------------------------------------------- |
-| `dd`          | Kill the selected process                                  |
-| `c`           | Sort by CPU usage, press again to reverse sorting order    |
-| `m`           | Sort by memory usage, press again to reverse sorting order |
-| `p`           | Sort by PID name, press again to reverse sorting order     |
-| `n`           | Sort by process name, press again to reverse sorting order |
-| `Tab`         | Group/un-group processes with the same name                |
-| `Ctrl-f`, `/` | Open process search widget                                 |
+|               |                                                               |
+| ------------- | ------------------------------------------------------------- |
+| `dd`          | Kill the selected process                                     |
+| `c`           | Sort by CPU usage, press again to reverse sorting order       |
+| `m`           | Sort by memory usage, press again to reverse sorting order    |
+| `p`           | Sort by PID name, press again to reverse sorting order        |
+| `n`           | Sort by process name, press again to reverse sorting order    |
+| `Tab`         | Group/un-group processes with the same name                   |
+| `Ctrl-f`, `/` | Open process search widget                                    |
+| `P`           | Toggle between showing the full path or just the process name |
 
 #### Process search bindings
 
@@ -551,6 +552,7 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Thanks

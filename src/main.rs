@@ -225,9 +225,6 @@ fn main() -> error::Result<()> {
 
                         // Processes
                         if app.used_widgets.use_proc {
-                            let (single, grouped) = convert_process_data(&app.data_collection);
-                            app.canvas_data.process_data = single;
-                            app.canvas_data.grouped_process_data = grouped;
                             update_all_process_lists(&mut app);
                         }
 
@@ -582,44 +579,45 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             .is_invalid_or_blank_search(),
         None => false,
     };
+    let is_grouped = app.is_grouped(widget_id);
+
+    if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
+        app.canvas_data.process_data = convert_process_data(
+            &app.data_collection,
+            if is_grouped {
+                ProcessGroupingType::Grouped
+            } else {
+                ProcessGroupingType::Ungrouped
+            },
+            if proc_widget_state.is_using_full_path {
+                ProcessNamingType::Path
+            } else {
+                ProcessNamingType::Name
+            },
+        );
+    }
 
     let process_filter = app.get_process_filter(widget_id);
-    let filtered_process_data: Vec<ConvertedProcessData> = if app.is_grouped(widget_id) {
-        app.canvas_data
-            .grouped_process_data
-            .iter()
-            .filter(|process| {
-                if is_invalid_or_blank {
-                    true
-                } else if let Some(process_filter) = process_filter {
-                    process_filter.check(process)
+    let filtered_process_data: Vec<ConvertedProcessData> = app
+        .canvas_data
+        .process_data
+        .iter()
+        .filter(|process| {
+            if !is_invalid_or_blank {
+                if let Some(process_filter) = process_filter {
+                    process_filter.check(&process)
                 } else {
                     true
                 }
-            })
-            .cloned()
-            .collect::<Vec<_>>()
-    } else {
-        app.canvas_data
-            .process_data
-            .iter()
-            .filter(|process| {
-                if !is_invalid_or_blank {
-                    if let Some(process_filter) = process_filter {
-                        process_filter.check(&process)
-                    } else {
-                        true
-                    }
-                } else {
-                    true
-                }
-            })
-            .cloned()
-            .collect::<Vec<_>>()
-    };
+            } else {
+                true
+            }
+        })
+        .cloned()
+        .collect::<Vec<_>>();
 
     // Quick fix for tab updating the table headers
-    if let Some(proc_widget_state) = app.proc_state.widget_states.get_mut(&widget_id) {
+    if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
         if let data_harvester::processes::ProcessSorting::PID =
             proc_widget_state.process_sorting_type
         {
@@ -672,7 +670,7 @@ fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::NAME => {
+        ProcessSorting::IDENTIFIER => {
             // Don't repeat if false...
             if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {

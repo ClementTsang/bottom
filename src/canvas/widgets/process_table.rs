@@ -133,13 +133,17 @@ impl ProcessTableWidget for Painter {
                 });
 
                 use app::data_harvester::processes::ProcessSorting;
-                let mut pid_or_name = if proc_widget_state.is_grouped {
+                let mut pid_or_count = if proc_widget_state.is_grouped {
                     "Count"
                 } else {
                     "PID(p)"
                 }
                 .to_string();
-                let mut name = "Name(n)".to_string();
+                let mut identifier = if proc_widget_state.is_using_full_path {
+                    "Command(n)".to_string()
+                } else {
+                    "Name(n)".to_string()
+                };
                 let mut cpu = "CPU%(c)".to_string();
                 let mut mem = "Mem%(m)".to_string();
                 let rps = "R/s".to_string();
@@ -157,14 +161,15 @@ impl ProcessTableWidget for Painter {
                 match proc_widget_state.process_sorting_type {
                     ProcessSorting::CPU => cpu += &direction_val,
                     ProcessSorting::MEM => mem += &direction_val,
-                    ProcessSorting::PID => pid_or_name += &direction_val,
-                    ProcessSorting::NAME => name += &direction_val,
+                    ProcessSorting::PID => pid_or_count += &direction_val,
+                    ProcessSorting::IDENTIFIER => identifier += &direction_val,
                 };
 
+                // TODO: Gonna have to figure out how to do left/right GUI notation.
                 let process_headers = if proc_widget_state.is_grouped {
                     vec![
-                        pid_or_name,
-                        name,
+                        pid_or_count,
+                        identifier,
                         cpu,
                         mem,
                         rps,
@@ -174,8 +179,8 @@ impl ProcessTableWidget for Painter {
                     ]
                 } else {
                     vec![
-                        pid_or_name,
-                        name,
+                        pid_or_count,
+                        identifier,
                         cpu,
                         mem,
                         rps,
@@ -185,6 +190,7 @@ impl ProcessTableWidget for Painter {
                         process_state,
                     ]
                 };
+                proc_widget_state.num_columns = process_headers.len();
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
                     .map(|entry| entry.len())
@@ -192,8 +198,16 @@ impl ProcessTableWidget for Painter {
 
                 // Calculate widths
                 let width = f64::from(draw_loc.width);
+
+                // TODO: This is a ugly work-around for now.
                 let width_ratios = if proc_widget_state.is_grouped {
-                    vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
+                    if proc_widget_state.is_using_full_path {
+                        vec![0.1, 0.7, 0.05, 0.05, 0.025, 0.025, 0.025, 0.025]
+                    } else {
+                        vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
+                    }
+                } else if proc_widget_state.is_using_full_path {
+                    vec![0.1, 0.7, 0.05, 0.05, 0.02, 0.02, 0.02, 0.02, 0.02]
                 } else {
                     vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
                 };

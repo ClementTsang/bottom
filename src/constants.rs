@@ -79,7 +79,7 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll   Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-pub const PROCESS_HELP_TEXT: [&str; 8] = [
+pub const PROCESS_HELP_TEXT: [&str; 9] = [
     "3 - Process widget\n",
     "dd             Kill the selected process\n",
     "c              Sort by CPU usage, press again to reverse sorting order\n",
@@ -87,7 +87,8 @@ pub const PROCESS_HELP_TEXT: [&str; 8] = [
     "p              Sort by PID name, press again to reverse sorting order\n",
     "n              Sort by process name, press again to reverse sorting order\n",
     "Tab            Group/un-group processes with the same name\n",
-    "Ctrl-f, /      Open process search widget",
+    "Ctrl-f, /      Open process search widget\n",
+    "P              Toggle between showing the full path or just the process name",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 43] = [
