@@ -177,9 +177,9 @@ checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "chrono"
-version = "0.4.11"
+version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80094f509cf8b5ae86a4966a39b3ff66cd7e2a3e594accec3743ff3fabeab5b2"
+checksum = "c74d84029116787153e02106bf53e66828452a4b325cc8652b788b5967c0a0b6"
 dependencies = [
  "num-integer",
  "num-traits",
@@ -188,9 +188,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "2.33.1"
+version = "2.33.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdfa80d47f954d53a35a64987ca1422f495b8d6483c0fe9f7117b36c2a792129"
+checksum = "10040cdf04294b565d9e0319955430099ec3813a64c952b86a41200ad714ae48"
 dependencies = [
  "ansi_term",
  "atty",
@@ -1355,9 +1355,9 @@ dependencies = [
 
 [[package]]
 name = "typed-builder"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85fc4459191c621a53ef6c6ca5642e6e0e5ccc61f3e5b8ad6b6ab5317f0200fb"
+checksum = "d942c3f63d40f62b3fece2ab34a5bfc0d427ef148010fa732f5d56da0ac6d6ec"
 dependencies = [
  "proc-macro2",
  "quote",
