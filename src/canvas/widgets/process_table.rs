@@ -372,17 +372,10 @@ impl ProcessTableWidget for Painter {
                 app_state.is_force_redraw,
             );
 
-            let mut search_text = vec![Span::styled(
-                search_title,
-                if is_on_widget {
-                    self.colours.table_header_style
-                } else {
-                    self.colours.text_style
-                },
-            )];
             let query = proc_widget_state.get_current_search_query().as_str();
             let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
-            let query_with_cursor: Vec<Span<'_>> = build_query(
+
+            let query_with_cursor = build_query(
                 is_on_widget,
                 grapheme_indices,
                 start_position,
@@ -391,6 +384,19 @@ impl ProcessTableWidget for Painter {
                 self.colours.currently_selected_text_style,
                 self.colours.text_style,
             );
+
+            let mut search_text = vec![Spans::from({
+                let mut search_vec = vec![Span::styled(
+                    search_title,
+                    if is_on_widget {
+                        self.colours.table_header_style
+                    } else {
+                        self.colours.text_style
+                    },
+                )];
+                search_vec.extend(query_with_cursor);
+                search_vec
+            })];
 
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.process_search_state.is_ignoring_case {
@@ -417,8 +423,7 @@ impl ProcessTableWidget for Painter {
                 self.colours.text_style
             };
 
-            let option_text = vec![
-                Span::from("\n"),
+            let option_text = Spans::from(vec![
                 Span::styled(
                     format!("Case({})", if self.is_mac_os { "F1" } else { "Alt+C" }),
                     case_style,
@@ -433,12 +438,11 @@ impl ProcessTableWidget for Painter {
                     format!("Regex({})", if self.is_mac_os { "F3" } else { "Alt+R" }),
                     regex_style,
                 ),
-            ];
+            ]);
 
-            search_text.extend(query_with_cursor);
-            search_text.push(Span::styled(
+            search_text.push(Spans::from(vec![Span::styled(
                 format!(
-                    "\n{}",
+                    "{}",
                     if let Some(err) = &proc_widget_state
                         .process_search_state
                         .search_state
@@ -450,9 +454,8 @@ impl ProcessTableWidget for Painter {
                     }
                 ),
                 self.colours.invalid_query_style,
-            ));
-            search_text.extend(option_text);
-            let search_spans = Spans::from(search_text);
+            )]));
+            search_text.push(option_text);
 
             let current_border_style = if proc_widget_state
                 .process_search_state
@@ -499,7 +502,7 @@ impl ProcessTableWidget for Painter {
                 .split(draw_loc);
 
             f.render_widget(
-                Paragraph::new(search_spans)
+                Paragraph::new(search_text)
                     .block(process_search_block)
                     .style(self.colours.text_style)
                     .alignment(Alignment::Left)
