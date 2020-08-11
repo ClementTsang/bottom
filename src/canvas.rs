@@ -185,7 +185,7 @@ impl Painter {
 
         self.styled_help_text = styled_help_spans
             .into_iter()
-            .map(|span| Spans::from(vec![span]))
+            .map(|span| Spans::from(span))
             .collect();
     }
 

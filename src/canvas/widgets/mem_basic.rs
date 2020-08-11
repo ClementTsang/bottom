@@ -66,10 +66,10 @@ impl MemBasicWidget for Painter {
             swap_use_percentage.round(),
         );
 
-        let mem_text: Spans<'_> = Spans::from(vec![
-            Span::styled(mem_label, self.colours.ram_style),
-            Span::styled(swap_label, self.colours.swap_style),
-        ]);
+        let mem_text = vec![
+            Spans::from(Span::styled(mem_label, self.colours.ram_style)),
+            Spans::from(Span::styled(swap_label, self.colours.swap_style)),
+        ];
 
         f.render_widget(
             Paragraph::new(mem_text).block(Block::default()),

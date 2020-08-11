@@ -58,11 +58,14 @@ impl BasicTableArrows for Painter {
         let num_spaces =
             usize::from(draw_loc.width).saturating_sub(6 + left_name.len() + right_name.len());
 
-        let arrow_text = Spans::from(vec![
-            Span::styled(format!("\n◄ {}", left_name), self.colours.text_style),
-            Span::from(" ".repeat(num_spaces)),
-            Span::styled(format!("{} ►", right_name), self.colours.text_style),
-        ]);
+        let arrow_text = vec![
+            Spans::from(Span::from(String::default())),
+            Spans::from(vec![
+                Span::styled(format!("◄ {}", left_name), self.colours.text_style),
+                Span::from(" ".repeat(num_spaces)),
+                Span::styled(format!("{} ►", right_name), self.colours.text_style),
+            ]),
+        ];
 
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())

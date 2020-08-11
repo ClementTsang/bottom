@@ -203,12 +203,12 @@ impl ProcessTableWidget for Painter {
                 // TODO: This is a ugly work-around for now.
                 let width_ratios = if proc_widget_state.is_grouped {
                     if proc_widget_state.is_using_full_path {
-                        vec![0.1, 0.7, 0.05, 0.05, 0.025, 0.025, 0.025, 0.025]
+                        vec![0.05, 0.7, 0.05, 0.05, 0.0375, 0.0375, 0.0375, 0.0375]
                     } else {
                         vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
                     }
                 } else if proc_widget_state.is_using_full_path {
-                    vec![0.1, 0.7, 0.05, 0.05, 0.02, 0.02, 0.02, 0.02, 0.02]
+                    vec![0.05, 0.7, 0.05, 0.05, 0.03, 0.03, 0.03, 0.03]
                 } else {
                     vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
                 };
@@ -440,7 +440,7 @@ impl ProcessTableWidget for Painter {
                 ),
             ]);
 
-            search_text.push(Spans::from(vec![Span::styled(
+            search_text.push(Spans::from(Span::styled(
                 format!(
                     "{}",
                     if let Some(err) = &proc_widget_state
@@ -454,7 +454,7 @@ impl ProcessTableWidget for Painter {
                     }
                 ),
                 self.colours.invalid_query_style,
-            )]));
+            )));
             search_text.push(option_text);
 
             let current_border_style = if proc_widget_state

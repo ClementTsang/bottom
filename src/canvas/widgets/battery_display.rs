@@ -124,10 +124,10 @@ impl BatteryDisplayWidget for Painter {
                 );
             } else {
                 f.render_widget(
-                    Paragraph::new(Spans::from(vec![Span::styled(
+                    Paragraph::new(Spans::from(Span::styled(
                         "No data found for this battery",
                         self.colours.text_style,
-                    )]))
+                    )))
                     .block(battery_block.clone()),
                     draw_loc,
                 );

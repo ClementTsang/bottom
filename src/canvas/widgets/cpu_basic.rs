@@ -77,10 +77,10 @@ impl CpuBasicWidget for Painter {
 
                     let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
                     format!(
-                        "{:3}[{}{}{:3.0}%]\n",
+                        "{:3}[{}{}{:3.0}%]",
                         if app_state.app_config_fields.show_average_cpu {
                             if cpu_index == 0 {
-                                "AVG".to_string()
+                                " AVG".to_string()
                             } else {
                                 (cpu_index - 1).to_string()
                             }
@@ -107,15 +107,15 @@ impl CpuBasicWidget for Painter {
                     );
                     row_counter -= how_many_cpus;
                     let end_index = min(start_index + how_many_cpus, num_cpus);
-                    let cpu_column: Spans<'_> = Spans::from(
-                        (start_index..end_index)
-                            .map(|cpu_index| Span {
+                    let cpu_column = (start_index..end_index)
+                        .map(|cpu_index| {
+                            Spans::from(Span {
                                 content: (&cpu_bars[cpu_index]).into(),
                                 style: self.colours.cpu_colour_styles
                                     [cpu_index % self.colours.cpu_colour_styles.len()],
                             })
-                            .collect::<Vec<_>>(),
-                    );
+                        })
+                        .collect::<Vec<_>>();
 
                     start_index += how_many_cpus;
 

@@ -49,15 +49,15 @@ impl NetworkBasicWidget for Painter {
         let total_rx_label = format!("Total RX: {}\n", &app_state.canvas_data.total_rx_display);
         let total_tx_label = format!("Total TX: {}", &app_state.canvas_data.total_tx_display);
 
-        let net_text = Spans::from(vec![
-            Span::styled(rx_label, self.colours.rx_style),
-            Span::styled(tx_label, self.colours.tx_style),
-        ]);
+        let net_text = vec![
+            Spans::from(Span::styled(rx_label, self.colours.rx_style)),
+            Spans::from(Span::styled(tx_label, self.colours.tx_style)),
+        ];
 
-        let total_net_text = Spans::from(vec![
-            Span::styled(total_rx_label, self.colours.total_rx_style),
-            Span::styled(total_tx_label, self.colours.total_tx_style),
-        ]);
+        let total_net_text = vec![
+            Spans::from(Span::styled(total_rx_label, self.colours.total_rx_style)),
+            Spans::from(Span::styled(total_tx_label, self.colours.total_tx_style)),
+        ];
 
         f.render_widget(Paragraph::new(net_text).block(Block::default()), net_loc[0]);
 
