@@ -183,10 +183,7 @@ impl Painter {
             }
         });
 
-        self.styled_help_text = styled_help_spans
-            .into_iter()
-            .map(|span| Spans::from(span))
-            .collect();
+        self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
     }
 
     pub fn draw_data<B: Backend>(

@@ -50,6 +50,7 @@ winapi = "0.3.8"
 [dev-dependencies]
 assert_cmd = "1.0"
 predicates = "1"
+cargo-husky = "1"
 
 [package.metadata.deb]
 section = "utils"
