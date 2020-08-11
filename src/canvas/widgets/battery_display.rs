@@ -138,7 +138,7 @@ impl BatteryDisplayWidget for Painter {
                         .canvas_data
                         .battery_data
                         .iter()
-                        .map(|battery| Spans::from((&battery).battery_name.clone())))
+                        .map(|battery| Spans::from(battery.battery_name.clone())))
                     .collect::<Vec<_>>(),
                 )
                 .block(battery_block)

@@ -365,6 +365,8 @@ fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
         }
     } else if let Some(home_path) = dirs::home_dir() {
         let mut path = home_path;
+        // TODO: This should not be done like this IMO... it should be based on the defaults set by dirs rather than home_dir
+        // This WILL cause breaking changes on macOS though, warning!
         path.push(DEFAULT_UNIX_CONFIG_FILE_PATH);
         path.into_os_string()
     } else {
