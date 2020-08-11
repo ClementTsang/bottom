@@ -11,7 +11,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text},
+    text::{Span, Spans},
+    widgets::{Block, Paragraph},
 };
 
 pub trait CpuBasicWidget {
@@ -106,15 +107,15 @@ impl CpuBasicWidget for Painter {
                     );
                     row_counter -= how_many_cpus;
                     let end_index = min(start_index + how_many_cpus, num_cpus);
-                    let cpu_column: Vec<Text<'_>> = (start_index..end_index)
-                        .map(|cpu_index| {
-                            Text::Styled(
-                                (&cpu_bars[cpu_index]).into(),
-                                self.colours.cpu_colour_styles
+                    let cpu_column: Spans<'_> = Spans::from(
+                        (start_index..end_index)
+                            .map(|cpu_index| Span {
+                                content: (&cpu_bars[cpu_index]).into(),
+                                style: self.colours.cpu_colour_styles
                                     [cpu_index % self.colours.cpu_colour_styles.len()],
-                            )
-                        })
-                        .collect::<Vec<_>>();
+                            })
+                            .collect::<Vec<_>>(),
+                    );
 
                     start_index += how_many_cpus;
 
@@ -125,7 +126,7 @@ impl CpuBasicWidget for Painter {
                         .split(*chunk);
 
                     f.render_widget(
-                        Paragraph::new(cpu_column.iter()).block(Block::default()),
+                        Paragraph::new(cpu_column).block(Block::default()),
                         margined_loc[0],
                     );
                 }

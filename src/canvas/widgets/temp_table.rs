@@ -5,6 +5,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
+    text::Span,
     widgets::{Block, Borders, Row, Table},
 };
 
@@ -67,20 +68,6 @@ impl TempTableWidget for Painter {
                 get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
             let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
-            let title = if app_state.is_expanded {
-                const TITLE_BASE: &str = " Temperatures ── Esc to go back ";
-                format!(
-                    " Temperatures ─{}─ Esc to go back ",
-                    "─".repeat(
-                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
-                    )
-                )
-            } else if app_state.app_config_fields.use_basic_mode {
-                String::new()
-            } else {
-                " Temperatures ".to_string()
-            };
-
             let (border_and_title_style, highlight_style) = if is_on_widget {
                 (
                     self.colours.highlighted_border_style,
@@ -90,14 +77,30 @@ impl TempTableWidget for Painter {
                 (self.colours.border_style, self.colours.text_style)
             };
 
+            let title = if app_state.is_expanded {
+                const TITLE_BASE: &str = " Temperatures ── Esc to go back ";
+                Span::styled(
+                    format!(
+                        " Temperatures ─{}─ Esc to go back ",
+                        "─".repeat(
+                            usize::from(draw_loc.width)
+                                .saturating_sub(TITLE_BASE.chars().count() + 2)
+                        )
+                    ),
+                    border_and_title_style,
+                )
+            } else if app_state.app_config_fields.use_basic_mode {
+                Span::from(String::new())
+            } else {
+                Span::styled(
+                    " Temperatures ".to_string(),
+                    self.colours.widget_title_style,
+                )
+            };
+
             let temp_block = if draw_border {
                 Block::default()
-                    .title(&title)
-                    .title_style(if app_state.is_expanded {
-                        border_and_title_style
-                    } else {
-                        self.colours.widget_title_style
-                    })
+                    .title(title)
                     .borders(Borders::ALL)
                     .border_style(border_and_title_style)
             } else if is_on_widget {

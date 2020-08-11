@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::Text,
+    text::{Span, Spans},
     Frame, Terminal,
 };
 
@@ -55,7 +55,7 @@ pub struct Painter {
     pub colours: CanvasColours,
     height: u16,
     width: u16,
-    styled_help_text: Vec<Text<'static>>,
+    styled_help_text: Vec<Spans<'static>>,
     is_mac_os: bool,
     row_constraints: Vec<Constraint>,
     col_constraints: Vec<Vec<Constraint>>,
@@ -139,14 +139,14 @@ impl Painter {
             colours: CanvasColours::default(),
             height: 0,
             width: 0,
-            styled_help_text: Vec::new(),
+            styled_help_text: Vec::default(),
             is_mac_os: false,
             row_constraints,
             col_constraints,
             col_row_constraints,
             layout_constraints,
             widget_layout,
-            derived_widget_draw_locs: Vec::new(),
+            derived_widget_draw_locs: Vec::default(),
             table_height_offset: 4 + table_gap,
         }
     }
@@ -155,34 +155,38 @@ impl Painter {
     /// This is to set some remaining styles and text.
     pub fn complete_painter_init(&mut self) {
         self.is_mac_os = cfg!(target_os = "macos");
+        let mut styled_help_spans = Vec::new();
 
         // Init help text:
         (*HELP_TEXT).iter().enumerate().for_each(|(itx, section)| {
             if itx == 0 {
-                self.styled_help_text.extend(
+                styled_help_spans.extend(
                     section
                         .iter()
-                        .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                        .map(|&text| Span::styled(text, self.colours.text_style))
                         .collect::<Vec<_>>(),
                 );
             } else {
                 // Not required check but it runs only a few times... so whatever ig, prevents me from
                 // being dumb and leaving a help text section only one line long.
                 if section.len() > 1 {
-                    self.styled_help_text.push(Text::Raw("\n\n".into()));
-                    self.styled_help_text.push(Text::Styled(
-                        section[0].into(),
-                        self.colours.table_header_style,
-                    ));
-                    self.styled_help_text.extend(
+                    styled_help_spans.push(Span::from("\n\n"));
+                    styled_help_spans
+                        .push(Span::styled(section[0], self.colours.table_header_style));
+                    styled_help_spans.extend(
                         section[1..]
                             .iter()
-                            .map(|&text| Text::Styled(text.into(), self.colours.text_style))
+                            .map(|&text| Span::styled(text, self.colours.text_style))
                             .collect::<Vec<_>>(),
                     );
                 }
             }
         });
+
+        self.styled_help_text = styled_help_spans
+            .into_iter()
+            .map(|span| Spans::from(vec![span]))
+            .collect();
     }
 
     pub fn draw_data<B: Backend>(
