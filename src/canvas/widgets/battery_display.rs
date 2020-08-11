@@ -63,6 +63,23 @@ impl BatteryDisplayWidget for Painter {
                 Block::default().borders(Borders::NONE)
             };
 
+            f.render_widget(
+                Tabs::new(
+                    (app_state
+                        .canvas_data
+                        .battery_data
+                        .iter()
+                        .map(|battery| Spans::from(battery.battery_name.clone())))
+                    .collect::<Vec<_>>(),
+                )
+                .block(battery_block.clone())
+                .divider(tui::symbols::line::VERTICAL)
+                .style(self.colours.text_style)
+                .highlight_style(self.colours.currently_selected_text_style)
+                .select(battery_widget_state.currently_selected_battery_index),
+                draw_loc,
+            );
+
             if let Some(battery_details) = app_state
                 .canvas_data
                 .battery_data
@@ -128,26 +145,10 @@ impl BatteryDisplayWidget for Painter {
                         "No data found for this battery",
                         self.colours.text_style,
                     )))
-                    .block(battery_block.clone()),
+                    .block(battery_block),
                     draw_loc,
                 );
             }
-            f.render_widget(
-                Tabs::new(
-                    (app_state
-                        .canvas_data
-                        .battery_data
-                        .iter()
-                        .map(|battery| Spans::from(battery.battery_name.clone())))
-                    .collect::<Vec<_>>(),
-                )
-                .block(battery_block)
-                .divider(tui::symbols::line::VERTICAL)
-                .style(self.colours.text_style)
-                .highlight_style(self.colours.currently_selected_text_style)
-                .select(battery_widget_state.currently_selected_battery_index),
-                draw_loc,
-            );
         }
     }
 }
