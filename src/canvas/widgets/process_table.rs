@@ -441,9 +441,7 @@ impl ProcessTableWidget for Painter {
             ]);
 
             search_text.push(Spans::from(Span::styled(
-                format!(
-                    "{}",
-                    if let Some(err) = &proc_widget_state
+                if let Some(err) = &proc_widget_state
                         .process_search_state
                         .search_state
                         .error_message
@@ -451,8 +449,7 @@ impl ProcessTableWidget for Painter {
                         err.as_str()
                     } else {
                         ""
-                    }
-                ),
+                    },
                 self.colours.invalid_query_style,
             )));
             search_text.push(option_text);
