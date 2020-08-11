@@ -1,7 +1,5 @@
 language: rust
 rust:
-  # MSRV; though I only want to test if it builds.
-  - 1.40.0
   - stable
   - beta
 os:
@@ -13,8 +11,6 @@ jobs:
   exclude:
     - if: tag IS present
       rust: beta
-    - if: tag IS present
-      rust: 1.40.0
 branches:
   only:
     - master
@@ -34,15 +30,9 @@ before_script:
   - rustup target add $TARGET
   - rustup component add clippy
 script:
-  - |
-    if [[ $TRAVIS_RUST_VERSION != "1.40.0" ]]; then
-      cargo clippy -- -D clippy::all
-    fi
+  - cargo clippy -- -D clippy::all
   - cargo build --verbose --target $TARGET
-  - |
-    if [[ $TRAVIS_RUST_VERSION != "1.40.0" ]]; then
-      cargo test --verbose --target $TARGET;
-    fi
+  - cargo test --verbose --target $TARGET
   - cargo install --path . --target $TARGET --locked --force
 
 before_cache:

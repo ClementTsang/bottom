@@ -61,7 +61,7 @@ As such, support beyond that is not guaranteed.
 
 ### Manual
 
-There are a few ways to go about doing this. Note that the MSRV is 1.40.0. For example:
+There are a few ways to go about doing this. Please build using stable. For example:
 
 ```bash
 # If required, update Rust on the stable channel

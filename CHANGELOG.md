@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [179](https://github.com/ClementTsang/bottom/pull/179): Show full command/process path as an option.
 
+### Changes
+
+- Changed to just support stable (and newer) Rust, due to library incompatibilities.
+
 ## [0.4.5] - 2020-07-08
 
 - No changes here, just an uptick for Crates.io using the wrong Cargo.lock.
