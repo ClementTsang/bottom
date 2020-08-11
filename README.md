@@ -84,6 +84,9 @@ cargo install --path .
 ### Cargo
 
 ```bash
+# If required, update Rust on the stable channel
+rustup update stable
+
 cargo install bottom
 
 # OR, --locked may be required due to how cargo install works
