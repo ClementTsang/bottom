@@ -1001,10 +1001,10 @@ impl App {
                 self.help_dialog_state.is_showing_help = true;
                 self.is_force_redraw = true;
             }
-            'H' => self.move_widget_selection_left(),
-            'L' => self.move_widget_selection_right(),
-            'K' => self.move_widget_selection_up(),
-            'J' => self.move_widget_selection_down(),
+            'H' | 'A' => self.move_widget_selection_left(),
+            'L' | 'D' => self.move_widget_selection_right(),
+            'K' | 'W' => self.move_widget_selection_up(),
+            'J' | 'S' => self.move_widget_selection_down(),
             ' ' => self.on_space(),
             '+' => self.zoom_in(),
             '-' => self.zoom_out(),

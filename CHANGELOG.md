@@ -15,7 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- Added `WASD` as an alternative widget movement system.
+
 - Changed to just support stable (and newer) Rust, due to library incompatibilities.
+
+### Bug Fixes
 
 ## [0.4.5] - 2020-07-08
 

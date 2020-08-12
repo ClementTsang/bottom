@@ -51,15 +51,24 @@ pub const HELP_CONTENTS_TEXT: [&str; 6] = [
     "5 - Battery widget",
 ];
 
-pub const GENERAL_HELP_TEXT: [&str; 20] = [
+pub const GENERAL_HELP_TEXT: [&str; 29] = [
     "1 - General\n",
     "q, Ctrl-c      Quit\n",
     "Esc            Close dialog windows, search, widgets, or exit expanded mode\n",
     "Ctrl-r         Reset display and any collected data\n",
     "f              Freeze/unfreeze updating with new data\n",
-    "Ctrl-Arrow     \n",
-    "Shift-Arrow    Move to a different widget\n",
-    "H/J/K/L        \n",
+    "Ctrl-Left,     \n",
+    "Shift-Left,    Move widget selection left\n",
+    "H, A           \n",
+    "Ctrl-Right,    \n",
+    "Shift-Right,   Move widget selection right\n",
+    "L, D           \n",
+    "Ctrl-Up,       \n",
+    "Shift-Up,      Move widget selection up\n",
+    "K, W           \n",
+    "Ctrl-Down,     \n",
+    "Shift-Down,    Move widget selection down\n",
+    "J, S           \n",
     "Left, h        Move left within widget\n",
     "Down, j        Move down within widget\n",
     "Up, k          Move up within widget\n",

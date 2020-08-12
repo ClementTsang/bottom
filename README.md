@@ -181,25 +181,28 @@ Run using `btm`.
 
 #### General
 
-|                                                    |                                                                              |
-| -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `q`, `Ctrl-c`                                      | Quit                                                                         |
-| `Esc`                                              | Close dialog windows, search, widgets, or exit expanded mode                 |
-| `Ctrl-r`                                           | Reset display and any collected data                                         |
-| `f`                                                | Freeze/unfreeze updating with new data                                       |
-| `Ctrl`-arrow key<br>`Shift`-arrow key<br>`H/J/K/L` | Move to a different widget (on macOS some keybindings may conflict)          |
-| `Left`, `h`                                        | Move left within widget                                                      |
-| `Down`, `j`                                        | Move down within widget                                                      |
-| `Up`,`k`                                           | Move up within widget                                                        |
-| `Right`, `l`                                       | Move right within widget                                                     |
-| `?`                                                | Open help menu                                                               |
-| `gg`, `Home`                                       | Jump to the first entry                                                      |
-| `Shift-g`, `End`                                   | Jump to the last entry                                                       |
-| `e`                                                | Expand the currently selected widget                                         |
-| `+`                                                | Zoom in on chart (decrease time range)                                       |
-| `-`                                                | Zoom out on chart (increase time range)                                      |
-| `=`                                                | Reset zoom                                                                   |
-| Mouse scroll                                       | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively |
+|                                             |                                                                              |
+| ------------------------------------------- | ---------------------------------------------------------------------------- |
+| `q`, `Ctrl-c`                               | Quit                                                                         |
+| `Esc`                                       | Close dialog windows, search, widgets, or exit expanded mode                 |
+| `Ctrl-r`                                    | Reset display and any collected data                                         |
+| `f`                                         | Freeze/unfreeze updating with new data                                       |
+| `Ctrl-Left`<br>`Shift-Left`<br>`H`<br>`A`   | Move widget selection left                                                   |
+| `Ctrl-Right`<br>`Shift-Right`<br>`L`<br>`D` | Move widget selection right                                                  |
+| `Ctrl-Up`<br>`Shift-Up`<br>`K`<br>`W`       | Move widget selection up                                                     |
+| `Ctrl-Down`<br>`Shift-Down`<br>`J`<br>`S`   | Move widget selection down                                                   |
+| `Left`, `h`                                 | Move left within widget                                                      |
+| `Down`, `j`                                 | Move down within widget                                                      |
+| `Up`,`k`                                    | Move up within widget                                                        |
+| `Right`, `l`                                | Move right within widget                                                     |
+| `?`                                         | Open help menu                                                               |
+| `gg`, `Home`                                | Jump to the first entry                                                      |
+| `Shift-g`, `End`                            | Jump to the last entry                                                       |
+| `e`                                         | Expand the currently selected widget                                         |
+| `+`                                         | Zoom in on chart (decrease time range)                                       |
+| `-`                                         | Zoom out on chart (increase time range)                                      |
+| `=`                                         | Reset zoom                                                                   |
+| Mouse scroll                                | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively |
 
 #### CPU bindings
 
