@@ -243,47 +243,74 @@ impl Painter {
 
                 self.draw_help_dialog(&mut f, app_state, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
-                let bordering = f.size().height.saturating_sub(7) / 2;
+                // TODO: This needs the paragraph wrap feature from tui-rs to be pushed to complete... but for now it's pretty close!
+                // The main problem right now is that I cannot properly calculate the height offset since
+                // line-wrapping is NOT the same as taking the width of the text and dividing by width.
+                // So, I need the height AFTER wrapping.
+                // See: https://github.com/fdehau/tui-rs/pull/349.  Land this after this pushes to release.
+
+                let dd_text = self.get_dd_spans(app_state);
+
+                let (text_width, text_height) = if let Some(dd_text) = &dd_text {
+                    let width = if f.size().width < 100 {
+                        f.size().width * 90 / 100
+                    } else {
+                        let min_possible_width = (f.size().width * 50 / 100) as usize;
+                        let mut width = dd_text.width();
+
+                        // This should theoretically never allow width to be 0... we can be safe and do an extra check though.
+                        while width > (f.size().width as usize) && width / 2 > min_possible_width {
+                            width /= 2;
+                        }
+
+                        std::cmp::max(width, min_possible_width) as u16
+                    };
+
+                    (
+                        width,
+                        (dd_text.height() + 2 + (dd_text.width() / width as usize)) as u16,
+                    )
+                } else {
+                    // AFAIK this shouldn't happen, unless something went wrong...
+                    (
+                        if f.size().width < 100 {
+                            f.size().width * 90 / 100
+                        } else {
+                            f.size().width * 50 / 100
+                        },
+                        7,
+                    )
+                };
+
+                let vertical_bordering = f.size().height.saturating_sub(text_height) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
                         [
-                            Constraint::Length(bordering),
-                            Constraint::Length(7),
-                            Constraint::Length(bordering),
+                            Constraint::Length(vertical_bordering),
+                            Constraint::Length(text_height),
+                            Constraint::Length(vertical_bordering),
                         ]
                         .as_ref(),
                     )
                     .split(f.size());
 
+                let horizontal_bordering = f.size().width.saturating_sub(text_width) / 2;
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(
-                        if f.size().width < 100 {
-                            // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
-                            [
-                                Constraint::Percentage(5),
-                                Constraint::Percentage(90),
-                                Constraint::Percentage(5),
-                            ]
-                        } else {
-                            [
-                                Constraint::Percentage(30),
-                                Constraint::Percentage(40),
-                                Constraint::Percentage(30),
-                            ]
-                        }
+                        [
+                            Constraint::Length(horizontal_bordering),
+                            Constraint::Length(text_width),
+                            Constraint::Length(horizontal_bordering),
+                        ]
                         .as_ref(),
                     )
                     .split(vertical_dialog_chunk[1]);
 
-                if let Some(dd_err) = &app_state.dd_err {
-                    self.draw_dd_error_dialog(&mut f, dd_err, middle_dialog_chunk[1]);
-                } else {
-                    // This is a bit nasty, but it works well... I guess.
-                    app_state.delete_dialog_state.is_showing_dd =
-                        self.draw_dd_dialog(&mut f, app_state, middle_dialog_chunk[1]);
-                }
+                // This is a bit nasty, but it works well... I guess.
+                app_state.delete_dialog_state.is_showing_dd =
+                    self.draw_dd_dialog(&mut f, dd_text, app_state, middle_dialog_chunk[1]);
             } else if app_state.is_expanded {
                 let rect = Layout::default()
                     .margin(0)

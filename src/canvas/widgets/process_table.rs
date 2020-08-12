@@ -151,7 +151,7 @@ impl ProcessTableWidget for Painter {
                 let wps = "W/s".to_string();
                 let total_read = "Read".to_string();
                 let total_write = "Write".to_string();
-                let process_state = "State".to_string();
+                let process_state = "State   ".to_string();
 
                 let direction_val = if proc_widget_state.process_sorting_reverse {
                     "▼".to_string()
