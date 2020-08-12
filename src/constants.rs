@@ -164,8 +164,7 @@ lazy_static! {
 }
 
 // Config and flags
-pub const DEFAULT_UNIX_CONFIG_FILE_PATH: &str = ".config/bottom/bottom.toml";
-pub const DEFAULT_WINDOWS_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
+pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
 // Default config file
 pub const DEFAULT_CONFIG_CONTENT: &str = r##"

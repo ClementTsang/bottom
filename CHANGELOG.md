@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Changed to just support stable (and newer) Rust, due to library incompatibilities.
 
+- For macOS, support `$HOME/Library/Application Support` instead of `$HOME/.config` for config files. For
+  backwards compatibility's sake, for macOS, this will still check `.config` if it exists first,
+  but otherwise, it will default to the new location.
+
 ### Bug Fixes
 
 ## [0.4.5] - 2020-07-08
