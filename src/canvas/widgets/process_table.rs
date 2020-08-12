@@ -13,7 +13,8 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Borders, Paragraph, Row, Table, Text},
+    text::{Span, Spans},
+    widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
 };
 
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
@@ -202,12 +203,12 @@ impl ProcessTableWidget for Painter {
                 // TODO: This is a ugly work-around for now.
                 let width_ratios = if proc_widget_state.is_grouped {
                     if proc_widget_state.is_using_full_path {
-                        vec![0.1, 0.7, 0.05, 0.05, 0.025, 0.025, 0.025, 0.025]
+                        vec![0.05, 0.7, 0.05, 0.05, 0.0375, 0.0375, 0.0375, 0.0375]
                     } else {
                         vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
                     }
                 } else if proc_widget_state.is_using_full_path {
-                    vec![0.1, 0.7, 0.05, 0.05, 0.02, 0.02, 0.02, 0.02, 0.02]
+                    vec![0.05, 0.7, 0.05, 0.05, 0.03, 0.03, 0.03, 0.03]
                 } else {
                     vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
                 };
@@ -219,28 +220,6 @@ impl ProcessTableWidget for Painter {
                 let intrinsic_widths =
                     &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
-                let title = if draw_border {
-                    if app_state.is_expanded
-                        && !proc_widget_state
-                            .process_search_state
-                            .search_state
-                            .is_enabled
-                    {
-                        const TITLE_BASE: &str = " Processes ── Esc to go back ";
-                        format!(
-                            " Processes ─{}─ Esc to go back ",
-                            "─".repeat(
-                                usize::from(draw_loc.width)
-                                    .saturating_sub(TITLE_BASE.chars().count() + 2)
-                            )
-                        )
-                    } else {
-                        " Processes ".to_string()
-                    }
-                } else {
-                    String::default()
-                };
-
                 let (border_and_title_style, highlight_style) = if is_on_widget {
                     (
                         self.colours.highlighted_border_style,
@@ -250,14 +229,34 @@ impl ProcessTableWidget for Painter {
                     (self.colours.border_style, self.colours.text_style)
                 };
 
+                let title = if draw_border {
+                    if app_state.is_expanded
+                        && !proc_widget_state
+                            .process_search_state
+                            .search_state
+                            .is_enabled
+                    {
+                        const TITLE_BASE: &str = " Processes ── Esc to go back ";
+                        Span::styled(
+                            format!(
+                                " Processes ─{}─ Esc to go back ",
+                                "─".repeat(
+                                    usize::from(draw_loc.width)
+                                        .saturating_sub(TITLE_BASE.chars().count() + 2)
+                                )
+                            ),
+                            border_and_title_style,
+                        )
+                    } else {
+                        Span::styled(" Processes ".to_string(), self.colours.widget_title_style)
+                    }
+                } else {
+                    Span::from(String::default())
+                };
+
                 let process_block = if draw_border {
                     Block::default()
-                        .title(&title)
-                        .title_style(if app_state.is_expanded {
-                            border_and_title_style
-                        } else {
-                            self.colours.widget_title_style
-                        })
+                        .title(title)
                         .borders(Borders::ALL)
                         .border_style(border_and_title_style)
                 } else if is_on_widget {
@@ -304,7 +303,7 @@ impl ProcessTableWidget for Painter {
             is_on_widget: bool, grapheme_indices: GraphemeIndices<'a>, start_position: usize,
             cursor_position: usize, query: &str, currently_selected_text_style: tui::style::Style,
             text_style: tui::style::Style,
-        ) -> Vec<Text<'a>> {
+        ) -> Vec<Span<'a>> {
             let mut current_grapheme_posn = 0;
 
             if is_on_widget {
@@ -316,9 +315,9 @@ impl ProcessTableWidget for Painter {
                             None
                         } else {
                             let styled = if grapheme.0 == cursor_position {
-                                Text::styled(grapheme.1, currently_selected_text_style)
+                                Span::styled(grapheme.1, currently_selected_text_style)
                             } else {
-                                Text::styled(grapheme.1, text_style)
+                                Span::styled(grapheme.1, text_style)
                             };
                             Some(styled)
                         }
@@ -326,20 +325,21 @@ impl ProcessTableWidget for Painter {
                     .collect::<Vec<_>>();
 
                 if cursor_position >= query.len() {
-                    res.push(Text::styled(" ", currently_selected_text_style))
+                    res.push(Span::styled(" ", currently_selected_text_style))
                 }
 
                 res
             } else {
                 // This is easier - we just need to get a range of graphemes, rather than
                 // dealing with possibly inserting a cursor (as none is shown!)
+
                 grapheme_indices
                     .filter_map(|grapheme| {
                         current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
                         if current_grapheme_posn <= start_position {
                             None
                         } else {
-                            let styled = Text::styled(grapheme.1, text_style);
+                            let styled = Span::styled(grapheme.1, text_style);
                             Some(styled)
                         }
                     })
@@ -372,17 +372,10 @@ impl ProcessTableWidget for Painter {
                 app_state.is_force_redraw,
             );
 
-            let mut search_text = vec![Text::styled(
-                search_title,
-                if is_on_widget {
-                    self.colours.table_header_style
-                } else {
-                    self.colours.text_style
-                },
-            )];
             let query = proc_widget_state.get_current_search_query().as_str();
             let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
-            let query_with_cursor: Vec<Text<'_>> = build_query(
+
+            let query_with_cursor = build_query(
                 is_on_widget,
                 grapheme_indices,
                 start_position,
@@ -391,6 +384,19 @@ impl ProcessTableWidget for Painter {
                 self.colours.currently_selected_text_style,
                 self.colours.text_style,
             );
+
+            let mut search_text = vec![Spans::from({
+                let mut search_vec = vec![Span::styled(
+                    search_title,
+                    if is_on_widget {
+                        self.colours.table_header_style
+                    } else {
+                        self.colours.text_style
+                    },
+                )];
+                search_vec.extend(query_with_cursor);
+                search_vec
+            })];
 
             // Text options shamelessly stolen from VS Code.
             let case_style = if !proc_widget_state.process_search_state.is_ignoring_case {
@@ -417,41 +423,36 @@ impl ProcessTableWidget for Painter {
                 self.colours.text_style
             };
 
-            let option_text = vec![
-                Text::raw("\n"),
-                Text::styled(
+            let option_text = Spans::from(vec![
+                Span::styled(
                     format!("Case({})", if self.is_mac_os { "F1" } else { "Alt+C" }),
                     case_style,
                 ),
-                Text::raw("  "),
-                Text::styled(
+                Span::from("  "),
+                Span::styled(
                     format!("Whole({})", if self.is_mac_os { "F2" } else { "Alt+W" }),
                     whole_word_style,
                 ),
-                Text::raw("  "),
-                Text::styled(
+                Span::from("  "),
+                Span::styled(
                     format!("Regex({})", if self.is_mac_os { "F3" } else { "Alt+R" }),
                     regex_style,
                 ),
-            ];
+            ]);
 
-            search_text.extend(query_with_cursor);
-            search_text.push(Text::styled(
-                format!(
-                    "\n{}",
-                    if let Some(err) = &proc_widget_state
-                        .process_search_state
-                        .search_state
-                        .error_message
-                    {
-                        err.as_str()
-                    } else {
-                        ""
-                    }
-                ),
+            search_text.push(Spans::from(Span::styled(
+                if let Some(err) = &proc_widget_state
+                    .process_search_state
+                    .search_state
+                    .error_message
+                {
+                    err.as_str()
+                } else {
+                    ""
+                },
                 self.colours.invalid_query_style,
-            ));
-            search_text.extend(option_text);
+            )));
+            search_text.push(option_text);
 
             let current_border_style = if proc_widget_state
                 .process_search_state
@@ -470,15 +471,17 @@ impl ProcessTableWidget for Painter {
 
                 let repeat_num =
                     usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2);
-                format!("{} Esc to close ", "─".repeat(repeat_num))
+                Span::styled(
+                    format!("{} Esc to close ", "─".repeat(repeat_num)),
+                    current_border_style,
+                )
             } else {
-                String::new()
+                Span::from(String::new())
             };
 
             let process_search_block = if draw_border {
                 Block::default()
-                    .title(&title)
-                    .title_style(current_border_style)
+                    .title(title)
                     .borders(Borders::ALL)
                     .border_style(current_border_style)
             } else if is_on_widget {
@@ -496,11 +499,11 @@ impl ProcessTableWidget for Painter {
                 .split(draw_loc);
 
             f.render_widget(
-                Paragraph::new(search_text.iter())
+                Paragraph::new(search_text)
                     .block(process_search_block)
                     .style(self.colours.text_style)
                     .alignment(Alignment::Left)
-                    .wrap(false),
+                    .wrap(Wrap { trim: false }),
                 margined_draw_loc[0],
             );
         }

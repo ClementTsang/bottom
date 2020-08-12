@@ -13,7 +13,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 ## Table of Contents
 
 - [Installation](#installation)
-  - [Manual](#manual)
+  - [Manually](#manually)
   - [Cargo](#cargo)
   - [AUR](#aur)
   - [Debian (and Debian-based)](#debian)
@@ -59,9 +59,9 @@ Note that bottom is:
 
 As such, support beyond that is not guaranteed.
 
-### Manual
+### [Manually]
 
-There are a few ways to go about doing this. Note that the MSRV is 1.40.0. For example:
+There are a few ways to go about doing this manually. If you do so, please build using the current stable release of Rust. For example:
 
 ```bash
 # If required, update Rust on the stable channel
@@ -84,6 +84,9 @@ cargo install --path .
 ### Cargo
 
 ```bash
+# If required, update Rust on the stable channel
+rustup update stable
+
 cargo install bottom
 
 # OR, --locked may be required due to how cargo install works

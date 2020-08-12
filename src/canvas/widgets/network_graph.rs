@@ -12,6 +12,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     terminal::Frame,
+    text::Span,
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -71,9 +72,12 @@ impl NetworkGraphWidget for Painter {
             let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
             let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
 
-            let display_time_labels = [
-                format!("{}s", network_widget_state.current_display_time / 1000),
-                "0s".to_string(),
+            let display_time_labels = vec![
+                Span::styled(
+                    format!("{}s", network_widget_state.current_display_time / 1000),
+                    self.colours.graph_style,
+                ),
+                Span::styled("0s".to_string(), self.colours.graph_style),
             ];
             let x_axis = if app_state.app_config_fields.hide_time
                 || (app_state.app_config_fields.autohide_time
@@ -87,8 +91,7 @@ impl NetworkGraphWidget for Painter {
                     Axis::default()
                         .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
-                        .labels_style(self.colours.graph_style)
-                        .labels(&display_time_labels)
+                        .labels(display_time_labels)
                 } else {
                     network_widget_state.autohide_timer = None;
                     Axis::default()
@@ -100,27 +103,35 @@ impl NetworkGraphWidget for Painter {
                 Axis::default()
                     .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
-                    .labels_style(self.colours.graph_style)
-                    .labels(&display_time_labels)
+                    .labels(display_time_labels)
             };
 
             // 0 is offset.
-            let y_axis: Axis<'_, &str> = Axis::default()
+            let y_axis_labels = vec![
+                Span::styled("0B", self.colours.graph_style),
+                Span::styled("1KiB", self.colours.graph_style),
+                Span::styled("1MiB", self.colours.graph_style),
+                Span::styled("1GiB", self.colours.graph_style),
+            ];
+            let y_axis = Axis::default()
                 .style(self.colours.graph_style)
-                .labels_style(self.colours.graph_style)
                 .bounds([-0.5, 30_f64])
-                .labels(&["0B", "1KiB", "1MiB", "1GiB"]);
+                .labels(y_axis_labels);
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Network ── Esc to go back ";
-                format!(
-                    " Network ─{}─ Esc to go back ",
-                    "─".repeat(
-                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
-                    )
+                Span::styled(
+                    format!(
+                        " Network ─{}─ Esc to go back ",
+                        "─".repeat(
+                            usize::from(draw_loc.width)
+                                .saturating_sub(TITLE_BASE.chars().count() + 2)
+                        )
+                    ),
+                    self.colours.highlighted_border_style,
                 )
             } else {
-                " Network ".to_string()
+                Span::styled(" Network ".to_string(), self.colours.widget_title_style)
             };
 
             let legend_constraints = if hide_legend {
@@ -209,15 +220,10 @@ impl NetworkGraphWidget for Painter {
             };
 
             f.render_widget(
-                Chart::default()
+                Chart::new(dataset)
                     .block(
                         Block::default()
-                            .title(&title)
-                            .title_style(if app_state.is_expanded {
-                                self.colours.highlighted_border_style
-                            } else {
-                                self.colours.widget_title_style
-                            })
+                            .title(title)
                             .borders(Borders::ALL)
                             .border_style(if app_state.current_widget.widget_id == widget_id {
                                 self.colours.highlighted_border_style
@@ -227,7 +233,6 @@ impl NetworkGraphWidget for Painter {
                     )
                     .x_axis(x_axis)
                     .y_axis(y_axis)
-                    .datasets(&dataset)
                     .hidden_legend_constraints(legend_constraints),
                 draw_loc,
             );

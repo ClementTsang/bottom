@@ -4,7 +4,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text},
+    text::{Span, Spans},
+    widgets::{Block, Paragraph},
 };
 
 pub trait NetworkBasicWidget {
@@ -49,22 +50,19 @@ impl NetworkBasicWidget for Painter {
         let total_tx_label = format!("Total TX: {}", &app_state.canvas_data.total_tx_display);
 
         let net_text = vec![
-            Text::Styled(rx_label.into(), self.colours.rx_style),
-            Text::Styled(tx_label.into(), self.colours.tx_style),
+            Spans::from(Span::styled(rx_label, self.colours.rx_style)),
+            Spans::from(Span::styled(tx_label, self.colours.tx_style)),
         ];
 
         let total_net_text = vec![
-            Text::Styled(total_rx_label.into(), self.colours.total_rx_style),
-            Text::Styled(total_tx_label.into(), self.colours.total_tx_style),
+            Spans::from(Span::styled(total_rx_label, self.colours.total_rx_style)),
+            Spans::from(Span::styled(total_tx_label, self.colours.total_tx_style)),
         ];
 
-        f.render_widget(
-            Paragraph::new(net_text.iter()).block(Block::default()),
-            net_loc[0],
-        );
+        f.render_widget(Paragraph::new(net_text).block(Block::default()), net_loc[0]);
 
         f.render_widget(
-            Paragraph::new(total_net_text.iter()).block(Block::default()),
+            Paragraph::new(total_net_text).block(Block::default()),
             total_loc[0],
         );
     }

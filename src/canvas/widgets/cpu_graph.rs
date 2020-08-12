@@ -17,6 +17,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     terminal::Frame,
+    text::Span,
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -103,9 +104,12 @@ impl CpuGraphWidget for Painter {
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
-            let display_time_labels = [
-                format!("{}s", cpu_widget_state.current_display_time / 1000),
-                "0s".to_string(),
+            let display_time_labels = vec![
+                Span::styled(
+                    format!("{}s", cpu_widget_state.current_display_time / 1000),
+                    self.colours.graph_style,
+                ),
+                Span::styled("0s".to_string(), self.colours.graph_style),
             ];
 
             let x_axis = if app_state.app_config_fields.hide_time
@@ -120,8 +124,7 @@ impl CpuGraphWidget for Painter {
                     Axis::default()
                         .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
-                        .labels_style(self.colours.graph_style)
-                        .labels(&display_time_labels)
+                        .labels(display_time_labels)
                 } else {
                     cpu_widget_state.autohide_timer = None;
                     Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
@@ -132,16 +135,17 @@ impl CpuGraphWidget for Painter {
                 Axis::default()
                     .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
-                    .labels_style(self.colours.graph_style)
-                    .labels(&display_time_labels)
+                    .labels(display_time_labels)
             };
 
             // Note this is offset as otherwise the 0 value is not drawn!
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
-                .labels_style(self.colours.graph_style)
                 .bounds([-0.5, 100.5])
-                .labels(&["0%", "100%"]);
+                .labels(vec![
+                    Span::styled("0%", self.colours.graph_style),
+                    Span::styled("100%", self.colours.graph_style),
+                ]);
 
             let use_dot = app_state.app_config_fields.use_dot;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
@@ -189,30 +193,28 @@ impl CpuGraphWidget for Painter {
                 vec![]
             };
 
-            let title = " CPU ".to_string();
-
             let border_style = if app_state.current_widget.widget_id == widget_id {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style
             };
 
+            let title = if app_state.is_expanded {
+                Span::styled(" CPU ".to_string(), border_style)
+            } else {
+                Span::styled(" CPU ".to_string(), self.colours.widget_title_style)
+            };
+
             f.render_widget(
-                Chart::default()
+                Chart::new(dataset_vector)
                     .block(
                         Block::default()
-                            .title(&title)
-                            .title_style(if app_state.is_expanded {
-                                border_style
-                            } else {
-                                self.colours.widget_title_style
-                            })
+                            .title(title)
                             .borders(Borders::ALL)
                             .border_style(border_style),
                     )
                     .x_axis(x_axis)
-                    .y_axis(y_axis)
-                    .datasets(&dataset_vector),
+                    .y_axis(y_axis),
                 draw_loc,
             );
         }
@@ -296,7 +298,6 @@ impl CpuGraphWidget for Painter {
                 Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
                     .block(
                         Block::default()
-                            .title_style(border_and_title_style)
                             .borders(Borders::ALL)
                             .border_style(border_and_title_style),
                     )

@@ -36,7 +36,7 @@ For reports/suggestions that don't fit the definition of a feature or bug, try t
 If you want to help contribute by submitting a PR, by all means, I'm open! In regards to the development process:
 
 - I develop primarily using _stable_ Rust. That is, whatever is the most up-to-date stable version you can get via running
-  `rustup update stable`. However, as of writing, I do support a MSRV of 1.40.0.
+  `rustup update stable`.
 
   - Note that `cargo test` will fail on anything lower than 1.43.0 due to it using a then-introduced env variable.
 

@@ -10,7 +10,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text},
+    text::{Span, Spans},
+    widgets::{Block, Paragraph},
 };
 
 pub trait BasicTableArrows {
@@ -58,9 +59,12 @@ impl BasicTableArrows for Painter {
             usize::from(draw_loc.width).saturating_sub(6 + left_name.len() + right_name.len());
 
         let arrow_text = vec![
-            Text::Styled(format!("\n◄ {}", left_name).into(), self.colours.text_style),
-            Text::Raw(" ".repeat(num_spaces).into()),
-            Text::Styled(format!("{} ►", right_name).into(), self.colours.text_style),
+            Spans::from(Span::from(String::default())),
+            Spans::from(vec![
+                Span::styled(format!("◄ {}", left_name), self.colours.text_style),
+                Span::from(" ".repeat(num_spaces)),
+                Span::styled(format!("{} ►", right_name), self.colours.text_style),
+            ]),
         ];
 
         let margined_draw_loc = Layout::default()
@@ -69,7 +73,7 @@ impl BasicTableArrows for Painter {
             .split(draw_loc);
 
         f.render_widget(
-            Paragraph::new(arrow_text.iter()).block(Block::default()),
+            Paragraph::new(arrow_text).block(Block::default()),
             margined_draw_loc[0],
         );
     }
