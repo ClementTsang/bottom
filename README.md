@@ -59,7 +59,7 @@ Note that bottom is:
 
 As such, support beyond that is not guaranteed.
 
-### [Manually]
+### Manually
 
 There are a few ways to go about doing this manually. If you do so, please build using the current stable release of Rust. For example:
 
