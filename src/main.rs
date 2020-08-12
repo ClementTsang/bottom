@@ -354,34 +354,50 @@ fn handle_key_event_or_break(
 fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
     use std::{ffi::OsString, fs};
     let config_path = if let Some(conf_loc) = flag_config_location {
-        OsString::from(conf_loc)
+        Some(OsString::from(conf_loc))
     } else if cfg!(target_os = "windows") {
         if let Some(home_path) = dirs::config_dir() {
             let mut path = home_path;
-            path.push(DEFAULT_WINDOWS_CONFIG_FILE_PATH);
-            path.into_os_string()
+            path.push(DEFAULT_CONFIG_FILE_PATH);
+            Some(path.into_os_string())
         } else {
-            OsString::new()
+            None
         }
     } else if let Some(home_path) = dirs::home_dir() {
         let mut path = home_path;
-        // TODO: This should not be done like this IMO... it should be based on the defaults set by dirs rather than home_dir
-        // This WILL cause breaking changes on macOS though, warning!
-        path.push(DEFAULT_UNIX_CONFIG_FILE_PATH);
-        path.into_os_string()
+        path.push(".config/");
+        path.push(DEFAULT_CONFIG_FILE_PATH);
+        if path.exists() {
+            // If it already exists, use the old one.
+            Some(path.into_os_string())
+        } else {
+            // If it does not, use the new one!
+            if let Some(config_path) = dirs::config_dir() {
+                let mut path = config_path;
+                path.push(DEFAULT_CONFIG_FILE_PATH);
+                Some(path.into_os_string())
+            } else {
+                None
+            }
+        }
     } else {
-        OsString::new()
+        None
     };
 
-    let path = std::path::Path::new(&config_path);
+    if let Some(config_path) = config_path {
+        let path = std::path::Path::new(&config_path);
 
-    if let Ok(config_string) = fs::read_to_string(path) {
-        Ok(toml::from_str(config_string.as_str())?)
-    } else {
-        if let Some(parent_path) = path.parent() {
-            fs::create_dir_all(parent_path)?;
+        if let Ok(config_string) = fs::read_to_string(path) {
+            Ok(toml::from_str(config_string.as_str())?)
+        } else {
+            if let Some(parent_path) = path.parent() {
+                fs::create_dir_all(parent_path)?;
+            }
+            fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
+            Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
         }
-        fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
+    } else {
+        // Don't write otherwise...
         Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
     }
 }

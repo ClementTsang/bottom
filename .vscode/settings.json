@@ -41,6 +41,7 @@
         "whitespaces",
         "winapi",
         "winnt",
-        "xzvf"
+        "xzvf",
+        "ytop"
     ]
 }

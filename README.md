@@ -377,7 +377,14 @@ Note custom layouts are currently not available when this is used.
 
 ### Config files
 
-bottom supports reading from a config file to customize its behaviour and look. By default, bottom will look at `~/.config/bottom/bottom.toml` or `C:\Users\<USER>\AppData\Roaming\bottom\bottom.toml` on Unix and Windows systems respectively.
+bottom supports reading from a config file to customize its behaviour and look.
+By default, bottom will look at (based on [dirs](https://github.com/dirs-dev/dirs-rs#features)):
+
+| OS                                                                      | Location |
+| ----------------------------------------------------------------------- | -------- |
+| `~/.config/bottom/bottom.toml` or `$XDG_CONFIG_HOME/bottom/bottom.toml` | Linux    |
+| `$HOME/Library/Application Support/bottom/bottom.toml`                  | macOS    |
+| `C:\Users\<USER>\AppData\Roaming\bottom\bottom.toml`                    | Windows  |
 
 Note that if a config file does not exist at either the default location or the passed in location via `-C` or `--config`, one is automatically created with no settings applied.
 
@@ -386,27 +393,28 @@ Note that if a config file does not exist at either the default location or the 
 The following options can be set under `[flags]` to achieve the same effect as passing in a flag on runtime. Note that if a flag is given, it will override the config file.
 
 These are the following supported flag config values:
-| Field | Type |
-|------------------------|---------------------------------------------------------------------------------------|
-| `hide_avg_cpu` | Boolean |
-| `dot_marker` | Boolean |
-| `left_legend` | Boolean |
-| `current_usage` | Boolean |
-| `group_processes` | Boolean |
-| `case_sensitive` | Boolean |
-| `whole_word` | Boolean |
-| `regex` | Boolean |
-| `show_disabled_data` | Boolean |
-| `basic` | Boolean |
-| `hide_table_count`| Boolean |
-| `use_old_network_legend`| Boolean |
-| `battery` | Boolean |
-| `rate` | Unsigned Int (represents milliseconds) |
-| `default_time_value` | Unsigned Int (represents milliseconds) |
-| `time_delta` | Unsigned Int (represents milliseconds) |
-| `temperature_type` | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"]) |
-| `default_widget_type` | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) |
-| `default_widget_count` | Unsigned Int (represents which `default_widget_type`) |
+
+| Field                    | Type                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| `hide_avg_cpu`           | Boolean                                                                               |
+| `dot_marker`             | Boolean                                                                               |
+| `left_legend`            | Boolean                                                                               |
+| `current_usage`          | Boolean                                                                               |
+| `group_processes`        | Boolean                                                                               |
+| `case_sensitive`         | Boolean                                                                               |
+| `whole_word`             | Boolean                                                                               |
+| `regex`                  | Boolean                                                                               |
+| `show_disabled_data`     | Boolean                                                                               |
+| `basic`                  | Boolean                                                                               |
+| `hide_table_count`       | Boolean                                                                               |
+| `use_old_network_legend` | Boolean                                                                               |
+| `battery`                | Boolean                                                                               |
+| `rate`                   | Unsigned Int (represents milliseconds)                                                |
+| `default_time_value`     | Unsigned Int (represents milliseconds)                                                |
+| `time_delta`             | Unsigned Int (represents milliseconds)                                                |
+| `temperature_type`       | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                    |
+| `default_widget_type`    | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) |
+| `default_widget_count`   | Unsigned Int (represents which `default_widget_type`)                                 |
 
 #### Theming
 
@@ -470,16 +478,17 @@ represents either a _column or a widget_. A column can have any number of `child
 represents a _widget_. A widget is represented by having a `type` field set to a string.
 
 The following `type` values are supported:
-| | |
-|---------|--------------------------|
-| `"cpu"` | CPU chart and legend |
-| `"mem", "memory"` | Memory chart |
-| `"net", "network"` | Network chart and legend |
+
+|                                  |                          |
+| -------------------------------- | ------------------------ |
+| `"cpu"`                          | CPU chart and legend     |
+| `"mem", "memory"`                | Memory chart             |
+| `"net", "network"`               | Network chart and legend |
 | `"proc", "process", "processes"` | Process table and search |
-| `"temp", "temperature"` | Temperature table |
-| `"disk"` | Disk table |
-| `"empty"` | An empty space |
-| `"batt", "battery"` | Battery statistics |
+| `"temp", "temperature"`          | Temperature table        |
+| `"disk"`                         | Disk table               |
+| `"empty"`                        | An empty space           |
+| `"batt", "battery"`              | Battery statistics       |
 
 Each component of the layout accepts a `ratio` value. If this is not set, it defaults to 1.
 
@@ -564,7 +573,8 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 ## Thanks
 
 - This project is very much inspired by both
-  [gotop](https://github.com/cjbassi/gotop) and [gtop](https://github.com/aksakalli/gtop).
+  [gotop](https://github.com/cjbassi/gotop), its successor
+  [ytop](https://github.com/cjbassi/ytop), and [gtop](https://github.com/aksakalli/gtop).
 
 - Basic mode is heavily inspired by [htop's](https://hisham.hm/htop/) design.
 
