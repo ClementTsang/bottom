@@ -377,13 +377,14 @@ Note custom layouts are currently not available when this is used.
 
 ### Config files
 
-bottom supports reading from a config file to customize its behaviour and look. By default, bottom will look at:
+bottom supports reading from a config file to customize its behaviour and look.
+By default, bottom will look at (based on [dirs](https://github.com/dirs-dev/dirs-rs#features)):
 
-| OS                                                     | Location |
-| ------------------------------------------------------ | -------- |
-| `~/.config/bottom/bottom.toml`                         | Linux    |
-| `$HOME/Library/Application Support/bottom/bottom.toml` | macOS    |
-| `C:\Users\<USER>\AppData\Roaming\bottom\bottom.toml`   | Windows  |
+| OS                                                                      | Location |
+| ----------------------------------------------------------------------- | -------- |
+| `~/.config/bottom/bottom.toml` or `$XDG_CONFIG_HOME/bottom/bottom.toml` | Linux    |
+| `$HOME/Library/Application Support/bottom/bottom.toml`                  | macOS    |
+| `C:\Users\<USER>\AppData\Roaming\bottom\bottom.toml`                    | Windows  |
 
 Note that if a config file does not exist at either the default location or the passed in location via `-C` or `--config`, one is automatically created with no settings applied.
 
