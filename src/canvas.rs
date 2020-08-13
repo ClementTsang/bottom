@@ -170,7 +170,7 @@ impl Painter {
                 // Not required check but it runs only a few times... so whatever ig, prevents me from
                 // being dumb and leaving a help text section only one line long.
                 if section.len() > 1 {
-                    styled_help_spans.push(Span::from("\n\n"));
+                    styled_help_spans.push(Span::from(""));
                     styled_help_spans
                         .push(Span::styled(section[0], self.colours.table_header_style));
                     styled_help_spans.extend(

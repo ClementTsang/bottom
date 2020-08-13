@@ -23,7 +23,7 @@ impl KillDialog for Painter {
     fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>> {
         if let Some(dd_err) = &app_state.dd_err {
             return Some(Text::from(Spans::from(format!(
-                "\nFailure to properly kill the process - {}",
+                "Failure to properly kill the process - {}",
                 dd_err
             ))));
         } else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
@@ -34,19 +34,19 @@ impl KillDialog for Painter {
                         if app_state.is_grouped(app_state.current_widget.widget_id) {
                             if to_kill_processes.1.len() != 1 {
                                 Span::from(format!(
-                                    "\nKill {} processes with the name \"{}\"?",
+                                    "Kill {} processes with the name \"{}\"?",
                                     to_kill_processes.1.len(),
                                     to_kill_processes.0
                                 ))
                             } else {
                                 Span::from(format!(
-                                    "\nKill 1 process with the name \"{}\"?",
+                                    "Kill 1 process with the name \"{}\"?",
                                     to_kill_processes.0
                                 ))
                             }
                         } else {
                             Span::from(format!(
-                                "\nKill process \"{}\" with PID {}?",
+                                "Kill process \"{}\" with PID {}?",
                                 to_kill_processes.0, first_pid
                             ))
                         },
