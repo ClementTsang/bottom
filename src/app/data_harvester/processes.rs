@@ -14,15 +14,20 @@ use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
 #[derive(Clone)]
 pub enum ProcessSorting {
-    CPU,
-    MEM,
-    PID,
-    IDENTIFIER,
+    Cpu,
+    Mem,
+    Pid,
+    Identifier,
+    Read,
+    Write,
+    TotalRead,
+    TotalWrite,
+    State, // This one is just alphabetical
 }
 
 impl Default for ProcessSorting {
     fn default() -> Self {
-        ProcessSorting::CPU
+        ProcessSorting::Cpu
     }
 }
 

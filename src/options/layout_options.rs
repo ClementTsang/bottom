@@ -53,7 +53,7 @@ impl Row {
 
                         children.push(match widget_type {
                             BottomWidgetType::Cpu => {
-                                let iter_old_id = *iter_id;
+                                let cpu_id = *iter_id;
                                 *iter_id += 1;
                                 BottomCol::builder()
                                     .col_width_ratio(width_ratio)
@@ -70,7 +70,7 @@ impl Row {
                                                 BottomWidget::builder()
                                                     .width_ratio(17)
                                                     .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(iter_old_id)
+                                                    .widget_id(cpu_id)
                                                     .flex_grow(true)
                                                     .build(),
                                             ])
@@ -82,7 +82,7 @@ impl Row {
                                                 BottomWidget::builder()
                                                     .width_ratio(17)
                                                     .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(iter_old_id)
+                                                    .widget_id(cpu_id)
                                                     .flex_grow(true)
                                                     .build(),
                                                 BottomWidget::builder()
@@ -97,7 +97,7 @@ impl Row {
                                     .build()
                             }
                             BottomWidgetType::Proc => {
-                                let iter_old_id = *iter_id;
+                                let proc_id = *iter_id;
                                 *iter_id += 1;
                                 BottomCol::builder()
                                     .total_col_row_ratio(2)
@@ -106,7 +106,7 @@ impl Row {
                                         BottomColRow::builder()
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(iter_old_id)
+                                                .widget_id(proc_id)
                                                 .build()])
                                             .flex_grow(true)
                                             .build(),
@@ -165,7 +165,7 @@ impl Row {
 
                             match widget_type {
                                 BottomWidgetType::Cpu => {
-                                    let iter_old_id = *iter_id;
+                                    let cpu_id = *iter_id;
                                     *iter_id += 1;
                                     if left_legend {
                                         col_row_children.push(
@@ -182,7 +182,7 @@ impl Row {
                                                     BottomWidget::builder()
                                                         .width_ratio(17)
                                                         .widget_type(BottomWidgetType::Cpu)
-                                                        .widget_id(iter_old_id)
+                                                        .widget_id(cpu_id)
                                                         .flex_grow(true)
                                                         .build(),
                                                 ])
@@ -197,7 +197,7 @@ impl Row {
                                                     BottomWidget::builder()
                                                         .width_ratio(17)
                                                         .widget_type(BottomWidgetType::Cpu)
-                                                        .widget_id(iter_old_id)
+                                                        .widget_id(cpu_id)
                                                         .flex_grow(true)
                                                         .build(),
                                                     BottomWidget::builder()
@@ -213,14 +213,14 @@ impl Row {
                                 }
                                 BottomWidgetType::Proc => {
                                     contains_proc = true;
-                                    let iter_old_id = *iter_id;
+                                    let proc_id = *iter_id;
                                     *iter_id += 1;
                                     col_row_children.push(
                                         BottomColRow::builder()
                                             .col_row_height_ratio(col_row_height_ratio)
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(iter_old_id)
+                                                .widget_id(proc_id)
                                                 .build()])
                                             .build(),
                                     );

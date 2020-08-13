@@ -45,7 +45,7 @@ pub struct ConvertedProcessData {
     pub wps_f64: f64,
     pub tr_f64: f64,
     pub tw_f64: f64,
-    pub process_states: String,
+    pub process_state: String,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -409,7 +409,7 @@ pub fn convert_process_data(
                     wps_f64: process.write_bytes_per_sec as f64,
                     tr_f64: process.total_read_bytes as f64,
                     tw_f64: process.total_write_bytes as f64,
-                    process_states: process.process_state.to_owned(),
+                    process_state: process.process_state.to_owned(),
                 }
             })
             .collect::<Vec<_>>(),
@@ -469,7 +469,7 @@ pub fn convert_process_data(
                         wps_f64: p.write_per_sec as f64,
                         tr_f64: p.total_read as f64,
                         tw_f64: p.total_write as f64,
-                        process_states: p.process_state,
+                        process_state: p.process_state,
                     }
                 })
                 .collect::<Vec<_>>()

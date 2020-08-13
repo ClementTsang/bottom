@@ -1,5 +1,5 @@
 use crate::{
-    app::{self, App},
+    app::{data_harvester::processes::ProcessSorting, App},
     canvas::{
         drawing_utils::{
             get_search_start_position, get_start_position, get_variable_intrinsic_widths,
@@ -127,13 +127,12 @@ impl ProcessTableWidget for Painter {
                             process.write_per_sec.to_string(),
                             process.total_read.to_string(),
                             process.total_write.to_string(),
-                            process.process_states.to_string(),
+                            process.process_state.to_string(),
                         ]
                         .into_iter(),
                     )
                 });
 
-                use app::data_harvester::processes::ProcessSorting;
                 let mut pid_or_count = if proc_widget_state.is_grouped {
                     "Count"
                 } else {
@@ -147,11 +146,11 @@ impl ProcessTableWidget for Painter {
                 };
                 let mut cpu = "CPU%(c)".to_string();
                 let mut mem = "Mem%(m)".to_string();
-                let rps = "R/s".to_string();
-                let wps = "W/s".to_string();
-                let total_read = "Read".to_string();
-                let total_write = "Write".to_string();
-                let process_state = "State   ".to_string();
+                let mut rps = "R/s".to_string();
+                let mut wps = "W/s".to_string();
+                let mut total_read = "Read".to_string();
+                let mut total_write = "Write".to_string();
+                let mut process_state = "State   ".to_string();
 
                 let direction_val = if proc_widget_state.process_sorting_reverse {
                     "▼".to_string()
@@ -160,10 +159,15 @@ impl ProcessTableWidget for Painter {
                 };
 
                 match proc_widget_state.process_sorting_type {
-                    ProcessSorting::CPU => cpu += &direction_val,
-                    ProcessSorting::MEM => mem += &direction_val,
-                    ProcessSorting::PID => pid_or_count += &direction_val,
-                    ProcessSorting::IDENTIFIER => identifier += &direction_val,
+                    ProcessSorting::Cpu => cpu += &direction_val,
+                    ProcessSorting::Mem => mem += &direction_val,
+                    ProcessSorting::Pid => pid_or_count += &direction_val,
+                    ProcessSorting::Identifier => identifier += &direction_val,
+                    ProcessSorting::Read => rps += &direction_val,
+                    ProcessSorting::Write => wps += &direction_val,
+                    ProcessSorting::TotalRead => total_read += &direction_val,
+                    ProcessSorting::TotalWrite => total_write += &direction_val,
+                    ProcessSorting::State => process_state += &direction_val,
                 };
 
                 // TODO: Gonna have to figure out how to do left/right GUI notation.

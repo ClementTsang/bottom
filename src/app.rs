@@ -457,7 +457,7 @@ impl App {
                     proc_widget_state
                         .process_search_state
                         .search_state
-                        .cursor_direction = CursorDirection::LEFT;
+                        .cursor_direction = CursorDirection::Left;
 
                     proc_widget_state.update_query();
                     self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
@@ -502,6 +502,11 @@ impl App {
                     {
                         proc_widget_state.current_column_index =
                             proc_widget_state.current_column_index.saturating_sub(1);
+
+                        debug!(
+                            "Current column index <: {}",
+                            proc_widget_state.current_column_index
+                        );
                     }
                 }
                 BottomWidgetType::ProcSearch => {
@@ -527,7 +532,7 @@ impl App {
                                 proc_widget_state
                                     .process_search_state
                                     .search_state
-                                    .cursor_direction = CursorDirection::LEFT;
+                                    .cursor_direction = CursorDirection::Left;
                             }
                         }
                     }
@@ -562,6 +567,10 @@ impl App {
                         if proc_widget_state.current_column_index < proc_widget_state.num_columns {
                             proc_widget_state.current_column_index += 1;
                         }
+                        debug!(
+                            "Current column index >: {}",
+                            proc_widget_state.current_column_index
+                        );
                     }
                 }
                 BottomWidgetType::ProcSearch => {
@@ -587,7 +596,7 @@ impl App {
                                 proc_widget_state
                                     .process_search_state
                                     .search_state
-                                    .cursor_direction = CursorDirection::RIGHT;
+                                    .cursor_direction = CursorDirection::Right;
                             }
                         }
                     }
@@ -643,7 +652,7 @@ impl App {
                         proc_widget_state
                             .process_search_state
                             .search_state
-                            .cursor_direction = CursorDirection::LEFT;
+                            .cursor_direction = CursorDirection::Left;
                     }
                 }
             }
@@ -689,7 +698,7 @@ impl App {
                         proc_widget_state
                             .process_search_state
                             .search_state
-                            .cursor_direction = CursorDirection::RIGHT;
+                            .cursor_direction = CursorDirection::Right;
                     }
                 }
             }
@@ -815,7 +824,7 @@ impl App {
                         proc_widget_state
                             .process_search_state
                             .search_state
-                            .cursor_direction = CursorDirection::RIGHT;
+                            .cursor_direction = CursorDirection::Right;
 
                         return;
                     }
@@ -900,13 +909,13 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::CPU => {
+                            processes::ProcessSorting::Cpu => {
                                 proc_widget_state.process_sorting_reverse =
                                     !proc_widget_state.process_sorting_reverse
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::CPU;
+                                    processes::ProcessSorting::Cpu;
                                 proc_widget_state.process_sorting_reverse = true;
                             }
                         }
@@ -923,13 +932,13 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::MEM => {
+                            processes::ProcessSorting::Mem => {
                                 proc_widget_state.process_sorting_reverse =
                                     !proc_widget_state.process_sorting_reverse
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::MEM;
+                                    processes::ProcessSorting::Mem;
                                 proc_widget_state.process_sorting_reverse = true;
                             }
                         }
@@ -947,13 +956,13 @@ impl App {
                         // Skip if grouped
                         if !proc_widget_state.is_grouped {
                             match proc_widget_state.process_sorting_type {
-                                processes::ProcessSorting::PID => {
+                                processes::ProcessSorting::Pid => {
                                     proc_widget_state.process_sorting_reverse =
                                         !proc_widget_state.process_sorting_reverse
                                 }
                                 _ => {
                                     proc_widget_state.process_sorting_type =
-                                        processes::ProcessSorting::PID;
+                                        processes::ProcessSorting::Pid;
                                     proc_widget_state.process_sorting_reverse = false;
                                 }
                             }
@@ -982,13 +991,13 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::IDENTIFIER => {
+                            processes::ProcessSorting::Identifier => {
                                 proc_widget_state.process_sorting_reverse =
                                     !proc_widget_state.process_sorting_reverse
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::IDENTIFIER;
+                                    processes::ProcessSorting::Identifier;
                                 proc_widget_state.process_sorting_reverse = false;
                             }
                         }
@@ -1010,6 +1019,19 @@ impl App {
             '-' => self.zoom_out(),
             '=' => self.reset_zoom(),
             'e' => self.expand_widget(),
+            's' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        // Open up sorting dialog for that specific proc widget.
+                        // TODO: It might be a decent idea to allow sorting ALL?  I dunno.
+
+                        proc_widget_state.is_sort_open = !proc_widget_state.is_sort_open;
+                    }
+                }
+            }
             _ => {}
         }
 
@@ -1413,7 +1435,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         proc_widget_state.scroll_state.current_scroll_position = 0;
-                        proc_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1422,7 +1444,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         temp_widget_state.scroll_state.current_scroll_position = 0;
-                        temp_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -1431,7 +1453,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         disk_widget_state.scroll_state.current_scroll_position = 0;
-                        disk_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -1440,7 +1462,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         cpu_widget_state.scroll_state.current_scroll_position = 0;
-                        cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
                     }
                 }
 
@@ -1469,7 +1491,7 @@ impl App {
                                 proc_widget_state.scroll_state.current_scroll_position =
                                     finalized_process_data.len() - 1;
                                 proc_widget_state.scroll_state.scroll_direction =
-                                    ScrollDirection::DOWN;
+                                    ScrollDirection::Down;
                             }
                         }
                     }
@@ -1482,7 +1504,7 @@ impl App {
                         if !self.canvas_data.temp_sensor_data.is_empty() {
                             temp_widget_state.scroll_state.current_scroll_position =
                                 self.canvas_data.temp_sensor_data.len() - 1;
-                            temp_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                            temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
                 }
@@ -1494,7 +1516,7 @@ impl App {
                         if !self.canvas_data.disk_data.is_empty() {
                             disk_widget_state.scroll_state.current_scroll_position =
                                 self.canvas_data.disk_data.len() - 1;
-                            disk_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                            disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
                 }
@@ -1506,7 +1528,7 @@ impl App {
                         let cap = self.canvas_data.cpu_data.len();
                         if cap > 0 {
                             cpu_widget_state.scroll_state.current_scroll_position = cap - 1;
-                            cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                            cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
                 }
@@ -1563,9 +1585,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }
@@ -1591,9 +1613,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }
@@ -1615,9 +1637,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }
@@ -1638,9 +1660,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }

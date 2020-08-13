@@ -24,7 +24,7 @@ pub mod temperature;
 #[derive(Clone, Debug)]
 pub struct Data {
     pub last_collection_time: Instant,
-    pub cpu: Option<cpu::CPUHarvest>,
+    pub cpu: Option<cpu::CpuHarvest>,
     pub memory: Option<mem::MemHarvest>,
     pub swap: Option<mem::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,

@@ -636,12 +636,12 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 
     // Quick fix for tab updating the table headers
     if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-        if let data_harvester::processes::ProcessSorting::PID =
+        if let data_harvester::processes::ProcessSorting::Pid =
             proc_widget_state.process_sorting_type
         {
             if proc_widget_state.is_grouped {
                 proc_widget_state.process_sorting_type =
-                    data_harvester::processes::ProcessSorting::CPU; // Go back to default, negate PID for group
+                    data_harvester::processes::ProcessSorting::Cpu; // Go back to default, negate PID for group
                 proc_widget_state.process_sorting_reverse = true;
             }
         }
@@ -653,7 +653,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             proc_widget_state.scroll_state.current_scroll_position =
                 resulting_processes.len().saturating_sub(1);
             proc_widget_state.scroll_state.previous_scroll_position = 0;
-            proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::DOWN;
+            proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
         }
 
         app.canvas_data
@@ -670,7 +670,7 @@ fn sort_process_data(
     });
 
     match proc_widget_state.process_sorting_type {
-        ProcessSorting::CPU => {
+        ProcessSorting::Cpu => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.cpu_usage,
@@ -679,7 +679,7 @@ fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::MEM => {
+        ProcessSorting::Mem => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.mem_usage,
@@ -688,7 +688,8 @@ fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::IDENTIFIER => {
+        ProcessSorting::Identifier => {
+            // TODO: ... I have no idea why I have this line, but I'm too afraid to remove it.
             // Don't repeat if false...
             if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {
@@ -700,7 +701,7 @@ fn sort_process_data(
                 })
             }
         }
-        ProcessSorting::PID => {
+        ProcessSorting::Pid => {
             if !proc_widget_state.is_grouped {
                 to_sort_vec.sort_by(|a, b| {
                     utils::gen_util::get_ordering(
@@ -711,6 +712,49 @@ fn sort_process_data(
                 });
             }
         }
+        ProcessSorting::Read => {
+            to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    a.rps_f64,
+                    b.rps_f64,
+                    proc_widget_state.process_sorting_reverse,
+                )
+            });
+        }
+        ProcessSorting::Write => {
+            to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    a.wps_f64,
+                    b.wps_f64,
+                    proc_widget_state.process_sorting_reverse,
+                )
+            });
+        }
+        ProcessSorting::TotalRead => {
+            to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    a.tr_f64,
+                    b.tr_f64,
+                    proc_widget_state.process_sorting_reverse,
+                )
+            });
+        }
+        ProcessSorting::TotalWrite => {
+            to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    a.tw_f64,
+                    b.tw_f64,
+                    proc_widget_state.process_sorting_reverse,
+                )
+            });
+        }
+        ProcessSorting::State => to_sort_vec.sort_by(|a, b| {
+            utils::gen_util::get_ordering(
+                &a.process_state.to_lowercase(),
+                &b.process_state.to_lowercase(),
+                proc_widget_state.process_sorting_reverse,
+            )
+        }),
     }
 }
 

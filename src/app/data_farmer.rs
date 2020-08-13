@@ -49,7 +49,7 @@ pub struct DataCollection {
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: mem::MemHarvest,
     pub swap_harvest: mem::MemHarvest,
-    pub cpu_harvest: cpu::CPUHarvest,
+    pub cpu_harvest: cpu::CpuHarvest,
     pub process_harvest: Vec<processes::ProcessHarvest>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IOHarvest,
@@ -67,7 +67,7 @@ impl Default for DataCollection {
             network_harvest: network::NetworkHarvest::default(),
             memory_harvest: mem::MemHarvest::default(),
             swap_harvest: mem::MemHarvest::default(),
-            cpu_harvest: cpu::CPUHarvest::default(),
+            cpu_harvest: cpu::CpuHarvest::default(),
             process_harvest: Vec::default(),
             disk_harvest: Vec::default(),
             io_harvest: disks::IOHarvest::default(),
@@ -84,7 +84,7 @@ impl DataCollection {
         self.network_harvest = network::NetworkHarvest::default();
         self.memory_harvest = mem::MemHarvest::default();
         self.swap_harvest = mem::MemHarvest::default();
-        self.cpu_harvest = cpu::CPUHarvest::default();
+        self.cpu_harvest = cpu::CpuHarvest::default();
         self.process_harvest = Vec::default();
         self.disk_harvest = Vec::default();
         self.io_harvest = disks::IOHarvest::default();
@@ -205,7 +205,7 @@ impl DataCollection {
         self.network_harvest = network.clone();
     }
 
-    fn eat_cpu(&mut self, cpu: &[cpu::CPUData], new_entry: &mut TimedData) {
+    fn eat_cpu(&mut self, cpu: &[cpu::CpuData], new_entry: &mut TimedData) {
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
         // it probably doesn't matter anyways.

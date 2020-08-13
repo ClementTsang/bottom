@@ -13,21 +13,21 @@ use crate::{
 #[derive(Debug)]
 pub enum ScrollDirection {
     // UP means scrolling up --- this usually DECREMENTS
-    UP,
+    Up,
     // DOWN means scrolling down --- this usually INCREMENTS
-    DOWN,
+    Down,
 }
 
 impl Default for ScrollDirection {
     fn default() -> Self {
-        ScrollDirection::DOWN
+        ScrollDirection::Down
     }
 }
 
 #[derive(Debug)]
 pub enum CursorDirection {
-    LEFT,
-    RIGHT,
+    Left,
+    Right,
 }
 
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
@@ -85,7 +85,7 @@ impl Default for AppSearchState {
             is_invalid_search: false,
             is_blank_search: true,
             grapheme_cursor: GraphemeCursor::new(0, 0, true),
-            cursor_direction: CursorDirection::RIGHT,
+            cursor_direction: CursorDirection::Right,
             cursor_bar: 0,
             char_cursor_position: 0,
             query: None,
@@ -150,6 +150,7 @@ pub struct ProcWidgetState {
     pub is_using_full_path: bool,
     pub current_column_index: usize,
     pub num_columns: usize,
+    pub is_sort_open: bool,
 }
 
 impl ProcWidgetState {
@@ -172,11 +173,12 @@ impl ProcWidgetState {
             process_search_state,
             is_grouped,
             scroll_state: AppScrollWidgetState::default(),
-            process_sorting_type: processes::ProcessSorting::CPU,
+            process_sorting_type: processes::ProcessSorting::Cpu,
             process_sorting_reverse: true,
             is_using_full_path: false,
             current_column_index: 0,
             num_columns: 1,
+            is_sort_open: false,
         }
     }
 
