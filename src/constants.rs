@@ -89,6 +89,8 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll   Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
+// TODO [Help]: Search in help?
+// TODO [Help]: Move to using tables for easier formatting?
 pub const PROCESS_HELP_TEXT: [&str; 11] = [
     "3 - Process widget",
     "dd             Kill the selected process",
@@ -99,8 +101,8 @@ pub const PROCESS_HELP_TEXT: [&str; 11] = [
     "Tab            Group/un-group processes with the same name",
     "Ctrl-f, /      Open process search widget",
     "P              Toggle between showing the full path or just the process name",
-    "s, F6          Manage column to sort by",
-    "I              Invert current sorting",
+    "s, F6          Open process column sort widget",
+    "I              Invert current sort",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 43] = [
@@ -151,8 +153,8 @@ pub const SEARCH_HELP_TEXT: [&str; 43] = [
 
 pub const SORT_HELP_TEXT: [&str; 6] = [
     "5 - Sort widget",
-    "Up             Scroll up in list",
-    "Down           Scroll down in list",
+    "Down, 'j'      Scroll down in list",
+    "Up, 'k'        Scroll up in list",
     "Mouse scroll   Scroll through sort widget",
     "Esc            Close the sort widget",
     "Enter          Sort by current selected column",

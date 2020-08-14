@@ -28,6 +28,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [CPU bindings](#cpu-bindings)
   - [Process bindings](#process-bindings)
   - [Process search bindings](#process-search-bindings)
+  - [Process sort bindings](#process-sort-bindings)
   - [Battery bindings](#battery-bindings)
   - [Process searching keywords](#process-searching-keywords)
     - [Supported keywords](#supported-keywords)
@@ -222,6 +223,8 @@ Run using `btm`.
 | `Tab`         | Group/un-group processes with the same name                   |
 | `Ctrl-f`, `/` | Open process search widget                                    |
 | `P`           | Toggle between showing the full path or just the process name |
+| `s, F6`       | Open process column sort widget                               |
+| `I`           | Invert current sort                                           |
 
 #### Process search bindings
 
@@ -239,6 +242,16 @@ Run using `btm`.
 | `Alt-r`/`F3` | Toggle using regex                           |
 | `Left`       | Move cursor left                             |
 | `Right`      | Move cursor right                            |
+
+### Process sort bindings
+
+|                |                                 |
+| -------------- | ------------------------------- |
+| `Down`, `j`    | Scroll down in list             |
+| `Up`, `k`      | Scroll up in list               |
+| `Mouse scroll` | Scroll through sort widget      |
+| `Esc`          | Close the sort widget           |
+| `Enter`        | Sort by current selected column |
 
 #### Battery bindings
 
