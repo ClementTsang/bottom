@@ -12,22 +12,47 @@ use std::{
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ProcessSorting {
-    Cpu,
+    CpuPercent,
     Mem,
+    MemPercent,
     Pid,
-    Identifier,
-    Read,
-    Write,
+    ProcessName,
+    Command,
+    ReadPerSecond,
+    WritePerSecond,
     TotalRead,
     TotalWrite,
     State, // This one is just alphabetical
 }
 
+impl std::fmt::Display for ProcessSorting {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use ProcessSorting::*;
+        write!(
+            f,
+            "{}",
+            match &self {
+                CpuPercent => "CPU%",
+                MemPercent => "Mem%",
+                Mem => "Mem",
+                ReadPerSecond => "R/s",
+                WritePerSecond => "W/s",
+                TotalRead => "Read",
+                TotalWrite => "Write",
+                State => "State",
+                ProcessName => "Name",
+                Command => "Command",
+                Pid => "PID",
+            }
+        )
+    }
+}
+
 impl Default for ProcessSorting {
     fn default() -> Self {
-        ProcessSorting::Cpu
+        ProcessSorting::CpuPercent
     }
 }
 

@@ -286,15 +286,10 @@ fn handle_key_event_or_break(
             KeyCode::Tab => app.on_tab(),
             KeyCode::Backspace => app.on_backspace(),
             KeyCode::Delete => app.on_delete(),
-            KeyCode::F(1) => {
-                app.toggle_ignore_case();
-            }
-            KeyCode::F(2) => {
-                app.toggle_search_whole_word();
-            }
-            KeyCode::F(3) => {
-                app.toggle_search_regex();
-            }
+            KeyCode::F(1) => app.toggle_ignore_case(),
+            KeyCode::F(2) => app.toggle_search_whole_word(),
+            KeyCode::F(3) => app.toggle_search_regex(),
+            KeyCode::F(6) => app.toggle_sort(),
             _ => {}
         }
     } else {
@@ -607,7 +602,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             } else {
                 ProcessGroupingType::Ungrouped
             },
-            if proc_widget_state.is_using_full_path {
+            if proc_widget_state.is_using_command {
                 ProcessNamingType::Path
             } else {
                 ProcessNamingType::Name
@@ -641,7 +636,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         {
             if proc_widget_state.is_grouped {
                 proc_widget_state.process_sorting_type =
-                    data_harvester::processes::ProcessSorting::Cpu; // Go back to default, negate PID for group
+                    data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
                 proc_widget_state.process_sorting_reverse = true;
             }
         }
@@ -670,7 +665,7 @@ fn sort_process_data(
     });
 
     match proc_widget_state.process_sorting_type {
-        ProcessSorting::Cpu => {
+        ProcessSorting::CpuPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.cpu_usage,
@@ -680,6 +675,9 @@ fn sort_process_data(
             });
         }
         ProcessSorting::Mem => {
+            // TODO: Do when I do mem values in processes
+        }
+        ProcessSorting::MemPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.mem_usage,
@@ -688,9 +686,8 @@ fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::Identifier => {
-            // TODO: ... I have no idea why I have this line, but I'm too afraid to remove it.
-            // Don't repeat if false...
+        ProcessSorting::ProcessName | ProcessSorting::Command => {
+            // Don't repeat if false... it sorts by name by default anyways.
             if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {
                     utils::gen_util::get_ordering(
@@ -712,7 +709,7 @@ fn sort_process_data(
                 });
             }
         }
-        ProcessSorting::Read => {
+        ProcessSorting::ReadPerSecond => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.rps_f64,
@@ -721,7 +718,7 @@ fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::Write => {
+        ProcessSorting::WritePerSecond => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.wps_f64,

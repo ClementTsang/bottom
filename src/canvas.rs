@@ -356,20 +356,16 @@ impl Painter {
                         app_state.current_widget.widget_id,
                         false,
                     ),
-                    Proc => self.draw_process_and_search(
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id,
-                    ),
-                    ProcSearch => self.draw_process_and_search(
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id - 1,
-                    ),
+                    proc_type @ Proc | proc_type @ ProcSearch | proc_type @ ProcSort => {
+                        let widget_id = app_state.current_widget.widget_id
+                            - match proc_type {
+                                ProcSearch => 1,
+                                ProcSort => 2,
+                                _ => 0,
+                            };
+
+                        self.draw_process_features(&mut f, app_state, rect[0], true, widget_id);
+                    }
                     Battery => self.draw_battery_display(
                         &mut f,
                         app_state,
@@ -430,7 +426,7 @@ impl Painter {
                             false,
                             widget_id,
                         ),
-                        Proc => self.draw_process_and_search(
+                        Proc => self.draw_process_features(
                             &mut f,
                             app_state,
                             vertical_chunks[4],
@@ -575,7 +571,7 @@ impl Painter {
                 Disk => {
                     self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
                 }
-                Proc => self.draw_process_and_search(
+                Proc => self.draw_process_features(
                     f,
                     app_state,
                     *widget_draw_loc,

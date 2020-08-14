@@ -7,7 +7,7 @@ use tui::widgets::TableState;
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
-    data_harvester::processes,
+    data_harvester::processes::{self, ProcessSorting},
 };
 
 #[derive(Debug)]
@@ -141,16 +141,173 @@ impl ProcessSearchState {
     }
 }
 
+pub struct ColumnInfo {
+    pub enabled: bool,
+    pub shortcut: Option<&'static str>,
+}
+
+pub struct ProcColumn {
+    pub ordered_columns: Vec<ProcessSorting>,
+    pub column_mapping: HashMap<ProcessSorting, ColumnInfo>,
+    pub longest_header_len: u16,
+    pub column_state: TableState,
+    pub scroll_direction: ScrollDirection,
+    pub current_scroll_position: usize,
+}
+
+impl Default for ProcColumn {
+    fn default() -> Self {
+        use ProcessSorting::*;
+        let ordered_columns = vec![
+            Pid,
+            ProcessName,
+            Command,
+            CpuPercent,
+            MemPercent,
+            ReadPerSecond,
+            WritePerSecond,
+            TotalRead,
+            TotalWrite,
+            State,
+        ];
+
+        let mut column_mapping = HashMap::new();
+        let mut longest_header_len = 0;
+        for column in ordered_columns.clone() {
+            longest_header_len = std::cmp::max(longest_header_len, column.to_string().len());
+            match column {
+                CpuPercent => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: true,
+                            shortcut: Some("c"),
+                        },
+                    );
+                }
+                MemPercent | Mem => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: true,
+                            shortcut: Some("m"),
+                        },
+                    );
+                }
+                ProcessName => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: true,
+                            shortcut: Some("n"),
+                        },
+                    );
+                }
+                Command => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: false,
+                            shortcut: Some("n"),
+                        },
+                    );
+                }
+                Pid => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: true,
+                            shortcut: Some("p"),
+                        },
+                    );
+                }
+                _ => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: true,
+                            shortcut: None,
+                        },
+                    );
+                }
+            }
+        }
+        let longest_header_len = longest_header_len as u16;
+
+        ProcColumn {
+            ordered_columns,
+            column_mapping,
+            longest_header_len,
+            column_state: TableState::default(),
+            scroll_direction: ScrollDirection::default(),
+            current_scroll_position: 0,
+        }
+    }
+}
+
+impl ProcColumn {
+    pub fn get_enabled_columns_len(&self) -> usize {
+        self.ordered_columns
+            .iter()
+            .filter_map(|column_type| {
+                if self.column_mapping.get(&column_type).unwrap().enabled {
+                    Some(1)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
+
+    pub fn set_to_sorted_index(&mut self, proc_sorting_type: &ProcessSorting) {
+        // TODO [Custom Columns]: If we add custom columns, this may be needed!  Since column indices will change, this runs the risk of OOB.  So, when you change columns, CALL THIS AND ADAPT!
+        for (itx, column) in self.ordered_columns.iter().enumerate() {
+            if *column == *proc_sorting_type {
+                self.current_scroll_position = itx;
+                break;
+            }
+        }
+    }
+
+    pub fn get_column_headers(
+        &self, proc_sorting_type: &ProcessSorting, sort_reverse: bool,
+    ) -> Vec<String> {
+        // TODO: Gonna have to figure out how to do left/right GUI notation if we add it.
+        self.ordered_columns
+            .iter()
+            .filter_map(|column_type| {
+                let mapping = self.column_mapping.get(&column_type).unwrap();
+                let mut command_str = String::default();
+                if let Some(command) = mapping.shortcut {
+                    command_str = format!("({})", command);
+                }
+
+                if mapping.enabled {
+                    Some(if proc_sorting_type == column_type {
+                        column_type.to_string()
+                            + command_str.as_str()
+                            + if sort_reverse { "▼" } else { "▲" }
+                    } else {
+                        column_type.to_string() + command_str.as_str()
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
 pub struct ProcWidgetState {
     pub process_search_state: ProcessSearchState,
     pub is_grouped: bool,
     pub scroll_state: AppScrollWidgetState,
     pub process_sorting_type: processes::ProcessSorting,
     pub process_sorting_reverse: bool,
-    pub is_using_full_path: bool,
+    pub is_using_command: bool,
     pub current_column_index: usize,
-    pub num_columns: usize,
     pub is_sort_open: bool,
+    pub columns: ProcColumn,
 }
 
 impl ProcWidgetState {
@@ -169,17 +326,77 @@ impl ProcWidgetState {
             process_search_state.search_toggle_regex();
         }
 
+        let process_sorting_type = processes::ProcessSorting::CpuPercent;
+
+        // TODO: If we add customizable columns, this should pull from config
+        let mut columns = ProcColumn::default();
+        columns.set_to_sorted_index(&process_sorting_type);
+
         ProcWidgetState {
             process_search_state,
             is_grouped,
             scroll_state: AppScrollWidgetState::default(),
-            process_sorting_type: processes::ProcessSorting::Cpu,
+            process_sorting_type,
             process_sorting_reverse: true,
-            is_using_full_path: false,
+            is_using_command: false,
             current_column_index: 0,
-            num_columns: 1,
             is_sort_open: false,
+            columns,
         }
+    }
+
+    /// Updates sorting when using the column list.
+    /// ...this really should be part of the ProcColumn struct (along with the sorting fields),
+    /// but I'm too lazy.
+    ///
+    /// Sorry, future me, you're gonna have to refactor this later.  Too busy getting
+    /// the feature to work in the first place!  :)
+    pub fn update_sorting_with_columns(&mut self) {
+        let mut true_index = 0;
+        let mut enabled_index = 0;
+        let target_itx = self.columns.current_scroll_position;
+        for column in &self.columns.ordered_columns {
+            let enabled = self.columns.column_mapping.get(column).unwrap().enabled;
+            if enabled_index == target_itx && enabled {
+                break;
+            }
+            if enabled {
+                enabled_index += 1;
+            }
+            true_index += 1;
+        }
+
+        if let Some(new_sort_type) = self.columns.ordered_columns.get(true_index) {
+            if *new_sort_type == self.process_sorting_type {
+                // Just reverse the search if we're reselecting!
+                self.process_sorting_reverse = !(self.process_sorting_reverse);
+            } else {
+                self.process_sorting_type = new_sort_type.clone();
+                match self.process_sorting_type {
+                    ProcessSorting::State
+                    | ProcessSorting::Pid
+                    | ProcessSorting::ProcessName
+                    | ProcessSorting::Command => {
+                        // Also please invert this (and any future ones that require alphabetical sorting) by default!
+                        self.process_sorting_reverse = false;
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    pub fn toggle_command_and_name(&mut self, is_using_command: bool) {
+        self.columns
+            .column_mapping
+            .get_mut(&ProcessSorting::ProcessName)
+            .unwrap()
+            .enabled = !is_using_command;
+        self.columns
+            .column_mapping
+            .get_mut(&ProcessSorting::Command)
+            .unwrap()
+            .enabled = is_using_command;
     }
 
     pub fn get_cursor_position(&self) -> usize {

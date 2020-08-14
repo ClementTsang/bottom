@@ -17,7 +17,7 @@ impl Row {
         default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
         left_legend: bool,
     ) -> Result<BottomRow> {
-        // In the future we want to also add percentages.
+        // TODO: In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
         let row_ratio = self.ratio.unwrap_or(1);
         let mut children = Vec::new();
@@ -98,22 +98,31 @@ impl Row {
                             }
                             BottomWidgetType::Proc => {
                                 let proc_id = *iter_id;
-                                *iter_id += 1;
+                                let proc_search_id = *iter_id + 1;
+                                *iter_id += 2;
                                 BottomCol::builder()
                                     .total_col_row_ratio(2)
                                     .col_width_ratio(width_ratio)
                                     .children(vec![
                                         BottomColRow::builder()
-                                            .children(vec![BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(proc_id)
-                                                .build()])
+                                            .children(vec![
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::ProcSort)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_width(true)
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::Proc)
+                                                    .widget_id(proc_id)
+                                                    .build(),
+                                            ])
+                                            .total_widget_ratio(2)
                                             .flex_grow(true)
                                             .build(),
                                         BottomColRow::builder()
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
-                                                .widget_id(*iter_id)
+                                                .widget_id(proc_search_id)
                                                 .build()])
                                             .canvas_handle_height(true)
                                             .build(),
@@ -137,7 +146,7 @@ impl Row {
                         let mut total_col_row_ratio = 0;
                         let mut contains_proc = false;
 
-                        let mut col_row_children = Vec::new();
+                        let mut col_row_children: Vec<BottomColRow> = Vec::new();
 
                         for widget in child {
                             let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
@@ -214,14 +223,23 @@ impl Row {
                                 BottomWidgetType::Proc => {
                                     contains_proc = true;
                                     let proc_id = *iter_id;
-                                    *iter_id += 1;
+                                    let proc_search_id = *iter_id + 1;
+                                    *iter_id += 2;
                                     col_row_children.push(
                                         BottomColRow::builder()
+                                            .children(vec![
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::ProcSort)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_width(true)
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::Proc)
+                                                    .widget_id(proc_id)
+                                                    .build(),
+                                            ])
                                             .col_row_height_ratio(col_row_height_ratio)
-                                            .children(vec![BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(proc_id)
-                                                .build()])
+                                            .total_widget_ratio(2)
                                             .build(),
                                     );
                                     col_row_children.push(
@@ -229,7 +247,7 @@ impl Row {
                                             .col_row_height_ratio(col_row_height_ratio)
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
-                                                .widget_id(*iter_id)
+                                                .widget_id(proc_search_id)
                                                 .build()])
                                             .canvas_handle_height(true)
                                             .build(),

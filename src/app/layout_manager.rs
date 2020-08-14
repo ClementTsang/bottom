@@ -541,7 +541,7 @@ impl BottomLayout {
                             .widget_id(4)
                             .up_neighbour(Some(100))
                             .left_neighbour(Some(8))
-                            .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                            .right_neighbour(Some(DEFAULT_WIDGET_ID + 2))
                             .build()])
                         .build()])
                     .build(),
@@ -550,15 +550,26 @@ impl BottomLayout {
                     .children(vec![
                         BottomColRow::builder()
                             .canvas_handle_height(true)
-                            .children(vec![BottomWidget::builder()
-                                .canvas_handle_width(true)
-                                .widget_type(BottomWidgetType::Proc)
-                                .widget_id(DEFAULT_WIDGET_ID)
-                                .up_neighbour(Some(100))
-                                .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
-                                .left_neighbour(Some(4))
-                                .right_neighbour(Some(8))
-                                .build()])
+                            .children(vec![
+                                BottomWidget::builder()
+                                    .canvas_handle_width(true)
+                                    .widget_type(BottomWidgetType::ProcSort)
+                                    .widget_id(DEFAULT_WIDGET_ID + 2)
+                                    .up_neighbour(Some(100))
+                                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                                    .left_neighbour(Some(4))
+                                    .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                                    .build(),
+                                BottomWidget::builder()
+                                    .canvas_handle_width(true)
+                                    .widget_type(BottomWidgetType::Proc)
+                                    .widget_id(DEFAULT_WIDGET_ID)
+                                    .up_neighbour(Some(100))
+                                    .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
+                                    .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
+                                    .right_neighbour(Some(8))
+                                    .build(),
+                            ])
                             .build(),
                         BottomColRow::builder()
                             .canvas_handle_height(true)
@@ -838,7 +849,7 @@ impl BottomWidgetType {
     pub fn is_widget_table(&self) -> bool {
         use BottomWidgetType::*;
         match self {
-            Disk | Proc | Temp | CpuLegend => true,
+            Disk | Proc | ProcSort | Temp | CpuLegend => true,
             _ => false,
         }
     }
