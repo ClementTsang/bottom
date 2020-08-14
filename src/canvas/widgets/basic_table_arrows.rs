@@ -71,7 +71,7 @@ impl BasicTableArrows for Painter {
                             .map(|right_widget| {
                                 if right_widget.widget_type == BottomWidgetType::ProcSort {
                                     right_widget
-                                        .left_neighbour
+                                        .right_neighbour
                                         .map(|right_right_widget_id| {
                                             app_state.widget_map.get(&right_right_widget_id).map(
                                                 |right_right_widget| {

@@ -223,7 +223,7 @@ Run using `btm`.
 | `Tab`         | Group/un-group processes with the same name                   |
 | `Ctrl-f`, `/` | Open process search widget                                    |
 | `P`           | Toggle between showing the full path or just the process name |
-| `s, F6`       | Open process column sort widget                               |
+| `s, F6`       | Open process sort widget                                      |
 | `I`           | Invert current sort                                           |
 
 #### Process search bindings

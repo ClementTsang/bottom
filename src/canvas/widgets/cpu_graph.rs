@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use std::cmp::max;
 
 use crate::{
-    app::App,
+    app::{layout_manager::WidgetDirection, App},
     canvas::{
         drawing_utils::{get_start_position, get_variable_intrinsic_widths},
         Painter,
@@ -57,9 +57,9 @@ impl CpuGraphWidget for Painter {
             // Skip drawing legend
             if app_state.current_widget.widget_id == (widget_id + 1) {
                 if app_state.app_config_fields.left_legend {
-                    app_state.move_widget_selection_right();
+                    app_state.move_widget_selection(&WidgetDirection::Right);
                 } else {
-                    app_state.move_widget_selection_left();
+                    app_state.move_widget_selection(&WidgetDirection::Left);
                 }
             }
             self.draw_cpu_graph(f, app_state, draw_loc, widget_id);

@@ -550,6 +550,7 @@ impl BottomLayout {
                     .children(vec![
                         BottomColRow::builder()
                             .canvas_handle_height(true)
+                            .total_widget_ratio(3)
                             .children(vec![
                                 BottomWidget::builder()
                                     .canvas_handle_width(true)
@@ -559,6 +560,7 @@ impl BottomLayout {
                                     .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                                     .left_neighbour(Some(4))
                                     .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                                    .width_ratio(1)
                                     .build(),
                                 BottomWidget::builder()
                                     .canvas_handle_width(true)
@@ -567,7 +569,8 @@ impl BottomLayout {
                                     .up_neighbour(Some(100))
                                     .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                                     .left_neighbour(Some(DEFAULT_WIDGET_ID + 2))
-                                    .right_neighbour(Some(8))
+                                    .right_neighbour(Some(7))
+                                    .width_ratio(2)
                                     .build(),
                             ])
                             .build(),
@@ -809,6 +812,25 @@ pub struct BottomColRow {
     pub flex_grow: bool,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum WidgetDirection {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+impl WidgetDirection {
+    pub fn is_opposite(&self, other_direction: &WidgetDirection) -> bool {
+        match &self {
+            WidgetDirection::Left => *other_direction == WidgetDirection::Right,
+            WidgetDirection::Right => *other_direction == WidgetDirection::Left,
+            WidgetDirection::Up => *other_direction == WidgetDirection::Down,
+            WidgetDirection::Down => *other_direction == WidgetDirection::Up,
+        }
+    }
+}
+
 /// Represents a single widget.
 #[derive(Debug, Default, Clone, TypedBuilder)]
 pub struct BottomWidget {
@@ -830,11 +852,17 @@ pub struct BottomWidget {
     #[builder(default = None)]
     pub down_neighbour: Option<u64>,
 
+    /// If set to true, the canvas will override any ratios.
     #[builder(default = false)]
     pub canvas_handle_width: bool,
 
+    /// Whether we want this widget to take up all available room (and ignore any ratios).
     #[builder(default = false)]
     pub flex_grow: bool,
+
+    /// The value is the direction to bounce, as well as the parent offset.
+    #[builder(default = None)]
+    pub parent_reflector: Option<(WidgetDirection, u64)>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

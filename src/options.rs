@@ -292,11 +292,11 @@ pub fn get_widget_layout(
             total_row_height_ratio: total_height_ratio,
         };
 
-        // debug!("Bottom layout: {:#?}", ret_bottom_layout);
-
         // Confirm that we have at least ONE widget - if not, error out!
         if iter_id > 0 {
             ret_bottom_layout.get_movement_mappings();
+            // debug!("Bottom layout: {:#?}", ret_bottom_layout);
+
             ret_bottom_layout
         } else {
             return Err(error::BottomError::ConfigError(

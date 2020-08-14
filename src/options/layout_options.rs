@@ -66,6 +66,10 @@ impl Row {
                                                     .widget_type(BottomWidgetType::CpuLegend)
                                                     .widget_id(*iter_id)
                                                     .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Right,
+                                                        1,
+                                                    )))
                                                     .build(),
                                                 BottomWidget::builder()
                                                     .width_ratio(17)
@@ -90,6 +94,10 @@ impl Row {
                                                     .widget_type(BottomWidgetType::CpuLegend)
                                                     .widget_id(*iter_id)
                                                     .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Left,
+                                                        1,
+                                                    )))
                                                     .build(),
                                             ])
                                             .build()]
@@ -110,19 +118,26 @@ impl Row {
                                                     .widget_type(BottomWidgetType::ProcSort)
                                                     .widget_id(*iter_id)
                                                     .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Right,
+                                                        2,
+                                                    )))
+                                                    .width_ratio(1)
                                                     .build(),
                                                 BottomWidget::builder()
                                                     .widget_type(BottomWidgetType::Proc)
                                                     .widget_id(proc_id)
+                                                    .width_ratio(2)
                                                     .build(),
                                             ])
-                                            .total_widget_ratio(2)
+                                            .total_widget_ratio(3)
                                             .flex_grow(true)
                                             .build(),
                                         BottomColRow::builder()
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
                                                 .widget_id(proc_search_id)
+                                                .parent_reflector(Some((WidgetDirection::Up, 1)))
                                                 .build()])
                                             .canvas_handle_height(true)
                                             .build(),
@@ -187,6 +202,10 @@ impl Row {
                                                         .widget_type(BottomWidgetType::CpuLegend)
                                                         .widget_id(*iter_id)
                                                         .canvas_handle_width(true)
+                                                        .parent_reflector(Some((
+                                                            WidgetDirection::Right,
+                                                            1,
+                                                        )))
                                                         .build(),
                                                     BottomWidget::builder()
                                                         .width_ratio(17)
@@ -214,6 +233,10 @@ impl Row {
                                                         .widget_type(BottomWidgetType::CpuLegend)
                                                         .widget_id(*iter_id)
                                                         .canvas_handle_width(true)
+                                                        .parent_reflector(Some((
+                                                            WidgetDirection::Left,
+                                                            1,
+                                                        )))
                                                         .build(),
                                                 ])
                                                 .build(),
@@ -232,14 +255,20 @@ impl Row {
                                                     .widget_type(BottomWidgetType::ProcSort)
                                                     .widget_id(*iter_id)
                                                     .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Right,
+                                                        2,
+                                                    )))
+                                                    .width_ratio(1)
                                                     .build(),
                                                 BottomWidget::builder()
                                                     .widget_type(BottomWidgetType::Proc)
                                                     .widget_id(proc_id)
+                                                    .width_ratio(2)
                                                     .build(),
                                             ])
                                             .col_row_height_ratio(col_row_height_ratio)
-                                            .total_widget_ratio(2)
+                                            .total_widget_ratio(3)
                                             .build(),
                                     );
                                     col_row_children.push(
@@ -248,6 +277,7 @@ impl Row {
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
                                                 .widget_id(proc_search_id)
+                                                .parent_reflector(Some((WidgetDirection::Up, 1)))
                                                 .build()])
                                             .canvas_handle_height(true)
                                             .build(),

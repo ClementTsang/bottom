@@ -28,7 +28,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 use app::{
     data_harvester::{self, processes::ProcessSorting},
-    layout_manager::UsedWidgets,
+    layout_manager::{UsedWidgets, WidgetDirection},
     App,
 };
 use constants::*;
@@ -310,10 +310,10 @@ fn handle_key_event_or_break(
 
             match event.code {
                 KeyCode::Char('f') => app.on_slash(),
-                KeyCode::Left => app.move_widget_selection_left(),
-                KeyCode::Right => app.move_widget_selection_right(),
-                KeyCode::Up => app.move_widget_selection_up(),
-                KeyCode::Down => app.move_widget_selection_down(),
+                KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
+                KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
+                KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
+                KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char('r') => {
                     if reset_sender.send(ResetEvent::Reset).is_ok() {
                         app.reset();
@@ -333,10 +333,10 @@ fn handle_key_event_or_break(
             }
         } else if let KeyModifiers::SHIFT = event.modifiers {
             match event.code {
-                KeyCode::Left => app.move_widget_selection_left(),
-                KeyCode::Right => app.move_widget_selection_right(),
-                KeyCode::Up => app.move_widget_selection_up(),
-                KeyCode::Down => app.move_widget_selection_down(),
+                KeyCode::Left => app.move_widget_selection(&WidgetDirection::Left),
+                KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
+                KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
+                KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char(caught_char) => app.on_char_key(caught_char),
                 _ => {}
             }
