@@ -88,7 +88,7 @@ impl ProcessTableWidget for Painter {
             if is_sort_open {
                 let processes_chunk = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints([Constraint::Length(header_len + 3), Constraint::Min(0)].as_ref())
+                    .constraints([Constraint::Length(header_len + 4), Constraint::Min(0)].as_ref())
                     .split(proc_draw_loc);
                 proc_draw_loc = processes_chunk[1];
 
@@ -564,7 +564,7 @@ impl ProcessTableWidget for Painter {
 
             let margined_draw_loc = Layout::default()
                 .constraints([Constraint::Percentage(100)].as_ref())
-                .margin(if is_on_widget || draw_border { 0 } else { 1 })
+                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                 .direction(Direction::Horizontal)
                 .split(draw_loc);
 

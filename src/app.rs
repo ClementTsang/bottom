@@ -891,11 +891,17 @@ impl App {
             // more obvious that we are separating dialog logic and normal logic IMO.
             // This is even more so as most logic already checks for dialog state.
             match caught_char {
-                '1' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[1]),
-                '2' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[2]),
-                '3' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[3]),
-                '4' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[4]),
-                '5' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[5]),
+                '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                    let potential_index = caught_char.to_digit(10);
+                    if let Some(potential_index) = potential_index {
+                        if (potential_index as usize) < self.help_dialog_state.index_shortcuts.len()
+                        {
+                            self.help_scroll_to_or_max(
+                                self.help_dialog_state.index_shortcuts[potential_index as usize],
+                            );
+                        }
+                    }
+                }
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }
@@ -1151,19 +1157,40 @@ impl App {
                             BottomWidgetType::Temp
                             | BottomWidgetType::Proc
                             | BottomWidgetType::ProcSearch
+                            | BottomWidgetType::ProcSort
                             | BottomWidgetType::Disk
                             | BottomWidgetType::Battery
                                 if self.basic_table_widget_state.is_some() =>
                             {
+                                // Gotta do this for the sort widget
+                                if let BottomWidgetType::ProcSort = new_widget.widget_type {
+                                    if let Some(proc_widget_state) =
+                                        self.proc_state.widget_states.get(&(new_widget_id - 2))
+                                    {
+                                        if proc_widget_state.is_sort_open {
+                                            self.current_widget = new_widget.clone();
+                                        } else if let Some(next_new_widget_id) =
+                                            new_widget.left_neighbour
+                                        {
+                                            if let Some(next_new_widget) =
+                                                self.widget_map.get(&next_new_widget_id)
+                                            {
+                                                self.current_widget = next_new_widget.clone();
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    self.current_widget = new_widget.clone();
+                                }
+
                                 if let Some(basic_table_widget_state) =
                                     &mut self.basic_table_widget_state
                                 {
                                     basic_table_widget_state.currently_displayed_widget_id =
-                                        new_widget_id;
+                                        self.current_widget.widget_id;
                                     basic_table_widget_state.currently_displayed_widget_type =
-                                        new_widget.widget_type.clone();
+                                        self.current_widget.widget_type.clone();
                                 }
-                                self.current_widget = new_widget.clone();
                             }
                             BottomWidgetType::CpuLegend => {
                                 if let Some(cpu_widget_state) =
@@ -1280,20 +1307,41 @@ impl App {
                         match new_widget.widget_type {
                             BottomWidgetType::Temp
                             | BottomWidgetType::Proc
+                            | BottomWidgetType::ProcSort
                             | BottomWidgetType::ProcSearch
                             | BottomWidgetType::Disk
                             | BottomWidgetType::Battery
                                 if self.basic_table_widget_state.is_some() =>
                             {
+                                // Required for sort widget.
+                                if let BottomWidgetType::ProcSort = new_widget.widget_type {
+                                    if let Some(proc_widget_state) =
+                                        self.proc_state.widget_states.get(&(new_widget_id - 2))
+                                    {
+                                        if proc_widget_state.is_sort_open {
+                                            self.current_widget = new_widget.clone();
+                                        } else if let Some(next_new_widget_id) =
+                                            new_widget.right_neighbour
+                                        {
+                                            if let Some(next_new_widget) =
+                                                self.widget_map.get(&next_new_widget_id)
+                                            {
+                                                self.current_widget = next_new_widget.clone();
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    self.current_widget = new_widget.clone();
+                                }
+
                                 if let Some(basic_table_widget_state) =
                                     &mut self.basic_table_widget_state
                                 {
                                     basic_table_widget_state.currently_displayed_widget_id =
-                                        new_widget_id;
+                                        self.current_widget.widget_id;
                                     basic_table_widget_state.currently_displayed_widget_type =
-                                        new_widget.widget_type.clone();
+                                        self.current_widget.widget_type.clone();
                                 }
-                                self.current_widget = new_widget.clone();
                             }
                             BottomWidgetType::CpuLegend => {
                                 if let Some(cpu_widget_state) =

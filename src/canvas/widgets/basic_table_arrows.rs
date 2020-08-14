@@ -24,6 +24,15 @@ impl BasicTableArrows for Painter {
     fn draw_basic_table_arrows<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &App, draw_loc: Rect, current_table: &BottomWidget,
     ) {
+        let current_table = if let BottomWidgetType::ProcSort = current_table.widget_type {
+            current_table
+                .right_neighbour
+                .map(|id| app_state.widget_map.get(&id).unwrap())
+                .unwrap()
+        } else {
+            current_table
+        };
+
         // Effectively a paragraph with a ton of spacing
         let (left_table, right_table) = (
             {
@@ -33,7 +42,21 @@ impl BasicTableArrows for Painter {
                         app_state
                             .widget_map
                             .get(&left_widget_id)
-                            .map(|left_widget| &left_widget.widget_type)
+                            .map(|left_widget| {
+                                if left_widget.widget_type == BottomWidgetType::ProcSort {
+                                    left_widget
+                                        .left_neighbour
+                                        .map(|left_left_widget_id| {
+                                            app_state.widget_map.get(&left_left_widget_id).map(
+                                                |left_left_widget| &left_left_widget.widget_type,
+                                            )
+                                        })
+                                        .unwrap_or_else(|| Some(&BottomWidgetType::Temp))
+                                        .unwrap_or_else(|| &BottomWidgetType::Temp)
+                                } else {
+                                    &left_widget.widget_type
+                                }
+                            })
                             .unwrap_or_else(|| &BottomWidgetType::Temp)
                     })
                     .unwrap_or_else(|| &BottomWidgetType::Temp)
@@ -45,7 +68,23 @@ impl BasicTableArrows for Painter {
                         app_state
                             .widget_map
                             .get(&right_widget_id)
-                            .map(|right_widget| &right_widget.widget_type)
+                            .map(|right_widget| {
+                                if right_widget.widget_type == BottomWidgetType::ProcSort {
+                                    right_widget
+                                        .left_neighbour
+                                        .map(|right_right_widget_id| {
+                                            app_state.widget_map.get(&right_right_widget_id).map(
+                                                |right_right_widget| {
+                                                    &right_right_widget.widget_type
+                                                },
+                                            )
+                                        })
+                                        .unwrap_or_else(|| Some(&BottomWidgetType::Disk))
+                                        .unwrap_or_else(|| &BottomWidgetType::Disk)
+                                } else {
+                                    &right_widget.widget_type
+                                }
+                            })
                             .unwrap_or_else(|| &BottomWidgetType::Disk)
                     })
                     .unwrap_or_else(|| &BottomWidgetType::Disk)

@@ -426,13 +426,20 @@ impl Painter {
                             false,
                             widget_id,
                         ),
-                        Proc => self.draw_process_features(
-                            &mut f,
-                            app_state,
-                            vertical_chunks[4],
-                            false,
-                            widget_id,
-                        ),
+                        Proc | ProcSort => {
+                            let wid = widget_id
+                                - match basic_table_widget_state.currently_displayed_widget_type {
+                                    ProcSort => 2,
+                                    _ => 0,
+                                };
+                            self.draw_process_features(
+                                &mut f,
+                                app_state,
+                                vertical_chunks[4],
+                                false,
+                                wid,
+                            );
+                        }
                         Temp => self.draw_temp_table(
                             &mut f,
                             app_state,

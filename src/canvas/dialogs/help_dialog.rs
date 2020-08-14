@@ -72,7 +72,7 @@ impl HelpDialog for Painter {
 
             app_state.help_dialog_state.scroll_state.max_scroll_index =
                 (self.styled_help_text.len() as u16
-                    + (constants::HELP_TEXT.len() as u16 - 3)
+                    + (constants::HELP_TEXT.len() as u16 - 4)
                     + overflow_buffer)
                     .saturating_sub(draw_loc.height);
 
