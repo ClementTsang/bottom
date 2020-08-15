@@ -550,7 +550,7 @@ impl ProcessTableWidget for Painter {
             let sliced_vec = &sort_string[start_position..];
 
             let sort_options = sliced_vec
-                .into_iter()
+                .iter()
                 .map(|(column, style)| Row::StyledData(vec![column].into_iter(), *style));
 
             let column_state = &mut proc_widget_state.columns.column_state;
