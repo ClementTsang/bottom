@@ -387,7 +387,7 @@ impl ProcWidgetState {
                     | ProcessSorting::Pid
                     | ProcessSorting::ProcessName
                     | ProcessSorting::Command => {
-                        // Also please invert this (and any future ones that require alphabetical sorting) by default!
+                        // Also invert anything that uses alphabetical sorting by default.
                         self.process_sorting_reverse = false;
                     }
                     _ => {}

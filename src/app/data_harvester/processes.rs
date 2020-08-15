@@ -12,6 +12,7 @@ use std::{
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
+// TODO: Add value so we know if it's sorted ascending or descending by default?
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ProcessSorting {
     CpuPercent,
@@ -24,7 +25,7 @@ pub enum ProcessSorting {
     WritePerSecond,
     TotalRead,
     TotalWrite,
-    State, // This one is just alphabetical
+    State,
 }
 
 impl std::fmt::Display for ProcessSorting {

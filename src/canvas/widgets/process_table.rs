@@ -14,7 +14,7 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
+    widgets::{Block, Borders, Paragraph, Row, Table},
 };
 
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
@@ -490,8 +490,7 @@ impl ProcessTableWidget for Painter {
                 Paragraph::new(search_text)
                     .block(process_search_block)
                     .style(self.colours.text_style)
-                    .alignment(Alignment::Left)
-                    .wrap(Wrap { trim: false }),
+                    .alignment(Alignment::Left),
                 margined_draw_loc[0],
             );
         }
