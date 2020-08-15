@@ -179,8 +179,6 @@ impl ProcessTableWidget for Painter {
                     proc_widget_state.process_sorting_reverse,
                 );
 
-                // debug!("PH: {:?}", process_headers);
-
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
                     .map(|entry| entry.len())
@@ -514,13 +512,12 @@ impl ProcessTableWidget for Painter {
                 .ordered_columns
                 .iter()
                 .filter(|column_type| {
-                    let mapping = proc_widget_state
+                    proc_widget_state
                         .columns
                         .column_mapping
                         .get(&column_type)
-                        .unwrap();
-
-                    mapping.enabled
+                        .unwrap()
+                        .enabled
                 })
                 .enumerate()
                 .map(|(itx, column_type)| {
@@ -534,9 +531,28 @@ impl ProcessTableWidget for Painter {
                     }
                 })
                 .collect::<Vec<_>>();
-            let sort_options = sort_string
+
+            let position = get_start_position(
+                usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
+                &proc_widget_state.columns.scroll_direction,
+                &mut proc_widget_state.columns.previous_scroll_position,
+                current_scroll_position,
+                app_state.is_force_redraw,
+            );
+
+            // Sanity check
+            let start_position = if position >= sort_string.len() {
+                sort_string.len().saturating_sub(1)
+            } else {
+                position
+            };
+
+            let sliced_vec = &sort_string[start_position..];
+
+            let sort_options = sliced_vec
                 .into_iter()
-                .map(|(column, style)| Row::StyledData(vec![column].into_iter(), style));
+                .map(|(column, style)| Row::StyledData(vec![column].into_iter(), *style));
+
             let column_state = &mut proc_widget_state.columns.column_state;
             let current_border_style = if proc_widget_state
                 .process_search_state

@@ -153,6 +153,8 @@ pub struct ProcColumn {
     pub column_state: TableState,
     pub scroll_direction: ScrollDirection,
     pub current_scroll_position: usize,
+    pub previous_scroll_position: usize,
+    pub backup_prev_scroll_position: usize,
 }
 
 impl Default for ProcColumn {
@@ -241,6 +243,8 @@ impl Default for ProcColumn {
             column_state: TableState::default(),
             scroll_direction: ScrollDirection::default(),
             current_scroll_position: 0,
+            previous_scroll_position: 0,
+            backup_prev_scroll_position: 0,
         }
     }
 }
@@ -261,12 +265,18 @@ impl ProcColumn {
 
     pub fn set_to_sorted_index(&mut self, proc_sorting_type: &ProcessSorting) {
         // TODO [Custom Columns]: If we add custom columns, this may be needed!  Since column indices will change, this runs the risk of OOB.  So, when you change columns, CALL THIS AND ADAPT!
-        for (itx, column) in self.ordered_columns.iter().enumerate() {
+        let mut true_index = 0;
+        for column in &self.ordered_columns {
             if *column == *proc_sorting_type {
-                self.current_scroll_position = itx;
                 break;
             }
+            if self.column_mapping.get(column).unwrap().enabled {
+                true_index += 1;
+            }
         }
+
+        self.current_scroll_position = true_index;
+        self.backup_prev_scroll_position = self.previous_scroll_position;
     }
 
     pub fn get_column_headers(

@@ -184,6 +184,8 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
                         if current_proc_state.is_sort_open {
+                            current_proc_state.columns.current_scroll_position =
+                                current_proc_state.columns.backup_prev_scroll_position;
                             current_proc_state.is_sort_open = false;
                             self.move_widget_selection(&WidgetDirection::Right);
                             return;
