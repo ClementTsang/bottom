@@ -53,7 +53,7 @@ impl MemBasicWidget for Painter {
         let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, bar_length);
         let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, bar_length);
         let mem_label = format!(
-            "RAM[{}{}{:3.0}%]",
+            "RAM[{}{}{:3.0}%]\n",
             "|".repeat(num_bars_ram),
             " ".repeat(bar_length - num_bars_ram),
             ram_use_percentage.round(),

@@ -97,7 +97,7 @@ impl BasicTableArrows for Painter {
             usize::from(draw_loc.width).saturating_sub(6 + left_name.len() + right_name.len());
 
         let arrow_text = vec![
-            Text::raw(String::default()),
+            Text::raw("\n"),
             Text::styled(format!("◄ {}", left_name), self.colours.text_style),
             Text::raw(" ".repeat(num_spaces)),
             Text::styled(format!("{} ►", right_name), self.colours.text_style),

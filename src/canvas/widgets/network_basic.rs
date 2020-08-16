@@ -43,7 +43,7 @@ impl NetworkBasicWidget for Painter {
             );
         }
 
-        let rx_label = format!("RX: {}", &app_state.canvas_data.rx_display);
+        let rx_label = format!("RX: {}\n", &app_state.canvas_data.rx_display);
         let tx_label = format!("TX: {}", &app_state.canvas_data.tx_display);
         let total_rx_label = format!("Total RX: {}\n", &app_state.canvas_data.total_rx_display);
         let total_tx_label = format!("Total TX: {}", &app_state.canvas_data.total_tx_display);

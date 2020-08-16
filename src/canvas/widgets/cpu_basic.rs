@@ -76,7 +76,7 @@ impl CpuBasicWidget for Painter {
 
                     let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
                     format!(
-                        "{:3}[{}{}{:3.0}%]",
+                        "{:3}[{}{}{:3.0}%]\n",
                         if app_state.app_config_fields.show_average_cpu {
                             if cpu_index == 0 {
                                 " AVG".to_string()
