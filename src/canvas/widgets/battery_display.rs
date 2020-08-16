@@ -82,32 +82,32 @@ impl BatteryDisplayWidget for Painter {
                 Block::default().borders(Borders::NONE)
             };
 
-            f.render_widget(
-                // Tabs::new(
-                //     (app_state
-                //         .canvas_data
-                //         .battery_data
-                //         .iter()
-                //         .map(|battery| Spans::from(battery.battery_name.clone())))
-                //     .collect::<Vec<_>>(),
-                // )
-                Tabs::default()
-                    .titles(
-                        app_state
-                            .canvas_data
-                            .battery_data
-                            .iter()
-                            .map(|battery| &battery.battery_name)
-                            .collect::<Vec<_>>()
-                            .as_ref(),
-                    )
-                    .block(battery_block)
-                    .divider(tui::symbols::line::VERTICAL)
-                    .style(self.colours.text_style)
-                    .highlight_style(self.colours.currently_selected_text_style)
-                    .select(battery_widget_state.currently_selected_battery_index),
-                draw_loc,
-            );
+            // f.render_widget(
+            //     // Tabs::new(
+            //     //     (app_state
+            //     //         .canvas_data
+            //     //         .battery_data
+            //     //         .iter()
+            //     //         .map(|battery| Spans::from(battery.battery_name.clone())))
+            //     //     .collect::<Vec<_>>(),
+            //     // )
+            //     Tabs::default()
+            //         .titles(
+            //             app_state
+            //                 .canvas_data
+            //                 .battery_data
+            //                 .iter()
+            //                 .map(|battery| &battery.battery_name)
+            //                 .collect::<Vec<_>>()
+            //                 .as_ref(),
+            //         )
+            //         .block(battery_block)
+            //         .divider(tui::symbols::line::VERTICAL)
+            //         .style(self.colours.text_style)
+            //         .highlight_style(self.colours.currently_selected_text_style)
+            //         .select(battery_widget_state.currently_selected_battery_index),
+            //     draw_loc,
+            // );
 
             if let Some(battery_details) = app_state
                 .canvas_data
@@ -181,6 +181,34 @@ impl BatteryDisplayWidget for Painter {
                     draw_loc,
                 );
             }
+
+            // Has to be placed AFTER for tui 0.9, place BEFORE for 0.10.
+            f.render_widget(
+                // Tabs::new(
+                //     (app_state
+                //         .canvas_data
+                //         .battery_data
+                //         .iter()
+                //         .map(|battery| Spans::from(battery.battery_name.clone())))
+                //     .collect::<Vec<_>>(),
+                // )
+                Tabs::default()
+                    .titles(
+                        app_state
+                            .canvas_data
+                            .battery_data
+                            .iter()
+                            .map(|battery| &battery.battery_name)
+                            .collect::<Vec<_>>()
+                            .as_ref(),
+                    )
+                    .block(battery_block)
+                    .divider(tui::symbols::line::VERTICAL)
+                    .style(self.colours.text_style)
+                    .highlight_style(self.colours.currently_selected_text_style)
+                    .select(battery_widget_state.currently_selected_battery_index),
+                draw_loc,
+            );
         }
     }
 }
