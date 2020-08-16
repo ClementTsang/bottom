@@ -267,7 +267,13 @@ pub fn get_widget_layout(
             Some(r) => r,
             None => {
                 // This cannot (like it really shouldn't) fail!
-                ref_row = toml::from_str::<Config>(DEFAULT_LAYOUT)?.row.unwrap();
+                ref_row = toml::from_str::<Config>(if get_use_battery(matches, config) {
+                    DEFAULT_BATTERY_LAYOUT
+                } else {
+                    DEFAULT_LAYOUT
+                })?
+                .row
+                .unwrap();
                 &ref_row
             }
         };

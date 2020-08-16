@@ -178,12 +178,41 @@ lazy_static! {
     ];
 }
 
-// Default layout
+// Default layouts
 pub const DEFAULT_LAYOUT: &str = r##"
 [[row]]
   ratio=30
   [[row.child]]
   type="cpu"
+[[row]]
+    ratio=40
+    [[row.child]]
+      ratio=4
+      type="mem"
+    [[row.child]]
+      ratio=3
+      [[row.child.child]]
+        type="temp"
+      [[row.child.child]]
+        type="disk"
+[[row]]
+  ratio=30
+  [[row.child]]
+    type="net"
+  [[row.child]]
+    type="proc"
+    default=true
+"##;
+
+pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
+[[row]]
+  ratio=30
+  [[row.child]]
+    ratio=2
+  type="cpu"
+  [[row.child]]
+    ratio=1
+  type="battery"
 [[row]]
     ratio=40
     [[row.child]]
