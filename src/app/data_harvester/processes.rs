@@ -184,7 +184,8 @@ fn get_process_stats(path: &PathBuf) -> std::io::Result<String> {
 
 #[cfg(target_os = "linux")]
 fn get_linux_process_state(proc_stats: &[&str]) -> (char, String) {
-    if let Some(first_char) = proc_stats[2].chars().collect::<Vec<char>>().first() {
+    // The -2 offset is because of us cutting off name + pid
+    if let Some(first_char) = proc_stats[0].chars().collect::<Vec<char>>().first() {
         (
             *first_char,
             ProcessStatus::from(*first_char).to_string().to_string(),
@@ -201,8 +202,8 @@ fn get_linux_cpu_usage(
     use_current_cpu_total: bool,
 ) -> std::io::Result<(f64, f64)> {
     fn get_process_cpu_stats(stats: &[&str]) -> f64 {
-        // utime + stime (matches top)
-        stats[13].parse::<f64>().unwrap_or(0_f64) + stats[14].parse::<f64>().unwrap_or(0_f64)
+        // utime + stime (matches top), the -2 offset is because of us cutting off name + pid
+        stats[11].parse::<f64>().unwrap_or(0_f64) + stats[12].parse::<f64>().unwrap_or(0_f64)
     }
 
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
@@ -251,19 +252,23 @@ fn convert_ps<S: core::hash::BuildHasher>(
 
     let (cpu_usage_percent, process_state_char, process_state) =
         if let Ok(stat_results) = get_process_stats(&new_pid_stat.proc_stat_path) {
-            let proc_stats = stat_results.split_whitespace().collect::<Vec<&str>>();
-            let (process_state_char, process_state) = get_linux_process_state(&proc_stats);
+            if let Some(tmp_split) = stat_results.split(')').collect::<Vec<_>>().last() {
+                let proc_stats = tmp_split.split_whitespace().collect::<Vec<&str>>();
+                let (process_state_char, process_state) = get_linux_process_state(&proc_stats);
 
-            let (cpu_usage_percent, after_proc_val) = get_linux_cpu_usage(
-                &proc_stats,
-                cpu_usage,
-                cpu_fraction,
-                new_pid_stat.cpu_time,
-                use_current_cpu_total,
-            )?;
-            new_pid_stat.cpu_time = after_proc_val;
+                let (cpu_usage_percent, after_proc_val) = get_linux_cpu_usage(
+                    &proc_stats,
+                    cpu_usage,
+                    cpu_fraction,
+                    new_pid_stat.cpu_time,
+                    use_current_cpu_total,
+                )?;
+                new_pid_stat.cpu_time = after_proc_val;
 
-            (cpu_usage_percent, process_state_char, process_state)
+                (cpu_usage_percent, process_state_char, process_state)
+            } else {
+                (0.0, '?', String::new())
+            }
         } else {
             (0.0, '?', String::new())
         };

@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [186](https://github.com/ClementTsang/bottom/pull/186): Fixed a bug caused by hitting `Enter` when a process kill fails, breaking future process kills.
 
+- [](): Fix bug caused by incorrectly reading the `/proc/{pid}/stats` file.
+
 ## [0.4.5] - 2020-07-08
 
 - No changes here, just an uptick for Crates.io using the wrong Cargo.lock.
