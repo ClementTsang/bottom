@@ -1,5 +1,5 @@
 use crate::{
-    app::{self, App},
+    app::App,
     canvas::{
         drawing_utils::{
             get_search_start_position, get_start_position, get_variable_intrinsic_widths,
@@ -14,43 +14,68 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
+    widgets::{Block, Borders, Paragraph, Row, Table},
 };
 
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
 pub trait ProcessTableWidget {
-    fn draw_process_and_search<B: Backend>(
+    /// Draws and handles all process-related drawing.  Use this.
+    /// - `widget_id` here represents the widget ID of the process widget itself!
+    fn draw_process_features<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 
+    /// Draws the process sort box.
+    /// - `widget_id` represents the widget ID of the process widget itself.
+    ///
+    /// This should not be directly called.
     fn draw_processes_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 
+    /// Draws the process sort box.
+    /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
+    /// state that is stored.
+    ///
+    /// This should not be directly called.
     fn draw_search_field<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
+    );
+
+    /// Draws the process sort box.
+    /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
+    /// state that is stored.
+    ///
+    /// This should not be directly called.
+    fn draw_process_sort<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 }
 
 impl ProcessTableWidget for Painter {
-    fn draw_process_and_search<B: Backend>(
+    fn draw_process_features<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
             let search_height = if draw_border { 5 } else { 3 };
+            let is_sort_open = process_widget_state.is_sort_open;
+            let header_len = process_widget_state.columns.longest_header_len;
+
+            let mut proc_draw_loc = draw_loc;
             if process_widget_state.is_search_enabled() {
                 let processes_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([Constraint::Min(0), Constraint::Length(search_height)].as_ref())
                     .split(draw_loc);
+                proc_draw_loc = processes_chunk[0];
 
-                self.draw_processes_table(f, app_state, processes_chunk[0], draw_border, widget_id);
                 self.draw_search_field(
                     f,
                     app_state,
@@ -58,9 +83,25 @@ impl ProcessTableWidget for Painter {
                     draw_border,
                     widget_id + 1,
                 );
-            } else {
-                self.draw_processes_table(f, app_state, draw_loc, draw_border, widget_id);
             }
+
+            if is_sort_open {
+                let processes_chunk = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Length(header_len + 4), Constraint::Min(0)].as_ref())
+                    .split(proc_draw_loc);
+                proc_draw_loc = processes_chunk[1];
+
+                self.draw_process_sort(
+                    f,
+                    app_state,
+                    processes_chunk[0],
+                    draw_border,
+                    widget_id + 2,
+                );
+            }
+
+            self.draw_processes_table(f, app_state, proc_draw_loc, draw_border, widget_id);
         }
     }
 
@@ -127,71 +168,17 @@ impl ProcessTableWidget for Painter {
                             process.write_per_sec.to_string(),
                             process.total_read.to_string(),
                             process.total_write.to_string(),
-                            process.process_states.to_string(),
+                            process.process_state.to_string(),
                         ]
                         .into_iter(),
                     )
                 });
 
-                use app::data_harvester::processes::ProcessSorting;
-                let mut pid_or_count = if proc_widget_state.is_grouped {
-                    "Count"
-                } else {
-                    "PID(p)"
-                }
-                .to_string();
-                let mut identifier = if proc_widget_state.is_using_full_path {
-                    "Command(n)".to_string()
-                } else {
-                    "Name(n)".to_string()
-                };
-                let mut cpu = "CPU%(c)".to_string();
-                let mut mem = "Mem%(m)".to_string();
-                let rps = "R/s".to_string();
-                let wps = "W/s".to_string();
-                let total_read = "Read".to_string();
-                let total_write = "Write".to_string();
-                let process_state = "State   ".to_string();
+                let process_headers = proc_widget_state.columns.get_column_headers(
+                    &proc_widget_state.process_sorting_type,
+                    proc_widget_state.process_sorting_reverse,
+                );
 
-                let direction_val = if proc_widget_state.process_sorting_reverse {
-                    "▼".to_string()
-                } else {
-                    "▲".to_string()
-                };
-
-                match proc_widget_state.process_sorting_type {
-                    ProcessSorting::CPU => cpu += &direction_val,
-                    ProcessSorting::MEM => mem += &direction_val,
-                    ProcessSorting::PID => pid_or_count += &direction_val,
-                    ProcessSorting::IDENTIFIER => identifier += &direction_val,
-                };
-
-                // TODO: Gonna have to figure out how to do left/right GUI notation.
-                let process_headers = if proc_widget_state.is_grouped {
-                    vec![
-                        pid_or_count,
-                        identifier,
-                        cpu,
-                        mem,
-                        rps,
-                        wps,
-                        total_read,
-                        total_write,
-                    ]
-                } else {
-                    vec![
-                        pid_or_count,
-                        identifier,
-                        cpu,
-                        mem,
-                        rps,
-                        wps,
-                        total_read,
-                        total_write,
-                        process_state,
-                    ]
-                };
-                proc_widget_state.num_columns = process_headers.len();
                 let process_headers_lens: Vec<usize> = process_headers
                     .iter()
                     .map(|entry| entry.len())
@@ -202,12 +189,12 @@ impl ProcessTableWidget for Painter {
 
                 // TODO: This is a ugly work-around for now.
                 let width_ratios = if proc_widget_state.is_grouped {
-                    if proc_widget_state.is_using_full_path {
+                    if proc_widget_state.is_using_command {
                         vec![0.05, 0.7, 0.05, 0.05, 0.0375, 0.0375, 0.0375, 0.0375]
                     } else {
                         vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
                     }
-                } else if proc_widget_state.is_using_full_path {
+                } else if proc_widget_state.is_using_command {
                     vec![0.05, 0.7, 0.05, 0.05, 0.03, 0.03, 0.03, 0.03]
                 } else {
                     vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
@@ -235,6 +222,7 @@ impl ProcessTableWidget for Painter {
                             .process_search_state
                             .search_state
                             .is_enabled
+                        && !proc_widget_state.is_sort_open
                     {
                         const TITLE_BASE: &str = " Processes ── Esc to go back ";
                         Span::styled(
@@ -502,9 +490,107 @@ impl ProcessTableWidget for Painter {
                 Paragraph::new(search_text)
                     .block(process_search_block)
                     .style(self.colours.text_style)
-                    .alignment(Alignment::Left)
-                    .wrap(Wrap { trim: false }),
+                    .alignment(Alignment::Left),
                 margined_draw_loc[0],
+            );
+        }
+    }
+
+    fn draw_process_sort<B: Backend>(
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        widget_id: u64,
+    ) {
+        let is_on_widget = widget_id == app_state.current_widget.widget_id;
+
+        if let Some(proc_widget_state) =
+            app_state.proc_state.widget_states.get_mut(&(widget_id - 2))
+        {
+            let current_scroll_position = proc_widget_state.columns.current_scroll_position;
+            let sort_string = proc_widget_state
+                .columns
+                .ordered_columns
+                .iter()
+                .filter(|column_type| {
+                    proc_widget_state
+                        .columns
+                        .column_mapping
+                        .get(&column_type)
+                        .unwrap()
+                        .enabled
+                })
+                .enumerate()
+                .map(|(itx, column_type)| {
+                    if current_scroll_position == itx {
+                        (
+                            column_type.to_string(),
+                            self.colours.currently_selected_text_style,
+                        )
+                    } else {
+                        (column_type.to_string(), self.colours.text_style)
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            let position = get_start_position(
+                usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
+                &proc_widget_state.columns.scroll_direction,
+                &mut proc_widget_state.columns.previous_scroll_position,
+                current_scroll_position,
+                app_state.is_force_redraw,
+            );
+
+            // Sanity check
+            let start_position = if position >= sort_string.len() {
+                sort_string.len().saturating_sub(1)
+            } else {
+                position
+            };
+
+            let sliced_vec = &sort_string[start_position..];
+
+            let sort_options = sliced_vec
+                .iter()
+                .map(|(column, style)| Row::StyledData(vec![column].into_iter(), *style));
+
+            let column_state = &mut proc_widget_state.columns.column_state;
+            let current_border_style = if proc_widget_state
+                .process_search_state
+                .search_state
+                .is_invalid_search
+            {
+                self.colours.invalid_query_style
+            } else if is_on_widget {
+                self.colours.highlighted_border_style
+            } else {
+                self.colours.border_style
+            };
+
+            let process_sort_block = if draw_border {
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(current_border_style)
+            } else if is_on_widget {
+                Block::default()
+                    .borders(*SIDE_BORDERS)
+                    .border_style(current_border_style)
+            } else {
+                Block::default().borders(Borders::NONE)
+            };
+
+            let margined_draw_loc = Layout::default()
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
+                .direction(Direction::Horizontal)
+                .split(draw_loc);
+
+            f.render_stateful_widget(
+                Table::new(["Sort By"].iter(), sort_options)
+                    .block(process_sort_block)
+                    .header_style(self.colours.table_header_style)
+                    .widths(&[Constraint::Percentage(100)])
+                    .header_gap(1),
+                margined_draw_loc[0],
+                column_state,
             );
         }
     }

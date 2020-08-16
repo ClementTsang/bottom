@@ -42,13 +42,14 @@ lazy_static! {
 }
 
 // Help text
-pub const HELP_CONTENTS_TEXT: [&str; 6] = [
+pub const HELP_CONTENTS_TEXT: [&str; 7] = [
     "Press the corresponding numbers to jump to the section, or scroll:",
     "1 - General",
     "2 - CPU widget",
     "3 - Process widget",
     "4 - Process search widget",
-    "5 - Battery widget",
+    "5 - Process sort widget",
+    "6 - Battery widget",
 ];
 
 pub const GENERAL_HELP_TEXT: [&str; 29] = [
@@ -88,7 +89,9 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll   Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-pub const PROCESS_HELP_TEXT: [&str; 9] = [
+// TODO [Help]: Search in help?
+// TODO [Help]: Move to using tables for easier formatting?
+pub const PROCESS_HELP_TEXT: [&str; 11] = [
     "3 - Process widget",
     "dd             Kill the selected process",
     "c              Sort by CPU usage, press again to reverse sorting order",
@@ -98,6 +101,8 @@ pub const PROCESS_HELP_TEXT: [&str; 9] = [
     "Tab            Group/un-group processes with the same name",
     "Ctrl-f, /      Open process search widget",
     "P              Toggle between showing the full path or just the process name",
+    "s, F6          Open process sort widget",
+    "I              Invert current sort",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 43] = [
@@ -146,8 +151,17 @@ pub const SEARCH_HELP_TEXT: [&str; 43] = [
     "TiB            ex: read > 1 tib",
 ];
 
+pub const SORT_HELP_TEXT: [&str; 6] = [
+    "5 - Sort widget",
+    "Down, 'j'      Scroll down in list",
+    "Up, 'k'        Scroll up in list",
+    "Mouse scroll   Scroll through sort widget",
+    "Esc            Close the sort widget",
+    "Enter          Sort by current selected column",
+];
+
 pub const BATTERY_HELP_TEXT: [&str; 3] = [
-    "5 - Battery widget",
+    "6 - Battery widget",
     "Left           Go to previous battery",
     "Right          Go to next battery",
 ];
@@ -159,9 +173,36 @@ lazy_static! {
         CPU_HELP_TEXT.to_vec(),
         PROCESS_HELP_TEXT.to_vec(),
         SEARCH_HELP_TEXT.to_vec(),
+        SORT_HELP_TEXT.to_vec(),
         BATTERY_HELP_TEXT.to_vec(),
     ];
 }
+
+// Default layout
+pub const DEFAULT_LAYOUT: &str = r##"
+[[row]]
+  ratio=30
+  [[row.child]]
+  type="cpu"
+[[row]]
+    ratio=40
+    [[row.child]]
+      ratio=4
+      type="mem"
+    [[row.child]]
+      ratio=3
+      [[row.child.child]]
+        type="temp"
+      [[row.child.child]]
+        type="disk"
+[[row]]
+  ratio=30
+  [[row.child]]
+    type="net"
+  [[row.child]]
+    type="proc"
+    default=true
+"##;
 
 // Config and flags
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";

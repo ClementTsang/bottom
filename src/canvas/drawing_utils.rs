@@ -85,7 +85,7 @@ pub fn get_search_start_position(
     }
 
     match cursor_direction {
-        app::CursorDirection::RIGHT => {
+        app::CursorDirection::Right => {
             if current_cursor_position < *cursor_bar + num_columns {
                 // If, using previous_scrolled_position, we can see the element
                 // (so within that and + num_rows) just reuse the current previously scrolled position
@@ -100,7 +100,7 @@ pub fn get_search_start_position(
                 0
             }
         }
-        app::CursorDirection::LEFT => {
+        app::CursorDirection::Left => {
             if current_cursor_position <= *cursor_bar {
                 // If it's past the first element, then show from that element downwards
                 *cursor_bar = current_cursor_position;
@@ -125,7 +125,7 @@ pub fn get_start_position(
     }
 
     match scroll_direction {
-        app::ScrollDirection::DOWN => {
+        app::ScrollDirection::Down => {
             if currently_selected_position < *scroll_position_bar + num_rows {
                 // If, using previous_scrolled_position, we can see the element
                 // (so within that and + num_rows) just reuse the current previously scrolled position
@@ -140,7 +140,7 @@ pub fn get_start_position(
                 0
             }
         }
-        app::ScrollDirection::UP => {
+        app::ScrollDirection::Up => {
             if currently_selected_position <= *scroll_position_bar {
                 // If it's past the first element, then show from that element downwards
                 *scroll_position_bar = currently_selected_position;

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [179](https://github.com/ClementTsang/bottom/pull/179): Show full command/process path as an option.
 
+- [183](https://github.com/ClementTsang/bottom/pull/183): Added sorting capabilities to any column.
+
 ### Changes
 
 - Added `WASD` as an alternative widget movement system.
@@ -24,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   but otherwise, it will default to the new location.
 
 ### Bug Fixes
+
+- [183](https://github.com/ClementTsang/bottom/pull/183): Fixed bug in basic mode where the battery widget was placed incorrectly.
 
 ## [0.4.5] - 2020-07-08
 

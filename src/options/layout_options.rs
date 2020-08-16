@@ -17,7 +17,7 @@ impl Row {
         default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
         left_legend: bool,
     ) -> Result<BottomRow> {
-        // In the future we want to also add percentages.
+        // TODO: In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
         let row_ratio = self.ratio.unwrap_or(1);
         let mut children = Vec::new();
@@ -53,7 +53,7 @@ impl Row {
 
                         children.push(match widget_type {
                             BottomWidgetType::Cpu => {
-                                let iter_old_id = *iter_id;
+                                let cpu_id = *iter_id;
                                 *iter_id += 1;
                                 BottomCol::builder()
                                     .col_width_ratio(width_ratio)
@@ -66,11 +66,15 @@ impl Row {
                                                     .widget_type(BottomWidgetType::CpuLegend)
                                                     .widget_id(*iter_id)
                                                     .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Right,
+                                                        1,
+                                                    )))
                                                     .build(),
                                                 BottomWidget::builder()
                                                     .width_ratio(17)
                                                     .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(iter_old_id)
+                                                    .widget_id(cpu_id)
                                                     .flex_grow(true)
                                                     .build(),
                                             ])
@@ -82,7 +86,7 @@ impl Row {
                                                 BottomWidget::builder()
                                                     .width_ratio(17)
                                                     .widget_type(BottomWidgetType::Cpu)
-                                                    .widget_id(iter_old_id)
+                                                    .widget_id(cpu_id)
                                                     .flex_grow(true)
                                                     .build(),
                                                 BottomWidget::builder()
@@ -90,6 +94,10 @@ impl Row {
                                                     .widget_type(BottomWidgetType::CpuLegend)
                                                     .widget_id(*iter_id)
                                                     .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Left,
+                                                        1,
+                                                    )))
                                                     .build(),
                                             ])
                                             .build()]
@@ -97,23 +105,39 @@ impl Row {
                                     .build()
                             }
                             BottomWidgetType::Proc => {
-                                let iter_old_id = *iter_id;
-                                *iter_id += 1;
+                                let proc_id = *iter_id;
+                                let proc_search_id = *iter_id + 1;
+                                *iter_id += 2;
                                 BottomCol::builder()
                                     .total_col_row_ratio(2)
                                     .col_width_ratio(width_ratio)
                                     .children(vec![
                                         BottomColRow::builder()
-                                            .children(vec![BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(iter_old_id)
-                                                .build()])
+                                            .children(vec![
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::ProcSort)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Right,
+                                                        2,
+                                                    )))
+                                                    .width_ratio(1)
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::Proc)
+                                                    .widget_id(proc_id)
+                                                    .width_ratio(2)
+                                                    .build(),
+                                            ])
+                                            .total_widget_ratio(3)
                                             .flex_grow(true)
                                             .build(),
                                         BottomColRow::builder()
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
-                                                .widget_id(*iter_id)
+                                                .widget_id(proc_search_id)
+                                                .parent_reflector(Some((WidgetDirection::Up, 1)))
                                                 .build()])
                                             .canvas_handle_height(true)
                                             .build(),
@@ -137,7 +161,7 @@ impl Row {
                         let mut total_col_row_ratio = 0;
                         let mut contains_proc = false;
 
-                        let mut col_row_children = Vec::new();
+                        let mut col_row_children: Vec<BottomColRow> = Vec::new();
 
                         for widget in child {
                             let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
@@ -165,7 +189,7 @@ impl Row {
 
                             match widget_type {
                                 BottomWidgetType::Cpu => {
-                                    let iter_old_id = *iter_id;
+                                    let cpu_id = *iter_id;
                                     *iter_id += 1;
                                     if left_legend {
                                         col_row_children.push(
@@ -178,11 +202,15 @@ impl Row {
                                                         .widget_type(BottomWidgetType::CpuLegend)
                                                         .widget_id(*iter_id)
                                                         .canvas_handle_width(true)
+                                                        .parent_reflector(Some((
+                                                            WidgetDirection::Right,
+                                                            1,
+                                                        )))
                                                         .build(),
                                                     BottomWidget::builder()
                                                         .width_ratio(17)
                                                         .widget_type(BottomWidgetType::Cpu)
-                                                        .widget_id(iter_old_id)
+                                                        .widget_id(cpu_id)
                                                         .flex_grow(true)
                                                         .build(),
                                                 ])
@@ -197,7 +225,7 @@ impl Row {
                                                     BottomWidget::builder()
                                                         .width_ratio(17)
                                                         .widget_type(BottomWidgetType::Cpu)
-                                                        .widget_id(iter_old_id)
+                                                        .widget_id(cpu_id)
                                                         .flex_grow(true)
                                                         .build(),
                                                     BottomWidget::builder()
@@ -205,6 +233,10 @@ impl Row {
                                                         .widget_type(BottomWidgetType::CpuLegend)
                                                         .widget_id(*iter_id)
                                                         .canvas_handle_width(true)
+                                                        .parent_reflector(Some((
+                                                            WidgetDirection::Left,
+                                                            1,
+                                                        )))
                                                         .build(),
                                                 ])
                                                 .build(),
@@ -213,15 +245,30 @@ impl Row {
                                 }
                                 BottomWidgetType::Proc => {
                                     contains_proc = true;
-                                    let iter_old_id = *iter_id;
-                                    *iter_id += 1;
+                                    let proc_id = *iter_id;
+                                    let proc_search_id = *iter_id + 1;
+                                    *iter_id += 2;
                                     col_row_children.push(
                                         BottomColRow::builder()
+                                            .children(vec![
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::ProcSort)
+                                                    .widget_id(*iter_id)
+                                                    .canvas_handle_width(true)
+                                                    .parent_reflector(Some((
+                                                        WidgetDirection::Right,
+                                                        2,
+                                                    )))
+                                                    .width_ratio(1)
+                                                    .build(),
+                                                BottomWidget::builder()
+                                                    .widget_type(BottomWidgetType::Proc)
+                                                    .widget_id(proc_id)
+                                                    .width_ratio(2)
+                                                    .build(),
+                                            ])
                                             .col_row_height_ratio(col_row_height_ratio)
-                                            .children(vec![BottomWidget::builder()
-                                                .widget_type(BottomWidgetType::Proc)
-                                                .widget_id(iter_old_id)
-                                                .build()])
+                                            .total_widget_ratio(3)
                                             .build(),
                                     );
                                     col_row_children.push(
@@ -229,7 +276,8 @@ impl Row {
                                             .col_row_height_ratio(col_row_height_ratio)
                                             .children(vec![BottomWidget::builder()
                                                 .widget_type(BottomWidgetType::ProcSearch)
-                                                .widget_id(*iter_id)
+                                                .widget_id(proc_search_id)
+                                                .parent_reflector(Some((WidgetDirection::Up, 1)))
                                                 .build()])
                                             .canvas_handle_height(true)
                                             .build(),

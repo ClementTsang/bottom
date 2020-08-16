@@ -144,20 +144,23 @@ impl App {
             }
 
             self.is_force_redraw = true;
-        } else if self.is_filtering_or_searching() {
+        } else {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(current_proc_state) = self
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if current_proc_state.is_search_enabled() {
+                        if current_proc_state.is_search_enabled() || current_proc_state.is_sort_open
+                        {
                             current_proc_state
                                 .process_search_state
                                 .search_state
                                 .is_enabled = false;
+                            current_proc_state.is_sort_open = false;
+                            self.is_force_redraw = true;
+                            return;
                         }
-                        self.is_force_redraw = true;
                     }
                 }
                 BottomWidgetType::ProcSearch => {
@@ -170,56 +173,38 @@ impl App {
                                 .process_search_state
                                 .search_state
                                 .is_enabled = false;
-                            self.move_widget_selection_up();
+                            self.move_widget_selection(&WidgetDirection::Up);
+                            return;
                         }
-                        self.is_force_redraw = true;
+                    }
+                }
+                BottomWidgetType::ProcSort => {
+                    if let Some(current_proc_state) = self
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id - 2)
+                    {
+                        if current_proc_state.is_sort_open {
+                            current_proc_state.columns.current_scroll_position =
+                                current_proc_state.columns.backup_prev_scroll_position;
+                            current_proc_state.is_sort_open = false;
+                            self.move_widget_selection(&WidgetDirection::Right);
+                            return;
+                        }
                     }
                 }
                 _ => {}
             }
-        } else if self.is_expanded {
-            self.is_expanded = false;
-            self.is_force_redraw = true;
+
+            if self.is_expanded {
+                self.is_expanded = false;
+                self.is_force_redraw = true;
+            }
         }
     }
 
     pub fn is_in_search_widget(&self) -> bool {
         match self.current_widget.widget_type {
             BottomWidgetType::ProcSearch => true,
-            _ => false,
-        }
-    }
-
-    fn is_filtering_or_searching(&self) -> bool {
-        match self.current_widget.widget_type {
-            BottomWidgetType::Proc => {
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get(&self.current_widget.widget_id)
-                {
-                    proc_widget_state
-                        .process_search_state
-                        .search_state
-                        .is_enabled
-                } else {
-                    false
-                }
-            }
-            BottomWidgetType::ProcSearch => {
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .widget_states
-                    .get(&(self.current_widget.widget_id - 1))
-                {
-                    proc_widget_state
-                        .process_search_state
-                        .search_state
-                        .is_enabled
-                } else {
-                    false
-                }
-            }
             _ => false,
         }
     }
@@ -254,6 +239,14 @@ impl App {
                     {
                         // Toggles process widget grouping state
                         proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
+
+                        proc_widget_state
+                            .columns
+                            .column_mapping
+                            .get_mut(&processes::ProcessSorting::State)
+                            .unwrap()
+                            .enabled = !(proc_widget_state.is_grouped);
+
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
                     }
                 }
@@ -287,9 +280,61 @@ impl App {
                         .process_search_state
                         .search_state
                         .is_enabled = true;
-                    self.move_widget_selection_down();
+                    self.move_widget_selection(&WidgetDirection::Down);
                 }
             }
+        }
+    }
+
+    pub fn toggle_sort(&mut self) {
+        match &self.current_widget.widget_type {
+            widget_type @ BottomWidgetType::Proc | widget_type @ BottomWidgetType::ProcSort => {
+                let widget_id = self.current_widget.widget_id
+                    - match &widget_type {
+                        BottomWidgetType::Proc => 0,
+                        BottomWidgetType::ProcSort => 2,
+                        _ => 0,
+                    };
+
+                if let Some(proc_widget_state) = self.proc_state.get_mut_widget_state(widget_id) {
+                    // Open up sorting dialog for that specific proc widget.
+                    // TODO: It might be a decent idea to allow sorting ALL?  I dunno.
+
+                    proc_widget_state.is_sort_open = !proc_widget_state.is_sort_open;
+                    if proc_widget_state.is_sort_open {
+                        // If it just opened, move left
+                        proc_widget_state
+                            .columns
+                            .set_to_sorted_index(&proc_widget_state.process_sorting_type);
+                        self.move_widget_selection(&WidgetDirection::Left);
+                    } else {
+                        // Otherwise, move right
+                        self.move_widget_selection(&WidgetDirection::Right);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn invert_sort(&mut self) {
+        match &self.current_widget.widget_type {
+            widget_type @ BottomWidgetType::Proc | widget_type @ BottomWidgetType::ProcSort => {
+                let widget_id = self.current_widget.widget_id
+                    - match &widget_type {
+                        BottomWidgetType::Proc => 0,
+                        BottomWidgetType::ProcSort => 2,
+                        _ => 0,
+                    };
+
+                if let Some(proc_widget_state) = self.proc_state.get_mut_widget_state(widget_id) {
+                    proc_widget_state.process_sorting_reverse =
+                        !proc_widget_state.process_sorting_reverse;
+
+                    self.proc_state.force_update = Some(widget_id);
+                }
+            }
+            _ => {}
         }
     }
 
@@ -361,6 +406,16 @@ impl App {
                 }
             } else {
                 self.delete_dialog_state.is_showing_dd = false;
+            }
+        } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
+            if let Some(proc_widget_state) = self
+                .proc_state
+                .widget_states
+                .get_mut(&(self.current_widget.widget_id - 2))
+            {
+                self.proc_state.force_update = Some(self.current_widget.widget_id - 2);
+                proc_widget_state.update_sorting_with_columns();
+                self.toggle_sort();
             }
         }
     }
@@ -457,7 +512,7 @@ impl App {
                     proc_widget_state
                         .process_search_state
                         .search_state
-                        .cursor_direction = CursorDirection::LEFT;
+                        .cursor_direction = CursorDirection::Left;
 
                     proc_widget_state.update_query();
                     self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
@@ -496,13 +551,18 @@ impl App {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        proc_widget_state.current_column_index =
-                            proc_widget_state.current_column_index.saturating_sub(1);
-                    }
+                    // if let Some(proc_widget_state) = self
+                    //     .proc_state
+                    //     .get_mut_widget_state(self.current_widget.widget_id)
+                    // {
+                    //     proc_widget_state.current_column_index =
+                    //         proc_widget_state.current_column_index.saturating_sub(1);
+
+                    //     debug!(
+                    //         "Current column index <: {}",
+                    //         proc_widget_state.current_column_index
+                    //     );
+                    // }
                 }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
@@ -527,7 +587,7 @@ impl App {
                                 proc_widget_state
                                     .process_search_state
                                     .search_state
-                                    .cursor_direction = CursorDirection::LEFT;
+                                    .cursor_direction = CursorDirection::Left;
                             }
                         }
                     }
@@ -555,14 +615,20 @@ impl App {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        if proc_widget_state.current_column_index < proc_widget_state.num_columns {
-                            proc_widget_state.current_column_index += 1;
-                        }
-                    }
+                    // if let Some(proc_widget_state) = self
+                    //     .proc_state
+                    //     .get_mut_widget_state(self.current_widget.widget_id)
+                    // {
+                    //     if proc_widget_state.current_column_index
+                    //         < proc_widget_state.columns.get_enabled_columns()
+                    //     {
+                    //         proc_widget_state.current_column_index += 1;
+                    //     }
+                    //     debug!(
+                    //         "Current column index >: {}",
+                    //         proc_widget_state.current_column_index
+                    //     );
+                    // }
                 }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
@@ -587,7 +653,7 @@ impl App {
                                 proc_widget_state
                                     .process_search_state
                                     .search_state
-                                    .cursor_direction = CursorDirection::RIGHT;
+                                    .cursor_direction = CursorDirection::Right;
                             }
                         }
                     }
@@ -643,7 +709,7 @@ impl App {
                         proc_widget_state
                             .process_search_state
                             .search_state
-                            .cursor_direction = CursorDirection::LEFT;
+                            .cursor_direction = CursorDirection::Left;
                     }
                 }
             }
@@ -689,7 +755,7 @@ impl App {
                         proc_widget_state
                             .process_search_state
                             .search_state
-                            .cursor_direction = CursorDirection::RIGHT;
+                            .cursor_direction = CursorDirection::Right;
                     }
                 }
             }
@@ -815,7 +881,7 @@ impl App {
                         proc_widget_state
                             .process_search_state
                             .search_state
-                            .cursor_direction = CursorDirection::RIGHT;
+                            .cursor_direction = CursorDirection::Right;
 
                         return;
                     }
@@ -827,11 +893,17 @@ impl App {
             // more obvious that we are separating dialog logic and normal logic IMO.
             // This is even more so as most logic already checks for dialog state.
             match caught_char {
-                '1' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[1]),
-                '2' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[2]),
-                '3' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[3]),
-                '4' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[4]),
-                '5' => self.help_scroll_to_or_max(self.help_dialog_state.index_shortcuts[5]),
+                '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                    let potential_index = caught_char.to_digit(10);
+                    if let Some(potential_index) = potential_index {
+                        if (potential_index as usize) < self.help_dialog_state.index_shortcuts.len()
+                        {
+                            self.help_scroll_to_or_max(
+                                self.help_dialog_state.index_shortcuts[potential_index as usize],
+                            );
+                        }
+                    }
+                }
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }
@@ -900,13 +972,13 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::CPU => {
+                            processes::ProcessSorting::CpuPercent => {
                                 proc_widget_state.process_sorting_reverse =
                                     !proc_widget_state.process_sorting_reverse
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::CPU;
+                                    processes::ProcessSorting::CpuPercent;
                                 proc_widget_state.process_sorting_reverse = true;
                             }
                         }
@@ -923,13 +995,13 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::MEM => {
+                            processes::ProcessSorting::MemPercent => {
                                 proc_widget_state.process_sorting_reverse =
                                     !proc_widget_state.process_sorting_reverse
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::MEM;
+                                    processes::ProcessSorting::MemPercent;
                                 proc_widget_state.process_sorting_reverse = true;
                             }
                         }
@@ -947,13 +1019,13 @@ impl App {
                         // Skip if grouped
                         if !proc_widget_state.is_grouped {
                             match proc_widget_state.process_sorting_type {
-                                processes::ProcessSorting::PID => {
+                                processes::ProcessSorting::Pid => {
                                     proc_widget_state.process_sorting_reverse =
                                         !proc_widget_state.process_sorting_reverse
                                 }
                                 _ => {
                                     proc_widget_state.process_sorting_type =
-                                        processes::ProcessSorting::PID;
+                                        processes::ProcessSorting::Pid;
                                     proc_widget_state.process_sorting_reverse = false;
                                 }
                             }
@@ -969,8 +1041,24 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        proc_widget_state.is_using_full_path =
-                            !proc_widget_state.is_using_full_path;
+                        proc_widget_state.is_using_command = !proc_widget_state.is_using_command;
+                        proc_widget_state
+                            .toggle_command_and_name(proc_widget_state.is_using_command);
+
+                        match &proc_widget_state.process_sorting_type {
+                            processes::ProcessSorting::Command
+                            | processes::ProcessSorting::ProcessName => {
+                                if proc_widget_state.is_using_command {
+                                    proc_widget_state.process_sorting_type =
+                                        processes::ProcessSorting::Command;
+                                } else {
+                                    proc_widget_state.process_sorting_type =
+                                        processes::ProcessSorting::ProcessName;
+                                }
+                            }
+                            _ => {}
+                        }
+
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
                     }
                 }
@@ -982,13 +1070,18 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::IDENTIFIER => {
+                            processes::ProcessSorting::ProcessName
+                            | processes::ProcessSorting::Command => {
                                 proc_widget_state.process_sorting_reverse =
                                     !proc_widget_state.process_sorting_reverse
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::IDENTIFIER;
+                                    if proc_widget_state.is_using_command {
+                                        processes::ProcessSorting::Command
+                                    } else {
+                                        processes::ProcessSorting::ProcessName
+                                    };
                                 proc_widget_state.process_sorting_reverse = false;
                             }
                         }
@@ -1001,15 +1094,17 @@ impl App {
                 self.help_dialog_state.is_showing_help = true;
                 self.is_force_redraw = true;
             }
-            'H' | 'A' => self.move_widget_selection_left(),
-            'L' | 'D' => self.move_widget_selection_right(),
-            'K' | 'W' => self.move_widget_selection_up(),
-            'J' | 'S' => self.move_widget_selection_down(),
+            'H' | 'A' => self.move_widget_selection(&WidgetDirection::Left),
+            'L' | 'D' => self.move_widget_selection(&WidgetDirection::Right),
+            'K' | 'W' => self.move_widget_selection(&WidgetDirection::Up),
+            'J' | 'S' => self.move_widget_selection(&WidgetDirection::Down),
             ' ' => self.on_space(),
             '+' => self.zoom_in(),
             '-' => self.zoom_out(),
             '=' => self.reset_zoom(),
             'e' => self.expand_widget(),
+            's' => self.toggle_sort(),
+            'I' => self.invert_sort(),
             _ => {}
         }
 
@@ -1055,55 +1150,46 @@ impl App {
         }
     }
 
-    pub fn move_widget_selection_left(&mut self) {
+    pub fn move_widget_selection(&mut self, direction: &WidgetDirection) {
+        /*
+            We follow these following steps:
+            1. Send a movement signal in `direction`.
+            2. Check if this new widget we've landed on is hidden.  If not, halt.
+            3. If it hidden, loop and either send:
+               - A signal equal to the current direction, if it is opposite of the reflection.
+               - Reflection direction.
+        */
+
         if !self.is_in_dialog() && !self.is_expanded {
-            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                if let Some(new_widget_id) = current_widget.left_neighbour {
-                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        match new_widget.widget_type {
-                            BottomWidgetType::Temp
-                            | BottomWidgetType::Proc
-                            | BottomWidgetType::ProcSearch
-                            | BottomWidgetType::Disk
-                            | BottomWidgetType::Battery
-                                if self.basic_table_widget_state.is_some() =>
-                            {
-                                if let Some(basic_table_widget_state) =
-                                    &mut self.basic_table_widget_state
-                                {
-                                    basic_table_widget_state.currently_displayed_widget_id =
-                                        new_widget_id;
-                                    basic_table_widget_state.currently_displayed_widget_type =
-                                        new_widget.widget_type.clone();
-                                }
-                                self.current_widget = new_widget.clone();
-                            }
-                            BottomWidgetType::CpuLegend => {
-                                if let Some(cpu_widget_state) =
-                                    self.cpu_state.widget_states.get(&(new_widget_id - 1))
-                                {
-                                    if cpu_widget_state.is_legend_hidden {
-                                        if let Some(next_new_widget_id) = new_widget.left_neighbour
-                                        {
-                                            if let Some(next_new_widget) =
-                                                self.widget_map.get(&next_new_widget_id)
-                                            {
-                                                self.current_widget = next_new_widget.clone();
-                                            }
-                                        }
-                                    } else {
-                                        self.current_widget = new_widget.clone();
-                                    }
-                                }
-                            }
-                            BottomWidgetType::ProcSearch => {
+            if let Some(new_widget_id) = &(match direction {
+                WidgetDirection::Left => self.current_widget.left_neighbour,
+                WidgetDirection::Right => self.current_widget.right_neighbour,
+                WidgetDirection::Up => self.current_widget.up_neighbour,
+                WidgetDirection::Down => self.current_widget.down_neighbour,
+            }) {
+                if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                    match &new_widget.widget_type {
+                        BottomWidgetType::Temp
+                        | BottomWidgetType::Proc
+                        | BottomWidgetType::ProcSearch
+                        | BottomWidgetType::ProcSort
+                        | BottomWidgetType::Disk
+                        | BottomWidgetType::Battery
+                            if self.basic_table_widget_state.is_some()
+                                && (*direction == WidgetDirection::Left
+                                    || *direction == WidgetDirection::Right) =>
+                        {
+                            // Gotta do this for the sort widget
+                            if let BottomWidgetType::ProcSort = new_widget.widget_type {
                                 if let Some(proc_widget_state) =
-                                    self.proc_state.widget_states.get(&(new_widget_id - 1))
+                                    self.proc_state.widget_states.get(&(new_widget_id - 2))
                                 {
-                                    if proc_widget_state.is_search_enabled() {
+                                    if proc_widget_state.is_sort_open {
                                         self.current_widget = new_widget.clone();
-                                    } else if let Some(next_new_widget_id) = new_widget.up_neighbour
-                                    {
+                                    } else if let Some(next_new_widget_id) = match direction {
+                                        WidgetDirection::Left => new_widget.left_neighbour,
+                                        _ => new_widget.right_neighbour,
+                                    } {
                                         if let Some(next_new_widget) =
                                             self.widget_map.get(&next_new_widget_id)
                                         {
@@ -1111,21 +1197,310 @@ impl App {
                                         }
                                     }
                                 }
+                            } else {
+                                self.current_widget = new_widget.clone();
                             }
-                            _ => self.current_widget = new_widget.clone(),
+
+                            if let Some(basic_table_widget_state) =
+                                &mut self.basic_table_widget_state
+                            {
+                                basic_table_widget_state.currently_displayed_widget_id =
+                                    self.current_widget.widget_id;
+                                basic_table_widget_state.currently_displayed_widget_type =
+                                    self.current_widget.widget_type.clone();
+                            }
                         }
+                        BottomWidgetType::BasicTables => {
+                            match &direction {
+                                WidgetDirection::Up => {
+                                    // Note this case would fail if it moved up into a hidden
+                                    // widget, but it's for basic so whatever, it's all hard-coded
+                                    // right now anyways.
+                                    if let Some(next_new_widget_id) = new_widget.up_neighbour {
+                                        if let Some(next_new_widget) =
+                                            self.widget_map.get(&next_new_widget_id)
+                                        {
+                                            self.current_widget = next_new_widget.clone();
+                                        }
+                                    }
+                                }
+                                WidgetDirection::Down => {
+                                    // This means we're in basic mode.  As such, then
+                                    // we want to move DOWN to the currently shown widget
+                                    if let Some(basic_table_widget_state) =
+                                        &self.basic_table_widget_state
+                                    {
+                                        if let Some(next_new_widget) = self.widget_map.get(
+                                            &basic_table_widget_state.currently_displayed_widget_id,
+                                        ) {
+                                            self.current_widget = next_new_widget.clone();
+                                        }
+                                    }
+                                }
+                                _ => self.current_widget = new_widget.clone(),
+                            }
+                        }
+                        _ if new_widget.parent_reflector.is_some() => {
+                            // It may be hidden...
+                            if let Some((parent_direction, offset)) = &new_widget.parent_reflector {
+                                if direction.is_opposite(parent_direction) {
+                                    // Keep going in the current direction if hidden...
+                                    let next_neighbour_id = match &direction {
+                                        WidgetDirection::Left => new_widget.left_neighbour,
+                                        WidgetDirection::Right => new_widget.right_neighbour,
+                                        WidgetDirection::Up => new_widget.up_neighbour,
+                                        WidgetDirection::Down => new_widget.down_neighbour,
+                                    }
+                                    .unwrap_or(*new_widget_id);
+                                    match &new_widget.widget_type {
+                                        BottomWidgetType::CpuLegend => {
+                                            if let Some(cpu_widget_state) = self
+                                                .cpu_state
+                                                .widget_states
+                                                .get(&(new_widget_id - *offset))
+                                            {
+                                                if cpu_widget_state.is_legend_hidden {
+                                                    if let Some(next_neighbour_widget) =
+                                                        self.widget_map.get(&next_neighbour_id)
+                                                    {
+                                                        self.current_widget =
+                                                            next_neighbour_widget.clone();
+                                                    }
+                                                } else {
+                                                    self.current_widget = new_widget.clone();
+                                                }
+                                            }
+                                        }
+                                        BottomWidgetType::ProcSearch
+                                        | BottomWidgetType::ProcSort => {
+                                            if let Some(proc_widget_state) = self
+                                                .proc_state
+                                                .widget_states
+                                                .get(&(new_widget_id - *offset))
+                                            {
+                                                match &new_widget.widget_type {
+                                                    BottomWidgetType::ProcSearch => {
+                                                        if !proc_widget_state.is_search_enabled() {
+                                                            if let Some(next_neighbour_widget) =
+                                                                self.widget_map
+                                                                    .get(&next_neighbour_id)
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
+                                                            }
+                                                        } else {
+                                                            self.current_widget =
+                                                                new_widget.clone();
+                                                        }
+                                                    }
+                                                    BottomWidgetType::ProcSort => {
+                                                        if !proc_widget_state.is_sort_open {
+                                                            if let Some(next_neighbour_widget) =
+                                                                self.widget_map
+                                                                    .get(&next_neighbour_id)
+                                                            {
+                                                                self.current_widget =
+                                                                    next_neighbour_widget.clone();
+                                                            }
+                                                        } else {
+                                                            self.current_widget =
+                                                                new_widget.clone();
+                                                        }
+                                                    }
+                                                    _ => {
+                                                        self.current_widget = new_widget.clone();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        _ => {
+                                            self.current_widget = new_widget.clone();
+                                        }
+                                    }
+                                } else {
+                                    // Reflect
+                                    match &new_widget.widget_type {
+                                        BottomWidgetType::CpuLegend => {
+                                            if let Some(cpu_widget_state) = self
+                                                .cpu_state
+                                                .widget_states
+                                                .get(&(new_widget_id - *offset))
+                                            {
+                                                if cpu_widget_state.is_legend_hidden {
+                                                    if let Some(parent_cpu_widget) = self
+                                                        .widget_map
+                                                        .get(&(new_widget_id - *offset))
+                                                    {
+                                                        self.current_widget =
+                                                            parent_cpu_widget.clone();
+                                                    }
+                                                } else {
+                                                    self.current_widget = new_widget.clone();
+                                                }
+                                            }
+                                        }
+                                        BottomWidgetType::ProcSearch
+                                        | BottomWidgetType::ProcSort => {
+                                            if let Some(proc_widget_state) = self
+                                                .proc_state
+                                                .widget_states
+                                                .get(&(new_widget_id - *offset))
+                                            {
+                                                match &new_widget.widget_type {
+                                                    BottomWidgetType::ProcSearch => {
+                                                        if !proc_widget_state.is_search_enabled() {
+                                                            if let Some(parent_proc_widget) = self
+                                                                .widget_map
+                                                                .get(&(new_widget_id - *offset))
+                                                            {
+                                                                self.current_widget =
+                                                                    parent_proc_widget.clone();
+                                                            }
+                                                        } else {
+                                                            self.current_widget =
+                                                                new_widget.clone();
+                                                        }
+                                                    }
+                                                    BottomWidgetType::ProcSort => {
+                                                        if !proc_widget_state.is_sort_open {
+                                                            if let Some(parent_proc_widget) = self
+                                                                .widget_map
+                                                                .get(&(new_widget_id - *offset))
+                                                            {
+                                                                self.current_widget =
+                                                                    parent_proc_widget.clone();
+                                                            }
+                                                        } else {
+                                                            self.current_widget =
+                                                                new_widget.clone();
+                                                        }
+                                                    }
+                                                    _ => {
+                                                        self.current_widget = new_widget.clone();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        _ => {
+                                            self.current_widget = new_widget.clone();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        _ => {
+                            // Cannot be hidden, does not special treatment.
+                            self.current_widget = new_widget.clone();
+                        }
+                    }
+
+                    let mut reflection_dir: Option<WidgetDirection> = None;
+                    if let Some((parent_direction, offset)) = &self.current_widget.parent_reflector
+                    {
+                        match &self.current_widget.widget_type {
+                            BottomWidgetType::CpuLegend => {
+                                if let Some(cpu_widget_state) = self
+                                    .cpu_state
+                                    .widget_states
+                                    .get(&(self.current_widget.widget_id - *offset))
+                                {
+                                    if cpu_widget_state.is_legend_hidden {
+                                        reflection_dir = Some(parent_direction.clone());
+                                    }
+                                }
+                            }
+                            BottomWidgetType::ProcSearch | BottomWidgetType::ProcSort => {
+                                if let Some(proc_widget_state) = self
+                                    .proc_state
+                                    .widget_states
+                                    .get(&(self.current_widget.widget_id - *offset))
+                                {
+                                    match &self.current_widget.widget_type {
+                                        BottomWidgetType::ProcSearch => {
+                                            if !proc_widget_state.is_search_enabled() {
+                                                reflection_dir = Some(parent_direction.clone());
+                                            }
+                                        }
+                                        BottomWidgetType::ProcSort => {
+                                            if !proc_widget_state.is_sort_open {
+                                                reflection_dir = Some(parent_direction.clone());
+                                            }
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    if let Some(ref_dir) = &reflection_dir {
+                        self.move_widget_selection(ref_dir);
                     }
                 }
             }
-        } else if self.is_expanded {
-            self.handle_left_expanded_cpu_movement();
+        } else {
+            match direction {
+                WidgetDirection::Left => self.handle_left_expanded_movement(),
+                WidgetDirection::Right => self.handle_right_expanded_movement(),
+                WidgetDirection::Up => {
+                    if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+                        if let Some(current_widget) =
+                            self.widget_map.get(&self.current_widget.widget_id)
+                        {
+                            if let Some(new_widget_id) = current_widget.up_neighbour {
+                                if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                                    self.current_widget = new_widget.clone();
+                                }
+                            }
+                        }
+                    }
+                }
+                WidgetDirection::Down => match &self.current_widget.widget_type {
+                    proc_type @ BottomWidgetType::Proc | proc_type @ BottomWidgetType::ProcSort => {
+                        let widget_id = self.current_widget.widget_id
+                            - match proc_type {
+                                BottomWidgetType::ProcSort => 2,
+                                _ => 0,
+                            };
+                        if let Some(current_widget) = self.widget_map.get(&widget_id) {
+                            if let Some(new_widget_id) = current_widget.down_neighbour {
+                                if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                                    if let Some(proc_widget_state) =
+                                        self.proc_state.get_widget_state(widget_id)
+                                    {
+                                        if proc_widget_state.is_search_enabled() {
+                                            self.current_widget = new_widget.clone();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                },
+            }
         }
 
         self.reset_multi_tap_keys();
     }
 
-    fn handle_left_expanded_cpu_movement(&mut self) {
-        if self.app_config_fields.left_legend {
+    fn handle_left_expanded_movement(&mut self) {
+        if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            if let Some(new_widget_id) = self.current_widget.left_neighbour {
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get(&self.current_widget.widget_id)
+                {
+                    if proc_widget_state.is_sort_open {
+                        if let Some(proc_sort_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = proc_sort_widget.clone(); // TODO: Could I remove this clone w/ static references?
+                        }
+                    }
+                }
+            }
+        } else if self.app_config_fields.left_legend {
             if let BottomWidgetType::Cpu = self.current_widget.widget_type {
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                     if let Some(cpu_widget_state) = self
@@ -1154,80 +1529,14 @@ impl App {
         }
     }
 
-    pub fn move_widget_selection_right(&mut self) {
-        if !self.is_in_dialog() && !self.is_expanded {
-            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                if let Some(new_widget_id) = current_widget.right_neighbour {
-                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        match new_widget.widget_type {
-                            BottomWidgetType::Temp
-                            | BottomWidgetType::Proc
-                            | BottomWidgetType::ProcSearch
-                            | BottomWidgetType::Disk
-                            | BottomWidgetType::Battery
-                                if self.basic_table_widget_state.is_some() =>
-                            {
-                                if let Some(basic_table_widget_state) =
-                                    &mut self.basic_table_widget_state
-                                {
-                                    basic_table_widget_state.currently_displayed_widget_id =
-                                        new_widget_id;
-                                    basic_table_widget_state.currently_displayed_widget_type =
-                                        new_widget.widget_type.clone();
-                                }
-                                self.current_widget = new_widget.clone();
-                            }
-                            BottomWidgetType::CpuLegend => {
-                                if let Some(cpu_widget_state) =
-                                    self.cpu_state.widget_states.get(&(new_widget_id - 1))
-                                {
-                                    if cpu_widget_state.is_legend_hidden {
-                                        if let Some(next_new_widget_id) = new_widget.right_neighbour
-                                        {
-                                            if let Some(next_new_widget) =
-                                                self.widget_map.get(&next_new_widget_id)
-                                            {
-                                                self.current_widget = next_new_widget.clone();
-                                            }
-                                        }
-                                    } else {
-                                        self.current_widget = new_widget.clone();
-                                    }
-                                }
-                            }
-                            BottomWidgetType::ProcSearch => {
-                                if let Some(proc_widget_state) =
-                                    self.proc_state.widget_states.get(&(new_widget_id - 1))
-                                {
-                                    if proc_widget_state.is_search_enabled() {
-                                        self.current_widget = new_widget.clone();
-                                    } else if let Some(next_new_widget_id) = new_widget.up_neighbour
-                                    {
-                                        if let Some(next_new_widget) =
-                                            self.widget_map.get(&next_new_widget_id)
-                                        {
-                                            self.current_widget = next_new_widget.clone();
-                                        }
-                                    }
-                                }
-                            }
-
-                            _ => {
-                                self.current_widget = new_widget.clone();
-                            }
-                        }
-                    }
+    fn handle_right_expanded_movement(&mut self) {
+        if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
+            if let Some(new_widget_id) = self.current_widget.right_neighbour {
+                if let Some(proc_sort_widget) = self.widget_map.get(&new_widget_id) {
+                    self.current_widget = proc_sort_widget.clone();
                 }
             }
-        } else if self.is_expanded {
-            self.handle_right_expanded_cpu_movement();
-        }
-
-        self.reset_multi_tap_keys();
-    }
-
-    fn handle_right_expanded_cpu_movement(&mut self) {
-        if self.app_config_fields.left_legend {
+        } else if self.app_config_fields.left_legend {
             if let BottomWidgetType::CpuLegend = self.current_widget.widget_type {
                 if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
                     if let Some(new_widget_id) = current_widget.right_neighbour {
@@ -1256,154 +1565,6 @@ impl App {
         }
     }
 
-    pub fn move_widget_selection_up(&mut self) {
-        if !self.is_in_dialog() && !self.is_expanded {
-            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                if let Some(new_widget_id) = current_widget.up_neighbour {
-                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        match new_widget.widget_type {
-                            BottomWidgetType::CpuLegend => {
-                                if let Some(cpu_widget_state) =
-                                    self.cpu_state.widget_states.get(&(new_widget_id - 1))
-                                {
-                                    if cpu_widget_state.is_legend_hidden {
-                                        if let Some(next_new_widget) =
-                                            self.widget_map.get(&(new_widget_id - 1))
-                                        {
-                                            self.current_widget = next_new_widget.clone();
-                                        }
-                                    } else {
-                                        self.current_widget = new_widget.clone();
-                                    }
-                                }
-                            }
-                            BottomWidgetType::ProcSearch => {
-                                if let Some(proc_widget_state) =
-                                    self.proc_state.widget_states.get(&(new_widget_id - 1))
-                                {
-                                    if proc_widget_state.is_search_enabled() {
-                                        self.current_widget = new_widget.clone();
-                                    } else if let Some(next_new_widget_id) = new_widget.up_neighbour
-                                    {
-                                        if let Some(next_new_widget) =
-                                            self.widget_map.get(&next_new_widget_id)
-                                        {
-                                            self.current_widget = next_new_widget.clone();
-                                        }
-                                    }
-                                }
-                            }
-                            BottomWidgetType::BasicTables => {
-                                if let Some(next_new_widget_id) = new_widget.up_neighbour {
-                                    if let Some(next_new_widget) =
-                                        self.widget_map.get(&next_new_widget_id)
-                                    {
-                                        self.current_widget = next_new_widget.clone();
-                                    }
-                                }
-                            }
-                            _ => {
-                                self.current_widget = new_widget.clone();
-                            }
-                        }
-                    }
-                }
-            }
-        } else if self.is_expanded {
-            if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
-                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(new_widget_id) = current_widget.up_neighbour {
-                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                            self.current_widget = new_widget.clone();
-                        }
-                    }
-                }
-            }
-        }
-
-        self.reset_multi_tap_keys();
-    }
-
-    pub fn move_widget_selection_down(&mut self) {
-        if !self.is_in_dialog() && !self.is_expanded {
-            if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                if let Some(new_widget_id) = current_widget.down_neighbour {
-                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                        match new_widget.widget_type {
-                            BottomWidgetType::CpuLegend => {
-                                if let Some(cpu_widget_state) =
-                                    self.cpu_state.widget_states.get(&(new_widget_id - 1))
-                                {
-                                    if cpu_widget_state.is_legend_hidden {
-                                        if let Some(next_new_widget) =
-                                            self.widget_map.get(&(new_widget_id - 1))
-                                        {
-                                            self.current_widget = next_new_widget.clone();
-                                        }
-                                    } else {
-                                        self.current_widget = new_widget.clone();
-                                    }
-                                }
-                            }
-                            BottomWidgetType::ProcSearch => {
-                                if let Some(proc_widget_state) =
-                                    self.proc_state.widget_states.get(&(new_widget_id - 1))
-                                {
-                                    if proc_widget_state.is_search_enabled() {
-                                        self.current_widget = new_widget.clone();
-                                    } else if let Some(next_new_widget_id) =
-                                        new_widget.down_neighbour
-                                    {
-                                        if let Some(next_new_widget) =
-                                            self.widget_map.get(&next_new_widget_id)
-                                        {
-                                            self.current_widget = next_new_widget.clone();
-                                        }
-                                    }
-                                }
-                            }
-                            BottomWidgetType::BasicTables => {
-                                // This means we're in basic mode.  As such, then
-                                // we want to move DOWN to the currently shown widget
-                                if let Some(basic_table_widget_state) =
-                                    &self.basic_table_widget_state
-                                {
-                                    if let Some(next_new_widget) = self.widget_map.get(
-                                        &basic_table_widget_state.currently_displayed_widget_id,
-                                    ) {
-                                        self.current_widget = next_new_widget.clone();
-                                    }
-                                }
-                            }
-                            _ => {
-                                self.current_widget = new_widget.clone();
-                            }
-                        }
-                    }
-                }
-            }
-        } else if self.is_expanded {
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                if let Some(current_widget) = self.widget_map.get(&self.current_widget.widget_id) {
-                    if let Some(new_widget_id) = current_widget.down_neighbour {
-                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                            if let Some(proc_widget_state) = self
-                                .proc_state
-                                .get_widget_state(self.current_widget.widget_id)
-                            {
-                                if proc_widget_state.is_search_enabled() {
-                                    self.current_widget = new_widget.clone();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        self.reset_multi_tap_keys();
-    }
-
     pub fn skip_to_first(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
@@ -1413,7 +1574,16 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         proc_widget_state.scroll_state.current_scroll_position = 0;
-                        proc_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
+                    }
+                }
+                BottomWidgetType::ProcSort => {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id - 2)
+                    {
+                        proc_widget_state.columns.current_scroll_position = 0;
+                        proc_widget_state.columns.scroll_direction = ScrollDirection::Up;
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1422,7 +1592,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         temp_widget_state.scroll_state.current_scroll_position = 0;
-                        temp_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -1431,7 +1601,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         disk_widget_state.scroll_state.current_scroll_position = 0;
-                        disk_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -1440,7 +1610,7 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         cpu_widget_state.scroll_state.current_scroll_position = 0;
-                        cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                        cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
                     }
                 }
 
@@ -1469,9 +1639,19 @@ impl App {
                                 proc_widget_state.scroll_state.current_scroll_position =
                                     finalized_process_data.len() - 1;
                                 proc_widget_state.scroll_state.scroll_direction =
-                                    ScrollDirection::DOWN;
+                                    ScrollDirection::Down;
                             }
                         }
+                    }
+                }
+                BottomWidgetType::ProcSort => {
+                    if let Some(proc_widget_state) = self
+                        .proc_state
+                        .get_mut_widget_state(self.current_widget.widget_id - 2)
+                    {
+                        proc_widget_state.columns.current_scroll_position =
+                            proc_widget_state.columns.get_enabled_columns_len() - 1;
+                        proc_widget_state.columns.scroll_direction = ScrollDirection::Down;
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -1482,7 +1662,7 @@ impl App {
                         if !self.canvas_data.temp_sensor_data.is_empty() {
                             temp_widget_state.scroll_state.current_scroll_position =
                                 self.canvas_data.temp_sensor_data.len() - 1;
-                            temp_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                            temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
                 }
@@ -1494,7 +1674,7 @@ impl App {
                         if !self.canvas_data.disk_data.is_empty() {
                             disk_widget_state.scroll_state.current_scroll_position =
                                 self.canvas_data.disk_data.len() - 1;
-                            disk_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                            disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
                 }
@@ -1506,7 +1686,7 @@ impl App {
                         let cap = self.canvas_data.cpu_data.len();
                         if cap > 0 {
                             cpu_widget_state.scroll_state.current_scroll_position = cap - 1;
-                            cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                            cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
                 }
@@ -1526,6 +1706,7 @@ impl App {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => self.change_process_position(-1),
+                BottomWidgetType::ProcSort => self.change_process_sort_position(-1),
                 BottomWidgetType::Temp => self.change_temp_position(-1),
                 BottomWidgetType::Disk => self.change_disk_position(-1),
                 BottomWidgetType::CpuLegend => self.change_cpu_table_position(-1),
@@ -1538,10 +1719,34 @@ impl App {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => self.change_process_position(1),
+                BottomWidgetType::ProcSort => self.change_process_sort_position(1),
                 BottomWidgetType::Temp => self.change_temp_position(1),
                 BottomWidgetType::Disk => self.change_disk_position(1),
                 BottomWidgetType::CpuLegend => self.change_cpu_table_position(1),
                 _ => {}
+            }
+        }
+    }
+
+    fn change_process_sort_position(&mut self, num_to_change_by: i64) {
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .get_mut_widget_state(self.current_widget.widget_id - 2)
+        {
+            let current_posn = proc_widget_state.columns.current_scroll_position;
+            let num_columns = proc_widget_state.columns.get_enabled_columns_len();
+
+            if current_posn as i64 + num_to_change_by >= 0
+                && current_posn as i64 + num_to_change_by < num_columns as i64
+            {
+                proc_widget_state.columns.current_scroll_position =
+                    (current_posn as i64 + num_to_change_by) as usize;
+            }
+
+            if num_to_change_by < 0 {
+                proc_widget_state.columns.scroll_direction = ScrollDirection::Up;
+            } else {
+                proc_widget_state.columns.scroll_direction = ScrollDirection::Down;
             }
         }
     }
@@ -1563,9 +1768,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }
@@ -1591,9 +1796,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }
@@ -1615,9 +1820,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }
@@ -1638,9 +1843,9 @@ impl App {
             }
 
             if num_to_change_by < 0 {
-                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::UP;
+                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
-                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::DOWN;
+                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
         }
     }

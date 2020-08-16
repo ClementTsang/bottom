@@ -180,8 +180,7 @@ pub fn build_app(
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
                         }
-                        Empty | BasicCpu | BasicMem | BasicNet | BasicTables | ProcSearch
-                        | CpuLegend => {}
+                        _ => {}
                     }
                 }
             }
@@ -262,7 +261,17 @@ pub fn get_widget_layout(
     let bottom_layout = if get_use_basic_mode(matches, config) {
         default_widget_id = DEFAULT_WIDGET_ID;
         BottomLayout::init_basic_default(get_use_battery(matches, config))
-    } else if let Some(rows) = &config.row {
+    } else {
+        let ref_row: Vec<Row>; // Required to handle reference
+        let rows = match &config.row {
+            Some(r) => r,
+            None => {
+                // This cannot (like it really shouldn't) fail!
+                ref_row = toml::from_str::<Config>(DEFAULT_LAYOUT)?.row.unwrap();
+                &ref_row
+            }
+        };
+
         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
         let mut total_height_ratio = 0;
 
@@ -286,15 +295,14 @@ pub fn get_widget_layout(
         // Confirm that we have at least ONE widget - if not, error out!
         if iter_id > 0 {
             ret_bottom_layout.get_movement_mappings();
+            // debug!("Bottom layout: {:#?}", ret_bottom_layout);
+
             ret_bottom_layout
         } else {
             return Err(error::BottomError::ConfigError(
                 "invalid layout config: please have at least one widget.".to_string(),
             ));
         }
-    } else {
-        default_widget_id = DEFAULT_WIDGET_ID;
-        BottomLayout::init_default(left_legend, get_use_battery(matches, config))
     };
 
     Ok((bottom_layout, default_widget_id))

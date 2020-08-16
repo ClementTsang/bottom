@@ -12,17 +12,48 @@ use std::{
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
-#[derive(Clone)]
+// TODO: Add value so we know if it's sorted ascending or descending by default?
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ProcessSorting {
-    CPU,
-    MEM,
-    PID,
-    IDENTIFIER,
+    CpuPercent,
+    Mem,
+    MemPercent,
+    Pid,
+    ProcessName,
+    Command,
+    ReadPerSecond,
+    WritePerSecond,
+    TotalRead,
+    TotalWrite,
+    State,
+}
+
+impl std::fmt::Display for ProcessSorting {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use ProcessSorting::*;
+        write!(
+            f,
+            "{}",
+            match &self {
+                CpuPercent => "CPU%",
+                MemPercent => "Mem%",
+                Mem => "Mem",
+                ReadPerSecond => "R/s",
+                WritePerSecond => "W/s",
+                TotalRead => "Read",
+                TotalWrite => "Write",
+                State => "State",
+                ProcessName => "Name",
+                Command => "Command",
+                Pid => "PID",
+            }
+        )
+    }
 }
 
 impl Default for ProcessSorting {
     fn default() -> Self {
-        ProcessSorting::CPU
+        ProcessSorting::CpuPercent
     }
 }
 
