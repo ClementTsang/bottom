@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
-- [179](https://github.com/ClementTsang/bottom/pull/179): Show full command/process path as an option.
+- [#179](https://github.com/ClementTsang/bottom/pull/179): Show full command/process path as an option.
 
-- [183](https://github.com/ClementTsang/bottom/pull/183): Added sorting capabilities to any column.
+- [#183](https://github.com/ClementTsang/bottom/pull/183): Added sorting capabilities to any column.
 
 ### Changes
 
@@ -27,11 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
-- [183](https://github.com/ClementTsang/bottom/pull/183): Fixed bug in basic mode where the battery widget was placed incorrectly.
+- [#183](https://github.com/ClementTsang/bottom/pull/183): Fixed bug in basic mode where the battery widget was placed incorrectly.
 
-- [186](https://github.com/ClementTsang/bottom/pull/186): Fixed a bug caused by hitting `Enter` when a process kill fails, breaking future process kills.
+- [#186](https://github.com/ClementTsang/bottom/pull/186): Fixed a bug caused by hitting `Enter` when a process kill fails, breaking future process kills.
 
-- [](): Fix bug caused by incorrectly reading the `/proc/{pid}/stats` file.
+- [#187](https://github.com/ClementTsang/bottom/pull/187): Fix bug caused by incorrectly reading the `/proc/{pid}/stats` file.
 
 ## [0.4.5] - 2020-07-08
 
