@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [183](https://github.com/ClementTsang/bottom/pull/183): Fixed bug in basic mode where the battery widget was placed incorrectly.
 
-- [](): Fixed a bug caused by hitting `Enter` when a process kill fails, breaking future process kills.
+- [186](https://github.com/ClementTsang/bottom/pull/186): Fixed a bug caused by hitting `Enter` when a process kill fails, breaking future process kills.
 
 ## [0.4.5] - 2020-07-08
 
