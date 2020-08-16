@@ -8,8 +8,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Rect},
     terminal::Frame,
-    text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
+    widgets::{Block, Borders, Paragraph, Row, Table, Tabs, Text},
 };
 
 pub trait BatteryDisplayWidget {
@@ -34,25 +33,45 @@ impl BatteryDisplayWidget for Painter {
                 self.colours.border_style
             };
 
+            // let title = if app_state.is_expanded {
+            //     const TITLE_BASE: &str = " Battery ── Esc to go back ";
+            //     Span::styled(
+            //         format!(
+            //             " Battery ─{}─ Esc to go back ",
+            //             "─".repeat(
+            //                 usize::from(draw_loc.width)
+            //                     .saturating_sub(TITLE_BASE.chars().count() + 2)
+            //             )
+            //         ),
+            //         border_and_title_style,
+            //     )
+            // } else {
+            //     Span::styled(" Battery ".to_string(), self.colours.widget_title_style)
+            // };
+
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
-                Span::styled(
-                    format!(
-                        " Battery ─{}─ Esc to go back ",
-                        "─".repeat(
-                            usize::from(draw_loc.width)
-                                .saturating_sub(TITLE_BASE.chars().count() + 2)
-                        )
-                    ),
-                    border_and_title_style,
+
+                format!(
+                    " Battery ─{}─ Esc to go back ",
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                    )
                 )
             } else {
-                Span::styled(" Battery ".to_string(), self.colours.widget_title_style)
+                " Battery ".to_string()
+            };
+
+            let title_style = if app_state.is_expanded {
+                border_and_title_style
+            } else {
+                self.colours.widget_title_style
             };
 
             let battery_block = if draw_border {
                 Block::default()
-                    .title(title)
+                    .title(&title)
+                    .title_style(title_style)
                     .borders(Borders::ALL)
                     .border_style(border_and_title_style)
             } else if is_on_widget {
@@ -64,19 +83,29 @@ impl BatteryDisplayWidget for Painter {
             };
 
             f.render_widget(
-                Tabs::new(
-                    (app_state
-                        .canvas_data
-                        .battery_data
-                        .iter()
-                        .map(|battery| Spans::from(battery.battery_name.clone())))
-                    .collect::<Vec<_>>(),
-                )
-                .block(battery_block.clone())
-                .divider(tui::symbols::line::VERTICAL)
-                .style(self.colours.text_style)
-                .highlight_style(self.colours.currently_selected_text_style)
-                .select(battery_widget_state.currently_selected_battery_index),
+                // Tabs::new(
+                //     (app_state
+                //         .canvas_data
+                //         .battery_data
+                //         .iter()
+                //         .map(|battery| Spans::from(battery.battery_name.clone())))
+                //     .collect::<Vec<_>>(),
+                // )
+                Tabs::default()
+                    .titles(
+                        app_state
+                            .canvas_data
+                            .battery_data
+                            .iter()
+                            .map(|battery| &battery.battery_name)
+                            .collect::<Vec<_>>()
+                            .as_ref(),
+                    )
+                    .block(battery_block)
+                    .divider(tui::symbols::line::VERTICAL)
+                    .style(self.colours.text_style)
+                    .highlight_style(self.colours.currently_selected_text_style)
+                    .select(battery_widget_state.currently_selected_battery_index),
                 draw_loc,
             );
 
@@ -134,17 +163,20 @@ impl BatteryDisplayWidget for Painter {
                 // Draw
                 f.render_widget(
                     Table::new([""].iter(), battery_rows)
-                        .block(battery_block.clone())
+                        .block(battery_block)
                         .header_style(self.colours.table_header_style)
                         .widths([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref()),
                     draw_loc,
                 );
             } else {
                 f.render_widget(
-                    Paragraph::new(Spans::from(Span::styled(
-                        "No data found for this battery",
-                        self.colours.text_style,
-                    )))
+                    Paragraph::new(
+                        [Text::styled(
+                            "No data found for this battery",
+                            self.colours.text_style,
+                        )]
+                        .iter(),
+                    )
                     .block(battery_block),
                     draw_loc,
                 );

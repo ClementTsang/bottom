@@ -4,8 +4,7 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
     terminal::Frame,
-    text::Span,
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, Borders, Paragraph},
 };
 
 use crate::{app::App, canvas::Painter, constants};
@@ -22,14 +21,19 @@ impl HelpDialog for Painter {
     fn draw_help_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
-        let help_title = Span::styled(
-            format!(
-                " Help ─{}─ Esc to close ",
-                "─".repeat(
-                    usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2)
-                )
-            ),
-            self.colours.border_style,
+        // let help_title = Text::styled(
+        //     format!(
+        //         " Help ─{}─ Esc to close ",
+        //         "─".repeat(
+        //             usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2)
+        //         )
+        //     ),
+        //     self.colours.border_style,
+        // );
+
+        let help_title = format!(
+            " Help ─{}─ Esc to close ",
+            "─".repeat(usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2))
         );
 
         if app_state.is_force_redraw {
@@ -95,24 +99,24 @@ impl HelpDialog for Painter {
         }
 
         f.render_widget(
-            Paragraph::new(self.styled_help_text.clone())
+            Paragraph::new(self.styled_help_text.iter())
                 .block(
                     Block::default()
-                        .title(help_title)
+                        .title(&help_title)
+                        .title_style(self.colours.border_style)
                         .style(self.colours.border_style)
                         .borders(Borders::ALL)
                         .border_style(self.colours.border_style),
                 )
                 .style(self.colours.text_style)
                 .alignment(Alignment::Left)
-                .wrap(Wrap { trim: true })
-                .scroll((
+                .wrap(true)
+                .scroll(
                     app_state
                         .help_dialog_state
                         .scroll_state
                         .current_scroll_index,
-                    0,
-                )),
+                ),
             draw_loc,
         );
     }

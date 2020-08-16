@@ -8,8 +8,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans},
-    widgets::{Block, Paragraph},
+    widgets::{Block, Paragraph, Text},
 };
 
 pub trait MemBasicWidget {
@@ -66,13 +65,13 @@ impl MemBasicWidget for Painter {
             swap_use_percentage.round(),
         );
 
-        let mem_text = vec![
-            Spans::from(Span::styled(mem_label, self.colours.ram_style)),
-            Spans::from(Span::styled(swap_label, self.colours.swap_style)),
+        let mem_text = [
+            Text::styled(mem_label, self.colours.ram_style),
+            Text::styled(swap_label, self.colours.swap_style),
         ];
 
         f.render_widget(
-            Paragraph::new(mem_text).block(Block::default()),
+            Paragraph::new(mem_text.iter()).block(Block::default()),
             margined_loc[0],
         );
     }
