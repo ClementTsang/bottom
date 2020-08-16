@@ -129,6 +129,7 @@ impl CpuGraphWidget for Painter {
                         .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
                         .labels(&display_time_labels)
+                        .labels_style(self.colours.graph_style)
                 } else {
                     cpu_widget_state.autohide_timer = None;
                     Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
