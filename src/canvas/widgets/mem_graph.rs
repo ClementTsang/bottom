@@ -5,7 +5,6 @@ use tui::{
     layout::{Constraint, Rect},
     symbols::Marker,
     terminal::Frame,
-    text::Span,
     widgets::{Axis, Block, Borders, Chart, Dataset},
 };
 
@@ -23,12 +22,9 @@ impl MemGraphWidget for Painter {
             let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
             let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
 
-            let display_time_labels = vec![
-                Span::styled(
-                    format!("{}s", mem_widget_state.current_display_time / 1000),
-                    self.colours.graph_style,
-                ),
-                Span::styled("0s".to_string(), self.colours.graph_style),
+            let display_time_labels = [
+                format!("{}s", mem_widget_state.current_display_time / 1000),
+                "0s".to_string(),
             ];
             let x_axis = if app_state.app_config_fields.hide_time
                 || (app_state.app_config_fields.autohide_time
@@ -42,7 +38,8 @@ impl MemGraphWidget for Painter {
                     Axis::default()
                         .bounds([-(mem_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
-                        .labels(display_time_labels)
+                        .labels(&display_time_labels)
+                        .labels_style(self.colours.graph_style)
                 } else {
                     mem_widget_state.autohide_timer = None;
                     Axis::default().bounds([-(mem_widget_state.current_display_time as f64), 0.0])
@@ -53,17 +50,16 @@ impl MemGraphWidget for Painter {
                 Axis::default()
                     .bounds([-(mem_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
-                    .labels(display_time_labels)
+                    .labels(&display_time_labels)
+                    .labels_style(self.colours.graph_style)
             };
 
             // Offset as the zero value isn't drawn otherwise...
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
                 .bounds([-0.5, 100.5])
-                .labels(vec![
-                    Span::styled("0%", self.colours.graph_style),
-                    Span::styled("100%", self.colours.graph_style),
-                ]);
+                .labels(&["0%", "100%"])
+                .labels_style(self.colours.graph_style);
 
             let mut mem_canvas_vec: Vec<Dataset<'_>> = vec![];
 
@@ -95,25 +91,29 @@ impl MemGraphWidget for Painter {
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Memory ── Esc to go back ";
-                Span::styled(
-                    format!(
-                        " Memory ─{}─ Esc to go back ",
-                        "─".repeat(
-                            usize::from(draw_loc.width)
-                                .saturating_sub(TITLE_BASE.chars().count() + 2)
-                        )
-                    ),
-                    self.colours.highlighted_border_style,
+                format!(
+                    " Memory ─{}─ Esc to go back ",
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                    )
                 )
             } else {
-                Span::styled(" Memory ".to_string(), self.colours.widget_title_style)
+                " Memory ".to_string()
+            };
+            let title_style = if app_state.is_expanded {
+                self.colours.highlighted_border_style
+            } else {
+                self.colours.widget_title_style
             };
 
             f.render_widget(
-                Chart::new(mem_canvas_vec)
+                // Chart::new(mem_canvas_vec)
+                Chart::default()
+                    .datasets(&mem_canvas_vec)
                     .block(
                         Block::default()
-                            .title(title)
+                            .title(&title)
+                            .title_style(title_style)
                             .borders(Borders::ALL)
                             .border_style(if app_state.current_widget.widget_id == widget_id {
                                 self.colours.highlighted_border_style

@@ -4,7 +4,6 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::Span,
     widgets::{Block, Borders, Row, Table},
 };
 
@@ -77,27 +76,48 @@ impl DiskTableWidget for Painter {
                 (self.colours.border_style, self.colours.text_style)
             };
 
+            // let title = if app_state.is_expanded {
+            //     const TITLE_BASE: &str = " Disk ── Esc to go back ";
+            //     Span::styled(
+            //         format!(
+            //             " Disk ─{}─ Esc to go back ",
+            //             "─".repeat(
+            //                 usize::from(draw_loc.width)
+            //                     .saturating_sub(TITLE_BASE.chars().count() + 2)
+            //             )
+            //         ),
+            //         border_and_title_style,
+            //     )
+            // } else if app_state.app_config_fields.use_basic_mode {
+            //     Span::from(String::new())
+            // } else {
+            //     Span::styled(" Disk ".to_string(), self.colours.widget_title_style)
+            // };
+
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Disk ── Esc to go back ";
-                Span::styled(
-                    format!(
-                        " Disk ─{}─ Esc to go back ",
-                        "─".repeat(
-                            usize::from(draw_loc.width)
-                                .saturating_sub(TITLE_BASE.chars().count() + 2)
-                        )
-                    ),
-                    border_and_title_style,
+                format!(
+                    " Disk ─{}─ Esc to go back ",
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
+                    )
                 )
             } else if app_state.app_config_fields.use_basic_mode {
-                Span::from(String::new())
+                String::new()
             } else {
-                Span::styled(" Disk ".to_string(), self.colours.widget_title_style)
+                " Disk ".to_string()
+            };
+
+            let title_style = if app_state.is_expanded {
+                border_and_title_style
+            } else {
+                self.colours.widget_title_style
             };
 
             let disk_block = if draw_border {
                 Block::default()
-                    .title(title)
+                    .title(&title)
+                    .title_style(title_style)
                     .borders(Borders::ALL)
                     .border_style(border_and_title_style)
             } else if is_on_widget {
