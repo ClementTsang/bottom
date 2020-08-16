@@ -1,5 +1,5 @@
 use crate::{
-    app::App,
+    app::{data_harvester::processes::ProcessSorting, App},
     canvas::{
         drawing_utils::{
             get_search_start_position, get_start_position, get_variable_intrinsic_widths,
@@ -152,6 +152,7 @@ impl ProcessTableWidget for Painter {
 
                 // Draw!
                 let is_proc_widget_grouped = proc_widget_state.is_grouped;
+                let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
                 let process_rows = sliced_vec.iter().map(|process| {
                     Row::Data(
                         vec![
@@ -161,8 +162,12 @@ impl ProcessTableWidget for Painter {
                                 process.pid.to_string()
                             },
                             process.name.clone(),
-                            format!("{:.1}%", process.cpu_usage),
-                            format!("{:.1}%", process.mem_usage),
+                            format!("{:.1}%", process.cpu_percent_usage),
+                            if mem_enabled {
+                                format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                            } else {
+                                format!("{:.1}%", process.mem_percent_usage)
+                            },
                             process.read_per_sec.to_string(),
                             process.write_per_sec.to_string(),
                             process.total_read.to_string(),

@@ -91,7 +91,7 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
 
 // TODO [Help]: Search in help?
 // TODO [Help]: Move to using tables for easier formatting?
-pub const PROCESS_HELP_TEXT: [&str; 11] = [
+pub const PROCESS_HELP_TEXT: [&str; 12] = [
     "3 - Process widget\n",
     "dd             Kill the selected process\n",
     "c              Sort by CPU usage, press again to reverse sorting order\n",
@@ -102,7 +102,8 @@ pub const PROCESS_HELP_TEXT: [&str; 11] = [
     "Ctrl-f, /      Open process search widget\n",
     "P              Toggle between showing the full path or just the process name\n",
     "s, F6          Open process sort widget\n",
-    "I              Invert current sort",
+    "I              Invert current sort\n",
+    "%              Toggle between values and percentages for memory usage",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 43] = [

@@ -67,6 +67,7 @@ impl DiskTableWidget for Painter {
                 get_variable_intrinsic_widths(width as u16, &width_ratios, &DISK_HEADERS_LENS);
             let intrinsic_widths = &variable_intrinsic_results.0[0..variable_intrinsic_results.1];
 
+            // TODO: This seems to be bugged?  The selected text style gets "stuck"?  I think this gets fixed with tui 0.10?
             let (border_and_title_style, highlight_style) = if is_on_widget {
                 (
                     self.colours.highlighted_border_style,

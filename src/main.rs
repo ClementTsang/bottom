@@ -668,20 +668,26 @@ fn sort_process_data(
         ProcessSorting::CpuPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
-                    a.cpu_usage,
-                    b.cpu_usage,
+                    a.cpu_percent_usage,
+                    b.cpu_percent_usage,
                     proc_widget_state.process_sorting_reverse,
                 )
             });
         }
         ProcessSorting::Mem => {
-            // TODO: Do when I do mem values in processes
+            to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    a.mem_usage_kb,
+                    b.mem_usage_kb,
+                    proc_widget_state.process_sorting_reverse,
+                )
+            });
         }
         ProcessSorting::MemPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
-                    a.mem_usage,
-                    b.mem_usage,
+                    a.mem_percent_usage,
+                    b.mem_percent_usage,
                     proc_widget_state.process_sorting_reverse,
                 )
             });

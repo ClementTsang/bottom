@@ -342,6 +342,22 @@ impl App {
         }
     }
 
+    pub fn toggle_percentages(&mut self) {
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .widget_states
+            .get_mut(&self.current_widget.widget_id)
+        {
+            proc_widget_state
+                .columns
+                .toggle(&processes::ProcessSorting::Mem);
+            proc_widget_state
+                .columns
+                .toggle(&processes::ProcessSorting::MemPercent);
+            self.proc_state.force_update = Some(self.current_widget.widget_id);
+        }
+    }
+
     pub fn toggle_ignore_case(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
@@ -1111,6 +1127,7 @@ impl App {
             'e' => self.expand_widget(),
             's' => self.toggle_sort(),
             'I' => self.invert_sort(),
+            '%' => self.toggle_percentages(),
             _ => {}
         }
 
