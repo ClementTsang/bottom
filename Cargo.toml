@@ -38,6 +38,7 @@ backtrace = "0.3"
 serde = {version = "1.0", features = ["derive"] }
 unicode-segmentation = "1.6.0"
 unicode-width = "0.1.7"
+# libc = "0.2.74"
 # tui = {version = "0.10.0", features = ["crossterm"], default-features = false, git = "https://github.com/fdehau/tui-rs.git"}
 tui = {version = "0.9.5", features = ["crossterm"], default-features = false }
 

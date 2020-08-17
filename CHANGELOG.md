@@ -41,8 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
-- [#114](https://github.com/ClementTsang/bottom/pull/114): Show process state per process (originally in 0.4.0, moved to later). This only
-  shows if the processes are not merged together; I couldn't think of a nice way to show it when grouped together, unfortunately.
+- [#114](https://github.com/ClementTsang/bottom/pull/114): Show process state per process (originally in 0.4.0, moved to later). This only shows if the processes are not merged together; I couldn't think of a nice way to show it when grouped together, unfortunately.
+
+- Add (estimated) memory usage values, toggle this from percent to values for processes with `%`.
 
 ### Changes
 

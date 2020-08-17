@@ -225,6 +225,7 @@ Run using `btm`.
 | `P`           | Toggle between showing the full path or just the process name |
 | `s, F6`       | Open process sort widget                                      |
 | `I`           | Invert current sort                                           |
+| `%`           | Toggle between values and percentages for memory usage        |
 
 #### Process search bindings
 
@@ -259,6 +260,12 @@ Run using `btm`.
 | -------------- | -------------------------- |
 | `Left, Alt-h`  | Go to the next battery     |
 | `Right, Alt-l` | Go to the previous battery |
+
+#### Basic memory bindings
+
+|     |                                                        |
+| --- | ------------------------------------------------------ |
+| `%` | Toggle between values and percentages for memory usage |
 
 ### Process searching keywords
 

@@ -671,12 +671,12 @@ impl Prefix {
             match prefix_type {
                 PrefixType::Cpu => matches_condition(
                     &numerical_query.condition,
-                    process.cpu_usage,
+                    process.cpu_percent_usage,
                     numerical_query.value,
                 ),
                 PrefixType::Mem => matches_condition(
                     &numerical_query.condition,
-                    process.mem_usage,
+                    process.mem_percent_usage,
                     numerical_query.value,
                 ),
                 PrefixType::Rps => matches_condition(

@@ -87,6 +87,7 @@ pub struct DataCollector {
     widgets_to_harvest: UsedWidgets,
     battery_manager: Option<Manager>,
     battery_list: Option<Vec<Battery>>,
+    // page_file_size_kb: u64,
 }
 
 impl Default for DataCollector {
@@ -110,6 +111,11 @@ impl Default for DataCollector {
             widgets_to_harvest: UsedWidgets::default(),
             battery_manager: None,
             battery_list: None,
+            // page_file_size_kb: if cfg!(target_os = "linux") {
+            //     unsafe { libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024 }
+            // } else {
+            //     0
+            // },
         }
     }
 }
@@ -200,6 +206,7 @@ impl DataCollector {
                         current_instant
                             .duration_since(self.last_collection_time)
                             .as_secs(),
+                        self.mem_total_kb,
                     )
                 }
                 #[cfg(not(target_os = "linux"))]

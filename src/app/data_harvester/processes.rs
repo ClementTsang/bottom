@@ -62,6 +62,9 @@ pub struct ProcessHarvest {
     pub pid: u32,
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
+    pub mem_usage_kb: u64,
+    // pub rss_kb: u64,
+    // pub virt_kb: u64,
     pub name: String,
     pub path: String,
     pub read_bytes_per_sec: u64,
@@ -224,12 +227,13 @@ fn get_linux_cpu_usage(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 #[cfg(target_os = "linux")]
 fn convert_ps<S: core::hash::BuildHasher>(
     process: &str, cpu_usage: f64, cpu_fraction: f64,
     prev_pid_stats: &mut HashMap<u32, PrevProcDetails, S>,
     new_pid_stats: &mut HashMap<u32, PrevProcDetails, S>, use_current_cpu_total: bool,
-    time_difference_in_secs: u64,
+    time_difference_in_secs: u64, mem_total_kb: u64,
 ) -> std::io::Result<ProcessHarvest> {
     let pid = (&process[..10])
         .trim()
@@ -313,6 +317,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
         name,
         path,
         mem_usage_percent,
+        mem_usage_kb: (mem_usage_percent * mem_total_kb as f64 / 100.0) as u64,
         cpu_usage_percent,
         total_read_bytes,
         total_write_bytes,
@@ -327,7 +332,7 @@ fn convert_ps<S: core::hash::BuildHasher>(
 pub fn linux_get_processes_list(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     prev_pid_stats: &mut HashMap<u32, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
-    time_difference_in_secs: u64,
+    time_difference_in_secs: u64, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let ps_result = Command::new("ps")
         .args(&["-axo", "pid:10,comm:100,%mem:5,args:100", "--noheader"])
@@ -336,7 +341,6 @@ pub fn linux_get_processes_list(
     let split_string = ps_stdout.split('\n');
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let process_list = split_string.collect::<Vec<&str>>();
-
         let mut new_pid_stats = HashMap::new();
 
         let process_vector: Vec<ProcessHarvest> = process_list
@@ -352,6 +356,7 @@ pub fn linux_get_processes_list(
                     &mut new_pid_stats,
                     use_current_cpu_total,
                     time_difference_in_secs,
+                    mem_total_kb,
                 ) {
                     if !process_object.name.is_empty() {
                         Some(process_object)
@@ -431,6 +436,7 @@ pub fn windows_macos_get_processes_list(
             } else {
                 0.0
             },
+            mem_usage_kb: process_val.memory(),
             cpu_usage_percent: process_cpu_usage,
             read_bytes_per_sec: disk_usage.read_bytes,
             write_bytes_per_sec: disk_usage.written_bytes,

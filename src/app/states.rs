@@ -165,6 +165,7 @@ impl Default for ProcColumn {
             ProcessName,
             Command,
             CpuPercent,
+            Mem,
             MemPercent,
             ReadPerSecond,
             WritePerSecond,
@@ -187,11 +188,20 @@ impl Default for ProcColumn {
                         },
                     );
                 }
-                MemPercent | Mem => {
+                MemPercent => {
                     column_mapping.insert(
                         column,
                         ColumnInfo {
                             enabled: true,
+                            shortcut: Some("m"),
+                        },
+                    );
+                }
+                Mem => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: false,
                             shortcut: Some("m"),
                         },
                     );
@@ -250,6 +260,20 @@ impl Default for ProcColumn {
 }
 
 impl ProcColumn {
+    pub fn toggle(&mut self, column: &ProcessSorting) {
+        if let Some(mapping) = self.column_mapping.get_mut(column) {
+            mapping.enabled = !(mapping.enabled);
+        }
+    }
+
+    pub fn is_enabled(&self, column: &ProcessSorting) -> bool {
+        if let Some(mapping) = self.column_mapping.get(column) {
+            mapping.enabled
+        } else {
+            false
+        }
+    }
+
     pub fn get_enabled_columns_len(&self) -> usize {
         self.ordered_columns
             .iter()

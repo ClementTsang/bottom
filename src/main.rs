@@ -213,8 +213,10 @@ fn main() -> error::Result<()> {
                             app.canvas_data.swap_data =
                                 convert_swap_data_points(&app.data_collection, false);
                             let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
-                            app.canvas_data.mem_label = memory_and_swap_labels.0;
-                            app.canvas_data.swap_label = memory_and_swap_labels.1;
+                            app.canvas_data.mem_label_percent = memory_and_swap_labels.0;
+                            app.canvas_data.mem_label_frac = memory_and_swap_labels.1;
+                            app.canvas_data.swap_label_percent = memory_and_swap_labels.2;
+                            app.canvas_data.swap_label_frac = memory_and_swap_labels.3;
                         }
 
                         if app.used_widgets.use_cpu {
@@ -668,20 +670,26 @@ fn sort_process_data(
         ProcessSorting::CpuPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
-                    a.cpu_usage,
-                    b.cpu_usage,
+                    a.cpu_percent_usage,
+                    b.cpu_percent_usage,
                     proc_widget_state.process_sorting_reverse,
                 )
             });
         }
         ProcessSorting::Mem => {
-            // TODO: Do when I do mem values in processes
+            to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    a.mem_usage_kb,
+                    b.mem_usage_kb,
+                    proc_widget_state.process_sorting_reverse,
+                )
+            });
         }
         ProcessSorting::MemPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
-                    a.mem_usage,
-                    b.mem_usage,
+                    a.mem_percent_usage,
+                    b.mem_percent_usage,
                     proc_widget_state.process_sorting_reverse,
                 )
             });
