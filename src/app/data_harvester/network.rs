@@ -53,8 +53,8 @@ pub async fn get_network_data(
         (0, 0)
     } else {
         (
-            ((total_rx - *prev_net_rx) as f64 / elapsed_time) as u64,
-            ((total_tx - *prev_net_tx) as f64 / elapsed_time) as u64,
+            ((total_rx.saturating_sub(*prev_net_rx)) as f64 / elapsed_time) as u64,
+            ((total_tx.saturating_sub(*prev_net_tx)) as f64 / elapsed_time) as u64,
         )
     };
 

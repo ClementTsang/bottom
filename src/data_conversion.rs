@@ -234,9 +234,11 @@ pub fn convert_swap_data_points(
     result
 }
 
-pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String, String) {
-    let mem_label = "RAM:".to_string()
-        + &format!(
+pub fn convert_mem_labels(
+    current_data: &data_farmer::DataCollection,
+) -> (String, String, String, String) {
+    (
+        format!(
             "{:3.0}%",
             match current_data.memory_harvest.mem_total_in_mb {
                 0 => 0.0,
@@ -244,15 +246,13 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
                     current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
                         / current_data.memory_harvest.mem_total_in_mb as f64,
             }
-        )
-        + &format!(
+        ),
+        format!(
             "   {:.1}GB/{:.1}GB",
             current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
             (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0)
-        );
-
-    let swap_label = "SWP:".to_string()
-        + &format!(
+        ),
+        format!(
             "{:3.0}%",
             match current_data.swap_harvest.mem_total_in_mb {
                 0 => 0.0,
@@ -260,14 +260,13 @@ pub fn convert_mem_labels(current_data: &data_farmer::DataCollection) -> (String
                     current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
                         / current_data.swap_harvest.mem_total_in_mb as f64,
             }
-        )
-        + &format!(
+        ),
+        format!(
             "   {:.1}GB/{:.1}GB",
             current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
             (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0)
-        );
-
-    (mem_label, swap_label)
+        ),
+    )
 }
 
 pub fn get_rx_tx_data_points(

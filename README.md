@@ -261,6 +261,12 @@ Run using `btm`.
 | `Left, Alt-h`  | Go to the next battery     |
 | `Right, Alt-l` | Go to the previous battery |
 
+#### Basic memory bindings
+
+|     |                                                        |
+| --- | ------------------------------------------------------ |
+| `%` | Toggle between values and percentages for memory usage |
+
 ### Process searching keywords
 
 - Note none of the keywords are case sensitive.

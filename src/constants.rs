@@ -42,14 +42,15 @@ lazy_static! {
 }
 
 // Help text
-pub const HELP_CONTENTS_TEXT: [&str; 7] = [
+pub const HELP_CONTENTS_TEXT: [&str; 8] = [
     "Press the corresponding numbers to jump to the section, or scroll:\n",
     "1 - General\n",
     "2 - CPU widget\n",
     "3 - Process widget\n",
     "4 - Process search widget\n",
     "5 - Process sort widget\n",
-    "6 - Battery widget",
+    "6 - Battery widget\n",
+    "7 - Basic memory widget",
 ];
 
 pub const GENERAL_HELP_TEXT: [&str; 29] = [
@@ -167,6 +168,11 @@ pub const BATTERY_HELP_TEXT: [&str; 3] = [
     "Right          Go to next battery",
 ];
 
+pub const BASIC_MEM_HELP_TEXT: [&str; 2] = [
+    "7 - Basic memory widget\n",
+    "%              Toggle between values and percentages for memory usage",
+];
+
 lazy_static! {
     pub static ref HELP_TEXT: Vec<Vec<&'static str>> = vec![
         HELP_CONTENTS_TEXT.to_vec(),
@@ -176,6 +182,7 @@ lazy_static! {
         SEARCH_HELP_TEXT.to_vec(),
         SORT_HELP_TEXT.to_vec(),
         BATTERY_HELP_TEXT.to_vec(),
+        BASIC_MEM_HELP_TEXT.to_vec(),
     ];
 }
 

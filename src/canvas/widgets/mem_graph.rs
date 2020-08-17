@@ -62,10 +62,13 @@ impl MemGraphWidget for Painter {
                 .labels_style(self.colours.graph_style);
 
             let mut mem_canvas_vec: Vec<Dataset<'_>> = vec![];
-
+            let mem_label = format!(
+                "RAM:{}{}",
+                app_state.canvas_data.mem_label_percent, app_state.canvas_data.mem_label_frac
+            );
             mem_canvas_vec.push(
                 Dataset::default()
-                    .name(&app_state.canvas_data.mem_label)
+                    .name(&mem_label)
                     .marker(if app_state.app_config_fields.use_dot {
                         Marker::Dot
                     } else {
@@ -76,9 +79,13 @@ impl MemGraphWidget for Painter {
                     .graph_type(tui::widgets::GraphType::Line),
             );
 
+            let swap_label = format!(
+                "SWP:{}{}",
+                app_state.canvas_data.swap_label_percent, app_state.canvas_data.swap_label_frac
+            );
             mem_canvas_vec.push(
                 Dataset::default()
-                    .name(&app_state.canvas_data.swap_label)
+                    .name(&swap_label)
                     .marker(if app_state.app_config_fields.use_dot {
                         Marker::Dot
                     } else {

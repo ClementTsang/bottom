@@ -38,8 +38,6 @@ impl MemBasicWidget for Painter {
             );
         }
 
-        // +9 due to 3 + 4 + 2 + 2 columns for the name & space + percentage + bar bounds + margin spacing
-        let bar_length = usize::from(draw_loc.width.saturating_sub(11));
         let ram_use_percentage = if let Some(mem) = mem_data.last() {
             mem.1
         } else {
@@ -50,20 +48,57 @@ impl MemBasicWidget for Painter {
         } else {
             0.0
         };
-        let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, bar_length);
-        let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, bar_length);
-        let mem_label = format!(
-            "RAM[{}{}{:3.0}%]\n",
-            "|".repeat(num_bars_ram),
-            " ".repeat(bar_length - num_bars_ram),
-            ram_use_percentage.round(),
-        );
-        let swap_label = format!(
-            "SWP[{}{}{:3.0}%]",
-            "|".repeat(num_bars_swap),
-            " ".repeat(bar_length - num_bars_swap),
-            swap_use_percentage.round(),
-        );
+
+        // +7 due to 3 + 2 + 2 columns for the name & space + bar bounds + margin spacing
+        // Then + length of fraction
+        let ram_bar_length = usize::from(draw_loc.width.saturating_sub(7).saturating_sub(
+            if app_state.basic_mode_use_percent {
+                4
+            } else {
+                app_state.canvas_data.mem_label_frac.trim().len() as u16
+            },
+        ));
+        let swap_bar_length = usize::from(draw_loc.width.saturating_sub(7).saturating_sub(
+            if app_state.basic_mode_use_percent {
+                4
+            } else {
+                app_state.canvas_data.swap_label_frac.trim().len() as u16
+            },
+        ));
+
+        let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, ram_bar_length);
+        let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, swap_bar_length);
+        // TODO: Use different styling for the frac.
+        let mem_label = if app_state.basic_mode_use_percent {
+            format!(
+                "RAM[{}{}{:3.0}%]\n",
+                "|".repeat(num_bars_ram),
+                " ".repeat(ram_bar_length - num_bars_ram),
+                ram_use_percentage.round()
+            )
+        } else {
+            format!(
+                "RAM[{}{}{}]\n",
+                "|".repeat(num_bars_ram),
+                " ".repeat(ram_bar_length - num_bars_ram),
+                &app_state.canvas_data.mem_label_frac.trim()
+            )
+        };
+        let swap_label = if app_state.basic_mode_use_percent {
+            format!(
+                "SWP[{}{}{:3.0}%]",
+                "|".repeat(num_bars_swap),
+                " ".repeat(swap_bar_length - num_bars_swap),
+                swap_use_percentage.round()
+            )
+        } else {
+            format!(
+                "SWP[{}{}{}]",
+                "|".repeat(num_bars_swap),
+                " ".repeat(swap_bar_length - num_bars_swap),
+                &app_state.canvas_data.swap_label_frac.trim()
+            )
+        };
 
         let mem_text = [
             Text::styled(mem_label, self.colours.ram_style),

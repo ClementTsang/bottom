@@ -80,6 +80,9 @@ pub struct App {
     #[builder(default = false, setter(skip))]
     pub is_force_redraw: bool,
 
+    #[builder(default = false, setter(skip))]
+    pub basic_mode_use_percent: bool,
+
     pub cpu_state: CpuState,
     pub mem_state: MemState,
     pub net_state: NetState,
@@ -343,18 +346,26 @@ impl App {
     }
 
     pub fn toggle_percentages(&mut self) {
-        if let Some(proc_widget_state) = self
-            .proc_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            proc_widget_state
-                .columns
-                .toggle(&processes::ProcessSorting::Mem);
-            proc_widget_state
-                .columns
-                .toggle(&processes::ProcessSorting::MemPercent);
-            self.proc_state.force_update = Some(self.current_widget.widget_id);
+        match &self.current_widget.widget_type {
+            BottomWidgetType::BasicMem => {
+                self.basic_mode_use_percent = !self.basic_mode_use_percent; // Oh god this is so lazy.
+            }
+            BottomWidgetType::Proc => {
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get_mut(&self.current_widget.widget_id)
+                {
+                    proc_widget_state
+                        .columns
+                        .toggle(&processes::ProcessSorting::Mem);
+                    proc_widget_state
+                        .columns
+                        .toggle(&processes::ProcessSorting::MemPercent);
+                    self.proc_state.force_update = Some(self.current_widget.widget_id);
+                }
+            }
+            _ => {}
         }
     }
 

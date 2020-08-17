@@ -42,8 +42,10 @@ pub struct DisplayableData {
     pub process_data: Vec<ConvertedProcessData>,
     // What's actually displayed
     pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>,
-    pub mem_label: String,
-    pub swap_label: String,
+    pub mem_label_percent: String,
+    pub swap_label_percent: String,
+    pub mem_label_frac: String,
+    pub swap_label_frac: String,
     pub mem_data: Vec<(f64, f64)>,
     pub swap_data: Vec<(f64, f64)>,
     pub cpu_data: Vec<ConvertedCpuData>,
