@@ -359,9 +359,25 @@ impl App {
                     proc_widget_state
                         .columns
                         .toggle(&processes::ProcessSorting::Mem);
-                    proc_widget_state
+                    if let Some(mem_percent_state) = proc_widget_state
                         .columns
-                        .toggle(&processes::ProcessSorting::MemPercent);
+                        .toggle(&processes::ProcessSorting::MemPercent)
+                    {
+                        if proc_widget_state.process_sorting_type
+                            == processes::ProcessSorting::MemPercent
+                            || proc_widget_state.process_sorting_type
+                                == processes::ProcessSorting::Mem
+                        {
+                            if mem_percent_state {
+                                proc_widget_state.process_sorting_type =
+                                    processes::ProcessSorting::MemPercent;
+                            } else {
+                                proc_widget_state.process_sorting_type =
+                                    processes::ProcessSorting::Mem;
+                            }
+                        }
+                    }
+
                     self.proc_state.force_update = Some(self.current_widget.widget_id);
                 }
             }

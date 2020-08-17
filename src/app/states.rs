@@ -260,9 +260,13 @@ impl Default for ProcColumn {
 }
 
 impl ProcColumn {
-    pub fn toggle(&mut self, column: &ProcessSorting) {
+    /// Returns its new status.
+    pub fn toggle(&mut self, column: &ProcessSorting) -> Option<bool> {
         if let Some(mapping) = self.column_mapping.get_mut(column) {
             mapping.enabled = !(mapping.enabled);
+            Some(mapping.enabled)
+        } else {
+            None
         }
     }
 
