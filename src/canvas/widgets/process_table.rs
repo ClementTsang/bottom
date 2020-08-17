@@ -432,6 +432,7 @@ impl ProcessTableWidget for Painter {
                 ),
             ];
 
+            search_text.push(Text::raw("\n"));
             search_text.push(Text::styled(
                 if let Some(err) = &proc_widget_state
                     .process_search_state
