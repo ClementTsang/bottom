@@ -1,0 +1,20 @@
+$ErrorActionPreference = 'Stop';
+$toolsDir   = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
+$url        = 'https://github.com/ClementTsang/bottom/releases/download/$version/bottom_i686-pc-windows-msvc.zip'
+$url64      = 'https://github.com/ClementTsang/bottom/releases/download/$version/bottom_x86_64-pc-windows-msvc.zip'
+
+$packageArgs = @{
+  packageName   = $env:ChocolateyPackageName
+  softwareName  = 'bottom'
+  unzipLocation = $toolsDir
+  fileType      = 'exe'
+  url           = $url
+  url64bit      = $url64
+
+  checksum      = '$hash_32'
+  checksumType  = 'sha1'
+  checksum64    = '$hash_64'
+  checksumType64= 'sha1'
+
+}
+Install-ChocolateyZipPackage @packageArgs

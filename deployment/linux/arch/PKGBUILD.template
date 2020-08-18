@@ -1,0 +1,23 @@
+# Maintainer: Clement Tsang (xoronth) <cjhtsang@uwaterloo.ca>
+
+pkgname=bottom
+pkgver=$version
+pkgrel=0
+pkgdesc="A cross-platform graphical process/system monitor with a customizable interface and a multitude of features."
+provides=('bottom')
+makedepends=('cargo')
+arch=('x86_64')
+url="https://github.com/ClementTsang/bottom"
+source=("$pkgname-$pkgver.tar.gz::https://github.com/ClementTsang/bottom/releases/download/$pkgver/bottom_required_files.tar.gz")
+license=('MIT')
+sha512sums=('$hash')
+
+build() {
+    cargo build --release --locked
+}
+
+package() {
+    install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
+    cd "./target/release"
+    install -Dm755 btm "$pkgdir/usr/bin/btm"
+}

@@ -60,6 +60,8 @@ before_deploy:
       strip "./target/i686-pc-windows-msvc/release/btm";
       mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
       zip bottom_i686-pc-windows-msvc.zip "btm.exe";
+      python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG;
+      zip choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
     else
         cargo build --release;
         cp ./target/release/btm btm;
@@ -67,11 +69,16 @@ before_deploy:
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
           tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm;
           tar -czvf bottom_required_files.tar.gz ./src ./Cargo.toml ./Cargo.lock LICENSE README.md;
-        cargo install cargo-deb;
-        cargo deb;
-        cp ./target/debian/bottom_*.deb .;
+          python "./deployment/packager.py" "./bottom_x86_64-unknown-linux-gnu.tar.gz" $TRAVIS_TAG "./deployment/linux/arch/PKGBUILD_BIN.template", "./PKGBUILD_BIN" "SHA512";
+          python "./deployment/packager.py" "./bottom_required_files.tar.gz" $TRAVIS_TAG "./deployment/linux/arch/PKGBUILD.template", "./PKGBUILD" "SHA512";
+          tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD
+          cargo install cargo-deb;
+          cargo deb;
+          cp ./target/debian/bottom_*.deb .;
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
           tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
+          python "./deployment/packager.py" "./bottom_x86_64-apple-darwin.tar.gz" $TRAVIS_TAG "./deployment/macos/homebrew/bottom.rb.template", "./bottom.rb" "SHA256";
+          tar -czvf homebrew.tar.gz bottom.rb;
         fi
     fi
 
@@ -85,6 +92,9 @@ deploy:
     - bottom_*.tar.gz
     - bottom_*.zip
     - bottom_*.deb
+    - arch.tar.gz
+    - homebrew.tar.gz
+    - choco.zip
   skip_cleanup: true
   on:
     tags: true
