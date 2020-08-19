@@ -10,7 +10,7 @@ use crate::{
 
 use layout_options::*;
 
-mod layout_options;
+pub mod layout_options;
 
 #[derive(Default, Deserialize)]
 pub struct Config {
@@ -68,7 +68,7 @@ pub struct ConfigColours {
 
 pub fn build_app(
     matches: &clap::ArgMatches<'static>, config: &Config, widget_layout: &BottomLayout,
-    default_widget_id: u64,
+    default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
 ) -> error::Result<App> {
     use BottomWidgetType::*;
     let autohide_time = get_autohide_time(&matches, &config);
@@ -96,7 +96,6 @@ pub fn build_app(
         None
     };
 
-    let (default_widget_type_option, _) = get_default_widget_and_count(matches, config)?;
     let mut initial_widget_id: u64 = default_widget_id;
     let mut initial_widget_type = Proc;
     let is_custom_layout = config.row.is_some();
@@ -252,7 +251,7 @@ pub fn build_app(
 
 pub fn get_widget_layout(
     matches: &clap::ArgMatches<'static>, config: &Config,
-) -> error::Result<(BottomLayout, u64)> {
+) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
     let left_legend = get_use_left_legend(matches, config);
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(matches, config)?;
@@ -311,7 +310,7 @@ pub fn get_widget_layout(
         }
     };
 
-    Ok((bottom_layout, default_widget_id))
+    Ok((bottom_layout, default_widget_id, default_widget_type))
 }
 
 fn get_update_rate_in_milliseconds(
