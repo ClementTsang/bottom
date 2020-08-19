@@ -38,9 +38,11 @@ If you want to help contribute by submitting a PR, by all means, I'm open! In re
 - I develop primarily using _stable_ Rust. That is, whatever is the most up-to-date stable version you can get via running
   `rustup update stable`.
 
+- There are some tests, they're mostly for sanity checks. Please run `cargo test` to ensure you didn't break anything important, unless the change will break the test (in which case please amend the tests).
+
   - Note that `cargo test` will fail on anything lower than 1.43.0 due to it using a then-introduced env variable.
 
-- I use both [clippy](https://github.com/rust-lang/rust-clippy) and [rustfmt](https://github.com/rust-lang/rustfmt) in development (with some settings, see [clippy.toml](./clippy.toml) and [rustfmt.toml](rustfmt.toml)). Note clippy must pass to pass CI.
+- I use both [clippy](https://github.com/rust-lang/rust-clippy) and [rustfmt](https://github.com/rust-lang/rustfmt) in development (with some settings, see [clippy.toml](./clippy.toml) and [rustfmt.toml](rustfmt.toml)). Note clippy must pass to for PRs to be accepted.
 
   - You can check clippy using `cargo +nightly clippy`.
 
