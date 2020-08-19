@@ -1,0 +1,28 @@
+name: Update Packages
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  set_env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set env
+          run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
+      - name: Test env
+        run: |
+          echo $RELEASE_VERSION
+      - name: Trigger homebrew
+        run: |
+          curl -X POST https://api.github.com/repos/ClementTsang/homebrew-bottom/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
+          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+      - name: Trigger choco
+        run: |
+          curl -X POST https://api.github.com/repos/ClementTsang/choco-bottom/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
+          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
