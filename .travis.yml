@@ -33,7 +33,6 @@ script:
   - cargo clippy -- -D clippy::all
   - cargo build --verbose --target $TARGET
   - cargo test --verbose --target $TARGET
-  - cargo install --path . --target $TARGET --locked --force
 
 before_cache:
   - rm -rf /home/travis/.cargo/git
@@ -48,6 +47,7 @@ notifications:
 
 before_deploy:
   - |
+    cargo install --path . --target $TARGET --locked --force
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
       choco install zip;
       rustup target add x86_64-pc-windows-msvc;
