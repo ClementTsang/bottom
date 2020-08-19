@@ -9,10 +9,12 @@ license = "MIT"
 categories = ["command-line-utilities", "visualization"]
 description = "A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows."
 readme = "README.md"
+default-run = "btm"
 
 [[bin]]
 name = "btm"
-path = "src/main.rs"
+path = "src/bin/main.rs"
+doc = false
 
 [profile.release]
 debug = 1

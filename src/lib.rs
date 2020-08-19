@@ -1,14 +1,7 @@
-#![warn(rust_2018_idioms)]
-
-#[allow(unused_imports)]
-#[macro_use]
-extern crate log;
-
 use std::{
     boxed::Box,
     io::{stdout, Write},
-    panic::{self, PanicInfo},
-    sync::mpsc,
+    panic::PanicInfo,
     thread,
     time::{Duration, Instant},
 };
@@ -16,15 +9,11 @@ use std::{
 use clap::*;
 
 use crossterm::{
-    event::{
-        poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent,
-        KeyModifiers, MouseEvent,
-    },
+    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
     execute,
     style::Print,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
-use tui::{backend::CrosstermBackend, Terminal};
 
 use app::{
     data_harvester::{self, processes::ProcessSorting},
@@ -38,30 +27,29 @@ use utils::error;
 
 pub mod app;
 
-mod utils {
+pub mod utils {
     pub mod error;
     pub mod gen_util;
     pub mod logging;
 }
 
-mod canvas;
-mod constants;
-mod data_conversion;
-
+pub mod canvas;
+pub mod constants;
+pub mod data_conversion;
 pub mod options;
 
-enum BottomEvent<I, J> {
+pub enum BottomEvent<I, J> {
     KeyInput(I),
     MouseInput(J),
     Update(Box<data_harvester::Data>),
     Clean,
 }
 
-enum ResetEvent {
+pub enum ResetEvent {
     Reset,
 }
 
-fn get_matches() -> clap::ArgMatches<'static> {
+pub fn get_matches() -> clap::ArgMatches<'static> {
     clap_app!(app =>
 		(name: crate_name!())
 		(version: crate_version!())
@@ -96,163 +84,7 @@ fn get_matches() -> clap::ArgMatches<'static> {
         .get_matches()
 }
 
-fn main() -> error::Result<()> {
-    #[cfg(debug_assertions)]
-    {
-        utils::logging::init_logger()?;
-    }
-    let matches = get_matches();
-
-    let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
-
-    // Get widget layout separately
-    let (widget_layout, default_widget_id) = get_widget_layout(&matches, &config)?;
-
-    // Create "app" struct, which will control most of the program and store settings/state
-    let mut app = build_app(&matches, &config, &widget_layout, default_widget_id)?;
-
-    // Create painter and set colours.
-    let mut painter = canvas::Painter::init(widget_layout, app.app_config_fields.table_gap);
-    generate_config_colours(&config, &mut painter)?;
-    painter.colours.generate_remaining_cpu_colours();
-    painter.complete_painter_init();
-
-    // Set up input handling
-    let (sender, receiver) = mpsc::channel();
-    create_input_thread(sender.clone());
-
-    // Cleaning loop
-    {
-        let cleaning_sender = sender.clone();
-        thread::spawn(move || loop {
-            thread::sleep(Duration::from_millis(
-                constants::STALE_MAX_MILLISECONDS + 5000,
-            ));
-            if cleaning_sender.send(BottomEvent::Clean).is_err() {
-                break;
-            }
-        });
-    }
-
-    // Event loop
-    let (reset_sender, reset_receiver) = mpsc::channel();
-    create_event_thread(
-        sender,
-        reset_receiver,
-        app.app_config_fields.use_current_cpu_total,
-        app.app_config_fields.update_rate_in_milliseconds,
-        app.app_config_fields.temperature_type.clone(),
-        app.app_config_fields.show_average_cpu,
-        app.used_widgets.clone(),
-    );
-
-    // Set up up tui and crossterm
-    let mut stdout_val = stdout();
-    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
-    enable_raw_mode()?;
-
-    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
-    terminal.hide_cursor()?;
-
-    // Set panic hook
-    panic::set_hook(Box::new(|info| panic_hook(info)));
-
-    loop {
-        if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
-            match recv {
-                BottomEvent::KeyInput(event) => {
-                    if handle_key_event_or_break(event, &mut app, &reset_sender) {
-                        break;
-                    }
-                    handle_force_redraws(&mut app);
-                }
-                BottomEvent::MouseInput(event) => {
-                    handle_mouse_event(event, &mut app);
-                    handle_force_redraws(&mut app);
-                }
-                BottomEvent::Update(data) => {
-                    app.data_collection.eat_data(&data);
-
-                    if !app.is_frozen {
-                        // Convert all data into tui-compliant components
-
-                        // Network
-                        if app.used_widgets.use_net {
-                            let network_data = convert_network_data_points(
-                                &app.data_collection,
-                                false,
-                                app.app_config_fields.use_basic_mode
-                                    || app.app_config_fields.use_old_network_legend,
-                            );
-                            app.canvas_data.network_data_rx = network_data.rx;
-                            app.canvas_data.network_data_tx = network_data.tx;
-                            app.canvas_data.rx_display = network_data.rx_display;
-                            app.canvas_data.tx_display = network_data.tx_display;
-                            if let Some(total_rx_display) = network_data.total_rx_display {
-                                app.canvas_data.total_rx_display = total_rx_display;
-                            }
-                            if let Some(total_tx_display) = network_data.total_tx_display {
-                                app.canvas_data.total_tx_display = total_tx_display;
-                            }
-                        }
-
-                        // Disk
-                        if app.used_widgets.use_disk {
-                            app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
-                        }
-
-                        // Temperatures
-                        if app.used_widgets.use_temp {
-                            app.canvas_data.temp_sensor_data = convert_temp_row(&app);
-                        }
-
-                        // Memory
-                        if app.used_widgets.use_mem {
-                            app.canvas_data.mem_data =
-                                convert_mem_data_points(&app.data_collection, false);
-                            app.canvas_data.swap_data =
-                                convert_swap_data_points(&app.data_collection, false);
-                            let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
-                            app.canvas_data.mem_label_percent = memory_and_swap_labels.0;
-                            app.canvas_data.mem_label_frac = memory_and_swap_labels.1;
-                            app.canvas_data.swap_label_percent = memory_and_swap_labels.2;
-                            app.canvas_data.swap_label_frac = memory_and_swap_labels.3;
-                        }
-
-                        if app.used_widgets.use_cpu {
-                            // CPU
-                            app.canvas_data.cpu_data =
-                                convert_cpu_data_points(&app.data_collection, false);
-                        }
-
-                        // Processes
-                        if app.used_widgets.use_proc {
-                            update_all_process_lists(&mut app);
-                        }
-
-                        // Battery
-                        if app.used_widgets.use_battery {
-                            app.canvas_data.battery_data =
-                                convert_battery_harvest(&app.data_collection);
-                        }
-                    }
-                }
-                BottomEvent::Clean => {
-                    app.data_collection
-                        .clean_data(constants::STALE_MAX_MILLISECONDS);
-                }
-            }
-        }
-
-        // TODO: [OPT] Should not draw if no change (ie: scroll max)
-        try_drawing(&mut terminal, &mut app, &mut painter)?;
-    }
-
-    cleanup_terminal(&mut terminal)?;
-    Ok(())
-}
-
-fn handle_mouse_event(event: MouseEvent, app: &mut App) {
+pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     match event {
         MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
         MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
@@ -260,7 +92,7 @@ fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     };
 }
 
-fn handle_key_event_or_break(
+pub fn handle_key_event_or_break(
     event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<ResetEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
@@ -348,7 +180,7 @@ fn handle_key_event_or_break(
     false
 }
 
-fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
+pub fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
     use std::{ffi::OsString, fs};
     let config_path = if let Some(conf_loc) = flag_config_location {
         Some(OsString::from(conf_loc))
@@ -399,7 +231,7 @@ fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
     }
 }
 
-fn try_drawing(
+pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
     app: &mut App, painter: &mut canvas::Painter,
 ) -> error::Result<()> {
@@ -411,7 +243,7 @@ fn try_drawing(
     Ok(())
 }
 
-fn cleanup_terminal(
+pub fn cleanup_terminal(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
     disable_raw_mode()?;
@@ -425,7 +257,9 @@ fn cleanup_terminal(
     Ok(())
 }
 
-fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> error::Result<()> {
+pub fn generate_config_colours(
+    config: &Config, painter: &mut canvas::Painter,
+) -> error::Result<()> {
     if let Some(colours) = &config.colors {
         if let Some(border_color) = &colours.border_color {
             painter.colours.set_border_colour(border_color)?;
@@ -514,7 +348,7 @@ fn generate_config_colours(config: &Config, painter: &mut canvas::Painter) -> er
 }
 
 /// Based on https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs
-fn panic_hook(panic_info: &PanicInfo<'_>) {
+pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let mut stdout = stdout();
 
     let msg = match panic_info.payload().downcast_ref::<&'static str>() {
@@ -543,7 +377,7 @@ fn panic_hook(panic_info: &PanicInfo<'_>) {
     .unwrap();
 }
 
-fn handle_force_redraws(app: &mut App) {
+pub fn handle_force_redraws(app: &mut App) {
     // Currently we use an Option... because we might want to future-proof this
     // if we eventually get widget-specific redrawing!
     if app.proc_state.force_update_all {
@@ -573,7 +407,7 @@ fn handle_force_redraws(app: &mut App) {
     }
 }
 
-fn update_all_process_lists(app: &mut App) {
+pub fn update_all_process_lists(app: &mut App) {
     let widget_ids = app
         .proc_state
         .widget_states
@@ -586,7 +420,7 @@ fn update_all_process_lists(app: &mut App) {
     });
 }
 
-fn update_final_process_list(app: &mut App, widget_id: u64) {
+pub fn update_final_process_list(app: &mut App, widget_id: u64) {
     let is_invalid_or_blank = match app.proc_state.widget_states.get(&widget_id) {
         Some(process_state) => process_state
             .process_search_state
@@ -659,7 +493,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
     }
 }
 
-fn sort_process_data(
+pub fn sort_process_data(
     to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
 ) {
     to_sort_vec.sort_by(|a, b| {
@@ -763,7 +597,7 @@ fn sort_process_data(
     }
 }
 
-fn create_input_thread(
+pub fn create_input_thread(
     sender: std::sync::mpsc::Sender<
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
@@ -796,7 +630,7 @@ fn create_input_thread(
     });
 }
 
-fn create_event_thread(
+pub fn create_event_thread(
     sender: std::sync::mpsc::Sender<
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
