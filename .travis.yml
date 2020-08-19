@@ -71,7 +71,7 @@ before_deploy:
           tar -czvf bottom_required_files.tar.gz ./src ./Cargo.toml ./Cargo.lock LICENSE README.md;
           python "./deployment/packager.py" "./bottom_x86_64-unknown-linux-gnu.tar.gz" $TRAVIS_TAG "./deployment/linux/arch/PKGBUILD_BIN.template", "./PKGBUILD_BIN" "SHA512";
           python "./deployment/packager.py" "./bottom_required_files.tar.gz" $TRAVIS_TAG "./deployment/linux/arch/PKGBUILD.template", "./PKGBUILD" "SHA512";
-          tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD
+          tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD;
           cargo install cargo-deb;
           cargo deb;
           cp ./target/debian/bottom_*.deb .;
