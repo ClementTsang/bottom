@@ -72,7 +72,7 @@ pub struct DataCollector {
     pub data: Data,
     sys: System,
     #[cfg(target_os = "linux")]
-    prev_pid_stats: HashMap<u32, processes::PrevProcDetails>,
+    pid_mapping: HashMap<u32, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
@@ -87,7 +87,7 @@ pub struct DataCollector {
     widgets_to_harvest: UsedWidgets,
     battery_manager: Option<Manager>,
     battery_list: Option<Vec<Battery>>,
-    // page_file_size_kb: u64,
+    page_file_size_kb: u64,
 }
 
 impl Default for DataCollector {
@@ -96,7 +96,7 @@ impl Default for DataCollector {
             data: Data::default(),
             sys: System::new_all(),
             #[cfg(target_os = "linux")]
-            prev_pid_stats: HashMap::new(),
+            pid_mapping: HashMap::new(),
             #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]
@@ -111,11 +111,15 @@ impl Default for DataCollector {
             widgets_to_harvest: UsedWidgets::default(),
             battery_manager: None,
             battery_list: None,
-            // page_file_size_kb: if cfg!(target_os = "linux") {
-            //     unsafe { libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024 }
-            // } else {
-            //     0
-            // },
+            page_file_size_kb: {
+                #[cfg(target_os = "linux")]
+                unsafe {
+                    libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024
+                }
+
+                #[cfg(not(target_os = "linux"))]
+                0
+            },
         }
     }
 }
@@ -201,12 +205,13 @@ impl DataCollector {
                     processes::linux_get_processes_list(
                         &mut self.prev_idle,
                         &mut self.prev_non_idle,
-                        &mut self.prev_pid_stats,
+                        &mut self.pid_mapping,
                         self.use_current_cpu_total,
                         current_instant
                             .duration_since(self.last_collection_time)
                             .as_secs(),
                         self.mem_total_kb,
+                        self.page_file_size_kb,
                     )
                 }
                 #[cfg(not(target_os = "linux"))]

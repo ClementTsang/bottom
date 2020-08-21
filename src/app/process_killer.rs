@@ -35,6 +35,7 @@ impl Process {
 /// Kills a process, given a PID.
 pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
     if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
+        // FIXME: Use libc instead of a command...
         let output = Command::new("kill").arg(pid.to_string()).output()?;
         if !(output.status).success() {
             return Err(BottomError::GenericError(

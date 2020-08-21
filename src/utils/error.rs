@@ -24,6 +24,8 @@ pub enum BottomError {
     ConversionError(String),
     /// An error to represent errors with querying.
     QueryError(Cow<'static, str>),
+    /// An error that just signifies something minor went wrong; no message.
+    MinorError(),
 }
 
 impl std::fmt::Display for BottomError {
@@ -50,6 +52,7 @@ impl std::fmt::Display for BottomError {
                 write!(f, "unable to convert: {}", message)
             }
             BottomError::QueryError(ref message) => write!(f, "{}", message),
+            BottomError::MinorError() => write!(f, "Minor error."),
         }
     }
 }

@@ -145,6 +145,7 @@ dependencies = [
  "heim",
  "itertools",
  "lazy_static",
+ "libc",
  "log",
  "predicates",
  "regex",

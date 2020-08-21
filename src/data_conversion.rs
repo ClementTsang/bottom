@@ -398,7 +398,7 @@ pub fn convert_process_data(
                     pid: process.pid,
                     name: match name_type {
                         ProcessNamingType::Name => process.name.to_string(),
-                        ProcessNamingType::Path => process.path.to_string(),
+                        ProcessNamingType::Path => process.command.to_string(),
                     },
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
@@ -425,7 +425,7 @@ pub fn convert_process_data(
                 let entry = grouped_hashmap
                     .entry(match name_type {
                         ProcessNamingType::Name => process.name.to_string(),
-                        ProcessNamingType::Path => process.path.to_string(),
+                        ProcessNamingType::Path => process.command.to_string(),
                     })
                     .or_insert(SingleProcessData {
                         pid: process.pid,

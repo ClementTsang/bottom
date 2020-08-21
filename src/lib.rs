@@ -1,3 +1,8 @@
+#![warn(rust_2018_idioms)]
+#[allow(unused_imports)]
+#[macro_use]
+extern crate log;
+
 use std::{
     boxed::Box,
     io::{stdout, Write},
