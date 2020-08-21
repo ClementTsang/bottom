@@ -25,8 +25,8 @@ codegen-units = 1
 [dependencies]
 battery = "0.7.5"
 crossterm = "0.17"
-chrono = "0.4.13"
-clap = "2.33.2"
+chrono = "0.4.15"
+clap = "2.33"
 dirs = "3.0.1"
 futures = "0.3.5"
 heim = "0.0.10"
@@ -39,17 +39,18 @@ lazy_static = "1.4.0"
 backtrace = "0.3"
 serde = {version = "1.0", features = ["derive"] }
 unicode-segmentation = "1.6.0"
-unicode-width = "0.1.7"
-libc = "0.2.74"
+unicode-width = "0.1"
+libc = "0.2"
+ctrlc = "3.1.6"
 # tui = {version = "0.10.0", features = ["crossterm"], default-features = false, git = "https://github.com/fdehau/tui-rs.git"}
 tui = {version = "0.9.5", features = ["crossterm"], default-features = false }
 
 # For debugging only...
 fern = "0.6.0"
-log = "0.4.8"
+log = "0.4.11"
 
 [target.'cfg(windows)'.dependencies]
-winapi = "0.3.8"
+winapi = "0.3.9"
 
 [dev-dependencies]
 assert_cmd = "1.0"
