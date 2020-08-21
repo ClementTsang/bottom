@@ -55,7 +55,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 Note that bottom is:
 
 - Built on the stable version of Rust
-- Tested and released for only 64-bit
+- Tested and released for only `x86_64` (and `i686` for Windows)
 - Developed mainly for macOS, Windows, and Linux
 
 As such, support beyond that is not guaranteed.
