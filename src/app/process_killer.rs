@@ -33,22 +33,25 @@ impl Process {
 /// Kills a process, given a PID.
 pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
     if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-        let output = unsafe { libc::kill(pid as i32, libc::SIGTERM) };
-        if output != 0 {
-            // We had an error...
-            let err_code = std::io::Error::last_os_error().raw_os_error();
-            let err = match err_code {
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        {
+            let output = unsafe { libc::kill(pid as i32, libc::SIGTERM) };
+            if output != 0 {
+                // We had an error...
+                let err_code = std::io::Error::last_os_error().raw_os_error();
+                let err = match err_code {
                 Some(libc::ESRCH) => "the target process did not exist.",
                 Some(libc::EPERM) => "the calling process does not have the permissions to terminate the target process(es).",
                 Some(libc::EINVAL) => "an invalid signal was specified.",
                 _ => "Unknown error occurred."
             };
 
-            return Err(BottomError::GenericError(format!(
-                "Error code {} - {}",
-                err_code.unwrap_or(-1),
-                err,
-            )));
+                return Err(BottomError::GenericError(format!(
+                    "Error code {} - {}",
+                    err_code.unwrap_or(-1),
+                    err,
+                )));
+            }
         }
     } else if cfg!(target_os = "windows") {
         #[cfg(target_os = "windows")]
