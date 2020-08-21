@@ -1,5 +1,3 @@
-use std::process::Command;
-
 // Copied from SO: https://stackoverflow.com/a/55231715
 #[cfg(target_os = "windows")]
 use winapi::{
@@ -35,12 +33,22 @@ impl Process {
 /// Kills a process, given a PID.
 pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
     if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-        // FIXME: Use libc instead of a command...
-        let output = Command::new("kill").arg(pid.to_string()).output()?;
-        if !(output.status).success() {
-            return Err(BottomError::GenericError(
-                std::str::from_utf8(&output.stderr)?.to_string(),
-            ));
+        let output = unsafe { libc::kill(pid as i32, libc::SIGTERM) };
+        if output != 0 {
+            // We had an error...
+            let err_code = std::io::Error::last_os_error().raw_os_error();
+            let err = match err_code {
+                Some(libc::ESRCH) => "the target process did not exist.",
+                Some(libc::EPERM) => "the calling process does not have the permissions to terminate the target process(es).",
+                Some(libc::EINVAL) => "an invalid signal was specified.",
+                _ => "Unknown error occurred."
+            };
+
+            return Err(BottomError::GenericError(format!(
+                "Error code {} - {}",
+                err_code.unwrap_or(-1),
+                err,
+            )));
         }
     } else if cfg!(target_os = "windows") {
         #[cfg(target_os = "windows")]
