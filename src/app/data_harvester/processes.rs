@@ -2,13 +2,12 @@ use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
 #[cfg(target_os = "linux")]
-use crate::utils::error;
-#[cfg(target_os = "linux")]
 use std::collections::{hash_map::RandomState, HashMap};
 
-use error::BottomError;
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
+
+use crate::utils::error::{self, BottomError};
 
 // TODO: Add value so we know if it's sorted ascending or descending by default?
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -352,10 +351,7 @@ pub fn linux_get_processes_list(
                             mem_total_kb,
                             page_file_kb,
                         ) {
-                            if !process_object.name.is_empty() || !process_object.command.is_empty()
-                            {
-                                return Some(process_object);
-                            }
+                            return Some(process_object);
                         }
                     }
                 }
@@ -424,7 +420,7 @@ pub fn windows_macos_get_processes_list(
         process_vector.push(ProcessHarvest {
             pid: process_val.pid() as u32,
             name,
-            path,
+            command,
             mem_usage_percent: if mem_total_kb > 0 {
                 process_val.memory() as f64 * 100.0 / mem_total_kb as f64
             } else {
