@@ -78,6 +78,7 @@ pub struct PrevProcDetails {
     pub total_write_bytes: u64,
     pub cpu_time: f64,
     pub proc_stat_path: PathBuf,
+    // pub proc_statm_path: PathBuf,
     pub proc_exe_path: PathBuf,
     pub proc_io_path: PathBuf,
     pub proc_cmdline_path: PathBuf,
@@ -90,6 +91,7 @@ impl PrevProcDetails {
             proc_io_path: PathBuf::from(format!("/proc/{}/io", pid)),
             proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid)),
             proc_stat_path: PathBuf::from(format!("/proc/{}/stat", pid)),
+            // proc_statm_path: PathBuf::from(format!("/proc/{}/statm", pid)),
             proc_cmdline_path: PathBuf::from(format!("/proc/{}/cmdline", pid)),
             ..PrevProcDetails::default()
         }
