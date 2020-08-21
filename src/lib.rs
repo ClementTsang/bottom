@@ -248,20 +248,6 @@ pub fn try_drawing(
     Ok(())
 }
 
-pub fn cleanup_terminal(
-    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-) -> error::Result<()> {
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        DisableMouseCapture,
-        LeaveAlternateScreen
-    )?;
-    terminal.show_cursor()?;
-
-    Ok(())
-}
-
 pub fn generate_config_colours(
     config: &Config, painter: &mut canvas::Painter,
 ) -> error::Result<()> {
@@ -352,6 +338,26 @@ pub fn generate_config_colours(
     Ok(())
 }
 
+pub fn cleanup_terminal(
+    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
+) -> error::Result<()> {
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        DisableMouseCapture,
+        LeaveAlternateScreen
+    )?;
+    terminal.show_cursor()?;
+
+    Ok(())
+}
+
+pub fn termination_hook() {
+    let mut stdout = stdout();
+    disable_raw_mode().unwrap();
+    execute!(stdout, DisableMouseCapture, LeaveAlternateScreen).unwrap();
+}
+
 /// Based on https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs
 pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let mut stdout = stdout();
@@ -367,7 +373,7 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
 
     disable_raw_mode().unwrap();
-    execute!(stdout, LeaveAlternateScreen, DisableMouseCapture).unwrap();
+    execute!(stdout, DisableMouseCapture, LeaveAlternateScreen).unwrap();
 
     // Print stack trace.  Must be done after!
     execute!(
@@ -617,14 +623,14 @@ pub fn create_input_thread(
                     if let Event::Key(key) = event {
                         if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
                             if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                return;
+                                break;
                             }
                             keyboard_timer = Instant::now();
                         }
                     } else if let Event::Mouse(mouse) = event {
                         if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
                             if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                return;
+                                break;
                             }
                             mouse_timer = Instant::now();
                         }

@@ -9,7 +9,10 @@ use std::{
     boxed::Box,
     io::{stdout, Write},
     panic,
-    sync::mpsc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc, Arc,
+    },
     thread,
     time::Duration,
 };
@@ -89,7 +92,16 @@ fn main() -> error::Result<()> {
     // Set panic hook
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
-    loop {
+    // Set termination hook
+    let is_terminated = Arc::new(AtomicBool::new(false));
+    let ist_clone = is_terminated.clone();
+    ctrlc::set_handler(move || {
+        ist_clone.store(true, Ordering::SeqCst);
+        termination_hook();
+    })
+    .unwrap();
+
+    while !is_terminated.load(Ordering::SeqCst) {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
                 BottomEvent::KeyInput(event) => {
