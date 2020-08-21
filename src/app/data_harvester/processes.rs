@@ -2,12 +2,13 @@ use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
 #[cfg(target_os = "linux")]
+use crate::utils::error::{self, BottomError};
+
+#[cfg(target_os = "linux")]
 use std::collections::{hash_map::RandomState, HashMap};
 
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
-
-use crate::utils::error::{self, BottomError};
 
 // TODO: Add value so we know if it's sorted ascending or descending by default?
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -397,12 +398,12 @@ pub fn windows_macos_get_processes_list(
         } else {
             process_val.name().to_string()
         };
-        let path = {
-            let path = process_val.cmd().join(" ");
-            if path.is_empty() {
+        let command = {
+            let command = process_val.cmd().join(" ");
+            if command.is_empty() {
                 name.to_string()
             } else {
-                path
+                command
             }
         };
 
