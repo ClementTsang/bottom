@@ -25,7 +25,7 @@ impl KillDialog for Painter {
             return Some(vec![
                 Text::raw("\n"),
                 Text::raw(format!("Failed to kill process.\n{}\n", dd_err)),
-                Text::raw(format!("Please press ENTER or ESC to close this dialog.")),
+                Text::raw("Please press ENTER or ESC to close this dialog."),
             ]);
         } else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
             if let Some(first_pid) = to_kill_processes.1.first() {
