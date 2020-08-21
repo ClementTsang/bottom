@@ -674,6 +674,7 @@ impl Prefix {
                     process.cpu_percent_usage,
                     numerical_query.value,
                 ),
+                // FIXME: This doesn't work with mem values!
                 PrefixType::Mem => matches_condition(
                     &numerical_query.condition,
                     process.mem_percent_usage,
