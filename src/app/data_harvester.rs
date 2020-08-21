@@ -111,9 +111,13 @@ impl Default for DataCollector {
             widgets_to_harvest: UsedWidgets::default(),
             battery_manager: None,
             battery_list: None,
-            page_file_size_kb: if cfg!(target_os = "linux") {
-                unsafe { libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024 }
-            } else {
+            page_file_size_kb: {
+                #[cfg(target_os = "linux")]
+                unsafe {
+                    libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024
+                }
+
+                #[cfg(not(target_os = "linux"))]
                 0
             },
         }
