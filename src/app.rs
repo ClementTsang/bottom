@@ -1151,7 +1151,7 @@ impl App {
             '+' => self.zoom_in(),
             '-' => self.zoom_out(),
             '=' => self.reset_zoom(),
-            'e' => self.expand_widget(),
+            'e' => self.toggle_expand_widget(),
             's' => self.toggle_sort(),
             'I' => self.invert_sort(),
             '%' => self.toggle_percentages(),
@@ -1184,6 +1184,15 @@ impl App {
 
     pub fn get_to_delete_processes(&self) -> Option<(String, Vec<u32>)> {
         self.to_delete_process_list.clone()
+    }
+
+    fn toggle_expand_widget(&mut self) {
+        if self.is_expanded {
+            self.is_expanded = false;
+            self.is_force_redraw = true;
+        } else {
+            self.expand_widget();
+        }
     }
 
     fn expand_widget(&mut self) {
