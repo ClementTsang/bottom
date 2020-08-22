@@ -426,9 +426,11 @@ pub fn update_all_process_lists(app: &mut App) {
         .cloned()
         .collect::<Vec<_>>();
 
-    widget_ids.into_iter().for_each(|widget_id| {
-        update_final_process_list(app, widget_id);
-    });
+    if !app.is_frozen {
+        widget_ids.into_iter().for_each(|widget_id| {
+            update_final_process_list(app, widget_id);
+        });
+    }
 }
 
 pub fn update_final_process_list(app: &mut App, widget_id: u64) {
@@ -441,20 +443,22 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
     };
     let is_grouped = app.is_grouped(widget_id);
 
-    if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-        app.canvas_data.process_data = convert_process_data(
-            &app.data_collection,
-            if is_grouped {
-                ProcessGroupingType::Grouped
-            } else {
-                ProcessGroupingType::Ungrouped
-            },
-            if proc_widget_state.is_using_command {
-                ProcessNamingType::Path
-            } else {
-                ProcessNamingType::Name
-            },
-        );
+    if !app.is_frozen {
+        if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
+            app.canvas_data.process_data = convert_process_data(
+                &app.data_collection,
+                if is_grouped {
+                    ProcessGroupingType::Grouped
+                } else {
+                    ProcessGroupingType::Ungrouped
+                },
+                if proc_widget_state.is_using_command {
+                    ProcessNamingType::Path
+                } else {
+                    ProcessNamingType::Name
+                },
+            );
+        }
     }
 
     let process_filter = app.get_process_filter(widget_id);
