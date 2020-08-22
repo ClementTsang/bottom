@@ -258,7 +258,7 @@ impl ProcessQuery for ProcWidgetState {
                                     compare_prefix: None,
                                 })
                             }
-                            PrefixType::Pid => {
+                            PrefixType::Pid | PrefixType::State => {
                                 // We have to check if someone put an "="...
                                 if content == "=" {
                                     // Check next string if possible
@@ -571,6 +571,7 @@ pub enum PrefixType {
     TRead,
     TWrite,
     Name,
+    State,
     __Nonexhaustive,
 }
 
@@ -581,17 +582,18 @@ impl std::str::FromStr for PrefixType {
         use PrefixType::*;
 
         let lower_case = s.to_lowercase();
-        // Didn't add %cpu, %mem, mem_bytes, total_read, and total_write
+        // Didn't add mem_bytes, total_read, and total_write
         // for now as it causes help to be clogged.
         match lower_case.as_str() {
-            "cpu" => Ok(PCpu),
-            "mem" => Ok(PMem),
+            "cpu" | "cpu%" => Ok(PCpu),
+            "mem" | "mem%" => Ok(PMem),
             "memb" => Ok(MemBytes),
-            "read" => Ok(Rps),
-            "write" => Ok(Wps),
-            "tread" => Ok(TRead),
-            "twrite" => Ok(TWrite),
+            "read" | "r/s" => Ok(Rps),
+            "write" | "w/s" => Ok(Wps),
+            "tread" | "t.read" => Ok(TRead),
+            "twrite" | "t.write" => Ok(TWrite),
             "pid" => Ok(Pid),
+            "state" => Ok(State),
             _ => Ok(Name),
         }
     }
@@ -618,7 +620,7 @@ impl Prefix {
         } else if let Some((prefix_type, query_content)) = &mut self.regex_prefix {
             if let StringQuery::Value(regex_string) = query_content {
                 match prefix_type {
-                    PrefixType::Pid | PrefixType::Name => {
+                    PrefixType::Pid | PrefixType::Name | PrefixType::State => {
                         let escaped_regex: String;
                         let final_regex_string = &format!(
                             "{}{}{}{}",
@@ -667,6 +669,7 @@ impl Prefix {
                 match prefix_type {
                     PrefixType::Name => r.is_match(process.name.as_str()),
                     PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
+                    PrefixType::State => r.is_match(process.process_state.as_str()),
                     _ => true,
                 }
             } else {
