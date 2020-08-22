@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   backwards compatibility's sake, for macOS, this will still check `.config` if it exists first,
   but otherwise, it will default to the new location.
 
+- Allow `e` to also escape expanded mode.
+
 ### Bug Fixes
 
 - [#183](https://github.com/ClementTsang/bottom/pull/183): Fixed bug in basic mode where the battery widget was placed incorrectly.

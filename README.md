@@ -199,7 +199,7 @@ Run using `btm`.
 | `?`                                         | Open help menu                                                               |
 | `gg`, `Home`                                | Jump to the first entry                                                      |
 | `Shift-g`, `End`                            | Jump to the last entry                                                       |
-| `e`                                         | Expand the currently selected widget                                         |
+| `e`                                         | Toggle expanding the currently selected widget                               |
 | `+`                                         | Zoom in on chart (decrease time range)                                       |
 | `-`                                         | Zoom out on chart (increase time range)                                      |
 | `=`                                         | Reset zoom                                                                   |
