@@ -107,7 +107,7 @@ pub const PROCESS_HELP_TEXT: [&str; 12] = [
     "%              Toggle between values and percentages for memory usage",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 45] = [
+pub const SEARCH_HELP_TEXT: [&str; 46] = [
     "4 - Process search widget\n",
     "Tab            Toggle between searching for PID and name\n",
     "Esc            Close the search widget (retains the filter)\n",
@@ -132,6 +132,7 @@ pub const SEARCH_HELP_TEXT: [&str; 45] = [
     "write, w/s     ex: write <= 1 tb\n",
     "tread          ex: tread = 1\n",
     "twrite         ex: twrite = 1\n",
+    "state          ex: state = running\n",
     "\n",
     "Comparison operators:\n",
     "=              ex: cpu = 1\n",

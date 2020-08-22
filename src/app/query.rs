@@ -258,7 +258,7 @@ impl ProcessQuery for ProcWidgetState {
                                     compare_prefix: None,
                                 })
                             }
-                            PrefixType::Pid => {
+                            PrefixType::Pid | PrefixType::State => {
                                 // We have to check if someone put an "="...
                                 if content == "=" {
                                     // Check next string if possible
@@ -620,7 +620,7 @@ impl Prefix {
         } else if let Some((prefix_type, query_content)) = &mut self.regex_prefix {
             if let StringQuery::Value(regex_string) = query_content {
                 match prefix_type {
-                    PrefixType::Pid | PrefixType::Name => {
+                    PrefixType::Pid | PrefixType::Name | PrefixType::State => {
                         let escaped_regex: String;
                         let final_regex_string = &format!(
                             "{}{}{}{}",
