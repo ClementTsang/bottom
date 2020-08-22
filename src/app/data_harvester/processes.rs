@@ -60,7 +60,7 @@ pub struct ProcessHarvest {
     pub pid: u32,
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
-    pub mem_usage_kb: u64,
+    pub mem_usage_bytes: u64,
     // pub rss_kb: u64,
     // pub virt_kb: u64,
     pub name: String,
@@ -282,7 +282,8 @@ fn read_proc<S: core::hash::BuildHasher>(
     )?;
     let (_vsize, rss) = get_linux_process_vsize_rss(&stat);
     let mem_usage_kb = rss * page_file_kb;
-    let mem_usage_percent = mem_usage_kb as f64 * 100.0 / mem_total_kb as f64;
+    let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
+    let mem_usage_bytes = mem_usage_kb * 1024;
 
     // This can fail if permission is denied!
     let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
@@ -320,7 +321,7 @@ fn read_proc<S: core::hash::BuildHasher>(
         name,
         command,
         mem_usage_percent,
-        mem_usage_kb,
+        mem_usage_bytes,
         cpu_usage_percent,
         total_read_bytes,
         total_write_bytes,
@@ -429,7 +430,7 @@ pub fn windows_macos_get_processes_list(
             } else {
                 0.0
             },
-            mem_usage_kb: process_val.memory(),
+            mem_usage_bytes: process_val.memory() * 1024,
             cpu_usage_percent: process_cpu_usage,
             read_bytes_per_sec: disk_usage.read_bytes,
             write_bytes_per_sec: disk_usage.written_bytes,

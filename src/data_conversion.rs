@@ -36,7 +36,7 @@ pub struct ConvertedProcessData {
     pub name: String,
     pub cpu_percent_usage: f64,
     pub mem_percent_usage: f64,
-    pub mem_usage_kb: u64,
+    pub mem_usage_bytes: u64,
     pub mem_usage_str: (f64, String),
     pub group_pids: Vec<u32>,
     pub read_per_sec: String,
@@ -55,7 +55,7 @@ pub struct SingleProcessData {
     pub pid: u32,
     pub cpu_percent_usage: f64,
     pub mem_percent_usage: f64,
-    pub mem_usage_kb: u64,
+    pub mem_usage_bytes: u64,
     pub group_pids: Vec<u32>,
     pub read_per_sec: u64,
     pub write_per_sec: u64,
@@ -402,8 +402,8 @@ pub fn convert_process_data(
                     },
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
-                    mem_usage_kb: process.mem_usage_kb,
-                    mem_usage_str: get_exact_byte_values(process.mem_usage_kb * 1024, false),
+                    mem_usage_bytes: process.mem_usage_bytes,
+                    mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
                     group_pids: vec![process.pid],
                     read_per_sec,
                     write_per_sec,
@@ -434,7 +434,7 @@ pub fn convert_process_data(
 
                 (*entry).cpu_percent_usage += process.cpu_usage_percent;
                 (*entry).mem_percent_usage += process.mem_usage_percent;
-                (*entry).mem_usage_kb += process.mem_usage_kb;
+                (*entry).mem_usage_bytes += process.mem_usage_bytes;
                 (*entry).group_pids.push(process.pid);
                 (*entry).read_per_sec += process.read_bytes_per_sec;
                 (*entry).write_per_sec += process.write_bytes_per_sec;
@@ -465,8 +465,8 @@ pub fn convert_process_data(
                         name: identifier.to_string(),
                         cpu_percent_usage: p.cpu_percent_usage,
                         mem_percent_usage: p.mem_percent_usage,
-                        mem_usage_kb: p.mem_usage_kb,
-                        mem_usage_str: get_exact_byte_values(p.mem_usage_kb * 1024, false),
+                        mem_usage_bytes: p.mem_usage_bytes,
+                        mem_usage_str: get_exact_byte_values(p.mem_usage_bytes, false),
                         group_pids: p.group_pids,
                         read_per_sec,
                         write_per_sec,

@@ -46,11 +46,17 @@ pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
                 _ => "Unknown error occurred."
             };
 
-                return Err(BottomError::GenericError(format!(
-                    "Error code {} - {}",
-                    err_code.unwrap_or(-1),
-                    err,
-                )));
+                return if let Some(err_code) = err_code {
+                    Err(BottomError::GenericError(format!(
+                        "Error code {} - {}",
+                        err_code, err,
+                    )))
+                } else {
+                    Err(BottomError::GenericError(format!(
+                        "Error code ??? - {}",
+                        err,
+                    )))
+                };
             }
         }
     } else if cfg!(target_os = "windows") {
