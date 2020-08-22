@@ -57,6 +57,7 @@
         "vsize",
         "whitespaces",
         "winapi",
+        "winget",
         "winnt",
         "wixtoolset",
         "xzvf",

@@ -66,7 +66,8 @@ before_deploy:
       cargo install cargo-wix;
       cargo wix init;
       cargo wix;
-      cp "./target/wix/bottom*.msi" .
+      cp "./target/wix/bottom*.msi" ./bottom_x86_64_installer.msi
+        python "./deployment/packager.py" "./bottom_x86_64_installer.msi" $TRAVIS_TAG "./deployment/windows/winget/winget.yaml.template", "$TRAVIS_TAG.yaml" "SHA256";
     else
         cargo build --release;
         cp ./target/release/btm btm;
@@ -83,7 +84,6 @@ before_deploy:
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
           tar -czvf bottom_x86_64-apple-darwin.tar.gz btm;
           python "./deployment/packager.py" "./bottom_x86_64-apple-darwin.tar.gz" $TRAVIS_TAG "./deployment/macos/homebrew/bottom.rb.template", "./bottom.rb" "SHA256";
-          tar -czvf homebrew.tar.gz bottom.rb;
         fi
     fi
 
@@ -98,9 +98,10 @@ deploy:
     - bottom_*.zip
     - bottom_*.deb
     - arch.tar.gz
-    - homebrew.tar.gz
+    - bottom.rb
     - choco.zip
-    - bottom*.msi
+    - bottom_x86_64_installer.msi
+    - $TRAVIS_TAG.yaml
   skip_cleanup: true
   on:
     tags: true
