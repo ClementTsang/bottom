@@ -107,7 +107,7 @@ pub const PROCESS_HELP_TEXT: [&str; 12] = [
     "%              Toggle between values and percentages for memory usage",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 44] = [
+pub const SEARCH_HELP_TEXT: [&str; 45] = [
     "4 - Process search widget\n",
     "Tab            Toggle between searching for PID and name\n",
     "Esc            Close the search widget (retains the filter)\n",
@@ -122,13 +122,14 @@ pub const SEARCH_HELP_TEXT: [&str; 44] = [
     "Left, Alt-h    Move cursor left\n",
     "Right, Alt-l   Move cursor right\n",
     "\n",
-    "Search keywords:\n",
+    "Supported search types:\n",
+    "<by name/cmd>  ex: btm\n",
     "pid            ex: pid 825\n",
-    "cpu            ex: cpu > 4.2\n",
-    "mem            ex: mem < 4.2\n",
+    "cpu, cpu%      ex: cpu > 4.2\n",
+    "mem, mem%      ex: mem < 4.2\n",
     "memb           ex: memb < 100 kb\n",
-    "read           ex: read >= 1 b\n",
-    "write          ex: write <= 1 tb\n",
+    "read, r/s      ex: read >= 1 b\n",
+    "write, w/s     ex: write <= 1 tb\n",
     "tread          ex: tread = 1\n",
     "twrite         ex: twrite = 1\n",
     "\n",
