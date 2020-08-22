@@ -334,7 +334,8 @@ impl ProcessQuery for ProcWidgetState {
                                         let mut value = read_value;
 
                                         match prefix_type {
-                                            PrefixType::Rps
+                                            PrefixType::MemBytes
+                                            | PrefixType::Rps
                                             | PrefixType::Wps
                                             | PrefixType::TRead
                                             | PrefixType::TWrite => {
@@ -562,8 +563,9 @@ impl Debug for And {
 #[derive(Debug)]
 pub enum PrefixType {
     Pid,
-    Cpu,
-    Mem,
+    PCpu,
+    MemBytes,
+    PMem,
     Rps,
     Wps,
     TRead,
@@ -579,9 +581,12 @@ impl std::str::FromStr for PrefixType {
         use PrefixType::*;
 
         let lower_case = s.to_lowercase();
+        // Didn't add %cpu, %mem, mem_bytes, total_read, and total_write
+        // for now as it causes help to be clogged.
         match lower_case.as_str() {
-            "cpu" => Ok(Cpu),
-            "mem" => Ok(Mem),
+            "cpu" => Ok(PCpu),
+            "mem" => Ok(PMem),
+            "memb" => Ok(MemBytes),
             "read" => Ok(Rps),
             "write" => Ok(Wps),
             "tread" => Ok(TRead),
@@ -669,15 +674,19 @@ impl Prefix {
             }
         } else if let Some((prefix_type, numerical_query)) = &self.compare_prefix {
             match prefix_type {
-                PrefixType::Cpu => matches_condition(
+                PrefixType::PCpu => matches_condition(
                     &numerical_query.condition,
                     process.cpu_percent_usage,
                     numerical_query.value,
                 ),
-                // FIXME: This doesn't work with mem values!
-                PrefixType::Mem => matches_condition(
+                PrefixType::PMem => matches_condition(
                     &numerical_query.condition,
                     process.mem_percent_usage,
+                    numerical_query.value,
+                ),
+                PrefixType::MemBytes => matches_condition(
+                    &numerical_query.condition,
+                    process.mem_usage_bytes as f64,
                     numerical_query.value,
                 ),
                 PrefixType::Rps => matches_condition(

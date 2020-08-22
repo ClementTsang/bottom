@@ -269,7 +269,7 @@ Run using `btm`.
 
 ### Process searching keywords
 
-- Note none of the keywords are case sensitive.
+- None of the keywords are case sensitive.
 - Use brackets to logically group together parts of the search.
 - Furthermore, if you want to search a reserved keyword, surround the text in quotes - for example, `"or" or "(sd-pam)"` would be a valid search:
 
@@ -277,15 +277,18 @@ Run using `btm`.
 
 #### Supported keywords
 
-| Keywords | Example         | Description                                                                     |
-| -------- | --------------- | ------------------------------------------------------------------------------- |
-| `pid`    | `pid: 1044`     | Matches by PID; supports regex and requiring matching the entire PID            |
-| `cpu`    | `cpu > 0.5`     | Matches the condition for the CPU column; supports comparison operators         |
-| `mem`    | `mem < 0.5`     | Matches the condition for the memory column; supports comparison operators      |
-| `read`   | `read = 1`      | Matches the condition for the read/s column; supports comparison operators      |
-| `write`  | `write >= 1`    | Matches the condition for the write/s column; supports comparison operators     |
-| `tread`  | `tread <= 1024` | Matches the condition for the total read column; supports comparison operators  |
-| `twrite` | `twrite > 1024` | Matches the condition for the total write column; supports comparison operators |
+Searching without a keyword will search by process or command name (depends on what column is being shown by the current process widget).
+
+| Keywords | Example            | Description                                                                                       |
+| -------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `pid`    | `pid: 1044`        | Matches by PID; supports regex and requiring matching the entire PID                              |
+| `cpu`    | `cpu > 0.5`        | Matches the condition for the CPU column; supports comparison operators                           |
+| `memb`   | `memb > 1000 b`    | Matches the condition for the memory column in terms of bytes; supports comparison operators      |
+| `mem`    | `mem < 0.5`        | Matches the condition for the memory column in terms of percent; supports comparison operators    |
+| `read`   | `read = 1 mb`      | Matches the condition for the read/s column in terms of bytes; supports comparison operators      |
+| `write`  | `write >= 1 kb`    | Matches the condition for the write/s column in terms of bytes; supports comparison operators     |
+| `tread`  | `tread <= 1024 gb` | Matches the condition for the total read column in terms of bytes; supports comparison operators  |
+| `twrite` | `twrite > 1024 tb` | Matches the condition for the total write column in terms of bytes; supports comparison operators |
 
 #### Supported comparison operators
 

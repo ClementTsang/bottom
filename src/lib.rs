@@ -524,8 +524,8 @@ pub fn sort_process_data(
         ProcessSorting::Mem => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
-                    a.mem_usage_kb,
-                    b.mem_usage_kb,
+                    a.mem_usage_bytes,
+                    b.mem_usage_bytes,
                     proc_widget_state.process_sorting_reverse,
                 )
             });
