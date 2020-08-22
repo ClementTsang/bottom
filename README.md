@@ -277,18 +277,18 @@ Run using `btm`.
 
 #### Supported search types
 
-| Keywords       | Example            | Description                                                                                       |
-| -------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-|                | `btm`              | Matches by process or command name; supports regex                                                |
-| `pid`          | `pid=1044`         | Matches by PID; supports regex                                                                    |
-| `cpu`, `cpu%`  | `cpu > 0.5`        | Matches the condition for the CPU column; supports comparison operators                           |
-| `memb`         | `memb > 1000 b`    | Matches the condition for the memory column in terms of bytes; supports comparison operators      |
-| `mem`, `mem%`  | `mem < 0.5`        | Matches the condition for the memory column in terms of percent; supports comparison operators    |
-| `read`, `r/s`  | `read = 1 mb`      | Matches the condition for the read/s column in terms of bytes; supports comparison operators      |
-| `write`, `w/s` | `write >= 1 kb`    | Matches the condition for the write/s column in terms of bytes; supports comparison operators     |
-| `tread`        | `tread <= 1024 gb` | Matches the condition for the total read column in terms of bytes; supports comparison operators  |
-| `twrite`       | `twrite > 1024 tb` | Matches the condition for the total write column in terms of bytes; supports comparison operators |
-| `state`        | `state=running`    | Matches by state; supports regex                                                                  |
+| Keywords            | Example            | Description                                                                     |
+| ------------------- | ------------------ | ------------------------------------------------------------------------------- |
+|                     | `btm`              | Matches by process or command name; supports regex                              |
+| `pid`               | `pid=1044`         | Matches by PID; supports regex                                                  |
+| `cpu`, `cpu%`       | `cpu > 0.5`        | Matches the CPU column; supports comparison operators                           |
+| `memb`              | `memb > 1000 b`    | Matches the memory column in terms of bytes; supports comparison operators      |
+| `mem`, `mem%`       | `mem < 0.5`        | Matches the memory column in terms of percent; supports comparison operators    |
+| `read`, `r/s`       | `read = 1 mb`      | Matches the read/s column in terms of bytes; supports comparison operators      |
+| `write`, `w/s`      | `write >= 1 kb`    | Matches the write/s column in terms of bytes; supports comparison operators     |
+| `tread`, `t.read`   | `tread <= 1024 gb` | Matches he total read column in terms of bytes; supports comparison operators   |
+| `twrite`, `t.write` | `twrite > 1024 tb` | Matches the total write column in terms of bytes; supports comparison operators |
+| `state`             | `state=running`    | Matches by state; supports regex                                                |
 
 #### Supported comparison operators
 
