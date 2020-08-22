@@ -62,6 +62,9 @@ before_deploy:
       zip bottom_i686-pc-windows-msvc.zip "btm.exe";
       python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG;
       zip choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
+      cargo install cargo-wix;
+      cargo wix init;
+      cargo wix;
     else
         cargo build --release;
         cp ./target/release/btm btm;
