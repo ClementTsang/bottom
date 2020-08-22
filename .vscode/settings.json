@@ -17,6 +17,7 @@
         "WASD",
         "Wojnarowski",
         "andys",
+        "choco",
         "cmdline",
         "crossterm",
         "curr",
@@ -57,6 +58,7 @@
         "whitespaces",
         "winapi",
         "winnt",
+        "wixtoolset",
         "xzvf",
         "ytop"
     ]
