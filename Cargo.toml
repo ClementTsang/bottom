@@ -58,7 +58,7 @@ predicates = "1"
 cargo-husky = "1"
 
 [package.metadata.deb]
-section = "utils"
+section = "utility"
 assets = [
     ["target/release/btm", "usr/bin/", "755"],
     ["LICENSE", "usr/share/doc/btm/", "644"],

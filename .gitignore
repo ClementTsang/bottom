@@ -13,3 +13,6 @@ rust-unmangle
 .idea/
 
 sample_configs/testing.toml
+
+# Wix
+/wix/
