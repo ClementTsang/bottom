@@ -14,6 +14,7 @@ nuspec_template = args[4]
 ps1_template = args[5]
 generated_nuspec = args[6]
 generated_ps1 = args[7]
+generated_ps1_dir = args[8]
 
 print("Generating Chocolatey package for:")
 print("     32-bit: %s", deployment_file_path_32)

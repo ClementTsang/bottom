@@ -23,8 +23,11 @@ before_install:
       export TARGET=x86_64-unknown-linux-gnu;
     elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
       export TARGET=x86_64-pc-windows-msvc;
-      powershell Install-WindowsFeature Net-Framework-Core;
-      choco install -y wixtoolset;
+      if [[ -n $TRAVIS_TAG ]]; then
+        powershell Install-WindowsFeature Net-Framework-Core;
+        choco install -y wixtoolset;
+        export PATH=$PATH:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
+      fi
     elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
       export TARGET=x86_64-apple-darwin;
     fi
@@ -57,6 +60,7 @@ before_deploy:
       mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
       zip bottom_i686-pc-windows-msvc.zip "btm.exe";
       python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1" "./deployment/windows/choco/tools/";
+      ls "./deployment/windows/choco/";
       zip choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
       cargo install cargo-wix;
       cargo wix init;
