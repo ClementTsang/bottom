@@ -22,7 +22,8 @@ print("     VERSION: %s" % version)
 print("     NUSPEC TEMPLATE: %s" % nuspec_template)
 print("     PS1 TEMPLATE: %s" % ps1_template)
 print("     GENERATED NUSPEC: %s" % generated_nuspec)
-print("     GENERATED_PS1: %s" % generated_ps1)
+print("     GENERATED PS1: %s" % generated_ps1)
+print("     GENERATED PS1 DIR: %s" % generated_ps1_dir)
 
 with open(deployment_file_path_32, "rb") as deployment_file_32, open(
     deployment_file_path_64, "rb"
@@ -43,7 +44,7 @@ with open(deployment_file_path_32, "rb") as deployment_file_32, open(
         with open(generated_nuspec, "w") as generated_file:
             generated_file.write(substitute)
 
-    os.makedirs("tools")
+    os.makedirs(generated_ps1_dir)
     with open(ps1_template, "r") as template_file:
         template = Template(template_file.read())
         substitute = template.safe_substitute(version=version, hash_32=hash_32, hash_64=hash_64)
