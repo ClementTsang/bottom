@@ -29,7 +29,7 @@ with open(deployment_file_path, "rb") as deployment_file:
         print('Unsupported hash format "%s".  Please use SHA512, SHA256, or SHA1.', hash_type)
         exit(1)
 
-    print("Generated hash: ", deployment_hash)
+    print("Generated hash: %s" % str(deployment_hash))
 
     with open(template_file_path, "r") as template_file:
         template = Template(template_file.read())
