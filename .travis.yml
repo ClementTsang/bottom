@@ -56,7 +56,6 @@ before_deploy:
       zip bottom_i686-pc-windows-msvc.zip "btm.exe";
       python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template";
       zip choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
-      choco install dotnet4.5.1;
       choco install wixtoolset;
       cargo install cargo-wix;
       cargo wix init;

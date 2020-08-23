@@ -8,7 +8,7 @@ provides=('bottom')
 makedepends=('cargo')
 arch=('x86_64')
 url="https://github.com/ClementTsang/bottom"
-source=("$pkgname-$pkgver.tar.gz::https://github.com/ClementTsang/bottom/releases/download/$pkgver/bottom_required_files.tar.gz")
+source=("$pkgname-$pkgver.tar.gz::https://github.com/ClementTsang/bottom/archive/$pkgver.tar.gz")
 license=('MIT')
 sha512sums=('$hash')
 
@@ -16,8 +16,11 @@ build() {
     cargo build --release --locked
 }
 
+check() {
+    cargo test --release --locked
+}
+
 package() {
+    install -Dm755 target/release/btm "$pkgdir/usr/bin/btm"
     install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
-    cd "./target/release"
-    install -Dm755 btm "$pkgdir/usr/bin/btm"
 }
