@@ -12,6 +12,8 @@ deployment_file_path_64 = args[2]
 version = args[3]
 nuspec_template = args[4]
 ps1_template = args[5]
+generated_nuspec = args[6]
+generated_ps1 = args[7]
 
 print("Generating Chocolatey package for:")
 print("     32-bit: %s", deployment_file_path_32)
@@ -19,6 +21,8 @@ print("     64-bit: %s", deployment_file_path_64)
 print("     VERSION: %s" % version)
 print("     NUSPEC TEMPLATE: %s" % nuspec_template)
 print("     PS1 TEMPLATE: %s" % ps1_template)
+print("     GENERATED NUSPEC: %s" % generated_nuspec)
+print("     GENERATED_PS1: %s" % generated_ps1)
 
 with open(deployment_file_path_32, "rb") as deployment_file_32, open(
     deployment_file_path_64, "rb"
@@ -36,7 +40,7 @@ with open(deployment_file_path_32, "rb") as deployment_file_32, open(
         print(substitute)
         print("\n============================================================\n")
 
-        with open("./bottom.nuspec", "w") as generated_file:
+        with open(generated_nuspec, "w") as generated_file:
             generated_file.write(substitute)
 
     os.makedirs("tools")
@@ -47,6 +51,6 @@ with open(deployment_file_path_32, "rb") as deployment_file_32, open(
         print(substitute)
         print("\n============================================================\n")
 
-        with open("./tools/chocolateyinstall.ps1", "w") as generated_file:
+        with open(generated_ps1, "w") as generated_file:
             generated_file.write(substitute)
 

@@ -54,9 +54,12 @@ before_deploy:
       strip "./target/i686-pc-windows-msvc/release/btm";
       mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
       zip bottom_i686-pc-windows-msvc.zip "btm.exe";
-      python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template";
+      python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1";
       zip choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
-      choco install wixtoolset;
+      # Generating msi
+      # See https://travis-ci.community/t/unable-to-install-wix-toolset/1071 for why we do nuget.
+      choco install nuget.commandline;
+      nuget install WiX.Toolset;
       cargo install cargo-wix;
       cargo wix init;
       cargo wix;
