@@ -51,21 +51,24 @@ before_deploy:
       choco install zip;
       rustup target add x86_64-pc-windows-msvc;
       cargo build --release --target x86_64-pc-windows-msvc;
-      strip "./target/x86_64-pc-windows-msvc/release/btm";
       mv "./target/x86_64-pc-windows-msvc/release/btm" "btm.exe";
+      strip "btm.exe"
       zip bottom_x86_64-pc-windows-msvc.zip "btm.exe";
+      rm "btm.exe"
       rustup target add i686-pc-windows-msvc;
       cargo build --release --target i686-pc-windows-msvc;
-      strip "./target/i686-pc-windows-msvc/release/btm";
       mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
+      strip "btm.exe"
       zip bottom_i686-pc-windows-msvc.zip "btm.exe";
+      rm "btm.exe"
       python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1" "./deployment/windows/choco/tools/";
-      ls "./deployment/windows/choco/";
       zip choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
       cargo install cargo-wix;
       cargo wix init;
       cargo wix;
-      cp "./target/wix/bottom*.msi" ./bottom_x86_64_installer.msi;
+      ls "./target/";
+      ls "./target/wix/";
+      mv "./target/wix/*.msi" ./bottom_x86_64_installer.msi;
       python "./deployment/packager.py" "./bottom_x86_64_installer.msi" $TRAVIS_TAG "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256";
     else
         cargo build --release;
