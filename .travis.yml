@@ -23,10 +23,8 @@ before_install:
       export TARGET=x86_64-unknown-linux-gnu;
     elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
       export TARGET=x86_64-pc-windows-msvc;
-      if [[ -z $TRAVIS_TAG ]]; then
-        choco install nuget.commandline;
-        nuget install WiX -version 3.11.1;
-      fi
+      powershell Install-WindowsFeature Net-Framework-Core;
+      choco install -y wixtoolset;
     elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
       export TARGET=x86_64-apple-darwin;
     fi
