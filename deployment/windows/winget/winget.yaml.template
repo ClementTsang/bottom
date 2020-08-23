@@ -12,4 +12,4 @@ Installers:
     Url: https://github.com/ClementTsang/bottom/releases/download/$version/bottom-$version-x86_64.msi
     Sha256: $hash
     InstallerType: msi
-
+    
