@@ -29,7 +29,7 @@ jobs:
         with:
           repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
           file: bottom.rb
-          tag: ${{ $RELEASE_VERSION }}
+          tag: $RELEASE_VERSION
           overwrite: true
   update_packages:
     runs-on: ubuntu-latest
