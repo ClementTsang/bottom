@@ -55,7 +55,6 @@ winapi = "0.3.9"
 [dev-dependencies]
 assert_cmd = "1.0"
 predicates = "1"
-cargo-husky = "1"
 
 [package.metadata.deb]
 section = "utility"
@@ -72,3 +71,8 @@ exist at the specified or default location, a blank one will be created for the 
 
 [package.metadata.wix]
 output = "bottom_x86_64_installer.msi"
+
+[dev-dependencies.cargo-husky]
+version = "1"
+default-features = false 
+features = ["precommit-hook", "run-cargo-clippy"]
