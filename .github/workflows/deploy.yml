@@ -2,9 +2,6 @@ name: Update Packages
 
 on:
   workflow_dispatch:
-    inputs:
-      tags:
-        description: "Test scenario tags"
   release:
     types: [published]
 
@@ -18,6 +15,11 @@ jobs:
       - name: Test env
         run: |
           echo $RELEASE_VERSION
+      - name: Make sure you're not on master...
+        run: |
+          if [[ $RELEASE_VERSION == "master" ]]; then
+            exit 1
+          fi
       - name: Download packages
         run: |
           curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-unknown-linux-gnu.tar.gz";
