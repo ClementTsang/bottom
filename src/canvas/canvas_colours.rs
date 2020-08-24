@@ -1,4 +1,5 @@
-use tui::style::{Color, Modifier, Style};
+use tui::style::{Color, Style};
+// use tui::style::Modifier;
 
 use colour_utils::*;
 
@@ -85,7 +86,9 @@ impl CanvasColours {
     }
 
     pub fn set_table_header_colour(&mut self, colour: &str) -> error::Result<()> {
-        self.table_header_style = get_style_from_config(colour)?.modifier(Modifier::BOLD);
+        self.table_header_style = get_style_from_config(colour)?;
+        // Disabled as it seems to be bugged when I go into full command mode...?  It becomes huge lol
+        // self.table_header_style = get_style_from_config(colour)?.modifier(Modifier::BOLD);
         Ok(())
     }
 
