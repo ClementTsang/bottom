@@ -1,6 +1,7 @@
 name: Update Packages
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
