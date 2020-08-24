@@ -1,8 +1,9 @@
 edition = "2018"
+reorder_imports = true
+reorder_modules = true
+merge_derives = true
+fn_args_layout = "Compressed"
+use_field_init_shorthand = true
+tab_spaces = 4
 max_width = 100
 newline_style = "Unix"
-reorder_imports = true
-fn_args_layout = "Compressed"
-merge_derives = true
-reorder_modules = true
-tab_spaces = 4
