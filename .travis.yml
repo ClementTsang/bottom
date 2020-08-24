@@ -65,10 +65,8 @@ before_deploy:
       zip choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
       cargo install cargo-wix;
       cargo wix init;
-      cargo wix;
-      ls "./target/";
-      ls "./target/wix/";
-      mv "./target/wix/*.msi" ./bottom_x86_64_installer.msi;
+      cargo wix -n "bottom_x86_64_installer.msi";
+      cp "./target/wix/bottom_x86_64_installer.msi" ./bottom_x86_64_installer.msi;
       python "./deployment/packager.py" "./bottom_x86_64_installer.msi" $TRAVIS_TAG "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256";
     else
         cargo build --release;
