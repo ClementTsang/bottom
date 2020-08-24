@@ -9,15 +9,12 @@ jobs:
   set_env:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Set env
         run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
       - name: Test env
         run: |
           echo $RELEASE_VERSION
-  update_homebrew:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
       - name: Download packages
         run: |
           curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-unknown-linux-gnu.tar.gz";
@@ -32,10 +29,6 @@ jobs:
           file: bottom.rb
           tag: $RELEASE_VERSION
           overwrite: true
-  update_packages:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
       - name: Trigger homebrew
         run: |
           curl -X POST https://api.github.com/repos/ClementTsang/homebrew-bottom/dispatches \
