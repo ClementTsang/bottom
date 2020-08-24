@@ -66,7 +66,6 @@ before_deploy:
       cargo install cargo-wix;
       cargo wix init;
       cargo wix;
-      cp "./target/wix/bottom_x86_64_installer.msi" ./bottom_x86_64_installer.msi;
       python "./deployment/packager.py" "./bottom_x86_64_installer.msi" $TRAVIS_TAG "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256";
     else
         cargo build --release;
