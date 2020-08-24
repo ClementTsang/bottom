@@ -10,7 +10,7 @@ arch=('x86_64')
 url="https://github.com/ClementTsang/bottom"
 source=("$pkgname-$pkgver.tar.gz::https://github.com/ClementTsang/bottom/archive/$pkgver.tar.gz")
 license=('MIT')
-sha512sums=('$hash')
+sha512sums=('$hash1')
 
 build() {
     cargo build --release --locked

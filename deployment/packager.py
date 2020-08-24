@@ -3,22 +3,27 @@ import sys
 from string import Template
 
 args = sys.argv
-deployment_file_path = args[1]
-version = args[2]
-template_file_path = args[3]
-generated_file_path = args[4]
+version = args[1]
+template_file_path = args[2]
+generated_file_path = args[3]
 
 # SHA512, SHA256, or SHA1
-hash_type = args[5]
+hash_type = args[4]
 
-print("Generating package for file: %s" % deployment_file_path)
+# Deployment files
+deployment_file_path_1 = args[5]
+deployment_file_path_2 = args[6] if len(args) > 6 else None
+
+print("Generating package for file: %s" % deployment_file_path_1)
+if deployment_file_path_2 is not None:
+    print("and for file: %s" % deployment_file_path_2)
 print("     VERSION: %s" % version)
 print("     TEMPLATE PATH: %s" % template_file_path)
 print("     SAVING AT: %s" % generated_file_path)
 print("     USING HASH TYPE: %s" % hash_type)
 
 
-with open(deployment_file_path, "rb") as deployment_file:
+def get_hash(deployment_file):
     if str.lower(hash_type) == "sha512":
         deployment_hash = hashlib.sha512(deployment_file.read()).hexdigest()
     elif str.lower(hash_type) == "sha256":
@@ -26,18 +31,30 @@ with open(deployment_file_path, "rb") as deployment_file:
     elif str.lower(hash_type) == "sha1":
         deployment_hash = hashlib.sha1(deployment_file.read()).hexdigest()
     else:
-        print('Unsupported hash format "%s".  Please use SHA512, SHA256, or SHA1.', hash_type)
+        print(
+            'Unsupported hash format "%s".  Please use SHA512, SHA256, or SHA1.', hash_type)
         exit(1)
 
     print("Generated hash: %s" % str(deployment_hash))
+    return deployment_hash
+
+
+with open(deployment_file_path_1, "rb") as deployment_file_1:
+    deployment_hash_1 = get_hash(deployment_file_1)
+
+    deployment_hash_2 = None
+    if deployment_file_path_2 is not None:
+        with open(deployment_file_path_2, "rb") as deployment_file_2:
+            deployment_hash_2 = get_hash(deployment_file_2)
 
     with open(template_file_path, "r") as template_file:
         template = Template(template_file.read())
-        substitute = template.safe_substitute(version=version, hash=deployment_hash)
+        substitute = template.safe_substitute(
+            version=version, hash1=deployment_hash_1) if deployment_hash_2 is None else template.safe_substitute(
+            version=version, hash1=deployment_hash_1, hash2=deployment_hash_2)
         print("\n================== Generated package file ==================\n")
         print(substitute)
         print("\n============================================================\n")
 
         with open(generated_file_path, "w") as generated_file:
             generated_file.write(substitute)
-

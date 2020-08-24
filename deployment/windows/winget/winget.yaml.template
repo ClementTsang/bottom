@@ -10,6 +10,6 @@ Homepage: https://github.com/ClementTsang/bottom
 Installers:
   - Arch: x64
     Url: https://github.com/ClementTsang/bottom/releases/download/$version/bottom-$version-x86_64.msi
-    Sha256: $hash
+    Sha256: $hash1
     InstallerType: msi
     

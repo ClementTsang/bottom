@@ -14,7 +14,7 @@ source=(
   LICENSE::${url}/raw/${pkgver}/LICENSE
 )
 sha512sums=(
-  '$hash'
+  '$hash1'
   SKIP
 )
 
