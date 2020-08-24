@@ -42,7 +42,7 @@ This is a nuspec. It mostly adheres to https://docs.nuget.org/create/Nuspec-Refe
     
     For more [documentation and usage](https://github.com/ClementTsang/bottom/blob/master/README.md), see the [official repo](https://github.com/ClementTsang/bottom).
     </description>
-    <releaseNotes>https://github.com/ClementTsang/bottom/releases/tag/0.4.3/</releaseNotes>
+    <releaseNotes>https://github.com/ClementTsang/bottom/releases/tag/$version/</releaseNotes>
   </metadata>
   <files>
     <!-- this section controls what actually gets packaged into the Chocolatey package -->
