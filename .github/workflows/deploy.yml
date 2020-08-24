@@ -2,6 +2,9 @@ name: Update Packages
 
 on:
   workflow_dispatch:
+    inputs:
+      tags:
+        description: "Test scenario tags"
   release:
     types: [published]
 
@@ -27,7 +30,7 @@ jobs:
         with:
           repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
           file: bottom.rb
-          tag: ${{ RELEASE_VERSION }}
+          tag: ${{ github.ref }}
           overwrite: true
       - name: Trigger homebrew
         run: |
