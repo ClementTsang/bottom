@@ -6,7 +6,7 @@ on:
     types: [published]
 
 jobs:
-  set_env:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -27,17 +27,17 @@ jobs:
         with:
           repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
           file: bottom.rb
-          tag: $RELEASE_VERSION
+          tag: ${{ RELEASE_VERSION }}
           overwrite: true
       - name: Trigger homebrew
         run: |
           curl -X POST https://api.github.com/repos/ClementTsang/homebrew-bottom/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
           -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
-          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+          --data '{ "event_type": "update", "client_payload": { "version": "$RELEASE_VERSION" } }'
       - name: Trigger choco
         run: |
           curl -X POST https://api.github.com/repos/ClementTsang/choco-bottom/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
           -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
-          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+          --data '{ "event_type": "update", "client_payload": { "version": "$RELEASE_VERSION" } }'
