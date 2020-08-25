@@ -14,7 +14,7 @@ class Bottom < Formula
       bin.install "btm"
       ohai "You're done!  Run with \"btm\""
       ohai "For runtime flags, see \"btm --help\""
-      ohai "If you want to configure bottom, by default bottom looks for a file in $HOME/.config/bottom/bottom.toml"
+      ohai "If you want to configure bottom, by default bottom looks for a file in $HOME/Library/Application Support/bottom.toml or $HOME/.config/bottom/bottom.toml"
     end
   end
   
