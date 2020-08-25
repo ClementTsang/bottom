@@ -21,15 +21,23 @@ _Steps on how to reproduce the behaviour:_
 
 _If relevant, please provide information on:_
 
-**Operating System:**
+**Operating System and Version:**
 
 **Terminal:**
 
 **Shell:**
 
-**bottom version (use `btm -V`):**
+**System Info:**
 
-**Any other relevant information (more details are always good!):**
+_Information about your system specifically (in case I have to replicate your system via VM):_
+
+- _Total RAM:_
+
+- _Total SWAP:_
+
+- _CPU:_
+
+**bottom version (use `btm -V`):**
 
 ## Additional context
 
