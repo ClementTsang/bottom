@@ -101,7 +101,7 @@ pub const PROCESS_HELP_TEXT: [&str; 12] = [
     "n                Sort by process name, press again to reverse sorting order\n",
     "Tab              Group/un-group processes with the same name\n",
     "Ctrl-f, /        Open process search widget\n",
-    "P                Toggle between showing the full path or just the process name\n",
+    "P                Toggle between showing the full command or just the process name\n",
     "s, F6            Open process sort widget\n",
     "I                Invert current sort\n",
     "%                Toggle between values and percentages for memory usage",
