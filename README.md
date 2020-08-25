@@ -77,8 +77,8 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.6/bottom_source_code.tar.gz
-tar -xzvf bottom_source_code.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.4.6.tar.gz
+tar -xzvf 0.4.6.tar.gz
 cargo install --path .
 ```
 
