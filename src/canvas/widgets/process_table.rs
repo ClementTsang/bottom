@@ -152,6 +152,7 @@ impl ProcessTableWidget for Painter {
 
                 // Draw!
                 let is_proc_widget_grouped = proc_widget_state.is_grouped;
+                let is_using_command = proc_widget_state.is_using_command;
                 let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
                 let process_rows = sliced_vec.iter().map(|process| {
                     Row::Data(
@@ -161,7 +162,11 @@ impl ProcessTableWidget for Painter {
                             } else {
                                 process.pid.to_string()
                             },
-                            process.name.clone(),
+                            if is_using_command {
+                                process.command.clone()
+                            } else {
+                                process.name.clone()
+                            },
                             format!("{:.1}%", process.cpu_percent_usage),
                             if mem_enabled {
                                 format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)

@@ -24,6 +24,7 @@ pub enum ProcessSorting {
     TotalRead,
     TotalWrite,
     State,
+    Count,
 }
 
 impl std::fmt::Display for ProcessSorting {
@@ -44,6 +45,7 @@ impl std::fmt::Display for ProcessSorting {
                 ProcessName => "Name",
                 Command => "Command",
                 Pid => "PID",
+                Count => "Count",
             }
         )
     }

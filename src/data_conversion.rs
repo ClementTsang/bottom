@@ -34,6 +34,7 @@ pub struct ConvertedNetworkData {
 pub struct ConvertedProcessData {
     pub pid: u32,
     pub name: String,
+    pub command: String,
     pub cpu_percent_usage: f64,
     pub mem_percent_usage: f64,
     pub mem_usage_bytes: u64,
@@ -372,116 +373,112 @@ pub enum ProcessNamingType {
 }
 
 pub fn convert_process_data(
-    current_data: &data_farmer::DataCollection, grouping_type: ProcessGroupingType,
-    name_type: ProcessNamingType,
+    current_data: &data_farmer::DataCollection,
 ) -> Vec<ConvertedProcessData> {
-    match grouping_type {
-        ProcessGroupingType::Ungrouped => current_data
-            .process_harvest
-            .iter()
-            .map(|process| {
-                let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
-                let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
-                let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
-                let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
+    current_data
+        .process_harvest
+        .iter()
+        .map(|process| {
+            let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
+            let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
+            let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
+            let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
 
-                let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-                let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-                let total_read =
-                    format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
-                let total_write = format!(
-                    "{:.*}{}",
-                    0, converted_total_write.0, converted_total_write.1
-                );
+            let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
+            let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
+            let total_read = format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
+            let total_write = format!(
+                "{:.*}{}",
+                0, converted_total_write.0, converted_total_write.1
+            );
 
-                ConvertedProcessData {
-                    pid: process.pid,
-                    name: match name_type {
-                        ProcessNamingType::Name => process.name.to_string(),
-                        ProcessNamingType::Path => process.command.to_string(),
-                    },
-                    cpu_percent_usage: process.cpu_usage_percent,
-                    mem_percent_usage: process.mem_usage_percent,
-                    mem_usage_bytes: process.mem_usage_bytes,
-                    mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
-                    group_pids: vec![process.pid],
-                    read_per_sec,
-                    write_per_sec,
-                    total_read,
-                    total_write,
-                    rps_f64: process.read_bytes_per_sec as f64,
-                    wps_f64: process.write_bytes_per_sec as f64,
-                    tr_f64: process.total_read_bytes as f64,
-                    tw_f64: process.total_write_bytes as f64,
-                    process_state: process.process_state.to_owned(),
-                }
+            ConvertedProcessData {
+                pid: process.pid,
+                name: process.name.to_string(),
+                command: process.command.to_string(),
+                cpu_percent_usage: process.cpu_usage_percent,
+                mem_percent_usage: process.mem_usage_percent,
+                mem_usage_bytes: process.mem_usage_bytes,
+                mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
+                group_pids: vec![process.pid],
+                read_per_sec,
+                write_per_sec,
+                total_read,
+                total_write,
+                rps_f64: process.read_bytes_per_sec as f64,
+                wps_f64: process.write_bytes_per_sec as f64,
+                tr_f64: process.total_read_bytes as f64,
+                tw_f64: process.total_write_bytes as f64,
+                process_state: process.process_state.to_owned(),
+            }
+        })
+        .collect::<Vec<_>>()
+}
+
+pub fn group_process_data(
+    single_process_data: &[ConvertedProcessData], is_using_command: ProcessNamingType,
+) -> Vec<ConvertedProcessData> {
+    let mut grouped_hashmap: HashMap<String, SingleProcessData> = std::collections::HashMap::new();
+
+    single_process_data.iter().for_each(|process| {
+        let entry = grouped_hashmap
+            .entry(match is_using_command {
+                ProcessNamingType::Name => process.name.to_string(),
+                ProcessNamingType::Path => process.command.to_string(),
             })
-            .collect::<Vec<_>>(),
-        ProcessGroupingType::Grouped => {
-            let mut grouped_hashmap: HashMap<String, SingleProcessData> =
-                std::collections::HashMap::new();
-
-            current_data.process_harvest.iter().for_each(|process| {
-                let entry = grouped_hashmap
-                    .entry(match name_type {
-                        ProcessNamingType::Name => process.name.to_string(),
-                        ProcessNamingType::Path => process.command.to_string(),
-                    })
-                    .or_insert(SingleProcessData {
-                        pid: process.pid,
-                        ..SingleProcessData::default()
-                    });
-
-                (*entry).cpu_percent_usage += process.cpu_usage_percent;
-                (*entry).mem_percent_usage += process.mem_usage_percent;
-                (*entry).mem_usage_bytes += process.mem_usage_bytes;
-                (*entry).group_pids.push(process.pid);
-                (*entry).read_per_sec += process.read_bytes_per_sec;
-                (*entry).write_per_sec += process.write_bytes_per_sec;
-                (*entry).total_read += process.total_read_bytes;
-                (*entry).total_write += process.total_write_bytes;
+            .or_insert(SingleProcessData {
+                pid: process.pid,
+                ..SingleProcessData::default()
             });
 
-            grouped_hashmap
-                .iter()
-                .map(|(identifier, process_details)| {
-                    let p = process_details.clone();
-                    let converted_rps = get_exact_byte_values(p.read_per_sec, false);
-                    let converted_wps = get_exact_byte_values(p.write_per_sec, false);
-                    let converted_total_read = get_exact_byte_values(p.total_read, false);
-                    let converted_total_write = get_exact_byte_values(p.total_write, false);
+        (*entry).cpu_percent_usage += process.cpu_percent_usage;
+        (*entry).mem_percent_usage += process.mem_percent_usage;
+        (*entry).mem_usage_bytes += process.mem_usage_bytes;
+        (*entry).group_pids.push(process.pid);
+        (*entry).read_per_sec += process.rps_f64 as u64;
+        (*entry).write_per_sec += process.wps_f64 as u64;
+        (*entry).total_read += process.tr_f64 as u64;
+        (*entry).total_write += process.tw_f64 as u64;
+    });
 
-                    let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-                    let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-                    let total_read =
-                        format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
-                    let total_write = format!(
-                        "{:.*}{}",
-                        0, converted_total_write.0, converted_total_write.1
-                    );
+    grouped_hashmap
+        .iter()
+        .map(|(identifier, process_details)| {
+            let p = process_details.clone();
+            let converted_rps = get_exact_byte_values(p.read_per_sec, false);
+            let converted_wps = get_exact_byte_values(p.write_per_sec, false);
+            let converted_total_read = get_exact_byte_values(p.total_read, false);
+            let converted_total_write = get_exact_byte_values(p.total_write, false);
 
-                    ConvertedProcessData {
-                        pid: p.pid,
-                        name: identifier.to_string(),
-                        cpu_percent_usage: p.cpu_percent_usage,
-                        mem_percent_usage: p.mem_percent_usage,
-                        mem_usage_bytes: p.mem_usage_bytes,
-                        mem_usage_str: get_exact_byte_values(p.mem_usage_bytes, false),
-                        group_pids: p.group_pids,
-                        read_per_sec,
-                        write_per_sec,
-                        total_read,
-                        total_write,
-                        rps_f64: p.read_per_sec as f64,
-                        wps_f64: p.write_per_sec as f64,
-                        tr_f64: p.total_read as f64,
-                        tw_f64: p.total_write as f64,
-                        process_state: p.process_state,
-                    }
-                })
-                .collect::<Vec<_>>()
-        }
-    }
+            let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
+            let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
+            let total_read = format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
+            let total_write = format!(
+                "{:.*}{}",
+                0, converted_total_write.0, converted_total_write.1
+            );
+
+            ConvertedProcessData {
+                pid: p.pid,
+                name: identifier.to_string(),
+                command: identifier.to_string(),
+                cpu_percent_usage: p.cpu_percent_usage,
+                mem_percent_usage: p.mem_percent_usage,
+                mem_usage_bytes: p.mem_usage_bytes,
+                mem_usage_str: get_exact_byte_values(p.mem_usage_bytes, false),
+                group_pids: p.group_pids,
+                read_per_sec,
+                write_per_sec,
+                total_read,
+                total_write,
+                rps_f64: p.read_per_sec as f64,
+                wps_f64: p.write_per_sec as f64,
+                tr_f64: p.total_read as f64,
+                tw_f64: p.total_write as f64,
+                process_state: p.process_state,
+            }
+        })
+        .collect::<Vec<_>>()
 }
 
 pub fn convert_battery_harvest(
