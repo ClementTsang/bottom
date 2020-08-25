@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - Unreleased
 
-## [0.4.6] - 2020-08-24
+## [0.4.6] - 2020-08-25
 
 ### Features
 
@@ -19,15 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#196](https://github.com/ClementTsang/bottom/pull/196): Support searching processes by process state.
 
-### Changes
-
 - Added `WASD` as an alternative widget movement system.
+
+- [#198](https://github.com/ClementTsang/bottom/pull/198): Allow `e` to also escape expanded mode.
+
+### Changes
 
 - [#181](https://github.com/ClementTsang/bottom/pull/181): Changed to just support stable (and newer) Rust, due to library incompatibilities.
 
 - [#182](https://github.com/ClementTsang/bottom/pull/182): For macOS, support `$HOME/Library/Application Support` instead of `$HOME/.config` for config files. For backwards compatibility's sake, for macOS, this will still check `.config` if it exists first, but otherwise, it will default to the new location.
-
-- [#198](https://github.com/ClementTsang/bottom/pull/198): Allow `e` to also escape expanded mode.
 
 ### Bug Fixes
 
