@@ -9,7 +9,7 @@ Description: Yet another cross-platform graphical process/system monitor.
 Homepage: https://github.com/ClementTsang/bottom
 Installers:
   - Arch: x64
-    Url: https://github.com/ClementTsang/bottom/releases/download/$version/bottom-$version-x86_64.msi
+    Url: https://github.com/ClementTsang/bottom/releases/download/$version/bottom_x86_64_installer.msi
     Sha256: $hash1
     InstallerType: msi
     
