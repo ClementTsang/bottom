@@ -13,14 +13,17 @@ license=('MIT')
 sha512sums=('$hash1')
 
 build() {
+    cd $pkgname-$pkgver
     cargo build --release --locked
 }
 
 check() {
+    cd $pkgname-$pkgver
     cargo test --release --locked
 }
 
 package() {
+    cd $pkgname-$pkgver
     install -Dm755 target/release/btm "$pkgdir/usr/bin/btm"
     install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
 }
