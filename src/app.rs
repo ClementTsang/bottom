@@ -254,6 +254,13 @@ impl App {
                             .unwrap()
                             .enabled = !(proc_widget_state.is_grouped);
 
+                        proc_widget_state
+                            .columns
+                            .toggle(&processes::ProcessSorting::Count);
+                        proc_widget_state
+                            .columns
+                            .toggle(&processes::ProcessSorting::Pid);
+
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
                     }
                 }

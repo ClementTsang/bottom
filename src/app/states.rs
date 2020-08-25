@@ -161,6 +161,7 @@ impl Default for ProcColumn {
     fn default() -> Self {
         use ProcessSorting::*;
         let ordered_columns = vec![
+            Count,
             Pid,
             ProcessName,
             Command,
@@ -230,6 +231,15 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: true,
                             shortcut: Some("p"),
+                        },
+                    );
+                }
+                Count => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: false,
+                            shortcut: None,
                         },
                     );
                 }
@@ -369,6 +379,10 @@ impl ProcWidgetState {
         // TODO: If we add customizable columns, this should pull from config
         let mut columns = ProcColumn::default();
         columns.set_to_sorted_index(&process_sorting_type);
+        if is_grouped {
+            columns.toggle(&ProcessSorting::Count);
+            columns.toggle(&ProcessSorting::Pid);
+        }
 
         ProcWidgetState {
             process_search_state,
@@ -627,7 +641,6 @@ impl MemWidgetState {
         }
     }
 }
-
 pub struct MemState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, MemWidgetState>,

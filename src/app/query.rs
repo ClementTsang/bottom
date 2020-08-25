@@ -459,8 +459,10 @@ impl Query {
         Ok(())
     }
 
-    pub fn check(&self, process: &ConvertedProcessData) -> bool {
-        self.query.iter().all(|ok| ok.check(process))
+    pub fn check(&self, process: &ConvertedProcessData, is_using_command: bool) -> bool {
+        self.query
+            .iter()
+            .all(|ok| ok.check(process, is_using_command))
     }
 }
 
@@ -497,11 +499,11 @@ impl Or {
         Ok(())
     }
 
-    pub fn check(&self, process: &ConvertedProcessData) -> bool {
+    pub fn check(&self, process: &ConvertedProcessData, is_using_command: bool) -> bool {
         if let Some(rhs) = &self.rhs {
-            self.lhs.check(process) || rhs.check(process)
+            self.lhs.check(process, is_using_command) || rhs.check(process, is_using_command)
         } else {
-            self.lhs.check(process)
+            self.lhs.check(process, is_using_command)
         }
     }
 }
@@ -542,11 +544,11 @@ impl And {
         Ok(())
     }
 
-    pub fn check(&self, process: &ConvertedProcessData) -> bool {
+    pub fn check(&self, process: &ConvertedProcessData, is_using_command: bool) -> bool {
         if let Some(rhs) = &self.rhs {
-            self.lhs.check(process) && rhs.check(process)
+            self.lhs.check(process, is_using_command) && rhs.check(process, is_using_command)
         } else {
-            self.lhs.check(process)
+            self.lhs.check(process, is_using_command)
         }
     }
 }
@@ -651,7 +653,7 @@ impl Prefix {
         Ok(())
     }
 
-    pub fn check(&self, process: &ConvertedProcessData) -> bool {
+    pub fn check(&self, process: &ConvertedProcessData, is_using_command: bool) -> bool {
         fn matches_condition(condition: &QueryComparison, lhs: f64, rhs: f64) -> bool {
             match condition {
                 QueryComparison::Equal => (lhs - rhs).abs() < std::f64::EPSILON,
@@ -663,7 +665,7 @@ impl Prefix {
         }
 
         if let Some(and) = &self.or {
-            and.check(process)
+            and.check(process, is_using_command)
         } else if let Some((prefix_type, query_content)) = &self.regex_prefix {
             if let StringQuery::Regex(r) = query_content {
                 match prefix_type {

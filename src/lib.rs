@@ -434,31 +434,34 @@ pub fn update_all_process_lists(app: &mut App) {
 }
 
 pub fn update_final_process_list(app: &mut App, widget_id: u64) {
-    let is_invalid_or_blank = match app.proc_state.widget_states.get(&widget_id) {
-        Some(process_state) => process_state
-            .process_search_state
-            .search_state
-            .is_invalid_or_blank_search(),
-        None => false,
+    let (is_invalid_or_blank, is_using_command) = match app.proc_state.widget_states.get(&widget_id)
+    {
+        Some(process_state) => (
+            process_state
+                .process_search_state
+                .search_state
+                .is_invalid_or_blank_search(),
+            process_state.is_using_command,
+        ),
+        None => (false, false),
     };
     let is_grouped = app.is_grouped(widget_id);
 
     if !app.is_frozen {
-        if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-            app.canvas_data.process_data = convert_process_data(
-                &app.data_collection,
-                if is_grouped {
-                    ProcessGroupingType::Grouped
-                } else {
-                    ProcessGroupingType::Ungrouped
-                },
-                if proc_widget_state.is_using_command {
-                    ProcessNamingType::Path
-                } else {
-                    ProcessNamingType::Name
-                },
-            );
-        }
+        app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
+    }
+
+    if is_grouped {
+        app.canvas_data.process_data = group_process_data(
+            &app.canvas_data.single_process_data,
+            if is_using_command {
+                ProcessNamingType::Path
+            } else {
+                ProcessNamingType::Name
+            },
+        );
+    } else {
+        app.canvas_data.process_data = app.canvas_data.single_process_data.clone();
     }
 
     let process_filter = app.get_process_filter(widget_id);
@@ -469,7 +472,7 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
         .filter(|process| {
             if !is_invalid_or_blank {
                 if let Some(process_filter) = process_filter {
-                    process_filter.check(&process)
+                    process_filter.check(&process, is_using_command)
                 } else {
                     true
                 }
@@ -543,7 +546,7 @@ pub fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::ProcessName | ProcessSorting::Command => {
+        ProcessSorting::ProcessName => {
             // Don't repeat if false... it sorts by name by default anyways.
             if proc_widget_state.process_sorting_reverse {
                 to_sort_vec.sort_by(|a, b| {
@@ -555,6 +558,13 @@ pub fn sort_process_data(
                 })
             }
         }
+        ProcessSorting::Command => to_sort_vec.sort_by(|a, b| {
+            utils::gen_util::get_ordering(
+                &a.command.to_lowercase(),
+                &b.command.to_lowercase(),
+                proc_widget_state.process_sorting_reverse,
+            )
+        }),
         ProcessSorting::Pid => {
             if !proc_widget_state.is_grouped {
                 to_sort_vec.sort_by(|a, b| {
@@ -609,6 +619,9 @@ pub fn sort_process_data(
                 proc_widget_state.process_sorting_reverse,
             )
         }),
+        ProcessSorting::Count => {
+            // Nothing should happen here.
+        }
     }
 }
 
