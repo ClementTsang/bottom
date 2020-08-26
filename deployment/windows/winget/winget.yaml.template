@@ -1,8 +1,9 @@
 Id: Clement.bottom
 Version: $version
 Name: bottom
-Publisher: Clement
-License: MIT
+Publisher: Clement Tsang
+License: MIT License
+LicenseUrl: https://github.com/ClementTsang/bottom/blob/master/LICENSE
 AppMoniker: bottom
 Tags: tui, monitoring, terminal
 Description: Yet another cross-platform graphical process/system monitor. 
