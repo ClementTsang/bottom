@@ -38,7 +38,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
 - [Features](#features)
   - [Processes](#processes)
     - [Process searching](#process-searching)
-    - [Sorting](#process-sorting)
+    - [Process sorting](#process-sorting)
   - [Zoom](#zoom)
   - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
@@ -343,13 +343,13 @@ As yet _another_ process/system visualization and management application, bottom
 
 - Display information regarding processes, like CPU, memory, I/O usage, and process state
 
-- Process management (process killing _is_ all you need, right?)
+- Process management (well, if process killing is all you need)
 
 It also aims to be:
 
 - Lightweight
 
-- Cross-platform - supports Linux, Windows, and macOS
+- Cross-platform - supports 64-bit Linux, Windows, and macOS
 
 In addition, bottom also currently has the following features:
 
@@ -612,7 +612,7 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 - Basic mode is heavily inspired by [htop's](https://hisham.hm/htop/) design.
 
 - This application was written with many, _many_ libraries, and built on the
-  work of many talented people. This application would be impossible
-  without their work.
+  work of many talented people. This application would be impossible without their
+  work. I used to thank them all individually but the list got too large...
 
 - And of course, thanks to all contributors!
