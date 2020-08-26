@@ -51,6 +51,7 @@
         "subwidget",
         "sysconf",
         "sysinfo",
+        "tebibyte",
         "tokei",
         "twrite",
         "usage",

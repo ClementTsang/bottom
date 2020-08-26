@@ -36,7 +36,9 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Supported logical operators](#supported-logical-operators)
     - [Supported units](#supported-units)
 - [Features](#features)
-  - [Process searching](#process-searching)
+  - [Processes](#processes)
+    - [Process searching](#process-searching)
+    - [Sorting](#process-sorting)
   - [Zoom](#zoom)
   - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
@@ -351,7 +353,9 @@ It also aims to be:
 
 In addition, bottom also currently has the following features:
 
-### Process searching
+### Processes
+
+#### Process searching
 
 On any process widget, hit `/` to bring up a search bar. If the layout has multiple process widgets, note this search is independent of other widgets.
 
@@ -367,15 +371,21 @@ This simple search can be refined by matching by case, matching the entire word,
 
 Now let's say you want to search for two things - luckily, we have the `AND` and `OR` logical operators:
 
-![logical operator demo](assets/or_search.png)
+![logical operator demo with just ors](assets/or_search.png)
 
-![logical operator demo](assets/and_or_search.png)
+![logical operator demo with ands and ors](assets/and_or_search.png)
 
 Furthermore, one is able to refine their searches by CPU usage, memory usage, PID, and more. For example:
 
 ![using cpu filter](assets/usage_search.png)
 
-One can see all available keywords and query options [here](#process-searching-keywords).
+You can see all available keywords and query options [here](#process-searching-keywords).
+
+#### Process sorting
+
+You can sort the processes list by any column you want by pressing `s` while on a process widget:
+
+![sorting](assets/sort.png)
 
 ### Zoom
 
@@ -386,7 +396,7 @@ Widgets can hold different time intervals independently. These time intervals ca
 ### Expand
 
 Only care about one specific widget? You can go to that widget and hit `e` to make that widget expand and take
-up the entire drawing area.
+up the entire drawing area. You can minimize this expanded widget with `Esc` or pressing `e` again.
 
 ### Basic mode
 
