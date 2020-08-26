@@ -669,7 +669,11 @@ impl Prefix {
         } else if let Some((prefix_type, query_content)) = &self.regex_prefix {
             if let StringQuery::Regex(r) = query_content {
                 match prefix_type {
-                    PrefixType::Name => r.is_match(process.name.as_str()),
+                    PrefixType::Name => r.is_match(if is_using_command {
+                        process.command.as_str()
+                    } else {
+                        process.name.as_str()
+                    }),
                     PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
                     PrefixType::State => r.is_match(process.process_state.as_str()),
                     _ => true,
