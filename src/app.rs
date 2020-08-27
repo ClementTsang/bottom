@@ -945,9 +945,6 @@ impl App {
             }
             self.handle_char(caught_char);
         } else if self.help_dialog_state.is_showing_help {
-            // TODO: Seems weird that we have it like this; it would be better to make this
-            // more obvious that we are separating dialog logic and normal logic IMO.
-            // This is even more so as most logic already checks for dialog state.
             match caught_char {
                 '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                     let potential_index = caught_char.to_digit(10);

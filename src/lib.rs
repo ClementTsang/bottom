@@ -421,6 +421,8 @@ pub fn handle_force_redraws(app: &mut App) {
 #[allow(clippy::needless_collect)]
 pub fn update_all_process_lists(app: &mut App) {
     if !app.is_frozen {
+        // According to clippy, I can avoid a collect... but if I follow it,
+        // I end up conflicting with the borrow checker since app is used within the closure... hm.
         let widget_ids = app
             .proc_state
             .widget_states
