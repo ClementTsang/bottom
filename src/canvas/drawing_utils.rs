@@ -19,11 +19,10 @@ pub fn get_variable_intrinsic_widths(
     let mut remaining_width = (total_width - (num_widths as u16 - 1)) as i32; // Required for spaces...
     let desired_widths = desired_widths_ratio
         .iter()
-        .map(|&desired_width_ratio| (desired_width_ratio * total_width as f64) as i32)
-        .collect::<Vec<_>>();
+        .map(|&desired_width_ratio| (desired_width_ratio * total_width as f64) as i32);
 
     for (desired_width, resulting_width, width_threshold) in izip!(
-        desired_widths.into_iter(),
+        desired_widths,
         resulting_widths.iter_mut(),
         width_thresholds
     ) {

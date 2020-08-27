@@ -210,10 +210,10 @@ impl App {
     }
 
     pub fn is_in_search_widget(&self) -> bool {
-        match self.current_widget.widget_type {
-            BottomWidgetType::ProcSearch => true,
-            _ => false,
-        }
+        matches!(
+            self.current_widget.widget_type,
+            BottomWidgetType::ProcSearch
+        )
     }
 
     fn reset_multi_tap_keys(&mut self) {
