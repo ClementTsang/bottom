@@ -104,7 +104,7 @@ impl NetworkGraphWidget for Painter {
                     .labels_style(self.colours.graph_style)
             };
 
-            // 0 is offset.
+            // -0.5 for offset.
             let y_axis_labels = ["0B", "1KiB", "1MiB", "1GiB"];
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)

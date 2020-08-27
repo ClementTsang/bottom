@@ -187,7 +187,7 @@ impl DataCollection {
     fn eat_network(&mut self, network: &network::NetworkHarvest, new_entry: &mut TimedData) {
         // RX
         let logged_rx_val = if network.rx as f64 > 0.0 {
-            (network.rx as f64).log(2.0)
+            network.rx as f64
         } else {
             0.0
         };
@@ -195,7 +195,7 @@ impl DataCollection {
 
         // TX
         let logged_tx_val = if network.tx as f64 > 0.0 {
-            (network.tx as f64).log(2.0)
+            network.tx as f64
         } else {
             0.0
         };
