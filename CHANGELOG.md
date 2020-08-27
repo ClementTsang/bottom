@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - Unreleased
 
+## [0.4.7] - 2020-08-26
+
+### Bug Fixes
+
+- [#204](https://github.com/ClementTsang/bottom/pull/204): Fix searching by command name being broken.
+
 ## [0.4.6] - 2020-08-25
 
 ### Features
