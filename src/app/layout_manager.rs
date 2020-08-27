@@ -887,18 +887,12 @@ pub enum BottomWidgetType {
 impl BottomWidgetType {
     pub fn is_widget_table(&self) -> bool {
         use BottomWidgetType::*;
-        match self {
-            Disk | Proc | ProcSort | Temp | CpuLegend => true,
-            _ => false,
-        }
+        matches!(self, Disk | Proc | ProcSort | Temp | CpuLegend)
     }
 
     pub fn is_widget_graph(&self) -> bool {
         use BottomWidgetType::*;
-        match self {
-            Cpu | Net | Mem => true,
-            _ => false,
-        }
+        matches!(self, Cpu | Net | Mem)
     }
 
     pub fn get_pretty_name(&self) -> &str {

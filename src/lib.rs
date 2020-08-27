@@ -418,15 +418,16 @@ pub fn handle_force_redraws(app: &mut App) {
     }
 }
 
+#[allow(clippy::needless_collect)]
 pub fn update_all_process_lists(app: &mut App) {
-    let widget_ids = app
-        .proc_state
-        .widget_states
-        .keys()
-        .cloned()
-        .collect::<Vec<_>>();
-
     if !app.is_frozen {
+        let widget_ids = app
+            .proc_state
+            .widget_states
+            .keys()
+            .cloned()
+            .collect::<Vec<_>>();
+
         widget_ids.into_iter().for_each(|widget_id| {
             update_final_process_list(app, widget_id);
         });
