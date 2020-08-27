@@ -301,6 +301,7 @@ impl ProcColumn {
             .sum()
     }
 
+    /// ALWAYS call this when opening the sorted window.
     pub fn set_to_sorted_index(&mut self, proc_sorting_type: &ProcessSorting) {
         // TODO [Custom Columns]: If we add custom columns, this may be needed!  Since column indices will change, this runs the risk of OOB.  So, when you change columns, CALL THIS AND ADAPT!
         let mut true_index = 0;
