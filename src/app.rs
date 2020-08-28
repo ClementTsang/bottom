@@ -90,9 +90,7 @@ pub struct App {
     pub temp_state: TempState,
     pub disk_state: DiskState,
     pub battery_state: BatteryState,
-
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
-
     pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget: BottomWidget,
@@ -279,9 +277,6 @@ impl App {
         }
     }
 
-    /// "On space" if we don't want to treat is as a character.
-    pub fn on_space(&mut self) {}
-
     pub fn on_slash(&mut self) {
         if !self.is_in_dialog() {
             if let BottomWidgetType::Proc = self.current_widget.widget_type {
@@ -295,6 +290,7 @@ impl App {
                         .search_state
                         .is_enabled = true;
                     self.move_widget_selection(&WidgetDirection::Down);
+                    self.is_force_redraw = true;
                 }
             }
         }
@@ -326,6 +322,8 @@ impl App {
                         self.move_widget_selection(&WidgetDirection::Right);
                     }
                 }
+
+                self.is_force_redraw = true;
             }
             _ => {}
         }
@@ -1151,7 +1149,6 @@ impl App {
             'L' | 'D' => self.move_widget_selection(&WidgetDirection::Right),
             'K' | 'W' => self.move_widget_selection(&WidgetDirection::Up),
             'J' | 'S' => self.move_widget_selection(&WidgetDirection::Down),
-            ' ' => self.on_space(),
             '+' => self.zoom_in(),
             '-' => self.zoom_out(),
             '=' => self.reset_zoom(),
@@ -2167,5 +2164,30 @@ impl App {
             BottomWidgetType::Net => self.reset_net_zoom(),
             _ => {}
         }
+    }
+
+    /// Moves the mouse to the widget that was clicked on, then propagates the click down to be
+    /// handled by the widget specifically.
+    pub fn left_mouse_click_movement(&mut self, x: u16, y: u16) {
+        // Pretty dead simple - iterate through the widget map and go to the widget where the click
+        // is within.
+        //
+        // TODO: [MOUSE] It's also possible to maybe do this with some kinda binary heap or something?  This would
+        // require ANOTHER collection of data but would also mean our click-to-widget speed would
+        // maybe faster...?
+        for (new_widget_id, widget) in &self.widget_map {
+            if let Some((tlc_x, tlc_y)) = widget.top_left_corner {
+                if let Some((brc_x, brc_y)) = widget.bottom_right_corner {
+                    if (x >= tlc_x && y >= tlc_y) && (x <= brc_x && y <= brc_y) {
+                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                            self.current_widget = new_widget.clone();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // FIXME: [MOUSE] how to handle click propagation + handling?
     }
 }

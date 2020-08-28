@@ -208,6 +208,14 @@ impl Painter {
             self.width = current_width;
         }
 
+        if app_state.is_force_redraw {
+            // If we're force drawing, reset ALL mouse boundaries.
+            for widget in app_state.widget_map.values_mut() {
+                widget.top_left_corner = None;
+                widget.bottom_right_corner = None;
+            }
+        }
+
         terminal.autoresize()?;
         terminal.draw(|mut f| {
             if app_state.help_dialog_state.is_showing_help {

@@ -67,5 +67,14 @@ impl NetworkBasicWidget for Painter {
             Paragraph::new(total_net_text.iter()).block(Block::default()),
             total_loc[0],
         );
+
+        if app_state.is_force_redraw {
+            // Update draw loc in widget map
+            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                widget.bottom_right_corner =
+                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+            }
+        }
     }
 }
