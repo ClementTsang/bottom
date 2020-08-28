@@ -144,10 +144,9 @@ impl CpuGraphWidget for Painter {
                     .labels_style(self.colours.graph_style)
             };
 
-            // Note this is offset as otherwise the 0 value is not drawn!
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
-                .bounds([-0.5, 100.5])
+                .bounds([0.0, 100.5])
                 .labels_style(self.colours.graph_style)
                 .labels(&["0%", "100%"]);
 

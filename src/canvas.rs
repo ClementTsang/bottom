@@ -28,14 +28,17 @@ mod dialogs;
 mod drawing_utils;
 mod widgets;
 
+/// Point is of time, data
+type Point = (f64, f64);
+
 #[derive(Default)]
 pub struct DisplayableData {
     pub rx_display: String,
     pub tx_display: String,
     pub total_rx_display: String,
     pub total_tx_display: String,
-    pub network_data_rx: Vec<(f64, f64)>,
-    pub network_data_tx: Vec<(f64, f64)>,
+    pub network_data_rx: Vec<Point>,
+    pub network_data_tx: Vec<Point>,
     pub disk_data: Vec<Vec<String>>,
     pub temp_sensor_data: Vec<Vec<String>>,
     pub single_process_data: Vec<ConvertedProcessData>, // Contains single process data
@@ -45,8 +48,8 @@ pub struct DisplayableData {
     pub swap_label_percent: String,
     pub mem_label_frac: String,
     pub swap_label_frac: String,
-    pub mem_data: Vec<(f64, f64)>,
-    pub swap_data: Vec<(f64, f64)>,
+    pub mem_data: Vec<Point>,
+    pub swap_data: Vec<Point>,
     pub cpu_data: Vec<ConvertedCpuData>,
     pub battery_data: Vec<ConvertedBatteryData>,
 }

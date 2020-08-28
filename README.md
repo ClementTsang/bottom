@@ -335,7 +335,11 @@ Note that the `and` operator takes precedence over the `or` operator.
 
 As yet _another_ process/system visualization and management application, bottom supports the typical features:
 
-- CPU, memory, and network usage visualization
+- CPU usage visualization, on an average and per-core basis
+
+- RAM and swap usage visualization
+
+- Network visualization for receiving and transmitting, on a log-graph scale
 
 - Display information about disk capacity and I/O per second
 
@@ -527,7 +531,7 @@ Each component of the layout accepts a `ratio` value. If this is not set, it def
 
 For an example, look at the [default config](./sample_configs/default_config.toml), which contains the default layout.
 
-And if your heart desires, you can have duplicate widgets. This means you could do something like:
+Furthermore, you can have duplicate widgets. This means you could do something like:
 
 ```toml
 [[row]]

@@ -5,9 +5,10 @@ use std::collections::HashMap;
 
 use crate::{
     app::{data_farmer, data_harvester, App},
-    utils::gen_util::{get_exact_byte_values, get_simple_byte_values},
+    utils::gen_util::*,
 };
 
+/// Point is of time, data
 type Point = (f64, f64);
 
 #[derive(Default, Debug)]
@@ -28,6 +29,13 @@ pub struct ConvertedNetworkData {
     pub tx_display: String,
     pub total_rx_display: Option<String>,
     pub total_tx_display: Option<String>,
+    // TODO: [NETWORKING] add min/max/mean of each
+    // min_rx : f64,
+    // max_rx : f64,
+    // mean_rx: f64,
+    // min_tx: f64,
+    // max_tx: f64,
+    // mean_tx: f64,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -335,7 +343,7 @@ pub fn convert_network_data_points(
         }
     } else {
         let rx_display = format!(
-            "RX: {:<9} All: {:<9}",
+            "RX: {:<9} Total: {:<9}",
             format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1),
             format!(
                 "{:.1}{:3}",
@@ -343,7 +351,7 @@ pub fn convert_network_data_points(
             )
         );
         let tx_display = format!(
-            "TX: {:<9} All: {:<9}",
+            "TX: {:<9} Total: {:<9}",
             format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1),
             format!(
                 "{:.1}{:3}",

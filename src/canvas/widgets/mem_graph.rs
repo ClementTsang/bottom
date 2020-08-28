@@ -54,10 +54,9 @@ impl MemGraphWidget for Painter {
                     .labels_style(self.colours.graph_style)
             };
 
-            // Offset as the zero value isn't drawn otherwise...
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
-                .bounds([-0.5, 100.5])
+                .bounds([0.0, 100.5])
                 .labels(&["0%", "100%"])
                 .labels_style(self.colours.graph_style);
 
