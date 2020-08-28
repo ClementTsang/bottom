@@ -65,6 +65,15 @@ impl CpuGraphWidget for Painter {
             if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
                 cpu_widget_state.is_legend_hidden = true;
             }
+
+            // Update draw loc in widget map
+            if app_state.is_force_redraw {
+                if let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id) {
+                    bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                    bottom_widget.bottom_right_corner =
+                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+                }
+            }
         } else {
             let (graph_index, legend_index, constraints) =
                 if app_state.app_config_fields.left_legend {
@@ -94,6 +103,35 @@ impl CpuGraphWidget for Painter {
                 partitioned_draw_loc[legend_index],
                 widget_id + 1,
             );
+
+            if app_state.is_force_redraw {
+                // Update draw loc in widget map
+                if let Some(cpu_widget) = app_state.widget_map.get_mut(&widget_id) {
+                    cpu_widget.top_left_corner = Some((
+                        partitioned_draw_loc[graph_index].x,
+                        partitioned_draw_loc[graph_index].y,
+                    ));
+                    cpu_widget.bottom_right_corner = Some((
+                        partitioned_draw_loc[graph_index].x
+                            + partitioned_draw_loc[graph_index].width,
+                        partitioned_draw_loc[graph_index].y
+                            + partitioned_draw_loc[graph_index].height,
+                    ));
+                }
+
+                if let Some(legend_widget) = app_state.widget_map.get_mut(&(widget_id + 1)) {
+                    legend_widget.top_left_corner = Some((
+                        partitioned_draw_loc[legend_index].x,
+                        partitioned_draw_loc[legend_index].y,
+                    ));
+                    legend_widget.bottom_right_corner = Some((
+                        partitioned_draw_loc[legend_index].x
+                            + partitioned_draw_loc[legend_index].width,
+                        partitioned_draw_loc[legend_index].y
+                            + partitioned_draw_loc[legend_index].height,
+                    ));
+                }
+            }
         }
     }
 

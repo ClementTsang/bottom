@@ -93,6 +93,17 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     match event {
         MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
         MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
+        MouseEvent::Down(button, x, y, modifiers) => {
+            debug!(
+                "Button: {:?}, x: {}, y: {}, modifiers: {:?}",
+                button, x, y, modifiers
+            );
+
+            if let crossterm::event::MouseButton::Left = button {
+                // Trigger click widget activity
+                app.left_mouse_click_movement(x, y);
+            }
+        }
         _ => {}
     };
 }
