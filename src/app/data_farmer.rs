@@ -185,21 +185,20 @@ impl DataCollection {
     }
 
     fn eat_network(&mut self, network: &network::NetworkHarvest, new_entry: &mut TimedData) {
+        // FIXME [NETWORKING]: Support bits, support switching between decimal and binary units (move the log part to conversion and switch on the fly)
         // RX
-        let logged_rx_val = if network.rx as f64 > 0.0 {
-            network.rx as f64
+        new_entry.rx_data = if network.rx > 0 {
+            (network.rx as f64).log2()
         } else {
             0.0
         };
-        new_entry.rx_data = logged_rx_val;
 
         // TX
-        let logged_tx_val = if network.tx as f64 > 0.0 {
-            network.tx as f64
+        new_entry.tx_data = if network.tx > 0 {
+            (network.tx as f64).log2()
         } else {
             0.0
         };
-        new_entry.tx_data = logged_tx_val;
 
         // In addition copy over latest data for easy reference
         self.network_harvest = network.clone();

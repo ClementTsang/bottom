@@ -5,6 +5,7 @@ use crate::{
     app::App,
     canvas::{drawing_utils::get_variable_intrinsic_widths, Painter},
     constants::*,
+    utils::gen_util::*,
 };
 
 use tui::{
@@ -67,10 +68,109 @@ impl NetworkGraphWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
         hide_legend: bool,
     ) {
+        /// Point is of time, data
+        type Point = (f64, f64);
+
+        /// Returns the required max data point and labels.
+        fn adjust_network_data_point(
+            rx: &[Point], tx: &[Point], time_start: f64, time_end: f64,
+        ) -> (f64, Vec<String>) {
+            // First, filter and find the maximal rx or tx so we know how to scale
+            let mut max_val_bytes = 0.0;
+            let filtered_rx = rx
+                .iter()
+                .cloned()
+                .filter(|(time, _data)| *time >= time_start && *time <= time_end);
+
+            let filtered_tx = tx
+                .iter()
+                .cloned()
+                .filter(|(time, _data)| *time >= time_start && *time <= time_end);
+
+            for (_time, data) in filtered_rx.clone().chain(filtered_tx.clone()) {
+                if data > max_val_bytes {
+                    max_val_bytes = data;
+                }
+            }
+
+            // Main idea is that we have some "limits" --- if we're, say, under a logged kibibyte,
+            // then we are just gonna set the cap at a kibibyte.
+            // For gibi/giga and beyond, we instead start going up by 1 rather than jumping to a tera/tebi.
+            // So, it would look a bit like:
+            // - < Kibi => Kibi => Mebi => Gibi => 2 Gibi => ... => 999 Gibi => Tebi => 2 Tebi => ...
+
+            let true_max_val: f64;
+            let mut labels = vec![];
+            if max_val_bytes < LOG_KIBI_LIMIT {
+                true_max_val = LOG_KIBI_LIMIT;
+                labels = vec!["0B".to_string(), "1KiB".to_string()];
+            } else if max_val_bytes < LOG_MEBI_LIMIT {
+                true_max_val = LOG_MEBI_LIMIT;
+                labels = vec!["0B".to_string(), "1KiB".to_string(), "1MiB".to_string()];
+            } else if max_val_bytes < LOG_GIBI_LIMIT {
+                true_max_val = LOG_GIBI_LIMIT;
+                labels = vec![
+                    "0B".to_string(),
+                    "1KiB".to_string(),
+                    "1MiB".to_string(),
+                    "1GiB".to_string(),
+                ];
+            } else if max_val_bytes < LOG_TEBI_LIMIT {
+                true_max_val = max_val_bytes.ceil() + 1.0;
+                let cap_u32 = true_max_val as u32;
+
+                for i in 0..=cap_u32 {
+                    match i {
+                        0 => labels.push("0B".to_string()),
+                        LOG_KIBI_LIMIT_U32 => labels.push("1KiB".to_string()),
+                        LOG_MEBI_LIMIT_U32 => labels.push("1MiB".to_string()),
+                        LOG_GIBI_LIMIT_U32 => labels.push("1GiB".to_string()),
+                        _ if i == cap_u32 => {
+                            labels.push(format!("{}GiB", 2_u64.pow(cap_u32 - LOG_GIBI_LIMIT_U32)))
+                        }
+                        _ if i == (LOG_GIBI_LIMIT_U32 + cap_u32) / 2 => labels.push(format!(
+                            "{}GiB",
+                            2_u64.pow(cap_u32 - ((LOG_GIBI_LIMIT_U32 + cap_u32) / 2))
+                        )), // ~Halfway point
+                        _ => labels.push(String::default()),
+                    }
+                }
+            } else {
+                true_max_val = max_val_bytes.ceil() + 1.0;
+                let cap_u32 = true_max_val as u32;
+
+                for i in 0..=cap_u32 {
+                    match i {
+                        0 => labels.push("0B".to_string()),
+                        LOG_KIBI_LIMIT_U32 => labels.push("1KiB".to_string()),
+                        LOG_MEBI_LIMIT_U32 => labels.push("1MiB".to_string()),
+                        LOG_GIBI_LIMIT_U32 => labels.push("1GiB".to_string()),
+                        LOG_TEBI_LIMIT_U32 => labels.push("1TiB".to_string()),
+                        _ if i == cap_u32 => {
+                            labels.push(format!("{}GiB", 2_u64.pow(cap_u32 - LOG_TEBI_LIMIT_U32)))
+                        }
+                        _ if i == (LOG_TEBI_LIMIT_U32 + cap_u32) / 2 => labels.push(format!(
+                            "{}TiB",
+                            2_u64.pow(cap_u32 - ((LOG_TEBI_LIMIT_U32 + cap_u32) / 2))
+                        )), // ~Halfway point
+                        _ => labels.push(String::default()),
+                    }
+                }
+            }
+
+            (true_max_val, labels)
+        }
+
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
             let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
             let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
 
+            let (max_range, labels) = adjust_network_data_point(
+                network_data_rx,
+                network_data_tx,
+                -(network_widget_state.current_display_time as f64),
+                0.0,
+            );
             let display_time_labels = [
                 format!("{}s", network_widget_state.current_display_time / 1000),
                 "0s".to_string(),
@@ -104,11 +204,10 @@ impl NetworkGraphWidget for Painter {
                     .labels_style(self.colours.graph_style)
             };
 
-            // -0.5 for offset.
-            let y_axis_labels = ["0B", "1KiB", "1MiB", "1GiB"];
+            let y_axis_labels = labels;
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
-                .bounds([-0.5, 30_f64])
+                .bounds([0.0, max_range])
                 .labels(&y_axis_labels)
                 .labels_style(self.colours.graph_style);
 
