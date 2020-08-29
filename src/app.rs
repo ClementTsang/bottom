@@ -134,6 +134,10 @@ impl App {
         self.data_collection.reset();
     }
 
+    pub fn should_get_widget_bounds(&self) -> bool {
+        self.is_force_redraw || self.is_determining_widget_boundary
+    }
+
     fn close_dd(&mut self) {
         self.delete_dialog_state.is_showing_dd = false;
         self.delete_dialog_state.is_on_yes = false;
@@ -1234,7 +1238,6 @@ impl App {
                     match &new_widget.widget_type {
                         BottomWidgetType::Temp
                         | BottomWidgetType::Proc
-                        | BottomWidgetType::ProcSearch
                         | BottomWidgetType::ProcSort
                         | BottomWidgetType::Disk
                         | BottomWidgetType::Battery
@@ -2177,18 +2180,89 @@ impl App {
     pub fn left_mouse_click_movement(&mut self, x: u16, y: u16) {
         // Pretty dead simple - iterate through the widget map and go to the widget where the click
         // is within.
-        //
-        // TODO: [MOUSE] It's also possible to maybe do this with some kinda binary heap or something?  This would
-        // require ANOTHER collection of data but would also mean our click-to-widget speed would
-        // maybe faster...?
-        for (new_widget_id, widget) in &self.widget_map {
-            if let Some((tlc_x, tlc_y)) = widget.top_left_corner {
-                if let Some((brc_x, brc_y)) = widget.bottom_right_corner {
-                    if (x >= tlc_x && y >= tlc_y) && (x <= brc_x && y <= brc_y) {
-                        if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
-                            self.current_widget = new_widget.clone();
-                            break;
+        if let Some(bt) = &mut self.basic_table_widget_state {
+            if let (
+                Some((left_tlc_x, left_tlc_y)),
+                Some((left_brc_x, left_brc_y)),
+                Some((right_tlc_x, right_tlc_y)),
+                Some((right_brc_x, right_brc_y)),
+            ) = (bt.left_tlc, bt.left_brc, bt.right_tlc, bt.right_brc)
+            {
+                if (x >= left_tlc_x && y >= left_tlc_y) && (x <= left_brc_x && y <= left_brc_y) {
+                    if let Some(new_widget) =
+                        self.widget_map.get(&(bt.currently_displayed_widget_id))
+                    {
+                        // We have to move to the current table widget first...
+                        self.current_widget = new_widget.clone();
+
+                        if let BottomWidgetType::Proc = &new_widget.widget_type {
+                            if let Some(proc_widget_state) =
+                                self.proc_state.get_widget_state(new_widget.widget_id)
+                            {
+                                if proc_widget_state.is_sort_open {
+                                    self.move_widget_selection(&WidgetDirection::Left);
+                                }
+                            }
                         }
+                        self.move_widget_selection(&WidgetDirection::Left);
+                        return;
+                    }
+                } else if (x >= right_tlc_x && y >= right_tlc_y)
+                    && (x <= right_brc_x && y <= right_brc_y)
+                {
+                    if let Some(new_widget) =
+                        self.widget_map.get(&(bt.currently_displayed_widget_id))
+                    {
+                        // We have to move to the current table widget first...
+                        self.current_widget = new_widget.clone();
+
+                        if let BottomWidgetType::ProcSort = &new_widget.widget_type {
+                            if let Some(proc_widget_state) =
+                                self.proc_state.get_widget_state(new_widget.widget_id - 2)
+                            {
+                                if proc_widget_state.is_sort_open {
+                                    self.move_widget_selection(&WidgetDirection::Right);
+                                }
+                            }
+                        }
+                    }
+                    self.move_widget_selection(&WidgetDirection::Right);
+                    // Bit extra logic to ensure you always land on a proc widget, not the sort
+                    if let BottomWidgetType::ProcSort = &self.current_widget.widget_type {
+                        self.move_widget_selection(&WidgetDirection::Right);
+                    }
+                    return;
+                }
+            }
+        }
+
+        for (new_widget_id, widget) in &self.widget_map {
+            if let (Some((tlc_x, tlc_y)), Some((brc_x, brc_y))) =
+                (widget.top_left_corner, widget.bottom_right_corner)
+            {
+                if (x >= tlc_x && y >= tlc_y) && (x <= brc_x && y <= brc_y) {
+                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                        self.current_widget = new_widget.clone();
+
+                        match &self.current_widget.widget_type {
+                            BottomWidgetType::Temp
+                            | BottomWidgetType::Proc
+                            | BottomWidgetType::ProcSort
+                            | BottomWidgetType::Disk
+                            | BottomWidgetType::Battery => {
+                                if let Some(basic_table_widget_state) =
+                                    &mut self.basic_table_widget_state
+                                {
+                                    basic_table_widget_state.currently_displayed_widget_id =
+                                        self.current_widget.widget_id;
+                                    basic_table_widget_state.currently_displayed_widget_type =
+                                        self.current_widget.widget_type.clone();
+                                }
+                            }
+                            _ => {}
+                        }
+
+                        break;
                     }
                 }
             }

@@ -730,6 +730,10 @@ pub struct BasicTableWidgetState {
     pub currently_displayed_widget_type: BottomWidgetType,
     pub currently_displayed_widget_id: u64,
     pub widget_id: i64,
+    pub left_tlc: Option<(u16, u16)>,
+    pub left_brc: Option<(u16, u16)>,
+    pub right_tlc: Option<(u16, u16)>,
+    pub right_brc: Option<(u16, u16)>,
 }
 
 #[derive(Default)]
