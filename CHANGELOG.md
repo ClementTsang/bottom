@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#206](https://github.com/ClementTsang/bottom/pull/206): Adaptive network graphs --- prior to this update, graphs were stuck at a range from 0B to 1GiB. Now, they adjust to your current usage and time span, so if you're using, say, less than a MiB, it will cap at a MiB. If you're using 10GiB, then the graph will reflect that and span to a bit greater than 10GiB.
 
+- [#208](https://github.com/ClementTsang/bottom/pull/208): Mouse support for tables and moving to widgets.
+
 ### Changes
 
 ### Bug Fixes

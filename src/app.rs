@@ -2271,6 +2271,8 @@ impl App {
         }
 
         let mut failed_to_get = true;
+        // TODO: [MOUSE] We could use a better data structure for this?  Currently it's a blind
+        // traversal through a hashmap, using a 2d binary tree of sorts would be better.
         for (new_widget_id, widget) in &self.widget_map {
             if let (Some((tlc_x, tlc_y)), Some((brc_x, brc_y))) =
                 (widget.top_left_corner, widget.bottom_right_corner)
