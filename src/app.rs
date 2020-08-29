@@ -2418,7 +2418,7 @@ impl App {
         if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) =
             (widget.top_left_corner, widget.bottom_right_corner)
         {
-            !(brc_y - tlc_y < constants::TABLE_GAP_HEIGHT_LIMIT)
+            brc_y - tlc_y >= constants::TABLE_GAP_HEIGHT_LIMIT
         } else {
             self.app_config_fields.table_gap == 0
         }
