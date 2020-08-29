@@ -333,8 +333,10 @@ impl App {
                             .set_to_sorted_index(&proc_widget_state.process_sorting_type);
                         self.move_widget_selection(&WidgetDirection::Left);
                     } else {
-                        // Otherwise, move right
-                        self.move_widget_selection(&WidgetDirection::Right);
+                        // Otherwise, move right if currently on the sort widget
+                        if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
+                            self.move_widget_selection(&WidgetDirection::Right);
+                        }
                     }
                 }
 
