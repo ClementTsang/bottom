@@ -36,7 +36,7 @@ impl HelpDialog for Painter {
             "─".repeat(usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2))
         );
 
-        if app_state.is_force_redraw {
+        if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
             // We must also recalculate how many lines are wrapping to properly get scrolling to work on
             // small terminal sizes... oh joy.
 
