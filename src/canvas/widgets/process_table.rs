@@ -140,10 +140,10 @@ impl ProcessTableWidget for Painter {
                         proc_draw_loc.x + proc_draw_loc.width,
                         proc_draw_loc.y + proc_draw_loc.height,
                     ));
-                    // debug!(
-                    //     "Process table - TLC: {:?}, BRC: {:?}",
-                    //     widget.top_left_corner, widget.bottom_right_corner
-                    // );
+                    debug!(
+                        "Process table - TLC: {:?}, BRC: {:?}",
+                        widget.top_left_corner, widget.bottom_right_corner
+                    );
                 }
             }
         }
