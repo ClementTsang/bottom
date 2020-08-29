@@ -93,15 +93,20 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
     match event {
         MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
         MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
-        MouseEvent::Down(button, x, y, modifiers) => {
-            debug!(
-                "Button: {:?}, x: {}, y: {}, modifiers: {:?}",
-                button, x, y, modifiers
-            );
+        MouseEvent::Down(button, x, y, _modifiers) => {
+            debug!("Button down: {:?}, x: {}, y: {}", button, x, y);
+            // We can add some button animation logic here...
+        }
+        MouseEvent::Up(button, x, y, _modifiers) => {
+            debug!("Button up: {:?}, x: {}, y: {}", button, x, y);
 
-            if let crossterm::event::MouseButton::Left = button {
-                // Trigger left click widget activity
-                app.left_mouse_click_movement(x, y);
+            match button {
+                crossterm::event::MouseButton::Left => {
+                    // Trigger left click widget activity
+                    app.left_mouse_click_movement(x, y);
+                }
+                crossterm::event::MouseButton::Right => {}
+                _ => {}
             }
         }
         _ => {}
