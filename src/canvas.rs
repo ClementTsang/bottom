@@ -68,10 +68,11 @@ pub struct Painter {
     widget_layout: BottomLayout,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
     table_height_offset: u16,
+    requires_boundary_recalculation: bool,
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout, table_gap: u16) -> Self {
+    pub fn init(widget_layout: BottomLayout, table_gap: u16, is_basic_mode: bool) -> Self {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -151,7 +152,8 @@ impl Painter {
             layout_constraints,
             widget_layout,
             derived_widget_draw_locs: Vec::default(),
-            table_height_offset: 4 + table_gap,
+            table_height_offset: if is_basic_mode { 2 } else { 4 } + table_gap,
+            requires_boundary_recalculation: true,
         }
     }
 
@@ -206,6 +208,14 @@ impl Painter {
             app_state.is_force_redraw = true;
             self.height = current_height;
             self.width = current_width;
+        }
+
+        if app_state.should_get_widget_bounds() {
+            // If we're force drawing, reset ALL mouse boundaries.
+            for widget in app_state.widget_map.values_mut() {
+                widget.top_left_corner = None;
+                widget.bottom_right_corner = None;
+            }
         }
 
         terminal.autoresize()?;
@@ -398,6 +408,14 @@ impl Painter {
                     } else {
                         1
                     });
+
+                // A little hack to force the widget boundary recalculation.  This is required here
+                // as basic mode has a height of 0 initially, which breaks things.
+                if self.requires_boundary_recalculation {
+                    app_state.is_determining_widget_boundary = true;
+                }
+                self.requires_boundary_recalculation = cpu_height == 0;
+
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -419,18 +437,11 @@ impl Painter {
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1], 3);
+
+                let mut later_widget_id: Option<u64> = None;
                 if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
                     let widget_id = basic_table_widget_state.currently_displayed_widget_id;
-
-                    if let Some(current_table) = app_state.widget_map.get(&widget_id) {
-                        self.draw_basic_table_arrows(
-                            &mut f,
-                            app_state,
-                            vertical_chunks[3],
-                            current_table,
-                        );
-                    }
-
+                    later_widget_id = Some(widget_id);
                     match basic_table_widget_state.currently_displayed_widget_type {
                         Disk => self.draw_disk_table(
                             &mut f,
@@ -442,6 +453,7 @@ impl Painter {
                         Proc | ProcSort => {
                             let wid = widget_id
                                 - match basic_table_widget_state.currently_displayed_widget_type {
+                                    ProcSearch => 1,
                                     ProcSort => 2,
                                     _ => 0,
                                 };
@@ -469,6 +481,10 @@ impl Painter {
                         ),
                         _ => {}
                     }
+                }
+
+                if let Some(widget_id) = later_widget_id {
+                    self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3], widget_id);
                 }
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.
@@ -570,6 +586,7 @@ impl Painter {
         })?;
 
         app_state.is_force_redraw = false;
+        app_state.is_determining_widget_boundary = false;
 
         Ok(())
     }

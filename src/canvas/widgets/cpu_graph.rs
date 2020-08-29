@@ -65,6 +65,15 @@ impl CpuGraphWidget for Painter {
             if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
                 cpu_widget_state.is_legend_hidden = true;
             }
+
+            // Update draw loc in widget map
+            if app_state.should_get_widget_bounds() {
+                if let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id) {
+                    bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                    bottom_widget.bottom_right_corner =
+                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+                }
+            }
         } else {
             let (graph_index, legend_index, constraints) =
                 if app_state.app_config_fields.left_legend {
@@ -94,6 +103,35 @@ impl CpuGraphWidget for Painter {
                 partitioned_draw_loc[legend_index],
                 widget_id + 1,
             );
+
+            if app_state.should_get_widget_bounds() {
+                // Update draw loc in widget map
+                if let Some(cpu_widget) = app_state.widget_map.get_mut(&widget_id) {
+                    cpu_widget.top_left_corner = Some((
+                        partitioned_draw_loc[graph_index].x,
+                        partitioned_draw_loc[graph_index].y,
+                    ));
+                    cpu_widget.bottom_right_corner = Some((
+                        partitioned_draw_loc[graph_index].x
+                            + partitioned_draw_loc[graph_index].width,
+                        partitioned_draw_loc[graph_index].y
+                            + partitioned_draw_loc[graph_index].height,
+                    ));
+                }
+
+                if let Some(legend_widget) = app_state.widget_map.get_mut(&(widget_id + 1)) {
+                    legend_widget.top_left_corner = Some((
+                        partitioned_draw_loc[legend_index].x,
+                        partitioned_draw_loc[legend_index].y,
+                    ));
+                    legend_widget.bottom_right_corner = Some((
+                        partitioned_draw_loc[legend_index].x
+                            + partitioned_draw_loc[legend_index].width,
+                        partitioned_draw_loc[legend_index].y
+                            + partitioned_draw_loc[legend_index].height,
+                    ));
+                }
+            }
         }
     }
 
@@ -239,20 +277,35 @@ impl CpuGraphWidget for Painter {
         {
             cpu_widget_state.is_legend_hidden = false;
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
-
+            let cpu_table_state = &mut cpu_widget_state.scroll_state.table_state;
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+                0
+            } else {
+                app_state.app_config_fields.table_gap
+            };
             let start_position = get_start_position(
-                usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
+                usize::from(
+                    (draw_loc.height + (1 - table_gap)).saturating_sub(self.table_height_offset),
+                ),
                 &cpu_widget_state.scroll_state.scroll_direction,
                 &mut cpu_widget_state.scroll_state.previous_scroll_position,
                 cpu_widget_state.scroll_state.current_scroll_position,
                 app_state.is_force_redraw,
             );
-            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            cpu_table_state.select(Some(
+                cpu_widget_state
+                    .scroll_state
+                    .current_scroll_position
+                    .saturating_sub(start_position),
+            ));
 
             let sliced_cpu_data = &cpu_data[start_position..];
 
-            let mut offset_scroll_index =
-                cpu_widget_state.scroll_state.current_scroll_position - start_position;
+            let mut offset_scroll_index = cpu_widget_state
+                .scroll_state
+                .current_scroll_position
+                .saturating_sub(start_position);
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
@@ -306,7 +359,7 @@ impl CpuGraphWidget for Painter {
             };
 
             // Draw
-            f.render_widget(
+            f.render_stateful_widget(
                 Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
                     .block(
                         Block::default()
@@ -321,8 +374,9 @@ impl CpuGraphWidget for Painter {
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),
                     )
-                    .header_gap(app_state.app_config_fields.table_gap),
+                    .header_gap(table_gap),
                 draw_loc,
+                cpu_table_state,
             );
         }
     }

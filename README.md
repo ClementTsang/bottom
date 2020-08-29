@@ -25,7 +25,6 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Options](#options)
 - [Keybindings](#keybindings)
   - [General](#general)
-  - [CPU bindings](#cpu-bindings)
   - [Process bindings](#process-bindings)
   - [Process search bindings](#process-search-bindings)
   - [Process sort bindings](#process-sort-bindings)
@@ -35,6 +34,9 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Supported comparison operators](#supported-comparison-operators)
     - [Supported logical operators](#supported-logical-operators)
     - [Supported units](#supported-units)
+- [Mousebindings](#mousebindings)
+  - [General](#general-1)
+  - [CPU bindings](#cpu-bindings)
 - [Features](#features)
   - [Processes](#processes)
     - [Process searching](#process-searching)
@@ -43,7 +45,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
   - [Config files](#config-files)
-    - [Config flags](#config-flags)
+    - [Config flags and options](#config-flags-and-options)
     - [Theming](#theming)
     - [Layout](#layout)
   - [Battery](#battery)
@@ -176,6 +178,7 @@ Run using `btm`.
     --use_old_network_legend        Use the older (pre-0.4) network legend which is separate from the network chart
     --hide_table_gap                Hides the spacing between table headers and data
     --battery                       Displays the battery widget for default and basic layouts
+    --disable_click                 Disables mouse clicks from interacting with the program
 ```
 
 ### Options
@@ -193,34 +196,27 @@ Run using `btm`.
 
 #### General
 
-|                                             |                                                                              |
-| ------------------------------------------- | ---------------------------------------------------------------------------- |
-| `q`, `Ctrl-c`                               | Quit                                                                         |
-| `Esc`                                       | Close dialog windows, search, widgets, or exit expanded mode                 |
-| `Ctrl-r`                                    | Reset display and any collected data                                         |
-| `f`                                         | Freeze/unfreeze updating with new data                                       |
-| `Ctrl-Left`<br>`Shift-Left`<br>`H`<br>`A`   | Move widget selection left                                                   |
-| `Ctrl-Right`<br>`Shift-Right`<br>`L`<br>`D` | Move widget selection right                                                  |
-| `Ctrl-Up`<br>`Shift-Up`<br>`K`<br>`W`       | Move widget selection up                                                     |
-| `Ctrl-Down`<br>`Shift-Down`<br>`J`<br>`S`   | Move widget selection down                                                   |
-| `Left`, `h`                                 | Move left within widget                                                      |
-| `Down`, `j`                                 | Move down within widget                                                      |
-| `Up`,`k`                                    | Move up within widget                                                        |
-| `Right`, `l`                                | Move right within widget                                                     |
-| `?`                                         | Open help menu                                                               |
-| `gg`, `Home`                                | Jump to the first entry                                                      |
-| `Shift-g`, `End`                            | Jump to the last entry                                                       |
-| `e`                                         | Toggle expanding the currently selected widget                               |
-| `+`                                         | Zoom in on chart (decrease time range)                                       |
-| `-`                                         | Zoom out on chart (increase time range)                                      |
-| `=`                                         | Reset zoom                                                                   |
-| Mouse scroll                                | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively |
-
-#### CPU bindings
-
-|              |                                                                       |
-| ------------ | --------------------------------------------------------------------- |
-| Mouse scroll | Scrolling over an CPU core/average shows only that entry on the chart |
+|                                             |                                                              |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| `q`, `Ctrl-c`                               | Quit                                                         |
+| `Esc`                                       | Close dialog windows, search, widgets, or exit expanded mode |
+| `Ctrl-r`                                    | Reset display and any collected data                         |
+| `f`                                         | Freeze/unfreeze updating with new data                       |
+| `Ctrl-Left`<br>`Shift-Left`<br>`H`<br>`A`   | Move widget selection left                                   |
+| `Ctrl-Right`<br>`Shift-Right`<br>`L`<br>`D` | Move widget selection right                                  |
+| `Ctrl-Up`<br>`Shift-Up`<br>`K`<br>`W`       | Move widget selection up                                     |
+| `Ctrl-Down`<br>`Shift-Down`<br>`J`<br>`S`   | Move widget selection down                                   |
+| `Left`, `h`                                 | Move left within widget                                      |
+| `Down`, `j`                                 | Move down within widget                                      |
+| `Up`,`k`                                    | Move up within widget                                        |
+| `Right`, `l`                                | Move right within widget                                     |
+| `?`                                         | Open help menu                                               |
+| `gg`, `Home`                                | Jump to the first entry                                      |
+| `Shift-g`, `End`                            | Jump to the last entry                                       |
+| `e`                                         | Toggle expanding the currently selected widget               |
+| `+`                                         | Zoom in on chart (decrease time range)                       |
+| `-`                                         | Zoom out on chart (increase time range)                      |
+| `=`                                         | Reset zoom                                                   |
 
 #### Process bindings
 
@@ -340,6 +336,21 @@ Note that the `and` operator takes precedence over the `or` operator.
 | -------- | ---------------------------------------------------- | -------------------------- |
 | `()`     | `(<CONDITION 1> AND <CONDITION 2>) OR <CONDITION 3>` | Group together a condition |
 
+### Mousebindings
+
+#### General
+
+|              |                                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Mouse scroll | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively                                          |
+| Mouse click  | Selects the clicked widget. For tables, clicking can also select a specific entry. Can be disabled via options/flags. |
+
+#### CPU bindings
+
+|              |                                                                       |
+| ------------ | --------------------------------------------------------------------- |
+| Mouse scroll | Scrolling over an CPU core/average shows only that entry on the chart |
+
 ## Features
 
 As yet _another_ process/system visualization and management application, bottom supports the typical features:
@@ -434,11 +445,11 @@ By default, bottom will look at (based on [dirs](https://github.com/dirs-dev/dir
 
 Note that if a config file does not exist at either the default location or the passed in location via `-C` or `--config`, one is automatically created with no settings applied.
 
-#### Config flags
+#### Config flags and options
 
 The following options can be set under `[flags]` to achieve the same effect as passing in a flag on runtime. Note that if a flag is given, it will override the config file.
 
-These are the following supported flag config values:
+These are the following supported flag config values, which correspond to the flag of the same name described in [Flags](#flags) and [Options](#options):
 
 | Field                    | Type                                                                                  |
 | ------------------------ | ------------------------------------------------------------------------------------- |
@@ -461,6 +472,7 @@ These are the following supported flag config values:
 | `temperature_type`       | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                    |
 | `default_widget_type`    | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) |
 | `default_widget_count`   | Unsigned Int (represents which `default_widget_type`)                                 |
+| `disable_click`          | Boolean                                                                               |
 
 #### Theming
 
@@ -614,6 +626,7 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Thanks

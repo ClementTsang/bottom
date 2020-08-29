@@ -39,8 +39,15 @@ impl DiskTableWidget for Painter {
     ) {
         if let Some(disk_widget_state) = app_state.disk_state.widget_states.get_mut(&widget_id) {
             let disk_data: &mut [Vec<String>] = &mut app_state.canvas_data.disk_data;
+            let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+                0
+            } else {
+                app_state.app_config_fields.table_gap
+            };
             let start_position = get_start_position(
-                usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
+                usize::from(
+                    (draw_loc.height + (1 - table_gap)).saturating_sub(self.table_height_offset),
+                ),
                 &disk_widget_state.scroll_state.scroll_direction,
                 &mut disk_widget_state.scroll_state.previous_scroll_position,
                 disk_widget_state.scroll_state.current_scroll_position,
@@ -49,15 +56,13 @@ impl DiskTableWidget for Painter {
             let is_on_widget = app_state.current_widget.widget_id == widget_id;
             let disk_table_state = &mut disk_widget_state.scroll_state.table_state;
             disk_table_state.select(Some(
-                disk_widget_state.scroll_state.current_scroll_position - start_position,
+                disk_widget_state
+                    .scroll_state
+                    .current_scroll_position
+                    .saturating_sub(start_position),
             ));
             let sliced_vec = &mut disk_data[start_position..];
             let disk_rows = sliced_vec.iter().map(|disk| Row::Data(disk.iter()));
-            let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
-                0
-            } else {
-                app_state.app_config_fields.table_gap
-            };
 
             // Calculate widths
             // TODO: [PRETTY] Ellipsis on strings?
@@ -133,7 +138,7 @@ impl DiskTableWidget for Painter {
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                 .direction(Direction::Horizontal)
-                .split(draw_loc);
+                .split(draw_loc)[0];
 
             // Draw!
             f.render_stateful_widget(
@@ -149,9 +154,20 @@ impl DiskTableWidget for Painter {
                             .collect::<Vec<_>>()),
                     )
                     .header_gap(table_gap),
-                margined_draw_loc[0],
+                margined_draw_loc,
                 disk_table_state,
             );
+
+            if app_state.should_get_widget_bounds() {
+                // Update draw loc in widget map
+                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                    widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
+                    widget.bottom_right_corner = Some((
+                        margined_draw_loc.x + margined_draw_loc.width,
+                        margined_draw_loc.y + margined_draw_loc.height,
+                    ));
+                }
+            }
         }
     }
 }

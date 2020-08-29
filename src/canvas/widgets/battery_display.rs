@@ -6,7 +6,7 @@ use crate::{
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     widgets::{Block, Borders, Paragraph, Row, Table, Tabs, Text},
 };
@@ -109,6 +109,12 @@ impl BatteryDisplayWidget for Painter {
             //     draw_loc,
             // );
 
+            let margined_draw_loc = Layout::default()
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
+                .direction(Direction::Horizontal)
+                .split(draw_loc)[0];
+
             if let Some(battery_details) = app_state
                 .canvas_data
                 .battery_data
@@ -166,7 +172,7 @@ impl BatteryDisplayWidget for Painter {
                         .block(battery_block)
                         .header_style(self.colours.table_header_style)
                         .widths([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref()),
-                    draw_loc,
+                    margined_draw_loc,
                 );
             } else {
                 f.render_widget(
@@ -178,7 +184,7 @@ impl BatteryDisplayWidget for Painter {
                         .iter(),
                     )
                     .block(battery_block),
-                    draw_loc,
+                    margined_draw_loc,
                 );
             }
 
@@ -209,6 +215,17 @@ impl BatteryDisplayWidget for Painter {
                     .select(battery_widget_state.currently_selected_battery_index),
                 draw_loc,
             );
+
+            if app_state.should_get_widget_bounds() {
+                // Update draw loc in widget map
+                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                    widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
+                    widget.bottom_right_corner = Some((
+                        margined_draw_loc.x + margined_draw_loc.width,
+                        margined_draw_loc.y + margined_draw_loc.height,
+                    ));
+                }
+            }
         }
     }
 }

@@ -47,7 +47,11 @@ fn main() -> error::Result<()> {
     )?;
 
     // Create painter and set colours.
-    let mut painter = canvas::Painter::init(widget_layout, app.app_config_fields.table_gap);
+    let mut painter = canvas::Painter::init(
+        widget_layout,
+        app.app_config_fields.table_gap,
+        app.app_config_fields.use_basic_mode,
+    );
     generate_config_colours(&config, &mut painter)?;
     painter.colours.generate_remaining_cpu_colours();
     painter.complete_painter_init();

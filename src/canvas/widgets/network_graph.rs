@@ -62,6 +62,17 @@ impl NetworkGraphWidget for Painter {
         } else {
             self.draw_network_graph(f, app_state, draw_loc, widget_id, false);
         }
+
+        if app_state.should_get_widget_bounds() {
+            // Update draw loc in widget map
+            // Note that in both cases, we always go to the same widget id so it's fine to do it like
+            // this lol.
+            if let Some(network_widget) = app_state.widget_map.get_mut(&widget_id) {
+                network_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                network_widget.bottom_right_corner =
+                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+            }
+        }
     }
 
     fn draw_network_graph<B: Backend>(
@@ -93,12 +104,8 @@ impl NetworkGraphWidget for Painter {
                 }
             }
 
-            // Main idea is that we have some "limits" --- if we're, say, under a logged kibibyte,
-            // then we are just gonna set the cap at a kibibyte.
-            // For gibi/giga and beyond, we instead start going up by 1 rather than jumping to a tera/tebi.
-            // So, it would look a bit like:
-            // - < Kibi => Kibi => Mebi => Gibi => 2 Gibi => ... => 999 Gibi => Tebi => 2 Tebi => ...
-
+            // FIXME [NETWORKING]: Do ya think it would be possible for a more granular approach?
+            // Currently we do 32 -> 33... which skips some gigabit values
             let true_max_val: f64;
             let mut labels = vec![];
             if max_val_bytes < LOG_KIBI_LIMIT {

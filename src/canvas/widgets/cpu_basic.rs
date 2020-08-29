@@ -127,13 +127,22 @@ impl CpuBasicWidget for Painter {
                         .direction(Direction::Horizontal)
                         .constraints([Constraint::Percentage(100)].as_ref())
                         .horizontal_margin(1)
-                        .split(*chunk);
+                        .split(*chunk)[0];
 
                     f.render_widget(
                         Paragraph::new(cpu_column.iter()).block(Block::default()),
-                        margined_loc[0],
+                        margined_loc,
                     );
                 }
+            }
+        }
+
+        if app_state.should_get_widget_bounds() {
+            // Update draw loc in widget map
+            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                widget.bottom_right_corner =
+                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
             }
         }
     }
