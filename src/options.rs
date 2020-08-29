@@ -192,11 +192,19 @@ pub fn build_app(
                 currently_displayed_widget_type: initial_widget_type,
                 currently_displayed_widget_id: initial_widget_id,
                 widget_id: 100,
+                left_tlc: None,
+                left_brc: None,
+                right_tlc: None,
+                right_brc: None,
             },
             _ => BasicTableWidgetState {
                 currently_displayed_widget_type: Proc,
                 currently_displayed_widget_id: DEFAULT_WIDGET_ID,
                 widget_id: 100,
+                left_tlc: None,
+                left_brc: None,
+                right_tlc: None,
+                right_brc: None,
             },
         })
     } else {

@@ -83,7 +83,7 @@ impl ProcessTableWidget for Painter {
                     widget_id + 1,
                 );
 
-                if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
+                if app_state.should_get_widget_bounds() {
                     // Update draw loc in widget map
                     if let Some(widget) = app_state.widget_map.get_mut(&(widget_id + 1)) {
                         widget.top_left_corner = Some((processes_chunk[1].x, processes_chunk[1].y));
@@ -114,7 +114,7 @@ impl ProcessTableWidget for Painter {
                     widget_id + 2,
                 );
 
-                if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
+                if app_state.should_get_widget_bounds() {
                     // Update draw loc in widget map
                     if let Some(widget) = app_state.widget_map.get_mut(&(widget_id + 2)) {
                         widget.top_left_corner = Some((processes_chunk[0].x, processes_chunk[0].y));
@@ -128,22 +128,22 @@ impl ProcessTableWidget for Painter {
 
             self.draw_processes_table(f, app_state, proc_draw_loc, draw_border, widget_id);
 
-            if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
+            if app_state.should_get_widget_bounds() {
                 // Update draw loc in widget map
                 if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                    debug!(
-                        "Process table BEFORE - TLC: {:?}, BRC: {:?}",
-                        widget.top_left_corner, widget.bottom_right_corner
-                    );
+                    // debug!(
+                    //     "Process table BEFORE - TLC: {:?}, BRC: {:?}",
+                    //     widget.top_left_corner, widget.bottom_right_corner
+                    // );
                     widget.top_left_corner = Some((proc_draw_loc.x, proc_draw_loc.y));
                     widget.bottom_right_corner = Some((
                         proc_draw_loc.x + proc_draw_loc.width,
                         proc_draw_loc.y + proc_draw_loc.height,
                     ));
-                    debug!(
-                        "Process table - TLC: {:?}, BRC: {:?}",
-                        widget.top_left_corner, widget.bottom_right_corner
-                    );
+                    // debug!(
+                    //     "Process table - TLC: {:?}, BRC: {:?}",
+                    //     widget.top_left_corner, widget.bottom_right_corner
+                    // );
                 }
             }
         }
@@ -317,7 +317,7 @@ impl ProcessTableWidget for Painter {
                     .constraints([Constraint::Percentage(100)].as_ref())
                     .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                     .direction(Direction::Horizontal)
-                    .split(draw_loc);
+                    .split(draw_loc)[0];
 
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
@@ -334,7 +334,7 @@ impl ProcessTableWidget for Painter {
                                 .collect::<Vec<_>>()),
                         )
                         .header_gap(table_gap),
-                    margined_draw_loc[0],
+                    margined_draw_loc,
                     proc_table_state,
                 );
             }

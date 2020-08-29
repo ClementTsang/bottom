@@ -210,7 +210,7 @@ impl Painter {
             self.width = current_width;
         }
 
-        if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
+        if app_state.should_get_widget_bounds() {
             // If we're force drawing, reset ALL mouse boundaries.
             for widget in app_state.widget_map.values_mut() {
                 widget.top_left_corner = None;
@@ -437,18 +437,11 @@ impl Painter {
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1], 3);
+
+                let mut later_widget_id: Option<u64> = None;
                 if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
                     let widget_id = basic_table_widget_state.currently_displayed_widget_id;
-
-                    if let Some(current_table) = app_state.widget_map.get(&widget_id) {
-                        self.draw_basic_table_arrows(
-                            &mut f,
-                            app_state,
-                            vertical_chunks[3],
-                            current_table,
-                        );
-                    }
-
+                    later_widget_id = Some(widget_id);
                     match basic_table_widget_state.currently_displayed_widget_type {
                         Disk => self.draw_disk_table(
                             &mut f,
@@ -460,6 +453,7 @@ impl Painter {
                         Proc | ProcSort => {
                             let wid = widget_id
                                 - match basic_table_widget_state.currently_displayed_widget_type {
+                                    ProcSearch => 1,
                                     ProcSort => 2,
                                     _ => 0,
                                 };
@@ -487,6 +481,10 @@ impl Painter {
                         ),
                         _ => {}
                     }
+                }
+
+                if let Some(widget_id) = later_widget_id {
+                    self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3], widget_id);
                 }
             } else {
                 // Draws using the passed in (or default) layout.  NOT basic so far.

@@ -67,7 +67,7 @@ impl CpuGraphWidget for Painter {
             }
 
             // Update draw loc in widget map
-            if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
+            if app_state.should_get_widget_bounds() {
                 if let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id) {
                     bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
                     bottom_widget.bottom_right_corner =
@@ -104,7 +104,7 @@ impl CpuGraphWidget for Painter {
                 widget_id + 1,
             );
 
-            if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
+            if app_state.should_get_widget_bounds() {
                 // Update draw loc in widget map
                 if let Some(cpu_widget) = app_state.widget_map.get_mut(&widget_id) {
                     cpu_widget.top_left_corner = Some((
