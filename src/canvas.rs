@@ -68,6 +68,7 @@ pub struct Painter {
     widget_layout: BottomLayout,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
     table_height_offset: u16,
+    requires_boundary_recalculation: bool,
 }
 
 impl Painter {
@@ -152,6 +153,7 @@ impl Painter {
             widget_layout,
             derived_widget_draw_locs: Vec::default(),
             table_height_offset: 4 + table_gap,
+            requires_boundary_recalculation: true,
         }
     }
 
@@ -208,7 +210,7 @@ impl Painter {
             self.width = current_width;
         }
 
-        if app_state.is_force_redraw {
+        if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
             // If we're force drawing, reset ALL mouse boundaries.
             for widget in app_state.widget_map.values_mut() {
                 widget.top_left_corner = None;
@@ -406,6 +408,14 @@ impl Painter {
                     } else {
                         1
                     });
+
+                // A little hack to force the widget boundary recalculation.  This is required here
+                // as basic mode has a height of 0 initially, which breaks things.
+                if self.requires_boundary_recalculation {
+                    app_state.is_determining_widget_boundary = true;
+                }
+                self.requires_boundary_recalculation = cpu_height == 0;
+
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -578,6 +588,7 @@ impl Painter {
         })?;
 
         app_state.is_force_redraw = false;
+        app_state.is_determining_widget_boundary = false;
 
         Ok(())
     }

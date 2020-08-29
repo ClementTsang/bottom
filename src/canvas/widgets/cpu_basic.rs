@@ -137,7 +137,7 @@ impl CpuBasicWidget for Painter {
             }
         }
 
-        if app_state.is_force_redraw {
+        if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
             // Update draw loc in widget map
             if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
                 widget.top_left_corner = Some((draw_loc.x, draw_loc.y));

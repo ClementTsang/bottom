@@ -81,6 +81,9 @@ pub struct App {
     pub is_force_redraw: bool,
 
     #[builder(default = false, setter(skip))]
+    pub is_determining_widget_boundary: bool,
+
+    #[builder(default = false, setter(skip))]
     pub basic_mode_use_percent: bool,
 
     pub cpu_state: CpuState,
@@ -1269,6 +1272,9 @@ impl App {
                                 basic_table_widget_state.currently_displayed_widget_type =
                                     self.current_widget.widget_type.clone();
                             }
+
+                            // And let's not forget:
+                            self.is_determining_widget_boundary = true;
                         }
                         BottomWidgetType::BasicTables => {
                             match &direction {

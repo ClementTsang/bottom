@@ -100,7 +100,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
             );
 
             if let crossterm::event::MouseButton::Left = button {
-                // Trigger click widget activity
+                // Trigger left click widget activity
                 app.left_mouse_click_movement(x, y);
             }
         }

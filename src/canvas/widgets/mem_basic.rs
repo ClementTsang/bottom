@@ -116,8 +116,8 @@ impl MemBasicWidget for Painter {
             margined_loc[0],
         );
 
-        if app_state.is_force_redraw {
-            // Update draw loc in widget map
+        // Update draw loc in widget map
+        if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
             if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
                 widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
                 widget.bottom_right_corner =

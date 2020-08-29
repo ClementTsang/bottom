@@ -63,7 +63,7 @@ impl NetworkGraphWidget for Painter {
             self.draw_network_graph(f, app_state, draw_loc, widget_id, false);
         }
 
-        if app_state.is_force_redraw {
+        if app_state.is_force_redraw || app_state.is_determining_widget_boundary {
             // Update draw loc in widget map
             // Note that in both cases, we always go to the same widget id so it's fine to do it like
             // this lol.
