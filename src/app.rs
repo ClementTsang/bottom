@@ -287,6 +287,7 @@ impl App {
 
     pub fn on_slash(&mut self) {
         if !self.is_in_dialog() {
+            // FIXME: Add ProcSort too, it's annoying
             if let BottomWidgetType::Proc = self.current_widget.widget_type {
                 // Toggle on
                 if let Some(proc_widget_state) = self
@@ -1808,11 +1809,11 @@ impl App {
     pub fn decrement_position_count(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
-                BottomWidgetType::Proc => self.change_process_position(-1),
-                BottomWidgetType::ProcSort => self.change_process_sort_position(-1),
-                BottomWidgetType::Temp => self.change_temp_position(-1),
-                BottomWidgetType::Disk => self.change_disk_position(-1),
-                BottomWidgetType::CpuLegend => self.change_cpu_table_position(-1),
+                BottomWidgetType::Proc => self.increment_process_position(-1),
+                BottomWidgetType::ProcSort => self.increment_process_sort_position(-1),
+                BottomWidgetType::Temp => self.increment_temp_position(-1),
+                BottomWidgetType::Disk => self.increment_disk_position(-1),
+                BottomWidgetType::CpuLegend => self.increment_cpu_legend_position(-1),
                 _ => {}
             }
         }
@@ -1821,17 +1822,17 @@ impl App {
     pub fn increment_position_count(&mut self) {
         if !self.is_in_dialog() {
             match self.current_widget.widget_type {
-                BottomWidgetType::Proc => self.change_process_position(1),
-                BottomWidgetType::ProcSort => self.change_process_sort_position(1),
-                BottomWidgetType::Temp => self.change_temp_position(1),
-                BottomWidgetType::Disk => self.change_disk_position(1),
-                BottomWidgetType::CpuLegend => self.change_cpu_table_position(1),
+                BottomWidgetType::Proc => self.increment_process_position(1),
+                BottomWidgetType::ProcSort => self.increment_process_sort_position(1),
+                BottomWidgetType::Temp => self.increment_temp_position(1),
+                BottomWidgetType::Disk => self.increment_disk_position(1),
+                BottomWidgetType::CpuLegend => self.increment_cpu_legend_position(1),
                 _ => {}
             }
         }
     }
 
-    fn change_process_sort_position(&mut self, num_to_change_by: i64) {
+    fn increment_process_sort_position(&mut self, num_to_change_by: i64) {
         if let Some(proc_widget_state) = self
             .proc_state
             .get_mut_widget_state(self.current_widget.widget_id - 2)
@@ -1854,7 +1855,26 @@ impl App {
         }
     }
 
-    fn change_cpu_table_position(&mut self, num_to_change_by: i64) {
+    fn change_process_sort_position(&mut self, new_index: usize) {
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .get_mut_widget_state(self.current_widget.widget_id - 2)
+        {
+            let current_posn = proc_widget_state.columns.current_scroll_position;
+
+            if new_index < proc_widget_state.columns.get_enabled_columns_len() {
+                proc_widget_state.columns.current_scroll_position = new_index;
+            }
+
+            if new_index < current_posn {
+                proc_widget_state.columns.scroll_direction = ScrollDirection::Up;
+            } else {
+                proc_widget_state.columns.scroll_direction = ScrollDirection::Down;
+            }
+        }
+    }
+
+    fn increment_cpu_legend_position(&mut self, num_to_change_by: i64) {
         if let Some(cpu_widget_state) = self
             .cpu_state
             .widget_states
@@ -1878,7 +1898,27 @@ impl App {
         }
     }
 
-    fn change_process_position(&mut self, num_to_change_by: i64) {
+    fn change_cpu_legend_position(&mut self, new_index: usize) {
+        if let Some(cpu_widget_state) = self
+            .cpu_state
+            .widget_states
+            .get_mut(&(self.current_widget.widget_id - 1))
+        {
+            let current_posn = cpu_widget_state.scroll_state.current_scroll_position;
+
+            if new_index < self.canvas_data.cpu_data.len() {
+                cpu_widget_state.scroll_state.current_scroll_position = new_index;
+            }
+
+            if new_index < current_posn {
+                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
+            } else {
+                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+            }
+        }
+    }
+
+    fn increment_process_position(&mut self, num_to_change_by: i64) {
         if let Some(proc_widget_state) = self
             .proc_state
             .get_mut_widget_state(self.current_widget.widget_id)
@@ -1906,7 +1946,32 @@ impl App {
         }
     }
 
-    fn change_temp_position(&mut self, num_to_change_by: i64) {
+    fn change_process_position(&mut self, new_index: usize) {
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .get_mut_widget_state(self.current_widget.widget_id)
+        {
+            let current_posn = proc_widget_state.scroll_state.current_scroll_position;
+
+            if let Some(finalized_process_data) = self
+                .canvas_data
+                .finalized_process_data_map
+                .get(&self.current_widget.widget_id)
+            {
+                if new_index < finalized_process_data.len() {
+                    proc_widget_state.scroll_state.current_scroll_position = new_index;
+                }
+            }
+
+            if new_index < current_posn {
+                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
+            } else {
+                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+            }
+        }
+    }
+
+    fn increment_temp_position(&mut self, num_to_change_by: i64) {
         if let Some(temp_widget_state) = self
             .temp_state
             .widget_states
@@ -1930,7 +1995,27 @@ impl App {
         }
     }
 
-    fn change_disk_position(&mut self, num_to_change_by: i64) {
+    fn change_temp_position(&mut self, new_index: usize) {
+        if let Some(temp_widget_state) = self
+            .temp_state
+            .widget_states
+            .get_mut(&self.current_widget.widget_id)
+        {
+            let current_posn = temp_widget_state.scroll_state.current_scroll_position;
+
+            if new_index < self.canvas_data.temp_sensor_data.len() {
+                temp_widget_state.scroll_state.current_scroll_position = new_index;
+            }
+
+            if new_index < current_posn {
+                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
+            } else {
+                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+            }
+        }
+    }
+
+    fn increment_disk_position(&mut self, num_to_change_by: i64) {
         if let Some(disk_widget_state) = self
             .disk_state
             .widget_states
@@ -1946,6 +2031,26 @@ impl App {
             }
 
             if num_to_change_by < 0 {
+                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
+            } else {
+                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+            }
+        }
+    }
+
+    fn change_disk_position(&mut self, new_index: usize) {
+        if let Some(disk_widget_state) = self
+            .disk_state
+            .widget_states
+            .get_mut(&self.current_widget.widget_id)
+        {
+            let current_posn = disk_widget_state.scroll_state.current_scroll_position;
+
+            if new_index < self.canvas_data.disk_data.len() {
+                disk_widget_state.scroll_state.current_scroll_position = new_index;
+            }
+
+            if new_index < current_posn {
                 disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
             } else {
                 disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
@@ -2270,6 +2375,7 @@ impl App {
             }
         }
 
+        let mut failed_to_get = true;
         for (new_widget_id, widget) in &self.widget_map {
             if let (Some((tlc_x, tlc_y)), Some((brc_x, brc_y))) =
                 (widget.top_left_corner, widget.bottom_right_corner)
@@ -2296,12 +2402,59 @@ impl App {
                             _ => {}
                         }
 
+                        failed_to_get = false;
                         break;
                     }
                 }
             }
         }
 
-        // FIXME: [MOUSE] add click handling per widget!
+        if failed_to_get {
+            return;
+        }
+
+        // Now handle click propagation down to widget.
+        if let Some((_tlc_x, tlc_y)) = &self.current_widget.top_left_corner {
+            match &self.current_widget.widget_type {
+                BottomWidgetType::Proc
+                | BottomWidgetType::ProcSort
+                | BottomWidgetType::CpuLegend
+                | BottomWidgetType::Temp
+                | BottomWidgetType::Disk => {
+                    // Get our index...
+                    let clicked_entry = y - *tlc_y;
+                    // + 1 so we start at 0.
+                    let offset = self.app_config_fields.table_gap
+                        + if self.is_drawing_border() { 1 } else { 0 }
+                        + 1;
+                    if clicked_entry >= offset {
+                        let offset_clicked_entry = clicked_entry - offset;
+                        match &self.current_widget.widget_type {
+                            BottomWidgetType::Proc => {
+                                self.change_process_position(offset_clicked_entry as usize)
+                            }
+                            BottomWidgetType::ProcSort => {
+                                self.change_process_sort_position(offset_clicked_entry as usize)
+                            }
+                            BottomWidgetType::CpuLegend => {
+                                self.change_cpu_legend_position(offset_clicked_entry as usize)
+                            }
+                            BottomWidgetType::Temp => {
+                                self.change_temp_position(offset_clicked_entry as usize)
+                            }
+                            BottomWidgetType::Disk => {
+                                self.change_disk_position(offset_clicked_entry as usize)
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn is_drawing_border(&self) -> bool {
+        self.is_expanded || !self.app_config_fields.use_basic_mode
     }
 }

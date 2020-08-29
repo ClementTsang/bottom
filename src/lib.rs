@@ -95,7 +95,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
         MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
         MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
         MouseEvent::Down(button, x, y, _modifiers) => {
-            debug!("Button up: {:?}, x: {}, y: {}", button, x, y);
+            debug!("Button down: {:?}, x: {}, y: {}", button, x, y);
 
             if !app.app_config_fields.disable_click {
                 match button {

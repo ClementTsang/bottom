@@ -82,21 +82,6 @@ impl ProcessTableWidget for Painter {
                     draw_border,
                     widget_id + 1,
                 );
-
-                if app_state.should_get_widget_bounds() {
-                    // Update draw loc in widget map
-                    if let Some(widget) = app_state.widget_map.get_mut(&(widget_id + 1)) {
-                        widget.top_left_corner = Some((processes_chunk[1].x, processes_chunk[1].y));
-                        widget.bottom_right_corner = Some((
-                            processes_chunk[1].x + processes_chunk[1].width,
-                            processes_chunk[1].y + processes_chunk[1].height,
-                        ));
-                        // debug!(
-                        //     "Process search - TLC: {:?}, BRC: {:?}",
-                        //     widget.top_left_corner, widget.bottom_right_corner
-                        // );
-                    }
-                }
             }
 
             if is_sort_open {
@@ -113,39 +98,9 @@ impl ProcessTableWidget for Painter {
                     draw_border,
                     widget_id + 2,
                 );
-
-                if app_state.should_get_widget_bounds() {
-                    // Update draw loc in widget map
-                    if let Some(widget) = app_state.widget_map.get_mut(&(widget_id + 2)) {
-                        widget.top_left_corner = Some((processes_chunk[0].x, processes_chunk[0].y));
-                        widget.bottom_right_corner = Some((
-                            processes_chunk[0].x + processes_chunk[0].width,
-                            processes_chunk[0].y + processes_chunk[0].height,
-                        ));
-                    }
-                }
             }
 
             self.draw_processes_table(f, app_state, proc_draw_loc, draw_border, widget_id);
-
-            if app_state.should_get_widget_bounds() {
-                // Update draw loc in widget map
-                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                    // debug!(
-                    //     "Process table BEFORE - TLC: {:?}, BRC: {:?}",
-                    //     widget.top_left_corner, widget.bottom_right_corner
-                    // );
-                    widget.top_left_corner = Some((proc_draw_loc.x, proc_draw_loc.y));
-                    widget.bottom_right_corner = Some((
-                        proc_draw_loc.x + proc_draw_loc.width,
-                        proc_draw_loc.y + proc_draw_loc.height,
-                    ));
-                    // debug!(
-                    //     "Process table - TLC: {:?}, BRC: {:?}",
-                    //     widget.top_left_corner, widget.bottom_right_corner
-                    // );
-                }
-            }
         }
     }
 
@@ -154,6 +109,13 @@ impl ProcessTableWidget for Painter {
         widget_id: u64,
     ) {
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let margined_draw_loc = Layout::default()
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
+                .direction(Direction::Horizontal)
+                .split(draw_loc)[0];
+
             if let Some(process_data) = &app_state
                 .canvas_data
                 .finalized_process_data_map
@@ -167,7 +129,6 @@ impl ProcessTableWidget for Painter {
                 // hit the process we've currently scrolled to.
                 // We also need to move the list - we can
                 // do so by hiding some elements!
-                let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
                 let position = get_start_position(
                     usize::from(draw_loc.height.saturating_sub(self.table_height_offset)),
@@ -313,12 +274,6 @@ impl ProcessTableWidget for Painter {
                     Block::default().borders(Borders::NONE)
                 };
 
-                let margined_draw_loc = Layout::default()
-                    .constraints([Constraint::Percentage(100)].as_ref())
-                    .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
-                    .direction(Direction::Horizontal)
-                    .split(draw_loc)[0];
-
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)
@@ -337,6 +292,17 @@ impl ProcessTableWidget for Painter {
                     margined_draw_loc,
                     proc_table_state,
                 );
+            }
+
+            if app_state.should_get_widget_bounds() {
+                // Update draw loc in widget map
+                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                    widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
+                    widget.bottom_right_corner = Some((
+                        margined_draw_loc.x + margined_draw_loc.width,
+                        margined_draw_loc.y + margined_draw_loc.height,
+                    ));
+                }
             }
         }
     }
@@ -542,15 +508,26 @@ impl ProcessTableWidget for Painter {
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                 .direction(Direction::Horizontal)
-                .split(draw_loc);
+                .split(draw_loc)[0];
 
             f.render_widget(
                 Paragraph::new(search_text.iter())
                     .block(process_search_block)
                     .style(self.colours.text_style)
                     .alignment(Alignment::Left),
-                margined_draw_loc[0],
+                margined_draw_loc,
             );
+
+            if app_state.should_get_widget_bounds() {
+                // Update draw loc in widget map
+                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                    widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
+                    widget.bottom_right_corner = Some((
+                        margined_draw_loc.x + margined_draw_loc.width,
+                        margined_draw_loc.y + margined_draw_loc.height,
+                    ));
+                }
+            }
         }
     }
 
@@ -639,7 +616,7 @@ impl ProcessTableWidget for Painter {
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                 .direction(Direction::Horizontal)
-                .split(draw_loc);
+                .split(draw_loc)[0];
 
             f.render_stateful_widget(
                 Table::new(["Sort By"].iter(), sort_options)
@@ -647,9 +624,20 @@ impl ProcessTableWidget for Painter {
                     .header_style(self.colours.table_header_style)
                     .widths(&[Constraint::Percentage(100)])
                     .header_gap(1),
-                margined_draw_loc[0],
+                margined_draw_loc,
                 column_state,
             );
+
+            if app_state.should_get_widget_bounds() {
+                // Update draw loc in widget map
+                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                    widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
+                    widget.bottom_right_corner = Some((
+                        margined_draw_loc.x + margined_draw_loc.width,
+                        margined_draw_loc.y + margined_draw_loc.height,
+                    ));
+                }
+            }
         }
     }
 }

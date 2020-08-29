@@ -943,7 +943,7 @@ impl std::str::FromStr for BottomWidgetType {
             "empty" => Ok(BottomWidgetType::Empty),
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
             _ => Err(BottomError::ConfigError(format!(
-                "invalid widget type: {}",
+                "invalid widget type: {}", // FIXME: Make this more helpful, specify valid widget types (just go through the list)
                 s
             ))),
         }
