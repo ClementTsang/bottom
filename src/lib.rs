@@ -85,6 +85,7 @@ pub fn get_matches() -> clap::ArgMatches<'static> {
         (@arg USE_OLD_NETWORK_LEGEND: --use_old_network_legend "Use the older (pre-0.4) network widget legend.")
         (@arg HIDE_TABLE_GAP: --hide_table_gap "Hides the spacing between the table headers and entries.")
         (@arg BATTERY: --battery "Shows the battery widget in default or basic mode.  No effect on custom layouts.")
+        (@arg DISABLE_CLICK: --disable_click "Disables mouse clicks from interacting with the program.")
 	)
         .get_matches()
 }
@@ -96,13 +97,15 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
         MouseEvent::Down(button, x, y, _modifiers) => {
             debug!("Button up: {:?}, x: {}, y: {}", button, x, y);
 
-            match button {
-                crossterm::event::MouseButton::Left => {
-                    // Trigger left click widget activity
-                    app.left_mouse_click_movement(x, y);
+            if !app.app_config_fields.disable_click {
+                match button {
+                    crossterm::event::MouseButton::Left => {
+                        // Trigger left click widget activity
+                        app.left_mouse_click_movement(x, y);
+                    }
+                    crossterm::event::MouseButton::Right => {}
+                    _ => {}
                 }
-                crossterm::event::MouseButton::Right => {}
-                _ => {}
             }
         }
         _ => {}

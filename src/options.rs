@@ -42,6 +42,7 @@ pub struct ConfigFlags {
     pub use_old_network_legend: Option<bool>,
     pub hide_table_gap: Option<bool>,
     pub battery: Option<bool>,
+    pub disable_click: Option<bool>,
 }
 
 #[derive(Default, Deserialize)]
@@ -229,6 +230,7 @@ pub fn build_app(
         } else {
             1
         },
+        disable_click: get_disable_click(matches, config),
     };
 
     let used_widgets = UsedWidgets {
@@ -498,9 +500,7 @@ pub fn get_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config) ->
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(grouping) = flags.group_processes {
-            if grouping {
-                return true;
-            }
+            return grouping;
         }
     }
     false
@@ -511,9 +511,7 @@ pub fn get_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Conf
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(case_sensitive) = flags.case_sensitive {
-            if case_sensitive {
-                return true;
-            }
+            return case_sensitive;
         }
     }
     false
@@ -524,9 +522,7 @@ pub fn get_app_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Co
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(whole_word) = flags.whole_word {
-            if whole_word {
-                return true;
-            }
+            return whole_word;
         }
     }
     false
@@ -537,9 +533,7 @@ pub fn get_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config) -
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(regex) = flags.regex {
-            if regex {
-                return true;
-            }
+            return regex;
         }
     }
     false
@@ -550,9 +544,7 @@ fn get_hide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(hide_time) = flags.hide_time {
-            if hide_time {
-                return true;
-            }
+            return hide_time;
         }
     }
     false
@@ -563,9 +555,7 @@ fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(autohide_time) = flags.autohide_time {
-            if autohide_time {
-                return true;
-            }
+            return autohide_time;
         }
     }
 
@@ -622,14 +612,23 @@ fn get_default_widget_and_count(
     }
 }
 
+fn get_disable_click(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("DISABLE_CLICK") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(disable_click) = flags.disable_click {
+            return disable_click;
+        }
+    }
+    false
+}
+
 pub fn get_use_old_network_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("USE_OLD_NETWORK_LEGEND") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(use_old_network_legend) = flags.use_old_network_legend {
-            if use_old_network_legend {
-                return true;
-            }
+            return use_old_network_legend;
         }
     }
     false
@@ -640,9 +639,7 @@ pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) 
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(hide_table_gap) = flags.hide_table_gap {
-            if hide_table_gap {
-                return true;
-            }
+            return hide_table_gap;
         }
     }
     false
@@ -653,9 +650,7 @@ pub fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> 
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(battery) = flags.battery {
-            if battery {
-                return true;
-            }
+            return battery;
         }
     }
     false

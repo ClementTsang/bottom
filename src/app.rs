@@ -40,6 +40,7 @@ pub struct AppConfigFields {
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
     pub table_gap: u16,
+    pub disable_click: bool,
 }
 
 #[derive(TypedBuilder)]
