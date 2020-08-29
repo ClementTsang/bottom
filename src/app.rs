@@ -305,6 +305,7 @@ impl App {
 
     pub fn toggle_sort(&mut self) {
         match &self.current_widget.widget_type {
+            // FIXME: [REFACTOR] Remove these @'s if unneeded, they were an idea but they're ultimately useless for me here...?
             widget_type @ BottomWidgetType::Proc | widget_type @ BottomWidgetType::ProcSort => {
                 let widget_id = self.current_widget.widget_id
                     - match &widget_type {
@@ -1218,7 +1219,16 @@ impl App {
     }
 
     pub fn move_widget_selection(&mut self, direction: &WidgetDirection) {
+        // Since we only want to call reset once, we do it like this to avoid
+        // redundant calls on recursion.
+        self.move_widget_selection_logic(direction);
+        self.reset_multi_tap_keys();
+    }
+
+    fn move_widget_selection_logic(&mut self, direction: &WidgetDirection) {
         /*
+            The actual logic for widget movement.
+
             We follow these following steps:
             1. Send a movement signal in `direction`.
             2. Check if this new widget we've landed on is hidden.  If not, halt.
@@ -1284,7 +1294,7 @@ impl App {
                                 WidgetDirection::Up => {
                                     // Note this case would fail if it moved up into a hidden
                                     // widget, but it's for basic so whatever, it's all hard-coded
-                                    // right now anyways.
+                                    // right now anyways...
                                     if let Some(next_new_widget_id) = new_widget.up_neighbour {
                                         if let Some(next_new_widget) =
                                             self.widget_map.get(&next_new_widget_id)
@@ -1294,11 +1304,22 @@ impl App {
                                     }
                                 }
                                 WidgetDirection::Down => {
-                                    // This means we're in basic mode.  As such, then
-                                    // we want to move DOWN to the currently shown widget
+                                    // Assuming we're in basic mode (BasicTables), then
+                                    // we want to move DOWN to the currently shown widget.
                                     if let Some(basic_table_widget_state) =
-                                        &self.basic_table_widget_state
+                                        &mut self.basic_table_widget_state
                                     {
+                                        // We also want to move towards Proc if we had set it to ProcSort.
+                                        if let BottomWidgetType::ProcSort =
+                                            basic_table_widget_state.currently_displayed_widget_type
+                                        {
+                                            basic_table_widget_state
+                                                .currently_displayed_widget_type =
+                                                BottomWidgetType::Proc;
+                                            basic_table_widget_state
+                                                .currently_displayed_widget_id -= 2;
+                                        }
+
                                         if let Some(next_new_widget) = self.widget_map.get(
                                             &basic_table_widget_state.currently_displayed_widget_id,
                                         ) {
@@ -1518,7 +1539,7 @@ impl App {
                     }
 
                     if let Some(ref_dir) = &reflection_dir {
-                        self.move_widget_selection(ref_dir);
+                        self.move_widget_selection_logic(ref_dir);
                     }
                 }
             }
@@ -1564,8 +1585,6 @@ impl App {
                 },
             }
         }
-
-        self.reset_multi_tap_keys();
     }
 
     fn handle_left_expanded_movement(&mut self) {
