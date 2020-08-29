@@ -215,14 +215,16 @@ impl BatteryDisplayWidget for Painter {
                     .select(battery_widget_state.currently_selected_battery_index),
                 draw_loc,
             );
-        }
 
-        if app_state.should_get_widget_bounds() {
-            // Update draw loc in widget map
-            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                widget.bottom_right_corner =
-                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+            if app_state.should_get_widget_bounds() {
+                // Update draw loc in widget map
+                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+                    widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
+                    widget.bottom_right_corner = Some((
+                        margined_draw_loc.x + margined_draw_loc.width,
+                        margined_draw_loc.y + margined_draw_loc.height,
+                    ));
+                }
             }
         }
     }

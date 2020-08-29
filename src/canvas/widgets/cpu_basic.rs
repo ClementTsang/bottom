@@ -127,11 +127,11 @@ impl CpuBasicWidget for Painter {
                         .direction(Direction::Horizontal)
                         .constraints([Constraint::Percentage(100)].as_ref())
                         .horizontal_margin(1)
-                        .split(*chunk);
+                        .split(*chunk)[0];
 
                     f.render_widget(
                         Paragraph::new(cpu_column.iter()).block(Block::default()),
-                        margined_loc[0],
+                        margined_loc,
                     );
                 }
             }

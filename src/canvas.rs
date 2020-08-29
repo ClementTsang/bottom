@@ -72,7 +72,7 @@ pub struct Painter {
 }
 
 impl Painter {
-    pub fn init(widget_layout: BottomLayout, table_gap: u16) -> Self {
+    pub fn init(widget_layout: BottomLayout, table_gap: u16, is_basic_mode: bool) -> Self {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -152,7 +152,7 @@ impl Painter {
             layout_constraints,
             widget_layout,
             derived_widget_draw_locs: Vec::default(),
-            table_height_offset: 4 + table_gap,
+            table_height_offset: if is_basic_mode { 2 } else { 4 } + table_gap,
             requires_boundary_recalculation: true,
         }
     }
