@@ -2301,6 +2301,6 @@ impl App {
             }
         }
 
-        // FIXME: [MOUSE] how to handle click propagation + handling?
+        // FIXME: [MOUSE] add click handling per widget!
     }
 }
