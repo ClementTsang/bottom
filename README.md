@@ -114,6 +114,15 @@ curl -LO https://github.com/ClementTsang/bottom/releases/download/0.4.7/bottom_0
 sudo dpkg -i bottom_0.4.7_amd64.deb
 ```
 
+### Fedora/CentOS
+
+Available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
+
+```bash
+sudo dnf copr enable atim/bottom -y
+sudo dnf install bottom
+```
+
 ### Homebrew
 
 ```bash
