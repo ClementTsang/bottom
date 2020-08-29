@@ -561,6 +561,7 @@ impl BottomLayout {
                                     .left_neighbour(Some(4))
                                     .right_neighbour(Some(DEFAULT_WIDGET_ID))
                                     .width_ratio(1)
+                                    .parent_reflector(Some((WidgetDirection::Right, 2)))
                                     .build(),
                                 BottomWidget::builder()
                                     .canvas_handle_width(true)
@@ -583,6 +584,7 @@ impl BottomLayout {
                                 .up_neighbour(Some(DEFAULT_WIDGET_ID))
                                 .left_neighbour(Some(4))
                                 .right_neighbour(Some(7))
+                                .parent_reflector(Some((WidgetDirection::Up, 1)))
                                 .build()])
                             .build(),
                     ])
@@ -646,6 +648,7 @@ impl BottomLayout {
                                     .down_neighbour(Some(DEFAULT_WIDGET_ID + 1))
                                     .left_neighbour(Some(4))
                                     .right_neighbour(Some(DEFAULT_WIDGET_ID))
+                                    .parent_reflector(Some((WidgetDirection::Right, 2)))
                                     .build(),
                                 BottomWidget::builder()
                                     .canvas_handle_width(true)
@@ -667,6 +670,7 @@ impl BottomLayout {
                                 .up_neighbour(Some(DEFAULT_WIDGET_ID))
                                 .left_neighbour(Some(4))
                                 .right_neighbour(Some(7))
+                                .parent_reflector(Some((WidgetDirection::Up, 1)))
                                 .build()])
                             .build(),
                     ])
