@@ -287,20 +287,25 @@ impl App {
 
     pub fn on_slash(&mut self) {
         if !self.is_in_dialog() {
-            // FIXME: Add ProcSort too, it's annoying
-            if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                // Toggle on
-                if let Some(proc_widget_state) = self
-                    .proc_state
-                    .get_mut_widget_state(self.current_widget.widget_id)
-                {
-                    proc_widget_state
-                        .process_search_state
-                        .search_state
-                        .is_enabled = true;
-                    self.move_widget_selection(&WidgetDirection::Down);
-                    self.is_force_redraw = true;
+            match &self.current_widget.widget_type {
+                BottomWidgetType::Proc | BottomWidgetType::ProcSort => {
+                    // Toggle on
+                    if let Some(proc_widget_state) = self.proc_state.get_mut_widget_state(
+                        self.current_widget.widget_id
+                            - match &self.current_widget.widget_type {
+                                BottomWidgetType::ProcSort => 2,
+                                _ => 0,
+                            },
+                    ) {
+                        proc_widget_state
+                            .process_search_state
+                            .search_state
+                            .is_enabled = true;
+                        self.move_widget_selection(&WidgetDirection::Down);
+                        self.is_force_redraw = true;
+                    }
                 }
+                _ => {}
             }
         }
     }
@@ -328,8 +333,10 @@ impl App {
                             .set_to_sorted_index(&proc_widget_state.process_sorting_type);
                         self.move_widget_selection(&WidgetDirection::Left);
                     } else {
-                        // Otherwise, move right
-                        self.move_widget_selection(&WidgetDirection::Right);
+                        // Otherwise, move right if currently on the sort widget
+                        if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
+                            self.move_widget_selection(&WidgetDirection::Right);
+                        }
                     }
                 }
 
