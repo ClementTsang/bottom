@@ -1314,13 +1314,13 @@ impl App {
                             if let Some((parent_direction, offset)) = &new_widget.parent_reflector {
                                 if direction.is_opposite(parent_direction) {
                                     // Keep going in the current direction if hidden...
-                                    let next_neighbour_id = match &direction {
+                                    // unless we hit a wall of sorts.
+                                    let option_next_neighbour_id = match &direction {
                                         WidgetDirection::Left => new_widget.left_neighbour,
                                         WidgetDirection::Right => new_widget.right_neighbour,
                                         WidgetDirection::Up => new_widget.up_neighbour,
                                         WidgetDirection::Down => new_widget.down_neighbour,
-                                    }
-                                    .unwrap_or(*new_widget_id);
+                                    };
                                     match &new_widget.widget_type {
                                         BottomWidgetType::CpuLegend => {
                                             if let Some(cpu_widget_state) = self
@@ -1329,11 +1329,15 @@ impl App {
                                                 .get(&(new_widget_id - *offset))
                                             {
                                                 if cpu_widget_state.is_legend_hidden {
-                                                    if let Some(next_neighbour_widget) =
-                                                        self.widget_map.get(&next_neighbour_id)
+                                                    if let Some(next_neighbour_id) =
+                                                        option_next_neighbour_id
                                                     {
-                                                        self.current_widget =
-                                                            next_neighbour_widget.clone();
+                                                        if let Some(next_neighbour_widget) =
+                                                            self.widget_map.get(&next_neighbour_id)
+                                                        {
+                                                            self.current_widget =
+                                                                next_neighbour_widget.clone();
+                                                        }
                                                     }
                                                 } else {
                                                     self.current_widget = new_widget.clone();
@@ -1350,12 +1354,17 @@ impl App {
                                                 match &new_widget.widget_type {
                                                     BottomWidgetType::ProcSearch => {
                                                         if !proc_widget_state.is_search_enabled() {
-                                                            if let Some(next_neighbour_widget) =
-                                                                self.widget_map
-                                                                    .get(&next_neighbour_id)
+                                                            if let Some(next_neighbour_id) =
+                                                                option_next_neighbour_id
                                                             {
-                                                                self.current_widget =
-                                                                    next_neighbour_widget.clone();
+                                                                if let Some(next_neighbour_widget) =
+                                                                    self.widget_map
+                                                                        .get(&next_neighbour_id)
+                                                                {
+                                                                    self.current_widget =
+                                                                        next_neighbour_widget
+                                                                            .clone();
+                                                                }
                                                             }
                                                         } else {
                                                             self.current_widget =
@@ -1364,12 +1373,17 @@ impl App {
                                                     }
                                                     BottomWidgetType::ProcSort => {
                                                         if !proc_widget_state.is_sort_open {
-                                                            if let Some(next_neighbour_widget) =
-                                                                self.widget_map
-                                                                    .get(&next_neighbour_id)
+                                                            if let Some(next_neighbour_id) =
+                                                                option_next_neighbour_id
                                                             {
-                                                                self.current_widget =
-                                                                    next_neighbour_widget.clone();
+                                                                if let Some(next_neighbour_widget) =
+                                                                    self.widget_map
+                                                                        .get(&next_neighbour_id)
+                                                                {
+                                                                    self.current_widget =
+                                                                        next_neighbour_widget
+                                                                            .clone();
+                                                                }
                                                             }
                                                         } else {
                                                             self.current_widget =

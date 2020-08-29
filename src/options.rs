@@ -267,6 +267,7 @@ pub fn get_widget_layout(
 
     let bottom_layout = if get_use_basic_mode(matches, config) {
         default_widget_id = DEFAULT_WIDGET_ID;
+
         BottomLayout::init_basic_default(get_use_battery(matches, config))
     } else {
         let ref_row: Vec<Row>; // Required to handle reference
@@ -305,7 +306,7 @@ pub fn get_widget_layout(
             total_row_height_ratio: total_height_ratio,
         };
 
-        // Confirm that we have at least ONE widget - if not, error out!
+        // Confirm that we have at least ONE widget left - if not, error out!
         if iter_id > 0 {
             ret_bottom_layout.get_movement_mappings();
             // debug!("Bottom layout: {:#?}", ret_bottom_layout);
