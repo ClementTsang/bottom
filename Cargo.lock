@@ -96,18 +96,17 @@ checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
 
 [[package]]
 name = "battery"
-version = "0.7.5"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36a698e449024a5d18994a815998bf5e2e4bc1883e35a7d7ba95b6b69ee45907"
+checksum = "8775be4956c98c9ac7c11cc383d632636935d3a688dabddb71ac83ba00a3a72f"
 dependencies = [
  "cfg-if",
- "core-foundation 0.6.4",
+ "core-foundation",
  "lazycell",
  "libc",
- "mach 0.2.3",
- "nix 0.15.0",
+ "mach",
  "num-traits",
- "uom 0.26.0",
+ "uom 0.29.0",
  "winapi 0.3.9",
 ]
 
@@ -227,29 +226,13 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
 name = "core-foundation"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25b9e03f145fd4f2bf705e07b900cd41fc636598fe5dc452fd0db1441c3f496d"
-dependencies = [
- "core-foundation-sys 0.6.2",
- "libc",
-]
-
-[[package]]
-name = "core-foundation"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57d24c7a13c43e870e37c1556b74555437870a04514f7685f5b354e090567171"
 dependencies = [
- "core-foundation-sys 0.7.0",
+ "core-foundation-sys",
  "libc",
 ]
-
-[[package]]
-name = "core-foundation-sys"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7ca8a5221364ef15ce201e8ed2f609fc312682a8f4e0e3d4aa5879764e0fa3b"
 
 [[package]]
 name = "core-foundation-sys"
@@ -335,7 +318,7 @@ version = "3.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0b676fa23f995faf587496dcd1c80fead847ed58d2da52ac1caca9a72790dd2"
 dependencies = [
- "nix 0.17.0",
+ "nix",
  "winapi 0.3.9",
 ]
 
@@ -568,13 +551,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "144af2a423102dd4dd3e9fdd2c77c4756fb3c6c009d691628997fd5a2247719a"
 dependencies = [
  "cfg-if",
- "core-foundation 0.7.0",
+ "core-foundation",
  "futures-core",
  "futures-util",
  "lazy_static",
  "libc",
- "mach 0.3.2",
- "nix 0.17.0",
+ "mach",
+ "nix",
  "pin-utils",
  "uom 0.27.0",
  "winapi 0.3.9",
@@ -591,7 +574,7 @@ dependencies = [
  "heim-runtime",
  "lazy_static",
  "libc",
- "mach 0.3.2",
+ "mach",
  "winapi 0.3.9",
 ]
 
@@ -603,11 +586,11 @@ checksum = "49e5740e687a7e1f1db597e14aff112b076f48997fe617b9b165e7c2f139d248"
 dependencies = [
  "bitflags",
  "cfg-if",
- "core-foundation 0.7.0",
+ "core-foundation",
  "heim-common",
  "heim-runtime",
  "libc",
- "mach 0.3.2",
+ "mach",
  "widestring",
  "winapi 0.3.9",
 ]
@@ -623,7 +606,7 @@ dependencies = [
  "heim-runtime",
  "lazy_static",
  "libc",
- "mach 0.3.2",
+ "mach",
  "platforms",
  "winapi 0.3.9",
 ]
@@ -639,7 +622,7 @@ dependencies = [
  "heim-runtime",
  "lazy_static",
  "libc",
- "mach 0.3.2",
+ "mach",
  "winapi 0.3.9",
 ]
 
@@ -656,7 +639,7 @@ dependencies = [
  "hex",
  "libc",
  "macaddr",
- "nix 0.17.0",
+ "nix",
 ]
 
 [[package]]
@@ -674,7 +657,7 @@ dependencies = [
  "heim-runtime",
  "lazy_static",
  "libc",
- "mach 0.3.2",
+ "mach",
  "memchr",
  "ntapi",
  "ordered-float",
@@ -768,9 +751,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "lazycell"
-version = "1.2.1"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
+checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
@@ -801,15 +784,6 @@ name = "macaddr"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baee0bbc17ce759db233beb01648088061bf678383130602a298e6998eedb2d8"
-
-[[package]]
-name = "mach"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86dd2487cdfea56def77b88438a2c915fb45113c5319bfe7e14306ca4cd0b0e1"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "mach"
@@ -881,19 +855,6 @@ dependencies = [
  "cfg-if",
  "libc",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "nix"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b2e0b4f3320ed72aaedb9a5ac838690a8047c7b275da22711fddff4f8a14229"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if",
- "libc",
- "void",
 ]
 
 [[package]]
@@ -1290,9 +1251,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f597c00e6548b9ddd54c11b8e8534fc11223f28509d57e021f01797b50ca5ca1"
+checksum = "13816d558f404113dfdf855ed982f160cf697b3e573a68b2b798062032182212"
 dependencies = [
  "cfg-if",
  "doc-comment",
@@ -1407,21 +1368,21 @@ checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
 
 [[package]]
 name = "uom"
-version = "0.26.0"
+version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cec796ec5f7ac557631709079168286056205c51c60aac33f51764bdc7b8dc4"
+checksum = "51fc04fb44bcb7806da71885872cb15d123b681e459a476ef8a0bab287bee0cd"
 dependencies = [
+ "num-rational",
  "num-traits",
  "typenum",
 ]
 
 [[package]]
 name = "uom"
-version = "0.27.0"
+version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51fc04fb44bcb7806da71885872cb15d123b681e459a476ef8a0bab287bee0cd"
+checksum = "8bb593f5252356bfb829112f8fca2d0982d48588d2d6bb5a92553b0dfc4c9aba"
 dependencies = [
- "num-rational",
  "num-traits",
  "typenum",
 ]
