@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
+- [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.
+
 ### Bug Fixes
 
 - [#211](https://github.com/ClementTsang/bottom/pull/211): Fixes a bug where you could move down in the process widget even if the process widget search was closed.
