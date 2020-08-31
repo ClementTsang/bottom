@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes
 
-- [#213](https://github.com/ClementTsang/bottom/pull/213): Updated help descriptions, added auto-complete generation.
+- [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.
 
 ### Bug Fixes
 
