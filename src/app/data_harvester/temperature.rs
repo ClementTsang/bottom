@@ -6,7 +6,8 @@ use sysinfo::{ComponentExt, System, SystemExt};
 
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
-    pub component_name: String,
+    pub component_name: Option<String>,
+    pub component_label: Option<String>,
     pub temperature: f32,
 }
 
@@ -37,7 +38,8 @@ pub async fn get_temperature_data(
         while let Some(sensor) = sensor_data.next().await {
             if let Ok(sensor) = sensor {
                 temperature_vec.push(TempHarvest {
-                    component_name: sensor.unit().to_string(),
+                    component_name: Some(sensor.unit().to_string()),
+                    component_label: Some(sensor.label().unwrap_or("").to_string()),
                     temperature: match temp_type {
                         TemperatureType::Celsius => sensor
                             .current()
@@ -58,7 +60,8 @@ pub async fn get_temperature_data(
         let sensor_data = sys.get_components();
         for component in sensor_data {
             temperature_vec.push(TempHarvest {
-                component_name: component.get_label().to_string(),
+                component_name: None,
+                component_label: Some(component.get_label().to_string()),
                 temperature: match temp_type {
                     TemperatureType::Celsius => component.get_temperature(),
                     TemperatureType::Kelvin => {
