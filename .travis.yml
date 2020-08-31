@@ -114,6 +114,7 @@ before_deploy:
           echo "Tar-ing AUR PKGBUILDs...";
           tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD;
           
+          # Note this requires the completions directory in the current directory.
           echo "Generating Debian install file...";
           cargo install cargo-deb;
           cargo deb;

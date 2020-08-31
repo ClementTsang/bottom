@@ -64,9 +64,14 @@ section = "utility"
 assets = [
     ["target/release/btm", "usr/bin/", "755"],
     ["LICENSE", "usr/share/doc/btm/", "644"],
-    ["README.md", "usr/share/doc/btm/README", "644"],
+    ["completions/btm.bash", "usr/share/bash-completion/completions/btm", "644"],
+    ["completions/btm.fish", "usr/share/fish/vendor_completions.d/btm.fish", "644"],
+    ["completions/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
 extended-description = """\
+A cross-platform graphical process/system monitor with a customizable interface and a multitude of
+features. Supports Linux, macOS, and Windows.
+
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml.
 If one is not specified it will fall back to defaults.  If a config file does not
 exist at the specified or default location, a blank one will be created for the user.
