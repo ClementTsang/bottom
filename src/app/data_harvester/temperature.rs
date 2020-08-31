@@ -39,7 +39,11 @@ pub async fn get_temperature_data(
             if let Ok(sensor) = sensor {
                 temperature_vec.push(TempHarvest {
                     component_name: Some(sensor.unit().to_string()),
-                    component_label: Some(sensor.label().unwrap_or("").to_string()),
+                    component_label: if let Some(label) = sensor.label() {
+                        Some(label.to_string())
+                    } else {
+                        None
+                    },
                     temperature: match temp_type {
                         TemperatureType::Celsius => sensor
                             .current()
