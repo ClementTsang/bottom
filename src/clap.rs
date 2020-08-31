@@ -9,8 +9,7 @@ const TEMPLATE: &str = "\
 USAGE:{usage}
 
 FLAGS:
-{unified}
-";
+{unified}";
 
 const USAGE: &str = "
     btm [FLAG]";
