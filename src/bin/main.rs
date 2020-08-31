@@ -29,7 +29,7 @@ fn main() -> error::Result<()> {
     {
         utils::logging::init_logger()?;
     }
-    let matches = get_matches();
+    let matches = clap::get_matches();
 
     let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
 
