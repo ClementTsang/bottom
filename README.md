@@ -20,6 +20,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Homebrew](#homebrew)
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
+  - [Auto-completion](#auto-completion)
 - [Usage](#usage)
   - [Flags](#flags)
   - [Options](#options)
@@ -86,6 +87,9 @@ tar -xzvf 0.4.7.tar.gz
 cargo install --path .
 ```
 
+Or, you can just download the binary from the [latest release](https://github.com/ClementTsang/bottom/releases/latest) and install/use it
+in whatever way you want.
+
 ### Cargo
 
 ```bash
@@ -151,6 +155,19 @@ choco install bottom
 # Version number may be required for newer releases, if available:
 choco install bottom --version=0.4.7
 ```
+
+### Auto-completion
+
+Shell completions are included in binary releases, and are generated in the same directory as the
+binary if bottom is manually built.
+
+- For bash, move `btm.bash` to `$XDG_CONFIG_HOME/bash_completion or /etc/bash_completion.d/`.
+- For fish, move `btm.fish` to `$HOME/.config/fish/completions/`.
+- For zsh, move `_btm` to one of your `$fpath` directories.
+- For PowerShell, add `. _btm.ps1` to your PowerShell
+  [profile](<https://docs.microsoft.com/en-us/previous-versions//bb613488(v=vs.85)>).
+
+Some install scripts (i.e. AUR) will automatically do this for you.
 
 ## Usage
 
