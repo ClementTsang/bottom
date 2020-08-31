@@ -23,7 +23,6 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Auto-completion](#auto-completion)
 - [Usage](#usage)
   - [Flags](#flags)
-  - [Options](#options)
 - [Keybindings](#keybindings)
   - [General](#general)
   - [Process bindings](#process-bindings)
@@ -176,37 +175,32 @@ Run using `btm`.
 ### Flags
 
 ```
--h, --help                          Prints help information, including flags and options
--a, --hide_avg_cpu                  Hides the average CPU usage
--m, --dot-marker                    Uses a dot marker instead of the default braille marker
--c, --celsius                       Displays the temperature type in Celsius [default]
--f, --fahrenheit                    Displays the temperature type in Fahrenheit
--k, --kelvin                        Displays the temperature type in Kelvin
--l, --left_legend                   Displays the CPU legend to the left rather than the right
--u, --current_usage                 Sets process CPU usage to be based on current total CPU usage
--g, --group                         Groups together processes with the same name by default
--S, --case_sensitive                Search defaults to matching cases
--W, --whole                         Search defaults to searching for the whole word
--R, --regex                         Search defaults to using regex
--s, --show_disabled_data            Shows disabled CPU entries in the CPU legend
--b, --basic                         Enables basic mode, removing charts and condensing data
-    --autohide_time                 Automatically hide the time scaling in graphs after being shown for a brief moment when
-                                    zoomed in/out.  If time is disabled via --hide_time then this will have no effect
-    --use_old_network_legend        Use the older (pre-0.4) network legend which is separate from the network chart
-    --hide_table_gap                Hides the spacing between table headers and data
-    --battery                       Displays the battery widget for default and basic layouts
-    --disable_click                 Disables mouse clicks from interacting with the program
-```
-
-### Options
-
-```
--r, --rate <MS>                     Set the refresh rate in milliseconds [default: 1000]
--C, --config <PATH>                 Use the specified config file; if it does not exist it is automatically created [default: see section on config files]
--t, --default_time_value <MS>       Sets the default time interval for charts in milliseconds [default: 60000]
--d, --time_delta <MS>               Sets the default amount each zoom in/out action changes by in milliseconds [default: 15000]
-    --default_widget_count <COUNT>  Which number of the selected widget type to select, from left to right, top to bottom [default: 1]
-    --default_widget_type <TYPE>    The default widget type to select by default [default: "process"]
+        --autohide_time                        Temporarily shows the time scale in graphs.
+    -b, --basic                                Hides graphs and uses a more basic look.
+        --battery                              Shows the battery widget.
+    -S, --case_sensitive                       Enables case sensitivity by default.
+    -c, --celsius                              Sets the temperature type to Celsius.
+    -C, --config <CONFIG PATH>                 Sets the location of the config file.
+    -t, --default_time_value <MS>              Default time value for graphs in ms.
+        --default_widget_count <INT>           Sets the n'th selected widget type as the default.
+        --default_widget_type <WIDGET TYPE>    Sets which widget type to use as the default widget.
+        --disable_click                        Disables mouse clicks.
+    -m, --dot_marker                           Uses a dot marker for graphs.
+    -f, --fahrenheit                           Sets the temperature type to Fahrenheit.
+    -g, --group                                Groups processes with the same name by default.
+    -a, --hide_avg_cpu                         Hides the average CPU usage.
+        --hide_table_gap                       Hides the spacing between table headers and entries.
+        --hide_time                            Completely hides the time scaling.
+    -k, --kelvin                               Sets the temperature type to Kelvin.
+    -l, --left_legend                          Puts the CPU chart legend to the left side.
+    -r, --rate <MS>                            Sets a refresh rate in ms.
+    -R, --regex                                Enables regex by default.
+    -d, --time_delta <MS>                      The amount in ms changed upon zooming.
+    -u, --current_usage                        Sets process CPU% to be based on current CPU%.
+        --use_old_network_legend               DEPRECATED - uses the older network legend.
+    -W, --whole_word                           Enables whole-word matching by default.
+    -h, --help                                 Prints help information.  Use --help for more info.
+    -V, --version                              Prints version information.
 ```
 
 ### Keybindings
@@ -466,7 +460,7 @@ Note that if a config file does not exist at either the default location or the 
 
 The following options can be set under `[flags]` to achieve the same effect as passing in a flag on runtime. Note that if a flag is given, it will override the config file.
 
-These are the following supported flag config values, which correspond to the flag of the same name described in [Flags](#flags) and [Options](#options):
+These are the following supported flag config values, which correspond to the flag of the same name described in [Flags](#flags):
 
 | Field                    | Type                                                                                  |
 | ------------------------ | ------------------------------------------------------------------------------------- |

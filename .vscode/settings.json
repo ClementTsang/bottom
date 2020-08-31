@@ -37,6 +37,7 @@
         "crossterm",
         "curr",
         "czvf",
+        "fpath",
         "gotop",
         "gtop",
         "haase",

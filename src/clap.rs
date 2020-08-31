@@ -6,15 +6,14 @@ const TEMPLATE: &str = "\
 
 {about}
 
-USAGE:
-{usage}
+USAGE:{usage}
 
 FLAGS:
-{flags}
-
-OPTIONS:
-{options}
+{unified}
 ";
+
+const USAGE: &str = "
+    btm [FLAG]";
 
 pub fn get_matches() -> clap::ArgMatches<'static> {
     build_app().get_matches()
@@ -198,13 +197,28 @@ time is 30s (30000), and the default is 60s (60000).\n\n\n",
     let default_widget_count = Arg::with_name("DEFAULT_WIDGET_COUNT")
         .long("default_widget_count")
         .takes_value(true)
+        .requires_all(&["DEFAULT_WIDGET_TYPE"])
         .value_name("INT")
         .help("Sets the n'th selected widget type as the default.")
         .long_help(
             "\
 Sets the n'th selected widget type to use as the default widget.
-Goes from left to right, top to bottom.\n\n",
-        ); //FIXME: Explain this
+Requires 'default_widget_type' to also be set, and defaults to 1.
+
+This reads from left to right, top to bottom.  For example, suppose
+we have a layout that looks like:
++-------------------+-----------------------+
+|      CPU (1)      |        CPU (2)        |
++---------+---------+-------------+---------+
+| Process | CPU (3) | Temperature | CPU (4) |
++---------+---------+-------------+---------+
+
+And we set our default widget type to 'CPU'.  If we set
+'--default_widget_count 1', then it would use the CPU (1) as
+the default widget.  If we set '--default_widget_count 3', it would
+use CPU (3) as the default instead.
+\n\n",
+        );
     let default_widget_type = Arg::with_name("DEFAULT_WIDGET_TYPE")
         .long("default_widget_type")
         .takes_value(true)
@@ -213,8 +227,37 @@ Goes from left to right, top to bottom.\n\n",
         .long_help(
             "\
 Sets which widget type to use as the default widget.
-Acceptable widget types are...\n\n",
-        ); //FIXME: Expand
+For the default layout, this defaults to the 'process' widget.
+For a custom layout, it defaults to the first widget it sees.
+
+For example, suppose we have a layout that looks like:
++-------------------+-----------------------+
+|      CPU (1)      |        CPU (2)        |
++---------+---------+-------------+---------+
+| Process | CPU (3) | Temperature | CPU (4) |
++---------+---------+-------------+---------+
+
+Setting '--default_widget_type Temp' will make the Temperature
+widget selected by default.
+
+Supported widget types:
++--------------------------+
+|            cpu           |
++--------------------------+
+|        mem, memory       |
++--------------------------+
+|       net, network       |
++--------------------------+
+| proc, process, processes |
++--------------------------+
+|     temp, temperature    |
++--------------------------+
+|           disk           |
++--------------------------+
+|       batt, battery      |
++--------------------------+
+\n\n",
+        );
     let rate = Arg::with_name("RATE_MILLIS")
         .short("r")
         .long("rate")
@@ -239,10 +282,12 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         );
 
     App::new(crate_name!())
+        .setting(AppSettings::UnifiedHelpMessage)
         .version(crate_version!())
         .author(crate_authors!())
         .about(crate_description!())
         .template(TEMPLATE)
+        .usage(USAGE)
         .help_message("Prints help information.  Use --help for more info.")
         .version_message("Prints version information.")
         .arg(kelvin)
@@ -253,6 +298,10 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(basic)
         .arg(battery)
         .arg(case_sensitive)
+        .arg(config)
+        .arg(default_time_value)
+        .arg(default_widget_count)
+        .arg(default_widget_type)
         .arg(disable_click)
         .arg(dot_marker)
         .arg(group)
@@ -260,14 +309,10 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(hide_table_gap)
         .arg(hide_time)
         .arg(left_legend)
+        .arg(rate)
         .arg(regex)
+        .arg(time_delta)
         .arg(current_usage)
         .arg(use_old_network_legend)
         .arg(whole_word)
-        .arg(config)
-        .arg(default_time_value)
-        .arg(default_widget_count)
-        .arg(default_widget_type)
-        .arg(rate)
-        .arg(time_delta)
 }
