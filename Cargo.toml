@@ -84,5 +84,5 @@ output = "bottom_x86_64_installer.msi"
 
 [dev-dependencies.cargo-husky]
 version = "1"
-default-features = false 
+default-features = false
 features = ["user-hooks"]
