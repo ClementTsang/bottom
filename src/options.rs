@@ -613,7 +613,9 @@ fn get_default_widget_and_count(
             Ok((widget_type, widget_count as u64))
         }
     } else {
-        Ok((None, 1))
+        Err(BottomError::ConfigError(
+            "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.".to_string(),
+        ))
     }
 }
 
