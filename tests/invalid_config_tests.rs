@@ -147,3 +147,14 @@ fn test_empty_battery() -> Result<(), Box<dyn std::error::Error>> {
         ));
     Ok(())
 }
+
+#[test]
+fn test_invalid_default_widget_count() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/invalid_configs/invalid_default_widget_count.toml")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("it must be used with"));
+    Ok(())
+}

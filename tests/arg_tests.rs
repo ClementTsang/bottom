@@ -156,3 +156,17 @@ fn test_invalid_default_widget_2() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+fn test_missing_default_widget_type() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_binary_location())
+        .arg("--default_widget_count")
+        .arg("3")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "The following required arguments were not provided",
+        ));
+
+    Ok(())
+}

@@ -592,30 +592,33 @@ fn get_default_widget_and_count(
         None
     };
 
-    if widget_type.is_some() {
-        let widget_count = if let Some(widget_count) = matches.value_of("DEFAULT_WIDGET_COUNT") {
-            widget_count.parse::<u128>()?
-        } else if let Some(flags) = &config.flags {
-            if let Some(widget_count) = flags.default_widget_count {
-                widget_count as u128
-            } else {
-                1 as u128
-            }
+    let widget_count = if let Some(widget_count) = matches.value_of("DEFAULT_WIDGET_COUNT") {
+        Some(widget_count.parse::<u128>()?)
+    } else if let Some(flags) = &config.flags {
+        if let Some(widget_count) = flags.default_widget_count {
+            Some(widget_count as u128)
         } else {
-            1 as u128
-        };
-
-        if widget_count > std::u64::MAX as u128 {
-            Err(BottomError::ConfigError(
-                "set your widget count to be at most unsigned INT_MAX.".to_string(),
-            ))
-        } else {
-            Ok((widget_type, widget_count as u64))
+            None
         }
     } else {
-        Err(BottomError::ConfigError(
+        None
+    };
+
+    match (widget_type, widget_count) {
+        (Some(widget_type), Some(widget_count)) => {
+            if widget_count > std::u64::MAX as u128 {
+                Err(BottomError::ConfigError(
+                    "set your widget count to be at most unsigned INT_MAX.".to_string(),
+                ))
+            } else {
+                Ok((Some(widget_type), widget_count as u64))
+            }
+        }
+        (Some(widget_type), None) => Ok((Some(widget_type), 1)),
+        (None, Some(_widget_count)) =>  Err(BottomError::ConfigError(
             "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.".to_string(),
-        ))
+        )),
+        (None, None) => Ok((None, 1))
     }
 }
 
