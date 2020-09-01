@@ -12,6 +12,8 @@ use layout_options::*;
 
 pub mod layout_options;
 
+use anyhow::{Context, Result};
+
 #[derive(Default, Deserialize)]
 pub struct Config {
     pub flags: Option<ConfigFlags>,
@@ -70,10 +72,11 @@ pub struct ConfigColours {
 pub fn build_app(
     matches: &clap::ArgMatches<'static>, config: &Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-) -> error::Result<App> {
+) -> Result<App> {
     use BottomWidgetType::*;
     let autohide_time = get_autohide_time(&matches, &config);
-    let default_time_value = get_default_time_value(&matches, &config)?;
+    let default_time_value = get_default_time_value(&matches, &config)
+        .context("Update 'default_time_value' in your config file.")?;
     let use_basic_mode = get_use_basic_mode(&matches, &config);
 
     // For processes
@@ -213,15 +216,18 @@ pub fn build_app(
     };
 
     let app_config_fields = AppConfigFields {
-        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)?,
-        temperature_type: get_temperature(matches, config)?,
+        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
+            .context("Update 'rate' in your config file.")?,
+        temperature_type: get_temperature(matches, config)
+            .context("Update 'temperature_type' in your config file.")?,
         show_average_cpu: get_show_average_cpu(matches, config),
         use_dot: get_use_dot(matches, config),
         left_legend: get_use_left_legend(matches, config),
         use_current_cpu_total: get_use_current_cpu_total(matches, config),
         use_basic_mode,
         default_time_value,
-        time_interval: get_time_interval(matches, config)?,
+        time_interval: get_time_interval(matches, config)
+            .context("Update 'time_delta' in your config file.")?,
         hide_time: get_hide_time(matches, config),
         autohide_time,
         use_old_network_legend: get_use_old_network_legend(matches, config),
@@ -340,12 +346,12 @@ fn get_update_rate_in_milliseconds(
     };
 
     if update_rate_in_milliseconds < 250 {
-        return Err(BottomError::InvalidArg(
-            "Please set your update rate to be at least 250 milliseconds.".to_string(),
+        return Err(BottomError::ConfigError(
+            "set your update rate to be at least 250 milliseconds.".to_string(),
         ));
     } else if update_rate_in_milliseconds as u128 > std::u64::MAX as u128 {
-        return Err(BottomError::InvalidArg(
-            "Please set your update rate to be at most unsigned INT_MAX.".to_string(),
+        return Err(BottomError::ConfigError(
+            "set your update rate to be at most unsigned INT_MAX.".to_string(),
         ));
     }
 
@@ -369,7 +375,7 @@ fn get_temperature(
                 "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
                 "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
                 _ => Err(BottomError::ConfigError(format!(
-                    "'{}' is an invalid temperature type, use \"temperature_type = <kelvin|k|celsius|c|fahrenheit|f>\".",
+                    "'{}' is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\".",
                     temp_type
                 ))),
             };
@@ -454,12 +460,12 @@ fn get_default_time_value(
     };
 
     if default_time < 30000 {
-        return Err(BottomError::InvalidArg(
-            "Please set your default value to be at least 30000 milliseconds.".to_string(),
+        return Err(BottomError::ConfigError(
+            "set your default value to be at least 30000 milliseconds.".to_string(),
         ));
     } else if default_time as u128 > STALE_MAX_MILLISECONDS as u128 {
-        return Err(BottomError::InvalidArg(format!(
-            "Please set your default value to be at most {} milliseconds.",
+        return Err(BottomError::ConfigError(format!(
+            "set your default value to be at most {} milliseconds.",
             STALE_MAX_MILLISECONDS
         )));
     }
@@ -481,12 +487,12 @@ fn get_time_interval(matches: &clap::ArgMatches<'static>, config: &Config) -> er
     };
 
     if time_interval < 1000 {
-        return Err(BottomError::InvalidArg(
-            "Please set your time delta to be at least 1000 milliseconds.".to_string(),
+        return Err(BottomError::ConfigError(
+            "set your time delta to be at least 1000 milliseconds.".to_string(),
         ));
     } else if time_interval > STALE_MAX_MILLISECONDS as u128 {
-        return Err(BottomError::InvalidArg(format!(
-            "Please set your time delta to be at most {} milliseconds.",
+        return Err(BottomError::ConfigError(format!(
+            "set your time delta to be at most {} milliseconds.",
             STALE_MAX_MILLISECONDS
         )));
     }
@@ -600,8 +606,8 @@ fn get_default_widget_and_count(
         };
 
         if widget_count > std::u64::MAX as u128 {
-            Err(BottomError::InvalidArg(
-                "Please set your widget count to be at most unsigned INT_MAX.".to_string(),
+            Err(BottomError::ConfigError(
+                "set your widget count to be at most unsigned INT_MAX.".to_string(),
             ))
         } else {
             Ok((widget_type, widget_count as u64))

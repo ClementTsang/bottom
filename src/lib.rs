@@ -5,8 +5,10 @@ extern crate log;
 
 use std::{
     boxed::Box,
+    fs,
     io::{stdout, Write},
     panic::PanicInfo,
+    path::PathBuf,
     thread,
     time::{Duration, Instant},
 };
@@ -166,15 +168,14 @@ pub fn handle_key_event_or_break(
     false
 }
 
-pub fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
-    use std::{ffi::OsString, fs};
-    let config_path = if let Some(conf_loc) = flag_config_location {
-        Some(OsString::from(conf_loc))
+pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBuf>> {
+    let config_path = if let Some(conf_loc) = config_location {
+        Some(PathBuf::from(conf_loc))
     } else if cfg!(target_os = "windows") {
         if let Some(home_path) = dirs::config_dir() {
             let mut path = home_path;
             path.push(DEFAULT_CONFIG_FILE_PATH);
-            Some(path.into_os_string())
+            Some(path.to_path_buf())
         } else {
             None
         }
@@ -184,13 +185,13 @@ pub fn create_config(flag_config_location: Option<&str>) -> error::Result<Config
         path.push(DEFAULT_CONFIG_FILE_PATH);
         if path.exists() {
             // If it already exists, use the old one.
-            Some(path.into_os_string())
+            Some(path.to_path_buf())
         } else {
             // If it does not, use the new one!
             if let Some(config_path) = dirs::config_dir() {
                 let mut path = config_path;
                 path.push(DEFAULT_CONFIG_FILE_PATH);
-                Some(path.into_os_string())
+                Some(path.to_path_buf())
             } else {
                 None
             }
@@ -199,9 +200,11 @@ pub fn create_config(flag_config_location: Option<&str>) -> error::Result<Config
         None
     };
 
-    if let Some(config_path) = config_path {
-        let path = std::path::Path::new(&config_path);
+    Ok(config_path)
+}
 
+pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
+    if let Some(path) = config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
             Ok(toml::from_str(config_string.as_str())?)
         } else {

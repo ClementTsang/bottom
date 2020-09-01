@@ -10,9 +10,6 @@ pub enum BottomError {
     /// An error when there is an IO exception.
     #[error("IO exception, {0}")]
     InvalidIO(String),
-    /// An error when there is an invalid argument passed in.
-    #[error("Invalid argument error, {0}")]
-    InvalidArg(String),
     /// An error when the heim library encounters a problem.
     #[error("Error caused by Heim, {0}")]
     InvalidHeim(String),
@@ -59,7 +56,7 @@ impl From<crossterm::ErrorKind> for BottomError {
 
 impl From<std::num::ParseIntError> for BottomError {
     fn from(err: std::num::ParseIntError) -> Self {
-        BottomError::InvalidArg(err.to_string())
+        BottomError::ConfigError(err.to_string())
     }
 }
 

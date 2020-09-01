@@ -18,7 +18,7 @@ fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your update rate to be at least 250 milliseconds.",
+            "set your update rate to be at least 250 milliseconds.",
         ));
     Ok(())
 }
@@ -31,7 +31,7 @@ fn test_large_default_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your default value to be at most",
+            "set your default value to be at most",
         ));
     Ok(())
 }
@@ -44,7 +44,7 @@ fn test_small_default_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your default value to be at least",
+            "set your default value to be at least",
         ));
     Ok(())
 }
@@ -57,7 +57,7 @@ fn test_large_delta_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your time delta to be at most",
+            "set your time delta to be at most",
         ));
     Ok(())
 }
@@ -70,7 +70,7 @@ fn test_small_delta_time() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your time delta to be at least",
+            "set your time delta to be at least",
         ));
     Ok(())
 }
@@ -83,7 +83,7 @@ fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your update rate to be at most unsigned INT_MAX.",
+            "set your update rate to be at most unsigned INT_MAX.",
         ));
     Ok(())
 }
@@ -151,7 +151,7 @@ fn test_invalid_default_widget_2() -> Result<(), Box<dyn std::error::Error>> {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "Please set your widget count to be at most unsigned INT_MAX",
+            "set your widget count to be at most unsigned INT_MAX",
         ));
 
     Ok(())
