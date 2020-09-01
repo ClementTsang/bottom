@@ -19,6 +19,7 @@
         "Mousebindings",
         "Nonexhaustive",
         "PKGBUILD",
+        "PKGBUILDs",
         "Polishchuk",
         "Qudsi",
         "SIGTERM",
@@ -81,6 +82,7 @@
         "winget",
         "winnt",
         "wixtoolset",
+        "xargs",
         "xzvf",
         "ytop"
     ]

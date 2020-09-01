@@ -15,8 +15,9 @@ use lazy_static::lazy_static;
 /// more points as this is used!
 use std::{time::Instant, vec::Vec};
 
-use crate::data_harvester::{
-    battery_harvester, cpu, disks, mem, network, processes, temperature, Data,
+use crate::{
+    data_harvester::{battery_harvester, cpu, disks, mem, network, processes, temperature, Data},
+    utils::gen_util::get_simple_byte_values,
 };
 use regex::Regex;
 
@@ -54,6 +55,7 @@ pub struct DataCollection {
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IOHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
+    pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
     pub battery_harvest: Vec<battery_harvester::BatteryHarvest>,
 }
@@ -72,6 +74,7 @@ impl Default for DataCollection {
             disk_harvest: Vec::default(),
             io_harvest: disks::IOHarvest::default(),
             io_labels_and_prev: Vec::default(),
+            io_labels: Vec::default(),
             temp_harvest: Vec::default(),
             battery_harvest: Vec::default(),
         }
@@ -232,7 +235,6 @@ impl DataCollection {
             if let Some(trim) = device.name.split('/').last() {
                 let io_device = if cfg!(target_os = "macos") {
                     // Must trim one level further!
-
                     lazy_static! {
                         static ref DISK_REGEX: Regex = Regex::new(r"disk\d+").unwrap();
                     }
@@ -244,24 +246,48 @@ impl DataCollection {
                 } else {
                     io.get(trim)
                 };
-                let (io_r_pt, io_w_pt) = if let Some(io) = io_device {
-                    (io.read_bytes, io.write_bytes)
+
+                if let Some(io_device) = io_device {
+                    let (io_r_pt, io_w_pt) = if let Some(io) = io_device {
+                        (io.read_bytes, io.write_bytes)
+                    } else {
+                        (0, 0)
+                    };
+
+                    if self.io_labels.len() <= itx {
+                        self.io_labels.push((String::default(), String::default()));
+                    }
+
+                    if self.io_labels_and_prev.len() <= itx {
+                        self.io_labels_and_prev.push(((0, 0), (io_r_pt, io_w_pt)));
+                    } else if let Some((io_curr, io_prev)) = self.io_labels_and_prev.get_mut(itx) {
+                        let r_rate = ((io_r_pt.saturating_sub(io_prev.0)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64;
+                        let w_rate = ((io_w_pt.saturating_sub(io_prev.1)) as f64
+                            / time_since_last_harvest)
+                            .round() as u64;
+
+                        *io_curr = (r_rate, w_rate);
+                        *io_prev = (io_r_pt, io_w_pt);
+
+                        if let Some(io_labels) = self.io_labels.get_mut(itx) {
+                            let converted_read = get_simple_byte_values(r_rate, false);
+                            let converted_write = get_simple_byte_values(w_rate, false);
+                            *io_labels = (
+                                format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
+                                format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
+                            );
+                        }
+                    }
                 } else {
-                    (0, 0)
-                };
+                    if self.io_labels.len() <= itx {
+                        self.io_labels.push((String::default(), String::default()));
+                    }
 
-                if self.io_labels_and_prev.len() <= itx {
-                    self.io_labels_and_prev.push(((0, 0), (io_r_pt, io_w_pt)));
-                } else if let Some((io_curr, io_prev)) = self.io_labels_and_prev.get_mut(itx) {
-                    let r_rate = ((io_r_pt.saturating_sub(io_prev.0)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64;
-                    let w_rate = ((io_w_pt.saturating_sub(io_prev.1)) as f64
-                        / time_since_last_harvest)
-                        .round() as u64;
-
-                    *io_curr = (r_rate, w_rate);
-                    *io_prev = (io_r_pt, io_w_pt);
+                    if let Some(io_labels) = self.io_labels.get_mut(itx) {
+                        *io_labels = ("N/A".to_string(), "N/A".to_string());
+                    }
                 }
             }
         }

@@ -117,15 +117,8 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
     current_data
         .disk_harvest
         .iter()
-        .zip(&current_data.io_labels_and_prev)
-        .for_each(|(disk, (io_label, _io_prev))| {
-            let converted_read = get_simple_byte_values(io_label.0, false);
-            let converted_write = get_simple_byte_values(io_label.1, false);
-            let io_activity = (
-                format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
-                format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
-            );
-
+        .zip(&current_data.io_labels)
+        .for_each(|(disk, (io_read, io_write))| {
             let converted_free_space = get_simple_byte_values(disk.free_space, false);
             let converted_total_space = get_simple_byte_values(disk.total_space, false);
             disk_vector.push(vec![
@@ -140,8 +133,8 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
                     "{:.*}{}",
                     0, converted_total_space.0, converted_total_space.1
                 ),
-                io_activity.0,
-                io_activity.1,
+                io_read.to_string(),
+                io_write.to_string(),
             ]);
         });
 
@@ -348,7 +341,7 @@ pub fn convert_network_data_points(
         }
     } else {
         let rx_display = format!(
-            "RX: {:<9} Total: {:<9}",
+            "RX: {:<9} All: {:<9}",
             format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1),
             format!(
                 "{:.1}{:3}",
@@ -356,7 +349,7 @@ pub fn convert_network_data_points(
             )
         );
         let tx_display = format!(
-            "TX: {:<9} Total: {:<9}",
+            "TX: {:<9} All: {:<9}",
             format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1),
             format!(
                 "{:.1}{:3}",

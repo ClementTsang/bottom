@@ -1,5 +1,4 @@
 use futures::stream::StreamExt;
-use heim::units::information;
 
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {
@@ -16,16 +15,58 @@ pub struct IOData {
     pub write_bytes: u64,
 }
 
-pub type IOHarvest = std::collections::HashMap<String, IOData>;
+pub type IOHarvest = std::collections::HashMap<String, Option<IOData>>;
 
-pub async fn get_io_usage_list(
+/// Meant for ARM use.
+#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+pub async fn get_sysinfo_io_usage_list(
+    _sys: &sysinfo::System, _actually_get: bool,
+) -> crate::utils::error::Result<Option<IOHarvest>> {
+    let io_hash: std::collections::HashMap<String, Option<IOData>> =
+        std::collections::HashMap::new();
+    Ok(Some(io_hash))
+
+    // TODO: Sysinfo disk I/O usage.
+    // ...sadly, this cannot be done as of now (other than me writing my own), it requires further
+    // work.  See https://github.com/GuillaumeGomez/sysinfo/issues/304.
+}
+
+/// Meant for ARM use.
+#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+pub async fn get_sysinfo_disk_usage_list(
+    sys: &sysinfo::System, actually_get: bool,
+) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
+    use sysinfo::{DiskExt, SystemExt};
+    if !actually_get {
+        return Ok(None);
+    }
+
+    let mut vec_disks = sys
+        .get_disks()
+        .iter()
+        .map(|disk| DiskHarvest {
+            name: disk.get_name().to_string_lossy().into(),
+            mount_point: disk.get_mount_point().to_string_lossy().into(),
+            free_space: disk.get_available_space(),
+            used_space: disk.get_total_space() - disk.get_available_space(),
+            total_space: disk.get_total_space(),
+        })
+        .collect::<Vec<DiskHarvest>>();
+    vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
+
+    Ok(Some(vec_disks))
+}
+
+#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+pub async fn get_heim_io_usage_list(
     get_physical: bool, actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
     if !actually_get {
         return Ok(None);
     }
 
-    let mut io_hash: std::collections::HashMap<String, IOData> = std::collections::HashMap::new();
+    let mut io_hash: std::collections::HashMap<String, Option<IOData>> =
+        std::collections::HashMap::new();
     if get_physical {
         let mut physical_counter_stream = heim::disk::io_counters_physical();
         while let Some(io) = physical_counter_stream.next().await {
@@ -33,10 +74,10 @@ pub async fn get_io_usage_list(
             let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
             io_hash.insert(
                 mount_point.to_string(),
-                IOData {
-                    read_bytes: io.read_bytes().get::<information::megabyte>(),
-                    write_bytes: io.write_bytes().get::<information::megabyte>(),
-                },
+                Some(IOData {
+                    read_bytes: io.read_bytes().get::<heim::units::information::megabyte>(),
+                    write_bytes: io.write_bytes().get::<heim::units::information::megabyte>(),
+                }),
             );
         }
     } else {
@@ -46,10 +87,10 @@ pub async fn get_io_usage_list(
             let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
             io_hash.insert(
                 mount_point.to_string(),
-                IOData {
-                    read_bytes: io.read_bytes().get::<information::byte>(),
-                    write_bytes: io.write_bytes().get::<information::byte>(),
-                },
+                Some(IOData {
+                    read_bytes: io.read_bytes().get::<heim::units::information::byte>(),
+                    write_bytes: io.write_bytes().get::<heim::units::information::byte>(),
+                }),
             );
         }
     }
@@ -57,7 +98,8 @@ pub async fn get_io_usage_list(
     Ok(Some(io_hash))
 }
 
-pub async fn get_disk_usage_list(
+#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+pub async fn get_heim_disk_usage_list(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     if !actually_get {
@@ -73,9 +115,9 @@ pub async fn get_disk_usage_list(
             let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
 
             vec_disks.push(DiskHarvest {
-                free_space: usage.free().get::<information::byte>(),
-                used_space: usage.used().get::<information::byte>(),
-                total_space: usage.total().get::<information::byte>(),
+                free_space: usage.free().get::<heim::units::information::byte>(),
+                used_space: usage.used().get::<heim::units::information::byte>(),
+                total_space: usage.total().get::<heim::units::information::byte>(),
                 mount_point: (partition
                     .mount_point()
                     .to_str()
