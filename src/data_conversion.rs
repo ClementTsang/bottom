@@ -93,7 +93,12 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
     } else {
         for sensor in &current_data.temp_harvest {
             sensor_vector.push(vec![
-                sensor.component_name.to_string(),
+                match (&sensor.component_name, &sensor.component_label) {
+                    (Some(name), Some(label)) => format!("{}: {}", name, label),
+                    (None, Some(label)) => label.to_string(),
+                    (Some(name), None) => name.to_string(),
+                    (None, None) => String::default(),
+                },
                 (sensor.temperature.ceil() as u64).to_string()
                     + match temp_type {
                         data_harvester::temperature::TemperatureType::Celsius => "C",

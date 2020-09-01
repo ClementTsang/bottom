@@ -6,7 +6,8 @@ use sysinfo::{ComponentExt, System, SystemExt};
 
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
-    pub component_name: String,
+    pub component_name: Option<String>,
+    pub component_label: Option<String>,
     pub temperature: f32,
 }
 
@@ -37,7 +38,12 @@ pub async fn get_temperature_data(
         while let Some(sensor) = sensor_data.next().await {
             if let Ok(sensor) = sensor {
                 temperature_vec.push(TempHarvest {
-                    component_name: sensor.unit().to_string(),
+                    component_name: Some(sensor.unit().to_string()),
+                    component_label: if let Some(label) = sensor.label() {
+                        Some(label.to_string())
+                    } else {
+                        None
+                    },
                     temperature: match temp_type {
                         TemperatureType::Celsius => sensor
                             .current()
@@ -58,7 +64,8 @@ pub async fn get_temperature_data(
         let sensor_data = sys.get_components();
         for component in sensor_data {
             temperature_vec.push(TempHarvest {
-                component_name: component.get_label().to_string(),
+                component_name: None,
+                component_label: Some(component.get_label().to_string()),
                 temperature: match temp_type {
                     TemperatureType::Celsius => component.get_temperature(),
                     TemperatureType::Kelvin => {
@@ -73,6 +80,7 @@ pub async fn get_temperature_data(
     }
 
     // By default, sort temperature, then by alphabetically!
+    // TODO: [TEMPS] Allow users to control this.
 
     // Note we sort in reverse here; we want greater temps to be higher priority.
     temperature_vec.sort_by(|a, b| match a.temperature.partial_cmp(&b.temperature) {

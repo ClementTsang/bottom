@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#211](https://github.com/ClementTsang/bottom/pull/211): Fixes a bug where you could move down in the process widget even if the process widget search was closed.
 
+- [#215](https://github.com/ClementTsang/bottom/pull/215): Add labels to Linux temperature values.
+
 ## [0.4.7] - 2020-08-26
 
 ### Bug Fixes
