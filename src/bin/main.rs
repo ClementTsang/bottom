@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     let config_path = read_config(matches.value_of("CONFIG_LOCATION"))
         .context("Unable to access the given config file location.")?;
     let config: Config = create_or_get_config(&config_path)
-        .context("Unable to read or create from the given config file location.")?;
+        .context("Unable to properly parse or create the config file.")?;
 
     // Get widget layout separately
     let (widget_layout, default_widget_id, default_widget_type_option) =
