@@ -1,60 +1,42 @@
 use std::{borrow::Cow, result};
+use thiserror::Error;
 
 /// A type alias for handling errors related to Bottom.
 pub type Result<T> = result::Result<T, BottomError>;
 
 /// An error that can occur while Bottom runs.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum BottomError {
     /// An error when there is an IO exception.
+    #[error("IO exception, {0}")]
     InvalidIO(String),
     /// An error when there is an invalid argument passed in.
+    #[error("Invalid argument error, {0}")]
     InvalidArg(String),
     /// An error when the heim library encounters a problem.
+    #[error("Error caused by Heim, {0}")]
     InvalidHeim(String),
     /// An error when the Crossterm library encounters a problem.
+    #[error("Error caused by Crossterm, {0}")]
     CrosstermError(String),
     /// An error to represent generic errors.
+    #[error("Generic error, {0}")]
     GenericError(String),
     /// An error to represent errors with fern.
+    #[error("Fern error, {0}")]
     FernError(String),
     /// An error to represent errors with the config.
+    #[error("Configuration file error, {0}")]
     ConfigError(String),
     /// An error to represent errors with converting between data types.
+    #[error("Conversion error, {0}")]
     ConversionError(String),
     /// An error to represent errors with querying.
+    #[error("Query error, {0}")]
     QueryError(Cow<'static, str>),
     /// An error that just signifies something minor went wrong; no message.
-    MinorError(),
-}
-
-impl std::fmt::Display for BottomError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            BottomError::InvalidIO(ref message) => {
-                write!(f, "encountered an IO exception: {}", message)
-            }
-            BottomError::InvalidArg(ref message) => write!(f, "Invalid argument: {}", message),
-            BottomError::InvalidHeim(ref message) => write!(
-                f,
-                "invalid error during data collection due to heim: {}",
-                message
-            ),
-            BottomError::CrosstermError(ref message) => {
-                write!(f, "invalid error due to Crossterm: {}", message)
-            }
-            BottomError::GenericError(ref message) => write!(f, "{}", message),
-            BottomError::FernError(ref message) => write!(f, "Invalid fern error: {}", message),
-            BottomError::ConfigError(ref message) => {
-                write!(f, "invalid config file error: {}", message)
-            }
-            BottomError::ConversionError(ref message) => {
-                write!(f, "unable to convert: {}", message)
-            }
-            BottomError::QueryError(ref message) => write!(f, "{}", message),
-            BottomError::MinorError() => write!(f, "Minor error."),
-        }
-    }
+    #[error("Minor error.")]
+    MinorError,
 }
 
 impl From<std::io::Error> for BottomError {

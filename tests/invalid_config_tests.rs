@@ -26,7 +26,7 @@ fn test_empty_layout() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/empty_layout.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid layout config"));
+        .stderr(predicate::str::contains("at least one widget"));
     Ok(())
 }
 
@@ -37,7 +37,7 @@ fn test_invalid_layout_widget_type() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_layout_widget_type.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid widget type"));
+        .stderr(predicate::str::contains("invalid widget name"));
     Ok(())
 }
 
@@ -62,7 +62,7 @@ fn test_invalid_colour_hex() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_colour_hex.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid color hex"));
+        .stderr(predicate::str::contains("invalid hex colour"));
     Ok(())
 }
 
@@ -74,7 +74,7 @@ fn test_invalid_colour_hex_2() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_colour_hex_2.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid color hex"));
+        .stderr(predicate::str::contains("invalid hex colour"));
     Ok(())
 }
 
@@ -87,7 +87,7 @@ fn test_invalid_colour_hex_3() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_colour_hex_3.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid color hex"));
+        .stderr(predicate::str::contains("invalid hex colour"));
     Ok(())
 }
 
@@ -98,7 +98,7 @@ fn test_invalid_colour_name() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_colour_name.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid named color"));
+        .stderr(predicate::str::contains("invalid named colour"));
     Ok(())
 }
 
@@ -109,7 +109,7 @@ fn test_invalid_colour_rgb() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_colour_rgb.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid RGB color"));
+        .stderr(predicate::str::contains("invalid RGB"));
     Ok(())
 }
 
@@ -120,7 +120,7 @@ fn test_invalid_colour_rgb_2() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_colour_rgb_2.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid RGB color"));
+        .stderr(predicate::str::contains("invalid RGB"));
     Ok(())
 }
 
@@ -131,6 +131,19 @@ fn test_invalid_colour_string() -> Result<(), Box<dyn std::error::Error>> {
         .arg("./tests/invalid_configs/invalid_colour_string.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid named color"));
+        .stderr(predicate::str::contains("invalid named colour"));
+    Ok(())
+}
+
+#[test]
+fn test_empty_battery() -> Result<(), Box<dyn std::error::Error>> {
+    Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/invalid_configs/empty_battery.toml")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "battery colour list must have at least one colour.",
+        ));
     Ok(())
 }

@@ -253,11 +253,11 @@ fn read_proc<S: core::hash::BuildHasher>(
         .splitn(2, '(')
         .collect::<Vec<_>>()
         .last()
-        .ok_or(BottomError::MinorError())?
+        .ok_or(BottomError::MinorError)?
         .rsplitn(2, ')')
         .collect::<Vec<_>>()
         .last()
-        .ok_or(BottomError::MinorError())?
+        .ok_or(BottomError::MinorError)?
         .to_string();
     let command = {
         let cmd = read_path_contents(&pid_stat.proc_cmdline_path)?;
@@ -271,7 +271,7 @@ fn read_proc<S: core::hash::BuildHasher>(
         .split(')')
         .collect::<Vec<_>>()
         .last()
-        .ok_or(BottomError::MinorError())?
+        .ok_or(BottomError::MinorError)?
         .split_whitespace()
         .collect::<Vec<&str>>();
     let (process_state_char, process_state) = get_linux_process_state(&stat);

@@ -18,6 +18,8 @@ use crossterm::{
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
 
+use anyhow::Context;
+
 use app::{
     data_harvester::{self, processes::ProcessSorting},
     layout_manager::{UsedWidgets, WidgetDirection},
@@ -229,48 +231,76 @@ pub fn try_drawing(
 
 pub fn generate_config_colours(
     config: &Config, painter: &mut canvas::Painter,
-) -> error::Result<()> {
+) -> anyhow::Result<()> {
     if let Some(colours) = &config.colors {
         if let Some(border_color) = &colours.border_color {
-            painter.colours.set_border_colour(border_color)?;
+            painter
+                .colours
+                .set_border_colour(border_color)
+                .context("Update 'border_color' in your config file..")?;
         }
 
         if let Some(highlighted_border_color) = &colours.highlighted_border_color {
             painter
                 .colours
-                .set_highlighted_border_colour(highlighted_border_color)?;
+                .set_highlighted_border_colour(highlighted_border_color)
+                .context("Update 'highlighted_border_color' in your config file..")?;
         }
 
         if let Some(text_color) = &colours.text_color {
-            painter.colours.set_text_colour(text_color)?;
+            painter
+                .colours
+                .set_text_colour(text_color)
+                .context("Update 'text_color' in your config file..")?;
         }
 
         if let Some(avg_cpu_color) = &colours.avg_cpu_color {
-            painter.colours.set_avg_cpu_colour(avg_cpu_color)?;
+            painter
+                .colours
+                .set_avg_cpu_colour(avg_cpu_color)
+                .context("Update 'avg_cpu_color' in your config file..")?;
         }
 
         if let Some(all_cpu_color) = &colours.all_cpu_color {
-            painter.colours.set_all_cpu_colour(all_cpu_color)?;
+            painter
+                .colours
+                .set_all_cpu_colour(all_cpu_color)
+                .context("Update 'all_cpu_color' in your config file..")?;
         }
 
         if let Some(cpu_core_colors) = &colours.cpu_core_colors {
-            painter.colours.set_cpu_colours(cpu_core_colors)?;
+            painter
+                .colours
+                .set_cpu_colours(cpu_core_colors)
+                .context("Update 'cpu_core_colors' in your config file..")?;
         }
 
         if let Some(ram_color) = &colours.ram_color {
-            painter.colours.set_ram_colour(ram_color)?;
+            painter
+                .colours
+                .set_ram_colour(ram_color)
+                .context("Update 'ram_color' in your config file..")?;
         }
 
         if let Some(swap_color) = &colours.swap_color {
-            painter.colours.set_swap_colour(swap_color)?;
+            painter
+                .colours
+                .set_swap_colour(swap_color)
+                .context("Update 'swap_color' in your config file..")?;
         }
 
         if let Some(rx_color) = &colours.rx_color {
-            painter.colours.set_rx_colour(rx_color)?;
+            painter
+                .colours
+                .set_rx_colour(rx_color)
+                .context("Update 'rx_color' in your config file..")?;
         }
 
         if let Some(tx_color) = &colours.tx_color {
-            painter.colours.set_tx_colour(tx_color)?;
+            painter
+                .colours
+                .set_tx_colour(tx_color)
+                .context("Update 'tx_color' in your config file..")?;
         }
 
         // if let Some(rx_total_color) = &colours.rx_total_color {
@@ -284,33 +314,43 @@ pub fn generate_config_colours(
         if let Some(table_header_color) = &colours.table_header_color {
             painter
                 .colours
-                .set_table_header_colour(table_header_color)?;
+                .set_table_header_colour(table_header_color)
+                .context("Update 'table_header_color' in your config file..")?;
         }
 
         if let Some(scroll_entry_text_color) = &colours.selected_text_color {
             painter
                 .colours
-                .set_scroll_entry_text_color(scroll_entry_text_color)?;
+                .set_scroll_entry_text_color(scroll_entry_text_color)
+                .context("Update 'selected_text_color' in your config file..")?;
         }
 
         if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
             painter
                 .colours
-                .set_scroll_entry_bg_color(scroll_entry_bg_color)?;
+                .set_scroll_entry_bg_color(scroll_entry_bg_color)
+                .context("Update 'selected_bg_color' in your config file..")?;
         }
 
         if let Some(widget_title_color) = &colours.widget_title_color {
             painter
                 .colours
-                .set_widget_title_colour(widget_title_color)?;
+                .set_widget_title_colour(widget_title_color)
+                .context("Update 'widget_title_color' in your config file..")?;
         }
 
         if let Some(graph_color) = &colours.graph_color {
-            painter.colours.set_graph_colour(graph_color)?;
+            painter
+                .colours
+                .set_graph_colour(graph_color)
+                .context("Update 'graph_color' in your config file..")?;
         }
 
         if let Some(battery_colors) = &colours.battery_colors {
-            painter.colours.set_battery_colours(battery_colors)?;
+            painter
+                .colours
+                .set_battery_colors(battery_colors)
+                .context("Update 'battery_colors' in your config file.")?;
         }
     }
 

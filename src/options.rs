@@ -316,7 +316,7 @@ pub fn get_widget_layout(
             ret_bottom_layout
         } else {
             return Err(error::BottomError::ConfigError(
-                "invalid layout config: please have at least one widget.".to_string(),
+                "please have at least one widget under the '[[row]]' section.".to_string(),
             ));
         }
     };
@@ -368,11 +368,10 @@ fn get_temperature(
                 "fahrenheit" | "f" => Ok(data_harvester::temperature::TemperatureType::Fahrenheit),
                 "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
                 "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
-                _ => Err(BottomError::ConfigError(
-                    "invalid temperature type: please have the value be of the form \
-						 <kelvin|k|celsius|c|fahrenheit|f>"
-                        .to_string(),
-                )),
+                _ => Err(BottomError::ConfigError(format!(
+                    "'{}' is an invalid temperature type, use \"temperature_type = <kelvin|k|celsius|c|fahrenheit|f>\".",
+                    temp_type
+                ))),
             };
         }
     }

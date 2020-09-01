@@ -3,7 +3,7 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{canvas, constants::*, data_conversion::*, options::*, utils::error, *};
+use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,
@@ -17,6 +17,7 @@ use std::{
     time::Duration,
 };
 
+use anyhow::Result;
 use crossterm::{
     event::EnableMouseCapture,
     execute,
@@ -24,7 +25,7 @@ use crossterm::{
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
-fn main() -> error::Result<()> {
+fn main() -> Result<()> {
     #[cfg(debug_assertions)]
     {
         utils::logging::init_logger()?;
