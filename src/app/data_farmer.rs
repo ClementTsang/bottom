@@ -247,8 +247,6 @@ impl DataCollection {
                     io.get(trim)
                 };
 
-                debug!("IO device: {:?}", io_device);
-
                 if let Some(io_device) = io_device {
                     let (io_r_pt, io_w_pt) = if let Some(io) = io_device {
                         (io.read_bytes, io.write_bytes)

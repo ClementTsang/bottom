@@ -95,6 +95,8 @@ pub async fn get_heim_io_usage_list(
         }
     }
 
+    debug!("IO hash: {:?}", io_hash);
+
     Ok(Some(io_hash))
 }
 
@@ -134,6 +136,8 @@ pub async fn get_heim_disk_usage_list(
     }
 
     vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
+
+    debug!("vec_disks: {:?}", vec_disks);
 
     Ok(Some(vec_disks))
 }
