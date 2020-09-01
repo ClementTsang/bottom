@@ -3,7 +3,7 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{canvas, constants::*, data_conversion::*, options::*, utils::error, *};
+use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,
@@ -17,6 +17,7 @@ use std::{
     time::Duration,
 };
 
+use anyhow::{Context, Result};
 use crossterm::{
     event::EnableMouseCapture,
     execute,
@@ -24,18 +25,22 @@ use crossterm::{
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
-fn main() -> error::Result<()> {
+fn main() -> Result<()> {
     #[cfg(debug_assertions)]
     {
         utils::logging::init_logger()?;
     }
     let matches = clap::get_matches();
 
-    let config: Config = create_config(matches.value_of("CONFIG_LOCATION"))?;
+    let config_path = read_config(matches.value_of("CONFIG_LOCATION"))
+        .context("Unable to access the given config file location.")?;
+    let config: Config = create_or_get_config(&config_path)
+        .context("Unable to properly parse or create the config file.")?;
 
     // Get widget layout separately
     let (widget_layout, default_widget_id, default_widget_type_option) =
-        get_widget_layout(&matches, &config)?;
+        get_widget_layout(&matches, &config)
+            .context("Found an issue while trying to build the widget layout.")?;
 
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(

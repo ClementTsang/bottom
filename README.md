@@ -509,7 +509,7 @@ Supported named colours are one of the following strings: `Reset, Black, Red, Gr
 | Cursor colour                   | The cursor's colour                                   | `cursor_color="#ffffff"`                                |
 | Selected text colour            | The colour of text that is selected                   | `scroll_entry_text_color="#ffffff"`                     |
 | Selected text background colour | The background colour of text that is selected        | `scroll_entry_bg_color="#ffffff"`                       |
-| Battery bar colours             | Colour used is based on percentage and no. of colours | `battery_colours=["green", "yellow", "red"]`            |
+| Battery bar colours             | Colour used is based on percentage and no. of colours | `battery_colors=["green", "yellow", "red"]`             |
 
 #### Layout
 

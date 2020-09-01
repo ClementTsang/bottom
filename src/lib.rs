@@ -5,8 +5,10 @@ extern crate log;
 
 use std::{
     boxed::Box,
+    fs,
     io::{stdout, Write},
     panic::PanicInfo,
+    path::PathBuf,
     thread,
     time::{Duration, Instant},
 };
@@ -17,6 +19,8 @@ use crossterm::{
     style::Print,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
+
+use anyhow::Context;
 
 use app::{
     data_harvester::{self, processes::ProcessSorting},
@@ -164,15 +168,14 @@ pub fn handle_key_event_or_break(
     false
 }
 
-pub fn create_config(flag_config_location: Option<&str>) -> error::Result<Config> {
-    use std::{ffi::OsString, fs};
-    let config_path = if let Some(conf_loc) = flag_config_location {
-        Some(OsString::from(conf_loc))
+pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBuf>> {
+    let config_path = if let Some(conf_loc) = config_location {
+        Some(PathBuf::from(conf_loc))
     } else if cfg!(target_os = "windows") {
         if let Some(home_path) = dirs::config_dir() {
             let mut path = home_path;
             path.push(DEFAULT_CONFIG_FILE_PATH);
-            Some(path.into_os_string())
+            Some(path)
         } else {
             None
         }
@@ -182,13 +185,13 @@ pub fn create_config(flag_config_location: Option<&str>) -> error::Result<Config
         path.push(DEFAULT_CONFIG_FILE_PATH);
         if path.exists() {
             // If it already exists, use the old one.
-            Some(path.into_os_string())
+            Some(path)
         } else {
             // If it does not, use the new one!
             if let Some(config_path) = dirs::config_dir() {
                 let mut path = config_path;
                 path.push(DEFAULT_CONFIG_FILE_PATH);
-                Some(path.into_os_string())
+                Some(path)
             } else {
                 None
             }
@@ -197,9 +200,11 @@ pub fn create_config(flag_config_location: Option<&str>) -> error::Result<Config
         None
     };
 
-    if let Some(config_path) = config_path {
-        let path = std::path::Path::new(&config_path);
+    Ok(config_path)
+}
 
+pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
+    if let Some(path) = config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
             Ok(toml::from_str(config_string.as_str())?)
         } else {
@@ -229,48 +234,76 @@ pub fn try_drawing(
 
 pub fn generate_config_colours(
     config: &Config, painter: &mut canvas::Painter,
-) -> error::Result<()> {
+) -> anyhow::Result<()> {
     if let Some(colours) = &config.colors {
         if let Some(border_color) = &colours.border_color {
-            painter.colours.set_border_colour(border_color)?;
+            painter
+                .colours
+                .set_border_colour(border_color)
+                .context("Update 'border_color' in your config file..")?;
         }
 
         if let Some(highlighted_border_color) = &colours.highlighted_border_color {
             painter
                 .colours
-                .set_highlighted_border_colour(highlighted_border_color)?;
+                .set_highlighted_border_colour(highlighted_border_color)
+                .context("Update 'highlighted_border_color' in your config file..")?;
         }
 
         if let Some(text_color) = &colours.text_color {
-            painter.colours.set_text_colour(text_color)?;
+            painter
+                .colours
+                .set_text_colour(text_color)
+                .context("Update 'text_color' in your config file..")?;
         }
 
         if let Some(avg_cpu_color) = &colours.avg_cpu_color {
-            painter.colours.set_avg_cpu_colour(avg_cpu_color)?;
+            painter
+                .colours
+                .set_avg_cpu_colour(avg_cpu_color)
+                .context("Update 'avg_cpu_color' in your config file..")?;
         }
 
         if let Some(all_cpu_color) = &colours.all_cpu_color {
-            painter.colours.set_all_cpu_colour(all_cpu_color)?;
+            painter
+                .colours
+                .set_all_cpu_colour(all_cpu_color)
+                .context("Update 'all_cpu_color' in your config file..")?;
         }
 
         if let Some(cpu_core_colors) = &colours.cpu_core_colors {
-            painter.colours.set_cpu_colours(cpu_core_colors)?;
+            painter
+                .colours
+                .set_cpu_colours(cpu_core_colors)
+                .context("Update 'cpu_core_colors' in your config file..")?;
         }
 
         if let Some(ram_color) = &colours.ram_color {
-            painter.colours.set_ram_colour(ram_color)?;
+            painter
+                .colours
+                .set_ram_colour(ram_color)
+                .context("Update 'ram_color' in your config file..")?;
         }
 
         if let Some(swap_color) = &colours.swap_color {
-            painter.colours.set_swap_colour(swap_color)?;
+            painter
+                .colours
+                .set_swap_colour(swap_color)
+                .context("Update 'swap_color' in your config file..")?;
         }
 
         if let Some(rx_color) = &colours.rx_color {
-            painter.colours.set_rx_colour(rx_color)?;
+            painter
+                .colours
+                .set_rx_colour(rx_color)
+                .context("Update 'rx_color' in your config file..")?;
         }
 
         if let Some(tx_color) = &colours.tx_color {
-            painter.colours.set_tx_colour(tx_color)?;
+            painter
+                .colours
+                .set_tx_colour(tx_color)
+                .context("Update 'tx_color' in your config file..")?;
         }
 
         // if let Some(rx_total_color) = &colours.rx_total_color {
@@ -284,33 +317,43 @@ pub fn generate_config_colours(
         if let Some(table_header_color) = &colours.table_header_color {
             painter
                 .colours
-                .set_table_header_colour(table_header_color)?;
+                .set_table_header_colour(table_header_color)
+                .context("Update 'table_header_color' in your config file..")?;
         }
 
         if let Some(scroll_entry_text_color) = &colours.selected_text_color {
             painter
                 .colours
-                .set_scroll_entry_text_color(scroll_entry_text_color)?;
+                .set_scroll_entry_text_color(scroll_entry_text_color)
+                .context("Update 'selected_text_color' in your config file..")?;
         }
 
         if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
             painter
                 .colours
-                .set_scroll_entry_bg_color(scroll_entry_bg_color)?;
+                .set_scroll_entry_bg_color(scroll_entry_bg_color)
+                .context("Update 'selected_bg_color' in your config file..")?;
         }
 
         if let Some(widget_title_color) = &colours.widget_title_color {
             painter
                 .colours
-                .set_widget_title_colour(widget_title_color)?;
+                .set_widget_title_colour(widget_title_color)
+                .context("Update 'widget_title_color' in your config file..")?;
         }
 
         if let Some(graph_color) = &colours.graph_color {
-            painter.colours.set_graph_colour(graph_color)?;
+            painter
+                .colours
+                .set_graph_colour(graph_color)
+                .context("Update 'graph_color' in your config file..")?;
         }
 
         if let Some(battery_colors) = &colours.battery_colors {
-            painter.colours.set_battery_colours(battery_colors)?;
+            painter
+                .colours
+                .set_battery_colors(battery_colors)
+                .context("Update 'battery_colors' in your config file.")?;
         }
     }
 

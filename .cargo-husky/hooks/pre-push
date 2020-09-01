@@ -1,0 +1,2 @@
+echo "Running pre-push hook: cargo +nightly clippy -- -D clippy::all"
+cargo +nightly clippy -- -D clippy::all

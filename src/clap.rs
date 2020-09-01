@@ -239,7 +239,7 @@ For example, suppose we have a layout that looks like:
 Setting '--default_widget_type Temp' will make the Temperature
 widget selected by default.
 
-Supported widget types:
+Supported widget names:
 +--------------------------+
 |            cpu           |
 +--------------------------+

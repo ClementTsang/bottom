@@ -1,5 +1,4 @@
 use tui::style::{Color, Style};
-// use tui::style::Modifier;
 
 use colour_utils::*;
 
@@ -175,11 +174,10 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_battery_colours(&mut self, colours: &[String]) -> error::Result<()> {
+    pub fn set_battery_colors(&mut self, colours: &[String]) -> error::Result<()> {
         if colours.is_empty() {
             Err(error::BottomError::ConfigError(
-                "invalid colour config: battery colour list must have at least one colour!"
-                    .to_string(),
+                "battery colour list must have at least one colour.".to_string(),
             ))
         } else {
             let generated_colours: Result<Vec<_>, _> = colours
