@@ -6,6 +6,9 @@ os:
   - linux
   - osx
   - windows
+arch:
+  - amd64
+  - arm64
 jobs:
   fast_finish: true
   exclude:
