@@ -45,7 +45,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
   - [Config files](#config-files)
-    - [Config flags and options](#config-flags-and-options)
+    - [Config flags](#config-flags)
     - [Theming](#theming)
     - [Layout](#layout)
   - [Battery](#battery)
@@ -456,7 +456,7 @@ By default, bottom will look at (based on [dirs](https://github.com/dirs-dev/dir
 
 Note that if a config file does not exist at either the default location or the passed in location via `-C` or `--config`, one is automatically created with no settings applied.
 
-#### Config flags and options
+#### Config flags
 
 The following options can be set under `[flags]` to achieve the same effect as passing in a flag on runtime. Note that if a flag is given, it will override the config file.
 
