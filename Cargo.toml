@@ -85,4 +85,4 @@ output = "bottom_x86_64_installer.msi"
 [dev-dependencies.cargo-husky]
 version = "1"
 default-features = false 
-features = ["prepush-hook", "run-cargo-clippy"]
+features = ["user-hooks"]

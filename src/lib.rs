@@ -175,7 +175,7 @@ pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBu
         if let Some(home_path) = dirs::config_dir() {
             let mut path = home_path;
             path.push(DEFAULT_CONFIG_FILE_PATH);
-            Some(path.to_path_buf())
+            Some(path)
         } else {
             None
         }
@@ -185,13 +185,13 @@ pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBu
         path.push(DEFAULT_CONFIG_FILE_PATH);
         if path.exists() {
             // If it already exists, use the old one.
-            Some(path.to_path_buf())
+            Some(path)
         } else {
             // If it does not, use the new one!
             if let Some(config_path) = dirs::config_dir() {
                 let mut path = config_path;
                 path.push(DEFAULT_CONFIG_FILE_PATH);
-                Some(path.to_path_buf())
+                Some(path)
             } else {
                 None
             }
