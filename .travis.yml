@@ -2,16 +2,11 @@ language: rust
 rust:
   - stable
   - beta
+os:
+  - linux
+  - osx
+  - windows
 jobs:
-  include:
-    - os: linux
-      arch: amd64
-    - os: osx
-      arch: amd64
-    - os: windows
-      arch: amd64
-    - os: linux
-      arch: arm64
   fast_finish: true
   exclude:
     - if: tag IS present
