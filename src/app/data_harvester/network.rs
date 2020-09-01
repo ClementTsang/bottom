@@ -1,4 +1,3 @@
-use futures::StreamExt;
 use std::time::Instant;
 
 #[derive(Default, Clone, Debug)]
@@ -63,6 +62,8 @@ pub async fn get_heim_network_data(
     prev_net_access_time: Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
     curr_time: Instant, actually_get: bool,
 ) -> Option<NetworkHarvest> {
+    use futures::StreamExt;
+
     if !actually_get {
         return None;
     }

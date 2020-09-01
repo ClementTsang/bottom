@@ -1,4 +1,3 @@
-use futures::StreamExt;
 use std::cmp::Ordering;
 
 #[derive(Default, Debug, Clone)]
@@ -65,6 +64,8 @@ pub async fn get_sysinfo_temperature_data(
 pub async fn get_heim_temperature_data(
     temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
+    use futures::StreamExt;
+
     if !actually_get {
         return Ok(None);
     }
