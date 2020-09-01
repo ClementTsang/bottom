@@ -943,7 +943,7 @@ impl std::str::FromStr for BottomWidgetType {
             "empty" => Ok(BottomWidgetType::Empty),
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
             _ => Err(BottomError::ConfigError(format!(
-                "'{}' is an invalid widget name.
+                "\"{}\" is an invalid widget name.
 
 Supported widget names:
 +--------------------------+

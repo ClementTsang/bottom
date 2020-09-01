@@ -100,7 +100,7 @@ pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     fn hex_err(hex: &str) -> error::Result<u8> {
         Err(
             error::BottomError::ConfigError(format!(
-                "'{}' is an invalid hex colour.  It must be a valid 7 character hex string of the (ie: \"#112233\")."
+                "\"{}\" is an invalid hex colour.  It must be a valid 7 character hex string of the (ie: \"#112233\")."
             , hex))
         )
     }
@@ -124,7 +124,7 @@ pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
         }
 
         Err(error::BottomError::ConfigError(format!(
-            "'{}' is an invalid hex colour.  It must be a 7 character string of the form \"#112233\".",
+            "\"{}\" is an invalid hex colour.  It must be a 7 character string of the form \"#112233\".",
             hex
         )))
     }
@@ -144,7 +144,7 @@ pub fn get_style_from_config(input_val: &str) -> error::Result<Style> {
         }
     } else {
         Err(error::BottomError::ConfigError(format!(
-            "value '{}' is not valid.",
+            "value \"{}\" is not valid.",
             input_val
         )))
     }
@@ -161,7 +161,7 @@ pub fn get_colour_from_config(input_val: &str) -> error::Result<Color> {
         }
     } else {
         Err(error::BottomError::ConfigError(format!(
-            "value '{}' is not valid.",
+            "value \"{}\" is not valid.",
             input_val
         )))
     }
@@ -175,7 +175,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
     let rgb_list = rgb_str.split(',').collect::<Vec<&str>>();
     if rgb_list.len() != 3 {
         return Err(error::BottomError::ConfigError(format!(
-            "value '{}' is an invalid RGB colour.  It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
+            "value \"{}\" is an invalid RGB colour.  It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
             rgb_str
         )));
     }
@@ -194,7 +194,7 @@ fn convert_rgb_to_color(rgb_str: &str) -> error::Result<Color> {
         Ok(Color::Rgb(rgb[0], rgb[1], rgb[2]))
     } else {
         Err(error::BottomError::ConfigError(format!(
-            "value '{}' contained invalid RGB values.  It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
+            "value \"{}\" contained invalid RGB values.  It must be a comma separated value with 3 integers from 0 to 255 (ie: \"255, 0, 155\").",
             rgb_str
         )))
     }
@@ -211,7 +211,7 @@ fn convert_name_to_color(color_name: &str) -> error::Result<Color> {
     }
 
     Err(error::BottomError::ConfigError(format!(
-        "'{}' is an invalid named colour.
+        "\"{}\" is an invalid named colour.
         
 The following are supported strings: 
 +--------+------------+--------------+

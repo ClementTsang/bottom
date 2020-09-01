@@ -375,7 +375,7 @@ fn get_temperature(
                 "kelvin" | "k" => Ok(data_harvester::temperature::TemperatureType::Kelvin),
                 "celsius" | "c" => Ok(data_harvester::temperature::TemperatureType::Celsius),
                 _ => Err(BottomError::ConfigError(format!(
-                    "'{}' is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\".",
+                    "\"{}\" is an invalid temperature type, use \"<kelvin|k|celsius|c|fahrenheit|f>\".",
                     temp_type
                 ))),
             };
