@@ -84,8 +84,7 @@ before_script:
     fi
   - |
     if [ "$TARGET" = "armv7-unknown-linux-gnueabihf" ]; then
-      sudo apt-get install -qq gcc-arm-linux-gnueabihf libc6-armhf-cross libc6-dev-armhf-cross;
-      export CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc;
+      sudo apt-get install -qq gcc-arm-linux-gnueabihf;
     fi
 
 script:
