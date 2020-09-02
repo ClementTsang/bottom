@@ -84,10 +84,17 @@ before_script:
     fi
   - |
     if [ "$TARGET" = "armv7-unknown-linux-gnueabihf" ]; then
-      # Following https://mudge.name/2019/01/02/cross-compiling-rust-for-a-raspberry-pi-on-travis-ci/
-      git clone --depth=1 https://github.com/raspberrypi/tools.git /tmp/tools;
-      export PATH=/tmp/tools/arm-bcm2708/arm-linux-gnueabihf/bin:$PATH;
-      export CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc;
+      # Following https://github.com/zwilias/elm-json/blob/master/.travis.yml
+      sudo apt-get -y install libc6
+      export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gcc;
+      export TOOLCHAIN=armv7-eabihf--glibc--stable-2018.11-1;
+      export TOOLCHAIN_URL="https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/";
+      export CC_armv7_unknown_linux_gnueabihf=arm-linux-gcc;
+      export CXX_armv7_unknown_linux_gnueabihf=arm-linux-g++;
+      export LD_armv7_unknown_linux_gnueabihf=arm-linux-ld;
+      export RUSTFLAGS="-C link-arg=-s";
+      curl -o- ${TOOLCHAIN_URL}/${TOOLCHAIN}.tar.bz2 | tar -xjf -;
+      PATH="${PATH}:${TRAVIS_BUILD_DIR}/${TOOLCHAIN}/bin";
     fi
 
 script:
