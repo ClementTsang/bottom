@@ -67,7 +67,6 @@ impl NetworkGraphWidget for Painter {
             // Update draw loc in widget map
             // Note that in both cases, we always go to the same widget id so it's fine to do it like
             // this lol.
-            debug!("!@#!@");
             if let Some(network_widget) = app_state.widget_map.get_mut(&widget_id) {
                 network_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
                 network_widget.bottom_right_corner =

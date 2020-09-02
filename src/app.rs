@@ -312,10 +312,9 @@ impl App {
 
     pub fn toggle_sort(&mut self) {
         match &self.current_widget.widget_type {
-            // FIXME: [REFACTOR] Remove these @'s if unneeded, they were an idea but they're ultimately useless for me here...?
-            widget_type @ BottomWidgetType::Proc | widget_type @ BottomWidgetType::ProcSort => {
+            BottomWidgetType::Proc | BottomWidgetType::ProcSort => {
                 let widget_id = self.current_widget.widget_id
-                    - match &widget_type {
+                    - match &self.current_widget.widget_type {
                         BottomWidgetType::Proc => 0,
                         BottomWidgetType::ProcSort => 2,
                         _ => 0,
@@ -348,9 +347,9 @@ impl App {
 
     pub fn invert_sort(&mut self) {
         match &self.current_widget.widget_type {
-            widget_type @ BottomWidgetType::Proc | widget_type @ BottomWidgetType::ProcSort => {
+            BottomWidgetType::Proc | BottomWidgetType::ProcSort => {
                 let widget_id = self.current_widget.widget_id
-                    - match &widget_type {
+                    - match &self.current_widget.widget_type {
                         BottomWidgetType::Proc => 0,
                         BottomWidgetType::ProcSort => 2,
                         _ => 0,
@@ -1571,9 +1570,9 @@ impl App {
                     }
                 }
                 WidgetDirection::Down => match &self.current_widget.widget_type {
-                    proc_type @ BottomWidgetType::Proc | proc_type @ BottomWidgetType::ProcSort => {
+                    BottomWidgetType::Proc | BottomWidgetType::ProcSort => {
                         let widget_id = self.current_widget.widget_id
-                            - match proc_type {
+                            - match &self.current_widget.widget_type {
                                 BottomWidgetType::ProcSort => 2,
                                 _ => 0,
                             };

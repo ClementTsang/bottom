@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#208](https://github.com/ClementTsang/bottom/pull/208): Mouse support for tables and moving to widgets.
 
+- [#217](https://github.com/ClementTsang/bottom/pull/217): Unofficial ARM support.
+
 ### Changes
 
 - [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.

@@ -352,16 +352,16 @@ Note that the `and` operator takes precedence over the `or` operator.
 
 #### General
 
-|              |                                                                                                                       |
-| ------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Mouse scroll | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively                                          |
-| Mouse click  | Selects the clicked widget. For tables, clicking can also select a specific entry. Can be disabled via options/flags. |
+|        |                                                                                                                  |
+| ------ | ---------------------------------------------------------------------------------------------------------------- |
+| Scroll | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively                                     |
+| Click  | Selects the clicked widget. For tables, clicking can also select an entry.<br>Can be disabled via options/flags. |
 
 #### CPU bindings
 
-|              |                                                                       |
-| ------------ | --------------------------------------------------------------------- |
-| Mouse scroll | Scrolling over an CPU core/average shows only that entry on the chart |
+|        |                                                                       |
+| ------ | --------------------------------------------------------------------- |
+| Scroll | Scrolling over an CPU core/average shows only that entry on the chart |
 
 ## Features
 
