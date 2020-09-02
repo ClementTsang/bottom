@@ -62,9 +62,8 @@ Note that bottom is:
 - Officially tested and released for only `x86_64` (and `i686` for Windows)
 - Developed mainly for macOS, Windows, and Linux
 
-As such, support beyond that is not guaranteed. There is now _technically_ support for AArch64 builds,
-and I do run them in Travis, but I am currently not guaranteeing their stability. In theory, they should
-work fine, but I've had some troubles with building on ARM in some situations.
+As such, support beyond that is not guaranteed. There is now _technically_ support for AArch64 and ARMv7 builds and it is tested on Travis,
+but I won't be officially supporting it for a bit and some things may or may not work (for example, R/s and W/s for disks doesn't work).
 
 ### Manually
 
