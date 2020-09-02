@@ -31,6 +31,14 @@ matrix:
       env: TARGET=x86_64-pc-windows-msvc
       arch: amd64
       rust: beta
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl
+      arch: amd64
+      rust: stable
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl
+      arch: amd64
+      rust: beta
 
     # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
     - os: linux
@@ -40,35 +48,14 @@ matrix:
       env: TARGET=armv7-unknown-linux-gnueabihf
       arch: arm64
 
-    # musl
-    - os: linux
-      env:
-        - TARGET=x86_64-unknown-linux-musl
-        - TRAVIS_ALLOW_FAILURE=true
-      arch: amd64
-
-    - os: linux
-      env:
-        - TARGET=x86_64-unknown-linux-musl
-        - TRAVIS_ALLOW_FAILURE=true
-      arch: amd64
-      rust: beta
-
   fast_finish: true
   exclude:
     - if: tag IS present
       rust: beta
     - if: tag IS present
       arch: arm64
-    - if: tag IS present
-      env:
-        - TARGET=x86_64-unknown-linux-musl
-        - TRAVIS_ALLOW_FAILURE=true
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
-    - env:
-        - TARGET=x86_64-unknown-linux-musl
-        - TRAVIS_ALLOW_FAILURE=true
 
 branches:
   only:
@@ -97,13 +84,10 @@ before_script:
     fi
   - |
     if [ "$TARGET" = "armv7-unknown-linux-gnueabihf" ]; then
-      export TOOLCHAIN=armv7-eabihf--glibc--stable-2020.02-2
-      export TOOLCHAIN_URL="https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs"
-      export CC_armv7_unknown_linux_gnueabihf=arm-linux-gcc
-      export CXX_armv7_unknown_linux_gnueabihf=arm-linux-g++
-      export LD_armv7_unknown_linux_gnueabihf=arm-linux-ld
-      export RUSTFLAGS="-C link-arg=-s"
-      curl -o- ${TOOLCHAIN_URL}/${TOOLCHAIN}.tar.bz2 | tar -xjf -;
+      # Following https://mudge.name/2019/01/02/cross-compiling-rust-for-a-raspberry-pi-on-travis-ci/
+      git clone --depth=1 https://github.com/raspberrypi/tools.git /tmp/tools;
+      export PATH=/tmp/tools/arm-bcm2708/arm-linux-gnueabihf/bin:$PATH;
+      export CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc;
     fi
 
 script:
@@ -166,11 +150,10 @@ before_deploy:
         strip btm;
         local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
         cp -r $target_dir completions
+        echo "Tar-ing macOS/Linux binary and completions..."
+        tar -czvf bottom_$TARGET.tar.gz btm completions;
 
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-          echo "Tar-ing Linux binary and completions..."
-          tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm completions;
-
           echo "Generating AUR template...";
           python "./deployment/packager.py" $TRAVIS_TAG "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
           curl -LO "https://github.com/ClementTsang/bottom/archive/$TRAVIS_TAG.tar.gz";
@@ -188,9 +171,6 @@ before_deploy:
           cargo deb;
           cp ./target/debian/bottom_*.deb .;
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-
-          echo "Tar-ing macOS binary and completions..."
-          tar -czvf bottom_x86_64-apple-darwin.tar.gz btm completions;
           # The bottom.rb file must be generated AFTER, since it relies on the Linux binary file.
         fi
 
