@@ -7,50 +7,47 @@ notifications:
 matrix:
   include:
     # Standard x86-64 stuff, stable and beta
-    # - os: linux
-    #   env: TARGET=x86_64-unknown-linux-gnu
-    #   arch: amd64
-    #   rust: stable
-    # - os: linux
-    #   env: TARGET=x86_64-unknown-linux-gnu
-    #   arch: amd64
-    #   rust: beta
-    # - os: osx
-    #   env: TARGET=x86_64-apple-darwin
-    #   arch: amd64
-    #   rust: stable
-    # - os: osx
-    #   env: TARGET=x86_64-apple-darwin
-    #   arch: amd64
-    #   rust: beta
-    # - os: windows
-    #   env: TARGET=x86_64-pc-windows-msvc
-    #   arch: amd64
-    #   rust: stable
-    # - os: windows
-    #   env: TARGET=x86_64-pc-windows-msvc
-    #   arch: amd64
-    #   rust: beta
-
-    # # musl
-    # - os: linux
-    #   env: TARGET=x86_64-unknown-linux-musl
-    #   arch: amd64
-    #   rust: stable
-    # - os: linux
-    #   env: TARGET=x86_64-unknown-linux-musl
-    #   arch: amd64
-    #   rust: beta
-
-    # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
-    # - os: linux
-    #   env: TARGET=aarch64-unknown-linux-gnu
-    #   arch: arm64
-    #   rust: stable
     - os: linux
-      env: TARGET=armv7-unknown-linux-musleabihf
+      env: TARGET=x86_64-unknown-linux-gnu
       arch: amd64
       rust: stable
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-gnu
+      arch: amd64
+      rust: beta
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
+      arch: amd64
+      rust: stable
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
+      arch: amd64
+      rust: beta
+    - os: windows
+      env: TARGET=x86_64-pc-windows-msvc
+      arch: amd64
+      rust: stable
+    - os: windows
+      env: TARGET=x86_64-pc-windows-msvc
+      arch: amd64
+      rust: beta
+
+    # musl
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl
+      arch: amd64
+      rust: stable
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl
+      arch: amd64
+      rust: beta
+
+    ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
+    - os: linux
+      env: TARGET=aarch64-unknown-linux-gnu
+      arch: arm64
+      rust: stable
+
 
   fast_finish: true
   exclude:
@@ -58,11 +55,8 @@ matrix:
       rust: beta
     - if: tag IS present
       arch: arm64
-    - if: tag IS present
-      env: TARGET=armv7-unknown-linux-musleabihf
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
-    - env: TARGET=armv7-unknown-linux-musleabihf
 
 branches:
   only:
@@ -88,21 +82,6 @@ before_script:
     # Only check clippy if stable...
     if [[ $TRAVIS_RUST_VERSION == "stable" ]]; then
       rustup component add clippy
-    fi
-  - |
-    if [ "$TARGET" = "armv7-unknown-linux-musleabihf" ]; then
-      # Just gonna copy this... https://github.com/zwilias/elm-json/blob/master/.travis.yml
-      sudo apt-get install musl-tools;
-      echo "armv7-unknown-linux-musleabihf pre-script triggered...";
-      export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=arm-linux-gcc;
-      export TOOLCHAIN=armv7-eabihf--musl--stable-2018.11-1;
-      export TOOLCHAIN_URL="https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/";
-      export CC_armv7_unknown_linux_musleabihf=arm-linux-gcc;
-      export CXX_armv7_unknown_linux_musleabihf=arm-linux-g++;
-      export LD_armv7_unknown_linux_musleabihf=arm-linux-ld;
-      export RUSTFLAGS="-C link-arg=-s";
-      curl -o- ${TOOLCHAIN_URL}/${TOOLCHAIN}.tar.bz2 | tar -xjf -;
-      PATH="${PATH}:${TRAVIS_BUILD_DIR}/${TOOLCHAIN}/bin";
     fi
 
 script:
