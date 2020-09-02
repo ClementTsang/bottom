@@ -10,7 +10,7 @@ jobs:
     - if: tag IS present
       arch: arm64
     - rust: beta
-      arch: arm64 # This seems bugged currently.
+      arch: arm64 # This seems bugged currently, see https://github.com/rust-lang/rust/issues/62896.
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
 branches:
