@@ -11,19 +11,19 @@ matrix:
       arch: amd64
       rust: beta
     - os: osx
-      env: TARGET=x86_64-pc-windows-msvc
+      env: TARGET=x86_64-apple-darwin
       arch: amd64
       rust: stable
     - os: osx
-      env: TARGET=x86_64-pc-windows-msvc
+      env: TARGET=x86_64-apple-darwin
       arch: amd64
       rust: beta
     - os: windows
-      env: TARGET=x86_64-apple-darwin
+      env: TARGET=x86_64-pc-windows-msvc
       arch: amd64
       rust: stable
     - os: windows
-      env: TARGET=x86_64-apple-darwin
+      env: TARGET=x86_64-pc-windows-msvc
       arch: amd64
       rust: beta
 
