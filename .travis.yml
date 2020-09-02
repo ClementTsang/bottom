@@ -61,9 +61,14 @@ matrix:
     - if: tag IS present
       arch: arm64
     - if: tag IS present
-      env: TRAVIS_ALLOW_FAILURE=true
+      env:
+        - TARGET=x86_64-unknown-linux-musl
+        - TRAVIS_ALLOW_FAILURE=true
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
+    - env:
+        - TARGET=x86_64-unknown-linux-musl
+        - TRAVIS_ALLOW_FAILURE=true
 
 branches:
   only:
