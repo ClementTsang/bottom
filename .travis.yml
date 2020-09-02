@@ -79,7 +79,6 @@ before_install:
     fi
 
 before_script:
-  - echo "Working on target: $TARGET"
   - rustup target add $TARGET
   - |
     # Only check clippy if stable...
