@@ -45,8 +45,8 @@ matrix:
       env: TARGET=aarch64-unknown-linux-gnu
       arch: arm64
     - os: linux
-      env: TARGET=armv7-unknown-linux-gnueabihf
-      arch: arm64
+      env: TARGET=armv7-unknown-linux-musleabihf
+      arch: amd64
 
   fast_finish: true
   exclude:
@@ -56,6 +56,7 @@ matrix:
       arch: arm64
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
+    - env: TARGET=armv7-unknown-linux-musleabihf
 
 branches:
   only:
@@ -76,6 +77,7 @@ before_install:
     fi
 
 before_script:
+  - echo "Working on target: $TARGET"
   - rustup target add $TARGET
   - |
     # Only check clippy if stable...
@@ -83,8 +85,16 @@ before_script:
       rustup component add clippy
     fi
   - |
-    if [ "$TARGET" = "armv7-unknown-linux-gnueabihf" ]; then
-      sudo apt-get install -qq gcc-arm-linux-gnueabihf;
+    if [ "$TARGET" = "armv7-unknown-linux-musleabihf" ]; then
+      # Just gonna copy this... https://github.com/zwilias/elm-json/blob/master/.travis.yml
+      echo "armv7-unknown-linux-musleabihf pre-script triggered...";
+      export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=arm-linux-gcc;
+      export TOOLCHAIN=armv7-eabihf--musl--stable-2018.11-1;
+      export TOOLCHAIN_URL="https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/";
+      export CC_armv7_unknown_linux_musleabihf=arm-linux-gcc;
+      export CXX_armv7_unknown_linux_musleabihf=arm-linux-g++;
+      export LD_armv7_unknown_linux_musleabihf=arm-linux-ld;
+      export RUSTFLAGS="-C link-arg=-s";
     fi
 
 script:
