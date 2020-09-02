@@ -2,18 +2,15 @@ language: rust
 rust:
   - stable
   - beta
-os:
-  - linux
-  - osx
-  - windows
-arch:
-  - amd64
-  - arm64
 jobs:
   fast_finish: true
   exclude:
     - if: tag IS present
       rust: beta
+    - if: tag IS present
+      arch: arm64
+    - rust: beta
+      arch: arm64 # This seems bugged currently.
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
 branches:
@@ -21,17 +18,33 @@ branches:
     - master
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
+matrix:
+  include:
+    # ARM stuff
+    - os: linux
+      env: TARGET=aarch64-unknown-linux-gnu
+      arch: arm64
+    - os: linux
+      env: TARGET=armv7-unknown-linux-gnueabihf
+      arch: arm64
+    - os: linux
+      env: TARGET=arm-unknown-linux-gnueabihf
+      arch: arm64
+    # Standard x86-64 stuff
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-gnu
+      arch: amd64
+    - os: osx
+      env: TARGET=x86_64-pc-windows-msvc
+      arch: amd64
+    - os: windows
+      env: TARGET=x86_64-apple-darwin
+      arch: amd64
+
 before_install:
   - export RUST_BACKTRACE=1
   - |
-    if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-      if [[ $TRAVIS_CPU_ARCH == "amd64" ]]; then
-        export TARGET=x86_64-unknown-linux-gnu;
-      else
-        export TARGET=aarch64-unknown-linux-gnu;
-      fi
-    elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
-      export TARGET=x86_64-pc-windows-msvc;
+    if [[ $TRAVIS_OS_NAME == "windows" ]]; then
       if [[ -n $TRAVIS_TAG ]]; then
         powershell Install-WindowsFeature Net-Framework-Core;
         choco install -y wixtoolset;
@@ -39,8 +52,6 @@ before_install:
         choco install zip;
         rustup target add i686-pc-windows-msvc;
       fi
-    elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-      export TARGET=x86_64-apple-darwin;
     fi
 before_script:
   - rustup target add $TARGET
