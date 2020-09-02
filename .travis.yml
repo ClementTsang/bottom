@@ -39,7 +39,7 @@ matrix:
     - os: linux
       env:
         - TARGET=x86_64-unknown-linux-musl
-        - SKIP_DEPLOY=true
+        - TRAVIS_ALLOW_FAILURE=true
       arch: arm64
 
     # Some other stuff
@@ -50,7 +50,7 @@ matrix:
     - os: linux
       env:
         - TARGET=x86_64-unknown-linux-musl
-        - SKIP_DEPLOY=true
+        - TRAVIS_ALLOW_FAILURE=true
       arch: amd64
       rust: beta
 
@@ -61,10 +61,9 @@ matrix:
     - if: tag IS present
       arch: arm64
     - if: tag IS present
-      env: SKIP_DEPLOY=true
+      env: TRAVIS_ALLOW_FAILURE=true
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
-    - env: SKIP_DEPLOY=true
 
 branches:
   only:
