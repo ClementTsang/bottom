@@ -1,5 +1,3 @@
-use futures::stream::StreamExt;
-
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {
     pub name: String,
@@ -61,6 +59,8 @@ pub async fn get_sysinfo_disk_usage_list(
 pub async fn get_heim_io_usage_list(
     get_physical: bool, actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
+    use futures::stream::StreamExt;
+
     if !actually_get {
         return Ok(None);
     }
@@ -102,6 +102,8 @@ pub async fn get_heim_io_usage_list(
 pub async fn get_heim_disk_usage_list(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
+    use futures::stream::StreamExt;
+
     if !actually_get {
         return Ok(None);
     }
