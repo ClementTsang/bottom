@@ -160,16 +160,32 @@ impl DataCollector {
             self.sys.refresh_cpu();
         }
 
-        if cfg!(not(target_os = "linux")) {
+        if cfg!(any(target_arch = "arm", target_arch = "aarch64")) {
+            // ARM stuff
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
-        }
-        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks();
+            if self.widgets_to_harvest.use_net {
+                self.sys.refresh_networks();
+            }
+            if self.widgets_to_harvest.use_mem {
+                self.sys.refresh_memory();
+            }
+        } else {
+            if cfg!(not(target_os = "linux")) {
+                if self.widgets_to_harvest.use_proc {
+                    self.sys.refresh_processes();
+                }
+                if self.widgets_to_harvest.use_temp {
+                    self.sys.refresh_components();
+                }
+            }
+            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
+                self.sys.refresh_networks();
+            }
         }
 
         let current_instant = std::time::Instant::now();
@@ -230,25 +246,96 @@ impl DataCollector {
             }
         }
 
-        // ASYNC
-        let network_data_fut = network::get_network_data(
-            &self.sys,
-            self.last_collection_time,
-            &mut self.total_rx,
-            &mut self.total_tx,
-            current_instant,
-            self.widgets_to_harvest.use_net,
-        );
+        // Async if Heim
+        let network_data_fut = {
+            #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
+            {
+                network::get_sysinfo_network_data(
+                    &self.sys,
+                    self.last_collection_time,
+                    &mut self.total_rx,
+                    &mut self.total_tx,
+                    current_instant,
+                    self.widgets_to_harvest.use_net,
+                )
+            }
+            #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
+            {
+                network::get_heim_network_data(
+                    self.last_collection_time,
+                    &mut self.total_rx,
+                    &mut self.total_tx,
+                    current_instant,
+                    self.widgets_to_harvest.use_net,
+                )
+            }
+        };
+        let mem_data_fut = {
+            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+            {
+                mem::get_sysinfo_mem_data_list(&self.sys, self.widgets_to_harvest.use_mem)
+            }
 
-        let mem_data_fut = mem::get_mem_data_list(self.widgets_to_harvest.use_mem);
-        let swap_data_fut = mem::get_swap_data_list(self.widgets_to_harvest.use_mem);
-        let disk_data_fut = disks::get_disk_usage_list(self.widgets_to_harvest.use_disk);
-        let disk_io_usage_fut = disks::get_io_usage_list(false, self.widgets_to_harvest.use_disk);
-        let temp_data_fut = temperature::get_temperature_data(
-            &self.sys,
-            &self.temperature_type,
-            self.widgets_to_harvest.use_temp,
-        );
+            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+            {
+                mem::get_heim_mem_data_list(self.widgets_to_harvest.use_mem)
+            }
+        };
+        let swap_data_fut = {
+            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+            {
+                mem::get_sysinfo_swap_data_list(&self.sys, self.widgets_to_harvest.use_mem)
+            }
+
+            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+            {
+                mem::get_heim_swap_data_list(self.widgets_to_harvest.use_mem)
+            }
+        };
+        let disk_data_fut = {
+            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+            {
+                disks::get_sysinfo_disk_usage_list(&self.sys, self.widgets_to_harvest.use_disk)
+            }
+
+            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+            {
+                disks::get_heim_disk_usage_list(self.widgets_to_harvest.use_disk)
+            }
+        };
+        let disk_io_usage_fut = {
+            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+            {
+                disks::get_sysinfo_io_usage_list(&self.sys, self.widgets_to_harvest.use_disk)
+            }
+
+            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+            {
+                disks::get_heim_io_usage_list(false, self.widgets_to_harvest.use_disk)
+            }
+        };
+        let temp_data_fut = {
+            #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
+            {
+                temperature::get_sysinfo_temperature_data(
+                    &self.sys,
+                    &self.temperature_type,
+                    self.widgets_to_harvest.use_temp,
+                )
+            }
+
+            #[cfg(not(any(
+                not(target_os = "linux"),
+                target_arch = "aarch64",
+                target_arch = "arm"
+            )))]
+            {
+                temperature::get_heim_temperature_data(
+                    &self.temperature_type,
+                    self.widgets_to_harvest.use_temp,
+                )
+            }
+        };
 
         let (net_data, mem_res, swap_res, disk_res, io_res, temp_res) = join!(
             network_data_fut,
@@ -259,7 +346,6 @@ impl DataCollector {
             temp_data_fut
         );
 
-        // After async
         if let Some(net_data) = net_data {
             self.total_rx = net_data.total_rx;
             self.total_tx = net_data.total_tx;

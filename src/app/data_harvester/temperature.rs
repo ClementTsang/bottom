@@ -1,9 +1,5 @@
 use std::cmp::Ordering;
 
-use futures::StreamExt;
-use heim::units::thermodynamic_temperature;
-use sysinfo::{ComponentExt, System, SystemExt};
-
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
     pub component_name: Option<String>,
@@ -24,61 +20,90 @@ impl Default for TemperatureType {
     }
 }
 
-pub async fn get_temperature_data(
-    sys: &System, temp_type: &TemperatureType, actually_get: bool,
+/// Meant for ARM and non-Linux usage.
+#[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
+pub async fn get_sysinfo_temperature_data(
+    sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
+    use sysinfo::{ComponentExt, SystemExt};
+
+    fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+        celsius + 273.15
+    }
+
+    fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+        (celsius * (9.0 / 5.0)) + 32.0
+    }
+
     if !actually_get {
         return Ok(None);
     }
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
-    if cfg!(target_os = "linux") {
-        let mut sensor_data = heim::sensors::temperatures();
-        while let Some(sensor) = sensor_data.next().await {
-            if let Ok(sensor) = sensor {
-                temperature_vec.push(TempHarvest {
-                    component_name: Some(sensor.unit().to_string()),
-                    component_label: if let Some(label) = sensor.label() {
-                        Some(label.to_string())
-                    } else {
-                        None
-                    },
-                    temperature: match temp_type {
-                        TemperatureType::Celsius => sensor
-                            .current()
-                            .get::<thermodynamic_temperature::degree_celsius>(
-                        ),
-                        TemperatureType::Kelvin => {
-                            sensor.current().get::<thermodynamic_temperature::kelvin>()
-                        }
-                        TemperatureType::Fahrenheit => sensor
-                            .current()
-                            .get::<thermodynamic_temperature::degree_fahrenheit>(
-                        ),
-                    },
-                });
-            }
-        }
-    } else {
-        let sensor_data = sys.get_components();
-        for component in sensor_data {
+    let sensor_data = sys.get_components();
+    for component in sensor_data {
+        temperature_vec.push(TempHarvest {
+            component_name: None,
+            component_label: Some(component.get_label().to_string()),
+            temperature: match temp_type {
+                TemperatureType::Celsius => component.get_temperature(),
+                TemperatureType::Kelvin => convert_celsius_to_kelvin(component.get_temperature()),
+                TemperatureType::Fahrenheit => {
+                    convert_celsius_to_fahrenheit(component.get_temperature())
+                }
+            },
+        });
+    }
+
+    temp_vec_sort(&mut temperature_vec);
+    Ok(Some(temperature_vec))
+}
+
+#[cfg(not(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm")))]
+pub async fn get_heim_temperature_data(
+    temp_type: &TemperatureType, actually_get: bool,
+) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
+    use futures::StreamExt;
+
+    if !actually_get {
+        return Ok(None);
+    }
+
+    let mut temperature_vec: Vec<TempHarvest> = Vec::new();
+
+    use heim::units::thermodynamic_temperature;
+    let mut sensor_data = heim::sensors::temperatures();
+    while let Some(sensor) = sensor_data.next().await {
+        if let Ok(sensor) = sensor {
             temperature_vec.push(TempHarvest {
-                component_name: None,
-                component_label: Some(component.get_label().to_string()),
+                component_name: Some(sensor.unit().to_string()),
+                component_label: if let Some(label) = sensor.label() {
+                    Some(label.to_string())
+                } else {
+                    None
+                },
                 temperature: match temp_type {
-                    TemperatureType::Celsius => component.get_temperature(),
+                    TemperatureType::Celsius => sensor
+                        .current()
+                        .get::<thermodynamic_temperature::degree_celsius>(),
                     TemperatureType::Kelvin => {
-                        convert_celsius_to_kelvin(component.get_temperature())
+                        sensor.current().get::<thermodynamic_temperature::kelvin>()
                     }
-                    TemperatureType::Fahrenheit => {
-                        convert_celsius_to_fahrenheit(component.get_temperature())
-                    }
+                    TemperatureType::Fahrenheit => sensor
+                        .current()
+                        .get::<thermodynamic_temperature::degree_fahrenheit>(
+                    ),
                 },
             });
         }
     }
 
+    temp_vec_sort(&mut temperature_vec);
+    Ok(Some(temperature_vec))
+}
+
+fn temp_vec_sort(temperature_vec: &mut Vec<TempHarvest>) {
     // By default, sort temperature, then by alphabetically!
     // TODO: [TEMPS] Allow users to control this.
 
@@ -97,14 +122,4 @@ pub async fn get_temperature_data(
             .partial_cmp(&b.component_name)
             .unwrap_or(Ordering::Equal)
     });
-
-    Ok(Some(temperature_vec))
-}
-
-fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
-    celsius + 273.15
-}
-
-fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
-    (celsius * (9.0 / 5.0)) + 32.0
 }

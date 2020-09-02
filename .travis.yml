@@ -1,16 +1,75 @@
 language: rust
-rust:
-  - stable
-  - beta
-os:
-  - linux
-  - osx
-  - windows
-jobs:
+cache: cargo
+notifications:
+  email:
+    on_success: never
+
+matrix:
+  include:
+    # Standard x86-64 stuff, stable and beta
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-gnu
+      arch: amd64
+      rust: stable
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-gnu
+      arch: amd64
+      rust: beta
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
+      arch: amd64
+      rust: stable
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
+      arch: amd64
+      rust: beta
+    - os: windows
+      env: TARGET=x86_64-pc-windows-msvc
+      arch: amd64
+      rust: stable
+    - os: windows
+      env: TARGET=x86_64-pc-windows-msvc
+      arch: amd64
+      rust: beta
+
+    # musl
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl
+      arch: amd64
+      rust: stable
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl
+      arch: amd64
+      rust: beta
+
+    # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
+    - os: linux
+      env: TARGET=aarch64-unknown-linux-gnu
+      arch: arm64
+      rust: stable
+    - os: linux
+      env: TARGET=armv7-unknown-linux-gnueabihf
+      arch: amd64
+      rust: stable
+      addons:
+        apt:
+          packages: &armhf
+            - gcc-arm-linux-gnueabihf
+            - libc6-armhf-cross
+            - libc6-dev-armhf-cross
+
   fast_finish: true
   exclude:
     - if: tag IS present
       rust: beta
+    - if: tag IS present
+      arch: arm64
+    - if: tag IS present
+      env: TARGET=armv7-unknown-linux-gnueabihf
+  allow_failures:
+    - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
+    - env: TARGET=armv7-unknown-linux-gnueabihf
+
 branches:
   only:
     - master
@@ -19,10 +78,7 @@ branches:
 before_install:
   - export RUST_BACKTRACE=1
   - |
-    if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-      export TARGET=x86_64-unknown-linux-gnu;
-    elif [[ $TRAVIS_OS_NAME == "windows" ]]; then
-      export TARGET=x86_64-pc-windows-msvc;
+    if [[ $TRAVIS_OS_NAME == "windows" ]]; then
       if [[ -n $TRAVIS_TAG ]]; then
         powershell Install-WindowsFeature Net-Framework-Core;
         choco install -y wixtoolset;
@@ -30,21 +86,29 @@ before_install:
         choco install zip;
         rustup target add i686-pc-windows-msvc;
       fi
-    elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-      export TARGET=x86_64-apple-darwin;
     fi
+
 before_script:
   - rustup target add $TARGET
-  - rustup component add clippy
+  - rustup update
+  - |
+    # Only check clippy if stable...
+    if [[ $TRAVIS_RUST_VERSION == "stable" ]]; then
+      rustup component add clippy
+    fi
+
 script:
-  - cargo clippy -- -D clippy::all
-  - cargo test --verbose --target $TARGET
-
-cache: cargo
-
-notifications:
-  email:
-    on_success: never
+  - |
+    # Only check clippy if stable...
+    if [[ $TRAVIS_RUST_VERSION == "stable" ]]; then
+      cargo clippy -- -D clippy::all
+    fi
+  - |
+    if [[ $TARGET = "armv7-unknown-linux-gnueabihf" ]]; then
+      cargo build --verbose --target $TARGET
+    else
+      cargo test --verbose --target $TARGET  
+    fi
 
 before_deploy:
   - |
@@ -98,11 +162,10 @@ before_deploy:
         strip btm;
         local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
         cp -r $target_dir completions
+        echo "Tar-ing macOS/Linux binary and completions..."
+        tar -czvf bottom_$TARGET.tar.gz btm completions;
 
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-          echo "Tar-ing Linux binary and completions..."
-          tar -czvf bottom_x86_64-unknown-linux-gnu.tar.gz btm completions;
-
           echo "Generating AUR template...";
           python "./deployment/packager.py" $TRAVIS_TAG "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
           curl -LO "https://github.com/ClementTsang/bottom/archive/$TRAVIS_TAG.tar.gz";
@@ -120,9 +183,6 @@ before_deploy:
           cargo deb;
           cp ./target/debian/bottom_*.deb .;
         elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-
-          echo "Tar-ing macOS binary and completions..."
-          tar -czvf bottom_x86_64-apple-darwin.tar.gz btm completions;
           # The bottom.rb file must be generated AFTER, since it relies on the Linux binary file.
         fi
 
