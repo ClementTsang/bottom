@@ -1,4 +1,9 @@
 language: rust
+cache: cargo
+notifications:
+  email:
+    on_success: never
+
 matrix:
   include:
     # Standard x86-64 stuff, stable and beta
@@ -34,9 +39,16 @@ matrix:
     - os: linux
       env: TARGET=armv7-unknown-linux-gnueabihf
       arch: arm64
+
+    # Some other stuff
     - os: linux
-      env: TARGET=arm-unknown-linux-gnueabihf
-      arch: arm64
+      env: TARGET=x86_64-unknown-linux-musl SKIP_DEPLOY=true
+      arch: amd64
+      rust: stable
+    - os: linux
+      env: TARGET=x86_64-unknown-linux-musl SKIP_DEPLOY=true
+      arch: amd64
+      rust: stable
 
   fast_finish: true
   exclude:
@@ -44,8 +56,11 @@ matrix:
       rust: beta
     - if: tag IS present
       arch: arm64
+    - if: tag IS present
+      env: SKIP_DEPLOY=true
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
+    - env: SKIP_DEPLOY=true
 
 branches:
   only:
@@ -64,9 +79,25 @@ before_install:
         rustup target add i686-pc-windows-msvc;
       fi
     fi
+
 before_script:
   - rustup target add $TARGET
-  - rustup component add clippy
+  - |
+    # Only check clippy if stable...
+    if [[ $TRAVIS_RUST_VERSION == "stable" ]]; then
+      rustup component add clippy
+    fi
+  - |
+    if [ "$TARGET" = "armv7-unknown-linux-gnueabihf" ]; then
+      export TOOLCHAIN=armv7-eabihf--glibc--stable-2020.02-2
+      export TOOLCHAIN_URL="https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs"
+      export CC_armv7_unknown_linux_gnueabihf=arm-linux-gcc
+      export CXX_armv7_unknown_linux_gnueabihf=arm-linux-g++
+      export LD_armv7_unknown_linux_gnueabihf=arm-linux-ld
+      export RUSTFLAGS="-C link-arg=-s"
+      curl -o- ${TOOLCHAIN_URL}/${TOOLCHAIN}.tar.bz2 | tar -xjf -;
+    fi
+
 script:
   - |
     # Only check clippy if stable...
@@ -74,12 +105,6 @@ script:
       cargo clippy -- -D clippy::all
     fi
   - cargo test --verbose --target $TARGET
-
-cache: cargo
-
-notifications:
-  email:
-    on_success: never
 
 before_deploy:
   - |
