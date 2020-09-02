@@ -37,7 +37,9 @@ matrix:
       env: TARGET=aarch64-unknown-linux-gnu
       arch: arm64
     - os: linux
-      env: TARGET=armv7-unknown-linux-gnueabihf
+      env:
+        - TARGET=x86_64-unknown-linux-musl
+        - SKIP_DEPLOY=true
       arch: arm64
 
     # Some other stuff
@@ -46,9 +48,11 @@ matrix:
       arch: amd64
       rust: stable
     - os: linux
-      env: TARGET=x86_64-unknown-linux-musl SKIP_DEPLOY=true
+      env:
+        - TARGET=x86_64-unknown-linux-musl
+        - SKIP_DEPLOY=true
       arch: amd64
-      rust: stable
+      rust: beta
 
   fast_finish: true
   exclude:
