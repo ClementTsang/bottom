@@ -93,7 +93,6 @@ before_script:
     if [ "$TARGET" = "armv7-unknown-linux-musleabihf" ]; then
       # Just gonna copy this... https://github.com/zwilias/elm-json/blob/master/.travis.yml
       sudo apt-get install musl-tools;
-      sudo apt-get install gcc-arm-linux-gnueabi;
       echo "armv7-unknown-linux-musleabihf pre-script triggered...";
       export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=arm-linux-gcc;
       export TOOLCHAIN=armv7-eabihf--musl--stable-2018.11-1;
@@ -102,6 +101,8 @@ before_script:
       export CXX_armv7_unknown_linux_musleabihf=arm-linux-g++;
       export LD_armv7_unknown_linux_musleabihf=arm-linux-ld;
       export RUSTFLAGS="-C link-arg=-s";
+      curl -o- ${TOOLCHAIN_URL}/${TOOLCHAIN}.tar.bz2 | tar -xjf -;
+      PATH="${PATH}:${TRAVIS_BUILD_DIR}/${TOOLCHAIN}/bin";
     fi
 
 script:
