@@ -68,7 +68,7 @@ matrix:
       env: TARGET=armv7-unknown-linux-gnueabihf
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
-      env: TARGET=armv7-unknown-linux-gnueabihf
+    - env: TARGET=armv7-unknown-linux-gnueabihf
 
 branches:
   only:
