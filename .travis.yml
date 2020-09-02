@@ -47,6 +47,16 @@ matrix:
       env: TARGET=aarch64-unknown-linux-gnu
       arch: arm64
       rust: stable
+    - os: linux
+      env: TARGET=armv7-unknown-linux-gnueabihf
+      arch: amd64
+      rust: stable
+      addons:
+        apt:
+          packages: &armhf
+            - gcc-arm-linux-gnueabihf
+            - libc6-armhf-cross
+            - libc6-dev-armhf-cross
 
   fast_finish: true
   exclude:
@@ -54,8 +64,11 @@ matrix:
       rust: beta
     - if: tag IS present
       arch: arm64
+    - if: tag IS present
+      env: TARGET=armv7-unknown-linux-gnueabihf
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
+      env: TARGET=armv7-unknown-linux-gnueabihf
 
 branches:
   only:
@@ -77,6 +90,7 @@ before_install:
 
 before_script:
   - rustup target add $TARGET
+  - rustup update
   - |
     # Only check clippy if stable...
     if [[ $TRAVIS_RUST_VERSION == "stable" ]]; then
