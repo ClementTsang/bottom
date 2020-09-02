@@ -22,7 +22,7 @@ matrix:
       env: TARGET=x86_64-apple-darwin
       arch: amd64
       rust: stable
-      - os: windows
+    - os: windows
       env: TARGET=x86_64-apple-darwin
       arch: amd64
       rust: beta
@@ -44,8 +44,6 @@ jobs:
       rust: beta
     - if: tag IS present
       arch: arm64
-    - rust: beta
-      arch: arm64 # This seems bugged currently, see https://github.com/rust-lang/rust/issues/62896.
   allow_failures:
     - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
 branches:
@@ -69,7 +67,11 @@ before_script:
   - rustup target add $TARGET
   - rustup component add clippy
 script:
-  - cargo clippy -- -D clippy::all
+  - |
+    # Only check clippy if stable...
+    if [[ $TRAVIS_RUST_VERSION == "stable" ]]; then
+      cargo clippy -- -D clippy::all
+    fi
   - cargo test --verbose --target $TARGET
 
 cache: cargo
