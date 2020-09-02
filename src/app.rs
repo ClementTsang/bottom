@@ -880,6 +880,7 @@ impl App {
 
                     self.to_delete_process_list = Some(current_process);
                     self.delete_dialog_state.is_showing_dd = true;
+                    self.is_determining_widget_boundary = true;
                 }
             }
         }
