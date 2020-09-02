@@ -103,7 +103,12 @@ script:
     if [[ $TRAVIS_RUST_VERSION == "stable" ]]; then
       cargo clippy -- -D clippy::all
     fi
-  - cargo test --verbose --target $TARGET
+  - |
+    if [[ $TARGET = "armv7-unknown-linux-gnueabihf" ]]; then
+      cargo build --verbose --target $TARGET
+    else
+      cargo test --verbose --target $TARGET  
+    fi
 
 before_deploy:
   - |
