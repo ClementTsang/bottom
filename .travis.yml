@@ -104,7 +104,7 @@ script:
       cargo clippy -- -D clippy::all
     fi
   - |
-    if [[ $TARGET = "armv7-unknown-linux-gnueabihf" ]]; then
+    if [[ $TARGET == "armv7-unknown-linux-gnueabihf" ]]; then
       cargo build --verbose --target $TARGET
     else
       cargo test --verbose --target $TARGET  
