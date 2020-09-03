@@ -349,13 +349,11 @@ impl CpuGraphWidget for Painter {
                 get_variable_intrinsic_widths(width as u16, &width_ratios, &CPU_LEGEND_HEADER_LENS);
             let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
-            let (border_and_title_style, highlight_style) = if is_on_widget {
-                (
-                    self.colours.highlighted_border_style,
-                    self.colours.currently_selected_text_style,
-                )
+            // Note we don't set highlight_style, as it should always be shown for this widget.
+            let border_and_title_style = if is_on_widget {
+                self.colours.highlighted_border_style
             } else {
-                (self.colours.border_style, self.colours.text_style)
+                self.colours.border_style
             };
 
             // Draw
@@ -367,7 +365,7 @@ impl CpuGraphWidget for Painter {
                             .border_style(border_and_title_style),
                     )
                     .header_style(self.colours.table_header_style)
-                    .highlight_style(highlight_style)
+                    .highlight_style(self.colours.currently_selected_text_style)
                     .widths(
                         &(intrinsic_widths
                             .iter()
