@@ -75,7 +75,7 @@ pub struct ConfigColours {
 #[derive(Default, Deserialize)]
 pub struct IgnoreList {
     pub is_list_ignored: bool,
-    pub use_regex: Option<bool>,
+    pub regex: Option<bool>,
     pub list: Vec<String>,
 }
 
@@ -691,7 +691,7 @@ pub fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option
             .list
             .iter()
             .map(|sensor| {
-                if let Some(use_regex) = ignore_list.use_regex {
+                if let Some(use_regex) = ignore_list.regex {
                     if use_regex {
                         Regex::new(sensor)
                     } else {
