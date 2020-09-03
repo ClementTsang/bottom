@@ -75,8 +75,9 @@ pub struct ConfigColours {
 #[derive(Default, Deserialize)]
 pub struct IgnoreList {
     pub is_list_ignored: bool,
-    pub regex: Option<bool>,
     pub list: Vec<String>,
+    pub regex: Option<bool>,
+    pub case_sensitive: Option<bool>,
 }
 
 pub fn build_app(
@@ -690,16 +691,31 @@ pub fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option
         let list: Result<Vec<_>, _> = ignore_list
             .list
             .iter()
-            .map(|sensor| {
-                if let Some(use_regex) = ignore_list.regex {
-                    if use_regex {
-                        Regex::new(sensor)
-                    } else {
-                        Regex::new(&regex::escape(sensor))
-                    }
+            .map(|name| {
+                let use_regex = if let Some(use_regex) = ignore_list.regex {
+                    use_regex
                 } else {
-                    Regex::new(&regex::escape(sensor))
-                }
+                    false
+                };
+                let use_cs = if let Some(use_cs) = ignore_list.case_sensitive {
+                    use_cs
+                } else {
+                    false
+                };
+
+                let escaped_string: String;
+                let res = format!(
+                    "{}{}",
+                    if use_cs { "" } else { "(?i)" },
+                    if use_regex {
+                        name
+                    } else {
+                        escaped_string = regex::escape(name);
+                        &escaped_string
+                    }
+                );
+
+                Regex::new(&res)
             })
             .collect();
 
