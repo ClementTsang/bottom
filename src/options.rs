@@ -1,3 +1,4 @@
+use regex::Regex;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
@@ -19,6 +20,8 @@ pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
     pub row: Option<Vec<Row>>,
+    pub disk_filter: Option<IgnoreList>,
+    pub temp_filter: Option<IgnoreList>,
 }
 
 #[derive(Default, Deserialize)]
@@ -67,6 +70,13 @@ pub struct ConfigColours {
     pub widget_title_color: Option<String>,
     pub graph_color: Option<String>,
     pub battery_colors: Option<Vec<String>>,
+}
+
+#[derive(Default, Deserialize)]
+pub struct IgnoreList {
+    pub is_list_ignored: bool,
+    pub use_regex: Option<bool>,
+    pub list: Vec<String>,
 }
 
 pub fn build_app(
@@ -249,6 +259,11 @@ pub fn build_app(
         use_battery: used_widget_set.get(&Battery).is_some(),
     };
 
+    let disk_filter =
+        get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;
+    let temp_filter =
+        get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
+
     Ok(App::builder()
         .app_config_fields(app_config_fields)
         .cpu_state(CpuState::init(cpu_state_map))
@@ -262,6 +277,10 @@ pub fn build_app(
         .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
         .widget_map(widget_map)
         .used_widgets(used_widgets)
+        .filters(DataFilters {
+            disk_filter,
+            temp_filter,
+        })
         .build())
 }
 
@@ -664,4 +683,31 @@ pub fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> 
         }
     }
     false
+}
+
+pub fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Filter>> {
+    if let Some(ignore_list) = ignore_list {
+        let list: Result<Vec<_>, _> = ignore_list
+            .list
+            .iter()
+            .map(|sensor| {
+                if let Some(use_regex) = ignore_list.use_regex {
+                    if use_regex {
+                        Regex::new(sensor)
+                    } else {
+                        Regex::new(&regex::escape(sensor))
+                    }
+                } else {
+                    Regex::new(&regex::escape(sensor))
+                }
+            })
+            .collect();
+
+        Ok(Some(Filter {
+            list: list?,
+            is_list_ignored: ignore_list.is_list_ignored,
+        }))
+    } else {
+        Ok(None)
+    }
 }

@@ -43,6 +43,18 @@ pub struct AppConfigFields {
     pub disable_click: bool,
 }
 
+/// For filtering out information
+pub struct DataFilters {
+    pub disk_filter: Option<Filter>,
+    pub temp_filter: Option<Filter>,
+}
+
+#[derive(Debug)]
+pub struct Filter {
+    pub is_list_ignored: bool,
+    pub list: Vec<regex::Regex>,
+}
+
 #[derive(TypedBuilder)]
 pub struct App {
     #[builder(default = false, setter(skip))]
@@ -99,6 +111,7 @@ pub struct App {
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget: BottomWidget,
     pub used_widgets: UsedWidgets,
+    pub filters: DataFilters,
 }
 
 impl App {
