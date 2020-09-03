@@ -42,6 +42,16 @@ matrix:
       arch: amd64
       rust: beta
 
+    # Windows GNU
+    - os: windows
+      env: TARGET=x86_64-pc-windows-gnu
+      arch: amd64
+      rust: stable
+    - os: windows
+      env: TARGET=x86_64-pc-windows-gnu
+      arch: amd64
+      rust: beta
+
     # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
     - os: linux
       env: TARGET=aarch64-unknown-linux-gnu
@@ -78,14 +88,13 @@ branches:
 before_install:
   - export RUST_BACKTRACE=1
   - |
-    if [[ $TRAVIS_OS_NAME == "windows" ]]; then
-      if [[ -n $TRAVIS_TAG ]]; then
-        powershell Install-WindowsFeature Net-Framework-Core;
-        choco install -y wixtoolset;
-        export PATH=$PATH:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
-        choco install zip;
-        rustup target add i686-pc-windows-msvc;
-      fi
+    if [[ $TRAVIS_OS_NAME == "windows" && -n $TRAVIS_TAG ]]; then
+      echo "Pre-installing deploy dependencies for Windows...";
+      powershell Install-WindowsFeature Net-Framework-Core;
+      choco install -y wixtoolset;
+      export PATH=$PATH:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
+      choco install zip;
+      rustup target add i686-pc-windows-msvc;
     fi
 
 before_script:
@@ -117,9 +126,8 @@ before_deploy:
   - |
     echo "Building release..."
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
-
       echo "Building Windows 64-bit...";
-      cargo build --release --target x86_64-pc-windows-msvc;
+      cargo build --release --target $TARGET;
       local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
       cp -r $target_dir completions
       mv "./target/x86_64-pc-windows-msvc/release/btm" "btm.exe";
@@ -128,31 +136,33 @@ before_deploy:
       rm "btm.exe"
       rm -r "completions"
 
-      echo "Building Windows 32-bit...";
-      cargo clean;
-      cargo build --release --target i686-pc-windows-msvc;
-      local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
-      cp -r $target_dir completions
-      mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
-      strip "btm.exe"
-      zip -r bottom_i686-pc-windows-msvc.zip "btm.exe" "completions";
-      rm "btm.exe"
-      rm -r "completions"
+      if [[ $TARGET == "x86_64-pc-windows-msvc" ]]; then
+        echo "Building Windows 32-bit...";
+        cargo clean;
+        cargo build --release --target i686-pc-windows-msvc;
+        local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
+        cp -r $target_dir completions
+        mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
+        strip "btm.exe"
+        zip -r bottom_i686-pc-windows-msvc.zip "btm.exe" "completions";
+        rm "btm.exe"
+        rm -r "completions"
 
-      echo "Building choco template...";
-      python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1" "./deployment/windows/choco/tools/";
-      cd "./deployment/windows/choco/"
-      zip -r choco.zip "bottom.nuspec" "tools/";
-      cd "../../../";
-      mv "./deployment/windows/choco/choco.zip" "./choco.zip"
+        echo "Building choco template...";
+        python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1" "./deployment/windows/choco/tools/";
+        cd "./deployment/windows/choco/"
+        zip -r choco.zip "bottom.nuspec" "tools/";
+        cd "../../../";
+        mv "./deployment/windows/choco/choco.zip" "./choco.zip"
 
-      echo "Building msi file...";
-      cargo install cargo-wix;
-      cargo wix init;
-      cargo wix;
+        echo "Building msi file...";
+        cargo install cargo-wix;
+        cargo wix init;
+        cargo wix;
 
-      echo "Building winget template...";
-      python "./deployment/packager.py" $TRAVIS_TAG "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256" "./bottom_x86_64_installer.msi";
+        echo "Building winget template...";
+        python "./deployment/packager.py" $TRAVIS_TAG "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256" "./bottom_x86_64_installer.msi";
+      fi
 
       echo "Done Windows pre-deploy!";
     else
