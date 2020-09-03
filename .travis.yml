@@ -76,10 +76,6 @@ branches:
     - master
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
-before_cache:
-  - rm -rf "$TRAVIS_HOME/.cargo/registry/src"
-  - rm -rf "$TRAVIS_HOME/.cargo/git"
-
 cache: cargo
 
 before_install:
