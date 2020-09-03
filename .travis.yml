@@ -77,8 +77,8 @@ branches:
     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 before_cache:
-  - rm -rf /home/travis/.cargo/git
-  - rm -rf /home/travis/.cargo/registry
+  - rm -rf "$TRAVIS_HOME/.cargo/registry/src"
+  - rm -rf "$TRAVIS_HOME/.cargo/git"
 
 cache: cargo
 
