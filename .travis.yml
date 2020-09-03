@@ -80,9 +80,7 @@ before_cache:
   - rm -rf /home/travis/.cargo/git
   - rm -rf /home/travis/.cargo/registry
 
-cache:
-  directories:
-    - /home/travis/.cargo
+cache: cargo
 
 before_install:
   - export RUST_BACKTRACE=1
