@@ -48,6 +48,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Config flags](#config-flags)
     - [Theming](#theming)
     - [Layout](#layout)
+    - [Disk and temperature filtering](#disk-and-temperature-filtering)
   - [Battery](#battery)
   - [Compatibility](#compatibility)
 - [Contribution](#contribution)
@@ -352,16 +353,16 @@ Note that the `and` operator takes precedence over the `or` operator.
 
 #### General
 
-|              |                                                                                                                       |
-| ------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Mouse scroll | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively                                          |
-| Mouse click  | Selects the clicked widget. For tables, clicking can also select a specific entry. Can be disabled via options/flags. |
+|        |                                                                                                                  |
+| ------ | ---------------------------------------------------------------------------------------------------------------- |
+| Scroll | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively                                     |
+| Click  | Selects the clicked widget. For tables, clicking can also select an entry.<br>Can be disabled via options/flags. |
 
 #### CPU bindings
 
-|              |                                                                       |
-| ------------ | --------------------------------------------------------------------- |
-| Mouse scroll | Scrolling over an CPU core/average shows only that entry on the chart |
+|        |                                                                       |
+| ------ | --------------------------------------------------------------------- |
+| Scroll | Scrolling over an CPU core/average shows only that entry on the chart |
 
 ## Features
 
@@ -595,6 +596,48 @@ Furthermore, you can have duplicate widgets. This means you could do something l
 
 and get the following CPU donut:
 ![CPU donut](./assets/cpu_layout.png)
+
+#### Disk and temperature filtering
+
+You can hide specific disks and temperature sensors by name in the config file via `disk_filter` and `temp_filter` respectively. Regex (`regex = true`) and case-sensitivity (`case_sensitive = true`) are supported, but are off by default.
+
+For example, let's say , given this disk list:
+
+![Disk filter not ignoring list](./assets/disk_filter_pre.png)
+
+I wish to _only_ show disks that follow the form `/dev/sda\d+`, or `/dev/nvme0n1p2`:
+
+```toml
+[disk_filter]
+is_list_ignored = false
+list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+regex = true
+```
+
+![Disk filter not ignoring list](./assets/disk_filter_post.png)
+
+This would ignore anything that does not match either of these two conditions. If I instead wish to ignore anything that matches this list, then I can set `is_list_ignored = true` instead:
+
+![Disk filter ignoring list](./assets/disk_filter_post2.png)
+
+Likewise, I can do something similar for `temp_filter`:
+
+![Temp filter before](./assets/temp_filter_pre.png)
+
+If I, say, only wanted to see any entry with the words "cpu" or "wifi" in it, case sensitive:
+
+```toml
+[temp_filter]
+is_list_ignored = false
+list = ["cpu", "wifi"]
+case_sensitive = true
+```
+
+![Temp filter after](./assets/temp_filter_post.png)
+
+Now, flipping to `case_sensitive = false` would instead show:
+
+![Temp filter after with case sensitivity off](./assets/temp_filter_post2.png)
 
 ### Battery
 

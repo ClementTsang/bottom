@@ -83,10 +83,7 @@ fn main() -> Result<()> {
     create_event_thread(
         sender,
         reset_receiver,
-        app.app_config_fields.use_current_cpu_total,
-        app.app_config_fields.update_rate_in_milliseconds,
-        app.app_config_fields.temperature_type.clone(),
-        app.app_config_fields.show_average_cpu,
+        &app.app_config_fields,
         app.used_widgets.clone(),
     );
 
@@ -151,7 +148,8 @@ fn main() -> Result<()> {
 
                         // Disk
                         if app.used_widgets.use_disk {
-                            app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
+                            app.canvas_data.disk_data =
+                                convert_disk_row(&app.data_collection, &app.filters.disk_filter);
                         }
 
                         // Temperatures

@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    app::{data_farmer, data_harvester, App},
+    app::{data_farmer, data_harvester, App, Filter},
     utils::gen_util::*,
 };
 
@@ -83,40 +83,77 @@ pub struct ConvertedCpuData {
 }
 
 pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
-    let mut sensor_vector: Vec<Vec<String>> = Vec::new();
-
     let current_data = &app.data_collection;
     let temp_type = &app.app_config_fields.temperature_type;
+    let temp_filter = &app.filters.temp_filter;
 
-    if current_data.temp_harvest.is_empty() {
-        sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()])
-    } else {
-        for sensor in &current_data.temp_harvest {
-            sensor_vector.push(vec![
-                match (&sensor.component_name, &sensor.component_label) {
-                    (Some(name), Some(label)) => format!("{}: {}", name, label),
-                    (None, Some(label)) => label.to_string(),
-                    (Some(name), None) => name.to_string(),
-                    (None, None) => String::default(),
-                },
-                (sensor.temperature.ceil() as u64).to_string()
-                    + match temp_type {
-                        data_harvester::temperature::TemperatureType::Celsius => "C",
-                        data_harvester::temperature::TemperatureType::Kelvin => "K",
-                        data_harvester::temperature::TemperatureType::Fahrenheit => "F",
-                    },
-            ]);
-        }
+    let mut sensor_vector: Vec<Vec<String>> = current_data
+        .temp_harvest
+        .iter()
+        .filter_map(|temp_harvest| {
+            let name = match (&temp_harvest.component_name, &temp_harvest.component_label) {
+                (Some(name), Some(label)) => format!("{}: {}", name, label),
+                (None, Some(label)) => label.to_string(),
+                (Some(name), None) => name.to_string(),
+                (None, None) => String::default(),
+            };
+
+            let to_keep = if let Some(temp_filter) = temp_filter {
+                let mut ret = temp_filter.is_list_ignored;
+                for r in &temp_filter.list {
+                    if r.is_match(&name) {
+                        ret = !temp_filter.is_list_ignored;
+                        break;
+                    }
+                }
+                ret
+            } else {
+                true
+            };
+
+            if to_keep {
+                Some(vec![
+                    name,
+                    (temp_harvest.temperature.ceil() as u64).to_string()
+                        + match temp_type {
+                            data_harvester::temperature::TemperatureType::Celsius => "C",
+                            data_harvester::temperature::TemperatureType::Kelvin => "K",
+                            data_harvester::temperature::TemperatureType::Fahrenheit => "F",
+                        },
+                ])
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if sensor_vector.is_empty() {
+        sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()]);
     }
 
     sensor_vector
 }
 
-pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<String>> {
+pub fn convert_disk_row(
+    current_data: &data_farmer::DataCollection, disk_filter: &Option<Filter>,
+) -> Vec<Vec<String>> {
     let mut disk_vector: Vec<Vec<String>> = Vec::new();
+
     current_data
         .disk_harvest
         .iter()
+        .filter(|disk_harvest| {
+            if let Some(disk_filter) = disk_filter {
+                for r in &disk_filter.list {
+                    if r.is_match(&disk_harvest.name) {
+                        return !disk_filter.is_list_ignored;
+                    }
+                }
+                disk_filter.is_list_ignored
+            } else {
+                true
+            }
+        })
         .zip(&current_data.io_labels)
         .for_each(|(disk, (io_read, io_write))| {
             let converted_free_space = get_simple_byte_values(disk.free_space, false);

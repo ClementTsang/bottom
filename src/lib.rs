@@ -687,16 +687,21 @@ pub fn create_event_thread(
     sender: std::sync::mpsc::Sender<
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
-    reset_receiver: std::sync::mpsc::Receiver<ResetEvent>, use_current_cpu_total: bool,
-    update_rate_in_milliseconds: u64, temp_type: data_harvester::temperature::TemperatureType,
-    show_average_cpu: bool, used_widget_set: UsedWidgets,
+    reset_receiver: std::sync::mpsc::Receiver<ResetEvent>,
+    app_config_fields: &app::AppConfigFields, used_widget_set: UsedWidgets,
 ) {
+    let temp_type = app_config_fields.temperature_type.clone();
+    let use_current_cpu_total = app_config_fields.use_current_cpu_total;
+    let show_average_cpu = app_config_fields.show_average_cpu;
+    let update_rate_in_milliseconds = app_config_fields.update_rate_in_milliseconds;
+
     thread::spawn(move || {
         let mut data_state = data_harvester::DataCollector::default();
         data_state.set_collected_data(used_widget_set);
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_show_average_cpu(show_average_cpu);
+
         data_state.init();
         loop {
             if let Ok(message) = reset_receiver.try_recv() {

@@ -379,9 +379,9 @@ impl Painter {
                         app_state.current_widget.widget_id,
                         false,
                     ),
-                    proc_type @ Proc | proc_type @ ProcSearch | proc_type @ ProcSort => {
+                    Proc | ProcSearch | ProcSort => {
                         let widget_id = app_state.current_widget.widget_id
-                            - match proc_type {
+                            - match &app_state.current_widget.widget_type {
                                 ProcSearch => 1,
                                 ProcSort => 2,
                                 _ => 0,

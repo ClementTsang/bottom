@@ -46,7 +46,9 @@ pub async fn get_sysinfo_disk_usage_list(
             name: disk.get_name().to_string_lossy().into(),
             mount_point: disk.get_mount_point().to_string_lossy().into(),
             free_space: disk.get_available_space(),
-            used_space: disk.get_total_space() - disk.get_available_space(),
+            used_space: disk
+                .get_total_space()
+                .saturating_sub(disk.get_available_space()),
             total_space: disk.get_total_space(),
         })
         .collect::<Vec<DiskHarvest>>();
