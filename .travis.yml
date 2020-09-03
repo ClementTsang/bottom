@@ -37,20 +37,12 @@ matrix:
       env: TARGET=x86_64-unknown-linux-musl
       arch: amd64
       rust: stable
-    - os: linux
-      env: TARGET=x86_64-unknown-linux-musl
-      arch: amd64
-      rust: beta
 
     # Windows GNU
     - os: windows
       env: TARGET=x86_64-pc-windows-gnu
       arch: amd64
       rust: stable
-    - os: windows
-      env: TARGET=x86_64-pc-windows-gnu
-      arch: amd64
-      rust: beta
 
     # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
     - os: linux
