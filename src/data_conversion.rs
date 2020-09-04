@@ -457,7 +457,6 @@ pub fn tree_process_data(
 ) -> Vec<ConvertedProcessData> {
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
-    // TODO: ideally... I shouldn't have to do this... this seems kinda... geh.
     let mut parent_child_mapping: HashMap<u32, Vec<u32>> = HashMap::default();
     let mut pid_process_mapping: HashMap<u32, &ConvertedProcessData> = HashMap::default();
 
@@ -480,7 +479,7 @@ pub fn tree_process_data(
     if let Some(zero_pid) = parent_child_mapping.get(&0) {
         pids_to_explore.extend(zero_pid);
     } else {
-        // FIXME: Remove this, this is for debugging
+        // FIXME: Remove this, this is for debugging... mainly because idk how the heck windows will behave
         debug!("PID 0 had no children during tree building...");
     }
 
@@ -494,8 +493,7 @@ pub fn tree_process_data(
     }
 
     // Now let's "rearrange" our current list of converted process data into the correct
-    // order required...
-
+    // order required... and we're done!
     explored_pids
         .iter()
         .filter_map(|pid| match pid_process_mapping.remove(pid) {
