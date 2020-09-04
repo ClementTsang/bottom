@@ -1,7 +1,7 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use crate::{
     app::{data_farmer, data_harvester, App, Filter},
@@ -38,11 +38,14 @@ pub struct ConvertedNetworkData {
     // mean_tx: f64,
 }
 
+// TODO: [REFACTOR] Process data... stuff really needs a rewrite.  Again.
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedProcessData {
     pub pid: u32,
+    pub ppid: Option<u32>,
     pub name: String,
     pub command: String,
+    pub is_thread: Option<bool>,
     pub cpu_percent_usage: f64,
     pub mem_percent_usage: f64,
     pub mem_usage_bytes: u64,
@@ -56,20 +59,6 @@ pub struct ConvertedProcessData {
     pub wps_f64: f64,
     pub tr_f64: f64,
     pub tw_f64: f64,
-    pub process_state: String,
-}
-
-#[derive(Clone, Default, Debug)]
-pub struct SingleProcessData {
-    pub pid: u32,
-    pub cpu_percent_usage: f64,
-    pub mem_percent_usage: f64,
-    pub mem_usage_bytes: u64,
-    pub group_pids: Vec<u32>,
-    pub read_per_sec: u64,
-    pub write_per_sec: u64,
-    pub total_read: u64,
-    pub total_write: u64,
     pub process_state: String,
 }
 
@@ -418,6 +407,9 @@ pub enum ProcessNamingType {
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
 ) -> Vec<ConvertedProcessData> {
+    // FIXME: Thread highlighting and hiding support
+    // For macOS see https://github.com/hishamhm/htop/pull/848/files
+
     current_data
         .process_harvest
         .iter()
@@ -437,6 +429,8 @@ pub fn convert_process_data(
 
             ConvertedProcessData {
                 pid: process.pid,
+                ppid: process.parent_pid,
+                is_thread: None,
                 name: process.name.to_string(),
                 command: process.command.to_string(),
                 cpu_percent_usage: process.cpu_usage_percent,
@@ -458,9 +452,76 @@ pub fn convert_process_data(
         .collect::<Vec<_>>()
 }
 
+pub fn tree_process_data(
+    single_process_data: &[ConvertedProcessData],
+) -> Vec<ConvertedProcessData> {
+    // Let's first build up a (really terrible) parent -> child mapping...
+    // At the same time, let's make a mapping of PID -> process data!
+    // TODO: ideally... I shouldn't have to do this... this seems kinda... geh.
+    let mut parent_child_mapping: HashMap<u32, Vec<u32>> = HashMap::default();
+    let mut pid_process_mapping: HashMap<u32, &ConvertedProcessData> = HashMap::default();
+
+    single_process_data.iter().for_each(|process| {
+        parent_child_mapping
+            .entry(process.ppid.unwrap_or(0))
+            .or_insert_with(Vec::new)
+            .push(process.pid);
+
+        // There should be no collisions...
+        if pid_process_mapping.contains_key(&process.pid) {
+            debug!("There was a PID collision!");
+        }
+        pid_process_mapping.insert(process.pid, process);
+    });
+
+    // Turn the parent-child mapping into a "list" via DFS...
+    let mut pids_to_explore: VecDeque<u32> = VecDeque::default();
+    let mut explored_pids: Vec<u32> = vec![0];
+    if let Some(zero_pid) = parent_child_mapping.get(&0) {
+        pids_to_explore.extend(zero_pid);
+    } else {
+        // FIXME: Remove this, this is for debugging
+        debug!("PID 0 had no children during tree building...");
+    }
+
+    while let Some(current_pid) = pids_to_explore.pop_front() {
+        explored_pids.push(current_pid);
+        if let Some(children) = parent_child_mapping.get(&current_pid) {
+            for child in children {
+                pids_to_explore.push_front(*child);
+            }
+        }
+    }
+
+    // Now let's "rearrange" our current list of converted process data into the correct
+    // order required...
+
+    explored_pids
+        .iter()
+        .filter_map(|pid| match pid_process_mapping.remove(pid) {
+            Some(proc) => Some(proc.clone()),
+            None => None,
+        })
+        .collect::<Vec<_>>()
+}
+
 pub fn group_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: ProcessNamingType,
 ) -> Vec<ConvertedProcessData> {
+    #[derive(Clone, Default, Debug)]
+    struct SingleProcessData {
+        pub pid: u32,
+        pub cpu_percent_usage: f64,
+        pub mem_percent_usage: f64,
+        pub mem_usage_bytes: u64,
+        pub group_pids: Vec<u32>,
+        pub read_per_sec: f64,
+        pub write_per_sec: f64,
+        pub total_read: f64,
+        pub total_write: f64,
+        pub process_state: String,
+    }
+
     let mut grouped_hashmap: HashMap<String, SingleProcessData> = std::collections::HashMap::new();
 
     single_process_data.iter().for_each(|process| {
@@ -478,20 +539,20 @@ pub fn group_process_data(
         (*entry).mem_percent_usage += process.mem_percent_usage;
         (*entry).mem_usage_bytes += process.mem_usage_bytes;
         (*entry).group_pids.push(process.pid);
-        (*entry).read_per_sec += process.rps_f64 as u64;
-        (*entry).write_per_sec += process.wps_f64 as u64;
-        (*entry).total_read += process.tr_f64 as u64;
-        (*entry).total_write += process.tw_f64 as u64;
+        (*entry).read_per_sec += process.rps_f64;
+        (*entry).write_per_sec += process.wps_f64;
+        (*entry).total_read += process.tr_f64;
+        (*entry).total_write += process.tw_f64;
     });
 
     grouped_hashmap
         .iter()
         .map(|(identifier, process_details)| {
             let p = process_details.clone();
-            let converted_rps = get_exact_byte_values(p.read_per_sec, false);
-            let converted_wps = get_exact_byte_values(p.write_per_sec, false);
-            let converted_total_read = get_exact_byte_values(p.total_read, false);
-            let converted_total_write = get_exact_byte_values(p.total_write, false);
+            let converted_rps = get_exact_byte_values(p.read_per_sec as u64, false);
+            let converted_wps = get_exact_byte_values(p.write_per_sec as u64, false);
+            let converted_total_read = get_exact_byte_values(p.total_read as u64, false);
+            let converted_total_write = get_exact_byte_values(p.total_write as u64, false);
 
             let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
             let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
@@ -503,6 +564,8 @@ pub fn group_process_data(
 
             ConvertedProcessData {
                 pid: p.pid,
+                ppid: None,
+                is_thread: None,
                 name: identifier.to_string(),
                 command: identifier.to_string(),
                 cpu_percent_usage: p.cpu_percent_usage,
@@ -514,10 +577,10 @@ pub fn group_process_data(
                 write_per_sec,
                 total_read,
                 total_write,
-                rps_f64: p.read_per_sec as f64,
-                wps_f64: p.write_per_sec as f64,
-                tr_f64: p.total_read as f64,
-                tw_f64: p.total_write as f64,
+                rps_f64: p.read_per_sec,
+                wps_f64: p.write_per_sec,
+                tr_f64: p.total_read,
+                tw_f64: p.total_write,
                 process_state: p.process_state,
             }
         })

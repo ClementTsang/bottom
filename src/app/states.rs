@@ -9,6 +9,7 @@ use crate::{
     constants,
     data_harvester::processes::{self, ProcessSorting},
 };
+use ProcessSorting::*;
 
 #[derive(Debug)]
 pub enum ScrollDirection {
@@ -159,7 +160,6 @@ pub struct ProcColumn {
 
 impl Default for ProcColumn {
     fn default() -> Self {
-        use ProcessSorting::*;
         let ordered_columns = vec![
             Count,
             Pid,
@@ -357,6 +357,7 @@ pub struct ProcWidgetState {
     pub current_column_index: usize,
     pub is_sort_open: bool,
     pub columns: ProcColumn,
+    pub is_tree_mode: bool,
 }
 
 impl ProcWidgetState {
@@ -395,6 +396,7 @@ impl ProcWidgetState {
             current_column_index: 0,
             is_sort_open: false,
             columns,
+            is_tree_mode: false,
         }
     }
 

@@ -60,6 +60,7 @@ impl Default for ProcessSorting {
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
     pub pid: u32,
+    pub parent_pid: Option<u32>, // Remember, parent_pid 0 is root...
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
     pub mem_usage_bytes: u64,
@@ -200,7 +201,7 @@ fn read_path_contents(path: &PathBuf) -> std::io::Result<String> {
 
 #[cfg(target_os = "linux")]
 fn get_linux_process_state(stat: &[&str]) -> (char, String) {
-    // The -2 offset is because of us cutting off name + pid
+    // The -2 offset is because of us cutting off name + pid, normally it's 2
     if let Some(first_char) = stat[0].chars().collect::<Vec<char>>().first() {
         (
             *first_char,
@@ -282,6 +283,7 @@ fn read_proc<S: core::hash::BuildHasher>(
         &mut pid_stat.cpu_time,
         use_current_cpu_total,
     )?;
+    let parent_pid = stat[1].parse::<u32>().ok();
     let (_vsize, rss) = get_linux_process_vsize_rss(&stat);
     let mem_usage_kb = rss * page_file_kb;
     let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
@@ -320,6 +322,7 @@ fn read_proc<S: core::hash::BuildHasher>(
 
     Ok(ProcessHarvest {
         pid,
+        parent_pid,
         name,
         command,
         mem_usage_percent,
@@ -425,6 +428,7 @@ pub fn windows_macos_get_processes_list(
 
         process_vector.push(ProcessHarvest {
             pid: process_val.pid() as u32,
+            parent_pid: process_val.parent(),
             name,
             command,
             mem_usage_percent: if mem_total_kb > 0 {

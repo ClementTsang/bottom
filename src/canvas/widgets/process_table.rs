@@ -36,7 +36,7 @@ pub trait ProcessTableWidget {
         widget_id: u64,
     );
 
-    /// Draws the process sort box.
+    /// Draws the process search field.
     /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
     /// state that is stored.
     ///
@@ -173,15 +173,6 @@ impl ProcessTableWidget for Painter {
                 .finalized_process_data_map
                 .get(&widget_id)
             {
-                // Admittedly this is kinda a hack... but we need to:
-                // * Scroll
-                // * Show/hide elements based on scroll position
-                //
-                // As such, we use a process_counter to know when we've
-                // hit the process we've currently scrolled to.
-                // We also need to move the list - we can
-                // do so by hiding some elements!
-
                 let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                     0
                 } else {
@@ -592,6 +583,7 @@ impl ProcessTableWidget for Painter {
                 .iter()
                 .map(|column| Row::Data(vec![column].into_iter()));
 
+            // FIXME: [State] Shorten state to small form if it can't fit...?
             let column_state = &mut proc_widget_state.columns.column_state;
             column_state.select(Some(
                 proc_widget_state

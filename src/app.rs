@@ -468,6 +468,17 @@ impl App {
         }
     }
 
+    pub fn toggle_tree_mode(&mut self) {
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .widget_states
+            .get_mut(&(self.current_widget.widget_id))
+        {
+            proc_widget_state.is_tree_mode = !proc_widget_state.is_tree_mode;
+            self.proc_state.force_update = Some(self.current_widget.widget_id);
+        }
+    }
+
     /// One of two functions allowed to run while in a dialog...
     pub fn on_enter(&mut self) {
         if self.delete_dialog_state.is_showing_dd {

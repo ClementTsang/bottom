@@ -111,6 +111,7 @@ pub fn handle_key_event_or_break(
             KeyCode::F(1) => app.toggle_ignore_case(),
             KeyCode::F(2) => app.toggle_search_whole_word(),
             KeyCode::F(3) => app.toggle_search_regex(),
+            KeyCode::F(5) => app.toggle_tree_mode(),
             KeyCode::F(6) => app.toggle_sort(),
             _ => {}
         }
@@ -459,80 +460,87 @@ pub fn update_all_process_lists(app: &mut App) {
 }
 
 pub fn update_final_process_list(app: &mut App, widget_id: u64) {
-    let (is_invalid_or_blank, is_using_command) = match app.proc_state.widget_states.get(&widget_id)
-    {
-        Some(process_state) => (
+    let process_states = match app.proc_state.widget_states.get(&widget_id) {
+        Some(process_state) => Some((
             process_state
                 .process_search_state
                 .search_state
                 .is_invalid_or_blank_search(),
             process_state.is_using_command,
-        ),
-        None => (false, false),
+            process_state.is_grouped,
+            process_state.is_tree_mode,
+        )),
+        None => None,
     };
-    let is_grouped = app.is_grouped(widget_id);
 
-    if !app.is_frozen {
-        app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
-    }
+    if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
+        if !app.is_frozen {
+            app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
+        }
 
-    if is_grouped {
-        app.canvas_data.process_data = group_process_data(
-            &app.canvas_data.single_process_data,
-            if is_using_command {
-                ProcessNamingType::Path
-            } else {
-                ProcessNamingType::Name
-            },
-        );
-    } else {
-        app.canvas_data.process_data = app.canvas_data.single_process_data.clone();
-    }
+        if is_tree {
+            app.canvas_data.process_data = tree_process_data(&app.canvas_data.single_process_data);
+        // debug!("Tree process data: {:#?}", app.canvas_data.process_data);
+        } else if is_grouped {
+            app.canvas_data.process_data = group_process_data(
+                &app.canvas_data.single_process_data,
+                if is_using_command {
+                    ProcessNamingType::Path
+                } else {
+                    ProcessNamingType::Name
+                },
+            );
+        } else {
+            app.canvas_data.process_data = app.canvas_data.single_process_data.clone();
+        }
 
-    let process_filter = app.get_process_filter(widget_id);
-    let filtered_process_data: Vec<ConvertedProcessData> = app
-        .canvas_data
-        .process_data
-        .iter()
-        .filter(|process| {
-            if !is_invalid_or_blank {
-                if let Some(process_filter) = process_filter {
-                    process_filter.check(&process, is_using_command)
+        let process_filter = app.get_process_filter(widget_id);
+        let mut filtered_process_data: Vec<ConvertedProcessData> = app
+            .canvas_data
+            .process_data
+            .iter()
+            .filter(|process| {
+                if !is_invalid_or_blank {
+                    if let Some(process_filter) = process_filter {
+                        process_filter.check(&process, is_using_command)
+                    } else {
+                        true
+                    }
                 } else {
                     true
                 }
-            } else {
-                true
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+
+        // Quick fix for tab updating the table headers
+        if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
+            if let data_harvester::processes::ProcessSorting::Pid =
+                proc_widget_state.process_sorting_type
+            {
+                if proc_widget_state.is_grouped {
+                    proc_widget_state.process_sorting_type =
+                        data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
+                    proc_widget_state.process_sorting_reverse = true;
+                }
             }
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-
-    // Quick fix for tab updating the table headers
-    if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-        if let data_harvester::processes::ProcessSorting::Pid =
-            proc_widget_state.process_sorting_type
-        {
-            if proc_widget_state.is_grouped {
-                proc_widget_state.process_sorting_type =
-                    data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
-                proc_widget_state.process_sorting_reverse = true;
+            if !is_tree {
+                // FIXME: Not sure if we want this, but for now...
+                sort_process_data(&mut filtered_process_data, proc_widget_state);
             }
+
+            if proc_widget_state.scroll_state.current_scroll_position >= filtered_process_data.len()
+            {
+                proc_widget_state.scroll_state.current_scroll_position =
+                    filtered_process_data.len().saturating_sub(1);
+                proc_widget_state.scroll_state.previous_scroll_position = 0;
+                proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
+            }
+
+            app.canvas_data
+                .finalized_process_data_map
+                .insert(widget_id, filtered_process_data);
         }
-
-        let mut resulting_processes = filtered_process_data;
-        sort_process_data(&mut resulting_processes, proc_widget_state);
-
-        if proc_widget_state.scroll_state.current_scroll_position >= resulting_processes.len() {
-            proc_widget_state.scroll_state.current_scroll_position =
-                resulting_processes.len().saturating_sub(1);
-            proc_widget_state.scroll_state.previous_scroll_position = 0;
-            proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
-        }
-
-        app.canvas_data
-            .finalized_process_data_map
-            .insert(widget_id, resulting_processes);
     }
 }
 

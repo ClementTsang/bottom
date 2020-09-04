@@ -61,6 +61,7 @@
         "nvme",
         "paren",
         "pmem",
+        "ppid",
         "prepush",
         "processthreadsapi",
         "regexes",
