@@ -47,6 +47,12 @@ pub mod options;
 
 pub mod clap;
 
+#[cfg(target_family = "windows")]
+pub type Pid = usize;
+
+#[cfg(target_family = "unix")]
+pub type Pid = libc::pid_t;
+
 pub enum BottomEvent<I, J> {
     KeyInput(I),
     MouseInput(J),

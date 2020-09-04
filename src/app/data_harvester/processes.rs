@@ -1,4 +1,4 @@
-use libc::pid_t;
+use crate::Pid;
 use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
@@ -60,8 +60,8 @@ impl Default for ProcessSorting {
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
-    pub pid: pid_t,
-    pub parent_pid: Option<pid_t>, // Remember, parent_pid 0 is root...
+    pub pid: Pid,
+    pub parent_pid: Option<Pid>, // Remember, parent_pid 0 is root...
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
     pub mem_usage_bytes: u64,
@@ -91,7 +91,7 @@ pub struct PrevProcDetails {
 }
 
 impl PrevProcDetails {
-    pub fn new(pid: pid_t) -> Self {
+    pub fn new(pid: Pid) -> Self {
         PrevProcDetails {
             proc_io_path: PathBuf::from(format!("/proc/{}/io", pid)),
             proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid)),
@@ -243,8 +243,8 @@ fn get_linux_cpu_usage(
 #[allow(clippy::too_many_arguments)]
 #[cfg(target_os = "linux")]
 fn read_proc<S: core::hash::BuildHasher>(
-    pid: pid_t, cpu_usage: f64, cpu_fraction: f64,
-    pid_mapping: &mut HashMap<pid_t, PrevProcDetails, S>, use_current_cpu_total: bool,
+    pid: Pid, cpu_usage: f64, cpu_fraction: f64,
+    pid_mapping: &mut HashMap<Pid, PrevProcDetails, S>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> error::Result<ProcessHarvest> {
     let pid_stat = pid_mapping
@@ -284,7 +284,7 @@ fn read_proc<S: core::hash::BuildHasher>(
         &mut pid_stat.cpu_time,
         use_current_cpu_total,
     )?;
-    let parent_pid = stat[1].parse::<pid_t>().ok();
+    let parent_pid = stat[1].parse::<Pid>().ok();
     let (_vsize, rss) = get_linux_process_vsize_rss(&stat);
     let mem_usage_kb = rss * page_file_kb;
     let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
@@ -341,14 +341,14 @@ fn read_proc<S: core::hash::BuildHasher>(
 #[cfg(target_os = "linux")]
 pub fn linux_get_processes_list(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
-    pid_mapping: &mut HashMap<pid_t, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
+    pid_mapping: &mut HashMap<Pid, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
-                    let pid = dir.file_name().to_string_lossy().trim().parse::<pid_t>();
+                    let pid = dir.file_name().to_string_lossy().trim().parse::<Pid>();
                     if let Ok(pid) = pid {
                         // I skip checking if the path is also a directory, it's not needed I think?
                         if let Ok(process_object) = read_proc(

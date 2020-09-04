@@ -11,8 +11,8 @@ use battery::{Battery, Manager};
 
 use crate::app::layout_manager::UsedWidgets;
 
+use crate::Pid;
 use futures::join;
-use libc::pid_t;
 
 pub mod battery_harvester;
 pub mod cpu;
@@ -73,7 +73,7 @@ pub struct DataCollector {
     pub data: Data,
     sys: System,
     #[cfg(target_os = "linux")]
-    pid_mapping: HashMap<pid_t, processes::PrevProcDetails>,
+    pid_mapping: HashMap<Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
