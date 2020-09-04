@@ -29,7 +29,7 @@ _If relevant, please provide information on:_
 
 **System Info:**
 
-_Information about your system specifically (in case I have to replicate your system via VM):_
+_Information about your system specifically (sometimes this matters...):_
 
 - _Total RAM:_
 
@@ -38,6 +38,8 @@ _Information about your system specifically (in case I have to replicate your sy
 - _CPU:_
 
 **bottom version (use `btm -V`):**
+
+**Rust version (if building yourself):**
 
 ## Additional context
 

@@ -72,28 +72,30 @@ pub async fn get_heim_io_usage_list(
     if get_physical {
         let mut physical_counter_stream = heim::disk::io_counters_physical();
         while let Some(io) = physical_counter_stream.next().await {
-            let io = io?;
-            let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
-            io_hash.insert(
-                mount_point.to_string(),
-                Some(IOData {
-                    read_bytes: io.read_bytes().get::<heim::units::information::megabyte>(),
-                    write_bytes: io.write_bytes().get::<heim::units::information::megabyte>(),
-                }),
-            );
+            if let Ok(io) = io {
+                let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
+                io_hash.insert(
+                    mount_point.to_string(),
+                    Some(IOData {
+                        read_bytes: io.read_bytes().get::<heim::units::information::megabyte>(),
+                        write_bytes: io.write_bytes().get::<heim::units::information::megabyte>(),
+                    }),
+                );
+            }
         }
     } else {
         let mut counter_stream = heim::disk::io_counters();
         while let Some(io) = counter_stream.next().await {
-            let io = io?;
-            let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
-            io_hash.insert(
-                mount_point.to_string(),
-                Some(IOData {
-                    read_bytes: io.read_bytes().get::<heim::units::information::byte>(),
-                    write_bytes: io.write_bytes().get::<heim::units::information::byte>(),
-                }),
-            );
+            if let Ok(io) = io {
+                let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
+                io_hash.insert(
+                    mount_point.to_string(),
+                    Some(IOData {
+                        read_bytes: io.read_bytes().get::<heim::units::information::byte>(),
+                        write_bytes: io.write_bytes().get::<heim::units::information::byte>(),
+                    }),
+                );
+            }
         }
     }
 
