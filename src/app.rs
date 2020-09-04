@@ -14,6 +14,7 @@ use crate::{
     canvas, constants,
     utils::error::{BottomError, Result},
 };
+use libc::pid_t;
 
 pub mod data_farmer;
 pub mod data_harvester;
@@ -67,7 +68,7 @@ pub struct App {
     pub dd_err: Option<String>,
 
     #[builder(default, setter(skip))]
-    to_delete_process_list: Option<(String, Vec<u32>)>,
+    to_delete_process_list: Option<(String, Vec<pid_t>)>,
 
     #[builder(default = false, setter(skip))]
     pub is_frozen: bool,
@@ -885,7 +886,7 @@ impl App {
                 if proc_widget_state.scroll_state.current_scroll_position
                     < corresponding_filtered_process_list.len()
                 {
-                    let current_process: (String, Vec<u32>);
+                    let current_process: (String, Vec<pid_t>);
                     if self.is_grouped(self.current_widget.widget_id) {
                         if let Some(process) = &corresponding_filtered_process_list
                             .get(proc_widget_state.scroll_state.current_scroll_position)
@@ -1224,7 +1225,7 @@ impl App {
         }
     }
 
-    pub fn get_to_delete_processes(&self) -> Option<(String, Vec<u32>)> {
+    pub fn get_to_delete_processes(&self) -> Option<(String, Vec<pid_t>)> {
         self.to_delete_process_list.clone()
     }
 

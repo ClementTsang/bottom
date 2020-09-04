@@ -7,6 +7,7 @@ use crate::{
     app::{data_farmer, data_harvester, App, Filter},
     utils::gen_util::*,
 };
+use libc::pid_t;
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -41,8 +42,8 @@ pub struct ConvertedNetworkData {
 // TODO: [REFACTOR] Process data... stuff really needs a rewrite.  Again.
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedProcessData {
-    pub pid: u32,
-    pub ppid: Option<u32>,
+    pub pid: pid_t,
+    pub ppid: Option<pid_t>,
     pub name: String,
     pub command: String,
     pub is_thread: Option<bool>,
@@ -50,7 +51,7 @@ pub struct ConvertedProcessData {
     pub mem_percent_usage: f64,
     pub mem_usage_bytes: u64,
     pub mem_usage_str: (f64, String),
-    pub group_pids: Vec<u32>,
+    pub group_pids: Vec<pid_t>,
     pub read_per_sec: String,
     pub write_per_sec: String,
     pub total_read: String,
@@ -457,14 +458,16 @@ pub fn tree_process_data(
 ) -> Vec<ConvertedProcessData> {
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
-    let mut parent_child_mapping: HashMap<u32, Vec<u32>> = HashMap::default();
-    let mut pid_process_mapping: HashMap<u32, &ConvertedProcessData> = HashMap::default();
+    let mut parent_child_mapping: HashMap<pid_t, Vec<pid_t>> = HashMap::default();
+    let mut pid_process_mapping: HashMap<pid_t, &ConvertedProcessData> = HashMap::default();
 
     single_process_data.iter().for_each(|process| {
-        parent_child_mapping
-            .entry(process.ppid.unwrap_or(0))
-            .or_insert_with(Vec::new)
-            .push(process.pid);
+        if let Some(ppid) = process.ppid {
+            parent_child_mapping
+                .entry(ppid)
+                .or_insert_with(Vec::new)
+                .push(process.pid);
+        }
 
         // There should be no collisions...
         if pid_process_mapping.contains_key(&process.pid) {
@@ -474,8 +477,8 @@ pub fn tree_process_data(
     });
 
     // Turn the parent-child mapping into a "list" via DFS...
-    let mut pids_to_explore: VecDeque<u32> = VecDeque::default();
-    let mut explored_pids: Vec<u32> = vec![0];
+    let mut pids_to_explore: VecDeque<pid_t> = VecDeque::default();
+    let mut explored_pids: Vec<pid_t> = vec![0];
     if let Some(zero_pid) = parent_child_mapping.get(&0) {
         pids_to_explore.extend(zero_pid);
     } else {
@@ -508,11 +511,11 @@ pub fn group_process_data(
 ) -> Vec<ConvertedProcessData> {
     #[derive(Clone, Default, Debug)]
     struct SingleProcessData {
-        pub pid: u32,
+        pub pid: pid_t,
         pub cpu_percent_usage: f64,
         pub mem_percent_usage: f64,
         pub mem_usage_bytes: u64,
-        pub group_pids: Vec<u32>,
+        pub group_pids: Vec<pid_t>,
         pub read_per_sec: f64,
         pub write_per_sec: f64,
         pub total_read: f64,
