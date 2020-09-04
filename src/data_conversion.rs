@@ -61,6 +61,9 @@ pub struct ConvertedProcessData {
     pub tr_f64: f64,
     pub tw_f64: f64,
     pub process_state: String,
+    pub process_char: char,
+    // Prefix printed before the process when displayed.
+    pub process_description_prefix: Option<String>,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -448,13 +451,20 @@ pub fn convert_process_data(
                 tr_f64: process.total_read_bytes as f64,
                 tw_f64: process.total_write_bytes as f64,
                 process_state: process.process_state.to_owned(),
+                process_char: process.process_state_char,
+                process_description_prefix: None,
             }
         })
         .collect::<Vec<_>>()
 }
 
+const BRANCH_ENDING: char = '┗';
+const BRANCH_VERTICAL: char = '┃';
+const BRANCH_SPLIT: char = '┣';
+const BRANCH_HORIZONTAL: char = '━';
+
 pub fn tree_process_data(
-    single_process_data: &[ConvertedProcessData],
+    single_process_data: &[ConvertedProcessData], is_using_command: bool,
 ) -> Vec<ConvertedProcessData> {
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
@@ -477,37 +487,95 @@ pub fn tree_process_data(
     });
 
     // Turn the parent-child mapping into a "list" via DFS...
-    let mut pids_to_explore: VecDeque<Pid> = VecDeque::default();
-    let mut explored_pids: Vec<Pid> = vec![0];
+    let mut pids_to_explore: VecDeque<Pid> = if cfg!(target_family = "windows") {
+        vec![4].into_iter().collect()
+    } else {
+        VecDeque::default()
+    };
+    let mut explored_pids: Vec<Pid> = vec![];
+    let mut lines: Vec<String> = vec![];
+    let num_lines: usize = 1;
+
+    // We do pid 0 separately as it's a bit special in some cases.
     if let Some(zero_pid) = parent_child_mapping.get(&0) {
         pids_to_explore.extend(zero_pid);
-    } else {
-        // FIXME: Remove this, this is for debugging... mainly because idk how the heck windows will behave
-        debug!("PID 0 had no children during tree building...");
+        // TODO: Windows implementation...
+    }
+
+    fn build_explored_pids(
+        current_pid: Pid, num_lines: usize, parent_child_mapping: &HashMap<Pid, Vec<Pid>>,
+    ) -> (Vec<Pid>, Vec<String>) {
+        let mut explored_pids: Vec<Pid> = vec![current_pid];
+        let mut lines: Vec<String> = vec![];
+        if let Some(children) = parent_child_mapping.get(&current_pid) {
+            for (itx, child) in children.iter().rev().enumerate() {
+                let (pid_res, branch_res) =
+                    build_explored_pids(*child, num_lines + 1, parent_child_mapping);
+
+                if itx == children.len() - 1 {
+                    lines.push(format!(
+                        "{}{}",
+                        format!("{}  ", BRANCH_VERTICAL).repeat(num_lines.saturating_sub(1)),
+                        if num_lines > 0 {
+                            format!("{}{} ", BRANCH_ENDING, BRANCH_HORIZONTAL)
+                        } else {
+                            String::default()
+                        }
+                    ));
+                } else {
+                    lines.push(format!(
+                        "{}{}",
+                        format!("{}  ", BRANCH_VERTICAL).repeat(num_lines.saturating_sub(1)),
+                        if num_lines > 0 {
+                            format!("{}{} ", BRANCH_SPLIT, BRANCH_HORIZONTAL)
+                        } else {
+                            String::default()
+                        }
+                    ));
+                }
+
+                explored_pids.extend(pid_res);
+                lines.extend(branch_res);
+            }
+        }
+
+        (explored_pids, lines)
     }
 
     while let Some(current_pid) = pids_to_explore.pop_front() {
-        explored_pids.push(current_pid);
-        if let Some(children) = parent_child_mapping.get(&current_pid) {
-            for child in children {
-                pids_to_explore.push_front(*child);
-            }
-        }
+        let (pid_res, branch_res) =
+            build_explored_pids(current_pid, num_lines, &parent_child_mapping);
+        lines.push(String::default());
+        lines.extend(branch_res);
+        explored_pids.extend(pid_res);
     }
 
     // Now let's "rearrange" our current list of converted process data into the correct
     // order required... and we're done!
     explored_pids
         .iter()
-        .filter_map(|pid| match pid_process_mapping.remove(pid) {
-            Some(proc) => Some(proc.clone()),
+        .zip(lines)
+        .filter_map(|(pid, prefix)| match pid_process_mapping.remove(pid) {
+            Some(proc) => {
+                let mut p = proc.clone();
+                p.process_description_prefix = Some(format!(
+                    "{}{}",
+                    prefix,
+                    if is_using_command {
+                        &p.command
+                    } else {
+                        &p.name
+                    }
+                ));
+                Some(p)
+            }
             None => None,
         })
         .collect::<Vec<_>>()
 }
 
 pub fn group_process_data(
-    single_process_data: &[ConvertedProcessData], is_using_command: ProcessNamingType,
+    single_process_data: &[ConvertedProcessData], is_using_command: bool,
 ) -> Vec<ConvertedProcessData> {
     #[derive(Clone, Default, Debug)]
     struct SingleProcessData {
@@ -527,9 +595,10 @@ pub fn group_process_data(
 
     single_process_data.iter().for_each(|process| {
         let entry = grouped_hashmap
-            .entry(match is_using_command {
-                ProcessNamingType::Name => process.name.to_string(),
-                ProcessNamingType::Path => process.command.to_string(),
+            .entry(if is_using_command {
+                process.command.to_string()
+            } else {
+                process.name.to_string()
             })
             .or_insert(SingleProcessData {
                 pid: process.pid,
@@ -582,7 +651,9 @@ pub fn group_process_data(
                 wps_f64: p.write_per_sec,
                 tr_f64: p.total_read,
                 tw_f64: p.total_write,
-                process_state: p.process_state,
+                process_state: p.process_state, // TODO: What the heck
+                process_description_prefix: None,
+                process_char: char::default(), // TODO: What the heck
             }
         })
         .collect::<Vec<_>>()

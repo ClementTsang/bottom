@@ -485,17 +485,12 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
         }
 
         if is_tree {
-            app.canvas_data.process_data = tree_process_data(&app.canvas_data.single_process_data);
+            app.canvas_data.process_data =
+                tree_process_data(&app.canvas_data.single_process_data, is_using_command);
         // debug!("Tree process data: {:#?}", app.canvas_data.process_data);
         } else if is_grouped {
-            app.canvas_data.process_data = group_process_data(
-                &app.canvas_data.single_process_data,
-                if is_using_command {
-                    ProcessNamingType::Path
-                } else {
-                    ProcessNamingType::Name
-                },
-            );
+            app.canvas_data.process_data =
+                group_process_data(&app.canvas_data.single_process_data, is_using_command);
         } else {
             app.canvas_data.process_data = app.canvas_data.single_process_data.clone();
         }

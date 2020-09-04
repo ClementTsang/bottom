@@ -208,7 +208,10 @@ impl ProcessTableWidget for Painter {
                 // Draw!
                 let is_proc_widget_grouped = proc_widget_state.is_grouped;
                 let is_using_command = proc_widget_state.is_using_command;
+                let is_tree = proc_widget_state.is_tree_mode;
                 let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
+
+                // FIXME: [PROC OPTIMIZE] This can definitely be optimized; string references work fine here!
                 let process_rows = sliced_vec.iter().map(|process| {
                     Row::Data(
                         vec![
@@ -217,7 +220,13 @@ impl ProcessTableWidget for Painter {
                             } else {
                                 process.pid.to_string()
                             },
-                            if is_using_command {
+                            if is_tree {
+                                if let Some(prefix) = &process.process_description_prefix {
+                                    prefix.clone()
+                                } else {
+                                    String::default()
+                                }
+                            } else if is_using_command {
                                 process.command.clone()
                             } else {
                                 process.name.clone()
@@ -228,11 +237,11 @@ impl ProcessTableWidget for Painter {
                             } else {
                                 format!("{:.1}%", process.mem_percent_usage)
                             },
-                            process.read_per_sec.to_string(),
-                            process.write_per_sec.to_string(),
-                            process.total_read.to_string(),
-                            process.total_write.to_string(),
-                            process.process_state.to_string(),
+                            process.read_per_sec.clone(),
+                            process.write_per_sec.clone(),
+                            process.total_read.clone(),
+                            process.total_write.clone(),
+                            process.process_state.clone(),
                         ]
                         .into_iter(),
                     )
