@@ -1,7 +1,7 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeSet, HashMap, VecDeque};
 
 use crate::Pid;
 use crate::{
@@ -62,8 +62,10 @@ pub struct ConvertedProcessData {
     pub tw_f64: f64,
     pub process_state: String,
     pub process_char: char,
-    // Prefix printed before the process when displayed.
+    /// Prefix printed before the process when displayed.
     pub process_description_prefix: Option<String>,
+    /// Whether to mark this process entry as disabled (mostly for tree mode).
+    pub is_disabled_entry: bool,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -453,30 +455,31 @@ pub fn convert_process_data(
                 process_state: process.process_state.to_owned(),
                 process_char: process.process_state_char,
                 process_description_prefix: None,
+                is_disabled_entry: false,
             }
         })
         .collect::<Vec<_>>()
 }
 
-const BRANCH_ENDING: char = '┗';
-const BRANCH_VERTICAL: char = '┃';
-const BRANCH_SPLIT: char = '┣';
-const BRANCH_HORIZONTAL: char = '━';
+const BRANCH_ENDING: char = '└';
+const BRANCH_VERTICAL: char = '│';
+const BRANCH_SPLIT: char = '├';
+const BRANCH_HORIZONTAL: char = '─';
 
 pub fn tree_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: bool,
 ) -> Vec<ConvertedProcessData> {
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
-    let mut parent_child_mapping: HashMap<Pid, Vec<Pid>> = HashMap::default();
+    let mut parent_child_mapping: HashMap<Pid, BTreeSet<Pid>> = HashMap::default();
     let mut pid_process_mapping: HashMap<Pid, &ConvertedProcessData> = HashMap::default();
 
     single_process_data.iter().for_each(|process| {
         if let Some(ppid) = process.ppid {
             parent_child_mapping
                 .entry(ppid)
-                .or_insert_with(Vec::new)
-                .push(process.pid);
+                .or_insert_with(BTreeSet::new)
+                .insert(process.pid);
         }
 
         // There should be no collisions...
@@ -494,7 +497,6 @@ pub fn tree_process_data(
     };
     let mut explored_pids: Vec<Pid> = vec![];
     let mut lines: Vec<String> = vec![];
-    let num_lines: usize = 1;
 
     // We do pid 0 separately as it's a bit special in some cases.
     if let Some(zero_pid) = parent_child_mapping.get(&0) {
@@ -502,21 +504,71 @@ pub fn tree_process_data(
         // TODO: Windows implementation...
     }
 
+    /// A post-order traversal to correctly prune entire branches that only contain children
+    /// that are disabled and themselves are also disabled ~~wait that sounds wrong~~.
+    ///
+    /// Basically, go through the hashmap, and prune out all branches that are no longer relevant.
+    fn prune_disabled_pids(
+        current_pid: Pid, parent_child_mapping: &mut HashMap<Pid, BTreeSet<Pid>>,
+        pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
+    ) -> bool {
+        // Let's explore all the children first, and make sure they (and their children)
+        // aren't all disabled...
+        let mut are_all_children_disabled = true;
+        if let Some(children) = parent_child_mapping.get(&current_pid) {
+            for child_pid in children.clone() {
+                let is_child_disabled =
+                    prune_disabled_pids(child_pid, parent_child_mapping, pid_process_mapping);
+
+                if is_child_disabled {
+                    if let Some(current_mapping) = parent_child_mapping.get_mut(&current_pid) {
+                        current_mapping.remove(&child_pid);
+                    }
+                } else if are_all_children_disabled {
+                    are_all_children_disabled = false;
+                }
+            }
+        }
+
+        // Now consider the current pid and whether to prune...
+        // If the node itself is not disabled, then never prune.  If it is, then check if all
+        // of its are disabled.
+        if let Some(process) = pid_process_mapping.get(&current_pid) {
+            if process.is_disabled_entry && are_all_children_disabled {
+                parent_child_mapping.remove(&current_pid);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// A DFS traversal to correctly build the prefix lines (the pretty '├' and '─' lines) and
+    /// the correct order to the PID tree as a vector (DFS is the order htop uses so we're copying
+    /// that *wink*).
     fn build_explored_pids(
-        current_pid: Pid, num_lines: usize, parent_child_mapping: &HashMap<Pid, Vec<Pid>>,
+        current_pid: Pid, parent_child_mapping: &HashMap<Pid, BTreeSet<Pid>>,
+        prev_drawn_lines: &str,
     ) -> (Vec<Pid>, Vec<String>) {
         let mut explored_pids: Vec<Pid> = vec![current_pid];
         let mut lines: Vec<String> = vec![];
+
         if let Some(children) = parent_child_mapping.get(&current_pid) {
             for (itx, child) in children.iter().rev().enumerate() {
+                let new_drawn_lines = if itx == children.len() - 1 {
+                    format!("{}   ", prev_drawn_lines)
+                } else {
+                    format!("{}{}  ", prev_drawn_lines, BRANCH_VERTICAL)
+                };
+
                 let (pid_res, branch_res) =
-                    build_explored_pids(*child, num_lines + 1, parent_child_mapping);
+                    build_explored_pids(*child, parent_child_mapping, new_drawn_lines.as_str());
 
                 if itx == children.len() - 1 {
                     lines.push(format!(
                         "{}{}",
-                        format!("{}  ", BRANCH_VERTICAL).repeat(num_lines.saturating_sub(1)),
-                        if num_lines > 0 {
+                        prev_drawn_lines,
+                        if !new_drawn_lines.is_empty() {
                             format!("{}{} ", BRANCH_ENDING, BRANCH_HORIZONTAL)
                         } else {
                             String::default()
@@ -525,8 +577,8 @@ pub fn tree_process_data(
                 } else {
                     lines.push(format!(
                         "{}{}",
-                        format!("{}  ", BRANCH_VERTICAL).repeat(num_lines.saturating_sub(1)),
-                        if num_lines > 0 {
+                        prev_drawn_lines,
+                        if !new_drawn_lines.is_empty() {
                             format!("{}{} ", BRANCH_SPLIT, BRANCH_HORIZONTAL)
                         } else {
                             String::default()
@@ -543,11 +595,14 @@ pub fn tree_process_data(
     }
 
     while let Some(current_pid) = pids_to_explore.pop_front() {
-        let (pid_res, branch_res) =
-            build_explored_pids(current_pid, num_lines, &parent_child_mapping);
-        lines.push(String::default());
-        lines.extend(branch_res);
-        explored_pids.extend(pid_res);
+        let is_disabled =
+            prune_disabled_pids(current_pid, &mut parent_child_mapping, &pid_process_mapping);
+        if !is_disabled {
+            let (pid_res, branch_res) = build_explored_pids(current_pid, &parent_child_mapping, "");
+            lines.push(String::default());
+            lines.extend(branch_res);
+            explored_pids.extend(pid_res);
+        }
     }
 
     // Now let's "rearrange" our current list of converted process data into the correct
@@ -654,6 +709,7 @@ pub fn group_process_data(
                 process_state: p.process_state, // TODO: What the heck
                 process_description_prefix: None,
                 process_char: char::default(), // TODO: What the heck
+                is_disabled_entry: false,
             }
         })
         .collect::<Vec<_>>()

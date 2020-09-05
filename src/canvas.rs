@@ -42,7 +42,6 @@ pub struct DisplayableData {
     pub disk_data: Vec<Vec<String>>,
     pub temp_sensor_data: Vec<Vec<String>>,
     pub single_process_data: Vec<ConvertedProcessData>, // Contains single process data
-    pub process_data: Vec<ConvertedProcessData>, // Not the final value, may be grouped or single
     pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>, // What's actually displayed
     pub mem_label_percent: String,
     pub swap_label_percent: String,

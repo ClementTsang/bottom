@@ -484,35 +484,48 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
             app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
         }
 
-        if is_tree {
-            app.canvas_data.process_data =
-                tree_process_data(&app.canvas_data.single_process_data, is_using_command);
-        // debug!("Tree process data: {:#?}", app.canvas_data.process_data);
-        } else if is_grouped {
-            app.canvas_data.process_data =
-                group_process_data(&app.canvas_data.single_process_data, is_using_command);
-        } else {
-            app.canvas_data.process_data = app.canvas_data.single_process_data.clone();
-        }
-
         let process_filter = app.get_process_filter(widget_id);
-        let mut filtered_process_data: Vec<ConvertedProcessData> = app
-            .canvas_data
-            .process_data
-            .iter()
-            .filter(|process| {
-                if !is_invalid_or_blank {
-                    if let Some(process_filter) = process_filter {
-                        process_filter.check(&process, is_using_command)
+        let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
+            app.canvas_data
+                .single_process_data
+                .iter()
+                .map(|process| {
+                    let mut process_clone = process.clone();
+                    if !is_invalid_or_blank {
+                        if let Some(process_filter) = process_filter {
+                            process_clone.is_disabled_entry =
+                                !process_filter.check(&process_clone, is_using_command);
+                        }
+                    }
+                    process_clone
+                })
+                .collect::<Vec<_>>()
+        } else {
+            app.canvas_data
+                .single_process_data
+                .iter()
+                .filter(|process| {
+                    if !is_invalid_or_blank {
+                        if let Some(process_filter) = process_filter {
+                            process_filter.check(&process, is_using_command)
+                        } else {
+                            true
+                        }
                     } else {
                         true
                     }
-                } else {
-                    true
-                }
-            })
-            .cloned()
-            .collect::<Vec<_>>();
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+        };
+
+        let mut finalized_process_data = if is_tree {
+            tree_process_data(&filtered_process_data, is_using_command)
+        } else if is_grouped {
+            group_process_data(&filtered_process_data, is_using_command)
+        } else {
+            filtered_process_data
+        };
 
         // Quick fix for tab updating the table headers
         if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
@@ -527,20 +540,21 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
             }
             if !is_tree {
                 // FIXME: Not sure if we want this, but for now...
-                sort_process_data(&mut filtered_process_data, proc_widget_state);
+                sort_process_data(&mut finalized_process_data, proc_widget_state);
             }
 
-            if proc_widget_state.scroll_state.current_scroll_position >= filtered_process_data.len()
+            if proc_widget_state.scroll_state.current_scroll_position
+                >= finalized_process_data.len()
             {
                 proc_widget_state.scroll_state.current_scroll_position =
-                    filtered_process_data.len().saturating_sub(1);
+                    finalized_process_data.len().saturating_sub(1);
                 proc_widget_state.scroll_state.previous_scroll_position = 0;
                 proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
             }
 
             app.canvas_data
                 .finalized_process_data_map
-                .insert(widget_id, filtered_process_data);
+                .insert(widget_id, finalized_process_data);
         }
     }
 }

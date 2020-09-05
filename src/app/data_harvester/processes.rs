@@ -344,6 +344,8 @@ pub fn linux_get_processes_list(
     pid_mapping: &mut HashMap<Pid, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+    // TODO: [PROC THREADS] Add threads
+
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {

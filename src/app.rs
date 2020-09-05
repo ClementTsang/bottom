@@ -201,6 +201,7 @@ impl App {
                                 .search_state
                                 .is_enabled = false;
                             self.move_widget_selection(&WidgetDirection::Up);
+                            self.is_force_redraw = true;
                             return;
                         }
                     }
@@ -215,6 +216,7 @@ impl App {
                                 current_proc_state.columns.backup_prev_scroll_position;
                             current_proc_state.is_sort_open = false;
                             self.move_widget_selection(&WidgetDirection::Right);
+                            self.is_force_redraw = true;
                             return;
                         }
                     }

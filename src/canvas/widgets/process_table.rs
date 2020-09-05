@@ -213,38 +213,42 @@ impl ProcessTableWidget for Painter {
 
                 // FIXME: [PROC OPTIMIZE] This can definitely be optimized; string references work fine here!
                 let process_rows = sliced_vec.iter().map(|process| {
-                    Row::Data(
-                        vec![
-                            if is_proc_widget_grouped {
-                                process.group_pids.len().to_string()
+                    let data = vec![
+                        if is_proc_widget_grouped {
+                            process.group_pids.len().to_string()
+                        } else {
+                            process.pid.to_string()
+                        },
+                        if is_tree {
+                            if let Some(prefix) = &process.process_description_prefix {
+                                prefix.clone()
                             } else {
-                                process.pid.to_string()
-                            },
-                            if is_tree {
-                                if let Some(prefix) = &process.process_description_prefix {
-                                    prefix.clone()
-                                } else {
-                                    String::default()
-                                }
-                            } else if is_using_command {
-                                process.command.clone()
-                            } else {
-                                process.name.clone()
-                            },
-                            format!("{:.1}%", process.cpu_percent_usage),
-                            if mem_enabled {
-                                format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
-                            } else {
-                                format!("{:.1}%", process.mem_percent_usage)
-                            },
-                            process.read_per_sec.clone(),
-                            process.write_per_sec.clone(),
-                            process.total_read.clone(),
-                            process.total_write.clone(),
-                            process.process_state.clone(),
-                        ]
-                        .into_iter(),
-                    )
+                                String::default()
+                            }
+                        } else if is_using_command {
+                            process.command.clone()
+                        } else {
+                            process.name.clone()
+                        },
+                        format!("{:.1}%", process.cpu_percent_usage),
+                        if mem_enabled {
+                            format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                        } else {
+                            format!("{:.1}%", process.mem_percent_usage)
+                        },
+                        process.read_per_sec.clone(),
+                        process.write_per_sec.clone(),
+                        process.total_read.clone(),
+                        process.total_write.clone(),
+                        process.process_state.clone(),
+                    ]
+                    .into_iter();
+
+                    if process.is_disabled_entry {
+                        Row::StyledData(data, self.colours.disabled_text_style)
+                    } else {
+                        Row::Data(data)
+                    }
                 });
 
                 let process_headers = proc_widget_state.columns.get_column_headers(
@@ -280,6 +284,7 @@ impl ProcessTableWidget for Painter {
                 let intrinsic_widths =
                     &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
+                // TODO: gotop's "x out of y" thing is really nice to help keep track of the scroll position.
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)

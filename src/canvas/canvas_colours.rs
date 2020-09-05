@@ -28,6 +28,7 @@ pub struct CanvasColours {
     // Full, Medium, Low
     pub battery_bar_styles: Vec<Style>,
     pub invalid_query_style: Style,
+    pub disabled_text_style: Style,
 }
 
 impl Default for CanvasColours {
@@ -63,7 +64,8 @@ impl Default for CanvasColours {
                 Style::default().fg(Color::Green),
                 Style::default().fg(Color::Green),
             ],
-            invalid_query_style: tui::style::Style::default().fg(tui::style::Color::Red),
+            invalid_query_style: Style::default().fg(tui::style::Color::Red),
+            disabled_text_style: Style::default().fg(Color::DarkGray),
         }
     }
 }
