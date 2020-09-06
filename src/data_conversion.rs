@@ -6,9 +6,8 @@ use crate::{
     utils::{self, gen_util::*},
 };
 use data_harvester::processes::ProcessSorting;
-use std::collections::{HashMap, VecDeque};
 use indexmap::IndexSet;
-
+use std::collections::{HashMap, VecDeque};
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -475,36 +474,56 @@ pub fn tree_process_data(
     // At the same time, let's make a mapping of PID -> process data!
     let mut parent_child_mapping: HashMap<Pid, IndexSet<Pid>> = HashMap::default();
     let mut pid_process_mapping: HashMap<Pid, &ConvertedProcessData> = HashMap::default();
+    let mut orphan_set: IndexSet<Pid> = IndexSet::new();
 
     single_process_data.iter().for_each(|process| {
         if let Some(ppid) = process.ppid {
+            orphan_set.insert(ppid);
+        }
+        orphan_set.insert(process.pid);
+    });
+
+    single_process_data.iter().for_each(|process| {
+        // Create a mapping for the process if it DNE.
+        parent_child_mapping
+            .entry(process.pid)
+            .or_insert_with(IndexSet::new);
+        pid_process_mapping.insert(process.pid, process);
+
+        // Insert its mapping to the process' parent if needed (create if it DNE).
+        if let Some(ppid) = process.ppid {
+            orphan_set.remove(&process.pid);
             parent_child_mapping
                 .entry(ppid)
                 .or_insert_with(IndexSet::new)
                 .insert(process.pid);
         }
+    });
 
-        // There should be no collisions...
-        if pid_process_mapping.contains_key(&process.pid) {
-            debug!("There was a PID collision!");
+    // Keep only orphans, or promote children of orphans to a top-level orphan
+    // if their parents DNE in our pid to process mapping...
+    #[allow(clippy::redundant_clone)]
+    orphan_set.clone().iter().for_each(|pid| {
+        if pid_process_mapping.get(pid).is_none() {
+            // DNE!  Promote the mapped children and remove the current parent...
+            orphan_set.remove(pid);
+            if let Some(children) = parent_child_mapping.get(pid) {
+                orphan_set.extend(children);
+            }
         }
-        pid_process_mapping.insert(process.pid, process);
     });
 
     // Turn the parent-child mapping into a "list" via DFS...
     let mut pids_to_explore: VecDeque<Pid> = if cfg!(target_family = "windows") {
-        vec![4].into_iter().collect()
+        orphan_set.into_iter().collect()
+    } else if let Some(zero_pid) = parent_child_mapping.get(&0) {
+        // For Unix, our common root is 0.
+        zero_pid.clone().into_iter().collect()
     } else {
         VecDeque::default()
     };
     let mut explored_pids: Vec<Pid> = vec![];
     let mut lines: Vec<String> = vec![];
-
-    // We do pid 0 separately as it's a bit special in some cases.
-    if let Some(zero_pid) = parent_child_mapping.get(&0) {
-        pids_to_explore.extend(zero_pid);
-        // TODO: Windows implementation...
-    }
 
     /// A post-order traversal to correctly prune entire branches that only contain children
     /// that are disabled and themselves are also disabled ~~wait that sounds wrong~~.
@@ -559,8 +578,6 @@ pub fn tree_process_data(
         // This is how htop does it by default.
         //
         // So how do we "sort"?  The current idea is that:
-        // - Special PIDs - for example, Unix 1 and 2 - don't move.  Basically, we don't
-        //   shift top-level "roots".
         // - We sort *per-level*.  Say, I want to sort by CPU.  The "first level" is sorted
         //   by CPU in terms of its usage.  All its direct children are sorted by CPU
         //   with *their* siblings.  Etc.
@@ -724,9 +741,7 @@ pub fn tree_process_data(
     }
 
     while let Some(current_pid) = pids_to_explore.pop_front() {
-        let is_disabled =
-            prune_disabled_pids(current_pid, &mut parent_child_mapping, &pid_process_mapping);
-        if !is_disabled {
+        if !prune_disabled_pids(current_pid, &mut parent_child_mapping, &pid_process_mapping) {
             sort_remaining_pids(
                 current_pid,
                 sort_type,
