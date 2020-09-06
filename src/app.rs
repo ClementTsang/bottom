@@ -266,24 +266,27 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        // Toggles process widget grouping state
-                        proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
+                        // Do NOT allow when in tree mode!
+                        if !proc_widget_state.is_tree_mode {
+                            // Toggles process widget grouping state
+                            proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
 
-                        proc_widget_state
-                            .columns
-                            .column_mapping
-                            .get_mut(&processes::ProcessSorting::State)
-                            .unwrap()
-                            .enabled = !(proc_widget_state.is_grouped);
+                            proc_widget_state
+                                .columns
+                                .column_mapping
+                                .get_mut(&processes::ProcessSorting::State)
+                                .unwrap()
+                                .enabled = !(proc_widget_state.is_grouped);
 
-                        proc_widget_state
-                            .columns
-                            .toggle(&processes::ProcessSorting::Count);
-                        proc_widget_state
-                            .columns
-                            .toggle(&processes::ProcessSorting::Pid);
+                            proc_widget_state
+                                .columns
+                                .toggle(&processes::ProcessSorting::Count);
+                            proc_widget_state
+                                .columns
+                                .toggle(&processes::ProcessSorting::Pid);
 
-                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                            self.proc_state.force_update = Some(self.current_widget.widget_id);
+                        }
                     }
                 }
                 _ => {}
@@ -372,8 +375,8 @@ impl App {
                     };
 
                 if let Some(proc_widget_state) = self.proc_state.get_mut_widget_state(widget_id) {
-                    proc_widget_state.process_sorting_reverse =
-                        !proc_widget_state.process_sorting_reverse;
+                    proc_widget_state.is_process_sort_descending =
+                        !proc_widget_state.is_process_sort_descending;
 
                     self.proc_state.force_update = Some(widget_id);
                 }
@@ -478,6 +481,13 @@ impl App {
             .get_mut(&(self.current_widget.widget_id))
         {
             proc_widget_state.is_tree_mode = !proc_widget_state.is_tree_mode;
+
+            if proc_widget_state.is_tree_mode {
+                // We enabled... set PID sort type to descending.
+                proc_widget_state.process_sorting_type = processes::ProcessSorting::Pid;
+                proc_widget_state.is_process_sort_descending = false;
+            }
+
             self.proc_state.force_update = Some(self.current_widget.widget_id);
         }
     }
@@ -1068,13 +1078,13 @@ impl App {
                     {
                         match proc_widget_state.process_sorting_type {
                             processes::ProcessSorting::CpuPercent => {
-                                proc_widget_state.process_sorting_reverse =
-                                    !proc_widget_state.process_sorting_reverse
+                                proc_widget_state.is_process_sort_descending =
+                                    !proc_widget_state.is_process_sort_descending
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
                                     processes::ProcessSorting::CpuPercent;
-                                proc_widget_state.process_sorting_reverse = true;
+                                proc_widget_state.is_process_sort_descending = true;
                             }
                         }
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
@@ -1091,13 +1101,13 @@ impl App {
                     {
                         match proc_widget_state.process_sorting_type {
                             processes::ProcessSorting::MemPercent => {
-                                proc_widget_state.process_sorting_reverse =
-                                    !proc_widget_state.process_sorting_reverse
+                                proc_widget_state.is_process_sort_descending =
+                                    !proc_widget_state.is_process_sort_descending
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
                                     processes::ProcessSorting::MemPercent;
-                                proc_widget_state.process_sorting_reverse = true;
+                                proc_widget_state.is_process_sort_descending = true;
                             }
                         }
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
@@ -1115,13 +1125,13 @@ impl App {
                         if !proc_widget_state.is_grouped {
                             match proc_widget_state.process_sorting_type {
                                 processes::ProcessSorting::Pid => {
-                                    proc_widget_state.process_sorting_reverse =
-                                        !proc_widget_state.process_sorting_reverse
+                                    proc_widget_state.is_process_sort_descending =
+                                        !proc_widget_state.is_process_sort_descending
                                 }
                                 _ => {
                                     proc_widget_state.process_sorting_type =
                                         processes::ProcessSorting::Pid;
-                                    proc_widget_state.process_sorting_reverse = false;
+                                    proc_widget_state.is_process_sort_descending = false;
                                 }
                             }
                             self.proc_state.force_update = Some(self.current_widget.widget_id);
@@ -1167,8 +1177,8 @@ impl App {
                         match proc_widget_state.process_sorting_type {
                             processes::ProcessSorting::ProcessName
                             | processes::ProcessSorting::Command => {
-                                proc_widget_state.process_sorting_reverse =
-                                    !proc_widget_state.process_sorting_reverse
+                                proc_widget_state.is_process_sort_descending =
+                                    !proc_widget_state.is_process_sort_descending
                             }
                             _ => {
                                 proc_widget_state.process_sorting_type =
@@ -1177,7 +1187,7 @@ impl App {
                                     } else {
                                         processes::ProcessSorting::ProcessName
                                     };
-                                proc_widget_state.process_sorting_reverse = false;
+                                proc_widget_state.is_process_sort_descending = false;
                             }
                         }
                         self.proc_state.force_update = Some(self.current_widget.widget_id);

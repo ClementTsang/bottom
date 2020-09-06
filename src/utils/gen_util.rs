@@ -91,19 +91,19 @@ pub fn get_simple_byte_values(bytes: u64, spacing: bool) -> (f64, String) {
 
 /// Gotta get partial ordering?  No problem, here's something to deal with it~
 pub fn get_ordering<T: std::cmp::PartialOrd>(
-    a_val: T, b_val: T, reverse_order: bool,
+    a_val: T, b_val: T, descending_order: bool,
 ) -> std::cmp::Ordering {
     match a_val.partial_cmp(&b_val) {
         Some(x) => match x {
             Ordering::Greater => {
-                if reverse_order {
+                if descending_order {
                     std::cmp::Ordering::Less
                 } else {
                     std::cmp::Ordering::Greater
                 }
             }
             Ordering::Less => {
-                if reverse_order {
+                if descending_order {
                     std::cmp::Ordering::Greater
                 } else {
                     std::cmp::Ordering::Less

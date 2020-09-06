@@ -465,7 +465,7 @@ pub fn update_all_process_lists(app: &mut App) {
     }
 }
 
-pub fn update_final_process_list(app: &mut App, widget_id: u64) {
+fn update_final_process_list(app: &mut App, widget_id: u64) {
     let process_states = match app.proc_state.widget_states.get(&widget_id) {
         Some(process_state) => Some((
             process_state
@@ -519,27 +519,33 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
                 .collect::<Vec<_>>()
         };
 
-        let mut finalized_process_data = if is_tree {
-            tree_process_data(&filtered_process_data, is_using_command)
-        } else if is_grouped {
-            group_process_data(&filtered_process_data, is_using_command)
-        } else {
-            filtered_process_data
-        };
-
-        // Quick fix for tab updating the table headers
         if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
+            let mut finalized_process_data = if is_tree {
+                tree_process_data(
+                    &filtered_process_data,
+                    is_using_command,
+                    &proc_widget_state.process_sorting_type,
+                    proc_widget_state.is_process_sort_descending,
+                )
+            } else if is_grouped {
+                group_process_data(&filtered_process_data, is_using_command)
+            } else {
+                filtered_process_data
+            };
+
+            // Quick fix for tab updating the table headers
             if let data_harvester::processes::ProcessSorting::Pid =
                 proc_widget_state.process_sorting_type
             {
                 if proc_widget_state.is_grouped {
                     proc_widget_state.process_sorting_type =
                         data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
-                    proc_widget_state.process_sorting_reverse = true;
+                    proc_widget_state.is_process_sort_descending = true;
                 }
             }
+
+            // Note tree mode is sorted well before this, as it's special.
             if !is_tree {
-                // FIXME: Not sure if we want this, but for now...
                 sort_process_data(&mut finalized_process_data, proc_widget_state);
             }
 
@@ -559,20 +565,20 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
     }
 }
 
-pub fn sort_process_data(
+fn sort_process_data(
     to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
 ) {
     to_sort_vec.sort_by(|a, b| {
         utils::gen_util::get_ordering(&a.name.to_lowercase(), &b.name.to_lowercase(), false)
     });
 
-    match proc_widget_state.process_sorting_type {
+    match &proc_widget_state.process_sorting_type {
         ProcessSorting::CpuPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.cpu_percent_usage,
                     b.cpu_percent_usage,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -581,7 +587,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.mem_usage_bytes,
                     b.mem_usage_bytes,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -590,18 +596,18 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.mem_percent_usage,
                     b.mem_percent_usage,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
         ProcessSorting::ProcessName => {
             // Don't repeat if false... it sorts by name by default anyways.
-            if proc_widget_state.process_sorting_reverse {
+            if proc_widget_state.is_process_sort_descending {
                 to_sort_vec.sort_by(|a, b| {
                     utils::gen_util::get_ordering(
                         &a.name.to_lowercase(),
                         &b.name.to_lowercase(),
-                        proc_widget_state.process_sorting_reverse,
+                        proc_widget_state.is_process_sort_descending,
                     )
                 })
             }
@@ -610,7 +616,7 @@ pub fn sort_process_data(
             utils::gen_util::get_ordering(
                 &a.command.to_lowercase(),
                 &b.command.to_lowercase(),
-                proc_widget_state.process_sorting_reverse,
+                proc_widget_state.is_process_sort_descending,
             )
         }),
         ProcessSorting::Pid => {
@@ -619,7 +625,7 @@ pub fn sort_process_data(
                     utils::gen_util::get_ordering(
                         a.pid,
                         b.pid,
-                        proc_widget_state.process_sorting_reverse,
+                        proc_widget_state.is_process_sort_descending,
                     )
                 });
             }
@@ -629,7 +635,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.rps_f64,
                     b.rps_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -638,7 +644,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.wps_f64,
                     b.wps_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -647,7 +653,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.tr_f64,
                     b.tr_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -656,7 +662,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.tw_f64,
                     b.tw_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -664,7 +670,7 @@ pub fn sort_process_data(
             utils::gen_util::get_ordering(
                 &a.process_state.to_lowercase(),
                 &b.process_state.to_lowercase(),
-                proc_widget_state.process_sorting_reverse,
+                proc_widget_state.is_process_sort_descending,
             )
         }),
         ProcessSorting::Count => {

@@ -1,13 +1,14 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
-
-use std::collections::{BTreeSet, HashMap, VecDeque};
-
 use crate::Pid;
 use crate::{
     app::{data_farmer, data_harvester, App, Filter},
-    utils::gen_util::*,
+    utils::{self, gen_util::*},
 };
+use data_harvester::processes::ProcessSorting;
+use std::collections::{HashMap, VecDeque};
+use indexmap::IndexSet;
+
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -468,17 +469,18 @@ const BRANCH_HORIZONTAL: char = '─';
 
 pub fn tree_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: bool,
+    sort_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
-    let mut parent_child_mapping: HashMap<Pid, BTreeSet<Pid>> = HashMap::default();
+    let mut parent_child_mapping: HashMap<Pid, IndexSet<Pid>> = HashMap::default();
     let mut pid_process_mapping: HashMap<Pid, &ConvertedProcessData> = HashMap::default();
 
     single_process_data.iter().for_each(|process| {
         if let Some(ppid) = process.ppid {
             parent_child_mapping
                 .entry(ppid)
-                .or_insert_with(BTreeSet::new)
+                .or_insert_with(IndexSet::new)
                 .insert(process.pid);
         }
 
@@ -509,7 +511,7 @@ pub fn tree_process_data(
     ///
     /// Basically, go through the hashmap, and prune out all branches that are no longer relevant.
     fn prune_disabled_pids(
-        current_pid: Pid, parent_child_mapping: &mut HashMap<Pid, BTreeSet<Pid>>,
+        current_pid: Pid, parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid>>,
         pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
     ) -> bool {
         // Let's explore all the children first, and make sure they (and their children)
@@ -543,11 +545,138 @@ pub fn tree_process_data(
         false
     }
 
+    fn sort_remaining_pids(
+        current_pid: Pid, sort_type: &ProcessSorting, is_sort_descending: bool,
+        parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid>>,
+        pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
+    ) {
+        // Sorting is special for tree data.  So, by default, things are "sorted"
+        // via the DFS, except for (at least Unix) PID 1 and 2, which are in that order.
+        // Otherwise, since this is DFS of the scanned PIDs (which are in order), you actually
+        // get a REVERSE order --- so, you get higher PIDs earlier than lower ones.
+        // But this is a tree.  So, you'll get a bit of a combination, but the general idea
+        // is that in a tree level, it's descending order, except, again, for the first layer.
+        // This is how htop does it by default.
+        //
+        // So how do we "sort"?  The current idea is that:
+        // - Special PIDs - for example, Unix 1 and 2 - don't move.  Basically, we don't
+        //   shift top-level "roots".
+        // - We sort *per-level*.  Say, I want to sort by CPU.  The "first level" is sorted
+        //   by CPU in terms of its usage.  All its direct children are sorted by CPU
+        //   with *their* siblings.  Etc.
+        // - The default is thus PIDs in reverse order (descending).  We set it to this when
+        //   we first enable the mode.
+
+        // So first, let's look at the children... (post-order again)
+        if let Some(children) = parent_child_mapping.get(&current_pid) {
+            let mut to_sort_vec: Vec<(Pid, &ConvertedProcessData)> = vec![];
+            for child_pid in children.clone() {
+                if let Some(child_process) = pid_process_mapping.get(&child_pid) {
+                    to_sort_vec.push((child_pid, child_process));
+                }
+                sort_remaining_pids(
+                    child_pid,
+                    sort_type,
+                    is_sort_descending,
+                    parent_child_mapping,
+                    pid_process_mapping,
+                );
+            }
+
+            // Now let's sort the immediate children!
+            match sort_type {
+                ProcessSorting::CpuPercent => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(
+                            a.1.cpu_percent_usage,
+                            b.1.cpu_percent_usage,
+                            is_sort_descending,
+                        )
+                    });
+                }
+                ProcessSorting::Mem => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(
+                            a.1.mem_usage_bytes,
+                            b.1.mem_usage_bytes,
+                            is_sort_descending,
+                        )
+                    });
+                }
+                ProcessSorting::MemPercent => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(
+                            a.1.mem_percent_usage,
+                            b.1.mem_percent_usage,
+                            is_sort_descending,
+                        )
+                    });
+                }
+                ProcessSorting::ProcessName => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(
+                            &a.1.name.to_lowercase(),
+                            &b.1.name.to_lowercase(),
+                            is_sort_descending,
+                        )
+                    });
+                }
+                ProcessSorting::Command => to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        &a.1.command.to_lowercase(),
+                        &b.1.command.to_lowercase(),
+                        is_sort_descending,
+                    )
+                }),
+                ProcessSorting::Pid => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(a.1.pid, b.1.pid, is_sort_descending)
+                    });
+                }
+                ProcessSorting::ReadPerSecond => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(a.1.rps_f64, b.1.rps_f64, is_sort_descending)
+                    });
+                }
+                ProcessSorting::WritePerSecond => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(a.1.wps_f64, b.1.wps_f64, is_sort_descending)
+                    });
+                }
+                ProcessSorting::TotalRead => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(a.1.tr_f64, b.1.tr_f64, is_sort_descending)
+                    });
+                }
+                ProcessSorting::TotalWrite => {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(a.1.tw_f64, b.1.tw_f64, is_sort_descending)
+                    });
+                }
+                ProcessSorting::State => to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        &a.1.process_state.to_lowercase(),
+                        &b.1.process_state.to_lowercase(),
+                        is_sort_descending,
+                    )
+                }),
+                ProcessSorting::Count => {}
+            }
+
+            if let Some(current_mapping) = parent_child_mapping.get_mut(&current_pid) {
+                *current_mapping = to_sort_vec
+                    .iter()
+                    .map(|(pid, _proc)| *pid)
+                    .collect::<IndexSet<Pid>>();
+            }
+        }
+    }
+
     /// A DFS traversal to correctly build the prefix lines (the pretty '├' and '─' lines) and
-    /// the correct order to the PID tree as a vector (DFS is the order htop uses so we're copying
-    /// that *wink*).
+    /// the correct order to the PID tree as a vector (DFS is the default order htop seems to use
+    /// so we're shamelessly copying that).
     fn build_explored_pids(
-        current_pid: Pid, parent_child_mapping: &HashMap<Pid, BTreeSet<Pid>>,
+        current_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid>>,
         prev_drawn_lines: &str,
     ) -> (Vec<Pid>, Vec<String>) {
         let mut explored_pids: Vec<Pid> = vec![current_pid];
@@ -598,6 +727,14 @@ pub fn tree_process_data(
         let is_disabled =
             prune_disabled_pids(current_pid, &mut parent_child_mapping, &pid_process_mapping);
         if !is_disabled {
+            sort_remaining_pids(
+                current_pid,
+                sort_type,
+                is_sort_descending,
+                &mut parent_child_mapping,
+                &pid_process_mapping,
+            );
+
             let (pid_res, branch_res) = build_explored_pids(current_pid, &parent_child_mapping, "");
             lines.push(String::default());
             lines.extend(branch_res);
@@ -611,8 +748,8 @@ pub fn tree_process_data(
         .iter()
         .zip(lines)
         .filter_map(|(pid, prefix)| match pid_process_mapping.remove(pid) {
-            Some(proc) => {
-                let mut p = proc.clone();
+            Some(process) => {
+                let mut p = process.clone();
                 p.process_description_prefix = Some(format!(
                     "{}{}",
                     prefix,

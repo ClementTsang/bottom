@@ -352,7 +352,7 @@ pub struct ProcWidgetState {
     pub is_grouped: bool,
     pub scroll_state: AppScrollWidgetState,
     pub process_sorting_type: processes::ProcessSorting,
-    pub process_sorting_reverse: bool,
+    pub is_process_sort_descending: bool,
     pub is_using_command: bool,
     pub current_column_index: usize,
     pub is_sort_open: bool,
@@ -391,7 +391,7 @@ impl ProcWidgetState {
             is_grouped,
             scroll_state: AppScrollWidgetState::default(),
             process_sorting_type,
-            process_sorting_reverse: true,
+            is_process_sort_descending: true,
             is_using_command: false,
             current_column_index: 0,
             is_sort_open: false,
@@ -424,7 +424,7 @@ impl ProcWidgetState {
         if let Some(new_sort_type) = self.columns.ordered_columns.get(true_index) {
             if *new_sort_type == self.process_sorting_type {
                 // Just reverse the search if we're reselecting!
-                self.process_sorting_reverse = !(self.process_sorting_reverse);
+                self.is_process_sort_descending = !(self.is_process_sort_descending);
             } else {
                 self.process_sorting_type = new_sort_type.clone();
                 match self.process_sorting_type {
@@ -433,7 +433,7 @@ impl ProcWidgetState {
                     | ProcessSorting::ProcessName
                     | ProcessSorting::Command => {
                         // Also invert anything that uses alphabetical sorting by default.
-                        self.process_sorting_reverse = false;
+                        self.is_process_sort_descending = false;
                     }
                     _ => {}
                 }

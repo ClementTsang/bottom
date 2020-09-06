@@ -253,7 +253,7 @@ impl ProcessTableWidget for Painter {
 
                 let process_headers = proc_widget_state.columns.get_column_headers(
                     &proc_widget_state.process_sorting_type,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 );
 
                 let process_headers_lens: Vec<usize> = process_headers
