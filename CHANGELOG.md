@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#215](https://github.com/ClementTsang/bottom/pull/215): Add labels to Linux temperature values.
 
+- [#224](https://github.com/ClementTsang/bottom/pull/224): Implements sorting by count. It previously did absolutely nothing.
+
 ## [0.4.7] - 2020-08-26
 
 ### Bug Fixes
