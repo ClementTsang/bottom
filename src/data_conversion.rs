@@ -601,84 +601,7 @@ pub fn tree_process_data(
             }
 
             // Now let's sort the immediate children!
-            match sort_type {
-                ProcessSorting::CpuPercent => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(
-                            a.1.cpu_percent_usage,
-                            b.1.cpu_percent_usage,
-                            is_sort_descending,
-                        )
-                    });
-                }
-                ProcessSorting::Mem => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(
-                            a.1.mem_usage_bytes,
-                            b.1.mem_usage_bytes,
-                            is_sort_descending,
-                        )
-                    });
-                }
-                ProcessSorting::MemPercent => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(
-                            a.1.mem_percent_usage,
-                            b.1.mem_percent_usage,
-                            is_sort_descending,
-                        )
-                    });
-                }
-                ProcessSorting::ProcessName => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(
-                            &a.1.name.to_lowercase(),
-                            &b.1.name.to_lowercase(),
-                            is_sort_descending,
-                        )
-                    });
-                }
-                ProcessSorting::Command => to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        &a.1.command.to_lowercase(),
-                        &b.1.command.to_lowercase(),
-                        is_sort_descending,
-                    )
-                }),
-                ProcessSorting::Pid => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(a.1.pid, b.1.pid, is_sort_descending)
-                    });
-                }
-                ProcessSorting::ReadPerSecond => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(a.1.rps_f64, b.1.rps_f64, is_sort_descending)
-                    });
-                }
-                ProcessSorting::WritePerSecond => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(a.1.wps_f64, b.1.wps_f64, is_sort_descending)
-                    });
-                }
-                ProcessSorting::TotalRead => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(a.1.tr_f64, b.1.tr_f64, is_sort_descending)
-                    });
-                }
-                ProcessSorting::TotalWrite => {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(a.1.tw_f64, b.1.tw_f64, is_sort_descending)
-                    });
-                }
-                ProcessSorting::State => to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        &a.1.process_state.to_lowercase(),
-                        &b.1.process_state.to_lowercase(),
-                        is_sort_descending,
-                    )
-                }),
-                ProcessSorting::Count => {}
-            }
+            sort_vec(&mut to_sort_vec, sort_type, is_sort_descending);
 
             if let Some(current_mapping) = parent_child_mapping.get_mut(&current_pid) {
                 *current_mapping = to_sort_vec
@@ -686,6 +609,90 @@ pub fn tree_process_data(
                     .map(|(pid, _proc)| *pid)
                     .collect::<IndexSet<Pid>>();
             }
+        }
+    }
+
+    fn sort_vec(
+        to_sort_vec: &mut Vec<(Pid, &ConvertedProcessData)>, sort_type: &ProcessSorting,
+        is_sort_descending: bool,
+    ) {
+        match sort_type {
+            ProcessSorting::CpuPercent => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        a.1.cpu_percent_usage,
+                        b.1.cpu_percent_usage,
+                        is_sort_descending,
+                    )
+                });
+            }
+            ProcessSorting::Mem => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        a.1.mem_usage_bytes,
+                        b.1.mem_usage_bytes,
+                        is_sort_descending,
+                    )
+                });
+            }
+            ProcessSorting::MemPercent => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        a.1.mem_percent_usage,
+                        b.1.mem_percent_usage,
+                        is_sort_descending,
+                    )
+                });
+            }
+            ProcessSorting::ProcessName => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        &a.1.name.to_lowercase(),
+                        &b.1.name.to_lowercase(),
+                        is_sort_descending,
+                    )
+                });
+            }
+            ProcessSorting::Command => to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    &a.1.command.to_lowercase(),
+                    &b.1.command.to_lowercase(),
+                    is_sort_descending,
+                )
+            }),
+            ProcessSorting::Pid => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(a.1.pid, b.1.pid, is_sort_descending)
+                });
+            }
+            ProcessSorting::ReadPerSecond => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(a.1.rps_f64, b.1.rps_f64, is_sort_descending)
+                });
+            }
+            ProcessSorting::WritePerSecond => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(a.1.wps_f64, b.1.wps_f64, is_sort_descending)
+                });
+            }
+            ProcessSorting::TotalRead => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(a.1.tr_f64, b.1.tr_f64, is_sort_descending)
+                });
+            }
+            ProcessSorting::TotalWrite => {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(a.1.tw_f64, b.1.tw_f64, is_sort_descending)
+                });
+            }
+            ProcessSorting::State => to_sort_vec.sort_by(|a, b| {
+                utils::gen_util::get_ordering(
+                    &a.1.process_state.to_lowercase(),
+                    &b.1.process_state.to_lowercase(),
+                    is_sort_descending,
+                )
+            }),
+            ProcessSorting::Count => {}
         }
     }
 
@@ -739,6 +746,15 @@ pub fn tree_process_data(
 
         (explored_pids, lines)
     }
+
+    let mut to_sort_vec = Vec::new();
+    for pid in pids_to_explore {
+        if let Some(process) = pid_process_mapping.get(&pid) {
+            to_sort_vec.push((pid, *process));
+        }
+    }
+    sort_vec(&mut to_sort_vec, sort_type, is_sort_descending);
+    pids_to_explore = to_sort_vec.iter().map(|(pid, _proc)| *pid).collect();
 
     while let Some(current_pid) = pids_to_explore.pop_front() {
         if !prune_disabled_pids(current_pid, &mut parent_child_mapping, &pid_process_mapping) {

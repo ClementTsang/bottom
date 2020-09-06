@@ -483,7 +483,7 @@ impl App {
             proc_widget_state.is_tree_mode = !proc_widget_state.is_tree_mode;
 
             if proc_widget_state.is_tree_mode {
-                // We enabled... set PID sort type to descending.
+                // We enabled... set PID sort type to ascending.
                 proc_widget_state.process_sorting_type = processes::ProcessSorting::Pid;
                 proc_widget_state.is_process_sort_descending = false;
             }
