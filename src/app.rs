@@ -268,6 +268,19 @@ impl App {
                         // Toggles process widget grouping state
                         proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
 
+                        // Forcefully switch off column if we were on it...
+                        if (proc_widget_state.is_grouped
+                            && proc_widget_state.process_sorting_type
+                                == data_harvester::processes::ProcessSorting::Pid)
+                            || (!proc_widget_state.is_grouped
+                                && proc_widget_state.process_sorting_type
+                                    == data_harvester::processes::ProcessSorting::Count)
+                        {
+                            proc_widget_state.process_sorting_type =
+                                data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
+                            proc_widget_state.process_sorting_reverse = true;
+                        }
+
                         proc_widget_state
                             .columns
                             .column_mapping

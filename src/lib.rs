@@ -510,16 +510,6 @@ pub fn update_final_process_list(app: &mut App, widget_id: u64) {
 
     // Quick fix for tab updating the table headers
     if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-        if let data_harvester::processes::ProcessSorting::Pid =
-            proc_widget_state.process_sorting_type
-        {
-            if proc_widget_state.is_grouped {
-                proc_widget_state.process_sorting_type =
-                    data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
-                proc_widget_state.process_sorting_reverse = true;
-            }
-        }
-
         let mut resulting_processes = filtered_process_data;
         sort_process_data(&mut resulting_processes, proc_widget_state);
 
@@ -645,7 +635,15 @@ pub fn sort_process_data(
             )
         }),
         ProcessSorting::Count => {
-            // Nothing should happen here.
+            if proc_widget_state.is_grouped {
+                to_sort_vec.sort_by(|a, b| {
+                    utils::gen_util::get_ordering(
+                        a.group_pids.len(),
+                        b.group_pids.len(),
+                        proc_widget_state.process_sorting_reverse,
+                    )
+                });
+            }
         }
     }
 }
