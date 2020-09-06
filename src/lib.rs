@@ -533,17 +533,6 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                 filtered_process_data
             };
 
-            // Quick fix for tab updating the table headers
-            if let data_harvester::processes::ProcessSorting::Pid =
-                proc_widget_state.process_sorting_type
-            {
-                if proc_widget_state.is_grouped {
-                    proc_widget_state.process_sorting_type =
-                        data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
-                    proc_widget_state.is_process_sort_descending = true;
-                }
-            }
-
             // Note tree mode is sorted well before this, as it's special.
             if !is_tree {
                 sort_process_data(&mut finalized_process_data, proc_widget_state);
