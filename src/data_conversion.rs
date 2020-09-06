@@ -514,14 +514,7 @@ pub fn tree_process_data(
     });
 
     // Turn the parent-child mapping into a "list" via DFS...
-    let mut pids_to_explore: VecDeque<Pid> = if cfg!(target_family = "windows") {
-        orphan_set.into_iter().collect()
-    } else if let Some(zero_pid) = parent_child_mapping.get(&0) {
-        // For Unix, our common root is 0.
-        zero_pid.clone().into_iter().collect()
-    } else {
-        VecDeque::default()
-    };
+    let mut pids_to_explore: VecDeque<Pid> = orphan_set.into_iter().collect();
     let mut explored_pids: Vec<Pid> = vec![];
     let mut lines: Vec<String> = vec![];
 
