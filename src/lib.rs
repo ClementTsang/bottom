@@ -668,7 +668,7 @@ fn sort_process_data(
                     utils::gen_util::get_ordering(
                         a.group_pids.len(),
                         b.group_pids.len(),
-                        proc_widget_state.process_sorting_reverse,
+                        proc_widget_state.is_process_sort_descending,
                     )
                 });
             }
