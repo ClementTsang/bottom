@@ -1216,6 +1216,7 @@ impl App {
             'L' | 'D' => self.move_widget_selection(&WidgetDirection::Right),
             'K' | 'W' => self.move_widget_selection(&WidgetDirection::Up),
             'J' | 'S' => self.move_widget_selection(&WidgetDirection::Down),
+            't' => self.toggle_tree_mode(),
             '+' => self.zoom_in(),
             '-' => self.zoom_out(),
             '=' => self.reset_zoom(),

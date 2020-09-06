@@ -609,6 +609,9 @@ pub fn tree_process_data(
         to_sort_vec: &mut Vec<(Pid, &ConvertedProcessData)>, sort_type: &ProcessSorting,
         is_sort_descending: bool,
     ) {
+        // Sort by PID first (descending)
+        to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(a.1.pid, b.1.pid, false));
+
         match sort_type {
             ProcessSorting::CpuPercent => {
                 to_sort_vec.sort_by(|a, b| {
@@ -654,9 +657,12 @@ pub fn tree_process_data(
                 )
             }),
             ProcessSorting::Pid => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(a.1.pid, b.1.pid, is_sort_descending)
-                });
+                // Note we only sort if is_sort_descending as otherwise it's repeated.
+                if is_sort_descending {
+                    to_sort_vec.sort_by(|a, b| {
+                        utils::gen_util::get_ordering(a.1.pid, b.1.pid, is_sort_descending)
+                    });
+                }
             }
             ProcessSorting::ReadPerSecond => {
                 to_sort_vec.sort_by(|a, b| {

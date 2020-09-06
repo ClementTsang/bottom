@@ -41,6 +41,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Processes](#processes)
     - [Process searching](#process-searching)
     - [Process sorting](#process-sorting)
+    - [Tree mode](#tree-mode)
   - [Zoom](#zoom)
   - [Expanding](#expanding)
   - [Basic mode](#basic-mode)
@@ -246,23 +247,24 @@ Run using `btm`.
 | `s, F6`       | Open process sort widget                                         |
 | `I`           | Invert current sort                                              |
 | `%`           | Toggle between values and percentages for memory usage           |
+| `t`, `F5`     | Toggle tree mode                                                 |
 
 #### Process search bindings
 
-|              |                                              |
-| ------------ | -------------------------------------------- |
-| `Tab`        | Toggle between searching by PID or name      |
-| `Esc`        | Close the search widget (retains the filter) |
-| `Ctrl-a`     | Skip to the start of the search query        |
-| `Ctrl-e`     | Skip to the end of the search query          |
-| `Ctrl-u`     | Clear the current search query               |
-| `Backspace`  | Delete the character behind the cursor       |
-| `Delete`     | Delete the character at the cursor           |
-| `Alt-c`/`F1` | Toggle matching case                         |
-| `Alt-w`/`F2` | Toggle matching the entire word              |
-| `Alt-r`/`F3` | Toggle using regex                           |
-| `Left`       | Move cursor left                             |
-| `Right`      | Move cursor right                            |
+|               |                                              |
+| ------------- | -------------------------------------------- |
+| `Tab`         | Toggle between searching by PID or name      |
+| `Esc`         | Close the search widget (retains the filter) |
+| `Ctrl-a`      | Skip to the start of the search query        |
+| `Ctrl-e`      | Skip to the end of the search query          |
+| `Ctrl-u`      | Clear the current search query               |
+| `Backspace`   | Delete the character behind the cursor       |
+| `Delete`      | Delete the character at the cursor           |
+| `Alt-c`, `F1` | Toggle matching case                         |
+| `Alt-w`, `F2` | Toggle matching the entire word              |
+| `Alt-r`, `F3` | Toggle using regex                           |
+| `Left`        | Move cursor left                             |
+| `Right`       | Move cursor right                            |
 
 ### Process sort bindings
 
@@ -423,6 +425,23 @@ You can see all available keywords and query options [here](#process-searching-k
 You can sort the processes list by any column you want by pressing `s` while on a process widget:
 
 ![sorting](assets/sort.png)
+
+#### Tree mode
+
+Use `t` or `F5` to toggle tree mode in a process widget. This is somewhat similar to htop's tree
+mode.
+
+![Standard tree](assets/trees_1.png)
+
+Sorting works as well, but it is done per groups of siblings. For example, by CPU%:
+
+![Standard tree](assets/trees_2.png)
+
+You can also still filter processes. Branches that entirely do not match the query are pruned out,
+but if a branch contains an element that does match the query, any non-matching elements will instead
+just be greyed out, so the tree structure is still maintained:
+
+![Standard tree](assets/trees_3.png)
 
 ### Zoom
 
