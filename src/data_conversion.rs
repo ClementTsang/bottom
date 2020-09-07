@@ -470,6 +470,8 @@ pub fn tree_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: bool,
     sort_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
+    // TODO: [TREE] Allow for collapsing entries.
+
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
     let mut parent_child_mapping: HashMap<Pid, IndexSet<Pid>> = HashMap::default();
@@ -596,9 +598,11 @@ pub fn tree_process_data(
             // Now let's sort the immediate children!
             sort_vec(&mut to_sort_vec, sort_type, is_sort_descending);
 
+            // Need to reverse what we got, apparently...
             if let Some(current_mapping) = parent_child_mapping.get_mut(&current_pid) {
                 *current_mapping = to_sort_vec
                     .iter()
+                    .rev()
                     .map(|(pid, _proc)| *pid)
                     .collect::<IndexSet<Pid>>();
             }
@@ -657,10 +661,9 @@ pub fn tree_process_data(
                 )
             }),
             ProcessSorting::Pid => {
-                // Note we only sort if is_sort_descending as otherwise it's repeated.
                 if is_sort_descending {
                     to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(a.1.pid, b.1.pid, is_sort_descending)
+                        utils::gen_util::get_ordering(a.0, b.0, is_sort_descending)
                     });
                 }
             }
@@ -691,7 +694,9 @@ pub fn tree_process_data(
                     is_sort_descending,
                 )
             }),
-            ProcessSorting::Count => {}
+            ProcessSorting::Count => {
+                // Should never occur in this case.
+            }
         }
     }
 
