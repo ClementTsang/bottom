@@ -271,8 +271,10 @@ impl ProcessTableWidget for Painter {
                     } else {
                         vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
                     }
-                } else if proc_widget_state.is_using_command || proc_widget_state.is_tree_mode {
+                } else if proc_widget_state.is_using_command {
                     vec![0.05, 0.7, 0.05, 0.05, 0.03, 0.03, 0.03, 0.03]
+                } else if proc_widget_state.is_tree_mode {
+                    vec![0.05, 0.4, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
                 } else {
                     vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
                 };
