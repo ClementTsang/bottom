@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 echo "Running pre-push hook:"
 
 echo "Executing: cargo +nightly clippy -- -D clippy::all"

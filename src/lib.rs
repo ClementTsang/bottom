@@ -47,6 +47,12 @@ pub mod options;
 
 pub mod clap;
 
+#[cfg(target_family = "windows")]
+pub type Pid = usize;
+
+#[cfg(target_family = "unix")]
+pub type Pid = libc::pid_t;
+
 pub enum BottomEvent<I, J> {
     KeyInput(I),
     MouseInput(J),
@@ -111,6 +117,7 @@ pub fn handle_key_event_or_break(
             KeyCode::F(1) => app.toggle_ignore_case(),
             KeyCode::F(2) => app.toggle_search_whole_word(),
             KeyCode::F(3) => app.toggle_search_regex(),
+            KeyCode::F(5) => app.toggle_tree_mode(),
             KeyCode::F(6) => app.toggle_sort(),
             _ => {}
         }
@@ -458,88 +465,109 @@ pub fn update_all_process_lists(app: &mut App) {
     }
 }
 
-pub fn update_final_process_list(app: &mut App, widget_id: u64) {
-    let (is_invalid_or_blank, is_using_command) = match app.proc_state.widget_states.get(&widget_id)
-    {
-        Some(process_state) => (
+fn update_final_process_list(app: &mut App, widget_id: u64) {
+    let process_states = match app.proc_state.widget_states.get(&widget_id) {
+        Some(process_state) => Some((
             process_state
                 .process_search_state
                 .search_state
                 .is_invalid_or_blank_search(),
             process_state.is_using_command,
-        ),
-        None => (false, false),
+            process_state.is_grouped,
+            process_state.is_tree_mode,
+        )),
+        None => None,
     };
-    let is_grouped = app.is_grouped(widget_id);
 
-    if !app.is_frozen {
-        app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
-    }
-
-    if is_grouped {
-        app.canvas_data.process_data = group_process_data(
-            &app.canvas_data.single_process_data,
-            if is_using_command {
-                ProcessNamingType::Path
-            } else {
-                ProcessNamingType::Name
-            },
-        );
-    } else {
-        app.canvas_data.process_data = app.canvas_data.single_process_data.clone();
-    }
-
-    let process_filter = app.get_process_filter(widget_id);
-    let filtered_process_data: Vec<ConvertedProcessData> = app
-        .canvas_data
-        .process_data
-        .iter()
-        .filter(|process| {
-            if !is_invalid_or_blank {
-                if let Some(process_filter) = process_filter {
-                    process_filter.check(&process, is_using_command)
-                } else {
-                    true
-                }
-            } else {
-                true
-            }
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-
-    // Quick fix for tab updating the table headers
-    if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-        let mut resulting_processes = filtered_process_data;
-        sort_process_data(&mut resulting_processes, proc_widget_state);
-
-        if proc_widget_state.scroll_state.current_scroll_position >= resulting_processes.len() {
-            proc_widget_state.scroll_state.current_scroll_position =
-                resulting_processes.len().saturating_sub(1);
-            proc_widget_state.scroll_state.previous_scroll_position = 0;
-            proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
+    if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
+        if !app.is_frozen {
+            app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
         }
 
-        app.canvas_data
-            .finalized_process_data_map
-            .insert(widget_id, resulting_processes);
+        let process_filter = app.get_process_filter(widget_id);
+        let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
+            app.canvas_data
+                .single_process_data
+                .iter()
+                .map(|process| {
+                    let mut process_clone = process.clone();
+                    if !is_invalid_or_blank {
+                        if let Some(process_filter) = process_filter {
+                            process_clone.is_disabled_entry =
+                                !process_filter.check(&process_clone, is_using_command);
+                        }
+                    }
+                    process_clone
+                })
+                .collect::<Vec<_>>()
+        } else {
+            app.canvas_data
+                .single_process_data
+                .iter()
+                .filter(|process| {
+                    if !is_invalid_or_blank {
+                        if let Some(process_filter) = process_filter {
+                            process_filter.check(&process, is_using_command)
+                        } else {
+                            true
+                        }
+                    } else {
+                        true
+                    }
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+        };
+
+        if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
+            let mut finalized_process_data = if is_tree {
+                tree_process_data(
+                    &filtered_process_data,
+                    is_using_command,
+                    &proc_widget_state.process_sorting_type,
+                    proc_widget_state.is_process_sort_descending,
+                )
+            } else if is_grouped {
+                group_process_data(&filtered_process_data, is_using_command)
+            } else {
+                filtered_process_data
+            };
+
+            // Note tree mode is sorted well before this, as it's special.
+            if !is_tree {
+                sort_process_data(&mut finalized_process_data, proc_widget_state);
+            }
+
+            if proc_widget_state.scroll_state.current_scroll_position
+                >= finalized_process_data.len()
+            {
+                proc_widget_state.scroll_state.current_scroll_position =
+                    finalized_process_data.len().saturating_sub(1);
+                proc_widget_state.scroll_state.previous_scroll_position = 0;
+                proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
+            }
+
+            app.canvas_data
+                .finalized_process_data_map
+                .insert(widget_id, finalized_process_data);
+        }
     }
 }
 
-pub fn sort_process_data(
+fn sort_process_data(
     to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
 ) {
     to_sort_vec.sort_by(|a, b| {
         utils::gen_util::get_ordering(&a.name.to_lowercase(), &b.name.to_lowercase(), false)
     });
 
-    match proc_widget_state.process_sorting_type {
+    match &proc_widget_state.process_sorting_type {
         ProcessSorting::CpuPercent => {
             to_sort_vec.sort_by(|a, b| {
                 utils::gen_util::get_ordering(
                     a.cpu_percent_usage,
                     b.cpu_percent_usage,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -548,7 +576,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.mem_usage_bytes,
                     b.mem_usage_bytes,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -557,18 +585,18 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.mem_percent_usage,
                     b.mem_percent_usage,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
         ProcessSorting::ProcessName => {
             // Don't repeat if false... it sorts by name by default anyways.
-            if proc_widget_state.process_sorting_reverse {
+            if proc_widget_state.is_process_sort_descending {
                 to_sort_vec.sort_by(|a, b| {
                     utils::gen_util::get_ordering(
                         &a.name.to_lowercase(),
                         &b.name.to_lowercase(),
-                        proc_widget_state.process_sorting_reverse,
+                        proc_widget_state.is_process_sort_descending,
                     )
                 })
             }
@@ -577,7 +605,7 @@ pub fn sort_process_data(
             utils::gen_util::get_ordering(
                 &a.command.to_lowercase(),
                 &b.command.to_lowercase(),
-                proc_widget_state.process_sorting_reverse,
+                proc_widget_state.is_process_sort_descending,
             )
         }),
         ProcessSorting::Pid => {
@@ -586,7 +614,7 @@ pub fn sort_process_data(
                     utils::gen_util::get_ordering(
                         a.pid,
                         b.pid,
-                        proc_widget_state.process_sorting_reverse,
+                        proc_widget_state.is_process_sort_descending,
                     )
                 });
             }
@@ -596,7 +624,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.rps_f64,
                     b.rps_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -605,7 +633,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.wps_f64,
                     b.wps_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -614,7 +642,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.tr_f64,
                     b.tr_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -623,7 +651,7 @@ pub fn sort_process_data(
                 utils::gen_util::get_ordering(
                     a.tw_f64,
                     b.tw_f64,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 )
             });
         }
@@ -631,7 +659,7 @@ pub fn sort_process_data(
             utils::gen_util::get_ordering(
                 &a.process_state.to_lowercase(),
                 &b.process_state.to_lowercase(),
-                proc_widget_state.process_sorting_reverse,
+                proc_widget_state.is_process_sort_descending,
             )
         }),
         ProcessSorting::Count => {
@@ -640,7 +668,7 @@ pub fn sort_process_data(
                     utils::gen_util::get_ordering(
                         a.group_pids.len(),
                         b.group_pids.len(),
-                        proc_widget_state.process_sorting_reverse,
+                        proc_widget_state.is_process_sort_descending,
                     )
                 });
             }

@@ -10,6 +10,7 @@ use winapi::{
 
 /// This file is meant to house (OS specific) implementations on how to kill processes.
 use crate::utils::error::BottomError;
+use crate::Pid;
 
 #[cfg(target_os = "windows")]
 struct Process(HANDLE);
@@ -31,9 +32,9 @@ impl Process {
 }
 
 /// Kills a process, given a PID.
-pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
-    if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-        #[cfg(any(target_os = "linux", target_os = "macos"))]
+pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
+    if cfg!(target_family = "unix") {
+        #[cfg(any(target_family = "unix"))]
         {
             let output = unsafe { libc::kill(pid as i32, libc::SIGTERM) };
             if output != 0 {
@@ -59,8 +60,8 @@ pub fn kill_process_given_pid(pid: u32) -> crate::utils::error::Result<()> {
                 };
             }
         }
-    } else if cfg!(target_os = "windows") {
-        #[cfg(target_os = "windows")]
+    } else if cfg!(target_family = "windows") {
+        #[cfg(target_family = "windows")]
         {
             let process = Process::open(pid as DWORD)?;
             process.kill()?;

@@ -36,7 +36,7 @@ pub trait ProcessTableWidget {
         widget_id: u64,
     );
 
-    /// Draws the process sort box.
+    /// Draws the process search field.
     /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
     /// state that is stored.
     ///
@@ -173,15 +173,6 @@ impl ProcessTableWidget for Painter {
                 .finalized_process_data_map
                 .get(&widget_id)
             {
-                // Admittedly this is kinda a hack... but we need to:
-                // * Scroll
-                // * Show/hide elements based on scroll position
-                //
-                // As such, we use a process_counter to know when we've
-                // hit the process we've currently scrolled to.
-                // We also need to move the list - we can
-                // do so by hiding some elements!
-
                 let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                     0
                 } else {
@@ -217,39 +208,52 @@ impl ProcessTableWidget for Painter {
                 // Draw!
                 let is_proc_widget_grouped = proc_widget_state.is_grouped;
                 let is_using_command = proc_widget_state.is_using_command;
+                let is_tree = proc_widget_state.is_tree_mode;
                 let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
+
+                // FIXME: [PROC OPTIMIZE] This can definitely be optimized; string references work fine here!
                 let process_rows = sliced_vec.iter().map(|process| {
-                    Row::Data(
-                        vec![
-                            if is_proc_widget_grouped {
-                                process.group_pids.len().to_string()
+                    let data = vec![
+                        if is_proc_widget_grouped {
+                            process.group_pids.len().to_string()
+                        } else {
+                            process.pid.to_string()
+                        },
+                        if is_tree {
+                            if let Some(prefix) = &process.process_description_prefix {
+                                prefix.clone()
                             } else {
-                                process.pid.to_string()
-                            },
-                            if is_using_command {
-                                process.command.clone()
-                            } else {
-                                process.name.clone()
-                            },
-                            format!("{:.1}%", process.cpu_percent_usage),
-                            if mem_enabled {
-                                format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
-                            } else {
-                                format!("{:.1}%", process.mem_percent_usage)
-                            },
-                            process.read_per_sec.to_string(),
-                            process.write_per_sec.to_string(),
-                            process.total_read.to_string(),
-                            process.total_write.to_string(),
-                            process.process_state.to_string(),
-                        ]
-                        .into_iter(),
-                    )
+                                String::default()
+                            }
+                        } else if is_using_command {
+                            process.command.clone()
+                        } else {
+                            process.name.clone()
+                        },
+                        format!("{:.1}%", process.cpu_percent_usage),
+                        if mem_enabled {
+                            format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                        } else {
+                            format!("{:.1}%", process.mem_percent_usage)
+                        },
+                        process.read_per_sec.clone(),
+                        process.write_per_sec.clone(),
+                        process.total_read.clone(),
+                        process.total_write.clone(),
+                        process.process_state.clone(),
+                    ]
+                    .into_iter();
+
+                    if process.is_disabled_entry {
+                        Row::StyledData(data, self.colours.disabled_text_style)
+                    } else {
+                        Row::Data(data)
+                    }
                 });
 
                 let process_headers = proc_widget_state.columns.get_column_headers(
                     &proc_widget_state.process_sorting_type,
-                    proc_widget_state.process_sorting_reverse,
+                    proc_widget_state.is_process_sort_descending,
                 );
 
                 let process_headers_lens: Vec<usize> = process_headers
@@ -269,6 +273,8 @@ impl ProcessTableWidget for Painter {
                     }
                 } else if proc_widget_state.is_using_command {
                     vec![0.05, 0.7, 0.05, 0.05, 0.03, 0.03, 0.03, 0.03]
+                } else if proc_widget_state.is_tree_mode {
+                    vec![0.05, 0.4, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
                 } else {
                     vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
                 };
@@ -280,6 +286,7 @@ impl ProcessTableWidget for Painter {
                 let intrinsic_widths =
                     &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
 
+                // TODO: gotop's "x out of y" thing is really nice to help keep track of the scroll position.
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)
@@ -592,6 +599,7 @@ impl ProcessTableWidget for Painter {
                 .iter()
                 .map(|column| Row::Data(vec![column].into_iter()));
 
+            // FIXME: [State] Shorten state to small form if it can't fit...?
             let column_state = &mut proc_widget_state.columns.column_state;
             column_state.select(Some(
                 proc_widget_state

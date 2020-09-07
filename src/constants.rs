@@ -92,7 +92,7 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
 
 // TODO [Help]: Search in help?
 // TODO [Help]: Move to using tables for easier formatting?
-pub const PROCESS_HELP_TEXT: [&str; 12] = [
+pub const PROCESS_HELP_TEXT: [&str; 13] = [
     "3 - Process widget\n",
     "dd               Kill the selected process\n",
     "c                Sort by CPU usage, press again to reverse sorting order\n",
@@ -104,7 +104,8 @@ pub const PROCESS_HELP_TEXT: [&str; 12] = [
     "P                Toggle between showing the full command or just the process name\n",
     "s, F6            Open process sort widget\n",
     "I                Invert current sort\n",
-    "%                Toggle between values and percentages for memory usage",
+    "%                Toggle between values and percentages for memory usage\n",
+    "t, F5            Toggle tree mode",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 46] = [
@@ -116,9 +117,9 @@ pub const SEARCH_HELP_TEXT: [&str; 46] = [
     "Ctrl-u           Clear the current search query\n",
     "Backspace        Delete the character behind the cursor\n",
     "Delete           Delete the character at the cursor\n",
-    "Alt-c/F1         Toggle matching case\n",
-    "Alt-w/F2         Toggle matching the entire word\n",
-    "Alt-r/F3         Toggle using regex\n",
+    "Alt-c, F1        Toggle matching case\n",
+    "Alt-w, F2        Toggle matching the entire word\n",
+    "Alt-r, F3        Toggle using regex\n",
     "Left, Alt-h      Move cursor left\n",
     "Right, Alt-l     Move cursor right\n",
     "\n",
@@ -142,8 +143,8 @@ pub const SEARCH_HELP_TEXT: [&str; 46] = [
     "<=               ex: cpu <= 1\n",
     "\n",
     "Logical operators:\n",
-    "and/&&/<Space>   ex: btm and cpu > 1 and mem > 1\n",
-    "or/||            ex: btm or firefox\n",
+    "and, &&, <Space> ex: btm and cpu > 1 and mem > 1\n",
+    "or, ||           ex: btm or firefox\n",
     "\n",
     "Supported units:\n",
     "B                ex: read > 1 b\n",

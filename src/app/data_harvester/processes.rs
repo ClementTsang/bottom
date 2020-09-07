@@ -1,3 +1,4 @@
+use crate::Pid;
 use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
@@ -59,7 +60,8 @@ impl Default for ProcessSorting {
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
-    pub pid: u32,
+    pub pid: Pid,
+    pub parent_pid: Option<Pid>, // Remember, parent_pid 0 is root...
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
     pub mem_usage_bytes: u64,
@@ -89,7 +91,7 @@ pub struct PrevProcDetails {
 }
 
 impl PrevProcDetails {
-    pub fn new(pid: u32) -> Self {
+    pub fn new(pid: Pid) -> Self {
         PrevProcDetails {
             proc_io_path: PathBuf::from(format!("/proc/{}/io", pid)),
             proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid)),
@@ -200,7 +202,7 @@ fn read_path_contents(path: &PathBuf) -> std::io::Result<String> {
 
 #[cfg(target_os = "linux")]
 fn get_linux_process_state(stat: &[&str]) -> (char, String) {
-    // The -2 offset is because of us cutting off name + pid
+    // The -2 offset is because of us cutting off name + pid, normally it's 2
     if let Some(first_char) = stat[0].chars().collect::<Vec<char>>().first() {
         (
             *first_char,
@@ -241,8 +243,8 @@ fn get_linux_cpu_usage(
 #[allow(clippy::too_many_arguments)]
 #[cfg(target_os = "linux")]
 fn read_proc<S: core::hash::BuildHasher>(
-    pid: u32, cpu_usage: f64, cpu_fraction: f64,
-    pid_mapping: &mut HashMap<u32, PrevProcDetails, S>, use_current_cpu_total: bool,
+    pid: Pid, cpu_usage: f64, cpu_fraction: f64,
+    pid_mapping: &mut HashMap<Pid, PrevProcDetails, S>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> error::Result<ProcessHarvest> {
     let pid_stat = pid_mapping
@@ -282,6 +284,7 @@ fn read_proc<S: core::hash::BuildHasher>(
         &mut pid_stat.cpu_time,
         use_current_cpu_total,
     )?;
+    let parent_pid = stat[1].parse::<Pid>().ok();
     let (_vsize, rss) = get_linux_process_vsize_rss(&stat);
     let mem_usage_kb = rss * page_file_kb;
     let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
@@ -320,6 +323,7 @@ fn read_proc<S: core::hash::BuildHasher>(
 
     Ok(ProcessHarvest {
         pid,
+        parent_pid,
         name,
         command,
         mem_usage_percent,
@@ -337,14 +341,16 @@ fn read_proc<S: core::hash::BuildHasher>(
 #[cfg(target_os = "linux")]
 pub fn linux_get_processes_list(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
-    pid_mapping: &mut HashMap<u32, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
+    pid_mapping: &mut HashMap<Pid, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+    // TODO: [PROC THREADS] Add threads
+
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
-                    let pid = dir.file_name().to_string_lossy().trim().parse::<u32>();
+                    let pid = dir.file_name().to_string_lossy().trim().parse::<Pid>();
                     if let Ok(pid) = pid {
                         // I skip checking if the path is also a directory, it's not needed I think?
                         if let Ok(process_object) = read_proc(
@@ -424,7 +430,8 @@ pub fn windows_macos_get_processes_list(
         let disk_usage = process_val.disk_usage();
 
         process_vector.push(ProcessHarvest {
-            pid: process_val.pid() as u32,
+            pid: process_val.pid(),
+            parent_pid: process_val.parent(),
             name,
             command,
             mem_usage_percent: if mem_total_kb > 0 {

@@ -72,7 +72,7 @@ pub struct DataCollector {
     pub data: Data,
     sys: System,
     #[cfg(target_os = "linux")]
-    pid_mapping: HashMap<u32, processes::PrevProcDetails>,
+    pid_mapping: HashMap<crate::Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]

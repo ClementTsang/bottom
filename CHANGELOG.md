@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#220](https://github.com/ClementTsang/bottom/pull/220): Add ability to hide specific temperature and disk entries via config.
 
+- [#223](https://github.com/ClementTsang/bottom/pull/223): Add tree mode for processes.
+
 ### Changes
 
 - [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.
