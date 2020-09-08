@@ -1178,7 +1178,7 @@ impl App {
                             }
                             _ => {}
                         }
-
+                        proc_widget_state.requires_redraw = true;
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
                     }
                 }

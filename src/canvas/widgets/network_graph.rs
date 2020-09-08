@@ -367,6 +367,8 @@ impl NetworkGraphWidget for Painter {
             draw_loc.width,
             &NETWORK_HEADERS_LENS,
             Some(&[0.25, 0.25, 0.25, 0.25]),
+            None,
+            &[3, 2, 1, 0],
             &[3, 2, 1, 0],
         );
 

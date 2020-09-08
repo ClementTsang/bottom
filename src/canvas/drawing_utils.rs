@@ -4,22 +4,26 @@ use std::cmp::min;
 /// Return a (hard)-width vector for column widths.
 /// * `total_width` is how much width we have to work with overall.
 /// * `desired_widths` is the width that is *desired*, but may not be reached.
-/// * `width_thresholds` is the maximal percentage we allow a column to take in the table.  If it is
+/// * `max_widths` is the maximal percentage we allow a column to take in the table.  If it is
 ///    negative, we assume it can take whatever size it wants.
+/// * `min_widths` is the minimal hard width we allow a column to take in the table.  If it is
+///   smaller than this, we just don't use it.
 /// * `column_bias` is how we determine which columns are more important.  A higher value on a
 ///   column means it is more important.
+/// * `spare_bias` is how we determine which column gets spare space first.  Again, higher value
+///   means it is more important.
 ///
 /// **NOTE:** This function ASSUMES THAT ALL PASSED SLICES ARE OF THE SAME SIZE.
-/// **NOTE:** This function automatically takes away 2 from the width as part of the left/right bounds.
+///
+/// **NOTE:** The returned vector may not be the same size as the slices, this is because including
+/// 0-constraints breaks tui-rs.
+///
+/// **NOTE:** This function automatically takes away 2 from the width as part of the left/right
+/// bounds.
 pub fn get_column_widths(
-    total_width: u16, desired_widths: &[u16], width_thresholds: Option<&[f64]>,
-    column_bias: &[usize],
+    total_width: u16, desired_widths: &[u16], max_widths: Option<&[f64]>,
+    min_widths: Option<&[u16]>, column_bias: &[usize], spare_bias: &[usize],
 ) -> Vec<u16> {
-    debug_assert_eq!(desired_widths.len(), column_bias.len());
-    if let Some(width_thresholds) = width_thresholds {
-        debug_assert_eq!(desired_widths.len(), width_thresholds.len());
-    }
-
     let mut total_width_left = total_width.saturating_sub(desired_widths.len() as u16) + 1 - 2;
     let mut column_widths: Vec<u16> = vec![0; desired_widths.len()];
 
@@ -31,7 +35,7 @@ pub fn get_column_widths(
     // Now, let's do a first pass.
     for itx in column_bias {
         let itx = *itx;
-        let desired_width = if let Some(width_thresholds) = width_thresholds {
+        let desired_width = if let Some(width_thresholds) = max_widths {
             if width_thresholds[itx].is_sign_negative() {
                 desired_widths[itx]
             } else {
@@ -44,17 +48,26 @@ pub fn get_column_widths(
             desired_widths[itx]
         };
         let remaining_width = min(total_width_left, desired_width);
-        column_widths[itx] = remaining_width;
-        total_width_left -= remaining_width;
+        if let Some(min_widths) = min_widths {
+            if remaining_width >= min_widths[itx] {
+                column_widths[itx] = remaining_width;
+                total_width_left -= remaining_width;
+            }
+        } else {
+            column_widths[itx] = remaining_width;
+            total_width_left -= remaining_width;
+        }
     }
 
     // Second pass to fill in gaps and spaces
     while total_width_left > 0 {
-        for itx in column_bias {
-            column_widths[*itx] += 1;
-            total_width_left -= 1;
-            if total_width_left == 0 {
-                break;
+        for itx in spare_bias {
+            if column_widths[*itx] > 0 {
+                column_widths[*itx] += 1;
+                total_width_left -= 1;
+                if total_width_left == 0 {
+                    break;
+                }
             }
         }
     }

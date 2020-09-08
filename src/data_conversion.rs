@@ -2,7 +2,7 @@
 //! can actually handle.
 use crate::Pid;
 use crate::{
-    app::{data_farmer, data_harvester, App, Filter},
+    app::{data_farmer, data_harvester, App, Filter, ProcWidgetState},
     utils::{self, gen_util::*},
 };
 use data_harvester::processes::ProcessSorting;
@@ -795,6 +795,69 @@ pub fn tree_process_data(
             None => None,
         })
         .collect::<Vec<_>>()
+}
+
+pub fn stringify_process_data(
+    proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
+) -> Vec<(Vec<(String, Option<String>, bool)>, bool)> {
+    let is_proc_widget_grouped = proc_widget_state.is_grouped;
+    let is_using_command = proc_widget_state.is_using_command;
+    let is_tree = proc_widget_state.is_tree_mode;
+    let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
+
+    finalized_process_data
+        .iter()
+        .map(|process| {
+            (
+                vec![
+                    (
+                        if is_proc_widget_grouped {
+                            process.group_pids.len().to_string()
+                        } else {
+                            process.pid.to_string()
+                        },
+                        None,
+                        false,
+                    ),
+                    (
+                        if is_tree {
+                            if let Some(prefix) = &process.process_description_prefix {
+                                prefix.clone()
+                            } else {
+                                String::default()
+                            }
+                        } else if is_using_command {
+                            process.command.clone()
+                        } else {
+                            process.name.clone()
+                        },
+                        None,
+                        true,
+                    ),
+                    (format!("{:.1}%", process.cpu_percent_usage), None, false),
+                    (
+                        if mem_enabled {
+                            format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                        } else {
+                            format!("{:.1}%", process.mem_percent_usage)
+                        },
+                        None,
+                        false,
+                    ),
+                    (process.read_per_sec.clone(), None, false),
+                    (process.write_per_sec.clone(), None, false),
+                    (process.total_read.clone(), None, false),
+                    (process.total_write.clone(), None, false),
+                    (
+                        process.process_state.clone(),
+                        Some(process.process_char.to_string()),
+                        true,
+                    ),
+                ],
+                process.is_disabled_entry,
+            )
+        })
+        .collect()
 }
 
 pub fn group_process_data(

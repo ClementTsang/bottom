@@ -82,7 +82,9 @@ impl TempTableWidget for Painter {
                     draw_loc.width,
                     &temp_widget_state.table_width_state.desired_column_widths,
                     Some(&[0.80, -1.0]),
+                    None,
                     &[1, 0],
+                    &[0, 1],
                 );
             }
 

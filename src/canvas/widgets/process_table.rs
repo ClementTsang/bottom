@@ -1,5 +1,5 @@
 use crate::{
-    app::{data_harvester::processes::ProcessSorting, App},
+    app::App,
     canvas::{
         drawing_utils::{get_column_widths, get_search_start_position, get_start_position},
         Painter,
@@ -175,7 +175,7 @@ impl ProcessTableWidget for Painter {
 
             if let Some(process_data) = &app_state
                 .canvas_data
-                .finalized_process_data_map
+                .stringified_process_data_map
                 .get(&widget_id)
             {
                 let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
@@ -202,6 +202,14 @@ impl ProcessTableWidget for Painter {
                 };
 
                 let sliced_vec = &process_data[start_position..];
+                let processed_sliced_vec = sliced_vec.iter().map(|(data, disabled)| {
+                    (
+                        data.iter()
+                            .map(|(entry, _alternative, _to_shorten)| entry)
+                            .collect::<Vec<_>>(),
+                        disabled,
+                    )
+                });
                 let proc_table_state = &mut proc_widget_state.scroll_state.table_state;
                 proc_table_state.select(Some(
                     proc_widget_state
@@ -211,57 +219,6 @@ impl ProcessTableWidget for Painter {
                 ));
 
                 // Draw!
-                let is_proc_widget_grouped = proc_widget_state.is_grouped;
-                let is_using_command = proc_widget_state.is_using_command;
-                let is_tree = proc_widget_state.is_tree_mode;
-                let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
-
-                // FIXME: [PROC OPTIMIZE] This can definitely be optimized; string references work fine here!
-                let processed_sliced_vec = sliced_vec.iter().map(|process| {
-                    (
-                        vec![
-                            if is_proc_widget_grouped {
-                                process.group_pids.len().to_string()
-                            } else {
-                                process.pid.to_string()
-                            },
-                            if is_tree {
-                                if let Some(prefix) = &process.process_description_prefix {
-                                    prefix.clone()
-                                } else {
-                                    String::default()
-                                }
-                            } else if is_using_command {
-                                process.command.clone()
-                            } else {
-                                process.name.clone()
-                            },
-                            format!("{:.1}%", process.cpu_percent_usage),
-                            if mem_enabled {
-                                format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
-                            } else {
-                                format!("{:.1}%", process.mem_percent_usage)
-                            },
-                            process.read_per_sec.clone(),
-                            process.write_per_sec.clone(),
-                            process.total_read.clone(),
-                            process.total_write.clone(),
-                            process.process_state.clone(),
-                        ]
-                        .into_iter(),
-                        process.is_disabled_entry,
-                    )
-                });
-
-                // FIXME: GET RID OF THIS CLONE.  THIS GETS FIXED BY REWRITING THE ABOVE PROCESSED_SLICED_VEC INTO CONVERSION
-                let process_rows = processed_sliced_vec.clone().map(|(data, disabled)| {
-                    if disabled {
-                        Row::StyledData(data, self.colours.disabled_text_style)
-                    } else {
-                        Row::Data(data)
-                    }
-                });
-
                 let process_headers = proc_widget_state.columns.get_column_headers(
                     &proc_widget_state.process_sorting_type,
                     proc_widget_state.is_process_sort_descending,
@@ -271,12 +228,13 @@ impl ProcessTableWidget for Painter {
                 if recalculate_column_widths {
                     let mut column_widths = process_headers
                         .iter()
-                        .map(|entry| entry.len() as u16)
+                        .map(|entry| std::cmp::max(entry.len(), 5) as u16)
                         .collect::<Vec<_>>();
+                    let min_width_ratios = column_widths.clone();
 
                     proc_widget_state.table_width_state.desired_column_widths = {
-                        for (row, _disabled) in processed_sliced_vec {
-                            for (col, entry) in row.enumerate() {
+                        for (row, _disabled) in processed_sliced_vec.clone() {
+                            for (col, entry) in row.iter().enumerate() {
                                 if let Some(col_width) = column_widths.get_mut(col) {
                                     if entry.len() as u16 > *col_width {
                                         *col_width = entry.len() as u16;
@@ -287,12 +245,7 @@ impl ProcessTableWidget for Painter {
                         column_widths
                     };
 
-                    debug!(
-                        "DCW: {:?}",
-                        proc_widget_state.table_width_state.desired_column_widths
-                    );
-
-                    let width_ratios = if proc_widget_state.is_grouped {
+                    let max_width_ratios = if proc_widget_state.is_grouped {
                         if proc_widget_state.is_using_command {
                             vec![0.25, 0.6, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
                         } else {
@@ -310,19 +263,61 @@ impl ProcessTableWidget for Painter {
                         vec![0, 2, 3, 1, 4, 5, 6, 7, 8]
                     };
 
+                    let space_bias = if proc_widget_state.is_grouped {
+                        vec![5, 4, 7, 6, 1, 3, 2, 0]
+                    } else {
+                        vec![5, 4, 8, 7, 6, 1, 3, 2, 0]
+                    };
+
                     proc_widget_state.table_width_state.calculated_column_widths =
                         get_column_widths(
                             draw_loc.width,
                             &proc_widget_state.table_width_state.desired_column_widths,
-                            Some(&width_ratios),
+                            Some(&max_width_ratios),
+                            Some(&min_width_ratios),
                             &column_bias,
+                            &space_bias,
                         );
-                    debug!(
-                        "DCW: {:?}",
-                        proc_widget_state.table_width_state.calculated_column_widths
-                    );
-                    debug!("Space available: {}", draw_loc.width);
                 }
+
+                let ccw = &proc_widget_state.table_width_state.calculated_column_widths;
+
+                let process_rows = sliced_vec.iter().cloned().map(|(data, disabled)| {
+                    let truncated_data = data.into_iter().enumerate().map(
+                        |(itx, (entry, alternative, to_shorten))| {
+                            if let Some(calculated_col_width) = ccw.get(itx) {
+                                if to_shorten {
+                                    if entry.len() > *calculated_col_width as usize
+                                        && *calculated_col_width > 0
+                                    {
+                                        if let Some(alternative) = alternative {
+                                            alternative
+                                        } else if *calculated_col_width > 3 {
+                                            // Truncate with ellipsis
+                                            let (first, _last) =
+                                                entry.split_at(*calculated_col_width as usize - 3);
+                                            format!("{}...", first)
+                                        } else {
+                                            entry
+                                        }
+                                    } else {
+                                        entry
+                                    }
+                                } else {
+                                    entry
+                                }
+                            } else {
+                                entry
+                            }
+                        },
+                    );
+
+                    if disabled {
+                        Row::StyledData(truncated_data, self.colours.disabled_text_style)
+                    } else {
+                        Row::Data(truncated_data)
+                    }
+                });
 
                 // TODO: gotop's "x out of y" thing is really nice to help keep track of the scroll position.
                 f.render_stateful_widget(

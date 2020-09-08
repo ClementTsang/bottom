@@ -82,6 +82,8 @@ impl DiskTableWidget for Painter {
                     draw_loc.width,
                     &disk_widget_state.table_width_state.desired_column_widths,
                     Some(&[0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13]),
+                    Some(&[4, 5, 3, 4, 2, 2, 2]),
+                    &[4, 3, 2, 1, 0, 5, 6],
                     &[4, 3, 2, 1, 0, 5, 6],
                 );
             }

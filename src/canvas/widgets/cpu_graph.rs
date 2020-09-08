@@ -338,8 +338,14 @@ impl CpuGraphWidget for Painter {
 
             // Calculate widths
             if recalculate_column_widths {
-                cpu_widget_state.table_width_state.calculated_column_widths =
-                    get_column_widths(draw_loc.width, &[6, 4], Some(&[0.5, 0.5]), &[1, 0]);
+                cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
+                    draw_loc.width,
+                    &[6, 4],
+                    Some(&[0.5, 0.5]),
+                    None,
+                    &[1, 0],
+                    &[1, 0],
+                );
             }
 
             // Note we don't set highlight_style, as it should always be shown for this widget.
