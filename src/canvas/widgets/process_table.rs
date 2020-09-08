@@ -1,9 +1,7 @@
 use crate::{
     app::{data_harvester::processes::ProcessSorting, App},
     canvas::{
-        drawing_utils::{
-            get_search_start_position, get_start_position, get_variable_intrinsic_widths,
-        },
+        drawing_utils::{get_column_widths, get_search_start_position, get_start_position},
         Painter,
     },
     constants::*,
@@ -108,7 +106,14 @@ impl ProcessTableWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
+        let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+            let recalculate_column_widths =
+                should_get_widget_bounds || proc_widget_state.requires_redraw;
+            if proc_widget_state.requires_redraw {
+                proc_widget_state.requires_redraw = false;
+            }
+
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let margined_draw_loc = Layout::default()
                 .constraints([Constraint::Percentage(100)].as_ref())
@@ -212,39 +217,45 @@ impl ProcessTableWidget for Painter {
                 let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
 
                 // FIXME: [PROC OPTIMIZE] This can definitely be optimized; string references work fine here!
-                let process_rows = sliced_vec.iter().map(|process| {
-                    let data = vec![
-                        if is_proc_widget_grouped {
-                            process.group_pids.len().to_string()
-                        } else {
-                            process.pid.to_string()
-                        },
-                        if is_tree {
-                            if let Some(prefix) = &process.process_description_prefix {
-                                prefix.clone()
+                let processed_sliced_vec = sliced_vec.iter().map(|process| {
+                    (
+                        vec![
+                            if is_proc_widget_grouped {
+                                process.group_pids.len().to_string()
                             } else {
-                                String::default()
-                            }
-                        } else if is_using_command {
-                            process.command.clone()
-                        } else {
-                            process.name.clone()
-                        },
-                        format!("{:.1}%", process.cpu_percent_usage),
-                        if mem_enabled {
-                            format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
-                        } else {
-                            format!("{:.1}%", process.mem_percent_usage)
-                        },
-                        process.read_per_sec.clone(),
-                        process.write_per_sec.clone(),
-                        process.total_read.clone(),
-                        process.total_write.clone(),
-                        process.process_state.clone(),
-                    ]
-                    .into_iter();
+                                process.pid.to_string()
+                            },
+                            if is_tree {
+                                if let Some(prefix) = &process.process_description_prefix {
+                                    prefix.clone()
+                                } else {
+                                    String::default()
+                                }
+                            } else if is_using_command {
+                                process.command.clone()
+                            } else {
+                                process.name.clone()
+                            },
+                            format!("{:.1}%", process.cpu_percent_usage),
+                            if mem_enabled {
+                                format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                            } else {
+                                format!("{:.1}%", process.mem_percent_usage)
+                            },
+                            process.read_per_sec.clone(),
+                            process.write_per_sec.clone(),
+                            process.total_read.clone(),
+                            process.total_write.clone(),
+                            process.process_state.clone(),
+                        ]
+                        .into_iter(),
+                        process.is_disabled_entry,
+                    )
+                });
 
-                    if process.is_disabled_entry {
+                // FIXME: GET RID OF THIS CLONE.  THIS GETS FIXED BY REWRITING THE ABOVE PROCESSED_SLICED_VEC INTO CONVERSION
+                let process_rows = processed_sliced_vec.clone().map(|(data, disabled)| {
+                    if disabled {
                         Row::StyledData(data, self.colours.disabled_text_style)
                     } else {
                         Row::Data(data)
@@ -256,35 +267,62 @@ impl ProcessTableWidget for Painter {
                     proc_widget_state.is_process_sort_descending,
                 );
 
-                let process_headers_lens: Vec<usize> = process_headers
-                    .iter()
-                    .map(|entry| entry.len())
-                    .collect::<Vec<_>>();
-
                 // Calculate widths
-                let width = f64::from(draw_loc.width);
+                if recalculate_column_widths {
+                    let mut column_widths = process_headers
+                        .iter()
+                        .map(|entry| entry.len() as u16)
+                        .collect::<Vec<_>>();
 
-                // TODO: This is a ugly work-around for now.
-                let width_ratios = if proc_widget_state.is_grouped {
-                    if proc_widget_state.is_using_command {
-                        vec![0.05, 0.7, 0.05, 0.05, 0.0375, 0.0375, 0.0375, 0.0375]
+                    proc_widget_state.table_width_state.desired_column_widths = {
+                        for (row, _disabled) in processed_sliced_vec {
+                            for (col, entry) in row.enumerate() {
+                                if let Some(col_width) = column_widths.get_mut(col) {
+                                    if entry.len() as u16 > *col_width {
+                                        *col_width = entry.len() as u16;
+                                    }
+                                }
+                            }
+                        }
+                        column_widths
+                    };
+
+                    debug!(
+                        "DCW: {:?}",
+                        proc_widget_state.table_width_state.desired_column_widths
+                    );
+
+                    let width_ratios = if proc_widget_state.is_grouped {
+                        if proc_widget_state.is_using_command {
+                            vec![0.25, 0.6, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
+                        } else {
+                            vec![0.25, 0.4, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
+                        }
+                    } else if proc_widget_state.is_using_command {
+                        vec![0.25, 0.6, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2, 0.2]
                     } else {
-                        vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.15, 0.15]
-                    }
-                } else if proc_widget_state.is_using_command {
-                    vec![0.05, 0.7, 0.05, 0.05, 0.03, 0.03, 0.03, 0.03]
-                } else if proc_widget_state.is_tree_mode {
-                    vec![0.05, 0.4, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-                } else {
-                    vec![0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-                };
-                let variable_intrinsic_results = get_variable_intrinsic_widths(
-                    width as u16,
-                    &width_ratios,
-                    &process_headers_lens,
-                );
-                let intrinsic_widths =
-                    &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
+                        vec![0.25, 0.4, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2, 0.2]
+                    };
+
+                    let column_bias = if proc_widget_state.is_grouped {
+                        vec![0, 2, 3, 1, 4, 5, 6, 7]
+                    } else {
+                        vec![0, 2, 3, 1, 4, 5, 6, 7, 8]
+                    };
+
+                    proc_widget_state.table_width_state.calculated_column_widths =
+                        get_column_widths(
+                            draw_loc.width,
+                            &proc_widget_state.table_width_state.desired_column_widths,
+                            Some(&width_ratios),
+                            &column_bias,
+                        );
+                    debug!(
+                        "DCW: {:?}",
+                        proc_widget_state.table_width_state.calculated_column_widths
+                    );
+                    debug!("Space available: {}", draw_loc.width);
+                }
 
                 // TODO: gotop's "x out of y" thing is really nice to help keep track of the scroll position.
                 f.render_stateful_widget(
@@ -294,7 +332,9 @@ impl ProcessTableWidget for Painter {
                         .highlight_style(highlight_style)
                         .style(self.colours.text_style)
                         .widths(
-                            &(intrinsic_widths
+                            &(proc_widget_state
+                                .table_width_state
+                                .calculated_column_widths
                                 .iter()
                                 .map(|calculated_width| {
                                     Constraint::Length(*calculated_width as u16)

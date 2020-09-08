@@ -298,6 +298,7 @@ impl App {
                                 .columns
                                 .toggle(&processes::ProcessSorting::Pid);
 
+                            proc_widget_state.requires_redraw = true;
                             self.proc_state.force_update = Some(self.current_widget.widget_id);
                         }
                     }
@@ -502,6 +503,7 @@ impl App {
             }
 
             self.proc_state.force_update = Some(self.current_widget.widget_id);
+            proc_widget_state.requires_redraw = true;
         }
     }
 

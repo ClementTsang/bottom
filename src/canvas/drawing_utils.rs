@@ -1,78 +1,65 @@
 use crate::app;
-use itertools::izip;
+use std::cmp::min;
 
-// TODO: Reverse intrinsic?
-/// A somewhat jury-rigged solution to simulate a variable intrinsic layout for
-/// table widths.  Note that this will do one main pass to try to properly
-/// allocate widths.  This will thus potentially cut off latter elements
-/// (return size of 0) if it is too small (threshold), but will try its best.
+/// Return a (hard)-width vector for column widths.
+/// * `total_width` is how much width we have to work with overall.
+/// * `desired_widths` is the width that is *desired*, but may not be reached.
+/// * `width_thresholds` is the maximal percentage we allow a column to take in the table.  If it is
+///    negative, we assume it can take whatever size it wants.
+/// * `column_bias` is how we determine which columns are more important.  A higher value on a
+///   column means it is more important.
 ///
-/// `width thresholds` and `desired_widths_ratio` should be the same length.
-/// Otherwise bad things happen.
-pub fn get_variable_intrinsic_widths(
-    total_width: u16, desired_widths_ratio: &[f64], width_thresholds: &[usize],
-) -> (Vec<u16>, usize) {
-    let num_widths = desired_widths_ratio.len();
-    let mut resulting_widths: Vec<u16> = vec![0; num_widths];
-    let mut last_index = 0;
+/// **NOTE:** This function ASSUMES THAT ALL PASSED SLICES ARE OF THE SAME SIZE.
+/// **NOTE:** This function automatically takes away 2 from the width as part of the left/right bounds.
+pub fn get_column_widths(
+    total_width: u16, desired_widths: &[u16], width_thresholds: Option<&[f64]>,
+    column_bias: &[usize],
+) -> Vec<u16> {
+    debug_assert_eq!(desired_widths.len(), column_bias.len());
+    if let Some(width_thresholds) = width_thresholds {
+        debug_assert_eq!(desired_widths.len(), width_thresholds.len());
+    }
 
-    let mut remaining_width = (total_width - (num_widths as u16 - 1)) as i32; // Required for spaces...
-    let desired_widths = desired_widths_ratio
-        .iter()
-        .map(|&desired_width_ratio| (desired_width_ratio * total_width as f64) as i32);
+    let mut total_width_left = total_width.saturating_sub(desired_widths.len() as u16) + 1 - 2;
+    let mut column_widths: Vec<u16> = vec![0; desired_widths.len()];
 
-    for (desired_width, resulting_width, width_threshold) in izip!(
-        desired_widths,
-        resulting_widths.iter_mut(),
-        width_thresholds
-    ) {
-        *resulting_width = if desired_width < *width_threshold as i32 {
-            // Try to take threshold, else, 0
-            if remaining_width < *width_threshold as i32 {
-                0
+    // Let's sort out our bias into a sorted list (reverse to get descending order).
+    let mut bias_list = column_bias.iter().enumerate().collect::<Vec<_>>();
+    bias_list.sort_by(|a, b| a.1.cmp(b.1));
+    bias_list.reverse();
+
+    // Now, let's do a first pass.
+    for itx in column_bias {
+        let itx = *itx;
+        let desired_width = if let Some(width_thresholds) = width_thresholds {
+            if width_thresholds[itx].is_sign_negative() {
+                desired_widths[itx]
             } else {
-                remaining_width -= *width_threshold as i32;
-                *width_threshold as u16
+                min(
+                    desired_widths[itx],
+                    (width_thresholds[itx] * total_width as f64).ceil() as u16,
+                )
             }
         } else {
-            // Take as large as possible
-            if remaining_width < desired_width {
-                // Check the biggest chunk possible
-                if remaining_width < *width_threshold as i32 {
-                    0
-                } else {
-                    let temp_width = remaining_width;
-                    remaining_width = 0;
-                    temp_width as u16
-                }
-            } else {
-                remaining_width -= desired_width;
-                desired_width as u16
-            }
+            desired_widths[itx]
         };
-
-        if *resulting_width == 0 {
-            break;
-        } else {
-            last_index += 1;
-        }
+        let remaining_width = min(total_width_left, desired_width);
+        column_widths[itx] = remaining_width;
+        total_width_left -= remaining_width;
     }
 
-    // Simple redistribution tactic - if there's any space left, split it evenly amongst all members
-    if last_index < num_widths && last_index != 0 {
-        let for_all_widths = (remaining_width / last_index as i32) as u16;
-        let mut remainder = remaining_width % last_index as i32;
-
-        for resulting_width in &mut resulting_widths {
-            *resulting_width += for_all_widths;
-            if remainder > 0 {
-                *resulting_width += 1;
-                remainder -= 1;
+    // Second pass to fill in gaps and spaces
+    while total_width_left > 0 {
+        for itx in column_bias {
+            column_widths[*itx] += 1;
+            total_width_left -= 1;
+            if total_width_left == 0 {
+                break;
             }
         }
     }
 
-    (resulting_widths, last_index)
+    column_widths.into_iter().filter(|x| *x > 0).collect()
 }
 
 pub fn get_search_start_position(

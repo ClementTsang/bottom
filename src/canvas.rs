@@ -67,7 +67,6 @@ pub struct Painter {
     widget_layout: BottomLayout,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
     table_height_offset: u16,
-    requires_boundary_recalculation: bool,
 }
 
 impl Painter {
@@ -152,7 +151,6 @@ impl Painter {
             widget_layout,
             derived_widget_draw_locs: Vec::default(),
             table_height_offset: if is_basic_mode { 2 } else { 4 } + table_gap,
-            requires_boundary_recalculation: true,
         }
     }
 
@@ -401,25 +399,18 @@ impl Painter {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
 
-                let cpu_height = (app_state.canvas_data.cpu_data.len() / 4) as u16
-                    + (if app_state.canvas_data.cpu_data.len() % 4 == 0 {
-                        0
-                    } else {
-                        1
-                    });
-
-                // A little hack to force the widget boundary recalculation.  This is required here
-                // as basic mode has a height of 0 initially, which breaks things.
-                if self.requires_boundary_recalculation {
-                    app_state.is_determining_widget_boundary = true;
-                }
-                self.requires_boundary_recalculation = cpu_height == 0;
-
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
                         [
-                            Constraint::Length(cpu_height),
+                            Constraint::Length(
+                                (app_state.canvas_data.cpu_data.len() / 4) as u16
+                                    + (if app_state.canvas_data.cpu_data.len() % 4 == 0 {
+                                        0
+                                    } else {
+                                        1
+                                    }),
+                            ),
                             Constraint::Length(1),
                             Constraint::Length(2),
                             Constraint::Length(2),
@@ -486,7 +477,7 @@ impl Painter {
                     self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3], widget_id);
                 }
             } else {
-                // Draws using the passed in (or default) layout.  NOT basic so far.
+                // Draws using the passed in (or default) layout.
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
                     let row_draw_locs = Layout::default()
                         .margin(0)

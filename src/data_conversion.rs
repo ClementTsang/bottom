@@ -471,6 +471,7 @@ pub fn tree_process_data(
     sort_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
     // TODO: [TREE] Allow for collapsing entries.
+    // TODO: [TREE] Option to sort usage by total branch usage or individual value usage?
 
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
@@ -565,18 +566,14 @@ pub fn tree_process_data(
         pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
     ) {
         // Sorting is special for tree data.  So, by default, things are "sorted"
-        // via the DFS, except for (at least Unix) PID 1 and 2, which are in that order.
-        // Otherwise, since this is DFS of the scanned PIDs (which are in order), you actually
-        // get a REVERSE order --- so, you get higher PIDs earlier than lower ones.
-        // But this is a tree.  So, you'll get a bit of a combination, but the general idea
-        // is that in a tree level, it's descending order, except, again, for the first layer.
-        // This is how htop does it by default.
+        // via the DFS.  Otherwise, since this is DFS of the scanned PIDs (which are in order),
+        // you actually get a REVERSE order --- so, you get higher PIDs earlier than lower ones.
         //
         // So how do we "sort"?  The current idea is that:
         // - We sort *per-level*.  Say, I want to sort by CPU.  The "first level" is sorted
         //   by CPU in terms of its usage.  All its direct children are sorted by CPU
         //   with *their* siblings.  Etc.
-        // - The default is thus PIDs in reverse order (descending).  We set it to this when
+        // - The default is thus PIDs in ascending order.  We set it to this when
         //   we first enable the mode.
 
         // So first, let's look at the children... (post-order again)
@@ -701,8 +698,7 @@ pub fn tree_process_data(
     }
 
     /// A DFS traversal to correctly build the prefix lines (the pretty '├' and '─' lines) and
-    /// the correct order to the PID tree as a vector (DFS is the default order htop seems to use
-    /// so we're shamelessly copying that).
+    /// the correct order to the PID tree as a vector.
     fn build_explored_pids(
         current_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid>>,
         prev_drawn_lines: &str,

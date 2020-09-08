@@ -1,11 +1,10 @@
 use lazy_static::lazy_static;
 use std::borrow::Cow;
-use std::cmp::max;
 
 use crate::{
     app::{layout_manager::WidgetDirection, App},
     canvas::{
-        drawing_utils::{get_start_position, get_variable_intrinsic_widths},
+        drawing_utils::{get_column_widths, get_start_position},
         Painter,
     },
     constants::*,
@@ -20,19 +19,14 @@ use tui::{
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
-const CPU_SELECT_LEGEND_HEADER: [&str; 2] = ["CPU", "Show"];
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 const AVG_POSITION: usize = 1;
 const ALL_POSITION: usize = 0;
 
 lazy_static! {
-    static ref CPU_LEGEND_HEADER_LENS: Vec<usize> = CPU_LEGEND_HEADER
+    static ref CPU_LEGEND_HEADER_LENS: Vec<u16> = CPU_LEGEND_HEADER
         .iter()
-        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
-        .collect::<Vec<_>>();
-    static ref CPU_SELECT_LEGEND_HEADER_LENS: Vec<usize> = CPU_SELECT_LEGEND_HEADER
-        .iter()
-        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .map(|entry| entry.len() as u16)
         .collect::<Vec<_>>();
 }
 
@@ -273,6 +267,7 @@ impl CpuGraphWidget for Painter {
     fn draw_cpu_legend<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
+        let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))
         {
             cpu_widget_state.is_legend_hidden = false;
@@ -342,12 +337,10 @@ impl CpuGraphWidget for Painter {
             });
 
             // Calculate widths
-            let width = f64::from(draw_loc.width);
-            let width_ratios = vec![0.5, 0.5];
-
-            let variable_intrinsic_results =
-                get_variable_intrinsic_widths(width as u16, &width_ratios, &CPU_LEGEND_HEADER_LENS);
-            let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
+            if recalculate_column_widths {
+                cpu_widget_state.table_width_state.calculated_column_widths =
+                    get_column_widths(draw_loc.width, &[6, 4], Some(&[0.5, 0.5]), &[1, 0]);
+            }
 
             // Note we don't set highlight_style, as it should always be shown for this widget.
             let border_and_title_style = if is_on_widget {
@@ -367,7 +360,9 @@ impl CpuGraphWidget for Painter {
                     .header_style(self.colours.table_header_style)
                     .highlight_style(self.colours.currently_selected_text_style)
                     .widths(
-                        &(intrinsic_widths
+                        &(cpu_widget_state
+                            .table_width_state
+                            .calculated_column_widths
                             .iter()
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),

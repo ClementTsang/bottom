@@ -106,6 +106,7 @@ fn main() -> Result<()> {
         termination_hook();
     })
     .unwrap();
+    let mut first_run = true;
 
     while !is_terminated.load(Ordering::SeqCst) {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
@@ -122,6 +123,13 @@ fn main() -> Result<()> {
                 }
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(&data);
+
+                    // This thing is required as otherwise, some widgets can't draw correctly w/o
+                    // some data (or they need to be re-drawn).
+                    if first_run {
+                        first_run = false;
+                        app.is_force_redraw = true;
+                    }
 
                     if !app.is_frozen {
                         // Convert all data into tui-compliant components

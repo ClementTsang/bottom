@@ -1,6 +1,4 @@
 use lazy_static::lazy_static;
-use std::cmp::max;
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -11,7 +9,7 @@ use tui::{
 use crate::{
     app,
     canvas::{
-        drawing_utils::{get_start_position, get_variable_intrinsic_widths},
+        drawing_utils::{get_column_widths, get_start_position},
         Painter,
     },
     constants::*,
@@ -20,9 +18,9 @@ use crate::{
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 
 lazy_static! {
-    static ref TEMP_HEADERS_LENS: Vec<usize> = TEMP_HEADERS
+    static ref TEMP_HEADERS_LENS: Vec<u16> = TEMP_HEADERS
         .iter()
-        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .map(|entry| entry.len() as u16)
         .collect::<Vec<_>>();
 }
 pub trait TempTableWidget {
@@ -37,6 +35,7 @@ impl TempTableWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
+        let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(temp_widget_state) = app_state.temp_state.widget_states.get_mut(&widget_id) {
             let temp_sensor_data: &mut [Vec<String>] = &mut app_state.canvas_data.temp_sensor_data;
 
@@ -66,11 +65,26 @@ impl TempTableWidget for Painter {
             let temperature_rows = sliced_vec.iter().map(|temp_row| Row::Data(temp_row.iter()));
 
             // Calculate widths
-            let width = f64::from(draw_loc.width);
-            let width_ratios = [0.5, 0.5];
-            let variable_intrinsic_results =
-                get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
-            let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
+            if recalculate_column_widths {
+                temp_widget_state.table_width_state.desired_column_widths = {
+                    let mut column_widths = TEMP_HEADERS_LENS.clone();
+                    for row in sliced_vec {
+                        for (col, entry) in row.iter().enumerate() {
+                            if entry.len() as u16 > column_widths[col] {
+                                column_widths[col] = entry.len() as u16;
+                            }
+                        }
+                    }
+
+                    column_widths
+                };
+                temp_widget_state.table_width_state.calculated_column_widths = get_column_widths(
+                    draw_loc.width,
+                    &temp_widget_state.table_width_state.desired_column_widths,
+                    Some(&[0.80, -1.0]),
+                    &[1, 0],
+                );
+            }
 
             let (border_and_title_style, highlight_style) = if is_on_widget {
                 (
@@ -128,7 +142,9 @@ impl TempTableWidget for Painter {
                     .highlight_style(highlight_style)
                     .style(self.colours.text_style)
                     .widths(
-                        &(intrinsic_widths
+                        &(temp_widget_state
+                            .table_width_state
+                            .calculated_column_widths
                             .iter()
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),
