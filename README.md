@@ -20,6 +20,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Homebrew](#homebrew)
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
+  - [winget](#winget)
   - [Auto-completion](#auto-completion)
 - [Usage](#usage)
   - [Flags](#flags)
@@ -157,6 +158,20 @@ choco install bottom
 # Version number may be required for newer releases, if available:
 choco install bottom --version=0.4.7
 ```
+
+### winget
+
+You can find the packages [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/Clement/bottom).
+Since validation of the package takes time, it may take a while to become available after a release.
+
+```bash
+winget install bottom
+```
+
+You can also manually do the same thing by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
+and installing via the `.msi` file.
+
+You can uninstall via Control Panel or Options in Windows.
 
 ### Auto-completion
 
