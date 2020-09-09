@@ -62,9 +62,9 @@ impl TempTableWidget for Painter {
                     .saturating_sub(start_position),
             ));
             let sliced_vec = &temp_sensor_data[start_position..];
-            let temperature_rows = sliced_vec.iter().map(|temp_row| Row::Data(temp_row.iter()));
 
             // Calculate widths
+            let hard_widths = [None, None];
             if recalculate_column_widths {
                 temp_widget_state.table_width_state.desired_column_widths = {
                     let mut column_widths = TEMP_HEADERS_LENS.clone();
@@ -80,7 +80,7 @@ impl TempTableWidget for Painter {
                 };
                 temp_widget_state.table_width_state.calculated_column_widths = get_column_widths(
                     draw_loc.width,
-                    &[None, None],
+                    &hard_widths,
                     &(TEMP_HEADERS_LENS
                         .iter()
                         .map(|width| Some(*width))
@@ -95,6 +95,44 @@ impl TempTableWidget for Painter {
                     &[1, 0],
                 );
             }
+
+            let dcw = &temp_widget_state.table_width_state.desired_column_widths;
+            let ccw = &temp_widget_state.table_width_state.calculated_column_widths;
+            let temperature_rows =
+                sliced_vec.iter().map(|temp_row| {
+                    let truncated_data = temp_row.iter().zip(&hard_widths).enumerate().map(
+                        |(itx, (entry, width))| {
+                            if width.is_none() {
+                                if let (Some(desired_col_width), Some(calculated_col_width)) =
+                                    (dcw.get(itx), ccw.get(itx))
+                                {
+                                    if *desired_col_width > *calculated_col_width
+                                        && *calculated_col_width > 0
+                                    {
+                                        if entry.len() > *calculated_col_width as usize
+                                            && *calculated_col_width > 1
+                                        {
+                                            // Truncate with ellipsis
+                                            let (first, _last) =
+                                                entry.split_at(*calculated_col_width as usize - 1);
+                                            format!("{}…", first)
+                                        } else {
+                                            entry.clone()
+                                        }
+                                    } else {
+                                        entry.clone()
+                                    }
+                                } else {
+                                    entry.clone()
+                                }
+                            } else {
+                                entry.clone()
+                            }
+                        },
+                    );
+
+                    Row::Data(truncated_data)
+                });
 
             let (border_and_title_style, highlight_style) = if is_on_widget {
                 (

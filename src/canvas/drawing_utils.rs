@@ -59,16 +59,14 @@ pub fn get_column_widths(
         }
     }
 
-    // Redistribute remaining; this goes between flex evenly.
+    // Redistribute remaining.
     while total_width_left > 0 {
         for itx in spacing_priority {
-            if let Some(col) = hard_widths.get(*itx) {
-                if col.is_none() && column_widths[*itx] > 0 {
-                    column_widths[*itx] += 1;
-                    total_width_left -= 1;
-                    if total_width_left == 0 {
-                        break;
-                    }
+            if column_widths[*itx] > 0 {
+                column_widths[*itx] += 1;
+                total_width_left -= 1;
+                if total_width_left == 0 {
+                    break;
                 }
             }
         }

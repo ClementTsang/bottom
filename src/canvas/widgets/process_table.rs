@@ -205,7 +205,7 @@ impl ProcessTableWidget for Painter {
                 let processed_sliced_vec = sliced_vec.iter().map(|(data, disabled)| {
                     (
                         data.iter()
-                            .map(|(entry, _alternative, _to_shorten)| entry)
+                            .map(|(entry, _alternative)| entry)
                             .collect::<Vec<_>>(),
                         disabled,
                     )
@@ -225,6 +225,31 @@ impl ProcessTableWidget for Painter {
                 );
 
                 // Calculate widths
+                let hard_widths = if proc_widget_state.is_grouped {
+                    vec![
+                        Some(7),
+                        None,
+                        Some(8),
+                        Some(8),
+                        Some(8),
+                        Some(8),
+                        Some(7),
+                        Some(8),
+                    ]
+                } else {
+                    vec![
+                        Some(7),
+                        None,
+                        Some(8),
+                        Some(8),
+                        Some(8),
+                        Some(8),
+                        Some(7),
+                        Some(8),
+                        None,
+                    ]
+                };
+
                 if recalculate_column_widths {
                     let mut column_widths = process_headers
                         .iter()
@@ -290,17 +315,7 @@ impl ProcessTableWidget for Painter {
                     proc_widget_state.table_width_state.calculated_column_widths =
                         get_column_widths(
                             draw_loc.width,
-                            &[
-                                Some(7),
-                                None,
-                                Some(8),
-                                Some(8),
-                                Some(8),
-                                Some(8),
-                                Some(7),
-                                Some(8),
-                                None,
-                            ],
+                            &hard_widths,
                             &soft_widths_min,
                             &soft_widths_max,
                             &(proc_widget_state
@@ -311,50 +326,46 @@ impl ProcessTableWidget for Painter {
                                 .collect::<Vec<_>>()),
                             &column_bias,
                         );
-
-                    debug!(
-                        "DCW: {:?}",
-                        proc_widget_state.table_width_state.desired_column_widths
-                    );
-                    debug!(
-                        "CCW: {:?}",
-                        proc_widget_state.table_width_state.calculated_column_widths
-                    );
                 }
 
+                let dcw = &proc_widget_state.table_width_state.desired_column_widths;
                 let ccw = &proc_widget_state.table_width_state.calculated_column_widths;
 
-                let process_rows = sliced_vec.iter().cloned().map(|(data, disabled)| {
-                    let truncated_data = data.into_iter().enumerate().map(
-                        |(itx, (entry, alternative, to_shorten))| {
-                            if let Some(calculated_col_width) = ccw.get(itx) {
-                                if to_shorten {
-                                    if entry.len() > *calculated_col_width as usize
+                let process_rows = sliced_vec.iter().map(|(data, disabled)| {
+                    let truncated_data = data.iter().zip(&hard_widths).enumerate().map(
+                        |(itx, ((entry, alternative), width))| {
+                            if let (Some(desired_col_width), Some(calculated_col_width)) =
+                                (dcw.get(itx), ccw.get(itx))
+                            {
+                                if width.is_none() {
+                                    if *desired_col_width > *calculated_col_width
                                         && *calculated_col_width > 0
                                     {
                                         if let Some(alternative) = alternative {
-                                            alternative
-                                        } else if *calculated_col_width > 3 {
+                                            alternative.clone()
+                                        } else if entry.len() > *calculated_col_width as usize
+                                            && *calculated_col_width > 1
+                                        {
                                             // Truncate with ellipsis
                                             let (first, _last) =
-                                                entry.split_at(*calculated_col_width as usize - 3);
-                                            format!("{}...", first)
+                                                entry.split_at(*calculated_col_width as usize - 1);
+                                            format!("{}…", first)
                                         } else {
-                                            entry
+                                            entry.clone()
                                         }
                                     } else {
-                                        entry
+                                        entry.clone()
                                     }
                                 } else {
-                                    entry
+                                    entry.clone()
                                 }
                             } else {
-                                entry
+                                entry.clone()
                             }
                         },
                     );
 
-                    if disabled {
+                    if *disabled {
                         Row::StyledData(truncated_data, self.colours.disabled_text_style)
                     } else {
                         Row::Data(truncated_data)

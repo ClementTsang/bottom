@@ -43,8 +43,7 @@ pub struct DisplayableData {
     pub temp_sensor_data: Vec<Vec<String>>,
     pub single_process_data: Vec<ConvertedProcessData>, // Contains single process data
     pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>, // What's actually displayed
-    pub stringified_process_data_map:
-        HashMap<u64, Vec<(Vec<(String, Option<String>, bool)>, bool)>>, // Represents the row and whether it is disabled
+    pub stringified_process_data_map: HashMap<u64, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled
     pub mem_label_percent: String,
     pub swap_label_percent: String,
     pub mem_label_frac: String,

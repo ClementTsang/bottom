@@ -303,11 +303,42 @@ impl CpuGraphWidget for Painter {
                 .saturating_sub(start_position);
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
+            // Calculate widths
+            if recalculate_column_widths {
+                cpu_widget_state.table_width_state.desired_column_widths = vec![6, 4];
+                cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
+                    draw_loc.width,
+                    &[None, None],
+                    &[Some(3), Some(4)],
+                    &[Some(0.5), Some(0.5)],
+                    &(cpu_widget_state
+                        .table_width_state
+                        .desired_column_widths
+                        .iter()
+                        .map(|width| Some(*width))
+                        .collect::<Vec<_>>()),
+                    &[1, 0],
+                );
+            }
+
+            let dcw = &cpu_widget_state.table_width_state.desired_column_widths;
+            let ccw = &cpu_widget_state.table_width_state.calculated_column_widths;
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
-                let cpu_string_row: Vec<Cow<'_, str>> = vec![
-                    Cow::Borrowed(&cpu.cpu_name),
-                    Cow::Borrowed(&cpu.legend_value),
-                ];
+                let truncated_name: Cow<'_, str> =
+                    if let (Some(desired_column_width), Some(calculated_column_width)) =
+                        (dcw.get(0), ccw.get(0))
+                    {
+                        if *desired_column_width > *calculated_column_width {
+                            Cow::Borrowed(&cpu.short_cpu_name)
+                        } else {
+                            Cow::Borrowed(&cpu.cpu_name)
+                        }
+                    } else {
+                        Cow::Borrowed(&cpu.cpu_name)
+                    };
+
+                let cpu_string_row: Vec<Cow<'_, str>> =
+                    vec![truncated_name, Cow::Borrowed(&cpu.legend_value)];
 
                 if cpu_string_row.is_empty() {
                     offset_scroll_index += 1;
@@ -335,18 +366,6 @@ impl CpuGraphWidget for Painter {
                     ))
                 }
             });
-
-            // Calculate widths
-            if recalculate_column_widths {
-                cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
-                    draw_loc.width,
-                    &[None, None],
-                    &[Some(3), Some(4)],
-                    &[Some(0.5), Some(0.5)],
-                    &[Some(6), Some(4)],
-                    &[1, 0],
-                );
-            }
 
             // Note we don't set highlight_style, as it should always be shown for this widget.
             let border_and_title_style = if is_on_widget {

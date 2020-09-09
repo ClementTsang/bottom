@@ -71,6 +71,7 @@ pub struct ConvertedProcessData {
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedCpuData {
     pub cpu_name: String,
+    pub short_cpu_name: String,
     /// Tuple is time, value
     pub cpu_data: Vec<Point>,
     /// Represents the value displayed on the legend.
@@ -196,10 +197,24 @@ pub fn convert_cpu_data_points(
                 let mut new_cpu_data = ConvertedCpuData::default();
                 new_cpu_data.cpu_name = if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
                 {
-                    cpu_harvest.cpu_name.to_string()
+                    if let Some(cpu_count) = cpu_harvest.cpu_count {
+                        format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
+                    } else {
+                        cpu_harvest.cpu_prefix.to_string()
+                    }
                 } else {
                     String::default()
                 };
+                new_cpu_data.short_cpu_name =
+                    if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
+                        if let Some(cpu_count) = cpu_harvest.cpu_count {
+                            cpu_count.to_string()
+                        } else {
+                            cpu_harvest.cpu_prefix.to_string()
+                        }
+                    } else {
+                        String::default()
+                    };
                 cpu_data_vector.push(new_cpu_data);
             }
 
@@ -216,6 +231,7 @@ pub fn convert_cpu_data_points(
 
     let mut extended_vec = vec![ConvertedCpuData {
         cpu_name: "All".to_string(),
+        short_cpu_name: "All".to_string(),
         cpu_data: vec![],
         legend_value: String::new(),
     }];
@@ -799,7 +815,7 @@ pub fn tree_process_data(
 
 pub fn stringify_process_data(
     proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
-) -> Vec<(Vec<(String, Option<String>, bool)>, bool)> {
+) -> Vec<(Vec<(String, Option<String>)>, bool)> {
     let is_proc_widget_grouped = proc_widget_state.is_grouped;
     let is_using_command = proc_widget_state.is_using_command;
     let is_tree = proc_widget_state.is_tree_mode;
@@ -817,7 +833,6 @@ pub fn stringify_process_data(
                             process.pid.to_string()
                         },
                         None,
-                        false,
                     ),
                     (
                         if is_tree {
@@ -832,9 +847,8 @@ pub fn stringify_process_data(
                             process.name.clone()
                         },
                         None,
-                        true,
                     ),
-                    (format!("{:.1}%", process.cpu_percent_usage), None, false),
+                    (format!("{:.1}%", process.cpu_percent_usage), None),
                     (
                         if mem_enabled {
                             format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
@@ -842,16 +856,14 @@ pub fn stringify_process_data(
                             format!("{:.1}%", process.mem_percent_usage)
                         },
                         None,
-                        false,
                     ),
-                    (process.read_per_sec.clone(), None, false),
-                    (process.write_per_sec.clone(), None, false),
-                    (process.total_read.clone(), None, false),
-                    (process.total_write.clone(), None, false),
+                    (process.read_per_sec.clone(), None),
+                    (process.write_per_sec.clone(), None),
+                    (process.total_read.clone(), None),
+                    (process.total_write.clone(), None),
                     (
                         process.process_state.clone(),
                         Some(process.process_char.to_string()),
-                        true,
                     ),
                 ],
                 process.is_disabled_entry,

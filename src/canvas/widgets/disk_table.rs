@@ -62,9 +62,9 @@ impl DiskTableWidget for Painter {
                     .saturating_sub(start_position),
             ));
             let sliced_vec = &disk_data[start_position..];
-            let disk_rows = sliced_vec.iter().map(|disk| Row::Data(disk.iter()));
 
             // Calculate widths
+            let hard_widths = [None, None, Some(4), Some(6), Some(6), Some(7), Some(7)];
             if recalculate_column_widths {
                 disk_widget_state.table_width_state.desired_column_widths = {
                     let mut column_widths = DISK_HEADERS_LENS.clone();
@@ -80,7 +80,7 @@ impl DiskTableWidget for Painter {
                 };
                 disk_widget_state.table_width_state.calculated_column_widths = get_column_widths(
                     draw_loc.width,
-                    &[None, None, Some(4), Some(6), Some(6), Some(7), Some(7)],
+                    &hard_widths,
                     &(DISK_HEADERS_LENS
                         .iter()
                         .map(|w| Some(*w))
@@ -95,6 +95,44 @@ impl DiskTableWidget for Painter {
                     &[0, 1, 2, 3, 4, 5, 6],
                 );
             }
+
+            let dcw = &disk_widget_state.table_width_state.desired_column_widths;
+            let ccw = &disk_widget_state.table_width_state.calculated_column_widths;
+            let disk_rows =
+                sliced_vec.iter().map(|disk_row| {
+                    let truncated_data = disk_row.iter().zip(&hard_widths).enumerate().map(
+                        |(itx, (entry, width))| {
+                            if width.is_none() {
+                                if let (Some(desired_col_width), Some(calculated_col_width)) =
+                                    (dcw.get(itx), ccw.get(itx))
+                                {
+                                    if *desired_col_width > *calculated_col_width
+                                        && *calculated_col_width > 0
+                                    {
+                                        if entry.len() > *calculated_col_width as usize
+                                            && *calculated_col_width > 1
+                                        {
+                                            // Truncate with ellipsis
+                                            let (first, _last) =
+                                                entry.split_at(*calculated_col_width as usize - 1);
+                                            format!("{}…", first)
+                                        } else {
+                                            entry.clone()
+                                        }
+                                    } else {
+                                        entry.clone()
+                                    }
+                                } else {
+                                    entry.clone()
+                                }
+                            } else {
+                                entry.clone()
+                            }
+                        },
+                    );
+
+                    Row::Data(truncated_data)
+                });
 
             // TODO: This seems to be bugged?  The selected text style gets "stuck"?  I think this gets fixed with tui 0.10?
             let (border_and_title_style, highlight_style) = if is_on_widget {
