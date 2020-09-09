@@ -31,6 +31,12 @@ pub fn get_column_widths(
         if let Some(Some(hard_width)) = hard_widths.get(*itx) {
             // Hard width...
             let space_taken = min(*hard_width, total_width_left);
+
+            // TODO [COLUMN MOVEMENT]: Remove this
+            if *hard_width > space_taken {
+                break;
+            }
+
             column_widths[*itx] = space_taken;
             total_width_left -= space_taken;
             total_width_left = total_width_left.saturating_sub(1);
@@ -53,6 +59,12 @@ pub fn get_column_widths(
                 *soft_width_min,
             );
             let space_taken = min(min(soft_limit, *soft_width_desired), total_width_left);
+
+            // TODO [COLUMN MOVEMENT]: Remove this
+            if *soft_width_min > space_taken {
+                break;
+            }
+
             column_widths[*itx] = space_taken;
             total_width_left -= space_taken;
             total_width_left = total_width_left.saturating_sub(1);

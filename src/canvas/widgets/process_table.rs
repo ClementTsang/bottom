@@ -291,7 +291,7 @@ impl ProcessTableWidget for Painter {
                     } else {
                         vec![
                             None,
-                            Some(0.4),
+                            Some(0.3),
                             None,
                             None,
                             None,
