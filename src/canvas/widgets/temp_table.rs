@@ -14,6 +14,7 @@ use crate::{
     },
     constants::*,
 };
+use std::borrow::Cow;
 
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 
@@ -115,18 +116,18 @@ impl TempTableWidget for Painter {
                                             // Truncate with ellipsis
                                             let (first, _last) =
                                                 entry.split_at(*calculated_col_width as usize - 1);
-                                            format!("{}…", first)
+                                            Cow::Owned(format!("{}…", first))
                                         } else {
-                                            entry.clone()
+                                            Cow::Borrowed(entry)
                                         }
                                     } else {
-                                        entry.clone()
+                                        Cow::Borrowed(entry)
                                     }
                                 } else {
-                                    entry.clone()
+                                    Cow::Borrowed(entry)
                                 }
                             } else {
-                                entry.clone()
+                                Cow::Borrowed(entry)
                             }
                         },
                     );

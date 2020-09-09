@@ -949,9 +949,9 @@ pub fn group_process_data(
                 wps_f64: p.write_per_sec,
                 tr_f64: p.total_read,
                 tw_f64: p.total_write,
-                process_state: p.process_state, // TODO: What the heck
+                process_state: p.process_state,
                 process_description_prefix: None,
-                process_char: char::default(), // TODO: What the heck
+                process_char: char::default(),
                 is_disabled_entry: false,
             }
         })

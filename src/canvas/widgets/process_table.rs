@@ -14,6 +14,7 @@ use tui::{
     widgets::{Block, Borders, Paragraph, Row, Table, Text},
 };
 
+use std::borrow::Cow;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
@@ -342,25 +343,25 @@ impl ProcessTableWidget for Painter {
                                         && *calculated_col_width > 0
                                     {
                                         if let Some(alternative) = alternative {
-                                            alternative.clone()
+                                            Cow::Borrowed(alternative)
                                         } else if entry.len() > *calculated_col_width as usize
                                             && *calculated_col_width > 1
                                         {
                                             // Truncate with ellipsis
                                             let (first, _last) =
                                                 entry.split_at(*calculated_col_width as usize - 1);
-                                            format!("{}…", first)
+                                            Cow::Owned(format!("{}…", first))
                                         } else {
-                                            entry.clone()
+                                            Cow::Borrowed(entry)
                                         }
                                     } else {
-                                        entry.clone()
+                                        Cow::Borrowed(entry)
                                     }
                                 } else {
-                                    entry.clone()
+                                    Cow::Borrowed(entry)
                                 }
                             } else {
-                                entry.clone()
+                                Cow::Borrowed(entry)
                             }
                         },
                     );
