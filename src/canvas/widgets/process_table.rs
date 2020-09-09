@@ -311,6 +311,15 @@ impl ProcessTableWidget for Painter {
                                 .collect::<Vec<_>>()),
                             &column_bias,
                         );
+
+                    debug!(
+                        "DCW: {:?}",
+                        proc_widget_state.table_width_state.desired_column_widths
+                    );
+                    debug!(
+                        "CCW: {:?}",
+                        proc_widget_state.table_width_state.calculated_column_widths
+                    );
                 }
 
                 let ccw = &proc_widget_state.table_width_state.calculated_column_widths;

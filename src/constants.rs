@@ -245,7 +245,7 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
 // Default config file
-// FIXME: Update the default config
+// FIXME [CHORE]: Update the default config
 pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # This is a default config file for bottom.  All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see

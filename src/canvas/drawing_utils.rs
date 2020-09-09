@@ -1,5 +1,5 @@
 use crate::app;
-use std::cmp::min;
+use std::cmp::{max, min};
 
 /// Return a (hard)-width vector for column widths.
 ///
@@ -23,18 +23,17 @@ pub fn get_column_widths(
     soft_widths_max: &[Option<f64>], soft_widths_desired: &[Option<u16>],
     spacing_priority: &[usize],
 ) -> Vec<u16> {
-    let initial_width = total_width.saturating_sub(hard_widths.len() as u16) + 1 - 2;
+    let initial_width = total_width - 2;
     let mut total_width_left = initial_width;
     let mut column_widths: Vec<u16> = vec![0; hard_widths.len()];
 
     for itx in spacing_priority {
         if let Some(Some(hard_width)) = hard_widths.get(*itx) {
             // Hard width...
-            let space_taken = min(total_width_left, *hard_width);
-            if space_taken >= *hard_width {
-                column_widths[*itx] = space_taken;
-                total_width_left -= space_taken;
-            }
+            let space_taken = min(*hard_width, total_width_left);
+            column_widths[*itx] = space_taken;
+            total_width_left -= space_taken;
+            total_width_left = total_width_left.saturating_sub(1);
         } else if let (
             Some(Some(soft_width_max)),
             Some(Some(soft_width_min)),
@@ -45,16 +44,18 @@ pub fn get_column_widths(
             soft_widths_desired.get(*itx),
         ) {
             // Soft width...
-            let soft_limit = if soft_width_max.is_sign_negative() {
-                *soft_width_desired
-            } else {
-                (*soft_width_max * initial_width as f64).ceil() as u16
-            };
+            let soft_limit = max(
+                if soft_width_max.is_sign_negative() {
+                    *soft_width_desired
+                } else {
+                    (*soft_width_max * initial_width as f64).ceil() as u16
+                },
+                *soft_width_min,
+            );
             let space_taken = min(min(soft_limit, *soft_width_desired), total_width_left);
-            if space_taken >= *soft_width_min {
-                column_widths[*itx] = space_taken;
-                total_width_left -= space_taken;
-            }
+            column_widths[*itx] = space_taken;
+            total_width_left -= space_taken;
+            total_width_left = total_width_left.saturating_sub(1);
         }
     }
 
