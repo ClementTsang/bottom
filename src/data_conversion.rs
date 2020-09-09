@@ -413,7 +413,7 @@ pub enum ProcessNamingType {
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
 ) -> Vec<ConvertedProcessData> {
-    // FIXME: Thread highlighting and hiding support
+    // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
     current_data

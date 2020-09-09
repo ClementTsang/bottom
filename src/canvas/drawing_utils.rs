@@ -2,77 +2,91 @@ use crate::app;
 use std::cmp::min;
 
 /// Return a (hard)-width vector for column widths.
-/// * `total_width` is how much width we have to work with overall.
-/// * `desired_widths` is the width that is *desired*, but may not be reached.
-/// * `max_widths` is the maximal percentage we allow a column to take in the table.  If it is
-///    negative, we assume it can take whatever size it wants.
-/// * `min_widths` is the minimal hard width we allow a column to take in the table.  If it is
-///   smaller than this, we just don't use it.
-/// * `column_bias` is how we determine which columns are more important.  A higher value on a
-///   column means it is more important.
-/// * `spare_bias` is how we determine which column gets spare space first.  Again, higher value
-///   means it is more important.
+///
+/// * `total_width` is the, well, total width available.  **NOTE:** This function automatically
+/// takes away 2 from the width as part of the left/right
+/// bounds.
+/// * `hard_widths` is inflexible column widths.  Use a `None` to represent a soft width.
+/// * `soft_widths_min` is the lower limit for a soft width.  Use `None` if a hard width goes there.
+/// * `soft_widths_max` is the upper limit for a soft width, in percentage of the total width.  Use
+///   `None` if a hard width goes there.
+/// * `soft_widths_desired` is the desired soft width.  Use `None` if a hard width goes there.
+/// * `spacing_priority` is the order we should prioritize columns in terms of the index.  Indices
+///   that come earlier in this list go first.
 ///
 /// **NOTE:** This function ASSUMES THAT ALL PASSED SLICES ARE OF THE SAME SIZE.
 ///
 /// **NOTE:** The returned vector may not be the same size as the slices, this is because including
 /// 0-constraints breaks tui-rs.
-///
-/// **NOTE:** This function automatically takes away 2 from the width as part of the left/right
-/// bounds.
 pub fn get_column_widths(
-    total_width: u16, desired_widths: &[u16], max_widths: Option<&[f64]>,
-    min_widths: Option<&[u16]>, column_bias: &[usize], spare_bias: &[usize],
+    total_width: u16, hard_widths: &[Option<u16>], soft_widths_min: &[Option<u16>],
+    soft_widths_max: &[Option<f64>], soft_widths_desired: &[Option<u16>],
+    spacing_priority: &[usize],
 ) -> Vec<u16> {
-    let mut total_width_left = total_width.saturating_sub(desired_widths.len() as u16) + 1 - 2;
-    let mut column_widths: Vec<u16> = vec![0; desired_widths.len()];
+    let initial_width = total_width.saturating_sub(hard_widths.len() as u16) + 1 - 2;
+    let mut total_width_left = initial_width;
+    let mut column_widths: Vec<u16> = vec![0; hard_widths.len()];
 
-    // Let's sort out our bias into a sorted list (reverse to get descending order).
-    let mut bias_list = column_bias.iter().enumerate().collect::<Vec<_>>();
-    bias_list.sort_by(|a, b| a.1.cmp(b.1));
-    bias_list.reverse();
-
-    // Now, let's do a first pass.
-    for itx in column_bias {
-        let itx = *itx;
-        let desired_width = if let Some(width_thresholds) = max_widths {
-            if width_thresholds[itx].is_sign_negative() {
-                desired_widths[itx]
+    for itx in spacing_priority {
+        if let Some(Some(hard_width)) = hard_widths.get(*itx) {
+            // Hard width...
+            let space_taken = min(total_width_left, *hard_width);
+            if space_taken >= *hard_width {
+                column_widths[*itx] = space_taken;
+                total_width_left -= space_taken;
+            }
+        } else if let (
+            Some(Some(soft_width_max)),
+            Some(Some(soft_width_min)),
+            Some(Some(soft_width_desired)),
+        ) = (
+            soft_widths_max.get(*itx),
+            soft_widths_min.get(*itx),
+            soft_widths_desired.get(*itx),
+        ) {
+            // Soft width...
+            let soft_limit = if soft_width_max.is_sign_negative() {
+                *soft_width_desired
             } else {
-                min(
-                    desired_widths[itx],
-                    (width_thresholds[itx] * total_width as f64).ceil() as u16,
-                )
+                (*soft_width_max * initial_width as f64).ceil() as u16
+            };
+            let space_taken = min(min(soft_limit, *soft_width_desired), total_width_left);
+            if space_taken >= *soft_width_min {
+                column_widths[*itx] = space_taken;
+                total_width_left -= space_taken;
             }
-        } else {
-            desired_widths[itx]
-        };
-        let remaining_width = min(total_width_left, desired_width);
-        if let Some(min_widths) = min_widths {
-            if remaining_width >= min_widths[itx] {
-                column_widths[itx] = remaining_width;
-                total_width_left -= remaining_width;
-            }
-        } else {
-            column_widths[itx] = remaining_width;
-            total_width_left -= remaining_width;
         }
     }
 
-    // Second pass to fill in gaps and spaces
+    // Redistribute remaining; this goes between flex evenly.
     while total_width_left > 0 {
-        for itx in spare_bias {
-            if column_widths[*itx] > 0 {
-                column_widths[*itx] += 1;
-                total_width_left -= 1;
-                if total_width_left == 0 {
-                    break;
+        for itx in spacing_priority {
+            if let Some(col) = hard_widths.get(*itx) {
+                if col.is_none() && column_widths[*itx] > 0 {
+                    column_widths[*itx] += 1;
+                    total_width_left -= 1;
+                    if total_width_left == 0 {
+                        break;
+                    }
                 }
             }
         }
     }
 
-    column_widths.into_iter().filter(|x| *x > 0).collect()
+    let mut filtered_column_widths: Vec<u16> = vec![];
+    let mut still_seeing_zeros = true;
+    column_widths.iter().rev().for_each(|width| {
+        if still_seeing_zeros {
+            if *width != 0 {
+                still_seeing_zeros = false;
+                filtered_column_widths.push(*width);
+            }
+        } else {
+            filtered_column_widths.push(*width);
+        }
+    });
+    filtered_column_widths.reverse();
+    filtered_column_widths
 }
 
 pub fn get_search_start_position(

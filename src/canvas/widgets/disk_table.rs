@@ -80,11 +80,19 @@ impl DiskTableWidget for Painter {
                 };
                 disk_widget_state.table_width_state.calculated_column_widths = get_column_widths(
                     draw_loc.width,
-                    &disk_widget_state.table_width_state.desired_column_widths,
-                    Some(&[0.2, 0.15, 0.13, 0.13, 0.13, 0.13, 0.13]),
-                    Some(&[4, 5, 3, 4, 2, 2, 2]),
-                    &[4, 3, 2, 1, 0, 5, 6],
-                    &[4, 3, 2, 1, 0, 5, 6],
+                    &[None, None, Some(4), Some(6), Some(6), Some(7), Some(7)],
+                    &(DISK_HEADERS_LENS
+                        .iter()
+                        .map(|w| Some(*w))
+                        .collect::<Vec<_>>()),
+                    &[Some(0.2), Some(0.2), None, None, None, None, None],
+                    &(disk_widget_state
+                        .table_width_state
+                        .desired_column_widths
+                        .iter()
+                        .map(|w| Some(*w))
+                        .collect::<Vec<_>>()),
+                    &[0, 1, 2, 3, 4, 5, 6],
                 );
             }
 

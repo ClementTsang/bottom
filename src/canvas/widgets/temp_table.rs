@@ -80,11 +80,19 @@ impl TempTableWidget for Painter {
                 };
                 temp_widget_state.table_width_state.calculated_column_widths = get_column_widths(
                     draw_loc.width,
-                    &temp_widget_state.table_width_state.desired_column_widths,
-                    Some(&[0.80, -1.0]),
-                    None,
+                    &[None, None],
+                    &(TEMP_HEADERS_LENS
+                        .iter()
+                        .map(|width| Some(*width))
+                        .collect::<Vec<_>>()),
+                    &[Some(0.80), Some(-1.0)],
+                    &temp_widget_state
+                        .table_width_state
+                        .desired_column_widths
+                        .iter()
+                        .map(|width| Some(*width))
+                        .collect::<Vec<_>>(),
                     &[1, 0],
-                    &[0, 1],
                 );
             }
 

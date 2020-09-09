@@ -365,11 +365,14 @@ impl NetworkGraphWidget for Painter {
         // Calculate widths
         let intrinsic_widths = get_column_widths(
             draw_loc.width,
-            &NETWORK_HEADERS_LENS,
-            Some(&[0.25, 0.25, 0.25, 0.25]),
-            None,
-            &[3, 2, 1, 0],
-            &[3, 2, 1, 0],
+            &[None, None, None, None],
+            &[Some(6); 4],
+            &[Some(0.25); 4],
+            &(NETWORK_HEADERS_LENS
+                .iter()
+                .map(|s| Some(*s))
+                .collect::<Vec<_>>()),
+            &[0, 1, 2, 3],
         );
 
         // Draw

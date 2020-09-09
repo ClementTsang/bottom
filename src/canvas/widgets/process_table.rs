@@ -230,7 +230,6 @@ impl ProcessTableWidget for Painter {
                         .iter()
                         .map(|entry| std::cmp::max(entry.len(), 5) as u16)
                         .collect::<Vec<_>>();
-                    let min_width_ratios = column_widths.clone();
 
                     proc_widget_state.table_width_state.desired_column_widths = {
                         for (row, _disabled) in processed_sliced_vec.clone() {
@@ -245,16 +244,41 @@ impl ProcessTableWidget for Painter {
                         column_widths
                     };
 
-                    let max_width_ratios = if proc_widget_state.is_grouped {
+                    let soft_widths_max = if proc_widget_state.is_grouped {
                         if proc_widget_state.is_using_command {
-                            vec![0.25, 0.6, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
+                            vec![None, Some(0.6), None, None, None, None, None, None]
                         } else {
-                            vec![0.25, 0.4, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
+                            vec![None, Some(0.4), None, None, None, None, None, None]
                         }
                     } else if proc_widget_state.is_using_command {
-                        vec![0.25, 0.6, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2, 0.2]
+                        vec![
+                            None,
+                            Some(0.6),
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            Some(0.2),
+                        ]
                     } else {
-                        vec![0.25, 0.4, 0.25, 0.25, 0.2, 0.2, 0.2, 0.2, 0.2]
+                        vec![
+                            None,
+                            Some(0.4),
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            Some(0.2),
+                        ]
+                    };
+                    let soft_widths_min = if proc_widget_state.is_grouped {
+                        vec![None, Some(8), None, None, None, None, None, None]
+                    } else {
+                        vec![None, Some(8), None, None, None, None, None, None, Some(5)]
                     };
 
                     let column_bias = if proc_widget_state.is_grouped {
@@ -263,20 +287,29 @@ impl ProcessTableWidget for Painter {
                         vec![0, 2, 3, 1, 4, 5, 6, 7, 8]
                     };
 
-                    let space_bias = if proc_widget_state.is_grouped {
-                        vec![5, 4, 7, 6, 1, 3, 2, 0]
-                    } else {
-                        vec![5, 4, 8, 7, 6, 1, 3, 2, 0]
-                    };
-
                     proc_widget_state.table_width_state.calculated_column_widths =
                         get_column_widths(
                             draw_loc.width,
-                            &proc_widget_state.table_width_state.desired_column_widths,
-                            Some(&max_width_ratios),
-                            Some(&min_width_ratios),
+                            &[
+                                Some(7),
+                                None,
+                                Some(8),
+                                Some(8),
+                                Some(8),
+                                Some(8),
+                                Some(7),
+                                Some(8),
+                                None,
+                            ],
+                            &soft_widths_min,
+                            &soft_widths_max,
+                            &(proc_widget_state
+                                .table_width_state
+                                .desired_column_widths
+                                .iter()
+                                .map(|width| Some(*width))
+                                .collect::<Vec<_>>()),
                             &column_bias,
-                            &space_bias,
                         );
                 }
 
