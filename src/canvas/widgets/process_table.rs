@@ -295,7 +295,7 @@ impl ProcessTableWidget for Painter {
 
                     let soft_widths_max = if proc_widget_state.is_grouped {
                         if proc_widget_state.is_using_command {
-                            vec![None, Some(0.6), None, None, None, None, None, None]
+                            vec![None, Some(0.7), None, None, None, None, None, None]
                         } else if proc_widget_state.is_tree_mode {
                             vec![None, Some(0.5), None, None, None, None, None, None]
                         } else {
@@ -304,7 +304,7 @@ impl ProcessTableWidget for Painter {
                     } else if proc_widget_state.is_using_command {
                         vec![
                             None,
-                            Some(0.6),
+                            Some(0.7),
                             None,
                             None,
                             None,
