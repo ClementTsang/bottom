@@ -212,7 +212,7 @@ impl DataCollector {
             if let Ok(process_list) = if cfg!(target_os = "linux") {
                 #[cfg(target_os = "linux")]
                 {
-                    processes::linux_get_processes_list(
+                    processes::linux_processes(
                         &mut self.prev_idle,
                         &mut self.prev_non_idle,
                         &mut self.pid_mapping,
@@ -231,7 +231,7 @@ impl DataCollector {
             } else {
                 #[cfg(not(target_os = "linux"))]
                 {
-                    processes::windows_macos_get_processes_list(
+                    processes::windows_macos_processes(
                         &self.sys,
                         self.use_current_cpu_total,
                         self.mem_total_kb,
@@ -250,7 +250,7 @@ impl DataCollector {
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
-                network::get_sysinfo_network_data(
+                network::arm_or_windows_network_data(
                     &self.sys,
                     self.last_collection_time,
                     &mut self.total_rx,
@@ -261,7 +261,7 @@ impl DataCollector {
             }
             #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
             {
-                network::get_heim_network_data(
+                network::non_arm_or_windows_network_data(
                     self.last_collection_time,
                     &mut self.total_rx,
                     &mut self.total_tx,
@@ -273,51 +273,51 @@ impl DataCollector {
         let mem_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                mem::get_sysinfo_mem_data_list(&self.sys, self.widgets_to_harvest.use_mem)
+                mem::arm_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                mem::get_heim_mem_data_list(self.widgets_to_harvest.use_mem)
+                mem::non_arm_mem_data(self.widgets_to_harvest.use_mem)
             }
         };
         let swap_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                mem::get_sysinfo_swap_data_list(&self.sys, self.widgets_to_harvest.use_mem)
+                mem::arm_swap_data(&self.sys, self.widgets_to_harvest.use_mem)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                mem::get_heim_swap_data_list(self.widgets_to_harvest.use_mem)
+                mem::non_arm_swap_data(self.widgets_to_harvest.use_mem)
             }
         };
         let disk_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::get_sysinfo_disk_usage_list(&self.sys, self.widgets_to_harvest.use_disk)
+                disks::arm_disk_usage(&self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                disks::get_heim_disk_usage_list(self.widgets_to_harvest.use_disk)
+                disks::non_arm_disk_usage(self.widgets_to_harvest.use_disk)
             }
         };
         let disk_io_usage_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::get_sysinfo_io_usage_list(&self.sys, self.widgets_to_harvest.use_disk)
+                disks::arm_io_usage(&self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                disks::get_heim_io_usage_list(false, self.widgets_to_harvest.use_disk)
+                disks::non_arm_io_usage(false, self.widgets_to_harvest.use_disk)
             }
         };
         let temp_data_fut = {
             #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
             {
-                temperature::get_sysinfo_temperature_data(
+                temperature::arm_and_non_linux_temperature_data(
                     &self.sys,
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
@@ -330,7 +330,7 @@ impl DataCollector {
                 target_arch = "arm"
             )))]
             {
-                temperature::get_heim_temperature_data(
+                temperature::linux_temperature_data(
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
                 )

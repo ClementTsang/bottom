@@ -15,7 +15,7 @@ impl Default for MemHarvest {
 
 /// Meant for ARM use.
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_sysinfo_mem_data_list(
+pub async fn arm_mem_data(
     sys: &sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<MemHarvest>> {
     use sysinfo::SystemExt;
@@ -31,7 +31,7 @@ pub async fn get_sysinfo_mem_data_list(
 
 /// Meant for ARM use.
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_sysinfo_swap_data_list(
+pub async fn arm_swap_data(
     sys: &sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<MemHarvest>> {
     use sysinfo::SystemExt;
@@ -46,7 +46,7 @@ pub async fn get_sysinfo_swap_data_list(
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn get_heim_mem_data_list(
+pub async fn non_arm_mem_data(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<MemHarvest>> {
     if !actually_get {
@@ -65,7 +65,7 @@ pub async fn get_heim_mem_data_list(
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn get_heim_swap_data_list(
+pub async fn non_arm_swap_data(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<MemHarvest>> {
     if !actually_get {
