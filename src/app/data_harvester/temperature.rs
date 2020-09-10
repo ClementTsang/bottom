@@ -22,7 +22,7 @@ impl Default for TemperatureType {
 
 /// Meant for ARM and non-Linux usage.
 #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_sysinfo_temperature_data(
+pub async fn arm_and_non_linux_temperature_data(
     sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use sysinfo::{ComponentExt, SystemExt};
@@ -61,7 +61,7 @@ pub async fn get_sysinfo_temperature_data(
 }
 
 #[cfg(not(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm")))]
-pub async fn get_heim_temperature_data(
+pub async fn linux_temperature_data(
     temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use futures::StreamExt;

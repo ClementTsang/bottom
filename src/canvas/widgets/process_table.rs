@@ -728,7 +728,6 @@ impl ProcessTableWidget for Painter {
                 .iter()
                 .map(|column| Row::Data(vec![column].into_iter()));
 
-            // FIXME: [State] Shorten state to small form if it can't fit...?
             let column_state = &mut proc_widget_state.columns.column_state;
             column_state.select(Some(
                 proc_widget_state

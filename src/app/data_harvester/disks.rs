@@ -17,14 +17,12 @@ pub type IOHarvest = std::collections::HashMap<String, Option<IOData>>;
 
 /// Meant for ARM use.
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_sysinfo_io_usage_list(
+pub async fn arm_io_usage(
     _sys: &sysinfo::System, _actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
     let io_hash: std::collections::HashMap<String, Option<IOData>> =
         std::collections::HashMap::new();
     Ok(Some(io_hash))
-
-    // TODO: Rename these functions to be like "get_arm_io_usage_list"
 
     // TODO: Sysinfo disk I/O usage.
     // ...sadly, this cannot be done as of now (other than me writing my own), it requires further
@@ -33,7 +31,7 @@ pub async fn get_sysinfo_io_usage_list(
 
 /// Meant for ARM use.
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_sysinfo_disk_usage_list(
+pub async fn arm_disk_usage(
     sys: &sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     use sysinfo::{DiskExt, SystemExt};
@@ -60,7 +58,7 @@ pub async fn get_sysinfo_disk_usage_list(
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn get_heim_io_usage_list(
+pub async fn non_arm_io_usage(
     get_physical: bool, actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
     use futures::stream::StreamExt;
@@ -105,7 +103,7 @@ pub async fn get_heim_io_usage_list(
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn get_heim_disk_usage_list(
+pub async fn non_arm_disk_usage(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     use futures::stream::StreamExt;
