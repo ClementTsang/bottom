@@ -2,7 +2,7 @@
 //! can actually handle.
 use crate::Pid;
 use crate::{
-    app::{data_farmer, data_harvester, App, Filter},
+    app::{data_farmer, data_harvester, App, Filter, ProcWidgetState},
     utils::{self, gen_util::*},
 };
 use data_harvester::processes::ProcessSorting;
@@ -71,6 +71,7 @@ pub struct ConvertedProcessData {
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedCpuData {
     pub cpu_name: String,
+    pub short_cpu_name: String,
     /// Tuple is time, value
     pub cpu_data: Vec<Point>,
     /// Represents the value displayed on the legend.
@@ -196,10 +197,24 @@ pub fn convert_cpu_data_points(
                 let mut new_cpu_data = ConvertedCpuData::default();
                 new_cpu_data.cpu_name = if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
                 {
-                    cpu_harvest.cpu_name.to_string()
+                    if let Some(cpu_count) = cpu_harvest.cpu_count {
+                        format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
+                    } else {
+                        cpu_harvest.cpu_prefix.to_string()
+                    }
                 } else {
                     String::default()
                 };
+                new_cpu_data.short_cpu_name =
+                    if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
+                        if let Some(cpu_count) = cpu_harvest.cpu_count {
+                            cpu_count.to_string()
+                        } else {
+                            cpu_harvest.cpu_prefix.to_string()
+                        }
+                    } else {
+                        String::default()
+                    };
                 cpu_data_vector.push(new_cpu_data);
             }
 
@@ -216,6 +231,7 @@ pub fn convert_cpu_data_points(
 
     let mut extended_vec = vec![ConvertedCpuData {
         cpu_name: "All".to_string(),
+        short_cpu_name: "All".to_string(),
         cpu_data: vec![],
         legend_value: String::new(),
     }];
@@ -413,7 +429,7 @@ pub enum ProcessNamingType {
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
 ) -> Vec<ConvertedProcessData> {
-    // FIXME: Thread highlighting and hiding support
+    // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
     current_data
@@ -471,6 +487,7 @@ pub fn tree_process_data(
     sort_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
     // TODO: [TREE] Allow for collapsing entries.
+    // TODO: [TREE] Option to sort usage by total branch usage or individual value usage?
 
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
@@ -565,18 +582,14 @@ pub fn tree_process_data(
         pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
     ) {
         // Sorting is special for tree data.  So, by default, things are "sorted"
-        // via the DFS, except for (at least Unix) PID 1 and 2, which are in that order.
-        // Otherwise, since this is DFS of the scanned PIDs (which are in order), you actually
-        // get a REVERSE order --- so, you get higher PIDs earlier than lower ones.
-        // But this is a tree.  So, you'll get a bit of a combination, but the general idea
-        // is that in a tree level, it's descending order, except, again, for the first layer.
-        // This is how htop does it by default.
+        // via the DFS.  Otherwise, since this is DFS of the scanned PIDs (which are in order),
+        // you actually get a REVERSE order --- so, you get higher PIDs earlier than lower ones.
         //
         // So how do we "sort"?  The current idea is that:
         // - We sort *per-level*.  Say, I want to sort by CPU.  The "first level" is sorted
         //   by CPU in terms of its usage.  All its direct children are sorted by CPU
         //   with *their* siblings.  Etc.
-        // - The default is thus PIDs in reverse order (descending).  We set it to this when
+        // - The default is thus PIDs in ascending order.  We set it to this when
         //   we first enable the mode.
 
         // So first, let's look at the children... (post-order again)
@@ -701,8 +714,7 @@ pub fn tree_process_data(
     }
 
     /// A DFS traversal to correctly build the prefix lines (the pretty '├' and '─' lines) and
-    /// the correct order to the PID tree as a vector (DFS is the default order htop seems to use
-    /// so we're shamelessly copying that).
+    /// the correct order to the PID tree as a vector.
     fn build_explored_pids(
         current_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid>>,
         prev_drawn_lines: &str,
@@ -801,6 +813,65 @@ pub fn tree_process_data(
         .collect::<Vec<_>>()
 }
 
+pub fn stringify_process_data(
+    proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
+) -> Vec<(Vec<(String, Option<String>)>, bool)> {
+    let is_proc_widget_grouped = proc_widget_state.is_grouped;
+    let is_using_command = proc_widget_state.is_using_command;
+    let is_tree = proc_widget_state.is_tree_mode;
+    let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
+
+    finalized_process_data
+        .iter()
+        .map(|process| {
+            (
+                vec![
+                    (
+                        if is_proc_widget_grouped {
+                            process.group_pids.len().to_string()
+                        } else {
+                            process.pid.to_string()
+                        },
+                        None,
+                    ),
+                    (
+                        if is_tree {
+                            if let Some(prefix) = &process.process_description_prefix {
+                                prefix.clone()
+                            } else {
+                                String::default()
+                            }
+                        } else if is_using_command {
+                            process.command.clone()
+                        } else {
+                            process.name.clone()
+                        },
+                        None,
+                    ),
+                    (format!("{:.1}%", process.cpu_percent_usage), None),
+                    (
+                        if mem_enabled {
+                            format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                        } else {
+                            format!("{:.1}%", process.mem_percent_usage)
+                        },
+                        None,
+                    ),
+                    (process.read_per_sec.clone(), None),
+                    (process.write_per_sec.clone(), None),
+                    (process.total_read.clone(), None),
+                    (process.total_write.clone(), None),
+                    (
+                        process.process_state.clone(),
+                        Some(process.process_char.to_string()),
+                    ),
+                ],
+                process.is_disabled_entry,
+            )
+        })
+        .collect()
+}
+
 pub fn group_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: bool,
 ) -> Vec<ConvertedProcessData> {
@@ -878,9 +949,9 @@ pub fn group_process_data(
                 wps_f64: p.write_per_sec,
                 tr_f64: p.total_read,
                 tw_f64: p.total_write,
-                process_state: p.process_state, // TODO: What the heck
+                process_state: p.process_state,
                 process_description_prefix: None,
-                process_char: char::default(), // TODO: What the heck
+                process_char: char::default(),
                 is_disabled_entry: false,
             }
         })

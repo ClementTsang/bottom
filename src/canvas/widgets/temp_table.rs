@@ -1,6 +1,4 @@
 use lazy_static::lazy_static;
-use std::cmp::max;
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -11,18 +9,20 @@ use tui::{
 use crate::{
     app,
     canvas::{
-        drawing_utils::{get_start_position, get_variable_intrinsic_widths},
+        drawing_utils::{get_column_widths, get_start_position},
         Painter,
     },
     constants::*,
 };
+use std::borrow::Cow;
+use unicode_segmentation::UnicodeSegmentation;
 
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 
 lazy_static! {
-    static ref TEMP_HEADERS_LENS: Vec<usize> = TEMP_HEADERS
+    static ref TEMP_HEADERS_LENS: Vec<u16> = TEMP_HEADERS
         .iter()
-        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .map(|entry| entry.len() as u16)
         .collect::<Vec<_>>();
 }
 pub trait TempTableWidget {
@@ -37,6 +37,7 @@ impl TempTableWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
+        let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(temp_widget_state) = app_state.temp_state.widget_states.get_mut(&widget_id) {
             let temp_sensor_data: &mut [Vec<String>] = &mut app_state.canvas_data.temp_sensor_data;
 
@@ -63,14 +64,82 @@ impl TempTableWidget for Painter {
                     .saturating_sub(start_position),
             ));
             let sliced_vec = &temp_sensor_data[start_position..];
-            let temperature_rows = sliced_vec.iter().map(|temp_row| Row::Data(temp_row.iter()));
 
             // Calculate widths
-            let width = f64::from(draw_loc.width);
-            let width_ratios = [0.5, 0.5];
-            let variable_intrinsic_results =
-                get_variable_intrinsic_widths(width as u16, &width_ratios, &TEMP_HEADERS_LENS);
-            let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
+            let hard_widths = [None, None];
+            if recalculate_column_widths {
+                temp_widget_state.table_width_state.desired_column_widths = {
+                    let mut column_widths = TEMP_HEADERS_LENS.clone();
+                    for row in sliced_vec {
+                        for (col, entry) in row.iter().enumerate() {
+                            if entry.len() as u16 > column_widths[col] {
+                                column_widths[col] = entry.len() as u16;
+                            }
+                        }
+                    }
+
+                    column_widths
+                };
+                temp_widget_state.table_width_state.calculated_column_widths = get_column_widths(
+                    draw_loc.width,
+                    &hard_widths,
+                    &(TEMP_HEADERS_LENS
+                        .iter()
+                        .map(|width| Some(*width))
+                        .collect::<Vec<_>>()),
+                    &[Some(0.80), Some(-1.0)],
+                    &temp_widget_state
+                        .table_width_state
+                        .desired_column_widths
+                        .iter()
+                        .map(|width| Some(*width))
+                        .collect::<Vec<_>>(),
+                    false,
+                );
+            }
+
+            let dcw = &temp_widget_state.table_width_state.desired_column_widths;
+            let ccw = &temp_widget_state.table_width_state.calculated_column_widths;
+            let temperature_rows =
+                sliced_vec.iter().map(|temp_row| {
+                    let truncated_data = temp_row.iter().zip(&hard_widths).enumerate().map(
+                        |(itx, (entry, width))| {
+                            if width.is_none() {
+                                if let (Some(desired_col_width), Some(calculated_col_width)) =
+                                    (dcw.get(itx), ccw.get(itx))
+                                {
+                                    if *desired_col_width > *calculated_col_width
+                                        && *calculated_col_width > 0
+                                    {
+                                        let graphemes =
+                                            UnicodeSegmentation::graphemes(entry.as_str(), true)
+                                                .collect::<Vec<&str>>();
+
+                                        if graphemes.len() > *calculated_col_width as usize
+                                            && *calculated_col_width > 1
+                                        {
+                                            // Truncate with ellipsis
+                                            let first_n = graphemes
+                                                [..(*calculated_col_width as usize - 1)]
+                                                .concat();
+                                            Cow::Owned(format!("{}…", first_n))
+                                        } else {
+                                            Cow::Borrowed(entry)
+                                        }
+                                    } else {
+                                        Cow::Borrowed(entry)
+                                    }
+                                } else {
+                                    Cow::Borrowed(entry)
+                                }
+                            } else {
+                                Cow::Borrowed(entry)
+                            }
+                        },
+                    );
+
+                    Row::Data(truncated_data)
+                });
 
             let (border_and_title_style, highlight_style) = if is_on_widget {
                 (
@@ -128,7 +197,9 @@ impl TempTableWidget for Painter {
                     .highlight_style(highlight_style)
                     .style(self.colours.text_style)
                     .widths(
-                        &(intrinsic_widths
+                        &(temp_widget_state
+                            .table_width_state
+                            .calculated_column_widths
                             .iter()
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),

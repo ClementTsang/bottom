@@ -1,78 +1,107 @@
 use crate::app;
-use itertools::izip;
+use std::cmp::{max, min};
 
-// TODO: Reverse intrinsic?
-/// A somewhat jury-rigged solution to simulate a variable intrinsic layout for
-/// table widths.  Note that this will do one main pass to try to properly
-/// allocate widths.  This will thus potentially cut off latter elements
-/// (return size of 0) if it is too small (threshold), but will try its best.
+/// Return a (hard)-width vector for column widths.
 ///
-/// `width thresholds` and `desired_widths_ratio` should be the same length.
-/// Otherwise bad things happen.
-pub fn get_variable_intrinsic_widths(
-    total_width: u16, desired_widths_ratio: &[f64], width_thresholds: &[usize],
-) -> (Vec<u16>, usize) {
-    let num_widths = desired_widths_ratio.len();
-    let mut resulting_widths: Vec<u16> = vec![0; num_widths];
-    let mut last_index = 0;
+/// * `total_width` is the, well, total width available.  **NOTE:** This function automatically
+/// takes away 2 from the width as part of the left/right
+/// bounds.
+/// * `hard_widths` is inflexible column widths.  Use a `None` to represent a soft width.
+/// * `soft_widths_min` is the lower limit for a soft width.  Use `None` if a hard width goes there.
+/// * `soft_widths_max` is the upper limit for a soft width, in percentage of the total width.  Use
+///   `None` if a hard width goes there.
+/// * `soft_widths_desired` is the desired soft width.  Use `None` if a hard width goes there.
+/// * `left_to_right` is a boolean whether to go from left to right if true, or right to left if
+///   false.
+///
+/// **NOTE:** This function ASSUMES THAT ALL PASSED SLICES ARE OF THE SAME SIZE.
+///
+/// **NOTE:** The returned vector may not be the same size as the slices, this is because including
+/// 0-constraints breaks tui-rs.
+pub fn get_column_widths(
+    total_width: u16, hard_widths: &[Option<u16>], soft_widths_min: &[Option<u16>],
+    soft_widths_max: &[Option<f64>], soft_widths_desired: &[Option<u16>], left_to_right: bool,
+) -> Vec<u16> {
+    let initial_width = total_width - 2;
+    let mut total_width_left = initial_width;
+    let mut column_widths: Vec<u16> = vec![0; hard_widths.len()];
+    let range: Vec<usize> = if left_to_right {
+        (0..hard_widths.len()).collect()
+    } else {
+        (0..hard_widths.len()).rev().collect()
+    };
 
-    let mut remaining_width = (total_width - (num_widths as u16 - 1)) as i32; // Required for spaces...
-    let desired_widths = desired_widths_ratio
-        .iter()
-        .map(|&desired_width_ratio| (desired_width_ratio * total_width as f64) as i32);
+    for itx in &range {
+        if let Some(Some(hard_width)) = hard_widths.get(*itx) {
+            // Hard width...
+            let space_taken = min(*hard_width, total_width_left);
 
-    for (desired_width, resulting_width, width_threshold) in izip!(
-        desired_widths,
-        resulting_widths.iter_mut(),
-        width_thresholds
-    ) {
-        *resulting_width = if desired_width < *width_threshold as i32 {
-            // Try to take threshold, else, 0
-            if remaining_width < *width_threshold as i32 {
-                0
-            } else {
-                remaining_width -= *width_threshold as i32;
-                *width_threshold as u16
+            // TODO [COLUMN MOVEMENT]: Remove this
+            if *hard_width > space_taken {
+                break;
             }
-        } else {
-            // Take as large as possible
-            if remaining_width < desired_width {
-                // Check the biggest chunk possible
-                if remaining_width < *width_threshold as i32 {
-                    0
+
+            column_widths[*itx] = space_taken;
+            total_width_left -= space_taken;
+            total_width_left = total_width_left.saturating_sub(1);
+        } else if let (
+            Some(Some(soft_width_max)),
+            Some(Some(soft_width_min)),
+            Some(Some(soft_width_desired)),
+        ) = (
+            soft_widths_max.get(*itx),
+            soft_widths_min.get(*itx),
+            soft_widths_desired.get(*itx),
+        ) {
+            // Soft width...
+            let soft_limit = max(
+                if soft_width_max.is_sign_negative() {
+                    *soft_width_desired
                 } else {
-                    let temp_width = remaining_width;
-                    remaining_width = 0;
-                    temp_width as u16
+                    (*soft_width_max * initial_width as f64).ceil() as u16
+                },
+                *soft_width_min,
+            );
+            let space_taken = min(min(soft_limit, *soft_width_desired), total_width_left);
+
+            // TODO [COLUMN MOVEMENT]: Remove this
+            if *soft_width_min > space_taken {
+                break;
+            }
+
+            column_widths[*itx] = space_taken;
+            total_width_left -= space_taken;
+            total_width_left = total_width_left.saturating_sub(1);
+        }
+    }
+
+    // Redistribute remaining.
+    while total_width_left > 0 {
+        for itx in &range {
+            if column_widths[*itx] > 0 {
+                column_widths[*itx] += 1;
+                total_width_left -= 1;
+                if total_width_left == 0 {
+                    break;
                 }
-            } else {
-                remaining_width -= desired_width;
-                desired_width as u16
             }
-        };
+        }
+    }
 
-        if *resulting_width == 0 {
-            break;
+    let mut filtered_column_widths: Vec<u16> = vec![];
+    let mut still_seeing_zeros = true;
+    column_widths.iter().rev().for_each(|width| {
+        if still_seeing_zeros {
+            if *width != 0 {
+                still_seeing_zeros = false;
+                filtered_column_widths.push(*width);
+            }
         } else {
-            last_index += 1;
+            filtered_column_widths.push(*width);
         }
-    }
-
-    // Simple redistribution tactic - if there's any space left, split it evenly amongst all members
-    if last_index < num_widths && last_index != 0 {
-        let for_all_widths = (remaining_width / last_index as i32) as u16;
-        let mut remainder = remaining_width % last_index as i32;
-
-        for resulting_width in &mut resulting_widths {
-            *resulting_width += for_all_widths;
-            if remainder > 0 {
-                *resulting_width += 1;
-                remainder -= 1;
-            }
-        }
-    }
-
-    (resulting_widths, last_index)
+    });
+    filtered_column_widths.reverse();
+    filtered_column_widths
 }
 
 pub fn get_search_start_position(

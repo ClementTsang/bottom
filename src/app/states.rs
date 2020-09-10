@@ -109,6 +109,13 @@ impl AppSearchState {
     }
 }
 
+/// Meant for canvas operations involving table column widths.
+#[derive(Default)]
+pub struct CanvasTableWidthState {
+    pub desired_column_widths: Vec<u16>,
+    pub calculated_column_widths: Vec<u16>,
+}
+
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
     pub search_state: AppSearchState,
@@ -321,6 +328,9 @@ impl ProcColumn {
     pub fn get_column_headers(
         &self, proc_sorting_type: &ProcessSorting, sort_reverse: bool,
     ) -> Vec<String> {
+        const DOWN_ARROW: char = '▼';
+        const UP_ARROW: char = '▲';
+
         // TODO: Gonna have to figure out how to do left/right GUI notation if we add it.
         self.ordered_columns
             .iter()
@@ -332,13 +342,20 @@ impl ProcColumn {
                 }
 
                 if mapping.enabled {
-                    Some(if proc_sorting_type == column_type {
-                        column_type.to_string()
-                            + command_str.as_str()
-                            + if sort_reverse { "▼" } else { "▲" }
-                    } else {
-                        column_type.to_string() + command_str.as_str()
-                    })
+                    Some(format!(
+                        "{}{}{}",
+                        column_type.to_string(),
+                        command_str.as_str(),
+                        if proc_sorting_type == column_type {
+                            if sort_reverse {
+                                DOWN_ARROW
+                            } else {
+                                UP_ARROW
+                            }
+                        } else {
+                            ' '
+                        }
+                    ))
                 } else {
                     None
                 }
@@ -358,6 +375,8 @@ pub struct ProcWidgetState {
     pub is_sort_open: bool,
     pub columns: ProcColumn,
     pub is_tree_mode: bool,
+    pub table_width_state: CanvasTableWidthState,
+    pub requires_redraw: bool,
 }
 
 impl ProcWidgetState {
@@ -397,6 +416,8 @@ impl ProcWidgetState {
             is_sort_open: false,
             columns,
             is_tree_mode: false,
+            table_width_state: CanvasTableWidthState::default(),
+            requires_redraw: false,
         }
     }
 
@@ -595,6 +616,7 @@ pub struct CpuWidgetState {
     pub autohide_timer: Option<Instant>,
     pub scroll_state: AppScrollWidgetState,
     pub is_multi_graph_mode: bool,
+    pub table_width_state: CanvasTableWidthState,
 }
 
 impl CpuWidgetState {
@@ -605,6 +627,7 @@ impl CpuWidgetState {
             autohide_timer,
             scroll_state: AppScrollWidgetState::default(),
             is_multi_graph_mode: false,
+            table_width_state: CanvasTableWidthState::default(),
         }
     }
 }
@@ -668,12 +691,14 @@ impl MemState {
 
 pub struct TempWidgetState {
     pub scroll_state: AppScrollWidgetState,
+    pub table_width_state: CanvasTableWidthState,
 }
 
 impl TempWidgetState {
     pub fn init() -> Self {
         TempWidgetState {
             scroll_state: AppScrollWidgetState::default(),
+            table_width_state: CanvasTableWidthState::default(),
         }
     }
 }
@@ -698,12 +723,14 @@ impl TempState {
 
 pub struct DiskWidgetState {
     pub scroll_state: AppScrollWidgetState,
+    pub table_width_state: CanvasTableWidthState,
 }
 
 impl DiskWidgetState {
     pub fn init() -> Self {
         DiskWidgetState {
             scroll_state: AppScrollWidgetState::default(),
+            table_width_state: CanvasTableWidthState::default(),
         }
     }
 }

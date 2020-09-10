@@ -2,7 +2,8 @@ use sysinfo::{ProcessorExt, System, SystemExt};
 
 #[derive(Default, Debug, Clone)]
 pub struct CpuData {
-    pub cpu_name: String,
+    pub cpu_prefix: String,
+    pub cpu_count: Option<usize>,
     pub cpu_usage: f64,
 }
 
@@ -15,14 +16,16 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CpuHarvest {
 
     if show_average_cpu {
         cpu_vec.push(CpuData {
-            cpu_name: "AVG".to_string(),
+            cpu_prefix: "AVG".to_string(),
+            cpu_count: None,
             cpu_usage: avg_cpu_usage as f64,
         });
     }
 
     for (itx, cpu) in cpu_data.iter().enumerate() {
         cpu_vec.push(CpuData {
-            cpu_name: format!("CPU{}", itx),
+            cpu_prefix: "CPU".to_string(),
+            cpu_count: Some(itx),
             cpu_usage: f64::from(cpu.get_cpu_usage()),
         });
     }

@@ -188,6 +188,7 @@ impl DataCollection {
     }
 
     fn eat_network(&mut self, network: &network::NetworkHarvest, new_entry: &mut TimedData) {
+        // FIXME [NETWORKING; CONFIG]: The ability to config this?
         // FIXME [NETWORKING]: Support bits, support switching between decimal and binary units (move the log part to conversion and switch on the fly)
         // RX
         new_entry.rx_data = if network.rx > 0 {

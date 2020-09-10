@@ -19,10 +19,6 @@ pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 // Number of colours to generate for the CPU chart/table
 pub const NUM_COLOURS: usize = 256;
 
-// Canvas stuff
-// The minimum threshold when resizing tables
-pub const FORCE_MIN_THRESHOLD: usize = 5;
-
 // Limits for when we should stop showing table gaps/labels (anything less means not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
@@ -249,7 +245,7 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
 // Default config file
-// FIXME: Update the default config
+// FIXME [CHORE]: Update the default config
 pub const DEFAULT_CONFIG_CONTENT: &str = r##"
 # This is a default config file for bottom.  All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see

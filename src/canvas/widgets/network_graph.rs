@@ -3,7 +3,7 @@ use std::cmp::max;
 
 use crate::{
     app::App,
-    canvas::{drawing_utils::get_variable_intrinsic_widths, Painter},
+    canvas::{drawing_utils::get_column_widths, Painter},
     constants::*,
     utils::gen_util::*,
 };
@@ -19,9 +19,9 @@ use tui::{
 const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
 lazy_static! {
-    static ref NETWORK_HEADERS_LENS: Vec<usize> = NETWORK_HEADERS
+    static ref NETWORK_HEADERS_LENS: Vec<u16> = NETWORK_HEADERS
         .iter()
-        .map(|entry| max(FORCE_MIN_THRESHOLD, entry.len()))
+        .map(|entry| entry.len() as u16)
         .collect::<Vec<_>>();
 }
 
@@ -342,6 +342,7 @@ impl NetworkGraphWidget for Painter {
         }
     }
 
+    // TODO: [DEPRECATED] Get rid of this in, like, 0.6...?
     fn draw_network_labels<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
@@ -362,13 +363,17 @@ impl NetworkGraphWidget for Painter {
             .map(|val| Row::StyledData(val.iter(), self.colours.text_style));
 
         // Calculate widths
-        let width_ratios: Vec<f64> = vec![0.25, 0.25, 0.25, 0.25];
-        let lens: &[usize] = &NETWORK_HEADERS_LENS;
-        let width = f64::from(draw_loc.width);
-
-        let variable_intrinsic_results =
-            get_variable_intrinsic_widths(width as u16, &width_ratios, lens);
-        let intrinsic_widths = &(variable_intrinsic_results.0)[0..variable_intrinsic_results.1];
+        let intrinsic_widths = get_column_widths(
+            draw_loc.width,
+            &[None, None, None, None],
+            &[Some(6); 4],
+            &[Some(0.25); 4],
+            &(NETWORK_HEADERS_LENS
+                .iter()
+                .map(|s| Some(*s))
+                .collect::<Vec<_>>()),
+            true,
+        );
 
         // Draw
         f.render_widget(

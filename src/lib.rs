@@ -483,7 +483,6 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         if !app.is_frozen {
             app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
         }
-
         let process_filter = app.get_process_filter(widget_id);
         let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
             app.canvas_data
@@ -547,6 +546,10 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                 proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
             }
 
+            app.canvas_data.stringified_process_data_map.insert(
+                widget_id,
+                stringify_process_data(&proc_widget_state, &finalized_process_data),
+            );
             app.canvas_data
                 .finalized_process_data_map
                 .insert(widget_id, finalized_process_data);
