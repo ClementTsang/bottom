@@ -66,8 +66,6 @@ pub fn get_column_widths(
 
             // TODO [COLUMN MOVEMENT]: Remove this
             if *soft_width_min > space_taken {
-                debug!("soft_width_min: {}", soft_width_min);
-                debug!("space_taken: {}", space_taken);
                 break;
             }
 

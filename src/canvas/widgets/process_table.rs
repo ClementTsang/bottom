@@ -254,7 +254,7 @@ impl ProcessTableWidget for Painter {
                 if recalculate_column_widths {
                     let mut column_widths = process_headers
                         .iter()
-                        .map(|entry| UnicodeWidthStr::width_cjk(entry.as_str()) as u16)
+                        .map(|entry| UnicodeWidthStr::width(entry.as_str()) as u16)
                         .collect::<Vec<_>>();
                     let soft_widths_min = column_widths
                         .iter()
@@ -265,7 +265,7 @@ impl ProcessTableWidget for Painter {
                         for (row, _disabled) in processed_sliced_vec.clone() {
                             for (col, entry) in row.iter().enumerate() {
                                 if let Some(col_width) = column_widths.get_mut(col) {
-                                    let grapheme_len = UnicodeWidthStr::width_cjk(entry.as_str());
+                                    let grapheme_len = UnicodeWidthStr::width(entry.as_str());
                                     if grapheme_len as u16 > *col_width {
                                         *col_width = grapheme_len as u16;
                                     }
@@ -274,6 +274,24 @@ impl ProcessTableWidget for Painter {
                         }
                         column_widths
                     };
+
+                    proc_widget_state.table_width_state.desired_column_widths = proc_widget_state
+                        .table_width_state
+                        .desired_column_widths
+                        .iter()
+                        .zip(&hard_widths)
+                        .map(|(current, hard)| {
+                            if let Some(hard) = hard {
+                                if *hard > *current {
+                                    *hard
+                                } else {
+                                    *current
+                                }
+                            } else {
+                                *current
+                            }
+                        })
+                        .collect::<Vec<_>>();
 
                     let soft_widths_max = if proc_widget_state.is_grouped {
                         if proc_widget_state.is_using_command {
@@ -336,14 +354,14 @@ impl ProcessTableWidget for Painter {
                             true,
                         );
 
-                    debug!(
-                        "DCW: {:?}",
-                        proc_widget_state.table_width_state.desired_column_widths
-                    );
-                    debug!(
-                        "CCW: {:?}",
-                        proc_widget_state.table_width_state.calculated_column_widths
-                    );
+                    // debug!(
+                    //     "DCW: {:?}",
+                    //     proc_widget_state.table_width_state.desired_column_widths
+                    // );
+                    // debug!(
+                    //     "CCW: {:?}",
+                    //     proc_widget_state.table_width_state.calculated_column_widths
+                    // );
                 }
 
                 let dcw = &proc_widget_state.table_width_state.desired_column_widths;

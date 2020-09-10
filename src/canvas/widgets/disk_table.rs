@@ -77,9 +77,26 @@ impl DiskTableWidget for Painter {
                             }
                         }
                     }
-
                     column_widths
                 };
+                disk_widget_state.table_width_state.desired_column_widths = disk_widget_state
+                    .table_width_state
+                    .desired_column_widths
+                    .iter()
+                    .zip(&hard_widths)
+                    .map(|(current, hard)| {
+                        if let Some(hard) = hard {
+                            if *hard > *current {
+                                *hard
+                            } else {
+                                *current
+                            }
+                        } else {
+                            *current
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
                 disk_widget_state.table_width_state.calculated_column_widths = get_column_widths(
                     draw_loc.width,
                     &hard_widths,
