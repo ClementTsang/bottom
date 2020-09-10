@@ -254,7 +254,7 @@ impl ProcessTableWidget for Painter {
                 if recalculate_column_widths {
                     let mut column_widths = process_headers
                         .iter()
-                        .map(|entry| entry.len() as u16)
+                        .map(|entry| UnicodeWidthStr::width_cjk(entry.as_str()) as u16)
                         .collect::<Vec<_>>();
                     let soft_widths_min = column_widths
                         .iter()
@@ -335,6 +335,15 @@ impl ProcessTableWidget for Painter {
                                 .collect::<Vec<_>>()),
                             true,
                         );
+
+                    debug!(
+                        "DCW: {:?}",
+                        proc_widget_state.table_width_state.desired_column_widths
+                    );
+                    debug!(
+                        "CCW: {:?}",
+                        proc_widget_state.table_width_state.calculated_column_widths
+                    );
                 }
 
                 let dcw = &proc_widget_state.table_width_state.desired_column_widths;
