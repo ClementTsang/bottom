@@ -309,7 +309,10 @@ impl CpuGraphWidget for Painter {
                 cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
                     draw_loc.width,
                     &[None, None],
-                    &[Some(3), Some(4)],
+                    &(CPU_LEGEND_HEADER_LENS
+                        .iter()
+                        .map(|width| Some(*width))
+                        .collect::<Vec<_>>()),
                     &[Some(0.5), Some(0.5)],
                     &(cpu_widget_state
                         .table_width_state

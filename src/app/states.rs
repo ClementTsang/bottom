@@ -342,16 +342,20 @@ impl ProcColumn {
                 }
 
                 if mapping.enabled {
-                    Some(if proc_sorting_type == column_type {
-                        format!(
-                            "{}{}{}",
-                            column_type.to_string(),
-                            command_str.as_str(),
-                            if sort_reverse { DOWN_ARROW } else { UP_ARROW }
-                        )
-                    } else {
-                        format!("{}{}", column_type.to_string(), command_str.as_str(),)
-                    })
+                    Some(format!(
+                        "{}{}{}",
+                        column_type.to_string(),
+                        command_str.as_str(),
+                        if proc_sorting_type == column_type {
+                            if sort_reverse {
+                                DOWN_ARROW
+                            } else {
+                                UP_ARROW
+                            }
+                        } else {
+                            ' '
+                        }
+                    ))
                 } else {
                     None
                 }

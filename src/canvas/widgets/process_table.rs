@@ -254,15 +254,20 @@ impl ProcessTableWidget for Painter {
                 if recalculate_column_widths {
                     let mut column_widths = process_headers
                         .iter()
-                        .map(|entry| std::cmp::max(entry.len(), 5) as u16)
+                        .map(|entry| entry.len() as u16)
+                        .collect::<Vec<_>>();
+                    let soft_widths_min = column_widths
+                        .iter()
+                        .map(|width| Some(*width))
                         .collect::<Vec<_>>();
 
                     proc_widget_state.table_width_state.desired_column_widths = {
                         for (row, _disabled) in processed_sliced_vec.clone() {
                             for (col, entry) in row.iter().enumerate() {
                                 if let Some(col_width) = column_widths.get_mut(col) {
-                                    if entry.len() as u16 > *col_width {
-                                        *col_width = entry.len() as u16;
+                                    let grapheme_len = UnicodeWidthStr::width_cjk(entry.as_str());
+                                    if grapheme_len as u16 > *col_width {
+                                        *col_width = grapheme_len as u16;
                                     }
                                 }
                             }
@@ -273,6 +278,8 @@ impl ProcessTableWidget for Painter {
                     let soft_widths_max = if proc_widget_state.is_grouped {
                         if proc_widget_state.is_using_command {
                             vec![None, Some(0.6), None, None, None, None, None, None]
+                        } else if proc_widget_state.is_tree_mode {
+                            vec![None, Some(0.5), None, None, None, None, None, None]
                         } else {
                             vec![None, Some(0.4), None, None, None, None, None, None]
                         }
@@ -280,6 +287,18 @@ impl ProcessTableWidget for Painter {
                         vec![
                             None,
                             Some(0.6),
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            Some(0.2),
+                        ]
+                    } else if proc_widget_state.is_tree_mode {
+                        vec![
+                            None,
+                            Some(0.5),
                             None,
                             None,
                             None,
@@ -300,11 +319,6 @@ impl ProcessTableWidget for Painter {
                             None,
                             Some(0.2),
                         ]
-                    };
-                    let soft_widths_min = if proc_widget_state.is_grouped {
-                        vec![None, Some(8), None, None, None, None, None, None]
-                    } else {
-                        vec![None, Some(8), None, None, None, None, None, None, Some(5)]
                     };
 
                     proc_widget_state.table_width_state.calculated_column_widths =
