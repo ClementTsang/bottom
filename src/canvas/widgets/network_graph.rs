@@ -372,7 +372,7 @@ impl NetworkGraphWidget for Painter {
                 .iter()
                 .map(|s| Some(*s))
                 .collect::<Vec<_>>()),
-            &[0, 1, 2, 3],
+            true,
         );
 
         // Draw

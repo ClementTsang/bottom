@@ -15,6 +15,7 @@ use crate::{
     constants::*,
 };
 use std::borrow::Cow;
+use unicode_segmentation::UnicodeSegmentation;
 
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 
@@ -93,7 +94,7 @@ impl DiskTableWidget for Painter {
                         .iter()
                         .map(|w| Some(*w))
                         .collect::<Vec<_>>()),
-                    &[0, 1, 2, 3, 4, 5, 6],
+                    true,
                 );
             }
 
@@ -110,13 +111,18 @@ impl DiskTableWidget for Painter {
                                     if *desired_col_width > *calculated_col_width
                                         && *calculated_col_width > 0
                                     {
-                                        if entry.len() > *calculated_col_width as usize
+                                        let graphemes =
+                                            UnicodeSegmentation::graphemes(entry.as_str(), true)
+                                                .collect::<Vec<&str>>();
+
+                                        if graphemes.len() > *calculated_col_width as usize
                                             && *calculated_col_width > 1
                                         {
                                             // Truncate with ellipsis
-                                            let (first, _last) =
-                                                entry.split_at(*calculated_col_width as usize - 1);
-                                            Cow::Owned(format!("{}…", first))
+                                            let first_n = graphemes
+                                                [..(*calculated_col_width as usize - 1)]
+                                                .concat();
+                                            Cow::Owned(format!("{}…", first_n))
                                         } else {
                                             Cow::Borrowed(entry)
                                         }

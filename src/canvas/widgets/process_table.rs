@@ -307,12 +307,6 @@ impl ProcessTableWidget for Painter {
                         vec![None, Some(8), None, None, None, None, None, None, Some(5)]
                     };
 
-                    let column_bias = if proc_widget_state.is_grouped {
-                        vec![0, 2, 3, 1, 4, 5, 6, 7]
-                    } else {
-                        vec![0, 2, 3, 1, 4, 5, 6, 7, 8]
-                    };
-
                     proc_widget_state.table_width_state.calculated_column_widths =
                         get_column_widths(
                             draw_loc.width,
@@ -325,7 +319,7 @@ impl ProcessTableWidget for Painter {
                                 .iter()
                                 .map(|width| Some(*width))
                                 .collect::<Vec<_>>()),
-                            &column_bias,
+                            true,
                         );
                 }
 
@@ -342,15 +336,20 @@ impl ProcessTableWidget for Painter {
                                     if *desired_col_width > *calculated_col_width
                                         && *calculated_col_width > 0
                                     {
+                                        let graphemes =
+                                            UnicodeSegmentation::graphemes(entry.as_str(), true)
+                                                .collect::<Vec<&str>>();
+
                                         if let Some(alternative) = alternative {
                                             Cow::Borrowed(alternative)
-                                        } else if entry.len() > *calculated_col_width as usize
+                                        } else if graphemes.len() > *calculated_col_width as usize
                                             && *calculated_col_width > 1
                                         {
                                             // Truncate with ellipsis
-                                            let (first, _last) =
-                                                entry.split_at(*calculated_col_width as usize - 1);
-                                            Cow::Owned(format!("{}…", first))
+                                            let first_n = graphemes
+                                                [..(*calculated_col_width as usize - 1)]
+                                                .concat();
+                                            Cow::Owned(format!("{}…", first_n))
                                         } else {
                                             Cow::Borrowed(entry)
                                         }

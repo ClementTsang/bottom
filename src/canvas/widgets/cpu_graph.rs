@@ -317,7 +317,7 @@ impl CpuGraphWidget for Painter {
                         .iter()
                         .map(|width| Some(*width))
                         .collect::<Vec<_>>()),
-                    &[1, 0],
+                    false,
                 );
             }
 
@@ -336,9 +336,18 @@ impl CpuGraphWidget for Painter {
                     } else {
                         Cow::Borrowed(&cpu.cpu_name)
                     };
+                let truncated_legend: Cow<'_, str> =
+                    if let Some(calculated_column_width) = ccw.get(0) {
+                        if *calculated_column_width == 0 && cpu.legend_value.is_empty() {
+                            Cow::Borrowed("All")
+                        } else {
+                            Cow::Borrowed(&cpu.legend_value)
+                        }
+                    } else {
+                        Cow::Borrowed(&cpu.legend_value)
+                    };
 
-                let cpu_string_row: Vec<Cow<'_, str>> =
-                    vec![truncated_name, Cow::Borrowed(&cpu.legend_value)];
+                let cpu_string_row: Vec<Cow<'_, str>> = vec![truncated_name, truncated_legend];
 
                 if cpu_string_row.is_empty() {
                     offset_scroll_index += 1;

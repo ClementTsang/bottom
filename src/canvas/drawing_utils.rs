@@ -11,8 +11,8 @@ use std::cmp::{max, min};
 /// * `soft_widths_max` is the upper limit for a soft width, in percentage of the total width.  Use
 ///   `None` if a hard width goes there.
 /// * `soft_widths_desired` is the desired soft width.  Use `None` if a hard width goes there.
-/// * `spacing_priority` is the order we should prioritize columns in terms of the index.  Indices
-///   that come earlier in this list go first.
+/// * `left_to_right` is a boolean whether to go from left to right if true, or right to left if
+///   false.
 ///
 /// **NOTE:** This function ASSUMES THAT ALL PASSED SLICES ARE OF THE SAME SIZE.
 ///
@@ -20,14 +20,18 @@ use std::cmp::{max, min};
 /// 0-constraints breaks tui-rs.
 pub fn get_column_widths(
     total_width: u16, hard_widths: &[Option<u16>], soft_widths_min: &[Option<u16>],
-    soft_widths_max: &[Option<f64>], soft_widths_desired: &[Option<u16>],
-    spacing_priority: &[usize],
+    soft_widths_max: &[Option<f64>], soft_widths_desired: &[Option<u16>], left_to_right: bool,
 ) -> Vec<u16> {
     let initial_width = total_width - 2;
     let mut total_width_left = initial_width;
     let mut column_widths: Vec<u16> = vec![0; hard_widths.len()];
+    let range: Vec<usize> = if left_to_right {
+        (0..hard_widths.len()).collect()
+    } else {
+        (0..hard_widths.len()).rev().collect()
+    };
 
-    for itx in spacing_priority {
+    for itx in &range {
         if let Some(Some(hard_width)) = hard_widths.get(*itx) {
             // Hard width...
             let space_taken = min(*hard_width, total_width_left);
@@ -73,7 +77,7 @@ pub fn get_column_widths(
 
     // Redistribute remaining.
     while total_width_left > 0 {
-        for itx in spacing_priority {
+        for itx in &range {
             if column_widths[*itx] > 0 {
                 column_widths[*itx] += 1;
                 total_width_left -= 1;

@@ -38,6 +38,7 @@
         "choco",
         "cmdline",
         "commandline",
+        "concat",
         "crossterm",
         "curr",
         "czvf",

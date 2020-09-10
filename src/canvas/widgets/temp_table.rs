@@ -15,6 +15,7 @@ use crate::{
     constants::*,
 };
 use std::borrow::Cow;
+use unicode_segmentation::UnicodeSegmentation;
 
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 
@@ -93,7 +94,7 @@ impl TempTableWidget for Painter {
                         .iter()
                         .map(|width| Some(*width))
                         .collect::<Vec<_>>(),
-                    &[1, 0],
+                    false,
                 );
             }
 
@@ -110,13 +111,18 @@ impl TempTableWidget for Painter {
                                     if *desired_col_width > *calculated_col_width
                                         && *calculated_col_width > 0
                                     {
-                                        if entry.len() > *calculated_col_width as usize
+                                        let graphemes =
+                                            UnicodeSegmentation::graphemes(entry.as_str(), true)
+                                                .collect::<Vec<&str>>();
+
+                                        if graphemes.len() > *calculated_col_width as usize
                                             && *calculated_col_width > 1
                                         {
                                             // Truncate with ellipsis
-                                            let (first, _last) =
-                                                entry.split_at(*calculated_col_width as usize - 1);
-                                            Cow::Owned(format!("{}…", first))
+                                            let first_n = graphemes
+                                                [..(*calculated_col_width as usize - 1)]
+                                                .concat();
+                                            Cow::Owned(format!("{}…", first_n))
                                         } else {
                                             Cow::Borrowed(entry)
                                         }
