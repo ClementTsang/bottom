@@ -44,6 +44,10 @@ pub struct AppScrollWidgetState {
 pub struct AppDeleteDialogState {
     pub is_showing_dd: bool,
     pub is_on_yes: bool, // Defaults to "No"
+    pub yes_tlc: Option<(u16, u16)>,
+    pub yes_brc: Option<(u16, u16)>,
+    pub no_tlc: Option<(u16, u16)>,
+    pub no_brc: Option<(u16, u16)>,
 }
 
 pub struct AppHelpDialogState {

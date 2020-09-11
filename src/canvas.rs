@@ -214,6 +214,12 @@ impl Painter {
                 widget.top_left_corner = None;
                 widget.bottom_right_corner = None;
             }
+
+            // And reset dd_dialog...
+            app_state.delete_dialog_state.yes_tlc = None;
+            app_state.delete_dialog_state.yes_brc = None;
+            app_state.delete_dialog_state.no_tlc = None;
+            app_state.delete_dialog_state.yes_brc = None;
         }
 
         terminal.autoresize()?;
