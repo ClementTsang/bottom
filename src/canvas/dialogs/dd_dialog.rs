@@ -34,19 +34,19 @@ impl KillDialog for Painter {
                     if app_state.is_grouped(app_state.current_widget.widget_id) {
                         if to_kill_processes.1.len() != 1 {
                             Text::raw(format!(
-                                "Kill {} processes with the name \"{}\"?",
+                                "Kill {} processes with the name \"{}\"?  Press ENTER to confirm.",
                                 to_kill_processes.1.len(),
                                 to_kill_processes.0
                             ))
                         } else {
                             Text::raw(format!(
-                                "Kill 1 process with the name \"{}\"?",
+                                "Kill 1 process with the name \"{}\"?  Press ENTER to confirm.",
                                 to_kill_processes.0
                             ))
                         }
                     } else {
                         Text::raw(format!(
-                            "Kill process \"{}\" with PID {}?",
+                            "Kill process \"{}\" with PID {}?  Press ENTER to confirm.",
                             to_kill_processes.0, first_pid
                         ))
                     },
