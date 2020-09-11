@@ -117,9 +117,16 @@ impl BatteryDisplayWidget for Painter {
                 .split(draw_loc)[0];
 
             let tab_draw_loc = Layout::default()
-                .constraints([Constraint::Length(1), Constraint::Min(0)].as_ref())
+                .constraints(
+                    [
+                        Constraint::Length(1),
+                        Constraint::Length(2),
+                        Constraint::Min(0),
+                    ]
+                    .as_ref(),
+                )
                 .direction(Direction::Vertical)
-                .split(draw_loc)[0];
+                .split(draw_loc)[1];
 
             if let Some(battery_details) = app_state
                 .canvas_data
@@ -214,7 +221,7 @@ impl BatteryDisplayWidget for Painter {
                 // FIXME: [MOUSE] Support mouse for the tabs?
                 Tabs::default()
                     .titles(battery_names.as_ref())
-                    .block(battery_block)
+                    .block(Block::default())
                     .divider(tui::symbols::line::VERTICAL)
                     .style(self.colours.text_style)
                     .highlight_style(self.colours.currently_selected_text_style)
