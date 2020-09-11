@@ -2498,6 +2498,23 @@ impl App {
                         }
                     }
                 }
+                BottomWidgetType::Battery => {
+                    if let Some(battery_widget_state) = self
+                        .battery_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        if let Some(tab_spacing) = &battery_widget_state.tab_click_locs {
+                            for (itx, ((tlc_x, tlc_y), (brc_x, brc_y))) in
+                                tab_spacing.iter().enumerate()
+                            {
+                                if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y) {
+                                    battery_widget_state.currently_selected_battery_index = itx;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
                 _ => {}
             }
         }
