@@ -236,12 +236,15 @@ impl BatteryDisplayWidget for Painter {
                     let current_y = tab_draw_loc.y;
                     let mut tab_click_locs: Vec<((u16, u16), (u16, u16))> = vec![];
                     for battery in battery_names {
+                        // +1 because there's a space after the tab label.
                         let width =
-                            unicode_width::UnicodeWidthStr::width(battery.as_str()) as u16 + 2;
+                            unicode_width::UnicodeWidthStr::width(battery.as_str()) as u16 + 1;
                         tab_click_locs
                             .push(((current_x, current_y), (current_x + width, current_y)));
 
-                        current_x = current_x + width + 1;
+                        // +2 because we want to go one space past to get to the '|', then one MORE
+                        // to start at the blank space before the tab label.
+                        current_x = current_x + width + 2;
                     }
                     battery_widget_state.tab_click_locs = Some(tab_click_locs);
                 }
