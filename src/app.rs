@@ -529,6 +529,7 @@ impl App {
             } else {
                 self.delete_dialog_state.is_showing_dd = false;
             }
+            self.is_force_redraw = true;
         } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
             if let Some(proc_widget_state) = self
                 .proc_state
@@ -2274,6 +2275,14 @@ impl App {
     pub fn left_mouse_click_movement(&mut self, x: u16, y: u16) {
         // Pretty dead simple - iterate through the widget map and go to the widget where the click
         // is within.
+
+        // TODO: [MOUSE] double click functionality...?
+        // TODO: [REFACTOR] might want to refactor this, it's ugly as sin.
+        // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently everything
+        // is grouped up as an app state.  We should separate stuff like event state and gui state and etc.
+
+        // Short circuit if we're in basic table... we might have to handle the basic table arrow
+        // case here...
         if let Some(bt) = &mut self.basic_table_widget_state {
             if let (
                 Some((left_tlc_x, left_tlc_y)),
@@ -2330,9 +2339,33 @@ impl App {
             }
         }
 
+        // Second short circuit --- are we in the dd dialog state?  If so, only check yes/no and
+        // bail after.
+        if self.is_in_dialog() {
+            if let (
+                Some((yes_tlc_x, yes_tlc_y)),
+                Some((yes_brc_x, yes_brc_y)),
+                Some((no_tlc_x, no_tlc_y)),
+                Some((no_brc_x, no_brc_y)),
+            ) = (
+                self.delete_dialog_state.yes_tlc,
+                self.delete_dialog_state.yes_brc,
+                self.delete_dialog_state.no_tlc,
+                self.delete_dialog_state.no_brc,
+            ) {
+                if (x >= yes_tlc_x && y >= yes_tlc_y) && (x <= yes_brc_x && y <= yes_brc_y) {
+                    self.delete_dialog_state.is_on_yes = true;
+                } else if (x >= no_tlc_x && y >= no_tlc_y) && (x <= no_brc_x && y <= no_brc_y) {
+                    self.delete_dialog_state.is_on_yes = false;
+                }
+            }
+            return;
+        }
+
         let mut failed_to_get = true;
         // TODO: [MOUSE] We could use a better data structure for this?  Currently it's a blind
         // traversal through a hashmap, using a 2d binary tree of sorts would be better.
+        // See: https://docs.rs/kdtree/0.6.0/kdtree/
         for (new_widget_id, widget) in &self.widget_map {
             if let (Some((tlc_x, tlc_y)), Some((brc_x, brc_y))) =
                 (widget.top_left_corner, widget.bottom_right_corner)
@@ -2462,6 +2495,23 @@ impl App {
                                 }
                             }
                             _ => {}
+                        }
+                    }
+                }
+                BottomWidgetType::Battery => {
+                    if let Some(battery_widget_state) = self
+                        .battery_state
+                        .get_mut_widget_state(self.current_widget.widget_id)
+                    {
+                        if let Some(tab_spacing) = &battery_widget_state.tab_click_locs {
+                            for (itx, ((tlc_x, tlc_y), (brc_x, brc_y))) in
+                                tab_spacing.iter().enumerate()
+                            {
+                                if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y) {
+                                    battery_widget_state.currently_selected_battery_index = itx;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }

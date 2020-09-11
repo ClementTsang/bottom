@@ -23,6 +23,7 @@ impl BatteryDisplayWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
+        let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(battery_widget_state) =
             app_state.battery_state.widget_states.get_mut(&widget_id)
         {
@@ -115,6 +116,18 @@ impl BatteryDisplayWidget for Painter {
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
 
+            let tab_draw_loc = Layout::default()
+                .constraints(
+                    [
+                        Constraint::Length(1),
+                        Constraint::Length(2),
+                        Constraint::Min(0),
+                    ]
+                    .as_ref(),
+                )
+                .direction(Direction::Vertical)
+                .split(draw_loc)[1];
+
             if let Some(battery_details) = app_state
                 .canvas_data
                 .battery_data
@@ -188,6 +201,13 @@ impl BatteryDisplayWidget for Painter {
                 );
             }
 
+            let battery_names = app_state
+                .canvas_data
+                .battery_data
+                .iter()
+                .map(|battery| &battery.battery_name)
+                .collect::<Vec<_>>();
+
             // Has to be placed AFTER for tui 0.9, place BEFORE for 0.10.
             f.render_widget(
                 // Tabs::new(
@@ -198,26 +218,36 @@ impl BatteryDisplayWidget for Painter {
                 //         .map(|battery| Spans::from(battery.battery_name.clone())))
                 //     .collect::<Vec<_>>(),
                 // )
-                // FIXME: [MOUSE] Support mouse for the tabs?
                 Tabs::default()
-                    .titles(
-                        app_state
-                            .canvas_data
-                            .battery_data
-                            .iter()
-                            .map(|battery| &battery.battery_name)
-                            .collect::<Vec<_>>()
-                            .as_ref(),
-                    )
-                    .block(battery_block)
+                    .titles(battery_names.as_ref())
+                    .block(Block::default())
                     .divider(tui::symbols::line::VERTICAL)
                     .style(self.colours.text_style)
                     .highlight_style(self.colours.currently_selected_text_style)
                     .select(battery_widget_state.currently_selected_battery_index),
-                draw_loc,
+                tab_draw_loc,
             );
 
-            if app_state.should_get_widget_bounds() {
+            if should_get_widget_bounds {
+                // Tab wizardry
+                if !battery_names.is_empty() {
+                    let mut current_x = tab_draw_loc.x;
+                    let current_y = tab_draw_loc.y;
+                    let mut tab_click_locs: Vec<((u16, u16), (u16, u16))> = vec![];
+                    for battery in battery_names {
+                        // +1 because there's a space after the tab label.
+                        let width =
+                            unicode_width::UnicodeWidthStr::width(battery.as_str()) as u16 + 1;
+                        tab_click_locs
+                            .push(((current_x, current_y), (current_x + width, current_y)));
+
+                        // +2 because we want to go one space past to get to the '|', then one MORE
+                        // to start at the blank space before the tab label.
+                        current_x = current_x + width + 2;
+                    }
+                    battery_widget_state.tab_click_locs = Some(tab_click_locs);
+                }
+
                 // Update draw loc in widget map
                 if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
                     widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));

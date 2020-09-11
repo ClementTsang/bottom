@@ -370,10 +370,10 @@ Note that the `and` operator takes precedence over the `or` operator.
 
 #### General
 
-|        |                                                                                                                  |
-| ------ | ---------------------------------------------------------------------------------------------------------------- |
-| Scroll | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively                                     |
-| Click  | Selects the clicked widget. For tables, clicking can also select an entry.<br>Can be disabled via options/flags. |
+|        |                                                                                                       |
+| ------ | ----------------------------------------------------------------------------------------------------- |
+| Scroll | Table: Scroll<br>Chart: Zooms in or out by scrolling up or down respectively                          |
+| Click  | Selects the clicked widget, table entry, dialog option, or tab.<br>Can be disabled via options/flags. |
 
 #### CPU bindings
 

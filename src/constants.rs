@@ -37,6 +37,7 @@ lazy_static! {
         tui::style::Style::default().fg(tui::style::Color::LightBlue);
 }
 
+// FIXME: [HELP] I wanna update this before release... it's missing mouse too.
 // Help text
 pub const HELP_CONTENTS_TEXT: [&str; 8] = [
     "Press the corresponding numbers to jump to the section, or scroll:\n",

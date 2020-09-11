@@ -44,6 +44,10 @@ pub struct AppScrollWidgetState {
 pub struct AppDeleteDialogState {
     pub is_showing_dd: bool,
     pub is_on_yes: bool, // Defaults to "No"
+    pub yes_tlc: Option<(u16, u16)>,
+    pub yes_brc: Option<(u16, u16)>,
+    pub no_tlc: Option<(u16, u16)>,
+    pub no_brc: Option<(u16, u16)>,
 }
 
 pub struct AppHelpDialogState {
@@ -768,6 +772,7 @@ pub struct BasicTableWidgetState {
 #[derive(Default)]
 pub struct BatteryWidgetState {
     pub currently_selected_battery_index: usize,
+    pub tab_click_locs: Option<Vec<((u16, u16), (u16, u16))>>,
 }
 
 pub struct BatteryState {
