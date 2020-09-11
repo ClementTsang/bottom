@@ -218,7 +218,6 @@ impl BatteryDisplayWidget for Painter {
                 //         .map(|battery| Spans::from(battery.battery_name.clone())))
                 //     .collect::<Vec<_>>(),
                 // )
-                // FIXME: [MOUSE] Support mouse for the tabs?
                 Tabs::default()
                     .titles(battery_names.as_ref())
                     .block(Block::default())
