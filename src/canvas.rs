@@ -219,7 +219,7 @@ impl Painter {
             app_state.delete_dialog_state.yes_tlc = None;
             app_state.delete_dialog_state.yes_brc = None;
             app_state.delete_dialog_state.no_tlc = None;
-            app_state.delete_dialog_state.yes_brc = None;
+            app_state.delete_dialog_state.no_brc = None;
 
             // And battery dialog...
             for battery_widget in app_state.battery_state.widget_states.values_mut() {

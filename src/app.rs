@@ -2276,6 +2276,28 @@ impl App {
         // Pretty dead simple - iterate through the widget map and go to the widget where the click
         // is within.
 
+        for widget in self.widget_map.values_mut() {
+            debug!("Widget tlc: {:?}", widget.top_left_corner);
+            debug!("Widget brc: {:?}", widget.bottom_right_corner);
+        }
+
+        // And reset dd_dialog...
+        debug!(
+            "Dialog save: yes tlc {:?}",
+            self.delete_dialog_state.yes_tlc
+        );
+        debug!(
+            "Dialog save: yes brc {:?}",
+            self.delete_dialog_state.yes_brc
+        );
+        debug!("Dialog save: no tlc {:?}", self.delete_dialog_state.no_tlc);
+        debug!("Dialog save: no brc {:?}", self.delete_dialog_state.no_brc);
+
+        // And battery dialog...
+        for battery_widget in self.battery_state.widget_states.values_mut() {
+            debug!("Battery locs: {:?}", battery_widget.tab_click_locs);
+        }
+
         // TODO: [MOUSE] double click functionality...?
         // TODO: [REFACTOR] might want to refactor this, it's ugly as sin.
         // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently everything
