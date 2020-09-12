@@ -100,6 +100,9 @@ pub struct App {
     #[builder(default = false, setter(skip))]
     pub basic_mode_use_percent: bool,
 
+    #[builder(default = false, setter(skip))]
+    pub is_config_open: bool,
+
     pub cpu_state: CpuState,
     pub mem_state: MemState,
     pub net_state: NetState,
@@ -171,6 +174,8 @@ impl App {
             }
 
             self.is_force_redraw = true;
+        } else if self.is_config_open {
+            self.close_config();
         } else {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -247,10 +252,14 @@ impl App {
         self.help_dialog_state.is_showing_help || self.delete_dialog_state.is_showing_dd
     }
 
-    pub fn on_tab(&mut self) {
-        // Disallow usage whilst in a dialog and only in processes
+    fn ignore_normal_keybinds(&self) -> bool {
+        self.is_config_open || self.is_in_dialog()
+    }
 
-        if !self.is_in_dialog() {
+    pub fn on_tab(&mut self) {
+        // Allow usage whilst only in processes
+
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Cpu => {
                     if let Some(cpu_widget_state) = self
@@ -319,7 +328,7 @@ impl App {
     }
 
     pub fn on_slash(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match &self.current_widget.widget_type {
                 BottomWidgetType::Proc | BottomWidgetType::ProcSort => {
                     // Toggle on
@@ -653,7 +662,8 @@ impl App {
     }
 
     pub fn on_up_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             self.decrement_position_count();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
@@ -662,7 +672,8 @@ impl App {
     }
 
     pub fn on_down_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             self.increment_position_count();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
@@ -671,7 +682,8 @@ impl App {
     }
 
     pub fn on_left_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     // if let Some(proc_widget_state) = self
@@ -735,7 +747,8 @@ impl App {
     }
 
     pub fn on_right_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     // if let Some(proc_widget_state) = self
@@ -804,7 +817,7 @@ impl App {
     }
 
     pub fn skip_cursor_beginning(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -836,11 +849,12 @@ impl App {
                     }
                 }
             }
+        } else if self.is_config_open {
         }
     }
 
     pub fn skip_cursor_end(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -882,6 +896,7 @@ impl App {
                     }
                 }
             }
+        } else if self.is_config_open {
         }
     }
 
@@ -945,7 +960,7 @@ impl App {
         }
 
         // Forbid any char key presses when showing a dialog box...
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             let current_key_press_inst = Instant::now();
             if current_key_press_inst
                 .duration_since(self.last_key_press)
@@ -1034,6 +1049,7 @@ impl App {
                 'k' | 'l' => self.on_right_key(),
                 _ => {}
             }
+        } else if self.is_config_open {
         }
     }
 
@@ -1086,6 +1102,7 @@ impl App {
                     self.data_collection.set_frozen_time();
                 }
             }
+            'C' => self.open_config(),
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
@@ -1237,6 +1254,16 @@ impl App {
         }
     }
 
+    pub fn open_config(&mut self) {
+        self.is_config_open = true;
+        self.is_force_redraw = true;
+    }
+
+    pub fn close_config(&mut self) {
+        self.is_config_open = false;
+        self.is_force_redraw = true;
+    }
+
     pub fn kill_highlighted_process(&mut self) -> Result<()> {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
             if let Some(current_selected_processes) = &self.to_delete_process_list {
@@ -1268,7 +1295,8 @@ impl App {
     }
 
     fn expand_widget(&mut self) {
-        if !self.is_in_dialog() && !self.app_config_fields.use_basic_mode {
+        // TODO: [BASIC] Expansion in basic mode.
+        if !self.ignore_normal_keybinds() && !self.app_config_fields.use_basic_mode {
             // Pop-out mode.  We ignore if in process search.
 
             match self.current_widget.widget_type {
@@ -1300,7 +1328,7 @@ impl App {
                - Reflection direction.
         */
 
-        if !self.is_in_dialog() && !self.is_expanded {
+        if !self.ignore_normal_keybinds() && !self.is_expanded {
             if let Some(new_widget_id) = &(match direction {
                 WidgetDirection::Left => self.current_widget.left_neighbour,
                 WidgetDirection::Right => self.current_widget.right_neighbour,
@@ -1731,7 +1759,7 @@ impl App {
     }
 
     pub fn skip_to_first(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
@@ -1782,13 +1810,14 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
-        } else {
+        } else if self.is_config_open {
+        } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
         }
     }
 
     pub fn skip_to_last(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
@@ -1858,7 +1887,8 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
-        } else {
+        } else if self.is_config_open {
+        } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = self
                 .help_dialog_state
                 .scroll_state
@@ -1868,7 +1898,7 @@ impl App {
     }
 
     pub fn decrement_position_count(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => self.increment_process_position(-1),
                 BottomWidgetType::ProcSort => self.increment_process_sort_position(-1),
@@ -1881,7 +1911,7 @@ impl App {
     }
 
     pub fn increment_position_count(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => self.increment_process_position(1),
                 BottomWidgetType::ProcSort => self.increment_process_sort_position(1),

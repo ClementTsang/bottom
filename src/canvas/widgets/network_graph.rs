@@ -104,7 +104,8 @@ impl NetworkGraphWidget for Painter {
                 }
             }
 
-            // FIXME [NETWORKING]: Do ya think it would be possible for a more granular approach?
+            // FIXME [NETWORKING]: Granularity.  Just scale up the values.
+            // FIXME [NETWORKING]: Ability to set fixed scale in config.
             // Currently we do 32 -> 33... which skips some gigabit values
             let true_max_val: f64;
             let mut labels = vec![];

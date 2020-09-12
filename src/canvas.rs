@@ -10,6 +10,7 @@ use tui::{
 
 use canvas_colours::*;
 use dialogs::*;
+use screens::*;
 use widgets::*;
 
 use crate::{
@@ -26,6 +27,7 @@ use crate::{
 mod canvas_colours;
 mod dialogs;
 mod drawing_utils;
+mod screens;
 mod widgets;
 
 /// Point is of time, data
@@ -407,6 +409,13 @@ impl Painter {
                     ),
                     _ => {}
                 }
+            } else if app_state.is_config_open {
+                let rect = Layout::default()
+                    .margin(0)
+                    .constraints([Constraint::Percentage(100)].as_ref())
+                    .split(f.size())[0];
+
+                self.draw_config_screen(&mut f, app_state, rect)
             } else if app_state.app_config_fields.use_basic_mode {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
