@@ -46,7 +46,7 @@ If you want to help contribute by submitting a PR, by all means, I'm open! In re
 
   - You can check clippy using `cargo clippy`.
 
-  - I use [cargo-husky](https://github.com/rhysd/cargo-husky) to automatically run a `cargo clippy` and `cargo test` check.
+  - I use [cargo-husky](https://github.com/rhysd/cargo-husky) to automatically run a `cargo clippy` check.
 
 - You may notice that I have fern and log as dependencies; this is mostly for easy debugging via the `debug!()` macro. It writes to the `debug.log` file that will automatically be created if you run in debug mode (so `cargo run`).
 
