@@ -230,7 +230,7 @@ impl Painter {
 
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
-                let border_len = f.size().height.saturating_sub(gen_help_len) / 2;
+                let border_len = current_height.saturating_sub(gen_help_len) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -241,12 +241,12 @@ impl Painter {
                         ]
                         .as_ref(),
                     )
-                    .split(f.size());
+                    .split(terminal_size);
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(
-                        if f.size().width < 100 {
+                        if current_width < 100 {
                             // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
                             [
                                 Constraint::Percentage(0),
@@ -275,22 +275,22 @@ impl Painter {
                 let dd_text = self.get_dd_spans(app_state);
 
                 let (text_width, text_height) = (
-                    if f.size().width < 100 {
-                        f.size().width * 90 / 100
+                    if current_width < 100 {
+                        current_width * 90 / 100
                     } else {
-                        f.size().width * 50 / 100
+                        current_width * 50 / 100
                     },
                     7,
                 );
                 // let (text_width, text_height) = if let Some(dd_text) = &dd_text {
-                //     let width = if f.size().width < 100 {
-                //         f.size().width * 90 / 100
+                //     let width = if current_width < 100 {
+                //         current_width * 90 / 100
                 //     } else {
-                //         let min_possible_width = (f.size().width * 50 / 100) as usize;
+                //         let min_possible_width = (current_width * 50 / 100) as usize;
                 //         let mut width = dd_text.width();
 
                 //         // This should theoretically never allow width to be 0... we can be safe and do an extra check though.
-                //         while width > (f.size().width as usize) && width / 2 > min_possible_width {
+                //         while width > (current_width as usize) && width / 2 > min_possible_width {
                 //             width /= 2;
                 //         }
 
@@ -304,16 +304,16 @@ impl Painter {
                 // } else {
                 //     // AFAIK this shouldn't happen, unless something went wrong...
                 //     (
-                //         if f.size().width < 100 {
-                //             f.size().width * 90 / 100
+                //         if current_width < 100 {
+                //             current_width * 90 / 100
                 //         } else {
-                //             f.size().width * 50 / 100
+                //             current_width * 50 / 100
                 //         },
                 //         7,
                 //     )
                 // };
 
-                let vertical_bordering = f.size().height.saturating_sub(text_height) / 2;
+                let vertical_bordering = current_height.saturating_sub(text_height) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -324,9 +324,9 @@ impl Painter {
                         ]
                         .as_ref(),
                     )
-                    .split(f.size());
+                    .split(terminal_size);
 
-                let horizontal_bordering = f.size().width.saturating_sub(text_width) / 2;
+                let horizontal_bordering = current_width.saturating_sub(text_width) / 2;
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(
@@ -346,7 +346,7 @@ impl Painter {
                 let rect = Layout::default()
                     .margin(0)
                     .constraints([Constraint::Percentage(100)].as_ref())
-                    .split(f.size());
+                    .split(terminal_size);
                 match &app_state.current_widget.widget_type {
                     Cpu => self.draw_cpu(
                         &mut f,
@@ -429,7 +429,7 @@ impl Painter {
                         ]
                         .as_ref(),
                     )
-                    .split(f.size());
+                    .split(terminal_size);
 
                 let middle_chunks = Layout::default()
                     .direction(Direction::Horizontal)
@@ -494,7 +494,7 @@ impl Painter {
                         .margin(0)
                         .constraints(self.row_constraints.as_ref())
                         .direction(Direction::Vertical)
-                        .split(f.size());
+                        .split(terminal_size);
                     let col_draw_locs = self
                         .col_constraints
                         .iter()
