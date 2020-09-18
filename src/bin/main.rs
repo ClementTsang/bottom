@@ -93,6 +93,7 @@ fn main() -> Result<()> {
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
+    terminal.clear()?;
     terminal.hide_cursor()?;
 
     // Set panic hook

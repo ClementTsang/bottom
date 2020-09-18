@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#204](https://github.com/ClementTsang/bottom/pull/204): Fix searching by command name being broken.
 
+- [#238](https://github.com/ClementTsang/bottom/pull/238): Fix being able to cause an index out-of-bounds by resizing
+  to a smaller terminal _just_ after the program got the terminal size, but right before the terminal started drawing.
+
 ## [0.4.6] - 2020-08-25
 
 ### Features

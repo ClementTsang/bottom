@@ -196,42 +196,41 @@ impl Painter {
     ) -> error::Result<()> {
         use BottomWidgetType::*;
 
-        let terminal_size = terminal.size()?;
-        let current_height = terminal_size.height;
-        let current_width = terminal_size.width;
-
-        if (self.height == 0 && self.width == 0)
-            || (self.height != current_height || self.width != current_width)
-        {
-            app_state.is_force_redraw = true;
-            self.height = current_height;
-            self.width = current_width;
-        }
-
-        if app_state.should_get_widget_bounds() {
-            // If we're force drawing, reset ALL mouse boundaries.
-            for widget in app_state.widget_map.values_mut() {
-                widget.top_left_corner = None;
-                widget.bottom_right_corner = None;
-            }
-
-            // And reset dd_dialog...
-            app_state.delete_dialog_state.yes_tlc = None;
-            app_state.delete_dialog_state.yes_brc = None;
-            app_state.delete_dialog_state.no_tlc = None;
-            app_state.delete_dialog_state.no_brc = None;
-
-            // And battery dialog...
-            for battery_widget in app_state.battery_state.widget_states.values_mut() {
-                battery_widget.tab_click_locs = None;
-            }
-        }
-
-        terminal.autoresize()?;
         terminal.draw(|mut f| {
+            let terminal_size = f.size();
+            let terminal_height = terminal_size.height;
+            let terminal_width = terminal_size.width;
+
+            if (self.height == 0 && self.width == 0)
+                || (self.height != terminal_height || self.width != terminal_width)
+            {
+                app_state.is_force_redraw = true;
+                self.height = terminal_height;
+                self.width = terminal_width;
+            }
+
+            if app_state.should_get_widget_bounds() {
+                // If we're force drawing, reset ALL mouse boundaries.
+                for widget in app_state.widget_map.values_mut() {
+                    widget.top_left_corner = None;
+                    widget.bottom_right_corner = None;
+                }
+
+                // And reset dd_dialog...
+                app_state.delete_dialog_state.yes_tlc = None;
+                app_state.delete_dialog_state.yes_brc = None;
+                app_state.delete_dialog_state.no_tlc = None;
+                app_state.delete_dialog_state.no_brc = None;
+
+                // And battery dialog...
+                for battery_widget in app_state.battery_state.widget_states.values_mut() {
+                    battery_widget.tab_click_locs = None;
+                }
+            }
+
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
-                let border_len = f.size().height.saturating_sub(gen_help_len) / 2;
+                let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -242,12 +241,12 @@ impl Painter {
                         ]
                         .as_ref(),
                     )
-                    .split(f.size());
+                    .split(terminal_size);
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(
-                        if f.size().width < 100 {
+                        if terminal_width < 100 {
                             // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
                             [
                                 Constraint::Percentage(0),
@@ -276,22 +275,22 @@ impl Painter {
                 let dd_text = self.get_dd_spans(app_state);
 
                 let (text_width, text_height) = (
-                    if f.size().width < 100 {
-                        f.size().width * 90 / 100
+                    if terminal_width < 100 {
+                        terminal_width * 90 / 100
                     } else {
-                        f.size().width * 50 / 100
+                        terminal_width * 50 / 100
                     },
                     7,
                 );
                 // let (text_width, text_height) = if let Some(dd_text) = &dd_text {
-                //     let width = if f.size().width < 100 {
-                //         f.size().width * 90 / 100
+                //     let width = if current_width < 100 {
+                //         current_width * 90 / 100
                 //     } else {
-                //         let min_possible_width = (f.size().width * 50 / 100) as usize;
+                //         let min_possible_width = (current_width * 50 / 100) as usize;
                 //         let mut width = dd_text.width();
 
                 //         // This should theoretically never allow width to be 0... we can be safe and do an extra check though.
-                //         while width > (f.size().width as usize) && width / 2 > min_possible_width {
+                //         while width > (current_width as usize) && width / 2 > min_possible_width {
                 //             width /= 2;
                 //         }
 
@@ -305,16 +304,16 @@ impl Painter {
                 // } else {
                 //     // AFAIK this shouldn't happen, unless something went wrong...
                 //     (
-                //         if f.size().width < 100 {
-                //             f.size().width * 90 / 100
+                //         if current_width < 100 {
+                //             current_width * 90 / 100
                 //         } else {
-                //             f.size().width * 50 / 100
+                //             current_width * 50 / 100
                 //         },
                 //         7,
                 //     )
                 // };
 
-                let vertical_bordering = f.size().height.saturating_sub(text_height) / 2;
+                let vertical_bordering = terminal_height.saturating_sub(text_height) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -325,9 +324,9 @@ impl Painter {
                         ]
                         .as_ref(),
                     )
-                    .split(f.size());
+                    .split(terminal_size);
 
-                let horizontal_bordering = f.size().width.saturating_sub(text_width) / 2;
+                let horizontal_bordering = terminal_width.saturating_sub(text_width) / 2;
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(
@@ -347,7 +346,7 @@ impl Painter {
                 let rect = Layout::default()
                     .margin(0)
                     .constraints([Constraint::Percentage(100)].as_ref())
-                    .split(f.size());
+                    .split(terminal_size);
                 match &app_state.current_widget.widget_type {
                     Cpu => self.draw_cpu(
                         &mut f,
@@ -430,7 +429,7 @@ impl Painter {
                         ]
                         .as_ref(),
                     )
-                    .split(f.size());
+                    .split(terminal_size);
 
                 let middle_chunks = Layout::default()
                     .direction(Direction::Horizontal)
@@ -495,7 +494,7 @@ impl Painter {
                         .margin(0)
                         .constraints(self.row_constraints.as_ref())
                         .direction(Direction::Vertical)
-                        .split(f.size());
+                        .split(terminal_size);
                     let col_draw_locs = self
                         .col_constraints
                         .iter()
