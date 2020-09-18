@@ -198,15 +198,15 @@ impl Painter {
 
         terminal.draw(|mut f| {
             let terminal_size = f.size();
-            let current_height = terminal_size.height;
-            let current_width = terminal_size.width;
+            let terminal_height = terminal_size.height;
+            let terminal_width = terminal_size.width;
 
             if (self.height == 0 && self.width == 0)
-                || (self.height != current_height || self.width != current_width)
+                || (self.height != terminal_height || self.width != terminal_width)
             {
                 app_state.is_force_redraw = true;
-                self.height = current_height;
-                self.width = current_width;
+                self.height = terminal_height;
+                self.width = terminal_width;
             }
 
             if app_state.should_get_widget_bounds() {
@@ -230,7 +230,7 @@ impl Painter {
 
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
-                let border_len = current_height.saturating_sub(gen_help_len) / 2;
+                let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -246,7 +246,7 @@ impl Painter {
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(
-                        if current_width < 100 {
+                        if terminal_width < 100 {
                             // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
                             [
                                 Constraint::Percentage(0),
@@ -275,10 +275,10 @@ impl Painter {
                 let dd_text = self.get_dd_spans(app_state);
 
                 let (text_width, text_height) = (
-                    if current_width < 100 {
-                        current_width * 90 / 100
+                    if terminal_width < 100 {
+                        terminal_width * 90 / 100
                     } else {
-                        current_width * 50 / 100
+                        terminal_width * 50 / 100
                     },
                     7,
                 );
@@ -313,7 +313,7 @@ impl Painter {
                 //     )
                 // };
 
-                let vertical_bordering = current_height.saturating_sub(text_height) / 2;
+                let vertical_bordering = terminal_height.saturating_sub(text_height) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(
@@ -326,7 +326,7 @@ impl Painter {
                     )
                     .split(terminal_size);
 
-                let horizontal_bordering = current_width.saturating_sub(text_width) / 2;
+                let horizontal_bordering = terminal_width.saturating_sub(text_width) / 2;
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(
