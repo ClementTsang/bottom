@@ -6,38 +6,34 @@ labels: "bug"
 assignees: ""
 ---
 
-## Describe the bug
+### Describe the bug
 
-_A clear and concise description of what the bug is and what the expected behaviour was. If applicable, add screenshots to help explain your problem:_
+_A clear and concise description of what the bug is and what the expected behaviour was._
+_If applicable, add screenshots to help explain your problem:_
 
-## To reproduce
+### To reproduce
 
 _Steps on how to reproduce the behaviour:_
 
 1. Go to...
-2. See error
+2. Click on...
+3. See error
 
-## Platform
+### bottom version (use `btm -V`)
+
+### bottom config file (if one is used)
+
+### Platform
 
 _If relevant, please provide information on:_
 
-**Operating System and Version:**
+**Operating system and OS version:**
 
-**Terminal:**
+**Terminal (i.e. urxvt, kitty, etc.):**
 
-**Shell:**
+**Shell (i.e. zsh, bash, etc.):**
 
-**System Info:**
-
-_Information about your system specifically (sometimes this matters...):_
-
-- _Total RAM:_
-
-- _Total SWAP:_
-
-- _CPU:_
-
-**bottom version (use `btm -V`):**
+**System info (RAM, SWAP, etc.):**
 
 **Rust version (if building yourself):**
 
