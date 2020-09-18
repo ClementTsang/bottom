@@ -196,39 +196,38 @@ impl Painter {
     ) -> error::Result<()> {
         use BottomWidgetType::*;
 
-        let terminal_size = terminal.size()?;
-        let current_height = terminal_size.height;
-        let current_width = terminal_size.width;
-
-        if (self.height == 0 && self.width == 0)
-            || (self.height != current_height || self.width != current_width)
-        {
-            app_state.is_force_redraw = true;
-            self.height = current_height;
-            self.width = current_width;
-        }
-
-        if app_state.should_get_widget_bounds() {
-            // If we're force drawing, reset ALL mouse boundaries.
-            for widget in app_state.widget_map.values_mut() {
-                widget.top_left_corner = None;
-                widget.bottom_right_corner = None;
-            }
-
-            // And reset dd_dialog...
-            app_state.delete_dialog_state.yes_tlc = None;
-            app_state.delete_dialog_state.yes_brc = None;
-            app_state.delete_dialog_state.no_tlc = None;
-            app_state.delete_dialog_state.no_brc = None;
-
-            // And battery dialog...
-            for battery_widget in app_state.battery_state.widget_states.values_mut() {
-                battery_widget.tab_click_locs = None;
-            }
-        }
-
-        terminal.autoresize()?;
         terminal.draw(|mut f| {
+            let terminal_size = f.size();
+            let current_height = terminal_size.height;
+            let current_width = terminal_size.width;
+
+            if (self.height == 0 && self.width == 0)
+                || (self.height != current_height || self.width != current_width)
+            {
+                app_state.is_force_redraw = true;
+                self.height = current_height;
+                self.width = current_width;
+            }
+
+            if app_state.should_get_widget_bounds() {
+                // If we're force drawing, reset ALL mouse boundaries.
+                for widget in app_state.widget_map.values_mut() {
+                    widget.top_left_corner = None;
+                    widget.bottom_right_corner = None;
+                }
+
+                // And reset dd_dialog...
+                app_state.delete_dialog_state.yes_tlc = None;
+                app_state.delete_dialog_state.yes_brc = None;
+                app_state.delete_dialog_state.no_tlc = None;
+                app_state.delete_dialog_state.no_brc = None;
+
+                // And battery dialog...
+                for battery_widget in app_state.battery_state.widget_states.values_mut() {
+                    battery_widget.tab_click_locs = None;
+                }
+            }
+
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = f.size().height.saturating_sub(gen_help_len) / 2;
