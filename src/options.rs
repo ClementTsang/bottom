@@ -15,7 +15,7 @@ pub mod layout_options;
 
 use anyhow::{Context, Result};
 
-#[derive(Default, Deserialize)]
+#[derive(Clone, Default, Deserialize)]
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
@@ -24,7 +24,7 @@ pub struct Config {
     pub temp_filter: Option<IgnoreList>,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Clone, Default, Deserialize)]
 pub struct ConfigFlags {
     pub hide_avg_cpu: Option<bool>,
     pub dot_marker: Option<bool>,
@@ -50,7 +50,7 @@ pub struct ConfigFlags {
     pub disable_click: Option<bool>,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Clone, Default, Deserialize)]
 pub struct ConfigColours {
     pub table_header_color: Option<String>,
     pub all_cpu_color: Option<String>,
@@ -72,7 +72,7 @@ pub struct ConfigColours {
     pub battery_colors: Option<Vec<String>>,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Clone, Default, Deserialize)]
 pub struct IgnoreList {
     pub is_list_ignored: bool,
     pub list: Vec<String>,
@@ -275,13 +275,14 @@ pub fn build_app(
         .temp_state(TempState::init(temp_state_map))
         .battery_state(BatteryState::init(battery_state_map))
         .basic_table_widget_state(basic_table_widget_state)
-        .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // I think the unwrap is fine here
+        .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // FIXME: [UNWRAP] - many of the unwraps are fine (like this one) but do a once-over and/or switch to expect?
         .widget_map(widget_map)
         .used_widgets(used_widgets)
         .filters(DataFilters {
             disk_filter,
             temp_filter,
         })
+        .config(config.clone())
         .build())
 }
 

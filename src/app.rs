@@ -12,6 +12,7 @@ pub use states::*;
 
 use crate::{
     canvas, constants,
+    options::Config,
     utils::error::{BottomError, Result},
     Pid,
 };
@@ -116,6 +117,7 @@ pub struct App {
     pub current_widget: BottomWidget,
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
+    pub config: Config,
 }
 
 impl App {
@@ -461,6 +463,8 @@ impl App {
                     .search_toggle_ignore_case();
                 proc_widget_state.update_query();
                 self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
+
+                // Also toggle it in the config file.
             }
         }
     }
@@ -1244,6 +1248,7 @@ impl App {
             's' => self.toggle_sort(),
             'I' => self.invert_sort(),
             '%' => self.toggle_percentages(),
+            ' ' => self.on_space(),
             _ => {}
         }
 
@@ -1253,6 +1258,8 @@ impl App {
             }
         }
     }
+
+    pub fn on_space(&mut self) {}
 
     pub fn open_config(&mut self) {
         self.is_config_open = true;

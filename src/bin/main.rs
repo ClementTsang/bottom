@@ -104,8 +104,7 @@ fn main() -> Result<()> {
     ctrlc::set_handler(move || {
         ist_clone.store(true, Ordering::SeqCst);
         termination_hook();
-    })
-    .unwrap();
+    })?;
     let mut first_run = true;
 
     while !is_terminated.load(Ordering::SeqCst) {

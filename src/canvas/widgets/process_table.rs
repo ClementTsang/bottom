@@ -413,7 +413,7 @@ impl ProcessTableWidget for Painter {
                     }
                 });
 
-                // TODO: gotop's "x out of y" thing is really nice to help keep track of the scroll position.
+                // TODO: gotop's "x out of y" thing is really nice to help keep track of the scroll position.  Add to everything?
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)
@@ -531,6 +531,8 @@ impl ProcessTableWidget for Painter {
             let query = proc_widget_state.get_current_search_query().as_str();
             let grapheme_indices = UnicodeSegmentation::grapheme_indices(query, true);
 
+            // TODO: [CURSOR] blank cursor if not selected
+            // TODO: [CURSOR] blinking cursor?
             let query_with_cursor = build_query(
                 is_on_widget,
                 grapheme_indices,
@@ -579,6 +581,8 @@ impl ProcessTableWidget for Painter {
                 self.colours.text_style
             };
 
+            // FIXME: [MOUSE] Mouse support for these in search
+            // FIXME: [MOVEMENT] Movement support for these in search
             let option_text = vec![
                 Text::raw("\n"),
                 Text::styled(

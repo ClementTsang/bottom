@@ -67,8 +67,8 @@ pub struct Painter {
     col_constraints: Vec<Vec<Constraint>>,
     col_row_constraints: Vec<Vec<Vec<Constraint>>>,
     layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
-    widget_layout: BottomLayout,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
+    widget_layout: BottomLayout,
     table_height_offset: u16,
 }
 

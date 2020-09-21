@@ -33,19 +33,16 @@ use options::*;
 use utils::error;
 
 pub mod app;
-
 pub mod utils {
     pub mod error;
     pub mod gen_util;
     pub mod logging;
 }
-
 pub mod canvas;
+pub mod clap;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
-
-pub mod clap;
 
 #[cfg(target_family = "windows")]
 pub type Pid = usize;
@@ -213,17 +210,19 @@ pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBu
 pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
     if let Some(path) = config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
+            // We found a config file!
             Ok(toml::from_str(config_string.as_str())?)
         } else {
+            // Config file DNE...
             if let Some(parent_path) = path.parent() {
                 fs::create_dir_all(parent_path)?;
             }
-            fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
-            Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
+            fs::File::create(path)?.write_all(CONFIG_TOP_HEAD.as_bytes())?;
+            Ok(Config::default())
         }
     } else {
-        // Don't write otherwise...
-        Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
+        // Don't write, the config path was somehow None...
+        Ok(Config::default())
     }
 }
 

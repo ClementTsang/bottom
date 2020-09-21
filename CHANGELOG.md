@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#223](https://github.com/ClementTsang/bottom/pull/223): Add tree mode for processes.
 
+- [](): Add in-app configuration.
+
 ### Changes
 
 - [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.

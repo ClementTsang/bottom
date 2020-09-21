@@ -1,6 +1,9 @@
 use crate::{app::App, canvas::Painter, constants};
 use tui::{
     backend::Backend,
+    layout::Constraint,
+    layout::Direction,
+    layout::Layout,
     layout::{Alignment, Rect},
     terminal::Frame,
     widgets::{Block, Borders, Paragraph},
@@ -23,19 +26,32 @@ impl ConfigScreen for Painter {
             .borders(Borders::ALL)
             .border_style(self.colours.border_style);
 
-        f.render_widget(
-            Paragraph::new(self.styled_help_text.iter())
-                .block(config_block)
-                .style(self.colours.text_style)
-                .alignment(Alignment::Left)
-                .wrap(true)
-                .scroll(
-                    app_state
-                        .help_dialog_state
-                        .scroll_state
-                        .current_scroll_index,
-                ),
-            draw_loc,
-        );
+        f.render_widget(config_block, draw_loc);
+
+        // let margined_draw_locs = Layout::default()
+        //     .margin(2)
+        //     .direction(Direction::Horizontal)
+        //     .constraints(
+        //         [
+        //             Constraint::Percentage(33),
+        //             Constraint::Percentage(34),
+        //             Constraint::Percentage(33),
+        //         ]
+        //         .as_ref(),
+        //     )
+        //     .split(draw_loc)
+        //     .into_iter()
+        //     .map(|loc| {
+        //         // Required to properly margin in *between* the rectangles.
+        //         Layout::default()
+        //             .horizontal_margin(1)
+        //             .constraints([Constraint::Percentage(100)].as_ref())
+        //             .split(loc)[0]
+        //     })
+        //     .collect::<Vec<Rect>>();
+
+        // for dl in margined_draw_locs {
+        //     f.render_widget(Block::default().borders(Borders::ALL), dl);
+        // }
     }
 }
