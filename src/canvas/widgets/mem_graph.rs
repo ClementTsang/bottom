@@ -78,6 +78,7 @@ impl MemGraphWidget for Painter {
                     .graph_type(tui::widgets::GraphType::Line),
             );
 
+            // FIXME: [SWAP] Hide this if denominator is 0...
             let swap_label = format!(
                 "SWP:{}{}",
                 app_state.canvas_data.swap_label_percent, app_state.canvas_data.swap_label_frac

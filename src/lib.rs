@@ -20,8 +20,6 @@ use crossterm::{
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
 
-use anyhow::Context;
-
 use app::{
     data_harvester::{self, processes::ProcessSorting},
     layout_manager::{UsedWidgets, WidgetDirection},
@@ -33,19 +31,16 @@ use options::*;
 use utils::error;
 
 pub mod app;
-
 pub mod utils {
     pub mod error;
     pub mod gen_util;
     pub mod logging;
 }
-
 pub mod canvas;
+pub mod clap;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
-
-pub mod clap;
 
 #[cfg(target_family = "windows")]
 pub type Pid = usize;
@@ -60,8 +55,11 @@ pub enum BottomEvent<I, J> {
     Clean,
 }
 
-pub enum ResetEvent {
+pub enum CollectionThreadEvent {
     Reset,
+    UpdateConfig(Box<app::AppConfigFields>),
+    UpdateUsedWidgets(Box<UsedWidgets>),
+    UpdateUpdateTime(u64),
 }
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
@@ -87,7 +85,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 pub fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<ResetEvent>,
+    event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<CollectionThreadEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
@@ -144,7 +142,7 @@ pub fn handle_key_event_or_break(
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char('r') => {
-                    if reset_sender.send(ResetEvent::Reset).is_ok() {
+                    if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
                         app.reset();
                     }
                 }
@@ -213,17 +211,19 @@ pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBu
 pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Config> {
     if let Some(path) = config_path {
         if let Ok(config_string) = fs::read_to_string(path) {
+            // We found a config file!
             Ok(toml::from_str(config_string.as_str())?)
         } else {
+            // Config file DNE...
             if let Some(parent_path) = path.parent() {
                 fs::create_dir_all(parent_path)?;
             }
-            fs::File::create(path)?.write_all(DEFAULT_CONFIG_CONTENT.as_bytes())?;
-            Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
+            fs::File::create(path)?.write_all(CONFIG_TOP_HEAD.as_bytes())?;
+            Ok(Config::default())
         }
     } else {
-        // Don't write otherwise...
-        Ok(toml::from_str(DEFAULT_CONFIG_CONTENT)?)
+        // Don't write, the config path was somehow None...
+        Ok(Config::default())
     }
 }
 
@@ -234,134 +234,6 @@ pub fn try_drawing(
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
         return Err(err);
-    }
-
-    Ok(())
-}
-
-pub fn generate_config_colours(
-    config: &Config, painter: &mut canvas::Painter,
-) -> anyhow::Result<()> {
-    if let Some(colours) = &config.colors {
-        if let Some(border_color) = &colours.border_color {
-            painter
-                .colours
-                .set_border_colour(border_color)
-                .context("Update 'border_color' in your config file..")?;
-        }
-
-        if let Some(highlighted_border_color) = &colours.highlighted_border_color {
-            painter
-                .colours
-                .set_highlighted_border_colour(highlighted_border_color)
-                .context("Update 'highlighted_border_color' in your config file..")?;
-        }
-
-        if let Some(text_color) = &colours.text_color {
-            painter
-                .colours
-                .set_text_colour(text_color)
-                .context("Update 'text_color' in your config file..")?;
-        }
-
-        if let Some(avg_cpu_color) = &colours.avg_cpu_color {
-            painter
-                .colours
-                .set_avg_cpu_colour(avg_cpu_color)
-                .context("Update 'avg_cpu_color' in your config file..")?;
-        }
-
-        if let Some(all_cpu_color) = &colours.all_cpu_color {
-            painter
-                .colours
-                .set_all_cpu_colour(all_cpu_color)
-                .context("Update 'all_cpu_color' in your config file..")?;
-        }
-
-        if let Some(cpu_core_colors) = &colours.cpu_core_colors {
-            painter
-                .colours
-                .set_cpu_colours(cpu_core_colors)
-                .context("Update 'cpu_core_colors' in your config file..")?;
-        }
-
-        if let Some(ram_color) = &colours.ram_color {
-            painter
-                .colours
-                .set_ram_colour(ram_color)
-                .context("Update 'ram_color' in your config file..")?;
-        }
-
-        if let Some(swap_color) = &colours.swap_color {
-            painter
-                .colours
-                .set_swap_colour(swap_color)
-                .context("Update 'swap_color' in your config file..")?;
-        }
-
-        if let Some(rx_color) = &colours.rx_color {
-            painter
-                .colours
-                .set_rx_colour(rx_color)
-                .context("Update 'rx_color' in your config file..")?;
-        }
-
-        if let Some(tx_color) = &colours.tx_color {
-            painter
-                .colours
-                .set_tx_colour(tx_color)
-                .context("Update 'tx_color' in your config file..")?;
-        }
-
-        // if let Some(rx_total_color) = &colours.rx_total_color {
-        //     painter.colours.set_rx_total_colour(rx_total_color)?;
-        // }
-
-        // if let Some(tx_total_color) = &colours.tx_total_color {
-        //     painter.colours.set_tx_total_colour(tx_total_color)?;
-        // }
-
-        if let Some(table_header_color) = &colours.table_header_color {
-            painter
-                .colours
-                .set_table_header_colour(table_header_color)
-                .context("Update 'table_header_color' in your config file..")?;
-        }
-
-        if let Some(scroll_entry_text_color) = &colours.selected_text_color {
-            painter
-                .colours
-                .set_scroll_entry_text_color(scroll_entry_text_color)
-                .context("Update 'selected_text_color' in your config file..")?;
-        }
-
-        if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
-            painter
-                .colours
-                .set_scroll_entry_bg_color(scroll_entry_bg_color)
-                .context("Update 'selected_bg_color' in your config file..")?;
-        }
-
-        if let Some(widget_title_color) = &colours.widget_title_color {
-            painter
-                .colours
-                .set_widget_title_colour(widget_title_color)
-                .context("Update 'widget_title_color' in your config file..")?;
-        }
-
-        if let Some(graph_color) = &colours.graph_color {
-            painter
-                .colours
-                .set_graph_colour(graph_color)
-                .context("Update 'graph_color' in your config file..")?;
-        }
-
-        if let Some(battery_colors) = &colours.battery_colors {
-            painter
-                .colours
-                .set_battery_colors(battery_colors)
-                .context("Update 'battery_colors' in your config file.")?;
-        }
     }
 
     Ok(())
@@ -712,11 +584,11 @@ pub fn create_input_thread(
     });
 }
 
-pub fn create_event_thread(
+pub fn create_collection_thread(
     sender: std::sync::mpsc::Sender<
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
-    reset_receiver: std::sync::mpsc::Receiver<ResetEvent>,
+    reset_receiver: std::sync::mpsc::Receiver<CollectionThreadEvent>,
     app_config_fields: &app::AppConfigFields, used_widget_set: UsedWidgets,
 ) {
     let temp_type = app_config_fields.temperature_type.clone();
@@ -733,10 +605,23 @@ pub fn create_event_thread(
 
         data_state.init();
         loop {
+            let mut update_time = update_rate_in_milliseconds;
             if let Ok(message) = reset_receiver.try_recv() {
                 match message {
-                    ResetEvent::Reset => {
+                    CollectionThreadEvent::Reset => {
                         data_state.data.first_run_cleanup();
+                    }
+                    CollectionThreadEvent::UpdateConfig(app_config_fields) => {
+                        data_state.set_temperature_type(app_config_fields.temperature_type.clone());
+                        data_state
+                            .set_use_current_cpu_total(app_config_fields.use_current_cpu_total);
+                        data_state.set_show_average_cpu(app_config_fields.show_average_cpu);
+                    }
+                    CollectionThreadEvent::UpdateUsedWidgets(used_widget_set) => {
+                        data_state.set_collected_data(*used_widget_set);
+                    }
+                    CollectionThreadEvent::UpdateUpdateTime(new_time) => {
+                        update_time = new_time;
                     }
                 }
             }
@@ -746,7 +631,7 @@ pub fn create_event_thread(
             if sender.send(event).is_err() {
                 break;
             }
-            thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
+            thread::sleep(Duration::from_millis(update_time));
         }
     });
 }

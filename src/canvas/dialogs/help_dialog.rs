@@ -1,13 +1,12 @@
 use unicode_width::UnicodeWidthStr;
 
+use crate::{app::App, canvas::Painter, constants};
 use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
     terminal::Frame,
     widgets::{Block, Borders, Paragraph},
 };
-
-use crate::{app::App, canvas::Painter, constants};
 
 const HELP_BASE: &str = " Help ── Esc to close ";
 
@@ -17,6 +16,7 @@ pub trait HelpDialog {
     );
 }
 
+// TODO: [REFACTOR] Make generic dialog boxes to build off of instead?
 impl HelpDialog for Painter {
     fn draw_help_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,

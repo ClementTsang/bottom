@@ -280,6 +280,7 @@ impl Default for ProcColumn {
     }
 }
 
+// TODO: [SORTING] Sort by clicking on column header (ie: click on cpu, sort/invert cpu sort)?
 impl ProcColumn {
     /// Returns its new status.
     pub fn toggle(&mut self, column: &ProcessSorting) -> Option<bool> {
@@ -303,8 +304,12 @@ impl ProcColumn {
         self.ordered_columns
             .iter()
             .filter_map(|column_type| {
-                if self.column_mapping.get(&column_type).unwrap().enabled {
-                    Some(1)
+                if let Some(col_map) = self.column_mapping.get(&column_type) {
+                    if col_map.enabled {
+                        Some(1)
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
@@ -467,16 +472,20 @@ impl ProcWidgetState {
     }
 
     pub fn toggle_command_and_name(&mut self, is_using_command: bool) {
-        self.columns
+        if let Some(pn) = self
+            .columns
             .column_mapping
             .get_mut(&ProcessSorting::ProcessName)
-            .unwrap()
-            .enabled = !is_using_command;
-        self.columns
+        {
+            pn.enabled = !is_using_command;
+        }
+        if let Some(c) = self
+            .columns
             .column_mapping
             .get_mut(&ProcessSorting::Command)
-            .unwrap()
-            .enabled = is_using_command;
+        {
+            c.enabled = is_using_command;
+        }
     }
 
     pub fn get_cursor_position(&self) -> usize {
@@ -797,4 +806,20 @@ impl BatteryState {
 pub struct ParagraphScrollState {
     pub current_scroll_index: u16,
     pub max_scroll_index: u16,
+}
+
+#[derive(Default)]
+pub struct ConfigState {
+    pub current_category_index: usize,
+    pub category_list: Vec<ConfigCategory>,
+}
+
+#[derive(Default)]
+pub struct ConfigCategory {
+    pub category_name: &'static str,
+    pub options_list: Vec<ConfigOption>,
+}
+
+pub struct ConfigOption {
+    pub set_function: Box<dyn Fn() -> anyhow::Result<()>>,
 }

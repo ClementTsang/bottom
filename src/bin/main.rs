@@ -32,7 +32,7 @@ fn main() -> Result<()> {
     }
     let matches = clap::get_matches();
 
-    let config_path = read_config(matches.value_of("CONFIG_LOCATION"))
+    let config_path = read_config(matches.value_of("config_location"))
         .context("Unable to access the given config file location.")?;
     let config: Config = create_or_get_config(&config_path)
         .context("Unable to properly parse or create the config file.")?;
@@ -49,6 +49,7 @@ fn main() -> Result<()> {
         &widget_layout,
         default_widget_id,
         &default_widget_type_option,
+        config_path,
     )?;
 
     // Create painter and set colours.
@@ -56,10 +57,8 @@ fn main() -> Result<()> {
         widget_layout,
         app.app_config_fields.table_gap,
         app.app_config_fields.use_basic_mode,
-    );
-    generate_config_colours(&config, &mut painter)?;
-    painter.colours.generate_remaining_cpu_colours();
-    painter.complete_painter_init();
+        &config,
+    )?;
 
     // Set up input handling
     let (sender, receiver) = mpsc::channel();
@@ -80,7 +79,7 @@ fn main() -> Result<()> {
 
     // Event loop
     let (reset_sender, reset_receiver) = mpsc::channel();
-    create_event_thread(
+    create_collection_thread(
         sender,
         reset_receiver,
         &app.app_config_fields,
@@ -105,8 +104,7 @@ fn main() -> Result<()> {
     ctrlc::set_handler(move || {
         ist_clone.store(true, Ordering::SeqCst);
         termination_hook();
-    })
-    .unwrap();
+    })?;
     let mut first_run = true;
 
     while !is_terminated.load(Ordering::SeqCst) {

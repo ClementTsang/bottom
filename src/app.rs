@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, io::Write, path::PathBuf, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
@@ -12,6 +12,7 @@ pub use states::*;
 
 use crate::{
     canvas, constants,
+    options::Config,
     utils::error::{BottomError, Result},
     Pid,
 };
@@ -42,6 +43,7 @@ pub struct AppConfigFields {
     pub use_old_network_legend: bool,
     pub table_gap: u16,
     pub disable_click: bool,
+    pub no_write: bool,
 }
 
 /// For filtering out information
@@ -100,6 +102,9 @@ pub struct App {
     #[builder(default = false, setter(skip))]
     pub basic_mode_use_percent: bool,
 
+    #[builder(default = false, setter(skip))]
+    pub is_config_open: bool,
+
     pub cpu_state: CpuState,
     pub mem_state: MemState,
     pub net_state: NetState,
@@ -113,6 +118,8 @@ pub struct App {
     pub current_widget: BottomWidget,
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
+    pub config: Config,
+    pub config_path: Option<PathBuf>,
 }
 
 impl App {
@@ -171,6 +178,8 @@ impl App {
             }
 
             self.is_force_redraw = true;
+        } else if self.is_config_open {
+            self.close_config();
         } else {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -247,10 +256,14 @@ impl App {
         self.help_dialog_state.is_showing_help || self.delete_dialog_state.is_showing_dd
     }
 
-    pub fn on_tab(&mut self) {
-        // Disallow usage whilst in a dialog and only in processes
+    fn ignore_normal_keybinds(&self) -> bool {
+        self.is_config_open || self.is_in_dialog()
+    }
 
-        if !self.is_in_dialog() {
+    pub fn on_tab(&mut self) {
+        // Allow usage whilst only in processes
+
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Cpu => {
                     if let Some(cpu_widget_state) = self
@@ -319,7 +332,7 @@ impl App {
     }
 
     pub fn on_slash(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match &self.current_widget.widget_type {
                 BottomWidgetType::Proc | BottomWidgetType::ProcSort => {
                     // Toggle on
@@ -452,6 +465,8 @@ impl App {
                     .search_toggle_ignore_case();
                 proc_widget_state.update_query();
                 self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
+
+                // Also toggle it in the config file.
             }
         }
     }
@@ -653,7 +668,8 @@ impl App {
     }
 
     pub fn on_up_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             self.decrement_position_count();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
@@ -662,7 +678,8 @@ impl App {
     }
 
     pub fn on_down_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             self.increment_position_count();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
@@ -671,7 +688,8 @@ impl App {
     }
 
     pub fn on_left_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     // if let Some(proc_widget_state) = self
@@ -735,7 +753,8 @@ impl App {
     }
 
     pub fn on_right_key(&mut self) {
-        if !self.is_in_dialog() {
+        if self.is_config_open {
+        } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     // if let Some(proc_widget_state) = self
@@ -804,7 +823,7 @@ impl App {
     }
 
     pub fn skip_cursor_beginning(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -836,11 +855,12 @@ impl App {
                     }
                 }
             }
+        } else if self.is_config_open {
         }
     }
 
     pub fn skip_cursor_end(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
                 let is_in_search_widget = self.is_in_search_widget();
                 if let Some(proc_widget_state) = self
@@ -882,6 +902,7 @@ impl App {
                     }
                 }
             }
+        } else if self.is_config_open {
         }
     }
 
@@ -945,7 +966,7 @@ impl App {
         }
 
         // Forbid any char key presses when showing a dialog box...
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             let current_key_press_inst = Instant::now();
             if current_key_press_inst
                 .duration_since(self.last_key_press)
@@ -1034,6 +1055,7 @@ impl App {
                 'k' | 'l' => self.on_right_key(),
                 _ => {}
             }
+        } else if self.is_config_open {
         }
     }
 
@@ -1085,6 +1107,9 @@ impl App {
                 if self.is_frozen {
                     self.data_collection.set_frozen_time();
                 }
+            }
+            'C' => {
+                // self.open_config(),
             }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
@@ -1227,6 +1252,7 @@ impl App {
             's' => self.toggle_sort(),
             'I' => self.invert_sort(),
             '%' => self.toggle_percentages(),
+            ' ' => self.on_space(),
             _ => {}
         }
 
@@ -1234,6 +1260,38 @@ impl App {
             if self.awaiting_second_char && caught_char != second_char {
                 self.awaiting_second_char = false;
             }
+        }
+    }
+
+    pub fn on_space(&mut self) {}
+
+    pub fn open_config(&mut self) {
+        self.is_config_open = true;
+        self.is_force_redraw = true;
+    }
+
+    pub fn close_config(&mut self) {
+        self.is_config_open = false;
+        self.is_force_redraw = true;
+    }
+
+    /// Call this whenever the config value is updated!
+    fn update_config_file(&mut self) -> anyhow::Result<()> {
+        if self.app_config_fields.no_write {
+            // Don't write!
+            // FIXME: [CONFIG] This should be made VERY clear to the user... make a thing saying "it will not write due to no_write option"
+            Ok(())
+        } else if let Some(config_path) = &self.config_path {
+            // Update
+            std::fs::File::open(config_path)?
+                .write_all(toml::to_string(&self.config)?.as_bytes())?;
+
+            Ok(())
+        } else {
+            // FIXME: [CONFIG] Put an actual error message?
+            Err(anyhow::anyhow!(
+                "Config path was missing, please try restarting bottom..."
+            ))
         }
     }
 
@@ -1268,7 +1326,8 @@ impl App {
     }
 
     fn expand_widget(&mut self) {
-        if !self.is_in_dialog() && !self.app_config_fields.use_basic_mode {
+        // TODO: [BASIC] Expansion in basic mode.
+        if !self.ignore_normal_keybinds() && !self.app_config_fields.use_basic_mode {
             // Pop-out mode.  We ignore if in process search.
 
             match self.current_widget.widget_type {
@@ -1300,7 +1359,7 @@ impl App {
                - Reflection direction.
         */
 
-        if !self.is_in_dialog() && !self.is_expanded {
+        if !self.ignore_normal_keybinds() && !self.is_expanded {
             if let Some(new_widget_id) = &(match direction {
                 WidgetDirection::Left => self.current_widget.left_neighbour,
                 WidgetDirection::Right => self.current_widget.right_neighbour,
@@ -1731,7 +1790,7 @@ impl App {
     }
 
     pub fn skip_to_first(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
@@ -1782,13 +1841,14 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
-        } else {
+        } else if self.is_config_open {
+        } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
         }
     }
 
     pub fn skip_to_last(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
                     if let Some(proc_widget_state) = self
@@ -1858,7 +1918,8 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
-        } else {
+        } else if self.is_config_open {
+        } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = self
                 .help_dialog_state
                 .scroll_state
@@ -1868,7 +1929,7 @@ impl App {
     }
 
     pub fn decrement_position_count(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => self.increment_process_position(-1),
                 BottomWidgetType::ProcSort => self.increment_process_sort_position(-1),
@@ -1881,7 +1942,7 @@ impl App {
     }
 
     pub fn increment_position_count(&mut self) {
-        if !self.is_in_dialog() {
+        if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => self.increment_process_position(1),
                 BottomWidgetType::ProcSort => self.increment_process_sort_position(1),
