@@ -32,7 +32,7 @@ fn main() -> Result<()> {
     }
     let matches = clap::get_matches();
 
-    let config_path = read_config(matches.value_of("CONFIG_LOCATION"))
+    let config_path = read_config(matches.value_of("config_location"))
         .context("Unable to access the given config file location.")?;
     let config: Config = create_or_get_config(&config_path)
         .context("Unable to properly parse or create the config file.")?;

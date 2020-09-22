@@ -20,7 +20,7 @@ pub fn get_matches() -> clap::ArgMatches<'static> {
 
 pub fn build_app() -> App<'static, 'static> {
     // Temps
-    let kelvin = Arg::with_name("KELVIN")
+    let kelvin = Arg::with_name("kelvin")
         .short("k")
         .long("kelvin")
         .help("Sets the temperature type to Kelvin.")
@@ -28,7 +28,7 @@ pub fn build_app() -> App<'static, 'static> {
             "\
 Sets the temperature type to Kelvin.\n\n",
         );
-    let fahrenheit = Arg::with_name("FAHRENHEIT")
+    let fahrenheit = Arg::with_name("fahrenheit")
         .short("f")
         .long("fahrenheit")
         .help("Sets the temperature type to Fahrenheit.")
@@ -36,7 +36,7 @@ Sets the temperature type to Kelvin.\n\n",
             "\
 Sets the temperature type to Fahrenheit.\n\n",
         );
-    let celsius = Arg::with_name("CELSIUS")
+    let celsius = Arg::with_name("celsius")
         .short("c")
         .long("celsius")
         .help("Sets the temperature type to Celsius.")
@@ -47,7 +47,7 @@ option.\n\n",
         );
 
     // All flags.  These are in alphabetical order
-    let autohide_time = Arg::with_name("AUTOHIDE_TIME")
+    let autohide_time = Arg::with_name("autohide_time")
         .long("autohide_time")
         .help("Temporarily shows the time scale in graphs.")
         .long_help(
@@ -56,7 +56,7 @@ Automatically hides the time scaling in graphs after being
 shown for a brief moment when zoomed in/out.  If time is
 disabled via --hide_time then this will have no effect.\n\n\n",
         );
-    let basic = Arg::with_name("BASIC_MODE")
+    let basic = Arg::with_name("basic")
         .short("b")
         .long("basic")
         .help("Hides graphs and uses a more basic look.")
@@ -65,7 +65,7 @@ disabled via --hide_time then this will have no effect.\n\n\n",
 Hides graphs and uses a more basic look.  Design is largely
 inspired by htop's.\n\n",
         );
-    let battery = Arg::with_name("BATTERY")
+    let battery = Arg::with_name("battery")
         .long("battery")
         .help("Shows the battery widget.")
         .long_help(
@@ -73,7 +73,7 @@ inspired by htop's.\n\n",
 Shows the battery widget in default or basic mode. No effect on
 custom layouts.\n\n",
         );
-    let case_sensitive = Arg::with_name("CASE_SENSITIVE")
+    let case_sensitive = Arg::with_name("case_sensitive")
         .short("S")
         .long("case_sensitive")
         .help("Enables case sensitivity by default.")
@@ -81,14 +81,14 @@ custom layouts.\n\n",
             "\
 When searching for a process, enables case sensitivity by default.\n\n",
         );
-    let disable_click = Arg::with_name("DISABLE_CLICK")
+    let disable_click = Arg::with_name("disable_click")
         .long("disable_click")
         .help("Disables mouse clicks.")
         .long_help(
             "\
 Disables mouse clicks from interacting with the program.\n\n",
         );
-    let dot_marker = Arg::with_name("DOT_MARKER")
+    let dot_marker = Arg::with_name("dot_marker")
         .short("m")
         .long("dot_marker")
         .help("Uses a dot marker for graphs.")
@@ -97,7 +97,7 @@ Disables mouse clicks from interacting with the program.\n\n",
 Uses a dot marker for graphs as opposed to the default braille
 marker.\n\n",
         );
-    let group = Arg::with_name("GROUP_PROCESSES")
+    let group = Arg::with_name("group")
         .short("g")
         .long("group")
         .help("Groups processes with the same name by default.")
@@ -105,7 +105,7 @@ marker.\n\n",
             "\
 Groups processes with the same name by default.\n\n",
         );
-    let hide_avg_cpu = Arg::with_name("HIDE_AVG_CPU")
+    let hide_avg_cpu = Arg::with_name("hide_avg_cpu")
         .short("a")
         .long("hide_avg_cpu")
         .help("Hides the average CPU usage.")
@@ -113,21 +113,21 @@ Groups processes with the same name by default.\n\n",
             "\
 Hides the average CPU usage from being shown.\n\n",
         );
-    let hide_table_gap = Arg::with_name("HIDE_TABLE_GAP")
+    let hide_table_gap = Arg::with_name("hide_table_gap")
         .long("hide_table_gap")
         .help("Hides the spacing between table headers and entries.")
         .long_help(
             "\
 Hides the spacing between table headers and entries.\n\n",
         );
-    let hide_time = Arg::with_name("HIDE_TIME")
+    let hide_time = Arg::with_name("hide_time")
         .long("hide_time")
         .help("Completely hides the time scaling.")
         .long_help(
             "\
 Completely hides the time scaling from being shown.\n\n",
         );
-    let left_legend = Arg::with_name("LEFT_LEGEND")
+    let left_legend = Arg::with_name("left_legend")
         .short("l")
         .long("left_legend")
         .help("Puts the CPU chart legend to the left side.")
@@ -142,7 +142,7 @@ Puts the CPU chart legend to the left side rather than the right side.\n\n",
             "\
 Disables config changes in-app from writing to the config file.",
         );
-    let regex = Arg::with_name("REGEX_DEFAULT")
+    let regex = Arg::with_name("regex")
         .short("R")
         .long("regex")
         .help("Enables regex by default.")
@@ -150,7 +150,7 @@ Disables config changes in-app from writing to the config file.",
             "\
 When searching for a process, enables regex by default.\n\n",
         );
-    let current_usage = Arg::with_name("USE_CURR_USAGE")
+    let current_usage = Arg::with_name("current_usage")
         .short("u")
         .long("current_usage")
         .help("Sets process CPU% to be based on current CPU%.")
@@ -159,7 +159,7 @@ When searching for a process, enables regex by default.\n\n",
 Sets process CPU% usage to be based on the current system CPU% usage
 rather than total CPU usage.\n\n",
         );
-    let use_old_network_legend = Arg::with_name("USE_OLD_NETWORK_LEGEND")
+    let use_old_network_legend = Arg::with_name("use_old_network_legend")
         .long("use_old_network_legend")
         .help("DEPRECATED - uses the older network legend.")
         .long_help(
@@ -167,7 +167,7 @@ rather than total CPU usage.\n\n",
 DEPRECATED - uses the older (pre-0.4) network widget legend.
 This display is not tested anymore and could be broken.\n\n\n",
         );
-    let whole_word = Arg::with_name("WHOLE_WORD")
+    let whole_word = Arg::with_name("whole_word")
         .short("W")
         .long("whole_word")
         .help("Enables whole-word matching by default.")
@@ -178,7 +178,7 @@ entire query by default.\n\n",
         );
 
     // All options.  Again, alphabetical order.
-    let config = Arg::with_name("CONFIG_LOCATION")
+    let config_location = Arg::with_name("config_location")
         .short("C")
         .long("config")
         .takes_value(true)
@@ -189,7 +189,7 @@ entire query by default.\n\n",
 Sets the location of the config file.  Expects a config
 file in the TOML format. If it doesn't exist, one is created.\n\n\n",
         );
-    let default_time_value = Arg::with_name("DEFAULT_TIME_VALUE")
+    let default_time_value = Arg::with_name("default_time_value")
         .short("t")
         .long("default_time_value")
         .takes_value(true)
@@ -200,10 +200,10 @@ file in the TOML format. If it doesn't exist, one is created.\n\n\n",
 Default time value for graphs in milliseconds.  The minimum
 time is 30s (30000), and the default is 60s (60000).\n\n\n",
         );
-    let default_widget_count = Arg::with_name("DEFAULT_WIDGET_COUNT")
+    let default_widget_count = Arg::with_name("default_widget_count")
         .long("default_widget_count")
         .takes_value(true)
-        .requires_all(&["DEFAULT_WIDGET_TYPE"])
+        .requires_all(&["default_widget_type"])
         .value_name("INT")
         .help("Sets the n'th selected widget type as the default.")
         .long_help(
@@ -225,7 +225,7 @@ the default widget.  If we set '--default_widget_count 3', it would
 use CPU (3) as the default instead.
 \n\n",
         );
-    let default_widget_type = Arg::with_name("DEFAULT_WIDGET_TYPE")
+    let default_widget_type = Arg::with_name("default_widget_type")
         .long("default_widget_type")
         .takes_value(true)
         .value_name("WIDGET TYPE")
@@ -264,7 +264,7 @@ Supported widget names:
 +--------------------------+
 \n\n",
         );
-    let rate = Arg::with_name("RATE_MILLIS")
+    let rate = Arg::with_name("rate")
         .short("r")
         .long("rate")
         .takes_value(true)
@@ -275,7 +275,7 @@ Supported widget names:
 Sets a refresh rate in milliseconds.  The minimum is 250ms,
 and defaults to 1000ms.  Smaller values may take more resources.\n\n\n",
         );
-    let time_delta = Arg::with_name("TIME_DELTA")
+    let time_delta = Arg::with_name("time_delta")
         .short("d")
         .long("time_delta")
         .takes_value(true)
@@ -299,12 +299,12 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(kelvin)
         .arg(fahrenheit)
         .arg(celsius)
-        .group(ArgGroup::with_name("TEMPERATURE_TYPE").args(&["KELVIN", "FAHRENHEIT", "CELSIUS"]))
+        .group(ArgGroup::with_name("TEMPERATURE_TYPE").args(&["kelvin", "fahrenheit", "celsius"]))
         .arg(autohide_time)
         .arg(basic)
         .arg(battery)
         .arg(case_sensitive)
-        .arg(config)
+        .arg(config_location)
         .arg(default_time_value)
         .arg(default_widget_count)
         .arg(default_widget_type)

@@ -51,6 +51,7 @@ pub struct ConfigFlags {
     pub hide_table_gap: Option<bool>,
     pub battery: Option<bool>,
     pub disable_click: Option<bool>,
+    pub no_write: Option<bool>,
 }
 
 #[derive(Clone, Default, Deserialize, Serialize)]
@@ -252,6 +253,7 @@ pub fn build_app(
             1
         },
         disable_click: get_disable_click(matches, config),
+        no_write: get_no_write(matches, config),
     };
 
     let used_widgets = UsedWidgets {
@@ -359,7 +361,7 @@ pub fn get_widget_layout(
 fn get_update_rate_in_milliseconds(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<u64> {
-    let update_rate_in_milliseconds = if let Some(update_rate) = matches.value_of("RATE_MILLIS") {
+    let update_rate_in_milliseconds = if let Some(update_rate) = matches.value_of("rate") {
         update_rate.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
         if let Some(rate) = flags.rate {
@@ -387,11 +389,11 @@ fn get_update_rate_in_milliseconds(
 fn get_temperature(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<data_harvester::temperature::TemperatureType> {
-    if matches.is_present("FAHRENHEIT") {
+    if matches.is_present("fahrenheit") {
         return Ok(data_harvester::temperature::TemperatureType::Fahrenheit);
-    } else if matches.is_present("KELVIN") {
+    } else if matches.is_present("kelvin") {
         return Ok(data_harvester::temperature::TemperatureType::Kelvin);
-    } else if matches.is_present("CELSIUS") {
+    } else if matches.is_present("celsius") {
         return Ok(data_harvester::temperature::TemperatureType::Celsius);
     } else if let Some(flags) = &config.flags {
         if let Some(temp_type) = &flags.temperature_type {
@@ -412,7 +414,7 @@ fn get_temperature(
 
 /// Yes, this function gets whether to show average CPU (true) or not (false)
 fn get_show_average_cpu(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("HIDE_AVG_CPU") {
+    if matches.is_present("hide_avg_cpu") {
         return false;
     } else if let Some(flags) = &config.flags {
         if let Some(avg_cpu) = flags.hide_avg_cpu {
@@ -424,7 +426,7 @@ fn get_show_average_cpu(matches: &clap::ArgMatches<'static>, config: &Config) ->
 }
 
 fn get_use_dot(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("DOT_MARKER") {
+    if matches.is_present("dot_marker") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(dot_marker) = flags.dot_marker {
@@ -435,7 +437,7 @@ fn get_use_dot(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
 }
 
 fn get_use_left_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("LEFT_LEGEND") {
+    if matches.is_present("left_legend") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(left_legend) = flags.left_legend {
@@ -447,7 +449,7 @@ fn get_use_left_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> 
 }
 
 fn get_use_current_cpu_total(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("USE_CURR_USAGE") {
+    if matches.is_present("current_usage") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(current_usage) = flags.current_usage {
@@ -459,7 +461,7 @@ fn get_use_current_cpu_total(matches: &clap::ArgMatches<'static>, config: &Confi
 }
 
 fn get_use_basic_mode(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("BASIC_MODE") {
+    if matches.is_present("basic") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(basic) = flags.basic {
@@ -473,7 +475,7 @@ fn get_use_basic_mode(matches: &clap::ArgMatches<'static>, config: &Config) -> b
 fn get_default_time_value(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<u64> {
-    let default_time = if let Some(default_time_value) = matches.value_of("DEFAULT_TIME_VALUE") {
+    let default_time = if let Some(default_time_value) = matches.value_of("default_time_value") {
         default_time_value.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
         if let Some(default_time_value) = flags.default_time_value {
@@ -500,7 +502,7 @@ fn get_default_time_value(
 }
 
 fn get_time_interval(matches: &clap::ArgMatches<'static>, config: &Config) -> error::Result<u64> {
-    let time_interval = if let Some(time_interval) = matches.value_of("TIME_DELTA") {
+    let time_interval = if let Some(time_interval) = matches.value_of("time_delta") {
         time_interval.parse::<u128>()?
     } else if let Some(flags) = &config.flags {
         if let Some(time_interval) = flags.time_delta {
@@ -527,7 +529,7 @@ fn get_time_interval(matches: &clap::ArgMatches<'static>, config: &Config) -> er
 }
 
 pub fn get_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("GROUP_PROCESSES") {
+    if matches.is_present("group") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(grouping) = flags.group_processes {
@@ -538,7 +540,7 @@ pub fn get_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config) ->
 }
 
 pub fn get_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("CASE_SENSITIVE") {
+    if matches.is_present("case_sensitive") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(case_sensitive) = flags.case_sensitive {
@@ -549,7 +551,7 @@ pub fn get_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Conf
 }
 
 pub fn get_app_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("WHOLE_WORD") {
+    if matches.is_present("whole_word") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(whole_word) = flags.whole_word {
@@ -560,7 +562,7 @@ pub fn get_app_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Co
 }
 
 pub fn get_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("REGEX_DEFAULT") {
+    if matches.is_present("regex") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(regex) = flags.regex {
@@ -571,7 +573,7 @@ pub fn get_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config) -
 }
 
 fn get_hide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("HIDE_TIME") {
+    if matches.is_present("hide_time") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(hide_time) = flags.hide_time {
@@ -582,7 +584,7 @@ fn get_hide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
 }
 
 fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("AUTOHIDE_TIME") {
+    if matches.is_present("autohide_time") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(autohide_time) = flags.autohide_time {
@@ -596,7 +598,7 @@ fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
 fn get_default_widget_and_count(
     matches: &clap::ArgMatches<'static>, config: &Config,
 ) -> error::Result<(Option<BottomWidgetType>, u64)> {
-    let widget_type = if let Some(widget_type) = matches.value_of("DEFAULT_WIDGET_TYPE") {
+    let widget_type = if let Some(widget_type) = matches.value_of("default_widget_type") {
         let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
         if let BottomWidgetType::Empty = parsed_widget {
             None
@@ -618,7 +620,7 @@ fn get_default_widget_and_count(
         None
     };
 
-    let widget_count = if let Some(widget_count) = matches.value_of("DEFAULT_WIDGET_COUNT") {
+    let widget_count = if let Some(widget_count) = matches.value_of("default_widget_count") {
         Some(widget_count.parse::<u128>()?)
     } else if let Some(flags) = &config.flags {
         if let Some(widget_count) = flags.default_widget_count {
@@ -649,7 +651,7 @@ fn get_default_widget_and_count(
 }
 
 fn get_disable_click(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("DISABLE_CLICK") {
+    if matches.is_present("disable_click") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(disable_click) = flags.disable_click {
@@ -660,7 +662,7 @@ fn get_disable_click(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
 }
 
 pub fn get_use_old_network_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("USE_OLD_NETWORK_LEGEND") {
+    if matches.is_present("use_old_network_legend") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(use_old_network_legend) = flags.use_old_network_legend {
@@ -671,7 +673,7 @@ pub fn get_use_old_network_legend(matches: &clap::ArgMatches<'static>, config: &
 }
 
 pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("HIDE_TABLE_GAP") {
+    if matches.is_present("hide_table_gap") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(hide_table_gap) = flags.hide_table_gap {
@@ -682,11 +684,22 @@ pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) 
 }
 
 pub fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("BATTERY") {
+    if matches.is_present("battery") {
         return true;
     } else if let Some(flags) = &config.flags {
         if let Some(battery) = flags.battery {
             return battery;
+        }
+    }
+    false
+}
+
+pub fn get_no_write(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("no_write") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(no_write) = flags.no_write {
+            return no_write;
         }
     }
     false

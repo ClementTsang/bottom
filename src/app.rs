@@ -43,6 +43,7 @@ pub struct AppConfigFields {
     pub use_old_network_legend: bool,
     pub table_gap: u16,
     pub disable_click: bool,
+    pub no_write: bool,
 }
 
 /// For filtering out information
@@ -1107,7 +1108,9 @@ impl App {
                     self.data_collection.set_frozen_time();
                 }
             }
-            'C' => self.open_config(),
+            'C' => {
+                // self.open_config(),
+            }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
                     if let Some(proc_widget_state) = self
@@ -1274,7 +1277,11 @@ impl App {
 
     /// Call this whenever the config value is updated!
     fn update_config_file(&mut self) -> anyhow::Result<()> {
-        if let Some(config_path) = &self.config_path {
+        if self.app_config_fields.no_write {
+            // Don't write!
+            // FIXME: [CONFIG] This should be made VERY clear to the user... make a thing saying "it will not write due to no_write option"
+            Ok(())
+        } else if let Some(config_path) = &self.config_path {
             // Update
             std::fs::File::open(config_path)?
                 .write_all(toml::to_string(&self.config)?.as_bytes())?;
