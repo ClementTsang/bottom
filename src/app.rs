@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, io::Write, path::PathBuf, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
@@ -118,6 +118,7 @@ pub struct App {
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
     pub config: Config,
+    pub config_path: Option<PathBuf>,
 }
 
 impl App {
@@ -1269,6 +1270,22 @@ impl App {
     pub fn close_config(&mut self) {
         self.is_config_open = false;
         self.is_force_redraw = true;
+    }
+
+    /// Call this whenever the config value is updated!
+    fn update_config_file(&mut self) -> anyhow::Result<()> {
+        if let Some(config_path) = &self.config_path {
+            // Update
+            std::fs::File::open(config_path)?
+                .write_all(toml::to_string(&self.config)?.as_bytes())?;
+
+            Ok(())
+        } else {
+            // FIXME: [CONFIG] Put an actual error message?
+            Err(anyhow::anyhow!(
+                "Config path was missing, please try restarting bottom..."
+            ))
+        }
     }
 
     pub fn kill_highlighted_process(&mut self) -> Result<()> {

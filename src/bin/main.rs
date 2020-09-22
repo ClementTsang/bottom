@@ -49,6 +49,7 @@ fn main() -> Result<()> {
         &widget_layout,
         default_widget_id,
         &default_widget_type_option,
+        config_path,
     )?;
 
     // Create painter and set colours.
@@ -56,10 +57,8 @@ fn main() -> Result<()> {
         widget_layout,
         app.app_config_fields.table_gap,
         app.app_config_fields.use_basic_mode,
-    );
-    generate_config_colours(&config, &mut painter)?;
-    painter.colours.generate_remaining_cpu_colours();
-    painter.complete_painter_init();
+        &config,
+    )?;
 
     // Set up input handling
     let (sender, receiver) = mpsc::channel();

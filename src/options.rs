@@ -1,7 +1,10 @@
 use regex::Regex;
-use serde::Deserialize;
-use std::collections::{HashMap, HashSet};
+use serde::{Deserialize, Serialize};
 use std::time::Instant;
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 
 use crate::{
     app::{layout_manager::*, *},
@@ -15,7 +18,7 @@ pub mod layout_options;
 
 use anyhow::{Context, Result};
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
@@ -24,7 +27,7 @@ pub struct Config {
     pub temp_filter: Option<IgnoreList>,
 }
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct ConfigFlags {
     pub hide_avg_cpu: Option<bool>,
     pub dot_marker: Option<bool>,
@@ -50,7 +53,7 @@ pub struct ConfigFlags {
     pub disable_click: Option<bool>,
 }
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct ConfigColours {
     pub table_header_color: Option<String>,
     pub all_cpu_color: Option<String>,
@@ -72,7 +75,7 @@ pub struct ConfigColours {
     pub battery_colors: Option<Vec<String>>,
 }
 
-#[derive(Clone, Default, Deserialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct IgnoreList {
     pub is_list_ignored: bool,
     pub list: Vec<String>,
@@ -83,6 +86,7 @@ pub struct IgnoreList {
 pub fn build_app(
     matches: &clap::ArgMatches<'static>, config: &Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
+    config_path: Option<PathBuf>,
 ) -> Result<App> {
     use BottomWidgetType::*;
     let autohide_time = get_autohide_time(&matches, &config);
@@ -283,6 +287,7 @@ pub fn build_app(
             temp_filter,
         })
         .config(config.clone())
+        .config_path(config_path)
         .build())
 }
 
