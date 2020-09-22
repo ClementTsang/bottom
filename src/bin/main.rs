@@ -79,7 +79,7 @@ fn main() -> Result<()> {
 
     // Event loop
     let (reset_sender, reset_receiver) = mpsc::channel();
-    create_event_thread(
+    create_collection_thread(
         sender,
         reset_receiver,
         &app.app_config_fields,

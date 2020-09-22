@@ -55,8 +55,11 @@ pub enum BottomEvent<I, J> {
     Clean,
 }
 
-pub enum ResetEvent {
+pub enum CollectionThreadEvent {
     Reset,
+    UpdateConfig(Box<app::AppConfigFields>),
+    UpdateUsedWidgets(Box<UsedWidgets>),
+    UpdateUpdateTime(u64),
 }
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
@@ -82,7 +85,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 pub fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<ResetEvent>,
+    event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<CollectionThreadEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
@@ -139,7 +142,7 @@ pub fn handle_key_event_or_break(
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char('r') => {
-                    if reset_sender.send(ResetEvent::Reset).is_ok() {
+                    if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
                         app.reset();
                     }
                 }
@@ -581,11 +584,11 @@ pub fn create_input_thread(
     });
 }
 
-pub fn create_event_thread(
+pub fn create_collection_thread(
     sender: std::sync::mpsc::Sender<
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
-    reset_receiver: std::sync::mpsc::Receiver<ResetEvent>,
+    reset_receiver: std::sync::mpsc::Receiver<CollectionThreadEvent>,
     app_config_fields: &app::AppConfigFields, used_widget_set: UsedWidgets,
 ) {
     let temp_type = app_config_fields.temperature_type.clone();
@@ -602,10 +605,23 @@ pub fn create_event_thread(
 
         data_state.init();
         loop {
+            let mut update_time = update_rate_in_milliseconds;
             if let Ok(message) = reset_receiver.try_recv() {
                 match message {
-                    ResetEvent::Reset => {
+                    CollectionThreadEvent::Reset => {
                         data_state.data.first_run_cleanup();
+                    }
+                    CollectionThreadEvent::UpdateConfig(app_config_fields) => {
+                        data_state.set_temperature_type(app_config_fields.temperature_type.clone());
+                        data_state
+                            .set_use_current_cpu_total(app_config_fields.use_current_cpu_total);
+                        data_state.set_show_average_cpu(app_config_fields.show_average_cpu);
+                    }
+                    CollectionThreadEvent::UpdateUsedWidgets(used_widget_set) => {
+                        data_state.set_collected_data(*used_widget_set);
+                    }
+                    CollectionThreadEvent::UpdateUpdateTime(new_time) => {
+                        update_time = new_time;
                     }
                 }
             }
@@ -615,7 +631,7 @@ pub fn create_event_thread(
             if sender.send(event).is_err() {
                 break;
             }
-            thread::sleep(Duration::from_millis(update_rate_in_milliseconds));
+            thread::sleep(Duration::from_millis(update_time));
         }
     });
 }
