@@ -371,14 +371,20 @@ impl Painter {
 
                 let dd_text = self.get_dd_spans(app_state);
 
-                let (text_width, text_height) = (
-                    if terminal_width < 100 {
-                        terminal_width * 90 / 100
-                    } else {
-                        terminal_width * 50 / 100
-                    },
-                    22,
-                );
+                let text_width = if terminal_width < 100 {
+                    terminal_width * 90 / 100
+                } else {
+                    terminal_width * 50 / 100
+                };
+                let text_height;
+                #[cfg(target_family = "unix")]
+                {
+                    text_height = 22;
+                }
+                #[cfg(target_os = "windows")]
+                {
+                    text_height = 7;
+                }
                 // let (text_width, text_height) = if let Some(dd_text) = &dd_text {
                 //     let width = if current_width < 100 {
                 //         current_width * 90 / 100

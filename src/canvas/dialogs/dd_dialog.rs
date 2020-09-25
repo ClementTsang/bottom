@@ -69,19 +69,16 @@ impl KillDialog for Painter {
     fn draw_dd_confirm_buttons<B: Backend>(
         &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
     ) {
-        // TODO: verify this still works on win
-        let (yes_button, no_button) =
-            if app_state.delete_dialog_state.selected_signal == KillSignal::KILL {
-                (
-                    Text::styled("Yes", self.colours.currently_selected_text_style),
-                    Text::raw("No"),
-                )
-            } else {
-                (
-                    Text::raw("Yes"),
-                    Text::styled("No", self.colours.currently_selected_text_style),
-                )
-            };
+        let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
+            KillSignal::KILL(_) => (
+                Span::styled("Yes", self.colours.currently_selected_text_style),
+                Span::raw("No"),
+            ),
+            KillSignal::CANCEL => (
+                Span::raw("Yes"),
+                Span::styled("No", self.colours.currently_selected_text_style),
+            ),
+        };
 
         let button_layout = Layout::default()
             .direction(Direction::Horizontal)
@@ -317,6 +314,15 @@ impl KillDialog for Painter {
                 draw_loc,
             );
 
+            let btn_height;
+            #[cfg(target_family = "unix")]
+            {
+                btn_height = 18;
+            }
+            #[cfg(target_os = "windows")]
+            {
+                btn_height = 3;
+            }
             // Now draw buttons if needed...
             let split_draw_loc = Layout::default()
                 .direction(Direction::Vertical)
@@ -324,7 +330,7 @@ impl KillDialog for Painter {
                     if app_state.dd_err.is_some() {
                         vec![Constraint::Percentage(100)]
                     } else {
-                        vec![Constraint::Min(0), Constraint::Length(18)]
+                        vec![Constraint::Min(0), Constraint::Length(btn_height)]
                     }
                     .as_ref(),
                 )
