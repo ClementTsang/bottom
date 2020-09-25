@@ -2683,26 +2683,26 @@ impl App {
             }
         }
 
-        // Second short circuit --- are we in the dd dialog state?  If so, only check yes/no and
-        // bail after.
+        // Second short circuit --- are we in the dd dialog state?  If so, only check yes/no/signals
+        // and bail after.
         if self.is_in_dialog() {
-            if let (
-                Some((yes_tlc_x, yes_tlc_y)),
-                Some((yes_brc_x, yes_brc_y)),
-                Some((no_tlc_x, no_tlc_y)),
-                Some((no_brc_x, no_brc_y)),
-            ) = (
-                self.delete_dialog_state.yes_tlc,
-                self.delete_dialog_state.yes_brc,
-                self.delete_dialog_state.no_tlc,
-                self.delete_dialog_state.no_brc,
-            ) {
-                // TODO: implement this for signals
-                if (x >= yes_tlc_x && y >= yes_tlc_y) && (x <= yes_brc_x && y <= yes_brc_y) {
-                    self.delete_dialog_state.selected_signal = KillSignal::KILL(15);
-                } else if (x >= no_tlc_x && y >= no_tlc_y) && (x <= no_brc_x && y <= no_brc_y) {
-                    self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+            match self
+                .delete_dialog_state
+                .button_positions
+                .iter()
+                .enumerate()
+                .find(|(_, (tl_x, tl_y, br_x, br_y))| {
+                    (x >= *tl_x && y >= *tl_y) && (x <= *br_x && y <= *br_y)
+                }) {
+                Some((0, _)) => self.delete_dialog_state.selected_signal = KillSignal::CANCEL,
+                Some((idx, _)) => {
+                    if idx > 31 {
+                        self.delete_dialog_state.selected_signal = KillSignal::KILL(idx + 2)
+                    } else {
+                        self.delete_dialog_state.selected_signal = KillSignal::KILL(idx)
+                    }
                 }
+                _ => {}
             }
             return;
         }

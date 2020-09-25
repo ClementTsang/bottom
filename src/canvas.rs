@@ -323,10 +323,7 @@ impl Painter {
                 }
 
                 // And reset dd_dialog...
-                app_state.delete_dialog_state.yes_tlc = None;
-                app_state.delete_dialog_state.yes_brc = None;
-                app_state.delete_dialog_state.no_tlc = None;
-                app_state.delete_dialog_state.no_brc = None;
+                app_state.delete_dialog_state.button_positions = vec![];
 
                 // And battery dialog...
                 for battery_widget in app_state.battery_state.widget_states.values_mut() {

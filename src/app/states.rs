@@ -56,10 +56,8 @@ impl Default for KillSignal {
 pub struct AppDeleteDialogState {
     pub is_showing_dd: bool,
     pub selected_signal: KillSignal,
-    pub yes_tlc: Option<(u16, u16)>,
-    pub yes_brc: Option<(u16, u16)>,
-    pub no_tlc: Option<(u16, u16)>,
-    pub no_brc: Option<(u16, u16)>,
+    // tl x, tl y, br x, br y
+    pub button_positions: Vec<(u16, u16, u16, u16)>,
     pub keyboard_signal_select: usize,
 }
 

@@ -109,17 +109,20 @@ impl KillDialog for Painter {
         );
 
         if app_state.should_get_widget_bounds() {
-            app_state.delete_dialog_state.yes_tlc = Some((button_layout[0].x, button_layout[0].y));
-            app_state.delete_dialog_state.yes_brc = Some((
-                button_layout[0].x + button_layout[0].width,
-                button_layout[0].y + button_layout[0].height,
-            ));
-
-            app_state.delete_dialog_state.no_tlc = Some((button_layout[2].x, button_layout[2].y));
-            app_state.delete_dialog_state.no_brc = Some((
-                button_layout[2].x + button_layout[2].width,
-                button_layout[2].y + button_layout[2].height,
-            ));
+            app_state.delete_dialog_state.button_positions = vec![
+                (
+                    button_layout[2].x,
+                    button_layout[2].y,
+                    button_layout[2].x + button_layout[2].width,
+                    button_layout[2].y + button_layout[2].height,
+                ),
+                (
+                    button_layout[0].x,
+                    button_layout[0].y,
+                    button_layout[0].x + button_layout[0].width,
+                    button_layout[0].y + button_layout[0].height,
+                ),
+            ];
         }
     }
 
@@ -238,6 +241,7 @@ impl KillDialog for Painter {
                     )
                     .split(cell)
             })
+            .take(63)
             .collect::<Vec<Rect>>();
 
         for (idx, btn) in buttons.into_iter().enumerate() {
@@ -247,6 +251,20 @@ impl KillDialog for Painter {
                     .alignment(Alignment::Left),
                 button_layout[idx],
             );
+        }
+
+        if app_state.should_get_widget_bounds() {
+            app_state.delete_dialog_state.button_positions = button_layout
+                .iter()
+                .map(|button| {
+                    (
+                        button.x,
+                        button.y,
+                        button.x + button.width - 1,
+                        button.y + button.height - 1,
+                    )
+                })
+                .collect::<Vec<(u16, u16, u16, u16)>>();
         }
     }
 
