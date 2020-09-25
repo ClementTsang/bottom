@@ -380,7 +380,7 @@ impl Painter {
                     } else {
                         terminal_width * 50 / 100
                     },
-                    7,
+                    22,
                 );
                 // let (text_width, text_height) = if let Some(dd_text) = &dd_text {
                 //     let width = if current_width < 100 {

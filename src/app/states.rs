@@ -40,10 +40,22 @@ pub struct AppScrollWidgetState {
     pub table_state: TableState,
 }
 
+#[derive(PartialEq)]
+pub enum KillSignal {
+    CANCEL,
+    KILL(usize),
+}
+
+impl Default for KillSignal {
+    fn default() -> Self {
+        KillSignal::CANCEL
+    }
+}
+
 #[derive(Default)]
 pub struct AppDeleteDialogState {
     pub is_showing_dd: bool,
-    pub is_on_yes: bool, // Defaults to "No"
+    pub selected_signal: KillSignal,
     pub yes_tlc: Option<(u16, u16)>,
     pub yes_brc: Option<(u16, u16)>,
     pub no_tlc: Option<(u16, u16)>,
