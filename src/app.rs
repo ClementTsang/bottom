@@ -175,7 +175,7 @@ impl App {
 
     fn close_dd(&mut self) {
         self.delete_dialog_state.is_showing_dd = false;
-        self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+        self.delete_dialog_state.selected_signal = KillSignal::KILL(15);
         self.to_delete_process_list = None;
         self.dd_err = None;
     }
@@ -665,7 +665,7 @@ impl App {
                 if self.dd_err.is_none() {
                     // Also ensure that we didn't just fail a dd...
                     let dd_result = self.kill_highlighted_process();
-                    self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+                    self.delete_dialog_state.selected_signal = KillSignal::KILL(15);
 
                     // Check if there was an issue... if so, inform the user.
                     if let Err(dd_err) = dd_result {
@@ -675,6 +675,7 @@ impl App {
                     }
                 }
             } else {
+                self.delete_dialog_state.selected_signal = KillSignal::KILL(15);
                 self.delete_dialog_state.is_showing_dd = false;
             }
             self.is_force_redraw = true;

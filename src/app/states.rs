@@ -48,7 +48,7 @@ pub enum KillSignal {
 
 impl Default for KillSignal {
     fn default() -> Self {
-        KillSignal::CANCEL
+        KillSignal::KILL(15)
     }
 }
 
