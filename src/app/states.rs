@@ -60,6 +60,7 @@ pub struct AppDeleteDialogState {
     pub yes_brc: Option<(u16, u16)>,
     pub no_tlc: Option<(u16, u16)>,
     pub no_brc: Option<(u16, u16)>,
+    pub keyboard_signal_select: usize,
 }
 
 pub struct AppHelpDialogState {

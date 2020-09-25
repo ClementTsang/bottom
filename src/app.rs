@@ -802,6 +802,25 @@ impl App {
         }
     }
 
+    pub fn on_number(&mut self, number_char: char) {
+        if self.delete_dialog_state.is_showing_dd {
+            let mut kbd_signal = self.delete_dialog_state.keyboard_signal_select * 10;
+            kbd_signal += number_char.to_digit(10).unwrap() as usize;
+            if kbd_signal > 64 {
+                kbd_signal %= 100;
+            }
+            if kbd_signal > 64 || kbd_signal == 32 || kbd_signal == 33 {
+                kbd_signal %= 10;
+            }
+            self.delete_dialog_state.selected_signal = KillSignal::KILL(kbd_signal);
+            if kbd_signal < 10 {
+                self.delete_dialog_state.keyboard_signal_select = kbd_signal;
+            } else {
+                self.delete_dialog_state.keyboard_signal_select = 0;
+            }
+        }
+    }
+
     pub fn on_up_key(&mut self) {
         if self.is_config_open {
         } else if !self.is_in_dialog() {
@@ -1245,7 +1264,9 @@ impl App {
                 'j' => self.on_down_key(),
                 'k' => self.on_up_key(),
                 'l' => self.on_right_key(),
-                // TODO: add number shortcuts (eg. press '15' to go to TERM)
+                '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                    self.on_number(caught_char)
+                }
                 _ => {}
             }
         } else if self.is_config_open {
