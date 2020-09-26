@@ -1276,6 +1276,7 @@ impl App {
     }
 
     /// Call this whenever the config value is updated!
+    #[allow(dead_code)] //FIXME: Remove this
     fn update_config_file(&mut self) -> anyhow::Result<()> {
         if self.app_config_fields.no_write {
             // Don't write!

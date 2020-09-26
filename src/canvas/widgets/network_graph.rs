@@ -13,6 +13,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     terminal::Frame,
+    text::Span,
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -179,9 +180,12 @@ impl NetworkGraphWidget for Painter {
                 -(network_widget_state.current_display_time as f64),
                 0.0,
             );
-            let display_time_labels = [
-                format!("{}s", network_widget_state.current_display_time / 1000),
-                "0s".to_string(),
+            let display_time_labels = vec![
+                Span::styled(
+                    format!("{}s", network_widget_state.current_display_time / 1000),
+                    self.colours.graph_style,
+                ),
+                Span::styled("0s".to_string(), self.colours.graph_style),
             ];
             let x_axis = if app_state.app_config_fields.hide_time
                 || (app_state.app_config_fields.autohide_time
@@ -195,8 +199,7 @@ impl NetworkGraphWidget for Painter {
                     Axis::default()
                         .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
-                        .labels(&display_time_labels)
-                        .labels_style(self.colours.graph_style)
+                        .labels(display_time_labels)
                 } else {
                     network_widget_state.autohide_timer = None;
                     Axis::default()
@@ -208,32 +211,32 @@ impl NetworkGraphWidget for Painter {
                 Axis::default()
                     .bounds([-(network_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
-                    .labels(&display_time_labels)
-                    .labels_style(self.colours.graph_style)
+                    .labels(display_time_labels)
             };
 
-            let y_axis_labels = labels;
+            let y_axis_labels = labels
+                .iter()
+                .map(|label| Span::styled(label, self.colours.graph_style))
+                .collect::<Vec<_>>();
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
                 .bounds([0.0, max_range])
-                .labels(&y_axis_labels)
-                .labels_style(self.colours.graph_style);
+                .labels(y_axis_labels);
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Network ── Esc to go back ";
-                format!(
-                    " Network ─{}─ Esc to go back ",
-                    "─".repeat(
-                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
-                    )
+                Span::styled(
+                    format!(
+                        " Network ─{}─ Esc to go back ",
+                        "─".repeat(
+                            usize::from(draw_loc.width)
+                                .saturating_sub(TITLE_BASE.chars().count() + 2)
+                        )
+                    ),
+                    self.colours.highlighted_border_style,
                 )
             } else {
-                " Network ".to_string()
-            };
-            let title_style = if app_state.is_expanded {
-                self.colours.highlighted_border_style
-            } else {
-                self.colours.widget_title_style
+                Span::styled(" Network ", self.colours.widget_title_style)
             };
 
             let legend_constraints = if hide_legend {
@@ -321,13 +324,10 @@ impl NetworkGraphWidget for Painter {
             };
 
             f.render_widget(
-                // Chart::new(dataset)
-                Chart::default()
-                    .datasets(&dataset)
+                Chart::new(dataset)
                     .block(
                         Block::default()
-                            .title(&title)
-                            .title_style(title_style)
+                            .title(title)
                             .borders(Borders::ALL)
                             .border_style(if app_state.current_widget.widget_id == widget_id {
                                 self.colours.highlighted_border_style

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::Text,
+    text::{Span, Spans},
     Frame, Terminal,
 };
 
@@ -63,7 +63,7 @@ pub struct Painter {
     pub colours: CanvasColours,
     height: u16,
     width: u16,
-    styled_help_text: Vec<Text<'static>>,
+    styled_help_text: Vec<Spans<'static>>,
     is_mac_os: bool,
     row_constraints: Vec<Constraint>,
     col_constraints: Vec<Vec<Constraint>>,
@@ -289,28 +289,27 @@ impl Painter {
                 styled_help_spans.extend(
                     section
                         .iter()
-                        .map(|&text| Text::styled(text, self.colours.text_style))
+                        .map(|&text| Span::styled(text, self.colours.text_style))
                         .collect::<Vec<_>>(),
                 );
             } else {
                 // Not required check but it runs only a few times... so whatever ig, prevents me from
                 // being dumb and leaving a help text section only one line long.
                 if section.len() > 1 {
-                    styled_help_spans.push(Text::raw("\n\n"));
+                    styled_help_spans.push(Span::raw(""));
                     styled_help_spans
-                        .push(Text::styled(section[0], self.colours.table_header_style));
+                        .push(Span::styled(section[0], self.colours.table_header_style));
                     styled_help_spans.extend(
                         section[1..]
                             .iter()
-                            .map(|&text| Text::styled(text, self.colours.text_style))
+                            .map(|&text| Span::styled(text, self.colours.text_style))
                             .collect::<Vec<_>>(),
                     );
                 }
             }
         });
 
-        // self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
-        self.styled_help_text = styled_help_spans;
+        self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
     }
 
     // FIXME: [CONFIG] write this, should call painter init and any changed colour functions...

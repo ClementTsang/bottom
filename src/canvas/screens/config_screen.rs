@@ -1,3 +1,5 @@
+#![allow(unused_variables)] //FIXME: Remove this
+#![allow(unused_imports)] //FIXME: Remove this
 use crate::{app::App, canvas::Painter, constants};
 use tui::{
     backend::Backend,
@@ -6,6 +8,7 @@ use tui::{
     layout::Layout,
     layout::{Alignment, Rect},
     terminal::Frame,
+    text::Span,
     widgets::{Block, Borders, Paragraph},
 };
 
@@ -20,8 +23,7 @@ impl ConfigScreen for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         let config_block = Block::default()
-            .title(&" Config ")
-            .title_style(self.colours.border_style)
+            .title(" Config ") // FIXME: [Config] missing title styling
             .style(self.colours.border_style)
             .borders(Borders::ALL)
             .border_style(self.colours.border_style);

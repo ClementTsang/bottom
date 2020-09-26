@@ -16,6 +16,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     symbols::Marker,
     terminal::Frame,
+    text::Span,
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -135,17 +136,17 @@ impl CpuGraphWidget for Painter {
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
 
-            // let display_time_labels = vec![
-            //     Text::styled(
-            //         format!("{}s", cpu_widget_state.current_display_time / 1000),
-            //         self.colours.graph_style,
-            //     ),
-            //     Text::styled("0s".to_string(), self.colours.graph_style),
-            // ];
+            let display_time_labels = vec![
+                Span::styled(
+                    format!("{}s", cpu_widget_state.current_display_time / 1000),
+                    self.colours.graph_style,
+                ),
+                Span::styled("0s".to_string(), self.colours.graph_style),
+            ];
 
-            let display_time_labels = [
-                format!("{}s", cpu_widget_state.current_display_time / 1000),
-                "0s".to_string(),
+            let y_axis_labels = vec![
+                Span::styled("0%", self.colours.graph_style),
+                Span::styled("100%", self.colours.graph_style),
             ];
 
             let x_axis = if app_state.app_config_fields.hide_time
@@ -160,8 +161,7 @@ impl CpuGraphWidget for Painter {
                     Axis::default()
                         .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
-                        .labels(&display_time_labels)
-                        .labels_style(self.colours.graph_style)
+                        .labels(display_time_labels)
                 } else {
                     cpu_widget_state.autohide_timer = None;
                     Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
@@ -172,15 +172,13 @@ impl CpuGraphWidget for Painter {
                 Axis::default()
                     .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
-                    .labels(&display_time_labels)
-                    .labels_style(self.colours.graph_style)
+                    .labels(display_time_labels)
             };
 
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
                 .bounds([0.0, 100.5])
-                .labels_style(self.colours.graph_style)
-                .labels(&["0%", "100%"]);
+                .labels(y_axis_labels);
 
             let use_dot = app_state.app_config_fields.use_dot;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
@@ -234,26 +232,17 @@ impl CpuGraphWidget for Painter {
                 self.colours.border_style
             };
 
-            // let title = if app_state.is_expanded {
-            //     Span::styled(" CPU ".to_string(), border_style)
-            // } else {
-            //     Span::styled(" CPU ".to_string(), self.colours.widget_title_style)
-            // };
-            let title = " CPU ";
-            let title_style = if app_state.is_expanded {
-                border_style
+            let title = if app_state.is_expanded {
+                Span::styled(" CPU ".to_string(), border_style)
             } else {
-                self.colours.widget_title_style
+                Span::styled(" CPU ".to_string(), self.colours.widget_title_style)
             };
 
             f.render_widget(
-                // Chart::new(dataset_vector)
-                Chart::default()
-                    .datasets(&dataset_vector)
+                Chart::new(dataset_vector)
                     .block(
                         Block::default()
                             .title(title)
-                            .title_style(title_style)
                             .borders(Borders::ALL)
                             .border_style(border_style),
                     )
