@@ -64,38 +64,12 @@ impl BatteryDisplayWidget for Painter {
                 Block::default().borders(Borders::NONE)
             };
 
-            // f.render_widget(
-            //     // Tabs::new(
-            //     //     (app_state
-            //     //         .canvas_data
-            //     //         .battery_data
-            //     //         .iter()
-            //     //         .map(|battery| Spans::from(battery.battery_name.clone())))
-            //     //     .collect::<Vec<_>>(),
-            //     // )
-            //     Tabs::default()
-            //         .titles(
-            //             app_state
-            //                 .canvas_data
-            //                 .battery_data
-            //                 .iter()
-            //                 .map(|battery| &battery.battery_name)
-            //                 .collect::<Vec<_>>()
-            //                 .as_ref(),
-            //         )
-            //         .block(battery_block)
-            //         .divider(tui::symbols::line::VERTICAL)
-            //         .style(self.colours.text_style)
-            //         .highlight_style(self.colours.currently_selected_text_style)
-            //         .select(battery_widget_state.currently_selected_battery_index),
-            //     draw_loc,
-            // );
-
-            let margined_draw_loc = Layout::default()
-                .constraints([Constraint::Percentage(100)].as_ref())
-                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
-                .direction(Direction::Horizontal)
-                .split(draw_loc)[0];
+            let battery_names = app_state
+                .canvas_data
+                .battery_data
+                .iter()
+                .map(|battery| &battery.battery_name)
+                .collect::<Vec<_>>();
 
             let tab_draw_loc = Layout::default()
                 .constraints(
@@ -108,6 +82,27 @@ impl BatteryDisplayWidget for Painter {
                 )
                 .direction(Direction::Vertical)
                 .split(draw_loc)[1];
+
+            f.render_widget(
+                Tabs::new(
+                    battery_names
+                        .iter()
+                        .map(|name| Spans::from((*name).clone()))
+                        .collect::<Vec<_>>(),
+                )
+                .block(Block::default())
+                .divider(tui::symbols::line::VERTICAL)
+                .style(self.colours.text_style)
+                .highlight_style(self.colours.currently_selected_text_style)
+                .select(battery_widget_state.currently_selected_battery_index),
+                tab_draw_loc,
+            );
+
+            let margined_draw_loc = Layout::default()
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
+                .direction(Direction::Horizontal)
+                .split(draw_loc)[0];
 
             if let Some(battery_details) = app_state
                 .canvas_data
@@ -178,29 +173,6 @@ impl BatteryDisplayWidget for Painter {
                     margined_draw_loc,
                 );
             }
-
-            let battery_names = app_state
-                .canvas_data
-                .battery_data
-                .iter()
-                .map(|battery| &battery.battery_name)
-                .collect::<Vec<_>>();
-
-            // Has to be placed AFTER for tui 0.9, place BEFORE for 0.10.
-            f.render_widget(
-                Tabs::new(
-                    battery_names
-                        .iter()
-                        .map(|name| Spans::from((*name).clone()))
-                        .collect::<Vec<_>>(),
-                )
-                .block(Block::default())
-                .divider(tui::symbols::line::VERTICAL)
-                .style(self.colours.text_style)
-                .highlight_style(self.colours.currently_selected_text_style)
-                .select(battery_widget_state.currently_selected_battery_index),
-                tab_draw_loc,
-            );
 
             if should_get_widget_bounds {
                 // Tab wizardry
