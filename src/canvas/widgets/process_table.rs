@@ -603,7 +603,6 @@ impl ProcessTableWidget for Painter {
                 ),
             ]);
 
-            search_text.push(Spans::default());
             search_text.push(Spans::from(Span::styled(
                 if let Some(err) = &proc_widget_state
                     .process_search_state

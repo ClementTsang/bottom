@@ -80,7 +80,7 @@ impl CpuBasicWidget for Painter {
                         "{:3}[{}{}{:3.0}%]",
                         if app_state.app_config_fields.show_average_cpu {
                             if cpu_index == 0 {
-                                " AVG".to_string()
+                                "AVG".to_string()
                             } else {
                                 (cpu_index - 1).to_string()
                             }

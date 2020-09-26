@@ -197,7 +197,7 @@ impl BatteryDisplayWidget for Painter {
                 .block(Block::default())
                 .divider(tui::symbols::line::VERTICAL)
                 .style(self.colours.text_style)
-                .highlight_style(self.colours.currently_selected_text_style) //FIXME: [HIGHLIGHT] THIS IS BROKEN ON TUI's SIDE, override this with your own style...
+                .highlight_style(self.colours.currently_selected_text_style)
                 .select(battery_widget_state.currently_selected_battery_index),
                 tab_draw_loc,
             );

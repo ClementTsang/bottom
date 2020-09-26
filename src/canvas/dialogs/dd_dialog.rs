@@ -23,7 +23,9 @@ impl KillDialog for Painter {
     fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>> {
         if let Some(dd_err) = &app_state.dd_err {
             return Some(Text::from(vec![
-                Spans::from(format!("Failed to kill process.\n{}\n", dd_err)),
+                Spans::default(),
+                Spans::from("Failed to kill process."),
+                Spans::from(dd_err.clone()),
                 Spans::from("Please press ENTER or ESC to close this dialog."),
             ]));
         } else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
