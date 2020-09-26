@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use std::cmp::max;
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::App,
@@ -14,6 +15,7 @@ use tui::{
     symbols::Marker,
     terminal::Frame,
     text::Span,
+    text::Spans,
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -223,20 +225,29 @@ impl NetworkGraphWidget for Painter {
                 .bounds([0.0, max_range])
                 .labels(y_axis_labels);
 
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let border_style = if is_on_widget {
+                self.colours.highlighted_border_style
+            } else {
+                self.colours.border_style
+            };
+
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Network ── Esc to go back ";
-                Span::styled(
-                    format!(
-                        " Network ─{}─ Esc to go back ",
-                        "─".repeat(
-                            usize::from(draw_loc.width)
-                                .saturating_sub(TITLE_BASE.chars().count() + 2)
-                        )
+                Spans::from(vec![
+                    Span::styled(" Network ", self.colours.widget_title_style),
+                    Span::styled(
+                        format!(
+                            "─{}─ Esc to go back ",
+                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
+                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
+                            ))
+                        ),
+                        border_style,
                     ),
-                    self.colours.highlighted_border_style,
-                )
+                ])
             } else {
-                Span::styled(" Network ", self.colours.widget_title_style)
+                Spans::from(Span::styled(" Network ", self.colours.widget_title_style))
             };
 
             let legend_constraints = if hide_legend {

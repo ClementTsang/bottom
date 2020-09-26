@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use std::borrow::Cow;
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{layout_manager::WidgetDirection, App},
@@ -17,6 +18,7 @@ use tui::{
     symbols::Marker,
     terminal::Frame,
     text::Span,
+    text::Spans,
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -226,16 +228,29 @@ impl CpuGraphWidget for Painter {
                 vec![]
             };
 
-            let border_style = if app_state.current_widget.widget_id == widget_id {
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let border_style = if is_on_widget {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style
             };
 
             let title = if app_state.is_expanded {
-                Span::styled(" CPU ".to_string(), border_style)
+                const TITLE_BASE: &str = " CPU ── Esc to go back ";
+                Spans::from(vec![
+                    Span::styled(" CPU ", self.colours.widget_title_style),
+                    Span::styled(
+                        format!(
+                            "─{}─ Esc to go back ",
+                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
+                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
+                            ))
+                        ),
+                        border_style,
+                    ),
+                ])
             } else {
-                Span::styled(" CPU ".to_string(), self.colours.widget_title_style)
+                Spans::from(Span::styled(" CPU ", self.colours.widget_title_style))
             };
 
             f.render_widget(

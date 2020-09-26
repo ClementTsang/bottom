@@ -123,7 +123,7 @@ impl ProcessTableWidget for Painter {
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
 
-            let (border_and_title_style, highlight_style) = if is_on_widget {
+            let (border_style, highlight_style) = if is_on_widget {
                 (
                     self.colours.highlighted_border_style,
                     self.colours.currently_selected_text_style,
@@ -132,43 +132,35 @@ impl ProcessTableWidget for Painter {
                 (self.colours.border_style, self.colours.text_style)
             };
 
-            let title_style = if app_state.is_expanded {
-                border_and_title_style
-            } else {
-                self.colours.widget_title_style
-            };
-
-            let title = if draw_border {
-                if app_state.is_expanded
-                    && !proc_widget_state
-                        .process_search_state
-                        .search_state
-                        .is_enabled
-                    && !proc_widget_state.is_sort_open
-                {
-                    const TITLE_BASE: &str = " Processes ── Esc to go back ";
+            let title = if app_state.is_expanded
+                && !proc_widget_state
+                    .process_search_state
+                    .search_state
+                    .is_enabled
+                && !proc_widget_state.is_sort_open
+            {
+                const TITLE_BASE: &str = " Processes ── Esc to go back ";
+                Spans::from(vec![
+                    Span::styled(" Processes ", self.colours.widget_title_style),
                     Span::styled(
                         format!(
-                            " Processes ─{}─ Esc to go back ",
-                            "─".repeat(
-                                usize::from(draw_loc.width)
-                                    .saturating_sub(TITLE_BASE.chars().count() + 2)
-                            )
+                            "─{}─ Esc to go back ",
+                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
+                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
+                            ))
                         ),
-                        title_style,
-                    )
-                } else {
-                    Span::styled(" Processes ", title_style)
-                }
+                        border_style,
+                    ),
+                ])
             } else {
-                Span::raw("")
+                Spans::from(Span::styled(" Processes ", self.colours.widget_title_style))
             };
 
             let process_block = if draw_border {
                 Block::default()
                     .title(title)
                     .borders(Borders::ALL)
-                    .border_style(border_and_title_style)
+                    .border_style(border_style)
             } else if is_on_widget {
                 Block::default()
                     .borders(*SIDE_BORDERS)

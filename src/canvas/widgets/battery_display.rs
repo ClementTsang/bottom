@@ -11,6 +11,7 @@ use tui::{
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 pub trait BatteryDisplayWidget {
     fn draw_battery_display<B: Backend>(
@@ -29,7 +30,7 @@ impl BatteryDisplayWidget for Painter {
             app_state.battery_state.widget_states.get_mut(&widget_id)
         {
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let border_and_title_style = if is_on_widget {
+            let border_style = if is_on_widget {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style
@@ -37,25 +38,30 @@ impl BatteryDisplayWidget for Painter {
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
-                Span::styled(
-                    format!(
-                        " Battery ─{}─ Esc to go back ",
-                        "─".repeat(
-                            usize::from(draw_loc.width)
-                                .saturating_sub(TITLE_BASE.chars().count() + 2)
-                        )
+                Spans::from(vec![
+                    Span::styled(" Battery ".to_string(), self.colours.widget_title_style),
+                    Span::styled(
+                        format!(
+                            "─{}─ Esc to go back ",
+                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
+                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
+                            ))
+                        ),
+                        border_style,
                     ),
-                    border_and_title_style,
-                )
+                ])
             } else {
-                Span::styled(" Battery ".to_string(), self.colours.widget_title_style)
+                Spans::from(Span::styled(
+                    " Battery ".to_string(),
+                    self.colours.widget_title_style,
+                ))
             };
 
             let battery_block = if draw_border {
                 Block::default()
                     .title(title)
                     .borders(Borders::ALL)
-                    .border_style(border_and_title_style)
+                    .border_style(border_style)
             } else if is_on_widget {
                 Block::default()
                     .borders(*SIDE_BORDERS)
