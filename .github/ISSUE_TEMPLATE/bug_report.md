@@ -8,8 +8,7 @@ assignees: ""
 
 ### Describe the bug
 
-_A clear and concise description of what the bug is and what the expected behaviour was._
-_If applicable, add screenshots to help explain your problem:_
+_A clear and concise description of what the bug is and what the expected behaviour was. If applicable, add screenshots to help explain your problem:_
 
 ### To reproduce
 
@@ -25,13 +24,13 @@ _Steps on how to reproduce the behaviour:_
 
 ### Platform
 
-_If relevant, please provide information on:_
-
 **Operating system and OS version:**
 
 **Terminal (i.e. urxvt, kitty, etc.):**
 
 **Shell (i.e. zsh, bash, etc.):**
+
+_If relevant, please provide information on:_
 
 **System info (RAM, SWAP, etc.):**
 

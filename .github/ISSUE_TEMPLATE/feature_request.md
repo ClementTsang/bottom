@@ -8,7 +8,7 @@ assignees: ""
 
 ### Describe the feature request
 
-_Why should we consider this feature request? Describe why, and/or how you think this feature will solve the issue, or overall improve the application:_
+_What is the feature of interest? Be clear and concise._
 
 ### Additional context/details
 
