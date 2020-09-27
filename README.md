@@ -17,6 +17,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Cargo](#cargo)
   - [AUR](#aur)
   - [Debian (and Debian-based)](#debian)
+  - [Fedora/CentOS](#fedoracentos)
   - [Homebrew](#homebrew)
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
