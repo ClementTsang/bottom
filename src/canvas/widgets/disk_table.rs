@@ -3,6 +3,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
+    text::Span,
+    text::Spans,
     widgets::{Block, Borders, Row, Table},
 };
 
@@ -139,19 +141,13 @@ impl DiskTableWidget for Painter {
                                             let first_n = graphemes
                                                 [..(*calculated_col_width as usize - 1)]
                                                 .concat();
-                                            Cow::Owned(format!("{}…", first_n))
-                                        } else {
-                                            Cow::Borrowed(entry)
+                                            return Cow::Owned(format!("{}…", first_n));
                                         }
-                                    } else {
-                                        Cow::Borrowed(entry)
                                     }
-                                } else {
-                                    Cow::Borrowed(entry)
                                 }
-                            } else {
-                                Cow::Borrowed(entry)
                             }
+
+                            Cow::Borrowed(entry)
                         },
                     );
 
@@ -159,7 +155,7 @@ impl DiskTableWidget for Painter {
                 });
 
             // TODO: This seems to be bugged?  The selected text style gets "stuck"?  I think this gets fixed with tui 0.10?
-            let (border_and_title_style, highlight_style) = if is_on_widget {
+            let (border_style, highlight_style) = if is_on_widget {
                 (
                     self.colours.highlighted_border_style,
                     self.colours.currently_selected_text_style,
@@ -168,50 +164,29 @@ impl DiskTableWidget for Painter {
                 (self.colours.border_style, self.colours.text_style)
             };
 
-            // let title = if app_state.is_expanded {
-            //     const TITLE_BASE: &str = " Disk ── Esc to go back ";
-            //     Span::styled(
-            //         format!(
-            //             " Disk ─{}─ Esc to go back ",
-            //             "─".repeat(
-            //                 usize::from(draw_loc.width)
-            //                     .saturating_sub(TITLE_BASE.chars().count() + 2)
-            //             )
-            //         ),
-            //         border_and_title_style,
-            //     )
-            // } else if app_state.app_config_fields.use_basic_mode {
-            //     Span::from(String::new())
-            // } else {
-            //     Span::styled(" Disk ".to_string(), self.colours.widget_title_style)
-            // };
-
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Disk ── Esc to go back ";
-                format!(
-                    " Disk ─{}─ Esc to go back ",
-                    "─".repeat(
-                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
-                    )
-                )
-            } else if app_state.app_config_fields.use_basic_mode {
-                String::new()
+                Spans::from(vec![
+                    Span::styled(" Disk ", self.colours.widget_title_style),
+                    Span::styled(
+                        format!(
+                            "─{}─ Esc to go back, ",
+                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
+                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
+                            ))
+                        ),
+                        border_style,
+                    ),
+                ])
             } else {
-                " Disk ".to_string()
-            };
-
-            let title_style = if app_state.is_expanded {
-                border_and_title_style
-            } else {
-                self.colours.widget_title_style
+                Spans::from(Span::styled(" Disk ", self.colours.widget_title_style))
             };
 
             let disk_block = if draw_border {
                 Block::default()
-                    .title(&title)
-                    .title_style(title_style)
+                    .title(title)
                     .borders(Borders::ALL)
-                    .border_style(border_and_title_style)
+                    .border_style(border_style)
             } else if is_on_widget {
                 Block::default()
                     .borders(*SIDE_BORDERS)

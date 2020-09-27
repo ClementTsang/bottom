@@ -5,8 +5,11 @@ use tui::{
     layout::{Constraint, Rect},
     symbols::Marker,
     terminal::Frame,
+    text::Span,
+    text::Spans,
     widgets::{Axis, Block, Borders, Chart, Dataset},
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 pub trait MemGraphWidget {
     fn draw_memory_graph<B: Backend>(
@@ -22,10 +25,18 @@ impl MemGraphWidget for Painter {
             let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
             let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
 
-            let display_time_labels = [
-                format!("{}s", mem_widget_state.current_display_time / 1000),
-                "0s".to_string(),
+            let display_time_labels = vec![
+                Span::styled(
+                    format!("{}s", mem_widget_state.current_display_time / 1000),
+                    self.colours.graph_style,
+                ),
+                Span::styled("0s".to_string(), self.colours.graph_style),
             ];
+            let y_axis_label = vec![
+                Span::styled("0%", self.colours.graph_style),
+                Span::styled("100%", self.colours.graph_style),
+            ];
+
             let x_axis = if app_state.app_config_fields.hide_time
                 || (app_state.app_config_fields.autohide_time
                     && mem_widget_state.autohide_timer.is_none())
@@ -38,8 +49,7 @@ impl MemGraphWidget for Painter {
                     Axis::default()
                         .bounds([-(mem_widget_state.current_display_time as f64), 0.0])
                         .style(self.colours.graph_style)
-                        .labels(&display_time_labels)
-                        .labels_style(self.colours.graph_style)
+                        .labels(display_time_labels)
                 } else {
                     mem_widget_state.autohide_timer = None;
                     Axis::default().bounds([-(mem_widget_state.current_display_time as f64), 0.0])
@@ -50,15 +60,13 @@ impl MemGraphWidget for Painter {
                 Axis::default()
                     .bounds([-(mem_widget_state.current_display_time as f64), 0.0])
                     .style(self.colours.graph_style)
-                    .labels(&display_time_labels)
-                    .labels_style(self.colours.graph_style)
+                    .labels(display_time_labels)
             };
 
             let y_axis = Axis::default()
                 .style(self.colours.graph_style)
                 .bounds([0.0, 100.5])
-                .labels(&["0%", "100%"])
-                .labels_style(self.colours.graph_style);
+                .labels(y_axis_label);
 
             let mut mem_canvas_vec: Vec<Dataset<'_>> = vec![];
             let mem_label = format!(
@@ -96,31 +104,39 @@ impl MemGraphWidget for Painter {
                     .graph_type(tui::widgets::GraphType::Line),
             );
 
-            let title = if app_state.is_expanded {
-                const TITLE_BASE: &str = " Memory ── Esc to go back ";
-                format!(
-                    " Memory ─{}─ Esc to go back ",
-                    "─".repeat(
-                        usize::from(draw_loc.width).saturating_sub(TITLE_BASE.chars().count() + 2)
-                    )
-                )
-            } else {
-                " Memory ".to_string()
-            };
-            let title_style = if app_state.is_expanded {
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let border_style = if is_on_widget {
                 self.colours.highlighted_border_style
             } else {
-                self.colours.widget_title_style
+                self.colours.border_style
+            };
+
+            let title = if app_state.is_expanded {
+                const TITLE_BASE: &str = " Memory ── Esc to go back ";
+                Spans::from(vec![
+                    Span::styled(" Memory ", self.colours.widget_title_style),
+                    Span::styled(
+                        format!(
+                            "─{}─ Esc to go back ",
+                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
+                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
+                            ))
+                        ),
+                        border_style,
+                    ),
+                ])
+            } else {
+                Spans::from(Span::styled(
+                    " Memory ".to_string(),
+                    self.colours.widget_title_style,
+                ))
             };
 
             f.render_widget(
-                // Chart::new(mem_canvas_vec)
-                Chart::default()
-                    .datasets(&mem_canvas_vec)
+                Chart::new(mem_canvas_vec)
                     .block(
                         Block::default()
-                            .title(&title)
-                            .title_style(title_style)
+                            .title(title)
                             .borders(Borders::ALL)
                             .border_style(if app_state.current_widget.widget_id == widget_id {
                                 self.colours.highlighted_border_style

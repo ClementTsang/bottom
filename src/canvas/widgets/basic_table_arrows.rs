@@ -7,7 +7,9 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text},
+    text::Span,
+    text::Spans,
+    widgets::{Block, Paragraph},
 };
 
 pub trait BasicTableArrows {
@@ -97,13 +99,19 @@ impl BasicTableArrows for Painter {
                 usize::from(draw_loc.width).saturating_sub(6 + left_name.len() + right_name.len());
 
             let left_arrow_text = vec![
-                Text::raw("\n"),
-                Text::styled(format!("◄ {}", left_name), self.colours.text_style),
+                Spans::default(),
+                Spans::from(Span::styled(
+                    format!("◄ {}", left_name),
+                    self.colours.text_style,
+                )),
             ];
 
             let right_arrow_text = vec![
-                Text::raw("\n"),
-                Text::styled(format!("{} ►", right_name), self.colours.text_style),
+                Spans::default(),
+                Spans::from(Span::styled(
+                    format!("{} ►", right_name),
+                    self.colours.text_style,
+                )),
             ];
 
             let margined_draw_loc = Layout::default()
@@ -120,11 +128,11 @@ impl BasicTableArrows for Painter {
                 .split(draw_loc);
 
             f.render_widget(
-                Paragraph::new(left_arrow_text.iter()).block(Block::default()),
+                Paragraph::new(left_arrow_text).block(Block::default()),
                 margined_draw_loc[0],
             );
             f.render_widget(
-                Paragraph::new(right_arrow_text.iter())
+                Paragraph::new(right_arrow_text)
                     .block(Block::default())
                     .alignment(Alignment::Right),
                 margined_draw_loc[2],

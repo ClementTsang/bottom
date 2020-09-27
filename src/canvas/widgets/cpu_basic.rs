@@ -11,7 +11,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    widgets::{Block, Paragraph, Text},
+    text::{Span, Spans},
+    widgets::{Block, Paragraph},
 };
 
 pub trait CpuBasicWidget {
@@ -76,7 +77,7 @@ impl CpuBasicWidget for Painter {
 
                     let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
                     format!(
-                        "{:3}[{}{}{:3.0}%]\n",
+                        "{:3}[{}{}{:3.0}%]",
                         if app_state.app_config_fields.show_average_cpu {
                             if cpu_index == 0 {
                                 "AVG".to_string()
@@ -108,16 +109,11 @@ impl CpuBasicWidget for Painter {
                     let end_index = min(start_index + how_many_cpus, num_cpus);
                     let cpu_column = (start_index..end_index)
                         .map(|cpu_index| {
-                            // Spans::from(Span {
-                            //     content: (&cpu_bars[cpu_index]).into(),
-                            //     style: self.colours.cpu_colour_styles
-                            //         [cpu_index % self.colours.cpu_colour_styles.len()],
-                            // })
-                            Text::styled(
-                                &cpu_bars[cpu_index],
-                                self.colours.cpu_colour_styles
+                            Spans::from(Span {
+                                content: (&cpu_bars[cpu_index]).into(),
+                                style: self.colours.cpu_colour_styles
                                     [cpu_index % self.colours.cpu_colour_styles.len()],
-                            )
+                            })
                         })
                         .collect::<Vec<_>>();
 
@@ -130,7 +126,7 @@ impl CpuBasicWidget for Painter {
                         .split(*chunk)[0];
 
                     f.render_widget(
-                        Paragraph::new(cpu_column.iter()).block(Block::default()),
+                        Paragraph::new(cpu_column).block(Block::default()),
                         margined_loc,
                     );
                 }
