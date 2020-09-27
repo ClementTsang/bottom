@@ -44,6 +44,7 @@ matrix:
       rust: stable
 
     # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
+    # TODO: [ARM] Support ARM binary generation...?
     - os: linux
       env: TARGET=aarch64-unknown-linux-gnu
       arch: arm64
@@ -67,9 +68,9 @@ matrix:
       arch: arm64
     - if: tag IS present
       env: TARGET=armv7-unknown-linux-gnueabihf
-  allow_failures:
-    - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
-    - env: TARGET=armv7-unknown-linux-gnueabihf
+  # allow_failures:
+  #   - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
+  #   - env: TARGET=armv7-unknown-linux-gnueabihf
 
 branches:
   only:
