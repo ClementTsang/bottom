@@ -2,7 +2,7 @@
 name: Packaging
 about: For any issues, questions, or requests regarding packaging or distribution.
 title: ""
-labels: "question"
+labels: "packaging"
 assignees: ""
 ---
 
