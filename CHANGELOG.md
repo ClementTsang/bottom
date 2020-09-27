@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#224](https://github.com/ClementTsang/bottom/pull/224): Implements sorting by count. It previously did absolutely nothing.
 
+- [#238](https://github.com/ClementTsang/bottom/pull/238): Fix being able to cause an index out-of-bounds by resizing
+  to a smaller terminal _just_ after the program got the terminal size, but right before the terminal started drawing.
+
+- [#238](https://github.com/ClementTsang/bottom/pull/238): Fixed not clearing screen before drawing, which caused issues for some environments.
+
 - [#253](https://github.com/ClementTsang/bottom/pull/253): Fix highlighted entries being stuck in another colour when the widget is not selected.
 
 - [#253](https://github.com/ClementTsang/bottom/pull/253): Expanding a widget no longer overrides the widget title colour.
@@ -40,9 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
 - [#204](https://github.com/ClementTsang/bottom/pull/204): Fix searching by command name being broken.
-
-- [#238](https://github.com/ClementTsang/bottom/pull/238): Fix being able to cause an index out-of-bounds by resizing
-  to a smaller terminal _just_ after the program got the terminal size, but right before the terminal started drawing.
 
 ## [0.4.6] - 2020-08-25
 
