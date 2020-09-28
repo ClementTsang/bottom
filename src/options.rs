@@ -372,6 +372,7 @@ pub fn build_app(
         get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
 
     // One more thing - we have to update the search settings of our proc_state_map, and create the hashmaps if needed!
+    // Note that if you change your layout, this might not actually match properly... not sure if/where we should deal with that...
     if let Some(flags) = &mut config.flags {
         if flags.case_sensitive.is_none() && !matches.is_present("case_sensitive") {
             if let Some(search_case_enabled_widgets) = &flags.search_case_enabled_widgets {
