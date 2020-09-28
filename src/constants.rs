@@ -246,7 +246,8 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
 pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.  Values in this config file will change when changed in the
-# interface.  You can also manually change these values.
+# interface.  You can also manually change these values.  Be aware that contents of this file will be overwritten if something is
+# changed in the application; you can disable writing via the --no_write flag or no_write config option.
 
 "##;
 
@@ -272,6 +273,6 @@ pub const CONFIG_LAYOUT_HEAD: &str = r##"
 # All layout components have a ratio value - if this is not set, then it defaults to 1. 
 "##;
 
-pub const CONFIG_DIVIDER: &str = r##"
-#########################################################################
+pub const CONFIG_FILTER_HEAD: &str = r##"
+# These options represent disabled entries for the temperature and disk widgets.
 "##;
