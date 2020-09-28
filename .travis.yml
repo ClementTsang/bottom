@@ -113,6 +113,7 @@ script:
       cargo test --verbose --target $TARGET  
     fi
 
+# FIXME: [TRAVIS] Probably want to update this with the new build targets and all.
 before_deploy:
   - |
     echo "Test whether installing works.  This is mostly just a sanity check.";
