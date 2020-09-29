@@ -6,6 +6,7 @@ use tui::{
     layout::{Alignment, Rect},
     terminal::Frame,
     text::Span,
+    text::Spans,
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 
@@ -22,15 +23,18 @@ impl HelpDialog for Painter {
     fn draw_help_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
-        let help_title = Span::styled(
-            format!(
-                " Help ─{}─ Esc to close ",
-                "─".repeat(
-                    usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2)
-                )
+        let help_title = Spans::from(vec![
+            Span::styled(" Help ", self.colours.widget_title_style),
+            Span::styled(
+                format!(
+                    "─{}─ Esc to close ",
+                    "─".repeat(
+                        usize::from(draw_loc.width).saturating_sub(HELP_BASE.chars().count() + 2)
+                    )
+                ),
+                self.colours.border_style,
             ),
-            self.colours.border_style,
-        );
+        ]);
 
         if app_state.should_get_widget_bounds() {
             // We must also recalculate how many lines are wrapping to properly get scrolling to work on

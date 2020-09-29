@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#253](https://github.com/ClementTsang/bottom/pull/253): Fix highlighted entries being stuck in another colour when the widget is not selected.
 
-- [#253](https://github.com/ClementTsang/bottom/pull/253): Expanding a widget no longer overrides the widget title colour.
+- [#253](https://github.com/ClementTsang/bottom/pull/253), [#266](https://github.com/ClementTsang/bottom/pull/266): Expanding a widget no longer overrides the widget/dialog title colour.
 
 - [#261](https://github.com/ClementTsang/bottom/pull/261): Fixed process names occasionally showing up as truncated, due to only using `/proc/<PID>/stat` as our data source.
 
