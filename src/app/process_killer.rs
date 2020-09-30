@@ -36,6 +36,7 @@ pub fn kill_process_given_pid(pid: Pid) -> crate::utils::error::Result<()> {
     if cfg!(target_family = "unix") {
         #[cfg(any(target_family = "unix"))]
         {
+            // FIXME: [KILL] Forbid negative PID killing in unix
             let output = unsafe { libc::kill(pid as i32, libc::SIGTERM) };
             if output != 0 {
                 // We had an error...

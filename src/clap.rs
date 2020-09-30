@@ -67,10 +67,10 @@ inspired by htop's.\n\n",
         );
     let battery = Arg::with_name("battery")
         .long("battery")
-        .help("Shows the battery widget.")
+        .help("Shows the battery widget in default/basic mode.")
         .long_help(
             "\
-Shows the battery widget in default or basic mode. No effect on
+Shows the battery widget in default/basic mode. No effect on
 custom layouts.\n\n",
         );
     let case_sensitive = Arg::with_name("case_sensitive")

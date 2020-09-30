@@ -1,5 +1,5 @@
-#![allow(unused_variables)] //FIXME: Remove this
-#![allow(unused_imports)] //FIXME: Remove this
+#![allow(unused_variables)]
+#![allow(unused_imports)]
 use crate::{app::App, canvas::Painter, constants};
 use tui::{
     backend::Backend,
@@ -9,7 +9,8 @@ use tui::{
     layout::{Alignment, Rect},
     terminal::Frame,
     text::Span,
-    widgets::{Block, Borders, Paragraph},
+    text::Spans,
+    widgets::{Block, Borders, Paragraph, Tabs},
 };
 
 pub trait ConfigScreen {
@@ -23,36 +24,24 @@ impl ConfigScreen for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         let config_block = Block::default()
-            .title(" Config ") // FIXME: [Config] missing title styling
+            .title(Span::styled(" Config ", self.colours.widget_title_style))
             .style(self.colours.border_style)
             .borders(Borders::ALL)
             .border_style(self.colours.border_style);
 
-        f.render_widget(config_block, draw_loc);
+        let titles: Vec<Spans<'_>> = app_state
+            .config_page_settings
+            .iter()
+            .map(|category| Spans::from(category.category_name))
+            .collect();
 
-        // let margined_draw_locs = Layout::default()
-        //     .margin(2)
-        //     .direction(Direction::Horizontal)
-        //     .constraints(
-        //         [
-        //             Constraint::Percentage(33),
-        //             Constraint::Percentage(34),
-        //             Constraint::Percentage(33),
-        //         ]
-        //     )
-        //     .split(draw_loc)
-        //     .into_iter()
-        //     .map(|loc| {
-        //         // Required to properly margin in *between* the rectangles.
-        //         Layout::default()
-        //             .horizontal_margin(1)
-        //             .constraints([Constraint::Percentage(100)])
-        //             .split(loc)[0]
-        //     })
-        //     .collect::<Vec<Rect>>();
-
-        // for dl in margined_draw_locs {
-        //     f.render_widget(Block::default().borders(Borders::ALL), dl);
-        // }
+        f.render_widget(
+            Tabs::new(titles)
+                .block(config_block)
+                .divider(tui::symbols::line::VERTICAL)
+                .style(self.colours.text_style)
+                .highlight_style(self.colours.currently_selected_text_style),
+            draw_loc,
+        )
     }
 }

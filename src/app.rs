@@ -11,7 +11,9 @@ use layout_manager::*;
 pub use states::*;
 
 use crate::{
-    canvas, constants,
+    canvas,
+    components::ScrollDirection,
+    constants,
     options::Config,
     options::ConfigFlags,
     options::WidgetIdEnabled,
@@ -126,6 +128,7 @@ pub struct App {
     pub filters: DataFilters,
     pub config: Config,
     pub config_path: Option<PathBuf>,
+    pub config_page_settings: Vec<MainConfigState>,
 }
 
 impl App {
@@ -1236,7 +1239,7 @@ impl App {
                 }
             }
             'C' => {
-                // self.open_config(),
+                // self.open_config_screen();
             }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
@@ -2593,6 +2596,7 @@ impl App {
         }
 
         // Now handle click propagation down to widget.
+        // self.current_widget.on_click(MouseButton::Left, Coordinate {x, y});
         if let Some((_tlc_x, tlc_y)) = &self.current_widget.top_left_corner {
             match &self.current_widget.widget_type {
                 BottomWidgetType::Proc

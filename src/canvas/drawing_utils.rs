@@ -1,4 +1,4 @@
-use crate::app;
+use crate::{app, components::ScrollDirection};
 use std::cmp::{max, min};
 
 /// Return a (hard)-width vector for column widths.
@@ -145,7 +145,7 @@ pub fn get_search_start_position(
 }
 
 pub fn get_start_position(
-    num_rows: usize, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut usize,
+    num_rows: usize, scroll_direction: &ScrollDirection, scroll_position_bar: &mut usize,
     currently_selected_position: usize, is_force_redraw: bool,
 ) -> usize {
     if is_force_redraw {
@@ -153,7 +153,7 @@ pub fn get_start_position(
     }
 
     match scroll_direction {
-        app::ScrollDirection::Down => {
+        ScrollDirection::Down => {
             if currently_selected_position < *scroll_position_bar + num_rows {
                 // If, using previous_scrolled_position, we can see the element
                 // (so within that and + num_rows) just reuse the current previously scrolled position
@@ -168,7 +168,7 @@ pub fn get_start_position(
                 0
             }
         }
-        app::ScrollDirection::Up => {
+        ScrollDirection::Up => {
             if currently_selected_position <= *scroll_position_bar {
                 // If it's past the first element, then show from that element downwards
                 *scroll_position_bar = currently_selected_position;

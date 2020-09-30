@@ -30,6 +30,7 @@ use app::{
     layout_manager::{UsedWidgets, WidgetDirection},
     App,
 };
+use components::*;
 use constants::*;
 use data_conversion::*;
 use options::*;
@@ -43,6 +44,7 @@ pub mod utils {
 }
 pub mod canvas;
 pub mod clap;
+pub mod components;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
@@ -423,7 +425,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                 proc_widget_state.scroll_state.current_scroll_position =
                     finalized_process_data.len().saturating_sub(1);
                 proc_widget_state.scroll_state.previous_scroll_position = 0;
-                proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
+                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
 
             app.canvas_data.stringified_process_data_map.insert(

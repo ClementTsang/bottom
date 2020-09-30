@@ -6,24 +6,11 @@ use tui::widgets::TableState;
 
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
+    components::ScrollDirection,
     constants,
     data_harvester::processes::{self, ProcessSorting},
 };
 use ProcessSorting::*;
-
-#[derive(Debug)]
-pub enum ScrollDirection {
-    // UP means scrolling up --- this usually DECREMENTS
-    Up,
-    // DOWN means scrolling down --- this usually INCREMENTS
-    Down,
-}
-
-impl Default for ScrollDirection {
-    fn default() -> Self {
-        ScrollDirection::Down
-    }
-}
 
 #[derive(Debug)]
 pub enum CursorDirection {
@@ -34,6 +21,8 @@ pub enum CursorDirection {
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
 #[derive(Default)]
 pub struct AppScrollWidgetState {
+    pub column_headers: Vec<String>,
+    pub column_contents: Vec<Vec<String>>,
     pub current_scroll_position: usize,
     pub previous_scroll_position: usize,
     pub scroll_direction: ScrollDirection,
@@ -802,6 +791,7 @@ impl BatteryState {
     }
 }
 
+// FIXME: [REFACTOR] Unify scroll state tracking implementations under one struct.
 #[derive(Default)]
 pub struct ParagraphScrollState {
     pub current_scroll_index: u16,
@@ -809,17 +799,22 @@ pub struct ParagraphScrollState {
 }
 
 #[derive(Default)]
-pub struct ConfigState {
-    pub current_category_index: usize,
-    pub category_list: Vec<ConfigCategory>,
-}
-
-#[derive(Default)]
-pub struct ConfigCategory {
+pub struct MainConfigState {
     pub category_name: &'static str,
-    pub options_list: Vec<ConfigOption>,
+    pub config_sub_options: Vec<ConfigSubOptions>,
 }
 
-pub struct ConfigOption {
-    pub set_function: Box<dyn Fn() -> anyhow::Result<()>>,
+pub struct ConfigSubOptions {
+    /// The option's name.
+    pub option_name: &'static str,
+    /// The option's description.
+    pub description: &'static str,
+    /// How it handles drawing in an additional Block.  If this does is None,
+    /// then nothing additional will be drawn here.
+    pub draw_fn: Option<Box<dyn Fn()>>,
+    /// How it handles inputs.  For example, scroll states, mouse inputs, keyboard inputs, etc.
+    /// must be handled by the option itself.
+    pub input_fn: Box<dyn Fn()>,
+    /// How it updates the config.  Must be handled by the option itself.
+    pub update_fn: Box<dyn Fn()>,
 }

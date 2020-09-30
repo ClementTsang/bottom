@@ -413,6 +413,18 @@ pub fn build_app(
         }
     }
 
+    let config_page_settings: Vec<MainConfigState> = vec![
+        build_display_options_config(),
+        MainConfigState {
+            category_name: "Colours",
+            config_sub_options: vec![],
+        },
+        MainConfigState {
+            category_name: "Layout",
+            config_sub_options: vec![],
+        },
+    ];
+
     Ok(App::builder()
         .app_config_fields(app_config_fields)
         .cpu_state(CpuState::init(cpu_state_map))
@@ -432,6 +444,7 @@ pub fn build_app(
         })
         .config(config.clone())
         .config_path(config_path)
+        .config_page_settings(config_page_settings)
         .build())
 }
 
@@ -886,5 +899,97 @@ pub fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option
         }))
     } else {
         Ok(None)
+    }
+}
+
+fn build_display_options_config() -> MainConfigState {
+    MainConfigState {
+        category_name: "Display options",
+        config_sub_options: vec![
+            ConfigSubOptions {
+                option_name: "Automatically hide time",
+                description: "Temporarily show the time scale in graphs.",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Basic mode",
+                description: "Hides graphs and uses a more basic look.",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Battery widget",
+                description: "Shows the battery widget in default/basic mode.",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Current usage",
+                description: "Use current CPU% as base for process CPU% usage.",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Default time value",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Disable click",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Dot marker",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Group processes by default",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Average CPU",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Left legend",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Refresh rate",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+            ConfigSubOptions {
+                option_name: "Zoom delta",
+                description: "",
+                draw_fn: None,
+                input_fn: Box::new(|| {}),
+                update_fn: Box::new(|| {}),
+            },
+        ],
     }
 }

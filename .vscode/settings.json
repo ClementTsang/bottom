@@ -42,6 +42,7 @@
     "cmdline",
     "commandline",
     "concat",
+    "coord",
     "crossterm",
     "curr",
     "cvar",

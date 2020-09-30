@@ -24,6 +24,7 @@ pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
 // Side borders
+// FIXME: [REFACTOR] Switch to once_cell over lazy_static.
 lazy_static! {
     pub static ref SIDE_BORDERS: tui::widgets::Borders =
         tui::widgets::Borders::from_bits_truncate(20);

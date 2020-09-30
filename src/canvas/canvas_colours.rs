@@ -25,7 +25,7 @@ pub struct CanvasColours {
     pub text_style: Style,
     pub widget_title_style: Style,
     pub graph_style: Style,
-    // Full, Medium, Low
+    // Order is full, medium, and low
     pub battery_bar_styles: Vec<Style>,
     pub invalid_query_style: Style,
     pub disabled_text_style: Style,
@@ -88,8 +88,9 @@ impl CanvasColours {
 
     pub fn set_table_header_colour(&mut self, colour: &str) -> error::Result<()> {
         self.table_header_style = get_style_from_config(colour)?;
-        // Disabled as it seems to be bugged when I go into full command mode...?  It becomes huge lol
-        // self.table_header_style = get_style_from_config(colour)?.modifier(Modifier::BOLD);
+        // TODO: Make arrows not bolded, rest of text bolded (if enabled)
+        // self.table_header_style =
+        //     get_style_from_config(colour)?.add_modifier(tui::style::Modifier::BOLD);
         Ok(())
     }
 
