@@ -968,7 +968,7 @@ Supported widget names:
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct UsedWidgets {
     pub use_cpu: bool,
     pub use_mem: bool,

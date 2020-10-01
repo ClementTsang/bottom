@@ -200,6 +200,7 @@ Run using `btm`.
     -S, --case_sensitive                       Enables case sensitivity by default.
     -c, --celsius                              Sets the temperature type to Celsius.
     -C, --config <CONFIG PATH>                 Sets the location of the config file.
+        --debug                                Enables debug logging.
     -t, --default_time_value <MS>              Default time value for graphs in ms.
         --default_widget_count <INT>           Sets the n'th selected widget type as the default.
         --default_widget_type <WIDGET TYPE>    Sets which widget type to use as the default widget.
