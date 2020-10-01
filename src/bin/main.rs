@@ -26,11 +26,16 @@ use crossterm::{
 use tui::{backend::CrosstermBackend, Terminal};
 
 fn main() -> Result<()> {
-    #[cfg(debug_assertions)]
-    {
-        utils::logging::init_logger()?;
-    }
     let matches = clap::get_matches();
+    let is_debug = matches.is_present("debug");
+    if is_debug {
+        utils::logging::init_logger(log::LevelFilter::Trace, "/tmp/bottom.log")?;
+    } else {
+        #[cfg(debug_assertions)]
+        {
+            utils::logging::init_logger(log::LevelFilter::Debug, "debug.log")?;
+        }
+    }
 
     let config_path = read_config(matches.value_of("config_location"))
         .context("Unable to access the given config file location.")?;
@@ -109,6 +114,7 @@ fn main() -> Result<()> {
 
     while !is_terminated.load(Ordering::SeqCst) {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
+            trace!("Main/drawing thread received event: {:?}", recv);
             match recv {
                 BottomEvent::KeyInput(event) => {
                     if handle_key_event_or_break(event, &mut app, &reset_sender) {
@@ -203,9 +209,10 @@ fn main() -> Result<()> {
         }
 
         // TODO: [OPT] Should not draw if no change (ie: scroll max)
-        try_drawing(&mut terminal, &mut app, &mut painter)?;
+        try_drawing(&mut terminal, &mut app, &mut painter, is_debug)?;
     }
 
-    cleanup_terminal(&mut terminal)?;
+    trace!("Main/drawing thread is cleaning up.");
+    cleanup_terminal(&mut terminal, is_debug)?;
     Ok(())
 }

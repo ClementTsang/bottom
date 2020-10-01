@@ -81,6 +81,13 @@ custom layouts.\n\n",
             "\
 When searching for a process, enables case sensitivity by default.\n\n",
         );
+    let debug = Arg::with_name("debug")
+        .long("debug")
+        .help("Enables debug logging.")
+        .long_help(
+            "\
+Enables debug logging to /tmp/bottom.log.",
+        );
     let disable_click = Arg::with_name("disable_click")
         .long("disable_click")
         .help("Disables mouse clicks.")
@@ -305,6 +312,7 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(battery)
         .arg(case_sensitive)
         .arg(config_location)
+        .arg(debug)
         .arg(default_time_value)
         .arg(default_widget_count)
         .arg(default_widget_type)

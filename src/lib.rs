@@ -48,6 +48,7 @@ pub type Pid = usize;
 #[cfg(target_family = "unix")]
 pub type Pid = libc::pid_t;
 
+#[derive(Debug)]
 pub enum BottomEvent<I, J> {
     KeyInput(I),
     MouseInput(J),
@@ -55,6 +56,7 @@ pub enum BottomEvent<I, J> {
     Clean,
 }
 
+#[derive(Debug)]
 pub enum CollectionThreadEvent {
     Reset,
     UpdateConfig(Box<app::AppConfigFields>),
@@ -229,10 +231,10 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
 
 pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    app: &mut App, painter: &mut canvas::Painter,
+    app: &mut App, painter: &mut canvas::Painter, is_debug: bool,
 ) -> error::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal)?;
+        cleanup_terminal(terminal, is_debug)?;
         return Err(err);
     }
 
@@ -241,6 +243,7 @@ pub fn try_drawing(
 
 pub fn cleanup_terminal(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
+    is_debug: bool,
 ) -> error::Result<()> {
     disable_raw_mode()?;
     execute!(
@@ -249,6 +252,10 @@ pub fn cleanup_terminal(
         LeaveAlternateScreen
     )?;
     terminal.show_cursor()?;
+
+    if is_debug {
+        println!("Your debug file is located at \"/tmp/bottom.log\".",);
+    }
 
     Ok(())
 }
@@ -556,13 +563,17 @@ pub fn create_input_thread(
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
 ) {
+    trace!("Creating input thread.");
     thread::spawn(move || {
+        trace!("Spawned input thread.");
         let mut mouse_timer = Instant::now();
         let mut keyboard_timer = Instant::now();
 
         loop {
+            trace!("Waiting for an input event...");
             if poll(Duration::from_millis(20)).is_ok() {
                 if let Ok(event) = read() {
+                    trace!("Input thread received an event: {:?}", event);
                     if let Event::Key(key) = event {
                         if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
                             if sender.send(BottomEvent::KeyInput(key)).is_err() {
@@ -591,12 +602,14 @@ pub fn create_collection_thread(
     reset_receiver: std::sync::mpsc::Receiver<CollectionThreadEvent>,
     app_config_fields: &app::AppConfigFields, used_widget_set: UsedWidgets,
 ) {
+    trace!("Creating collection thread.");
     let temp_type = app_config_fields.temperature_type.clone();
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_rate_in_milliseconds = app_config_fields.update_rate_in_milliseconds;
 
     thread::spawn(move || {
+        trace!("Spawned collection thread.");
         let mut data_state = data_harvester::DataCollector::default();
         data_state.set_collected_data(used_widget_set);
         data_state.set_temperature_type(temp_type);
@@ -605,11 +618,13 @@ pub fn create_collection_thread(
 
         data_state.init();
         loop {
+            trace!("Collecting...");
             let mut update_time = update_rate_in_milliseconds;
             if let Ok(message) = reset_receiver.try_recv() {
+                trace!("Received message: {:?}", message);
                 match message {
                     CollectionThreadEvent::Reset => {
-                        data_state.data.first_run_cleanup();
+                        data_state.data.cleanup();
                     }
                     CollectionThreadEvent::UpdateConfig(app_config_fields) => {
                         data_state.set_temperature_type(app_config_fields.temperature_type.clone());
@@ -626,11 +641,14 @@ pub fn create_collection_thread(
                 }
             }
             futures::executor::block_on(data_state.update_data());
+            trace!("Collection thread is updating...");
             let event = BottomEvent::Update(Box::from(data_state.data));
+            trace!("Collection thread done updating.  Sending data now...");
             data_state.data = data_harvester::Data::default();
             if sender.send(event).is_err() {
                 break;
             }
+            trace!("No problem sending from collection thread!");
             thread::sleep(Duration::from_millis(update_time));
         }
     });

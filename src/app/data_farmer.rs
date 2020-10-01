@@ -101,6 +101,7 @@ impl DataCollection {
     }
 
     pub fn clean_data(&mut self, max_time_millis: u64) {
+        trace!("Cleaning data.");
         let current_time = Instant::now();
 
         let mut remove_index = 0;
@@ -116,7 +117,10 @@ impl DataCollection {
     }
 
     pub fn eat_data(&mut self, harvested_data: &Data) {
+        trace!("Eating data now...");
         let harvested_time = harvested_data.last_collection_time;
+        trace!("Harvested time: {:?}", harvested_time);
+        trace!("New current instant: {:?}", self.current_instant);
         let mut new_entry = TimedData::default();
 
         // Network
@@ -166,6 +170,7 @@ impl DataCollection {
     fn eat_memory_and_swap(
         &mut self, memory: &mem::MemHarvest, swap: &mem::MemHarvest, new_entry: &mut TimedData,
     ) {
+        trace!("Eating mem and swap.");
         // Memory
         let mem_percent = match memory.mem_total_in_mb {
             0 => 0f64,
@@ -188,6 +193,7 @@ impl DataCollection {
     }
 
     fn eat_network(&mut self, network: &network::NetworkHarvest, new_entry: &mut TimedData) {
+        trace!("Eating network.");
         // FIXME [NETWORKING; CONFIG]: The ability to config this?
         // FIXME [NETWORKING]: Support bits, support switching between decimal and binary units (move the log part to conversion and switch on the fly)
         // RX
@@ -209,6 +215,7 @@ impl DataCollection {
     }
 
     fn eat_cpu(&mut self, cpu: &[cpu::CpuData], new_entry: &mut TimedData) {
+        trace!("Eating CPU.");
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
         // it probably doesn't matter anyways.
@@ -219,6 +226,7 @@ impl DataCollection {
     }
 
     fn eat_temp(&mut self, temperature_sensors: &[temperature::TempHarvest]) {
+        trace!("Eating temps.");
         // TODO: [PO] To implement
         self.temp_harvest = temperature_sensors.to_vec();
     }
@@ -226,6 +234,7 @@ impl DataCollection {
     fn eat_disks(
         &mut self, disks: &[disks::DiskHarvest], io: &disks::IOHarvest, harvested_time: Instant,
     ) {
+        trace!("Eating disks.");
         // TODO: [PO] To implement
 
         let time_since_last_harvest = harvested_time
@@ -300,10 +309,12 @@ impl DataCollection {
     }
 
     fn eat_proc(&mut self, list_of_processes: &[processes::ProcessHarvest]) {
+        trace!("Eating proc.");
         self.process_harvest = list_of_processes.to_vec();
     }
 
     fn eat_battery(&mut self, list_of_batteries: &[battery_harvester::BatteryHarvest]) {
+        trace!("Eating batteries.");
         self.battery_harvest = list_of_batteries.to_vec();
     }
 }

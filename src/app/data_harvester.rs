@@ -53,7 +53,7 @@ impl Default for Data {
 }
 
 impl Data {
-    pub fn first_run_cleanup(&mut self) {
+    pub fn cleanup(&mut self) {
         self.io = None;
         self.temperature_sensors = None;
         self.list_of_processes = None;
@@ -68,6 +68,7 @@ impl Data {
     }
 }
 
+#[derive(Debug)]
 pub struct DataCollector {
     pub data: Data,
     sys: System,
@@ -134,9 +135,14 @@ impl DataCollector {
             }
         }
 
+        trace!("Running first run.");
         futures::executor::block_on(self.update_data());
         std::thread::sleep(std::time::Duration::from_millis(250));
-        self.data.first_run_cleanup();
+
+        trace!("Running first run cleanup now.");
+        self.data.cleanup();
+
+        trace!("Enabled widgets to harvest: {:#?}", self.widgets_to_harvest);
     }
 
     pub fn set_collected_data(&mut self, used_widgets: UsedWidgets) {
@@ -193,6 +199,13 @@ impl DataCollector {
         // CPU
         if self.widgets_to_harvest.use_cpu {
             self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
+            if log_enabled!(log::Level::Trace) {
+                if let Some(cpus) = &self.data.cpu {
+                    trace!("cpus: {:#?} results", cpus.len());
+                } else {
+                    trace!("Found no cpus.");
+                }
+            }
         }
 
         // Batteries
@@ -202,6 +215,14 @@ impl DataCollector {
                     &battery_manager,
                     battery_list,
                 ));
+            }
+
+            if log_enabled!(log::Level::Trace) {
+                if let Some(batteries) = &self.data.list_of_batteries {
+                    trace!("batteries: {:#?} results", batteries.len());
+                } else {
+                    trace!("Found no batteries.");
+                }
             }
         }
 
@@ -243,6 +264,14 @@ impl DataCollector {
                 }
             } {
                 self.data.list_of_processes = Some(process_list);
+            }
+
+            if log_enabled!(log::Level::Trace) {
+                if let Some(processes) = &self.data.list_of_processes {
+                    trace!("processes: {:#?} results", processes.len());
+                } else {
+                    trace!("Found no processes.");
+                }
             }
         }
 
@@ -350,26 +379,59 @@ impl DataCollector {
             self.total_rx = net_data.total_rx;
             self.total_tx = net_data.total_tx;
             self.data.network = Some(net_data);
+            if log_enabled!(log::Level::Trace) {
+                trace!("Total rx: {:#?}", self.total_rx);
+                trace!("Total tx: {:#?}", self.total_tx);
+                if let Some(network) = &self.data.network {
+                    trace!("network rx: {:#?}", network.rx);
+                    trace!("network tx: {:#?}", network.tx);
+                }
+                trace!("Could not find any networks.");
+            }
         }
 
         if let Ok(memory) = mem_res {
             self.data.memory = memory;
+            if log_enabled!(log::Level::Trace) {
+                trace!("mem: {:#?} results", self.data.memory);
+            }
         }
 
         if let Ok(swap) = swap_res {
             self.data.swap = swap;
+            if log_enabled!(log::Level::Trace) {
+                trace!("swap: {:#?} results", self.data.swap);
+            }
         }
 
         if let Ok(disks) = disk_res {
             self.data.disks = disks;
+            if log_enabled!(log::Level::Trace) {
+                if let Some(disks) = &self.data.disks {
+                    trace!("disks: {:#?} results", disks.len());
+                }
+                trace!("Could not find any disks.");
+            }
         }
 
         if let Ok(io) = io_res {
             self.data.io = io;
+            if log_enabled!(log::Level::Trace) {
+                if let Some(io) = &self.data.io {
+                    trace!("io: {:#?} results", io.len());
+                }
+                trace!("Could not find any io results.");
+            }
         }
 
         if let Ok(temp) = temp_res {
             self.data.temperature_sensors = temp;
+            if log_enabled!(log::Level::Trace) {
+                if let Some(sensors) = &self.data.temperature_sensors {
+                    trace!("temp: {:#?} results", sensors.len());
+                }
+                trace!("Could not find any temp sensors.");
+            }
         }
 
         // Update time

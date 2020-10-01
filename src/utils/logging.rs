@@ -1,5 +1,6 @@
-#[cfg(debug_assertions)]
-pub fn init_logger() -> Result<(), fern::InitError> {
+pub fn init_logger(
+    min_level: log::LevelFilter, debug_file_name: &str,
+) -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
@@ -10,12 +11,8 @@ pub fn init_logger() -> Result<(), fern::InitError> {
                 message
             ))
         })
-        .level(if cfg!(debug_assertions) {
-            log::LevelFilter::Debug
-        } else {
-            log::LevelFilter::Info
-        })
-        .chain(fern::log_file("debug.log")?)
+        .level(min_level)
+        .chain(fern::log_file(debug_file_name)?)
         .apply()?;
 
     Ok(())

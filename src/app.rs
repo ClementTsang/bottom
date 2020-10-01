@@ -30,6 +30,7 @@ const MAX_SEARCH_LENGTH: usize = 200;
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
+#[derive(Debug)]
 pub struct AppConfigFields {
     pub update_rate_in_milliseconds: u64,
     pub temperature_type: temperature::TemperatureType,
@@ -1228,6 +1229,7 @@ impl App {
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
             'f' => {
+                // FIXME: [FROZEN] Add an indicator if frozen!
                 self.is_frozen = !self.is_frozen;
                 if self.is_frozen {
                     self.data_collection.set_frozen_time();
