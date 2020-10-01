@@ -385,22 +385,23 @@ impl DataCollector {
                 if let Some(network) = &self.data.network {
                     trace!("network rx: {:#?}", network.rx);
                     trace!("network tx: {:#?}", network.tx);
+                } else {
+                    trace!("Could not find any networks.");
                 }
-                trace!("Could not find any networks.");
             }
         }
 
         if let Ok(memory) = mem_res {
             self.data.memory = memory;
             if log_enabled!(log::Level::Trace) {
-                trace!("mem: {:#?} results", self.data.memory);
+                trace!("mem: {:?} results", self.data.memory);
             }
         }
 
         if let Ok(swap) = swap_res {
             self.data.swap = swap;
             if log_enabled!(log::Level::Trace) {
-                trace!("swap: {:#?} results", self.data.swap);
+                trace!("swap: {:?} results", self.data.swap);
             }
         }
 
@@ -409,8 +410,9 @@ impl DataCollector {
             if log_enabled!(log::Level::Trace) {
                 if let Some(disks) = &self.data.disks {
                     trace!("disks: {:#?} results", disks.len());
+                } else {
+                    trace!("Could not find any disks.");
                 }
-                trace!("Could not find any disks.");
             }
         }
 
@@ -419,8 +421,9 @@ impl DataCollector {
             if log_enabled!(log::Level::Trace) {
                 if let Some(io) = &self.data.io {
                     trace!("io: {:#?} results", io.len());
+                } else {
+                    trace!("Could not find any io results.");
                 }
-                trace!("Could not find any io results.");
             }
         }
 
@@ -429,8 +432,9 @@ impl DataCollector {
             if log_enabled!(log::Level::Trace) {
                 if let Some(sensors) = &self.data.temperature_sensors {
                     trace!("temp: {:#?} results", sensors.len());
+                } else {
+                    trace!("Could not find any temp sensors.");
                 }
-                trace!("Could not find any temp sensors.");
             }
         }
 
