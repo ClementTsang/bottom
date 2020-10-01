@@ -29,7 +29,7 @@ fn main() -> Result<()> {
     let matches = clap::get_matches();
     let is_debug = matches.is_present("debug");
     if is_debug {
-        utils::logging::init_logger(log::LevelFilter::Trace, "/tmp/bottom.log")?;
+        utils::logging::init_logger(log::LevelFilter::Trace, "/tmp/bottom_debug.log")?;
     } else {
         #[cfg(debug_assertions)]
         {

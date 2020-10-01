@@ -254,7 +254,7 @@ pub fn cleanup_terminal(
     terminal.show_cursor()?;
 
     if is_debug {
-        println!("Your debug file is located at \"/tmp/bottom.log\".",);
+        println!("Your debug file is located at \"/tmp/bottom_debug.log\".",);
     }
 
     Ok(())
