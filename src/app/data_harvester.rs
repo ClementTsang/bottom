@@ -122,8 +122,10 @@ impl Default for DataCollector {
 impl DataCollector {
     pub fn init(&mut self) {
         self.mem_total_kb = self.sys.get_total_memory();
+        trace!("Total memory in KB: {}", self.mem_total_kb);
 
         if self.widgets_to_harvest.use_battery {
+            trace!("First run battery vec creation.");
             if let Ok(battery_manager) = Manager::new() {
                 if let Ok(batteries) = battery_manager.batteries() {
                     let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();

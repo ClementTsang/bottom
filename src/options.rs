@@ -20,7 +20,7 @@ pub mod layout_options;
 
 use anyhow::{Context, Result};
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
@@ -154,7 +154,7 @@ impl WidgetIdEnabled {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ConfigColours {
     pub table_header_color: Option<String>,
     pub all_cpu_color: Option<String>,
@@ -176,7 +176,7 @@ pub struct ConfigColours {
     pub battery_colors: Option<Vec<String>>,
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct IgnoreList {
     pub is_list_ignored: bool,
     pub list: Vec<String>,

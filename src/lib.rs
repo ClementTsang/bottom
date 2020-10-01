@@ -615,17 +615,23 @@ pub fn create_collection_thread(
     thread::spawn(move || {
         trace!("Spawned collection thread.");
         let mut data_state = data_harvester::DataCollector::default();
+        trace!("Created initial data state.");
         data_state.set_collected_data(used_widget_set);
+        trace!("Set collected data.");
         data_state.set_temperature_type(temp_type);
+        trace!("Set initial temp type.");
         data_state.set_use_current_cpu_total(use_current_cpu_total);
+        trace!("Set current CPU total.");
         data_state.set_show_average_cpu(show_average_cpu);
+        trace!("Set showing average CPU.");
 
         data_state.init();
+        trace!("Data state is now fully initialized.");
         loop {
             trace!("Collecting...");
             let mut update_time = update_rate_in_milliseconds;
             if let Ok(message) = reset_receiver.try_recv() {
-                trace!("Received message: {:?}", message);
+                trace!("Received message in collection thread: {:?}", message);
                 match message {
                     CollectionThreadEvent::Reset => {
                         data_state.data.cleanup();
@@ -650,6 +656,7 @@ pub fn create_collection_thread(
             trace!("Collection thread done updating.  Sending data now...");
             data_state.data = data_harvester::Data::default();
             if sender.send(event).is_err() {
+                trace!("Error sending from collection thread...");
                 break;
             }
             trace!("No problem sending from collection thread!");

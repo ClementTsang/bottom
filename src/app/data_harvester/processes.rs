@@ -11,6 +11,9 @@ use std::collections::{hash_map::RandomState, HashMap};
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
+/// Maximum character length of a /proc/<PID>/stat process name.
+const MAX_STAT_NAME_LEN: usize = 15;
+
 // TODO: Add value so we know if it's sorted ascending or descending by default?
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ProcessSorting {
@@ -251,7 +254,9 @@ fn read_proc<S: core::hash::BuildHasher>(
         .entry(pid)
         .or_insert_with(|| PrevProcDetails::new(pid));
     let stat_results = read_path_contents(&pid_stat.proc_stat_path)?;
-    let name = stat_results
+
+    // truncated_name may potentially be cut!  Hence why we do the bit of code after...
+    let truncated_name = stat_results
         .splitn(2, '(')
         .collect::<Vec<_>>()
         .last()
@@ -261,12 +266,36 @@ fn read_proc<S: core::hash::BuildHasher>(
         .last()
         .ok_or(BottomError::MinorError)?
         .to_string();
-    let command = {
-        let cmd = read_path_contents(&pid_stat.proc_cmdline_path)?; // FIXME: [PROC] Use full proc name all the time
-        if cmd.trim().is_empty() {
-            format!("[{}]", name)
+    let (command, name) = {
+        let cmd = read_path_contents(&pid_stat.proc_cmdline_path)?;
+        let trimmed_cmd = cmd.trim();
+        if trimmed_cmd.is_empty() {
+            (format!("[{}]", truncated_name), truncated_name)
         } else {
-            cmd
+            // We split by spaces and null terminators.
+            let separated_strings = trimmed_cmd
+                .split_terminator(|c| c == '\0' || c == ' ')
+                .collect::<Vec<&str>>();
+
+            (
+                separated_strings.join(" "),
+                if truncated_name.len() >= MAX_STAT_NAME_LEN {
+                    if let Some(first_part) = separated_strings.first() {
+                        // We're only interested in the executable part... not the file path.
+                        // That's for command.
+                        first_part
+                            .split('/')
+                            .collect::<Vec<_>>()
+                            .last()
+                            .unwrap_or(&truncated_name.as_str())
+                            .to_string()
+                    } else {
+                        truncated_name
+                    }
+                } else {
+                    truncated_name
+                },
+            )
         }
     };
     let stat = stat_results
