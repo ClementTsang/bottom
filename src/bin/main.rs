@@ -114,7 +114,13 @@ fn main() -> Result<()> {
 
     while !is_terminated.load(Ordering::SeqCst) {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
-            trace!("Main/drawing thread received event: {:?}", recv);
+            if log_enabled!(log::Level::Trace) {
+                if let BottomEvent::Update(_) = recv {
+                    trace!("Main/drawing thread received Update event.");
+                } else {
+                    trace!("Main/drawing thread received event: {:#?}", recv);
+                }
+            }
             match recv {
                 BottomEvent::KeyInput(event) => {
                     if handle_key_event_or_break(event, &mut app, &reset_sender) {
