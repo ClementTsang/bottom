@@ -42,8 +42,10 @@ fn main() -> Result<()> {
 
     let config_path = read_config(matches.value_of("config_location"))
         .context("Unable to access the given config file location.")?;
+    trace!("Config path: {:?}", config_path);
     let mut config: Config = create_or_get_config(&config_path)
         .context("Unable to properly parse or create the config file.")?;
+    trace!("Current config: {:#?}", config);
 
     // Get widget layout separately
     let (widget_layout, default_widget_id, default_widget_type_option) =
@@ -75,13 +77,17 @@ fn main() -> Result<()> {
     // Cleaning loop
     {
         let cleaning_sender = sender.clone();
+        trace!("Initializing cleaning thread...");
         thread::spawn(move || loop {
             thread::sleep(Duration::from_millis(
                 constants::STALE_MAX_MILLISECONDS + 5000,
             ));
+            trace!("Sending cleaning signal...");
             if cleaning_sender.send(BottomEvent::Clean).is_err() {
+                trace!("Failed to send cleaning signal.  Halting cleaning thread loop.");
                 break;
             }
+            trace!("Cleaning signal sent without errors.");
         });
     }
 
