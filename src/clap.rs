@@ -86,7 +86,7 @@ When searching for a process, enables case sensitivity by default.\n\n",
         .help("Enables debug logging.")
         .long_help(
             "\
-Enables debug logging to /tmp/bottom_debug.log.",
+Enables debug logging.  The program will print where it logged to after running.",
         );
     let disable_click = Arg::with_name("disable_click")
         .long("disable_click")

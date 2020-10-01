@@ -1,5 +1,7 @@
+use std::ffi::OsStr;
+
 pub fn init_logger(
-    min_level: log::LevelFilter, debug_file_name: &str,
+    min_level: log::LevelFilter, debug_file_name: &OsStr,
 ) -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {

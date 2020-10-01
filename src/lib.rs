@@ -254,7 +254,9 @@ pub fn cleanup_terminal(
     terminal.show_cursor()?;
 
     if is_debug {
-        println!("Your debug file is located at \"/tmp/bottom_debug.log\".",);
+        let mut tmp_dir = std::env::temp_dir();
+        tmp_dir.push("bottom_debug.log");
+        println!("Your debug file is located at {:?}", tmp_dir.as_os_str());
     }
 
     Ok(())

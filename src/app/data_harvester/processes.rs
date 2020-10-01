@@ -262,7 +262,7 @@ fn read_proc<S: core::hash::BuildHasher>(
         .ok_or(BottomError::MinorError)?
         .to_string();
     let command = {
-        let cmd = read_path_contents(&pid_stat.proc_cmdline_path)?;
+        let cmd = read_path_contents(&pid_stat.proc_cmdline_path)?; // FIXME: [PROC] Use full proc name all the time
         if cmd.trim().is_empty() {
             format!("[{}]", name)
         } else {
