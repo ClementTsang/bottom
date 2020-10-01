@@ -7,6 +7,7 @@ use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,
+    ffi::OsStr,
     io::{stdout, Write},
     panic,
     sync::{
@@ -29,11 +30,13 @@ fn main() -> Result<()> {
     let matches = clap::get_matches();
     let is_debug = matches.is_present("debug");
     if is_debug {
-        utils::logging::init_logger(log::LevelFilter::Trace, "/tmp/bottom_debug.log")?;
+        let mut tmp_dir = std::env::temp_dir();
+        tmp_dir.push("bottom_debug.log");
+        utils::logging::init_logger(log::LevelFilter::Trace, tmp_dir.as_os_str())?;
     } else {
         #[cfg(debug_assertions)]
         {
-            utils::logging::init_logger(log::LevelFilter::Debug, "debug.log")?;
+            utils::logging::init_logger(log::LevelFilter::Debug, OsStr::new("debug.log"))?;
         }
     }
 
