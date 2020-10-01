@@ -579,6 +579,7 @@ pub fn create_input_thread(
                             if sender.send(BottomEvent::KeyInput(key)).is_err() {
                                 break;
                             }
+                            trace!("Input thread sent data.");
                             keyboard_timer = Instant::now();
                         }
                     } else if let Event::Mouse(mouse) = event {
@@ -586,6 +587,7 @@ pub fn create_input_thread(
                             if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
                                 break;
                             }
+                            trace!("Input thread sent data.");
                             mouse_timer = Instant::now();
                         }
                     }
