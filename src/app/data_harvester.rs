@@ -37,6 +37,7 @@ pub struct Data {
 
 impl Default for Data {
     fn default() -> Self {
+        trace!("Creating new Data for data harvester.");
         Data {
             last_collection_time: Instant::now(),
             cpu: None,
@@ -94,9 +95,15 @@ pub struct DataCollector {
 
 impl Default for DataCollector {
     fn default() -> Self {
+        trace!("Creating default data collector...");
         DataCollector {
             data: Data::default(),
-            sys: System::new_all(),
+            sys: {
+                trace!("Creating new System...");
+                let sys = System::new_all();
+                trace!("Created new System...");
+                sys
+            },
             #[cfg(target_os = "linux")]
             pid_mapping: HashMap::new(),
             #[cfg(target_os = "linux")]
@@ -114,7 +121,11 @@ impl Default for DataCollector {
             battery_manager: None,
             battery_list: None,
             #[cfg(target_os = "linux")]
-            page_file_size_kb: unsafe { libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024 },
+            page_file_size_kb: unsafe {
+                let page_file_size_kb = libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024;
+                trace!("Page file size in KB: {}", page_file_size_kb);
+                page_file_size_kb
+            },
         }
     }
 }
@@ -122,7 +133,6 @@ impl Default for DataCollector {
 impl DataCollector {
     pub fn init(&mut self) {
         trace!("Initializing data collector.");
-        self.sys.refresh_memory();
         self.mem_total_kb = self.sys.get_total_memory();
         trace!("Total memory in KB: {}", self.mem_total_kb);
 
