@@ -12,6 +12,7 @@ use std::collections::{hash_map::RandomState, HashMap};
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
 /// Maximum character length of a /proc/<PID>/stat process name.
+#[cfg(target_os = "linux")]
 const MAX_STAT_NAME_LEN: usize = 15;
 
 // TODO: Add value so we know if it's sorted ascending or descending by default?
