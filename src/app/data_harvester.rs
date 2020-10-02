@@ -121,6 +121,8 @@ impl Default for DataCollector {
 
 impl DataCollector {
     pub fn init(&mut self) {
+        trace!("Initializing data collector.");
+        self.sys.refresh_memory();
         self.mem_total_kb = self.sys.get_total_memory();
         trace!("Total memory in KB: {}", self.mem_total_kb);
 

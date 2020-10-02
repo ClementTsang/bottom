@@ -624,11 +624,12 @@ pub fn create_collection_thread(
     thread::spawn(move || {
         trace!("Spawned collection thread.");
         let mut data_state = data_harvester::DataCollector::default();
-        trace!("Created initial data state.");
+        trace!("Created default data state.");
         data_state.set_collected_data(used_widget_set);
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_show_average_cpu(show_average_cpu);
+        trace!("Set default data state settings.");
 
         data_state.init();
         trace!("Data state is now fully initialized.");
