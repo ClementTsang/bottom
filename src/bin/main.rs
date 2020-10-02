@@ -7,12 +7,11 @@ use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,
-    ffi::OsStr,
     io::{stdout, Write},
     panic,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc, Arc,
+        mpsc, Arc, Condvar, Mutex,
     },
     thread,
     time::Duration,
@@ -36,7 +35,10 @@ fn main() -> Result<()> {
     } else {
         #[cfg(debug_assertions)]
         {
-            utils::logging::init_logger(log::LevelFilter::Debug, OsStr::new("debug.log"))?;
+            utils::logging::init_logger(
+                log::LevelFilter::Debug,
+                std::ffi::OsStr::new("debug.log"),
+            )?;
         }
     }
 
@@ -70,32 +72,53 @@ fn main() -> Result<()> {
         &config,
     )?;
 
+    // Create termination mutex and cvar
+    #[allow(clippy::mutex_atomic)]
+    let thread_termination_lock = Arc::new(Mutex::new(false));
+    let thread_termination_cvar = Arc::new(Condvar::new());
+
     // Set up input handling
     let (sender, receiver) = mpsc::channel();
-    create_input_thread(sender.clone());
+    let input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop
-    {
+    let cleaning_thread = {
+        let lock = thread_termination_lock.clone();
+        let cvar = thread_termination_cvar.clone();
         let cleaning_sender = sender.clone();
         trace!("Initializing cleaning thread...");
-        thread::spawn(move || loop {
-            thread::sleep(Duration::from_millis(
-                constants::STALE_MAX_MILLISECONDS + 5000,
-            ));
-            trace!("Sending cleaning signal...");
-            if cleaning_sender.send(BottomEvent::Clean).is_err() {
-                trace!("Failed to send cleaning signal.  Halting cleaning thread loop.");
-                break;
+        thread::spawn(move || {
+            loop {
+                let result = cvar.wait_timeout(
+                    lock.lock().unwrap(),
+                    Duration::from_millis(constants::STALE_MAX_MILLISECONDS + 5000),
+                );
+                if let Ok(result) = result {
+                    if *(result.0) {
+                        trace!("Received termination lock in cleaning thread from cvar!");
+                        break;
+                    }
+                } else {
+                    trace!("Sending cleaning signal...");
+                    if cleaning_sender.send(BottomEvent::Clean).is_err() {
+                        trace!("Failed to send cleaning signal.  Halting cleaning thread loop.");
+                        break;
+                    }
+                    trace!("Cleaning signal sent without errors.");
+                }
             }
-            trace!("Cleaning signal sent without errors.");
-        });
-    }
+
+            trace!("Cleaning thread loop has closed.");
+        })
+    };
 
     // Event loop
-    let (reset_sender, reset_receiver) = mpsc::channel();
-    create_collection_thread(
+    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
+    let collection_thread = create_collection_thread(
         sender,
-        reset_receiver,
+        collection_thread_ctrl_receiver,
+        thread_termination_lock.clone(),
+        thread_termination_cvar.clone(),
         &app.app_config_fields,
         app.used_widgets.clone(),
     );
@@ -117,7 +140,6 @@ fn main() -> Result<()> {
     let ist_clone = is_terminated.clone();
     ctrlc::set_handler(move || {
         ist_clone.store(true, Ordering::SeqCst);
-        termination_hook();
     })?;
     let mut first_run = true;
 
@@ -127,12 +149,12 @@ fn main() -> Result<()> {
                 if let BottomEvent::Update(_) = recv {
                     trace!("Main/drawing thread received Update event.");
                 } else {
-                    trace!("Main/drawing thread received event: {:#?}", recv);
+                    trace!("Main/drawing thread received event: {:?}", recv);
                 }
             }
             match recv {
                 BottomEvent::KeyInput(event) => {
-                    if handle_key_event_or_break(event, &mut app, &reset_sender) {
+                    if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
                     }
                     handle_force_redraws(&mut app);
@@ -227,7 +249,19 @@ fn main() -> Result<()> {
         try_drawing(&mut terminal, &mut app, &mut painter, is_debug)?;
     }
 
-    trace!("Main/drawing thread is cleaning up.");
+    // I think doing it in this order is safe...
+    trace!("Send termination thread locks.");
+    *thread_termination_lock.lock().unwrap() = true;
+    trace!("Notifying all cvars.");
+    thread_termination_cvar.notify_all();
+
     cleanup_terminal(&mut terminal, is_debug)?;
+
+    trace!("Main/drawing thread is cleaning up.");
+
+    cleaning_thread.join().unwrap();
+    input_thread.join().unwrap();
+    collection_thread.join().unwrap();
+    trace!("Fini.");
     Ok(())
 }
