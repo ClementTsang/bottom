@@ -88,6 +88,7 @@ When searching for a process, enables case sensitivity by default.\n\n",
             "\
 Enables debug logging.  The program will print where it logged to after running.",
         );
+    // TODO: [DIAGNOSE] Add a diagnose option to help with debugging.
     let disable_click = Arg::with_name("disable_click")
         .long("disable_click")
         .help("Disables mouse clicks.")
