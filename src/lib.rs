@@ -626,9 +626,13 @@ pub fn create_collection_thread(
         let mut data_state = data_harvester::DataCollector::default();
         trace!("Created default data state.");
         data_state.set_collected_data(used_widget_set);
+        trace!("Set which widgets are collected.");
         data_state.set_temperature_type(temp_type);
+        trace!("Set temperature type.");
         data_state.set_use_current_cpu_total(use_current_cpu_total);
+        trace!("Set whether to use current CPU total.");
         data_state.set_show_average_cpu(show_average_cpu);
+        trace!("Set whether to show average CPU.");
         trace!("Set default data state settings.");
 
         data_state.init();

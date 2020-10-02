@@ -141,9 +141,10 @@ impl DataCollector {
 
         trace!("Running first run.");
         futures::executor::block_on(self.update_data());
+        trace!("First run done.  Sleeping for 250ms...");
         std::thread::sleep(std::time::Duration::from_millis(250));
 
-        trace!("Running first run cleanup now.");
+        trace!("First run done.  Running first run cleanup now.");
         self.data.cleanup();
 
         trace!("Enabled widgets to harvest: {:#?}", self.widgets_to_harvest);
