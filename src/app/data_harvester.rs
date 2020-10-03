@@ -37,7 +37,6 @@ pub struct Data {
 
 impl Default for Data {
     fn default() -> Self {
-        trace!("Creating new Data for data harvester.");
         Data {
             last_collection_time: Instant::now(),
             cpu: None,
@@ -98,12 +97,7 @@ impl Default for DataCollector {
         trace!("Creating default data collector...");
         DataCollector {
             data: Data::default(),
-            sys: {
-                trace!("Creating new System...");
-                let sys = System::new_all();
-                trace!("Created new System...");
-                sys
-            },
+            sys: System::new_all(),
             #[cfg(target_os = "linux")]
             pid_mapping: HashMap::new(),
             #[cfg(target_os = "linux")]
