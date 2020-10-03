@@ -3,7 +3,7 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
 };
 
 use crate::{
@@ -112,12 +112,14 @@ impl KillDialog for Painter {
                     button_layout[2].y,
                     button_layout[2].x + button_layout[2].width,
                     button_layout[2].y + button_layout[2].height,
+                    0,
                 ),
                 (
                     button_layout[0].x,
                     button_layout[0].y,
                     button_layout[0].x + button_layout[0].width,
                     button_layout[0].y + button_layout[0].height,
+                    1,
                 ),
             ];
         }
@@ -192,10 +194,10 @@ impl KillDialog for Painter {
             "63: RTMAX-1",
             "64: RTMAX",
         ];
-        let mut buttons = signal_text
+        let buttons = signal_text
             .iter()
-            .map(|text| Span::raw(*text))
-            .collect::<Vec<Span<'_>>>();
+            .map(|text| ListItem::new(*text))
+            .collect::<Vec<ListItem<'_>>>();
         let mut selected = match app_state.delete_dialog_state.selected_signal {
             KillSignal::CANCEL => 0,
             KillSignal::KILL(signal) => signal,
@@ -204,65 +206,48 @@ impl KillDialog for Painter {
         if selected > 31 {
             selected -= 2;
         }
-        buttons[selected] = Span::styled(
-            signal_text[selected],
-            self.colours.currently_selected_text_style,
-        );
 
-        let button_layout_hor = Layout::default()
-            .direction(Direction::Vertical)
-            .vertical_margin(1)
+        let mut state = ListState::default();
+        state.select(Some(selected));
+
+        let button_rect = Layout::default()
+            .direction(Direction::Horizontal)
+            .margin(1)
             .constraints(
-                vec![Constraint::Ratio(1, 8)]
-                    .into_iter()
-                    .cycle()
-                    .take(8)
-                    .collect::<Vec<Constraint>>()
-                    .as_ref(),
+                [
+                    Constraint::Length((button_draw_loc.width - 14) / 2),
+                    Constraint::Min(0),
+                    Constraint::Length((button_draw_loc.width - 14) / 2),
+                ]
+                .as_ref(),
             )
-            .split(*button_draw_loc);
+            .split(*button_draw_loc)[1];
 
-        let button_layout = button_layout_hor
-            .into_iter()
-            .flat_map(|cell| {
-                Layout::default()
-                    .direction(Direction::Horizontal)
-                    .horizontal_margin(1)
-                    .constraints(
-                        vec![Constraint::Ratio(1, 8)]
-                            .into_iter()
-                            .cycle()
-                            .take(8)
-                            .collect::<Vec<Constraint>>()
-                            .as_ref(),
-                    )
-                    .split(cell)
+        let layout = List::new(buttons)
+            .block(Block::default().borders(Borders::NONE))
+            .highlight_style(self.colours.currently_selected_text_style);
+
+        f.render_stateful_widget(layout, button_rect, &mut state);
+
+        // if app_state.should_get_widget_bounds() {
+        let layout_height: usize = button_rect.height.into();
+        app_state.delete_dialog_state.button_positions = (button_rect.y
+            ..button_rect.y + button_rect.height)
+            .map(|pos| {
+                (
+                    button_rect.x,
+                    pos,
+                    button_rect.x + button_rect.width - 1,
+                    pos,
+                    (if selected >= layout_height {
+                        selected - layout_height + 1
+                    } else {
+                        0
+                    }) + ((pos - button_rect.y) as usize),
+                )
             })
-            .take(63)
-            .collect::<Vec<Rect>>();
-
-        for (idx, btn) in buttons.into_iter().enumerate() {
-            f.render_widget(
-                Paragraph::new(btn)
-                    .block(Block::default())
-                    .alignment(Alignment::Left),
-                button_layout[idx],
-            );
-        }
-
-        if app_state.should_get_widget_bounds() {
-            app_state.delete_dialog_state.button_positions = button_layout
-                .iter()
-                .map(|button| {
-                    (
-                        button.x,
-                        button.y,
-                        button.x + button.width - 1,
-                        button.y + button.height - 1,
-                    )
-                })
-                .collect::<Vec<(u16, u16, u16, u16)>>();
-        }
+            .collect::<Vec<(u16, u16, u16, u16, usize)>>();
+        // }
     }
 
     fn draw_dd_dialog<B: Backend>(
@@ -317,7 +302,7 @@ impl KillDialog for Painter {
             let btn_height;
             #[cfg(target_family = "unix")]
             {
-                btn_height = 18;
+                btn_height = 20;
             }
             #[cfg(target_os = "windows")]
             {
@@ -330,7 +315,7 @@ impl KillDialog for Painter {
                     if app_state.dd_err.is_some() {
                         vec![Constraint::Percentage(100)]
                     } else {
-                        vec![Constraint::Min(0), Constraint::Length(btn_height)]
+                        vec![Constraint::Min(3), Constraint::Length(btn_height)]
                     }
                     .as_ref(),
                 )

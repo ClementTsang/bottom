@@ -838,25 +838,11 @@ impl App {
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
         } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                let mut new_signal = match self.delete_dialog_state.selected_signal {
-                    KillSignal::CANCEL => 0,
-                    KillSignal::KILL(signal) => max(signal, 8) - 8,
-                };
-                if new_signal > 23 && new_signal < 33 {
-                    new_signal -= 2;
-                }
-                self.delete_dialog_state.selected_signal = match new_signal {
-                    0 => KillSignal::CANCEL,
-                    sig => KillSignal::KILL(sig),
-                };
-            }
             #[cfg(target_os = "windows")]
-            {
-                self.on_right_key();
-                return;
-            }
+            self.on_right_key();
+            #[cfg(target_family = "unix")]
+            self.on_left_key();
+            return;
         }
         self.reset_multi_tap_keys();
     }
@@ -868,22 +854,11 @@ impl App {
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
         } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                let mut new_signal = match self.delete_dialog_state.selected_signal {
-                    KillSignal::CANCEL => 8,
-                    KillSignal::KILL(signal) => min(signal, 56) + 8,
-                };
-                if new_signal > 31 && new_signal < 42 {
-                    new_signal += 2;
-                }
-                self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
-            }
             #[cfg(target_os = "windows")]
-            {
-                self.on_left_key();
-                return;
-            }
+            self.on_left_key();
+            #[cfg(target_family = "unix")]
+            self.on_right_key();
+            return;
         }
         self.reset_multi_tap_keys();
     }
@@ -1040,6 +1015,35 @@ impl App {
             };
             #[cfg(target_os = "windows")]
             let new_signal = 1;
+            self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
+        }
+    }
+
+    pub fn on_page_up(&mut self) {
+        if self.delete_dialog_state.is_showing_dd {
+            let mut new_signal = match self.delete_dialog_state.selected_signal {
+                KillSignal::CANCEL => 0,
+                KillSignal::KILL(signal) => max(signal, 8) - 8,
+            };
+            if new_signal > 23 && new_signal < 33 {
+                new_signal -= 2;
+            }
+            self.delete_dialog_state.selected_signal = match new_signal {
+                0 => KillSignal::CANCEL,
+                sig => KillSignal::KILL(sig),
+            };
+        }
+    }
+
+    pub fn on_page_down(&mut self) {
+        if self.delete_dialog_state.is_showing_dd {
+            let mut new_signal = match self.delete_dialog_state.selected_signal {
+                KillSignal::CANCEL => 8,
+                KillSignal::KILL(signal) => min(signal, 56) + 8,
+            };
+            if new_signal > 31 && new_signal < 42 {
+                new_signal += 2;
+            }
             self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
         }
     }
@@ -1280,6 +1284,8 @@ impl App {
                 '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                     self.on_number(caught_char)
                 }
+                'u' => self.on_page_up(),
+                'd' => self.on_page_down(),
                 _ => {}
             }
         } else if self.is_config_open {
@@ -2347,6 +2353,13 @@ impl App {
     }
 
     pub fn handle_scroll_up(&mut self) {
+        if self.delete_dialog_state.is_showing_dd {
+            #[cfg(target_family = "unix")]
+            {
+                self.on_up_key();
+                return;
+            }
+        }
         if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
         } else if self.current_widget.widget_type.is_widget_graph() {
@@ -2357,6 +2370,13 @@ impl App {
     }
 
     pub fn handle_scroll_down(&mut self) {
+        if self.delete_dialog_state.is_showing_dd {
+            #[cfg(target_family = "unix")]
+            {
+                self.on_down_key();
+                return;
+            }
+        }
         if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
         } else if self.current_widget.widget_type.is_widget_graph() {
@@ -2699,20 +2719,19 @@ impl App {
         // Second short circuit --- are we in the dd dialog state?  If so, only check yes/no/signals
         // and bail after.
         if self.is_in_dialog() {
-            match self
-                .delete_dialog_state
-                .button_positions
-                .iter()
-                .enumerate()
-                .find(|(_, (tl_x, tl_y, br_x, br_y))| {
+            match self.delete_dialog_state.button_positions.iter().find(
+                |(tl_x, tl_y, br_x, br_y, _idx)| {
                     (x >= *tl_x && y >= *tl_y) && (x <= *br_x && y <= *br_y)
-                }) {
-                Some((0, _)) => self.delete_dialog_state.selected_signal = KillSignal::CANCEL,
-                Some((idx, _)) => {
-                    if idx > 31 {
-                        self.delete_dialog_state.selected_signal = KillSignal::KILL(idx + 2)
+                },
+            ) {
+                Some((_, _, _, _, 0)) => {
+                    self.delete_dialog_state.selected_signal = KillSignal::CANCEL
+                }
+                Some((_, _, _, _, idx)) => {
+                    if *idx > 31 {
+                        self.delete_dialog_state.selected_signal = KillSignal::KILL(*idx + 2)
                     } else {
-                        self.delete_dialog_state.selected_signal = KillSignal::KILL(idx)
+                        self.delete_dialog_state.selected_signal = KillSignal::KILL(*idx)
                     }
                 }
                 _ => {}
