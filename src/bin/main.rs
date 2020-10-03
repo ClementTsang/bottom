@@ -79,10 +79,10 @@ fn main() -> Result<()> {
 
     // Set up input handling
     let (sender, receiver) = mpsc::channel();
-    let input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
+    let _input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop
-    let cleaning_thread = {
+    let _cleaning_thread = {
         let lock = thread_termination_lock.clone();
         let cvar = thread_termination_cvar.clone();
         let cleaning_sender = sender.clone();
@@ -114,7 +114,7 @@ fn main() -> Result<()> {
 
     // Event loop
     let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
-    let collection_thread = create_collection_thread(
+    let _collection_thread = create_collection_thread(
         sender,
         collection_thread_ctrl_receiver,
         thread_termination_lock.clone(),
@@ -255,13 +255,9 @@ fn main() -> Result<()> {
     trace!("Notifying all cvars.");
     thread_termination_cvar.notify_all();
 
+    trace!("Main/drawing thread is cleaning up.");
     cleanup_terminal(&mut terminal, is_debug)?;
 
-    trace!("Main/drawing thread is cleaning up.");
-
-    cleaning_thread.join().unwrap();
-    input_thread.join().unwrap();
-    collection_thread.join().unwrap();
     trace!("Fini.");
     Ok(())
 }

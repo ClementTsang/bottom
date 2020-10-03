@@ -94,6 +94,7 @@ pub struct DataCollector {
 
 impl Default for DataCollector {
     fn default() -> Self {
+        trace!("Creating default data collector...");
         DataCollector {
             data: Data::default(),
             sys: System::new_all(),
@@ -114,13 +115,18 @@ impl Default for DataCollector {
             battery_manager: None,
             battery_list: None,
             #[cfg(target_os = "linux")]
-            page_file_size_kb: unsafe { libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024 },
+            page_file_size_kb: unsafe {
+                let page_file_size_kb = libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024;
+                trace!("Page file size in KB: {}", page_file_size_kb);
+                page_file_size_kb
+            },
         }
     }
 }
 
 impl DataCollector {
     pub fn init(&mut self) {
+        trace!("Initializing data collector.");
         self.mem_total_kb = self.sys.get_total_memory();
         trace!("Total memory in KB: {}", self.mem_total_kb);
 
@@ -139,9 +145,10 @@ impl DataCollector {
 
         trace!("Running first run.");
         futures::executor::block_on(self.update_data());
+        trace!("First run done.  Sleeping for 250ms...");
         std::thread::sleep(std::time::Duration::from_millis(250));
 
-        trace!("Running first run cleanup now.");
+        trace!("First run done.  Running first run cleanup now.");
         self.data.cleanup();
 
         trace!("Enabled widgets to harvest: {:#?}", self.widgets_to_harvest);

@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#261](https://github.com/ClementTsang/bottom/pull/261): Fixed process names occasionally showing up as truncated, due to only using `/proc/<PID>/stat` as our data source.
 
+- [#262](https://github.com/ClementTsang/bottom/pull/262): Fixed missing thread termination steps as well as improper polling causing blocking in input thread.
+
 ## [0.4.7] - 2020-08-26
 
 ### Bug Fixes
