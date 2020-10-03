@@ -47,8 +47,13 @@ pub enum KillSignal {
 }
 
 impl Default for KillSignal {
+    #[cfg(target_family = "unix")]
     fn default() -> Self {
         KillSignal::KILL(15)
+    }
+    #[cfg(target_os = "windows")]
+    fn default() -> Self {
+        KillSignal::KILL(1)
     }
 }
 

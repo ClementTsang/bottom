@@ -175,7 +175,7 @@ impl App {
 
     fn close_dd(&mut self) {
         self.delete_dialog_state.is_showing_dd = false;
-        self.delete_dialog_state.selected_signal = KillSignal::KILL(15);
+        self.delete_dialog_state.selected_signal = KillSignal::default();
         self.to_delete_process_list = None;
         self.dd_err = None;
     }
@@ -665,7 +665,7 @@ impl App {
                 if self.dd_err.is_none() {
                     // Also ensure that we didn't just fail a dd...
                     let dd_result = self.kill_highlighted_process();
-                    self.delete_dialog_state.selected_signal = KillSignal::KILL(15);
+                    self.delete_dialog_state.selected_signal = KillSignal::default();
 
                     // Check if there was an issue... if so, inform the user.
                     if let Err(dd_err) = dd_result {
@@ -675,7 +675,7 @@ impl App {
                     }
                 }
             } else {
-                self.delete_dialog_state.selected_signal = KillSignal::KILL(15);
+                self.delete_dialog_state.selected_signal = KillSignal::default();
                 self.delete_dialog_state.is_showing_dd = false;
             }
             self.is_force_redraw = true;
@@ -803,6 +803,7 @@ impl App {
     }
 
     pub fn on_number(&mut self, number_char: char) {
+        #[cfg(target_family = "unix")]
         if self.delete_dialog_state.is_showing_dd {
             let mut kbd_signal = self.delete_dialog_state.keyboard_signal_select * 10;
             kbd_signal += number_char.to_digit(10).unwrap() as usize;
@@ -871,7 +872,7 @@ impl App {
             }
             #[cfg(target_os = "windows")]
             {
-                self.on_right_key();
+                self.on_left_key();
                 return;
             }
         }
@@ -1020,6 +1021,7 @@ impl App {
                 _ => {}
             }
         } else if self.delete_dialog_state.is_showing_dd {
+            #[cfg(target_family = "unix")]
             let new_signal = match self.delete_dialog_state.selected_signal {
                 KillSignal::CANCEL => 1,
                 // 32+33 are skipped
@@ -1027,6 +1029,8 @@ impl App {
                 KillSignal::KILL(64) => 64,
                 KillSignal::KILL(signal) => signal + 1,
             };
+            #[cfg(target_os = "windows")]
+            let new_signal = 1;
             self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
         }
     }
