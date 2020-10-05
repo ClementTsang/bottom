@@ -805,6 +805,14 @@ impl App {
     pub fn on_number(&mut self, number_char: char) {
         #[cfg(target_family = "unix")]
         if self.delete_dialog_state.is_showing_dd {
+            if self
+                .delete_dialog_state
+                .last_number_press
+                .map_or(100, |ins| ins.elapsed().as_millis())
+                > 500
+            {
+                self.delete_dialog_state.keyboard_signal_select = 0;
+            }
             let mut kbd_signal = self.delete_dialog_state.keyboard_signal_select * 10;
             kbd_signal += number_char.to_digit(10).unwrap() as usize;
             if kbd_signal > 64 {
@@ -819,6 +827,7 @@ impl App {
             } else {
                 self.delete_dialog_state.keyboard_signal_select = 0;
             }
+            self.delete_dialog_state.last_number_press = Some(Instant::now());
         }
     }
 

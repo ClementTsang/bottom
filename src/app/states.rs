@@ -64,6 +64,7 @@ pub struct AppDeleteDialogState {
     // tl x, tl y, br x, br y
     pub button_positions: Vec<(u16, u16, u16, u16)>,
     pub keyboard_signal_select: usize,
+    pub last_number_press: Option<Instant>,
 }
 
 pub struct AppHelpDialogState {
