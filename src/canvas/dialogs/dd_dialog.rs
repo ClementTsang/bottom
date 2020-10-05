@@ -4,7 +4,7 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
+    widgets::{Block, Borders, Paragraph, Wrap},
 };
 
 use crate::{
@@ -218,7 +218,19 @@ impl KillDialog for Painter {
             selected -= 2;
         }
 
-        let scroll_offset: usize = if selected < (button_rect.height as usize) - 1 {
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                vec![Constraint::Min(1)]
+                    .into_iter()
+                    .cycle()
+                    .take((button_rect.height).into())
+                    .collect::<Vec<Constraint>>()
+                    .as_ref(),
+            )
+            .split(button_rect);
+
+        let scroll_offset: usize = if selected < (layout.len() as usize) - 1 {
             0
         } else {
             selected
@@ -229,39 +241,36 @@ impl KillDialog for Painter {
                     // always show one more element
                     2
                 }
-                - (button_rect.height as usize)
+                - (layout.len() as usize)
         };
 
-        let buttons = signal_text[scroll_offset
-            ..min(
-                (button_rect.height as usize) + scroll_offset,
-                signal_text.len(),
-            )]
+        let mut buttons = signal_text
+            [scroll_offset..min((layout.len() as usize) + scroll_offset, signal_text.len())]
             .iter()
-            .map(|text| ListItem::new(*text))
-            .collect::<Vec<ListItem<'_>>>();
+            .map(|text| Span::raw(*text))
+            .collect::<Vec<Span<'_>>>();
+        buttons[selected - scroll_offset] = Span::styled(
+            signal_text[selected],
+            self.colours.currently_selected_text_style,
+        );
 
-        let mut state = ListState::default();
-        state.select(Some(selected - scroll_offset));
-
-        let layout = List::new(buttons)
-            .block(Block::default().borders(Borders::NONE))
-            .highlight_style(self.colours.currently_selected_text_style);
-
-        f.render_stateful_widget(layout, button_rect, &mut state);
-
-        app_state.delete_dialog_state.button_positions = (button_rect.y
-            ..button_rect.y + button_rect.height)
-            .map(|pos| {
+        app_state.delete_dialog_state.button_positions = layout
+            .iter()
+            .enumerate()
+            .map(|(i, pos)| {
                 (
-                    button_rect.x,
-                    pos,
-                    button_rect.x + button_rect.width - 1,
-                    pos,
-                    scroll_offset + ((pos - button_rect.y) as usize),
+                    pos.x,
+                    pos.y,
+                    pos.x + pos.width - 1,
+                    pos.y + pos.height - 1,
+                    scroll_offset + i,
                 )
             })
             .collect::<Vec<(u16, u16, u16, u16, usize)>>();
+
+        for (btn, pos) in buttons.into_iter().zip(layout.into_iter()) {
+            f.render_widget(Paragraph::new(btn).alignment(Alignment::Left), pos);
+        }
     }
 
     fn draw_dd_dialog<B: Backend>(
