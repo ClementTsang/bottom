@@ -1,3 +1,4 @@
+use std::cmp::min;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -194,21 +195,6 @@ impl KillDialog for Painter {
             "63: RTMAX-1",
             "64: RTMAX",
         ];
-        let buttons = signal_text
-            .iter()
-            .map(|text| ListItem::new(*text))
-            .collect::<Vec<ListItem<'_>>>();
-        let mut selected = match app_state.delete_dialog_state.selected_signal {
-            KillSignal::CANCEL => 0,
-            KillSignal::KILL(signal) => signal,
-        };
-        // 32+33 are skipped
-        if selected > 31 {
-            selected -= 2;
-        }
-
-        let mut state = ListState::default();
-        state.select(Some(selected));
 
         let button_rect = Layout::default()
             .direction(Direction::Horizontal)
@@ -223,14 +209,47 @@ impl KillDialog for Painter {
             )
             .split(*button_draw_loc)[1];
 
+        let mut selected = match app_state.delete_dialog_state.selected_signal {
+            KillSignal::CANCEL => 0,
+            KillSignal::KILL(signal) => signal,
+        };
+        // 32+33 are skipped
+        if selected > 31 {
+            selected -= 2;
+        }
+
+        let scroll_offset: usize = if selected < (button_rect.height as usize) - 1 {
+            0
+        } else {
+            selected
+                + if selected == signal_text.len() - 1 {
+                    // don't scroll down if we are on the last element
+                    1
+                } else {
+                    // always show one more element
+                    2
+                }
+                - (button_rect.height as usize)
+        };
+
+        let buttons = signal_text[scroll_offset
+            ..min(
+                (button_rect.height as usize) + scroll_offset,
+                signal_text.len(),
+            )]
+            .iter()
+            .map(|text| ListItem::new(*text))
+            .collect::<Vec<ListItem<'_>>>();
+
+        let mut state = ListState::default();
+        state.select(Some(selected - scroll_offset));
+
         let layout = List::new(buttons)
             .block(Block::default().borders(Borders::NONE))
             .highlight_style(self.colours.currently_selected_text_style);
 
         f.render_stateful_widget(layout, button_rect, &mut state);
 
-        // if app_state.should_get_widget_bounds() {
-        let layout_height: usize = button_rect.height.into();
         app_state.delete_dialog_state.button_positions = (button_rect.y
             ..button_rect.y + button_rect.height)
             .map(|pos| {
@@ -239,15 +258,10 @@ impl KillDialog for Painter {
                     pos,
                     button_rect.x + button_rect.width - 1,
                     pos,
-                    (if selected >= layout_height {
-                        selected - layout_height + 1
-                    } else {
-                        0
-                    }) + ((pos - button_rect.y) as usize),
+                    scroll_offset + ((pos - button_rect.y) as usize),
                 )
             })
             .collect::<Vec<(u16, u16, u16, u16, usize)>>();
-        // }
     }
 
     fn draw_dd_dialog<B: Backend>(
