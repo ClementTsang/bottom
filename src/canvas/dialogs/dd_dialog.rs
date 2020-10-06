@@ -245,10 +245,11 @@ impl KillDialog for Painter {
         };
 
         let mut buttons = signal_text
-            [scroll_offset..min((layout.len() as usize) + scroll_offset, signal_text.len())]
+            [scroll_offset + 1..min((layout.len() as usize) + scroll_offset, signal_text.len())]
             .iter()
             .map(|text| Span::raw(*text))
             .collect::<Vec<Span<'_>>>();
+        buttons.insert(0, Span::raw(signal_text[0]));
         buttons[selected - scroll_offset] = Span::styled(
             signal_text[selected],
             self.colours.currently_selected_text_style,
@@ -263,7 +264,7 @@ impl KillDialog for Painter {
                     pos.y,
                     pos.x + pos.width - 1,
                     pos.y + pos.height - 1,
-                    scroll_offset + i,
+                    if i == 0 { 0 } else { scroll_offset } + i,
                 )
             })
             .collect::<Vec<(u16, u16, u16, u16, usize)>>();
