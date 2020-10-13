@@ -63,26 +63,33 @@ impl KillDialog for Painter {
     ) -> bool {
         if let Some(dd_text) = dd_text {
             let dd_title = if app_state.dd_err.is_some() {
-                Span::styled(
-                    format!(
-                        " Error ─{}─ Esc to close ",
-                        "─".repeat(
-                            usize::from(draw_loc.width)
-                                .saturating_sub(DD_ERROR_BASE.chars().count() + 2)
-                        )
+                Spans::from(vec![
+                    Span::styled(" Error ", self.colours.widget_title_style),
+                    Span::styled(
+                        format!(
+                            "─{}─ Esc to close ",
+                            "─".repeat(
+                                usize::from(draw_loc.width)
+                                    .saturating_sub(DD_ERROR_BASE.chars().count() + 2)
+                            )
+                        ),
+                        self.colours.border_style,
                     ),
-                    self.colours.border_style,
-                )
+                ])
             } else {
-                Span::styled(
-                    format!(
-                        " Confirm Kill Process ─{}─ Esc to close ",
-                        "─".repeat(
-                            usize::from(draw_loc.width).saturating_sub(DD_BASE.chars().count() + 2)
-                        )
+                Spans::from(vec![
+                    Span::styled(" Confirm Kill Process ", self.colours.widget_title_style),
+                    Span::styled(
+                        format!(
+                            "─{}─ Esc to close ",
+                            "─".repeat(
+                                usize::from(draw_loc.width)
+                                    .saturating_sub(DD_BASE.chars().count() + 2)
+                            )
+                        ),
+                        self.colours.border_style,
                     ),
-                    self.colours.border_style,
-                )
+                ])
             };
 
             f.render_widget(
