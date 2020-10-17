@@ -54,7 +54,7 @@ impl CpuBasicWidget for Painter {
             let chunk_vec =
                 vec![Constraint::Percentage((100 / REQUIRED_COLUMNS) as u16); REQUIRED_COLUMNS];
             let chunks = Layout::default()
-                .constraints(chunk_vec.as_ref())
+                .constraints(chunk_vec)
                 .direction(Direction::Horizontal)
                 .split(draw_loc);
 
@@ -121,7 +121,7 @@ impl CpuBasicWidget for Painter {
 
                     let margined_loc = Layout::default()
                         .direction(Direction::Horizontal)
-                        .constraints([Constraint::Percentage(100)].as_ref())
+                        .constraints([Constraint::Percentage(100)])
                         .horizontal_margin(1)
                         .split(*chunk)[0];
 

@@ -39,7 +39,6 @@ impl ConfigScreen for Painter {
         //             Constraint::Percentage(34),
         //             Constraint::Percentage(33),
         //         ]
-        //         .as_ref(),
         //     )
         //     .split(draw_loc)
         //     .into_iter()
@@ -47,7 +46,7 @@ impl ConfigScreen for Painter {
         //         // Required to properly margin in *between* the rectangles.
         //         Layout::default()
         //             .horizontal_margin(1)
-        //             .constraints([Constraint::Percentage(100)].as_ref())
+        //             .constraints([Constraint::Percentage(100)])
         //             .split(loc)[0]
         //     })
         //     .collect::<Vec<Rect>>();

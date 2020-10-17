@@ -116,14 +116,11 @@ impl BasicTableArrows for Painter {
 
             let margined_draw_loc = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints(
-                    [
-                        Constraint::Length(2 + left_name.len() as u16),
-                        Constraint::Length(num_spaces as u16),
-                        Constraint::Length(2 + right_name.len() as u16),
-                    ]
-                    .as_ref(),
-                )
+                .constraints([
+                    Constraint::Length(2 + left_name.len() as u16),
+                    Constraint::Length(num_spaces as u16),
+                    Constraint::Length(2 + right_name.len() as u16),
+                ])
                 .horizontal_margin(1)
                 .split(draw_loc);
 

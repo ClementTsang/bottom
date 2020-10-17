@@ -51,13 +51,10 @@ impl NetworkGraphWidget for Painter {
             let network_chunk = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(0)
-                .constraints(
-                    [
-                        Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
-                        Constraint::Length(5),
-                    ]
-                    .as_ref(),
-                )
+                .constraints([
+                    Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
+                    Constraint::Length(5),
+                ])
                 .split(draw_loc);
 
             self.draw_network_graph(f, app_state, network_chunk[0], widget_id, true);
