@@ -110,14 +110,11 @@ impl KillDialog for Painter {
             // Now draw buttons if needed...
             let split_draw_loc = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints(
-                    if app_state.dd_err.is_some() {
-                        vec![Constraint::Percentage(100)]
-                    } else {
-                        vec![Constraint::Min(0), Constraint::Length(3)]
-                    }
-                    .as_ref(),
-                )
+                .constraints(if app_state.dd_err.is_some() {
+                    vec![Constraint::Percentage(100)]
+                } else {
+                    vec![Constraint::Min(0), Constraint::Length(3)]
+                })
                 .split(draw_loc);
 
             // This being true implies that dd_err is none.
@@ -136,14 +133,11 @@ impl KillDialog for Painter {
 
                 let button_layout = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints(
-                        [
-                            Constraint::Percentage(35),
-                            Constraint::Percentage(30),
-                            Constraint::Percentage(35),
-                        ]
-                        .as_ref(),
-                    )
+                    .constraints([
+                        Constraint::Percentage(35),
+                        Constraint::Percentage(30),
+                        Constraint::Percentage(35),
+                    ])
                     .split(*button_draw_loc);
 
                 f.render_widget(

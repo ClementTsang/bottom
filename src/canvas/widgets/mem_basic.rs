@@ -27,7 +27,7 @@ impl MemBasicWidget for Painter {
         let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
 
         let margined_loc = Layout::default()
-            .constraints([Constraint::Percentage(100)].as_ref())
+            .constraints([Constraint::Percentage(100)])
             .horizontal_margin(1)
             .split(draw_loc);
 

@@ -357,35 +357,29 @@ impl Painter {
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints(
-                        [
-                            Constraint::Length(border_len),
-                            Constraint::Length(gen_help_len),
-                            Constraint::Length(border_len),
-                        ]
-                        .as_ref(),
-                    )
+                    .constraints([
+                        Constraint::Length(border_len),
+                        Constraint::Length(gen_help_len),
+                        Constraint::Length(border_len),
+                    ])
                     .split(terminal_size);
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints(
-                        if terminal_width < 100 {
-                            // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
-                            [
-                                Constraint::Percentage(0),
-                                Constraint::Percentage(100),
-                                Constraint::Percentage(0),
-                            ]
-                        } else {
-                            [
-                                Constraint::Percentage(20),
-                                Constraint::Percentage(60),
-                                Constraint::Percentage(20),
-                            ]
-                        }
-                        .as_ref(),
-                    )
+                    .constraints(if terminal_width < 100 {
+                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
+                        [
+                            Constraint::Percentage(0),
+                            Constraint::Percentage(100),
+                            Constraint::Percentage(0),
+                        ]
+                    } else {
+                        [
+                            Constraint::Percentage(20),
+                            Constraint::Percentage(60),
+                            Constraint::Percentage(20),
+                        ]
+                    })
                     .split(vertical_dialog_chunk[1]);
 
                 self.draw_help_dialog(&mut f, app_state, middle_dialog_chunk[1]);
@@ -440,27 +434,21 @@ impl Painter {
                 let vertical_bordering = terminal_height.saturating_sub(text_height) / 2;
                 let vertical_dialog_chunk = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints(
-                        [
-                            Constraint::Length(vertical_bordering),
-                            Constraint::Length(text_height),
-                            Constraint::Length(vertical_bordering),
-                        ]
-                        .as_ref(),
-                    )
+                    .constraints([
+                        Constraint::Length(vertical_bordering),
+                        Constraint::Length(text_height),
+                        Constraint::Length(vertical_bordering),
+                    ])
                     .split(terminal_size);
 
                 let horizontal_bordering = terminal_width.saturating_sub(text_width) / 2;
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints(
-                        [
-                            Constraint::Length(horizontal_bordering),
-                            Constraint::Length(text_width),
-                            Constraint::Length(horizontal_bordering),
-                        ]
-                        .as_ref(),
-                    )
+                    .constraints([
+                        Constraint::Length(horizontal_bordering),
+                        Constraint::Length(text_width),
+                        Constraint::Length(horizontal_bordering),
+                    ])
                     .split(vertical_dialog_chunk[1]);
 
                 // This is a bit nasty, but it works well... I guess.
@@ -469,7 +457,7 @@ impl Painter {
             } else if app_state.is_expanded {
                 let rect = Layout::default()
                     .margin(0)
-                    .constraints([Constraint::Percentage(100)].as_ref())
+                    .constraints([Constraint::Percentage(100)])
                     .split(terminal_size);
                 match &app_state.current_widget.widget_type {
                     Cpu => self.draw_cpu(
@@ -533,7 +521,7 @@ impl Painter {
             } else if app_state.is_config_open {
                 let rect = Layout::default()
                     .margin(0)
-                    .constraints([Constraint::Percentage(100)].as_ref())
+                    .constraints([Constraint::Percentage(100)])
                     .split(f.size())[0];
 
                 self.draw_config_screen(&mut f, app_state, rect)
@@ -543,28 +531,25 @@ impl Painter {
 
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints(
-                        [
-                            Constraint::Length(
-                                (app_state.canvas_data.cpu_data.len() / 4) as u16
-                                    + (if app_state.canvas_data.cpu_data.len() % 4 == 0 {
-                                        0
-                                    } else {
-                                        1
-                                    }),
-                            ),
-                            Constraint::Length(1),
-                            Constraint::Length(2),
-                            Constraint::Length(2),
-                            Constraint::Min(5),
-                        ]
-                        .as_ref(),
-                    )
+                    .constraints([
+                        Constraint::Length(
+                            (app_state.canvas_data.cpu_data.len() / 4) as u16
+                                + (if app_state.canvas_data.cpu_data.len() % 4 == 0 {
+                                    0
+                                } else {
+                                    1
+                                }),
+                        ),
+                        Constraint::Length(1),
+                        Constraint::Length(2),
+                        Constraint::Length(2),
+                        Constraint::Min(5),
+                    ])
                     .split(terminal_size);
 
                 let middle_chunks = Layout::default()
                     .direction(Direction::Horizontal)
-                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
                     .split(vertical_chunks[2]);
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);

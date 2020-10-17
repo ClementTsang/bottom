@@ -4,7 +4,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans, },
+    text::{Span, Spans},
     widgets::{Block, Paragraph},
 };
 
@@ -20,18 +20,18 @@ impl NetworkBasicWidget for Painter {
     ) {
         let divided_loc = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(draw_loc);
 
         let net_loc = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(100)].as_ref())
+            .constraints([Constraint::Percentage(100)])
             .horizontal_margin(1)
             .split(divided_loc[0]);
 
         let total_loc = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(100)].as_ref())
+            .constraints([Constraint::Percentage(100)])
             .horizontal_margin(1)
             .split(divided_loc[1]);
 

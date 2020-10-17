@@ -90,7 +90,7 @@ impl CpuGraphWidget for Painter {
             let partitioned_draw_loc = Layout::default()
                 .margin(0)
                 .direction(Direction::Horizontal)
-                .constraints(constraints.as_ref())
+                .constraints(constraints)
                 .split(draw_loc);
 
             self.draw_cpu_graph(f, app_state, partitioned_draw_loc[graph_index], widget_id);

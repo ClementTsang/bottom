@@ -78,14 +78,11 @@ impl BatteryDisplayWidget for Painter {
                 .collect::<Vec<_>>();
 
             let tab_draw_loc = Layout::default()
-                .constraints(
-                    [
-                        Constraint::Length(1),
-                        Constraint::Length(2),
-                        Constraint::Min(0),
-                    ]
-                    .as_ref(),
-                )
+                .constraints([
+                    Constraint::Length(1),
+                    Constraint::Length(2),
+                    Constraint::Min(0),
+                ])
                 .direction(Direction::Vertical)
                 .split(draw_loc)[1];
 
@@ -105,7 +102,7 @@ impl BatteryDisplayWidget for Painter {
             );
 
             let margined_draw_loc = Layout::default()
-                .constraints([Constraint::Percentage(100)].as_ref())
+                .constraints([Constraint::Percentage(100)])
                 .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
@@ -166,7 +163,7 @@ impl BatteryDisplayWidget for Painter {
                     Table::new([""].iter(), battery_rows)
                         .block(battery_block)
                         .header_style(self.colours.table_header_style)
-                        .widths([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref()),
+                        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]),
                     margined_draw_loc,
                 );
             } else {

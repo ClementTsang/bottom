@@ -196,7 +196,7 @@ impl DiskTableWidget for Painter {
             };
 
             let margined_draw_loc = Layout::default()
-                .constraints([Constraint::Percentage(100)].as_ref())
+                .constraints([Constraint::Percentage(100)])
                 .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
                 .direction(Direction::Horizontal)
                 .split(draw_loc)[0];
