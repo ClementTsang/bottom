@@ -29,30 +29,5 @@ impl ConfigScreen for Painter {
             .border_style(self.colours.border_style);
 
         f.render_widget(config_block, draw_loc);
-
-        // let margined_draw_locs = Layout::default()
-        //     .margin(2)
-        //     .direction(Direction::Horizontal)
-        //     .constraints(
-        //         [
-        //             Constraint::Percentage(33),
-        //             Constraint::Percentage(34),
-        //             Constraint::Percentage(33),
-        //         ]
-        //     )
-        //     .split(draw_loc)
-        //     .into_iter()
-        //     .map(|loc| {
-        //         // Required to properly margin in *between* the rectangles.
-        //         Layout::default()
-        //             .horizontal_margin(1)
-        //             .constraints([Constraint::Percentage(100)])
-        //             .split(loc)[0]
-        //     })
-        //     .collect::<Vec<Rect>>();
-
-        // for dl in margined_draw_locs {
-        //     f.render_widget(Block::default().borders(Borders::ALL), dl);
-        // }
     }
 }

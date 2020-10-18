@@ -6,6 +6,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Span, Spans},
+    widgets::Paragraph,
     Frame, Terminal,
 };
 
@@ -315,13 +316,33 @@ impl Painter {
     // FIXME: [CONFIG] write this, should call painter init and any changed colour functions...
     pub fn update_painter_colours(&mut self) {}
 
+    fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {
+        f.render_widget(
+            Paragraph::new(Span::styled(
+                "Frozen, press 'f' to unfreeze",
+                self.colours.currently_selected_text_style,
+            )),
+            Layout::default()
+                .horizontal_margin(1)
+                .constraints([Constraint::Length(1)])
+                .split(draw_loc)[0],
+        )
+    }
+
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
     ) -> error::Result<()> {
         use BottomWidgetType::*;
 
         terminal.draw(|mut f| {
-            let terminal_size = f.size();
+            let (terminal_size, frozen_draw_loc) = if app_state.is_frozen {
+                let split_loc = Layout::default()
+                    .constraints([Constraint::Min(0), Constraint::Length(1)])
+                    .split(f.size());
+                (split_loc[0], Some(split_loc[1]))
+            } else {
+                (f.size(), None)
+            };
             let terminal_height = terminal_size.height;
             let terminal_width = terminal_size.width;
 
@@ -455,6 +476,10 @@ impl Painter {
                 app_state.delete_dialog_state.is_showing_dd =
                     self.draw_dd_dialog(&mut f, dd_text, app_state, middle_dialog_chunk[1]);
             } else if app_state.is_expanded {
+                if let Some(frozen_draw_loc) = frozen_draw_loc {
+                    self.draw_frozen_indicator(&mut f, frozen_draw_loc);
+                }
+
                 let rect = Layout::default()
                     .margin(0)
                     .constraints([Constraint::Percentage(100)])
@@ -528,6 +553,9 @@ impl Painter {
             } else if app_state.app_config_fields.use_basic_mode {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
+                if let Some(frozen_draw_loc) = frozen_draw_loc {
+                    self.draw_frozen_indicator(&mut f, frozen_draw_loc);
+                }
 
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
@@ -605,6 +633,10 @@ impl Painter {
                 }
             } else {
                 // Draws using the passed in (or default) layout.
+                if let Some(frozen_draw_loc) = frozen_draw_loc {
+                    self.draw_frozen_indicator(&mut f, frozen_draw_loc);
+                }
+
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
                     let row_draw_locs = Layout::default()
                         .margin(0)
