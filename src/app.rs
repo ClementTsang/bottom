@@ -1229,7 +1229,6 @@ impl App {
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
             'f' => {
-                // FIXME: [FROZEN] Add an indicator if frozen!
                 self.is_frozen = !self.is_frozen;
                 if self.is_frozen {
                     self.data_collection.set_frozen_time();
