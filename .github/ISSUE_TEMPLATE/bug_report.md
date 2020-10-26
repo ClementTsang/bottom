@@ -22,6 +22,8 @@ _Steps on how to reproduce the behaviour:_
 
 ### bottom config file (if one is used)
 
+### Installation method
+
 ### Platform
 
 **Operating system and OS version:**
