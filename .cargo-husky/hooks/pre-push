@@ -4,8 +4,8 @@ set -e
 
 echo "Running pre-push hook:"
 
-echo "Executing: cargo +nightly clippy -- -D clippy::all"
-cargo +nightly clippy -- -D clippy::all
+echo "Executing: cargo clippy -- -D clippy::all"
+cargo clippy -- -D clippy::all
 
 # echo "Executing: cargo test"
 # cargo test
