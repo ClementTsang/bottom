@@ -43,6 +43,12 @@ matrix:
       arch: amd64
       rust: stable
 
+    # PowerPC 64 LE
+    - os: linux
+      env: TARGET=powerpc64le-unknown-linux-gnu
+      arch: ppc64le
+      rust: stable
+
     # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
     # TODO: [ARM] Support ARM binary generation...?
     - os: linux
