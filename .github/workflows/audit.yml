@@ -1,0 +1,15 @@
+name: cargo-audit check
+on:
+  schedule:
+    - cron: "0 0 * * *"
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/install@master
+        with:
+          crate: cargo-audit
+      - uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
