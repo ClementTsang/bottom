@@ -60,6 +60,16 @@
         "platform",
         "doc"
       ]
+    },
+    {
+      "login": "runlevel5",
+      "name": "Trung Lê",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/135605?v=4",
+      "profile": "http://ruby-journal.com/",
+      "contributions": [
+        "platform",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
