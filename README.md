@@ -66,8 +66,7 @@ Note that bottom is:
 - Officially tested and released for only `x86_64` (and `i686` for Windows)
 - Developed mainly for macOS, Windows, and Linux
 
-As such, support beyond that is not guaranteed. There is now _technically_ support for AArch64 and ARMv7 builds and it is tested on Travis,
-but I won't be officially supporting it for a bit and some things may or may not work (for example, R/s and W/s for disks doesn't work).
+Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is tested against on Travis and release builds are supported, but not all features will work (such as R/s and W/s for disks).
 
 ### Manually
 
@@ -718,6 +717,7 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Thanks

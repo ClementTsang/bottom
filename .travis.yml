@@ -5,7 +5,7 @@ notifications:
 
 matrix:
   include:
-    # Standard x86-64 stuff, stable and beta
+    # Standard x86-64 stuff, stable and beta, on tier-1 environments
     - os: linux
       env: TARGET=x86_64-unknown-linux-gnu
       arch: amd64
@@ -50,7 +50,6 @@ matrix:
       rust: stable
 
     # ARM stuff (skip beta for now, see https://github.com/rust-lang/rust/issues/62896)
-    # TODO: [ARM] Support ARM binary generation...?
     - os: linux
       env: TARGET=aarch64-unknown-linux-gnu
       arch: arm64
@@ -70,10 +69,6 @@ matrix:
   exclude:
     - if: tag IS present
       rust: beta
-    - if: tag IS present
-      arch: arm64
-    - if: tag IS present
-      env: TARGET=armv7-unknown-linux-gnueabihf
   # allow_failures:
   #   - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
   #   - env: TARGET=armv7-unknown-linux-gnueabihf
@@ -119,7 +114,6 @@ script:
       cargo test --verbose --target $TARGET  
     fi
 
-# FIXME: [TRAVIS] Probably want to update this with the new build targets and all.
 before_deploy:
   - |
     echo "Test whether installing works.  This is mostly just a sanity check.";
@@ -127,17 +121,18 @@ before_deploy:
   - |
     echo "Building release..."
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
-      echo "Building Windows 64-bit...";
+      echo "Building Windows 64-bit, target: $TARGET...";
       cargo build --release --target $TARGET;
       local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
       cp -r $target_dir completions
-      mv "./target/x86_64-pc-windows-msvc/release/btm" "btm.exe";
+      mv "./target/$TARGET/release/btm" "btm.exe";
       strip "btm.exe"
-      zip -r bottom_x86_64-pc-windows-msvc.zip "btm.exe" "completions";
+      zip -r bottom_$TARGET.zip "btm.exe" "completions";
       rm "btm.exe"
       rm -r "completions"
 
       if [[ $TARGET == "x86_64-pc-windows-msvc" ]]; then
+        echo "Building further results for x86_64-pc-windows-msvc target..."
         echo "Building Windows 32-bit...";
         cargo clean;
         cargo build --release --target i686-pc-windows-msvc;
@@ -167,7 +162,7 @@ before_deploy:
 
       echo "Done Windows pre-deploy!";
     else
-        echo "Building release for macOS/Linux...";
+        echo "Building release for macOS/Linux, target: $TARGET";
         cargo build --release;
         cp ./target/release/btm btm;
         strip btm;
@@ -176,7 +171,8 @@ before_deploy:
         echo "Tar-ing macOS/Linux binary and completions..."
         tar -czvf bottom_$TARGET.tar.gz btm completions;
 
-        if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+        if [[ $TRAVIS_OS_NAME == "linux" && $TARGET == "x86_64-unknown-linux-gnu" ]]; then
+          echo "Building further results for x86_64-unknown-linux-gnu..."
           echo "Generating AUR template...";
           python "./deployment/packager.py" $TRAVIS_TAG "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
           curl -LO "https://github.com/ClementTsang/bottom/archive/$TRAVIS_TAG.tar.gz";
@@ -193,9 +189,6 @@ before_deploy:
           cargo install cargo-deb;
           cargo deb;
           cp ./target/debian/bottom_*.deb .;
-        elif [[ $TRAVIS_OS_NAME == "osx" ]]; then
-          # The bottom.rb file must be generated AFTER, since it relies on the Linux binary file.
-        fi
 
         echo "Done macOS/Linux pre-deploy!";
     fi
