@@ -26,7 +26,7 @@ codegen-units = 1
 [dependencies]
 anyhow = "1.0.32"
 backtrace = "0.3"
-battery = "0.7.7"
+battery = "0.7.8"
 chrono = "0.4.19"
 crossterm = "0.17"
 ctrlc = {version = "3.1", features = ["termination"]}
@@ -52,7 +52,7 @@ fern = "0.6.0"
 log = "0.4.11"
 
 [target.'cfg(not(any(target_arch = "arm", target_arch = "aarch64")))'.dependencies]
-heim = "0.0.10"
+heim = "0.0.11"
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3.9"

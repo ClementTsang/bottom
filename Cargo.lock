@@ -102,17 +102,18 @@ checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
 
 [[package]]
 name = "battery"
-version = "0.7.7"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3ba81abd3ec70c6ef1d7a85c85cfcbab52b6b9536ea97e5ab7948d971603d2b"
+checksum = "b4b624268937c0e0a3edb7c27843f9e547c320d730c610d3b8e6e8e95b2026e4"
 dependencies = [
  "cfg-if 1.0.0",
  "core-foundation",
  "lazycell",
  "libc",
  "mach",
+ "nix 0.19.0",
  "num-traits",
- "uom 0.30.0",
+ "uom",
  "winapi 0.3.9",
 ]
 
@@ -335,7 +336,7 @@ version = "3.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0b676fa23f995faf587496dcd1c80fead847ed58d2da52ac1caca9a72790dd2"
 dependencies = [
- "nix",
+ "nix 0.17.0",
  "winapi 0.3.9",
 ]
 
@@ -552,9 +553,9 @@ checksum = "00d63df3d41950fb462ed38308eea019113ad1508da725bbedcd0fa5a85ef5f7"
 
 [[package]]
 name = "heim"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51b8e403c0598237327b4143bdc1c7e01db0b358b5420579637e27cc117d573c"
+checksum = "4da6d047f03312960babf4d2032a6551bd14b4293b9cba61c17e33e1ef4b652d"
 dependencies = [
  "heim-common",
  "heim-cpu",
@@ -570,9 +571,9 @@ dependencies = [
 
 [[package]]
 name = "heim-common"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "144af2a423102dd4dd3e9fdd2c77c4756fb3c6c009d691628997fd5a2247719a"
+checksum = "6f5a8c66797cb950fdbf6ea1d750f5ffe687e4cb13713fe1f3214d693ffd72a4"
 dependencies = [
  "cfg-if 0.1.10",
  "core-foundation",
@@ -581,17 +582,17 @@ dependencies = [
  "lazy_static",
  "libc",
  "mach",
- "nix",
+ "nix 0.17.0",
  "pin-utils",
- "uom 0.27.0",
+ "uom",
  "winapi 0.3.9",
 ]
 
 [[package]]
 name = "heim-cpu"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8abb50616d331bd75cd7f52d56b66114a0e8813fda2201c3618a105baa2b470d"
+checksum = "cc191b97ede884083df6d4c0ac47246b86782a0d253d001d7b4610f6ec9cb21f"
 dependencies = [
  "cfg-if 0.1.10",
  "heim-common",
@@ -604,9 +605,9 @@ dependencies = [
 
 [[package]]
 name = "heim-disk"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49e5740e687a7e1f1db597e14aff112b076f48997fe617b9b165e7c2f139d248"
+checksum = "876034f2b6a4360668fded6bb1d787a76acd5d896998a035466c301f0bc98299"
 dependencies = [
  "bitflags",
  "cfg-if 0.1.10",
@@ -621,9 +622,9 @@ dependencies = [
 
 [[package]]
 name = "heim-host"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d46019db89b0021344fd5bb8626a12cb5d9556aa8b79685ecc907b0c43e3c5f0"
+checksum = "5e323e5563d38acfba5400a5b6fea252d40fb03c0318844f9c37501d2eda9564"
 dependencies = [
  "cfg-if 0.1.10",
  "heim-common",
@@ -637,9 +638,9 @@ dependencies = [
 
 [[package]]
 name = "heim-memory"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "216b66fececba2f68a08d15b893f0c5826346b5fb4c8d5201494f8ac2347d3bf"
+checksum = "679781f53236883fe4f26c29c7973cf30fdd1812de7fd15f673dd84027bfe4a3"
 dependencies = [
  "cfg-if 0.1.10",
  "heim-common",
@@ -652,9 +653,9 @@ dependencies = [
 
 [[package]]
 name = "heim-net"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52b790922244bd5b139254a0411ea2b4e4175b3e4c261d52011a9c42535c7aa7"
+checksum = "03cfb3cdf09eee9abe0f01360e3270a45829851c9266dd99ee511b4c621840ea"
 dependencies = [
  "bitflags",
  "cfg-if 0.1.10",
@@ -663,14 +664,14 @@ dependencies = [
  "hex",
  "libc",
  "macaddr",
- "nix",
+ "nix 0.17.0",
 ]
 
 [[package]]
 name = "heim-process"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c8e29fca8becea6bc261c38230f3f45a358b7922451353dd068247a3ef059de"
+checksum = "58bc17fe0cb77010de2a2d82f98af1e6be6bcd28ea1f5b10e57658630f6ce77c"
 dependencies = [
  "cfg-if 0.1.10",
  "darwin-libproc",
@@ -690,9 +691,9 @@ dependencies = [
 
 [[package]]
 name = "heim-runtime"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00bd0a5a5e4af50d5d7d9537d3ecf02dca42c26bbbd8dd76621c5116dab14f69"
+checksum = "1504955d04ec7cf8df8bbe541a8636f619450af6f618a6a6111dfecc79743ee5"
 dependencies = [
  "cfg-if 0.1.10",
  "futures-channel",
@@ -703,9 +704,9 @@ dependencies = [
 
 [[package]]
 name = "heim-sensors"
-version = "0.0.5"
+version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f1250df4d79d4238261588e5aaf1de0e7853dbe632f5bd6868e394d1e730024"
+checksum = "397b856317d361806d1428cabb261188d71d02faaf01463f12637b56ce0c7961"
 dependencies = [
  "cfg-if 0.1.10",
  "heim-common",
@@ -714,9 +715,9 @@ dependencies = [
 
 [[package]]
 name = "heim-virt"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4b6ac6721ba5856659a197934ce522250a3ddd2e8646daa5660b41f1ba96457"
+checksum = "79e1d9cb9d87a4f8bc8721ae86c00eb2a232853bca969e63ff8f62660493c477"
 dependencies = [
  "cfg-if 0.1.10",
  "heim-common",
@@ -791,9 +792,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.74"
+version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2f02823cf78b754822df5f7f268fb59822e7296276d3e069d8e8cb26a14bd10"
+checksum = "4d58d1b70b004888f764dfbf6a26a3b0342a1632d33968e4a179d8011c760614"
 
 [[package]]
 name = "lock_api"
@@ -905,6 +906,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85db2feff6bf70ebc3a4793191517d5f0331100a2f10f9bf93b5e5214f32b7b7"
+dependencies = [
+ "bitflags",
+ "cc",
+ "cfg-if 0.1.10",
+ "libc",
+]
+
+[[package]]
 name = "normalize-line-endings"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -931,9 +944,9 @@ dependencies = [
 
 [[package]]
 name = "num-rational"
-version = "0.2.4"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c000134b5dbf44adc5cb772486d335293351644b801551abe8f75c84cfa4aef"
+checksum = "e5fa6d5f418879385b213d905f7cf5bf4aa553d4c380f0152d1d4f2749186fa9"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -1420,21 +1433,11 @@ checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
 
 [[package]]
 name = "uom"
-version = "0.27.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51fc04fb44bcb7806da71885872cb15d123b681e459a476ef8a0bab287bee0cd"
-dependencies = [
- "num-rational",
- "num-traits",
- "typenum",
-]
-
-[[package]]
-name = "uom"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e76503e636584f1e10b9b3b9498538279561adcef5412927ba00c2b32c4ce5ed"
 dependencies = [
+ "num-rational",
  "num-traits",
  "typenum",
 ]
