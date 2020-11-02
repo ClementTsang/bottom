@@ -31,7 +31,7 @@ chrono = "0.4.19"
 crossterm = "0.17"
 ctrlc = {version = "3.1", features = ["termination"]}
 clap = "2.33"
-dirs = "3.0.1"
+dirs-next = "2.0.0"
 futures = "0.3.5"
 indexmap = "1.6.0"
 itertools = "0.9.0"
