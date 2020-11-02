@@ -51,15 +51,15 @@ impl BasicTableArrows for Painter {
                                                     },
                                                 )
                                             })
-                                            .unwrap_or_else(|| Some(&BottomWidgetType::Temp))
-                                            .unwrap_or_else(|| &BottomWidgetType::Temp)
+                                            .unwrap_or(Some(&BottomWidgetType::Temp))
+                                            .unwrap_or(&BottomWidgetType::Temp)
                                     } else {
                                         &left_widget.widget_type
                                     }
                                 })
-                                .unwrap_or_else(|| &BottomWidgetType::Temp)
+                                .unwrap_or(&BottomWidgetType::Temp)
                         })
-                        .unwrap_or_else(|| &BottomWidgetType::Temp)
+                        .unwrap_or(&BottomWidgetType::Temp)
                 },
                 {
                     current_table
@@ -80,15 +80,15 @@ impl BasicTableArrows for Painter {
                                                         &right_right_widget.widget_type
                                                     })
                                             })
-                                            .unwrap_or_else(|| Some(&BottomWidgetType::Disk))
-                                            .unwrap_or_else(|| &BottomWidgetType::Disk)
+                                            .unwrap_or(Some(&BottomWidgetType::Disk))
+                                            .unwrap_or(&BottomWidgetType::Disk)
                                     } else {
                                         &right_widget.widget_type
                                     }
                                 })
-                                .unwrap_or_else(|| &BottomWidgetType::Disk)
+                                .unwrap_or(&BottomWidgetType::Disk)
                         })
-                        .unwrap_or_else(|| &BottomWidgetType::Disk)
+                        .unwrap_or(&BottomWidgetType::Disk)
                 },
             );
 
