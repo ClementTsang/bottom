@@ -184,14 +184,14 @@ pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBu
     let config_path = if let Some(conf_loc) = config_location {
         Some(PathBuf::from(conf_loc))
     } else if cfg!(target_os = "windows") {
-        if let Some(home_path) = dirs::config_dir() {
+        if let Some(home_path) = dirs_next::config_dir() {
             let mut path = home_path;
             path.push(DEFAULT_CONFIG_FILE_PATH);
             Some(path)
         } else {
             None
         }
-    } else if let Some(home_path) = dirs::home_dir() {
+    } else if let Some(home_path) = dirs_next::home_dir() {
         let mut path = home_path;
         path.push(".config/");
         path.push(DEFAULT_CONFIG_FILE_PATH);
@@ -200,7 +200,7 @@ pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBu
             Some(path)
         } else {
             // If it does not, use the new one!
-            if let Some(config_path) = dirs::config_dir() {
+            if let Some(config_path) = dirs_next::config_dir() {
                 let mut path = config_path;
                 path.push(DEFAULT_CONFIG_FILE_PATH);
                 Some(path)
