@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#290](https://github.com/ClementTsang/bottom/pull/290): Fixed an incorrect offset affecting the CPU colour when scrolling.
 
+- [#291](https://github.com/ClementTsang/bottom/pull/291): Fixed spacing problems in basic CPU mode.
+
 ## [0.4.7] - 2020-08-26
 
 ### Bug Fixes
