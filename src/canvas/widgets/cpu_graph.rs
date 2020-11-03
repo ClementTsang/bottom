@@ -364,10 +364,10 @@ impl CpuGraphWidget for Painter {
                         cpu_string_row.into_iter(),
                         if itx == offset_scroll_index {
                             self.colours.currently_selected_text_style
-                        } else if itx == ALL_POSITION {
+                        } else if itx + start_position == ALL_POSITION {
                             self.colours.all_colour_style
                         } else if show_avg_cpu {
-                            if itx == AVG_POSITION {
+                            if itx + start_position == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else {
                                 self.colours.cpu_colour_styles[itx + start_position
