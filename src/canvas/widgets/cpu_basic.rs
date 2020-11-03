@@ -61,41 +61,86 @@ impl CpuBasicWidget for Painter {
                     .direction(Direction::Horizontal)
                     .split(draw_loc);
 
-                // +9 due to 3 + 4 + 2 columns for the name & space + percentage + bar bounds
+                const CPU_NAME_SPACE: usize = 3;
+                const BAR_BOUND_SPACE: usize = 2;
+                const PERCENTAGE_SPACE: usize = 4;
                 const MARGIN_SPACE: usize = 2;
-                let remaining_width = usize::from(draw_loc.width)
-                    .saturating_sub((9 + MARGIN_SPACE) * REQUIRED_COLUMNS);
 
-                let bar_length = remaining_width / REQUIRED_COLUMNS;
+                const COMBINED_SPACING: usize =
+                    CPU_NAME_SPACE + BAR_BOUND_SPACE + PERCENTAGE_SPACE + MARGIN_SPACE;
+                const REDUCED_SPACING: usize = CPU_NAME_SPACE + PERCENTAGE_SPACE + MARGIN_SPACE;
+                let chunk_width = chunks[0].width as usize;
 
-                // CPU (and RAM) percent bars are, uh, "heavily" inspired from htop.
-                let cpu_bars = (0..num_cpus)
-                    .map(|cpu_index| {
-                        let use_percentage =
-                            if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
-                                cpu_usage.1
-                            } else {
-                                0.0
-                            };
-
-                        let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
-                        format!(
-                            "{:3}[{}{}{:3.0}%]",
-                            if app_state.app_config_fields.show_average_cpu {
-                                if cpu_index == 0 {
-                                    "AVG".to_string()
+                // Inspired by htop.
+                // We do +4 as if it's too few bars in the bar length, it's kinda pointless.
+                let cpu_bars = if chunk_width >= COMBINED_SPACING + 4 {
+                    let bar_length = chunk_width - COMBINED_SPACING;
+                    (0..num_cpus)
+                        .map(|cpu_index| {
+                            let use_percentage =
+                                if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
+                                    cpu_usage.1
                                 } else {
-                                    (cpu_index - 1).to_string()
-                                }
-                            } else {
-                                cpu_index.to_string()
-                            },
-                            "|".repeat(num_bars),
-                            " ".repeat(bar_length - num_bars),
-                            use_percentage.round(),
-                        )
-                    })
-                    .collect::<Vec<_>>();
+                                    0.0
+                                };
+
+                            let num_bars = calculate_basic_use_bars(use_percentage, bar_length);
+                            format!(
+                                "{:3}[{}{}{:3.0}%]",
+                                if app_state.app_config_fields.show_average_cpu {
+                                    if cpu_index == 0 {
+                                        "AVG".to_string()
+                                    } else {
+                                        (cpu_index - 1).to_string()
+                                    }
+                                } else {
+                                    cpu_index.to_string()
+                                },
+                                "|".repeat(num_bars),
+                                " ".repeat(bar_length - num_bars),
+                                use_percentage.round(),
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                } else if chunk_width >= REDUCED_SPACING {
+                    (0..num_cpus)
+                        .map(|cpu_index| {
+                            let use_percentage =
+                                if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
+                                    cpu_usage.1
+                                } else {
+                                    0.0
+                                };
+
+                            format!(
+                                "{:3} {:3.0}%",
+                                if app_state.app_config_fields.show_average_cpu {
+                                    if cpu_index == 0 {
+                                        "AVG".to_string()
+                                    } else {
+                                        (cpu_index - 1).to_string()
+                                    }
+                                } else {
+                                    cpu_index.to_string()
+                                },
+                                use_percentage.round(),
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                } else {
+                    (0..num_cpus)
+                        .map(|cpu_index| {
+                            let use_percentage =
+                                if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
+                                    cpu_usage.1
+                                } else {
+                                    0.0
+                                };
+
+                            format!("{:3.0}%", use_percentage.round(),)
+                        })
+                        .collect::<Vec<_>>()
+                };
 
                 let mut row_counter = num_cpus;
                 let mut start_index = 0;
