@@ -127,19 +127,6 @@ impl CpuBasicWidget for Painter {
                             )
                         })
                         .collect::<Vec<_>>()
-                } else if chunk_width >= PERCENTAGE_SPACE {
-                    (0..num_cpus)
-                        .map(|cpu_index| {
-                            let use_percentage =
-                                if let Some(cpu_usage) = cpu_data[cpu_index].cpu_data.last() {
-                                    cpu_usage.1
-                                } else {
-                                    0.0
-                                };
-
-                            format!("{:3.0}%", use_percentage.round(),)
-                        })
-                        .collect::<Vec<_>>()
                 } else {
                     (0..num_cpus)
                         .map(|cpu_index| {
@@ -150,7 +137,7 @@ impl CpuBasicWidget for Painter {
                                     0.0
                                 };
 
-                            format!("{:.0}%", use_percentage.round(),)
+                            format!("{:3.0}%", use_percentage.round(),)
                         })
                         .collect::<Vec<_>>()
                 };
