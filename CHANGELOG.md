@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#262](https://github.com/ClementTsang/bottom/pull/262): Fixed missing thread termination steps as well as improper polling causing blocking in input thread.
 
+- [#289](https://github.com/ClementTsang/bottom/pull/289): Fixed the CPU basic widget showing incorrect data due to an incorrect offset when displaying the data.
+
+- [#290](https://github.com/ClementTsang/bottom/pull/290): Fixed an incorrect offset affecting the CPU colour when scrolling.
+
 ## [0.4.7] - 2020-08-26
 
 ### Bug Fixes
