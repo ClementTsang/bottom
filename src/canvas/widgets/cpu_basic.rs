@@ -26,7 +26,7 @@ impl CpuBasicWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         // Skip the first element, it's the "all" element
-        if !app_state.canvas_data.cpu_data.is_empty() {
+        if app_state.canvas_data.cpu_data.len() > 1 {
             let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data[1..];
 
             // This is a bit complicated, but basically, we want to draw SOME number
@@ -64,7 +64,7 @@ impl CpuBasicWidget for Painter {
                 // +9 due to 3 + 4 + 2 columns for the name & space + percentage + bar bounds
                 const MARGIN_SPACE: usize = 2;
                 let remaining_width = usize::from(draw_loc.width)
-                    .saturating_sub((9 + MARGIN_SPACE) * REQUIRED_COLUMNS - MARGIN_SPACE);
+                    .saturating_sub((9 + MARGIN_SPACE) * REQUIRED_COLUMNS);
 
                 let bar_length = remaining_width / REQUIRED_COLUMNS;
 
@@ -100,7 +100,8 @@ impl CpuBasicWidget for Painter {
                 let mut row_counter = num_cpus;
                 let mut start_index = 0;
                 for (itx, chunk) in chunks.iter().enumerate() {
-                    // Explicitly check... don't want an accidental DBZ or underflow
+                    // Explicitly check... don't want an accidental DBZ or underflow, this ensures
+                    // to_divide is > 0
                     if REQUIRED_COLUMNS > itx {
                         let to_divide = REQUIRED_COLUMNS - itx;
                         let how_many_cpus = min(
@@ -110,6 +111,7 @@ impl CpuBasicWidget for Painter {
                         );
                         row_counter -= how_many_cpus;
                         let end_index = min(start_index + how_many_cpus, num_cpus);
+
                         let cpu_column = (start_index..end_index)
                             .map(|cpu_index| {
                                 Spans::from(Span {
