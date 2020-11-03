@@ -486,7 +486,7 @@ pub fn tree_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: bool,
     sort_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
-    // TODO: [TREE] Allow for collapsing entries.
+    // FIXME: [TREE] Allow for collapsing entries.
     // TODO: [TREE] Option to sort usage by total branch usage or individual value usage?
 
     // Let's first build up a (really terrible) parent -> child mapping...
