@@ -1,7 +1,7 @@
 name: cargo-audit check
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 5 * * *"
 jobs:
   audit:
     runs-on: ubuntu-latest
