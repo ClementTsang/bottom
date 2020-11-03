@@ -1404,7 +1404,7 @@ impl App {
     /// Call this whenever the config value is updated!
     fn update_config_file(&mut self) -> anyhow::Result<()> {
         if self.app_config_fields.no_write {
-            debug!("No write enabled.  Config will not be written.");
+            // debug!("No write enabled.  Config will not be written.");
             // Don't write!
             // FIXME: [CONFIG] This should be made VERY clear to the user... make a thing saying "it will not write due to no_write option"
             Ok(())
