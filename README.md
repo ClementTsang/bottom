@@ -18,6 +18,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [AUR](#aur)
   - [Debian (and Debian-based)](#debian)
   - [Fedora/CentOS](#fedoracentos)
+  - [Nix](#nix)
   - [Homebrew](#homebrew)
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
@@ -130,6 +131,12 @@ Available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 ```bash
 sudo dnf copr enable atim/bottom -y
 sudo dnf install bottom
+```
+
+### Nix
+
+```bash
+nix-env -i bottom
 ```
 
 ### Homebrew
