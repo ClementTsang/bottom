@@ -26,7 +26,7 @@ impl CpuBasicWidget for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         // Skip the first element, it's the "all" element
-        if app_state.canvas_data.cpu_data.len() > 0 {
+        if !app_state.canvas_data.cpu_data.is_empty() {
             let cpu_data: &[ConvertedCpuData] = &app_state.canvas_data.cpu_data[1..];
 
             // This is a bit complicated, but basically, we want to draw SOME number
