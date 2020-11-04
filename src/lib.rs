@@ -222,10 +222,22 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
             Ok(toml::from_str(config_string.as_str())?)
         } else {
             // Config file DNE...
-            if let Some(parent_path) = path.parent() {
-                fs::create_dir_all(parent_path)?;
-            }
-            fs::File::create(path)?.write_all(CONFIG_TOP_HEAD.as_bytes())?;
+            let create_config = || {
+                if let Some(parent_path) = path.parent() {
+                    fs::create_dir_all(parent_path)?;
+
+                }
+                fs::File::create(path)?.write_all(CONFIG_TOP_HEAD.as_bytes())
+            };
+            create_config().or_else(|e| {
+                match e.raw_os_error() {
+                    // Linux error code 30 is "Read-only file system".
+                    Some(code) if code == 30 => {
+                        Ok(())
+                    },
+                    _ => Err(e)
+                }
+            })?;
             Ok(Config::default())
         }
     } else {
