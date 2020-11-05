@@ -197,6 +197,34 @@ entire query by default.\n\n",
 Sets the location of the config file.  Expects a config
 file in the TOML format. If it doesn't exist, one is created.\n\n\n",
         );
+    let color = Arg::with_name("color")
+        .long("color")
+        .takes_value(true)
+        .value_name("COLOR SCHEME")
+        .help("Use a color scheme, use --help for supported values.")
+        .long_help(
+            "\
+Use a pre-defined color scheme.  Supported values are:
+
+default
+default-dark
+gruvbox
+gruvbox-light
+nord
+
+Defaults to \"default\".
+\n",
+        )
+        .possible_values(&[
+            "default",
+            "default-dark",
+            "gruvbox",
+            "gruvbox-light",
+            "nord",
+        ])
+        .default_value("default")
+        .hide_default_value(true)
+        .hide_possible_values(true);
     let default_time_value = Arg::with_name("default_time_value")
         .short("t")
         .long("default_time_value")
@@ -313,6 +341,7 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(battery)
         .arg(case_sensitive)
         .arg(config_location)
+        .arg(color)
         .arg(debug)
         .arg(default_time_value)
         .arg(default_widget_count)
