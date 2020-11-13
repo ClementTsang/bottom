@@ -18,6 +18,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [AUR](#aur)
   - [Debian (and Debian-based)](#debian)
   - [Fedora/CentOS](#fedoracentos)
+  - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [Homebrew](#homebrew)
   - [Scoop](#scoop)
@@ -131,6 +132,15 @@ Available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
 ```bash
 sudo dnf copr enable atim/bottom -y
 sudo dnf install bottom
+```
+
+### Gentoo
+
+Available in [dm9pZCAq overlay](https://github.com/gentoo-mirror/dm9pZCAq)
+```bash
+sudo eselect repository enable dm9pZCAq
+sudo emerge --sync dm9pZCAq
+sudo emerge sys-process/bottom::dm9pZCAq
 ```
 
 ### Nix
