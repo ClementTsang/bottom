@@ -136,19 +136,6 @@ fn test_invalid_colour_string() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn test_empty_battery() -> Result<(), Box<dyn std::error::Error>> {
-    Command::new(get_binary_location())
-        .arg("-C")
-        .arg("./tests/invalid_configs/empty_battery.toml")
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "battery colour list must have at least one colour.",
-        ));
-    Ok(())
-}
-
-#[test]
 fn test_lone_default_widget_count() -> Result<(), Box<dyn std::error::Error>> {
     Command::new(get_binary_location())
         .arg("-C")
