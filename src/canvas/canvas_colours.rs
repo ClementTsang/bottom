@@ -58,6 +58,10 @@ impl Default for CanvasColours {
                 Style::default().fg(Color::Red),
                 Style::default().fg(Color::Yellow),
                 Style::default().fg(Color::Yellow),
+                Style::default().fg(Color::Yellow),
+                Style::default().fg(Color::Green),
+                Style::default().fg(Color::Green),
+                Style::default().fg(Color::Green),
                 Style::default().fg(Color::Green),
                 Style::default().fg(Color::Green),
                 Style::default().fg(Color::Green),
@@ -291,18 +295,22 @@ impl CanvasColours {
         self.battery_bar_styles[0] = style;
         self.battery_bar_styles[1] = style;
         self.battery_bar_styles[2] = style;
+        self.battery_bar_styles[3] = style;
+        self.battery_bar_styles[4] = style;
+        self.battery_bar_styles[5] = style;
         Ok(())
     }
 
     pub fn set_medium_battery_color(&mut self, colour: &str) -> error::Result<()> {
         let style = get_style_from_config(colour)?;
-        self.battery_bar_styles[3] = style;
-        self.battery_bar_styles[4] = style;
+        self.battery_bar_styles[6] = style;
+        self.battery_bar_styles[7] = style;
+        self.battery_bar_styles[8] = style;
         Ok(())
     }
 
     pub fn set_low_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.battery_bar_styles[5] = get_style_from_config(colour)?;
+        self.battery_bar_styles[9] = get_style_from_config(colour)?;
         Ok(())
     }
 }

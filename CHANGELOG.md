@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.
 
+- [#296](https://github.com/ClementTsang/bottom/pull/296): Changed how we do battery theming. We now only set high, medium, and low colours and we deal with the ratios.
+
 ### Bug Fixes
 
 - [#211](https://github.com/ClementTsang/bottom/pull/211): Fixes a bug where you could move down in the process widget even if the process widget search was closed.

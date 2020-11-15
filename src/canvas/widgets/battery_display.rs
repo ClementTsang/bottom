@@ -143,10 +143,10 @@ impl BatteryDisplayWidget for Painter {
                         item.iter(),
                         if itx == 0 {
                             let colour_index = ((charge_percentage
-                                * self.colours.battery_bar_styles.len() as f64
-                                - 1.0)
+                                * self.colours.battery_bar_styles.len() as f64)
                                 / 100.0)
-                                .floor() as usize;
+                                .ceil() as usize
+                                - 1;
                             *self
                                 .colours
                                 .battery_bar_styles
