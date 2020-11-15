@@ -170,7 +170,7 @@ impl DiskTableWidget for Painter {
                     Span::styled(" Disk ", self.colours.widget_title_style),
                     Span::styled(
                         format!(
-                            "─{}─ Esc to go back, ",
+                            "─{}─ Esc to go back ",
                             "─".repeat(usize::from(draw_loc.width).saturating_sub(
                                 UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
                             ))
