@@ -220,7 +220,12 @@ impl CpuGraphWidget for Painter {
                         self.colours.cpu_colour_styles[cpu_widget_state
                             .scroll_state
                             .current_scroll_position
-                            % self.colours.cpu_colour_styles.len()]
+                            - 1 // Because of the all position
+                            - (if show_avg_cpu {
+                                AVG_POSITION
+                            } else {
+                                0
+                            }) % self.colours.cpu_colour_styles.len()]
                     })
                     .data(&cpu.cpu_data[..])
                     .graph_type(tui::widgets::GraphType::Line)]
