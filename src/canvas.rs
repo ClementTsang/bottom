@@ -1,6 +1,5 @@
-use anyhow::Context;
 use itertools::izip;
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use tui::{
     backend::Backend,
@@ -25,6 +24,7 @@ use crate::{
     data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
     options::Config,
     utils::error,
+    utils::error::BottomError,
 };
 
 mod canvas_colours;
@@ -59,6 +59,35 @@ pub struct DisplayableData {
     pub battery_data: Vec<ConvertedBatteryData>,
 }
 
+#[derive(Debug)]
+pub enum ColourScheme {
+    Default,
+    DefaultLight,
+    Gruvbox,
+    GruvboxLight,
+    // Nord,
+    Custom,
+}
+
+impl FromStr for ColourScheme {
+    type Err = BottomError;
+
+    fn from_str(s: &str) -> error::Result<Self> {
+        let lower_case = s.to_lowercase();
+        match lower_case.as_str() {
+            "default" => Ok(ColourScheme::Default),
+            "default-light" => Ok(ColourScheme::DefaultLight),
+            "gruvbox" => Ok(ColourScheme::Gruvbox),
+            "gruvbox-light" => Ok(ColourScheme::GruvboxLight),
+            // "nord" => Ok(ColourScheme::Nord),
+            _ => Err(BottomError::ConfigError(format!(
+                "\"{}\" is an invalid built-in color scheme.",
+                s
+            ))),
+        }
+    }
+}
+
 /// Handles the canvas' state.  TODO: [OPT] implement this.
 pub struct Painter {
     pub colours: CanvasColours,
@@ -78,6 +107,7 @@ pub struct Painter {
 impl Painter {
     pub fn init(
         widget_layout: BottomLayout, table_gap: u16, is_basic_mode: bool, config: &Config,
+        colour_scheme: ColourScheme,
     ) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
@@ -161,117 +191,48 @@ impl Painter {
             table_height_offset: if is_basic_mode { 2 } else { 4 } + table_gap,
         };
 
-        painter.generate_config_colours(config)?;
+        if let ColourScheme::Custom = colour_scheme {
+            painter.generate_config_colours(config)?;
+        } else {
+            painter.generate_colour_scheme(colour_scheme)?;
+        }
         painter.colours.generate_remaining_cpu_colours();
         painter.complete_painter_init();
 
         Ok(painter)
     }
 
-    pub fn generate_config_colours(&mut self, config: &Config) -> anyhow::Result<()> {
+    fn generate_config_colours(&mut self, config: &Config) -> anyhow::Result<()> {
         if let Some(colours) = &config.colors {
-            if let Some(border_color) = &colours.border_color {
-                self.colours
-                    .set_border_colour(border_color)
-                    .context("Update 'border_color' in your config file..")?;
-            }
+            self.colours.set_colours_from_palette(colours)?;
+        }
 
-            if let Some(highlighted_border_color) = &colours.highlighted_border_color {
-                self.colours
-                    .set_highlighted_border_colour(highlighted_border_color)
-                    .context("Update 'highlighted_border_color' in your config file..")?;
-            }
+        Ok(())
+    }
 
-            if let Some(text_color) = &colours.text_color {
-                self.colours
-                    .set_text_colour(text_color)
-                    .context("Update 'text_color' in your config file..")?;
+    fn generate_colour_scheme(&mut self, colour_scheme: ColourScheme) -> anyhow::Result<()> {
+        match colour_scheme {
+            ColourScheme::Default => {
+                // Don't have to do anything.
             }
-
-            if let Some(avg_cpu_color) = &colours.avg_cpu_color {
+            ColourScheme::DefaultLight => {
                 self.colours
-                    .set_avg_cpu_colour(avg_cpu_color)
-                    .context("Update 'avg_cpu_color' in your config file..")?;
+                    .set_colours_from_palette(&*DEFAULT_LIGHT_MODE_COLOUR_PALETTE)?;
             }
-
-            if let Some(all_cpu_color) = &colours.all_cpu_color {
+            ColourScheme::Gruvbox => {
                 self.colours
-                    .set_all_cpu_colour(all_cpu_color)
-                    .context("Update 'all_cpu_color' in your config file..")?;
+                    .set_colours_from_palette(&*GRUVBOX_COLOUR_PALETTE)?;
             }
-
-            if let Some(cpu_core_colors) = &colours.cpu_core_colors {
+            ColourScheme::GruvboxLight => {
                 self.colours
-                    .set_cpu_colours(cpu_core_colors)
-                    .context("Update 'cpu_core_colors' in your config file..")?;
+                    .set_colours_from_palette(&*GRUVBOX_LIGHT_COLOUR_PALETTE)?;
             }
-
-            if let Some(ram_color) = &colours.ram_color {
-                self.colours
-                    .set_ram_colour(ram_color)
-                    .context("Update 'ram_color' in your config file..")?;
-            }
-
-            if let Some(swap_color) = &colours.swap_color {
-                self.colours
-                    .set_swap_colour(swap_color)
-                    .context("Update 'swap_color' in your config file..")?;
-            }
-
-            if let Some(rx_color) = &colours.rx_color {
-                self.colours
-                    .set_rx_colour(rx_color)
-                    .context("Update 'rx_color' in your config file..")?;
-            }
-
-            if let Some(tx_color) = &colours.tx_color {
-                self.colours
-                    .set_tx_colour(tx_color)
-                    .context("Update 'tx_color' in your config file..")?;
-            }
-
-            // if let Some(rx_total_color) = &colours.rx_total_color {
-            //     painter.colours.set_rx_total_colour(rx_total_color)?;
+            // ColourScheme::Nord => {
+            //     self.colours
+            //         .set_colours_from_palette(&*NORD_COLOUR_PALETTE)?;
             // }
-
-            // if let Some(tx_total_color) = &colours.tx_total_color {
-            //     painter.colours.set_tx_total_colour(tx_total_color)?;
-            // }
-
-            if let Some(table_header_color) = &colours.table_header_color {
-                self.colours
-                    .set_table_header_colour(table_header_color)
-                    .context("Update 'table_header_color' in your config file..")?;
-            }
-
-            if let Some(scroll_entry_text_color) = &colours.selected_text_color {
-                self.colours
-                    .set_scroll_entry_text_color(scroll_entry_text_color)
-                    .context("Update 'selected_text_color' in your config file..")?;
-            }
-
-            if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
-                self.colours
-                    .set_scroll_entry_bg_color(scroll_entry_bg_color)
-                    .context("Update 'selected_bg_color' in your config file..")?;
-            }
-
-            if let Some(widget_title_color) = &colours.widget_title_color {
-                self.colours
-                    .set_widget_title_colour(widget_title_color)
-                    .context("Update 'widget_title_color' in your config file..")?;
-            }
-
-            if let Some(graph_color) = &colours.graph_color {
-                self.colours
-                    .set_graph_colour(graph_color)
-                    .context("Update 'graph_color' in your config file..")?;
-            }
-
-            if let Some(battery_colors) = &colours.battery_colors {
-                self.colours
-                    .set_battery_colors(battery_colors)
-                    .context("Update 'battery_colors' in your config file.")?;
+            ColourScheme::Custom => {
+                // This case should never occur, just do nothing.
             }
         }
 

@@ -1,5 +1,7 @@
 use lazy_static::lazy_static;
 
+use crate::options::ConfigColours;
+
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
 
@@ -35,6 +37,125 @@ lazy_static! {
         tui::style::Style::default().fg(tui::style::Color::Gray);
     pub static ref DEFAULT_HEADER_STYLE: tui::style::Style =
         tui::style::Style::default().fg(tui::style::Color::LightBlue);
+}
+
+// Colour profiles
+lazy_static! {
+    pub static ref DEFAULT_LIGHT_MODE_COLOUR_PALETTE: ConfigColours = ConfigColours {
+        text_color: Some("black".to_string()),
+        border_color: Some("black".to_string()),
+        table_header_color: Some("black".to_string()),
+        widget_title_color: Some("black".to_string()),
+        selected_text_color: Some("white".to_string()),
+        graph_color: Some("black".to_string()),
+        disabled_text_color: Some("gray".to_string()),
+        ..ConfigColours::default()
+    };
+    pub static ref GRUVBOX_COLOUR_PALETTE: ConfigColours = ConfigColours {
+        table_header_color: Some("#ebdbb2".to_string()),
+        all_cpu_color: Some("#cc241d".to_string()),
+        avg_cpu_color: Some("#98971a".to_string()),
+        cpu_core_colors: Some(vec![
+            "#d79921".to_string(),
+            "#458588".to_string(),
+            "#b16286".to_string(),
+            "#689d6a".to_string(),
+            "#fb4934".to_string(),
+            "#b8bb26".to_string(),
+            "#fe8019".to_string(),
+            "#fabd2f".to_string(),
+            "#83a598".to_string(),
+            "#d3869b".to_string(),
+            "#8ec07c".to_string(),
+            "#d65d0e".to_string(),
+            "#fbf1c7".to_string(),
+            "#ebdbb2".to_string(),
+            "#d5c4a1".to_string(),
+            "#bdae93".to_string(),
+            "#a89984".to_string(),
+        ]),
+        ram_color: Some("#458588".to_string()),
+        swap_color: Some("#fabd2f".to_string()),
+        rx_color: Some("#458588".to_string()),
+        tx_color: Some("#fabd2f".to_string()),
+        rx_total_color: Some("#83a598".to_string()),
+        tx_total_color: Some("#d79921".to_string()),
+        border_color: Some("#ebdbb2".to_string()),
+        highlighted_border_color: Some("#fe8019".to_string()),
+        disabled_text_color: Some("#665c54".to_string()),
+        text_color: Some("#ebdbb2".to_string()),
+        selected_text_color: Some("#1d2021".to_string()),
+        selected_bg_color: Some("#ebdbb2".to_string()),
+        widget_title_color: Some("#ebdbb2".to_string()),
+        graph_color: Some("#ebdbb2".to_string()),
+        high_battery_color: Some("#98971a".to_string()),
+        medium_battery_color: Some("#fabd2f".to_string()),
+        low_battery_color: Some("#fb4934".to_string())
+    };
+    pub static ref GRUVBOX_LIGHT_COLOUR_PALETTE: ConfigColours = ConfigColours {
+        table_header_color: Some("#3c3836".to_string()),
+        all_cpu_color: Some("#cc241d".to_string()),
+        avg_cpu_color: Some("#98971a".to_string()),
+        cpu_core_colors: Some(vec![
+            "#d79921".to_string(),
+            "#458588".to_string(),
+            "#b16286".to_string(),
+            "#689d6a".to_string(),
+            "#fb4934".to_string(),
+            "#b8bb26".to_string(),
+            "#fe8019".to_string(),
+            "#fabd2f".to_string(),
+            "#83a598".to_string(),
+            "#d3869b".to_string(),
+            "#8ec07c".to_string(),
+            "#d65d0e".to_string(),
+            "#928374".to_string(),
+            "#665c54".to_string(),
+            "#504945".to_string(),
+            "#3c3836".to_string(),
+            "#282828".to_string(),
+        ]),
+        ram_color: Some("#458588".to_string()),
+        swap_color: Some("#cc241d".to_string()),
+        rx_color: Some("#458588".to_string()),
+        tx_color: Some("#cc241d".to_string()),
+        rx_total_color: Some("#83a598".to_string()),
+        tx_total_color: Some("#9d0006".to_string()),
+        border_color: Some("#3c3836".to_string()),
+        highlighted_border_color: Some("#fe8019".to_string()),
+        disabled_text_color: Some("#665c54".to_string()),
+        text_color: Some("#3c3836".to_string()),
+        selected_text_color: Some("#f9f5d7".to_string()),
+        selected_bg_color: Some("#665c54".to_string()),
+        widget_title_color: Some("#3c3836".to_string()),
+        graph_color: Some("#3c3836".to_string()),
+        high_battery_color: Some("#98971a".to_string()),
+        medium_battery_color: Some("#fabd2f".to_string()),
+        low_battery_color: Some("#fb4934".to_string())
+    };
+    // pub static ref NORD_COLOUR_PALETTE: ConfigColours = ConfigColours {
+    //     table_header_color: None,
+    //     all_cpu_color: None,
+    //     avg_cpu_color: None,
+    //     cpu_core_colors: None,
+    //     ram_color: None,
+    //     swap_color: None,
+    //     rx_color: None,
+    //     tx_color: None,
+    //     rx_total_color: None,
+    //     tx_total_color: None,
+    //     border_color: None,
+    //     highlighted_border_color: None,
+    //     text_color: None,
+    //     selected_text_color: None,
+    //     selected_bg_color: None,
+    //     widget_title_color: None,
+    //     graph_color: None,
+    //     high_battery_color: None,
+    //     medium_battery_color: None,
+    //     low_battery_color: None,
+    //     disabled_text_color: None,
+    // };
 }
 
 // FIXME: [HELP] I wanna update this before release... it's missing mouse too.

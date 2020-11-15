@@ -6,7 +6,7 @@
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
-![Quick demo recording showing off searching, expanding, and process killing.](assets/demo.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml))._ Recorded on version 0.4.7.
+![Quick demo recording showing off searching, expanding, and process killing.](assets/demo.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml)). Font is [IBM Plex Mono](https://www.ibm.com/plex/), terminal is [Kitty](https://sw.kovidgoyal.net/kitty/)_ Recorded on version **0.4.7**.
 
 **Note**: If you are reading this on the master branch, then it may refer to in-development or un-released features/changes. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
@@ -215,7 +215,9 @@ Run using `btm`.
         --battery                              Shows the battery widget.
     -S, --case_sensitive                       Enables case sensitivity by default.
     -c, --celsius                              Sets the temperature type to Celsius.
+        --color <COLOR SCHEME>                 Use a color scheme, use --help for supported values.
     -C, --config <CONFIG PATH>                 Sets the location of the config file.
+    -u, --current_usage                        Sets process CPU% to be based on current CPU%.
         --debug                                Enables debug logging.
     -t, --default_time_value <MS>              Default time value for graphs in ms.
         --default_widget_count <INT>           Sets the n'th selected widget type as the default.
@@ -224,19 +226,19 @@ Run using `btm`.
     -m, --dot_marker                           Uses a dot marker for graphs.
     -f, --fahrenheit                           Sets the temperature type to Fahrenheit.
     -g, --group                                Groups processes with the same name by default.
+    -h, --help                                 Prints help information.  Use --help for more info.
     -a, --hide_avg_cpu                         Hides the average CPU usage.
         --hide_table_gap                       Hides the spacing between table headers and entries.
         --hide_time                            Completely hides the time scaling.
     -k, --kelvin                               Sets the temperature type to Kelvin.
     -l, --left_legend                          Puts the CPU chart legend to the left side.
+        --no_write                             Disables writing to the config file.
     -r, --rate <MS>                            Sets a refresh rate in ms.
     -R, --regex                                Enables regex by default.
     -d, --time_delta <MS>                      The amount in ms changed upon zooming.
-    -u, --current_usage                        Sets process CPU% to be based on current CPU%.
         --use_old_network_legend               DEPRECATED - uses the older network legend.
-    -W, --whole_word                           Enables whole-word matching by default.
-    -h, --help                                 Prints help information.  Use --help for more info.
     -V, --version                              Prints version information.
+    -W, --whole_word                           Enables whole-word matching by default.
 ```
 
 ### Keybindings
@@ -538,6 +540,7 @@ These are the following supported flag config values, which correspond to the fl
 | `default_widget_type`    | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) |
 | `default_widget_count`   | Unsigned Int (represents which `default_widget_type`)                                 |
 | `disable_click`          | Boolean                                                                               |
+| `color`                  | String (one of ["default", "default-light", "gruvbox", "gruvbox-light"])              |
 
 #### Theming
 
@@ -545,25 +548,27 @@ The config file can be used to set custom colours for parts of the application u
 
 Supported named colours are one of the following strings: `Reset, Black, Red, Green, Yellow, Blue, Magenta, Cyan, Gray, DarkGray, LightRed, LightGreen, LightYellow, LightBlue, LightMagenta, LightCyan, White`.
 
-| Labels                          | Details                                               | Example                                                 |
-| ------------------------------- | ----------------------------------------------------- | ------------------------------------------------------- |
-| Table header colours            | Colour of table headers                               | `table_header_color="255, 255, 255"`                    |
-| CPU colour per core             | Colour of each core. Read in order.                   | `cpu_core_colors=["#ffffff", "white", "255, 255, 255"]` |
-| Average CPU colour              | The average CPU color                                 | `avg_cpu_color="White"`                                 |
-| All CPUs colour                 | The colour for the "All" CPU label                    | `all_cpu_color="White"`                                 |
-| RAM                             | The colour RAM will use                               | `ram_color="#ffffff"`                                   |
-| SWAP                            | The colour SWAP will use                              | `swap_color="#ffffff"`                                  |
-| RX                              | The colour rx will use                                | `rx_color="#ffffff"`                                    |
-| TX                              | The colour tx will use                                | `tx_color="#ffffff"`                                    |
-| Widget title colour             | The colour of the label each widget has               | `widget_title_color="#ffffff"`                          |
-| Border colour                   | The colour of the border of unselected widgets        | `border_color="#ffffff"`                                |
-| Selected border colour          | The colour of the border of selected widgets          | `highlighted_border_color="#ffffff"`                    |
-| Text colour                     | The colour of most text                               | `text_color="#ffffff"`                                  |
-| Graph colour                    | The colour of the lines and text of the graph         | `graph_color="#ffffff"`                                 |
-| Cursor colour                   | The cursor's colour                                   | `cursor_color="#ffffff"`                                |
-| Selected text colour            | The colour of text that is selected                   | `scroll_entry_text_color="#ffffff"`                     |
-| Selected text background colour | The background colour of text that is selected        | `scroll_entry_bg_color="#ffffff"`                       |
-| Battery bar colours             | Colour used is based on percentage and no. of colours | `battery_colors=["green", "yellow", "red"]`             |
+| Labels                          | Details                                                 | Example                                                 |
+| ------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| Table header colours            | Colour of table headers                                 | `table_header_color="255, 255, 255"`                    |
+| CPU colour per core             | Colour of each core. Read in order.                     | `cpu_core_colors=["#ffffff", "white", "255, 255, 255"]` |
+| Average CPU colour              | The average CPU color                                   | `avg_cpu_color="White"`                                 |
+| All CPUs colour                 | The colour for the "All" CPU label                      | `all_cpu_color="White"`                                 |
+| RAM                             | The colour RAM will use                                 | `ram_color="#ffffff"`                                   |
+| SWAP                            | The colour SWAP will use                                | `swap_color="#ffffff"`                                  |
+| RX                              | The colour rx will use                                  | `rx_color="#ffffff"`                                    |
+| TX                              | The colour tx will use                                  | `tx_color="#ffffff"`                                    |
+| Widget title colour             | The colour of the label each widget has                 | `widget_title_color="#ffffff"`                          |
+| Border colour                   | The colour of the border of unselected widgets          | `border_color="#ffffff"`                                |
+| Selected border colour          | The colour of the border of selected widgets            | `highlighted_border_color="#ffffff"`                    |
+| Text colour                     | The colour of most text                                 | `text_color="#ffffff"`                                  |
+| Graph colour                    | The colour of the lines and text of the graph           | `graph_color="#ffffff"`                                 |
+| Cursor colour                   | The cursor's colour                                     | `cursor_color="#ffffff"`                                |
+| Selected text colour            | The colour of text that is selected                     | `scroll_entry_text_color="#ffffff"`                     |
+| Selected text background colour | The background colour of text that is selected          | `scroll_entry_bg_color="#ffffff"`                       |
+| High battery level colour       | The colour used for a high battery level (100% to 50%)  | `high_battery_color="green"`                            |
+| Medium battery level colour     | The colour used for a medium battery level (50% to 10%) | `medium_battery_color="yellow"`                         |
+| Low battery level colour        | The colour used for a low battery level (10% to 0%)     | `low_battery_color="red"`                               |
 
 #### Layout
 

@@ -1,13 +1,16 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, time::Instant};
 use std::{
+    borrow::Cow,
     collections::{HashMap, HashSet},
     path::PathBuf,
+    str::FromStr,
+    time::Instant,
 };
 
 use crate::{
     app::{layout_manager::*, *},
+    canvas::ColourScheme,
     constants::*,
     utils::error::{self, BottomError},
 };
@@ -112,6 +115,9 @@ pub struct ConfigFlags {
     #[builder(default, setter(strip_option))]
     pub no_write: Option<bool>,
 
+    #[builder(default, setter(strip_option))]
+    pub color: Option<String>,
+
     // This is a huge hack to enable hashmap functionality WITHOUT being able to serializing the field.
     // Basically, keep a hashmap in the struct, and convert to a vector every time.
     #[builder(default, setter(strip_option))]
@@ -164,16 +170,19 @@ pub struct ConfigColours {
     pub swap_color: Option<String>,
     pub rx_color: Option<String>,
     pub tx_color: Option<String>,
-    pub rx_total_color: Option<String>,
-    pub tx_total_color: Option<String>,
+    pub rx_total_color: Option<String>, // These only affect basic mode.
+    pub tx_total_color: Option<String>, // These only affect basic mode.
     pub border_color: Option<String>,
     pub highlighted_border_color: Option<String>,
+    pub disabled_text_color: Option<String>,
     pub text_color: Option<String>,
     pub selected_text_color: Option<String>,
     pub selected_bg_color: Option<String>,
     pub widget_title_color: Option<String>,
     pub graph_color: Option<String>,
-    pub battery_colors: Option<Vec<String>>,
+    pub high_battery_color: Option<String>,
+    pub medium_battery_color: Option<String>,
+    pub low_battery_color: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -803,7 +812,7 @@ fn get_disable_click(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
     false
 }
 
-pub fn get_use_old_network_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_old_network_legend(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("use_old_network_legend") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -814,7 +823,7 @@ pub fn get_use_old_network_legend(matches: &clap::ArgMatches<'static>, config: &
     false
 }
 
-pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("hide_table_gap") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -825,7 +834,7 @@ pub fn get_hide_table_gap(matches: &clap::ArgMatches<'static>, config: &Config) 
     false
 }
 
-pub fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("battery") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -836,7 +845,7 @@ pub fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> 
     false
 }
 
-pub fn get_no_write(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+fn get_no_write(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("no_write") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -847,7 +856,7 @@ pub fn get_no_write(matches: &clap::ArgMatches<'static>, config: &Config) -> boo
     false
 }
 
-pub fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Filter>> {
+fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Filter>> {
     if let Some(ignore_list) = ignore_list {
         let list: Result<Vec<_>, _> = ignore_list
             .list
@@ -887,4 +896,24 @@ pub fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option
     } else {
         Ok(None)
     }
+}
+
+pub fn get_color_scheme(
+    matches: &clap::ArgMatches<'static>, config: &Config,
+) -> error::Result<ColourScheme> {
+    if let Some(color) = matches.value_of("color") {
+        // Highest priority is always command line flags...
+        return ColourScheme::from_str(color);
+    } else if config.colors.is_some() {
+        // Then, give priority to custom colours...
+        return Ok(ColourScheme::Custom);
+    } else if let Some(flags) = &config.flags {
+        // Last priority is config file flags...
+        if let Some(color) = &flags.color {
+            return ColourScheme::from_str(color);
+        }
+    }
+
+    // And lastly, the final case is just "default".
+    Ok(ColourScheme::Default)
 }

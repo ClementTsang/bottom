@@ -408,7 +408,7 @@ impl ProcessTableWidget for Painter {
                     }
                 });
 
-                // TODO: gotop's "x out of y" thing is really nice to help keep track of the scroll position.  Add to everything?
+                // FIXME: gotop's "x out of y" thing is really nice to help keep track of the scroll position.  Add to everything?
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)

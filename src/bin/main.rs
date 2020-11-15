@@ -70,6 +70,7 @@ fn main() -> Result<()> {
         app.app_config_fields.table_gap,
         app.app_config_fields.use_basic_mode,
         &config,
+        get_color_scheme(&matches, &config)?,
     )?;
 
     // Create termination mutex and cvar
