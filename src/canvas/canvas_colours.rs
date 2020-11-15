@@ -1,9 +1,7 @@
-use tui::style::{Color, Style};
-
+use crate::{constants::*, options::ConfigColours, utils::error};
+use anyhow::Context;
 use colour_utils::*;
-
-use crate::{constants::*, utils::error};
-
+use tui::style::{Color, Style};
 mod colour_utils;
 
 pub struct CanvasColours {
@@ -71,6 +69,118 @@ impl Default for CanvasColours {
 }
 
 impl CanvasColours {
+    pub fn set_colours_from_palette(&mut self, colours: &ConfigColours) -> anyhow::Result<()> {
+        if let Some(border_color) = &colours.border_color {
+            self.set_border_colour(border_color)
+                .context("Update 'border_color' in your config file..")?;
+        }
+
+        if let Some(highlighted_border_color) = &colours.highlighted_border_color {
+            self.set_highlighted_border_colour(highlighted_border_color)
+                .context("Update 'highlighted_border_color' in your config file..")?;
+        }
+
+        if let Some(text_color) = &colours.text_color {
+            self.set_text_colour(text_color)
+                .context("Update 'text_color' in your config file..")?;
+        }
+
+        if let Some(avg_cpu_color) = &colours.avg_cpu_color {
+            self.set_avg_cpu_colour(avg_cpu_color)
+                .context("Update 'avg_cpu_color' in your config file..")?;
+        }
+
+        if let Some(all_cpu_color) = &colours.all_cpu_color {
+            self.set_all_cpu_colour(all_cpu_color)
+                .context("Update 'all_cpu_color' in your config file..")?;
+        }
+
+        if let Some(cpu_core_colors) = &colours.cpu_core_colors {
+            self.set_cpu_colours(cpu_core_colors)
+                .context("Update 'cpu_core_colors' in your config file..")?;
+        }
+
+        if let Some(ram_color) = &colours.ram_color {
+            self.set_ram_colour(ram_color)
+                .context("Update 'ram_color' in your config file..")?;
+        }
+
+        if let Some(swap_color) = &colours.swap_color {
+            self.set_swap_colour(swap_color)
+                .context("Update 'swap_color' in your config file..")?;
+        }
+
+        if let Some(rx_color) = &colours.rx_color {
+            self.set_rx_colour(rx_color)
+                .context("Update 'rx_color' in your config file..")?;
+        }
+
+        if let Some(tx_color) = &colours.tx_color {
+            self.set_tx_colour(tx_color)
+                .context("Update 'tx_color' in your config file..")?;
+        }
+
+        if let Some(table_header_color) = &colours.table_header_color {
+            self.set_table_header_colour(table_header_color)
+                .context("Update 'table_header_color' in your config file..")?;
+        }
+
+        if let Some(scroll_entry_text_color) = &colours.selected_text_color {
+            self.set_scroll_entry_text_color(scroll_entry_text_color)
+                .context("Update 'selected_text_color' in your config file..")?;
+        }
+
+        if let Some(scroll_entry_bg_color) = &colours.selected_bg_color {
+            self.set_scroll_entry_bg_color(scroll_entry_bg_color)
+                .context("Update 'selected_bg_color' in your config file..")?;
+        }
+
+        if let Some(widget_title_color) = &colours.widget_title_color {
+            self.set_widget_title_colour(widget_title_color)
+                .context("Update 'widget_title_color' in your config file..")?;
+        }
+
+        if let Some(graph_color) = &colours.graph_color {
+            self.set_graph_colour(graph_color)
+                .context("Update 'graph_color' in your config file..")?;
+        }
+
+        if let Some(high_battery_color) = &colours.high_battery_color {
+            self.set_high_battery_color(high_battery_color)
+                .context("Update 'high_battery_color' in your config file.")?;
+        }
+
+        if let Some(medium_battery_color) = &colours.medium_battery_color {
+            self.set_medium_battery_color(medium_battery_color)
+                .context("Update 'medium_battery_color' in your config file.")?;
+        }
+
+        if let Some(low_battery_color) = &colours.low_battery_color {
+            self.set_low_battery_color(low_battery_color)
+                .context("Update 'low_battery_color' in your config file.")?;
+        }
+
+        if let Some(disabled_text_color) = &colours.disabled_text_color {
+            self.set_disabled_text_colour(disabled_text_color)
+                .context("Update 'disabled_text_color' in your config file.")?;
+        }
+
+        if let Some(rx_total_color) = &colours.rx_total_color {
+            self.set_rx_total_colour(rx_total_color)?;
+        }
+
+        if let Some(tx_total_color) = &colours.tx_total_color {
+            self.set_tx_total_colour(tx_total_color)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn set_disabled_text_colour(&mut self, colour: &str) -> error::Result<()> {
+        self.disabled_text_style = get_style_from_config(colour)?;
+        Ok(())
+    }
+
     pub fn set_text_colour(&mut self, colour: &str) -> error::Result<()> {
         self.text_style = get_style_from_config(colour)?;
         Ok(())
@@ -113,15 +223,15 @@ impl CanvasColours {
         Ok(())
     }
 
-    // pub fn set_rx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-    //     self.total_rx_style = get_style_from_config(colour)?;
-    //     Ok(())
-    // }
+    pub fn set_rx_total_colour(&mut self, colour: &str) -> error::Result<()> {
+        self.total_rx_style = get_style_from_config(colour)?;
+        Ok(())
+    }
 
-    // pub fn set_tx_total_colour(&mut self, colour: &str) -> error::Result<()> {
-    //     self.total_tx_style = get_style_from_config(colour)?;
-    //     Ok(())
-    // }
+    pub fn set_tx_total_colour(&mut self, colour: &str) -> error::Result<()> {
+        self.total_tx_style = get_style_from_config(colour)?;
+        Ok(())
+    }
 
     pub fn set_avg_cpu_colour(&mut self, colour: &str) -> error::Result<()> {
         self.avg_colour_style = get_style_from_config(colour)?;
@@ -176,19 +286,23 @@ impl CanvasColours {
         Ok(())
     }
 
-    pub fn set_battery_colors(&mut self, colours: &[String]) -> error::Result<()> {
-        if colours.is_empty() {
-            Err(error::BottomError::ConfigError(
-                "battery colour list must have at least one colour.".to_string(),
-            ))
-        } else {
-            let generated_colours: Result<Vec<_>, _> = colours
-                .iter()
-                .map(|colour| get_style_from_config(colour))
-                .collect();
+    pub fn set_high_battery_color(&mut self, colour: &str) -> error::Result<()> {
+        let style = get_style_from_config(colour)?;
+        self.battery_bar_styles[0] = style;
+        self.battery_bar_styles[1] = style;
+        self.battery_bar_styles[2] = style;
+        Ok(())
+    }
 
-            self.battery_bar_styles = generated_colours?;
-            Ok(())
-        }
+    pub fn set_medium_battery_color(&mut self, colour: &str) -> error::Result<()> {
+        let style = get_style_from_config(colour)?;
+        self.battery_bar_styles[3] = style;
+        self.battery_bar_styles[4] = style;
+        Ok(())
+    }
+
+    pub fn set_low_battery_color(&mut self, colour: &str) -> error::Result<()> {
+        self.battery_bar_styles[5] = get_style_from_config(colour)?;
+        Ok(())
     }
 }

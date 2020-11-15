@@ -204,26 +204,28 @@ file in the TOML format. If it doesn't exist, one is created.\n\n\n",
         .help("Use a color scheme, use --help for supported values.")
         .long_help(
             "\
-Use a pre-defined color scheme.  Supported values are:
+Use a pre-defined color scheme.  Currently supported values are:
 
-default
-default-dark
-gruvbox
-gruvbox-light
-nord
++------------------------------------------------------------+
+| default                                                    |
++------------------------------------------------------------+
+| default-light (default but for use with light backgrounds) |
++------------------------------------------------------------+
+| gruvbox (a bright theme with 'retro groove' colors)        |
++------------------------------------------------------------+
+| gruvbox-light (gruvbox but for use with light backgrounds) |
++------------------------------------------------------------+
 
 Defaults to \"default\".
-\n",
+\n\n",
         )
         .possible_values(&[
             "default",
-            "default-dark",
+            "default-light",
             "gruvbox",
             "gruvbox-light",
             "nord",
         ])
-        .default_value("default")
-        .hide_default_value(true)
         .hide_possible_values(true);
     let default_time_value = Arg::with_name("default_time_value")
         .short("t")

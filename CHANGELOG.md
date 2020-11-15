@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#269](https://github.com/ClementTsang/bottom/pull/269): Add simple indicator for when data updating is frozen.
 
+- [#296](https://github.com/ClementTsang/bottom/pull/296): Built-in colour themes.
+
 ### Changes
 
 - [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.
@@ -51,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#290](https://github.com/ClementTsang/bottom/pull/290): Fixed an incorrect offset affecting the CPU colour when scrolling.
 
 - [#291](https://github.com/ClementTsang/bottom/pull/291): Fixed spacing problems in basic CPU mode.
+
+- [#296](https://github.com/ClementTsang/bottom/pull/296): Fixed an incorrect offset affecting the graph CPU colour mismatching the legend.
+
+- [#296](https://github.com/ClementTsang/bottom/pull/296): Removes an accidental extra comma in one of the headers in the disk widget.
 
 ## [0.4.7] - 2020-08-26
 

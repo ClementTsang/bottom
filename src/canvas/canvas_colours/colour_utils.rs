@@ -26,6 +26,7 @@ lazy_static! {
         ("magenta", Color::Magenta),
         ("cyan", Color::Cyan),
         ("gray", Color::Gray),
+        ("grey", Color::Gray),
         ("darkgray", Color::DarkGray),
         ("lightred", Color::LightRed),
         ("lightgreen", Color::LightGreen),
