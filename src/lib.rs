@@ -361,14 +361,17 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 
     if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
         if !app.is_frozen {
-            app.canvas_data.single_process_data = convert_process_data(&app.data_collection);
+            app.canvas_data.single_process_data = convert_process_data(
+                &app.data_collection,
+                &mut app.canvas_data.single_process_data,
+            );
         }
         let process_filter = app.get_process_filter(widget_id);
         let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
             app.canvas_data
                 .single_process_data
                 .iter()
-                .map(|process| {
+                .map(|(_pid, process)| {
                     let mut process_clone = process.clone();
                     if !is_invalid_or_blank {
                         if let Some(process_filter) = process_filter {
@@ -383,15 +386,19 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             app.canvas_data
                 .single_process_data
                 .iter()
-                .filter(|process| {
+                .filter_map(|(_pid, process)| {
                     if !is_invalid_or_blank {
                         if let Some(process_filter) = process_filter {
-                            process_filter.check(&process, is_using_command)
+                            if process_filter.check(&process, is_using_command) {
+                                Some(process)
+                            } else {
+                                None
+                            }
                         } else {
-                            true
+                            Some(process)
                         }
                     } else {
-                        true
+                        Some(process)
                     }
                 })
                 .cloned()

@@ -488,7 +488,7 @@ impl ProcWidgetState {
         }
     }
 
-    pub fn get_cursor_position(&self) -> usize {
+    pub fn get_search_cursor_position(&self) -> usize {
         self.process_search_state
             .search_state
             .grapheme_cursor

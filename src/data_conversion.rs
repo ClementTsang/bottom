@@ -66,6 +66,8 @@ pub struct ConvertedProcessData {
     pub process_description_prefix: Option<String>,
     /// Whether to mark this process entry as disabled (mostly for tree mode).
     pub is_disabled_entry: bool,
+    /// Whether this entry is collapsed, hiding all its children (for tree mode).
+    pub is_collapsed_entry: bool,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -426,28 +428,72 @@ pub enum ProcessNamingType {
     Path,
 }
 
+/// Because we needed to UPDATE data entries rather than REPLACING entries, we instead update
+/// the existing vector.
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
-) -> Vec<ConvertedProcessData> {
+    existing_converted_process_data: &mut HashMap<Pid, ConvertedProcessData>,
+) -> HashMap<Pid, ConvertedProcessData> {
     // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
-    current_data
-        .process_harvest
-        .iter()
-        .map(|process| {
-            let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
-            let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
-            let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
-            let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
+    let mut new_converted_process_data: HashMap<Pid, ConvertedProcessData> = HashMap::default();
 
-            let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-            let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-            let total_read = format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
-            let total_write = format!(
-                "{:.*}{}",
-                0, converted_total_write.0, converted_total_write.1
-            );
+    for process in &current_data.process_harvest {
+        let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
+        let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
+        let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
+        let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
+
+        let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
+        let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
+        let total_read = format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
+        let total_write = format!(
+            "{:.*}{}",
+            0, converted_total_write.0, converted_total_write.1
+        );
+
+        // Pull existing entry out, modify values, then store in new hashmap.  We do this to avoid
+        // keeping old, non-updated values.
+        let updated_entry = (|| {
+            let removed_entry = existing_converted_process_data.remove(&process.pid);
+
+            if removed_entry.is_some() {
+                // This is usually not an issue but to avoid PID reuse causing problems
+                // (again, this is probably unlikely...) we do this additional check...
+                // This _is_ assuming that if the name, PPID, and PID match you aren't reusing, which is
+                // probably not always true, but probably true in many situations?
+
+                // This is a valid unwrap due to the above check, don't worry.
+                let mut process_entry = removed_entry.unwrap();
+
+                if process_entry.name == process.name.to_string()
+                    && process_entry.ppid == process.parent_pid
+                {
+                    process_entry.name = process.name.to_string();
+                    process_entry.command = process.command.to_string();
+                    process_entry.cpu_percent_usage = process.cpu_usage_percent;
+                    process_entry.mem_percent_usage = process.mem_usage_percent;
+                    process_entry.mem_usage_bytes = process.mem_usage_bytes;
+                    process_entry.mem_usage_str =
+                        get_exact_byte_values(process.mem_usage_bytes, false);
+                    process_entry.group_pids = vec![process.pid];
+                    process_entry.read_per_sec = read_per_sec;
+                    process_entry.write_per_sec = write_per_sec;
+                    process_entry.total_read = total_read;
+                    process_entry.total_write = total_write;
+                    process_entry.rps_f64 = process.read_bytes_per_sec as f64;
+                    process_entry.wps_f64 = process.write_bytes_per_sec as f64;
+                    process_entry.tr_f64 = process.total_read_bytes as f64;
+                    process_entry.tw_f64 = process.total_write_bytes as f64;
+                    process_entry.process_state = process.process_state.to_owned();
+                    process_entry.process_char = process.process_state_char;
+                    process_entry.process_description_prefix = None;
+                    process_entry.is_disabled_entry = false;
+
+                    return process_entry;
+                }
+            }
 
             ConvertedProcessData {
                 pid: process.pid,
@@ -472,9 +518,14 @@ pub fn convert_process_data(
                 process_char: process.process_state_char,
                 process_description_prefix: None,
                 is_disabled_entry: false,
+                is_collapsed_entry: false,
             }
-        })
-        .collect::<Vec<_>>()
+        })();
+
+        new_converted_process_data.insert(process.pid, updated_entry);
+    }
+
+    return new_converted_process_data;
 }
 
 const BRANCH_ENDING: char = '└';
@@ -483,31 +534,35 @@ const BRANCH_SPLIT: char = '├';
 const BRANCH_HORIZONTAL: char = '─';
 
 pub fn tree_process_data(
-    single_process_data: &[ConvertedProcessData], is_using_command: bool,
-    sort_type: &ProcessSorting, is_sort_descending: bool,
+    filtered_process_data: &[ConvertedProcessData], is_using_command: bool,
+    sorting_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
-    // FIXME: [TREE] Allow for collapsing entries.
     // TODO: [TREE] Option to sort usage by total branch usage or individual value usage?
 
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
     let mut parent_child_mapping: HashMap<Pid, IndexSet<Pid>> = HashMap::default();
-    let mut pid_process_mapping: HashMap<Pid, &ConvertedProcessData> = HashMap::default();
+    let mut pid_process_mapping: HashMap<Pid, &ConvertedProcessData> = HashMap::default(); // We actually already have this stored, but it's unfiltered... oh well.
     let mut orphan_set: IndexSet<Pid> = IndexSet::new();
+    let mut collapsed_set: IndexSet<Pid> = IndexSet::new();
 
-    single_process_data.iter().for_each(|process| {
+    filtered_process_data.iter().for_each(|process| {
         if let Some(ppid) = process.ppid {
             orphan_set.insert(ppid);
         }
         orphan_set.insert(process.pid);
     });
 
-    single_process_data.iter().for_each(|process| {
+    filtered_process_data.iter().for_each(|process| {
         // Create a mapping for the process if it DNE.
         parent_child_mapping
             .entry(process.pid)
             .or_insert_with(IndexSet::new);
         pid_process_mapping.insert(process.pid, process);
+
+        if process.is_collapsed_entry {
+            collapsed_set.insert(process.pid);
+        }
 
         // Insert its mapping to the process' parent if needed (create if it DNE).
         if let Some(ppid) = process.ppid {
@@ -521,8 +576,8 @@ pub fn tree_process_data(
 
     // Keep only orphans, or promote children of orphans to a top-level orphan
     // if their parents DNE in our pid to process mapping...
-    #[allow(clippy::redundant_clone)]
-    orphan_set.clone().iter().for_each(|pid| {
+    let old_orphan_set = orphan_set.clone();
+    old_orphan_set.iter().for_each(|pid| {
         if pid_process_mapping.get(pid).is_none() {
             // DNE!  Promote the mapped children and remove the current parent...
             orphan_set.remove(pid);
@@ -717,12 +772,14 @@ pub fn tree_process_data(
     /// the correct order to the PID tree as a vector.
     fn build_explored_pids(
         current_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid>>,
-        prev_drawn_lines: &str,
+        prev_drawn_lines: &str, collapsed_set: &IndexSet<Pid>,
     ) -> (Vec<Pid>, Vec<String>) {
         let mut explored_pids: Vec<Pid> = vec![current_pid];
         let mut lines: Vec<String> = vec![];
 
-        if let Some(children) = parent_child_mapping.get(&current_pid) {
+        if collapsed_set.contains(&current_pid) {
+            return (explored_pids, lines);
+        } else if let Some(children) = parent_child_mapping.get(&current_pid) {
             for (itx, child) in children.iter().rev().enumerate() {
                 let new_drawn_lines = if itx == children.len() - 1 {
                     format!("{}   ", prev_drawn_lines)
@@ -730,8 +787,12 @@ pub fn tree_process_data(
                     format!("{}{}  ", prev_drawn_lines, BRANCH_VERTICAL)
                 };
 
-                let (pid_res, branch_res) =
-                    build_explored_pids(*child, parent_child_mapping, new_drawn_lines.as_str());
+                let (pid_res, branch_res) = build_explored_pids(
+                    *child,
+                    parent_child_mapping,
+                    new_drawn_lines.as_str(),
+                    collapsed_set,
+                );
 
                 if itx == children.len() - 1 {
                     lines.push(format!(
@@ -769,20 +830,21 @@ pub fn tree_process_data(
             to_sort_vec.push((pid, *process));
         }
     }
-    sort_vec(&mut to_sort_vec, sort_type, is_sort_descending);
+    sort_vec(&mut to_sort_vec, sorting_type, is_sort_descending);
     pids_to_explore = to_sort_vec.iter().map(|(pid, _proc)| *pid).collect();
 
     while let Some(current_pid) = pids_to_explore.pop_front() {
         if !prune_disabled_pids(current_pid, &mut parent_child_mapping, &pid_process_mapping) {
             sort_remaining_pids(
                 current_pid,
-                sort_type,
+                sorting_type,
                 is_sort_descending,
                 &mut parent_child_mapping,
                 &pid_process_mapping,
             );
 
-            let (pid_res, branch_res) = build_explored_pids(current_pid, &parent_child_mapping, "");
+            let (pid_res, branch_res) =
+                build_explored_pids(current_pid, &parent_child_mapping, "", &collapsed_set);
             lines.push(String::default());
             lines.extend(branch_res);
             explored_pids.extend(pid_res);
@@ -798,8 +860,9 @@ pub fn tree_process_data(
             Some(process) => {
                 let mut p = process.clone();
                 p.process_description_prefix = Some(format!(
-                    "{}{}",
+                    "{}{}{}",
                     prefix,
+                    if p.is_collapsed_entry { "+ " } else { "" }, // I do the + sign thing here because I'm kinda too lazy to do it in the prefix, tbh.
                     if is_using_command {
                         &p.command
                     } else {
@@ -953,6 +1016,7 @@ pub fn group_process_data(
                 process_description_prefix: None,
                 process_char: char::default(),
                 is_disabled_entry: false,
+                is_collapsed_entry: false,
             }
         })
         .collect::<Vec<_>>()

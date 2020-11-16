@@ -697,7 +697,7 @@ impl App {
                         .process_search_state
                         .search_state
                         .is_enabled
-                        && proc_widget_state.get_cursor_position()
+                        && proc_widget_state.get_search_cursor_position()
                             < proc_widget_state
                                 .process_search_state
                                 .search_state
@@ -708,13 +708,13 @@ impl App {
                             .process_search_state
                             .search_state
                             .current_search_query
-                            .remove(proc_widget_state.get_cursor_position());
+                            .remove(proc_widget_state.get_search_cursor_position());
 
                         proc_widget_state
                             .process_search_state
                             .search_state
                             .grapheme_cursor = GraphemeCursor::new(
-                            proc_widget_state.get_cursor_position(),
+                            proc_widget_state.get_search_cursor_position(),
                             proc_widget_state
                                 .process_search_state
                                 .search_state
@@ -746,21 +746,22 @@ impl App {
                         .process_search_state
                         .search_state
                         .is_enabled
-                    && proc_widget_state.get_cursor_position() > 0
+                    && proc_widget_state.get_search_cursor_position() > 0
                 {
-                    proc_widget_state.search_walk_back(proc_widget_state.get_cursor_position());
+                    proc_widget_state
+                        .search_walk_back(proc_widget_state.get_search_cursor_position());
 
                     let removed_char = proc_widget_state
                         .process_search_state
                         .search_state
                         .current_search_query
-                        .remove(proc_widget_state.get_cursor_position());
+                        .remove(proc_widget_state.get_search_cursor_position());
 
                     proc_widget_state
                         .process_search_state
                         .search_state
                         .grapheme_cursor = GraphemeCursor::new(
-                        proc_widget_state.get_cursor_position(),
+                        proc_widget_state.get_search_cursor_position(),
                         proc_widget_state
                             .process_search_state
                             .search_state
@@ -838,15 +839,15 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.get_cursor_position();
+                            let prev_cursor = proc_widget_state.get_search_cursor_position();
                             proc_widget_state
-                                .search_walk_back(proc_widget_state.get_cursor_position());
-                            if proc_widget_state.get_cursor_position() < prev_cursor {
+                                .search_walk_back(proc_widget_state.get_search_cursor_position());
+                            if proc_widget_state.get_search_cursor_position() < prev_cursor {
                                 let str_slice = &proc_widget_state
                                     .process_search_state
                                     .search_state
                                     .current_search_query
-                                    [proc_widget_state.get_cursor_position()..prev_cursor];
+                                    [proc_widget_state.get_search_cursor_position()..prev_cursor];
                                 proc_widget_state
                                     .process_search_state
                                     .search_state
@@ -905,15 +906,16 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
                         if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.get_cursor_position();
-                            proc_widget_state
-                                .search_walk_forward(proc_widget_state.get_cursor_position());
-                            if proc_widget_state.get_cursor_position() > prev_cursor {
+                            let prev_cursor = proc_widget_state.get_search_cursor_position();
+                            proc_widget_state.search_walk_forward(
+                                proc_widget_state.get_search_cursor_position(),
+                            );
+                            if proc_widget_state.get_search_cursor_position() > prev_cursor {
                                 let str_slice = &proc_widget_state
                                     .process_search_state
                                     .search_state
                                     .current_search_query
-                                    [prev_cursor..proc_widget_state.get_cursor_position()];
+                                    [prev_cursor..proc_widget_state.get_search_cursor_position()];
                                 proc_widget_state
                                     .process_search_state
                                     .search_state
@@ -1124,13 +1126,13 @@ impl App {
                             .process_search_state
                             .search_state
                             .current_search_query
-                            .insert(proc_widget_state.get_cursor_position(), caught_char);
+                            .insert(proc_widget_state.get_search_cursor_position(), caught_char);
 
                         proc_widget_state
                             .process_search_state
                             .search_state
                             .grapheme_cursor = GraphemeCursor::new(
-                            proc_widget_state.get_cursor_position(),
+                            proc_widget_state.get_search_cursor_position(),
                             proc_widget_state
                                 .process_search_state
                                 .search_state
@@ -1139,7 +1141,7 @@ impl App {
                             true,
                         );
                         proc_widget_state
-                            .search_walk_forward(proc_widget_state.get_cursor_position());
+                            .search_walk_forward(proc_widget_state.get_search_cursor_position());
 
                         proc_widget_state
                             .process_search_state
@@ -1371,8 +1373,8 @@ impl App {
             'K' | 'W' => self.move_widget_selection(&WidgetDirection::Up),
             'J' | 'S' => self.move_widget_selection(&WidgetDirection::Down),
             't' => self.toggle_tree_mode(),
-            '+' => self.zoom_in(),
-            '-' => self.zoom_out(),
+            '+' => self.on_plus(),
+            '-' => self.on_minus(),
             '=' => self.reset_zoom(),
             'e' => self.toggle_expand_widget(),
             's' => self.toggle_sort(),
@@ -2242,6 +2244,53 @@ impl App {
             self.zoom_out();
         } else if self.current_widget.widget_type.is_widget_table() {
             self.increment_position_count();
+        }
+    }
+
+    fn on_plus(&mut self) {
+        if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            // Toggle collapsing if tree
+            self.toggle_collapsing_process_branch();
+        } else {
+            self.zoom_in();
+        }
+    }
+
+    fn on_minus(&mut self) {
+        if let BottomWidgetType::Proc = self.current_widget.widget_type {
+            // Toggle collapsing if tree
+            self.toggle_collapsing_process_branch();
+        } else {
+            self.zoom_out();
+        }
+    }
+
+    fn toggle_collapsing_process_branch(&mut self) {
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .widget_states
+            .get_mut(&self.current_widget.widget_id)
+        {
+            let current_posn = proc_widget_state.scroll_state.current_scroll_position;
+
+            if let Some(displayed_process_list) = self
+                .canvas_data
+                .finalized_process_data_map
+                .get(&self.current_widget.widget_id)
+            {
+                if let Some(corresponding_process) = displayed_process_list.get(current_posn) {
+                    let corresponding_pid = corresponding_process.pid;
+
+                    if let Some(process_data) = self
+                        .canvas_data
+                        .single_process_data
+                        .get_mut(&corresponding_pid)
+                    {
+                        process_data.is_collapsed_entry = !process_data.is_collapsed_entry;
+                        self.proc_state.force_update = Some(self.current_widget.widget_id);
+                    }
+                }
+            }
         }
     }
 
