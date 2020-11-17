@@ -2151,6 +2151,8 @@ impl App {
                 {
                     proc_widget_state.scroll_state.current_scroll_position =
                         (current_posn as i64 + num_to_change_by) as usize;
+                } else {
+                    return None;
                 }
             }
 
