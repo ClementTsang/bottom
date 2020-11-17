@@ -2060,7 +2060,9 @@ impl App {
     pub fn decrement_position_count(&mut self) {
         if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
-                BottomWidgetType::Proc => self.increment_process_position(-1),
+                BottomWidgetType::Proc => {
+                    self.increment_process_position(-1);
+                }
                 BottomWidgetType::ProcSort => self.increment_process_sort_position(-1),
                 BottomWidgetType::Temp => self.increment_temp_position(-1),
                 BottomWidgetType::Disk => self.increment_disk_position(-1),
@@ -2073,7 +2075,9 @@ impl App {
     pub fn increment_position_count(&mut self) {
         if !self.ignore_normal_keybinds() {
             match self.current_widget.widget_type {
-                BottomWidgetType::Proc => self.increment_process_position(1),
+                BottomWidgetType::Proc => {
+                    self.increment_process_position(1);
+                }
                 BottomWidgetType::ProcSort => self.increment_process_sort_position(1),
                 BottomWidgetType::Temp => self.increment_temp_position(1),
                 BottomWidgetType::Disk => self.increment_disk_position(1),
@@ -2130,7 +2134,8 @@ impl App {
         }
     }
 
-    fn increment_process_position(&mut self, num_to_change_by: i64) {
+    /// Returns the new position.
+    fn increment_process_position(&mut self, num_to_change_by: i64) -> Option<usize> {
         if let Some(proc_widget_state) = self
             .proc_state
             .get_mut_widget_state(self.current_widget.widget_id)
@@ -2154,7 +2159,11 @@ impl App {
             } else {
                 proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
             }
+
+            return Some(proc_widget_state.scroll_state.current_scroll_position);
         }
+
+        None
     }
 
     fn increment_temp_position(&mut self, num_to_change_by: i64) {
@@ -2513,10 +2522,11 @@ impl App {
         // Pretty dead simple - iterate through the widget map and go to the widget where the click
         // is within.
 
-        // TODO: [MOUSE] double click functionality...?
         // TODO: [REFACTOR] might want to refactor this, it's ugly as sin.
         // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently everything
         // is grouped up as an app state.  We should separate stuff like event state and gui state and etc.
+
+        // TODO: [MOUSE] double click functionality...?  We would do this above all other actions and SC if needed.
 
         // Short circuit if we're in basic table... we might have to handle the basic table arrow
         // case here...
@@ -2669,9 +2679,25 @@ impl App {
                                     if let Some(visual_index) =
                                         proc_widget_state.scroll_state.table_state.selected()
                                     {
-                                        self.increment_process_position(
+                                        // If in tree mode, also check to see if this click is on
+                                        // the same entry as the already selected one - if it is,
+                                        // then we minimize.
+
+                                        let previous_scroll_position =
+                                            proc_widget_state.scroll_state.current_scroll_position;
+                                        let is_tree_mode = proc_widget_state.is_tree_mode;
+
+                                        let new_position = self.increment_process_position(
                                             offset_clicked_entry as i64 - visual_index as i64,
                                         );
+
+                                        if is_tree_mode {
+                                            if let Some(new_position) = new_position {
+                                                if previous_scroll_position == new_position {
+                                                    self.toggle_collapsing_process_branch();
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
