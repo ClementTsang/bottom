@@ -525,7 +525,7 @@ pub fn convert_process_data(
         new_converted_process_data.insert(process.pid, updated_entry);
     }
 
-    return new_converted_process_data;
+    new_converted_process_data
 }
 
 const BRANCH_ENDING: char = '└';
