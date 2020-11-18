@@ -8,7 +8,6 @@ use crate::{
 use data_harvester::processes::ProcessSorting;
 use indexmap::IndexSet;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::iter::FromIterator;
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -197,19 +196,17 @@ pub fn convert_cpu_data_points(
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
             // Check if the vector exists yet
             if cpu_data_vector.len() <= itx {
-                let mut new_cpu_data = ConvertedCpuData::default();
-                new_cpu_data.cpu_name = if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
-                {
-                    if let Some(cpu_count) = cpu_harvest.cpu_count {
-                        format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
+                let new_cpu_data = ConvertedCpuData {
+                    cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
+                        if let Some(cpu_count) = cpu_harvest.cpu_count {
+                            format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
+                        } else {
+                            cpu_harvest.cpu_prefix.to_string()
+                        }
                     } else {
-                        cpu_harvest.cpu_prefix.to_string()
-                    }
-                } else {
-                    String::default()
-                };
-                new_cpu_data.short_cpu_name =
-                    if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
+                        String::default()
+                    },
+                    short_cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
                         if let Some(cpu_count) = cpu_harvest.cpu_count {
                             cpu_count.to_string()
                         } else {
@@ -217,7 +214,10 @@ pub fn convert_cpu_data_points(
                         }
                     } else {
                         String::default()
-                    };
+                    },
+                    ..ConvertedCpuData::default()
+                };
+
                 cpu_data_vector.push(new_cpu_data);
             }
 
@@ -439,7 +439,7 @@ pub fn convert_process_data(
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
     let mut complete_pid_set: HashSet<Pid> =
-        HashSet::from_iter(existing_converted_process_data.keys().map(|pid| *pid));
+        existing_converted_process_data.keys().copied().collect();
 
     for process in &current_data.process_harvest {
         let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
