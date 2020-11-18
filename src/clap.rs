@@ -143,13 +143,13 @@ Completely hides the time scaling from being shown.\n\n",
             "\
 Puts the CPU chart legend to the left side rather than the right side.\n\n",
         );
-    let no_write = Arg::with_name("no_write")
-        .long("no_write")
-        .help("Disables writing to the config file.")
-        .long_help(
-            "\
-Disables config changes in-app from writing to the config file.",
-        );
+    //     let no_write = Arg::with_name("no_write")
+    //         .long("no_write")
+    //         .help("Disables writing to the config file.")
+    //         .long_help(
+    //             "\
+    // Disables config changes in-app from writing to the config file.",
+    //         );
     let regex = Arg::with_name("regex")
         .short("R")
         .long("regex")
@@ -355,7 +355,7 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(hide_table_gap)
         .arg(hide_time)
         .arg(left_legend)
-        .arg(no_write)
+        // .arg(no_write)
         .arg(rate)
         .arg(regex)
         .arg(time_delta)

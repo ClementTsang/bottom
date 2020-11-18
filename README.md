@@ -233,7 +233,6 @@ Run using `btm`.
         --hide_time                            Completely hides the time scaling.
     -k, --kelvin                               Sets the temperature type to Kelvin.
     -l, --left_legend                          Puts the CPU chart legend to the left side.
-        --no_write                             Disables writing to the config file.
     -r, --rate <MS>                            Sets a refresh rate in ms.
     -R, --regex                                Enables regex by default.
     -d, --time_delta <MS>                      The amount in ms changed upon zooming.
