@@ -137,6 +137,7 @@ sudo dnf install bottom
 ### Gentoo
 
 Available in [dm9pZCAq overlay](https://github.com/gentoo-mirror/dm9pZCAq)
+
 ```bash
 sudo eselect repository enable dm9pZCAq
 sudo emerge --sync dm9pZCAq
@@ -400,6 +401,12 @@ Note that the `and` operator takes precedence over the `or` operator.
 |        |                                                                       |
 | ------ | --------------------------------------------------------------------- |
 | Scroll | Scrolling over an CPU core/average shows only that entry on the chart |
+
+#### Process bindings
+
+|       |                                                                                                     |
+| ----- | --------------------------------------------------------------------------------------------------- |
+| Click | If in tree mode and you click on a selected entry, it toggles whether the branch is expanded or not |
 
 ## Features
 
@@ -742,6 +749,7 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Thanks
