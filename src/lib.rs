@@ -361,7 +361,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 
     if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
         if !app.is_frozen {
-            app.canvas_data.single_process_data = convert_process_data(
+            convert_process_data(
                 &app.data_collection,
                 &mut app.canvas_data.single_process_data,
             );

@@ -7,7 +7,8 @@ use crate::{
 };
 use data_harvester::processes::ProcessSorting;
 use indexmap::IndexSet;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::iter::FromIterator;
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -433,11 +434,12 @@ pub enum ProcessNamingType {
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
     existing_converted_process_data: &mut HashMap<Pid, ConvertedProcessData>,
-) -> HashMap<Pid, ConvertedProcessData> {
+) {
     // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
-    let mut new_converted_process_data: HashMap<Pid, ConvertedProcessData> = HashMap::default();
+    let mut complete_pid_set: HashSet<Pid> =
+        HashSet::from_iter(existing_converted_process_data.keys().map(|pid| *pid));
 
     for process in &current_data.process_harvest {
         let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
@@ -453,79 +455,94 @@ pub fn convert_process_data(
             0, converted_total_write.0, converted_total_write.1
         );
 
-        // Pull existing entry out, modify values, then store in new hashmap.  We do this to avoid
-        // keeping old, non-updated values.
-        let updated_entry = (|| {
-            let removed_entry = existing_converted_process_data.remove(&process.pid);
+        if let Some(process_entry) = existing_converted_process_data.get_mut(&process.pid) {
+            complete_pid_set.remove(&process.pid);
 
-            if removed_entry.is_some() {
-                // This is usually not an issue but to avoid PID reuse causing problems
-                // (again, this is probably unlikely...) we do this additional check...
-                // This _is_ assuming that if the name, PPID, and PID match you aren't reusing, which is
-                // probably not always true, but probably true in many situations?
-
-                // This is a valid unwrap due to the above check, don't worry.
-                let mut process_entry = removed_entry.unwrap();
-
-                if process_entry.name == process.name.to_string()
-                    && process_entry.ppid == process.parent_pid
-                {
-                    process_entry.name = process.name.to_string();
-                    process_entry.command = process.command.to_string();
-                    process_entry.cpu_percent_usage = process.cpu_usage_percent;
-                    process_entry.mem_percent_usage = process.mem_usage_percent;
-                    process_entry.mem_usage_bytes = process.mem_usage_bytes;
-                    process_entry.mem_usage_str =
-                        get_exact_byte_values(process.mem_usage_bytes, false);
-                    process_entry.group_pids = vec![process.pid];
-                    process_entry.read_per_sec = read_per_sec;
-                    process_entry.write_per_sec = write_per_sec;
-                    process_entry.total_read = total_read;
-                    process_entry.total_write = total_write;
-                    process_entry.rps_f64 = process.read_bytes_per_sec as f64;
-                    process_entry.wps_f64 = process.write_bytes_per_sec as f64;
-                    process_entry.tr_f64 = process.total_read_bytes as f64;
-                    process_entry.tw_f64 = process.total_write_bytes as f64;
-                    process_entry.process_state = process.process_state.to_owned();
-                    process_entry.process_char = process.process_state_char;
-                    process_entry.process_description_prefix = None;
-                    process_entry.is_disabled_entry = false;
-
-                    return process_entry;
-                }
+            // Very dumb way to see if there's PID reuse...
+            if process_entry.ppid == process.parent_pid {
+                process_entry.name = process.name.to_string();
+                process_entry.command = process.command.to_string();
+                process_entry.cpu_percent_usage = process.cpu_usage_percent;
+                process_entry.mem_percent_usage = process.mem_usage_percent;
+                process_entry.mem_usage_bytes = process.mem_usage_bytes;
+                process_entry.mem_usage_str = get_exact_byte_values(process.mem_usage_bytes, false);
+                process_entry.group_pids = vec![process.pid];
+                process_entry.read_per_sec = read_per_sec;
+                process_entry.write_per_sec = write_per_sec;
+                process_entry.total_read = total_read;
+                process_entry.total_write = total_write;
+                process_entry.rps_f64 = process.read_bytes_per_sec as f64;
+                process_entry.wps_f64 = process.write_bytes_per_sec as f64;
+                process_entry.tr_f64 = process.total_read_bytes as f64;
+                process_entry.tw_f64 = process.total_write_bytes as f64;
+                process_entry.process_state = process.process_state.to_owned();
+                process_entry.process_char = process.process_state_char;
+                process_entry.process_description_prefix = None;
+                process_entry.is_disabled_entry = false;
+            } else {
+                // ...I hate that I can't combine if let and an if statement in one line...
+                *process_entry = ConvertedProcessData {
+                    pid: process.pid,
+                    ppid: process.parent_pid,
+                    is_thread: None,
+                    name: process.name.to_string(),
+                    command: process.command.to_string(),
+                    cpu_percent_usage: process.cpu_usage_percent,
+                    mem_percent_usage: process.mem_usage_percent,
+                    mem_usage_bytes: process.mem_usage_bytes,
+                    mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
+                    group_pids: vec![process.pid],
+                    read_per_sec,
+                    write_per_sec,
+                    total_read,
+                    total_write,
+                    rps_f64: process.read_bytes_per_sec as f64,
+                    wps_f64: process.write_bytes_per_sec as f64,
+                    tr_f64: process.total_read_bytes as f64,
+                    tw_f64: process.total_write_bytes as f64,
+                    process_state: process.process_state.to_owned(),
+                    process_char: process.process_state_char,
+                    process_description_prefix: None,
+                    is_disabled_entry: false,
+                    is_collapsed_entry: false,
+                };
             }
-
-            ConvertedProcessData {
-                pid: process.pid,
-                ppid: process.parent_pid,
-                is_thread: None,
-                name: process.name.to_string(),
-                command: process.command.to_string(),
-                cpu_percent_usage: process.cpu_usage_percent,
-                mem_percent_usage: process.mem_usage_percent,
-                mem_usage_bytes: process.mem_usage_bytes,
-                mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
-                group_pids: vec![process.pid],
-                read_per_sec,
-                write_per_sec,
-                total_read,
-                total_write,
-                rps_f64: process.read_bytes_per_sec as f64,
-                wps_f64: process.write_bytes_per_sec as f64,
-                tr_f64: process.total_read_bytes as f64,
-                tw_f64: process.total_write_bytes as f64,
-                process_state: process.process_state.to_owned(),
-                process_char: process.process_state_char,
-                process_description_prefix: None,
-                is_disabled_entry: false,
-                is_collapsed_entry: false,
-            }
-        })();
-
-        new_converted_process_data.insert(process.pid, updated_entry);
+        } else {
+            existing_converted_process_data.insert(
+                process.pid,
+                ConvertedProcessData {
+                    pid: process.pid,
+                    ppid: process.parent_pid,
+                    is_thread: None,
+                    name: process.name.to_string(),
+                    command: process.command.to_string(),
+                    cpu_percent_usage: process.cpu_usage_percent,
+                    mem_percent_usage: process.mem_usage_percent,
+                    mem_usage_bytes: process.mem_usage_bytes,
+                    mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
+                    group_pids: vec![process.pid],
+                    read_per_sec,
+                    write_per_sec,
+                    total_read,
+                    total_write,
+                    rps_f64: process.read_bytes_per_sec as f64,
+                    wps_f64: process.write_bytes_per_sec as f64,
+                    tr_f64: process.total_read_bytes as f64,
+                    tw_f64: process.total_write_bytes as f64,
+                    process_state: process.process_state.to_owned(),
+                    process_char: process.process_state_char,
+                    process_description_prefix: None,
+                    is_disabled_entry: false,
+                    is_collapsed_entry: false,
+                },
+            );
+        }
     }
 
-    new_converted_process_data
+    // Now clean up any spare entries that weren't visited, to avoid clutter:
+    complete_pid_set.iter().for_each(|pid| {
+        existing_converted_process_data.remove(pid);
+    })
 }
 
 const BRANCH_ENDING: char = '└';
