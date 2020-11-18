@@ -506,7 +506,7 @@ impl ProcessTableWidget for Painter {
             let search_title = "> ";
 
             let num_chars_for_text = search_title.len();
-            let cursor_position = proc_widget_state.get_cursor_position();
+            let cursor_position = proc_widget_state.get_search_cursor_position();
             let current_cursor_position = proc_widget_state.get_char_cursor_position();
 
             let start_position: usize = get_search_start_position(

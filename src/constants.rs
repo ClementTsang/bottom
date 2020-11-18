@@ -158,7 +158,6 @@ lazy_static! {
     // };
 }
 
-// FIXME: [HELP] I wanna update this before release... it's missing mouse too.
 // Help text
 pub const HELP_CONTENTS_TEXT: [&str; 8] = [
     "Press the corresponding numbers to jump to the section, or scroll:",
@@ -171,7 +170,9 @@ pub const HELP_CONTENTS_TEXT: [&str; 8] = [
     "7 - Basic memory widget",
 ];
 
-pub const GENERAL_HELP_TEXT: [&str; 29] = [
+// TODO [Help]: Search in help?
+// TODO [Help]: Move to using tables for easier formatting?
+pub const GENERAL_HELP_TEXT: [&str; 30] = [
     "1 - General",
     "q, Ctrl-c        Quit",
     "Esc              Close dialog windows, search, widgets, or exit expanded mode",
@@ -201,6 +202,7 @@ pub const GENERAL_HELP_TEXT: [&str; 29] = [
     "-                Zoom out on chart (increase time range)",
     "=                Reset zoom",
     "Mouse scroll     Scroll through the tables or zoom in/out of charts by scrolling up/down",
+    "Mouse click      Selects the clicked widget, table entry, dialog option, or tab",
 ];
 
 pub const CPU_HELP_TEXT: [&str; 2] = [
@@ -208,9 +210,7 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
     "Mouse scroll     Scrolling over an CPU core/average shows only that entry on the chart",
 ];
 
-// TODO [Help]: Search in help?
-// TODO [Help]: Move to using tables for easier formatting?
-pub const PROCESS_HELP_TEXT: [&str; 13] = [
+pub const PROCESS_HELP_TEXT: [&str; 14] = [
     "3 - Process widget",
     "dd               Kill the selected process",
     "c                Sort by CPU usage, press again to reverse sorting order",
@@ -224,6 +224,7 @@ pub const PROCESS_HELP_TEXT: [&str; 13] = [
     "I                Invert current sort",
     "%                Toggle between values and percentages for memory usage",
     "t, F5            Toggle tree mode",
+    "+, -, click      Collapse/expand a branch while in tree mode",
 ];
 
 pub const SEARCH_HELP_TEXT: [&str; 46] = [

@@ -115,6 +115,7 @@ pub struct ConfigFlags {
     #[builder(default, setter(strip_option))]
     pub no_write: Option<bool>,
 
+    // For built-in colour palettes.
     #[builder(default, setter(strip_option))]
     pub color: Option<String>,
 
@@ -362,7 +363,8 @@ pub fn build_app(
             1
         },
         disable_click: get_disable_click(matches, config),
-        no_write: get_no_write(matches, config),
+        // no_write: get_no_write(matches, config),
+        no_write: false,
     };
 
     let used_widgets = UsedWidgets {
@@ -845,6 +847,7 @@ fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> bool
     false
 }
 
+#[allow(dead_code)]
 fn get_no_write(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("no_write") {
         return true;
