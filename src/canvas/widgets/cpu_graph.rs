@@ -217,7 +217,7 @@ impl CpuGraphWidget for Painter {
                     .style(if show_avg_cpu && current_scroll_position == AVG_POSITION {
                         self.colours.avg_colour_style
                     } else {
-                        self.colours.cpu_colour_styles[cpu_widget_state
+                        self.colours.cpu_colour_styles[(cpu_widget_state
                             .scroll_state
                             .current_scroll_position
                             - 1 // Because of the all position
@@ -225,7 +225,8 @@ impl CpuGraphWidget for Painter {
                                 AVG_POSITION
                             } else {
                                 0
-                            }) % self.colours.cpu_colour_styles.len()]
+                            }))
+                            % self.colours.cpu_colour_styles.len()]
                     })
                     .data(&cpu.cpu_data[..])
                     .graph_type(tui::widgets::GraphType::Line)]
@@ -375,14 +376,16 @@ impl CpuGraphWidget for Painter {
                             if itx + start_position == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else {
-                                self.colours.cpu_colour_styles[itx + start_position
+                                self.colours.cpu_colour_styles[(itx + start_position
                                     - AVG_POSITION
-                                    - 1 % self.colours.cpu_colour_styles.len()]
+                                    - 1)
+                                    % self.colours.cpu_colour_styles.len()]
                             }
                         } else {
-                            self.colours.cpu_colour_styles[itx + start_position
+                            self.colours.cpu_colour_styles[(itx + start_position
                                 - ALL_POSITION
-                                - 1 % self.colours.cpu_colour_styles.len()]
+                                - 1)
+                                % self.colours.cpu_colour_styles.len()]
                         },
                     ))
                 }

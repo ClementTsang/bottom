@@ -48,7 +48,7 @@ impl Default for CanvasColours {
             total_tx_style: Style::default().fg(STANDARD_FOURTH_COLOUR),
             all_colour_style: Style::default().fg(ALL_COLOUR),
             avg_colour_style: Style::default().fg(AVG_COLOUR),
-            cpu_colour_styles: Vec::new(),
+            cpu_colour_styles: colour_utils::get_default_cpu_colours(),
             border_style: Style::default().fg(text_colour),
             highlighted_border_style: Style::default().fg(STANDARD_HIGHLIGHT_COLOUR),
             text_style: Style::default().fg(text_colour),
@@ -256,12 +256,6 @@ impl CanvasColours {
             self.cpu_colour_styles.push(get_style_from_config(colour)?);
         }
         Ok(())
-    }
-
-    pub fn generate_remaining_cpu_colours(&mut self) {
-        let remaining_num_colours = NUM_COLOURS.saturating_sub(self.cpu_colour_styles.len());
-        self.cpu_colour_styles
-            .extend(gen_n_styles(remaining_num_colours));
     }
 
     pub fn set_scroll_entry_text_color(&mut self, colour: &str) -> error::Result<()> {

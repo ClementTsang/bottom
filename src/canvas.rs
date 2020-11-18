@@ -197,7 +197,6 @@ impl Painter {
         } else {
             painter.generate_colour_scheme(colour_scheme)?;
         }
-        painter.colours.generate_remaining_cpu_colours();
         painter.complete_painter_init();
 
         Ok(painter)
