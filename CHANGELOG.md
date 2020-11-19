@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#296](https://github.com/ClementTsang/bottom/pull/296): Built-in colour themes.
 
+- [#309](https://github.com/ClementTsang/bottom/pull/309): Adds a `mem_as_value` flag to default displaying process memory as value rather than percentage.
+
 ### Changes
 
 - [#213](https://github.com/ClementTsang/bottom/pull/213), [#214](https://github.com/ClementTsang/bottom/pull/214): Updated help descriptions, added auto-complete generation.
