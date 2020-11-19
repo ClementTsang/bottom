@@ -1,4 +1,5 @@
-use std::{collections::HashMap, io::Write, path::PathBuf, time::Instant};
+// use std::io::Write;
+use std::{collections::HashMap, path::PathBuf, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
@@ -1405,23 +1406,25 @@ impl App {
 
     /// Call this whenever the config value is updated!
     fn update_config_file(&mut self) -> anyhow::Result<()> {
-        if self.app_config_fields.no_write {
-            // debug!("No write enabled.  Config will not be written.");
-            // Don't write!
-            // FIXME: [CONFIG] This should be made VERY clear to the user... make a thing saying "it will not write due to no_write option"
-            Ok(())
-        } else if let Some(config_path) = &self.config_path {
-            // Update
-            // debug!("Updating config file - writing to: {:?}", config_path);
-            std::fs::File::create(config_path)?
-                .write_all(self.config.get_config_as_bytes()?.as_ref())?;
-            Ok(())
-        } else {
-            // FIXME: [CONFIG] Put an actual error message?
-            Err(anyhow::anyhow!(
-                "Config path was missing, please try restarting bottom..."
-            ))
-        }
+        // TODO: Disabled.
+        // if self.app_config_fields.no_write {
+        //     // debug!("No write enabled.  Config will not be written.");
+        //     // Don't write!
+        //     // FIXME: [CONFIG] This should be made VERY clear to the user... make a thing saying "it will not write due to no_write option"
+        //     Ok(())
+        // } else if let Some(config_path) = &self.config_path {
+        //     // Update
+        //     // debug!("Updating config file - writing to: {:?}", config_path);
+        //     std::fs::File::create(config_path)?
+        //         .write_all(self.config.get_config_as_bytes()?.as_ref())?;
+        //     Ok(())
+        // } else {
+        //     // FIXME: [CONFIG] Put an actual error message?
+        //     Err(anyhow::anyhow!(
+        //         "Config path was missing, please try restarting bottom..."
+        //     ))
+        // }
+        Ok(())
     }
 
     pub fn kill_highlighted_process(&mut self) -> Result<()> {

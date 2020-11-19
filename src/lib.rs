@@ -225,7 +225,8 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
             if let Some(parent_path) = path.parent() {
                 fs::create_dir_all(parent_path)?;
             }
-            fs::File::create(path)?.write_all(CONFIG_TOP_HEAD.as_bytes())?;
+            // fs::File::create(path)?.write_all(CONFIG_TOP_HEAD.as_bytes())?;
+            fs::File::create(path)?.write_all(OLD_CONFIG_TEXT.as_bytes())?;
             Ok(Config::default())
         }
     } else {

@@ -227,6 +227,13 @@ Defaults to \"default\".
             "nord",
         ])
         .hide_possible_values(true);
+    let mem_as_value = Arg::with_name("mem_as_value")
+        .long("mem_as_value")
+        .help("Defaults to showing process memory usage by value.")
+        .long_help(
+            "\
+Defaults to showing process memory usage by value.  Otherwise, it defaults to showing it by percentage.\n\n",
+        );
     let default_time_value = Arg::with_name("default_time_value")
         .short("t")
         .long("default_time_value")
@@ -345,6 +352,7 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(config_location)
         .arg(color)
         .arg(debug)
+        .arg(mem_as_value)
         .arg(default_time_value)
         .arg(default_widget_count)
         .arg(default_widget_type)

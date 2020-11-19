@@ -233,6 +233,7 @@ Run using `btm`.
         --hide_time                            Completely hides the time scaling.
     -k, --kelvin                               Sets the temperature type to Kelvin.
     -l, --left_legend                          Puts the CPU chart legend to the left side.
+        --mem_as_value                         Defaults to showing process memory usage by value.
     -r, --rate <MS>                            Sets a refresh rate in ms.
     -R, --regex                                Enables regex by default.
     -d, --time_delta <MS>                      The amount in ms changed upon zooming.
@@ -547,6 +548,7 @@ These are the following supported flag config values, which correspond to the fl
 | `default_widget_count`   | Unsigned Int (represents which `default_widget_type`)                                 |
 | `disable_click`          | Boolean                                                                               |
 | `color`                  | String (one of ["default", "default-light", "gruvbox", "gruvbox-light"])              |
+| `mem_as_value`           | Boolean                                                                               |
 
 #### Theming
 

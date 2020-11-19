@@ -365,9 +365,133 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 // Config and flags
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
-pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.  Values in this config file will change when changed in the
-# interface.  You can also manually change these values.  Be aware that contents of this file will be overwritten if something is
-# changed in the application; you can disable writing via the --no_write flag or no_write config option.
+pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  All of the settings are commented
+# out by default; if you wish to change them uncomment and modify as you see
+# fit.
+
+# This group of options represents a command-line flag/option.  Flags explicitly
+# added when running (ie: btm -a) will override this config file if an option
+# is also set here.
+[flags]
+# Whether to hide the average cpu entry.
+#hide_avg_cpu = false
+# Whether to use dot markers rather than braille.
+#dot_marker = false
+# The update rate of the application.
+#rate = 1000
+# Whether to put the CPU legend to the left.
+#left_legend = false
+# Whether to set CPU% on a process to be based on the total CPU or just current usage.
+#current_usage = false
+# Whether to group processes with the same name together by default.
+#group_processes = false
+# Whether to make process searching case sensitive by default.
+#case_sensitive = false
+# Whether to make process searching look for matching the entire word by default.
+#whole_word = false
+# Whether to make process searching use regex by default.
+#regex = false
+# Defaults to Celsius.  Temperature is one of:
+#temperature_type = "k"
+#temperature_type = "f"
+#temperature_type = "c"
+#temperature_type = "kelvin"
+#temperature_type = "fahrenheit"
+#temperature_type = "celsius"
+# The default time interval (in milliseconds).
+#default_time_value = 60000
+# The time delta on each zoom in/out action (in milliseconds).
+#time_delta = 15000
+# Override layout default widget
+#default_widget_type = "proc"
+#default_widget_count = 1
+# Use basic mode
+#basic = false
+# Use the old network legend style
+#use_old_network_legend = false
+# Remove space in tables
+#hide_table_gap = false
+# Disable mouse clicks
+#disable_click = false
+# Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light"
+#color = "default"
+# Show memory values in the processes widget as values by default
+# mem_as_value = false
+
+# These are all the components that support custom theming.  Note that colour support
+# will depend on terminal support.
+[colors]
+# Represents the colour of table headers (processes, CPU, disks, temperature).
+#table_header_color="LightBlue"
+# Represents the colour of the label each widget has.
+#widget_title_color="Gray"
+# Represents the average CPU color.
+#avg_cpu_color="Red"
+# Represents the colour the core will use in the CPU legend and graph.
+#cpu_core_colors=["LightMagenta", "LightYellow", "LightCyan", "LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
+# Represents the colour RAM will use in the memory legend and graph.
+#ram_color="LightMagenta"
+# Represents the colour SWAP will use in the memory legend and graph.
+#swap_color="LightYellow"
+# Represents the colour rx will use in the network legend and graph.
+#rx_color="LightCyan"
+# Represents the colour tx will use in the network legend and graph.
+#tx_color="LightGreen"
+# Represents the colour of the border of unselected widgets.
+#border_color="Gray"
+# Represents the colour of the border of selected widgets.
+#highlighted_border_color="LightBlue"
+# Represents the colour of most text.
+#text_color="Gray"
+# Represents the colour of text that is selected.
+#selected_text_color="Black"
+# Represents the background colour of text that is selected.
+#selected_bg_color="LightBlue"
+# Represents the colour of the lines and text of the graph.
+#graph_color="Gray"
+# Represents the colours of the battery based on charge
+#high_battery_color="green"
+#medium_battery_color="yellow"
+#low_battery_color="red"
+
+# Layout - layouts follow a pattern like this:
+# [[row]] represents a row in the application.
+# [[row.child]] represents either a widget or a column.
+# [[row.child.child]] represents a widget.
+#
+# All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
+# All layout components have a ratio value - if this is not set, then it defaults to 1. 
+# The default widget layout:
+#[[row]]
+#  ratio=30
+#  [[row.child]]
+#  type="cpu"
+#[[row]]
+#    ratio=40
+#    [[row.child]]
+#      ratio=4
+#      type="mem"
+#    [[row.child]]
+#      ratio=3
+#      [[row.child.child]]
+#        type="temp"
+#      [[row.child.child]]
+#        type="disk"
+#[[row]]
+#  ratio=30
+#  [[row.child]]
+#    type="net"
+#  [[row.child]]
+#    type="proc"
+#    default=true
+"##;
+
+pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
+# Values in this config file will change when changed in the interface.
+# You can also manually change these values.
+# Be aware that contents of this file will be overwritten if something is
+# changed in the application; you can disable writing via the
+# --no_write flag or no_write config option.
 
 "##;
 
