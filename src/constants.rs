@@ -18,8 +18,6 @@ pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 // How fast the screen refreshes
 pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
 pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
-// Number of colours to generate for the CPU chart/table
-pub const NUM_COLOURS: usize = 256;
 
 // Limits for when we should stop showing table gaps/labels (anything less means not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;

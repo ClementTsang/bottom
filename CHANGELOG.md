@@ -68,6 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#296](https://github.com/ClementTsang/bottom/pull/296): Removes an accidental extra comma in one of the headers in the disk widget.
 
+- [#308](https://github.com/ClementTsang/bottom/pull/308): Removes the automatically generated CPU colours method.
+
 ## [0.4.7] - 2020-08-26
 
 ### Bug Fixes

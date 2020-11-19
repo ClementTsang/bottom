@@ -1,4 +1,4 @@
-use crate::{constants::*, options::ConfigColours, utils::error};
+use crate::{options::ConfigColours, utils::error};
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
@@ -48,7 +48,7 @@ impl Default for CanvasColours {
             total_tx_style: Style::default().fg(STANDARD_FOURTH_COLOUR),
             all_colour_style: Style::default().fg(ALL_COLOUR),
             avg_colour_style: Style::default().fg(AVG_COLOUR),
-            cpu_colour_styles: Vec::new(),
+            cpu_colour_styles: colour_utils::get_default_cpu_colours(),
             border_style: Style::default().fg(text_colour),
             highlighted_border_style: Style::default().fg(STANDARD_HIGHLIGHT_COLOUR),
             text_style: Style::default().fg(text_colour),
@@ -248,20 +248,11 @@ impl CanvasColours {
     }
 
     pub fn set_cpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
-        let max_amount = std::cmp::min(colours.len(), NUM_COLOURS);
-        for (itx, colour) in colours.iter().enumerate() {
-            if itx >= max_amount {
-                break;
-            }
-            self.cpu_colour_styles.push(get_style_from_config(colour)?);
-        }
+        self.cpu_colour_styles = colours
+            .iter()
+            .map(|colour| get_style_from_config(colour))
+            .collect::<error::Result<Vec<Style>>>()?;
         Ok(())
-    }
-
-    pub fn generate_remaining_cpu_colours(&mut self) {
-        let remaining_num_colours = NUM_COLOURS.saturating_sub(self.cpu_colour_styles.len());
-        self.cpu_colour_styles
-            .extend(gen_n_styles(remaining_num_colours));
     }
 
     pub fn set_scroll_entry_text_color(&mut self, colour: &str) -> error::Result<()> {
