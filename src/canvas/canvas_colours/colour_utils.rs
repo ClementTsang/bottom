@@ -40,6 +40,8 @@ lazy_static! {
     .collect();
 }
 
+/// We take basically no chances with this.  If the user wants prettier colours, they can
+/// set it on their own - unfortunately, supported colour detection is kinda a PITA.
 pub fn get_default_cpu_colours() -> Vec<Style> {
     vec![
         Style::default().fg(Color::LightMagenta),

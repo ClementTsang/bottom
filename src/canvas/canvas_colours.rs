@@ -1,4 +1,4 @@
-use crate::{constants::*, options::ConfigColours, utils::error};
+use crate::{options::ConfigColours, utils::error};
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
@@ -248,13 +248,10 @@ impl CanvasColours {
     }
 
     pub fn set_cpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
-        let max_amount = std::cmp::min(colours.len(), NUM_COLOURS);
-        for (itx, colour) in colours.iter().enumerate() {
-            if itx >= max_amount {
-                break;
-            }
-            self.cpu_colour_styles.push(get_style_from_config(colour)?);
-        }
+        self.cpu_colour_styles = colours
+            .iter()
+            .map(|colour| get_style_from_config(colour))
+            .collect::<error::Result<Vec<Style>>>()?;
         Ok(())
     }
 
