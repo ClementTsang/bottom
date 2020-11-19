@@ -391,6 +391,7 @@ pub struct ProcWidgetState {
 impl ProcWidgetState {
     pub fn init(
         is_case_sensitive: bool, is_match_whole_word: bool, is_use_regex: bool, is_grouped: bool,
+        show_memory_as_values: bool,
     ) -> Self {
         let mut process_search_state = ProcessSearchState::default();
         if is_case_sensitive {
@@ -410,8 +411,14 @@ impl ProcWidgetState {
         let mut columns = ProcColumn::default();
         columns.set_to_sorted_index(&process_sorting_type);
         if is_grouped {
+            // Normally defaults to showing by PID, toggle count on instead.
             columns.toggle(&ProcessSorting::Count);
             columns.toggle(&ProcessSorting::Pid);
+        }
+        if show_memory_as_values {
+            // Normally defaults to showing by percent, toggle value on instead.
+            columns.toggle(&ProcessSorting::Mem);
+            columns.toggle(&ProcessSorting::MemPercent);
         }
 
         ProcWidgetState {

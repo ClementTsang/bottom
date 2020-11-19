@@ -141,6 +141,9 @@ pub struct ConfigFlags {
 
     #[builder(default, setter(strip_option))]
     pub search_regex_enabled_widgets: Option<Vec<WidgetIdEnabled>>,
+
+    #[builder(default, setter(strip_option))]
+    pub mem_as_value: Option<bool>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -231,6 +234,8 @@ pub fn build_app(
     let is_custom_layout = config.row.is_some();
     let mut used_widget_set = HashSet::new();
 
+    let show_memory_as_values = get_mem_as_value(matches, config);
+
     for row in &widget_layout.rows {
         for col in &row.children {
             for col_row in &col.children {
@@ -296,6 +301,7 @@ pub fn build_app(
                                     is_match_whole_word,
                                     is_use_regex,
                                     is_grouped,
+                                    show_memory_as_values,
                                 ),
                             );
                         }
@@ -919,4 +925,15 @@ pub fn get_color_scheme(
 
     // And lastly, the final case is just "default".
     Ok(ColourScheme::Default)
+}
+
+fn get_mem_as_value(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("mem_as_value") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(mem_as_value) = flags.mem_as_value {
+            return mem_as_value;
+        }
+    }
+    false
 }
