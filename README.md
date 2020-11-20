@@ -6,7 +6,7 @@
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
-![Quick demo recording showing off searching, expanding, and process killing.](assets/demo.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (see [sample config](./sample_configs/demo_config.toml)). Font is [IBM Plex Mono](https://www.ibm.com/plex/), terminal is [Kitty](https://sw.kovidgoyal.net/kitty/)_ Recorded on version **0.4.7**.
+![Quick demo recording showing off searching, expanding, and process killing.](assets/demo.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (run with `--color gruvbox`). Font is [IBM Plex Mono](https://www.ibm.com/plex/), terminal is [Kitty](https://sw.kovidgoyal.net/kitty/)_ Recorded on version **0.5.0**.
 
 **Note**: If you are reading this on the master branch, then it may refer to in-development or un-released features/changes. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 

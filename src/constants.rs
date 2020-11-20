@@ -50,33 +50,36 @@ lazy_static! {
         ..ConfigColours::default()
     };
     pub static ref GRUVBOX_COLOUR_PALETTE: ConfigColours = ConfigColours {
-        table_header_color: Some("#ebdbb2".to_string()),
-        all_cpu_color: Some("#cc241d".to_string()),
-        avg_cpu_color: Some("#98971a".to_string()),
+        table_header_color: Some("#83a598".to_string()),
+        all_cpu_color: Some("#8ec07c".to_string()),
+        avg_cpu_color: Some("#fb4934".to_string()),
         cpu_core_colors: Some(vec![
+            "#cc241d".to_string(),
+            "#98971a".to_string(),
             "#d79921".to_string(),
             "#458588".to_string(),
             "#b16286".to_string(),
             "#689d6a".to_string(),
-            "#fb4934".to_string(),
-            "#b8bb26".to_string(),
             "#fe8019".to_string(),
+            "#b8bb26".to_string(),
             "#fabd2f".to_string(),
             "#83a598".to_string(),
             "#d3869b".to_string(),
-            "#8ec07c".to_string(),
             "#d65d0e".to_string(),
-            "#fbf1c7".to_string(),
-            "#ebdbb2".to_string(),
-            "#d5c4a1".to_string(),
-            "#bdae93".to_string(),
-            "#a89984".to_string(),
+            "#9d0006".to_string(),
+            "#79740e".to_string(),
+            "#b57614".to_string(),
+            "#076678".to_string(),
+            "#8f3f71".to_string(),
+            "#427b58".to_string(),
+            "#d65d03".to_string(),
+            "#af3a03".to_string(),
         ]),
-        ram_color: Some("#458588".to_string()),
+        ram_color: Some("#8ec07c".to_string()),
         swap_color: Some("#fabd2f".to_string()),
-        rx_color: Some("#458588".to_string()),
+        rx_color: Some("#8ec07c".to_string()),
         tx_color: Some("#fabd2f".to_string()),
-        rx_total_color: Some("#83a598".to_string()),
+        rx_total_color: Some("#689d6a".to_string()),
         tx_total_color: Some("#d79921".to_string()),
         border_color: Some("#ebdbb2".to_string()),
         highlighted_border_color: Some("#fe8019".to_string()),
@@ -91,69 +94,49 @@ lazy_static! {
         low_battery_color: Some("#fb4934".to_string())
     };
     pub static ref GRUVBOX_LIGHT_COLOUR_PALETTE: ConfigColours = ConfigColours {
-        table_header_color: Some("#3c3836".to_string()),
-        all_cpu_color: Some("#cc241d".to_string()),
-        avg_cpu_color: Some("#98971a".to_string()),
+        table_header_color: Some("#076678".to_string()),
+        all_cpu_color: Some("#8ec07c".to_string()),
+        avg_cpu_color: Some("#fb4934".to_string()),
         cpu_core_colors: Some(vec![
+            "#cc241d".to_string(),
+            "#98971a".to_string(),
             "#d79921".to_string(),
             "#458588".to_string(),
             "#b16286".to_string(),
             "#689d6a".to_string(),
-            "#fb4934".to_string(),
-            "#b8bb26".to_string(),
             "#fe8019".to_string(),
+            "#b8bb26".to_string(),
             "#fabd2f".to_string(),
             "#83a598".to_string(),
             "#d3869b".to_string(),
-            "#8ec07c".to_string(),
             "#d65d0e".to_string(),
-            "#928374".to_string(),
-            "#665c54".to_string(),
-            "#504945".to_string(),
-            "#3c3836".to_string(),
-            "#282828".to_string(),
+            "#9d0006".to_string(),
+            "#79740e".to_string(),
+            "#b57614".to_string(),
+            "#076678".to_string(),
+            "#8f3f71".to_string(),
+            "#427b58".to_string(),
+            "#d65d03".to_string(),
+            "#af3a03".to_string(),
         ]),
-        ram_color: Some("#458588".to_string()),
+        ram_color: Some("#427b58".to_string()),
         swap_color: Some("#cc241d".to_string()),
-        rx_color: Some("#458588".to_string()),
+        rx_color: Some("#427b58".to_string()),
         tx_color: Some("#cc241d".to_string()),
-        rx_total_color: Some("#83a598".to_string()),
+        rx_total_color: Some("#689d6a".to_string()),
         tx_total_color: Some("#9d0006".to_string()),
         border_color: Some("#3c3836".to_string()),
-        highlighted_border_color: Some("#fe8019".to_string()),
-        disabled_text_color: Some("#665c54".to_string()),
+        highlighted_border_color: Some("#af3a03".to_string()),
+        disabled_text_color: Some("#d5c4a1".to_string()),
         text_color: Some("#3c3836".to_string()),
-        selected_text_color: Some("#f9f5d7".to_string()),
-        selected_bg_color: Some("#665c54".to_string()),
+        selected_text_color: Some("#ebdbb2".to_string()),
+        selected_bg_color: Some("#3c3836".to_string()),
         widget_title_color: Some("#3c3836".to_string()),
         graph_color: Some("#3c3836".to_string()),
         high_battery_color: Some("#98971a".to_string()),
-        medium_battery_color: Some("#fabd2f".to_string()),
-        low_battery_color: Some("#fb4934".to_string())
+        medium_battery_color: Some("#d79921".to_string()),
+        low_battery_color: Some("#cc241d".to_string())
     };
-    // pub static ref NORD_COLOUR_PALETTE: ConfigColours = ConfigColours {
-    //     table_header_color: None,
-    //     all_cpu_color: None,
-    //     avg_cpu_color: None,
-    //     cpu_core_colors: None,
-    //     ram_color: None,
-    //     swap_color: None,
-    //     rx_color: None,
-    //     tx_color: None,
-    //     rx_total_color: None,
-    //     tx_total_color: None,
-    //     border_color: None,
-    //     highlighted_border_color: None,
-    //     text_color: None,
-    //     selected_text_color: None,
-    //     selected_bg_color: None,
-    //     widget_title_color: None,
-    //     graph_color: None,
-    //     high_battery_color: None,
-    //     medium_battery_color: None,
-    //     low_battery_color: None,
-    //     disabled_text_color: None,
-    // };
 }
 
 // Help text
@@ -484,6 +467,21 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #  [[row.child]]
 #    type="proc"
 #    default=true
+
+
+# Filters - you can hide specific temperature and disks using filters.  This is admittedly a bit
+# hard to use as of now, and there is a planned interface for managing this in the future:
+#[disk_filter]
+#is_list_ignored = false
+#list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+#regex = true
+#case_sensitive = false
+
+#[temp_filter]
+#is_list_ignored = false
+#list = ["cpu", "wifi"]
+#regex = false
+#case_sensitive = false
 "##;
 
 pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
