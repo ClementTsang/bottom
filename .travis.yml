@@ -69,9 +69,6 @@ matrix:
   exclude:
     - if: tag IS present
       rust: beta
-  # allow_failures:
-  #   - arch: arm64 # ARM will be run, but support is still gonna be limited for now... may change.
-  #   - env: TARGET=armv7-unknown-linux-gnueabihf
 
 branches:
   only:
@@ -190,7 +187,7 @@ before_deploy:
           cargo deb;
           cp ./target/debian/bottom_*.deb .;
         fi
-        
+
         echo "Done macOS/Linux pre-deploy!";
     fi
 
