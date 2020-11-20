@@ -189,7 +189,8 @@ before_deploy:
           cargo install cargo-deb;
           cargo deb;
           cp ./target/debian/bottom_*.deb .;
-
+        fi
+        
         echo "Done macOS/Linux pre-deploy!";
     fi
 
