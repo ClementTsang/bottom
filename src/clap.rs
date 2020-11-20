@@ -232,7 +232,8 @@ Defaults to \"default\".
         .help("Defaults to showing process memory usage by value.")
         .long_help(
             "\
-Defaults to showing process memory usage by value.  Otherwise, it defaults to showing it by percentage.\n\n",
+Defaults to showing process memory usage by value.  Otherwise,
+it defaults to showing it by percentage.\n\n",
         );
     let default_time_value = Arg::with_name("default_time_value")
         .short("t")
@@ -332,6 +333,15 @@ The amount of time in milliseconds changed when zooming in/out.
 The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         );
 
+    let tree = Arg::with_name("tree")
+        .short("T")
+        .long("tree")
+        .help("Defaults to showing the process widget in tree mode.")
+        .long_help(
+            "\
+Defaults to showing the process widget in tree mode.\n\n",
+        );
+
     App::new(crate_name!())
         .setting(AppSettings::UnifiedHelpMessage)
         .version(crate_version!())
@@ -367,6 +377,7 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
         .arg(rate)
         .arg(regex)
         .arg(time_delta)
+        .arg(tree)
         .arg(current_usage)
         .arg(use_old_network_legend)
         .arg(whole_word)

@@ -144,6 +144,9 @@ pub struct ConfigFlags {
 
     #[builder(default, setter(strip_option))]
     pub mem_as_value: Option<bool>,
+
+    #[builder(default, setter(strip_option))]
+    pub tree: Option<bool>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -235,6 +238,7 @@ pub fn build_app(
     let mut used_widget_set = HashSet::new();
 
     let show_memory_as_values = get_mem_as_value(matches, config);
+    let is_default_tree = get_is_default_tree(matches, config);
 
     for row in &widget_layout.rows {
         for col in &row.children {
@@ -302,6 +306,7 @@ pub fn build_app(
                                     is_use_regex,
                                     is_grouped,
                                     show_memory_as_values,
+                                    is_default_tree,
                                 ),
                             );
                         }
@@ -933,6 +938,17 @@ fn get_mem_as_value(matches: &clap::ArgMatches<'static>, config: &Config) -> boo
     } else if let Some(flags) = &config.flags {
         if let Some(mem_as_value) = flags.mem_as_value {
             return mem_as_value;
+        }
+    }
+    false
+}
+
+fn get_is_default_tree(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("tree") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(tree) = flags.tree {
+            return tree;
         }
     }
     false

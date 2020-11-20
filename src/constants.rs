@@ -399,7 +399,9 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 # Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light"
 #color = "default"
 # Show memory values in the processes widget as values by default
-# mem_as_value = false
+#mem_as_value = false
+# Show tree mode by default in the processes widget.
+#tree = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
