@@ -23,7 +23,7 @@ impl ConfigScreen for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         let config_block = Block::default()
-            .title(" Config ") // FIXME: [Config] missing title styling
+            .title(Span::styled(" Config ", self.colours.widget_title_style))
             .style(self.colours.border_style)
             .borders(Borders::ALL)
             .border_style(self.colours.border_style);

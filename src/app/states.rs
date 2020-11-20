@@ -391,9 +391,10 @@ pub struct ProcWidgetState {
 impl ProcWidgetState {
     pub fn init(
         is_case_sensitive: bool, is_match_whole_word: bool, is_use_regex: bool, is_grouped: bool,
-        show_memory_as_values: bool,
+        show_memory_as_values: bool, is_tree_mode: bool,
     ) -> Self {
         let mut process_search_state = ProcessSearchState::default();
+
         if is_case_sensitive {
             // By default it's off
             process_search_state.search_toggle_ignore_case();
@@ -405,7 +406,11 @@ impl ProcWidgetState {
             process_search_state.search_toggle_regex();
         }
 
-        let process_sorting_type = processes::ProcessSorting::CpuPercent;
+        let (process_sorting_type, is_process_sort_descending) = if is_tree_mode {
+            (processes::ProcessSorting::Pid, false)
+        } else {
+            (processes::ProcessSorting::CpuPercent, true)
+        };
 
         // TODO: If we add customizable columns, this should pull from config
         let mut columns = ProcColumn::default();
@@ -426,12 +431,12 @@ impl ProcWidgetState {
             is_grouped,
             scroll_state: AppScrollWidgetState::default(),
             process_sorting_type,
-            is_process_sort_descending: true,
+            is_process_sort_descending,
             is_using_command: false,
             current_column_index: 0,
             is_sort_open: false,
             columns,
-            is_tree_mode: false,
+            is_tree_mode,
             table_width_state: CanvasTableWidthState::default(),
             requires_redraw: false,
         }

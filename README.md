@@ -210,6 +210,8 @@ Run using `btm`.
 
 ### Flags
 
+Use `btm --help` for more information.
+
 ```
         --autohide_time                        Temporarily shows the time scale in graphs.
     -b, --basic                                Hides graphs and uses a more basic look.
@@ -237,6 +239,7 @@ Run using `btm`.
     -r, --rate <MS>                            Sets a refresh rate in ms.
     -R, --regex                                Enables regex by default.
     -d, --time_delta <MS>                      The amount in ms changed upon zooming.
+    -T, --tree                                 Defaults to showing the process widget in tree mode.
         --use_old_network_legend               DEPRECATED - uses the older network legend.
     -V, --version                              Prints version information.
     -W, --whole_word                           Enables whole-word matching by default.
@@ -549,6 +552,7 @@ These are the following supported flag config values, which correspond to the fl
 | `disable_click`          | Boolean                                                                               |
 | `color`                  | String (one of ["default", "default-light", "gruvbox", "gruvbox-light"])              |
 | `mem_as_value`           | Boolean                                                                               |
+| `tree`                   | Boolean                                                                               |
 
 #### Theming
 
