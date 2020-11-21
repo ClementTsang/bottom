@@ -5,6 +5,7 @@
 name: ci
 
 on:
+  workflow_dispatch::
   pull_request:
   push:
     branches:
@@ -174,15 +175,13 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
-      toolchain:
-        - stable
     steps:
       - uses: actions/checkout@v2
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.toolchain }}
+          toolchain: stable
           override: true
 
       - name: Run tests
