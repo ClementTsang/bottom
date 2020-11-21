@@ -1,8 +1,7 @@
 # bottom
 
-[![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom)
+![ci](https://github.com/ClementTsang/bottom/workflows/ci/badge.svg)
 [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
-[![tokei](https://tokei.rs/b1/github/ClementTsang/bottom?category=code)](https://github.com/ClementTsang/bottom)
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
