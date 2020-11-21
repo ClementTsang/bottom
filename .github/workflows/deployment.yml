@@ -1,0 +1,6 @@
+name: deployment
+
+on:
+  create:
+    tags:
+      - /^\d+\.\d+(\.\d+)?(-\S*)?$/
