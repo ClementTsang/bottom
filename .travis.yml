@@ -120,7 +120,7 @@ before_deploy:
     if [[ $TRAVIS_OS_NAME == "windows" ]]; then
       echo "Building Windows 64-bit, target: $TARGET...";
       cargo build --release --target $TARGET;
-      local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
+      local target_dir=$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)
       cp -r $target_dir completions
       mv "./target/$TARGET/release/btm" "btm.exe";
       strip "btm.exe"
@@ -133,7 +133,7 @@ before_deploy:
         echo "Building Windows 32-bit...";
         cargo clean;
         cargo build --release --target i686-pc-windows-msvc;
-        local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
+        local target_dir=$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)
         cp -r $target_dir completions
         mv "./target/i686-pc-windows-msvc/release/btm" "btm.exe";
         strip "btm.exe"
@@ -163,7 +163,7 @@ before_deploy:
         cargo build --release;
         cp ./target/release/btm btm;
         strip btm;
-        local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
+        local target_dir=$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)
         cp -r $target_dir completions
         echo "Tar-ing macOS/Linux binary and completions..."
         tar -czvf bottom_$TARGET.tar.gz btm completions;

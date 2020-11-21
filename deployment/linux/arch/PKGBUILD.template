@@ -27,7 +27,7 @@ package() {
     install -Dm755 target/release/btm "$pkgdir/usr/bin/btm"
     install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/${pkgname}/LICENSE"
 
-    local target_dir=$(ls target/release/build/bottom-*/out/rg.bash | head -n1 | xargs dirname)
+    local target_dir=$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)
     install -Dm644 "$target_dir"/_btm "$pkgdir/usr/share/zsh/site-functions/_btm"
     install -Dm644 "$target_dir"/btm.bash "$pkgdir/usr/share/bash-completion/completions/btm"
     install -Dm644 "$target_dir"/btm.fish "$pkgdir/usr/share/fish/vendor_completions.d/btm.fish"
