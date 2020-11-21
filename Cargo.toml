@@ -32,7 +32,7 @@ crossterm = "0.18.2"
 ctrlc = {version = "3.1", features = ["termination"]}
 clap = "2.33"
 dirs-next = "2.0.0"
-futures = "0.3.7"
+futures = "0.3.8"
 indexmap = "1.6.0"
 itertools = "0.9.0"
 lazy_static = "1.4.0"

@@ -18,9 +18,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
+          - ubuntu-18.04
           - macOS-latest
-          - windows-latest
+          - windows-2019
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -37,9 +37,9 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
+          - ubuntu-18.04
           - macOS-latest
-          - windows-latest
+          - windows-2019
     steps:
       - uses: actions/checkout@v2
       - name: Cache cargo build target
@@ -67,25 +67,25 @@ jobs:
         triple:
           # Standard x86-64 stuff, stable
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: stable,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
               rust: stable,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
               rust: stable,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "i686-unknown-linux-musl",
               cross: true,
               rust: stable,
@@ -97,14 +97,14 @@ jobs:
               rust: stable,
             }
           - {
-              os: "windows-latest",
+              os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: stable,
             }
-          - { os: "windows-latest", target: "i686-pc-windows-gnu", cross: true }
+          - { os: "windows-2019", target: "i686-pc-windows-gnu", cross: true }
           - {
-              os: "windows-latest",
+              os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
               cross: false,
               rust: stable,
@@ -112,13 +112,13 @@ jobs:
 
           # aarch64
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "aarch64-unknown-linux-gnu",
               cross: true,
               rust: stable,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "aarch64-unknown-linux-musl",
               cross: true,
               rust: stable,
@@ -126,13 +126,13 @@ jobs:
 
           # armv7
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
               rust: stable,
             }
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "armv7-unknown-linux-musleabihf",
               cross: true,
               rust: stable,
@@ -140,7 +140,7 @@ jobs:
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-latest",
+              os: "ubuntu-18.04",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
               rust: stable,
@@ -172,9 +172,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
+          - ubuntu-18.04
           - macOS-latest
-          - windows-latest
+          - windows-2019
     steps:
       - uses: actions/checkout@v2
       - name: Install toolchain
