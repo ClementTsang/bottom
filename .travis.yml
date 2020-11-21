@@ -108,7 +108,7 @@ script:
     if [[ $TARGET == "armv7-unknown-linux-gnueabihf" ]]; then
       cargo build --verbose --target $TARGET
     else
-      cargo test --verbose --target $TARGET  
+      CARGO_HUSKY_DONT_INSTALL_HOOKS=true cargo test --verbose --target $TARGET  
     fi
 
 before_deploy:

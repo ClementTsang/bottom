@@ -219,13 +219,7 @@ Use a pre-defined color scheme.  Currently supported values are:
 Defaults to \"default\".
 \n\n",
         )
-        .possible_values(&[
-            "default",
-            "default-light",
-            "gruvbox",
-            "gruvbox-light",
-            "nord",
-        ])
+        .possible_values(&["default", "default-light", "gruvbox", "gruvbox-light"])
         .hide_possible_values(true);
     let mem_as_value = Arg::with_name("mem_as_value")
         .long("mem_as_value")
