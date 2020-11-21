@@ -164,7 +164,7 @@ jobs:
           use-cross: ${{ matrix.triple.cross }}
 
   tests:
-    needs: [compile]
+    needs: [check]
     name: Test ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     continue-on-error: true
