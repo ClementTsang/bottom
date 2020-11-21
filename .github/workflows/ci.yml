@@ -41,8 +41,9 @@ jobs:
           - macOS-latest
           - windows-2019
     steps:
-      # - uses: actions/checkout@v2
-      # - name: Cache cargo build target
+      - uses: actions/checkout@v2
+
+      # - name: Cache Cargo
       #   uses: actions/cache@v1
       #   with:
       #     path: target
@@ -54,6 +55,7 @@ jobs:
           toolchain: stable
           override: true
           components: clippy
+
       - run: cargo clippy --all-targets --workspace -- -D warnings
 
   # Compile/check test.
