@@ -192,6 +192,18 @@ pub struct ConfigColours {
     pub low_battery_color: Option<String>,
 }
 
+impl ConfigColours {
+    pub fn is_empty(&self) -> bool {
+        if let Ok(serialized_string) = toml::to_string(self) {
+            if !serialized_string.is_empty() {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct IgnoreList {
     pub is_list_ignored: bool,
@@ -918,9 +930,16 @@ pub fn get_color_scheme(
     if let Some(color) = matches.value_of("color") {
         // Highest priority is always command line flags...
         return ColourScheme::from_str(color);
-    } else if config.colors.is_some() {
-        // Then, give priority to custom colours...
-        return Ok(ColourScheme::Custom);
+    } else if let Some(colors) = &config.colors {
+        if !colors.is_empty() {
+            // Then, give priority to custom colours...
+            return Ok(ColourScheme::Custom);
+        } else if let Some(flags) = &config.flags {
+            // Last priority is config file flags...
+            if let Some(color) = &flags.color {
+                return ColourScheme::from_str(color);
+            }
+        }
     } else if let Some(flags) = &config.flags {
         // Last priority is config file flags...
         if let Some(color) = &flags.color {

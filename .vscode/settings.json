@@ -86,6 +86,7 @@
     "regexes",
     "rsplitn",
     "runlevel",
+    "rustflags",
     "rustfmt",
     "shilangyu",
     "softirq",
