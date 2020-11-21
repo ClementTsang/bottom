@@ -41,12 +41,12 @@ jobs:
           - macOS-latest
           - windows-2019
     steps:
-      - uses: actions/checkout@v2
-      - name: Cache cargo build target
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: clippy-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}
+      # - uses: actions/checkout@v2
+      # - name: Cache cargo build target
+      #   uses: actions/cache@v1
+      #   with:
+      #     path: target
+      #     key: clippy-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}
 
       - uses: actions-rs/toolchain@v1
         with:
