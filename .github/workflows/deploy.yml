@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set env
-        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF#refs/*/}
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Test env
         run: |
           echo $RELEASE_VERSION
