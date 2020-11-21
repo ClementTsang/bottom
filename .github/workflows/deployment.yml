@@ -46,7 +46,167 @@ jobs:
   build-release:
     name: build-release
     needs: [create-github-release]
+    runs-on: ${{ matrix.os }}
+    env:
+      # For some builds, we use cross to test on 32-bit and big-endian
+      # systems.
+      CARGO: cargo
+      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+      TARGET_FLAGS:
+      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
+      TARGET_DIR: ./target
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+    strategy:
+      matrix:
+        triple:
+          # Standard x86-64 stuff, stable
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "i686-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-musl",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "i686-unknown-linux-musl",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "macOS-latest",
+              target: "x86_64-apple-darwin",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "i686-pc-windows-gnu",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-gnu",
+              cross: false,
+              rust: stable,
+            }
+
+          # aarch64
+          - {
+              os: "ubuntu-18.04",
+              target: "aarch64-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "aarch64-unknown-linux-musl",
+              cross: true,
+              rust: stable,
+            }
+
+          # armv7
+          - {
+              os: "ubuntu-18.04",
+              target: "armv7-unknown-linux-gnueabihf",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "armv7-unknown-linux-musleabihf",
+              cross: true,
+              rust: stable,
+            }
+
+          # PowerPC 64 LE
+          - {
+              os: "ubuntu-18.04",
+              target: "powerpc64le-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+
     steps:
-      - name: Strip release binary (Linux/macOS)
-        if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip btm
+      - name: Install Net-Framework-Core (Windows)
+        if: ${{ matrix.triple.os == 'windows-2019' }}
+        shell: powershell
+        run: Install-WindowsFeature Net-Framework-Core
+
+      - name: Install wixtoolset (Windows)
+        if: ${{ matrix.triple.os == 'windows-2019' }}
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with: install -y wixtoolset
+
+      - name: Export wixtoolset to path (Windows)
+        if: ${{ matrix.triple.os == 'windows-2019' }}
+        shell: powershell   
+        run: export PATH=$PATH:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
+
+      - name: Install zip (Windows)
+        if: ${{ matrix.triple.os == 'windows-2019' }}
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with: install -y zip
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.triple.rust }}
+          override: true
+
+      - name: Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --verbose
+          use-cross: ${{ matrix.triple.cross }}
+
+      - name: Bundle autocomplete
+        shell: bash
+        run: |
+          local target_dir=$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname);
+          cp -r $target_dir completions
+
+      - name: Strip release binary (Linux and macOS)
+        
+
+      - name: Bundle release and completions (Windows)
+        shell: bash
+        run: |
+          cp target/release/btm btm.exe;
+          zip -r ${} "btm.exe", "completions"
+
+      - name: Bundle release and completions (Linux and macOS)
+
+      - name: Build msi file (only Windows MSVC)
+
+      - name: Build winget (only Windows MSVC)
+
+      - name: Build Debian release (only Linux x86-64 GNU)
+
+      - name: Build AUR PKGBUILDs (only Linux x86-64 GNU)
