@@ -56,8 +56,8 @@ jobs:
           components: clippy
       - run: cargo clippy --all-targets --workspace -- -D warnings
 
-  # Compile test.
-  compile:
+  # Compile/check test.
+  check:
     name: ${{ matrix.toolchain }} / ${{ matrix.triple.target }}
     needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
