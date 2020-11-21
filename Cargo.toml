@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
@@ -32,7 +32,7 @@ crossterm = "0.18.2"
 ctrlc = {version = "3.1", features = ["termination"]}
 clap = "2.33"
 dirs-next = "2.0.0"
-futures = "0.3.7"
+futures = "0.3.8"
 indexmap = "1.6.0"
 itertools = "0.9.0"
 lazy_static = "1.4.0"
@@ -69,9 +69,9 @@ section = "utility"
 assets = [
     ["target/release/btm", "usr/bin/", "755"],
     ["LICENSE", "usr/share/doc/btm/", "644"],
-    ["completions/btm.bash", "usr/share/bash-completion/completions/btm", "644"],
-    ["completions/btm.fish", "usr/share/fish/vendor_completions.d/btm.fish", "644"],
-    ["completions/_btm", "usr/share/zsh/vendor-completions/", "644"],
+    ["completion/btm.bash", "usr/share/bash-completion/completions/btm", "644"],
+    ["completion/btm.fish", "usr/share/fish/vendor_completions.d/btm.fish", "644"],
+    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
 extended-description = """\
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of

@@ -6,4 +6,3 @@ fn_args_layout = "Compressed"
 use_field_init_shorthand = true
 tab_spaces = 4
 max_width = 100
-newline_style = "Unix"

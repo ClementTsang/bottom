@@ -22,7 +22,7 @@ const PROC_LAYOUT: &str = r##"
 "##;
 
 fn test_create_layout(
-    rows: &Vec<Row>, default_widget_id: u64, default_widget_type: Option<BottomWidgetType>,
+    rows: &[Row], default_widget_id: u64, default_widget_type: Option<BottomWidgetType>,
     default_widget_count: u64, left_legend: bool,
 ) -> BottomLayout {
     let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*

@@ -1,12 +1,11 @@
 # bottom
 
-[![Build Status](https://travis-ci.com/ClementTsang/bottom.svg?token=1wvzVgp94E1TZyPNs8JF&branch=master)](https://travis-ci.com/ClementTsang/bottom)
+![ci](https://github.com/ClementTsang/bottom/workflows/ci/badge.svg)
 [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
-[![tokei](https://tokei.rs/b1/github/ClementTsang/bottom?category=code)](https://github.com/ClementTsang/bottom)
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
 
-![Quick demo recording showing off searching, expanding, and process killing.](assets/demo.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox) (run with_ `--color gruvbox`_). Font is [IBM Plex Mono](https://www.ibm.com/plex/), terminal is [Kitty](https://sw.kovidgoyal.net/kitty/). Recorded on version **0.5.0**._
+![Quick demo recording showing off searching, expanding, and process killing.](assets/demo.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox)_ (`--color gruvbox`). _Font is [IBM Plex Mono](https://www.ibm.com/plex/), terminal is [Kitty](https://sw.kovidgoyal.net/kitty/). Recorded on version **0.5.1**._
 
 **Note**: If you are reading this on the master branch, then it may refer to in-development or un-released features/changes. Please refer to [release branch](https://github.com/ClementTsang/bottom/tree/release/README.md) or [crates.io](https://crates.io/crates/bottom) for the most up-to-date _release_ documentation.
 
@@ -68,7 +67,7 @@ Note that bottom is:
 - Officially tested and released for only `x86_64` (and `i686` for Windows)
 - Developed mainly for macOS, Windows, and Linux
 
-Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is tested against on Travis and release builds are supported, but not all features will work (such as R/s and W/s for disks).
+Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is compiled on the CI pipeline and release builds will be provided, but not all features may work (such as R/s and W/s for disks).
 
 ### Manually
 
@@ -87,13 +86,12 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.5.0.tar.gz
-tar -xzvf 0.5.0.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.5.1.tar.gz
+tar -xzvf 0.5.1.tar.gz
 cargo install --path .
 ```
 
-Or, you can just download the binary from the [latest release](https://github.com/ClementTsang/bottom/releases/latest) and install/use it
-in whatever way you want.
+Or, you can just download the binary from the [latest release](https://github.com/ClementTsang/bottom/releases/latest).
 
 ### Cargo
 
@@ -121,8 +119,8 @@ yay -S bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.0/bottom_0.5.0_amd64.deb
-sudo dpkg -i bottom_0.5.0_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.1/bottom_0.5.1_amd64.deb
+sudo dpkg -i bottom_0.5.1_amd64.deb
 ```
 
 ### Fedora/CentOS
@@ -174,7 +172,7 @@ Choco package located [here](https://chocolatey.org/packages/bottom).
 choco install bottom
 
 # Version number may be required for newer releases, if available:
-choco install bottom --version=0.5.0
+choco install bottom --version=0.5.1
 ```
 
 ### winget

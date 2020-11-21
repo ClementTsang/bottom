@@ -1,3 +1,6 @@
+#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+use futures::stream::StreamExt;
+
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {
     pub name: String,
@@ -61,8 +64,6 @@ pub async fn arm_disk_usage(
 pub async fn non_arm_io_usage(
     get_physical: bool, actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
-    use futures::stream::StreamExt;
-
     if !actually_get {
         return Ok(None);
     }
@@ -106,8 +107,6 @@ pub async fn non_arm_io_usage(
 pub async fn non_arm_disk_usage(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
-    use futures::stream::StreamExt;
-
     if !actually_get {
         return Ok(None);
     }
