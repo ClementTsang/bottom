@@ -1,3 +1,6 @@
+# Based on:
+# - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
+
 name: deployment
 
 on:
@@ -7,11 +10,43 @@ on:
       - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 jobs:
-  create-github-release:
-    name: create-github-release
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
     steps:
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Get the release version from the tag
+        if: env.VERSION == ''
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "version is: ${{ env.VERSION }}"
+      - name: Create GitHub release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+
+      - name: Save release upload URL to artifact
+        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+
+      - name: Save version number to artifact
+        run: echo "${{ env.VERSION }}" > artifacts/release-version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
 
   build-release:
     name: build-release
     needs: [create-github-release]
     steps:
+      - name: Strip release binary (Linux/macOS)
+        if: matrix.build == 'linux' || matrix.build == 'macos'
+        run: strip btm
