@@ -46,7 +46,214 @@ jobs:
   build-release:
     name: build-release
     needs: [create-github-release]
+    runs-on: ${{ matrix.os }}
+    env:
+      # For some builds, we use cross to test on 32-bit and big-endian
+      # systems.
+      CARGO: cargo
+      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+      TARGET_FLAGS:
+      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
+      TARGET_DIR: ./target
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+    strategy:
+      matrix:
+        triple:
+          # Standard x86-64 stuff, stable
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "i686-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-musl",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "i686-unknown-linux-musl",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "macOS-latest",
+              target: "x86_64-apple-darwin",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "i686-pc-windows-gnu",
+              cross: true,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-gnu",
+              cross: false,
+              rust: stable,
+            }
+
+          # aarch64
+          - {
+              os: "ubuntu-18.04",
+              target: "aarch64-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+
+          # armv7
+          - {
+              os: "ubuntu-18.04",
+              target: "armv7-unknown-linux-gnueabihf",
+              cross: true,
+              rust: stable,
+            }
+
+          # PowerPC 64 LE
+          - {
+              os: "ubuntu-18.04",
+              target: "powerpc64le-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+
     steps:
-      - name: Strip release binary (Linux/macOS)
-        if: matrix.build == 'linux' || matrix.build == 'macos'
-        run: strip btm
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+
+      - name: Install Net-Framework-Core (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        shell: powershell
+        run: Install-WindowsFeature Net-Framework-Core
+
+      - name: Install wixtoolset (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with: install -y wixtoolset
+
+      - name: Export wixtoolset to path (Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        shell: powershell   
+        run: export PATH=$PATH:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
+
+      - name: Install zip (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with: install -y zip
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.triple.rust }}
+          override: true
+
+      - name: Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --verbose
+          use-cross: ${{ matrix.triple.cross }}
+
+      - name: Bundle autocomplete
+        shell: bash
+        run: |
+          local target_dir=$(ls target/${{ matrix.triple.target }}/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname);
+          cp -r $target_dir completion
+
+      - name: Strip release binary (x86-64 or i686)
+        if: matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+        run: |
+          strip target/${{ matrix.triple.target }}/release/btm
+
+      - name: Strip release binary (aarch64)
+        if: matrix.triple.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:aarch64-unknown-linux-gnu \
+            aarch64-linux-gnu-strip \
+            /target/aarch64-unknown-linux-gnu/release/btm
+
+      - name: Strip release binary (armv7)
+        if: matrix.triple.target == 'armv7-unknown-linux-gnueabihf'
+        run: |
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:armv7-unknown-linux-gnueabihf \
+            arm-linux-gnueabihf-strip \
+            /target/armv7-unknown-linux-gnueabihf/release/btm
+
+      - name: Strip release binary (ppc)
+        if: matrix.triple.target == 'powerpc64le-unknown-linux-gnu'
+        run: |
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:powerpc64le-unknown-linux-gnu \
+            powerpc64le-linux-gnu-strip \
+            /target/powerpc64le-unknown-linux-gnu/release/btm
+
+      - name: Bundle release and completion (Windows)
+        shell: bash
+        run: |
+          cp target/${{ matrix.triple.target }}/release/btm btm.exe;
+          zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe", "completion"
+
+      - name: Bundle release and completion (Linux and macOS)
+        shell: bash
+        run: |
+          cp target/${{ matrix.triple.target }}/release/btm ./btm;
+          tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion;
+
+      - name: Build msi file (only Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        shell: powershell
+        run: |
+          cargo install cargo-wix;
+          cargo wix init;
+          cargo wix;
+
+      - name: Build winget (only Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        run: |
+          python "./deployment/packager.py" ${{ env.version }} "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256" "./bottom_x86_64_installer.msi";
+
+      - name: Build Debian release (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        run: |
+          cargo install cargo-deb;
+          cargo deb;
+          cp ./target/debian/bottom_*.deb ./
+
+      - name: Build AUR PKGBUILD (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        run: | 
+          curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.version }}.tar.gz";
+          python "./deployment/packager.py" ${{ env.version }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.target }}.tar.gz";
+
+      - name: Build AUR binary PKGBUILD (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        run: | 
+          python "./deployment/packager.py" ${{ env.version }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+
