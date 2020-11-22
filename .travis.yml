@@ -1,8 +1,0 @@
-# Based on https://github.com/rust-lang/futures-rs/blob/master/.travis.yml
-
-language: minimal
-sudo: false
-
-notifications:
-  email:
-    on_success: never

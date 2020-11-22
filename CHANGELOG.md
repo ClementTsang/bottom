@@ -5,11 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.1] - Unreleased
+## [0.5.1] - 2020-11-21
 
-### Features
+## Bug Fixes
 
-### Changes
+- [6ef1d66](https://github.com/ClementTsang/bottom/commit/6ef1d66b2bca49452572a2cabb87d338dcf56e7b): Remove nord as a valid colour for now.
+
+- [e04ce4f](https://github.com/ClementTsang/bottom/commit/e04ce4fa1b42e99f00cf8825bcd58da43552214e): Fix `--use_old_network_legend`.
+
+- [99d0402](https://github.com/ClementTsang/bottom/commit/99d04029f0ebfc73d36adb06ea58ad68f090017c): Fix config detection for built-in colours.
 
 ### Bug Fixes
 
