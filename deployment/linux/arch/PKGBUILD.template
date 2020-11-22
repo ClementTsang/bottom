@@ -19,7 +19,7 @@ build() {
 
 check() {
     cd $pkgname-$pkgver
-    cargo test --release --locked
+    CARGO_HUSKY_DONT_INSTALL_HOOKS=true cargo test --release --locked
 }
 
 package() {
