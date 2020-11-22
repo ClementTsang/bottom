@@ -407,7 +407,7 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
 
-#[colors] # Uncomment if you want to use colors
+#[colors] # Uncomment if you want to use custom colors
 # Represents the colour of table headers (processes, CPU, disks, temperature).
 #table_header_color="LightBlue"
 # Represents the colour of the label each widget has.
