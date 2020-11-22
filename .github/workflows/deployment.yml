@@ -5,9 +5,9 @@ name: deployment
 
 on:
   workflow_dispatch:
-  create:
+  push:
     tags:
-      - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   create-github-release:
@@ -22,6 +22,7 @@ jobs:
         run: |
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "version is: ${{ env.VERSION }}"
+
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
@@ -75,21 +76,13 @@ jobs:
               target: "i686-unknown-linux-musl",
               cross: true,
             }
-          - {
-              os: "macOS-latest",
-              target: "x86_64-apple-darwin",
-              cross: false,
-            }
+          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
-          - {
-              os: "windows-2019",
-              target: "i686-pc-windows-gnu",
-              cross: true,
-            }
+          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: true }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
@@ -126,7 +119,7 @@ jobs:
       - uses: actions/setup-python@v2
 
       - name: Get release download URL
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: artifacts
           path: artifacts
@@ -134,11 +127,15 @@ jobs:
       - name: Set release upload URL and release version
         shell: bash
         run: |
-          release_upload_url="$(cat artifacts/release-upload-url)"
+          release_upload_url="$(cat ./artifacts/release-upload-url)"
           echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          echo "release upload url: $RELEASE_UPLOAD_URL"
-          release_version="$(cat artifacts/release-version)"
+          release_version="$(cat ./artifacts/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Check release upload URL and release version
+        shell: bash
+        run: |
+          echo "release upload url: $RELEASE_UPLOAD_URL"
           echo "release version: $RELEASE_VERSION"
 
       - name: Install Net-Framework-Core (Windows x86-64 MSVC)
@@ -155,7 +152,7 @@ jobs:
       # - name: Export wixtoolset to path (Windows x86-64 MSVC)
       #   if: matrix.triple.target == 'x86_64-pc-windows-msvc'
       #   shell: powershell
-      #   run: export PATH=${PATH}:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
+      #   run: export PATH=${PATH}:"/c/Program Files (x86)/WiX Toolset v3.11/bin"
 
       - name: Install zip (Windows)
         if: matrix.triple.os == 'windows-2019'
@@ -178,58 +175,35 @@ jobs:
           args: --release --verbose --target=${{ matrix.triple.target }}
           use-cross: ${{ matrix.triple.cross }}
 
-      - name: Bundle autocomplete
+      - name: Move autocomplete to working directory
         shell: bash
         run: |
-          echo $PWD
-          ls
-          echo "completion_dir=$(ls ./target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)" >> $GITHUB_ENV
-          cp -r $completion_dir completion
+          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out completion
 
-      - name: Strip release binary (x86-64 or i686)
-        if: matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+      - name: Strip release binary (Windows x86-64/i686)
+        if: matrix.triple.os == 'windows-2019' && matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
         run: |
-          strip target/release/btm
+          strip target/${{ matrix.triple.target }}/release/btm.exe
 
-      # - name: Strip release binary (aarch64)
-      #   if: matrix.triple.target == 'aarch64-unknown-linux-gnu'
-      #   run: |
-      #     docker run --rm -v \
-      #       "$PWD/target:/target:Z" \
-      #       rustembedded/cross:aarch64-unknown-linux-gnu \
-      #       aarch64-linux-gnu-strip \
-      #       /target/aarch64-unknown-linux-gnu/release/btm
-
-      # - name: Strip release binary (armv7)
-      #   if: matrix.triple.target == 'armv7-unknown-linux-gnueabihf'
-      #   run: |
-      #     docker run --rm -v \
-      #       "$PWD/target:/target:Z" \
-      #       rustembedded/cross:armv7-unknown-linux-gnueabihf \
-      #       arm-linux-gnueabihf-strip \
-      #       /target/armv7-unknown-linux-gnueabihf/release/btm
-
-      # - name: Strip release binary (ppc)
-      #   if: matrix.triple.target == 'powerpc64le-unknown-linux-gnu'
-      #   run: |
-      #     docker run --rm -v \
-      #       "$PWD/target:/target:Z" \
-      #       rustembedded/cross:powerpc64le-unknown-linux-gnu \
-      #       powerpc64le-linux-gnu-strip \
-      #       /target/powerpc64le-unknown-linux-gnu/release/btm
+      - name: Strip release binary (macOS or Linux x86-64/i686)
+        if: matrix.triple.os != 'windows-2019' && matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+        run: |
+          strip target/${{ matrix.triple.target }}/release/btm
 
       - name: Bundle release and completion (Windows)
+        if: matrix.triple.os == 'windows-2019'
         shell: bash
         run: |
-          cp target/release/btm btm.exe;
+          cp target/${{ matrix.triple.target }}/release/btm.exe btm.exe
           zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe", "completion"
           echo "ASSET=bottom_${{ matrix.triple.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
+        if: matrix.triple.os != 'windows-2019'
         shell: bash
         run: |
-          cp target/release/btm ./btm;
-          tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion;
+          cp target/${{ matrix.triple.target }}/release/btm ./btm
+          tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion
           echo "ASSET=bottom_${{ matrix.triple.target }}.tar.gz" >> $GITHUB_ENV
 
       - name: Upload main release
@@ -242,15 +216,15 @@ jobs:
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
 
-      - name: Build msi file (only Windows x86-64 MSVC)
+      - name: Build msi file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         shell: powershell
         run: |
-          cargo install cargo-wix;
-          cargo wix init;
-          cargo wix;
+          cargo install cargo-wix
+          cargo wix init
+          cargo wix
 
-      - name: Upload msi file (only Windows x86-64 MSVC)
+      - name: Upload msi file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -261,12 +235,12 @@ jobs:
           asset_name: bottom_x86_64_installer.msi
           asset_content_type: application/octet-stream
 
-      - name: Build winget (only Windows x86-64 MSVC)
+      - name: Build winget (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "${{ env.RELEASE_VERSION }}.yaml" "SHA256" "./bottom_x86_64_installer.msi";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "${{ env.RELEASE_VERSION }}.yaml" "SHA256" "./bottom_x86_64_installer.msi"
 
-      - name: Upload winget file (only Windows x86-64 MSVC)
+      - name: Upload winget file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -277,14 +251,14 @@ jobs:
           asset_name: ${{ env.RELEASE_VERSION }}.yaml
           asset_content_type: application/octet-stream
 
-      - name: Build Debian release (only Linux x86-64 GNU)
+      - name: Build Debian release (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         run: |
-          cargo install cargo-deb;
-          cargo deb;
+          cargo install cargo-deb
+          cargo deb
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
-      - name: Upload Debian file (only Linux x86-64 GNU)
+      - name: Upload Debian file (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -295,23 +269,23 @@ jobs:
           asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
           asset_content_type: application/octet-stream
 
-      - name: Build AUR PKGBUILD (only Linux x86-64 GNU)
+      - name: Build AUR PKGBUILD (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         run: |
-          curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.RELEASE_VERSION }}.tar.gz";
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.target }}.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.RELEASE_VERSION }}.tar.gz"
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.RELEASE_VERSION }}.tar.gz"
 
-      - name: Build AUR binary PKGBUILD (only Linux x86-64 GNU)
+      - name: Build AUR binary PKGBUILD (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz"
 
       - name: Tar AUR PKGBUILDs
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         run: |
-          tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD;
+          tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD
 
-      - name: Upload AUR PKGBUILDs (only Linux x86-64 GNU)
+      - name: Upload AUR PKGBUILDs (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         uses: actions/upload-release-asset@v1.0.1
         env:

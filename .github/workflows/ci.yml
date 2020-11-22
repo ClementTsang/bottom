@@ -112,12 +112,6 @@ jobs:
             }
           - {
               os: "windows-2019",
-              target: "i686-pc-windows-gnu",
-              cross: true,
-              rust: stable,
-            }
-          - {
-              os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
               cross: false,
               rust: stable,
