@@ -91,8 +91,7 @@ tar -xzvf 0.5.1.tar.gz
 cargo install --path .
 ```
 
-Or, you can just download the binary from the [latest release](https://github.com/ClementTsang/bottom/releases/latest) and install/use it
-in whatever way you want.
+Or, you can just download the binary from the [latest release](https://github.com/ClementTsang/bottom/releases/latest).
 
 ### Cargo
 
