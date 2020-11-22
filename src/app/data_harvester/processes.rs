@@ -11,7 +11,7 @@ use std::collections::{hash_map::RandomState, HashMap};
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
-/// Maximum character length of a /proc/<PID>/stat process name.
+/// Maximum character length of a /proc/<PID>/stat process name that we'll accept.
 #[cfg(target_os = "linux")]
 const MAX_STAT_NAME_LEN: usize = 15;
 

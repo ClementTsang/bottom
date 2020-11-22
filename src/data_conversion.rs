@@ -62,6 +62,7 @@ pub struct ConvertedProcessData {
     pub tw_f64: f64,
     pub process_state: String,
     pub process_char: char,
+
     /// Prefix printed before the process when displayed.
     pub process_description_prefix: Option<String>,
     /// Whether to mark this process entry as disabled (mostly for tree mode).
