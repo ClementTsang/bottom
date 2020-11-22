@@ -189,6 +189,7 @@ jobs:
           strip target/${{ matrix.triple.target }}/release/btm
 
       - name: Bundle release and completion (Windows)
+        if: matrix.triple.os == 'windows-2019'
         shell: bash
         run: |
           cp target/${{ matrix.triple.target }}/release/btm btm.exe;
@@ -196,6 +197,7 @@ jobs:
           echo "ASSET=bottom_${{ matrix.triple.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
+        if: matrix.triple.os !- 'windows-2019'
         shell: bash
         run: |
           cp target/${{ matrix.triple.target }}/release/btm ./btm;
