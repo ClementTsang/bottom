@@ -212,7 +212,7 @@ jobs:
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
 
-      - name: Build msi file (only Windows x86-64 MSVC)
+      - name: Build msi file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         shell: powershell
         run: |
@@ -220,7 +220,7 @@ jobs:
           cargo wix init;
           cargo wix;
 
-      - name: Upload msi file (only Windows x86-64 MSVC)
+      - name: Upload msi file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -231,12 +231,12 @@ jobs:
           asset_name: bottom_x86_64_installer.msi
           asset_content_type: application/octet-stream
 
-      - name: Build winget (only Windows x86-64 MSVC)
+      - name: Build winget (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         run: |
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "${{ env.RELEASE_VERSION }}.yaml" "SHA256" "./bottom_x86_64_installer.msi";
 
-      - name: Upload winget file (only Windows x86-64 MSVC)
+      - name: Upload winget file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -247,14 +247,14 @@ jobs:
           asset_name: ${{ env.RELEASE_VERSION }}.yaml
           asset_content_type: application/octet-stream
 
-      - name: Build Debian release (only Linux x86-64 GNU)
+      - name: Build Debian release (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         run: |
           cargo install cargo-deb;
           cargo deb;
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
-      - name: Upload Debian file (only Linux x86-64 GNU)
+      - name: Upload Debian file (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -265,13 +265,13 @@ jobs:
           asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
           asset_content_type: application/octet-stream
 
-      - name: Build AUR PKGBUILD (only Linux x86-64 GNU)
+      - name: Build AUR PKGBUILD (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         run: |
           curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.RELEASE_VERSION }}.tar.gz";
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.target }}.tar.gz";
 
-      - name: Build AUR binary PKGBUILD (only Linux x86-64 GNU)
+      - name: Build AUR binary PKGBUILD (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         run: |
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
@@ -281,7 +281,7 @@ jobs:
         run: |
           tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD;
 
-      - name: Upload AUR PKGBUILDs (only Linux x86-64 GNU)
+      - name: Upload AUR PKGBUILDs (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
         uses: actions/upload-release-asset@v1.0.1
         env:
