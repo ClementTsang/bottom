@@ -5,9 +5,9 @@ name: deployment
 
 on:
   workflow_dispatch:
-  create:
+  push:
     tags:
-      - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   create-github-release:
@@ -19,9 +19,13 @@ jobs:
 
       - name: Get the release version from the tag
         if: env.VERSION == ''
+        # run: |
+        #   echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        #   echo "version is: ${{ env.VERSION }}"
         run: |
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "VERSION=0.5.0" >> $GITHUB_ENV
           echo "version is: ${{ env.VERSION }}"
+
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
@@ -75,21 +79,13 @@ jobs:
               target: "i686-unknown-linux-musl",
               cross: true,
             }
-          - {
-              os: "macOS-latest",
-              target: "x86_64-apple-darwin",
-              cross: false,
-            }
+          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
-          - {
-              os: "windows-2019",
-              target: "i686-pc-windows-gnu",
-              cross: true,
-            }
+          - { os: "windows-2019", target: "i686-pc-windows-gnu", cross: true }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
@@ -126,7 +122,7 @@ jobs:
       - uses: actions/setup-python@v2
 
       - name: Get release download URL
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: artifacts
           path: artifacts
@@ -134,11 +130,15 @@ jobs:
       - name: Set release upload URL and release version
         shell: bash
         run: |
-          release_upload_url="$(cat artifacts/release-upload-url)"
+          release_upload_url="$(cat ./artifacts/release-upload-url)"
           echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          echo "release upload url: $RELEASE_UPLOAD_URL"
-          release_version="$(cat artifacts/release-version)"
+          release_version="$(cat ./artifacts/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Check release upload URL and release version
+        shell: bash
+        run: |
+          echo "release upload url: $RELEASE_UPLOAD_URL"
           echo "release version: $RELEASE_VERSION"
 
       - name: Install Net-Framework-Core (Windows x86-64 MSVC)
@@ -181,54 +181,26 @@ jobs:
       - name: Bundle autocomplete
         shell: bash
         run: |
-          echo $PWD
-          ls
-          echo "completion_dir=$(ls ./target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)" >> $GITHUB_ENV
+          ls ./target/${{ matrix.triple.target }}/release/build/bottom-*
+          echo "completion_dir=$(ls ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)" >> $GITHUB_ENV
           cp -r $completion_dir completion
 
       - name: Strip release binary (x86-64 or i686)
         if: matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
         run: |
-          strip target/release/btm
-
-      # - name: Strip release binary (aarch64)
-      #   if: matrix.triple.target == 'aarch64-unknown-linux-gnu'
-      #   run: |
-      #     docker run --rm -v \
-      #       "$PWD/target:/target:Z" \
-      #       rustembedded/cross:aarch64-unknown-linux-gnu \
-      #       aarch64-linux-gnu-strip \
-      #       /target/aarch64-unknown-linux-gnu/release/btm
-
-      # - name: Strip release binary (armv7)
-      #   if: matrix.triple.target == 'armv7-unknown-linux-gnueabihf'
-      #   run: |
-      #     docker run --rm -v \
-      #       "$PWD/target:/target:Z" \
-      #       rustembedded/cross:armv7-unknown-linux-gnueabihf \
-      #       arm-linux-gnueabihf-strip \
-      #       /target/armv7-unknown-linux-gnueabihf/release/btm
-
-      # - name: Strip release binary (ppc)
-      #   if: matrix.triple.target == 'powerpc64le-unknown-linux-gnu'
-      #   run: |
-      #     docker run --rm -v \
-      #       "$PWD/target:/target:Z" \
-      #       rustembedded/cross:powerpc64le-unknown-linux-gnu \
-      #       powerpc64le-linux-gnu-strip \
-      #       /target/powerpc64le-unknown-linux-gnu/release/btm
+          strip target/${{ matrix.triple.target }}/release/btm
 
       - name: Bundle release and completion (Windows)
         shell: bash
         run: |
-          cp target/release/btm btm.exe;
+          cp target/${{ matrix.triple.target }}/release/btm btm.exe;
           zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe", "completion"
           echo "ASSET=bottom_${{ matrix.triple.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
         shell: bash
         run: |
-          cp target/release/btm ./btm;
+          cp target/${{ matrix.triple.target }}/release/btm ./btm;
           tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion;
           echo "ASSET=bottom_${{ matrix.triple.target }}.tar.gz" >> $GITHUB_ENV
 
