@@ -130,23 +130,11 @@ jobs:
               cross: true,
               rust: stable,
             }
-          - {
-              os: "ubuntu-18.04",
-              target: "aarch64-unknown-linux-musl",
-              cross: true,
-              rust: stable,
-            }
 
           # armv7
           - {
               os: "ubuntu-18.04",
               target: "armv7-unknown-linux-gnueabihf",
-              cross: true,
-              rust: stable,
-            }
-          - {
-              os: "ubuntu-18.04",
-              target: "armv7-unknown-linux-musleabihf",
               cross: true,
               rust: stable,
             }
