@@ -19,6 +19,81 @@ use std::borrow::Cow;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
+use once_cell::sync::Lazy;
+
+static PROCESS_HEADERS_HARD_WIDTH_NO_GROUP: Lazy<Vec<Option<u16>>> = Lazy::new(|| {
+    vec![
+        Some(7),
+        None,
+        Some(8),
+        Some(8),
+        Some(8),
+        Some(8),
+        Some(7),
+        Some(8),
+    ]
+});
+static PROCESS_HEADERS_HARD_WIDTH_GROUPED: Lazy<Vec<Option<u16>>> = Lazy::new(|| {
+    vec![
+        Some(7),
+        None,
+        Some(8),
+        Some(8),
+        Some(8),
+        Some(8),
+        Some(7),
+        Some(8),
+        None,
+    ]
+});
+
+static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND: Lazy<Vec<Option<f64>>> =
+    Lazy::new(|| vec![None, Some(0.7), None, None, None, None, None, None]);
+static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_TREE: Lazy<Vec<Option<f64>>> =
+    Lazy::new(|| vec![None, Some(0.5), None, None, None, None, None, None]);
+static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE: Lazy<Vec<Option<f64>>> =
+    Lazy::new(|| vec![None, Some(0.4), None, None, None, None, None, None]);
+
+static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND: Lazy<Vec<Option<f64>>> = Lazy::new(|| {
+    vec![
+        None,
+        Some(0.7),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(0.2),
+    ]
+});
+static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE: Lazy<Vec<Option<f64>>> = Lazy::new(|| {
+    vec![
+        None,
+        Some(0.5),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(0.2),
+    ]
+});
+static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE: Lazy<Vec<Option<f64>>> = Lazy::new(|| {
+    vec![
+        None,
+        Some(0.3),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(0.2),
+    ]
+});
+
 pub trait ProcessTableWidget {
     /// Draws and handles all process-related drawing.  Use this.
     /// - `widget_id` here represents the widget ID of the process widget itself!
@@ -222,28 +297,9 @@ impl ProcessTableWidget for Painter {
 
                 // Calculate widths
                 let hard_widths = if proc_widget_state.is_grouped {
-                    vec![
-                        Some(7),
-                        None,
-                        Some(8),
-                        Some(8),
-                        Some(8),
-                        Some(8),
-                        Some(7),
-                        Some(8),
-                    ]
+                    &*PROCESS_HEADERS_HARD_WIDTH_GROUPED
                 } else {
-                    vec![
-                        Some(7),
-                        None,
-                        Some(8),
-                        Some(8),
-                        Some(8),
-                        Some(8),
-                        Some(7),
-                        Some(8),
-                        None,
-                    ]
+                    &*PROCESS_HEADERS_HARD_WIDTH_NO_GROUP
                 };
 
                 if recalculate_column_widths {
@@ -274,7 +330,7 @@ impl ProcessTableWidget for Painter {
                         .table_width_state
                         .desired_column_widths
                         .iter()
-                        .zip(&hard_widths)
+                        .zip(hard_widths)
                         .map(|(current, hard)| {
                             if let Some(hard) = hard {
                                 if *hard > *current {
@@ -290,48 +346,18 @@ impl ProcessTableWidget for Painter {
 
                     let soft_widths_max = if proc_widget_state.is_grouped {
                         if proc_widget_state.is_using_command {
-                            vec![None, Some(0.7), None, None, None, None, None, None]
+                            &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND
                         } else if proc_widget_state.is_tree_mode {
-                            vec![None, Some(0.5), None, None, None, None, None, None]
+                            &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_TREE
                         } else {
-                            vec![None, Some(0.4), None, None, None, None, None, None]
+                            &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE
                         }
                     } else if proc_widget_state.is_using_command {
-                        vec![
-                            None,
-                            Some(0.7),
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                            Some(0.2),
-                        ]
+                        &*PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND
                     } else if proc_widget_state.is_tree_mode {
-                        vec![
-                            None,
-                            Some(0.5),
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                            Some(0.2),
-                        ]
+                        &*PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE
                     } else {
-                        vec![
-                            None,
-                            Some(0.3),
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                            Some(0.2),
-                        ]
+                        &*PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE
                     };
 
                     proc_widget_state.table_width_state.calculated_column_widths =
@@ -339,7 +365,7 @@ impl ProcessTableWidget for Painter {
                             draw_loc.width,
                             &hard_widths,
                             &soft_widths_min,
-                            &soft_widths_max,
+                            soft_widths_max,
                             &(proc_widget_state
                                 .table_width_state
                                 .desired_column_widths
@@ -363,7 +389,7 @@ impl ProcessTableWidget for Painter {
                 let ccw = &proc_widget_state.table_width_state.calculated_column_widths;
 
                 let process_rows = sliced_vec.iter().map(|(data, disabled)| {
-                    let truncated_data = data.iter().zip(&hard_widths).enumerate().map(
+                    let truncated_data = data.iter().zip(hard_widths).enumerate().map(
                         |(itx, ((entry, alternative), width))| {
                             if let (Some(desired_col_width), Some(calculated_col_width)) =
                                 (dcw.get(itx), ccw.get(itx))

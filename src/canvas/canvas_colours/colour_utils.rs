@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
 use tui::style::{Color, Style};
@@ -14,8 +14,8 @@ pub const STANDARD_HIGHLIGHT_COLOUR: Color = Color::LightBlue;
 pub const AVG_COLOUR: Color = Color::Red;
 pub const ALL_COLOUR: Color = Color::Green;
 
-lazy_static! {
-    static ref COLOR_NAME_LOOKUP_TABLE: HashMap<&'static str, Color> = [
+static COLOR_NAME_LOOKUP_TABLE: Lazy<HashMap<&'static str, Color>> = Lazy::new(|| {
+    [
         ("reset", Color::Reset),
         ("black", Color::Black),
         ("red", Color::Red),
@@ -33,12 +33,12 @@ lazy_static! {
         ("lightblue", Color::LightBlue),
         ("lightmagenta", Color::LightMagenta),
         ("lightcyan", Color::LightCyan),
-        ("white", Color::White)
+        ("white", Color::White),
     ]
     .iter()
     .copied()
-    .collect();
-}
+    .collect()
+});
 
 pub fn convert_hex_to_color(hex: &str) -> error::Result<Color> {
     fn hex_err(hex: &str) -> error::Result<u8> {

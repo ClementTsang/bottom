@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -21,12 +21,13 @@ use unicode_segmentation::UnicodeSegmentation;
 
 const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 
-lazy_static! {
-    static ref TEMP_HEADERS_LENS: Vec<u16> = TEMP_HEADERS
+static TEMP_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
+    TEMP_HEADERS
         .iter()
         .map(|entry| entry.len() as u16)
-        .collect::<Vec<_>>();
-}
+        .collect::<Vec<_>>()
+});
+
 pub trait TempTableWidget {
     fn draw_temp_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,

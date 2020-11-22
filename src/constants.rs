@@ -1,6 +1,5 @@
-use lazy_static::lazy_static;
-
 use crate::options::ConfigColours;
+use once_cell::sync::Lazy;
 
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;
@@ -24,120 +23,116 @@ pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
 // Side borders
-lazy_static! {
-    pub static ref SIDE_BORDERS: tui::widgets::Borders =
-        tui::widgets::Borders::from_bits_truncate(20);
-    pub static ref TOP_LEFT_RIGHT: tui::widgets::Borders =
-        tui::widgets::Borders::from_bits_truncate(22);
-    pub static ref BOTTOM_LEFT_RIGHT: tui::widgets::Borders =
-        tui::widgets::Borders::from_bits_truncate(28);
-    pub static ref DEFAULT_TEXT_STYLE: tui::style::Style =
-        tui::style::Style::default().fg(tui::style::Color::Gray);
-    pub static ref DEFAULT_HEADER_STYLE: tui::style::Style =
-        tui::style::Style::default().fg(tui::style::Color::LightBlue);
-}
+pub static SIDE_BORDERS: Lazy<tui::widgets::Borders> =
+    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(20));
+pub static TOP_LEFT_RIGHT: Lazy<tui::widgets::Borders> =
+    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(22));
+pub static BOTTOM_LEFT_RIGHT: Lazy<tui::widgets::Borders> =
+    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(28));
+pub static DEFAULT_TEXT_STYLE: Lazy<tui::style::Style> =
+    Lazy::new(|| tui::style::Style::default().fg(tui::style::Color::Gray));
+pub static DEFAULT_HEADER_STYLE: Lazy<tui::style::Style> =
+    Lazy::new(|| tui::style::Style::default().fg(tui::style::Color::LightBlue));
 
 // Colour profiles
-lazy_static! {
-    pub static ref DEFAULT_LIGHT_MODE_COLOUR_PALETTE: ConfigColours = ConfigColours {
-        text_color: Some("black".to_string()),
-        border_color: Some("black".to_string()),
-        table_header_color: Some("black".to_string()),
-        widget_title_color: Some("black".to_string()),
-        selected_text_color: Some("white".to_string()),
-        graph_color: Some("black".to_string()),
-        disabled_text_color: Some("gray".to_string()),
-        ..ConfigColours::default()
-    };
-    pub static ref GRUVBOX_COLOUR_PALETTE: ConfigColours = ConfigColours {
-        table_header_color: Some("#83a598".to_string()),
-        all_cpu_color: Some("#8ec07c".to_string()),
-        avg_cpu_color: Some("#fb4934".to_string()),
-        cpu_core_colors: Some(vec![
-            "#cc241d".to_string(),
-            "#98971a".to_string(),
-            "#d79921".to_string(),
-            "#458588".to_string(),
-            "#b16286".to_string(),
-            "#689d6a".to_string(),
-            "#fe8019".to_string(),
-            "#b8bb26".to_string(),
-            "#fabd2f".to_string(),
-            "#83a598".to_string(),
-            "#d3869b".to_string(),
-            "#d65d0e".to_string(),
-            "#9d0006".to_string(),
-            "#79740e".to_string(),
-            "#b57614".to_string(),
-            "#076678".to_string(),
-            "#8f3f71".to_string(),
-            "#427b58".to_string(),
-            "#d65d03".to_string(),
-            "#af3a03".to_string(),
-        ]),
-        ram_color: Some("#8ec07c".to_string()),
-        swap_color: Some("#fabd2f".to_string()),
-        rx_color: Some("#8ec07c".to_string()),
-        tx_color: Some("#fabd2f".to_string()),
-        rx_total_color: Some("#689d6a".to_string()),
-        tx_total_color: Some("#d79921".to_string()),
-        border_color: Some("#ebdbb2".to_string()),
-        highlighted_border_color: Some("#fe8019".to_string()),
-        disabled_text_color: Some("#665c54".to_string()),
-        text_color: Some("#ebdbb2".to_string()),
-        selected_text_color: Some("#1d2021".to_string()),
-        selected_bg_color: Some("#ebdbb2".to_string()),
-        widget_title_color: Some("#ebdbb2".to_string()),
-        graph_color: Some("#ebdbb2".to_string()),
-        high_battery_color: Some("#98971a".to_string()),
-        medium_battery_color: Some("#fabd2f".to_string()),
-        low_battery_color: Some("#fb4934".to_string())
-    };
-    pub static ref GRUVBOX_LIGHT_COLOUR_PALETTE: ConfigColours = ConfigColours {
-        table_header_color: Some("#076678".to_string()),
-        all_cpu_color: Some("#8ec07c".to_string()),
-        avg_cpu_color: Some("#fb4934".to_string()),
-        cpu_core_colors: Some(vec![
-            "#cc241d".to_string(),
-            "#98971a".to_string(),
-            "#d79921".to_string(),
-            "#458588".to_string(),
-            "#b16286".to_string(),
-            "#689d6a".to_string(),
-            "#fe8019".to_string(),
-            "#b8bb26".to_string(),
-            "#fabd2f".to_string(),
-            "#83a598".to_string(),
-            "#d3869b".to_string(),
-            "#d65d0e".to_string(),
-            "#9d0006".to_string(),
-            "#79740e".to_string(),
-            "#b57614".to_string(),
-            "#076678".to_string(),
-            "#8f3f71".to_string(),
-            "#427b58".to_string(),
-            "#d65d03".to_string(),
-            "#af3a03".to_string(),
-        ]),
-        ram_color: Some("#427b58".to_string()),
-        swap_color: Some("#cc241d".to_string()),
-        rx_color: Some("#427b58".to_string()),
-        tx_color: Some("#cc241d".to_string()),
-        rx_total_color: Some("#689d6a".to_string()),
-        tx_total_color: Some("#9d0006".to_string()),
-        border_color: Some("#3c3836".to_string()),
-        highlighted_border_color: Some("#af3a03".to_string()),
-        disabled_text_color: Some("#d5c4a1".to_string()),
-        text_color: Some("#3c3836".to_string()),
-        selected_text_color: Some("#ebdbb2".to_string()),
-        selected_bg_color: Some("#3c3836".to_string()),
-        widget_title_color: Some("#3c3836".to_string()),
-        graph_color: Some("#3c3836".to_string()),
-        high_battery_color: Some("#98971a".to_string()),
-        medium_battery_color: Some("#d79921".to_string()),
-        low_battery_color: Some("#cc241d".to_string())
-    };
-}
+pub static DEFAULT_LIGHT_MODE_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {
+    text_color: Some("black".to_string()),
+    border_color: Some("black".to_string()),
+    table_header_color: Some("black".to_string()),
+    widget_title_color: Some("black".to_string()),
+    selected_text_color: Some("white".to_string()),
+    graph_color: Some("black".to_string()),
+    disabled_text_color: Some("gray".to_string()),
+    ..ConfigColours::default()
+});
+pub static GRUVBOX_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {
+    table_header_color: Some("#83a598".to_string()),
+    all_cpu_color: Some("#8ec07c".to_string()),
+    avg_cpu_color: Some("#fb4934".to_string()),
+    cpu_core_colors: Some(vec![
+        "#cc241d".to_string(),
+        "#98971a".to_string(),
+        "#d79921".to_string(),
+        "#458588".to_string(),
+        "#b16286".to_string(),
+        "#689d6a".to_string(),
+        "#fe8019".to_string(),
+        "#b8bb26".to_string(),
+        "#fabd2f".to_string(),
+        "#83a598".to_string(),
+        "#d3869b".to_string(),
+        "#d65d0e".to_string(),
+        "#9d0006".to_string(),
+        "#79740e".to_string(),
+        "#b57614".to_string(),
+        "#076678".to_string(),
+        "#8f3f71".to_string(),
+        "#427b58".to_string(),
+        "#d65d03".to_string(),
+        "#af3a03".to_string(),
+    ]),
+    ram_color: Some("#8ec07c".to_string()),
+    swap_color: Some("#fabd2f".to_string()),
+    rx_color: Some("#8ec07c".to_string()),
+    tx_color: Some("#fabd2f".to_string()),
+    rx_total_color: Some("#689d6a".to_string()),
+    tx_total_color: Some("#d79921".to_string()),
+    border_color: Some("#ebdbb2".to_string()),
+    highlighted_border_color: Some("#fe8019".to_string()),
+    disabled_text_color: Some("#665c54".to_string()),
+    text_color: Some("#ebdbb2".to_string()),
+    selected_text_color: Some("#1d2021".to_string()),
+    selected_bg_color: Some("#ebdbb2".to_string()),
+    widget_title_color: Some("#ebdbb2".to_string()),
+    graph_color: Some("#ebdbb2".to_string()),
+    high_battery_color: Some("#98971a".to_string()),
+    medium_battery_color: Some("#fabd2f".to_string()),
+    low_battery_color: Some("#fb4934".to_string()),
+});
+pub static GRUVBOX_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {
+    table_header_color: Some("#076678".to_string()),
+    all_cpu_color: Some("#8ec07c".to_string()),
+    avg_cpu_color: Some("#fb4934".to_string()),
+    cpu_core_colors: Some(vec![
+        "#cc241d".to_string(),
+        "#98971a".to_string(),
+        "#d79921".to_string(),
+        "#458588".to_string(),
+        "#b16286".to_string(),
+        "#689d6a".to_string(),
+        "#fe8019".to_string(),
+        "#b8bb26".to_string(),
+        "#fabd2f".to_string(),
+        "#83a598".to_string(),
+        "#d3869b".to_string(),
+        "#d65d0e".to_string(),
+        "#9d0006".to_string(),
+        "#79740e".to_string(),
+        "#b57614".to_string(),
+        "#076678".to_string(),
+        "#8f3f71".to_string(),
+        "#427b58".to_string(),
+        "#d65d03".to_string(),
+        "#af3a03".to_string(),
+    ]),
+    ram_color: Some("#427b58".to_string()),
+    swap_color: Some("#cc241d".to_string()),
+    rx_color: Some("#427b58".to_string()),
+    tx_color: Some("#cc241d".to_string()),
+    rx_total_color: Some("#689d6a".to_string()),
+    tx_total_color: Some("#9d0006".to_string()),
+    border_color: Some("#3c3836".to_string()),
+    highlighted_border_color: Some("#af3a03".to_string()),
+    disabled_text_color: Some("#d5c4a1".to_string()),
+    text_color: Some("#3c3836".to_string()),
+    selected_text_color: Some("#ebdbb2".to_string()),
+    selected_bg_color: Some("#3c3836".to_string()),
+    widget_title_color: Some("#3c3836".to_string()),
+    graph_color: Some("#3c3836".to_string()),
+    high_battery_color: Some("#98971a".to_string()),
+    medium_battery_color: Some("#d79921".to_string()),
+    low_battery_color: Some("#cc241d".to_string()),
+});
 
 // Help text
 pub const HELP_CONTENTS_TEXT: [&str; 8] = [
@@ -277,8 +272,8 @@ pub const BASIC_MEM_HELP_TEXT: [&str; 2] = [
     "%                Toggle between values and percentages for memory usage",
 ];
 
-lazy_static! {
-    pub static ref HELP_TEXT: Vec<Vec<&'static str>> = vec![
+pub static HELP_TEXT: Lazy<Vec<Vec<&'static str>>> = Lazy::new(|| {
+    vec![
         HELP_CONTENTS_TEXT.to_vec(),
         GENERAL_HELP_TEXT.to_vec(),
         CPU_HELP_TEXT.to_vec(),
@@ -287,8 +282,8 @@ lazy_static! {
         SORT_HELP_TEXT.to_vec(),
         BATTERY_HELP_TEXT.to_vec(),
         BASIC_MEM_HELP_TEXT.to_vec(),
-    ];
-}
+    ]
+});
 
 // Default layouts
 pub const DEFAULT_LAYOUT: &str = r##"

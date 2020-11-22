@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -21,12 +21,12 @@ use unicode_segmentation::UnicodeSegmentation;
 
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
 
-lazy_static! {
-    static ref DISK_HEADERS_LENS: Vec<u16> = DISK_HEADERS
+static DISK_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
+    DISK_HEADERS
         .iter()
         .map(|entry| entry.len() as u16)
-        .collect::<Vec<_>>();
-}
+        .collect::<Vec<_>>()
+});
 
 pub trait DiskTableWidget {
     fn draw_disk_table<B: Backend>(
