@@ -28,8 +28,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          draft: true
           tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }} Release
 
       - name: Save release upload URL to artifact
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
@@ -48,14 +49,6 @@ jobs:
     needs: [create-github-release]
     runs-on: ${{ matrix.os }}
     env:
-      # For some builds, we use cross to test on 32-bit and big-endian
-      # systems.
-      CARGO: cargo
-      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-      TARGET_FLAGS:
-      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
-      TARGET_DIR: ./target
-      # Emit backtraces on panics.
       RUST_BACKTRACE: 1
     strategy:
       matrix:
@@ -142,6 +135,23 @@ jobs:
 
       - uses: actions/setup-python@v2
 
+
+      - name: Get release download URL
+        uses: actions/download-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Set release upload URL and release version
+        shell: bash
+        run: |
+          release_upload_url="$(cat artifacts/release-upload-url)"
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          echo "release upload url: $RELEASE_UPLOAD_URL"
+          release_version="$(cat artifacts/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+          echo "release version: $RELEASE_VERSION"
+
       - name: Install Net-Framework-Core (Windows)
         if: matrix.triple.os == 'windows-2019'
         shell: powershell
@@ -150,7 +160,8 @@ jobs:
       - name: Install wixtoolset (Windows)
         if: matrix.triple.os == 'windows-2019'
         uses: crazy-max/ghaction-chocolatey@v1.4.0
-        with: install -y wixtoolset
+        with: 
+          args: install -y wixtoolset
 
       - name: Export wixtoolset to path (Windows x86-64 MSVC)
         if: matrix.triple.target == "x86_64-pc-windows-msvc"
@@ -160,7 +171,8 @@ jobs:
       - name: Install zip (Windows)
         if: matrix.triple.os == 'windows-2019'
         uses: crazy-max/ghaction-chocolatey@v1.4.0
-        with: install -y zip
+        with:
+          args: install -y zip
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -219,12 +231,24 @@ jobs:
         run: |
           cp target/${{ matrix.triple.target }}/release/btm btm.exe;
           zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe", "completion"
+          echo "ASSET=bottom_${{ matrix.triple.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
         shell: bash
         run: |
           cp target/${{ matrix.triple.target }}/release/btm ./btm;
           tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion;
+          echo "ASSET=bottom_${{ matrix.triple.target }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload main release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: ${{ env.ASSET }}
+          asset_name: ${{ env.ASSET }}
+          asset_content_type: application/octet-stream
 
       - name: Build msi file (only Windows x86-64 MSVC)
         if: matrix.triple.target == "x86_64-pc-windows-msvc"
@@ -234,26 +258,74 @@ jobs:
           cargo wix init;
           cargo wix;
 
+      - name: Upload msi file (only Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom_x86_64_installer.msi
+          asset_name: bottom_x86_64_installer.msi
+          asset_content_type: application/octet-stream
+
       - name: Build winget (only Windows x86-64 MSVC)
         if: matrix.triple.target == "x86_64-pc-windows-msvc"
         run: |
-          python "./deployment/packager.py" ${{ env.version }} "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256" "./bottom_x86_64_installer.msi";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "${{ env.RELEASE_VERSION }}.yaml" "SHA256" "./bottom_x86_64_installer.msi";
+
+      - name: Upload winget file (only Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: ${{ env.RELEASE_VERSION }}.yaml
+          asset_name: ${{ env.RELEASE_VERSION }}.yaml
+          asset_content_type: application/octet-stream
 
       - name: Build Debian release (only Linux x86-64 GNU)
         if: matrix.triple.target == "x86_64-unknown-linux-gnu"
         run: |
           cargo install cargo-deb;
           cargo deb;
-          cp ./target/debian/bottom_*.deb ./
+          cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+
+      - name: Upload Debian file (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          asset_content_type: application/octet-stream
 
       - name: Build AUR PKGBUILD (only Linux x86-64 GNU)
         if: matrix.triple.target == "x86_64-unknown-linux-gnu"
         run: | 
-          curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.version }}.tar.gz";
-          python "./deployment/packager.py" ${{ env.version }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.target }}.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.RELEASE_VERSION }}.tar.gz";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.target }}.tar.gz";
 
       - name: Build AUR binary PKGBUILD (only Linux x86-64 GNU)
         if: matrix.triple.target == "x86_64-unknown-linux-gnu"
         run: | 
-          python "./deployment/packager.py" ${{ env.version }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
 
+      - name: Tar AUR PKGBUILDs
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        run: |
+          tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD;
+      
+      - name: Upload AUR PKGBUILDs (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: arch.tar.gz
+          asset_name: arch.tar.gz
+          asset_content_type: application/octet-stream
