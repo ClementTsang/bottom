@@ -27,6 +27,8 @@ jobs:
         run: |
           curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-unknown-linux-gnu.tar.gz";
           curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-apple-darwin.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_i686-pc-windows-msvc.zip";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-pc-windows-msvc.zip";
 
       - name: Execute choco packaging script
         run: |
