@@ -181,7 +181,7 @@ jobs:
       - name: Bundle autocomplete
         shell: bash
         run: |
-          ls ./target/${{ matrix.triple.target }}/release/build/bottom-*
+          ls ./target/${{ matrix.triple.target }}/release/build/bottom-*/out
           echo "completion_dir=$(ls ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)" >> $GITHUB_ENV
           cp -r $completion_dir completion
 
