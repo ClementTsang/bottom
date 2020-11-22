@@ -181,9 +181,7 @@ jobs:
       - name: Bundle autocomplete
         shell: bash
         run: |
-          ls ./target/${{ matrix.triple.target }}/release/build/bottom-*/out
-          echo "completion_dir=$(ls ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)" >> $GITHUB_ENV
-          cp -r $completion_dir completion
+          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out completion
 
       - name: Strip release binary (x86-64 or i686)
         if: matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
