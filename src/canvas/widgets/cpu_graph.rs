@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -26,12 +26,12 @@ const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 const AVG_POSITION: usize = 1;
 const ALL_POSITION: usize = 0;
 
-lazy_static! {
-    static ref CPU_LEGEND_HEADER_LENS: Vec<u16> = CPU_LEGEND_HEADER
+static CPU_LEGEND_HEADER_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
+    CPU_LEGEND_HEADER
         .iter()
         .map(|entry| entry.len() as u16)
-        .collect::<Vec<_>>();
-}
+        .collect::<Vec<_>>()
+});
 
 pub trait CpuGraphWidget {
     fn draw_cpu<B: Backend>(

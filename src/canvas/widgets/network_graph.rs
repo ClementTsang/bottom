@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::cmp::max;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -21,12 +21,12 @@ use tui::{
 
 const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
-lazy_static! {
-    static ref NETWORK_HEADERS_LENS: Vec<u16> = NETWORK_HEADERS
+static NETWORK_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
+    NETWORK_HEADERS
         .iter()
         .map(|entry| entry.len() as u16)
-        .collect::<Vec<_>>();
-}
+        .collect::<Vec<_>>()
+});
 
 pub trait NetworkGraphWidget {
     fn draw_network<B: Backend>(
