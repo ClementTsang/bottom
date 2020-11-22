@@ -17,17 +17,17 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
-      # - name: Get the release version from the tag
-      #   if: env.VERSION == ''
-      #   run: |
-      #     echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-      #     echo "Version is: ${{ env.VERSION }}"
-
       - name: Get the release version from the tag
         if: env.VERSION == ''
         run: |
-          echo "VERSION=0.5.1" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "Version is: ${{ env.VERSION }}"
+
+      # - name: Hard-coded release version for testing
+      #   if: env.VERSION == ''
+      #   run: |
+      #     echo "VERSION=0.5.1" >> $GITHUB_ENV
+      #     echo "Version is: ${{ env.VERSION }}"
 
       - name: Create GitHub release
         id: release
