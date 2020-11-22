@@ -117,23 +117,11 @@ jobs:
               cross: true,
               rust: stable,
             }
-          - {
-              os: "ubuntu-18.04",
-              target: "aarch64-unknown-linux-musl",
-              cross: true,
-              rust: stable,
-            }
 
           # armv7
           - {
               os: "ubuntu-18.04",
               target: "armv7-unknown-linux-gnueabihf",
-              cross: true,
-              rust: stable,
-            }
-          - {
-              os: "ubuntu-18.04",
-              target: "armv7-unknown-linux-musleabihf",
               cross: true,
               rust: stable,
             }
@@ -147,30 +135,32 @@ jobs:
             }
 
     steps:
-      - name: Install Net-Framework-Core (Windows)
-        if: ${{ matrix.triple.os == 'windows-2019' }}
-        shell: powershell
-        run: Install-WindowsFeature Net-Framework-Core
-
-      - name: Install wixtoolset (Windows)
-        if: ${{ matrix.triple.os == 'windows-2019' }}
-        uses: crazy-max/ghaction-chocolatey@v1.4.0
-        with: install -y wixtoolset
-
-      - name: Export wixtoolset to path (Windows)
-        if: ${{ matrix.triple.os == 'windows-2019' }}
-        shell: powershell   
-        run: export PATH=$PATH:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
-
-      - name: Install zip (Windows)
-        if: ${{ matrix.triple.os == 'windows-2019' }}
-        uses: crazy-max/ghaction-chocolatey@v1.4.0
-        with: install -y zip
-
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+
+      - name: Install Net-Framework-Core (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        shell: powershell
+        run: Install-WindowsFeature Net-Framework-Core
+
+      - name: Install wixtoolset (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with: install -y wixtoolset
+
+      - name: Export wixtoolset to path (Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        shell: powershell   
+        run: export PATH=$PATH:"/c/Program Files (x86)/WiX Toolset v3.11/bin";
+
+      - name: Install zip (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with: install -y zip
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -190,23 +180,53 @@ jobs:
         shell: bash
         run: |
           local target_dir=$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname);
-          cp -r $target_dir completions
+          cp -r $target_dir completion
 
-      - name: Strip release binary (Linux and macOS)
-        
+      - name: Strip release binary (x86-64 or i686)
+        if: matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+        run: |
+          strip target/release/btm
 
-      - name: Bundle release and completions (Windows)
+      - name: Bundle release and completion (Windows)
         shell: bash
         run: |
           cp target/release/btm btm.exe;
-          zip -r ${} "btm.exe", "completions"
+          zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe", "completion"
 
-      - name: Bundle release and completions (Linux and macOS)
+      - name: Bundle release and completion (Linux and macOS)
+        shell: bash
+        run: |
+          cp target/release/btm ./btm;
+          tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion;
 
-      - name: Build msi file (only Windows MSVC)
+      - name: Build msi file (only Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        shell: powershell
+        run: |
+          cargo install cargo-wix;
+          cargo wix init;
+          cargo wix;
 
-      - name: Build winget (only Windows MSVC)
+      - name: Build winget (only Windows x86-64 MSVC)
+        if: matrix.triple.target == "x86_64-pc-windows-msvc"
+        run: |
+          python "./deployment/packager.py" ${{ env.version }} "./deployment/windows/winget/winget.yaml.template" "$TRAVIS_TAG.yaml" "SHA256" "./bottom_x86_64_installer.msi";
 
       - name: Build Debian release (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        run: |
+          cargo install cargo-deb;
+          cargo deb;
+          cp ./target/debian/bottom_*.deb ./
 
-      - name: Build AUR PKGBUILDs (only Linux x86-64 GNU)
+      - name: Build AUR PKGBUILD (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        run: | 
+          curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.version }}.tar.gz";
+          python "./deployment/packager.py" ${{ env.version }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.target }}.tar.gz";
+
+      - name: Build AUR binary PKGBUILD (only Linux x86-64 GNU)
+        if: matrix.triple.target == "x86_64-unknown-linux-gnu"
+        run: | 
+          python "./deployment/packager.py" ${{ env.version }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+

@@ -37,7 +37,7 @@ _If relevant, ensure the following have been met:_
 - [ ] _Change has been tested to work, and does not cause new breakage unless intended_
 - [ ] _Code has been self-reviewed_
 - [ ] _Documentation has been added/updated if needed (README, help menu, etc.)_
-- [ ] _Passes Travis tests (clippy check and `cargo test` check)_
+- [ ] _Passes CI pipeline (clippy check and `cargo test` check)_
 - [ ] _Areas your change affects have been linted using rustfmt (`cargo fmt`)_
 - [ ] _No merge conflicts arise from the change_
 
