@@ -19,11 +19,8 @@ jobs:
 
       - name: Get the release version from the tag
         if: env.VERSION == ''
-        # run: |
-        #   echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-        #   echo "version is: ${{ env.VERSION }}"
         run: |
-          echo "VERSION=0.5.0" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "version is: ${{ env.VERSION }}"
 
       - name: Create GitHub release
