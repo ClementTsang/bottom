@@ -203,6 +203,8 @@ jobs:
         run: |
           strip target/${{ matrix.triple.target }}/release/btm
 
+      # TODO: Strip ARM
+
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
         shell: bash

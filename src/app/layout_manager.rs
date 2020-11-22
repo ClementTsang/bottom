@@ -868,11 +868,11 @@ pub struct BottomWidget {
     #[builder(default = None)]
     pub parent_reflector: Option<(WidgetDirection, u64)>,
 
-    /// Top left corner when drawn, for mouse click detection
+    /// Top left corner when drawn, for mouse click detection.  (x, y)
     #[builder(default = None)]
     pub top_left_corner: Option<(u16, u16)>,
 
-    /// Bottom right corner when drawn, for mouse click detection
+    /// Bottom right corner when drawn, for mouse click detection.  (x, y)
     #[builder(default = None)]
     pub bottom_right_corner: Option<(u16, u16)>,
 }

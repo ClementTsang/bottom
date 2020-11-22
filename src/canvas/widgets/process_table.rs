@@ -227,6 +227,29 @@ impl ProcessTableWidget for Painter {
                         border_style,
                     ),
                 ])
+            // } else if !app_state.app_config_fields.hide_table_scroll_position {
+            //     if let Some(finalized_process_data) = app_state
+            //         .canvas_data
+            //         .finalized_process_data_map
+            //         .get(&widget_id)
+            //     {
+            //         let title = format!(
+            //             " Processes ({} of {}) ",
+            //             proc_widget_state
+            //                 .scroll_state
+            //                 .current_scroll_position
+            //                 .saturating_add(1),
+            //             finalized_process_data.len()
+            //         );
+
+            //         if title.len() <= draw_loc.width as usize {
+            //             Spans::from(Span::styled(title, self.colours.widget_title_style))
+            //         } else {
+            //             Spans::from(Span::styled(" Processes ", self.colours.widget_title_style))
+            //         }
+            //     } else {
+            //         Spans::from(Span::styled(" Processes ", self.colours.widget_title_style))
+            //     }
             } else {
                 Spans::from(Span::styled(" Processes ", self.colours.widget_title_style))
             };
@@ -281,6 +304,7 @@ impl ProcessTableWidget for Painter {
                         disabled,
                     )
                 });
+
                 let proc_table_state = &mut proc_widget_state.scroll_state.table_state;
                 proc_table_state.select(Some(
                     proc_widget_state
@@ -434,7 +458,6 @@ impl ProcessTableWidget for Painter {
                     }
                 });
 
-                // FIXME: gotop's "x out of y" thing is really nice to help keep track of the scroll position.  Add to everything?
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)
