@@ -9,23 +9,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Set env
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
       - name: Test env
         run: |
           echo $RELEASE_VERSION
+
       - name: Make sure you're not on master...
         run: |
           if [[ $RELEASE_VERSION == "master" ]]; then
             exit 1
           fi
+
       - name: Download packages
         run: |
           curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-unknown-linux-gnu.tar.gz";
           curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-apple-darwin.tar.gz";
-      - name: Execute packaging script
+
+      - name: Execute choco packaging script
+        run: |
+          python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $TRAVIS_TAG "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1" "./deployment/windows/choco/tools/";
+          zip -r choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/";
+
+      - name: Upload choco.zip to release
+        uses: svenstaro/upload-release-action@2.1.0
+        with:
+          repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
+          file: choco.zip
+          tag: ${{ env.RELEASE_VERSION }}
+          overwrite: true
+
+      - name: Execute Homebrew packaging script
         run: |
           python "./deployment/packager.py" $RELEASE_VERSION "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./bottom_x86_64-apple-darwin.tar.gz" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+
       - name: Upload bottom.rb to release
         uses: svenstaro/upload-release-action@2.1.0
         with:
@@ -33,12 +52,14 @@ jobs:
           file: bottom.rb
           tag: ${{ env.RELEASE_VERSION }}
           overwrite: true
+
       - name: Trigger homebrew
         run: |
           curl -X POST https://api.github.com/repos/ClementTsang/homebrew-bottom/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
           -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
           --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+
       - name: Trigger choco
         run: |
           curl -X POST https://api.github.com/repos/ClementTsang/choco-bottom/dispatches \
