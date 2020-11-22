@@ -172,7 +172,7 @@ Choco package located [here](https://chocolatey.org/packages/bottom).
 choco install bottom
 
 # Version number may be required for newer releases, if available:
-choco install bottom --version=0.5.1
+choco install bottom --version=0.5.0 # 0.5.1 requires 0.5.0 to be accepted first, unfortunately...
 ```
 
 ### winget
