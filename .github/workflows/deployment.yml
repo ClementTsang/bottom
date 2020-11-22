@@ -179,24 +179,51 @@ jobs:
       - name: Bundle autocomplete
         shell: bash
         run: |
-          local target_dir=$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname);
+          local target_dir=$(ls target/${{ matrix.triple.target }}/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname);
           cp -r $target_dir completion
 
       - name: Strip release binary (x86-64 or i686)
         if: matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
         run: |
-          strip target/release/btm
+          strip target/${{ matrix.triple.target }}/release/btm
+
+      - name: Strip release binary (aarch64)
+        if: matrix.triple.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:aarch64-unknown-linux-gnu \
+            aarch64-linux-gnu-strip \
+            /target/aarch64-unknown-linux-gnu/release/btm
+
+      - name: Strip release binary (armv7)
+        if: matrix.triple.target == 'armv7-unknown-linux-gnueabihf'
+        run: |
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:armv7-unknown-linux-gnueabihf \
+            arm-linux-gnueabihf-strip \
+            /target/armv7-unknown-linux-gnueabihf/release/btm
+
+      - name: Strip release binary (ppc)
+        if: matrix.triple.target == 'powerpc64le-unknown-linux-gnu'
+        run: |
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:powerpc64le-unknown-linux-gnu \
+            powerpc64le-linux-gnu-strip \
+            /target/powerpc64le-unknown-linux-gnu/release/btm
 
       - name: Bundle release and completion (Windows)
         shell: bash
         run: |
-          cp target/release/btm btm.exe;
+          cp target/${{ matrix.triple.target }}/release/btm btm.exe;
           zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe", "completion"
 
       - name: Bundle release and completion (Linux and macOS)
         shell: bash
         run: |
-          cp target/release/btm ./btm;
+          cp target/${{ matrix.triple.target }}/release/btm ./btm;
           tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion;
 
       - name: Build msi file (only Windows x86-64 MSVC)
