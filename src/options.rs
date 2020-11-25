@@ -594,7 +594,7 @@ fn get_show_average_cpu(matches: &clap::ArgMatches<'static>, config: &Config) ->
         return false;
     } else if let Some(flags) = &config.flags {
         if let Some(avg_cpu) = flags.hide_avg_cpu {
-            return avg_cpu;
+            return !avg_cpu;
         }
     }
 
