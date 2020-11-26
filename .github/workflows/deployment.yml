@@ -1,8 +1,9 @@
+# How we deploy a release.  Covers binary builds.  Also manages packaging for AUR, winget, choco, and homebrew.
+#
 # Based on:
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
-name: deployment script
-description: How we deploy a release.  Covers binary builds.  Also manages packaging for AUR, winget, choco, and homebrew.
+name: deployment
 
 on:
   workflow_dispatch:

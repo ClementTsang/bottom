@@ -1,4 +1,4 @@
-name: cargo-audit check
+name: audit
 on:
   schedule:
     - cron: "0 5 * * *"
