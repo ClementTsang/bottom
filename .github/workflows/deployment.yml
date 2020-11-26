@@ -17,15 +17,17 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
-      - name: Get the release version from the tag
-        if: env.VERSION == ''
-        run: |
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      # TODO: Make this easier to test with.
 
-      # - name: Hard-coded release version for testing
+      # - name: Get the release version from the tag
       #   if: env.VERSION == ''
       #   run: |
-      #     echo "VERSION=0.5.1" >> $GITHUB_ENV
+      #     echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Hard-coded release version for testing
+        if: env.VERSION == ''
+        run: |
+          echo "VERSION=0.5.2" >> $GITHUB_ENV
 
       - name: Validate the release version from the tag
         run: |
@@ -303,3 +305,63 @@ jobs:
           asset_path: arch.tar.gz
           asset_name: arch.tar.gz
           asset_content_type: application/octet-stream
+
+  additional-file-generation:
+    needs: [build-release]
+    name: additional-file-generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get release download URL
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Set release upload URL and release version
+        shell: bash
+        run: |
+          release_upload_url="$(cat ./artifacts/release-upload-url)"
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          release_version="$(cat ./artifacts/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Check release upload URL and release version
+        shell: bash
+        run: |
+          echo "release upload url: $RELEASE_UPLOAD_URL"
+          echo "release version: $RELEASE_VERSION"
+
+      - name: Download packages
+        run: |
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-unknown-linux-gnu.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-apple-darwin.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_i686-pc-windows-msvc.zip";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-pc-windows-msvc.zip";
+
+      - name: Execute choco packaging script
+        run: |
+          python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $RELEASE_VERSION "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1" "./deployment/windows/choco/tools/"
+          cd ./deployment/windows/choco
+          zip -r choco.zip "bottom.nuspec" "tools"
+          cd ../../../
+          cp ./deployment/windows/choco/choco.zip .
+
+      - name: Upload choco.zip to release
+        uses: svenstaro/upload-release-action@2.1.0
+        with:
+          repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
+          file: choco.zip
+          tag: ${{ env.RELEASE_VERSION }}
+          overwrite: true
+
+      - name: Execute Homebrew packaging script
+        run: |
+          python "./deployment/packager.py" $RELEASE_VERSION "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./bottom_x86_64-apple-darwin.tar.gz" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+
+      - name: Upload bottom.rb to release
+        uses: svenstaro/upload-release-action@2.1.0
+        with:
+          repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
+          file: bottom.rb
+          tag: ${{ env.RELEASE_VERSION }}
+          overwrite: true
