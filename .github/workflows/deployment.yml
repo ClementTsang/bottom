@@ -349,7 +349,6 @@ jobs:
         run: |
           python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $RELEASE_VERSION "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
           zip -r choco.zip "bottom.nuspec" "tools"
-          cp ./deployment/windows/choco/choco.zip .
 
       - name: Upload choco.zip to release
         uses: svenstaro/upload-release-action@2.1.0
