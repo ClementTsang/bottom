@@ -19,15 +19,15 @@ jobs:
 
       # TODO: Make this easier to test with.
 
-      # - name: Get the release version from the tag
-      #   if: env.VERSION == ''
-      #   run: |
-      #     echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Hard-coded release version for testing
+      - name: Get the release version from the tag
         if: env.VERSION == ''
         run: |
-          echo "VERSION=0.5.1" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      # - name: Hard-coded release version for testing
+      #   if: env.VERSION == ''
+      #   run: |
+      #     echo "VERSION=0.5.1" >> $GITHUB_ENV
 
       - name: Validate the release version from the tag
         run: |
