@@ -351,21 +351,25 @@ jobs:
           zip -r choco.zip "bottom.nuspec" "tools"
 
       - name: Upload choco.zip to release
-        uses: svenstaro/upload-release-action@2.1.0
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
-          file: choco.zip
-          tag: ${{ env.RELEASE_VERSION }}
-          overwrite: true
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: choco.zip
+          asset_name: choco.zip
+          asset_content_type: application/octet-stream
 
       - name: Execute Homebrew packaging script
         run: |
           python "./deployment/packager.py" $RELEASE_VERSION "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./bottom_x86_64-apple-darwin.tar.gz" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
 
       - name: Upload bottom.rb to release
-        uses: svenstaro/upload-release-action@2.1.0
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repo_token: ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }}
-          file: bottom.rb
-          tag: ${{ env.RELEASE_VERSION }}
-          overwrite: true
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom.rb
+          asset_name: bottom.rb
+          asset_content_type: application/octet-stream
