@@ -1,3 +1,5 @@
+# Main CI pipeline to validate PRs.
+#
 # CI pipeline based on:
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml

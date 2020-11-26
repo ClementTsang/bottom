@@ -17,8 +17,8 @@ generated_ps1 = args[7]
 generated_ps1_dir = args[8]
 
 print("Generating Chocolatey package for:")
-print("     32-bit: %s", deployment_file_path_32)
-print("     64-bit: %s", deployment_file_path_64)
+print("     32-bit: %s" % deployment_file_path_32)
+print("     64-bit: %s" % deployment_file_path_64)
 print("     VERSION: %s" % version)
 print("     NUSPEC TEMPLATE: %s" % nuspec_template)
 print("     PS1 TEMPLATE: %s" % ps1_template)
@@ -55,4 +55,3 @@ with open(deployment_file_path_32, "rb") as deployment_file_32, open(
 
         with open(generated_ps1, "w") as generated_file:
             generated_file.write(substitute)
-

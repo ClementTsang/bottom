@@ -1,4 +1,6 @@
-name: Update Packages
+# A short amount of actions to run after releasing.  This is mostly just to trigger other repos to run specific actions.
+
+name: post-deploy script
 
 on:
   release:

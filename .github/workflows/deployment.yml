@@ -1,3 +1,5 @@
+# How we deploy a release.  Covers binary builds.  Also manages packaging for AUR, winget, choco, and homebrew.
+#
 # Based on:
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
@@ -5,6 +7,10 @@ name: deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Which tag to test against."
+        required: true
   push:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
@@ -17,21 +23,19 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
-      # TODO: Make this easier to test with.
-
       - name: Get the release version from the tag
         if: env.VERSION == ''
         run: |
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          if [[ -n "${{ github.event.inputs.tag }}" ]]; then
+            echo "Manual run against a tag; overriding actual tag in the environment..."
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          fi
 
-      # - name: Hard-coded release version for testing
-      #   if: env.VERSION == ''
-      #   run: |
-      #     echo "VERSION=0.5.1" >> $GITHUB_ENV
-
-      - name: Validate the release version from the tag
+      - name: Validate version environment variable
         run: |
-          echo "Version is: ${{ env.VERSION }}"
+          echo "Version being built against is version ${{ env.VERSION }}"!
 
       - name: Create GitHub release
         id: release
@@ -142,11 +146,10 @@ jobs:
           release_version="$(cat ./artifacts/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-      - name: Check release upload URL and release version
-        shell: bash
+      - name: Validate release environment variables
         run: |
-          echo "release upload url: $RELEASE_UPLOAD_URL"
-          echo "release version: $RELEASE_VERSION"
+          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install Net-Framework-Core (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
@@ -332,22 +335,21 @@ jobs:
           release_version="$(cat ./artifacts/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-      - name: Check release upload URL and release version
-        shell: bash
+      - name: Validate release environment variables
         run: |
-          echo "release upload url: $RELEASE_UPLOAD_URL"
-          echo "release version: $RELEASE_VERSION"
+          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Download packages
         run: |
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-unknown-linux-gnu.tar.gz";
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-apple-darwin.tar.gz";
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_i686-pc-windows-msvc.zip";
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-pc-windows-msvc.zip";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-unknown-linux-gnu.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-apple-darwin.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_i686-pc-windows-msvc.zip";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-pc-windows-msvc.zip";
 
       - name: Execute choco packaging script
         run: |
-          python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $RELEASE_VERSION "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
+          python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
           zip -r choco.zip "bottom.nuspec" "tools"
 
       - name: Upload choco.zip to release
@@ -362,7 +364,7 @@ jobs:
 
       - name: Execute Homebrew packaging script
         run: |
-          python "./deployment/packager.py" $RELEASE_VERSION "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./bottom_x86_64-apple-darwin.tar.gz" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./bottom_x86_64-apple-darwin.tar.gz" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
 
       - name: Upload bottom.rb to release
         uses: actions/upload-release-asset@v1.0.1
