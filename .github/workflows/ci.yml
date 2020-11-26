@@ -2,7 +2,8 @@
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
 
-name: ci
+name: ci pipeline
+description: Main CI pipeline to validate PRs.
 
 on:
   workflow_dispatch:
