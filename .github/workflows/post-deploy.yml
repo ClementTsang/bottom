@@ -4,6 +4,8 @@ on:
   release:
     types: [published]
 
+# TODO: Move the homebrew and choco steps back to the main deployment script.
+
 jobs:
   post-deploy:
     runs-on: ubuntu-latest
@@ -34,8 +36,9 @@ jobs:
         run: |
           python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $RELEASE_VERSION "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools/chocolateyinstall.ps1" "./deployment/windows/choco/tools/"
           cd ./deployment/windows/choco
-          zip -r choco.zip "bottom.nuspec" "./tools"
+          zip -r choco.zip "./deployment/windows/choco/bottom.nuspec" "./deployment/windows/choco/tools"
           cd ../../../
+          cp ./deployment/windows/choco/choco.zip .
 
       - name: Upload choco.zip to release
         uses: svenstaro/upload-release-action@2.1.0
