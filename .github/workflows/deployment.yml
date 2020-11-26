@@ -17,6 +17,8 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
+      # TODO: Make this easier to test with.
+
       - name: Get the release version from the tag
         if: env.VERSION == ''
         run: |
@@ -302,4 +304,72 @@ jobs:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: arch.tar.gz
           asset_name: arch.tar.gz
+          asset_content_type: application/octet-stream
+
+  additional-file-generation:
+    needs: [build-release]
+    name: additional-file-generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v2
+
+      - name: Get release download URL
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Set release upload URL and release version
+        shell: bash
+        run: |
+          release_upload_url="$(cat ./artifacts/release-upload-url)"
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          release_version="$(cat ./artifacts/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Check release upload URL and release version
+        shell: bash
+        run: |
+          echo "release upload url: $RELEASE_UPLOAD_URL"
+          echo "release version: $RELEASE_VERSION"
+
+      - name: Download packages
+        run: |
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-unknown-linux-gnu.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-apple-darwin.tar.gz";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_i686-pc-windows-msvc.zip";
+          curl -LO "https://github.com/ClementTsang/bottom/releases/download/$RELEASE_VERSION/bottom_x86_64-pc-windows-msvc.zip";
+
+      - name: Execute choco packaging script
+        run: |
+          python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" $RELEASE_VERSION "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
+          zip -r choco.zip "bottom.nuspec" "tools"
+
+      - name: Upload choco.zip to release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: choco.zip
+          asset_name: choco.zip
+          asset_content_type: application/octet-stream
+
+      - name: Execute Homebrew packaging script
+        run: |
+          python "./deployment/packager.py" $RELEASE_VERSION "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./bottom_x86_64-apple-darwin.tar.gz" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+
+      - name: Upload bottom.rb to release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom.rb
+          asset_name: bottom.rb
           asset_content_type: application/octet-stream
