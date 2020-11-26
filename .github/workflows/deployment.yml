@@ -25,14 +25,12 @@ jobs:
         if: env.VERSION == ''
         run: |
           if [[ -n "${{ github.event.inputs.tag }}" ]]; then
-            echo "VERSION=${{ github.event.inputs.logLevel }}" >> $GITHUB_ENV
+            echo "Manual run against a tag; overriding actual tag in the environment..."
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
           else
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           fi
-
-      - name: Validate the release version from the tag
-        run: |
-          echo "Version is: ${{ env.VERSION }}"
+          echo "Version being built against is version ${{ env.VERSION }}"!
 
       - name: Create GitHub release
         id: release
