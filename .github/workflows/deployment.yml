@@ -330,7 +330,7 @@ jobs:
           name: artifacts
           path: artifacts
 
-      - name: Set release upload URL and release version
+      - name: Set release upload URL, download URL and version
         shell: bash
         run: |
           release_download_url="$(cat ./artifacts/release-download-url)"
