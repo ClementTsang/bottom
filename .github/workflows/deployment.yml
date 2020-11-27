@@ -332,9 +332,6 @@ jobs:
 
       - uses: actions/setup-python@v2
 
-      - name: Install dos2unix
-        run: sudo apt-get install dos2unix
-
       - name: Get release download URL
         uses: actions/download-artifact@v2
         with:
