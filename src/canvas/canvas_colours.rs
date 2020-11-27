@@ -23,8 +23,9 @@ pub struct CanvasColours {
     pub text_style: Style,
     pub widget_title_style: Style,
     pub graph_style: Style,
-    // Full, Medium, Low
-    pub battery_bar_styles: Vec<Style>,
+    pub high_battery_colour: Style,
+    pub medium_battery_colour: Style,
+    pub low_battery_colour: Style,
     pub invalid_query_style: Style,
     pub disabled_text_style: Style,
 }
@@ -65,18 +66,9 @@ impl Default for CanvasColours {
             text_style: Style::default().fg(text_colour),
             widget_title_style: Style::default().fg(text_colour),
             graph_style: Style::default().fg(text_colour),
-            battery_bar_styles: vec![
-                Style::default().fg(Color::Red),
-                Style::default().fg(Color::Yellow),
-                Style::default().fg(Color::Yellow),
-                Style::default().fg(Color::Yellow),
-                Style::default().fg(Color::Green),
-                Style::default().fg(Color::Green),
-                Style::default().fg(Color::Green),
-                Style::default().fg(Color::Green),
-                Style::default().fg(Color::Green),
-                Style::default().fg(Color::Green),
-            ],
+            high_battery_colour: Style::default().fg(Color::Green),
+            medium_battery_colour: Style::default().fg(Color::Yellow),
+            low_battery_colour: Style::default().fg(Color::Red),
             invalid_query_style: Style::default().fg(tui::style::Color::Red),
             disabled_text_style: Style::default().fg(Color::DarkGray),
         }
@@ -293,26 +285,17 @@ impl CanvasColours {
     }
 
     pub fn set_high_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        let style = get_style_from_config(colour)?;
-        self.battery_bar_styles[0] = style;
-        self.battery_bar_styles[1] = style;
-        self.battery_bar_styles[2] = style;
-        self.battery_bar_styles[3] = style;
-        self.battery_bar_styles[4] = style;
-        self.battery_bar_styles[5] = style;
+        self.high_battery_colour = get_style_from_config(colour)?;
         Ok(())
     }
 
     pub fn set_medium_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        let style = get_style_from_config(colour)?;
-        self.battery_bar_styles[6] = style;
-        self.battery_bar_styles[7] = style;
-        self.battery_bar_styles[8] = style;
+        self.medium_battery_colour = get_style_from_config(colour)?;
         Ok(())
     }
 
     pub fn set_low_battery_color(&mut self, colour: &str) -> error::Result<()> {
-        self.battery_bar_styles[9] = get_style_from_config(colour)?;
+        self.low_battery_colour = get_style_from_config(colour)?;
         Ok(())
     }
 }

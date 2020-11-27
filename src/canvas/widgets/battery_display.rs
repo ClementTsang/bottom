@@ -138,22 +138,15 @@ impl BatteryDisplayWidget for Painter {
                     ["Health %", &battery_details.health],
                 ];
 
-                let battery_rows = battery_items.iter().enumerate().map(|(itx, item)| {
+                let battery_rows = battery_items.iter().map(|item| {
                     Row::StyledData(
                         item.iter(),
-                        if itx == 0 {
-                            let colour_index = ((charge_percentage
-                                * self.colours.battery_bar_styles.len() as f64)
-                                / 100.0)
-                                .ceil() as usize
-                                - 1;
-                            *self
-                                .colours
-                                .battery_bar_styles
-                                .get(colour_index)
-                                .unwrap_or(&self.colours.text_style)
+                        if charge_percentage < 10.0 {
+                            self.colours.low_battery_colour
+                        } else if charge_percentage < 50.0 {
+                            self.colours.medium_battery_colour
                         } else {
-                            self.colours.text_style
+                            self.colours.high_battery_colour
                         },
                     )
                 });
