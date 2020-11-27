@@ -348,13 +348,16 @@ jobs:
 
           linux="$(cat ./artifacts/x86_64-unknown-linux-gnu)"
           echo "LINUX=$linux" >> $GITHUB_ENV
+
           macos="$(cat ./artifacts/x86_64-apple-darwin)"
           echo "MACOS=$macos" >> $GITHUB_ENV
+
+          dos2unix ./artifacts/i686-pc-windows-msvc
           win_32="$(cat ./artifacts/i686-pc-windows-msvc)"
-          win_32=${win_32%$'\r'}
           echo "WINDOWS_32=$win_32" >> $GITHUB_ENV
+
+          dos2unix ./artifacts/x86_64-pc-windows-msvc
           win_64="$(cat ./artifacts/x86_64-pc-windows-msvc)"
-          win_64=${win64%$'\r'}
           echo "WINDOWS_64=$win_64" >> $GITHUB_ENV
 
       - name: Validate release environment variables
