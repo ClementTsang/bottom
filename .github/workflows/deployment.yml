@@ -221,6 +221,7 @@ jobs:
 
       - name: Upload main release
         uses: actions/upload-release-asset@v1.0.1
+        id: upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -228,6 +229,16 @@ jobs:
           asset_path: ${{ env.ASSET }}
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
+
+      - name: Add download asset to artifact if required
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' || matrix.triple.target == 'x86_64-pc-windows-msvc' || matrix.triple.target == 'i686-pc-windows-msvc' || matrix.triple.target == 'x86_64-apple-darwin'
+        run: cp ${{ env.ASSET }} artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
 
       - name: Build msi file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
@@ -327,7 +338,7 @@ jobs:
           name: artifacts
           path: artifacts
 
-      - name: Set release upload URL and release version
+      - name: Set release upload URL, download URL and version
         shell: bash
         run: |
           release_upload_url="$(cat ./artifacts/release-upload-url)"
@@ -340,16 +351,9 @@ jobs:
           echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
-      - name: Download packages
-        run: |
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-unknown-linux-gnu.tar.gz";
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-apple-darwin.tar.gz";
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_i686-pc-windows-msvc.zip";
-          curl -LO "https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-pc-windows-msvc.zip";
-
       - name: Execute choco packaging script
         run: |
-          python "./deployment/windows/choco/choco_packager.py" "bottom_i686-pc-windows-msvc.zip" "bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
+          python "./deployment/windows/choco/choco_packager.py" "./artifacts/bottom_i686-pc-windows-msvc.zip" "./artifacts/bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolateyinstall.ps1.template" "bottom.nuspec" "tools/chocolateyinstall.ps1" "tools/"
           zip -r choco.zip "bottom.nuspec" "tools"
 
       - name: Upload choco.zip to release
@@ -364,7 +368,7 @@ jobs:
 
       - name: Execute Homebrew packaging script
         run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./bottom_x86_64-apple-darwin.tar.gz" "./bottom_x86_64-unknown-linux-gnu.tar.gz";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./artifacts/bottom_x86_64-apple-darwin.tar.gz" "./artifacts/bottom_x86_64-unknown-linux-gnu.tar.gz";
 
       - name: Upload bottom.rb to release
         uses: actions/upload-release-asset@v1.0.1
