@@ -230,7 +230,7 @@ jobs:
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
 
-      - name: Add download asset URL to artifact if required
+      - name: Add download asset to artifact if required
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' || matrix.triple.target == 'x86_64-pc-windows-msvc' || matrix.triple.target == 'i686-pc-windows-msvc' || matrix.triple.target == 'x86_64-apple-darwin'
         run: cp ${{ env.ASSET }} artifacts/
 
