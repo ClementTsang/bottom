@@ -147,6 +147,9 @@ pub struct ConfigFlags {
 
     #[builder(default, setter(strip_option))]
     pub tree: Option<bool>,
+
+    #[builder(default, setter(strip_option))]
+    show_table_scroll_position: Option<bool>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -388,6 +391,7 @@ pub fn build_app(
         disable_click: get_disable_click(matches, config),
         // no_write: get_no_write(matches, config),
         no_write: false,
+        show_table_scroll_position: get_show_table_scroll_position(matches, config),
     };
 
     let used_widgets = UsedWidgets {
@@ -968,6 +972,17 @@ fn get_is_default_tree(matches: &clap::ArgMatches<'static>, config: &Config) -> 
     } else if let Some(flags) = &config.flags {
         if let Some(tree) = flags.tree {
             return tree;
+        }
+    }
+    false
+}
+
+fn get_show_table_scroll_position(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("show_table_scroll_position") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(show_table_scroll_position) = flags.show_table_scroll_position {
+            return show_table_scroll_position;
         }
     }
     false

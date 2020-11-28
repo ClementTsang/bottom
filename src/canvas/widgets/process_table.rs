@@ -207,6 +207,33 @@ impl ProcessTableWidget for Painter {
                 (self.colours.border_style, self.colours.text_style)
             };
 
+            let title_base = if app_state.app_config_fields.show_table_scroll_position {
+                if let Some(finalized_process_data) = app_state
+                    .canvas_data
+                    .finalized_process_data_map
+                    .get(&widget_id)
+                {
+                    let title = format!(
+                        " Processes ({} of {}) ",
+                        proc_widget_state
+                            .scroll_state
+                            .current_scroll_position
+                            .saturating_add(1),
+                        finalized_process_data.len()
+                    );
+
+                    if title.len() <= draw_loc.width as usize {
+                        title
+                    } else {
+                        " Processes ".to_string()
+                    }
+                } else {
+                    " Processes ".to_string()
+                }
+            } else {
+                " Processes ".to_string()
+            };
+
             let title = if app_state.is_expanded
                 && !proc_widget_state
                     .process_search_state
@@ -214,21 +241,42 @@ impl ProcessTableWidget for Painter {
                     .is_enabled
                 && !proc_widget_state.is_sort_open
             {
-                const TITLE_BASE: &str = " Processes ── Esc to go back ";
+                const ESCAPE_ENDING: &str = "── Esc to go back ";
+
+                let (chosen_title_base, expanded_title_base) = {
+                    let temp_title_base = format!("{}{}", title_base, ESCAPE_ENDING);
+
+                    if temp_title_base.len() > draw_loc.width as usize {
+                        (
+                            " Processes ".to_string(),
+                            format!("{}{}", " Processes ".to_string(), ESCAPE_ENDING),
+                        )
+                    } else {
+                        (title_base, temp_title_base)
+                    }
+                };
+
                 Spans::from(vec![
-                    Span::styled(" Processes ", self.colours.widget_title_style),
+                    Span::styled(chosen_title_base, self.colours.widget_title_style),
                     Span::styled(
                         format!(
                             "─{}─ Esc to go back ",
-                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
-                            ))
+                            "─".repeat(
+                                usize::from(draw_loc.width).saturating_sub(
+                                    UnicodeSegmentation::graphemes(
+                                        expanded_title_base.as_str(),
+                                        true
+                                    )
+                                    .count()
+                                        + 2
+                                )
+                            )
                         ),
                         border_style,
                     ),
                 ])
             } else {
-                Spans::from(Span::styled(" Processes ", self.colours.widget_title_style))
+                Spans::from(Span::styled(title_base, self.colours.widget_title_style))
             };
 
             let process_block = if draw_border {
@@ -281,6 +329,7 @@ impl ProcessTableWidget for Painter {
                         disabled,
                     )
                 });
+
                 let proc_table_state = &mut proc_widget_state.scroll_state.table_state;
                 proc_table_state.select(Some(
                     proc_widget_state
@@ -434,7 +483,6 @@ impl ProcessTableWidget for Painter {
                     }
                 });
 
-                // FIXME: gotop's "x out of y" thing is really nice to help keep track of the scroll position.  Add to everything?
                 f.render_stateful_widget(
                     Table::new(process_headers.iter(), process_rows)
                         .block(process_block)

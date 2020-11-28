@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - Unreleased
+
+## Features
+
+- [#333](https://github.com/ClementTsang/bottom/pull/333): Adds an "out of" indicator that can be enabled using `--show_table_scroll_position` to help keep track of scrolled position.
+
+## Changes
+
+## Bug Fixes
+
 ## [0.5.3] - 2020-11-26
 
 ## Bug Fixes
