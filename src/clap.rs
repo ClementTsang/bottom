@@ -135,13 +135,13 @@ Hides the spacing between table headers and entries.\n\n",
             "\
 Completely hides the time scaling from being shown.\n\n",
         );
-    let hide_table_scroll_position = Arg::with_name("hide_table_scroll_position")
-        .long("hide_table_scroll_position")
-        .help("Hides the scroll position tracker in table widgets")
-        .long_help(
-            "\
-Hides the list scroll position tracker in the widget title for table widgets.\n\n",
-        );
+    //     let hide_table_scroll_position = Arg::with_name("hide_table_scroll_position")
+    //         .long("hide_table_scroll_position")
+    //         .help("Hides the scroll position tracker in table widgets")
+    //         .long_help(
+    //             "\
+    // Hides the list scroll position tracker in the widget title for table widgets.\n\n",
+    //         );
     let left_legend = Arg::with_name("left_legend")
         .short("l")
         .long("left_legend")
