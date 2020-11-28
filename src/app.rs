@@ -48,7 +48,7 @@ pub struct AppConfigFields {
     pub table_gap: u16,
     pub disable_click: bool,
     pub no_write: bool,
-    pub hide_table_scroll_position: bool,
+    pub show_table_scroll_position: bool,
 }
 
 /// For filtering out information

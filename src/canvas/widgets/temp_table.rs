@@ -42,8 +42,6 @@ impl TempTableWidget for Painter {
     ) {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(temp_widget_state) = app_state.temp_state.widget_states.get_mut(&widget_id) {
-            let temp_sensor_data: &mut [Vec<String>] = &mut app_state.canvas_data.temp_sensor_data;
-
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {
@@ -66,7 +64,7 @@ impl TempTableWidget for Painter {
                     .current_scroll_position
                     .saturating_sub(start_position),
             ));
-            let sliced_vec = &temp_sensor_data[start_position..];
+            let sliced_vec = &app_state.canvas_data.temp_sensor_data[start_position..];
 
             // Calculate widths
             let hard_widths = [None, None];
@@ -153,25 +151,62 @@ impl TempTableWidget for Painter {
                 (self.colours.border_style, self.colours.text_style)
             };
 
+            let title_base = if app_state.app_config_fields.show_table_scroll_position {
+                let title_string = format!(
+                    " Temperatures ({} of {}) ",
+                    temp_widget_state
+                        .scroll_state
+                        .current_scroll_position
+                        .saturating_add(1),
+                    app_state.canvas_data.temp_sensor_data.len()
+                );
+
+                if title_string.len() <= draw_loc.width as usize {
+                    title_string
+                } else {
+                    " Temperatures ".to_string()
+                }
+            } else {
+                " Temperatures ".to_string()
+            };
+
             let title = if app_state.is_expanded {
-                const TITLE_BASE: &str = " Temperatures ── Esc to go back ";
+                const ESCAPE_ENDING: &str = "── Esc to go back ";
+
+                let (chosen_title_base, expanded_title_base) = {
+                    let temp_title_base = format!("{}{}", title_base, ESCAPE_ENDING);
+
+                    if temp_title_base.len() > draw_loc.width as usize {
+                        (
+                            " Temperatures ".to_string(),
+                            format!("{}{}", " Temperatures ".to_string(), ESCAPE_ENDING),
+                        )
+                    } else {
+                        (title_base, temp_title_base)
+                    }
+                };
+
                 Spans::from(vec![
-                    Span::styled(" Temperatures ", self.colours.widget_title_style),
+                    Span::styled(chosen_title_base, self.colours.widget_title_style),
                     Span::styled(
                         format!(
                             "─{}─ Esc to go back ",
-                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
-                            ))
+                            "─".repeat(
+                                usize::from(draw_loc.width).saturating_sub(
+                                    UnicodeSegmentation::graphemes(
+                                        expanded_title_base.as_str(),
+                                        true
+                                    )
+                                    .count()
+                                        + 2
+                                )
+                            )
                         ),
                         border_style,
                     ),
                 ])
             } else {
-                Spans::from(Span::styled(
-                    " Temperatures ",
-                    self.colours.widget_title_style,
-                ))
+                Spans::from(Span::styled(title_base, self.colours.widget_title_style))
             };
 
             let temp_block = if draw_border {
