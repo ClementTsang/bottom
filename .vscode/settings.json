@@ -92,6 +92,7 @@
     "rustflags",
     "rustfmt",
     "shilangyu",
+    "smol",
     "softirq",
     "splitn",
     "statm",

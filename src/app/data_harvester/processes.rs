@@ -369,7 +369,7 @@ fn read_proc<S: core::hash::BuildHasher>(
 }
 
 #[cfg(target_os = "linux")]
-pub fn linux_processes(
+pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     pid_mapping: &mut HashMap<Pid, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
@@ -409,7 +409,7 @@ pub fn linux_processes(
 }
 
 #[cfg(not(target_os = "linux"))]
-pub fn windows_macos_processes(
+pub fn get_process_data(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();

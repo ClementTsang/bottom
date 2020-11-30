@@ -18,9 +18,8 @@ pub struct IOData {
 
 pub type IOHarvest = std::collections::HashMap<String, Option<IOData>>;
 
-/// Meant for ARM use.
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn arm_io_usage(
+pub async fn get_io_usage(
     _sys: &sysinfo::System, _actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
     let io_hash: std::collections::HashMap<String, Option<IOData>> =
@@ -32,9 +31,8 @@ pub async fn arm_io_usage(
     // work.  See https://github.com/GuillaumeGomez/sysinfo/issues/304.
 }
 
-/// Meant for ARM use.
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn arm_disk_usage(
+pub async fn get_disk_usage(
     sys: &sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     use sysinfo::{DiskExt, SystemExt};
@@ -61,7 +59,7 @@ pub async fn arm_disk_usage(
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn non_arm_io_usage(
+pub async fn get_io_usage(
     get_physical: bool, actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
     if !actually_get {
@@ -104,7 +102,7 @@ pub async fn non_arm_io_usage(
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn non_arm_disk_usage(
+pub async fn get_disk_usage(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     if !actually_get {

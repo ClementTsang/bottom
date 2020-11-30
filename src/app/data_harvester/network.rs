@@ -17,7 +17,7 @@ impl NetworkHarvest {
 
 /// Meant for Windows and ARM use.
 #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
-pub async fn arm_or_windows_network_data(
+pub async fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
     prev_net_tx: &mut u64, curr_time: Instant, actually_get: bool,
 ) -> Option<NetworkHarvest> {
@@ -58,7 +58,7 @@ pub async fn arm_or_windows_network_data(
 }
 
 #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
-pub async fn non_arm_or_windows_network_data(
+pub async fn get_network_data(
     prev_net_access_time: Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
     curr_time: Instant, actually_get: bool,
 ) -> Option<NetworkHarvest> {
