@@ -19,7 +19,7 @@ pub struct IOData {
 pub type IOHarvest = std::collections::HashMap<String, Option<IOData>>;
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_io_usage(
+pub fn get_io_usage(
     _sys: &sysinfo::System, _actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
     let io_hash: std::collections::HashMap<String, Option<IOData>> =
@@ -32,7 +32,7 @@ pub async fn get_io_usage(
 }
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_disk_usage(
+pub fn get_disk_usage(
     sys: &sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     use sysinfo::{DiskExt, SystemExt};

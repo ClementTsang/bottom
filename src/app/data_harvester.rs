@@ -12,6 +12,7 @@ use battery::{Battery, Manager};
 use crate::app::layout_manager::UsedWidgets;
 
 use futures::join;
+use smol::Unblock;
 
 pub mod battery_harvester;
 pub mod cpu;
@@ -144,7 +145,7 @@ impl DataCollector {
         }
 
         trace!("Running first run.");
-        futures::executor::block_on(self.update_data());
+        smol::block_on(self.update_data());
         trace!("First run done.  Sleeping for 250ms...");
         std::thread::sleep(std::time::Duration::from_millis(250));
 
@@ -276,14 +277,14 @@ impl DataCollector {
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
-                network::get_network_data(
+                Unblock::new(network::get_network_data(
                     &self.sys,
                     self.last_collection_time,
                     &mut self.total_rx,
                     &mut self.total_tx,
                     current_instant,
                     self.widgets_to_harvest.use_net,
-                )
+                ))
             }
             #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
             {
@@ -299,7 +300,10 @@ impl DataCollector {
         let mem_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                mem::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
+                Unblock::new(mem::get_mem_data(
+                    &self.sys,
+                    self.widgets_to_harvest.use_mem,
+                ))
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -310,7 +314,10 @@ impl DataCollector {
         let swap_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                mem::get_swap_data(&self.sys, self.widgets_to_harvest.use_mem)
+                Unblock::new(mem::get_swap_data(
+                    &self.sys,
+                    self.widgets_to_harvest.use_mem,
+                ))
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -321,7 +328,10 @@ impl DataCollector {
         let disk_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::get_disk_usage(&self.sys, self.widgets_to_harvest.use_disk)
+                Unblock::new(disks::get_disk_usage(
+                    &self.sys,
+                    self.widgets_to_harvest.use_disk,
+                ))
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -332,7 +342,10 @@ impl DataCollector {
         let disk_io_usage_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::get_io_usage(&self.sys, self.widgets_to_harvest.use_disk)
+                Unblock::new(disks::get_io_usage(
+                    &self.sys,
+                    self.widgets_to_harvest.use_disk,
+                ))
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
