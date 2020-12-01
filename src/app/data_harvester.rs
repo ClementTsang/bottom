@@ -236,13 +236,10 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_proc {
-            // Processes.  This is the longest part of the harvesting process... changing this might be
-            // good in the future.  What was tried already:
-            // * Splitting the internal part into multiple scoped threads (dropped by ~.01 seconds, but upped usage)
-            if let Ok(process_list) = if cfg!(target_os = "linux") {
+            if let Ok(process_list) = {
                 #[cfg(target_os = "linux")]
                 {
-                    processes::linux_processes(
+                    processes::get_process_data(
                         &mut self.prev_idle,
                         &mut self.prev_non_idle,
                         &mut self.pid_mapping,
@@ -256,20 +253,11 @@ impl DataCollector {
                 }
                 #[cfg(not(target_os = "linux"))]
                 {
-                    Ok(Vec::new())
-                }
-            } else {
-                #[cfg(not(target_os = "linux"))]
-                {
-                    processes::windows_macos_processes(
+                    processes::get_process_data(
                         &self.sys,
                         self.use_current_cpu_total,
                         self.mem_total_kb,
                     )
-                }
-                #[cfg(target_os = "linux")]
-                {
-                    Ok(Vec::new())
                 }
             } {
                 self.data.list_of_processes = Some(process_list);
@@ -288,7 +276,7 @@ impl DataCollector {
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
-                network::arm_or_windows_network_data(
+                network::get_network_data(
                     &self.sys,
                     self.last_collection_time,
                     &mut self.total_rx,
@@ -299,7 +287,7 @@ impl DataCollector {
             }
             #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
             {
-                network::non_arm_or_windows_network_data(
+                network::get_network_data(
                     self.last_collection_time,
                     &mut self.total_rx,
                     &mut self.total_tx,
@@ -311,45 +299,45 @@ impl DataCollector {
         let mem_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                mem::arm_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
+                mem::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                mem::non_arm_mem_data(self.widgets_to_harvest.use_mem)
+                mem::get_mem_data(self.widgets_to_harvest.use_mem)
             }
         };
         let swap_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                mem::arm_swap_data(&self.sys, self.widgets_to_harvest.use_mem)
+                mem::get_swap_data(&self.sys, self.widgets_to_harvest.use_mem)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                mem::non_arm_swap_data(self.widgets_to_harvest.use_mem)
+                mem::get_swap_data(self.widgets_to_harvest.use_mem)
             }
         };
         let disk_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::arm_disk_usage(&self.sys, self.widgets_to_harvest.use_disk)
+                disks::get_disk_usage(&self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                disks::non_arm_disk_usage(self.widgets_to_harvest.use_disk)
+                disks::get_disk_usage(self.widgets_to_harvest.use_disk)
             }
         };
         let disk_io_usage_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::arm_io_usage(&self.sys, self.widgets_to_harvest.use_disk)
+                disks::get_io_usage(&self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
             {
-                disks::non_arm_io_usage(false, self.widgets_to_harvest.use_disk)
+                disks::get_io_usage(false, self.widgets_to_harvest.use_disk)
             }
         };
         let temp_data_fut = {
