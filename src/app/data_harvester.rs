@@ -12,7 +12,6 @@ use battery::{Battery, Manager};
 use crate::app::layout_manager::UsedWidgets;
 
 use futures::join;
-use smol::Unblock;
 
 pub mod battery_harvester;
 pub mod cpu;
@@ -273,18 +272,18 @@ impl DataCollector {
             }
         }
 
-        // Async if Heim
+        debug!("Calling async functions now...");
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
-                Unblock::new(network::get_network_data(
+                network::get_network_data(
                     &self.sys,
                     self.last_collection_time,
                     &mut self.total_rx,
                     &mut self.total_tx,
                     current_instant,
                     self.widgets_to_harvest.use_net,
-                ))
+                )
             }
             #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
             {
@@ -300,10 +299,7 @@ impl DataCollector {
         let mem_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                Unblock::new(mem::get_mem_data(
-                    &self.sys,
-                    self.widgets_to_harvest.use_mem,
-                ))
+                mem::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -314,10 +310,7 @@ impl DataCollector {
         let swap_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                Unblock::new(mem::get_swap_data(
-                    &self.sys,
-                    self.widgets_to_harvest.use_mem,
-                ))
+                mem::get_swap_data(&self.sys, self.widgets_to_harvest.use_mem)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -328,10 +321,7 @@ impl DataCollector {
         let disk_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                Unblock::new(disks::get_disk_usage(
-                    &self.sys,
-                    self.widgets_to_harvest.use_disk,
-                ))
+                disks::get_disk_usage(&self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -342,10 +332,7 @@ impl DataCollector {
         let disk_io_usage_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                Unblock::new(disks::get_io_usage(
-                    &self.sys,
-                    self.widgets_to_harvest.use_disk,
-                ))
+                disks::get_io_usage(&self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -356,7 +343,7 @@ impl DataCollector {
         let temp_data_fut = {
             #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
             {
-                temperature::arm_and_non_linux_temperature_data(
+                temperature::get_temperature_data(
                     &self.sys,
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
@@ -369,7 +356,7 @@ impl DataCollector {
                 target_arch = "arm"
             )))]
             {
-                temperature::linux_temperature_data(
+                temperature::get_temperature_data(
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
                 )

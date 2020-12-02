@@ -376,6 +376,8 @@ pub fn get_process_data(
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
+    debug!("Starting process collection...");
+
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {
@@ -402,9 +404,13 @@ pub fn get_process_data(
             })
             .collect();
 
+        debug!("Ending process collection...");
         Ok(process_vector)
     } else {
-        Ok(Vec::new())
+        trace!("Could not calculate CPU usage.");
+        Err(BottomError::GenericError(
+            "Could not calculate CPU usage.".to_string(),
+        ))
     }
 }
 
