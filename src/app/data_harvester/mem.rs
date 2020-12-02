@@ -14,7 +14,7 @@ impl Default for MemHarvest {
 }
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub fn get_mem_data(
+pub async fn get_mem_data(
     sys: &sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<MemHarvest>> {
     use sysinfo::SystemExt;
