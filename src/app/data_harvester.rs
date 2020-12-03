@@ -187,10 +187,8 @@ impl DataCollector {
                 self.sys.refresh_memory();
             }
         } else {
-            if cfg!(not(target_os = "linux")) {
-                if self.widgets_to_harvest.use_temp {
-                    self.sys.refresh_components();
-                }
+            if cfg!(not(target_os = "linux")) && self.widgets_to_harvest.use_temp {
+                self.sys.refresh_components();
             }
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
                 self.sys.refresh_networks();
