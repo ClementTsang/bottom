@@ -12,6 +12,9 @@ use crate::utils::error::{self, BottomError};
 use std::collections::{hash_map::RandomState, HashMap};
 
 #[cfg(not(target_os = "linux"))]
+use smol::unblock;
+
+#[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
 /// Maximum character length of a /proc/<PID>/stat process name that we'll accept.
@@ -420,7 +423,7 @@ pub async fn get_process_data(
 
 #[cfg(not(target_os = "linux"))]
 pub async fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
+    sys: &mut System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     unblock(|| sys.refresh_processes()).await;
 
