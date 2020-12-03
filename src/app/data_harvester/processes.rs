@@ -426,10 +426,8 @@ pub async fn get_process_data(
 
 #[cfg(not(target_os = "linux"))]
 pub async fn get_process_data(
-    sys: &mut System, use_current_cpu_total: bool, mem_total_kb: u64,
+    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    sys.refresh_processes();
-
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;

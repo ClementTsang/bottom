@@ -17,7 +17,7 @@ impl Default for MemHarvest {
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_mem_data(
-    sys: &mut sysinfo::System, actually_get: bool,
+    sys: &sysinfo::System, actually_get: bool,
 ) -> (
     crate::utils::error::Result<Option<MemHarvest>>,
     crate::utils::error::Result<Option<MemHarvest>>,
@@ -25,7 +25,6 @@ pub async fn get_mem_data(
     if !actually_get {
         (Ok(None), Ok(None))
     } else {
-        self.sys.refresh_memory();
         join!(get_ram_data(&sys), get_swap_data(&sys))
     }
 }
