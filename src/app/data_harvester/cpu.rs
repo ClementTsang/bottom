@@ -9,7 +9,9 @@ pub struct CpuData {
 
 pub type CpuHarvest = Vec<CpuData>;
 
-pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CpuHarvest {
+pub fn get_cpu_data_list(sys: &mut System, show_average_cpu: bool) -> CpuHarvest {
+    sys.refresh_cpu();
+
     let cpu_data = sys.get_processors();
     let avg_cpu_usage = sys.get_global_processor_info().get_cpu_usage();
     let mut cpu_vec = vec![];

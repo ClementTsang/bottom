@@ -2,7 +2,10 @@ use crate::Pid;
 use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
+#[cfg(target_os = "linux")]
 use futures::stream::StreamExt;
+
+#[cfg(target_os = "linux")]
 use smol::fs;
 
 #[cfg(target_os = "linux")]
@@ -11,8 +14,8 @@ use crate::utils::error::{self, BottomError};
 #[cfg(target_os = "linux")]
 use std::collections::{hash_map::RandomState, HashMap};
 
-#[cfg(not(target_os = "linux"))]
-use smol::unblock;
+// #[cfg(not(target_os = "linux"))]
+// use smol::unblock;
 
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
@@ -425,15 +428,12 @@ pub async fn get_process_data(
 pub async fn get_process_data(
     sys: &mut System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    unblock(|| sys.refresh_processes()).await;
+    sys.refresh_processes();
 
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
-    let process_hashmap = unblock(|| sys.get_processes()).await;
-    let cpu_usage = unblock(|| sys.get_global_processor_info())
-        .await
-        .get_cpu_usage() as f64
-        / 100.0;
-    let num_cpus = unblock(|| sys.get_processors()).await.len() as f64;
+    let process_hashmap = sys.get_processes();
+    let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
+    let num_cpus = sys.get_processors().len() as f64;
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();

@@ -171,35 +171,11 @@ impl DataCollector {
     }
 
     pub async fn update_data(&mut self) {
-        if self.widgets_to_harvest.use_cpu {
-            self.sys.refresh_cpu();
-        }
-
-        if cfg!(any(target_arch = "arm", target_arch = "aarch64")) {
-            // ARM stuff
-            if self.widgets_to_harvest.use_temp {
-                self.sys.refresh_components();
-            }
-            if self.widgets_to_harvest.use_net {
-                self.sys.refresh_networks();
-            }
-            if self.widgets_to_harvest.use_mem {
-                self.sys.refresh_memory();
-            }
-        } else {
-            if cfg!(not(target_os = "linux")) && self.widgets_to_harvest.use_temp {
-                self.sys.refresh_components();
-            }
-            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
-                self.sys.refresh_networks();
-            }
-        }
-
         let current_instant = std::time::Instant::now();
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
+            self.data.cpu = Some(cpu::get_cpu_data_list(&mut self.sys, self.show_average_cpu));
             if log_enabled!(log::Level::Trace) {
                 if let Some(cpus) = &self.data.cpu {
                     trace!("cpus: {:#?} results", cpus.len());
@@ -247,7 +223,7 @@ impl DataCollector {
                 #[cfg(not(target_os = "linux"))]
                 {
                     processes::get_process_data(
-                        &self.sys,
+                        &mut self.sys,
                         self.use_current_cpu_total,
                         self.mem_total_kb,
                     )
@@ -271,7 +247,7 @@ impl DataCollector {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
                 network::get_network_data(
-                    &self.sys,
+                    &mut self.sys,
                     self.last_collection_time,
                     &mut self.total_rx,
                     &mut self.total_tx,
@@ -293,7 +269,7 @@ impl DataCollector {
         let mem_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                mem::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
+                mem::get_mem_data(&mut self.sys, self.widgets_to_harvest.use_mem)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -301,21 +277,10 @@ impl DataCollector {
                 mem::get_mem_data(self.widgets_to_harvest.use_mem)
             }
         };
-        let swap_data_fut = {
-            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-            {
-                mem::get_swap_data(&self.sys, self.widgets_to_harvest.use_mem)
-            }
-
-            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-            {
-                mem::get_swap_data(self.widgets_to_harvest.use_mem)
-            }
-        };
         let disk_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::get_disk_usage(&self.sys, self.widgets_to_harvest.use_disk)
+                disks::get_disk_usage(&mut self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -326,7 +291,7 @@ impl DataCollector {
         let disk_io_usage_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
-                disks::get_io_usage(&self.sys, self.widgets_to_harvest.use_disk)
+                disks::get_io_usage(&mut self.sys, self.widgets_to_harvest.use_disk)
             }
 
             #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
@@ -338,7 +303,7 @@ impl DataCollector {
             #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
             {
                 temperature::get_temperature_data(
-                    &self.sys,
+                    &mut self.sys,
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
                 )
@@ -357,10 +322,9 @@ impl DataCollector {
             }
         };
 
-        let (net_data, mem_res, swap_res, disk_res, io_res, temp_res) = join!(
+        let (net_data, mem_res, disk_res, io_res, temp_res) = join!(
             network_data_fut,
             mem_data_fut,
-            swap_data_fut,
             disk_data_fut,
             disk_io_usage_fut,
             temp_data_fut
@@ -382,14 +346,14 @@ impl DataCollector {
             }
         }
 
-        if let Ok(memory) = mem_res {
+        if let Ok(memory) = mem_res.0 {
             self.data.memory = memory;
             if log_enabled!(log::Level::Trace) {
                 trace!("mem: {:?} results", self.data.memory);
             }
         }
 
-        if let Ok(swap) = swap_res {
+        if let Ok(swap) = mem_res.1 {
             self.data.swap = swap;
             if log_enabled!(log::Level::Trace) {
                 trace!("swap: {:?} results", self.data.swap);

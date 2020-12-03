@@ -33,12 +33,15 @@ pub async fn get_io_usage(
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_disk_usage(
-    sys: &sysinfo::System, actually_get: bool,
+    sys: &mut sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     use sysinfo::{DiskExt, SystemExt};
     if !actually_get {
         return Ok(None);
     }
+
+    sys.refresh_disks_list();
+    sys.refresh_disks();
 
     let mut vec_disks = sys
         .get_disks()

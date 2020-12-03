@@ -1,3 +1,5 @@
+use futures::join;
+
 #[derive(Debug, Clone)]
 pub struct MemHarvest {
     pub mem_total_in_mb: u64,
@@ -15,12 +17,24 @@ impl Default for MemHarvest {
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_mem_data(
-    sys: &sysinfo::System, actually_get: bool,
+    sys: &mut sysinfo::System, actually_get: bool,
+) -> (
+    crate::utils::error::Result<Option<MemHarvest>>,
+    crate::utils::error::Result<Option<MemHarvest>>,
+) {
+    if !actually_get {
+        (Ok(None), Ok(None))
+    } else {
+        self.sys.refresh_memory();
+        join!(get_ram_data(&sys), get_swap_data(&sys))
+    }
+}
+
+#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+pub async fn get_ram_data(
+    sys: &sysinfo::System,
 ) -> crate::utils::error::Result<Option<MemHarvest>> {
     use sysinfo::SystemExt;
-    if !actually_get {
-        return Ok(None);
-    }
 
     Ok(Some(MemHarvest {
         mem_total_in_mb: sys.get_total_memory() / 1024,
@@ -30,12 +44,9 @@ pub async fn get_mem_data(
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_swap_data(
-    sys: &sysinfo::System, actually_get: bool,
+    sys: &sysinfo::System,
 ) -> crate::utils::error::Result<Option<MemHarvest>> {
     use sysinfo::SystemExt;
-    if !actually_get {
-        return Ok(None);
-    }
 
     Ok(Some(MemHarvest {
         mem_total_in_mb: sys.get_total_swap() / 1024,
@@ -44,11 +55,21 @@ pub async fn get_swap_data(
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn get_mem_data(actually_get: bool) -> crate::utils::error::Result<Option<MemHarvest>> {
+pub async fn get_mem_data(
+    actually_get: bool,
+) -> (
+    crate::utils::error::Result<Option<MemHarvest>>,
+    crate::utils::error::Result<Option<MemHarvest>>,
+) {
     if !actually_get {
-        return Ok(None);
+        (Ok(None), Ok(None))
+    } else {
+        join!(get_ram_data(), get_swap_data())
     }
+}
 
+#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let memory = heim::memory::memory().await?;
 
     Ok(Some(MemHarvest {
@@ -61,11 +82,7 @@ pub async fn get_mem_data(actually_get: bool) -> crate::utils::error::Result<Opt
 }
 
 #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-pub async fn get_swap_data(actually_get: bool) -> crate::utils::error::Result<Option<MemHarvest>> {
-    if !actually_get {
-        return Ok(None);
-    }
-
+pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let memory = heim::memory::swap().await?;
 
     Ok(Some(MemHarvest {
