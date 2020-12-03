@@ -177,9 +177,6 @@ impl DataCollector {
 
         if cfg!(any(target_arch = "arm", target_arch = "aarch64")) {
             // ARM stuff
-            if self.widgets_to_harvest.use_proc {
-                self.sys.refresh_processes();
-            }
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
@@ -191,9 +188,6 @@ impl DataCollector {
             }
         } else {
             if cfg!(not(target_os = "linux")) {
-                if self.widgets_to_harvest.use_proc {
-                    self.sys.refresh_processes();
-                }
                 if self.widgets_to_harvest.use_temp {
                     self.sys.refresh_components();
                 }
@@ -250,6 +244,7 @@ impl DataCollector {
                         self.mem_total_kb,
                         self.page_file_size_kb,
                     )
+                    .await
                 }
                 #[cfg(not(target_os = "linux"))]
                 {
@@ -258,6 +253,7 @@ impl DataCollector {
                         self.use_current_cpu_total,
                         self.mem_total_kb,
                     )
+                    .await
                 }
             } {
                 self.data.list_of_processes = Some(process_list);
