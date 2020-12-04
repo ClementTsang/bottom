@@ -33,7 +33,7 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all -- --check
 
-  # Check clippy.
+  # Check clippy.  This doesn't check ARM though.
   clippy:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -44,12 +44,6 @@ jobs:
           - windows-2019
     steps:
       - uses: actions/checkout@v2
-
-      # - name: Cache Cargo
-      #   uses: actions/cache@v1
-      #   with:
-      #     path: target
-      #     key: clippy-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}
 
       - uses: actions-rs/toolchain@v1
         with:
