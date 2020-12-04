@@ -25,14 +25,12 @@ pub async fn get_mem_data(
     if !actually_get {
         (Ok(None), Ok(None))
     } else {
-        join!(get_ram_data(sys), get_swap_data(sys))
+        (get_ram_data(sys), get_swap_data(sys))
     }
 }
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_ram_data(
-    sys: &sysinfo::System,
-) -> crate::utils::error::Result<Option<MemHarvest>> {
+pub fn get_ram_data(sys: &sysinfo::System) -> crate::utils::error::Result<Option<MemHarvest>> {
     use sysinfo::SystemExt;
 
     Ok(Some(MemHarvest {
@@ -42,9 +40,7 @@ pub async fn get_ram_data(
 }
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_swap_data(
-    sys: &sysinfo::System,
-) -> crate::utils::error::Result<Option<MemHarvest>> {
+pub fn get_swap_data(sys: &sysinfo::System) -> crate::utils::error::Result<Option<MemHarvest>> {
     use sysinfo::SystemExt;
 
     Ok(Some(MemHarvest {
