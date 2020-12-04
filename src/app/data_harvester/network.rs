@@ -18,9 +18,13 @@ impl NetworkHarvest {
 #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
-    prev_net_tx: &mut u64, curr_time: Instant,
+    prev_net_tx: &mut u64, curr_time: Instant, actually_get: bool,
 ) -> Option<NetworkHarvest> {
     use sysinfo::{NetworkExt, SystemExt};
+
+    if !actually_get {
+        return None;
+    }
 
     let mut total_rx: u64 = 0;
     let mut total_tx: u64 = 0;

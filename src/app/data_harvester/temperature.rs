@@ -22,9 +22,13 @@ impl Default for TemperatureType {
 
 #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_temperature_data(
-    sys: &sysinfo::System, temp_type: &TemperatureType,
+    sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use sysinfo::{ComponentExt, SystemExt};
+
+    if !actually_get {
+        return None;
+    }
 
     fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
         celsius + 273.15
