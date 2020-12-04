@@ -25,7 +25,7 @@ pub async fn get_mem_data(
     if !actually_get {
         (Ok(None), Ok(None))
     } else {
-        join!(get_ram_data(), get_swap_data())
+        join!(get_ram_data(sys), get_swap_data(sys))
     }
 }
 
