@@ -272,6 +272,7 @@ impl DataCollector {
             }
         }
 
+        // I am *well* aware that the sysinfo part w/ blocking code is... not great.
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
