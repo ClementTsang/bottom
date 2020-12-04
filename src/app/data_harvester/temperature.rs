@@ -22,7 +22,7 @@ impl Default for TemperatureType {
 
 #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_temperature_data(
-    sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool,
+    sys: &sysinfo::System, temp_type: &TemperatureType,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use sysinfo::{ComponentExt, SystemExt};
 
@@ -32,10 +32,6 @@ pub async fn get_temperature_data(
 
     fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
         (celsius * (9.0 / 5.0)) + 32.0
-    }
-
-    if !actually_get {
-        return Ok(None);
     }
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();

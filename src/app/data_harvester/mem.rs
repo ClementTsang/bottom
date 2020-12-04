@@ -17,16 +17,12 @@ impl Default for MemHarvest {
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
 pub async fn get_mem_data(
-    sys: &sysinfo::System, actually_get: bool,
+    sys: &sysinfo::System,
 ) -> (
     crate::utils::error::Result<Option<MemHarvest>>,
     crate::utils::error::Result<Option<MemHarvest>>,
 ) {
-    if !actually_get {
-        (Ok(None), Ok(None))
-    } else {
-        join!(get_ram_data(&sys), get_swap_data(&sys))
-    }
+    join!(get_ram_data(sys), get_swap_data(sys))
 }
 
 #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]

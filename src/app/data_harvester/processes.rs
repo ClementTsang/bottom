@@ -3,19 +3,10 @@ use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
 #[cfg(target_os = "linux")]
-use futures::stream::StreamExt;
-
-#[cfg(target_os = "linux")]
-use smol::fs;
-
-#[cfg(target_os = "linux")]
 use crate::utils::error::{self, BottomError};
 
 #[cfg(target_os = "linux")]
 use std::collections::{hash_map::RandomState, HashMap};
-
-// #[cfg(not(target_os = "linux"))]
-// use smol::unblock;
 
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
@@ -117,7 +108,7 @@ impl PrevProcDetails {
 }
 
 #[cfg(target_os = "linux")]
-async fn cpu_usage_calculation(
+fn cpu_usage_calculation(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
 ) -> error::Result<(f64, f64)> {
     // From SO answer: https://stackoverflow.com/a/23376195
@@ -125,7 +116,7 @@ async fn cpu_usage_calculation(
     path.push("/proc");
     path.push("stat");
 
-    let stat_results = fs::read_to_string(path).await?;
+    let stat_results = std::fs::read_to_string(path)?;
     let first_line: &str;
 
     let split_results = stat_results.split('\n').collect::<Vec<&str>>();
@@ -186,8 +177,8 @@ async fn cpu_usage_calculation(
 }
 
 #[cfg(target_os = "linux")]
-async fn get_process_io(path: &PathBuf) -> std::io::Result<String> {
-    Ok(fs::read_to_string(path).await?)
+fn get_process_io(path: &PathBuf) -> std::io::Result<String> {
+    Ok(std::fs::read_to_string(path)?)
 }
 
 #[cfg(target_os = "linux")]
@@ -209,8 +200,8 @@ fn get_linux_process_vsize_rss(stat: &[&str]) -> (u64, u64) {
 }
 
 #[cfg(target_os = "linux")]
-async fn read_path_contents(path: &PathBuf) -> std::io::Result<String> {
-    Ok(fs::read_to_string(path).await?)
+fn read_path_contents(path: &PathBuf) -> std::io::Result<String> {
+    Ok(std::fs::read_to_string(path)?)
 }
 
 #[cfg(target_os = "linux")]
@@ -255,7 +246,7 @@ fn get_linux_cpu_usage(
 
 #[allow(clippy::too_many_arguments)]
 #[cfg(target_os = "linux")]
-async fn read_proc<S: core::hash::BuildHasher>(
+fn read_proc<S: core::hash::BuildHasher>(
     pid: Pid, cpu_usage: f64, cpu_fraction: f64,
     pid_mapping: &mut HashMap<Pid, PrevProcDetails, S>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
@@ -263,7 +254,7 @@ async fn read_proc<S: core::hash::BuildHasher>(
     let pid_stat = pid_mapping
         .entry(pid)
         .or_insert_with(|| PrevProcDetails::new(pid));
-    let stat_results = read_path_contents(&pid_stat.proc_stat_path).await?;
+    let stat_results = read_path_contents(&pid_stat.proc_stat_path)?;
 
     // truncated_name may potentially be cut!  Hence why we do the bit of code after...
     let truncated_name = stat_results
@@ -277,7 +268,7 @@ async fn read_proc<S: core::hash::BuildHasher>(
         .ok_or(BottomError::MinorError)?
         .to_string();
     let (command, name) = {
-        let cmd = read_path_contents(&pid_stat.proc_cmdline_path).await?;
+        let cmd = read_path_contents(&pid_stat.proc_cmdline_path)?;
         let trimmed_cmd = cmd.trim();
         if trimmed_cmd.is_empty() {
             (format!("[{}]", truncated_name), truncated_name)
@@ -331,7 +322,7 @@ async fn read_proc<S: core::hash::BuildHasher>(
 
     // This can fail if permission is denied!
     let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
-        if let Ok(io_results) = get_process_io(&pid_stat.proc_io_path).await {
+        if let Ok(io_results) = get_process_io(&pid_stat.proc_io_path) {
             let io_stats = io_results.split_whitespace().collect::<Vec<&str>>();
 
             let (total_read_bytes, total_write_bytes) = get_linux_process_io_usage(&io_stats);
@@ -378,43 +369,39 @@ async fn read_proc<S: core::hash::BuildHasher>(
 }
 
 #[cfg(target_os = "linux")]
-pub async fn get_process_data(
+pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     pid_mapping: &mut HashMap<Pid, PrevProcDetails, RandomState>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
-    debug!("Starting process collection...");
-
-    if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle).await {
-        let mut process_vector: Vec<ProcessHarvest> = Vec::new();
-        let mut entries = fs::read_dir("/proc").await?;
-
-        while let Some(dir) = entries.next().await {
-            if let Ok(dir) = dir {
-                let pid = dir.file_name().to_string_lossy().trim().parse::<Pid>();
-                if let Ok(pid) = pid {
-                    // I skip checking if the path is also a directory, it's not needed I think?
-                    if let Ok(process_object) = read_proc(
-                        pid,
-                        cpu_usage,
-                        cpu_fraction,
-                        pid_mapping,
-                        use_current_cpu_total,
-                        time_difference_in_secs,
-                        mem_total_kb,
-                        page_file_kb,
-                    )
-                    .await
-                    {
-                        process_vector.push(process_object);
+    if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
+        let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
+            .filter_map(|dir| {
+                if let Ok(dir) = dir {
+                    let pid = dir.file_name().to_string_lossy().trim().parse::<Pid>();
+                    if let Ok(pid) = pid {
+                        // I skip checking if the path is also a directory, it's not needed I think?
+                        if let Ok(process_object) = read_proc(
+                            pid,
+                            cpu_usage,
+                            cpu_fraction,
+                            pid_mapping,
+                            use_current_cpu_total,
+                            time_difference_in_secs,
+                            mem_total_kb,
+                            page_file_kb,
+                        ) {
+                            return Some(process_object);
+                        }
                     }
                 }
-            }
-        }
 
-        debug!("Ending process collection...");
+                None
+            })
+            .collect();
+
         Ok(process_vector)
     } else {
         trace!("Could not calculate CPU usage.");
@@ -425,7 +412,7 @@ pub async fn get_process_data(
 }
 
 #[cfg(not(target_os = "linux"))]
-pub async fn get_process_data(
+pub fn get_process_data(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();

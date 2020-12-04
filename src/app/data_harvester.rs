@@ -144,7 +144,7 @@ impl DataCollector {
         }
 
         trace!("Running first run.");
-        smol::block_on(self.update_data());
+        futures::executor::block_on(self.update_data());
         trace!("First run done.  Sleeping for 250ms...");
         std::thread::sleep(std::time::Duration::from_millis(250));
 
@@ -250,7 +250,6 @@ impl DataCollector {
                         self.mem_total_kb,
                         self.page_file_size_kb,
                     )
-                    .await
                 }
                 #[cfg(not(target_os = "linux"))]
                 {
@@ -259,7 +258,6 @@ impl DataCollector {
                         self.use_current_cpu_total,
                         self.mem_total_kb,
                     )
-                    .await
                 }
             } {
                 self.data.list_of_processes = Some(process_list);
@@ -274,7 +272,6 @@ impl DataCollector {
             }
         }
 
-        debug!("Calling async functions now...");
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
