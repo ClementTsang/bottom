@@ -404,7 +404,10 @@ pub fn get_process_data(
 
         Ok(process_vector)
     } else {
-        Ok(Vec::new())
+        trace!("Could not calculate CPU usage.");
+        Err(BottomError::GenericError(
+            "Could not calculate CPU usage.".to_string(),
+        ))
     }
 }
 

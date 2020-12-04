@@ -272,7 +272,7 @@ impl DataCollector {
             }
         }
 
-        // Async if Heim
+        // I am *well* aware that the sysinfo part w/ blocking code is... not great.
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
             {
@@ -307,17 +307,6 @@ impl DataCollector {
                 mem::get_mem_data(self.widgets_to_harvest.use_mem)
             }
         };
-        let swap_data_fut = {
-            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-            {
-                mem::get_swap_data(&self.sys, self.widgets_to_harvest.use_mem)
-            }
-
-            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-            {
-                mem::get_swap_data(self.widgets_to_harvest.use_mem)
-            }
-        };
         let disk_data_fut = {
             #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
             {
@@ -343,7 +332,7 @@ impl DataCollector {
         let temp_data_fut = {
             #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
             {
-                temperature::arm_and_non_linux_temperature_data(
+                temperature::get_temperature_data(
                     &self.sys,
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
@@ -356,17 +345,16 @@ impl DataCollector {
                 target_arch = "arm"
             )))]
             {
-                temperature::linux_temperature_data(
+                temperature::get_temperature_data(
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
                 )
             }
         };
 
-        let (net_data, mem_res, swap_res, disk_res, io_res, temp_res) = join!(
+        let (net_data, mem_res, disk_res, io_res, temp_res) = join!(
             network_data_fut,
             mem_data_fut,
-            swap_data_fut,
             disk_data_fut,
             disk_io_usage_fut,
             temp_data_fut
@@ -388,14 +376,14 @@ impl DataCollector {
             }
         }
 
-        if let Ok(memory) = mem_res {
+        if let Ok(memory) = mem_res.0 {
             self.data.memory = memory;
             if log_enabled!(log::Level::Trace) {
                 trace!("mem: {:?} results", self.data.memory);
             }
         }
 
-        if let Ok(swap) = swap_res {
+        if let Ok(swap) = mem_res.1 {
             self.data.swap = swap;
             if log_enabled!(log::Level::Trace) {
                 trace!("swap: {:?} results", self.data.swap);

@@ -36,6 +36,7 @@ pub async fn get_disk_usage(
     sys: &sysinfo::System, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     use sysinfo::{DiskExt, SystemExt};
+
     if !actually_get {
         return Ok(None);
     }

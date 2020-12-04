@@ -20,12 +20,15 @@ impl Default for TemperatureType {
     }
 }
 
-/// Meant for ARM and non-Linux usage.
 #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
-pub async fn arm_and_non_linux_temperature_data(
+pub async fn get_temperature_data(
     sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use sysinfo::{ComponentExt, SystemExt};
+
+    if !actually_get {
+        return Ok(None);
+    }
 
     fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
         celsius + 273.15
@@ -33,10 +36,6 @@ pub async fn arm_and_non_linux_temperature_data(
 
     fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
         (celsius * (9.0 / 5.0)) + 32.0
-    }
-
-    if !actually_get {
-        return Ok(None);
     }
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
@@ -61,7 +60,7 @@ pub async fn arm_and_non_linux_temperature_data(
 }
 
 #[cfg(not(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm")))]
-pub async fn linux_temperature_data(
+pub async fn get_temperature_data(
     temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use futures::StreamExt;

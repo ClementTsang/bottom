@@ -1,5 +1,5 @@
 use battery::{
-    units::{power::watt, ratio::percent, time::second, Time},
+    units::{power::watt, ratio::percent, time::second},
     Battery, Manager,
 };
 
@@ -12,26 +12,28 @@ pub struct BatteryHarvest {
     pub health_percent: f64,
 }
 
-fn convert_optional_time_to_optional_seconds(optional_time: Option<Time>) -> Option<i64> {
-    if let Some(time) = optional_time {
-        Some(f64::from(time.get::<second>()) as i64)
-    } else {
-        None
-    }
-}
-
 pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<BatteryHarvest> {
     batteries
         .iter_mut()
         .filter_map(|battery| {
             if manager.refresh(battery).is_ok() {
                 Some(BatteryHarvest {
-                    secs_until_full: convert_optional_time_to_optional_seconds(
-                        battery.time_to_full(),
-                    ),
-                    secs_until_empty: convert_optional_time_to_optional_seconds(
-                        battery.time_to_empty(),
-                    ),
+                    secs_until_full: {
+                        let optional_time = battery.time_to_full();
+                        if let Some(time) = optional_time {
+                            Some(f64::from(time.get::<second>()) as i64)
+                        } else {
+                            None
+                        }
+                    },
+                    secs_until_empty: {
+                        let optional_time = battery.time_to_empty();
+                        if let Some(time) = optional_time {
+                            Some(f64::from(time.get::<second>()) as i64)
+                        } else {
+                            None
+                        }
+                    },
                     charge_percent: f64::from(battery.state_of_charge().get::<percent>()),
                     power_consumption_rate_watts: f64::from(battery.energy_rate().get::<watt>()),
                     health_percent: f64::from(battery.state_of_health().get::<percent>()),
