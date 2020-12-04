@@ -27,7 +27,7 @@ pub async fn get_temperature_data(
     use sysinfo::{ComponentExt, SystemExt};
 
     if !actually_get {
-        return None;
+        return Ok(None);
     }
 
     fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
