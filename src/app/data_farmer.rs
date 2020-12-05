@@ -17,7 +17,7 @@ use once_cell::sync::Lazy;
 use std::{time::Instant, vec::Vec};
 
 use crate::{
-    data_harvester::{battery_harvester, cpu, disks, mem, network, processes, temperature, Data},
+    data_harvester::{batteries, cpu, disks, mem, network, processes, temperature, Data},
     utils::gen_util::get_simple_byte_values,
 };
 use regex::Regex;
@@ -58,7 +58,7 @@ pub struct DataCollection {
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
-    pub battery_harvest: Vec<battery_harvester::BatteryHarvest>,
+    pub battery_harvest: Vec<batteries::BatteryHarvest>,
 }
 
 impl Default for DataCollection {
@@ -312,7 +312,7 @@ impl DataCollection {
         self.process_harvest = list_of_processes.to_vec();
     }
 
-    fn eat_battery(&mut self, list_of_batteries: &[battery_harvester::BatteryHarvest]) {
+    fn eat_battery(&mut self, list_of_batteries: &[batteries::BatteryHarvest]) {
         trace!("Eating batteries.");
         self.battery_harvest = list_of_batteries.to_vec();
     }
