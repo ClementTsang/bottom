@@ -55,6 +55,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Disk and temperature filtering](#disk-and-temperature-filtering)
   - [Battery](#battery)
   - [Compatibility](#compatibility)
+- [FAQ](#faq)
 - [Contribution](#contribution)
   - [Contributors](#contributors)
 - [Thanks](#thanks)
@@ -727,6 +728,10 @@ The current compatibility of widgets with operating systems from personal testin
 | Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
 | Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        | ✓ (seems to have issues with dual batteries) |
 | macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
+
+## FAQ
+
+Please see the [FAQ](./FAQ.md) for answers to frequently asked questions.
 
 ## Contribution
 
