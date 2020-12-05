@@ -13,7 +13,7 @@ use crate::app::layout_manager::UsedWidgets;
 
 use futures::join;
 
-pub mod battery_harvester;
+pub mod batteries;
 pub mod cpu;
 pub mod disks;
 pub mod mem;
@@ -32,7 +32,7 @@ pub struct Data {
     pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
     pub disks: Option<Vec<disks::DiskHarvest>>,
     pub io: Option<disks::IOHarvest>,
-    pub list_of_batteries: Option<Vec<battery_harvester::BatteryHarvest>>,
+    pub list_of_batteries: Option<Vec<batteries::BatteryHarvest>>,
 }
 
 impl Default for Data {
@@ -220,10 +220,8 @@ impl DataCollector {
         // Batteries
         if let Some(battery_manager) = &self.battery_manager {
             if let Some(battery_list) = &mut self.battery_list {
-                self.data.list_of_batteries = Some(battery_harvester::refresh_batteries(
-                    &battery_manager,
-                    battery_list,
-                ));
+                self.data.list_of_batteries =
+                    Some(batteries::refresh_batteries(&battery_manager, battery_list));
             }
 
             if log_enabled!(log::Level::Trace) {
