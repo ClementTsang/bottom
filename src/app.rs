@@ -176,6 +176,7 @@ impl App {
     fn close_dd(&mut self) {
         self.delete_dialog_state.is_showing_dd = false;
         self.delete_dialog_state.selected_signal = KillSignal::default();
+        self.delete_dialog_state.scroll_pos = 0;
         self.to_delete_process_list = None;
         self.dd_err = None;
     }
@@ -665,6 +666,7 @@ impl App {
                 if self.dd_err.is_none() {
                     // Also ensure that we didn't just fail a dd...
                     let dd_result = self.kill_highlighted_process();
+                    self.delete_dialog_state.scroll_pos = 0;
                     self.delete_dialog_state.selected_signal = KillSignal::default();
 
                     // Check if there was an issue... if so, inform the user.
@@ -675,6 +677,7 @@ impl App {
                     }
                 }
             } else {
+                self.delete_dialog_state.scroll_pos = 0;
                 self.delete_dialog_state.selected_signal = KillSignal::default();
                 self.delete_dialog_state.is_showing_dd = false;
             }
@@ -1540,9 +1543,13 @@ impl App {
                 };
                 for pid in &current_selected_processes.1 {
                     #[cfg(target_family = "unix")]
-                    process_killer::kill_process_given_pid(*pid, signal)?;
+                    {
+                        process_killer::kill_process_given_pid(*pid, signal)?;
+                    }
                     #[cfg(target_os = "windows")]
-                    process_killer::kill_process_given_pid(*pid)?;
+                    {
+                        process_killer::kill_process_given_pid(*pid)?;
+                    }
                 }
             }
             self.to_delete_process_list = None;

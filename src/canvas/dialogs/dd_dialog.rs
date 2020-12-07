@@ -223,19 +223,17 @@ impl KillDialog for Painter {
             .constraints(vec![Constraint::Min(1); button_rect.height as usize])
             .split(button_rect);
 
-        let scroll_offset: usize = if selected < (layout.len() as usize) - 1 {
+        let prev_offset: usize = app_state.delete_dialog_state.scroll_pos;
+        app_state.delete_dialog_state.scroll_pos = if selected == 0 {
             0
+        } else if selected < prev_offset + 1 {
+            selected - 1
+        } else if selected > prev_offset + (layout.len() as usize) - 1 {
+            selected - (layout.len() as usize) + 1
         } else {
-            selected
-                + if selected == signal_text.len() - 1 {
-                    // don't scroll down if we are on the last element
-                    1
-                } else {
-                    // always show one more element
-                    2
-                }
-                - (layout.len() as usize)
+            prev_offset
         };
+        let scroll_offset: usize = app_state.delete_dialog_state.scroll_pos;
 
         let mut buttons = signal_text
             [scroll_offset + 1..min((layout.len() as usize) + scroll_offset, signal_text.len())]
