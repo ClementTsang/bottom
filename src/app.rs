@@ -932,17 +932,24 @@ impl App {
                 _ => {}
             }
         } else if self.delete_dialog_state.is_showing_dd {
-            match self.delete_dialog_state.selected_signal {
-                KillSignal::KILL(prev_signal) => {
-                    self.delete_dialog_state.selected_signal = match prev_signal - 1 {
-                        0 => KillSignal::CANCEL,
-                        // 32+33 are skipped
-                        33 => KillSignal::KILL(31),
-                        signal => KillSignal::KILL(signal),
-                    };
-                }
-                KillSignal::CANCEL => (),
-            };
+            #[cfg(target_family = "unix")]
+            {
+                match self.delete_dialog_state.selected_signal {
+                    KillSignal::KILL(prev_signal) => {
+                        self.delete_dialog_state.selected_signal = match prev_signal - 1 {
+                            0 => KillSignal::CANCEL,
+                            // 32+33 are skipped
+                            33 => KillSignal::KILL(31),
+                            signal => KillSignal::KILL(signal),
+                        };
+                    }
+                    KillSignal::CANCEL => (),
+                };
+            }
+            #[cfg(target_os = "windows")]
+            {
+                self.delete_dialog_state.selected_signal = KillSignal::KILL(1);
+            }
         }
     }
 
@@ -1014,19 +1021,23 @@ impl App {
             }
         } else if self.delete_dialog_state.is_showing_dd {
             #[cfg(target_family = "unix")]
-            let new_signal = match self.delete_dialog_state.selected_signal {
-                KillSignal::CANCEL => 1,
-                // 32+33 are skipped
-                #[cfg(target_os = "linux")]
-                KillSignal::KILL(31) => 34,
-                #[cfg(target_os = "macos")]
-                KillSignal::KILL(31) => 31,
-                KillSignal::KILL(64) => 64,
-                KillSignal::KILL(signal) => signal + 1,
-            };
+            {
+                let new_signal = match self.delete_dialog_state.selected_signal {
+                    KillSignal::CANCEL => 1,
+                    // 32+33 are skipped
+                    #[cfg(target_os = "linux")]
+                    KillSignal::KILL(31) => 34,
+                    #[cfg(target_os = "macos")]
+                    KillSignal::KILL(31) => 31,
+                    KillSignal::KILL(64) => 64,
+                    KillSignal::KILL(signal) => signal + 1,
+                };
+                self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
+            }
             #[cfg(target_os = "windows")]
-            let new_signal = 1;
-            self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
+            {
+                self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+            }
         }
     }
 
