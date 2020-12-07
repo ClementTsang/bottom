@@ -220,14 +220,7 @@ impl KillDialog for Painter {
 
         let layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(
-                vec![Constraint::Min(1)]
-                    .into_iter()
-                    .cycle()
-                    .take((button_rect.height).into())
-                    .collect::<Vec<Constraint>>()
-                    .as_ref(),
-            )
+            .constraints(vec![Constraint::Min(1); button_rect.height as usize])
             .split(button_rect);
 
         let scroll_offset: usize = if selected < (layout.len() as usize) - 1 {
