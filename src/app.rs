@@ -805,8 +805,8 @@ impl App {
         }
     }
 
+    #[cfg(target_family = "unix")]
     pub fn on_number(&mut self, number_char: char) {
-        #[cfg(target_family = "unix")]
         if self.delete_dialog_state.is_showing_dd {
             if self
                 .delete_dialog_state
@@ -1316,6 +1316,7 @@ impl App {
                 'j' => self.on_down_key(),
                 'k' => self.on_up_key(),
                 'l' => self.on_right_key(),
+                #[cfg(target_family = "unix")]
                 '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                     self.on_number(caught_char)
                 }
@@ -1569,6 +1570,7 @@ impl App {
     pub fn kill_highlighted_process(&mut self) -> Result<()> {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
             if let Some(current_selected_processes) = &self.to_delete_process_list {
+                #[cfg(target_family = "unix")]
                 let signal = match self.delete_dialog_state.selected_signal {
                     KillSignal::KILL(sig) => sig,
                     KillSignal::CANCEL => 15, // should never happen, so just TERM

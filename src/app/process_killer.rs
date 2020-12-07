@@ -9,6 +9,7 @@ use winapi::{
 };
 
 /// This file is meant to house (OS specific) implementations on how to kill processes.
+#[cfg(target_family = "unix")]
 use crate::utils::error::BottomError;
 use crate::Pid;
 

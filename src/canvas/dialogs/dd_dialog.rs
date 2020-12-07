@@ -1,3 +1,4 @@
+#[cfg(target_family = "unix")]
 use std::cmp::min;
 use tui::{
     backend::Backend,
