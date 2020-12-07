@@ -135,6 +135,13 @@ pub struct App {
     pub config_path: Option<PathBuf>,
 }
 
+#[cfg(target_os = "windows")]
+const MAX_SIGNAL: usize = 1;
+#[cfg(target_os = "linux")]
+const MAX_SIGNAL: usize = 64;
+#[cfg(target_os = "macos")]
+const MAX_SIGNAL: usize = 31;
+
 impl App {
     pub fn reset(&mut self) {
         // Reset multi
@@ -1059,22 +1066,9 @@ impl App {
 
     pub fn on_page_down(&mut self) {
         if self.delete_dialog_state.is_showing_dd {
-            let max_signal;
-            #[cfg(target_os = "windows")]
-            {
-                max_signal = 1;
-            }
-            #[cfg(target_os = "linux")]
-            {
-                max_signal = 64;
-            }
-            #[cfg(target_os = "macos")]
-            {
-                max_signal = 31;
-            }
             let mut new_signal = match self.delete_dialog_state.selected_signal {
                 KillSignal::CANCEL => 8,
-                KillSignal::KILL(signal) => min(signal + 8, max_signal),
+                KillSignal::KILL(signal) => min(signal + 8, MAX_SIGNAL),
             };
             if new_signal > 31 && new_signal < 42 {
                 new_signal += 2;
@@ -1322,6 +1316,23 @@ impl App {
                 }
                 'u' => self.on_page_up(),
                 'd' => self.on_page_down(),
+                'g' => {
+                    let mut is_first_g = true;
+                    if let Some(second_char) = self.second_char {
+                        if self.awaiting_second_char && second_char == 'g' {
+                            is_first_g = false;
+                            self.awaiting_second_char = false;
+                            self.second_char = None;
+                            self.skip_to_first();
+                        }
+                    }
+
+                    if is_first_g {
+                        self.awaiting_second_char = true;
+                        self.second_char = Some('g');
+                    }
+                }
+                'G' => self.skip_to_last(),
                 _ => {}
             }
         } else if self.is_config_open {
@@ -2128,6 +2139,8 @@ impl App {
         } else if self.is_config_open {
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
+        } else if self.delete_dialog_state.is_showing_dd {
+            self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
         }
     }
 
@@ -2209,6 +2222,8 @@ impl App {
                 .scroll_state
                 .max_scroll_index
                 .saturating_sub(1);
+        } else if self.delete_dialog_state.is_showing_dd {
+            self.delete_dialog_state.selected_signal = KillSignal::KILL(MAX_SIGNAL);
         }
     }
 
