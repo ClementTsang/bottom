@@ -821,7 +821,12 @@ impl App {
             if kbd_signal > 64 {
                 kbd_signal %= 100;
             }
+            #[cfg(target_os = "linux")]
             if kbd_signal > 64 || kbd_signal == 32 || kbd_signal == 33 {
+                kbd_signal %= 10;
+            }
+            #[cfg(target_os = "macos")]
+            if kbd_signal > 31 {
                 kbd_signal %= 10;
             }
             self.delete_dialog_state.selected_signal = KillSignal::KILL(kbd_signal);
@@ -1012,7 +1017,10 @@ impl App {
             let new_signal = match self.delete_dialog_state.selected_signal {
                 KillSignal::CANCEL => 1,
                 // 32+33 are skipped
+                #[cfg(target_os = "linux")]
                 KillSignal::KILL(31) => 34,
+                #[cfg(target_os = "macos")]
+                KillSignal::KILL(31) => 31,
                 KillSignal::KILL(64) => 64,
                 KillSignal::KILL(signal) => signal + 1,
             };
@@ -1040,9 +1048,22 @@ impl App {
 
     pub fn on_page_down(&mut self) {
         if self.delete_dialog_state.is_showing_dd {
+            let max_signal;
+            #[cfg(target_os = "windows")]
+            {
+                max_signal = 1;
+            }
+            #[cfg(target_os = "linux")]
+            {
+                max_signal = 64;
+            }
+            #[cfg(target_os = "macos")]
+            {
+                max_signal = 31;
+            }
             let mut new_signal = match self.delete_dialog_state.selected_signal {
                 KillSignal::CANCEL => 8,
-                KillSignal::KILL(signal) => min(signal, 56) + 8,
+                KillSignal::KILL(signal) => min(signal + 8, max_signal),
             };
             if new_signal > 31 && new_signal < 42 {
                 new_signal += 2;
