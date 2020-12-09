@@ -666,21 +666,17 @@ impl Painter {
                     self.widget_layout
                         .rows
                         .iter()
-                        .zip(&self.derived_widget_draw_locs)
-                        .for_each(|(cols, row_layout)| {
-                            cols.children.iter().zip(row_layout).for_each(
-                                |(col_rows, col_row_layout)| {
-                                    col_rows.children.iter().zip(col_row_layout).for_each(
-                                        |(widgets, widget_draw_locs)| {
-                                            self.draw_widgets_with_constraints(
-                                                &mut f,
-                                                app_state,
-                                                widgets,
-                                                &widget_draw_locs,
-                                            );
-                                        },
-                                    );
-                                },
+                        .map(|row| &row.children)
+                        .flatten()
+                        .map(|col| &col.children)
+                        .flatten()
+                        .zip(self.derived_widget_draw_locs.iter().flatten().flatten())
+                        .for_each(|(widgets, widget_draw_locs)| {
+                            self.draw_widgets_with_constraints(
+                                &mut f,
+                                app_state,
+                                widgets,
+                                &widget_draw_locs,
                             );
                         });
                 }
