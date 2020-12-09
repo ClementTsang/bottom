@@ -95,7 +95,7 @@ pub struct Painter {
     height: u16,
     width: u16,
     styled_help_text: Vec<Spans<'static>>,
-    is_mac_os: bool,
+    is_mac_os: bool, // FIXME: This feels out of place...
     row_constraints: Vec<Constraint>,
     col_constraints: Vec<Vec<Constraint>>,
     col_row_constraints: Vec<Vec<Vec<Constraint>>>,
@@ -182,7 +182,7 @@ impl Painter {
             height: 0,
             width: 0,
             styled_help_text: Vec::default(),
-            is_mac_os: false,
+            is_mac_os: cfg!(target_os = "macos"),
             row_constraints,
             col_constraints,
             col_row_constraints,
@@ -242,7 +242,6 @@ impl Painter {
     /// Must be run once before drawing, but after setting colours.
     /// This is to set some remaining styles and text.
     fn complete_painter_init(&mut self) {
-        self.is_mac_os = cfg!(target_os = "macos");
         let mut styled_help_spans = Vec::new();
 
         // Init help text:
@@ -599,96 +598,85 @@ impl Painter {
                 }
 
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
-                    let row_draw_locs = Layout::default()
+                    let draw_locs = Layout::default()
                         .margin(0)
                         .constraints(self.row_constraints.as_ref())
                         .direction(Direction::Vertical)
                         .split(terminal_size);
-                    let col_draw_locs = self
-                        .col_constraints
-                        .iter()
-                        .zip(&row_draw_locs)
-                        .map(|(col_constraint, row_draw_loc)| {
-                            Layout::default()
-                                .constraints(col_constraint.as_ref())
-                                .direction(Direction::Horizontal)
-                                .split(*row_draw_loc)
-                        })
-                        .collect::<Vec<_>>();
-                    let col_row_draw_locs = self
-                        .col_row_constraints
-                        .iter()
-                        .zip(&col_draw_locs)
-                        .map(|(col_row_constraints, row_draw_loc)| {
-                            col_row_constraints
-                                .iter()
-                                .zip(row_draw_loc)
-                                .map(|(col_row_constraint, col_draw_loc)| {
-                                    Layout::default()
-                                        .constraints(col_row_constraint.as_ref())
-                                        .direction(Direction::Vertical)
-                                        .split(*col_draw_loc)
-                                })
-                                .collect::<Vec<_>>()
-                        })
-                        .collect::<Vec<_>>();
 
-                    // Now... draw!
-                    let mut new_derived_widget_draw_locs = Vec::new();
-                    izip!(
+                    self.derived_widget_draw_locs = izip!(
+                        draw_locs,
+                        &self.col_constraints,
+                        &self.col_row_constraints,
                         &self.layout_constraints,
-                        col_row_draw_locs,
                         &self.widget_layout.rows
                     )
-                    .for_each(|(row_constraint_vec, row_draw_loc, cols)| {
-                        let mut derived_row_draw_locs = Vec::new();
-                        izip!(row_constraint_vec, row_draw_loc, &cols.children).for_each(
-                            |(col_constraint_vec, col_draw_loc, col_rows)| {
-                                let mut derived_col_draw_locs = Vec::new();
-                                izip!(col_constraint_vec, col_draw_loc, &col_rows.children)
-                                    .for_each(
-                                        |(col_row_constraint_vec, col_row_draw_loc, widgets)| {
-                                            // Note that col_row_constraint_vec CONTAINS the widget constraints
-                                            let widget_draw_locs = Layout::default()
-                                                .constraints(col_row_constraint_vec.as_ref())
-                                                .direction(Direction::Horizontal)
-                                                .split(col_row_draw_loc);
+                    .map(
+                        |(
+                            draw_loc,
+                            col_constraint,
+                            col_row_constraint,
+                            row_constraint_vec,
+                            cols,
+                        )| {
+                            izip!(
+                                Layout::default()
+                                    .constraints(col_constraint.as_ref())
+                                    .direction(Direction::Horizontal)
+                                    .split(draw_loc)
+                                    .into_iter(),
+                                col_row_constraint,
+                                row_constraint_vec,
+                                &cols.children
+                            )
+                            .map(|(split_loc, constraint, col_constraint_vec, col_rows)| {
+                                izip!(
+                                    Layout::default()
+                                        .constraints(constraint.as_ref())
+                                        .direction(Direction::Vertical)
+                                        .split(split_loc)
+                                        .into_iter(),
+                                    col_constraint_vec,
+                                    &col_rows.children
+                                )
+                                .map(|(draw_loc, col_row_constraint_vec, widgets)| {
+                                    // Note that col_row_constraint_vec CONTAINS the widget constraints
+                                    let widget_draw_locs = Layout::default()
+                                        .constraints(col_row_constraint_vec.as_ref())
+                                        .direction(Direction::Horizontal)
+                                        .split(draw_loc);
 
-                                            self.draw_widgets_with_constraints(
-                                                &mut f,
-                                                app_state,
-                                                widgets,
-                                                &widget_draw_locs,
-                                            );
-
-                                            derived_col_draw_locs.push(widget_draw_locs);
-                                        },
+                                    // Side effect, draw here.
+                                    self.draw_widgets_with_constraints(
+                                        &mut f,
+                                        app_state,
+                                        widgets,
+                                        &widget_draw_locs,
                                     );
-                                derived_row_draw_locs.push(derived_col_draw_locs);
-                            },
-                        );
-                        new_derived_widget_draw_locs.push(derived_row_draw_locs);
-                    });
-                    self.derived_widget_draw_locs = new_derived_widget_draw_locs;
+
+                                    widget_draw_locs
+                                })
+                                .collect()
+                            })
+                            .collect()
+                        },
+                    )
+                    .collect();
                 } else {
                     self.widget_layout
                         .rows
                         .iter()
-                        .zip(&self.derived_widget_draw_locs)
-                        .for_each(|(cols, row_layout)| {
-                            cols.children.iter().zip(row_layout).for_each(
-                                |(col_rows, col_row_layout)| {
-                                    col_rows.children.iter().zip(col_row_layout).for_each(
-                                        |(widgets, widget_draw_locs)| {
-                                            self.draw_widgets_with_constraints(
-                                                &mut f,
-                                                app_state,
-                                                widgets,
-                                                &widget_draw_locs,
-                                            );
-                                        },
-                                    );
-                                },
+                        .map(|row| &row.children)
+                        .flatten()
+                        .map(|col| &col.children)
+                        .flatten()
+                        .zip(self.derived_widget_draw_locs.iter().flatten().flatten())
+                        .for_each(|(widgets, widget_draw_locs)| {
+                            self.draw_widgets_with_constraints(
+                                &mut f,
+                                app_state,
+                                widgets,
+                                &widget_draw_locs,
                             );
                         });
                 }
