@@ -1,5 +1,3 @@
-use futures::join;
-
 #[derive(Debug, Clone)]
 pub struct MemHarvest {
     pub mem_total_in_mb: u64,
@@ -56,6 +54,8 @@ pub async fn get_mem_data(
     crate::utils::error::Result<Option<MemHarvest>>,
     crate::utils::error::Result<Option<MemHarvest>>,
 ) {
+    use futures::join;
+
     if !actually_get {
         (Ok(None), Ok(None))
     } else {
