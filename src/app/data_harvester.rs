@@ -116,9 +116,10 @@ impl Default for DataCollector {
             battery_list: None,
             #[cfg(target_os = "linux")]
             page_file_size_kb: unsafe {
-                let page_file_size_kb = libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024;
+                // let page_file_size_kb = libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024;
                 // trace!("Page file size in KB: {}", page_file_size_kb);
-                page_file_size_kb
+                // page_file_size_kb
+                libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024
             },
         }
     }
