@@ -237,10 +237,10 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
 
 pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    app: &mut App, painter: &mut canvas::Painter, is_debug: bool,
+    app: &mut App, painter: &mut canvas::Painter,
 ) -> error::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal, is_debug)?;
+        cleanup_terminal(terminal)?;
         return Err(err);
     }
 
@@ -249,7 +249,6 @@ pub fn try_drawing(
 
 pub fn cleanup_terminal(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    is_debug: bool,
 ) -> error::Result<()> {
     disable_raw_mode()?;
     execute!(
@@ -259,11 +258,11 @@ pub fn cleanup_terminal(
     )?;
     terminal.show_cursor()?;
 
-    if is_debug {
-        let mut tmp_dir = std::env::temp_dir();
-        tmp_dir.push("bottom_debug.log");
-        println!("Your debug file is located at {:?}", tmp_dir.as_os_str());
-    }
+    // if is_debug {
+    //     let mut tmp_dir = std::env::temp_dir();
+    //     tmp_dir.push("bottom_debug.log");
+    //     println!("Your debug file is located at {:?}", tmp_dir.as_os_str());
+    // }
 
     Ok(())
 }

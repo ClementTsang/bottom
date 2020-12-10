@@ -27,20 +27,17 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 fn main() -> Result<()> {
     let matches = clap::get_matches();
-    let is_debug = matches.is_present("debug");
-    if is_debug {
-        let mut tmp_dir = std::env::temp_dir();
-        tmp_dir.push("bottom_debug.log");
-        utils::logging::init_logger(log::LevelFilter::Trace, tmp_dir.as_os_str())?;
-    } else {
-        #[cfg(debug_assertions)]
-        {
-            utils::logging::init_logger(
-                log::LevelFilter::Debug,
-                std::ffi::OsStr::new("debug.log"),
-            )?;
-        }
+    // let is_debug = matches.is_present("debug");
+    // if is_debug {
+    //     let mut tmp_dir = std::env::temp_dir();
+    //     tmp_dir.push("bottom_debug.log");
+    //     utils::logging::init_logger(log::LevelFilter::Trace, tmp_dir.as_os_str())?;
+    // } else {
+    #[cfg(debug_assertions)]
+    {
+        utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))?;
     }
+    // }
 
     let config_path = read_config(matches.value_of("config_location"))
         .context("Unable to access the given config file location.")?;
@@ -247,7 +244,7 @@ fn main() -> Result<()> {
         }
 
         // TODO: [OPT] Should not draw if no change (ie: scroll max)
-        try_drawing(&mut terminal, &mut app, &mut painter, is_debug)?;
+        try_drawing(&mut terminal, &mut app, &mut painter)?;
     }
 
     // I think doing it in this order is safe...
@@ -257,7 +254,7 @@ fn main() -> Result<()> {
     thread_termination_cvar.notify_all();
 
     // trace!("Main/drawing thread is cleaning up.");
-    cleanup_terminal(&mut terminal, is_debug)?;
+    cleanup_terminal(&mut terminal)?;
 
     // trace!("Fini.");
     Ok(())
