@@ -218,8 +218,6 @@ impl DataCollector {
                 self.data.list_of_batteries =
                     Some(batteries::refresh_batteries(&battery_manager, battery_list));
             }
-
-            if log_enabled!(log::Level::Trace) {}
         }
 
         if self.widgets_to_harvest.use_proc {
