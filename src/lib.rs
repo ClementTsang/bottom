@@ -447,9 +447,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 fn sort_process_data(
     to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
 ) {
-    to_sort_vec.sort_by(|a, b| {
-        utils::gen_util::get_ordering(&a.name.to_lowercase(), &b.name.to_lowercase(), false)
-    });
+    to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
 
     match &proc_widget_state.process_sorting_type {
         ProcessSorting::CpuPercent => {
@@ -482,22 +480,18 @@ fn sort_process_data(
         ProcessSorting::ProcessName => {
             // Don't repeat if false... it sorts by name by default anyways.
             if proc_widget_state.is_process_sort_descending {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        &a.name.to_lowercase(),
-                        &b.name.to_lowercase(),
-                        proc_widget_state.is_process_sort_descending,
-                    )
-                })
+                to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
+                if proc_widget_state.is_process_sort_descending {
+                    to_sort_vec.reverse();
+                }
             }
         }
-        ProcessSorting::Command => to_sort_vec.sort_by(|a, b| {
-            utils::gen_util::get_ordering(
-                &a.command.to_lowercase(),
-                &b.command.to_lowercase(),
-                proc_widget_state.is_process_sort_descending,
-            )
-        }),
+        ProcessSorting::Command => {
+            to_sort_vec.sort_by_cached_key(|c| c.command.to_lowercase());
+            if proc_widget_state.is_process_sort_descending {
+                to_sort_vec.reverse();
+            }
+        }
         ProcessSorting::Pid => {
             if !proc_widget_state.is_grouped {
                 to_sort_vec.sort_by(|a, b| {
@@ -545,13 +539,12 @@ fn sort_process_data(
                 )
             });
         }
-        ProcessSorting::State => to_sort_vec.sort_by(|a, b| {
-            utils::gen_util::get_ordering(
-                &a.process_state.to_lowercase(),
-                &b.process_state.to_lowercase(),
-                proc_widget_state.is_process_sort_descending,
-            )
-        }),
+        ProcessSorting::State => {
+            to_sort_vec.sort_by_cached_key(|c| c.process_state.to_lowercase());
+            if proc_widget_state.is_process_sort_descending {
+                to_sort_vec.reverse();
+            }
+        }
         ProcessSorting::Count => {
             if proc_widget_state.is_grouped {
                 to_sort_vec.sort_by(|a, b| {
