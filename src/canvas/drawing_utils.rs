@@ -22,6 +22,19 @@ pub fn get_column_widths(
     total_width: u16, hard_widths: &[Option<u16>], soft_widths_min: &[Option<u16>],
     soft_widths_max: &[Option<f64>], soft_widths_desired: &[Option<u16>], left_to_right: bool,
 ) -> Vec<u16> {
+    debug_assert!(
+        hard_widths.len() == soft_widths_min.len(),
+        "hard width length != soft width min length!"
+    );
+    debug_assert!(
+        soft_widths_min.len() == soft_widths_max.len(),
+        "soft width min length != soft width max length!"
+    );
+    debug_assert!(
+        soft_widths_max.len() == soft_widths_desired.len(),
+        "soft width max length != soft width desired length!"
+    );
+
     let initial_width = total_width - 2;
     let mut total_width_left = initial_width;
     let mut column_widths: Vec<u16> = vec![0; hard_widths.len()];

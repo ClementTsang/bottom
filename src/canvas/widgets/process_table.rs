@@ -31,6 +31,7 @@ static PROCESS_HEADERS_HARD_WIDTH_NO_GROUP: Lazy<Vec<Option<u16>>> = Lazy::new(|
         Some(8),
         Some(7),
         Some(8),
+        None,
     ]
 });
 static PROCESS_HEADERS_HARD_WIDTH_GROUPED: Lazy<Vec<Option<u16>>> = Lazy::new(|| {
@@ -43,7 +44,6 @@ static PROCESS_HEADERS_HARD_WIDTH_GROUPED: Lazy<Vec<Option<u16>>> = Lazy::new(||
         Some(8),
         Some(7),
         Some(8),
-        None,
     ]
 });
 

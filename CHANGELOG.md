@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+## [0.5.4] - Unreleased
+
+## Changes
+
+## Bug Fixes
+
+- [#345](https://github.com/ClementTsang/bottom/pull/345): Fixes process states not showing.
+
 ## [0.5.3] - 2020-11-26
 
 ## Bug Fixes
