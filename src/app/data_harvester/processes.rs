@@ -1,5 +1,5 @@
 use crate::Pid;
-use std::{collections::HashSet, path::PathBuf};
+use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
 #[cfg(target_os = "linux")]
@@ -375,6 +375,7 @@ pub fn get_process_data(
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
+    use std::collections::HashSet;
 
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let mut pids_to_clear = pid_mapping.keys().cloned().collect::<HashSet<_>>();
