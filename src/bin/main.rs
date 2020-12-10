@@ -44,10 +44,10 @@ fn main() -> Result<()> {
 
     let config_path = read_config(matches.value_of("config_location"))
         .context("Unable to access the given config file location.")?;
-    trace!("Config path: {:?}", config_path);
+    // trace!("Config path: {:?}", config_path);
     let mut config: Config = create_or_get_config(&config_path)
         .context("Unable to properly parse or create the config file.")?;
-    trace!("Current config: {:#?}", config);
+    // trace!("Current config: {:#?}", config);
 
     // Get widget layout separately
     let (widget_layout, default_widget_id, default_widget_type_option) =
@@ -87,7 +87,7 @@ fn main() -> Result<()> {
         let lock = thread_termination_lock.clone();
         let cvar = thread_termination_cvar.clone();
         let cleaning_sender = sender.clone();
-        trace!("Initializing cleaning thread...");
+        // trace!("Initializing cleaning thread...");
         thread::spawn(move || {
             loop {
                 let result = cvar.wait_timeout(
@@ -96,20 +96,20 @@ fn main() -> Result<()> {
                 );
                 if let Ok(result) = result {
                     if *(result.0) {
-                        trace!("Received termination lock in cleaning thread from cvar!");
+                        // trace!("Received termination lock in cleaning thread from cvar!");
                         break;
                     }
                 } else {
-                    trace!("Sending cleaning signal...");
+                    // trace!("Sending cleaning signal...");
                     if cleaning_sender.send(BottomEvent::Clean).is_err() {
-                        trace!("Failed to send cleaning signal.  Halting cleaning thread loop.");
+                        // trace!("Failed to send cleaning signal.  Halting cleaning thread loop.");
                         break;
                     }
-                    trace!("Cleaning signal sent without errors.");
+                    // trace!("Cleaning signal sent without errors.");
                 }
             }
 
-            trace!("Cleaning thread loop has closed.");
+            // trace!("Cleaning thread loop has closed.");
         })
     };
 
@@ -148,9 +148,9 @@ fn main() -> Result<()> {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             if log_enabled!(log::Level::Trace) {
                 if let BottomEvent::Update(_) = recv {
-                    trace!("Main/drawing thread received Update event.");
+                    // trace!("Main/drawing thread received Update event.");
                 } else {
-                    trace!("Main/drawing thread received event: {:?}", recv);
+                    // trace!("Main/drawing thread received event: {:?}", recv);
                 }
             }
             match recv {
@@ -251,14 +251,14 @@ fn main() -> Result<()> {
     }
 
     // I think doing it in this order is safe...
-    trace!("Send termination thread locks.");
+    // trace!("Send termination thread locks.");
     *thread_termination_lock.lock().unwrap() = true;
-    trace!("Notifying all cvars.");
+    // trace!("Notifying all cvars.");
     thread_termination_cvar.notify_all();
 
-    trace!("Main/drawing thread is cleaning up.");
+    // trace!("Main/drawing thread is cleaning up.");
     cleanup_terminal(&mut terminal, is_debug)?;
 
-    trace!("Fini.");
+    // trace!("Fini.");
     Ok(())
 }
