@@ -19,6 +19,7 @@ doc = false
 
 [profile.release]
 debug = 1
+# debug = true
 opt-level = 3
 lto = "fat"
 codegen-units = 1
