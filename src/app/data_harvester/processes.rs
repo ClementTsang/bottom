@@ -1,5 +1,5 @@
 use crate::Pid;
-use std::path::PathBuf;
+use std::{collections::HashSet, path::PathBuf};
 use sysinfo::ProcessStatus;
 
 #[cfg(target_os = "linux")]
@@ -377,6 +377,7 @@ pub fn get_process_data(
     // TODO: [PROC THREADS] Add threads
 
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
+        let mut pids_to_clear = pid_mapping.keys().cloned().collect::<HashSet<_>>();
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
@@ -393,6 +394,7 @@ pub fn get_process_data(
                             mem_total_kb,
                             page_file_kb,
                         ) {
+                            pids_to_clear.remove(&pid);
                             return Some(process_object);
                         }
                     }
@@ -401,6 +403,10 @@ pub fn get_process_data(
                 None
             })
             .collect();
+
+        pids_to_clear.iter().for_each(|pid| {
+            pid_mapping.remove(pid);
+        });
 
         Ok(process_vector)
     } else {
