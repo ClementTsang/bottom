@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+## [0.5.5] - Unreleased
+
+## Bug Fixes
+
+- [#349](https://github.com/ClementTsang/bottom/pull/349): Fixed CPU graph colours not matching the legend in the "all" state.
+
 ## [0.5.4] - 2020-12-10
 
 ## Changes
