@@ -233,7 +233,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Add download asset to artifact if required
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' || matrix.triple.target == 'x86_64-pc-windows-msvc' || matrix.triple.target == 'i686-pc-windows-msvc' || matrix.triple.target == 'x86_64-apple-darwin'
+        if: matrix.triple.target == 'x86_64-unknown-linux-musl' || matrix.triple.target == 'x86_64-pc-windows-msvc' || matrix.triple.target == 'i686-pc-windows-msvc' || matrix.triple.target == 'x86_64-apple-darwin'
         run: cp ${{ env.ASSET }} artifacts/
 
       - name: Upload artifacts
@@ -370,7 +370,7 @@ jobs:
 
       - name: Execute Homebrew packaging script
         run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./artifacts/bottom_x86_64-apple-darwin.tar.gz" "./artifacts/bottom_x86_64-unknown-linux-gnu.tar.gz";
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./artifacts/bottom_x86_64-apple-darwin.tar.gz" "./artifacts/bottom_x86_64-unknown-linux-musl.tar.gz";
 
       - name: Upload bottom.rb to release
         uses: actions/upload-release-asset@v1.0.1
