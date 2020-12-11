@@ -309,7 +309,11 @@ pub fn handle_force_redraws(app: &mut App) {
     }
 
     if app.cpu_state.force_update.is_some() {
-        app.canvas_data.cpu_data = convert_cpu_data_points(&app.data_collection, app.is_frozen);
+        convert_cpu_data_points(
+            &app.data_collection,
+            &mut app.canvas_data.cpu_data,
+            app.is_frozen,
+        );
         app.cpu_state.force_update = None;
     }
 

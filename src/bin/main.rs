@@ -215,8 +215,12 @@ fn main() -> Result<()> {
 
                         if app.used_widgets.use_cpu {
                             // CPU
-                            app.canvas_data.cpu_data =
-                                convert_cpu_data_points(&app.data_collection, false);
+
+                            convert_cpu_data_points(
+                                &app.data_collection,
+                                &mut app.canvas_data.cpu_data,
+                                false,
+                            );
                         }
 
                         // Processes

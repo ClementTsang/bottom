@@ -178,9 +178,9 @@ pub fn convert_disk_row(
 }
 
 pub fn convert_cpu_data_points(
-    current_data: &data_farmer::DataCollection, is_frozen: bool,
-) -> Vec<ConvertedCpuData> {
-    let mut cpu_data_vector: Vec<ConvertedCpuData> = Vec::new();
+    current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
+    is_frozen: bool,
+) {
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
             frozen_instant
@@ -191,39 +191,62 @@ pub fn convert_cpu_data_points(
         current_data.current_instant
     };
 
+    // Initialize cpu_data_vector if the lengths don't match...
+    if let Some((_time, data)) = &current_data.timed_data_vec.last() {
+        if data.cpu_data.len() + 1 != existing_cpu_data.len() {
+            *existing_cpu_data = vec![ConvertedCpuData {
+                cpu_name: "All".to_string(),
+                short_cpu_name: "All".to_string(),
+                cpu_data: vec![],
+                legend_value: String::new(),
+            }];
+
+            existing_cpu_data.extend(
+                data.cpu_data
+                    .iter()
+                    .enumerate()
+                    .map(|(itx, cpu_usage)| ConvertedCpuData {
+                        cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
+                            if let Some(cpu_count) = cpu_harvest.cpu_count {
+                                format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
+                            } else {
+                                cpu_harvest.cpu_prefix.to_string()
+                            }
+                        } else {
+                            String::default()
+                        },
+                        short_cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
+                        {
+                            if let Some(cpu_count) = cpu_harvest.cpu_count {
+                                cpu_count.to_string()
+                            } else {
+                                cpu_harvest.cpu_prefix.to_string()
+                            }
+                        } else {
+                            String::default()
+                        },
+                        legend_value: format!("{:.0}%", cpu_usage.round()),
+                        cpu_data: vec![],
+                    })
+                    .collect::<Vec<ConvertedCpuData>>(),
+            );
+        } else {
+            existing_cpu_data
+                .iter_mut()
+                .skip(1)
+                .zip(&data.cpu_data)
+                .for_each(|(cpu, cpu_usage)| {
+                    cpu.cpu_data = vec![];
+                    cpu.legend_value = format!("{:.0}%", cpu_usage.round());
+                });
+        }
+    }
+
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
-            // Check if the vector exists yet
-            if cpu_data_vector.len() <= itx {
-                let new_cpu_data = ConvertedCpuData {
-                    cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
-                        if let Some(cpu_count) = cpu_harvest.cpu_count {
-                            format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
-                        } else {
-                            cpu_harvest.cpu_prefix.to_string()
-                        }
-                    } else {
-                        String::default()
-                    },
-                    short_cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
-                        if let Some(cpu_count) = cpu_harvest.cpu_count {
-                            cpu_count.to_string()
-                        } else {
-                            cpu_harvest.cpu_prefix.to_string()
-                        }
-                    } else {
-                        String::default()
-                    },
-                    ..ConvertedCpuData::default()
-                };
-
-                cpu_data_vector.push(new_cpu_data);
-            }
-
-            if let Some(cpu_data) = cpu_data_vector.get_mut(itx) {
-                cpu_data.legend_value = format!("{:.0}%", cpu.round());
+            if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
                 cpu_data.cpu_data.push((-time_from_start, *cpu));
             }
         }
@@ -232,15 +255,6 @@ pub fn convert_cpu_data_points(
             break;
         }
     }
-
-    let mut extended_vec = vec![ConvertedCpuData {
-        cpu_name: "All".to_string(),
-        short_cpu_name: "All".to_string(),
-        cpu_data: vec![],
-        legend_value: String::new(),
-    }];
-    extended_vec.extend(cpu_data_vector);
-    extended_vec
 }
 
 pub fn convert_mem_data_points(
