@@ -84,26 +84,28 @@ fn main() -> Result<()> {
         let lock = thread_termination_lock.clone();
         let cvar = thread_termination_cvar.clone();
         let cleaning_sender = sender.clone();
+        const OFFSET_WAIT_TIME: u64 = constants::STALE_MAX_MILLISECONDS + 60000;
         // trace!("Initializing cleaning thread...");
         thread::spawn(move || {
             loop {
+                // debug!("Starting cleaning loop...");
                 let result = cvar.wait_timeout(
                     lock.lock().unwrap(),
-                    Duration::from_millis(constants::STALE_MAX_MILLISECONDS + 5000),
+                    Duration::from_millis(OFFSET_WAIT_TIME),
                 );
+                // debug!("Result mutex guard over...");
                 if let Ok(result) = result {
                     if *(result.0) {
-                        // trace!("Received termination lock in cleaning thread from cvar!");
+                        // debug!("Received termination lock in cleaning thread from cvar!");
                         break;
                     }
-                } else {
-                    // trace!("Sending cleaning signal...");
-                    if cleaning_sender.send(BottomEvent::Clean).is_err() {
-                        // trace!("Failed to send cleaning signal.  Halting cleaning thread loop.");
-                        break;
-                    }
-                    // trace!("Cleaning signal sent without errors.");
                 }
+                // debug!("Sending cleaning signal...");
+                if cleaning_sender.send(BottomEvent::Clean).is_err() {
+                    // debug!("Failed to send cleaning sender...");
+                    break;
+                }
+                // trace!("Cleaning signal sent without errors.");
             }
 
             // trace!("Cleaning thread loop has closed.");
