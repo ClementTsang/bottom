@@ -19,9 +19,10 @@ doc = false
 
 [profile.release]
 debug = 1
-# debug = true
-opt-level = 3
 lto = "fat"
+# debug = true
+# lto = false
+opt-level = 3
 codegen-units = 1
 
 [dependencies]
