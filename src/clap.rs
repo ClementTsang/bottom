@@ -81,13 +81,14 @@ custom layouts.\n\n",
             "\
 When searching for a process, enables case sensitivity by default.\n\n",
         );
-    let debug = Arg::with_name("debug")
-        .long("debug")
-        .help("Enables debug logging.")
-        .long_help(
-            "\
-Enables debug logging.  The program will print where it logged to after running.",
-        );
+    // TODO: [DEBUG] Add a proper debugging solution.
+    //     let debug = Arg::with_name("debug")
+    //         .long("debug")
+    //         .help("Enables debug logging.")
+    //         .long_help(
+    //             "\
+    // Enables debug logging.  The program will print where it logged to after running.",
+    //         );
     // TODO: [DIAGNOSE] Add a diagnose option to help with debugging.
     let disable_click = Arg::with_name("disable_click")
         .long("disable_click")
@@ -362,7 +363,7 @@ Defaults to showing the process widget in tree mode.\n\n",
         .arg(case_sensitive)
         .arg(config_location)
         .arg(color)
-        .arg(debug)
+        // .arg(debug)
         .arg(mem_as_value)
         .arg(default_time_value)
         .arg(default_widget_count)

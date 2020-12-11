@@ -375,8 +375,10 @@ pub fn get_process_data(
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
+    use std::collections::HashSet;
 
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
+        let mut pids_to_clear: HashSet<Pid> = pid_mapping.keys().cloned().collect();
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
@@ -393,6 +395,7 @@ pub fn get_process_data(
                             mem_total_kb,
                             page_file_kb,
                         ) {
+                            pids_to_clear.remove(&pid);
                             return Some(process_object);
                         }
                     }
@@ -402,9 +405,12 @@ pub fn get_process_data(
             })
             .collect();
 
+        pids_to_clear.iter().for_each(|pid| {
+            pid_mapping.remove(pid);
+        });
+
         Ok(process_vector)
     } else {
-        trace!("Could not calculate CPU usage.");
         Err(BottomError::GenericError(
             "Could not calculate CPU usage.".to_string(),
         ))

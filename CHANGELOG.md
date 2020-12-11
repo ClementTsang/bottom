@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+- [#344](https://github.com/ClementTsang/bottom/pull/344): Fixes a performance regression causing high memory and CPU usage over time.
+
 - [#345](https://github.com/ClementTsang/bottom/pull/345): Fixes process states not showing.
 
 ## [0.5.3] - 2020-11-26

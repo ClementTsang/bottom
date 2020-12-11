@@ -894,6 +894,7 @@ pub fn tree_process_data(
         .collect::<Vec<_>>()
 }
 
+// FIXME: [OPT] This is an easy target for optimization, too many to_strings!
 pub fn stringify_process_data(
     proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
 ) -> Vec<(Vec<(String, Option<String>)>, bool)> {
