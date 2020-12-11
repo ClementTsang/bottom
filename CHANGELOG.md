@@ -15,9 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
-## [0.5.4] - Unreleased
+## [0.5.4] - 2020-12-10
 
 ## Changes
+
+- [#344](https://github.com/ClementTsang/bottom/pull/344): Removed the `--debug` option for now.
 
 ## Bug Fixes
 
