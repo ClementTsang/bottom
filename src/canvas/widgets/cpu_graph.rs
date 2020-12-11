@@ -199,9 +199,16 @@ impl CpuGraphWidget for Painter {
                             })
                             .style(if show_avg_cpu && itx == AVG_POSITION {
                                 self.colours.avg_colour_style
+                            } else if itx == ALL_POSITION {
+                                self.colours.all_colour_style
                             } else {
-                                self.colours.cpu_colour_styles
-                                    [itx % self.colours.cpu_colour_styles.len()]
+                                self.colours.cpu_colour_styles[(itx - 1 // Because of the all position
+                                        - (if show_avg_cpu {
+                                            AVG_POSITION
+                                        } else {
+                                            0
+                                        }))
+                                    % self.colours.cpu_colour_styles.len()]
                             })
                             .data(&cpu.cpu_data[..])
                             .graph_type(tui::widgets::GraphType::Line)
