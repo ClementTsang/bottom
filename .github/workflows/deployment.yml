@@ -185,7 +185,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --verbose --target=${{ matrix.triple.target }}
+          args: --release --verbose --target=${{ matrix.triple.target }} --no-default-features
           use-cross: ${{ matrix.triple.cross }}
 
       - name: Move autocomplete to working directory
