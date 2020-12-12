@@ -88,7 +88,7 @@ pub struct PrevProcDetails {
     pub cpu_time: f64,
     pub proc_stat_path: PathBuf,
     // pub proc_statm_path: PathBuf,
-    pub proc_exe_path: PathBuf,
+    // pub proc_exe_path: PathBuf,
     pub proc_io_path: PathBuf,
     pub proc_cmdline_path: PathBuf,
     pub just_read: bool,
@@ -98,7 +98,7 @@ impl PrevProcDetails {
     pub fn new(pid: Pid) -> Self {
         PrevProcDetails {
             proc_io_path: PathBuf::from(format!("/proc/{}/io", pid)),
-            proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid)),
+            // proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid)),
             proc_stat_path: PathBuf::from(format!("/proc/{}/stat", pid)),
             // proc_statm_path: PathBuf::from(format!("/proc/{}/statm", pid)),
             proc_cmdline_path: PathBuf::from(format!("/proc/{}/cmdline", pid)),
@@ -111,23 +111,17 @@ impl PrevProcDetails {
 fn cpu_usage_calculation(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
 ) -> error::Result<(f64, f64)> {
+    use std::io::prelude::*;
+    use std::io::BufReader;
+
     // From SO answer: https://stackoverflow.com/a/23376195
     let mut path = std::path::PathBuf::new();
     path.push("/proc");
     path.push("stat");
 
-    let stat_results = std::fs::read_to_string(path)?;
-    let first_line: &str;
-
-    let split_results = stat_results.split('\n').collect::<Vec<&str>>();
-    if split_results.is_empty() {
-        return Err(error::BottomError::InvalidIO(format!(
-            "Unable to properly split the stat results; saw {} values, expected at least 1 value.",
-            split_results.len()
-        )));
-    } else {
-        first_line = split_results[0];
-    }
+    let mut reader = BufReader::new(std::fs::File::open(path)?);
+    let mut first_line = String::new();
+    reader.read_line(&mut first_line)?;
 
     let val = first_line.split_whitespace().collect::<Vec<&str>>();
 
@@ -177,20 +171,6 @@ fn cpu_usage_calculation(
 }
 
 #[cfg(target_os = "linux")]
-fn get_process_io(path: &PathBuf) -> std::io::Result<String> {
-    Ok(std::fs::read_to_string(path)?)
-}
-
-#[cfg(target_os = "linux")]
-fn get_linux_process_io_usage(stat: &[&str]) -> (u64, u64) {
-    // Represents read_bytes and write_bytes
-    (
-        stat[9].parse::<u64>().unwrap_or(0),
-        stat[11].parse::<u64>().unwrap_or(0),
-    )
-}
-
-#[cfg(target_os = "linux")]
 fn get_linux_process_vsize_rss(stat: &[&str]) -> (u64, u64) {
     // Represents vsize and rss (bytes and page numbers respectively)
     (
@@ -200,6 +180,7 @@ fn get_linux_process_vsize_rss(stat: &[&str]) -> (u64, u64) {
 }
 
 #[cfg(target_os = "linux")]
+/// Preferably use this only on small files.
 fn read_path_contents(path: &PathBuf) -> std::io::Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
@@ -251,6 +232,9 @@ fn read_proc(
     pid_mapping: &mut FnvHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> error::Result<ProcessHarvest> {
+    use std::io::prelude::*;
+    use std::io::BufReader;
+
     let pid_stat = pid_mapping
         .entry(pid)
         .or_insert_with(|| PrevProcDetails::new(pid));
@@ -321,11 +305,33 @@ fn read_proc(
     let mem_usage_bytes = mem_usage_kb * 1024;
 
     // This can fail if permission is denied!
-    let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
-        if let Ok(io_results) = get_process_io(&pid_stat.proc_io_path) {
-            let io_stats = io_results.split_whitespace().collect::<Vec<&str>>();
 
-            let (total_read_bytes, total_write_bytes) = get_linux_process_io_usage(&io_stats);
+    let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
+        if let Ok(file) = std::fs::File::open(&pid_stat.proc_io_path) {
+            let reader = BufReader::new(file);
+            let mut lines = reader.lines().skip(4);
+
+            // Represents read_bytes and write_bytes, at the 5th and 6th lines (1-index, not 0-index)
+            let total_read_bytes = if let Some(Ok(read_bytes_line)) = lines.next() {
+                if let Some(read_bytes) = read_bytes_line.split_whitespace().last() {
+                    read_bytes.parse::<u64>().unwrap_or(0)
+                } else {
+                    0
+                }
+            } else {
+                0
+            };
+
+            let total_write_bytes = if let Some(Ok(write_bytes_line)) = lines.next() {
+                if let Some(write_bytes) = write_bytes_line.split_whitespace().last() {
+                    write_bytes.parse::<u64>().unwrap_or(0)
+                } else {
+                    0
+                }
+            } else {
+                0
+            };
+
             let read_bytes_per_sec = if time_difference_in_secs == 0 {
                 0
             } else {
