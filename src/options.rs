@@ -1,7 +1,7 @@
+use beef::Cow;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
-    borrow::Cow,
     collections::{HashMap, HashSet},
     path::PathBuf,
     str::FromStr,

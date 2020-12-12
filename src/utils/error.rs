@@ -1,4 +1,5 @@
-use std::{borrow::Cow, result};
+use beef::Cow;
+use std::result;
 use thiserror::Error;
 
 /// A type alias for handling errors related to Bottom.
