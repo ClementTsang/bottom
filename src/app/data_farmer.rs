@@ -121,7 +121,7 @@ impl DataCollection {
         self.timed_data_vec.drain(0..remove_index);
     }
 
-    pub fn eat_data(&mut self, harvested_data: &Data) {
+    pub fn eat_data(&mut self, harvested_data: Box<Data>) {
         // trace!("Eating data now...");
         let harvested_time = harvested_data.last_collection_time;
         // trace!("Harvested time: {:?}", harvested_time);
@@ -129,41 +129,39 @@ impl DataCollection {
         let mut new_entry = TimedData::default();
 
         // Network
-        if let Some(network) = &harvested_data.network {
+        if let Some(network) = harvested_data.network {
             self.eat_network(network, &mut new_entry);
         }
 
         // Memory and Swap
-        if let Some(memory) = &harvested_data.memory {
-            if let Some(swap) = &harvested_data.swap {
-                self.eat_memory_and_swap(memory, swap, &mut new_entry);
-            }
+        if let (Some(memory), Some(swap)) = (harvested_data.memory, harvested_data.swap) {
+            self.eat_memory_and_swap(memory, swap, &mut new_entry);
         }
 
         // CPU
-        if let Some(cpu) = &harvested_data.cpu {
+        if let Some(cpu) = harvested_data.cpu {
             self.eat_cpu(cpu, &mut new_entry);
         }
 
         // Temp
-        if let Some(temperature_sensors) = &harvested_data.temperature_sensors {
+        if let Some(temperature_sensors) = harvested_data.temperature_sensors {
             self.eat_temp(temperature_sensors);
         }
 
         // Disks
-        if let Some(disks) = &harvested_data.disks {
-            if let Some(io) = &harvested_data.io {
+        if let Some(disks) = harvested_data.disks {
+            if let Some(io) = harvested_data.io {
                 self.eat_disks(disks, io, harvested_time);
             }
         }
 
         // Processes
-        if let Some(list_of_processes) = &harvested_data.list_of_processes {
+        if let Some(list_of_processes) = harvested_data.list_of_processes {
             self.eat_proc(list_of_processes);
         }
 
         // Battery
-        if let Some(list_of_batteries) = &harvested_data.list_of_batteries {
+        if let Some(list_of_batteries) = harvested_data.list_of_batteries {
             self.eat_battery(list_of_batteries);
         }
 
@@ -173,7 +171,7 @@ impl DataCollection {
     }
 
     fn eat_memory_and_swap(
-        &mut self, memory: &mem::MemHarvest, swap: &mem::MemHarvest, new_entry: &mut TimedData,
+        &mut self, memory: mem::MemHarvest, swap: mem::MemHarvest, new_entry: &mut TimedData,
     ) {
         // trace!("Eating mem and swap.");
         // Memory
@@ -193,11 +191,11 @@ impl DataCollection {
         }
 
         // In addition copy over latest data for easy reference
-        self.memory_harvest = memory.clone();
-        self.swap_harvest = swap.clone();
+        self.memory_harvest = memory;
+        self.swap_harvest = swap;
     }
 
-    fn eat_network(&mut self, network: &network::NetworkHarvest, new_entry: &mut TimedData) {
+    fn eat_network(&mut self, network: network::NetworkHarvest, new_entry: &mut TimedData) {
         // trace!("Eating network.");
         // FIXME [NETWORKING; CONFIG]: The ability to config this?
         // FIXME [NETWORKING]: Support bits, support switching between decimal and binary units (move the log part to conversion and switch on the fly)
@@ -216,10 +214,10 @@ impl DataCollection {
         };
 
         // In addition copy over latest data for easy reference
-        self.network_harvest = network.clone();
+        self.network_harvest = network;
     }
 
-    fn eat_cpu(&mut self, cpu: &[cpu::CpuData], new_entry: &mut TimedData) {
+    fn eat_cpu(&mut self, cpu: Vec<cpu::CpuData>, new_entry: &mut TimedData) {
         // trace!("Eating CPU.");
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
@@ -230,14 +228,14 @@ impl DataCollection {
         self.cpu_harvest = cpu.to_vec();
     }
 
-    fn eat_temp(&mut self, temperature_sensors: &[temperature::TempHarvest]) {
+    fn eat_temp(&mut self, temperature_sensors: Vec<temperature::TempHarvest>) {
         // trace!("Eating temps.");
         // TODO: [PO] To implement
         self.temp_harvest = temperature_sensors.to_vec();
     }
 
     fn eat_disks(
-        &mut self, disks: &[disks::DiskHarvest], io: &disks::IOHarvest, harvested_time: Instant,
+        &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IOHarvest, harvested_time: Instant,
     ) {
         // trace!("Eating disks.");
         // TODO: [PO] To implement
@@ -307,17 +305,17 @@ impl DataCollection {
             }
         }
 
-        self.disk_harvest = disks.to_vec();
-        self.io_harvest = io.clone();
+        self.disk_harvest = disks;
+        self.io_harvest = io;
     }
 
-    fn eat_proc(&mut self, list_of_processes: &[processes::ProcessHarvest]) {
+    fn eat_proc(&mut self, list_of_processes: Vec<processes::ProcessHarvest>) {
         // trace!("Eating proc.");
-        self.process_harvest = list_of_processes.to_vec();
+        self.process_harvest = list_of_processes;
     }
 
-    fn eat_battery(&mut self, list_of_batteries: &[batteries::BatteryHarvest]) {
+    fn eat_battery(&mut self, list_of_batteries: Vec<batteries::BatteryHarvest>) {
         // trace!("Eating batteries.");
-        self.battery_harvest = list_of_batteries.to_vec();
+        self.battery_harvest = list_of_batteries;
     }
 }
