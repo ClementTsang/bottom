@@ -1,6 +1,5 @@
 #![warn(rust_2018_idioms)]
 #[allow(unused_imports)]
-
 #[cfg(feature = "log")]
 #[macro_use]
 extern crate log;
