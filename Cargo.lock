@@ -121,6 +121,7 @@ dependencies = [
  "ctrlc",
  "dirs-next",
  "fern",
+ "fnv",
  "futures",
  "heim",
  "indexmap",
@@ -388,6 +389,12 @@ checksum = "e1267f4ac4f343772758f7b1bdcbe767c218bbab93bb432acbf5162bbf85a6c4"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "fnv"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "futures"

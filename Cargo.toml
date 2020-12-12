@@ -19,9 +19,10 @@ doc = false
 
 [profile.release]
 debug = 1
+lto = true
 # debug = true
+# lto = false
 opt-level = 3
-lto = "fat"
 codegen-units = 1
 
 [dependencies]
@@ -33,6 +34,7 @@ crossterm = "0.18.2"
 ctrlc = {version = "3.1", features = ["termination"]}
 clap = "2.33"
 dirs-next = "2.0.0"
+fnv = "1.0.7"
 futures = "0.3.8"
 indexmap = "1.6.0"
 itertools = "0.9.0"

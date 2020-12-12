@@ -3,7 +3,7 @@
 use std::time::Instant;
 
 #[cfg(target_os = "linux")]
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 
 use sysinfo::{System, SystemExt};
 
@@ -73,7 +73,7 @@ pub struct DataCollector {
     pub data: Data,
     sys: System,
     #[cfg(target_os = "linux")]
-    pid_mapping: HashMap<crate::Pid, processes::PrevProcDetails>,
+    pid_mapping: FnvHashMap<crate::Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
@@ -99,7 +99,7 @@ impl Default for DataCollector {
             data: Data::default(),
             sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
             #[cfg(target_os = "linux")]
-            pid_mapping: HashMap::new(),
+            pid_mapping: FnvHashMap::default(),
             #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]

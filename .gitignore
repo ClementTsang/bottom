@@ -12,6 +12,7 @@
 rust-unmangle
 *.svg
 *.data
+*.data.old
 
 # IntelliJ
 .idea/
