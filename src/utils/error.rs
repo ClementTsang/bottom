@@ -73,6 +73,7 @@ impl From<toml::de::Error> for BottomError {
     }
 }
 
+#[cfg(feature = "fern")]
 impl From<fern::InitError> for BottomError {
     fn from(err: fern::InitError) -> Self {
         BottomError::FernError(err.to_string())

@@ -1,5 +1,6 @@
 #![warn(rust_2018_idioms)]
 #[allow(unused_imports)]
+#[cfg(feature = "log")]
 #[macro_use]
 extern crate log;
 
@@ -33,7 +34,7 @@ fn main() -> Result<()> {
     //     tmp_dir.push("bottom_debug.log");
     //     utils::logging::init_logger(log::LevelFilter::Trace, tmp_dir.as_os_str())?;
     // } else {
-    #[cfg(debug_assertions)]
+    #[cfg(all(feature = "fern", debug_assertions))]
     {
         utils::logging::init_logger(log::LevelFilter::Debug, std::ffi::OsStr::new("debug.log"))?;
     }
