@@ -78,7 +78,7 @@ impl ProcessQuery for ProcWidgetState {
                         break;
                     }
                 } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
-                    return Err(QueryError("Comparison not valid here".into()));
+                    return Err(QueryError(beef::Cow::borrowed("Comparison not valid here")));
                 } else {
                     break;
                 }
@@ -117,7 +117,7 @@ impl ProcessQuery for ProcWidgetState {
                         break;
                     }
                 } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
-                    return Err(QueryError("Comparison not valid here".into()));
+                    return Err(QueryError(beef::Cow::borrowed("Comparison not valid here")));
                 } else {
                     break;
                 }
@@ -165,7 +165,9 @@ impl ProcessQuery for ProcWidgetState {
                     }
                 } else if queue_top == "(" {
                     if query.is_empty() {
-                        return Err(QueryError("Missing closing parentheses".into()));
+                        return Err(QueryError(beef::Cow::borrowed(
+                            "Missing closing parentheses",
+                        )));
                     }
 
                     let mut list_of_ors = VecDeque::new();

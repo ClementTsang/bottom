@@ -158,7 +158,7 @@ fn main() -> Result<()> {
                     handle_force_redraws(&mut app);
                 }
                 BottomEvent::Update(data) => {
-                    app.data_collection.eat_data(&data);
+                    app.data_collection.eat_data(data);
 
                     // This thing is required as otherwise, some widgets can't draw correctly w/o
                     // some data (or they need to be re-drawn).

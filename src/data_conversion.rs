@@ -7,7 +7,7 @@ use crate::{
 };
 use data_harvester::processes::ProcessSorting;
 use indexmap::IndexSet;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -453,7 +453,7 @@ pub fn convert_process_data(
     // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
-    let mut complete_pid_set: HashSet<Pid> =
+    let mut complete_pid_set: fnv::FnvHashSet<Pid> =
         existing_converted_process_data.keys().copied().collect();
 
     for process in &current_data.process_harvest {
