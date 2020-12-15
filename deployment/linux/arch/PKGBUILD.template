@@ -14,12 +14,12 @@ sha512sums=('$hash1')
 
 build() {
     cd $pkgname-$pkgver
-    cargo build --release --locked
+    cargo build --release --locked --no-default-features
 }
 
 check() {
     cd $pkgname-$pkgver
-    CARGO_HUSKY_DONT_INSTALL_HOOKS=true cargo test --release --locked
+    CARGO_HUSKY_DONT_INSTALL_HOOKS=true cargo test --release --locked --no-default-features
 }
 
 package() {
