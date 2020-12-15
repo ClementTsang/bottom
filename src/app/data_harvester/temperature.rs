@@ -64,6 +64,7 @@ pub async fn get_temperature_data(
     temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use futures::StreamExt;
+    use heim::units::thermodynamic_temperature;
 
     if !actually_get {
         return Ok(None);
@@ -71,8 +72,7 @@ pub async fn get_temperature_data(
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
-    use heim::units::thermodynamic_temperature;
-    let mut sensor_data = heim::sensors::temperatures();
+    let mut sensor_data = heim::sensors::temperatures().boxed_local();
     while let Some(sensor) = sensor_data.next().await {
         if let Ok(sensor) = sensor {
             temperature_vec.push(TempHarvest {
