@@ -40,14 +40,32 @@ pub struct AppScrollWidgetState {
     pub table_state: TableState,
 }
 
+#[derive(PartialEq)]
+pub enum KillSignal {
+    CANCEL,
+    KILL(usize),
+}
+
+impl Default for KillSignal {
+    #[cfg(target_family = "unix")]
+    fn default() -> Self {
+        KillSignal::KILL(15)
+    }
+    #[cfg(target_os = "windows")]
+    fn default() -> Self {
+        KillSignal::KILL(1)
+    }
+}
+
 #[derive(Default)]
 pub struct AppDeleteDialogState {
     pub is_showing_dd: bool,
-    pub is_on_yes: bool, // Defaults to "No"
-    pub yes_tlc: Option<(u16, u16)>,
-    pub yes_brc: Option<(u16, u16)>,
-    pub no_tlc: Option<(u16, u16)>,
-    pub no_brc: Option<(u16, u16)>,
+    pub selected_signal: KillSignal,
+    // tl x, tl y, br x, br y
+    pub button_positions: Vec<(u16, u16, u16, u16, usize)>,
+    pub keyboard_signal_select: usize,
+    pub last_number_press: Option<Instant>,
+    pub scroll_pos: usize,
 }
 
 pub struct AppHelpDialogState {

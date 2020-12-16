@@ -322,10 +322,7 @@ impl Painter {
                 }
 
                 // And reset dd_dialog...
-                app_state.delete_dialog_state.yes_tlc = None;
-                app_state.delete_dialog_state.yes_brc = None;
-                app_state.delete_dialog_state.no_tlc = None;
-                app_state.delete_dialog_state.no_brc = None;
+                app_state.delete_dialog_state.button_positions = vec![];
 
                 // And battery dialog...
                 for battery_widget in app_state.battery_state.widget_states.values_mut() {
@@ -373,14 +370,20 @@ impl Painter {
 
                 let dd_text = self.get_dd_spans(app_state);
 
-                let (text_width, text_height) = (
-                    if terminal_width < 100 {
-                        terminal_width * 90 / 100
-                    } else {
-                        terminal_width * 50 / 100
-                    },
-                    7,
-                );
+                let text_width = if terminal_width < 100 {
+                    terminal_width * 90 / 100
+                } else {
+                    terminal_width * 50 / 100
+                };
+                let text_height;
+                #[cfg(target_family = "unix")]
+                {
+                    text_height = 22;
+                }
+                #[cfg(target_os = "windows")]
+                {
+                    text_height = 7;
+                }
                 // let (text_width, text_height) = if let Some(dd_text) = &dd_text {
                 //     let width = if current_width < 100 {
                 //         current_width * 90 / 100
