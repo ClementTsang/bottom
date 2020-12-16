@@ -1,6 +1,3 @@
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-use futures::stream::StreamExt;
-
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {
     pub name: String,
@@ -67,10 +64,14 @@ pub async fn get_io_usage(
         return Ok(None);
     }
 
+    use futures::StreamExt;
+
     let mut io_hash: std::collections::HashMap<String, Option<IOData>> =
         std::collections::HashMap::new();
     if get_physical {
-        let mut physical_counter_stream = heim::disk::io_counters_physical();
+        let physical_counter_stream = heim::disk::io_counters_physical().await?;
+        futures::pin_mut!(physical_counter_stream);
+
         while let Some(io) = physical_counter_stream.next().await {
             if let Ok(io) = io {
                 let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
@@ -84,7 +85,9 @@ pub async fn get_io_usage(
             }
         }
     } else {
-        let mut counter_stream = heim::disk::io_counters();
+        let counter_stream = heim::disk::io_counters().await?;
+        futures::pin_mut!(counter_stream);
+
         while let Some(io) = counter_stream.next().await {
             if let Ok(io) = io {
                 let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
@@ -110,8 +113,11 @@ pub async fn get_disk_usage(
         return Ok(None);
     }
 
+    use futures::StreamExt;
+
     let mut vec_disks: Vec<DiskHarvest> = Vec::new();
-    let mut partitions_stream = heim::disk::partitions_physical();
+    let partitions_stream = heim::disk::partitions_physical().await?;
+    futures::pin_mut!(partitions_stream);
 
     while let Some(part) = partitions_stream.next().await {
         if let Ok(part) = part {

@@ -337,10 +337,12 @@ impl DataCollector {
             temp_data_fut
         );
 
-        if let Some(net_data) = net_data {
-            self.total_rx = net_data.total_rx;
-            self.total_tx = net_data.total_tx;
-            self.data.network = Some(net_data);
+        if let Ok(net_data) = net_data {
+            if let Some(net_data) = &net_data {
+                self.total_rx = net_data.total_rx;
+                self.total_tx = net_data.total_tx;
+            }
+            self.data.network = net_data;
         }
 
         if let Ok(memory) = mem_res.0 {
