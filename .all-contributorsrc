@@ -80,6 +80,15 @@
         "platform",
         "doc"
       ]
+    },
+    {
+      "login": "LlinksRechts",
+      "name": "Lukas Rysavy",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/10536802?v=4",
+      "profile": "https://lukor.org",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
