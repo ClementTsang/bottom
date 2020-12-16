@@ -19,11 +19,11 @@ impl NetworkHarvest {
 pub async fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
     prev_net_tx: &mut u64, curr_time: Instant, actually_get: bool,
-) -> Option<NetworkHarvest> {
+) -> crate::utils::error::Result<Option<NetworkHarvest>> {
     use sysinfo::{NetworkExt, SystemExt};
 
     if !actually_get {
-        return None;
+        return Ok(None);
     }
 
     let mut total_rx: u64 = 0;
@@ -48,26 +48,27 @@ pub async fn get_network_data(
 
     *prev_net_rx = total_rx;
     *prev_net_tx = total_tx;
-    Some(NetworkHarvest {
+    Ok(Some(NetworkHarvest {
         rx,
         tx,
         total_rx,
         total_tx,
-    })
+    }))
 }
 
 #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
 pub async fn get_network_data(
     prev_net_access_time: Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
     curr_time: Instant, actually_get: bool,
-) -> Option<NetworkHarvest> {
+) -> crate::utils::error::Result<Option<NetworkHarvest>> {
     use futures::StreamExt;
 
     if !actually_get {
-        return None;
+        return Ok(None);
     }
 
-    let mut io_data = heim::net::io_counters();
+    let io_data = heim::net::io_counters().await?;
+    futures::pin_mut!(io_data);
     let mut total_rx: u64 = 0;
     let mut total_tx: u64 = 0;
 
@@ -91,10 +92,10 @@ pub async fn get_network_data(
 
     *prev_net_rx = total_rx;
     *prev_net_tx = total_tx;
-    Some(NetworkHarvest {
+    Ok(Some(NetworkHarvest {
         rx,
         tx,
         total_rx,
         total_tx,
-    })
+    }))
 }
