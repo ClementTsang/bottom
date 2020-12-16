@@ -1083,7 +1083,7 @@ pub fn convert_battery_harvest(
                 None
             },
             duration_until_full: if let Some(secs_till_full) = battery_harvest.secs_until_full {
-                let time = chrono::Duration::seconds(secs_till_full);
+                let time = chrono::Duration::seconds(secs_till_full); // FIXME [DEP]: Can I get rid of chrono?
                 let num_minutes = time.num_minutes() - time.num_hours() * 60;
                 let num_seconds = time.num_seconds() - time.num_minutes() * 60;
                 Some(format!(
