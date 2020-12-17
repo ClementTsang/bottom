@@ -97,7 +97,7 @@ impl Default for DataCollector {
         // trace!("Creating default data collector...");
         DataCollector {
             data: Data::default(),
-            sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
+            sys: System::new_with_specifics(sysinfo::RefreshKind::new()), // FIXME: Make this run on only macOS and Windows.
             #[cfg(target_os = "linux")]
             pid_mapping: FnvHashMap::default(),
             #[cfg(target_os = "linux")]
@@ -127,10 +127,13 @@ impl Default for DataCollector {
 
 impl DataCollector {
     pub fn init(&mut self) {
-        // trace!("Initializing data collector.");
         self.sys.refresh_memory();
         self.mem_total_kb = self.sys.get_total_memory();
-        // trace!("Total memory in KB: {}", self.mem_total_kb);
+
+        // Refresh components list once...
+        if self.widgets_to_harvest.use_temp {
+            self.sys.refresh_components_list();
+        }
 
         if self.widgets_to_harvest.use_battery {
             // trace!("First run battery vec creation.");
@@ -143,11 +146,6 @@ impl DataCollector {
                     }
                 }
             }
-        }
-
-        // Refresh components list once...
-        if self.widgets_to_harvest.use_temp {
-            self.sys.refresh_components_list();
         }
 
         // trace!("Running first run.");
@@ -182,31 +180,12 @@ impl DataCollector {
             self.sys.refresh_cpu();
         }
 
-        if cfg!(any(target_arch = "arm", target_arch = "aarch64")) {
-            // ARM stuff
+        if cfg!(not(target_os = "linux")) {
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
-            }
-            if self.widgets_to_harvest.use_net {
-                self.sys.refresh_networks();
-            }
-            if self.widgets_to_harvest.use_mem {
-                self.sys.refresh_memory();
-            }
-        } else {
-            if cfg!(not(target_os = "linux")) {
-                if self.widgets_to_harvest.use_proc {
-                    self.sys.refresh_processes();
-                }
-                if self.widgets_to_harvest.use_temp {
-                    self.sys.refresh_components();
-                }
-            }
-            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
-                self.sys.refresh_networks();
             }
         }
 
@@ -256,63 +235,19 @@ impl DataCollector {
 
         // I am *well* aware that the sysinfo part w/ blocking code is... not great.
         let network_data_fut = {
-            #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
-            {
-                network::get_network_data(
-                    &self.sys,
-                    self.last_collection_time,
-                    &mut self.total_rx,
-                    &mut self.total_tx,
-                    current_instant,
-                    self.widgets_to_harvest.use_net,
-                )
-            }
-            #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
-            {
-                network::get_network_data(
-                    self.last_collection_time,
-                    &mut self.total_rx,
-                    &mut self.total_tx,
-                    current_instant,
-                    self.widgets_to_harvest.use_net,
-                )
-            }
+            network::get_network_data(
+                self.last_collection_time,
+                &mut self.total_rx,
+                &mut self.total_tx,
+                current_instant,
+                self.widgets_to_harvest.use_net,
+            )
         };
-        let mem_data_fut = {
-            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-            {
-                mem::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
-            }
-
-            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-            {
-                mem::get_mem_data(self.widgets_to_harvest.use_mem)
-            }
-        };
-        let disk_data_fut = {
-            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-            {
-                disks::get_disk_usage(&self.sys, self.widgets_to_harvest.use_disk)
-            }
-
-            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-            {
-                disks::get_disk_usage(self.widgets_to_harvest.use_disk)
-            }
-        };
-        let disk_io_usage_fut = {
-            #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-            {
-                disks::get_io_usage(&self.sys, self.widgets_to_harvest.use_disk)
-            }
-
-            #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
-            {
-                disks::get_io_usage(false, self.widgets_to_harvest.use_disk)
-            }
-        };
+        let mem_data_fut = mem::get_mem_data(self.widgets_to_harvest.use_mem);
+        let disk_data_fut = disks::get_disk_usage(self.widgets_to_harvest.use_disk);
+        let disk_io_usage_fut = disks::get_io_usage(false, self.widgets_to_harvest.use_disk);
         let temp_data_fut = {
-            #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
+            #[cfg(not(target_os = "linux"))]
             {
                 temperature::get_temperature_data(
                     &self.sys,
@@ -321,11 +256,7 @@ impl DataCollector {
                 )
             }
 
-            #[cfg(not(any(
-                not(target_os = "linux"),
-                target_arch = "aarch64",
-                target_arch = "arm"
-            )))]
+            #[cfg(target_os = "linux")]
             {
                 temperature::get_temperature_data(
                     &self.temperature_type,

@@ -43,7 +43,6 @@ impl From<std::io::Error> for BottomError {
     }
 }
 
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 impl From<heim::Error> for BottomError {
     fn from(err: heim::Error) -> Self {
         BottomError::InvalidHeim(err.to_string())

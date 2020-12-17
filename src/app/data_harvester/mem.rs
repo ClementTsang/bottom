@@ -13,41 +13,6 @@ impl Default for MemHarvest {
     }
 }
 
-#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_mem_data(
-    sys: &sysinfo::System, actually_get: bool,
-) -> (
-    crate::utils::error::Result<Option<MemHarvest>>,
-    crate::utils::error::Result<Option<MemHarvest>>,
-) {
-    if !actually_get {
-        (Ok(None), Ok(None))
-    } else {
-        (get_ram_data(sys), get_swap_data(sys))
-    }
-}
-
-#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub fn get_ram_data(sys: &sysinfo::System) -> crate::utils::error::Result<Option<MemHarvest>> {
-    use sysinfo::SystemExt;
-
-    Ok(Some(MemHarvest {
-        mem_total_in_mb: sys.get_total_memory() / 1024,
-        mem_used_in_mb: sys.get_used_memory() / 1024,
-    }))
-}
-
-#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub fn get_swap_data(sys: &sysinfo::System) -> crate::utils::error::Result<Option<MemHarvest>> {
-    use sysinfo::SystemExt;
-
-    Ok(Some(MemHarvest {
-        mem_total_in_mb: sys.get_total_swap() / 1024,
-        mem_used_in_mb: sys.get_used_swap() / 1024,
-    }))
-}
-
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 pub async fn get_mem_data(
     actually_get: bool,
 ) -> (
@@ -63,7 +28,6 @@ pub async fn get_mem_data(
     }
 }
 
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let memory = heim::memory::memory().await?;
 
@@ -76,7 +40,6 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     }))
 }
 
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let memory = heim::memory::swap().await?;
 

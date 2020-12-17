@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+## [0.5.6] - Unreleased
+
+## Bug Fixes
+
+- [#361](https://github.com/ClementTsang/bottom/pull/361): Fixed temperature sensors not working on non-Linux platforms.
+
 ## [0.5.5] - 2020-12-14
 
 ## Bug Fixes
