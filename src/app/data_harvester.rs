@@ -135,6 +135,11 @@ impl DataCollector {
             self.sys.refresh_components_list();
         }
 
+        // Refresh network list once...
+        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks_list();
+        }
+
         if self.widgets_to_harvest.use_battery {
             // trace!("First run battery vec creation.");
             if let Ok(battery_manager) = Manager::new() {
@@ -187,6 +192,9 @@ impl DataCollector {
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
+        }
+        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks();
         }
 
         let current_instant = std::time::Instant::now();
