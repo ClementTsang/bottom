@@ -15,48 +15,6 @@ pub struct IOData {
 
 pub type IOHarvest = std::collections::HashMap<String, Option<IOData>>;
 
-#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_io_usage(
-    _sys: &sysinfo::System, _actually_get: bool,
-) -> crate::utils::error::Result<Option<IOHarvest>> {
-    let io_hash: std::collections::HashMap<String, Option<IOData>> =
-        std::collections::HashMap::new();
-    Ok(Some(io_hash))
-
-    // TODO: Sysinfo disk I/O usage.
-    // ...sadly, this cannot be done as of now (other than me writing my own), it requires further
-    // work.  See https://github.com/GuillaumeGomez/sysinfo/issues/304.
-}
-
-#[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
-pub async fn get_disk_usage(
-    sys: &sysinfo::System, actually_get: bool,
-) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
-    use sysinfo::{DiskExt, SystemExt};
-
-    if !actually_get {
-        return Ok(None);
-    }
-
-    let mut vec_disks = sys
-        .get_disks()
-        .iter()
-        .map(|disk| DiskHarvest {
-            name: disk.get_name().to_string_lossy().into(),
-            mount_point: disk.get_mount_point().to_string_lossy().into(),
-            free_space: disk.get_available_space(),
-            used_space: disk
-                .get_total_space()
-                .saturating_sub(disk.get_available_space()),
-            total_space: disk.get_total_space(),
-        })
-        .collect::<Vec<DiskHarvest>>();
-    vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
-
-    Ok(Some(vec_disks))
-}
-
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 pub async fn get_io_usage(
     get_physical: bool, actually_get: bool,
 ) -> crate::utils::error::Result<Option<IOHarvest>> {
@@ -105,7 +63,6 @@ pub async fn get_io_usage(
     Ok(Some(io_hash))
 }
 
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 pub async fn get_disk_usage(
     actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
