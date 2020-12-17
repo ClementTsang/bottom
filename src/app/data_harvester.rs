@@ -135,6 +135,11 @@ impl DataCollector {
             self.sys.refresh_components_list();
         }
 
+        // Refresh network list once...
+        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks_list();
+        }
+
         if self.widgets_to_harvest.use_battery {
             // trace!("First run battery vec creation.");
             if let Ok(battery_manager) = Manager::new() {
@@ -188,6 +193,9 @@ impl DataCollector {
                 self.sys.refresh_components();
             }
         }
+        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
+            self.sys.refresh_networks();
+        }
 
         let current_instant = std::time::Instant::now();
 
@@ -233,15 +241,28 @@ impl DataCollector {
             }
         }
 
-        // I am *well* aware that the sysinfo part w/ blocking code is... not great.
         let network_data_fut = {
-            network::get_network_data(
-                self.last_collection_time,
-                &mut self.total_rx,
-                &mut self.total_tx,
-                current_instant,
-                self.widgets_to_harvest.use_net,
-            )
+            #[cfg(target_os = "windows")]
+            {
+                network::get_network_data(
+                    &self.sys,
+                    self.last_collection_time,
+                    &mut self.total_rx,
+                    &mut self.total_tx,
+                    current_instant,
+                    self.widgets_to_harvest.use_net,
+                )
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                network::get_network_data(
+                    self.last_collection_time,
+                    &mut self.total_rx,
+                    &mut self.total_tx,
+                    current_instant,
+                    self.widgets_to_harvest.use_net,
+                )
+            }
         };
         let mem_data_fut = mem::get_mem_data(self.widgets_to_harvest.use_mem);
         let disk_data_fut = disks::get_disk_usage(self.widgets_to_harvest.use_disk);
