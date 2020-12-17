@@ -249,7 +249,7 @@ impl DataCollector {
         let disk_data_fut = disks::get_disk_usage(self.widgets_to_harvest.use_disk);
         let disk_io_usage_fut = disks::get_io_usage(false, self.widgets_to_harvest.use_disk);
         let temp_data_fut = {
-            #[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
+            #[cfg(not(target_os = "linux"))]
             {
                 temperature::get_temperature_data(
                     &self.sys,
@@ -258,11 +258,7 @@ impl DataCollector {
                 )
             }
 
-            #[cfg(not(any(
-                not(target_os = "linux"),
-                target_arch = "aarch64",
-                target_arch = "arm"
-            )))]
+            #[cfg(target_os = "linux")]
             {
                 temperature::get_temperature_data(
                     &self.temperature_type,
