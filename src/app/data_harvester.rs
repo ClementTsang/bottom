@@ -97,7 +97,7 @@ impl Default for DataCollector {
         // trace!("Creating default data collector...");
         DataCollector {
             data: Data::default(),
-            sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
+            sys: System::new_with_specifics(sysinfo::RefreshKind::new()), // FIXME: Make this run on only macOS and Windows.
             #[cfg(target_os = "linux")]
             pid_mapping: FnvHashMap::default(),
             #[cfg(target_os = "linux")]
@@ -127,10 +127,13 @@ impl Default for DataCollector {
 
 impl DataCollector {
     pub fn init(&mut self) {
-        // trace!("Initializing data collector.");
         self.sys.refresh_memory();
         self.mem_total_kb = self.sys.get_total_memory();
-        // trace!("Total memory in KB: {}", self.mem_total_kb);
+
+        // Refresh components list once...
+        if self.widgets_to_harvest.use_temp {
+            self.sys.refresh_components_list();
+        }
 
         if self.widgets_to_harvest.use_battery {
             // trace!("First run battery vec creation.");
@@ -143,11 +146,6 @@ impl DataCollector {
                     }
                 }
             }
-        }
-
-        // Refresh components list once...
-        if self.widgets_to_harvest.use_temp {
-            self.sys.refresh_components_list();
         }
 
         // trace!("Running first run.");
