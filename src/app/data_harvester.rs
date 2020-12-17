@@ -242,7 +242,7 @@ impl DataCollector {
         }
 
         let network_data_fut = {
-            #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
+            #[cfg(target_os = "windows")]
             {
                 network::get_network_data(
                     &self.sys,
@@ -253,7 +253,7 @@ impl DataCollector {
                     self.widgets_to_harvest.use_net,
                 )
             }
-            #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
+            #[cfg(not(target_os = "windows"))]
             {
                 network::get_network_data(
                     self.last_collection_time,
