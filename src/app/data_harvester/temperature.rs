@@ -20,7 +20,7 @@ impl Default for TemperatureType {
     }
 }
 
-#[cfg(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm"))]
+#[cfg(not(target_os = "linux"))]
 pub async fn get_temperature_data(
     sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
@@ -59,7 +59,7 @@ pub async fn get_temperature_data(
     Ok(Some(temperature_vec))
 }
 
-#[cfg(not(any(not(target_os = "linux"), target_arch = "aarch64", target_arch = "arm")))]
+#[cfg(target_os = "linux")]
 pub async fn get_temperature_data(
     temp_type: &TemperatureType, actually_get: bool,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
