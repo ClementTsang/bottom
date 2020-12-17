@@ -241,15 +241,28 @@ impl DataCollector {
             }
         }
 
-        // I am *well* aware that the sysinfo part w/ blocking code is... not great.
         let network_data_fut = {
-            network::get_network_data(
-                self.last_collection_time,
-                &mut self.total_rx,
-                &mut self.total_tx,
-                current_instant,
-                self.widgets_to_harvest.use_net,
-            )
+            #[cfg(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm"))]
+            {
+                network::get_network_data(
+                    &self.sys,
+                    self.last_collection_time,
+                    &mut self.total_rx,
+                    &mut self.total_tx,
+                    current_instant,
+                    self.widgets_to_harvest.use_net,
+                )
+            }
+            #[cfg(not(any(target_os = "windows", target_arch = "aarch64", target_arch = "arm")))]
+            {
+                network::get_network_data(
+                    self.last_collection_time,
+                    &mut self.total_rx,
+                    &mut self.total_tx,
+                    current_instant,
+                    self.widgets_to_harvest.use_net,
+                )
+            }
         };
         let mem_data_fut = mem::get_mem_data(self.widgets_to_harvest.use_mem);
         let disk_data_fut = disks::get_disk_usage(self.widgets_to_harvest.use_disk);
