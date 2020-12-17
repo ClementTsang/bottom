@@ -145,6 +145,11 @@ impl DataCollector {
             }
         }
 
+        // Refresh components list once...
+        if self.widgets_to_harvest.use_temp {
+            self.sys.refresh_components_list();
+        }
+
         // trace!("Running first run.");
         futures::executor::block_on(self.update_data());
         // trace!("First run done.  Sleeping for 250ms...");
