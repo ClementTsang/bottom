@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
-## [0.5.6] - Unreleased
+## [0.5.6] - 2020-12-17
 
 ## Bug Fixes
 

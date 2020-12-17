@@ -87,8 +87,8 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.5.5.tar.gz
-tar -xzvf 0.5.5.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.5.6.tar.gz
+tar -xzvf 0.5.6.tar.gz
 cargo install --path .
 ```
 
@@ -120,8 +120,8 @@ yay -S bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.5/bottom_0.5.5_amd64.deb
-sudo dpkg -i bottom_0.5.5_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.6/bottom_0.5.6_amd64.deb
+sudo dpkg -i bottom_0.5.6_amd64.deb
 ```
 
 ### Fedora/CentOS
@@ -175,7 +175,7 @@ to appear.
 choco install bottom
 
 # Version number may be required for newer releases, if available:
-choco install bottom --version=0.5.5
+choco install bottom --version=0.5.6
 ```
 
 ### winget
@@ -759,13 +759,13 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Thanks
 
-- This project is very much inspired by both
-  [gotop](https://github.com/cjbassi/gotop), its successor
-  [ytop](https://github.com/cjbassi/ytop), and [gtop](https://github.com/aksakalli/gtop).
+- This project is very much inspired by [gotop](https://github.com/cjbassi/gotop),
+  its successor [ytop](https://github.com/cjbassi/ytop), and [gtop](https://github.com/aksakalli/gtop).
 
 - Basic mode is heavily inspired by [htop's](https://hisham.hm/htop/) design.
 
