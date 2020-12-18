@@ -108,6 +108,8 @@ cargo install bottom --locked
 
 ### AUR
 
+Normal package found [here](https://aur.archlinux.org/packages/bottom/), binary package found [here](https://aur.archlinux.org/packages/bottom-bin/):
+
 ```bash
 yay -S bottom
 

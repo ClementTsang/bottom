@@ -18,10 +18,10 @@ path = "src/bin/main.rs"
 doc = false
 
 [profile.release]
-# debug = 1
-# lto = true
-debug = true
-lto = false
+debug = 0
+lto = true
+# debug = true
+# lto = false
 opt-level = 3
 codegen-units = 1
 
