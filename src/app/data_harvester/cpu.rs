@@ -11,9 +11,10 @@ pub type PastCpuWork = f64;
 pub type PastCpuTotal = f64;
 
 #[cfg(not(target_os = "linux"))]
-pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CpuHarvest {
-    use sysinfo::{ProcessorExt, System};
+use sysinfo::{ProcessorExt, System, SystemExt};
 
+#[cfg(not(target_os = "linux"))]
+pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CpuHarvest {
     let cpu_data = sys.get_processors();
     let avg_cpu_usage = sys.get_global_processor_info().get_cpu_usage();
     let mut cpu_vec = vec![];
