@@ -40,13 +40,13 @@ _Please specify your operating system, the version, and architecture, so I can t
 
 _Sometimes this matters, so please mention your terminal/terminal emulator._
 
-## Shell (i.e. zsh, bash, etc.)
+### Shell (i.e. zsh, bash, etc.)
 
-### Other
+## Other
 
 _If relevant, please provide information on:_
 
-## System info
+### System info
 
 _Not totally necessary, but if possible, include details like:_
 
@@ -54,7 +54,7 @@ _RAM size:_
 
 _SWAP size:_
 
-## Rust version
+### Rust version
 
 _Check this with `rustc --version`. This is only relevant if your version of bottom isn't from a pre-built binary (i.e. Cargo)._
 
