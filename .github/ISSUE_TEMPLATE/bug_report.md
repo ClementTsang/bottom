@@ -58,6 +58,6 @@ _CPU and number of cores:_
 
 _Check this with `rustc --version`. This is only relevant if your version of bottom isn't from a pre-built binary (i.e. Cargo). Otherwise, feel free to skip._
 
-### Additional context
+## Additional context
 
 _If anything hasn't been covered by the above categories, feel free to include it here:_
