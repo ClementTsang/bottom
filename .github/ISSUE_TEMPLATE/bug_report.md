@@ -16,21 +16,21 @@ _Steps on how to reproduce the behaviour:_
 
 1. Go to...
 2. Click on...
-3. See error
+3. See problem...
 
 ## bottom version (use `btm -V`)
 
-_Tell me which version of bottom you installed. If you're not on the latest version, does using that fix the problem?_
+_Tell me which version of bottom you installed. Also, if you're not on the latest version, please try that and see if the problem is already resolved._
 
-## bottom config file (if one is used) or flags
+## bottom config file (if used)
 
-_If you're using a config file or running with specific flags, please include it in the report._
+_If you're using a config file, please include it in the report._
 
 ## Installation method
 
-_How did you install bottom? Note if it's not a supported method, I may not be able to help you. Also ensure that any performance bug reports are **not** only replicable on debug mode (`cargo run`)._
+_How did you install bottom? Note if it's not a supported method, I may not be able to help you._
 
-## Platform Information
+## Platform and environment information
 
 ### Operating system, OS version, and architecture
 
@@ -44,13 +44,15 @@ _Sometimes this matters, so please mention your terminal/terminal emulator._
 
 _Again, sometimes this matters, so please mention your shell if possible._
 
-### System info
+### Miscellaneous system info
 
 _Not totally necessary, but if possible, include details like:_
 
 _RAM size:_
 
 _SWAP size:_
+
+_CPU and number of cores:_
 
 ### Rust version
 
