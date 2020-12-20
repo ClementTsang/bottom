@@ -60,4 +60,4 @@ _Check this with `rustc --version`. This is only relevant if your version of bot
 
 ## Additional context
 
-_If anything hasn't been covered by the above categories, state it down here:_
+_If anything hasn't been covered by the above categories, feel free to include it here:_
