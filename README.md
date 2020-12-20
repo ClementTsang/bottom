@@ -68,7 +68,7 @@ Note that bottom is:
 - Officially tested and released for only `x86_64` (and `i686` for Windows and Linux)
 - Developed mainly for macOS, Windows, and Linux
 
-Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is compiled on the CI pipeline and release builds will be provided, but not all features may necessarily work.
+Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is compiled on the CI pipeline and release builds will be provided, but not all features may necessarily work. Feel free to file any ARM-related bugs, but know I might not be able to fix them.
 
 ### Manually
 
