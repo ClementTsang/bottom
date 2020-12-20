@@ -65,10 +65,10 @@ A cross-platform graphical process/system monitor with a customizable interface 
 Note that bottom is:
 
 - Built on the stable version of Rust
-- Officially tested and released for only `x86_64` (and `i686` for Windows)
+- Officially tested and released for only `x86_64` (and `i686` for Windows and Linux)
 - Developed mainly for macOS, Windows, and Linux
 
-Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is compiled on the CI pipeline and release builds will be provided, but not all features may work (such as R/s and W/s for disks).
+Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is compiled on the CI pipeline and release builds will be provided, but not all features may necessarily work.
 
 ### Manually
 

@@ -249,6 +249,7 @@ dependencies = [
  "fern",
  "fnv",
  "futures",
+ "futures-timer",
  "heim",
  "indexmap",
  "itertools",
@@ -672,6 +673,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
+name = "glob"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
+
+[[package]]
 name = "hashbrown"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -684,6 +691,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8a653442b9bdd11a77d3753a60443c60c4437d3acac8e6c3d4a6a9acd7cceed"
 dependencies = [
  "heim-common",
+ "heim-cpu",
  "heim-disk",
  "heim-memory",
  "heim-net",
@@ -707,6 +715,25 @@ dependencies = [
  "nix 0.19.1",
  "pin-utils",
  "uom",
+ "winapi",
+]
+
+[[package]]
+name = "heim-cpu"
+version = "0.1.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ba5fb13a3b90581d22b4edf99e87c54316444622ae123d36816a227a7caa6df"
+dependencies = [
+ "cfg-if 1.0.0",
+ "futures",
+ "glob",
+ "heim-common",
+ "heim-runtime",
+ "lazy_static",
+ "libc",
+ "mach",
+ "ntapi",
+ "smol",
  "winapi",
 ]
 
