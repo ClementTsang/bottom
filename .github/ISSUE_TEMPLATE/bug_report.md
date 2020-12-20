@@ -18,9 +18,9 @@ _Steps on how to reproduce the behaviour:_
 2. Click on...
 3. See problem...
 
-## bottom version (use `btm -V`)
+## bottom version
 
-_Tell me which version of bottom you installed. Also, if you're not on the latest version, please try that and see if the problem is already resolved._
+_Use `btm -V` and report the version of bottom you have installed. Also, if you're not on the latest version, please try that and see if the problem is already resolved._
 
 ## bottom config file (if used)
 
