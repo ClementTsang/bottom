@@ -42,9 +42,7 @@ _Sometimes this matters, so please mention your terminal/terminal emulator._
 
 ### Shell (i.e. zsh, bash, etc.)
 
-## Other
-
-_If relevant, please provide information on:_
+_Again, sometimes this matters, so please mention your shell if possible._
 
 ### System info
 
@@ -56,8 +54,8 @@ _SWAP size:_
 
 ### Rust version
 
-_Check this with `rustc --version`. This is only relevant if your version of bottom isn't from a pre-built binary (i.e. Cargo)._
+_Check this with `rustc --version`. This is only relevant if your version of bottom isn't from a pre-built binary (i.e. Cargo). Otherwise, feel free to skip._
 
-### Additional context
+## Additional context
 
 _If anything hasn't been covered by the above categories, state it down here:_
