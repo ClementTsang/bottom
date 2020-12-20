@@ -34,7 +34,7 @@ _How did you install bottom? Note if it's not a supported method, I may not be a
 
 ### Operating system, OS version, and architecture
 
-_Please specify your operating system, the version, and architecture, so I can try to replicate as best as possible._
+_Please specify your operating system, the version, and architecture, so I can try to replicate your environment as best as possible._
 
 ### Terminal (i.e. urxvt, kitty, etc.)
 
@@ -42,7 +42,7 @@ _Sometimes this matters, so please mention your terminal/terminal emulator._
 
 ### Shell (i.e. zsh, bash, etc.)
 
-_Again, sometimes this matters, so please mention your shell if possible._
+_Again, sometimes this matters, so please mention your shell type if possible._
 
 ### Miscellaneous system info
 
