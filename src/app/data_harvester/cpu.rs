@@ -47,6 +47,37 @@ pub async fn get_cpu_data_list(
     use heim::cpu::os::linux::CpuTimeExt;
     use std::collections::VecDeque;
 
+    fn convert_cpu_times(cpu_time: &heim::cpu::CpuTime) -> (f64, f64) {
+        let working_time: f64 = (cpu_time.user()
+            + cpu_time.nice()
+            + cpu_time.system()
+            + cpu_time.irq()
+            + cpu_time.soft_irq()
+            + cpu_time.steal())
+        .get::<heim::units::time::second>();
+        (
+            working_time,
+            working_time
+                + (cpu_time.idle() + cpu_time.io_wait()).get::<heim::units::time::second>(),
+        )
+    }
+
+    fn calculate_cpu_usage_percentage(
+        (previous_working_time, previous_total_time): (f64, f64),
+        (current_working_time, current_total_time): (f64, f64),
+    ) -> f64 {
+        ((if current_working_time > previous_working_time {
+            current_working_time - previous_working_time
+        } else {
+            0.0
+        }) * 100.0)
+            / (if current_total_time > previous_total_time {
+                current_total_time - previous_total_time
+            } else {
+                1.0
+            })
+    }
+
     // Get all CPU times...
     let cpu_times = heim::cpu::times().await?;
     futures::pin_mut!(cpu_times);
@@ -60,47 +91,19 @@ pub async fn get_cpu_data_list(
 
         let mut new_cpu_times: Vec<(PastCpuWork, PastCpuTotal)> = Vec::new();
         let mut cpu_deque: VecDeque<CpuData> = VecDeque::new();
-
-        let mut collected_zip = cpu_times.zip(second_cpu_times).enumerate();
+        let mut collected_zip = cpu_times.zip(second_cpu_times).enumerate(); // Gotta move it here, can't on while line.
 
         while let Some((itx, (past, present))) = collected_zip.next().await {
             if let (Ok(past), Ok(present)) = (past, present) {
-                let first_working_time: f64 = (past.user()
-                    + past.nice()
-                    + past.system()
-                    + past.irq()
-                    + past.soft_irq()
-                    + past.steal())
-                .get::<heim::units::time::second>();
-                let first_total_time: f64 = first_working_time
-                    + (past.idle() + past.io_wait()).get::<heim::units::time::second>();
-
-                let second_working_time: f64 = (present.user()
-                    + present.nice()
-                    + present.system()
-                    + present.irq()
-                    + present.soft_irq()
-                    + present.steal())
-                .get::<heim::units::time::second>();
-                let second_total_time: f64 = second_working_time
-                    + (present.idle() + present.io_wait()).get::<heim::units::time::second>();
-
-                let working_time_delta: f64 = if second_working_time > first_working_time {
-                    second_working_time - first_working_time
-                } else {
-                    0.0
-                };
-                let total_time_delta: f64 = if second_total_time > first_total_time {
-                    second_total_time - first_total_time
-                } else {
-                    1.0
-                };
-
-                new_cpu_times.push((second_working_time, second_total_time));
+                let present_times = convert_cpu_times(&present);
+                new_cpu_times.push(present_times);
                 cpu_deque.push_back(CpuData {
                     cpu_prefix: "CPU".to_string(),
                     cpu_count: Some(itx),
-                    cpu_usage: working_time_delta / total_time_delta * 100.0,
+                    cpu_usage: calculate_cpu_usage_percentage(
+                        convert_cpu_times(&past),
+                        present_times,
+                    ),
                 });
             } else {
                 new_cpu_times.push((0.0, 0.0));
@@ -123,35 +126,18 @@ pub async fn get_cpu_data_list(
                 .zip(&*previous_cpu_times)
                 .enumerate()
                 .map(|(itx, (current_cpu, (past_cpu_work, past_cpu_total)))| {
-                    if let Ok(current_cpu) = current_cpu {
-                        let working_time: f64 = (current_cpu.user()
-                            + current_cpu.nice()
-                            + current_cpu.system()
-                            + current_cpu.irq()
-                            + current_cpu.soft_irq()
-                            + current_cpu.steal())
-                        .get::<heim::units::time::second>();
-                        let total_time: f64 = working_time
-                            + (current_cpu.idle() + current_cpu.io_wait())
-                                .get::<heim::units::time::second>();
-
-                        let working_time_delta: f64 = if working_time > *past_cpu_work {
-                            working_time - *past_cpu_work
-                        } else {
-                            0.0
-                        };
-                        let total_time_delta: f64 = if total_time > *past_cpu_total {
-                            total_time - *past_cpu_total
-                        } else {
-                            1.0
-                        };
+                    if let Ok(cpu_time) = current_cpu {
+                        let present_times = convert_cpu_times(&cpu_time);
 
                         (
-                            (working_time, total_time),
+                            present_times,
                             CpuData {
                                 cpu_prefix: "CPU".to_string(),
                                 cpu_count: Some(itx),
-                                cpu_usage: working_time_delta / total_time_delta * 100.0,
+                                cpu_usage: calculate_cpu_usage_percentage(
+                                    (*past_cpu_work, *past_cpu_total),
+                                    present_times,
+                                ),
                             },
                         )
                     } else {
@@ -175,75 +161,25 @@ pub async fn get_cpu_data_list(
     if show_average_cpu {
         let cpu_time = heim::cpu::time().await?;
 
-        let (cpu_usage, new_average_cpu_time) =
-            if let Some((past_cpu_work, past_cpu_total)) = previous_average_cpu_time {
-                let working_time: f64 = (cpu_time.user()
-                    + cpu_time.nice()
-                    + cpu_time.system()
-                    + cpu_time.irq()
-                    + cpu_time.soft_irq()
-                    + cpu_time.steal())
-                .get::<heim::units::time::second>();
-                let total_time: f64 = working_time
-                    + (cpu_time.idle() + cpu_time.io_wait()).get::<heim::units::time::second>();
+        let (cpu_usage, new_average_cpu_time) = if let Some((past_cpu_work, past_cpu_total)) =
+            previous_average_cpu_time
+        {
+            let present_times = convert_cpu_times(&cpu_time);
+            (
+                calculate_cpu_usage_percentage((*past_cpu_work, *past_cpu_total), present_times),
+                present_times,
+            )
+        } else {
+            // Again, we need to do a quick timeout...
+            futures_timer::Delay::new(std::time::Duration::from_millis(100)).await;
+            let second_cpu_time = heim::cpu::time().await?;
 
-                let working_time_delta: f64 = if working_time > *past_cpu_work {
-                    working_time - *past_cpu_work
-                } else {
-                    0.0
-                };
-                let total_time_delta: f64 = if total_time > *past_cpu_total {
-                    total_time - *past_cpu_total
-                } else {
-                    1.0
-                };
-
-                (
-                    working_time_delta / total_time_delta * 100.0,
-                    (working_time, total_time),
-                )
-            } else {
-                // Again, we need to do a quick timeout...
-                futures_timer::Delay::new(std::time::Duration::from_millis(100)).await;
-                let second_cpu_time = heim::cpu::time().await?;
-
-                let first_working_time: f64 = (cpu_time.user()
-                    + cpu_time.nice()
-                    + cpu_time.system()
-                    + cpu_time.irq()
-                    + cpu_time.soft_irq()
-                    + cpu_time.steal())
-                .get::<heim::units::time::second>();
-                let first_total_time: f64 = first_working_time
-                    + (cpu_time.idle() + cpu_time.io_wait()).get::<heim::units::time::second>();
-
-                let second_working_time: f64 = (second_cpu_time.user()
-                    + second_cpu_time.nice()
-                    + second_cpu_time.system()
-                    + second_cpu_time.irq()
-                    + second_cpu_time.soft_irq()
-                    + second_cpu_time.steal())
-                .get::<heim::units::time::second>();
-                let second_total_time: f64 = second_working_time
-                    + (second_cpu_time.idle() + second_cpu_time.io_wait())
-                        .get::<heim::units::time::second>();
-
-                let working_time_delta: f64 = if second_working_time > first_working_time {
-                    second_working_time - first_working_time
-                } else {
-                    0.0
-                };
-                let total_time_delta: f64 = if second_total_time > first_total_time {
-                    second_total_time - first_total_time
-                } else {
-                    1.0
-                };
-
-                (
-                    working_time_delta / total_time_delta * 100.0,
-                    (second_working_time, second_total_time),
-                )
-            };
+            let present_times = convert_cpu_times(&second_cpu_time);
+            (
+                calculate_cpu_usage_percentage(convert_cpu_times(&cpu_time), present_times),
+                present_times,
+            )
+        };
 
         *previous_average_cpu_time = Some(new_average_cpu_time);
         cpu_deque.push_front(CpuData {
