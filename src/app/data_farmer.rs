@@ -175,16 +175,16 @@ impl DataCollection {
     ) {
         // trace!("Eating mem and swap.");
         // Memory
-        let mem_percent = if memory.mem_total_in_kb > 0 {
-            Some((memory.mem_used_in_kb as f64) / (memory.mem_total_in_kb as f64) * 100.0)
+        let mem_percent = if memory.mem_total_in_kib > 0 {
+            Some((memory.mem_used_in_kib as f64) / (memory.mem_total_in_kib as f64) * 100.0)
         } else {
             None
         };
         new_entry.mem_data = mem_percent;
 
         // Swap
-        let swap_percent = if swap.mem_total_in_kb > 0 {
-            Some((swap.mem_used_in_kb as f64) / (swap.mem_total_in_kb as f64) * 100.0)
+        let swap_percent = if swap.mem_total_in_kib > 0 {
+            Some((swap.mem_used_in_kib as f64) / (swap.mem_total_in_kib as f64) * 100.0)
         } else {
             None
         };

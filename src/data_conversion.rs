@@ -317,44 +317,44 @@ pub fn convert_mem_labels(
     current_data: &data_farmer::DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
     fn return_unit_and_numerator_for_kb(mem_total_kb: u64) -> (&'static str, f64) {
-        if mem_total_kb < 1000 {
+        if mem_total_kb < 1024 {
             // Stay with KB
             ("KB", 1.0)
-        } else if mem_total_kb < 1_000_000 {
+        } else if mem_total_kb < 1_048_576 {
             // Use MB
             ("MB", 1024.0)
-        } else if mem_total_kb < 1_000_000_000 {
+        } else if mem_total_kb < 1_073_741_824 {
             // Use GB
-            ("GB", 1024_000.0)
+            ("GB", 1_048_576.0)
         } else {
             // Use TB
-            ("TB", 1024_000_000.0)
+            ("TB", 1_073_741_824.0)
         }
     }
 
     (
-        if current_data.memory_harvest.mem_total_in_kb > 0 {
+        if current_data.memory_harvest.mem_total_in_kib > 0 {
             Some((
                 format!(
                     "{:3.0}%",
-                    match current_data.memory_harvest.mem_total_in_kb {
+                    match current_data.memory_harvest.mem_total_in_kib {
                         0 => 0.0,
                         _ =>
-                            current_data.memory_harvest.mem_used_in_kb as f64
-                                / current_data.memory_harvest.mem_total_in_kb as f64
+                            current_data.memory_harvest.mem_used_in_kib as f64
+                                / current_data.memory_harvest.mem_total_in_kib as f64
                                 * 100.0,
                     }
                 ),
                 {
                     let (unit, numerator) = return_unit_and_numerator_for_kb(
-                        current_data.memory_harvest.mem_total_in_kb,
+                        current_data.memory_harvest.mem_total_in_kib,
                     );
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        current_data.memory_harvest.mem_used_in_kb as f64 / numerator,
+                        current_data.memory_harvest.mem_used_in_kib as f64 / numerator,
                         unit,
-                        (current_data.memory_harvest.mem_total_in_kb as f64 / numerator),
+                        (current_data.memory_harvest.mem_total_in_kib as f64 / numerator),
                         unit
                     )
                 },
@@ -362,27 +362,28 @@ pub fn convert_mem_labels(
         } else {
             None
         },
-        if current_data.swap_harvest.mem_total_in_kb > 0 {
+        if current_data.swap_harvest.mem_total_in_kib > 0 {
             Some((
                 format!(
                     "{:3.0}%",
-                    match current_data.swap_harvest.mem_total_in_kb {
+                    match current_data.swap_harvest.mem_total_in_kib {
                         0 => 0.0,
                         _ =>
-                            current_data.swap_harvest.mem_used_in_kb as f64
-                                / current_data.swap_harvest.mem_total_in_kb as f64
+                            current_data.swap_harvest.mem_used_in_kib as f64
+                                / current_data.swap_harvest.mem_total_in_kib as f64
                                 * 100.0,
                     }
                 ),
                 {
-                    let (unit, numerator) =
-                        return_unit_and_numerator_for_kb(current_data.swap_harvest.mem_total_in_kb);
+                    let (unit, numerator) = return_unit_and_numerator_for_kb(
+                        current_data.swap_harvest.mem_total_in_kib,
+                    );
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        current_data.swap_harvest.mem_used_in_kb as f64 / numerator,
+                        current_data.swap_harvest.mem_used_in_kib as f64 / numerator,
                         unit,
-                        (current_data.swap_harvest.mem_total_in_kb as f64 / numerator),
+                        (current_data.swap_harvest.mem_total_in_kib as f64 / numerator),
                         unit
                     )
                 },
