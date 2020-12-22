@@ -272,10 +272,13 @@ pub fn convert_mem_data_points(
     };
 
     for (time, data) in &current_data.timed_data_vec {
-        let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-        result.push((-time_from_start, data.mem_data));
-        if *time == current_time {
-            break;
+        if let Some(mem_data) = data.mem_data {
+            let time_from_start: f64 =
+                (current_time.duration_since(*time).as_millis() as f64).floor();
+            result.push((-time_from_start, mem_data));
+            if *time == current_time {
+                break;
+            }
         }
     }
 
@@ -297,10 +300,13 @@ pub fn convert_swap_data_points(
     };
 
     for (time, data) in &current_data.timed_data_vec {
-        let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-        result.push((-time_from_start, data.swap_data));
-        if *time == current_time {
-            break;
+        if let Some(swap_data) = data.swap_data {
+            let time_from_start: f64 =
+                (current_time.duration_since(*time).as_millis() as f64).floor();
+            result.push((-time_from_start, swap_data));
+            if *time == current_time {
+                break;
+            }
         }
     }
 
@@ -309,36 +315,48 @@ pub fn convert_swap_data_points(
 
 pub fn convert_mem_labels(
     current_data: &data_farmer::DataCollection,
-) -> (String, String, String, String) {
+) -> (Option<(String, String)>, Option<(String, String)>) {
     (
-        format!(
-            "{:3.0}%",
-            match current_data.memory_harvest.mem_total_in_mb {
-                0 => 0.0,
-                _ =>
-                    current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
-                        / current_data.memory_harvest.mem_total_in_mb as f64,
-            }
-        ),
-        format!(
-            "   {:.1}GB/{:.1}GB",
-            current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
-            (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0)
-        ),
-        format!(
-            "{:3.0}%",
-            match current_data.swap_harvest.mem_total_in_mb {
-                0 => 0.0,
-                _ =>
-                    current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
-                        / current_data.swap_harvest.mem_total_in_mb as f64,
-            }
-        ),
-        format!(
-            "   {:.1}GB/{:.1}GB",
-            current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
-            (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0)
-        ),
+        if current_data.memory_harvest.mem_total_in_mb > 0 {
+            Some((
+                format!(
+                    "{:3.0}%",
+                    match current_data.memory_harvest.mem_total_in_mb {
+                        0 => 0.0,
+                        _ =>
+                            current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
+                                / current_data.memory_harvest.mem_total_in_mb as f64,
+                    }
+                ),
+                format!(
+                    "   {:.1}GB/{:.1}GB",
+                    current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
+                    (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0)
+                ),
+            ))
+        } else {
+            None
+        },
+        if current_data.swap_harvest.mem_total_in_mb > 0 {
+            Some((
+                format!(
+                    "{:3.0}%",
+                    match current_data.swap_harvest.mem_total_in_mb {
+                        0 => 0.0,
+                        _ =>
+                            current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
+                                / current_data.swap_harvest.mem_total_in_mb as f64,
+                    }
+                ),
+                format!(
+                    "   {:.1}GB/{:.1}GB",
+                    current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
+                    (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0)
+                ),
+            ))
+        } else {
+            None
+        },
     )
 }
 

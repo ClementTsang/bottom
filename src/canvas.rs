@@ -50,10 +50,10 @@ pub struct DisplayableData {
     pub single_process_data: HashMap<Pid, ConvertedProcessData>, // Contains single process data, key is PID
     pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>, // What's actually displayed, key is the widget ID.
     pub stringified_process_data_map: HashMap<u64, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled, key is the widget ID
-    pub mem_label_percent: String,
-    pub swap_label_percent: String,
-    pub mem_label_frac: String,
-    pub swap_label_frac: String,
+
+    pub mem_labels: Option<(String, String)>,
+    pub swap_labels: Option<(String, String)>,
+
     pub mem_data: Vec<Point>,
     pub swap_data: Vec<Point>,
     pub cpu_data: Vec<ConvertedCpuData>,

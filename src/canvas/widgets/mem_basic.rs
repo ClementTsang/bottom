@@ -51,20 +51,28 @@ impl MemBasicWidget for Painter {
             0.0
         };
 
+        const EMPTY_MEMORY_FRAC_STRING: &str = "0.0B/0.0B";
+
+        let trimmed_memory_frac =
+            if let Some((_label_percent, label_frac)) = &app_state.canvas_data.mem_labels {
+                label_frac.trim()
+            } else {
+                EMPTY_MEMORY_FRAC_STRING
+            };
+
+        let trimmed_swap_frac =
+            if let Some((_label_percent, label_frac)) = &app_state.canvas_data.swap_labels {
+                label_frac.trim()
+            } else {
+                EMPTY_MEMORY_FRAC_STRING
+            };
+
         // +7 due to 3 + 2 + 2 columns for the name & space + bar bounds + margin spacing
         // Then + length of fraction
-        let ram_bar_length = usize::from(
-            draw_loc
-                .width
-                .saturating_sub(7)
-                .saturating_sub(app_state.canvas_data.mem_label_frac.trim().len() as u16),
-        );
-        let swap_bar_length = usize::from(
-            draw_loc
-                .width
-                .saturating_sub(7)
-                .saturating_sub(app_state.canvas_data.swap_label_frac.trim().len() as u16),
-        );
+        let ram_bar_length =
+            usize::from(draw_loc.width.saturating_sub(7)).saturating_sub(trimmed_memory_frac.len());
+        let swap_bar_length =
+            usize::from(draw_loc.width.saturating_sub(7)).saturating_sub(trimmed_swap_frac.len());
 
         let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, ram_bar_length);
         let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, swap_bar_length);
@@ -73,11 +81,7 @@ impl MemBasicWidget for Painter {
             format!(
                 "RAM[{}{}{:3.0}%]\n",
                 "|".repeat(num_bars_ram),
-                " ".repeat(
-                    ram_bar_length - num_bars_ram
-                        + app_state.canvas_data.mem_label_frac.trim().len()
-                        - 4
-                ),
+                " ".repeat(ram_bar_length - num_bars_ram + trimmed_memory_frac.len() - 4),
                 ram_use_percentage.round()
             )
         } else {
@@ -85,18 +89,14 @@ impl MemBasicWidget for Painter {
                 "RAM[{}{}{}]\n",
                 "|".repeat(num_bars_ram),
                 " ".repeat(ram_bar_length - num_bars_ram),
-                &app_state.canvas_data.mem_label_frac.trim()
+                trimmed_memory_frac
             )
         };
         let swap_label = if app_state.basic_mode_use_percent {
             format!(
                 "SWP[{}{}{:3.0}%]",
                 "|".repeat(num_bars_swap),
-                " ".repeat(
-                    swap_bar_length - num_bars_swap
-                        + app_state.canvas_data.swap_label_frac.trim().len()
-                        - 4
-                ),
+                " ".repeat(swap_bar_length - num_bars_swap + trimmed_swap_frac.len() - 4),
                 swap_use_percentage.round()
             )
         } else {
@@ -104,7 +104,7 @@ impl MemBasicWidget for Painter {
                 "SWP[{}{}{}]",
                 "|".repeat(num_bars_swap),
                 " ".repeat(swap_bar_length - num_bars_swap),
-                &app_state.canvas_data.swap_label_frac.trim()
+                trimmed_swap_frac
             )
         };
 

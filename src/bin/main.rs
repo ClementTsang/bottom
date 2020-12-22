@@ -207,11 +207,11 @@ fn main() -> Result<()> {
                                 convert_mem_data_points(&app.data_collection, false);
                             app.canvas_data.swap_data =
                                 convert_swap_data_points(&app.data_collection, false);
-                            let memory_and_swap_labels = convert_mem_labels(&app.data_collection);
-                            app.canvas_data.mem_label_percent = memory_and_swap_labels.0;
-                            app.canvas_data.mem_label_frac = memory_and_swap_labels.1;
-                            app.canvas_data.swap_label_percent = memory_and_swap_labels.2;
-                            app.canvas_data.swap_label_frac = memory_and_swap_labels.3;
+                            let (memory_labels, swap_labels) =
+                                convert_mem_labels(&app.data_collection);
+
+                            app.canvas_data.mem_labels = memory_labels;
+                            app.canvas_data.swap_labels = swap_labels;
                         }
 
                         if app.used_widgets.use_cpu {
