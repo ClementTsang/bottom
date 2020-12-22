@@ -316,43 +316,76 @@ pub fn convert_swap_data_points(
 pub fn convert_mem_labels(
     current_data: &data_farmer::DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
+    fn return_unit_and_numerator_for_kb(mem_total_kb: u64) -> (&'static str, f64) {
+        if mem_total_kb < 1000 {
+            // Stay with KB
+            ("KB", 1.0)
+        } else if mem_total_kb < 1_000_000 {
+            // Use MB
+            ("MB", 1000.0)
+        } else if mem_total_kb < 1_000_000_000 {
+            // Use GB
+            ("GB", 1_000_000.0)
+        } else {
+            // Use TB
+            ("TB", 1_000_000_000.0)
+        }
+    }
+
     (
-        if current_data.memory_harvest.mem_total_in_mb > 0 {
+        if current_data.memory_harvest.mem_total_in_kb > 0 {
             Some((
                 format!(
                     "{:3.0}%",
-                    match current_data.memory_harvest.mem_total_in_mb {
+                    match current_data.memory_harvest.mem_total_in_kb {
                         0 => 0.0,
                         _ =>
-                            current_data.memory_harvest.mem_used_in_mb as f64 * 100.0
-                                / current_data.memory_harvest.mem_total_in_mb as f64,
+                            current_data.memory_harvest.mem_used_in_kb as f64
+                                / current_data.memory_harvest.mem_total_in_kb as f64
+                                * 100.0,
                     }
                 ),
-                format!(
-                    "   {:.1}GB/{:.1}GB",
-                    current_data.memory_harvest.mem_used_in_mb as f64 / 1024.0,
-                    (current_data.memory_harvest.mem_total_in_mb as f64 / 1024.0)
-                ),
+                {
+                    let (unit, numerator) = return_unit_and_numerator_for_kb(
+                        current_data.memory_harvest.mem_total_in_kb,
+                    );
+
+                    format!(
+                        "   {:.1}{}/{:.1}{}",
+                        current_data.memory_harvest.mem_used_in_kb as f64 / numerator,
+                        unit,
+                        (current_data.memory_harvest.mem_total_in_kb as f64 / numerator),
+                        unit
+                    )
+                },
             ))
         } else {
             None
         },
-        if current_data.swap_harvest.mem_total_in_mb > 0 {
+        if current_data.swap_harvest.mem_total_in_kb > 0 {
             Some((
                 format!(
                     "{:3.0}%",
-                    match current_data.swap_harvest.mem_total_in_mb {
+                    match current_data.swap_harvest.mem_total_in_kb {
                         0 => 0.0,
                         _ =>
-                            current_data.swap_harvest.mem_used_in_mb as f64 * 100.0
-                                / current_data.swap_harvest.mem_total_in_mb as f64,
+                            current_data.swap_harvest.mem_used_in_kb as f64
+                                / current_data.swap_harvest.mem_total_in_kb as f64
+                                * 100.0,
                     }
                 ),
-                format!(
-                    "   {:.1}GB/{:.1}GB",
-                    current_data.swap_harvest.mem_used_in_mb as f64 / 1024.0,
-                    (current_data.swap_harvest.mem_total_in_mb as f64 / 1024.0)
-                ),
+                {
+                    let (unit, numerator) =
+                        return_unit_and_numerator_for_kb(current_data.swap_harvest.mem_total_in_kb);
+
+                    format!(
+                        "   {:.1}{}/{:.1}{}",
+                        current_data.swap_harvest.mem_used_in_kb as f64 / numerator,
+                        unit,
+                        (current_data.swap_harvest.mem_total_in_kb as f64 / numerator),
+                        unit
+                    )
+                },
             ))
         } else {
             None
