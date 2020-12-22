@@ -49,6 +49,7 @@ impl CpuBasicWidget for Painter {
             }
 
             let num_cpus = cpu_data.len();
+            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
             if draw_loc.height > 0 {
                 let remaining_height = usize::from(draw_loc.height);
@@ -158,11 +159,20 @@ impl CpuBasicWidget for Painter {
                         let end_index = min(start_index + how_many_cpus, num_cpus);
 
                         let cpu_column = (start_index..end_index)
-                            .map(|cpu_index| {
+                            .map(|itx| {
                                 Spans::from(Span {
-                                    content: (&cpu_bars[cpu_index]).into(),
-                                    style: self.colours.cpu_colour_styles
-                                        [cpu_index % self.colours.cpu_colour_styles.len()],
+                                    content: (&cpu_bars[itx]).into(),
+                                    style: if show_avg_cpu {
+                                        if itx == 0 {
+                                            self.colours.avg_colour_style
+                                        } else {
+                                            self.colours.cpu_colour_styles
+                                                [(itx - 1) % self.colours.cpu_colour_styles.len()]
+                                        }
+                                    } else {
+                                        self.colours.cpu_colour_styles
+                                            [(itx - 1) % self.colours.cpu_colour_styles.len()]
+                                    },
                                 })
                             })
                             .collect::<Vec<_>>();
