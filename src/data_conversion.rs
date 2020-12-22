@@ -322,13 +322,13 @@ pub fn convert_mem_labels(
             ("KB", 1.0)
         } else if mem_total_kb < 1_000_000 {
             // Use MB
-            ("MB", 1000.0)
+            ("MB", 1024.0)
         } else if mem_total_kb < 1_000_000_000 {
             // Use GB
-            ("GB", 1_000_000.0)
+            ("GB", 1024_000.0)
         } else {
             // Use TB
-            ("TB", 1_000_000_000.0)
+            ("TB", 1024_000_000.0)
         }
     }
 
