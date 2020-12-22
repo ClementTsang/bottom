@@ -30,8 +30,8 @@ pub struct TimedData {
     pub rx_data: Value,
     pub tx_data: Value,
     pub cpu_data: Vec<Value>,
-    pub mem_data: Value,
-    pub swap_data: Value,
+    pub mem_data: Option<Value>,
+    pub swap_data: Option<Value>,
 }
 
 /// AppCollection represents the pooled data stored within the main app
@@ -175,20 +175,20 @@ impl DataCollection {
     ) {
         // trace!("Eating mem and swap.");
         // Memory
-        let mem_percent = match memory.mem_total_in_mb {
-            0 => 0f64,
-            total => (memory.mem_used_in_mb as f64) / (total as f64) * 100.0,
+        let mem_percent = if memory.mem_total_in_kib > 0 {
+            Some((memory.mem_used_in_kib as f64) / (memory.mem_total_in_kib as f64) * 100.0)
+        } else {
+            None
         };
         new_entry.mem_data = mem_percent;
 
         // Swap
-        if swap.mem_total_in_mb > 0 {
-            let swap_percent = match swap.mem_total_in_mb {
-                0 => 0f64,
-                total => (swap.mem_used_in_mb as f64) / (total as f64) * 100.0,
-            };
-            new_entry.swap_data = swap_percent;
-        }
+        let swap_percent = if swap.mem_total_in_kib > 0 {
+            Some((swap.mem_used_in_kib as f64) / (swap.mem_total_in_kib as f64) * 100.0)
+        } else {
+            None
+        };
+        new_entry.swap_data = swap_percent;
 
         // In addition copy over latest data for easy reference
         self.memory_harvest = memory;

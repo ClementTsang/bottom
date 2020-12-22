@@ -69,40 +69,38 @@ impl MemGraphWidget for Painter {
                 .labels(y_axis_label);
 
             let mut mem_canvas_vec: Vec<Dataset<'_>> = vec![];
-            let mem_label = format!(
-                "RAM:{}{}",
-                app_state.canvas_data.mem_label_percent, app_state.canvas_data.mem_label_frac
-            );
-            mem_canvas_vec.push(
-                Dataset::default()
-                    .name(&mem_label)
-                    .marker(if app_state.app_config_fields.use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(self.colours.ram_style)
-                    .data(&mem_data)
-                    .graph_type(tui::widgets::GraphType::Line),
-            );
 
-            // FIXME: [SWAP] Hide this if denominator is 0...
-            let swap_label = format!(
-                "SWP:{}{}",
-                app_state.canvas_data.swap_label_percent, app_state.canvas_data.swap_label_frac
-            );
-            mem_canvas_vec.push(
-                Dataset::default()
-                    .name(&swap_label)
-                    .marker(if app_state.app_config_fields.use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(self.colours.swap_style)
-                    .data(&swap_data)
-                    .graph_type(tui::widgets::GraphType::Line),
-            );
+            if let Some((label_percent, label_frac)) = &app_state.canvas_data.mem_labels {
+                let mem_label = format!("RAM:{}{}", label_percent, label_frac);
+                mem_canvas_vec.push(
+                    Dataset::default()
+                        .name(mem_label)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.ram_style)
+                        .data(&mem_data)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
+            }
+
+            if let Some((label_percent, label_frac)) = &app_state.canvas_data.swap_labels {
+                let swap_label = format!("SWP:{}{}", label_percent, label_frac);
+                mem_canvas_vec.push(
+                    Dataset::default()
+                        .name(swap_label)
+                        .marker(if app_state.app_config_fields.use_dot {
+                            Marker::Dot
+                        } else {
+                            Marker::Braille
+                        })
+                        .style(self.colours.swap_style)
+                        .data(&swap_data)
+                        .graph_type(tui::widgets::GraphType::Line),
+                );
+            }
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let border_style = if is_on_widget {
