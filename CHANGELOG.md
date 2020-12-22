@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
+- [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.
+
 ## Bug Fixes
+
+- [#373](https://github.com/ClementTsang/bottom/pull/373): Fixes incorrect colours being used the CPU widget in basic mode.
 
 ## [0.5.6] - 2020-12-17
 
