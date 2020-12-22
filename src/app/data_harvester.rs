@@ -5,6 +5,7 @@ use std::time::Instant;
 #[cfg(target_os = "linux")]
 use fnv::FnvHashMap;
 
+#[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
 
 use battery::{Battery, Manager};
@@ -71,7 +72,12 @@ impl Data {
 #[derive(Debug)]
 pub struct DataCollector {
     pub data: Data,
+    #[cfg(not(target_os = "linux"))]
     sys: System,
+    #[cfg(target_os = "linux")]
+    previous_cpu_times: Vec<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
+    #[cfg(target_os = "linux")]
+    previous_average_cpu_time: Option<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
     #[cfg(target_os = "linux")]
     pid_mapping: FnvHashMap<crate::Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
@@ -97,7 +103,12 @@ impl Default for DataCollector {
         // trace!("Creating default data collector...");
         DataCollector {
             data: Data::default(),
+            #[cfg(not(target_os = "linux"))]
             sys: System::new_with_specifics(sysinfo::RefreshKind::new()), // FIXME: Make this run on only macOS and Windows.
+            #[cfg(target_os = "linux")]
+            previous_cpu_times: vec![],
+            #[cfg(target_os = "linux")]
+            previous_average_cpu_time: None,
             #[cfg(target_os = "linux")]
             pid_mapping: FnvHashMap::default(),
             #[cfg(target_os = "linux")]
@@ -127,17 +138,24 @@ impl Default for DataCollector {
 
 impl DataCollector {
     pub fn init(&mut self) {
-        self.sys.refresh_memory();
-        self.mem_total_kb = self.sys.get_total_memory();
-
-        // Refresh components list once...
-        if self.widgets_to_harvest.use_temp {
-            self.sys.refresh_components_list();
+        #[cfg(target_os = "linux")]
+        {
+            futures::executor::block_on(self.initialize_memory_size());
         }
+        #[cfg(not(target_os = "linux"))]
+        {
+            self.sys.refresh_memory();
+            self.mem_total_kb = self.sys.get_total_memory();
 
-        // Refresh network list once...
-        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks_list();
+            // Refresh components list once...
+            if self.widgets_to_harvest.use_temp {
+                self.sys.refresh_components_list();
+            }
+
+            // Refresh network list once...
+            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
+                self.sys.refresh_networks_list();
+            }
         }
 
         if self.widgets_to_harvest.use_battery {
@@ -164,6 +182,15 @@ impl DataCollector {
         // trace!("Enabled widgets to harvest: {:#?}", self.widgets_to_harvest);
     }
 
+    #[cfg(target_os = "linux")]
+    async fn initialize_memory_size(&mut self) {
+        self.mem_total_kb = if let Ok(mem) = heim::memory::memory().await {
+            mem.total().get::<heim::units::information::kilobyte>()
+        } else {
+            1
+        };
+    }
+
     pub fn set_collected_data(&mut self, used_widgets: UsedWidgets) {
         self.widgets_to_harvest = used_widgets;
     }
@@ -181,27 +208,44 @@ impl DataCollector {
     }
 
     pub async fn update_data(&mut self) {
-        if self.widgets_to_harvest.use_cpu {
-            self.sys.refresh_cpu();
-        }
-
-        if cfg!(not(target_os = "linux")) {
+        #[cfg(not(target_os = "linux"))]
+        {
+            if self.widgets_to_harvest.use_cpu {
+                self.sys.refresh_cpu();
+            }
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
-        }
-        if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
-            self.sys.refresh_networks();
+
+            if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
+                self.sys.refresh_networks();
+            }
         }
 
         let current_instant = std::time::Instant::now();
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
+            #[cfg(not(target_os = "linux"))]
+            {
+                self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                if let Ok(cpu_data) = cpu::get_cpu_data_list(
+                    self.show_average_cpu,
+                    &mut self.previous_cpu_times,
+                    &mut self.previous_average_cpu_time,
+                )
+                .await
+                {
+                    self.data.cpu = Some(cpu_data);
+                }
+            }
         }
 
         // Batteries
