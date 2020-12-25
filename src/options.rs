@@ -977,14 +977,13 @@ fn get_is_default_tree(matches: &clap::ArgMatches<'static>, config: &Config) -> 
     false
 }
 
-// FIXME: Re-enable this for 0.6
-fn get_show_table_scroll_position(_matches: &clap::ArgMatches<'static>, _config: &Config) -> bool {
-    // if matches.is_present("show_table_scroll_position") {
-    //     return true;
-    // } else if let Some(flags) = &config.flags {
-    //     if let Some(show_table_scroll_position) = flags.show_table_scroll_position {
-    //         return show_table_scroll_position;
-    //     }
-    // }
+fn get_show_table_scroll_position(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("show_table_scroll_position") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(show_table_scroll_position) = flags.show_table_scroll_position {
+            return show_table_scroll_position;
+        }
+    }
     false
 }
