@@ -240,6 +240,7 @@ Use `btm --help` for more information.
         --mem_as_value                         Defaults to showing process memory usage by value.
     -r, --rate <MS>                            Sets a refresh rate in ms.
     -R, --regex                                Enables regex by default.
+        --show_table_scroll_position           Shows the scroll position tracker in table widgets
     -d, --time_delta <MS>                      The amount in ms changed upon zooming.
     -T, --tree                                 Defaults to showing the process widget in tree mode.
         --use_old_network_legend               DEPRECATED - uses the older network legend.
@@ -530,31 +531,32 @@ The following options can be set under `[flags]` to achieve the same effect as p
 
 These are the following supported flag config values, which correspond to the flag of the same name described in [Flags](#flags):
 
-| Field                    | Type                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| `hide_avg_cpu`           | Boolean                                                                               |
-| `dot_marker`             | Boolean                                                                               |
-| `left_legend`            | Boolean                                                                               |
-| `current_usage`          | Boolean                                                                               |
-| `group_processes`        | Boolean                                                                               |
-| `case_sensitive`         | Boolean                                                                               |
-| `whole_word`             | Boolean                                                                               |
-| `regex`                  | Boolean                                                                               |
-| `show_disabled_data`     | Boolean                                                                               |
-| `basic`                  | Boolean                                                                               |
-| `hide_table_count`       | Boolean                                                                               |
-| `use_old_network_legend` | Boolean                                                                               |
-| `battery`                | Boolean                                                                               |
-| `rate`                   | Unsigned Int (represents milliseconds)                                                |
-| `default_time_value`     | Unsigned Int (represents milliseconds)                                                |
-| `time_delta`             | Unsigned Int (represents milliseconds)                                                |
-| `temperature_type`       | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                    |
-| `default_widget_type`    | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) |
-| `default_widget_count`   | Unsigned Int (represents which `default_widget_type`)                                 |
-| `disable_click`          | Boolean                                                                               |
-| `color`                  | String (one of ["default", "default-light", "gruvbox", "gruvbox-light"])              |
-| `mem_as_value`           | Boolean                                                                               |
-| `tree`                   | Boolean                                                                               |
+| Field                        | Type                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
+| `hide_avg_cpu`               | Boolean                                                                               |
+| `dot_marker`                 | Boolean                                                                               |
+| `left_legend`                | Boolean                                                                               |
+| `current_usage`              | Boolean                                                                               |
+| `group_processes`            | Boolean                                                                               |
+| `case_sensitive`             | Boolean                                                                               |
+| `whole_word`                 | Boolean                                                                               |
+| `regex`                      | Boolean                                                                               |
+| `show_disabled_data`         | Boolean                                                                               |
+| `basic`                      | Boolean                                                                               |
+| `hide_table_count`           | Boolean                                                                               |
+| `use_old_network_legend`     | Boolean                                                                               |
+| `battery`                    | Boolean                                                                               |
+| `rate`                       | Unsigned Int (represents milliseconds)                                                |
+| `default_time_value`         | Unsigned Int (represents milliseconds)                                                |
+| `time_delta`                 | Unsigned Int (represents milliseconds)                                                |
+| `temperature_type`           | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                    |
+| `default_widget_type`        | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) |
+| `default_widget_count`       | Unsigned Int (represents which `default_widget_type`)                                 |
+| `disable_click`              | Boolean                                                                               |
+| `color`                      | String (one of ["default", "default-light", "gruvbox", "gruvbox-light"])              |
+| `mem_as_value`               | Boolean                                                                               |
+| `tree`                       | Boolean                                                                               |
+| `show_table_scroll_position` | Boolean                                                                               |
 
 #### Theming
 
