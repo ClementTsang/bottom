@@ -79,6 +79,11 @@ pub struct ProcessHarvest {
     pub total_write_bytes: u64,
     pub process_state: String,
     pub process_state_char: char,
+
+    /// This is the *effective* user ID.
+    pub uid: Option<u32>,
+    // pub real_uid: Option<u32>, // TODO: Add real user ID
+    pub gid: Option<u32>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -87,6 +92,7 @@ pub struct PrevProcDetails {
     pub total_write_bytes: u64,
     pub cpu_time: f64,
     pub proc_stat_path: PathBuf,
+    pub proc_status_path: PathBuf,
     // pub proc_statm_path: PathBuf,
     // pub proc_exe_path: PathBuf,
     pub proc_io_path: PathBuf,
@@ -100,6 +106,7 @@ impl PrevProcDetails {
             proc_io_path: PathBuf::from(format!("/proc/{}/io", pid)),
             // proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid)),
             proc_stat_path: PathBuf::from(format!("/proc/{}/stat", pid)),
+            proc_status_path: PathBuf::from(format!("/proc/{}/status", pid)),
             // proc_statm_path: PathBuf::from(format!("/proc/{}/statm", pid)),
             proc_cmdline_path: PathBuf::from(format!("/proc/{}/cmdline", pid)),
             ..PrevProcDetails::default()
@@ -115,11 +122,8 @@ fn cpu_usage_calculation(
     use std::io::BufReader;
 
     // From SO answer: https://stackoverflow.com/a/23376195
-    let mut path = std::path::PathBuf::new();
-    path.push("/proc");
-    path.push("stat");
 
-    let mut reader = BufReader::new(std::fs::File::open(path)?);
+    let mut reader = BufReader::new(std::fs::File::open("/proc/stat")?);
     let mut first_line = String::new();
     reader.read_line(&mut first_line)?;
 
@@ -222,6 +226,42 @@ fn get_linux_cpu_usage(
         let res = Ok((new_proc_val - *prev_proc_val) / cpu_usage * 100_f64 * cpu_fraction);
         *prev_proc_val = new_proc_val;
         res
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn get_uid_and_gid(path: &PathBuf) -> (Option<u32>, Option<u32>) {
+    // FIXME: [OPT] - can we merge our /stat and /status calls?
+    use std::io::prelude::*;
+    use std::io::BufReader;
+
+    if let Ok(file) = std::fs::File::open(path) {
+        let reader = BufReader::new(file);
+        let mut lines = reader.lines().skip(8);
+
+        let (_real_uid, effective_uid) = if let Some(Ok(read_uid_line)) = lines.next() {
+            let mut split_whitespace = read_uid_line.split_whitespace().skip(1);
+            (
+                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
+                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
+            )
+        } else {
+            (None, None)
+        };
+
+        let (_real_gid, effective_gid) = if let Some(Ok(read_gid_line)) = lines.next() {
+            let mut split_whitespace = read_gid_line.split_whitespace().skip(1);
+            (
+                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
+                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
+            )
+        } else {
+            (None, None)
+        };
+
+        (effective_uid, effective_gid)
+    } else {
+        (None, None)
     }
 }
 
@@ -357,6 +397,8 @@ fn read_proc(
             (0, 0, 0, 0)
         };
 
+    let (uid, gid) = get_uid_and_gid(&pid_stat.proc_status_path);
+
     Ok(ProcessHarvest {
         pid,
         parent_pid,
@@ -371,6 +413,8 @@ fn read_proc(
         write_bytes_per_sec,
         process_state,
         process_state_char,
+        uid,
+        gid,
     })
 }
 
@@ -472,26 +516,54 @@ pub fn get_process_data(
         };
 
         let disk_usage = process_val.disk_usage();
-
-        process_vector.push(ProcessHarvest {
-            pid: process_val.pid(),
-            parent_pid: process_val.parent(),
-            name,
-            command,
-            mem_usage_percent: if mem_total_kb > 0 {
-                process_val.memory() as f64 * 100.0 / mem_total_kb as f64
-            } else {
-                0.0
-            },
-            mem_usage_bytes: process_val.memory() * 1024,
-            cpu_usage_percent: process_cpu_usage,
-            read_bytes_per_sec: disk_usage.read_bytes,
-            write_bytes_per_sec: disk_usage.written_bytes,
-            total_read_bytes: disk_usage.total_read_bytes,
-            total_write_bytes: disk_usage.total_written_bytes,
-            process_state: process_val.status().to_string().to_string(),
-            process_state_char: convert_process_status_to_char(process_val.status()),
-        });
+        #[cfg(target_os = "macos")]
+        {
+            process_vector.push(ProcessHarvest {
+                pid: process_val.pid(),
+                parent_pid: process_val.parent(),
+                name,
+                command,
+                mem_usage_percent: if mem_total_kb > 0 {
+                    process_val.memory() as f64 * 100.0 / mem_total_kb as f64
+                } else {
+                    0.0
+                },
+                mem_usage_bytes: process_val.memory() * 1024,
+                cpu_usage_percent: process_cpu_usage,
+                read_bytes_per_sec: disk_usage.read_bytes,
+                write_bytes_per_sec: disk_usage.written_bytes,
+                total_read_bytes: disk_usage.total_read_bytes,
+                total_write_bytes: disk_usage.total_written_bytes,
+                process_state: process_val.status().to_string().to_string(),
+                process_state_char: convert_process_status_to_char(process_val.status()),
+                uid: Some(process_val.uid),
+                gid: Some(process_val.gid),
+            });
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            process_vector.push(ProcessHarvest {
+                pid: process_val.pid(),
+                parent_pid: process_val.parent(),
+                name,
+                command,
+                mem_usage_percent: if mem_total_kb > 0 {
+                    process_val.memory() as f64 * 100.0 / mem_total_kb as f64
+                } else {
+                    0.0
+                },
+                mem_usage_bytes: process_val.memory() * 1024,
+                cpu_usage_percent: process_cpu_usage,
+                read_bytes_per_sec: disk_usage.read_bytes,
+                write_bytes_per_sec: disk_usage.written_bytes,
+                total_read_bytes: disk_usage.total_read_bytes,
+                total_write_bytes: disk_usage.total_written_bytes,
+                process_state: process_val.status().to_string().to_string(),
+                process_state_char: convert_process_status_to_char(process_val.status()),
+                uid: None,
+                gid: None,
+            });
+        }
     }
 
     Ok(process_vector)
@@ -500,22 +572,18 @@ pub fn get_process_data(
 #[allow(unused_variables)]
 #[cfg(not(target_os = "linux"))]
 fn convert_process_status_to_char(status: ProcessStatus) -> char {
-    if cfg!(target_os = "macos") {
-        #[cfg(target_os = "macos")]
-        {
-            match status {
-                ProcessStatus::Run => 'R',
-                ProcessStatus::Sleep => 'S',
-                ProcessStatus::Idle => 'D',
-                ProcessStatus::Zombie => 'Z',
-                _ => '?',
-            }
+    #[cfg(target_os = "macos")]
+    {
+        match status {
+            ProcessStatus::Run => 'R',
+            ProcessStatus::Sleep => 'S',
+            ProcessStatus::Idle => 'D',
+            ProcessStatus::Zombie => 'Z',
+            _ => '?',
         }
-        #[cfg(not(target_os = "macos"))]
-        {
-            '?'
-        }
-    } else {
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
         'R'
     }
 }
