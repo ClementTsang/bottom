@@ -115,7 +115,7 @@ Disables mouse clicks from interacting with the program.\n\n",
 Uses a dot marker for graphs as opposed to the default braille
 marker.\n\n",
         );
-    let group = Arg::with_name("group")
+    let group = Arg::with_name("group") // FIXME: Rename this to something like "group_process", would be "breaking" though.
         .short("g")
         .long("group")
         .help("Groups processes with the same name by default.")
@@ -145,12 +145,12 @@ Hides the spacing between table headers and entries.\n\n",
             "\
 Completely hides the time scaling from being shown.\n\n",
         );
-    let proc_command = Arg::with_name("command")
-        .long("proc_command")
-        .help("Defaults to showing the full command in a process..")
+    let process_command = Arg::with_name("process_command")
+        .long("process_command")
+        .help("Show processes as their commands by default.")
         .long_help(
             "\
-Defaults to showing the full command in a process.
+            Show processes as their commands by default in the process widget.
             ",
         );
     let left_legend = Arg::with_name("left_legend")
@@ -178,7 +178,7 @@ When searching for a process, enables regex by default.\n\n",
         );
     let show_table_scroll_position = Arg::with_name("show_table_scroll_position")
         .long("show_table_scroll_position")
-        .help("Shows the scroll position tracker in table widgets")
+        .help("Shows the scroll position tracker in table widgets.")
         .long_help(
             "\
     Shows the list scroll position tracker in the widget title for table widgets.\n\n",
@@ -285,7 +285,7 @@ use CPU (3) as the default instead.
         .long("default_widget_type")
         .takes_value(true)
         .value_name("WIDGET TYPE")
-        .help("Sets which widget type to use as the default widget.")
+        .help("Sets the default widget type, use --help for more info.")
         .long_help(
             "\
 Sets which widget type to use as the default widget.
@@ -369,7 +369,7 @@ Defaults to showing the process widget in tree mode.\n\n",
         .arg(basic)
         .arg(battery)
         .arg(case_sensitive)
-        .arg(proc_command)
+        .arg(process_command)
         .arg(config_location)
         .arg(color)
         // .arg(debug)
