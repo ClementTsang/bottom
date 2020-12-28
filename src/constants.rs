@@ -398,6 +398,10 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #mem_as_value = false
 # Show tree mode by default in the processes widget.
 #tree = false
+# Shows an indicator in table widgets tracking where in the list you are.
+#show_table_scroll_position = false
+# Show processes as their commands by default in the process widget.
+#process_command = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.

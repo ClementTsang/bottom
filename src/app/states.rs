@@ -409,7 +409,7 @@ pub struct ProcWidgetState {
 impl ProcWidgetState {
     pub fn init(
         is_case_sensitive: bool, is_match_whole_word: bool, is_use_regex: bool, is_grouped: bool,
-        show_memory_as_values: bool, is_tree_mode: bool,
+        show_memory_as_values: bool, is_tree_mode: bool, is_using_command: bool,
     ) -> Self {
         let mut process_search_state = ProcessSearchState::default();
 
@@ -450,7 +450,7 @@ impl ProcWidgetState {
             scroll_state: AppScrollWidgetState::default(),
             process_sorting_type,
             is_process_sort_descending,
-            is_using_command: false,
+            is_using_command,
             current_column_index: 0,
             is_sort_open: false,
             columns,

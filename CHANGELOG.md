@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Features
 
-- [#333](https://github.com/ClementTsang/bottom/pull/333): Adds an "out of" indicator that can be enabled using `--show_table_scroll_position` to help keep track of scrolled position.
+- [#333](https://github.com/ClementTsang/bottom/pull/333): Adds an "out of" indicator that can be enabled using `--show_table_scroll_position` (and its corresponding config option) to help keep track of scrolled position.
+
+- [#379](https://github.com/ClementTsang/bottom/pull/379): Adds `--process_command` flag and corresponding config option to default to showing a process' command.
 
 ## Changes
 

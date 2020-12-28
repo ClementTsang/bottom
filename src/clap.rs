@@ -81,6 +81,15 @@ custom layouts.\n\n",
             "\
 When searching for a process, enables case sensitivity by default.\n\n",
         );
+    let current_usage = Arg::with_name("current_usage")
+        .short("u")
+        .long("current_usage")
+        .help("Sets process CPU% to be based on current CPU%.")
+        .long_help(
+            "\
+Sets process CPU% usage to be based on the current system CPU% usage
+rather than total CPU usage.\n\n",
+        );
     // TODO: [DEBUG] Add a proper debugging solution.
     //     let debug = Arg::with_name("debug")
     //         .long("debug")
@@ -106,7 +115,7 @@ Disables mouse clicks from interacting with the program.\n\n",
 Uses a dot marker for graphs as opposed to the default braille
 marker.\n\n",
         );
-    let group = Arg::with_name("group")
+    let group = Arg::with_name("group") // FIXME: Rename this to something like "group_process", would be "breaking" though.
         .short("g")
         .long("group")
         .help("Groups processes with the same name by default.")
@@ -136,12 +145,13 @@ Hides the spacing between table headers and entries.\n\n",
             "\
 Completely hides the time scaling from being shown.\n\n",
         );
-    let show_table_scroll_position = Arg::with_name("show_table_scroll_position")
-        .long("show_table_scroll_position")
-        .help("Shows the scroll position tracker in table widgets")
+    let process_command = Arg::with_name("process_command")
+        .long("process_command")
+        .help("Show processes as their commands by default.")
         .long_help(
             "\
-    Shows the list scroll position tracker in the widget title for table widgets.\n\n",
+            Show processes as their commands by default in the process widget.
+            ",
         );
     let left_legend = Arg::with_name("left_legend")
         .short("l")
@@ -166,14 +176,12 @@ Puts the CPU chart legend to the left side rather than the right side.\n\n",
             "\
 When searching for a process, enables regex by default.\n\n",
         );
-    let current_usage = Arg::with_name("current_usage")
-        .short("u")
-        .long("current_usage")
-        .help("Sets process CPU% to be based on current CPU%.")
+    let show_table_scroll_position = Arg::with_name("show_table_scroll_position")
+        .long("show_table_scroll_position")
+        .help("Shows the scroll position tracker in table widgets.")
         .long_help(
             "\
-Sets process CPU% usage to be based on the current system CPU% usage
-rather than total CPU usage.\n\n",
+    Shows the list scroll position tracker in the widget title for table widgets.\n\n",
         );
     let use_old_network_legend = Arg::with_name("use_old_network_legend")
         .long("use_old_network_legend")
@@ -277,7 +285,7 @@ use CPU (3) as the default instead.
         .long("default_widget_type")
         .takes_value(true)
         .value_name("WIDGET TYPE")
-        .help("Sets which widget type to use as the default widget.")
+        .help("Sets the default widget type, use --help for more info.")
         .long_help(
             "\
 Sets which widget type to use as the default widget.
@@ -361,6 +369,7 @@ Defaults to showing the process widget in tree mode.\n\n",
         .arg(basic)
         .arg(battery)
         .arg(case_sensitive)
+        .arg(process_command)
         .arg(config_location)
         .arg(color)
         // .arg(debug)

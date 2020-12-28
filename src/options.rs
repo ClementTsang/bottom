@@ -150,6 +150,9 @@ pub struct ConfigFlags {
 
     #[builder(default, setter(strip_option))]
     show_table_scroll_position: Option<bool>,
+
+    #[builder(default, setter(strip_option))]
+    pub process_command: Option<bool>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -254,6 +257,7 @@ pub fn build_app(
 
     let show_memory_as_values = get_mem_as_value(matches, config);
     let is_default_tree = get_is_default_tree(matches, config);
+    let is_default_command = get_is_default_process_command(matches, config);
 
     for row in &widget_layout.rows {
         for col in &row.children {
@@ -322,6 +326,7 @@ pub fn build_app(
                                     is_grouped,
                                     show_memory_as_values,
                                     is_default_tree,
+                                    is_default_command,
                                 ),
                             );
                         }
@@ -983,6 +988,17 @@ fn get_show_table_scroll_position(matches: &clap::ArgMatches<'static>, config: &
     } else if let Some(flags) = &config.flags {
         if let Some(show_table_scroll_position) = flags.show_table_scroll_position {
             return show_table_scroll_position;
+        }
+    }
+    false
+}
+
+fn get_is_default_process_command(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("process_command") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(process_command) = flags.process_command {
+            return process_command;
         }
     }
     false
