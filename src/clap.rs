@@ -81,6 +81,15 @@ custom layouts.\n\n",
             "\
 When searching for a process, enables case sensitivity by default.\n\n",
         );
+    let current_usage = Arg::with_name("current_usage")
+        .short("u")
+        .long("current_usage")
+        .help("Sets process CPU% to be based on current CPU%.")
+        .long_help(
+            "\
+Sets process CPU% usage to be based on the current system CPU% usage
+rather than total CPU usage.\n\n",
+        );
     // TODO: [DEBUG] Add a proper debugging solution.
     //     let debug = Arg::with_name("debug")
     //         .long("debug")
@@ -136,12 +145,13 @@ Hides the spacing between table headers and entries.\n\n",
             "\
 Completely hides the time scaling from being shown.\n\n",
         );
-    let show_table_scroll_position = Arg::with_name("show_table_scroll_position")
-        .long("show_table_scroll_position")
-        .help("Shows the scroll position tracker in table widgets")
+    let proc_command = Arg::with_name("command")
+        .long("proc_command")
+        .help("Defaults to showing the full command in a process..")
         .long_help(
             "\
-    Shows the list scroll position tracker in the widget title for table widgets.\n\n",
+Defaults to showing the full command in a process.
+            ",
         );
     let left_legend = Arg::with_name("left_legend")
         .short("l")
@@ -166,14 +176,12 @@ Puts the CPU chart legend to the left side rather than the right side.\n\n",
             "\
 When searching for a process, enables regex by default.\n\n",
         );
-    let current_usage = Arg::with_name("current_usage")
-        .short("u")
-        .long("current_usage")
-        .help("Sets process CPU% to be based on current CPU%.")
+    let show_table_scroll_position = Arg::with_name("show_table_scroll_position")
+        .long("show_table_scroll_position")
+        .help("Shows the scroll position tracker in table widgets")
         .long_help(
             "\
-Sets process CPU% usage to be based on the current system CPU% usage
-rather than total CPU usage.\n\n",
+    Shows the list scroll position tracker in the widget title for table widgets.\n\n",
         );
     let use_old_network_legend = Arg::with_name("use_old_network_legend")
         .long("use_old_network_legend")
@@ -361,6 +369,7 @@ Defaults to showing the process widget in tree mode.\n\n",
         .arg(basic)
         .arg(battery)
         .arg(case_sensitive)
+        .arg(proc_command)
         .arg(config_location)
         .arg(color)
         // .arg(debug)
