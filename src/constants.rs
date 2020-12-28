@@ -401,7 +401,7 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 # Shows an indicator in table widgets tracking where in the list you are.
 #show_table_scroll_position = false
 # Show processes as their commands by default in the process widget.
-#proc_command = false
+#process_command = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
