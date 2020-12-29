@@ -18,5 +18,13 @@ class Bottom < Formula
       ohai "For runtime flags, see \"btm --help\""
       ohai "If you want to configure bottom, by default bottom looks for a file in $HOME/Library/Application Support/bottom.toml or $HOME/.config/bottom/bottom.toml"
     end
+
+    def caveats
+      <<~EOS
+        Note that bottom may require elevated privileges to correctly display information for all processes.
+        You can do this with `sudo btm`.
+        You should be certain that you trust any software you grant root privileges.
+      EOS
+    end 
   end
   
