@@ -15,6 +15,7 @@ impl NetworkHarvest {
     }
 }
 
+/// Separate Windows implementation required due to https://github.com/heim-rs/heim/issues/26.
 #[cfg(target_os = "windows")]
 pub async fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
