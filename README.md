@@ -724,11 +724,11 @@ Since this is only useful for devices like laptops, it is off by default. You ca
 
 The current compatibility of widgets with operating systems from personal testing:
 
-| OS      | CPU | Memory | Disks | Temperature | Processes/Search | Networks | Battery                                      |
-| ------- | --- | ------ | ----- | ----------- | ---------------- | -------- | -------------------------------------------- |
-| Linux   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
-| Windows | ✓   | ✓      | ✓     | ✗           | ✓                | ✓        | ✓ (seems to have issues with dual batteries) |
-| macOS   | ✓   | ✓      | ✓     | ✓           | ✓                | ✓        | ✓                                            |
+| OS      | CPU | Memory | Disks | Temperature                          | Processes/Search | Networks | Battery                                      |
+| ------- | --- | ------ | ----- | ------------------------------------ | ---------------- | -------- | -------------------------------------------- |
+| Linux   | ✓   | ✓      | ✓     | ✓                                    | ✓                | ✓        | ✓                                            |
+| Windows | ✓   | ✓      | ✓     | ? (seems to require elevated access) | ✓                | ✓        | ✓ (seems to have issues with dual batteries) |
+| macOS   | ✓   | ✓      | ✓     | ✓                                    | ✓                | ✓        | ✓                                            |
 
 ## FAQ
 
