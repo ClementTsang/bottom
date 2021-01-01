@@ -43,15 +43,7 @@ pub async fn get_temperature_data(
 
     let sensor_data = sys.get_components();
     for component in sensor_data {
-        let component_name = None;
-        let component_label = Some(component.get_label().to_string());
-
-        let name = match (component_name, component_label) {
-            (Some(name), Some(label)) => format!("{}: {}", name, label),
-            (None, Some(label)) => label.to_string(),
-            (Some(name), None) => name.to_string(),
-            (None, None) => String::default(),
-        };
+        let name = component.get_label().to_string();
 
         let to_keep = if let Some(filter) = filter {
             let mut ret = filter.is_list_ignored;
