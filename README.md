@@ -52,7 +52,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Config flags](#config-flags)
     - [Theming](#theming)
     - [Layout](#layout)
-    - [Disk and temperature filtering](#disk-and-temperature-filtering)
+    - [Disk and temperature filtering](#disk-temperature-and-network-filtering)
   - [Battery](#battery)
   - [Compatibility](#compatibility)
 - [FAQ](#faq)
@@ -670,9 +670,9 @@ Furthermore, you can have duplicate widgets. This means you could do something l
 and get the following CPU donut:
 ![CPU donut](./assets/cpu_layout.png)
 
-#### Disk and temperature filtering
+#### Disk, temperature, and network filtering
 
-You can hide specific disks and temperature sensors by name in the config file via `disk_filter` and `temp_filter` respectively. Regex (`regex = true`) and case-sensitivity (`case_sensitive = true`) are supported, but are off by default.
+You can hide specific disks, temperature sensors, and networks by name in the config file via `disk_filter`, `temp_filter`, and `net_filter` respectively. Regex (`regex = true`), case-sensitivity (`case_sensitive = true`), and matching only the entire word (`whole_word = true`) are supported, but are off by default.
 
 For example, let's say , given this disk list:
 
@@ -711,6 +711,20 @@ case_sensitive = true
 Now, flipping to `case_sensitive = false` would instead show:
 
 ![Temp filter after with case sensitivity off](./assets/temp_filter_post2.png)
+
+Lastly, let's say I want to filter out _exactly_ "iwlwifi_1" from my results. I could do:
+
+```toml
+[temp_filter]
+is_list_ignored = true
+list = ["iwlwifi_1"]
+case_sensitive = true
+whole_word = true
+```
+
+This will match the entire word, "iwlwifi_1", and ignore any result that exactly matches it:
+
+![Temp filter after with whole_word](./assets/temp_filter_post3.png)
 
 ### Battery
 

@@ -30,6 +30,7 @@ pub struct Config {
     pub row: Option<Vec<Row>>,
     pub disk_filter: Option<IgnoreList>,
     pub temp_filter: Option<IgnoreList>,
+    pub net_filter: Option<IgnoreList>,
 }
 
 impl Config {
@@ -216,6 +217,7 @@ pub struct IgnoreList {
     pub list: Vec<String>,
     pub regex: Option<bool>,
     pub case_sensitive: Option<bool>,
+    pub whole_word: Option<bool>,
 }
 
 pub fn build_app(
@@ -413,6 +415,8 @@ pub fn build_app(
         get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;
     let temp_filter =
         get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
+    let net_filter =
+        get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
 
     // One more thing - we have to update the search settings of our proc_state_map, and create the hashmaps if needed!
     // Note that if you change your layout, this might not actually match properly... not sure if/where we should deal with that...
@@ -472,6 +476,7 @@ pub fn build_app(
         .filters(DataFilters {
             disk_filter,
             temp_filter,
+            net_filter,
         })
         .config(config.clone())
         .config_path(config_path)
@@ -907,17 +912,24 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
                 } else {
                     false
                 };
+                let whole_word = if let Some(whole_word) = ignore_list.whole_word {
+                    whole_word
+                } else {
+                    false
+                };
 
                 let escaped_string: String;
                 let res = format!(
-                    "{}{}",
+                    "{}{}{}{}",
+                    if whole_word { "^" } else { "" },
                     if use_cs { "" } else { "(?i)" },
                     if use_regex {
                         name
                     } else {
                         escaped_string = regex::escape(name);
                         &escaped_string
-                    }
+                    },
+                    if whole_word { "$" } else { "" },
                 );
 
                 Regex::new(&res)

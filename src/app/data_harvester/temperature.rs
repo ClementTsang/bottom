@@ -1,9 +1,10 @@
 use std::cmp::Ordering;
 
+use crate::app::Filter;
+
 #[derive(Default, Debug, Clone)]
 pub struct TempHarvest {
-    pub component_name: Option<String>,
-    pub component_label: Option<String>,
+    pub name: String,
     pub temperature: f32,
 }
 
@@ -22,7 +23,7 @@ impl Default for TemperatureType {
 
 #[cfg(not(target_os = "linux"))]
 pub async fn get_temperature_data(
-    sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool,
+    sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool, filter: &Option<Filter>,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use sysinfo::{ComponentExt, SystemExt};
 
@@ -42,17 +43,43 @@ pub async fn get_temperature_data(
 
     let sensor_data = sys.get_components();
     for component in sensor_data {
-        temperature_vec.push(TempHarvest {
-            component_name: None,
-            component_label: Some(component.get_label().to_string()),
-            temperature: match temp_type {
-                TemperatureType::Celsius => component.get_temperature(),
-                TemperatureType::Kelvin => convert_celsius_to_kelvin(component.get_temperature()),
-                TemperatureType::Fahrenheit => {
-                    convert_celsius_to_fahrenheit(component.get_temperature())
+        let component_name = None;
+        let component_label = Some(component.get_label().to_string());
+
+        let name = match (component_name, component_label) {
+            (Some(name), Some(label)) => format!("{}: {}", name, label),
+            (None, Some(label)) => label.to_string(),
+            (Some(name), None) => name.to_string(),
+            (None, None) => String::default(),
+        };
+
+        let to_keep = if let Some(filter) = filter {
+            let mut ret = filter.is_list_ignored;
+            for r in &filter.list {
+                if r.is_match(&name) {
+                    ret = !filter.is_list_ignored;
+                    break;
                 }
-            },
-        });
+            }
+            ret
+        } else {
+            true
+        };
+
+        if to_keep {
+            temperature_vec.push(TempHarvest {
+                name,
+                temperature: match temp_type {
+                    TemperatureType::Celsius => component.get_temperature(),
+                    TemperatureType::Kelvin => {
+                        convert_celsius_to_kelvin(component.get_temperature())
+                    }
+                    TemperatureType::Fahrenheit => {
+                        convert_celsius_to_fahrenheit(component.get_temperature())
+                    }
+                },
+            });
+        }
     }
 
     temp_vec_sort(&mut temperature_vec);
@@ -61,7 +88,7 @@ pub async fn get_temperature_data(
 
 #[cfg(target_os = "linux")]
 pub async fn get_temperature_data(
-    temp_type: &TemperatureType, actually_get: bool,
+    temp_type: &TemperatureType, actually_get: bool, filter: &Option<Filter>,
 ) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
     use futures::StreamExt;
     use heim::units::thermodynamic_temperature;
@@ -75,26 +102,51 @@ pub async fn get_temperature_data(
     let mut sensor_data = heim::sensors::temperatures().boxed_local();
     while let Some(sensor) = sensor_data.next().await {
         if let Ok(sensor) = sensor {
-            temperature_vec.push(TempHarvest {
-                component_name: Some(sensor.unit().to_string()),
-                component_label: if let Some(label) = sensor.label() {
-                    Some(label.to_string())
-                } else {
-                    None
-                },
-                temperature: match temp_type {
-                    TemperatureType::Celsius => sensor
-                        .current()
-                        .get::<thermodynamic_temperature::degree_celsius>(),
-                    TemperatureType::Kelvin => {
-                        sensor.current().get::<thermodynamic_temperature::kelvin>()
+            let component_name = Some(sensor.unit().to_string());
+            let component_label = if let Some(label) = sensor.label() {
+                Some(label.to_string())
+            } else {
+                None
+            };
+
+            let name = match (component_name, component_label) {
+                (Some(name), Some(label)) => format!("{}: {}", name, label),
+                (None, Some(label)) => label.to_string(),
+                (Some(name), None) => name.to_string(),
+                (None, None) => String::default(),
+            };
+
+            let to_keep = if let Some(filter) = filter {
+                let mut ret = filter.is_list_ignored;
+                for r in &filter.list {
+                    if r.is_match(&name) {
+                        ret = !filter.is_list_ignored;
+                        break;
                     }
-                    TemperatureType::Fahrenheit => sensor
-                        .current()
-                        .get::<thermodynamic_temperature::degree_fahrenheit>(
-                    ),
-                },
-            });
+                }
+                ret
+            } else {
+                true
+            };
+
+            if to_keep {
+                temperature_vec.push(TempHarvest {
+                    name,
+                    temperature: match temp_type {
+                        TemperatureType::Celsius => sensor
+                            .current()
+                            .get::<thermodynamic_temperature::degree_celsius>(
+                        ),
+                        TemperatureType::Kelvin => {
+                            sensor.current().get::<thermodynamic_temperature::kelvin>()
+                        }
+                        TemperatureType::Fahrenheit => sensor
+                            .current()
+                            .get::<thermodynamic_temperature::degree_fahrenheit>(
+                        ),
+                    },
+                });
+            }
         }
     }
 
@@ -116,9 +168,5 @@ fn temp_vec_sort(temperature_vec: &mut Vec<TempHarvest>) {
         None => Ordering::Equal,
     });
 
-    temperature_vec.sort_by(|a, b| {
-        a.component_name
-            .partial_cmp(&b.component_name)
-            .unwrap_or(Ordering::Equal)
-    });
+    temperature_vec.sort_by(|a, b| a.name.partial_cmp(&b.name).unwrap_or(Ordering::Equal));
 }

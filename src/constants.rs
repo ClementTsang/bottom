@@ -479,12 +479,21 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
 #regex = true
 #case_sensitive = false
+#whole_word = false
 
 #[temp_filter]
 #is_list_ignored = false
 #list = ["cpu", "wifi"]
 #regex = false
 #case_sensitive = false
+#whole_word = false
+
+#[net_filter]
+#is_list_ignored = false
+#list = ["virbr0.*"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
 "##;
 
 pub const CONFIG_TOP_HEAD: &str = r##"# This is bottom's config file.
