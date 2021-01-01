@@ -297,7 +297,7 @@ impl DataCollector {
                     &mut self.total_tx,
                     current_instant,
                     self.widgets_to_harvest.use_net,
-                    self.filters.net_filter,
+                    &self.filters.net_filter,
                 )
             }
             #[cfg(not(target_os = "windows"))]
