@@ -135,6 +135,10 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
             ]);
         });
 
+    if disk_vector.is_empty() {
+        disk_vector.push(vec!["No Disks Found".to_string(), "".to_string()]);
+    }
+
     disk_vector
 }
 
