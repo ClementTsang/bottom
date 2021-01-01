@@ -20,6 +20,7 @@ impl NetworkHarvest {
 pub async fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
     prev_net_tx: &mut u64, curr_time: Instant, actually_get: bool,
+    filter: &Option<crate::app::Filter>,
 ) -> crate::utils::error::Result<Option<NetworkHarvest>> {
     use sysinfo::{NetworkExt, SystemExt};
 
@@ -31,9 +32,24 @@ pub async fn get_network_data(
     let mut total_tx: u64 = 0;
 
     let networks = sys.get_networks();
-    for (_, network) in networks {
-        total_rx += network.get_total_received();
-        total_tx += network.get_total_transmitted();
+    for (name, network) in networks {
+        let to_keep = if let Some(filter) = filter {
+            let mut ret = filter.is_list_ignored;
+            for r in &filter.list {
+                if r.is_match(&name) {
+                    ret = !filter.is_list_ignored;
+                    break;
+                }
+            }
+            ret
+        } else {
+            true
+        };
+
+        if to_keep {
+            total_rx += network.get_total_received();
+            total_tx += network.get_total_transmitted();
+        }
     }
 
     let elapsed_time = curr_time.duration_since(prev_net_access_time).as_secs_f64();
@@ -57,10 +73,11 @@ pub async fn get_network_data(
     }))
 }
 
+// FIXME: Eventually make it so that this thing also takes individual usage into account, so we can allow for showing per-interface!
 #[cfg(not(target_os = "windows"))]
 pub async fn get_network_data(
     prev_net_access_time: Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
-    curr_time: Instant, actually_get: bool,
+    curr_time: Instant, actually_get: bool, filter: &Option<crate::app::Filter>,
 ) -> crate::utils::error::Result<Option<NetworkHarvest>> {
     use futures::StreamExt;
 
@@ -75,8 +92,23 @@ pub async fn get_network_data(
 
     while let Some(io) = io_data.next().await {
         if let Ok(io) = io {
-            total_rx += io.bytes_recv().get::<heim::units::information::byte>();
-            total_tx += io.bytes_sent().get::<heim::units::information::byte>();
+            let to_keep = if let Some(filter) = filter {
+                let mut ret = filter.is_list_ignored;
+                for r in &filter.list {
+                    if r.is_match(&io.interface()) {
+                        ret = !filter.is_list_ignored;
+                        break;
+                    }
+                }
+                ret
+            } else {
+                true
+            };
+
+            if to_keep {
+                total_rx += io.bytes_recv().get::<heim::units::information::byte>();
+                total_tx += io.bytes_sent().get::<heim::units::information::byte>();
+            }
         }
     }
 

@@ -1,3 +1,5 @@
+use crate::app::Filter;
+
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {
     pub name: String,
@@ -15,9 +17,7 @@ pub struct IOData {
 
 pub type IOHarvest = std::collections::HashMap<String, Option<IOData>>;
 
-pub async fn get_io_usage(
-    get_physical: bool, actually_get: bool,
-) -> crate::utils::error::Result<Option<IOHarvest>> {
+pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IOHarvest>> {
     if !actually_get {
         return Ok(None);
     }
@@ -26,37 +26,23 @@ pub async fn get_io_usage(
 
     let mut io_hash: std::collections::HashMap<String, Option<IOData>> =
         std::collections::HashMap::new();
-    if get_physical {
-        let physical_counter_stream = heim::disk::io_counters_physical().await?;
-        futures::pin_mut!(physical_counter_stream);
 
-        while let Some(io) = physical_counter_stream.next().await {
-            if let Ok(io) = io {
-                let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
-                io_hash.insert(
-                    mount_point.to_string(),
-                    Some(IOData {
-                        read_bytes: io.read_bytes().get::<heim::units::information::megabyte>(),
-                        write_bytes: io.write_bytes().get::<heim::units::information::megabyte>(),
-                    }),
-                );
-            }
-        }
-    } else {
-        let counter_stream = heim::disk::io_counters().await?;
-        futures::pin_mut!(counter_stream);
+    let counter_stream = heim::disk::io_counters().await?;
+    futures::pin_mut!(counter_stream);
 
-        while let Some(io) = counter_stream.next().await {
-            if let Ok(io) = io {
-                let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
-                io_hash.insert(
-                    mount_point.to_string(),
-                    Some(IOData {
-                        read_bytes: io.read_bytes().get::<heim::units::information::byte>(),
-                        write_bytes: io.write_bytes().get::<heim::units::information::byte>(),
-                    }),
-                );
-            }
+    while let Some(io) = counter_stream.next().await {
+        if let Ok(io) = io {
+            let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
+
+            // FIXME: [MOUNT POINT] Add the filter here I guess?
+
+            io_hash.insert(
+                mount_point.to_string(),
+                Some(IOData {
+                    read_bytes: io.read_bytes().get::<heim::units::information::byte>(),
+                    write_bytes: io.write_bytes().get::<heim::units::information::byte>(),
+                }),
+            );
         }
     }
 
@@ -64,7 +50,7 @@ pub async fn get_io_usage(
 }
 
 pub async fn get_disk_usage(
-    actually_get: bool,
+    actually_get: bool, name_filter: &Option<Filter>,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     if !actually_get {
         return Ok(None);
@@ -77,26 +63,43 @@ pub async fn get_disk_usage(
     futures::pin_mut!(partitions_stream);
 
     while let Some(part) = partitions_stream.next().await {
-        if let Ok(part) = part {
-            let partition = part;
-            let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
+        if let Ok(partition) = part {
+            let name = (partition
+                .device()
+                .unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable"))
+                .to_str()
+                .unwrap_or("Name Unavailable"))
+            .to_string();
 
-            vec_disks.push(DiskHarvest {
-                free_space: usage.free().get::<heim::units::information::byte>(),
-                used_space: usage.used().get::<heim::units::information::byte>(),
-                total_space: usage.total().get::<heim::units::information::byte>(),
-                mount_point: (partition
-                    .mount_point()
-                    .to_str()
-                    .unwrap_or("Name Unavailable"))
-                .to_string(),
-                name: (partition
-                    .device()
-                    .unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable"))
-                    .to_str()
-                    .unwrap_or("Name Unavailable"))
-                .to_string(),
-            });
+            let mount_point = (partition
+                .mount_point()
+                .to_str()
+                .unwrap_or("Name Unavailable"))
+            .to_string();
+
+            let to_keep = if let Some(filter) = name_filter {
+                let mut ret = filter.is_list_ignored;
+                for r in &filter.list {
+                    if r.is_match(&name) {
+                        ret = !filter.is_list_ignored;
+                        break;
+                    }
+                }
+                ret
+            } else {
+                true
+            };
+
+            if to_keep {
+                let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
+                vec_disks.push(DiskHarvest {
+                    free_space: usage.free().get::<heim::units::information::byte>(),
+                    used_space: usage.used().get::<heim::units::information::byte>(),
+                    total_space: usage.total().get::<heim::units::information::byte>(),
+                    mount_point,
+                    name,
+                });
+            }
         }
     }
 

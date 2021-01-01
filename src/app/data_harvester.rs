@@ -14,6 +14,8 @@ use crate::app::layout_manager::UsedWidgets;
 
 use futures::join;
 
+use super::DataFilters;
+
 pub mod batteries;
 pub mod cpu;
 pub mod disks;
@@ -96,15 +98,15 @@ pub struct DataCollector {
     battery_list: Option<Vec<Battery>>,
     #[cfg(target_os = "linux")]
     page_file_size_kb: u64,
+    filters: DataFilters,
 }
 
-impl Default for DataCollector {
-    fn default() -> Self {
-        // trace!("Creating default data collector...");
+impl DataCollector {
+    pub fn new(filters: DataFilters) -> Self {
         DataCollector {
             data: Data::default(),
             #[cfg(not(target_os = "linux"))]
-            sys: System::new_with_specifics(sysinfo::RefreshKind::new()), // FIXME: Make this run on only macOS and Windows.
+            sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
             #[cfg(target_os = "linux")]
             previous_cpu_times: vec![],
             #[cfg(target_os = "linux")]
@@ -132,11 +134,10 @@ impl Default for DataCollector {
                 // page_file_size_kb
                 libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024
             },
+            filters,
         }
     }
-}
 
-impl DataCollector {
     pub fn init(&mut self) {
         #[cfg(target_os = "linux")]
         {
@@ -147,6 +148,7 @@ impl DataCollector {
             self.sys.refresh_memory();
             self.mem_total_kb = self.sys.get_total_memory();
 
+            // TODO: Would be good to get this and network list running on a timer instead...?
             // Refresh components list once...
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components_list();
@@ -295,6 +297,7 @@ impl DataCollector {
                     &mut self.total_tx,
                     current_instant,
                     self.widgets_to_harvest.use_net,
+                    &self.filters.net_filter,
                 )
             }
             #[cfg(not(target_os = "windows"))]
@@ -305,12 +308,14 @@ impl DataCollector {
                     &mut self.total_tx,
                     current_instant,
                     self.widgets_to_harvest.use_net,
+                    &self.filters.net_filter,
                 )
             }
         };
         let mem_data_fut = mem::get_mem_data(self.widgets_to_harvest.use_mem);
-        let disk_data_fut = disks::get_disk_usage(self.widgets_to_harvest.use_disk);
-        let disk_io_usage_fut = disks::get_io_usage(false, self.widgets_to_harvest.use_disk);
+        let disk_data_fut =
+            disks::get_disk_usage(self.widgets_to_harvest.use_disk, &self.filters.disk_filter);
+        let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
         let temp_data_fut = {
             #[cfg(not(target_os = "linux"))]
             {
@@ -318,6 +323,7 @@ impl DataCollector {
                     &self.sys,
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
+                    &self.filters.temp_filter,
                 )
             }
 
@@ -326,6 +332,7 @@ impl DataCollector {
                 temperature::get_temperature_data(
                     &self.temperature_type,
                     self.widgets_to_harvest.use_temp,
+                    &self.filters.temp_filter,
                 )
             }
         };

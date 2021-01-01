@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#379](https://github.com/ClementTsang/bottom/pull/379): Adds `--process_command` flag and corresponding config option to default to showing a process' command.
 
+- [#381](https://github.com/ClementTsang/bottom/pull/381): Adds a filter in the config file for network interfaces.
+
 ## Changes
 
 - [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.

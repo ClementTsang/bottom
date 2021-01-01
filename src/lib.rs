@@ -620,7 +620,8 @@ pub fn create_collection_thread(
     >,
     control_receiver: std::sync::mpsc::Receiver<ThreadControlEvent>,
     termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
-    app_config_fields: &app::AppConfigFields, used_widget_set: UsedWidgets,
+    app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
+    used_widget_set: UsedWidgets,
 ) -> std::thread::JoinHandle<()> {
     // trace!("Creating collection thread.");
     let temp_type = app_config_fields.temperature_type.clone();
@@ -630,7 +631,7 @@ pub fn create_collection_thread(
 
     thread::spawn(move || {
         // trace!("Spawned collection thread.");
-        let mut data_state = data_harvester::DataCollector::default();
+        let mut data_state = data_harvester::DataCollector::new(filters);
         // trace!("Created default data state.");
         data_state.set_collected_data(used_widget_set);
         data_state.set_temperature_type(temp_type);

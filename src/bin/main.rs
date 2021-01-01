@@ -121,6 +121,7 @@ fn main() -> Result<()> {
         thread_termination_lock.clone(),
         thread_termination_cvar.clone(),
         &app.app_config_fields,
+        app.filters.clone(),
         app.used_widgets.clone(),
     );
 
@@ -192,8 +193,7 @@ fn main() -> Result<()> {
 
                         // Disk
                         if app.used_widgets.use_disk {
-                            app.canvas_data.disk_data =
-                                convert_disk_row(&app.data_collection, &app.filters.disk_filter);
+                            app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
                         }
 
                         // Temperatures
