@@ -34,7 +34,13 @@ _How did you install bottom? Note if it's not a supported method, I may not be a
 
 ### Operating system, OS version, and architecture
 
-_Please specify your operating system, the version, and architecture, so I can try to replicate your environment as best as possible._
+_Please specify your operating system, the version, and architecture, so I can try to replicate your environment as best as possible. Note that the officially supported platforms are:_
+
+- _macOS (`x86_64`)_
+- _Linux (`x86_64`, `i686`, `aarch64`)_
+- _Windows (`x86_64`, `i686`)_
+
+_If your platform is not listed, please be aware I do not officially support it and may be unable to fix this issue._
 
 ### Terminal (i.e. urxvt, kitty, etc.)
 

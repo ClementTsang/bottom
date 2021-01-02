@@ -11,6 +11,9 @@ A cross-platform graphical process/system monitor with a customizable interface 
 
 ## Table of Contents
 
+- [Support](#support)
+  - [Compatibility](#compatibility)
+  - [Other known platform-specific issues](#other-known-platform-specific-issues)
 - [Installation](#installation)
   - [Manually](#manually)
   - [Cargo](#cargo)
@@ -54,21 +57,40 @@ A cross-platform graphical process/system monitor with a customizable interface 
     - [Layout](#layout)
     - [Disk and temperature filtering](#disk-temperature-and-network-filtering)
   - [Battery](#battery)
-  - [Compatibility](#compatibility)
 - [FAQ](#faq)
 - [Contribution](#contribution)
   - [Contributors](#contributors)
 - [Thanks](#thanks)
 
-## Installation
+## Support
 
 Note that bottom is:
 
-- Built on the stable version of Rust
-- Officially tested and released for only `x86_64` (and `i686` for Windows and Linux)
-- Developed mainly for macOS, Windows, and Linux
+- Built and released using the most recent stable version of Rust
+- Officially supports:
+  - macOS (`x86_64`)
+  - Linux (`x86_64`, `i686`, `aarch64`)
+  - Windows (`x86_64`, `i686`)
 
-Anything outside of this (i.e: ARM builds, building on Nightly, building on another OS) is currently not guaranteed, even if it does happen to work. For example, ARM is compiled on the CI pipeline and release builds will be provided, but not all features may necessarily work. Feel free to file any ARM-related bugs, but know I might not be able to fix them.
+Operating systems, versions of Rust, or platforms that are outside of this list are
+_not_ currently officially supported - even if it is built, tested, or works - and I may not be
+able to fix bugs for these!
+
+### Compatibility
+
+The current compatibility of widgets with operating systems from personal testing:
+
+| OS      | CPU | Memory | Disks | Temperature                          | Processes/Search                           | Networks | Battery                                      |
+| ------- | --- | ------ | ----- | ------------------------------------ | ------------------------------------------ | -------- | -------------------------------------------- |
+| Linux   | ✓   | ✓      | ✓     | ✓                                    | ✓                                          | ✓        | ✓                                            |
+| Windows | ✓   | ✓      | ✓     | ? (seems to require elevated access) | ✓                                          | ✓        | ✓ (seems to have issues with dual batteries) |
+| macOS   | ✓   | ✓      | ✓     | ✓                                    | ✓ (requires `sudo btm` to show everything) | ✓        | ✓                                            |
+
+### Other known platform-specific issues
+
+- M1-based macOS devices may have issues with temperature sensors not returning anything.
+
+## Installation
 
 ### Manually
 
@@ -733,16 +755,6 @@ You can get battery statistics (charge, time to fill/discharge, consumption in w
 Since this is only useful for devices like laptops, it is off by default. You can either enable the widget in the default layout via the `--battery` flag, or by specifying the widget in a [layout](#layout):
 
 ![Battery example](assets/battery.png)
-
-### Compatibility
-
-The current compatibility of widgets with operating systems from personal testing:
-
-| OS      | CPU | Memory | Disks | Temperature                          | Processes/Search                           | Networks | Battery                                      |
-| ------- | --- | ------ | ----- | ------------------------------------ | ------------------------------------------ | -------- | -------------------------------------------- |
-| Linux   | ✓   | ✓      | ✓     | ✓                                    | ✓                                          | ✓        | ✓                                            |
-| Windows | ✓   | ✓      | ✓     | ? (seems to require elevated access) | ✓                                          | ✓        | ✓ (seems to have issues with dual batteries) |
-| macOS   | ✓   | ✓      | ✓     | ✓                                    | ✓ (requires `sudo btm` to show everything) | ✓        | ✓                                            |
 
 ## FAQ
 
