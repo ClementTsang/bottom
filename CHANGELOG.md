@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#373](https://github.com/ClementTsang/bottom/pull/373): Fixes incorrect colours being used the CPU widget in basic mode.
 
+- [#386](https://github.com/ClementTsang/bottom/pull/386): Fixes `hide_table_gap` not working in the battery widget.
+
 ## [0.5.6] - 2020-12-17
 
 ## Bug Fixes
