@@ -35,6 +35,11 @@ impl BatteryDisplayWidget for Painter {
             } else {
                 self.colours.border_style
             };
+            let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+                0
+            } else {
+                app_state.app_config_fields.table_gap
+            };
 
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " Battery ── Esc to go back ";
@@ -156,16 +161,20 @@ impl BatteryDisplayWidget for Painter {
                     Table::new([""].iter(), battery_rows)
                         .block(battery_block)
                         .header_style(self.colours.table_header_style)
-                        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]),
+                        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
+                        .header_gap(table_gap),
                     margined_draw_loc,
                 );
             } else {
+                let mut contents = vec![Spans::default(); table_gap as usize];
+
+                contents.push(Spans::from(Span::styled(
+                    "No data found for this battery",
+                    self.colours.text_style,
+                )));
+
                 f.render_widget(
-                    Paragraph::new(Span::styled(
-                        "No data found for this battery",
-                        self.colours.text_style,
-                    ))
-                    .block(battery_block),
+                    Paragraph::new(contents).block(battery_block),
                     margined_draw_loc,
                 );
             }
