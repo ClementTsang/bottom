@@ -90,7 +90,11 @@ The current compatibility of widgets with operating systems from personal testin
 
 - M1-based macOS devices may have issues with temperature sensors not returning anything.
 
-- For now, WSL/WSL2 may have some issues.
+- For now, WSL has an issue reporting total memory usage.
+
+- WSL and WSL2 (as far as I know) cannot correctly report temperature sensors.
+
+- WSL2 will not match Windows' own Task Manager, this appears to be due to how WSL2 works.
 
 ## Installation
 
