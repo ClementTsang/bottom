@@ -90,6 +90,8 @@ The current compatibility of widgets with operating systems from personal testin
 
 - M1-based macOS devices may have issues with temperature sensors not returning anything.
 
+- For now, WSL/WSL2 may have some issues.
+
 ## Installation
 
 ### Manually
