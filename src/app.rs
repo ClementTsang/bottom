@@ -1423,13 +1423,21 @@ impl App {
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
                         match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::MemPercent => {
+                            processes::ProcessSorting::MemPercent
+                            | processes::ProcessSorting::Mem => {
                                 proc_widget_state.is_process_sort_descending =
                                     !proc_widget_state.is_process_sort_descending
                             }
+
                             _ => {
-                                proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::MemPercent;
+                                proc_widget_state.process_sorting_type = if proc_widget_state
+                                    .columns
+                                    .is_enabled(&processes::ProcessSorting::MemPercent)
+                                {
+                                    processes::ProcessSorting::MemPercent
+                                } else {
+                                    processes::ProcessSorting::Mem
+                                };
                                 proc_widget_state.is_process_sort_descending = true;
                             }
                         }
