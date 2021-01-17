@@ -16,12 +16,12 @@ use once_cell::sync::Lazy;
 
 use std::{time::Instant, vec::Vec};
 
+use crate::app::data_harvester::loadavg::LoadAvgHarvest;
 use crate::{
-    data_harvester::{batteries, cpu, loadavg, disks, mem, network, processes, temperature, Data},
+    data_harvester::{batteries, cpu, disks, loadavg, mem, network, processes, temperature, Data},
     utils::gen_util::get_simple_byte_values,
 };
 use regex::Regex;
-use crate::app::data_harvester::loadavg::LoadAvgHarvest;
 
 pub type TimeOffset = f64;
 pub type Value = f64;
@@ -31,7 +31,7 @@ pub struct TimedData {
     pub rx_data: Value,
     pub tx_data: Value,
     pub cpu_data: Vec<Value>,
-    pub loadavg_data: [f64;3],
+    pub loadavg_data: [f64; 3],
     pub mem_data: Option<Value>,
     pub swap_data: Option<Value>,
 }

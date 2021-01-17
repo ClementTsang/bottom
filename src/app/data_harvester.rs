@@ -18,8 +18,8 @@ use super::DataFilters;
 
 pub mod batteries;
 pub mod cpu;
-pub mod loadavg;
 pub mod disks;
+pub mod loadavg;
 pub mod mem;
 pub mod network;
 pub mod processes;
@@ -255,9 +255,7 @@ impl DataCollector {
         }
 
         // Load Average
-        if let Ok(loadavg_data) = loadavg::get_loadavg()
-            .await
-        {
+        if let Ok(loadavg_data) = loadavg::get_loadavg().await {
             self.data.loadavg = Some(loadavg_data);
         }
 

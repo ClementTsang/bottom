@@ -249,7 +249,8 @@ impl CpuGraphWidget for Painter {
 
             let loadavg = app_state.canvas_data.loadavg_data;
             let loadavg_str = format!("{} {} {} ", loadavg[0], loadavg[1], loadavg[2]);
-            let loadavg_str_size = UnicodeSegmentation::graphemes(loadavg_str.as_str(), true).count();
+            let loadavg_str_size =
+                UnicodeSegmentation::graphemes(loadavg_str.as_str(), true).count();
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " CPU ── Esc to go back ";
 
@@ -260,7 +261,9 @@ impl CpuGraphWidget for Painter {
                         format!(
                             "─{}─ Esc to go back ",
                             "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                                loadavg_str_size + UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
+                                loadavg_str_size
+                                    + UnicodeSegmentation::graphemes(TITLE_BASE, true).count()
+                                    + 2
                             ))
                         ),
                         border_style,
@@ -269,7 +272,7 @@ impl CpuGraphWidget for Painter {
             } else {
                 Spans::from(vec![
                     Span::styled(" CPU ", self.colours.widget_title_style),
-                    Span::styled(loadavg_str, self.colours.widget_title_style)
+                    Span::styled(loadavg_str, self.colours.widget_title_style),
                 ])
             };
 
