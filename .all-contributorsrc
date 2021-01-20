@@ -89,6 +89,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ehamberg",
+      "name": "Erlend Hamberg",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/16063?v=4",
+      "profile": "http://hamberg.no/erlend",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
