@@ -93,9 +93,9 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
                 temp_harvest.name.clone(),
                 (temp_harvest.temperature.ceil() as u64).to_string()
                     + match temp_type {
-                        data_harvester::temperature::TemperatureType::Celsius => "C",
+                        data_harvester::temperature::TemperatureType::Celsius => "°C",
                         data_harvester::temperature::TemperatureType::Kelvin => "K",
-                        data_harvester::temperature::TemperatureType::Fahrenheit => "F",
+                        data_harvester::temperature::TemperatureType::Fahrenheit => "°F",
                     },
             ]
         })
