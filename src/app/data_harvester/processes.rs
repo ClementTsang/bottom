@@ -229,6 +229,37 @@ fn get_linux_cpu_usage(
     }
 }
 
+#[cfg(target_os = "macos")]
+fn get_macos_cpu_usage(pids: &[i32]) -> std::io::Result<std::collections::HashMap<i32, f64>> {
+    use itertools::Itertools;
+    let output = std::process::Command::new("ps")
+        .args(&["-o", "pid=,pcpu=", "-p"])
+        .arg(
+            pids.iter()
+                .map(i32::to_string)
+                .intersperse(",".to_string())
+                .collect::<String>(),
+        )
+        .output()?;
+    let mut result = std::collections::HashMap::new();
+    String::from_utf8_lossy(&output.stdout)
+        .split_whitespace()
+        .chunks(2)
+        .into_iter()
+        .for_each(|chunk| {
+            let chunk: Vec<&str> = chunk.collect();
+            if chunk.len() != 2 {
+                panic!("Unexpected `ps` output");
+            }
+            let pid = chunk[0].parse();
+            let usage = chunk[1].parse();
+            if let (Ok(pid), Ok(usage)) = (pid, usage) {
+                result.insert(pid, usage);
+            }
+        });
+    Ok(result)
+}
+
 #[cfg(target_os = "linux")]
 fn get_uid_and_gid(path: &PathBuf) -> (Option<u32>, Option<u32>) {
     // FIXME: [OPT] - can we merge our /stat and /status calls?
@@ -563,6 +594,26 @@ pub fn get_process_data(
                 uid: None,
                 gid: None,
             });
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let unknown_state = ProcessStatus::Unknown(0).to_string().to_string();
+        let cpu_usage_unknown_pids: Vec<i32> = process_vector
+            .iter()
+            .filter(|process| process.process_state == unknown_state)
+            .map(|process| process.pid)
+            .collect();
+        let cpu_usages = get_macos_cpu_usage(&cpu_usage_unknown_pids)?;
+        for process in &mut process_vector {
+            if cpu_usages.contains_key(&process.pid) {
+                process.cpu_usage_percent = if num_cpus == 0.0 {
+                    *cpu_usages.get(&process.pid).unwrap()
+                } else {
+                    *cpu_usages.get(&process.pid).unwrap() / num_cpus
+                };
+            }
         }
     }
 
