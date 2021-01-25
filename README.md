@@ -11,56 +11,61 @@ A cross-platform graphical process/system monitor with a customizable interface 
 
 ## Table of Contents
 
-- [Support](#support)
-  - [Compatibility](#compatibility)
-  - [Other known platform-specific issues](#other-known-platform-specific-issues)
-- [Installation](#installation)
-  - [Manually](#manually)
-  - [Cargo](#cargo)
-  - [AUR](#aur)
-  - [Debian (and Debian-based)](#debian)
-  - [Fedora/CentOS](#fedoracentos)
-  - [Gentoo](#gentoo)
-  - [Nix](#nix)
-  - [Homebrew](#homebrew)
-  - [Scoop](#scoop)
-  - [Chocolatey](#chocolatey)
-  - [winget](#winget)
-  - [Auto-completion](#auto-completion)
-- [Usage](#usage)
-  - [Flags](#flags)
-- [Keybindings](#keybindings)
-  - [General](#general)
-  - [Process bindings](#process-bindings)
-  - [Process search bindings](#process-search-bindings)
-  - [Process sort bindings](#process-sort-bindings)
-  - [Battery bindings](#battery-bindings)
-  - [Process searching keywords](#process-searching-keywords)
-    - [Supported keywords](#supported-keywords)
-    - [Supported comparison operators](#supported-comparison-operators)
-    - [Supported logical operators](#supported-logical-operators)
-    - [Supported units](#supported-units)
-- [Mousebindings](#mousebindings)
-  - [General](#general-1)
-  - [CPU bindings](#cpu-bindings)
-- [Features](#features)
-  - [Processes](#processes)
-    - [Process searching](#process-searching)
-    - [Process sorting](#process-sorting)
-    - [Tree mode](#tree-mode)
-  - [Zoom](#zoom)
-  - [Expanding](#expanding)
-  - [Basic mode](#basic-mode)
-  - [Config files](#config-files)
-    - [Config flags](#config-flags)
-    - [Theming](#theming)
-    - [Layout](#layout)
-    - [Disk and temperature filtering](#disk-temperature-and-network-filtering)
-  - [Battery](#battery)
-- [FAQ](#faq)
-- [Contribution](#contribution)
-  - [Contributors](#contributors)
-- [Thanks](#thanks)
+- [bottom](#bottom)
+  - [Table of Contents](#table-of-contents)
+  - [Support](#support)
+    - [Compatibility](#compatibility)
+    - [Other known platform-specific issues](#other-known-platform-specific-issues)
+  - [Installation](#installation)
+    - [Manually](#manually)
+    - [Cargo](#cargo)
+    - [AUR](#aur)
+    - [Debian](#debian)
+    - [Fedora/CentOS](#fedoracentos)
+    - [Gentoo](#gentoo)
+    - [Nix](#nix)
+    - [Homebrew](#homebrew)
+    - [Scoop](#scoop)
+    - [Chocolatey](#chocolatey)
+    - [winget](#winget)
+    - [Auto-completion](#auto-completion)
+  - [Usage](#usage)
+    - [Flags](#flags)
+    - [Keybindings](#keybindings)
+      - [General](#general)
+      - [Process bindings](#process-bindings)
+      - [Process search bindings](#process-search-bindings)
+    - [Process sort bindings](#process-sort-bindings)
+      - [Battery bindings](#battery-bindings)
+      - [Basic memory bindings](#basic-memory-bindings)
+    - [Process searching keywords](#process-searching-keywords)
+      - [Supported search types](#supported-search-types)
+      - [Supported comparison operators](#supported-comparison-operators)
+      - [Supported logical operators](#supported-logical-operators)
+      - [Supported units](#supported-units)
+      - [Other syntax](#other-syntax)
+    - [Mousebindings](#mousebindings)
+      - [General](#general-1)
+      - [CPU bindings](#cpu-bindings)
+      - [Process bindings](#process-bindings-1)
+  - [Features](#features)
+    - [Processes](#processes)
+      - [Process searching](#process-searching)
+      - [Process sorting](#process-sorting)
+      - [Tree mode](#tree-mode)
+    - [Zoom](#zoom)
+    - [Expand](#expand)
+    - [Basic mode](#basic-mode)
+    - [Config files](#config-files)
+      - [Config flags](#config-flags)
+      - [Theming](#theming)
+      - [Layout](#layout)
+      - [Disk, temperature, and network filtering](#disk-temperature-and-network-filtering)
+    - [Battery](#battery)
+  - [FAQ](#faq)
+  - [Contribution](#contribution)
+    - [Contributors](#contributors)
+  - [Thanks](#thanks)
 
 ## Support
 
@@ -115,8 +120,8 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.5.6.tar.gz
-tar -xzvf 0.5.6.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.5.7.tar.gz
+tar -xzvf 0.5.7.tar.gz
 cargo install --path .
 ```
 
@@ -150,8 +155,8 @@ yay -S bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.6/bottom_0.5.6_amd64.deb
-sudo dpkg -i bottom_0.5.6_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.7/bottom_0.5.7_amd64.deb
+sudo dpkg -i bottom_0.5.7_amd64.deb
 ```
 
 ### Fedora/CentOS
@@ -205,7 +210,7 @@ to appear.
 choco install bottom
 
 # Version number may be required for newer releases, if available:
-choco install bottom --version=0.5.6
+choco install bottom --version=0.5.7
 ```
 
 ### winget
