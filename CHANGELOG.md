@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 - [#391](https://github.com/ClementTsang/bottom/pull/391): Show degree symbol on Celsius and Fahrenheit.
 
+## [0.5.7] - Unreleased
+
 ## Bug Fixes
 
 - [#373](https://github.com/ClementTsang/bottom/pull/373): Fixes incorrect colours being used the CPU widget in basic mode.
