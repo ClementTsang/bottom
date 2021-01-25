@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.
 
 - [#390](https://github.com/ClementTsang/bottom/pull/390): macOS shouldn't need elevated privileges to see CPU usage on all processes now.
--
+
 - [#391](https://github.com/ClementTsang/bottom/pull/391): Show degree symbol on Celsius and Fahrenheit.
 
 ## [0.5.7] - Unreleased
