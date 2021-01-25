@@ -171,7 +171,7 @@ impl CpuBasicWidget for Painter {
                                         }
                                     } else {
                                         self.colours.cpu_colour_styles
-                                            [(itx - 1) % self.colours.cpu_colour_styles.len()]
+                                            [itx % self.colours.cpu_colour_styles.len()]
                                     },
                                 })
                             })

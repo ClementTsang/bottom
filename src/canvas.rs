@@ -520,18 +520,16 @@ impl Painter {
                     self.draw_frozen_indicator(&mut f, frozen_draw_loc);
                 }
 
+                let actual_cpu_data_len = app_state.canvas_data.cpu_data.len().saturating_sub(1);
+                let cpu_height = (actual_cpu_data_len / 4) as u16
+                    + (if actual_cpu_data_len % 4 == 0 { 0 } else { 1 });
+
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
+                    .margin(0)
                     .constraints([
-                        Constraint::Length(
-                            (app_state.canvas_data.cpu_data.len() / 4) as u16
-                                + (if app_state.canvas_data.cpu_data.len() % 4 == 0 {
-                                    0
-                                } else {
-                                    1
-                                }),
-                        ),
-                        Constraint::Length(1),
+                        Constraint::Length(cpu_height + if cpu_height <= 1 { 1 } else { 0 }), // This fixes #397, apparently if the height is 1, it can't render the CPU bars...
+                        Constraint::Length(if cpu_height <= 1 { 0 } else { 1 }),
                         Constraint::Length(2),
                         Constraint::Length(2),
                         Constraint::Min(5),
