@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
+- [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.
+
+- [#390](https://github.com/ClementTsang/bottom/pull/390): macOS shouldn't need elevated privileges to see CPU usage on all processes now.
+
+- [#391](https://github.com/ClementTsang/bottom/pull/391): Show degree symbol on Celsius and Fahrenheit.
+
+## [0.5.7] - Unreleased
+
 ## Bug Fixes
 
 - [#373](https://github.com/ClementTsang/bottom/pull/373): Fixes incorrect colours being used the CPU widget in basic mode.
@@ -20,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#386](https://github.com/ClementTsang/bottom/pull/386): Fixes `hide_table_gap` not working in the battery widget.
 
 - [#389](https://github.com/ClementTsang/bottom/pull/389): Fixes the sorting arrow disappearing in proc widget under some cases.
+
+- [#398](https://github.com/ClementTsang/bottom/pull/398): Fixes basic mode failing to report CPUs if there are less than 4 entries to report.
 
 ## [0.5.6] - 2020-12-17
 
