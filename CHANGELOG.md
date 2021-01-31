@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#381](https://github.com/ClementTsang/bottom/pull/381): Adds a filter in the config file for network interfaces.
 
+## [0.5.8] - Unreleased
+
 ## Changes
 
 - [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.
