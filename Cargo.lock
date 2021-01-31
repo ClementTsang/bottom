@@ -207,9 +207,9 @@ dependencies = [
 
 [[package]]
 name = "beef"
-version = "0.4.4"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "474a626a67200bd107d44179bb3d4fc61891172d11696609264589be6a0e6a43"
+checksum = "6736e2428df2ca2848d846c43e88745121a6654696e349ce0054a420815a7409"
 
 [[package]]
 name = "bitflags"
