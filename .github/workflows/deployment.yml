@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Which tag to test against."
+        description: "Which tag to deploy as:"
         required: true
   push:
     tags:
