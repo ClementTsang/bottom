@@ -87,8 +87,8 @@ cd bottom
 cargo install --path .
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.5.6.tar.gz
-tar -xzvf 0.5.6.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.5.7.tar.gz
+tar -xzvf 0.5.7.tar.gz
 cargo install --path .
 ```
 
@@ -120,8 +120,8 @@ yay -S bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.6/bottom_0.5.6_amd64.deb
-sudo dpkg -i bottom_0.5.6_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.5.7/bottom_0.5.7_amd64.deb
+sudo dpkg -i bottom_0.5.7_amd64.deb
 ```
 
 ### Fedora/CentOS
@@ -175,7 +175,7 @@ to appear.
 choco install bottom
 
 # Version number may be required for newer releases, if available:
-choco install bottom --version=0.5.6
+choco install bottom --version=0.5.7
 ```
 
 ### winget
