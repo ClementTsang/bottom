@@ -11,7 +11,6 @@ A cross-platform graphical process/system monitor with a customizable interface 
 
 ## Table of Contents
 
-- [Table of Contents](#table-of-contents)
 - [Support](#support)
   - [Compatibility](#compatibility)
   - [Other known platform-specific issues](#other-known-platform-specific-issues)
