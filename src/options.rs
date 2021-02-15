@@ -154,6 +154,9 @@ pub struct ConfigFlags {
 
     #[builder(default, setter(strip_option))]
     pub process_command: Option<bool>,
+
+    #[builder(default, setter(strip_option))]
+    pub advanced_kill: Option<bool>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
