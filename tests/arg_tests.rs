@@ -11,7 +11,7 @@ fn get_binary_location() -> String {
 }
 
 #[test]
-fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
+fn test_small_rate() {
     Command::new(get_binary_location())
         .arg("-r")
         .arg("249")
@@ -20,11 +20,10 @@ fn test_small_rate() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "set your update rate to be at least 250 milliseconds.",
         ));
-    Ok(())
 }
 
 #[test]
-fn test_large_default_time() -> Result<(), Box<dyn std::error::Error>> {
+fn test_large_default_time() {
     Command::new(get_binary_location())
         .arg("-t")
         .arg("18446744073709551616")
@@ -33,11 +32,10 @@ fn test_large_default_time() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "set your default value to be at most",
         ));
-    Ok(())
 }
 
 #[test]
-fn test_small_default_time() -> Result<(), Box<dyn std::error::Error>> {
+fn test_small_default_time() {
     Command::new(get_binary_location())
         .arg("-t")
         .arg("900")
@@ -46,11 +44,10 @@ fn test_small_default_time() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "set your default value to be at least",
         ));
-    Ok(())
 }
 
 #[test]
-fn test_large_delta_time() -> Result<(), Box<dyn std::error::Error>> {
+fn test_large_delta_time() {
     Command::new(get_binary_location())
         .arg("-d")
         .arg("18446744073709551616")
@@ -59,11 +56,10 @@ fn test_large_delta_time() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "set your time delta to be at most",
         ));
-    Ok(())
 }
 
 #[test]
-fn test_small_delta_time() -> Result<(), Box<dyn std::error::Error>> {
+fn test_small_delta_time() {
     Command::new(get_binary_location())
         .arg("-d")
         .arg("900")
@@ -72,11 +68,10 @@ fn test_small_delta_time() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "set your time delta to be at least",
         ));
-    Ok(())
 }
 
 #[test]
-fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
+fn test_large_rate() {
     Command::new(get_binary_location())
         .arg("-r")
         .arg("18446744073709551616")
@@ -85,11 +80,10 @@ fn test_large_rate() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "set your update rate to be at most unsigned INT_MAX.",
         ));
-    Ok(())
 }
 
 #[test]
-fn test_negative_rate() -> Result<(), Box<dyn std::error::Error>> {
+fn test_negative_rate() {
     // This test should auto fail due to how clap works
     Command::new(get_binary_location())
         .arg("-r")
@@ -99,24 +93,20 @@ fn test_negative_rate() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "wasn't expected, or isn't valid in this context",
         ));
-
-    Ok(())
 }
 
 #[test]
-fn test_invalid_rate() -> Result<(), Box<dyn std::error::Error>> {
+fn test_invalid_rate() {
     Command::new(get_binary_location())
         .arg("-r")
         .arg("100-1000")
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid digit"));
-
-    Ok(())
 }
 
 #[test]
-fn test_conflicting_temps() -> Result<(), Box<dyn std::error::Error>> {
+fn test_conflicting_temps() {
     Command::new(get_binary_location())
         .arg("-c")
         .arg("-f")
@@ -125,24 +115,20 @@ fn test_conflicting_temps() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "cannot be used with one or more of the other specified arguments",
         ));
-
-    Ok(())
 }
 
 #[test]
-fn test_invalid_default_widget_1() -> Result<(), Box<dyn std::error::Error>> {
+fn test_invalid_default_widget_1() {
     Command::new(get_binary_location())
         .arg("--default_widget_type")
         .arg("fake_widget")
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid widget name"));
-
-    Ok(())
 }
 
 #[test]
-fn test_invalid_default_widget_2() -> Result<(), Box<dyn std::error::Error>> {
+fn test_invalid_default_widget_2() {
     Command::new(get_binary_location())
         .arg("--default_widget_type")
         .arg("cpu")
@@ -153,12 +139,10 @@ fn test_invalid_default_widget_2() -> Result<(), Box<dyn std::error::Error>> {
         .stderr(predicate::str::contains(
             "set your widget count to be at most unsigned INT_MAX",
         ));
-
-    Ok(())
 }
 
 #[test]
-fn test_missing_default_widget_type() -> Result<(), Box<dyn std::error::Error>> {
+fn test_missing_default_widget_type() {
     Command::new(get_binary_location())
         .arg("--default_widget_count")
         .arg("3")
@@ -167,6 +151,4 @@ fn test_missing_default_widget_type() -> Result<(), Box<dyn std::error::Error>> 
         .stderr(predicate::str::contains(
             "The following required arguments were not provided",
         ));
-
-    Ok(())
 }
