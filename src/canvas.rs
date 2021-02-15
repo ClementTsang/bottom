@@ -66,7 +66,8 @@ pub enum ColourScheme {
     DefaultLight,
     Gruvbox,
     GruvboxLight,
-    // Nord,
+    Nord,
+    NordLight,
     Custom,
 }
 
@@ -80,7 +81,8 @@ impl FromStr for ColourScheme {
             "default-light" => Ok(ColourScheme::DefaultLight),
             "gruvbox" => Ok(ColourScheme::Gruvbox),
             "gruvbox-light" => Ok(ColourScheme::GruvboxLight),
-            // "nord" => Ok(ColourScheme::Nord),
+            "nord" => Ok(ColourScheme::Nord),
+            "nord-light" => Ok(ColourScheme::NordLight),
             _ => Err(BottomError::ConfigError(format!(
                 "\"{}\" is an invalid built-in color scheme.",
                 s
@@ -227,10 +229,14 @@ impl Painter {
                 self.colours
                     .set_colours_from_palette(&*GRUVBOX_LIGHT_COLOUR_PALETTE)?;
             }
-            // ColourScheme::Nord => {
-            //     self.colours
-            //         .set_colours_from_palette(&*NORD_COLOUR_PALETTE)?;
-            // }
+            ColourScheme::Nord => {
+                self.colours
+                    .set_colours_from_palette(&*NORD_COLOUR_PALETTE)?;
+            }
+            ColourScheme::NordLight => {
+                self.colours
+                    .set_colours_from_palette(&*NORD_LIGHT_COLOUR_PALETTE)?;
+            }
             ColourScheme::Custom => {
                 // This case should never occur, just do nothing.
             }

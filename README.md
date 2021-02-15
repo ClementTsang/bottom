@@ -563,31 +563,31 @@ The following options can be set under `[flags]` to achieve the same effect as p
 
 These are the following supported flag config values, which correspond to the flag of the same name described in [Flags](#flags):
 
-| Field                        | Type                                                                                  | Functionality                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `hide_avg_cpu`               | Boolean                                                                               | Hides the average CPU usage.                            |
-| `dot_marker`                 | Boolean                                                                               | Uses a dot marker for graphs.                           |
-| `left_legend`                | Boolean                                                                               | Puts the CPU chart legend to the left side.             |
-| `current_usage`              | Boolean                                                                               | Sets process CPU% to be based on current CPU%.          |
-| `group_processes`            | Boolean                                                                               | Groups processes with the same name by default.         |
-| `case_sensitive`             | Boolean                                                                               | Enables case sensitivity by default.                    |
-| `whole_word`                 | Boolean                                                                               | Enables whole-word matching by default.                 |
-| `regex`                      | Boolean                                                                               | Enables regex by default.                               |
-| `basic`                      | Boolean                                                                               | Hides graphs and uses a more basic look.                |
-| `use_old_network_legend`     | Boolean                                                                               | DEPRECATED - uses the older network legend.             |
-| `battery`                    | Boolean                                                                               | Shows the battery widget.                               |
-| `rate`                       | Unsigned Int (represents milliseconds)                                                | Sets a refresh rate in ms.                              |
-| `default_time_value`         | Unsigned Int (represents milliseconds)                                                | Default time value for graphs in ms.                    |
-| `time_delta`                 | Unsigned Int (represents milliseconds)                                                | The amount in ms changed upon zooming.                  |
-| `temperature_type`           | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                    | Sets the temperature unit type.                         |
-| `default_widget_type`        | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options) | Sets the default widget type, use --help for more info. |
-| `default_widget_count`       | Unsigned Int (represents which `default_widget_type`)                                 | Sets the n'th selected widget type as the default.      |
-| `disable_click`              | Boolean                                                                               | Disables mouse clicks.                                  |
-| `color`                      | String (one of ["default", "default-light", "gruvbox", "gruvbox-light"])              | Use a color scheme, use --help for supported values.    |
-| `mem_as_value`               | Boolean                                                                               | Defaults to showing process memory usage by value.      |
-| `tree`                       | Boolean                                                                               | Defaults to showing the process widget in tree mode.    |
-| `show_table_scroll_position` | Boolean                                                                               | Shows the scroll position tracker in table widgets.     |
-| `process_command`            | Boolean                                                                               | Show processes as their commands by default.            |
+| Field                        | Type                                                                                           | Functionality                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `hide_avg_cpu`               | Boolean                                                                                        | Hides the average CPU usage.                            |
+| `dot_marker`                 | Boolean                                                                                        | Uses a dot marker for graphs.                           |
+| `left_legend`                | Boolean                                                                                        | Puts the CPU chart legend to the left side.             |
+| `current_usage`              | Boolean                                                                                        | Sets process CPU% to be based on current CPU%.          |
+| `group_processes`            | Boolean                                                                                        | Groups processes with the same name by default.         |
+| `case_sensitive`             | Boolean                                                                                        | Enables case sensitivity by default.                    |
+| `whole_word`                 | Boolean                                                                                        | Enables whole-word matching by default.                 |
+| `regex`                      | Boolean                                                                                        | Enables regex by default.                               |
+| `basic`                      | Boolean                                                                                        | Hides graphs and uses a more basic look.                |
+| `use_old_network_legend`     | Boolean                                                                                        | DEPRECATED - uses the older network legend.             |
+| `battery`                    | Boolean                                                                                        | Shows the battery widget.                               |
+| `rate`                       | Unsigned Int (represents milliseconds)                                                         | Sets a refresh rate in ms.                              |
+| `default_time_value`         | Unsigned Int (represents milliseconds)                                                         | Default time value for graphs in ms.                    |
+| `time_delta`                 | Unsigned Int (represents milliseconds)                                                         | The amount in ms changed upon zooming.                  |
+| `temperature_type`           | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                             | Sets the temperature unit type.                         |
+| `default_widget_type`        | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options)          | Sets the default widget type, use --help for more info. |
+| `default_widget_count`       | Unsigned Int (represents which `default_widget_type`)                                          | Sets the n'th selected widget type as the default.      |
+| `disable_click`              | Boolean                                                                                        | Disables mouse clicks.                                  |
+| `color`                      | String (one of ["default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"]) | Use a color scheme, use --help for supported values.    |
+| `mem_as_value`               | Boolean                                                                                        | Defaults to showing process memory usage by value.      |
+| `tree`                       | Boolean                                                                                        | Defaults to showing the process widget in tree mode.    |
+| `show_table_scroll_position` | Boolean                                                                                        | Shows the scroll position tracker in table widgets.     |
+| `process_command`            | Boolean                                                                                        | Show processes as their commands by default.            |
 
 #### Theming
 

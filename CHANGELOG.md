@@ -9,13 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Features
 
+- [#263](https://github.com/ClementTsang/bottom/pull/263): Adds the option for fine-grained kill signals on Unix-like systems.
+
 - [#333](https://github.com/ClementTsang/bottom/pull/333): Adds an "out of" indicator that can be enabled using `--show_table_scroll_position` (and its corresponding config option) to help keep track of scrolled position.
 
 - [#379](https://github.com/ClementTsang/bottom/pull/379): Adds `--process_command` flag and corresponding config option to default to showing a process' command.
 
 - [#381](https://github.com/ClementTsang/bottom/pull/381): Adds a filter in the config file for network interfaces.
 
-## [0.5.8] - Unreleased
+- [#406](https://github.com/ClementTsang/bottom/pull/406): Adds the Nord colour scheme, as well as a light variant.
 
 ## Changes
 

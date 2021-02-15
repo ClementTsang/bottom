@@ -27,7 +27,11 @@ impl Process {
     }
 
     fn kill(self) -> Result<(), String> {
-        unsafe { TerminateProcess(self.0, 1) };
+        let result = unsafe { TerminateProcess(self.0, 1) };
+        if result == 0 {
+            return Err("Failed to kill process".to_string());
+        }
+
         Ok(())
     }
 }

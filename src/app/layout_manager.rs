@@ -12,20 +12,24 @@ pub struct BottomLayout {
     pub total_row_height_ratio: u32,
 }
 
-type WidgetMappings = (u32, BTreeMap<(u32, u32), u64>);
-type ColumnRowMappings = (u32, BTreeMap<(u32, u32), WidgetMappings>);
-type ColumnMappings = (u32, BTreeMap<(u32, u32), ColumnRowMappings>);
+// Represents a start and end coordinate in some dimension.
+type LineSegment = (u32, u32);
+
+type WidgetMappings = (u32, BTreeMap<LineSegment, u64>);
+type ColumnRowMappings = (u32, BTreeMap<LineSegment, WidgetMappings>);
+type ColumnMappings = (u32, BTreeMap<LineSegment, ColumnRowMappings>);
 
 impl BottomLayout {
     pub fn get_movement_mappings(&mut self) {
-        fn is_intersecting(a: (u32, u32), b: (u32, u32)) -> bool {
+        #[allow(clippy::suspicious_operation_groupings)] // Have to enable this, clippy really doesn't like me doing this with tuples...
+        fn is_intersecting(a: LineSegment, b: LineSegment) -> bool {
             a.0 >= b.0 && a.1 <= b.1
                 || a.1 >= b.1 && a.0 <= b.0
                 || a.0 <= b.0 && a.1 >= b.0
                 || a.0 >= b.0 && a.0 < b.1 && a.1 >= b.1
         }
 
-        fn get_distance(target: (u32, u32), candidate: (u32, u32)) -> u32 {
+        fn get_distance(target: LineSegment, candidate: LineSegment) -> u32 {
             if candidate.0 < target.0 {
                 candidate.1 - target.0
             } else if candidate.1 < target.1 {
@@ -38,20 +42,20 @@ impl BottomLayout {
         // Now we need to create the correct mapping for moving from a specific
         // widget to another
 
-        let mut layout_mapping: BTreeMap<(u32, u32), ColumnMappings> = BTreeMap::new();
+        let mut layout_mapping: BTreeMap<LineSegment, ColumnMappings> = BTreeMap::new();
         let mut total_height = 0;
         for row in &self.rows {
             let mut row_width = 0;
-            let mut row_mapping: BTreeMap<(u32, u32), ColumnRowMappings> = BTreeMap::new();
+            let mut row_mapping: BTreeMap<LineSegment, ColumnRowMappings> = BTreeMap::new();
             let mut is_valid_row = false;
             for col in &row.children {
                 let mut col_row_height = 0;
-                let mut col_mapping: BTreeMap<(u32, u32), WidgetMappings> = BTreeMap::new();
+                let mut col_mapping: BTreeMap<LineSegment, WidgetMappings> = BTreeMap::new();
                 let mut is_valid_col = false;
 
                 for col_row in &col.children {
                     let mut widget_width = 0;
-                    let mut col_row_mapping: BTreeMap<(u32, u32), u64> = BTreeMap::new();
+                    let mut col_row_mapping: BTreeMap<LineSegment, u64> = BTreeMap::new();
                     let mut is_valid_col_row = false;
                     for widget in &col_row.children {
                         match widget.widget_type {
