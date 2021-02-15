@@ -231,11 +231,22 @@ Use a pre-defined color scheme.  Currently supported values are:
 +------------------------------------------------------------+
 | gruvbox-light (gruvbox but for use with light backgrounds) |
 +------------------------------------------------------------+
+| nord (an arctic, north-bluish color palette)               |
++------------------------------------------------------------+
+| nord-light (nord but for use with light backgrounds)       |
++------------------------------------------------------------+
 
 Defaults to \"default\".
 \n\n",
         )
-        .possible_values(&["default", "default-light", "gruvbox", "gruvbox-light"])
+        .possible_values(&[
+            "default",
+            "default-light",
+            "gruvbox",
+            "gruvbox-light",
+            "nord",
+            "nord-light",
+        ])
         .hide_possible_values(true);
     let mem_as_value = Arg::with_name("mem_as_value")
         .long("mem_as_value")

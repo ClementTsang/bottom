@@ -45,6 +45,7 @@ pub static DEFAULT_LIGHT_MODE_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(||
     disabled_text_color: Some("gray".to_string()),
     ..ConfigColours::default()
 });
+
 pub static GRUVBOX_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {
     table_header_color: Some("#83a598".to_string()),
     all_cpu_color: Some("#8ec07c".to_string()),
@@ -89,6 +90,7 @@ pub static GRUVBOX_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColo
     medium_battery_color: Some("#fabd2f".to_string()),
     low_battery_color: Some("#fb4934".to_string()),
 });
+
 pub static GRUVBOX_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {
     table_header_color: Some("#076678".to_string()),
     all_cpu_color: Some("#8ec07c".to_string()),
@@ -132,6 +134,72 @@ pub static GRUVBOX_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| Conf
     high_battery_color: Some("#98971a".to_string()),
     medium_battery_color: Some("#d79921".to_string()),
     low_battery_color: Some("#cc241d".to_string()),
+});
+
+pub static NORD_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {
+    table_header_color: Some("#81a1c1".to_string()),
+    all_cpu_color: Some("#88c0d0".to_string()),
+    avg_cpu_color: Some("#8fbcbb".to_string()),
+    cpu_core_colors: Some(vec![
+        "#5e81ac".to_string(),
+        "#81a1c1".to_string(),
+        "#d8dee9".to_string(),
+        "#b48ead".to_string(),
+        "#a3be8c".to_string(),
+        "#ebcb8b".to_string(),
+        "#d08770".to_string(),
+        "#bf616a".to_string(),
+    ]),
+    ram_color: Some("#88c0d0".to_string()),
+    swap_color: Some("#d08770".to_string()),
+    rx_color: Some("#88c0d0".to_string()),
+    tx_color: Some("#d08770".to_string()),
+    rx_total_color: Some("#5e81ac".to_string()),
+    tx_total_color: Some("#8fbcbb".to_string()),
+    border_color: Some("#e5e9f0".to_string()),
+    highlighted_border_color: Some("#88c0d0".to_string()),
+    disabled_text_color: Some("#4c566a".to_string()),
+    text_color: Some("#e5e9f0".to_string()),
+    selected_text_color: Some("#2e3440".to_string()),
+    selected_bg_color: Some("#88c0d0".to_string()),
+    widget_title_color: Some("#e5e9f0".to_string()),
+    graph_color: Some("#e5e9f0".to_string()),
+    high_battery_color: Some("#a3be8c".to_string()),
+    medium_battery_color: Some("#ebcb8b".to_string()),
+    low_battery_color: Some("#bf616a".to_string()),
+});
+
+pub static NORD_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {
+    table_header_color: Some("#5e81ac".to_string()),
+    all_cpu_color: Some("#81a1c1".to_string()),
+    avg_cpu_color: Some("#8fbcbb".to_string()),
+    cpu_core_colors: Some(vec![
+        "#5e81ac".to_string(),
+        "#88c0d0".to_string(),
+        "#4c566a".to_string(),
+        "#b48ead".to_string(),
+        "#a3be8c".to_string(),
+        "#ebcb8b".to_string(),
+        "#d08770".to_string(),
+        "#bf616a".to_string(),
+    ]),
+    ram_color: Some("#81a1c1".to_string()),
+    swap_color: Some("#d08770".to_string()),
+    rx_color: Some("#81a1c1".to_string()),
+    tx_color: Some("#d08770".to_string()),
+    rx_total_color: Some("#5e81ac".to_string()),
+    tx_total_color: Some("#8fbcbb".to_string()),
+    border_color: Some("#2e3440".to_string()),
+    highlighted_border_color: Some("#5e81ac".to_string()),
+    disabled_text_color: Some("#d8dee9".to_string()),
+    text_color: Some("#2e3440".to_string()),
+    selected_text_color: Some("#f5f5f5".to_string()),
+    selected_bg_color: Some("#5e81ac".to_string()),
+    widget_title_color: Some("#2e3440".to_string()),
+    graph_color: Some("#2e3440".to_string()),
+    high_battery_color: Some("#a3be8c".to_string()),
+    medium_battery_color: Some("#ebcb8b".to_string()),
+    low_battery_color: Some("#bf616a".to_string()),
 });
 
 // Help text
