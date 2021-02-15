@@ -625,34 +625,33 @@ impl Prefix {
                 is_ignoring_case,
                 is_searching_with_regex,
             );
-        } else if let Some((prefix_type, query_content)) = &mut self.regex_prefix {
-            if let StringQuery::Value(regex_string) = query_content {
-                match prefix_type {
-                    PrefixType::Pid | PrefixType::Name | PrefixType::State => {
-                        let escaped_regex: String;
-                        let final_regex_string = &format!(
-                            "{}{}{}{}",
-                            if is_searching_whole_word { "^" } else { "" },
-                            if is_ignoring_case { "(?i)" } else { "" },
-                            if !is_searching_with_regex {
-                                escaped_regex = regex::escape(regex_string);
-                                &escaped_regex
-                            } else {
-                                regex_string
-                            },
-                            if is_searching_whole_word { "$" } else { "" },
-                        );
+        } else if let Some((prefix_type, StringQuery::Value(regex_string))) = &mut self.regex_prefix
+        {
+            match prefix_type {
+                PrefixType::Pid | PrefixType::Name | PrefixType::State => {
+                    let escaped_regex: String;
+                    let final_regex_string = &format!(
+                        "{}{}{}{}",
+                        if is_searching_whole_word { "^" } else { "" },
+                        if is_ignoring_case { "(?i)" } else { "" },
+                        if !is_searching_with_regex {
+                            escaped_regex = regex::escape(regex_string);
+                            &escaped_regex
+                        } else {
+                            regex_string
+                        },
+                        if is_searching_whole_word { "$" } else { "" },
+                    );
 
-                        let taken_pwc = self.regex_prefix.take();
-                        if let Some((taken_pt, _)) = taken_pwc {
-                            self.regex_prefix = Some((
-                                taken_pt,
-                                StringQuery::Regex(regex::Regex::new(final_regex_string)?),
-                            ));
-                        }
+                    let taken_pwc = self.regex_prefix.take();
+                    if let Some((taken_pt, _)) = taken_pwc {
+                        self.regex_prefix = Some((
+                            taken_pt,
+                            StringQuery::Regex(regex::Regex::new(final_regex_string)?),
+                        ));
                     }
-                    _ => {}
                 }
+                _ => {}
             }
         }
 
