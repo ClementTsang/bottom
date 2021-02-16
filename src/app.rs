@@ -725,17 +725,22 @@ impl App {
                                 .current_search_query
                                 .len()
                     {
+                        let current_cursor = proc_widget_state.get_search_cursor_position();
                         proc_widget_state
+                            .search_walk_forward(proc_widget_state.get_search_cursor_position());
+
+                        let _removed_chars: String = proc_widget_state
                             .process_search_state
                             .search_state
                             .current_search_query
-                            .remove(proc_widget_state.get_search_cursor_position());
+                            .drain(current_cursor..proc_widget_state.get_search_cursor_position())
+                            .collect();
 
                         proc_widget_state
                             .process_search_state
                             .search_state
                             .grapheme_cursor = GraphemeCursor::new(
-                            proc_widget_state.get_search_cursor_position(),
+                            current_cursor,
                             proc_widget_state
                                 .process_search_state
                                 .search_state
@@ -769,14 +774,16 @@ impl App {
                         .is_enabled
                     && proc_widget_state.get_search_cursor_position() > 0
                 {
+                    let current_cursor = proc_widget_state.get_search_cursor_position();
                     proc_widget_state
                         .search_walk_back(proc_widget_state.get_search_cursor_position());
 
-                    let removed_char = proc_widget_state
+                    let removed_chars: String = proc_widget_state
                         .process_search_state
                         .search_state
                         .current_search_query
-                        .remove(proc_widget_state.get_search_cursor_position());
+                        .drain(proc_widget_state.get_search_cursor_position()..current_cursor)
+                        .collect();
 
                     proc_widget_state
                         .process_search_state
@@ -794,7 +801,8 @@ impl App {
                     proc_widget_state
                         .process_search_state
                         .search_state
-                        .char_cursor_position -= UnicodeWidthChar::width(removed_char).unwrap_or(0);
+                        .char_cursor_position -= UnicodeWidthStr::width(removed_chars.as_str());
+
                     proc_widget_state
                         .process_search_state
                         .search_state
@@ -1162,6 +1170,31 @@ impl App {
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
                 proc_widget_state.clear_search();
+                self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
+            }
+        }
+    }
+
+    pub fn clear_previous_word(&mut self) {
+        if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
+            if let Some(proc_widget_state) = self
+                .proc_state
+                .widget_states
+                .get_mut(&(self.current_widget.widget_id - 1))
+            {
+                // Traverse backwards from the current cursor location until you hit non-whitespace characters,
+                // then continue to traverse (and delete) backwards until you hit a whitespace character.  Halt.
+
+                // So... first, let's get our current cursor position using graphemes...
+                let end_range = proc_widget_state.get_search_cursor_position();
+
+                // Then, let's crawl backwards until we hit our location, and store the "head"...
+                proc_widget_state.search_walk_back(proc_widget_state.get_search_cursor_position());
+
+                // Now, convert this range into a String-friendly range and remove it all at once!
+
+                // Now make sure to also update our current cursor positions...
+
                 self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
             }
         }
