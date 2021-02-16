@@ -157,6 +157,8 @@ pub fn handle_key_event_or_break(
                 KeyCode::Char('a') => app.skip_cursor_beginning(),
                 KeyCode::Char('e') => app.skip_cursor_end(),
                 KeyCode::Char('u') => app.clear_search(),
+                KeyCode::Char('w') => app.clear_previous_word(),
+                KeyCode::Char('h') => app.on_backspace(),
                 // KeyCode::Char('j') => {}, // Move down
                 // KeyCode::Char('k') => {}, // Move up
                 // KeyCode::Char('h') => {}, // Move right

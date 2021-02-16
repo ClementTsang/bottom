@@ -549,7 +549,7 @@ impl ProcessTableWidget for Painter {
                     })
                     .collect::<Vec<_>>();
 
-                if cursor_position >= query.len() {
+                if cursor_position == query.len() {
                     res.push(Span::styled(" ", currently_selected_text_style))
                 }
 
@@ -558,17 +558,7 @@ impl ProcessTableWidget for Painter {
                 // This is easier - we just need to get a range of graphemes, rather than
                 // dealing with possibly inserting a cursor (as none is shown!)
 
-                grapheme_indices
-                    .filter_map(|grapheme| {
-                        current_grapheme_posn += UnicodeWidthStr::width(grapheme.1);
-                        if current_grapheme_posn <= start_position {
-                            None
-                        } else {
-                            let styled = Span::styled(grapheme.1, text_style);
-                            Some(styled)
-                        }
-                    })
-                    .collect::<Vec<_>>()
+                vec![Span::styled(query.to_string(), text_style)]
             }
         }
 
@@ -622,6 +612,7 @@ impl ProcessTableWidget for Painter {
                     },
                 )];
                 search_vec.extend(query_with_cursor);
+
                 search_vec
             })];
 
