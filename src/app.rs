@@ -861,9 +861,9 @@ impl App {
             #[cfg(target_family = "unix")]
             {
                 if self.app_config_fields.is_advanced_kill {
-                    self.on_right_key();
-                } else {
                     self.on_left_key();
+                } else {
+                    self.on_right_key();
                 }
             }
             return;
@@ -883,9 +883,9 @@ impl App {
             #[cfg(target_family = "unix")]
             {
                 if self.app_config_fields.is_advanced_kill {
-                    self.on_left_key();
-                } else {
                     self.on_right_key();
+                } else {
+                    self.on_left_key();
                 }
             }
             return;
