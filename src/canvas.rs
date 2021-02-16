@@ -381,15 +381,15 @@ impl Painter {
                 } else {
                     terminal_width * 50 / 100
                 };
-                let text_height;
-                #[cfg(target_family = "unix")]
+
+                let text_height = if cfg!(target_os = "windows")
+                    || !app_state.app_config_fields.is_advanced_kill
                 {
-                    text_height = 22;
-                }
-                #[cfg(target_os = "windows")]
-                {
-                    text_height = 7;
-                }
+                    7
+                } else {
+                    22
+                };
+
                 // let (text_width, text_height) = if let Some(dd_text) = &dd_text {
                 //     let width = if current_width < 100 {
                 //         current_width * 90 / 100

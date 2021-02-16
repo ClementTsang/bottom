@@ -263,6 +263,7 @@ pub fn build_app(
     let show_memory_as_values = get_mem_as_value(matches, config);
     let is_default_tree = get_is_default_tree(matches, config);
     let is_default_command = get_is_default_process_command(matches, config);
+    let is_advanced_kill = get_is_using_advanced_kill(matches, config);
 
     for row in &widget_layout.rows {
         for col in &row.children {
@@ -402,6 +403,7 @@ pub fn build_app(
         // no_write: get_no_write(matches, config),
         no_write: false,
         show_table_scroll_position: get_show_table_scroll_position(matches, config),
+        is_advanced_kill,
     };
 
     let used_widgets = UsedWidgets {
@@ -1014,6 +1016,17 @@ fn get_is_default_process_command(matches: &clap::ArgMatches<'static>, config: &
     } else if let Some(flags) = &config.flags {
         if let Some(process_command) = flags.process_command {
             return process_command;
+        }
+    }
+    false
+}
+
+fn get_is_using_advanced_kill(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("advanced_kill") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(advanced_kill) = flags.advanced_kill {
+            return advanced_kill;
         }
     }
     false

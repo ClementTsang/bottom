@@ -54,6 +54,7 @@ pub struct AppConfigFields {
     pub disable_click: bool,
     pub no_write: bool,
     pub show_table_scroll_position: bool,
+    pub is_advanced_kill: bool,
 }
 
 /// For filtering out information
@@ -884,20 +885,6 @@ impl App {
         if self.is_config_open {
         } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
-                BottomWidgetType::Proc => {
-                    // if let Some(proc_widget_state) = self
-                    //     .proc_state
-                    //     .get_mut_widget_state(self.current_widget.widget_id)
-                    // {
-                    //     proc_widget_state.current_column_index =
-                    //         proc_widget_state.current_column_index.saturating_sub(1);
-
-                    //     debug!(
-                    //         "Current column index <: {}",
-                    //         proc_widget_state.current_column_index
-                    //     );
-                    // }
-                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
@@ -943,17 +930,21 @@ impl App {
         } else if self.delete_dialog_state.is_showing_dd {
             #[cfg(target_family = "unix")]
             {
-                match self.delete_dialog_state.selected_signal {
-                    KillSignal::KILL(prev_signal) => {
-                        self.delete_dialog_state.selected_signal = match prev_signal - 1 {
-                            0 => KillSignal::CANCEL,
-                            // 32+33 are skipped
-                            33 => KillSignal::KILL(31),
-                            signal => KillSignal::KILL(signal),
-                        };
-                    }
-                    KillSignal::CANCEL => (),
-                };
+                if self.app_config_fields.is_advanced_kill {
+                    match self.delete_dialog_state.selected_signal {
+                        KillSignal::KILL(prev_signal) => {
+                            self.delete_dialog_state.selected_signal = match prev_signal - 1 {
+                                0 => KillSignal::CANCEL,
+                                // 32+33 are skipped
+                                33 => KillSignal::KILL(31),
+                                signal => KillSignal::KILL(signal),
+                            };
+                        }
+                        KillSignal::CANCEL => {}
+                    };
+                } else {
+                    self.delete_dialog_state.selected_signal = KillSignal::default();
+                }
             }
             #[cfg(target_os = "windows")]
             {
@@ -966,22 +957,6 @@ impl App {
         if self.is_config_open {
         } else if !self.is_in_dialog() {
             match self.current_widget.widget_type {
-                BottomWidgetType::Proc => {
-                    // if let Some(proc_widget_state) = self
-                    //     .proc_state
-                    //     .get_mut_widget_state(self.current_widget.widget_id)
-                    // {
-                    //     if proc_widget_state.current_column_index
-                    //         < proc_widget_state.columns.get_enabled_columns()
-                    //     {
-                    //         proc_widget_state.current_column_index += 1;
-                    //     }
-                    //     debug!(
-                    //         "Current column index >: {}",
-                    //         proc_widget_state.current_column_index
-                    //     );
-                    // }
-                }
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
                     if let Some(proc_widget_state) = self
@@ -1031,17 +1006,21 @@ impl App {
         } else if self.delete_dialog_state.is_showing_dd {
             #[cfg(target_family = "unix")]
             {
-                let new_signal = match self.delete_dialog_state.selected_signal {
-                    KillSignal::CANCEL => 1,
-                    // 32+33 are skipped
-                    #[cfg(target_os = "linux")]
-                    KillSignal::KILL(31) => 34,
-                    #[cfg(target_os = "macos")]
-                    KillSignal::KILL(31) => 31,
-                    KillSignal::KILL(64) => 64,
-                    KillSignal::KILL(signal) => signal + 1,
-                };
-                self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
+                if self.app_config_fields.is_advanced_kill {
+                    let new_signal = match self.delete_dialog_state.selected_signal {
+                        KillSignal::CANCEL => 1,
+                        // 32+33 are skipped
+                        #[cfg(target_os = "linux")]
+                        KillSignal::KILL(31) => 34,
+                        #[cfg(target_os = "macos")]
+                        KillSignal::KILL(31) => 31,
+                        KillSignal::KILL(64) => 64,
+                        KillSignal::KILL(signal) => signal + 1,
+                    };
+                    self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
+                } else {
+                    self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+                }
             }
             #[cfg(target_os = "windows")]
             {
