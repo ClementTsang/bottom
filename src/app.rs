@@ -859,7 +859,13 @@ impl App {
             #[cfg(target_os = "windows")]
             self.on_right_key();
             #[cfg(target_family = "unix")]
-            self.on_left_key();
+            {
+                if self.app_config_fields.is_advanced_kill {
+                    self.on_right_key();
+                } else {
+                    self.on_left_key();
+                }
+            }
             return;
         }
         self.reset_multi_tap_keys();
@@ -875,7 +881,13 @@ impl App {
             #[cfg(target_os = "windows")]
             self.on_left_key();
             #[cfg(target_family = "unix")]
-            self.on_right_key();
+            {
+                if self.app_config_fields.is_advanced_kill {
+                    self.on_left_key();
+                } else {
+                    self.on_right_key();
+                }
+            }
             return;
         }
         self.reset_multi_tap_keys();
