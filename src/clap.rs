@@ -106,6 +106,7 @@ rather than total CPU usage.\n\n",
             "\
 Disables mouse clicks from interacting with the program.\n\n",
         );
+
     let dot_marker = Arg::with_name("dot_marker")
         .short("m")
         .long("dot_marker")
@@ -115,6 +116,7 @@ Disables mouse clicks from interacting with the program.\n\n",
 Uses a dot marker for graphs as opposed to the default braille
 marker.\n\n",
         );
+
     let group = Arg::with_name("group") // FIXME: Rename this to something like "group_process", would be "breaking" though.
         .short("g")
         .long("group")
@@ -123,6 +125,7 @@ marker.\n\n",
             "\
 Groups processes with the same name by default.\n\n",
         );
+
     let hide_avg_cpu = Arg::with_name("hide_avg_cpu")
         .short("a")
         .long("hide_avg_cpu")
@@ -131,6 +134,7 @@ Groups processes with the same name by default.\n\n",
             "\
 Hides the average CPU usage from being shown.\n\n",
         );
+
     let hide_table_gap = Arg::with_name("hide_table_gap")
         .long("hide_table_gap")
         .help("Hides the spacing between table headers and entries.")
@@ -138,6 +142,7 @@ Hides the average CPU usage from being shown.\n\n",
             "\
 Hides the spacing between table headers and entries.\n\n",
         );
+
     let hide_time = Arg::with_name("hide_time")
         .long("hide_time")
         .help("Completely hides the time scaling.")
@@ -145,6 +150,7 @@ Hides the spacing between table headers and entries.\n\n",
             "\
 Completely hides the time scaling from being shown.\n\n",
         );
+
     let process_command = Arg::with_name("process_command")
         .long("process_command")
         .help("Show processes as their commands by default.")
@@ -153,6 +159,7 @@ Completely hides the time scaling from being shown.\n\n",
             Show processes as their commands by default in the process widget.
             ",
         );
+
     let left_legend = Arg::with_name("left_legend")
         .short("l")
         .long("left_legend")
@@ -161,6 +168,7 @@ Completely hides the time scaling from being shown.\n\n",
             "\
 Puts the CPU chart legend to the left side rather than the right side.\n\n",
         );
+
     //     let no_write = Arg::with_name("no_write")
     //         .long("no_write")
     //         .help("Disables writing to the config file.")
@@ -168,6 +176,7 @@ Puts the CPU chart legend to the left side rather than the right side.\n\n",
     //             "\
     // Disables config changes in-app from writing to the config file.",
     //         );
+
     let regex = Arg::with_name("regex")
         .short("R")
         .long("regex")
@@ -176,6 +185,15 @@ Puts the CPU chart legend to the left side rather than the right side.\n\n",
             "\
 When searching for a process, enables regex by default.\n\n",
         );
+
+    let advanced_kill = Arg::with_name("advanced_kill")
+        .long("advanced_kill")
+        .help("Shows more options when killing a process on Unix-like systems.")
+        .long_help(
+            "\
+Shows more options when killing a process on Unix-like systems.\n\n",
+        );
+
     let show_table_scroll_position = Arg::with_name("show_table_scroll_position")
         .long("show_table_scroll_position")
         .help("Shows the scroll position tracker in table widgets.")
@@ -183,6 +201,7 @@ When searching for a process, enables regex by default.\n\n",
             "\
     Shows the list scroll position tracker in the widget title for table widgets.\n\n",
         );
+
     let use_old_network_legend = Arg::with_name("use_old_network_legend")
         .long("use_old_network_legend")
         .help("DEPRECATED - uses the older network legend.")
@@ -191,6 +210,7 @@ When searching for a process, enables regex by default.\n\n",
 DEPRECATED - uses the older (pre-0.4) network widget legend.
 This display is not tested anymore and could be broken.\n\n\n",
         );
+
     let whole_word = Arg::with_name("whole_word")
         .short("W")
         .long("whole_word")
@@ -396,6 +416,7 @@ Defaults to showing the process widget in tree mode.\n\n",
         .arg(hide_time)
         .arg(show_table_scroll_position)
         .arg(left_legend)
+        .arg(advanced_kill)
         // .arg(no_write)
         .arg(rate)
         .arg(regex)
