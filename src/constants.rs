@@ -271,13 +271,15 @@ pub const PROCESS_HELP_TEXT: [&str; 14] = [
     "+, -, click      Collapse/expand a branch while in tree mode",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 46] = [
+pub const SEARCH_HELP_TEXT: [&str; 48] = [
     "4 - Process search widget",
     "Tab              Toggle between searching for PID and name",
     "Esc              Close the search widget (retains the filter)",
     "Ctrl-a           Skip to the start of the search query",
     "Ctrl-e           Skip to the end of the search query",
     "Ctrl-u           Clear the current search query",
+    "Ctrl-w           Delete a word behind the cursor",
+    "Ctrl-h           Delete the character behind the cursor",
     "Backspace        Delete the character behind the cursor",
     "Delete           Delete the character at the cursor",
     "Alt-c, F1        Toggle matching case",

@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#406](https://github.com/ClementTsang/bottom/pull/406): Adds the Nord colour scheme, as well as a light variant.
 
+- [#409](https://github.com/ClementTsang/bottom/pull/409): Adds `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.
+
 ## Changes
 
 - [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.

@@ -333,6 +333,8 @@ Use `btm --help` for more information.
 | `Ctrl-a`      | Skip to the start of the search query        |
 | `Ctrl-e`      | Skip to the end of the search query          |
 | `Ctrl-u`      | Clear the current search query               |
+| `Ctrl-w`      | Delete a word behind the cursor              |
+| `Ctrl-h`      | Delete the character behind the cursor       |
 | `Backspace`   | Delete the character behind the cursor       |
 | `Delete`      | Delete the character at the cursor           |
 | `Alt-c`, `F1` | Toggle matching case                         |
