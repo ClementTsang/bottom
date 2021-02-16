@@ -1186,10 +1186,61 @@ impl App {
                 // then continue to traverse (and delete) backwards until you hit a whitespace character.  Halt.
 
                 // So... first, let's get our current cursor position using graphemes...
-                let end_range = proc_widget_state.get_search_cursor_position();
+                let end_index = proc_widget_state.get_char_cursor_position();
 
                 // Then, let's crawl backwards until we hit our location, and store the "head"...
-                proc_widget_state.search_walk_back(proc_widget_state.get_search_cursor_position());
+                let query = proc_widget_state.get_current_search_query();
+                let mut start_index = 0;
+                let mut saw_non_whitespace = false;
+
+                for (itx, c) in query
+                    .chars()
+                    .rev()
+                    .enumerate()
+                    .skip(query.len() - end_index)
+                {
+                    if c.is_whitespace() {
+                        if saw_non_whitespace {
+                            start_index = query.len() - itx;
+                            break;
+                        }
+                    } else {
+                        saw_non_whitespace = true;
+                    }
+                }
+
+                let removed_chars: String = proc_widget_state
+                    .process_search_state
+                    .search_state
+                    .current_search_query
+                    .drain(start_index..end_index)
+                    .collect();
+
+                proc_widget_state
+                    .process_search_state
+                    .search_state
+                    .grapheme_cursor = GraphemeCursor::new(
+                    start_index,
+                    proc_widget_state
+                        .process_search_state
+                        .search_state
+                        .current_search_query
+                        .len(),
+                    true,
+                );
+
+                proc_widget_state
+                    .process_search_state
+                    .search_state
+                    .char_cursor_position -= UnicodeWidthStr::width(removed_chars.as_str());
+
+                proc_widget_state
+                    .process_search_state
+                    .search_state
+                    .cursor_direction = CursorDirection::Left;
+
+                proc_widget_state.update_query();
+                self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
 
                 // Now, convert this range into a String-friendly range and remove it all at once!
 
