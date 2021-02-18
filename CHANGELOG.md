@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#409](https://github.com/ClementTsang/bottom/pull/409): Adds `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.
 
+- [#413](https://github.com/ClementTsang/bottom/pull/413): Adds mouse support for sorting process columns.
+
 ## Changes
 
 - [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.

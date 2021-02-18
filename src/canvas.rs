@@ -327,12 +327,18 @@ impl Painter {
                     widget.bottom_right_corner = None;
                 }
 
-                // And reset dd_dialog...
+                // Reset dd_dialog...
                 app_state.delete_dialog_state.button_positions = vec![];
 
-                // And battery dialog...
+                // Reset battery dialog...
                 for battery_widget in app_state.battery_state.widget_states.values_mut() {
                     battery_widget.tab_click_locs = None;
+                }
+
+                // Reset column headers for sorting in process widget...
+                for proc_widget in app_state.proc_state.widget_states.values_mut() {
+                    proc_widget.columns.column_header_y_loc = None;
+                    proc_widget.columns.column_header_x_locs = None;
                 }
             }
 
