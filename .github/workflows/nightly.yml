@@ -1,0 +1,210 @@
+# Creates nightly deployment builds for main targets.  Note this does not cover package distribution channels,
+# such as choco, AUR, Homebrew, etc.
+
+name: deployment
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    name: build-release
+    needs: [create-github-release]
+    runs-on: ${{ matrix.triple.os }}
+    env:
+      RUST_BACKTRACE: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        triple:
+          # Standard x86-64 stuff, stable
+          - {
+              os: "ubuntu-16.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+            }
+          - {
+              os: "ubuntu-16.04",
+              target: "i686-unknown-linux-gnu",
+              cross: true,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-musl",
+              cross: false,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "i686-unknown-linux-musl",
+              cross: true,
+            }
+          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+            }
+          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: true }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-gnu",
+              cross: false,
+            }
+
+          # aarch64
+          - {
+              os: "ubuntu-18.04",
+              target: "aarch64-unknown-linux-gnu",
+              cross: true,
+            }
+
+          # armv7
+          - {
+              os: "ubuntu-18.04",
+              target: "armv7-unknown-linux-gnueabihf",
+              cross: true,
+            }
+
+          # PowerPC 64 LE
+          - {
+              os: "ubuntu-18.04",
+              target: "powerpc64le-unknown-linux-gnu",
+              cross: true,
+            }
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Set release upload URL and release version
+        shell: bash
+        run: |
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Install Net-Framework-Core (Windows x86-64 MSVC)
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
+        shell: powershell
+        run: Install-WindowsFeature Net-Framework-Core
+
+      - name: Install wixtoolset (Windows x86-64 MSVC)
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with:
+          args: install -y wixtoolset
+
+      - name: Install zip (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with:
+          args: install -y zip
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: ${{ matrix.triple.target }}
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --verbose --target=${{ matrix.triple.target }} --no-default-features
+          use-cross: ${{ matrix.triple.cross }}
+
+      - name: Move autocomplete to working directory
+        shell: bash
+        run: |
+          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out completion
+
+      - name: Strip release binary (Windows x86-64/i686)
+        if: matrix.triple.os == 'windows-2019' && matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+        run: |
+          strip target/${{ matrix.triple.target }}/release/btm.exe
+
+      - name: Strip release binary (macOS or Linux x86-64/i686)
+        if: matrix.triple.os != 'windows-2019' && matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+        run: |
+          strip target/${{ matrix.triple.target }}/release/btm
+
+      # TODO: Strip ARM
+
+      - name: Bundle release and completion (Windows)
+        if: matrix.triple.os == 'windows-2019'
+        shell: bash
+        run: |
+          cp target/${{ matrix.triple.target }}/release/btm.exe btm.exe
+          zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe" "completion"
+          echo "ASSET=bottom_${{ matrix.triple.target }}.zip" >> $GITHUB_ENV
+
+      - name: Bundle release and completion (Linux and macOS)
+        if: matrix.triple.os != 'windows-2019'
+        shell: bash
+        run: |
+          cp target/${{ matrix.triple.target }}/release/btm ./btm
+          tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.triple.target }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload main release
+        uses: actions/upload-release-asset@v1.0.1
+        id: upload
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: ${{ env.ASSET }}
+          asset_name: ${{ env.ASSET }}
+          asset_content_type: application/octet-stream
+
+      - name: Add download asset to artifact if required
+        if: matrix.triple.target == 'x86_64-unknown-linux-musl' || matrix.triple.target == 'x86_64-pc-windows-msvc' || matrix.triple.target == 'i686-pc-windows-msvc' || matrix.triple.target == 'x86_64-apple-darwin'
+        run: cp ${{ env.ASSET }} artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Build msi file (Windows x86-64 MSVC)
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
+        shell: powershell
+        run: |
+          cargo install cargo-wix
+          cargo wix init
+          cargo wix
+
+      - name: Upload msi file (Windows x86-64 MSVC)
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom_x86_64_installer.msi
+          asset_name: bottom_x86_64_installer.msi
+          asset_content_type: application/octet-stream
+
+      - name: Build Debian release (Linux x86-64 GNU)
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          cargo install cargo-deb
+          cargo deb
+          cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+
+      - name: Upload Debian file (Linux x86-64 GNU)
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          asset_content_type: application/octet-stream
