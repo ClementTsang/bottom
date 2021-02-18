@@ -16,9 +16,9 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
-      - name: Create GitHub release
+      - name: Create/recreate nightly GitHub release
         id: release
-        uses: GongT/actions-recreate-release@v1
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
