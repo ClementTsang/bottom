@@ -445,9 +445,10 @@ Note that the `and` operator takes precedence over the `or` operator.
 
 #### Process bindings
 
-|       |                                                                                                     |
-| ----- | --------------------------------------------------------------------------------------------------- |
-| Click | If in tree mode and you click on a selected entry, it toggles whether the branch is expanded or not |
+|                        |                                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| Click on process entry | If in tree mode and you click on a selected entry, it toggles whether the branch is expanded or not |
+| Click on table header  | Sorts the widget by that column, or inverts the sort if already selected                            |
 
 ## Features
 
