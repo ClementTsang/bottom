@@ -118,11 +118,26 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: actions/setup-python@v2
+
+      - name: Get release download URL
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
+
       - name: Set release upload URL and release version
         shell: bash
         run: |
+          release_upload_url="$(cat ./artifacts/release-upload-url)"
           echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          release_version="$(cat ./artifacts/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Validate release environment variables
+        run: |
+          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install Net-Framework-Core (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
