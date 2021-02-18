@@ -1,7 +1,7 @@
 # Creates nightly deployment builds for main targets.  Note this does not cover package distribution channels,
 # such as choco, AUR, Homebrew, etc.
 
-name: deployment
+name: nightly
 
 on:
   schedule:
