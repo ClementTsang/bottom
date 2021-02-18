@@ -399,7 +399,7 @@ impl App {
                         // If it just opened, move left
                         proc_widget_state
                             .columns
-                            .set_to_sorted_index(&proc_widget_state.process_sorting_type);
+                            .set_to_sorted_index_from_type(&proc_widget_state.process_sorting_type);
                         self.move_widget_selection(&WidgetDirection::Left);
                     } else {
                         // Otherwise, move right if currently on the sort widget
@@ -469,6 +469,7 @@ impl App {
                         }
                     }
 
+                    proc_widget_state.requires_redraw = true;
                     self.proc_state.force_update = Some(self.current_widget.widget_id);
                 }
             }
@@ -692,15 +693,17 @@ impl App {
                 self.delete_dialog_state.is_showing_dd = false;
             }
             self.is_force_redraw = true;
-        } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
-            if let Some(proc_widget_state) = self
-                .proc_state
-                .widget_states
-                .get_mut(&(self.current_widget.widget_id - 2))
-            {
-                self.proc_state.force_update = Some(self.current_widget.widget_id - 2);
-                proc_widget_state.update_sorting_with_columns();
-                self.toggle_sort();
+        } else if !self.is_in_dialog() {
+            if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
+                if let Some(proc_widget_state) = self
+                    .proc_state
+                    .widget_states
+                    .get_mut(&(self.current_widget.widget_id - 2))
+                {
+                    self.proc_state.force_update = Some(self.current_widget.widget_id - 2);
+                    proc_widget_state.update_sorting_with_columns();
+                    self.toggle_sort();
+                }
             }
         }
     }
@@ -1470,6 +1473,8 @@ impl App {
             }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    // FIXME: There's a mismatch bug with this and all sorting types when using the keybind vs the sorting menu.
+                    // If the sorting menu is open, it won't update when using this!
                     if let Some(proc_widget_state) = self
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
@@ -2932,13 +2937,13 @@ impl App {
                     // Get our index...
                     let clicked_entry = y - *tlc_y;
                     // + 1 so we start at 0.
-                    let offset = 1
-                        + if self.is_drawing_border() { 1 } else { 0 }
-                        + if self.is_drawing_gap(&self.current_widget) {
-                            self.app_config_fields.table_gap
-                        } else {
-                            0
-                        };
+                    let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+                    let header_gap_offset = 1 + if self.is_drawing_gap(&self.current_widget) {
+                        self.app_config_fields.table_gap
+                    } else {
+                        0
+                    };
+                    let offset = border_offset + header_gap_offset;
                     if clicked_entry >= offset {
                         let offset_clicked_entry = clicked_entry - offset;
                         match &self.current_widget.widget_type {
@@ -3029,6 +3034,51 @@ impl App {
                                 }
                             }
                             _ => {}
+                        }
+                    } else {
+                        // We might have clicked on a header!  Check if we only exceeded the table + border offset, and
+                        // it's implied we exceeded the gap offset.
+                        if clicked_entry == border_offset {
+                            #[allow(clippy::single_match)]
+                            match &self.current_widget.widget_type {
+                                BottomWidgetType::Proc => {
+                                    if let Some(proc_widget_state) = self
+                                        .proc_state
+                                        .get_mut_widget_state(self.current_widget.widget_id)
+                                    {
+                                        // Let's now check if it's a column header.
+                                        if let (Some(y_loc), Some(x_locs)) = (
+                                            &proc_widget_state.columns.column_header_y_loc,
+                                            &proc_widget_state.columns.column_header_x_locs,
+                                        ) {
+                                            // debug!("x, y: {}, {}", x, y);
+                                            // debug!("y_loc: {}", y_loc);
+                                            // debug!("x_locs: {:?}", x_locs);
+
+                                            if y == *y_loc {
+                                                for (itx, (x_left, x_right)) in
+                                                    x_locs.iter().enumerate()
+                                                {
+                                                    if x >= *x_left && x <= *x_right {
+                                                        // Found our column!
+                                                        proc_widget_state
+                                                            .columns
+                                                            .set_to_sorted_index_from_visual_index(
+                                                                itx,
+                                                            );
+                                                        proc_widget_state
+                                                            .update_sorting_with_columns();
+                                                        self.proc_state.force_update =
+                                                            Some(self.current_widget.widget_id);
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
                         }
                     }
                 }

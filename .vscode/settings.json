@@ -97,6 +97,7 @@
     "nuget",
     "nvme",
     "paren",
+    "pcpu",
     "pids",
     "pmem",
     "powerpc",

@@ -507,6 +507,42 @@ impl ProcessTableWidget for Painter {
                 f.render_widget(process_block, margined_draw_loc);
             }
 
+            // Check if we need to update columnar bounds...
+            if recalculate_column_widths
+                || proc_widget_state.columns.column_header_x_locs.is_none()
+                || proc_widget_state.columns.column_header_y_loc.is_none()
+            {
+                // y location is just the y location of the widget + border size (1 normally, 0 in basic)
+                proc_widget_state.columns.column_header_y_loc =
+                    Some(draw_loc.y + if draw_border { 1 } else { 0 });
+
+                // x location is determined using the x locations of the widget; just offset from the left bound
+                // as appropriate, and use the right bound as limiter.
+
+                let mut current_x_left = draw_loc.x + 1;
+                let max_x_right = draw_loc.x + draw_loc.width - 1;
+
+                let mut x_locs = vec![];
+
+                for width in proc_widget_state
+                    .table_width_state
+                    .calculated_column_widths
+                    .iter()
+                {
+                    let right_bound = current_x_left + width;
+
+                    if right_bound < max_x_right {
+                        x_locs.push((current_x_left, right_bound));
+                        current_x_left = right_bound + 1;
+                    } else {
+                        x_locs.push((current_x_left, max_x_right));
+                        break;
+                    }
+                }
+
+                proc_widget_state.columns.column_header_x_locs = Some(x_locs);
+            }
+
             if app_state.should_get_widget_bounds() {
                 // Update draw loc in widget map
                 if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {

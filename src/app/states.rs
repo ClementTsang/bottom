@@ -178,6 +178,10 @@ pub struct ColumnInfo {
 
 pub struct ProcColumn {
     pub ordered_columns: Vec<ProcessSorting>,
+    /// The y location of headers.  Since they're all aligned, it's just one value.
+    pub column_header_y_loc: Option<u16>,
+    /// The x start and end bounds for each header.
+    pub column_header_x_locs: Option<Vec<(u16, u16)>>,
     pub column_mapping: HashMap<ProcessSorting, ColumnInfo>,
     pub longest_header_len: u16,
     pub column_state: TableState,
@@ -294,6 +298,8 @@ impl Default for ProcColumn {
             current_scroll_position: 0,
             previous_scroll_position: 0,
             backup_prev_scroll_position: 0,
+            column_header_y_loc: None,
+            column_header_x_locs: None,
         }
     }
 }
@@ -335,8 +341,8 @@ impl ProcColumn {
             .sum()
     }
 
-    /// ALWAYS call this when opening the sorted window.
-    pub fn set_to_sorted_index(&mut self, proc_sorting_type: &ProcessSorting) {
+    /// NOTE: ALWAYS call this when opening the sorted window.
+    pub fn set_to_sorted_index_from_type(&mut self, proc_sorting_type: &ProcessSorting) {
         // TODO [Custom Columns]: If we add custom columns, this may be needed!  Since column indices will change, this runs the risk of OOB.  So, when you change columns, CALL THIS AND ADAPT!
         let mut true_index = 0;
         for column in &self.ordered_columns {
@@ -349,6 +355,12 @@ impl ProcColumn {
         }
 
         self.current_scroll_position = true_index;
+        self.backup_prev_scroll_position = self.previous_scroll_position;
+    }
+
+    /// This function sets the scroll position based on the index.
+    pub fn set_to_sorted_index_from_visual_index(&mut self, visual_index: usize) {
+        self.current_scroll_position = visual_index;
         self.backup_prev_scroll_position = self.previous_scroll_position;
     }
 
@@ -432,7 +444,7 @@ impl ProcWidgetState {
 
         // TODO: If we add customizable columns, this should pull from config
         let mut columns = ProcColumn::default();
-        columns.set_to_sorted_index(&process_sorting_type);
+        columns.set_to_sorted_index_from_type(&process_sorting_type);
         if is_grouped {
             // Normally defaults to showing by PID, toggle count on instead.
             columns.toggle(&ProcessSorting::Count);
