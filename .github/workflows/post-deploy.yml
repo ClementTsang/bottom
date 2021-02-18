@@ -25,6 +25,12 @@ jobs:
             exit 1
           fi
 
+      - name: Make sure you're not on nightly...
+        run: |
+          if [[ $RELEASE_VERSION == "nightly" ]]; then
+            exit 1
+          fi
+
       - name: Trigger homebrew
         run: |
           curl -X POST https://api.github.com/repos/ClementTsang/homebrew-bottom/dispatches \

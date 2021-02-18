@@ -5,10 +5,40 @@ name: deployment
 
 on:
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
+  create-github-release:
+    name: create-github-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Create GitHub release
+        id: release
+        uses: GongT/actions-recreate-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: false
+          tag_name: nightly
+          release_name: nightly
+          prerelease: true
+
+      - name: Save release upload URL to artifact
+        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+
+      - name: Save version number to artifact
+        run: echo "nightly" > artifacts/release-version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+
   build-release:
     name: build-release
     needs: [create-github-release]
@@ -161,16 +191,6 @@ jobs:
           asset_path: ${{ env.ASSET }}
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
-
-      - name: Add download asset to artifact if required
-        if: matrix.triple.target == 'x86_64-unknown-linux-musl' || matrix.triple.target == 'x86_64-pc-windows-msvc' || matrix.triple.target == 'i686-pc-windows-msvc' || matrix.triple.target == 'x86_64-apple-darwin'
-        run: cp ${{ env.ASSET }} artifacts/
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: artifacts
-          path: artifacts
 
       - name: Build msi file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
