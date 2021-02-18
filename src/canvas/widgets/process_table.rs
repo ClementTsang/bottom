@@ -52,7 +52,7 @@ static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND: Lazy<Vec<Option<f64>>> =
 static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_TREE: Lazy<Vec<Option<f64>>> =
     Lazy::new(|| vec![None, Some(0.5), None, None, None, None, None, None]);
 static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE: Lazy<Vec<Option<f64>>> =
-    Lazy::new(|| vec![None, Some(0.4), None, None, None, None, None, None]);
+    Lazy::new(|| vec![None, Some(0.3), None, None, None, None, None, None]);
 
 static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND: Lazy<Vec<Option<f64>>> = Lazy::new(|| {
     vec![
@@ -356,6 +356,7 @@ impl ProcessTableWidget for Painter {
                         .iter()
                         .map(|entry| UnicodeWidthStr::width(entry.as_str()) as u16)
                         .collect::<Vec<_>>();
+
                     let soft_widths_min = column_widths
                         .iter()
                         .map(|width| Some(*width))
