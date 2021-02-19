@@ -342,7 +342,7 @@ impl CpuGraphWidget for Painter {
 
             let dcw = &cpu_widget_state.table_width_state.desired_column_widths;
             let ccw = &cpu_widget_state.table_width_state.calculated_column_widths;
-            let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
+            let cpu_rows = sliced_cpu_data.iter().enumerate().map(|(itx, cpu)| {
                 let mut truncated_name =
                     if let (Some(desired_column_width), Some(calculated_column_width)) =
                         (dcw.get(0), ccw.get(0))
@@ -369,37 +369,33 @@ impl CpuGraphWidget for Painter {
                     Text::raw(&cpu.legend_value)
                 };
 
-                Some(
-                    if !is_first_column_hidden
-                        && itx == offset_scroll_index
-                        && itx + start_position == ALL_POSITION
-                    {
-                        truncated_name.patch_style(self.colours.currently_selected_text_style);
-                        Row::new(vec![truncated_name, truncated_legend])
-                    } else {
-                        let cpu_string_row = vec![truncated_name, truncated_legend];
+                if !is_first_column_hidden
+                    && itx == offset_scroll_index
+                    && itx + start_position == ALL_POSITION
+                {
+                    truncated_name.patch_style(self.colours.currently_selected_text_style);
+                    Row::new(vec![truncated_name, truncated_legend])
+                } else {
+                    let cpu_string_row = vec![truncated_name, truncated_legend];
 
-                        Row::new(cpu_string_row).style(if itx == offset_scroll_index {
-                            self.colours.currently_selected_text_style
-                        } else if itx + start_position == ALL_POSITION {
-                            self.colours.all_colour_style
-                        } else if show_avg_cpu {
-                            if itx + start_position == AVG_POSITION {
-                                self.colours.avg_colour_style
-                            } else {
-                                self.colours.cpu_colour_styles[(itx + start_position
-                                    - AVG_POSITION
-                                    - 1)
-                                    % self.colours.cpu_colour_styles.len()]
-                            }
+                    Row::new(cpu_string_row).style(if itx == offset_scroll_index {
+                        self.colours.currently_selected_text_style
+                    } else if itx + start_position == ALL_POSITION {
+                        self.colours.all_colour_style
+                    } else if show_avg_cpu {
+                        if itx + start_position == AVG_POSITION {
+                            self.colours.avg_colour_style
                         } else {
                             self.colours.cpu_colour_styles[(itx + start_position
-                                - ALL_POSITION
+                                - AVG_POSITION
                                 - 1)
                                 % self.colours.cpu_colour_styles.len()]
-                        })
-                    },
-                )
+                        }
+                    } else {
+                        self.colours.cpu_colour_styles[(itx + start_position - ALL_POSITION - 1)
+                            % self.colours.cpu_colour_styles.len()]
+                    })
+                }
             });
 
             // Note we don't set highlight_style, as it should always be shown for this widget.

@@ -20,10 +20,7 @@ use std::{
 };
 
 use crossterm::{
-    event::{
-        poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
-        MouseEventKind,
-    },
+    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
     execute,
     style::Print,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
@@ -74,15 +71,15 @@ pub enum ThreadControlEvent {
 }
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
-    match event.kind {
-        MouseEventKind::ScrollUp => app.handle_scroll_up(),
-        MouseEventKind::ScrollDown => app.handle_scroll_down(),
-        MouseEventKind::Up(button) => {
+    match event {
+        MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
+        MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
+        MouseEvent::Down(button, x, y, _modifiers) => {
             if !app.app_config_fields.disable_click {
                 match button {
                     crossterm::event::MouseButton::Left => {
                         // Trigger left click widget activity
-                        app.on_left_mouse_up(event.column, event.row);
+                        app.on_left_mouse_up(x, y);
                     }
                     crossterm::event::MouseButton::Right => {}
                     _ => {}
@@ -601,9 +598,7 @@ pub fn create_input_thread(
                                 keyboard_timer = Instant::now();
                             }
                         } else if let Event::Mouse(mouse) = event {
-                            if mouse.kind != MouseEventKind::Moved
-                                && Instant::now().duration_since(mouse_timer).as_millis() >= 20
-                            {
+                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
                                 if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
                                     break;
                                 }

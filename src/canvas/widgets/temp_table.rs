@@ -18,7 +18,7 @@ use crate::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-const TEMP_HEADERS: Lazy<Vec<&'static str>> = Lazy::new(|| vec!["Sensor", "Temp"]);
+const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
 
 static TEMP_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
     TEMP_HEADERS
