@@ -4,7 +4,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::Span,
-    text::Spans,
+    text::{Spans, Text},
     widgets::{Block, Borders, Row, Table},
 };
 
@@ -16,7 +16,6 @@ use crate::{
     },
     constants::*,
 };
-use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 
 const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
@@ -140,17 +139,17 @@ impl DiskTableWidget for Painter {
                                             let first_n = graphemes
                                                 [..(*calculated_col_width as usize - 1)]
                                                 .concat();
-                                            return Cow::Owned(format!("{}…", first_n));
+                                            return Text::raw(format!("{}…", first_n));
                                         }
                                     }
                                 }
                             }
 
-                            Cow::Borrowed(entry)
+                            Text::raw(entry)
                         },
                     );
 
-                    Row::Data(truncated_data)
+                    Row::new(truncated_data)
                 });
 
             let (border_style, highlight_style) = if is_on_widget {
@@ -241,9 +240,13 @@ impl DiskTableWidget for Painter {
 
             // Draw!
             f.render_stateful_widget(
-                Table::new(DISK_HEADERS.iter(), disk_rows)
+                Table::new(disk_rows)
                     .block(disk_block)
-                    .header_style(self.colours.table_header_style)
+                    .header(
+                        Row::new(DISK_HEADERS.to_vec())
+                            .style(self.colours.table_header_style)
+                            .bottom_margin(table_gap),
+                    )
                     .highlight_style(highlight_style)
                     .style(self.colours.text_style)
                     .widths(
@@ -253,8 +256,7 @@ impl DiskTableWidget for Painter {
                             .iter()
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),
-                    )
-                    .header_gap(table_gap),
+                    ),
                 margined_draw_loc,
                 disk_table_state,
             );
