@@ -507,7 +507,9 @@ impl ProcWidgetState {
                         // Also invert anything that uses alphabetical sorting by default.
                         self.is_process_sort_descending = false;
                     }
-                    _ => {}
+                    _ => {
+                        self.is_process_sort_descending = true;
+                    }
                 }
             }
         }

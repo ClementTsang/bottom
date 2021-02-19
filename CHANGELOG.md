@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#416](https://github.com/ClementTsang/bottom/pull/416): Fixes grouped vs ungrouped modes in the processes widget having inconsistent spacing.
 
+- [#417](https://github.com/ClementTsang/bottom/pull/417): Fixes the sort menu and sort shortcuts not syncing up.
+
 ## [0.5.7] - 2021-01-30
 
 ## Bug Fixes
