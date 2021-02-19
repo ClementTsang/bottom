@@ -700,8 +700,8 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 2))
                 {
-                    self.proc_state.force_update = Some(self.current_widget.widget_id - 2);
                     proc_widget_state.update_sorting_with_columns();
+                    self.proc_state.force_update = Some(self.current_widget.widget_id - 2);
                     self.toggle_sort();
                 }
             }
@@ -1473,25 +1473,15 @@ impl App {
             }
             'c' => {
                 if let BottomWidgetType::Proc = self.current_widget.widget_type {
-                    // FIXME: There's a mismatch bug with this and all sorting types when using the keybind vs the sorting menu.
-                    // If the sorting menu is open, it won't update when using this!
                     if let Some(proc_widget_state) = self
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::CpuPercent => {
-                                proc_widget_state.is_process_sort_descending =
-                                    !proc_widget_state.is_process_sort_descending
-                            }
-                            _ => {
-                                proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::CpuPercent;
-                                proc_widget_state.is_process_sort_descending = true;
-                            }
-                        }
+                        proc_widget_state
+                            .columns
+                            .set_to_sorted_index_from_type(&processes::ProcessSorting::CpuPercent);
+                        proc_widget_state.update_sorting_with_columns();
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
-
                         self.skip_to_first();
                     }
                 }
@@ -1502,25 +1492,17 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::MemPercent
-                            | processes::ProcessSorting::Mem => {
-                                proc_widget_state.is_process_sort_descending =
-                                    !proc_widget_state.is_process_sort_descending
-                            }
-
-                            _ => {
-                                proc_widget_state.process_sorting_type = if proc_widget_state
-                                    .columns
-                                    .is_enabled(&processes::ProcessSorting::MemPercent)
-                                {
-                                    processes::ProcessSorting::MemPercent
-                                } else {
-                                    processes::ProcessSorting::Mem
-                                };
-                                proc_widget_state.is_process_sort_descending = true;
-                            }
-                        }
+                        proc_widget_state.columns.set_to_sorted_index_from_type(
+                            &(if proc_widget_state
+                                .columns
+                                .is_enabled(&processes::ProcessSorting::MemPercent)
+                            {
+                                processes::ProcessSorting::MemPercent
+                            } else {
+                                processes::ProcessSorting::Mem
+                            }),
+                        );
+                        proc_widget_state.update_sorting_with_columns();
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
                         self.skip_to_first();
                     }
@@ -1534,17 +1516,10 @@ impl App {
                     {
                         // Skip if grouped
                         if !proc_widget_state.is_grouped {
-                            match proc_widget_state.process_sorting_type {
-                                processes::ProcessSorting::Pid => {
-                                    proc_widget_state.is_process_sort_descending =
-                                        !proc_widget_state.is_process_sort_descending
-                                }
-                                _ => {
-                                    proc_widget_state.process_sorting_type =
-                                        processes::ProcessSorting::Pid;
-                                    proc_widget_state.is_process_sort_descending = false;
-                                }
-                            }
+                            proc_widget_state
+                                .columns
+                                .set_to_sorted_index_from_type(&processes::ProcessSorting::Pid);
+                            proc_widget_state.update_sorting_with_columns();
                             self.proc_state.force_update = Some(self.current_widget.widget_id);
                             self.skip_to_first();
                         }
@@ -1585,22 +1560,14 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        match proc_widget_state.process_sorting_type {
-                            processes::ProcessSorting::ProcessName
-                            | processes::ProcessSorting::Command => {
-                                proc_widget_state.is_process_sort_descending =
-                                    !proc_widget_state.is_process_sort_descending
-                            }
-                            _ => {
-                                proc_widget_state.process_sorting_type =
-                                    if proc_widget_state.is_using_command {
-                                        processes::ProcessSorting::Command
-                                    } else {
-                                        processes::ProcessSorting::ProcessName
-                                    };
-                                proc_widget_state.is_process_sort_descending = false;
-                            }
-                        }
+                        proc_widget_state.columns.set_to_sorted_index_from_type(
+                            &(if proc_widget_state.is_using_command {
+                                processes::ProcessSorting::Command
+                            } else {
+                                processes::ProcessSorting::ProcessName
+                            }),
+                        );
+                        proc_widget_state.update_sorting_with_columns();
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
                         self.skip_to_first();
                     }
