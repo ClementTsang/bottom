@@ -1,5 +1,4 @@
 use once_cell::sync::Lazy;
-use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
@@ -18,7 +17,7 @@ use tui::{
     symbols::Marker,
     terminal::Frame,
     text::Span,
-    text::Spans,
+    text::{Spans, Text},
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -314,7 +313,7 @@ impl CpuGraphWidget for Painter {
 
             let sliced_cpu_data = &cpu_data[start_position..];
 
-            let mut offset_scroll_index = cpu_widget_state
+            let offset_scroll_index = cpu_widget_state
                 .scroll_state
                 .current_scroll_position
                 .saturating_sub(start_position);
@@ -344,38 +343,43 @@ impl CpuGraphWidget for Painter {
             let dcw = &cpu_widget_state.table_width_state.desired_column_widths;
             let ccw = &cpu_widget_state.table_width_state.calculated_column_widths;
             let cpu_rows = sliced_cpu_data.iter().enumerate().filter_map(|(itx, cpu)| {
-                let truncated_name: Cow<'_, str> =
+                let mut truncated_name =
                     if let (Some(desired_column_width), Some(calculated_column_width)) =
                         (dcw.get(0), ccw.get(0))
                     {
                         if *desired_column_width > *calculated_column_width {
-                            Cow::Borrowed(&cpu.short_cpu_name)
+                            Text::raw(&cpu.short_cpu_name)
                         } else {
-                            Cow::Borrowed(&cpu.cpu_name)
+                            Text::raw(&cpu.cpu_name)
                         }
                     } else {
-                        Cow::Borrowed(&cpu.cpu_name)
-                    };
-                let truncated_legend: Cow<'_, str> =
-                    if let Some(calculated_column_width) = ccw.get(0) {
-                        if *calculated_column_width == 0 && cpu.legend_value.is_empty() {
-                            Cow::Borrowed("All")
-                        } else {
-                            Cow::Borrowed(&cpu.legend_value)
-                        }
-                    } else {
-                        Cow::Borrowed(&cpu.legend_value)
+                        Text::raw(&cpu.cpu_name)
                     };
 
-                let cpu_string_row: Vec<Cow<'_, str>> = vec![truncated_name, truncated_legend];
-
-                if cpu_string_row.is_empty() {
-                    offset_scroll_index += 1;
-                    None
+                let is_first_column_hidden = if let Some(calculated_column_width) = ccw.get(0) {
+                    *calculated_column_width == 0
                 } else {
-                    Some(Row::StyledData(
-                        cpu_string_row.into_iter(),
-                        if itx == offset_scroll_index {
+                    false
+                };
+
+                let truncated_legend = if is_first_column_hidden && cpu.legend_value.is_empty() {
+                    // For the case where we only have room for one column, display "All" in the normally blank area.
+                    Text::raw("All")
+                } else {
+                    Text::raw(&cpu.legend_value)
+                };
+
+                Some(
+                    if !is_first_column_hidden
+                        && itx == offset_scroll_index
+                        && itx + start_position == ALL_POSITION
+                    {
+                        truncated_name.patch_style(self.colours.currently_selected_text_style);
+                        Row::new(vec![truncated_name, truncated_legend])
+                    } else {
+                        let cpu_string_row = vec![truncated_name, truncated_legend];
+
+                        Row::new(cpu_string_row).style(if itx == offset_scroll_index {
                             self.colours.currently_selected_text_style
                         } else if itx + start_position == ALL_POSITION {
                             self.colours.all_colour_style
@@ -393,9 +397,9 @@ impl CpuGraphWidget for Painter {
                                 - ALL_POSITION
                                 - 1)
                                 % self.colours.cpu_colour_styles.len()]
-                        },
-                    ))
-                }
+                        })
+                    },
+                )
             });
 
             // Note we don't set highlight_style, as it should always be shown for this widget.
@@ -407,14 +411,17 @@ impl CpuGraphWidget for Painter {
 
             // Draw
             f.render_stateful_widget(
-                Table::new(CPU_LEGEND_HEADER.iter(), cpu_rows)
+                Table::new(cpu_rows)
                     .block(
                         Block::default()
                             .borders(Borders::ALL)
                             .border_style(border_and_title_style),
                     )
-                    .header_style(self.colours.table_header_style)
-                    .highlight_style(self.colours.currently_selected_text_style)
+                    .header(
+                        Row::new(CPU_LEGEND_HEADER.to_vec())
+                            .style(self.colours.table_header_style)
+                            .bottom_margin(table_gap),
+                    )
                     .widths(
                         &(cpu_widget_state
                             .table_width_state
@@ -422,8 +429,7 @@ impl CpuGraphWidget for Painter {
                             .iter()
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),
-                    )
-                    .header_gap(table_gap),
+                    ),
                 draw_loc,
                 cpu_table_state,
             );

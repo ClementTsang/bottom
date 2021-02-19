@@ -129,40 +129,36 @@ impl BatteryDisplayWidget for Painter {
                     charge_percentage,
                 );
 
-                let battery_items = vec![
-                    ["Charge %", &bars],
-                    ["Consumption", &battery_details.watt_consumption],
+                let battery_items: Vec<Vec<&str>> = vec![
+                    vec!["Charge %", &bars],
+                    vec!["Consumption", &battery_details.watt_consumption],
                     if let Some(duration_until_full) = &battery_details.duration_until_full {
-                        ["Time to full", duration_until_full]
+                        vec!["Time to full", duration_until_full]
                     } else if let Some(duration_until_empty) = &battery_details.duration_until_empty
                     {
-                        ["Time to empty", duration_until_empty]
+                        vec!["Time to empty", duration_until_empty]
                     } else {
-                        ["Time to full/empty", "N/A"]
+                        vec!["Time to full/empty", "N/A"]
                     },
-                    ["Health %", &battery_details.health],
+                    vec!["Health %", &battery_details.health],
                 ];
 
-                let battery_rows = battery_items.iter().map(|item| {
-                    Row::StyledData(
-                        item.iter(),
-                        if charge_percentage < 10.0 {
-                            self.colours.low_battery_colour
-                        } else if charge_percentage < 50.0 {
-                            self.colours.medium_battery_colour
-                        } else {
-                            self.colours.high_battery_colour
-                        },
-                    )
+                let battery_rows = battery_items.into_iter().map(|item| {
+                    Row::new(item).style(if charge_percentage < 10.0 {
+                        self.colours.low_battery_colour
+                    } else if charge_percentage < 50.0 {
+                        self.colours.medium_battery_colour
+                    } else {
+                        self.colours.high_battery_colour
+                    })
                 });
 
                 // Draw
                 f.render_widget(
-                    Table::new([""].iter(), battery_rows)
+                    Table::new(battery_rows)
                         .block(battery_block)
-                        .header_style(self.colours.table_header_style)
-                        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)])
-                        .header_gap(table_gap),
+                        .header(Row::new(vec![""]).bottom_margin(table_gap))
+                        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]),
                     margined_draw_loc,
                 );
             } else {

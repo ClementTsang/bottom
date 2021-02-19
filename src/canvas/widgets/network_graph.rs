@@ -15,7 +15,7 @@ use tui::{
     symbols::Marker,
     terminal::Frame,
     text::Span,
-    text::Spans,
+    text::{Spans, Text},
     widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
 };
 
@@ -355,6 +355,12 @@ impl NetworkGraphWidget for Painter {
     fn draw_network_labels<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
+        let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+            0
+        } else {
+            app_state.app_config_fields.table_gap
+        };
+
         let rx_display = &app_state.canvas_data.rx_display;
         let tx_display = &app_state.canvas_data.tx_display;
         let total_rx_display = &app_state.canvas_data.total_rx_display;
@@ -362,14 +368,14 @@ impl NetworkGraphWidget for Painter {
 
         // Gross but I need it to work...
         let total_network = vec![vec![
-            rx_display,
-            tx_display,
-            total_rx_display,
-            total_tx_display,
+            Text::raw(rx_display),
+            Text::raw(tx_display),
+            Text::raw(total_rx_display),
+            Text::raw(total_tx_display),
         ]];
         let mapped_network = total_network
-            .iter()
-            .map(|val| Row::StyledData(val.iter(), self.colours.text_style));
+            .into_iter()
+            .map(|val| Row::new(val).style(self.colours.text_style));
 
         // Calculate widths
         let intrinsic_widths = get_column_widths(
@@ -389,7 +395,12 @@ impl NetworkGraphWidget for Painter {
 
         // Draw
         f.render_widget(
-            Table::new(NETWORK_HEADERS.iter(), mapped_network)
+            Table::new(mapped_network)
+                .header(
+                    Row::new(NETWORK_HEADERS.to_vec())
+                        .style(self.colours.table_header_style)
+                        .bottom_margin(table_gap),
+                )
                 .block(Block::default().borders(Borders::ALL).border_style(
                     if app_state.current_widget.widget_id == widget_id {
                         self.colours.highlighted_border_style
@@ -397,7 +408,6 @@ impl NetworkGraphWidget for Painter {
                         self.colours.border_style
                     },
                 ))
-                .header_style(self.colours.table_header_style)
                 .style(self.colours.text_style)
                 .widths(
                     &(intrinsic_widths

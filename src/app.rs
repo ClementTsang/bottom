@@ -2757,7 +2757,7 @@ impl App {
 
     /// Moves the mouse to the widget that was clicked on, then propagates the click down to be
     /// handled by the widget specifically.
-    pub fn left_mouse_click_movement(&mut self, x: u16, y: u16) {
+    pub fn on_left_mouse_up(&mut self, x: u16, y: u16) {
         // Pretty dead simple - iterate through the widget map and go to the widget where the click
         // is within.
 
@@ -2769,6 +2769,7 @@ impl App {
 
         // Short circuit if we're in basic table... we might have to handle the basic table arrow
         // case here...
+
         if let Some(bt) = &mut self.basic_table_widget_state {
             if let (
                 Some((left_tlc_x, left_tlc_y)),

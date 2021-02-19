@@ -11,11 +11,10 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans},
+    text::{Span, Spans, Text},
     widgets::{Block, Borders, Paragraph, Row, Table},
 };
 
-use std::borrow::Cow;
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
@@ -453,7 +452,7 @@ impl ProcessTableWidget for Painter {
                                                 .collect::<Vec<&str>>();
 
                                         if let Some(alternative) = alternative {
-                                            Cow::Borrowed(alternative)
+                                            Text::raw(alternative)
                                         } else if graphemes.len() > *calculated_col_width as usize
                                             && *calculated_col_width > 1
                                         {
@@ -461,33 +460,37 @@ impl ProcessTableWidget for Painter {
                                             let first_n = graphemes
                                                 [..(*calculated_col_width as usize - 1)]
                                                 .concat();
-                                            Cow::Owned(format!("{}…", first_n))
+                                            Text::raw(format!("{}…", first_n))
                                         } else {
-                                            Cow::Borrowed(entry)
+                                            Text::raw(entry)
                                         }
                                     } else {
-                                        Cow::Borrowed(entry)
+                                        Text::raw(entry)
                                     }
                                 } else {
-                                    Cow::Borrowed(entry)
+                                    Text::raw(entry)
                                 }
                             } else {
-                                Cow::Borrowed(entry)
+                                Text::raw(entry)
                             }
                         },
                     );
 
                     if *disabled {
-                        Row::StyledData(truncated_data, self.colours.disabled_text_style)
+                        Row::new(truncated_data).style(self.colours.disabled_text_style)
                     } else {
-                        Row::Data(truncated_data)
+                        Row::new(truncated_data)
                     }
                 });
 
                 f.render_stateful_widget(
-                    Table::new(process_headers.iter(), process_rows)
+                    Table::new(process_rows)
+                        .header(
+                            Row::new(process_headers)
+                                .style(self.colours.table_header_style)
+                                .bottom_margin(table_gap),
+                        )
                         .block(process_block)
-                        .header_style(self.colours.table_header_style)
                         .highlight_style(highlight_style)
                         .style(self.colours.text_style)
                         .widths(
@@ -499,8 +502,7 @@ impl ProcessTableWidget for Painter {
                                     Constraint::Length(*calculated_width as u16)
                                 })
                                 .collect::<Vec<_>>()),
-                        )
-                        .header_gap(table_gap),
+                        ),
                     margined_draw_loc,
                     proc_table_state,
                 );
@@ -826,7 +828,7 @@ impl ProcessTableWidget for Painter {
 
             let sort_options = sliced_vec
                 .iter()
-                .map(|column| Row::Data(vec![column].into_iter()));
+                .map(|column| Row::new(vec![column.as_str()]));
 
             let column_state = &mut proc_widget_state.columns.column_state;
             column_state.select(Some(
@@ -872,13 +874,16 @@ impl ProcessTableWidget for Painter {
                 .split(draw_loc)[0];
 
             f.render_stateful_widget(
-                Table::new(["Sort By"].iter(), sort_options)
+                Table::new(sort_options)
+                    .header(
+                        Row::new(vec!["Sort By"])
+                            .style(self.colours.table_header_style)
+                            .bottom_margin(table_gap),
+                    )
                     .block(process_sort_block)
                     .highlight_style(highlight_style)
                     .style(self.colours.text_style)
-                    .header_style(self.colours.table_header_style)
-                    .widths(&[Constraint::Percentage(100)])
-                    .header_gap(table_gap),
+                    .widths(&[Constraint::Percentage(100)]),
                 margined_draw_loc,
                 column_state,
             );

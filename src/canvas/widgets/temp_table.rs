@@ -4,7 +4,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::Span,
-    text::Spans,
+    text::{Spans, Text},
     widgets::{Block, Borders, Row, Table},
 };
 
@@ -16,10 +16,9 @@ use crate::{
     },
     constants::*,
 };
-use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 
-const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
+const TEMP_HEADERS: Lazy<Vec<&'static str>> = Lazy::new(|| vec!["Sensor", "Temp"]);
 
 static TEMP_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
     TEMP_HEADERS
@@ -123,23 +122,23 @@ impl TempTableWidget for Painter {
                                             let first_n = graphemes
                                                 [..(*calculated_col_width as usize - 1)]
                                                 .concat();
-                                            Cow::Owned(format!("{}…", first_n))
+                                            Text::raw(format!("{}…", first_n))
                                         } else {
-                                            Cow::Borrowed(entry)
+                                            Text::raw(entry)
                                         }
                                     } else {
-                                        Cow::Borrowed(entry)
+                                        Text::raw(entry)
                                     }
                                 } else {
-                                    Cow::Borrowed(entry)
+                                    Text::raw(entry)
                                 }
                             } else {
-                                Cow::Borrowed(entry)
+                                Text::raw(entry)
                             }
                         },
                     );
 
-                    Row::Data(truncated_data)
+                    Row::new(truncated_data)
                 });
 
             let (border_style, highlight_style) = if is_on_widget {
@@ -230,9 +229,13 @@ impl TempTableWidget for Painter {
 
             // Draw
             f.render_stateful_widget(
-                Table::new(TEMP_HEADERS.iter(), temperature_rows)
+                Table::new(temperature_rows)
+                    .header(
+                        Row::new(TEMP_HEADERS.to_vec())
+                            .style(self.colours.table_header_style)
+                            .bottom_margin(table_gap),
+                    )
                     .block(temp_block)
-                    .header_style(self.colours.table_header_style)
                     .highlight_style(highlight_style)
                     .style(self.colours.text_style)
                     .widths(
@@ -242,8 +245,7 @@ impl TempTableWidget for Painter {
                             .iter()
                             .map(|calculated_width| Constraint::Length(*calculated_width as u16))
                             .collect::<Vec<_>>()),
-                    )
-                    .header_gap(table_gap),
+                    ),
                 margined_draw_loc,
                 temp_table_state,
             );

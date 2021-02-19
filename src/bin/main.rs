@@ -8,7 +8,7 @@ use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,
-    io::{stdout, Write},
+    io::stdout,
     panic,
     sync::{
         atomic::{AtomicBool, Ordering},
