@@ -1482,7 +1482,6 @@ impl App {
                             .set_to_sorted_index_from_type(&processes::ProcessSorting::CpuPercent);
                         proc_widget_state.update_sorting_with_columns();
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
-                        self.skip_to_first();
                     }
                 }
             }
@@ -1504,7 +1503,6 @@ impl App {
                         );
                         proc_widget_state.update_sorting_with_columns();
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
-                        self.skip_to_first();
                     }
                 }
             }
@@ -1521,7 +1519,6 @@ impl App {
                                 .set_to_sorted_index_from_type(&processes::ProcessSorting::Pid);
                             proc_widget_state.update_sorting_with_columns();
                             self.proc_state.force_update = Some(self.current_widget.widget_id);
-                            self.skip_to_first();
                         }
                     }
                 }
@@ -1569,7 +1566,6 @@ impl App {
                         );
                         proc_widget_state.update_sorting_with_columns();
                         self.proc_state.force_update = Some(self.current_widget.widget_id);
-                        self.skip_to_first();
                     }
                 }
             }

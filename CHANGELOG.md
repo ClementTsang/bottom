@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#391](https://github.com/ClementTsang/bottom/pull/391): Show degree symbol on Celsius and Fahrenheit.
 
+- [#418](https://github.com/ClementTsang/bottom/pull/418): Removed automatically jumping to the top of the list for process sort shortcuts. The standard behaviour is to now stay in place.
+
 ## Bug Fixes
 
 - [#416](https://github.com/ClementTsang/bottom/pull/416): Fixes grouped vs ungrouped modes in the processes widget having inconsistent spacing.
