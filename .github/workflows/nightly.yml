@@ -23,6 +23,9 @@ jobs:
           tag_name: nightly
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Sleep for a few seconds.
+        run: sleep(10)
 
       - name: Create nightly GitHub release
         id: release
