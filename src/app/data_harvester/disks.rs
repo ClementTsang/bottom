@@ -31,11 +31,11 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
     futures::pin_mut!(counter_stream);
 
     while let Some(io) = counter_stream.next().await {
+        debug!("io: {:?}", io);
         if let Ok(io) = io {
             let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
 
             // FIXME: [MOUNT POINT] Add the filter here I guess?
-
             io_hash.insert(
                 mount_point.to_string(),
                 Some(IOData {
