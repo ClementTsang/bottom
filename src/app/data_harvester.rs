@@ -362,10 +362,12 @@ impl DataCollector {
         }
 
         if let Ok(disks) = disk_res {
+            debug!("Disks: {:?}", disks);
             self.data.disks = disks;
         }
 
         if let Ok(io) = io_res {
+            debug!("io: {:?}", io);
             self.data.io = io;
         }
 

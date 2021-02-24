@@ -90,11 +90,8 @@ pub async fn get_disk_usage(
                 true
             };
 
-            debug!("to_keep: {}", to_keep);
-
             if to_keep {
                 let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
-                debug!("usage: {:?}", usage);
 
                 vec_disks.push(DiskHarvest {
                     free_space: usage.free().get::<heim::units::information::byte>(),
