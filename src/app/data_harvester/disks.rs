@@ -63,6 +63,7 @@ pub async fn get_disk_usage(
     futures::pin_mut!(partitions_stream);
 
     while let Some(part) = partitions_stream.next().await {
+        debug!("part: {:?}", part);
         if let Ok(partition) = part {
             let name = (partition
                 .device()
@@ -70,12 +71,14 @@ pub async fn get_disk_usage(
                 .to_str()
                 .unwrap_or("Name Unavailable"))
             .to_string();
+            debug!("name: {}", name);
 
             let mount_point = (partition
                 .mount_point()
                 .to_str()
                 .unwrap_or("Name Unavailable"))
             .to_string();
+            debug!("mount_point: {}", mount_point);
 
             let to_keep = if let Some(filter) = name_filter {
                 let mut ret = filter.is_list_ignored;
@@ -92,6 +95,7 @@ pub async fn get_disk_usage(
 
             if to_keep {
                 let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
+                debug!("usage: {:?}", usage);
 
                 vec_disks.push(DiskHarvest {
                     free_space: usage.free().get::<heim::units::information::byte>(),
@@ -100,6 +104,7 @@ pub async fn get_disk_usage(
                     mount_point,
                     name,
                 });
+                debug!("vec_disks: {:?}", vec_disks);
             }
         }
     }
