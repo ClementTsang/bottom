@@ -70,14 +70,12 @@ pub async fn get_disk_usage(
                 .to_str()
                 .unwrap_or("Name Unavailable"))
             .to_string();
-            debug!("Partition name: {}", name);
 
             let mount_point = (partition
                 .mount_point()
                 .to_str()
                 .unwrap_or("Name Unavailable"))
             .to_string();
-            debug!("Mount point: {}", name);
 
             let to_keep = if let Some(filter) = name_filter {
                 let mut ret = filter.is_list_ignored;
@@ -92,8 +90,12 @@ pub async fn get_disk_usage(
                 true
             };
 
+            debug!("to_keep: {}", to_keep);
+
             if to_keep {
                 let usage = heim::disk::usage(partition.mount_point().to_path_buf()).await?;
+                debug!("usage: {:?}", usage);
+
                 vec_disks.push(DiskHarvest {
                     free_space: usage.free().get::<heim::units::information::byte>(),
                     used_space: usage.used().get::<heim::units::information::byte>(),
