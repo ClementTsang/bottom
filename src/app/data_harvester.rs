@@ -361,7 +361,6 @@ impl DataCollector {
             self.data.swap = swap;
         }
 
-        debug!("Disks: {:?}", disk_res);
         if let Ok(disks) = disk_res {
             self.data.disks = disks;
         }
