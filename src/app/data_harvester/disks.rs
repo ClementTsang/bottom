@@ -31,6 +31,7 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
     futures::pin_mut!(counter_stream);
 
     while let Some(io) = counter_stream.next().await {
+        debug!("io: {:?}", io);
         if let Ok(io) = io {
             let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
 
@@ -63,6 +64,8 @@ pub async fn get_disk_usage(
     futures::pin_mut!(partitions_stream);
 
     while let Some(part) = partitions_stream.next().await {
+        debug!("partition: {:?}", part);
+
         if let Ok(partition) = part {
             let name = (partition
                 .device()
