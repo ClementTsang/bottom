@@ -361,13 +361,12 @@ impl DataCollector {
             self.data.swap = swap;
         }
 
+        debug!("Disks: {:?}", disk_res);
         if let Ok(disks) = disk_res {
-            debug!("Disks: {:?}", disks);
             self.data.disks = disks;
         }
 
         if let Ok(io) = io_res {
-            debug!("io: {:?}", io);
             self.data.io = io;
         }
 
