@@ -73,6 +73,7 @@ pub async fn get_disk_usage(
                     if let Ok(path) = std::fs::read_link(device) {
                         let mut combined_path = std::path::PathBuf::new();
                         combined_path.push(device);
+                        combined_path.pop();
                         combined_path.push(path.clone());
 
                         if let Ok(path) = std::fs::canonicalize(combined_path) {
