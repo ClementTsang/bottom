@@ -116,20 +116,36 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
         .iter()
         .zip(&current_data.io_labels)
         .for_each(|(disk, (io_read, io_write))| {
-            let converted_free_space = get_simple_byte_values(disk.free_space, false);
-            let converted_total_space = get_simple_byte_values(disk.total_space, false);
-            disk_vector.push(vec![
-                disk.name.to_string(),
-                disk.mount_point.to_string(),
-                format!(
-                    "{:.0}%",
-                    disk.used_space as f64 / disk.total_space as f64 * 100_f64
-                ),
-                format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1),
+            let free_space_fmt = if let Some(free_space) = disk.free_space {
+                let converted_free_space = get_simple_byte_values(free_space, false);
+                format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1)
+            } else {
+                "N/A".to_string()
+            };
+            let total_space_fmt = if let Some(total_space) = disk.total_space {
+                let converted_total_space = get_simple_byte_values(total_space, false);
                 format!(
                     "{:.*}{}",
                     0, converted_total_space.0, converted_total_space.1
-                ),
+                )
+            } else {
+                "N/A".to_string()
+            };
+
+            let usage_fmt = if let (Some(used_space), Some(total_space)) =
+                (disk.used_space, disk.total_space)
+            {
+                format!("{:.0}%", used_space as f64 / total_space as f64 * 100_f64)
+            } else {
+                "N/A".to_string()
+            };
+
+            disk_vector.push(vec![
+                disk.name.to_string(),
+                disk.mount_point.to_string(),
+                usage_fmt,
+                free_space_fmt,
+                total_space_fmt,
                 io_read.to_string(),
                 io_write.to_string(),
             ]);
