@@ -67,22 +67,27 @@ pub async fn get_disk_usage(
 
             let name = (if let Some(device) = partition.device() {
                 // See if this disk is actually mounted elsewhere on Linux...
-                // This is part of a workaround due to https://github.com/ClementTsang/bottom/issues/419
-
+                // This is part of a workaround to properly map I/O, see
+                // https://github.com/ClementTsang/bottom/issues/419
                 if cfg!(target_os = "linux") {
                     if let Ok(path) = std::fs::read_link(device) {
-                        let mut combined_path = std::path::PathBuf::new();
-                        combined_path.push(device);
-                        combined_path.pop();
-                        combined_path.push(path.clone());
-
-                        if let Ok(path) = std::fs::canonicalize(combined_path) {
-                            // Resolve the local path into an absolute one...
+                        if path.is_absolute() {
                             symlink = path.into_os_string();
                             symlink.as_os_str()
                         } else {
-                            symlink = path.into_os_string();
-                            symlink.as_os_str()
+                            let mut combined_path = std::path::PathBuf::new();
+                            combined_path.push(device);
+                            combined_path.pop(); // Pop the current file...
+                            combined_path.push(path.clone());
+
+                            if let Ok(path) = std::fs::canonicalize(combined_path) {
+                                // Resolve the local path into an absolute one...
+                                symlink = path.into_os_string();
+                                symlink.as_os_str()
+                            } else {
+                                symlink = path.into_os_string();
+                                symlink.as_os_str()
+                            }
                         }
                     } else {
                         device
