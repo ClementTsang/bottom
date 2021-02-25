@@ -67,14 +67,21 @@ pub async fn get_disk_usage(
 
             let name = (if let Some(device) = partition.device() {
                 // See if this disk is actually mounted elsewhere on Linux...
+                // This is part of a workaround due to https://github.com/ClementTsang/bottom/issues/419
+
                 if cfg!(target_os = "linux") {
                     if let Ok(path) = std::fs::read_link(device) {
-                        debug!("CANON: {:?}", std::fs::canonicalize(path.clone()));
-                        if let Ok(path) = std::fs::canonicalize(path) {
+                        let mut combined_path = std::path::PathBuf::new();
+                        combined_path.push(device);
+                        combined_path.push(path.clone());
+
+                        if let Ok(path) = std::fs::canonicalize(combined_path) {
+                            // Resolve the local path into an absolute one...
                             symlink = path.into_os_string();
                             symlink.as_os_str()
                         } else {
-                            device
+                            symlink = path.into_os_string();
+                            symlink.as_os_str()
                         }
                     } else {
                         device
@@ -109,7 +116,7 @@ pub async fn get_disk_usage(
             };
 
             if to_keep {
-                // The usage line fails in some cases (Void linux + LUKS)
+                // The usage line fails in some cases (Void linux + LUKS, see https://github.com/ClementTsang/bottom/issues/419)
                 if let Ok(usage) = heim::disk::usage(partition.mount_point().to_path_buf()).await {
                     vec_disks.push(DiskHarvest {
                         free_space: Some(usage.free().get::<heim::units::information::byte>()),
