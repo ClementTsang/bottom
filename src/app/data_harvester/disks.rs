@@ -69,8 +69,12 @@ pub async fn get_disk_usage(
                 // See if this disk is actually mounted elsewhere on Linux...
                 if cfg!(target_os = "linux") {
                     if let Ok(path) = std::fs::read_link(device) {
-                        symlink = path.into_os_string();
-                        symlink.as_os_str()
+                        if let Ok(path) = std::fs::canonicalize(path) {
+                            symlink = path.into_os_string();
+                            symlink.as_os_str()
+                        } else {
+                            device
+                        }
                     } else {
                         device
                     }
