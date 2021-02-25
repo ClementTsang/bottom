@@ -63,11 +63,25 @@ pub async fn get_disk_usage(
 
     while let Some(part) = partitions_stream.next().await {
         if let Ok(partition) = part {
-            let name = (partition
-                .device()
-                .unwrap_or_else(|| std::ffi::OsStr::new("Name Unavailable"))
-                .to_str()
-                .unwrap_or("Name Unavailable"))
+            let symlink: std::ffi::OsString;
+
+            let name = (if let Some(device) = partition.device() {
+                // See if this disk is actually mounted elsewhere on Linux...
+                if cfg!(target_os = "linux") {
+                    if let Ok(path) = std::fs::read_link(device) {
+                        symlink = path.into_os_string();
+                        symlink.as_os_str()
+                    } else {
+                        device
+                    }
+                } else {
+                    device
+                }
+            } else {
+                std::ffi::OsStr::new("Name Unavailable")
+            }
+            .to_str()
+            .unwrap_or("Name Unavailable"))
             .to_string();
 
             let mount_point = (partition
