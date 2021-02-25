@@ -4,9 +4,9 @@ use crate::app::Filter;
 pub struct DiskHarvest {
     pub name: String,
     pub mount_point: String,
-    pub free_space: u64,
-    pub used_space: u64,
-    pub total_space: u64,
+    pub free_space: Option<u64>,
+    pub used_space: Option<u64>,
+    pub total_space: Option<u64>,
 }
 
 #[derive(Clone, Debug)]
@@ -31,7 +31,6 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
     futures::pin_mut!(counter_stream);
 
     while let Some(io) = counter_stream.next().await {
-        debug!("io: {:?}", io);
         if let Ok(io) = io {
             let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
 
@@ -94,9 +93,17 @@ pub async fn get_disk_usage(
                 // The usage line fails in some cases (Void linux + LUKS)
                 if let Ok(usage) = heim::disk::usage(partition.mount_point().to_path_buf()).await {
                     vec_disks.push(DiskHarvest {
-                        free_space: usage.free().get::<heim::units::information::byte>(),
-                        used_space: usage.used().get::<heim::units::information::byte>(),
-                        total_space: usage.total().get::<heim::units::information::byte>(),
+                        free_space: Some(usage.free().get::<heim::units::information::byte>()),
+                        used_space: Some(usage.used().get::<heim::units::information::byte>()),
+                        total_space: Some(usage.total().get::<heim::units::information::byte>()),
+                        mount_point,
+                        name,
+                    });
+                } else {
+                    vec_disks.push(DiskHarvest {
+                        free_space: None,
+                        used_space: None,
+                        total_space: None,
                         mount_point,
                         name,
                     });
