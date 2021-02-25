@@ -67,7 +67,7 @@ pub async fn get_disk_usage(
 
             let name = (if let Some(device) = partition.device() {
                 // See if this disk is actually mounted elsewhere on Linux...
-                // This is part of a workaround to properly map I/O, see
+                // This is a workaround to properly map I/O in some cases (i.e. disk encryption), see
                 // https://github.com/ClementTsang/bottom/issues/419
                 if cfg!(target_os = "linux") {
                     if let Ok(path) = std::fs::read_link(device) {
