@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#417](https://github.com/ClementTsang/bottom/pull/417): Fixes the sort menu and sort shortcuts not syncing up.
 
+- [#423](https://github.com/ClementTsang/bottom/pull/423): Fixes disk encryption causing the disk widget to fail or not properly map I/O statistics.
+
 ## [0.5.7] - 2021-01-30
 
 ## Bug Fixes
