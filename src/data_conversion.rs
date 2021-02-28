@@ -505,13 +505,20 @@ pub fn convert_process_data(
             0, converted_total_write.0, converted_total_write.1
         );
 
-        let mut user = None;
-        #[cfg(target_family = "unix")]
-        {
-            if let Some(uid) = process.uid {
-                user = user_table.get_uid_to_username_mapping(uid).ok();
+        let user = {
+            #[cfg(target_family = "unix")]
+            {
+                if let Some(uid) = process.uid {
+                    user_table.get_uid_to_username_mapping(uid).ok()
+                } else {
+                    None
+                }
             }
-        }
+            #[cfg(not(target_family = "unix"))]
+            {
+                None
+            }
+        };
 
         if let Some(process_entry) = existing_converted_process_data.get_mut(&process.pid) {
             complete_pid_set.remove(&process.pid);
