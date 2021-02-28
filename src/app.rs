@@ -314,16 +314,24 @@ impl App {
 
                             // Forcefully switch off column if we were on it...
                             if (proc_widget_state.is_grouped
-                                && proc_widget_state.process_sorting_type
-                                    == data_harvester::processes::ProcessSorting::Pid)
+                                && (proc_widget_state.process_sorting_type
+                                    == processes::ProcessSorting::Pid
+                                    || proc_widget_state.process_sorting_type
+                                        == processes::ProcessSorting::User
+                                    || proc_widget_state.process_sorting_type
+                                        == processes::ProcessSorting::State))
                                 || (!proc_widget_state.is_grouped
                                     && proc_widget_state.process_sorting_type
-                                        == data_harvester::processes::ProcessSorting::Count)
+                                        == processes::ProcessSorting::Count)
                             {
                                 proc_widget_state.process_sorting_type =
-                                    data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
+                                    processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
                                 proc_widget_state.is_process_sort_descending = true;
                             }
+
+                            proc_widget_state.columns.set_to_sorted_index_from_type(
+                                &proc_widget_state.process_sorting_type,
+                            );
 
                             proc_widget_state.columns.try_set(
                                 &processes::ProcessSorting::State,
