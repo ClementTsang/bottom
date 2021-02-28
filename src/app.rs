@@ -6,7 +6,6 @@ use std::{
     time::Instant,
 };
 
-use processes::UserTable;
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
@@ -122,8 +121,9 @@ pub struct App {
     #[builder(default = false, setter(skip))]
     pub did_config_fail_to_save: bool,
 
+    #[cfg(target_family = "unix")]
     #[builder(default, setter(skip))]
-    pub user_table: UserTable,
+    pub user_table: processes::UserTable,
 
     pub cpu_state: CpuState,
     pub mem_state: MemState,

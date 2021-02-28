@@ -82,10 +82,12 @@ pub struct ProcessHarvest {
     pub process_state_char: char,
 
     /// This is the *effective* user ID.
+    #[cfg(target_family = "unix")]
     pub uid: Option<libc::uid_t>,
 
     // TODO: Add real user ID
     // pub real_uid: Option<u32>,
+    #[cfg(target_family = "unix")]
     pub gid: Option<libc::gid_t>,
 }
 
@@ -117,6 +119,7 @@ impl PrevProcDetails {
     }
 }
 
+#[cfg(target_family = "unix")]
 #[derive(Debug, Default)]
 pub struct UserTable {
     pub uid_user_mapping: HashMap<libc::uid_t, String>,
@@ -616,8 +619,6 @@ pub fn get_process_data(
                 total_write_bytes: disk_usage.total_written_bytes,
                 process_state: process_val.status().to_string().to_string(),
                 process_state_char: convert_process_status_to_char(process_val.status()),
-                uid: None,
-                gid: None,
             });
         }
     }

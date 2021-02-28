@@ -5,7 +5,7 @@ use crate::{
     app::{data_farmer, data_harvester, App, ProcWidgetState},
     utils::{self, gen_util::*},
 };
-use data_harvester::processes::{ProcessSorting, UserTable};
+use data_harvester::processes::ProcessSorting;
 use indexmap::IndexSet;
 use std::collections::{HashMap, VecDeque};
 
@@ -483,7 +483,7 @@ pub enum ProcessNamingType {
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
     existing_converted_process_data: &mut HashMap<Pid, ConvertedProcessData>,
-    user_table: &mut UserTable,
+    #[cfg(target_family = "unix")] user_table: &mut data_harvester::processes::UserTable,
 ) {
     // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
@@ -505,11 +505,13 @@ pub fn convert_process_data(
             0, converted_total_write.0, converted_total_write.1
         );
 
-        let user = if let Some(uid) = process.uid {
-            user_table.get_uid_to_username_mapping(uid).ok()
-        } else {
-            None
-        };
+        let mut user = None;
+        #[cfg(target_family = "unix")]
+        {
+            if let Some(uid) = process.uid {
+                user = user_table.get_uid_to_username_mapping(uid).ok();
+            }
+        }
 
         if let Some(process_entry) = existing_converted_process_data.get_mut(&process.pid) {
             complete_pid_set.remove(&process.pid);
