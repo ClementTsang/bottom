@@ -1,5 +1,5 @@
 use crate::Pid;
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
 #[cfg(target_os = "linux")]
@@ -122,7 +122,7 @@ impl PrevProcDetails {
 #[cfg(target_family = "unix")]
 #[derive(Debug, Default)]
 pub struct UserTable {
-    pub uid_user_mapping: HashMap<libc::uid_t, String>,
+    pub uid_user_mapping: std::collections::HashMap<libc::uid_t, String>,
 }
 
 #[cfg(target_family = "unix")]

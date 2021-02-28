@@ -369,6 +369,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             convert_process_data(
                 &app.data_collection,
                 &mut app.canvas_data.single_process_data,
+                #[cfg(target_family = "unix")]
                 &mut app.user_table,
             );
         }
