@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#413](https://github.com/ClementTsang/bottom/pull/413): Added mouse support for sorting process columns.
 
-- [#](): Added user into the process widget for Unix-based systems.
+- [#425](https://github.com/ClementTsang/bottom/pull/425): Added user into the process widget for Unix-based systems.
 
 ## Changes
 
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#423](https://github.com/ClementTsang/bottom/pull/423): Fixes disk encryption causing the disk widget to fail or not properly map I/O statistics.
 
-- [#](): Fixed a bug allowing grouped mode in tree mode if already in grouped mode.
+- [#425](https://github.com/ClementTsang/bottom/pull/425): Fixed a bug allowing grouped mode in tree mode if already in grouped mode.
 
 ## [0.5.7] - 2021-01-30
 
