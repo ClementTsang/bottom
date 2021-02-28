@@ -26,7 +26,8 @@ pub trait ProcessQuery {
     /// - PIDs: Use prefix `pid`, can use regex or match word (case is irrelevant).
     /// - CPU: Use prefix `cpu`, cannot use r/m/c (regex, match word, case).  Can compare.
     /// - MEM: Use prefix `mem`, cannot use r/m/c.  Can compare.
-    /// - STATE: Use prefix `state`, TODO when we update how state looks in 0.5 probably.
+    /// - STATE: Use prefix `state`, can use regex, match word, or case.
+    /// - USER: Use prefix `user`, can use regex, match word, or case.
     /// - Read/s: Use prefix `r`.  Can compare.
     /// - Write/s: Use prefix `w`.  Can compare.
     /// - Total read: Use prefix `read`.  Can compare.
@@ -128,8 +129,6 @@ impl ProcessQuery for ProcWidgetState {
 
         fn process_prefix(query: &mut VecDeque<String>, inside_quotation: bool) -> Result<Prefix> {
             if let Some(queue_top) = query.pop_front() {
-                // debug!("Prefix QT: {:?}", queue_top);
-
                 if inside_quotation {
                     if queue_top == "\"" {
                         // This means we hit something like "".  Return an empty prefix, and to deal with
@@ -264,11 +263,20 @@ impl ProcessQuery for ProcWidgetState {
                                     compare_prefix: None,
                                 })
                             }
-                            PrefixType::Pid | PrefixType::State => {
+                            PrefixType::Pid | PrefixType::State | PrefixType::User => {
                                 // We have to check if someone put an "="...
                                 if content == "=" {
                                     // Check next string if possible
                                     if let Some(queue_next) = query.pop_front() {
+                                        // TODO: Need to consider the following cases:
+                                        // - (test)
+                                        // - (test
+                                        // - test)
+                                        // These are split into 2 to 3 different strings due to parentheses being
+                                        // delimiters in our query system.
+                                        //
+                                        // Do we want these to be valid?  They should, as a string, right?
+
                                         return Ok(Prefix {
                                             or: None,
                                             regex_prefix: Some((
@@ -580,6 +588,7 @@ pub enum PrefixType {
     TWrite,
     Name,
     State,
+    User,
     __Nonexhaustive,
 }
 
@@ -602,6 +611,7 @@ impl std::str::FromStr for PrefixType {
             "twrite" | "t.write" => Ok(TWrite),
             "pid" => Ok(Pid),
             "state" => Ok(State),
+            "user" => Ok(User),
             _ => Ok(Name),
         }
     }
@@ -628,7 +638,7 @@ impl Prefix {
         } else if let Some((prefix_type, StringQuery::Value(regex_string))) = &mut self.regex_prefix
         {
             match prefix_type {
-                PrefixType::Pid | PrefixType::Name | PrefixType::State => {
+                PrefixType::Pid | PrefixType::Name | PrefixType::State | PrefixType::User => {
                     let escaped_regex: String;
                     let final_regex_string = &format!(
                         "{}{}{}{}",
@@ -681,6 +691,13 @@ impl Prefix {
                     }),
                     PrefixType::Pid => r.is_match(process.pid.to_string().as_str()),
                     PrefixType::State => r.is_match(process.process_state.as_str()),
+                    PrefixType::User => {
+                        if let Some(user) = &process.user {
+                            r.is_match(user.as_str())
+                        } else {
+                            false
+                        }
+                    }
                     _ => true,
                 }
             } else {

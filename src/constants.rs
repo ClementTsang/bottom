@@ -272,7 +272,7 @@ pub const PROCESS_HELP_TEXT: [&str; 15] = [
     "click on header  Sorts the entries by that column, click again to invert the sort",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 48] = [
+pub const SEARCH_HELP_TEXT: [&str; 49] = [
     "4 - Process search widget",
     "Tab              Toggle between searching for PID and name",
     "Esc              Close the search widget (retains the filter)",
@@ -299,6 +299,7 @@ pub const SEARCH_HELP_TEXT: [&str; 48] = [
     "write, w/s       ex: write <= 1 tb",
     "tread, t.read    ex: tread = 1",
     "twrite, t.write  ex: twrite = 1",
+    "user            ex: user = root",
     "state            ex: state = running",
     "",
     "Comparison operators:",
