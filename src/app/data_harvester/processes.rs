@@ -2,8 +2,11 @@ use crate::Pid;
 use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
+#[cfg(target_family = "unix")]
+use crate::utils::error;
+
 #[cfg(target_os = "linux")]
-use crate::utils::error::{self, BottomError};
+use crate::utils::error::BottomError;
 
 #[cfg(target_os = "linux")]
 use fnv::{FnvHashMap, FnvHashSet};
