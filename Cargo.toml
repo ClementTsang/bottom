@@ -17,6 +17,11 @@ name = "btm"
 path = "src/bin/main.rs"
 doc = false
 
+[lib]
+test = false
+doctest = false
+doc = false
+
 [profile.release]
 debug = 0
 lto = true

@@ -174,6 +174,9 @@ impl ProcessSearchState {
 pub struct ColumnInfo {
     pub enabled: bool,
     pub shortcut: Option<&'static str>,
+    // FIXME: Move column width logic here!
+    // pub hard_width: Option<u16>,
+    // pub max_soft_width: Option<f64>,
 }
 
 pub struct ProcColumn {
@@ -205,6 +208,7 @@ impl Default for ProcColumn {
             WritePerSecond,
             TotalRead,
             TotalWrite,
+            User,
             State,
         ];
 
@@ -219,6 +223,8 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: true,
                             shortcut: Some("c"),
+                            // hard_width: None,
+                            // max_soft_width: None,
                         },
                     );
                 }
@@ -228,6 +234,8 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: true,
                             shortcut: Some("m"),
+                            // hard_width: None,
+                            // max_soft_width: None,
                         },
                     );
                 }
@@ -237,6 +245,8 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: false,
                             shortcut: Some("m"),
+                            // hard_width: None,
+                            // max_soft_width: None,
                         },
                     );
                 }
@@ -246,6 +256,8 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: true,
                             shortcut: Some("n"),
+                            // hard_width: None,
+                            // max_soft_width: None,
                         },
                     );
                 }
@@ -255,6 +267,8 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: false,
                             shortcut: Some("n"),
+                            // hard_width: None,
+                            // max_soft_width: None,
                         },
                     );
                 }
@@ -264,6 +278,8 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: true,
                             shortcut: Some("p"),
+                            // hard_width: None,
+                            // max_soft_width: None,
                         },
                     );
                 }
@@ -272,6 +288,17 @@ impl Default for ProcColumn {
                         column,
                         ColumnInfo {
                             enabled: false,
+                            shortcut: None,
+                            // hard_width: None,
+                            // max_soft_width: None,
+                        },
+                    );
+                }
+                User => {
+                    column_mapping.insert(
+                        column,
+                        ColumnInfo {
+                            enabled: cfg!(target_family = "unix"),
                             shortcut: None,
                         },
                     );
@@ -282,6 +309,8 @@ impl Default for ProcColumn {
                         ColumnInfo {
                             enabled: true,
                             shortcut: None,
+                            // hard_width: None,
+                            // max_soft_width: None,
                         },
                     );
                 }
@@ -310,6 +339,33 @@ impl ProcColumn {
     pub fn toggle(&mut self, column: &ProcessSorting) -> Option<bool> {
         if let Some(mapping) = self.column_mapping.get_mut(column) {
             mapping.enabled = !(mapping.enabled);
+            Some(mapping.enabled)
+        } else {
+            None
+        }
+    }
+
+    pub fn try_set(&mut self, column: &ProcessSorting, setting: bool) -> Option<bool> {
+        if let Some(mapping) = self.column_mapping.get_mut(column) {
+            mapping.enabled = setting;
+            Some(mapping.enabled)
+        } else {
+            None
+        }
+    }
+
+    pub fn try_enable(&mut self, column: &ProcessSorting) -> Option<bool> {
+        if let Some(mapping) = self.column_mapping.get_mut(column) {
+            mapping.enabled = true;
+            Some(mapping.enabled)
+        } else {
+            None
+        }
+    }
+
+    pub fn try_disable(&mut self, column: &ProcessSorting) -> Option<bool> {
+        if let Some(mapping) = self.column_mapping.get_mut(column) {
+            mapping.enabled = false;
             Some(mapping.enabled)
         } else {
             None

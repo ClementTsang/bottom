@@ -86,6 +86,12 @@ impl From<std::str::Utf8Error> for BottomError {
     }
 }
 
+impl From<std::string::FromUtf8Error> for BottomError {
+    fn from(err: std::string::FromUtf8Error) -> Self {
+        BottomError::ConversionError(err.to_string())
+    }
+}
+
 impl From<regex::Error> for BottomError {
     fn from(err: regex::Error) -> Self {
         // We only really want the last part of it... so we'll do it the ugly way:

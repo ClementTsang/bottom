@@ -6,6 +6,7 @@ use std::{
     time::Instant,
 };
 
+use processes::UserTable;
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
@@ -120,6 +121,9 @@ pub struct App {
 
     #[builder(default = false, setter(skip))]
     pub did_config_fail_to_save: bool,
+
+    #[builder(default, setter(skip))]
+    pub user_table: UserTable,
 
     pub cpu_state: CpuState,
     pub mem_state: MemState,
@@ -321,12 +325,16 @@ impl App {
                                 proc_widget_state.is_process_sort_descending = true;
                             }
 
-                            proc_widget_state
-                                .columns
-                                .column_mapping
-                                .get_mut(&processes::ProcessSorting::State)
-                                .unwrap()
-                                .enabled = !(proc_widget_state.is_grouped);
+                            proc_widget_state.columns.try_set(
+                                &processes::ProcessSorting::State,
+                                !(proc_widget_state.is_grouped),
+                            );
+
+                            #[cfg(target_family = "unix")]
+                            proc_widget_state.columns.try_set(
+                                &processes::ProcessSorting::User,
+                                !(proc_widget_state.is_grouped),
+                            );
 
                             proc_widget_state
                                 .columns
@@ -657,6 +665,26 @@ impl App {
             proc_widget_state.is_tree_mode = !proc_widget_state.is_tree_mode;
 
             if proc_widget_state.is_tree_mode {
+                // Disable grouping if so!
+                proc_widget_state.is_grouped = false;
+
+                proc_widget_state
+                    .columns
+                    .try_enable(&processes::ProcessSorting::State);
+
+                #[cfg(target_family = "unix")]
+                proc_widget_state
+                    .columns
+                    .try_enable(&processes::ProcessSorting::User);
+
+                proc_widget_state
+                    .columns
+                    .try_disable(&processes::ProcessSorting::Count);
+
+                proc_widget_state
+                    .columns
+                    .try_enable(&processes::ProcessSorting::Pid);
+
                 // We enabled... set PID sort type to ascending.
                 proc_widget_state.process_sorting_type = processes::ProcessSorting::Pid;
                 proc_widget_state.is_process_sort_descending = false;

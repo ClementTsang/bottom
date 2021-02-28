@@ -369,6 +369,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             convert_process_data(
                 &app.data_collection,
                 &mut app.canvas_data.single_process_data,
+                &mut app.user_table,
             );
         }
         let process_filter = app.get_process_filter(widget_id);
@@ -550,6 +551,16 @@ fn sort_process_data(
                 to_sort_vec.reverse();
             }
         }
+        ProcessSorting::User => to_sort_vec.sort_by(|a, b| match (&a.user, &b.user) {
+            (Some(user_a), Some(user_b)) => utils::gen_util::get_ordering(
+                user_a.to_lowercase(),
+                user_b.to_lowercase(),
+                proc_widget_state.is_process_sort_descending,
+            ),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => std::cmp::Ordering::Less,
+        }),
         ProcessSorting::Count => {
             if proc_widget_state.is_grouped {
                 to_sort_vec.sort_by(|a, b| {
