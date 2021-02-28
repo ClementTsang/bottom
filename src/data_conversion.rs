@@ -1023,7 +1023,6 @@ pub fn stringify_process_data(
                     #[cfg(target_family = "unix")]
                     (
                         if let Some(user) = &process.user {
-                            debug!("user: {}", user);
                             user.clone()
                         } else {
                             "N/A".to_string()
