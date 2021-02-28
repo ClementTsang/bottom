@@ -121,6 +121,10 @@ pub struct App {
     #[builder(default = false, setter(skip))]
     pub did_config_fail_to_save: bool,
 
+    #[cfg(target_family = "unix")]
+    #[builder(default, setter(skip))]
+    pub user_table: processes::UserTable,
+
     pub cpu_state: CpuState,
     pub mem_state: MemState,
     pub net_state: NetState,
@@ -310,23 +314,35 @@ impl App {
 
                             // Forcefully switch off column if we were on it...
                             if (proc_widget_state.is_grouped
-                                && proc_widget_state.process_sorting_type
-                                    == data_harvester::processes::ProcessSorting::Pid)
+                                && (proc_widget_state.process_sorting_type
+                                    == processes::ProcessSorting::Pid
+                                    || proc_widget_state.process_sorting_type
+                                        == processes::ProcessSorting::User
+                                    || proc_widget_state.process_sorting_type
+                                        == processes::ProcessSorting::State))
                                 || (!proc_widget_state.is_grouped
                                     && proc_widget_state.process_sorting_type
-                                        == data_harvester::processes::ProcessSorting::Count)
+                                        == processes::ProcessSorting::Count)
                             {
                                 proc_widget_state.process_sorting_type =
-                                    data_harvester::processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
+                                    processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
                                 proc_widget_state.is_process_sort_descending = true;
                             }
 
-                            proc_widget_state
-                                .columns
-                                .column_mapping
-                                .get_mut(&processes::ProcessSorting::State)
-                                .unwrap()
-                                .enabled = !(proc_widget_state.is_grouped);
+                            proc_widget_state.columns.set_to_sorted_index_from_type(
+                                &proc_widget_state.process_sorting_type,
+                            );
+
+                            proc_widget_state.columns.try_set(
+                                &processes::ProcessSorting::State,
+                                !(proc_widget_state.is_grouped),
+                            );
+
+                            #[cfg(target_family = "unix")]
+                            proc_widget_state.columns.try_set(
+                                &processes::ProcessSorting::User,
+                                !(proc_widget_state.is_grouped),
+                            );
 
                             proc_widget_state
                                 .columns
@@ -657,6 +673,26 @@ impl App {
             proc_widget_state.is_tree_mode = !proc_widget_state.is_tree_mode;
 
             if proc_widget_state.is_tree_mode {
+                // Disable grouping if so!
+                proc_widget_state.is_grouped = false;
+
+                proc_widget_state
+                    .columns
+                    .try_enable(&processes::ProcessSorting::State);
+
+                #[cfg(target_family = "unix")]
+                proc_widget_state
+                    .columns
+                    .try_enable(&processes::ProcessSorting::User);
+
+                proc_widget_state
+                    .columns
+                    .try_disable(&processes::ProcessSorting::Count);
+
+                proc_widget_state
+                    .columns
+                    .try_enable(&processes::ProcessSorting::Pid);
+
                 // We enabled... set PID sort type to ascending.
                 proc_widget_state.process_sorting_type = processes::ProcessSorting::Pid;
                 proc_widget_state.is_process_sort_descending = false;

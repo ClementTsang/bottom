@@ -9,19 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Features
 
-- [#263](https://github.com/ClementTsang/bottom/pull/263): Adds the option for fine-grained kill signals on Unix-like systems.
+- [#263](https://github.com/ClementTsang/bottom/pull/263): Added the option for fine-grained kill signals on Unix-like systems.
 
-- [#333](https://github.com/ClementTsang/bottom/pull/333): Adds an "out of" indicator that can be enabled using `--show_table_scroll_position` (and its corresponding config option) to help keep track of scrolled position.
+- [#333](https://github.com/ClementTsang/bottom/pull/333): Added an "out of" indicator that can be enabled using `--show_table_scroll_position` (and its corresponding config option) to help keep track of scrolled position.
 
-- [#379](https://github.com/ClementTsang/bottom/pull/379): Adds `--process_command` flag and corresponding config option to default to showing a process' command.
+- [#379](https://github.com/ClementTsang/bottom/pull/379): Added `--process_command` flag and corresponding config option to default to showing a process' command.
 
-- [#381](https://github.com/ClementTsang/bottom/pull/381): Adds a filter in the config file for network interfaces.
+- [#381](https://github.com/ClementTsang/bottom/pull/381): Added a filter in the config file for network interfaces.
 
-- [#406](https://github.com/ClementTsang/bottom/pull/406): Adds the Nord colour scheme, as well as a light variant.
+- [#406](https://github.com/ClementTsang/bottom/pull/406): Added the Nord colour scheme, as well as a light variant.
 
-- [#409](https://github.com/ClementTsang/bottom/pull/409): Adds `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.
+- [#409](https://github.com/ClementTsang/bottom/pull/409): Added `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.
 
-- [#413](https://github.com/ClementTsang/bottom/pull/413): Adds mouse support for sorting process columns.
+- [#413](https://github.com/ClementTsang/bottom/pull/413): Added mouse support for sorting process columns.
+
+- [#425](https://github.com/ClementTsang/bottom/pull/425): Added user into the process widget for Unix-based systems.
 
 ## Changes
 
@@ -42,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#417](https://github.com/ClementTsang/bottom/pull/417): Fixes the sort menu and sort shortcuts not syncing up.
 
 - [#423](https://github.com/ClementTsang/bottom/pull/423): Fixes disk encryption causing the disk widget to fail or not properly map I/O statistics.
+
+- [#425](https://github.com/ClementTsang/bottom/pull/425): Fixed a bug allowing grouped mode in tree mode if already in grouped mode.
 
 ## [0.5.7] - 2021-01-30
 

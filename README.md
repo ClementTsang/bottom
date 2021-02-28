@@ -387,6 +387,7 @@ Use `btm --help` for more information.
 | `write`, `w/s`      | `write >= 1 kb`    | Matches the write/s column in terms of bytes; supports comparison operators     |
 | `tread`, `t.read`   | `tread <= 1024 gb` | Matches he total read column in terms of bytes; supports comparison operators   |
 | `twrite`, `t.write` | `twrite > 1024 tb` | Matches the total write column in terms of bytes; supports comparison operators |
+| `user`              | `user=root`        | Matches by user; supports regex                                                 |
 | `state`             | `state=running`    | Matches by state; supports regex                                                |
 
 #### Supported comparison operators
@@ -464,7 +465,7 @@ As yet _another_ process/system visualization and management application, bottom
 
 - Display temperatures from sensors
 
-- Display information regarding processes, like CPU, memory, I/O usage, and process state
+- Display information regarding processes, like CPU, memory, I/O usage, user, and process state
 
 - Process management (well, if process killing is all you need)
 

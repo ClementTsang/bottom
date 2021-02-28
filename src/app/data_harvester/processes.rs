@@ -2,8 +2,11 @@ use crate::Pid;
 use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
+#[cfg(target_family = "unix")]
+use crate::utils::error;
+
 #[cfg(target_os = "linux")]
-use crate::utils::error::{self, BottomError};
+use crate::utils::error::BottomError;
 
 #[cfg(target_os = "linux")]
 use fnv::{FnvHashMap, FnvHashSet};
@@ -29,28 +32,29 @@ pub enum ProcessSorting {
     TotalRead,
     TotalWrite,
     State,
+    User,
     Count,
 }
 
 impl std::fmt::Display for ProcessSorting {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use ProcessSorting::*;
         write!(
             f,
             "{}",
             match &self {
-                CpuPercent => "CPU%",
-                MemPercent => "Mem%",
-                Mem => "Mem",
-                ReadPerSecond => "R/s",
-                WritePerSecond => "W/s",
-                TotalRead => "T.Read",
-                TotalWrite => "T.Write",
-                State => "State",
-                ProcessName => "Name",
-                Command => "Command",
-                Pid => "PID",
-                Count => "Count",
+                ProcessSorting::CpuPercent => "CPU%",
+                ProcessSorting::MemPercent => "Mem%",
+                ProcessSorting::Mem => "Mem",
+                ProcessSorting::ReadPerSecond => "R/s",
+                ProcessSorting::WritePerSecond => "W/s",
+                ProcessSorting::TotalRead => "T.Read",
+                ProcessSorting::TotalWrite => "T.Write",
+                ProcessSorting::State => "State",
+                ProcessSorting::ProcessName => "Name",
+                ProcessSorting::Command => "Command",
+                ProcessSorting::Pid => "PID",
+                ProcessSorting::Count => "Count",
+                ProcessSorting::User => "User",
             }
         )
     }
@@ -81,9 +85,13 @@ pub struct ProcessHarvest {
     pub process_state_char: char,
 
     /// This is the *effective* user ID.
-    pub uid: Option<u32>,
-    // pub real_uid: Option<u32>, // TODO: Add real user ID
-    pub gid: Option<u32>,
+    #[cfg(target_family = "unix")]
+    pub uid: Option<libc::uid_t>,
+
+    // TODO: Add real user ID
+    // pub real_uid: Option<u32>,
+    #[cfg(target_family = "unix")]
+    pub gid: Option<libc::gid_t>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -110,6 +118,29 @@ impl PrevProcDetails {
             // proc_statm_path: PathBuf::from(format!("/proc/{}/statm", pid)),
             proc_cmdline_path: PathBuf::from(format!("/proc/{}/cmdline", pid)),
             ..PrevProcDetails::default()
+        }
+    }
+}
+
+#[cfg(target_family = "unix")]
+#[derive(Debug, Default)]
+pub struct UserTable {
+    pub uid_user_mapping: std::collections::HashMap<libc::uid_t, String>,
+}
+
+#[cfg(target_family = "unix")]
+impl UserTable {
+    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> error::Result<String> {
+        if let Some(user) = self.uid_user_mapping.get(&uid) {
+            Ok(user.clone())
+        } else {
+            let passwd = unsafe { libc::getpwuid(uid) };
+            let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
+                .to_str()?
+                .to_string();
+            self.uid_user_mapping.insert(uid, username.clone());
+
+            Ok(username)
         }
     }
 }
@@ -591,8 +622,6 @@ pub fn get_process_data(
                 total_write_bytes: disk_usage.total_written_bytes,
                 process_state: process_val.status().to_string().to_string(),
                 process_state_char: convert_process_status_to_char(process_val.status()),
-                uid: None,
-                gid: None,
             });
         }
     }

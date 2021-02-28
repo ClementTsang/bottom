@@ -62,6 +62,7 @@ pub struct ConvertedProcessData {
     pub tw_f64: f64,
     pub process_state: String,
     pub process_char: char,
+    pub user: Option<String>,
 
     /// Prefix printed before the process when displayed.
     pub process_description_prefix: Option<String>,
@@ -482,6 +483,7 @@ pub enum ProcessNamingType {
 pub fn convert_process_data(
     current_data: &data_farmer::DataCollection,
     existing_converted_process_data: &mut HashMap<Pid, ConvertedProcessData>,
+    #[cfg(target_family = "unix")] user_table: &mut data_harvester::processes::UserTable,
 ) {
     // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
@@ -502,6 +504,21 @@ pub fn convert_process_data(
             "{:.*}{}",
             0, converted_total_write.0, converted_total_write.1
         );
+
+        let user = {
+            #[cfg(target_family = "unix")]
+            {
+                if let Some(uid) = process.uid {
+                    user_table.get_uid_to_username_mapping(uid).ok()
+                } else {
+                    None
+                }
+            }
+            #[cfg(not(target_family = "unix"))]
+            {
+                None
+            }
+        };
 
         if let Some(process_entry) = existing_converted_process_data.get_mut(&process.pid) {
             complete_pid_set.remove(&process.pid);
@@ -527,6 +544,7 @@ pub fn convert_process_data(
                 process_entry.process_char = process.process_state_char;
                 process_entry.process_description_prefix = None;
                 process_entry.is_disabled_entry = false;
+                process_entry.user = user;
             } else {
                 // ...I hate that I can't combine if let and an if statement in one line...
                 *process_entry = ConvertedProcessData {
@@ -553,6 +571,7 @@ pub fn convert_process_data(
                     process_description_prefix: None,
                     is_disabled_entry: false,
                     is_collapsed_entry: false,
+                    user,
                 };
             }
         } else {
@@ -582,6 +601,7 @@ pub fn convert_process_data(
                     process_description_prefix: None,
                     is_disabled_entry: false,
                     is_collapsed_entry: false,
+                    user,
                 },
             );
         }
@@ -827,8 +847,18 @@ pub fn tree_process_data(
                     is_sort_descending,
                 )
             }),
+            ProcessSorting::User => to_sort_vec.sort_by(|a, b| match (&a.1.user, &b.1.user) {
+                (Some(user_a), Some(user_b)) => utils::gen_util::get_ordering(
+                    user_a.to_lowercase(),
+                    user_b.to_lowercase(),
+                    is_sort_descending,
+                ),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => std::cmp::Ordering::Less,
+            }),
             ProcessSorting::Count => {
-                // Should never occur in this case.
+                // Should never occur in this case, tree mode explicitly disables grouping.
             }
         }
     }
@@ -990,6 +1020,15 @@ pub fn stringify_process_data(
                     (process.write_per_sec.clone(), None),
                     (process.total_read.clone(), None),
                     (process.total_write.clone(), None),
+                    #[cfg(target_family = "unix")]
+                    (
+                        if let Some(user) = &process.user {
+                            user.clone()
+                        } else {
+                            "N/A".to_string()
+                        },
+                        None,
+                    ),
                     (
                         process.process_state.clone(),
                         Some(process.process_char.to_string()),
@@ -1083,6 +1122,7 @@ pub fn group_process_data(
                 process_char: char::default(),
                 is_disabled_entry: false,
                 is_collapsed_entry: false,
+                user: None,
             }
         })
         .collect::<Vec<_>>()

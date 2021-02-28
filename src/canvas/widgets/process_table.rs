@@ -30,6 +30,8 @@ static PROCESS_HEADERS_HARD_WIDTH_NO_GROUP: Lazy<Vec<Option<u16>>> = Lazy::new(|
         Some(8),
         Some(7),
         Some(8),
+        #[cfg(target_family = "unix")]
+        None,
         None,
     ]
 });
@@ -48,8 +50,6 @@ static PROCESS_HEADERS_HARD_WIDTH_GROUPED: Lazy<Vec<Option<u16>>> = Lazy::new(||
 
 static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND: Lazy<Vec<Option<f64>>> =
     Lazy::new(|| vec![None, Some(0.7), None, None, None, None, None, None]);
-static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_TREE: Lazy<Vec<Option<f64>>> =
-    Lazy::new(|| vec![None, Some(0.5), None, None, None, None, None, None]);
 static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE: Lazy<Vec<Option<f64>>> =
     Lazy::new(|| vec![None, Some(0.3), None, None, None, None, None, None]);
 
@@ -63,6 +63,8 @@ static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND: Lazy<Vec<Option<f64>>> =
         None,
         None,
         None,
+        #[cfg(target_family = "unix")]
+        Some(0.05),
         Some(0.2),
     ]
 });
@@ -76,6 +78,8 @@ static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE: Lazy<Vec<Option<f64>>> = La
         None,
         None,
         None,
+        #[cfg(target_family = "unix")]
+        Some(0.05),
         Some(0.2),
     ]
 });
@@ -89,6 +93,8 @@ static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE: Lazy<Vec<Option<f64>>> = La
         None,
         None,
         None,
+        #[cfg(target_family = "unix")]
+        Some(0.05),
         Some(0.2),
     ]
 });
@@ -344,6 +350,7 @@ impl ProcessTableWidget for Painter {
                 );
 
                 // Calculate widths
+                // FIXME: See if we can move this into the recalculate block?  I want to move column widths into the column widths
                 let hard_widths = if proc_widget_state.is_grouped {
                     &*PROCESS_HEADERS_HARD_WIDTH_GROUPED
                 } else {
@@ -394,10 +401,10 @@ impl ProcessTableWidget for Painter {
                         .collect::<Vec<_>>();
 
                     let soft_widths_max = if proc_widget_state.is_grouped {
+                        // Note grouped trees are not a thing.
+
                         if proc_widget_state.is_using_command {
                             &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND
-                        } else if proc_widget_state.is_tree_mode {
-                            &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_TREE
                         } else {
                             &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE
                         }
@@ -601,6 +608,7 @@ impl ProcessTableWidget for Painter {
             }
         }
 
+        // TODO: Make the cursor scroll back if there's space!
         if let Some(proc_widget_state) =
             app_state.proc_state.widget_states.get_mut(&(widget_id - 1))
         {
