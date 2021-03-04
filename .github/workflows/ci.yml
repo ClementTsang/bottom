@@ -94,6 +94,13 @@ jobs:
               cross: false,
               rust: stable,
             }
+          # Disabled, unfortunately.
+          # - {
+          #     os: "macOS-11.0",
+          #     target: "x86_64-apple-darwin",
+          #     cross: false,
+          #     rust: stable,
+          #   }
           - {
               os: "windows-2019",
               target: "i686-pc-windows-msvc",
@@ -129,10 +136,26 @@ jobs:
               rust: stable,
             }
 
+          # armv6
+          - {
+              os: "ubuntu-18.04",
+              target: "arm-unknown-linux-gnueabihf",
+              cross: true,
+              rust: stable,
+            }
+
           # PowerPC 64 LE
           - {
               os: "ubuntu-18.04",
               target: "powerpc64le-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+
+          # macOS ARM
+          - {
+              os: "macOS-latest",
+              target: "aarch64-apple-darwin",
               cross: true,
               rust: stable,
             }
