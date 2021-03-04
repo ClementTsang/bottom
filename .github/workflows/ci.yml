@@ -136,6 +136,14 @@ jobs:
               rust: stable,
             }
 
+          # armv6
+          - {
+              os: "ubuntu-18.04",
+              target: "arm-unknown-linux-gnueabihf",
+              cross: true,
+              rust: stable,
+            }
+
           # PowerPC 64 LE
           - {
               os: "ubuntu-18.04",
