@@ -16,9 +16,9 @@ use once_cell::sync::Lazy;
 
 use std::{time::Instant, vec::Vec};
 
-use crate::app::data_harvester::loadavg::LoadAvgHarvest;
+use crate::app::data_harvester::load_avg::LoadAvgHarvest;
 use crate::{
-    data_harvester::{batteries, cpu, disks, loadavg, mem, network, processes, temperature, Data},
+    data_harvester::{batteries, cpu, disks, load_avg, mem, network, processes, temperature, Data},
     utils::gen_util::get_simple_byte_values,
 };
 use regex::Regex;
@@ -31,7 +31,7 @@ pub struct TimedData {
     pub rx_data: Value,
     pub tx_data: Value,
     pub cpu_data: Vec<Value>,
-    pub loadavg_data: [f64; 3],
+    pub load_avg_data: [f64; 3],
     pub mem_data: Option<Value>,
     pub swap_data: Option<Value>,
 }
@@ -54,7 +54,7 @@ pub struct DataCollection {
     pub memory_harvest: mem::MemHarvest,
     pub swap_harvest: mem::MemHarvest,
     pub cpu_harvest: cpu::CpuHarvest,
-    pub loadavg_harvest: loadavg::LoadAvgHarvest,
+    pub load_avg_harvest: load_avg::LoadAvgHarvest,
     pub process_harvest: Vec<processes::ProcessHarvest>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IOHarvest,
@@ -74,7 +74,7 @@ impl Default for DataCollection {
             memory_harvest: mem::MemHarvest::default(),
             swap_harvest: mem::MemHarvest::default(),
             cpu_harvest: cpu::CpuHarvest::default(),
-            loadavg_harvest: loadavg::LoadAvgHarvest::default(),
+            load_avg_harvest: load_avg::LoadAvgHarvest::default(),
             process_harvest: Vec::default(),
             disk_harvest: Vec::default(),
             io_harvest: disks::IOHarvest::default(),
@@ -148,8 +148,8 @@ impl DataCollection {
         }
 
         // Load Average
-        if let Some(loadavg) = harvested_data.loadavg {
-            self.eat_loadavg(loadavg, &mut new_entry);
+        if let Some(load_avg) = harvested_data.load_avg {
+            self.eat_load_avg(load_avg, &mut new_entry);
         }
 
         // Temp
@@ -237,10 +237,10 @@ impl DataCollection {
         self.cpu_harvest = cpu.to_vec();
     }
 
-    fn eat_loadavg(&mut self, loadavg: LoadAvgHarvest, new_entry: &mut TimedData) {
-        new_entry.loadavg_data = loadavg;
+    fn eat_load_avg(&mut self, load_avg: LoadAvgHarvest, new_entry: &mut TimedData) {
+        new_entry.load_avg_data = load_avg;
 
-        self.loadavg_harvest = loadavg;
+        self.load_avg_harvest = load_avg;
     }
 
     fn eat_temp(&mut self, temperature_sensors: Vec<temperature::TempHarvest>) {

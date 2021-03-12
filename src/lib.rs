@@ -315,7 +315,7 @@ pub fn handle_force_redraws(app: &mut App) {
             &mut app.canvas_data.cpu_data,
             app.is_frozen,
         );
-        app.canvas_data.loadavg_data = app.data_collection.loadavg_harvest;
+        app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
         app.cpu_state.force_update = None;
     }
 

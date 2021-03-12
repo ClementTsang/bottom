@@ -247,21 +247,24 @@ impl CpuGraphWidget for Painter {
                 self.colours.border_style
             };
 
-            let loadavg = app_state.canvas_data.loadavg_data;
-            let loadavg_str = format!("{} {} {} ", loadavg[0], loadavg[1], loadavg[2]);
-            let loadavg_str_size =
-                UnicodeSegmentation::graphemes(loadavg_str.as_str(), true).count();
+            let load_avg = app_state.canvas_data.load_avg_data;
+            let load_avg_str = format!(
+                "─ {:.2} {:.2} {:.2} ",
+                load_avg[0], load_avg[1], load_avg[2]
+            );
+            let load_avg_str_size =
+                UnicodeSegmentation::graphemes(load_avg_str.as_str(), true).count();
             let title = if app_state.is_expanded {
                 const TITLE_BASE: &str = " CPU ── Esc to go back ";
 
                 Spans::from(vec![
                     Span::styled(" CPU ", self.colours.widget_title_style),
-                    Span::styled(loadavg_str, self.colours.widget_title_style),
+                    Span::styled(load_avg_str, self.colours.widget_title_style),
                     Span::styled(
                         format!(
                             "─{}─ Esc to go back ",
                             "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                                loadavg_str_size
+                                load_avg_str_size
                                     + UnicodeSegmentation::graphemes(TITLE_BASE, true).count()
                                     + 2
                             ))
@@ -272,7 +275,7 @@ impl CpuGraphWidget for Painter {
             } else {
                 Spans::from(vec![
                     Span::styled(" CPU ", self.colours.widget_title_style),
-                    Span::styled(loadavg_str, self.colours.widget_title_style),
+                    Span::styled(load_avg_str, self.colours.widget_title_style),
                 ])
             };
 

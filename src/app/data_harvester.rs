@@ -19,7 +19,7 @@ use super::DataFilters;
 pub mod batteries;
 pub mod cpu;
 pub mod disks;
-pub mod loadavg;
+pub mod load_avg;
 pub mod mem;
 pub mod network;
 pub mod processes;
@@ -29,7 +29,7 @@ pub mod temperature;
 pub struct Data {
     pub last_collection_time: Instant,
     pub cpu: Option<cpu::CpuHarvest>,
-    pub loadavg: Option<loadavg::LoadAvgHarvest>,
+    pub load_avg: Option<load_avg::LoadAvgHarvest>,
     pub memory: Option<mem::MemHarvest>,
     pub swap: Option<mem::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
@@ -45,7 +45,7 @@ impl Default for Data {
         Data {
             last_collection_time: Instant::now(),
             cpu: None,
-            loadavg: None,
+            load_avg: None,
             memory: None,
             swap: None,
             temperature_sensors: None,
@@ -67,7 +67,7 @@ impl Data {
         self.memory = None;
         self.swap = None;
         self.cpu = None;
-        self.loadavg = None;
+        self.load_avg = None;
 
         if let Some(network) = &mut self.network {
             network.first_run_cleanup();
@@ -255,8 +255,8 @@ impl DataCollector {
         }
 
         // Load Average
-        if let Ok(loadavg_data) = loadavg::get_loadavg().await {
-            self.data.loadavg = Some(loadavg_data);
+        if let Ok(load_avg_data) = load_avg::get_load_avg().await {
+            self.data.load_avg = Some(load_avg_data);
         }
 
         // Batteries
