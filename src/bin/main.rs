@@ -222,6 +222,7 @@ fn main() -> Result<()> {
                                 &mut app.canvas_data.cpu_data,
                                 false,
                             );
+                            app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }
 
                         // Processes

@@ -56,6 +56,7 @@ pub struct DisplayableData {
 
     pub mem_data: Vec<Point>,
     pub swap_data: Vec<Point>,
+    pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<ConvertedCpuData>,
     pub battery_data: Vec<ConvertedBatteryData>,
 }
