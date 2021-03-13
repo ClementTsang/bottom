@@ -33,7 +33,7 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all -- --check
 
-  # Check clippy.  This doesn't check ARM though.
+  # Check clippy.  Note that this doesn't check ARM.
   clippy:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -180,6 +180,7 @@ jobs:
           args: --all-targets --verbose --target=${{ matrix.triple.target }} --no-default-features
           use-cross: ${{ matrix.triple.cross }}
 
+  # Run tests on a subset of platforms
   tests:
     needs: [check]
     name: Test ${{ matrix.os }}
