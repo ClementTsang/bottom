@@ -21,6 +21,7 @@ use crate::{
     options::Config,
     options::ConfigFlags,
     options::WidgetIdEnabled,
+    units::data_units::DataUnit,
     utils::error::{BottomError, Result},
     Pid,
 };
@@ -33,6 +34,12 @@ pub mod query;
 pub mod states;
 
 const MAX_SEARCH_LENGTH: usize = 200;
+
+#[derive(Debug, Clone)]
+pub enum AxisScaling {
+    Log,
+    Linear,
+}
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
@@ -55,6 +62,10 @@ pub struct AppConfigFields {
     pub no_write: bool,
     pub show_table_scroll_position: bool,
     pub is_advanced_kill: bool,
+    // TODO: Remove these, move network details state-side.
+    pub network_unit_type: DataUnit,
+    pub network_scale_type: AxisScaling,
+    pub network_use_binary_prefix: bool,
 }
 
 /// For filtering out information

@@ -50,6 +50,7 @@ itertools = "0.10.0"
 once_cell = "1.5.2"
 regex = "1.4.3"
 serde = { version = "1.0.123", features = ["derive"] }
+# Sysinfo is still used in Linux for the ProcessStatus
 sysinfo = "0.16.4"
 thiserror = "1.0.24"
 toml = "0.5.8"

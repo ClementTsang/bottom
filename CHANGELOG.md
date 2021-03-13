@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#381](https://github.com/ClementTsang/bottom/pull/381): Added a filter in the config file for network interfaces.
 
+- [#392](https://github.com/ClementTsang/bottom/pull/392): Added CPU load averages (1, 5, 15) for Unix-based systems.
+
 - [#406](https://github.com/ClementTsang/bottom/pull/406): Added the Nord colour scheme, as well as a light variant.
 
 - [#409](https://github.com/ClementTsang/bottom/pull/409): Added `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.

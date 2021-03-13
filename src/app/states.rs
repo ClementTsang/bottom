@@ -8,6 +8,7 @@ use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
     data_harvester::processes::{self, ProcessSorting},
+    units::data_units::DataUnitTypes,
 };
 use ProcessSorting::*;
 
@@ -55,6 +56,12 @@ impl Default for KillSignal {
     fn default() -> Self {
         KillSignal::KILL(1)
     }
+}
+
+#[derive(Clone)]
+pub enum AxisScaling {
+    Log,
+    Linear,
 }
 
 #[derive(Default)]
@@ -690,13 +697,20 @@ impl ProcState {
 pub struct NetWidgetState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
+    pub unit_type: DataUnitTypes,
+    pub scale_type: AxisScaling,
 }
 
 impl NetWidgetState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
+    pub fn init(
+        current_display_time: u64, autohide_timer: Option<Instant>, unit_type: DataUnitTypes,
+        scale_type: AxisScaling,
+    ) -> Self {
         NetWidgetState {
             current_display_time,
             autohide_timer,
+            unit_type,
+            scale_type,
         }
     }
 }
