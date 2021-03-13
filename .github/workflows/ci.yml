@@ -33,7 +33,7 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all -- --check
 
-  # Check clippy.  This doesn't check ARM though.
+  # Check clippy.  Note that this doesn't check ARM.
   clippy:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -171,6 +171,8 @@ jobs:
           override: true
           target: ${{ matrix.triple.target }}
 
+      - uses: Swatinem/rust-cache@v1
+
       - name: Check
         uses: actions-rs/cargo@v1
         with:
@@ -178,6 +180,7 @@ jobs:
           args: --all-targets --verbose --target=${{ matrix.triple.target }} --no-default-features
           use-cross: ${{ matrix.triple.cross }}
 
+  # Run tests on a subset of platforms
   tests:
     needs: [check]
     name: Test ${{ matrix.os }}
@@ -198,6 +201,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+
+      - uses: Swatinem/rust-cache@v1
 
       - name: Run tests
         run: cargo test --no-fail-fast
