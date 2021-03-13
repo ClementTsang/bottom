@@ -238,8 +238,6 @@ impl DataCollector {
             #[cfg(not(target_os = "linux"))]
             {
                 self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
-
-                self.data.load_avg = Some(load_avg::get_load_avg(&self.sys));
             }
 
             #[cfg(target_os = "linux")]
@@ -253,7 +251,10 @@ impl DataCollector {
                 {
                     self.data.cpu = Some(cpu_data);
                 }
+            }
 
+            #[cfg(target_family = "unix")]
+            {
                 // Load Average
                 if let Ok(load_avg_data) = load_avg::get_load_avg().await {
                     self.data.load_avg = Some(load_avg_data);
