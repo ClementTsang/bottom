@@ -1,6 +1,3 @@
-#[cfg(not(target_os = "linux"))]
-use sysinfo::{System, SystemExt};
-
 pub type LoadAvgHarvest = [f32; 3];
 
 #[cfg(target_family = "unix")]
