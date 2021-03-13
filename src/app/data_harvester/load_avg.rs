@@ -6,7 +6,11 @@ pub type LoadAvgHarvest = [f32; 3];
 #[cfg(not(target_os = "linux"))]
 pub fn get_load_avg(sys: &System) -> LoadAvgHarvest {
     let load_avg = sys.get_load_average();
-    [load_avg.one, load_avg.five, load_avg.fifteen]
+    [
+        load_avg.one as f32,
+        load_avg.five as f32,
+        load_avg.fifteen as f32,
+    ]
 }
 
 #[cfg(target_os = "linux")]
