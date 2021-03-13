@@ -31,7 +31,7 @@ pub struct TimedData {
     pub rx_data: Value,
     pub tx_data: Value,
     pub cpu_data: Vec<Value>,
-    pub load_avg_data: [f64; 3],
+    pub load_avg_data: [f32; 3],
     pub mem_data: Option<Value>,
     pub swap_data: Option<Value>,
 }

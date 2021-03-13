@@ -1,9 +1,21 @@
+#[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
 
-pub type LoadAvgHarvest = [f64; 3];
+pub type LoadAvgHarvest = [f32; 3];
 
-pub async fn get_load_avg() -> crate::error::Result<LoadAvgHarvest> {
-    let s = System::new_all();
-    let load_avg = s.get_load_average();
+#[cfg(not(target_os = "linux"))]
+pub async fn get_load_avg(sys: &System) -> crate::error::Result<LoadAvgHarvest> {
+    let load_avg = sys.get_load_average();
     Ok([load_avg.one, load_avg.five, load_avg.fifteen])
+}
+
+#[cfg(target_os = "linux")]
+pub async fn get_load_avg() -> crate::error::Result<LoadAvgHarvest> {
+    let (one, five, fifteen) = heim::cpu::os::unix::loadavg().await?;
+
+    Ok([
+        one.get::<heim::units::ratio::ratio>(),
+        five.get::<heim::units::ratio::ratio>(),
+        fifteen.get::<heim::units::ratio::ratio>(),
+    ])
 }
