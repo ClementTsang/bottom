@@ -4,7 +4,7 @@ use sysinfo::{System, SystemExt};
 pub type LoadAvgHarvest = [f32; 3];
 
 #[cfg(not(target_os = "linux"))]
-pub async fn get_load_avg(sys: &System) -> crate::error::Result<LoadAvgHarvest> {
+pub fn get_load_avg(sys: &System) -> crate::error::Result<LoadAvgHarvest> {
     let load_avg = sys.get_load_average();
     Ok([load_avg.one, load_avg.five, load_avg.fifteen])
 }
