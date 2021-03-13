@@ -171,6 +171,8 @@ jobs:
           override: true
           target: ${{ matrix.triple.target }}
 
+      - uses: Swatinem/rust-cache@v1
+
       - name: Check
         uses: actions-rs/cargo@v1
         with:
@@ -198,6 +200,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+
+      - uses: Swatinem/rust-cache@v1
 
       - name: Run tests
         run: cargo test --no-fail-fast

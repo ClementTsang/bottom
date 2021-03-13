@@ -37,6 +37,7 @@
     "SEGV",
     "SIGTERM",
     "STKFLT",
+    "Swatinem",
     "TEBI",
     "TERA",
     "TSTP",
