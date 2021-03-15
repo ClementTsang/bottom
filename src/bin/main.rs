@@ -178,6 +178,9 @@ fn main() -> Result<()> {
                                 false,
                                 app.app_config_fields.use_basic_mode
                                     || app.app_config_fields.use_old_network_legend,
+                                &app.app_config_fields.network_scale_type,
+                                &app.app_config_fields.network_unit_type,
+                                app.app_config_fields.network_use_binary_prefix,
                             );
                             app.canvas_data.network_data_rx = network_data.rx;
                             app.canvas_data.network_data_tx = network_data.tx;

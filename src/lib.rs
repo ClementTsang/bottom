@@ -327,7 +327,13 @@ pub fn handle_force_redraws(app: &mut App) {
     }
 
     if app.net_state.force_update.is_some() {
-        let (rx, tx) = get_rx_tx_data_points(&app.data_collection, app.is_frozen);
+        let (rx, tx) = get_rx_tx_data_points(
+            &app.data_collection,
+            app.is_frozen,
+            &app.app_config_fields.network_scale_type,
+            &app.app_config_fields.network_unit_type,
+            app.app_config_fields.network_use_binary_prefix,
+        );
         app.canvas_data.network_data_rx = rx;
         app.canvas_data.network_data_tx = tx;
         app.net_state.force_update = None;

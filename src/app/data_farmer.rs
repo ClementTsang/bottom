@@ -19,7 +19,7 @@ use std::{time::Instant, vec::Vec};
 use crate::app::data_harvester::load_avg::LoadAvgHarvest;
 use crate::{
     data_harvester::{batteries, cpu, disks, load_avg, mem, network, processes, temperature, Data},
-    utils::gen_util::get_simple_byte_values,
+    utils::gen_util::get_decimal_bytes,
 };
 use regex::Regex;
 
@@ -205,22 +205,15 @@ impl DataCollection {
     }
 
     fn eat_network(&mut self, network: network::NetworkHarvest, new_entry: &mut TimedData) {
-        // trace!("Eating network.");
-        // FIXME [NETWORKING; CONFIG]: The ability to config this?
-        // FIXME [NETWORKING]: Support bits, support switching between decimal and binary units (move the log part to conversion and switch on the fly)
         // RX
-        new_entry.rx_data = if network.rx > 0 {
-            (network.rx as f64).log2()
-        } else {
-            0.0
-        };
+        if network.rx > 0 {
+            new_entry.rx_data = network.rx as f64;
+        }
 
         // TX
-        new_entry.tx_data = if network.tx > 0 {
-            (network.tx as f64).log2()
-        } else {
-            0.0
-        };
+        if network.tx > 0 {
+            new_entry.tx_data = network.tx as f64;
+        }
 
         // In addition copy over latest data for easy reference
         self.network_harvest = network;
@@ -300,8 +293,8 @@ impl DataCollection {
                         *io_prev = (io_r_pt, io_w_pt);
 
                         if let Some(io_labels) = self.io_labels.get_mut(itx) {
-                            let converted_read = get_simple_byte_values(r_rate, false);
-                            let converted_write = get_simple_byte_values(w_rate, false);
+                            let converted_read = get_decimal_bytes(r_rate, false);
+                            let converted_write = get_decimal_bytes(w_rate, false);
                             *io_labels = (
                                 format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
                                 format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),

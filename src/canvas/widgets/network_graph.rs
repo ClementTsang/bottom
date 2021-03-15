@@ -3,9 +3,10 @@ use std::cmp::max;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::App,
+    app::{App, AxisScaling},
     canvas::{drawing_utils::get_column_widths, Painter},
     constants::*,
+    units::data_units::DataUnit,
     utils::gen_util::*,
 };
 
@@ -82,103 +83,245 @@ impl NetworkGraphWidget for Painter {
         /// Point is of time, data
         type Point = (f64, f64);
 
+        /// Returns the max data point given a time.
+        fn get_max_entry(
+            rx: &[Point], tx: &[Point], time_start: f64, network_scale_type: &AxisScaling,
+            network_use_binary_prefix: bool,
+        ) -> f64 {
+            /// Determines a "fake" max value in circumstances where we couldn't find one from the data.
+            fn calculate_missing_max(
+                network_scale_type: &AxisScaling, network_use_binary_prefix: bool,
+            ) -> f64 {
+                match network_scale_type {
+                    AxisScaling::Log => {
+                        if network_use_binary_prefix {
+                            LOG_MEGA_LIMIT
+                        } else {
+                            LOG_MEBI_LIMIT
+                        }
+                    }
+                    AxisScaling::Linear => {
+                        if network_use_binary_prefix {
+                            MEGA_LIMIT_F64
+                        } else {
+                            MEBI_LIMIT_F64
+                        }
+                    }
+                }
+            }
+
+            // First, let's shorten our ranges to actually look.  We can abuse the fact that our rx and tx arrays
+            // are sorted, so we can short-circuit our search to filter out only the relevant data points...
+            let filtered_rx = if let (Some(rx_start), Some(rx_end)) = (
+                rx.iter().position(|(time, _data)| *time >= time_start),
+                rx.iter().rposition(|(time, _data)| *time <= 0.0),
+            ) {
+                Some(&rx[rx_start..=rx_end])
+            } else {
+                None
+            };
+
+            let filtered_tx = if let (Some(tx_start), Some(tx_end)) = (
+                tx.iter().position(|(time, _data)| *time >= time_start),
+                tx.iter().rposition(|(time, _data)| *time <= 0.0),
+            ) {
+                Some(&rx[tx_start..=tx_end])
+            } else {
+                None
+            };
+
+            // Then, find the maximal rx/tx so we know how to scale, and return it.
+            match (filtered_rx, filtered_tx) {
+                (None, None) => {
+                    calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                }
+                (None, Some(filtered_tx)) => {
+                    match filtered_tx
+                        .iter()
+                        .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                    {
+                        Some((_, max_val)) => *max_val,
+                        None => {
+                            calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                        }
+                    }
+                }
+                (Some(filtered_rx), None) => {
+                    match filtered_rx
+                        .iter()
+                        .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                    {
+                        Some((_, max_val)) => *max_val,
+                        None => {
+                            calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                        }
+                    }
+                }
+                (Some(filtered_rx), Some(filtered_tx)) => {
+                    match filtered_rx
+                        .iter()
+                        .chain(filtered_tx)
+                        .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                    {
+                        Some((_, max_val)) => *max_val,
+                        None => {
+                            calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                        }
+                    }
+                }
+            }
+        }
+
         /// Returns the required max data point and labels.
         fn adjust_network_data_point(
-            rx: &[Point], tx: &[Point], time_start: f64, time_end: f64,
+            max_entry: f64, network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
+            network_use_binary_prefix: bool,
         ) -> (f64, Vec<String>) {
-            // First, filter and find the maximal rx or tx so we know how to scale
-            let mut max_val_bytes = 0.0;
-            let filtered_rx = rx
-                .iter()
-                .cloned()
-                .filter(|(time, _data)| *time >= time_start && *time <= time_end);
+            // So, we're going with an approach like this:
+            // - Main goal is to maximize the amount of information displayed given a specific height.
+            //   We don't want to drown out some data if the ranges are too far though!  Nor do we want to filter
+            //   out too much data...
+            // - Change the y-axis unit (kilo/kibi, mega/mebi...) dynamically based on max load.
+            //
+            //
+            // The idea is we take the top value, build our scale such that each "point" is a scaled version of that.
+            // So for example, let's say I use 390 Mb/s.  If I drew 4 segments, it would be 97.5, 195, 292.5, 390, and
+            // probably something like 438.75?
+            //
+            // So, how do we do this in tui-rs?  Well, if we  are using intervals that tie in perfectly to the max
+            // value we want... then it's actually not that hard.  Since tui-rs accepts a vector as labels and will
+            // properly space them all out... we just work with that and space it out properly.
+            //
+            // Dynamic chart idea based off of FreeNAS's chart design.
 
-            let filtered_tx = tx
-                .iter()
-                .cloned()
-                .filter(|(time, _data)| *time >= time_start && *time <= time_end);
-
-            for (_time, data) in filtered_rx.clone().chain(filtered_tx.clone()) {
-                if data > max_val_bytes {
-                    max_val_bytes = data;
-                }
-            }
-
-            // FIXME [NETWORKING]: Granularity.  Just scale up the values.
-            // FIXME [NETWORKING]: Ability to set fixed scale in config.
-            // Currently we do 32 -> 33... which skips some gigabit values
-            let true_max_val: f64;
-            let mut labels = vec![];
-            if max_val_bytes < LOG_KIBI_LIMIT {
-                true_max_val = LOG_KIBI_LIMIT;
-                labels = vec!["0B".to_string(), "1KiB".to_string()];
-            } else if max_val_bytes < LOG_MEBI_LIMIT {
-                true_max_val = LOG_MEBI_LIMIT;
-                labels = vec!["0B".to_string(), "1KiB".to_string(), "1MiB".to_string()];
-            } else if max_val_bytes < LOG_GIBI_LIMIT {
-                true_max_val = LOG_GIBI_LIMIT;
-                labels = vec![
-                    "0B".to_string(),
-                    "1KiB".to_string(),
-                    "1MiB".to_string(),
-                    "1GiB".to_string(),
-                ];
-            } else if max_val_bytes < LOG_TEBI_LIMIT {
-                true_max_val = max_val_bytes.ceil() + 1.0;
-                let cap_u32 = true_max_val as u32;
-
-                for i in 0..=cap_u32 {
-                    match i {
-                        0 => labels.push("0B".to_string()),
-                        LOG_KIBI_LIMIT_U32 => labels.push("1KiB".to_string()),
-                        LOG_MEBI_LIMIT_U32 => labels.push("1MiB".to_string()),
-                        LOG_GIBI_LIMIT_U32 => labels.push("1GiB".to_string()),
-                        _ if i == cap_u32 => {
-                            labels.push(format!("{}GiB", 2_u64.pow(cap_u32 - LOG_GIBI_LIMIT_U32)))
-                        }
-                        _ if i == (LOG_GIBI_LIMIT_U32 + cap_u32) / 2 => labels.push(format!(
-                            "{}GiB",
-                            2_u64.pow(cap_u32 - ((LOG_GIBI_LIMIT_U32 + cap_u32) / 2))
-                        )), // ~Halfway point
-                        _ => labels.push(String::default()),
+            // Now just check the largest unit we correspond to... then proceed to build some entries from there!
+            let (k_limit, m_limit, g_limit, t_limit) = match network_scale_type {
+                AxisScaling::Log => {
+                    if network_use_binary_prefix {
+                        (
+                            LOG_KIBI_LIMIT,
+                            LOG_MEBI_LIMIT,
+                            LOG_GIBI_LIMIT,
+                            LOG_TEBI_LIMIT,
+                        )
+                    } else {
+                        (
+                            LOG_KILO_LIMIT,
+                            LOG_MEGA_LIMIT,
+                            LOG_GIGA_LIMIT,
+                            LOG_TERA_LIMIT,
+                        )
                     }
                 }
-            } else {
-                true_max_val = max_val_bytes.ceil() + 1.0;
-                let cap_u32 = true_max_val as u32;
-
-                for i in 0..=cap_u32 {
-                    match i {
-                        0 => labels.push("0B".to_string()),
-                        LOG_KIBI_LIMIT_U32 => labels.push("1KiB".to_string()),
-                        LOG_MEBI_LIMIT_U32 => labels.push("1MiB".to_string()),
-                        LOG_GIBI_LIMIT_U32 => labels.push("1GiB".to_string()),
-                        LOG_TEBI_LIMIT_U32 => labels.push("1TiB".to_string()),
-                        _ if i == cap_u32 => {
-                            labels.push(format!("{}GiB", 2_u64.pow(cap_u32 - LOG_TEBI_LIMIT_U32)))
-                        }
-                        _ if i == (LOG_TEBI_LIMIT_U32 + cap_u32) / 2 => labels.push(format!(
-                            "{}TiB",
-                            2_u64.pow(cap_u32 - ((LOG_TEBI_LIMIT_U32 + cap_u32) / 2))
-                        )), // ~Halfway point
-                        _ => labels.push(String::default()),
+                AxisScaling::Linear => {
+                    if network_use_binary_prefix {
+                        (
+                            KIBI_LIMIT_F64,
+                            MEBI_LIMIT_F64,
+                            GIBI_LIMIT_F64,
+                            TEBI_LIMIT_F64,
+                        )
+                    } else {
+                        (
+                            KILO_LIMIT_F64,
+                            MEGA_LIMIT_F64,
+                            GIGA_LIMIT_F64,
+                            TERA_LIMIT_F64,
+                        )
                     }
                 }
-            }
+            };
 
-            (true_max_val, labels)
+            let bumped_max_entry = max_entry * 1.5; // We use the bumped up version to calculate our unit type.
+            let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) =
+                if bumped_max_entry < k_limit {
+                    (
+                        max_entry,
+                        if network_use_binary_prefix { "" } else { "" },
+                        match network_unit_type {
+                            DataUnit::Byte => "B",
+                            DataUnit::Bit => "b",
+                        },
+                    )
+                } else if bumped_max_entry < m_limit {
+                    (
+                        max_entry / k_limit,
+                        if network_use_binary_prefix { "Ki" } else { "K" },
+                        match network_unit_type {
+                            DataUnit::Byte => "B",
+                            DataUnit::Bit => "b",
+                        },
+                    )
+                } else if bumped_max_entry < g_limit {
+                    (
+                        max_entry / m_limit,
+                        if network_use_binary_prefix { "Mi" } else { "M" },
+                        match network_unit_type {
+                            DataUnit::Byte => "B",
+                            DataUnit::Bit => "b",
+                        },
+                    )
+                } else if bumped_max_entry < t_limit {
+                    (
+                        max_entry / g_limit,
+                        if network_use_binary_prefix { "Gi" } else { "G" },
+                        match network_unit_type {
+                            DataUnit::Byte => "B",
+                            DataUnit::Bit => "b",
+                        },
+                    )
+                } else {
+                    (
+                        max_entry / t_limit,
+                        if network_use_binary_prefix { "Ti" } else { "T" },
+                        match network_unit_type {
+                            DataUnit::Byte => "B",
+                            DataUnit::Bit => "b",
+                        },
+                    )
+                };
+
+            // Finally, build an acceptable range starting from there, using the given height!
+            // Note we try to put more of a weight on the bottom section vs. the top, since the top has less data.
+
+            let base_unit = match network_scale_type {
+                AxisScaling::Log => {
+                    if network_use_binary_prefix {
+                        f64::exp2(max_value_scaled)
+                    } else {
+                        10.0_f64.powf(max_value_scaled)
+                    }
+                }
+                AxisScaling::Linear => max_value_scaled,
+            };
+            let labels: Vec<String> = vec![
+                format!("0{}{}", unit_prefix, unit_type),
+                format!("{:.1}{}{}", base_unit * 0.5, unit_prefix, unit_type),
+                format!("{:.1}{}{}", base_unit, unit_prefix, unit_type),
+                format!("{:.1}{}{}", base_unit * 1.5, unit_prefix, unit_type),
+            ]
+            .into_iter()
+            .map(|s| {
+                if network_use_binary_prefix {
+                    format!("{:>8}", s)
+                } else {
+                    format!("{:>7}", s)
+                }
+            })
+            .collect();
+
+            (bumped_max_entry, labels)
         }
 
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
             let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
             let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
 
-            let (max_range, labels) = adjust_network_data_point(
-                network_data_rx,
-                network_data_tx,
-                -(network_widget_state.current_display_time as f64),
-                0.0,
-            );
+            // FIXME: [NETWORK] Can we make this run just once, and cache the results, and only update if the max value might exceed?
+            // Note if we do this, we have to store multiple copies per state.
+
+            let time_start = -(network_widget_state.current_display_time as f64);
+
             let display_time_labels = vec![
                 Span::styled(
                     format!("{}s", network_widget_state.current_display_time / 1000),
@@ -212,6 +355,22 @@ impl NetworkGraphWidget for Painter {
                     .style(self.colours.graph_style)
                     .labels(display_time_labels)
             };
+
+            // Find the maximal rx/tx so we know how to scale, and return it.
+            let max_entry = get_max_entry(
+                network_data_rx,
+                network_data_tx,
+                time_start,
+                &app_state.app_config_fields.network_scale_type,
+                app_state.app_config_fields.network_use_binary_prefix,
+            );
+
+            let (max_range, labels) = adjust_network_data_point(
+                max_entry,
+                &app_state.app_config_fields.network_scale_type,
+                &app_state.app_config_fields.network_unit_type,
+                app_state.app_config_fields.network_use_binary_prefix,
+            );
 
             let y_axis_labels = labels
                 .iter()
@@ -250,7 +409,7 @@ impl NetworkGraphWidget for Painter {
             let legend_constraints = if hide_legend {
                 (Constraint::Ratio(0, 1), Constraint::Ratio(0, 1))
             } else {
-                (Constraint::Ratio(3, 4), Constraint::Ratio(3, 4))
+                (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
             };
 
             let dataset = if app_state.app_config_fields.use_old_network_legend && !hide_legend {
@@ -351,7 +510,6 @@ impl NetworkGraphWidget for Painter {
         }
     }
 
-    // TODO: [DEPRECATED] Get rid of this in, like, 0.6...?
     fn draw_network_labels<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {

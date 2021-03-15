@@ -33,7 +33,7 @@ impl MemGraphWidget for Painter {
                 Span::styled("0s".to_string(), self.colours.graph_style),
             ];
             let y_axis_label = vec![
-                Span::styled("0%", self.colours.graph_style),
+                Span::styled("  0%", self.colours.graph_style),
                 Span::styled("100%", self.colours.graph_style),
             ];
 

@@ -146,7 +146,7 @@ impl CpuGraphWidget for Painter {
             ];
 
             let y_axis_labels = vec![
-                Span::styled("0%", self.colours.graph_style),
+                Span::styled("  0%", self.colours.graph_style),
                 Span::styled("100%", self.colours.graph_style),
             ];
 
