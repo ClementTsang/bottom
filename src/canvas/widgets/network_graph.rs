@@ -296,18 +296,12 @@ impl NetworkGraphWidget for Painter {
             };
             let labels: Vec<String> = vec![
                 format!("0{}{}", unit_prefix, unit_type),
-                format!("{:.1}{}{}", base_unit * 0.5, unit_prefix, unit_type),
-                format!("{:.1}{}{}", base_unit, unit_prefix, unit_type),
-                format!("{:.1}{}{}", base_unit * 1.5, unit_prefix, unit_type),
+                format!("{:.1}", base_unit * 0.5),
+                format!("{:.1}", base_unit),
+                format!("{:.1}", base_unit * 1.5),
             ]
             .into_iter()
-            .map(|s| {
-                if network_use_binary_prefix {
-                    format!("{:>8}", s)
-                } else {
-                    format!("{:>7}", s)
-                }
-            })
+            .map(|s| format!("{:>5}", s))
             .collect();
 
             (bumped_max_entry, labels)
@@ -317,8 +311,8 @@ impl NetworkGraphWidget for Painter {
             let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
             let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
 
-            // FIXME: [NETWORK] Can we make this run just once, and cache the results, and only update if the max value might exceed?
-            // Note if we do this, we have to store multiple copies per state.
+            // FIXME: [NETWORK] Can we make this run just once, and cache the results,
+            // and only update if the max value might exceed, or if the time updates?
 
             let time_start = -(network_widget_state.current_display_time as f64);
 
