@@ -275,8 +275,8 @@ pub fn build_app(
     let is_default_command = get_is_default_process_command(matches, config);
     let is_advanced_kill = get_is_using_advanced_kill(matches, config);
 
-    let network_unit_type = get_network_unit_type(matches, config)?;
-    let network_scale_type = get_network_scale_type(matches, config)?;
+    let network_unit_type = get_network_unit_type(matches, config);
+    let network_scale_type = get_network_scale_type(matches, config);
     let network_use_binary_prefix = get_network_use_binary_prefix(matches, config);
 
     for row in &widget_layout.rows {
@@ -1054,36 +1054,32 @@ fn get_is_using_advanced_kill(matches: &clap::ArgMatches<'static>, config: &Conf
     false
 }
 
-fn get_network_unit_type(
-    matches: &clap::ArgMatches<'static>, config: &Config,
-) -> error::Result<DataUnit> {
+fn get_network_unit_type(matches: &clap::ArgMatches<'static>, config: &Config) -> DataUnit {
     if matches.is_present("network_use_bytes") {
-        return Ok(DataUnit::Byte);
+        return DataUnit::Byte;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_bytes) = flags.network_use_bytes {
             if network_use_bytes {
-                return Ok(DataUnit::Byte);
+                return DataUnit::Byte;
             }
         }
     }
 
-    Ok(DataUnit::Bit)
+    DataUnit::Bit
 }
 
-fn get_network_scale_type(
-    matches: &clap::ArgMatches<'static>, config: &Config,
-) -> error::Result<AxisScaling> {
+fn get_network_scale_type(matches: &clap::ArgMatches<'static>, config: &Config) -> AxisScaling {
     if matches.is_present("network_use_log") {
-        return Ok(AxisScaling::Log);
+        return AxisScaling::Log;
     } else if let Some(flags) = &config.flags {
         if let Some(network_use_log) = flags.network_use_log {
             if network_use_log {
-                return Ok(AxisScaling::Log);
+                return AxisScaling::Log;
             }
         }
     }
 
-    Ok(AxisScaling::Linear)
+    AxisScaling::Linear
 }
 
 fn get_network_use_binary_prefix(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {

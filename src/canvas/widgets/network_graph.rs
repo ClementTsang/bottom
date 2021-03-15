@@ -237,7 +237,7 @@ impl NetworkGraphWidget for Painter {
                 if bumped_max_entry < k_limit {
                     (
                         max_entry,
-                        if network_use_binary_prefix { "" } else { "" },
+                        "",
                         match network_unit_type {
                             DataUnit::Byte => "B",
                             DataUnit::Bit => "b",

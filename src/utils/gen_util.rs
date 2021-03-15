@@ -88,7 +88,7 @@ pub fn get_binary_prefix(quantity: u64, spacing: bool, unit: &str) -> (f64, Stri
             if spacing {
                 format!(" {}", unit)
             } else {
-                format!("{}", unit)
+                unit.to_string()
             },
         ),
         b if b < MEBI_LIMIT => (quantity as f64 / 1024.0, format!("Ki{}", unit)),
@@ -108,7 +108,7 @@ pub fn get_decimal_prefix(quantity: u64, spacing: bool, unit: &str) -> (f64, Str
             if spacing {
                 format!(" {}", unit)
             } else {
-                format!("{}", unit)
+                unit.to_string()
             },
         ),
         b if b < MEGA_LIMIT => (quantity as f64 / 1000.0, format!("K{}", unit)),
