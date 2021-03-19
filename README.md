@@ -16,6 +16,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Other known platform-specific issues](#other-known-platform-specific-issues)
 - [Installation](#installation)
   - [Manually](#manually)
+  - [Nightly](#nightly)
   - [Cargo](#cargo)
   - [AUR](#aur)
   - [Debian](#debian)
@@ -124,6 +125,10 @@ cargo install --path .
 ```
 
 Or, you can just download the binary from the [latest release](https://github.com/ClementTsang/bottom/releases/latest).
+
+### Nightly
+
+You can install pre-release nightly versions [here](https://github.com/ClementTsang/bottom/releases/tag/nightly).  Builds are generated every day at 00:00 UTC, based on the most recent commit on the master branch.
 
 ### Cargo
 
