@@ -314,6 +314,9 @@ impl NetworkGraphWidget for Painter {
             // FIXME: [NETWORK] Can we make this run just once, and cache the results,
             // and only update if the max value might exceed, or if the time updates?
 
+            // FIXME: Is there any way to deal with how parts of the data near the root get cut off?  Perhaps
+            // just interpolate the value at the current time + 1?
+
             let time_start = -(network_widget_state.current_display_time as f64);
 
             let display_time_labels = vec![
