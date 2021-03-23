@@ -138,7 +138,7 @@ impl UserTable {
             let passwd = unsafe { libc::getpwuid(uid) };
 
             if passwd.is_null() {
-                return Err(BottomError::QueryError("Missing passwd".into()))
+                return Err(BottomError::QueryError("Missing passwd".into()));
             }
 
             let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
