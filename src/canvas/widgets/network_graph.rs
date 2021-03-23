@@ -125,7 +125,7 @@ impl NetworkGraphWidget for Painter {
                 tx.iter().position(|(time, _data)| *time >= time_start),
                 tx.iter().rposition(|(time, _data)| *time <= 0.0),
             ) {
-                Some(&rx[tx_start..=tx_end])
+                Some(&tx[tx_start..=tx_end])
             } else {
                 None
             };

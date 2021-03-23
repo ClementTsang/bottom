@@ -511,7 +511,7 @@ pub fn convert_network_data_points(
         }
     } else {
         let rx_display = format!(
-            "RX: {:<9} All: {:<9}",
+            "RX: {:<8}  All: {}",
             if network_use_binary_prefix {
                 format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1)
             } else {
@@ -530,7 +530,7 @@ pub fn convert_network_data_points(
             }
         );
         let tx_display = format!(
-            "TX: {:<9} All: {:<9}",
+            "TX: {:<8}  All: {}",
             if network_use_binary_prefix {
                 format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1)
             } else {
