@@ -134,7 +134,13 @@ impl UserTable {
         if let Some(user) = self.uid_user_mapping.get(&uid) {
             Ok(user.clone())
         } else {
+            // SAFETY: getpwuid returns a null pointer if no passwd entry is found for the uid
             let passwd = unsafe { libc::getpwuid(uid) };
+
+            if passwd.is_null() {
+                return Err(BottomError::QueryError("Missing passwd".into()))
+            }
+
             let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
                 .to_str()?
                 .to_string();
