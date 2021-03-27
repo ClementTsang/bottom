@@ -188,11 +188,7 @@ impl ProcessQuery for ProcWidgetState {
                     let initial_or = Or {
                         lhs: And {
                             lhs: Prefix {
-                                or: if let Some(or) = list_of_ors.pop_front() {
-                                    Some(Box::new(or))
-                                } else {
-                                    None
-                                },
+                                or: list_of_ors.pop_front().map(Box::new),
                                 compare_prefix: None,
                                 regex_prefix: None,
                             },

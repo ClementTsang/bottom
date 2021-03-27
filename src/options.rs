@@ -840,11 +840,9 @@ fn get_default_widget_and_count(
     let widget_count = if let Some(widget_count) = matches.value_of("default_widget_count") {
         Some(widget_count.parse::<u128>()?)
     } else if let Some(flags) = &config.flags {
-        if let Some(widget_count) = flags.default_widget_count {
-            Some(widget_count as u128)
-        } else {
-            None
-        }
+        flags
+            .default_widget_count
+            .map(|widget_count| widget_count as u128)
     } else {
         None
     };

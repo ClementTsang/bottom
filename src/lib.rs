@@ -359,18 +359,21 @@ pub fn update_all_process_lists(app: &mut App) {
 }
 
 fn update_final_process_list(app: &mut App, widget_id: u64) {
-    let process_states = match app.proc_state.widget_states.get(&widget_id) {
-        Some(process_state) => Some((
-            process_state
-                .process_search_state
-                .search_state
-                .is_invalid_or_blank_search(),
-            process_state.is_using_command,
-            process_state.is_grouped,
-            process_state.is_tree_mode,
-        )),
-        None => None,
-    };
+    let process_states = app
+        .proc_state
+        .widget_states
+        .get(&widget_id)
+        .map(|process_state| {
+            (
+                process_state
+                    .process_search_state
+                    .search_state
+                    .is_invalid_or_blank_search(),
+                process_state.is_using_command,
+                process_state.is_grouped,
+                process_state.is_tree_mode,
+            )
+        });
 
     if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
         if !app.is_frozen {

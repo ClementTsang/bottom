@@ -20,19 +20,11 @@ pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<Ba
                 Some(BatteryHarvest {
                     secs_until_full: {
                         let optional_time = battery.time_to_full();
-                        if let Some(time) = optional_time {
-                            Some(f64::from(time.get::<second>()) as i64)
-                        } else {
-                            None
-                        }
+                        optional_time.map(|time| f64::from(time.get::<second>()) as i64)
                     },
                     secs_until_empty: {
                         let optional_time = battery.time_to_empty();
-                        if let Some(time) = optional_time {
-                            Some(f64::from(time.get::<second>()) as i64)
-                        } else {
-                            None
-                        }
+                        optional_time.map(|time| f64::from(time.get::<second>()) as i64)
                     },
                     charge_percent: f64::from(battery.state_of_charge().get::<percent>()),
                     power_consumption_rate_watts: f64::from(battery.energy_rate().get::<watt>()),
