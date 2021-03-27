@@ -168,7 +168,7 @@ fn cpu_usage_calculation(
 
     // SC in case that the parsing will fail due to length:
     if val.len() <= 10 {
-        return Err(error::BottomError::InvalidIO(format!(
+        return Err(error::BottomError::InvalidIo(format!(
             "CPU parsing will fail due to too short of a return value; saw {} values, expected 10 values.",
             val.len()
         )));

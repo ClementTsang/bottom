@@ -719,7 +719,7 @@ impl App {
         if self.delete_dialog_state.is_showing_dd {
             if self.dd_err.is_some() {
                 self.close_dd();
-            } else if self.delete_dialog_state.selected_signal != KillSignal::CANCEL {
+            } else if self.delete_dialog_state.selected_signal != KillSignal::Cancel {
                 // If within dd...
                 if self.dd_err.is_none() {
                     // Also ensure that we didn't just fail a dd...
@@ -897,7 +897,7 @@ impl App {
             if kbd_signal > 31 {
                 kbd_signal %= 10;
             }
-            self.delete_dialog_state.selected_signal = KillSignal::KILL(kbd_signal);
+            self.delete_dialog_state.selected_signal = KillSignal::Kill(kbd_signal);
             if kbd_signal < 10 {
                 self.delete_dialog_state.keyboard_signal_select = kbd_signal;
             } else {
@@ -1002,15 +1002,15 @@ impl App {
             {
                 if self.app_config_fields.is_advanced_kill {
                     match self.delete_dialog_state.selected_signal {
-                        KillSignal::KILL(prev_signal) => {
+                        KillSignal::Kill(prev_signal) => {
                             self.delete_dialog_state.selected_signal = match prev_signal - 1 {
-                                0 => KillSignal::CANCEL,
+                                0 => KillSignal::Cancel,
                                 // 32+33 are skipped
-                                33 => KillSignal::KILL(31),
-                                signal => KillSignal::KILL(signal),
+                                33 => KillSignal::Kill(31),
+                                signal => KillSignal::Kill(signal),
                             };
                         }
-                        KillSignal::CANCEL => {}
+                        KillSignal::Cancel => {}
                     };
                 } else {
                     self.delete_dialog_state.selected_signal = KillSignal::default();
@@ -1078,18 +1078,18 @@ impl App {
             {
                 if self.app_config_fields.is_advanced_kill {
                     let new_signal = match self.delete_dialog_state.selected_signal {
-                        KillSignal::CANCEL => 1,
+                        KillSignal::Cancel => 1,
                         // 32+33 are skipped
                         #[cfg(target_os = "linux")]
-                        KillSignal::KILL(31) => 34,
+                        KillSignal::Kill(31) => 34,
                         #[cfg(target_os = "macos")]
-                        KillSignal::KILL(31) => 31,
-                        KillSignal::KILL(64) => 64,
-                        KillSignal::KILL(signal) => signal + 1,
+                        KillSignal::Kill(31) => 31,
+                        KillSignal::Kill(64) => 64,
+                        KillSignal::Kill(signal) => signal + 1,
                     };
-                    self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
+                    self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
                 } else {
-                    self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+                    self.delete_dialog_state.selected_signal = KillSignal::Cancel;
                 }
             }
             #[cfg(target_os = "windows")]
@@ -1102,15 +1102,15 @@ impl App {
     pub fn on_page_up(&mut self) {
         if self.delete_dialog_state.is_showing_dd {
             let mut new_signal = match self.delete_dialog_state.selected_signal {
-                KillSignal::CANCEL => 0,
-                KillSignal::KILL(signal) => max(signal, 8) - 8,
+                KillSignal::Cancel => 0,
+                KillSignal::Kill(signal) => max(signal, 8) - 8,
             };
             if new_signal > 23 && new_signal < 33 {
                 new_signal -= 2;
             }
             self.delete_dialog_state.selected_signal = match new_signal {
-                0 => KillSignal::CANCEL,
-                sig => KillSignal::KILL(sig),
+                0 => KillSignal::Cancel,
+                sig => KillSignal::Kill(sig),
             };
         }
     }
@@ -1118,13 +1118,13 @@ impl App {
     pub fn on_page_down(&mut self) {
         if self.delete_dialog_state.is_showing_dd {
             let mut new_signal = match self.delete_dialog_state.selected_signal {
-                KillSignal::CANCEL => 8,
-                KillSignal::KILL(signal) => min(signal + 8, MAX_SIGNAL),
+                KillSignal::Cancel => 8,
+                KillSignal::Kill(signal) => min(signal + 8, MAX_SIGNAL),
             };
             if new_signal > 31 && new_signal < 42 {
                 new_signal += 2;
             }
-            self.delete_dialog_state.selected_signal = KillSignal::KILL(new_signal);
+            self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
         }
     }
 
@@ -1683,8 +1683,8 @@ impl App {
             if let Some(current_selected_processes) = &self.to_delete_process_list {
                 #[cfg(target_family = "unix")]
                 let signal = match self.delete_dialog_state.selected_signal {
-                    KillSignal::KILL(sig) => sig,
-                    KillSignal::CANCEL => 15, // should never happen, so just TERM
+                    KillSignal::Kill(sig) => sig,
+                    KillSignal::Cancel => 15, // should never happen, so just TERM
                 };
                 for pid in &current_selected_processes.1 {
                     #[cfg(target_family = "unix")]
@@ -2240,7 +2240,7 @@ impl App {
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
         } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+            self.delete_dialog_state.selected_signal = KillSignal::Cancel;
         }
     }
 
@@ -2323,7 +2323,7 @@ impl App {
                 .max_scroll_index
                 .saturating_sub(1);
         } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::KILL(MAX_SIGNAL);
+            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_SIGNAL);
         }
     }
 
@@ -2882,13 +2882,13 @@ impl App {
                 },
             ) {
                 Some((_, _, _, _, 0)) => {
-                    self.delete_dialog_state.selected_signal = KillSignal::CANCEL
+                    self.delete_dialog_state.selected_signal = KillSignal::Cancel
                 }
                 Some((_, _, _, _, idx)) => {
                     if *idx > 31 {
-                        self.delete_dialog_state.selected_signal = KillSignal::KILL(*idx + 2)
+                        self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx + 2)
                     } else {
-                        self.delete_dialog_state.selected_signal = KillSignal::KILL(*idx)
+                        self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx)
                     }
                 }
                 _ => {}

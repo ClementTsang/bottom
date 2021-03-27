@@ -36,7 +36,7 @@ pub struct Data {
     pub network: Option<network::NetworkHarvest>,
     pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
     pub disks: Option<Vec<disks::DiskHarvest>>,
-    pub io: Option<disks::IOHarvest>,
+    pub io: Option<disks::IoHarvest>,
     pub list_of_batteries: Option<Vec<batteries::BatteryHarvest>>,
 }
 

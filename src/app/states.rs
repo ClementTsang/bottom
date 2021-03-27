@@ -42,14 +42,14 @@ pub struct AppScrollWidgetState {
 
 #[derive(PartialEq)]
 pub enum KillSignal {
-    CANCEL,
-    KILL(usize),
+    Cancel,
+    Kill(usize),
 }
 
 impl Default for KillSignal {
     #[cfg(target_family = "unix")]
     fn default() -> Self {
-        KillSignal::KILL(15)
+        KillSignal::Kill(15)
     }
     #[cfg(target_os = "windows")]
     fn default() -> Self {

@@ -57,7 +57,7 @@ pub struct DataCollection {
     pub load_avg_harvest: load_avg::LoadAvgHarvest,
     pub process_harvest: Vec<processes::ProcessHarvest>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
-    pub io_harvest: disks::IOHarvest,
+    pub io_harvest: disks::IoHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
@@ -77,7 +77,7 @@ impl Default for DataCollection {
             load_avg_harvest: load_avg::LoadAvgHarvest::default(),
             process_harvest: Vec::default(),
             disk_harvest: Vec::default(),
-            io_harvest: disks::IOHarvest::default(),
+            io_harvest: disks::IoHarvest::default(),
             io_labels_and_prev: Vec::default(),
             io_labels: Vec::default(),
             temp_harvest: Vec::default(),
@@ -95,7 +95,7 @@ impl DataCollection {
         self.cpu_harvest = cpu::CpuHarvest::default();
         self.process_harvest = Vec::default();
         self.disk_harvest = Vec::default();
-        self.io_harvest = disks::IOHarvest::default();
+        self.io_harvest = disks::IoHarvest::default();
         self.io_labels_and_prev = Vec::default();
         self.temp_harvest = Vec::default();
         self.battery_harvest = Vec::default();
@@ -243,7 +243,7 @@ impl DataCollection {
     }
 
     fn eat_disks(
-        &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IOHarvest, harvested_time: Instant,
+        &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
     ) {
         // trace!("Eating disks.");
         // TODO: [PO] To implement
