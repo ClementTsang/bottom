@@ -1,6 +1,9 @@
 use crate::Pid;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use sysinfo::ProcessStatus;
+
+#[cfg(target_os = "linux")]
+use std::path::Path;
 
 #[cfg(target_family = "unix")]
 use crate::utils::error;
@@ -272,9 +275,8 @@ fn get_macos_cpu_usage(pids: &[i32]) -> std::io::Result<std::collections::HashMa
     let output = std::process::Command::new("ps")
         .args(&["-o", "pid=,pcpu=", "-p"])
         .arg(
-            pids.iter()
-                .map(i32::to_string)
-                .intersperse(",".to_string())
+            // Has to look like this since otherwise, it you hit a `unstable_name_collisions` warning.
+            Itertools::intersperse(pids.iter().map(i32::to_string), ",".to_string())
                 .collect::<String>(),
         )
         .output()?;
