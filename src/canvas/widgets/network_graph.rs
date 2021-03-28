@@ -4,7 +4,10 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{App, AxisScaling},
-    canvas::{drawing_utils::get_column_widths, Painter},
+    canvas::{
+        drawing_utils::{get_column_widths, interpolate_points},
+        Painter,
+    },
     constants::*,
     units::data_units::DataUnit,
     utils::gen_util::*,
@@ -140,7 +143,13 @@ impl NetworkGraphWidget for Painter {
                         .iter()
                         .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
                     {
-                        Some((_, max_val)) => *max_val,
+                        Some((_, max_val)) => {
+                            if *max_val == 0.0 {
+                                calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                            } else {
+                                *max_val
+                            }
+                        }
                         None => {
                             calculate_missing_max(network_scale_type, network_use_binary_prefix)
                         }
@@ -151,7 +160,13 @@ impl NetworkGraphWidget for Painter {
                         .iter()
                         .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
                     {
-                        Some((_, max_val)) => *max_val,
+                        Some((_, max_val)) => {
+                            if *max_val == 0.0 {
+                                calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                            } else {
+                                *max_val
+                            }
+                        }
                         None => {
                             calculate_missing_max(network_scale_type, network_use_binary_prefix)
                         }
@@ -163,7 +178,13 @@ impl NetworkGraphWidget for Painter {
                         .chain(filtered_tx)
                         .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
                     {
-                        Some((_, max_val)) => *max_val,
+                        Some((_, max_val)) => {
+                            if *max_val == 0.0 {
+                                calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                            } else {
+                                *max_val
+                            }
+                        }
                         None => {
                             calculate_missing_max(network_scale_type, network_use_binary_prefix)
                         }
@@ -308,14 +329,11 @@ impl NetworkGraphWidget for Painter {
         }
 
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
-            let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
-            let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
+            let network_data_rx: &mut [(f64, f64)] = &mut app_state.canvas_data.network_data_rx;
+            let network_data_tx: &mut [(f64, f64)] = &mut app_state.canvas_data.network_data_tx;
 
             // FIXME: [NETWORK] Can we make this run just once, and cache the results,
             // and only update if the max value might exceed, or if the time updates?
-
-            // FIXME: Is there any way to deal with how parts of the data near the root get cut off?  Perhaps
-            // just interpolate the value at the current time + 1?
 
             let time_start = -(network_widget_state.current_display_time as f64);
 
@@ -330,27 +348,109 @@ impl NetworkGraphWidget for Painter {
                 || (app_state.app_config_fields.autohide_time
                     && network_widget_state.autohide_timer.is_none())
             {
-                Axis::default().bounds([-(network_widget_state.current_display_time as f64), 0.0])
+                Axis::default().bounds([time_start, 0.0])
             } else if let Some(time) = network_widget_state.autohide_timer {
                 if std::time::Instant::now().duration_since(time).as_millis()
                     < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
                 {
                     Axis::default()
-                        .bounds([-(network_widget_state.current_display_time as f64), 0.0])
+                        .bounds([time_start, 0.0])
                         .style(self.colours.graph_style)
                         .labels(display_time_labels)
                 } else {
                     network_widget_state.autohide_timer = None;
-                    Axis::default()
-                        .bounds([-(network_widget_state.current_display_time as f64), 0.0])
+                    Axis::default().bounds([time_start, 0.0])
                 }
             } else if draw_loc.height < TIME_LABEL_HEIGHT_LIMIT {
-                Axis::default().bounds([-(network_widget_state.current_display_time as f64), 0.0])
+                Axis::default().bounds([time_start, 0.0])
             } else {
                 Axis::default()
-                    .bounds([-(network_widget_state.current_display_time as f64), 0.0])
+                    .bounds([time_start, 0.0])
                     .style(self.colours.graph_style)
                     .labels(display_time_labels)
+            };
+
+            // Interpolate a point for rx and tx between the last value outside of the left bounds and the first value
+            // inside it.
+            // Because we assume it is all in order for... basically all our code, we can't just append it,
+            // and insertion in the middle seems.  So instead, we swap *out* the value that is outside with our
+            // interpolated point, draw and do whatever calculations, then swap back in the old value!
+            //
+            // Note there is some re-used work here!  For potential optimizations, we could re-use some work here in/from
+            // get_max_entry...
+            let interpolated_rx_point = if let Some(rx_end_pos) = network_data_rx
+                .iter()
+                .position(|(time, _data)| *time >= time_start)
+            {
+                if rx_end_pos > 1 {
+                    let rx_start_pos = rx_end_pos - 1;
+                    let outside_rx_point = network_data_rx.get(rx_start_pos);
+                    let inside_rx_point = network_data_rx.get(rx_end_pos);
+
+                    if let (Some(outside_rx_point), Some(inside_rx_point)) =
+                        (outside_rx_point, inside_rx_point)
+                    {
+                        let old = *outside_rx_point;
+
+                        let new_point = (
+                            time_start,
+                            interpolate_points(outside_rx_point, inside_rx_point, time_start),
+                        );
+
+                        // debug!(
+                        //     "Interpolated between {:?} and {:?}, got rx for time {:?}: {:?}",
+                        //     outside_rx_point, inside_rx_point, time_start, new_point
+                        // );
+
+                        if let Some(to_replace) = network_data_rx.get_mut(rx_start_pos) {
+                            *to_replace = new_point;
+                            Some((rx_start_pos, old))
+                        } else {
+                            None // Failed to get mutable reference.
+                        }
+                    } else {
+                        None // Point somehow doesn't exist in our network_data_rx
+                    }
+                } else {
+                    None // Point is already "leftmost", no need to interpolate.
+                }
+            } else {
+                None // There is no point.
+            };
+
+            let interpolated_tx_point = if let Some(tx_end_pos) = network_data_tx
+                .iter()
+                .position(|(time, _data)| *time >= time_start)
+            {
+                if tx_end_pos > 1 {
+                    let tx_start_pos = tx_end_pos - 1;
+                    let outside_tx_point = network_data_tx.get(tx_start_pos);
+                    let inside_tx_point = network_data_tx.get(tx_end_pos);
+
+                    if let (Some(outside_tx_point), Some(inside_tx_point)) =
+                        (outside_tx_point, inside_tx_point)
+                    {
+                        let old = *outside_tx_point;
+
+                        let new_point = (
+                            time_start,
+                            interpolate_points(outside_tx_point, inside_tx_point, time_start),
+                        );
+
+                        if let Some(to_replace) = network_data_tx.get_mut(tx_start_pos) {
+                            *to_replace = new_point;
+                            Some((tx_start_pos, old))
+                        } else {
+                            None // Failed to get mutable reference.
+                        }
+                    } else {
+                        None // Point somehow doesn't exist in our network_data_tx
+                    }
+                } else {
+                    None // Point is already "leftmost", no need to interpolate.
+                }
+            } else {
+                None // There is no point.
             };
 
             // Find the maximal rx/tx so we know how to scale, and return it.
@@ -409,6 +509,7 @@ impl NetworkGraphWidget for Painter {
                 (Constraint::Ratio(1, 1), Constraint::Ratio(3, 4))
             };
 
+            // TODO: Add support for clicking on legend to only show that value on chart.
             let dataset = if app_state.app_config_fields.use_old_network_legend && !hide_legend {
                 vec![
                     Dataset::default()
@@ -486,6 +587,19 @@ impl NetworkGraphWidget for Painter {
                     .hidden_legend_constraints(legend_constraints),
                 draw_loc,
             );
+
+            // Now if you're done, reset any interpolated points!
+            if let Some((index, old_value)) = interpolated_rx_point {
+                if let Some(to_replace) = network_data_rx.get_mut(index) {
+                    *to_replace = old_value;
+                }
+            }
+
+            if let Some((index, old_value)) = interpolated_tx_point {
+                if let Some(to_replace) = network_data_tx.get_mut(index) {
+                    *to_replace = old_value;
+                }
+            }
         }
     }
 
