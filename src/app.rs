@@ -1018,7 +1018,7 @@ impl App {
             }
             #[cfg(target_os = "windows")]
             {
-                self.delete_dialog_state.selected_signal = KillSignal::KILL(1);
+                self.delete_dialog_state.selected_signal = KillSignal::Kill(1);
             }
         }
     }
@@ -1094,7 +1094,7 @@ impl App {
             }
             #[cfg(target_os = "windows")]
             {
-                self.delete_dialog_state.selected_signal = KillSignal::CANCEL;
+                self.delete_dialog_state.selected_signal = KillSignal::Cancel;
             }
         }
     }

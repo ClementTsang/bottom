@@ -53,7 +53,7 @@ impl Default for KillSignal {
     }
     #[cfg(target_os = "windows")]
     fn default() -> Self {
-        KillSignal::KILL(1)
+        KillSignal::Kill(1)
     }
 }
 
