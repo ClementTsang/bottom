@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#425](https://github.com/ClementTsang/bottom/pull/425): Added user into the process widget for Unix-based systems.
 
+- [#437](https://github.com/ClementTsang/bottom/pull/437): Redo dynamic network y-axis, add linear scaling, unit type, and prefix options.
+
 ## Changes
 
 - [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.
@@ -38,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#418](https://github.com/ClementTsang/bottom/pull/418): Removed automatically jumping to the top of the list for process sort shortcuts. The standard behaviour is to now stay in place.
 
 - [#420](https://github.com/ClementTsang/bottom/pull/420): Updated tui-rs, allowing for prettier looking tables!
+
+- [#437](https://github.com/ClementTsang/bottom/pull/437): Add linear interpolation step in drawing step to pr event missing entries on the right side of charts.
 
 ## Bug Fixes
 
