@@ -298,14 +298,18 @@ pub fn convert_swap_data_points(
 pub fn convert_mem_labels(
     current_data: &data_farmer::DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
-    fn return_unit_and_numerator_for_mem_kb(mem_total_kb: u64) -> (&'static str, f64) {
-        if mem_total_kb < 1024 {
+    /// Returns the unit type and denominator for given total amount of memory in kibibytes.
+    ///
+    /// Yes, this function is a bit of a lie.  But people seem to generally expect, say, GiB when what they actually
+    /// wanted calculated was GiB.
+    fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
+        if mem_total_kib < 1024 {
             // Stay with KiB
             ("KB", 1.0)
-        } else if mem_total_kb < 1_048_576 {
+        } else if mem_total_kib < 1_048_576 {
             // Use MiB
             ("MB", 1024.0)
-        } else if mem_total_kb < 1_073_741_824 {
+        } else if mem_total_kib < 1_073_741_824 {
             // Use GiB
             ("GB", 1_048_576.0)
         } else {
@@ -328,15 +332,15 @@ pub fn convert_mem_labels(
                     }
                 ),
                 {
-                    let (unit, numerator) = return_unit_and_numerator_for_mem_kb(
+                    let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
                         current_data.memory_harvest.mem_total_in_kib,
                     );
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        current_data.memory_harvest.mem_used_in_kib as f64 / numerator,
+                        current_data.memory_harvest.mem_used_in_kib as f64 / denominator,
                         unit,
-                        (current_data.memory_harvest.mem_total_in_kib as f64 / numerator),
+                        (current_data.memory_harvest.mem_total_in_kib as f64 / denominator),
                         unit
                     )
                 },
@@ -357,7 +361,7 @@ pub fn convert_mem_labels(
                     }
                 ),
                 {
-                    let (unit, numerator) = return_unit_and_numerator_for_mem_kb(
+                    let (unit, numerator) = return_unit_and_denominator_for_mem_kib(
                         current_data.swap_harvest.mem_total_in_kib,
                     );
 
