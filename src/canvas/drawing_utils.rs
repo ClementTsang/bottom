@@ -117,12 +117,11 @@ pub fn get_column_widths(
     filtered_column_widths
 }
 
-#[allow(dead_code)]
 /// FIXME: [command move] This is a greedy method of determining column widths.  This is reserved for columns where we are okay with
 /// shoving information as far right as required.
-pub fn greedy_get_column_widths() -> Vec<u16> {
-    vec![]
-}
+// pub fn greedy_get_column_widths() -> Vec<u16> {
+//     vec![]
+// }
 
 pub fn get_search_start_position(
     num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
