@@ -318,82 +318,82 @@ impl NetworkGraphWidget for Painter {
                         (LOG_MEGA_LIMIT, LOG_GIGA_LIMIT, LOG_TERA_LIMIT)
                     };
 
+                    fn get_zero(network_use_binary_prefix: bool, unit_char: &str) -> String {
+                        format!(
+                            "{}0{}",
+                            if network_use_binary_prefix { "  " } else { " " },
+                            unit_char
+                        )
+                    }
+
+                    fn get_k(network_use_binary_prefix: bool, unit_char: &str) -> String {
+                        format!(
+                            "1{}{}",
+                            if network_use_binary_prefix { "Ki" } else { "K" },
+                            unit_char
+                        )
+                    }
+
+                    fn get_m(network_use_binary_prefix: bool, unit_char: &str) -> String {
+                        format!(
+                            "1{}{}",
+                            if network_use_binary_prefix { "Mi" } else { "M" },
+                            unit_char
+                        )
+                    }
+
+                    fn get_g(network_use_binary_prefix: bool, unit_char: &str) -> String {
+                        format!(
+                            "1{}{}",
+                            if network_use_binary_prefix { "Gi" } else { "G" },
+                            unit_char
+                        )
+                    }
+
+                    fn get_t(network_use_binary_prefix: bool, unit_char: &str) -> String {
+                        format!(
+                            "1{}{}",
+                            if network_use_binary_prefix { "Ti" } else { "T" },
+                            unit_char
+                        )
+                    }
+
+                    fn get_p(network_use_binary_prefix: bool, unit_char: &str) -> String {
+                        format!(
+                            "1{}{}",
+                            if network_use_binary_prefix { "Pi" } else { "P" },
+                            unit_char
+                        )
+                    }
+
                     if max_entry < m_limit {
                         (
                             m_limit,
                             vec![
-                                format!(
-                                    "{}0{}",
-                                    if network_use_binary_prefix { "  " } else { " " },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Ki" } else { "K" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Mi" } else { "M" },
-                                    unit_char
-                                ),
+                                get_zero(network_use_binary_prefix, unit_char),
+                                get_k(network_use_binary_prefix, unit_char),
+                                get_m(network_use_binary_prefix, unit_char),
                             ],
                         )
                     } else if max_entry < g_limit {
                         (
                             g_limit,
                             vec![
-                                format!(
-                                    "{}0{}",
-                                    if network_use_binary_prefix { "  " } else { " " },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Ki" } else { "K" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Mi" } else { "M" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Gi" } else { "G" },
-                                    unit_char
-                                ),
+                                get_zero(network_use_binary_prefix, unit_char),
+                                get_k(network_use_binary_prefix, unit_char),
+                                get_m(network_use_binary_prefix, unit_char),
+                                get_g(network_use_binary_prefix, unit_char),
                             ],
                         )
                     } else if max_entry < t_limit {
                         (
                             t_limit,
                             vec![
-                                format!(
-                                    "{}0{}",
-                                    if network_use_binary_prefix { "  " } else { " " },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Ki" } else { "K" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Mi" } else { "M" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Gi" } else { "G" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Ti" } else { "T" },
-                                    unit_char
-                                ),
+                                get_zero(network_use_binary_prefix, unit_char),
+                                get_k(network_use_binary_prefix, unit_char),
+                                get_m(network_use_binary_prefix, unit_char),
+                                get_g(network_use_binary_prefix, unit_char),
+                                get_t(network_use_binary_prefix, unit_char),
                             ],
                         )
                     } else {
@@ -405,36 +405,12 @@ impl NetworkGraphWidget for Painter {
                                 LOG_PETA_LIMIT
                             },
                             vec![
-                                format!(
-                                    "{}0{}",
-                                    if network_use_binary_prefix { "  " } else { " " },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Ki" } else { "K" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Mi" } else { "M" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Gi" } else { "G" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Ti" } else { "T" },
-                                    unit_char
-                                ),
-                                format!(
-                                    "1{}{}",
-                                    if network_use_binary_prefix { "Pi" } else { "P" },
-                                    unit_char
-                                ),
+                                get_zero(network_use_binary_prefix, unit_char),
+                                get_k(network_use_binary_prefix, unit_char),
+                                get_m(network_use_binary_prefix, unit_char),
+                                get_g(network_use_binary_prefix, unit_char),
+                                get_t(network_use_binary_prefix, unit_char),
+                                get_p(network_use_binary_prefix, unit_char),
                             ],
                         )
                     }
