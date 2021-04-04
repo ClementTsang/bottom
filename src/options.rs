@@ -12,6 +12,7 @@ use crate::{
     app::{layout_manager::*, *},
     canvas::ColourScheme,
     constants::*,
+    units::data_units::DataUnit,
     utils::error::{self, BottomError},
 };
 
@@ -157,6 +158,15 @@ pub struct ConfigFlags {
 
     #[builder(default, setter(strip_option))]
     pub advanced_kill: Option<bool>,
+
+    #[builder(default, setter(strip_option))]
+    pub network_use_bytes: Option<bool>,
+
+    #[builder(default, setter(strip_option))]
+    pub network_use_log: Option<bool>,
+
+    #[builder(default, setter(strip_option))]
+    pub network_use_binary_prefix: Option<bool>,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -265,6 +275,10 @@ pub fn build_app(
     let is_default_command = get_is_default_process_command(matches, config);
     let is_advanced_kill = get_is_using_advanced_kill(matches, config);
 
+    let network_unit_type = get_network_unit_type(matches, config);
+    let network_scale_type = get_network_scale_type(matches, config);
+    let network_use_binary_prefix = get_network_use_binary_prefix(matches, config);
+
     for row in &widget_layout.rows {
         for col in &row.children {
             for col_row in &col.children {
@@ -319,7 +333,12 @@ pub fn build_app(
                         Net => {
                             net_state_map.insert(
                                 widget.widget_id,
-                                NetWidgetState::init(default_time_value, autohide_timer),
+                                NetWidgetState::init(
+                                    default_time_value,
+                                    autohide_timer,
+                                    // network_unit_type.clone(),
+                                    // network_scale_type.clone(),
+                                ),
                             );
                         }
                         Proc => {
@@ -404,6 +423,9 @@ pub fn build_app(
         no_write: false,
         show_table_scroll_position: get_show_table_scroll_position(matches, config),
         is_advanced_kill,
+        network_scale_type,
+        network_unit_type,
+        network_use_binary_prefix,
     };
 
     let used_widgets = UsedWidgets {
@@ -818,11 +840,9 @@ fn get_default_widget_and_count(
     let widget_count = if let Some(widget_count) = matches.value_of("default_widget_count") {
         Some(widget_count.parse::<u128>()?)
     } else if let Some(flags) = &config.flags {
-        if let Some(widget_count) = flags.default_widget_count {
-            Some(widget_count as u128)
-        } else {
-            None
-        }
+        flags
+            .default_widget_count
+            .map(|widget_count| widget_count as u128)
     } else {
         None
     };
@@ -1027,6 +1047,45 @@ fn get_is_using_advanced_kill(matches: &clap::ArgMatches<'static>, config: &Conf
     } else if let Some(flags) = &config.flags {
         if let Some(advanced_kill) = flags.advanced_kill {
             return advanced_kill;
+        }
+    }
+    false
+}
+
+fn get_network_unit_type(matches: &clap::ArgMatches<'static>, config: &Config) -> DataUnit {
+    if matches.is_present("network_use_bytes") {
+        return DataUnit::Byte;
+    } else if let Some(flags) = &config.flags {
+        if let Some(network_use_bytes) = flags.network_use_bytes {
+            if network_use_bytes {
+                return DataUnit::Byte;
+            }
+        }
+    }
+
+    DataUnit::Bit
+}
+
+fn get_network_scale_type(matches: &clap::ArgMatches<'static>, config: &Config) -> AxisScaling {
+    if matches.is_present("network_use_log") {
+        return AxisScaling::Log;
+    } else if let Some(flags) = &config.flags {
+        if let Some(network_use_log) = flags.network_use_log {
+            if network_use_log {
+                return AxisScaling::Log;
+            }
+        }
+    }
+
+    AxisScaling::Linear
+}
+
+fn get_network_use_binary_prefix(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("network_use_binary_prefix") {
+        return true;
+    } else if let Some(flags) = &config.flags {
+        if let Some(network_use_binary_prefix) = flags.network_use_binary_prefix {
+            return network_use_binary_prefix;
         }
     }
     false

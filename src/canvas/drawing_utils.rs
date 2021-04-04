@@ -117,6 +117,12 @@ pub fn get_column_widths(
     filtered_column_widths
 }
 
+/// FIXME: [command move] This is a greedy method of determining column widths.  This is reserved for columns where we are okay with
+/// shoving information as far right as required.
+// pub fn greedy_get_column_widths() -> Vec<u16> {
+//     vec![]
+// }
+
 pub fn get_search_start_position(
     num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
     current_cursor_position: usize, is_force_redraw: bool,
@@ -204,4 +210,15 @@ pub fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) 
         (num_bars_available as f64 * use_percentage / 100.0).round() as usize,
         num_bars_available,
     )
+}
+
+/// Interpolates between two points.  Mainly used to help fill in tui-rs blanks in certain situations.
+/// It is expected point_one is "further left" compared to point_two.
+/// A point is two floats, in (x, y) form.  x is time, y is value.
+pub fn interpolate_points(point_one: &(f64, f64), point_two: &(f64, f64), time: f64) -> f64 {
+    let delta_x = point_two.0 - point_one.0;
+    let delta_y = point_two.1 - point_one.1;
+    let slope = delta_y / delta_x;
+
+    (point_one.1 + (time - point_one.0) * slope).max(0.0)
 }

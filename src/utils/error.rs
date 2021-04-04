@@ -10,7 +10,7 @@ pub type Result<T> = result::Result<T, BottomError>;
 pub enum BottomError {
     /// An error when there is an IO exception.
     #[error("IO exception, {0}")]
-    InvalidIO(String),
+    InvalidIo(String),
     /// An error when the heim library encounters a problem.
     #[error("Error caused by Heim, {0}")]
     InvalidHeim(String),
@@ -39,7 +39,7 @@ pub enum BottomError {
 
 impl From<std::io::Error> for BottomError {
     fn from(err: std::io::Error) -> Self {
-        BottomError::InvalidIO(err.to_string())
+        BottomError::InvalidIo(err.to_string())
     }
 }
 

@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#381](https://github.com/ClementTsang/bottom/pull/381): Added a filter in the config file for network interfaces.
 
+- [#392](https://github.com/ClementTsang/bottom/pull/392): Added CPU load averages (1, 5, 15) for Unix-based systems.
+
 - [#406](https://github.com/ClementTsang/bottom/pull/406): Added the Nord colour scheme, as well as a light variant.
 
 - [#409](https://github.com/ClementTsang/bottom/pull/409): Added `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.
@@ -24,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#413](https://github.com/ClementTsang/bottom/pull/413): Added mouse support for sorting process columns.
 
 - [#425](https://github.com/ClementTsang/bottom/pull/425): Added user into the process widget for Unix-based systems.
+
+- [#437](https://github.com/ClementTsang/bottom/pull/437): Redo dynamic network y-axis, add linear scaling, unit type, and prefix options.
 
 ## Changes
 
@@ -36,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#418](https://github.com/ClementTsang/bottom/pull/418): Removed automatically jumping to the top of the list for process sort shortcuts. The standard behaviour is to now stay in place.
 
 - [#420](https://github.com/ClementTsang/bottom/pull/420): Updated tui-rs, allowing for prettier looking tables!
+
+- [#437](https://github.com/ClementTsang/bottom/pull/437): Add linear interpolation step in drawing step to pr event missing entries on the right side of charts.
 
 ## Bug Fixes
 

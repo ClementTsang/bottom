@@ -2,6 +2,9 @@ use crate::Pid;
 use std::path::PathBuf;
 use sysinfo::ProcessStatus;
 
+#[cfg(target_os = "linux")]
+use std::path::Path;
+
 #[cfg(target_family = "unix")]
 use crate::utils::error;
 
@@ -168,7 +171,7 @@ fn cpu_usage_calculation(
 
     // SC in case that the parsing will fail due to length:
     if val.len() <= 10 {
-        return Err(error::BottomError::InvalidIO(format!(
+        return Err(error::BottomError::InvalidIo(format!(
             "CPU parsing will fail due to too short of a return value; saw {} values, expected 10 values.",
             val.len()
         )));
@@ -222,8 +225,8 @@ fn get_linux_process_vsize_rss(stat: &[&str]) -> (u64, u64) {
 
 #[cfg(target_os = "linux")]
 /// Preferably use this only on small files.
-fn read_path_contents(path: &PathBuf) -> std::io::Result<String> {
-    Ok(std::fs::read_to_string(path)?)
+fn read_path_contents(path: &Path) -> std::io::Result<String> {
+    std::fs::read_to_string(path)
 }
 
 #[cfg(target_os = "linux")]
@@ -272,9 +275,8 @@ fn get_macos_cpu_usage(pids: &[i32]) -> std::io::Result<std::collections::HashMa
     let output = std::process::Command::new("ps")
         .args(&["-o", "pid=,pcpu=", "-p"])
         .arg(
-            pids.iter()
-                .map(i32::to_string)
-                .intersperse(",".to_string())
+            // Has to look like this since otherwise, it you hit a `unstable_name_collisions` warning.
+            Itertools::intersperse(pids.iter().map(i32::to_string), ",".to_string())
                 .collect::<String>(),
         )
         .output()?;
@@ -298,7 +300,7 @@ fn get_macos_cpu_usage(pids: &[i32]) -> std::io::Result<std::collections::HashMa
 }
 
 #[cfg(target_os = "linux")]
-fn get_uid_and_gid(path: &PathBuf) -> (Option<u32>, Option<u32>) {
+fn get_uid_and_gid(path: &Path) -> (Option<u32>, Option<u32>) {
     // FIXME: [OPT] - can we merge our /stat and /status calls?
     use std::io::prelude::*;
     use std::io::BufReader;
@@ -470,15 +472,15 @@ fn read_proc(
     Ok(ProcessHarvest {
         pid,
         parent_pid,
-        name,
-        command,
+        cpu_usage_percent,
         mem_usage_percent,
         mem_usage_bytes,
-        cpu_usage_percent,
-        total_read_bytes,
-        total_write_bytes,
+        name,
+        command,
         read_bytes_per_sec,
         write_bytes_per_sec,
+        total_read_bytes,
+        total_write_bytes,
         process_state,
         process_state_char,
         uid,

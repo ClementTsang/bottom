@@ -26,6 +26,10 @@ use crossterm::{
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
+// TODO: Add a debugger tool:
+// Debugger binary.  This isn't implemented yet; the idea for this is to make it easier to troubleshoot bug reports
+// by providing a built-in debugger to help gather relevant information to narrow down the problem.
+
 fn main() -> Result<()> {
     let matches = clap::get_matches();
     // let is_debug = matches.is_present("debug");
@@ -178,6 +182,9 @@ fn main() -> Result<()> {
                                 false,
                                 app.app_config_fields.use_basic_mode
                                     || app.app_config_fields.use_old_network_legend,
+                                &app.app_config_fields.network_scale_type,
+                                &app.app_config_fields.network_unit_type,
+                                app.app_config_fields.network_use_binary_prefix,
                             );
                             app.canvas_data.network_data_rx = network_data.rx;
                             app.canvas_data.network_data_tx = network_data.tx;

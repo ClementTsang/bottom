@@ -9,6 +9,8 @@ use tui::{
     Frame, Terminal,
 };
 
+// use ordered_float::OrderedFloat;
+
 use canvas_colours::*;
 use dialogs::*;
 use screens::*;
@@ -54,7 +56,7 @@ pub struct DisplayableData {
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
 
-    pub mem_data: Vec<Point>,
+    pub mem_data: Vec<Point>, // TODO: Switch this and all data points over to a better data structure...
     pub swap_data: Vec<Point>,
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<ConvertedCpuData>,

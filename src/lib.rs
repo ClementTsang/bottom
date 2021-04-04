@@ -47,6 +47,7 @@ pub mod clap;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
+pub mod units;
 
 #[cfg(target_family = "windows")]
 pub type Pid = usize;
@@ -326,7 +327,13 @@ pub fn handle_force_redraws(app: &mut App) {
     }
 
     if app.net_state.force_update.is_some() {
-        let (rx, tx) = get_rx_tx_data_points(&app.data_collection, app.is_frozen);
+        let (rx, tx) = get_rx_tx_data_points(
+            &app.data_collection,
+            app.is_frozen,
+            &app.app_config_fields.network_scale_type,
+            &app.app_config_fields.network_unit_type,
+            app.app_config_fields.network_use_binary_prefix,
+        );
         app.canvas_data.network_data_rx = rx;
         app.canvas_data.network_data_tx = tx;
         app.net_state.force_update = None;
@@ -352,18 +359,21 @@ pub fn update_all_process_lists(app: &mut App) {
 }
 
 fn update_final_process_list(app: &mut App, widget_id: u64) {
-    let process_states = match app.proc_state.widget_states.get(&widget_id) {
-        Some(process_state) => Some((
-            process_state
-                .process_search_state
-                .search_state
-                .is_invalid_or_blank_search(),
-            process_state.is_using_command,
-            process_state.is_grouped,
-            process_state.is_tree_mode,
-        )),
-        None => None,
-    };
+    let process_states = app
+        .proc_state
+        .widget_states
+        .get(&widget_id)
+        .map(|process_state| {
+            (
+                process_state
+                    .process_search_state
+                    .search_state
+                    .is_invalid_or_blank_search(),
+                process_state.is_using_command,
+                process_state.is_grouped,
+                process_state.is_tree_mode,
+            )
+        });
 
     if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
         if !app.is_frozen {

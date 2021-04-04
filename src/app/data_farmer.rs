@@ -19,7 +19,7 @@ use std::{time::Instant, vec::Vec};
 use crate::app::data_harvester::load_avg::LoadAvgHarvest;
 use crate::{
     data_harvester::{batteries, cpu, disks, load_avg, mem, network, processes, temperature, Data},
-    utils::gen_util::get_simple_byte_values,
+    utils::gen_util::get_decimal_bytes,
 };
 use regex::Regex;
 
@@ -57,7 +57,7 @@ pub struct DataCollection {
     pub load_avg_harvest: load_avg::LoadAvgHarvest,
     pub process_harvest: Vec<processes::ProcessHarvest>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
-    pub io_harvest: disks::IOHarvest,
+    pub io_harvest: disks::IoHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
@@ -77,7 +77,7 @@ impl Default for DataCollection {
             load_avg_harvest: load_avg::LoadAvgHarvest::default(),
             process_harvest: Vec::default(),
             disk_harvest: Vec::default(),
-            io_harvest: disks::IOHarvest::default(),
+            io_harvest: disks::IoHarvest::default(),
             io_labels_and_prev: Vec::default(),
             io_labels: Vec::default(),
             temp_harvest: Vec::default(),
@@ -95,7 +95,7 @@ impl DataCollection {
         self.cpu_harvest = cpu::CpuHarvest::default();
         self.process_harvest = Vec::default();
         self.disk_harvest = Vec::default();
-        self.io_harvest = disks::IOHarvest::default();
+        self.io_harvest = disks::IoHarvest::default();
         self.io_labels_and_prev = Vec::default();
         self.temp_harvest = Vec::default();
         self.battery_harvest = Vec::default();
@@ -205,22 +205,15 @@ impl DataCollection {
     }
 
     fn eat_network(&mut self, network: network::NetworkHarvest, new_entry: &mut TimedData) {
-        // trace!("Eating network.");
-        // FIXME [NETWORKING; CONFIG]: The ability to config this?
-        // FIXME [NETWORKING]: Support bits, support switching between decimal and binary units (move the log part to conversion and switch on the fly)
         // RX
-        new_entry.rx_data = if network.rx > 0 {
-            (network.rx as f64).log2()
-        } else {
-            0.0
-        };
+        if network.rx > 0 {
+            new_entry.rx_data = network.rx as f64;
+        }
 
         // TX
-        new_entry.tx_data = if network.tx > 0 {
-            (network.tx as f64).log2()
-        } else {
-            0.0
-        };
+        if network.tx > 0 {
+            new_entry.tx_data = network.tx as f64;
+        }
 
         // In addition copy over latest data for easy reference
         self.network_harvest = network;
@@ -250,7 +243,7 @@ impl DataCollection {
     }
 
     fn eat_disks(
-        &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IOHarvest, harvested_time: Instant,
+        &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
     ) {
         // trace!("Eating disks.");
         // TODO: [PO] To implement
@@ -300,8 +293,8 @@ impl DataCollection {
                         *io_prev = (io_r_pt, io_w_pt);
 
                         if let Some(io_labels) = self.io_labels.get_mut(itx) {
-                            let converted_read = get_simple_byte_values(r_rate, false);
-                            let converted_write = get_simple_byte_values(w_rate, false);
+                            let converted_read = get_decimal_bytes(r_rate);
+                            let converted_write = get_decimal_bytes(w_rate);
                             *io_labels = (
                                 format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
                                 format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),

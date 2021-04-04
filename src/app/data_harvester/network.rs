@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 #[derive(Default, Clone, Debug)]
+/// All units in bits.
 pub struct NetworkHarvest {
     pub rx: u64,
     pub tx: u64,
@@ -47,8 +48,8 @@ pub async fn get_network_data(
         };
 
         if to_keep {
-            total_rx += network.get_total_received();
-            total_tx += network.get_total_transmitted();
+            total_rx += network.get_total_received() * 8;
+            total_tx += network.get_total_transmitted() * 8;
         }
     }
 
@@ -106,8 +107,12 @@ pub async fn get_network_data(
             };
 
             if to_keep {
-                total_rx += io.bytes_recv().get::<heim::units::information::byte>();
-                total_tx += io.bytes_sent().get::<heim::units::information::byte>();
+                // TODO: Use bytes as the default instead, perhaps?
+                // Since you might have to do a double conversion (bytes -> bits -> bytes) in some cases;
+                // but if you stick to bytes, then in the bytes, case, you do no conversion, and in the bits case,
+                // you only do one conversion...
+                total_rx += io.bytes_recv().get::<heim::units::information::bit>();
+                total_tx += io.bytes_sent().get::<heim::units::information::bit>();
             }
         }
     }

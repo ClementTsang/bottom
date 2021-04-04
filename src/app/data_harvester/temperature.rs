@@ -95,11 +95,7 @@ pub async fn get_temperature_data(
     while let Some(sensor) = sensor_data.next().await {
         if let Ok(sensor) = sensor {
             let component_name = Some(sensor.unit().to_string());
-            let component_label = if let Some(label) = sensor.label() {
-                Some(label.to_string())
-            } else {
-                None
-            };
+            let component_label = sensor.label().map(|label| label.to_string());
 
             let name = match (component_name, component_label) {
                 (Some(name), Some(label)) => format!("{}: {}", name, label),

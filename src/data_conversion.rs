@@ -1,6 +1,6 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
-use crate::Pid;
+use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 use crate::{
     app::{data_farmer, data_harvester, App, ProcWidgetState},
     utils::{self, gen_util::*},
@@ -118,13 +118,13 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
         .zip(&current_data.io_labels)
         .for_each(|(disk, (io_read, io_write))| {
             let free_space_fmt = if let Some(free_space) = disk.free_space {
-                let converted_free_space = get_simple_byte_values(free_space, false);
+                let converted_free_space = get_decimal_bytes(free_space);
                 format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1)
             } else {
                 "N/A".to_string()
             };
             let total_space_fmt = if let Some(total_space) = disk.total_space {
-                let converted_total_space = get_simple_byte_values(total_space, false);
+                let converted_total_space = get_decimal_bytes(total_space);
                 format!(
                     "{:.*}{}",
                     0, converted_total_space.0, converted_total_space.1
@@ -298,18 +298,22 @@ pub fn convert_swap_data_points(
 pub fn convert_mem_labels(
     current_data: &data_farmer::DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
-    fn return_unit_and_numerator_for_kb(mem_total_kb: u64) -> (&'static str, f64) {
-        if mem_total_kb < 1024 {
-            // Stay with KB
+    /// Returns the unit type and denominator for given total amount of memory in kibibytes.
+    ///
+    /// Yes, this function is a bit of a lie.  But people seem to generally expect, say, GiB when what they actually
+    /// wanted calculated was GiB.
+    fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
+        if mem_total_kib < 1024 {
+            // Stay with KiB
             ("KB", 1.0)
-        } else if mem_total_kb < 1_048_576 {
-            // Use MB
+        } else if mem_total_kib < 1_048_576 {
+            // Use MiB
             ("MB", 1024.0)
-        } else if mem_total_kb < 1_073_741_824 {
-            // Use GB
+        } else if mem_total_kib < 1_073_741_824 {
+            // Use GiB
             ("GB", 1_048_576.0)
         } else {
-            // Use TB
+            // Use TiB
             ("TB", 1_073_741_824.0)
         }
     }
@@ -328,15 +332,15 @@ pub fn convert_mem_labels(
                     }
                 ),
                 {
-                    let (unit, numerator) = return_unit_and_numerator_for_kb(
+                    let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
                         current_data.memory_harvest.mem_total_in_kib,
                     );
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        current_data.memory_harvest.mem_used_in_kib as f64 / numerator,
+                        current_data.memory_harvest.mem_used_in_kib as f64 / denominator,
                         unit,
-                        (current_data.memory_harvest.mem_total_in_kib as f64 / numerator),
+                        (current_data.memory_harvest.mem_total_in_kib as f64 / denominator),
                         unit
                     )
                 },
@@ -357,7 +361,7 @@ pub fn convert_mem_labels(
                     }
                 ),
                 {
-                    let (unit, numerator) = return_unit_and_numerator_for_kb(
+                    let (unit, numerator) = return_unit_and_denominator_for_mem_kib(
                         current_data.swap_harvest.mem_total_in_kib,
                     );
 
@@ -377,7 +381,8 @@ pub fn convert_mem_labels(
 }
 
 pub fn get_rx_tx_data_points(
-    current_data: &data_farmer::DataCollection, is_frozen: bool,
+    current_data: &data_farmer::DataCollection, is_frozen: bool, network_scale_type: &AxisScaling,
+    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
@@ -394,8 +399,34 @@ pub fn get_rx_tx_data_points(
 
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-        rx.push((-time_from_start, data.rx_data));
-        tx.push((-time_from_start, data.tx_data));
+
+        let (rx_data, tx_data) = match network_scale_type {
+            AxisScaling::Log => {
+                if network_use_binary_prefix {
+                    match network_unit_type {
+                        DataUnit::Byte => {
+                            // As dividing by 8 is equal to subtracting 4 in base 2!
+                            ((data.rx_data).log2() - 4.0, (data.tx_data).log2() - 4.0)
+                        }
+                        DataUnit::Bit => ((data.rx_data).log2(), (data.tx_data).log2()),
+                    }
+                } else {
+                    match network_unit_type {
+                        DataUnit::Byte => {
+                            ((data.rx_data / 8.0).log10(), (data.tx_data / 8.0).log10())
+                        }
+                        DataUnit::Bit => ((data.rx_data).log10(), (data.tx_data).log10()),
+                    }
+                }
+            }
+            AxisScaling::Linear => match network_unit_type {
+                DataUnit::Byte => (data.rx_data / 8.0, data.tx_data / 8.0),
+                DataUnit::Bit => (data.rx_data, data.tx_data),
+            },
+        };
+
+        rx.push((-time_from_start, rx_data));
+        tx.push((-time_from_start, tx_data));
         if *time == current_time {
             break;
         }
@@ -406,19 +437,62 @@ pub fn get_rx_tx_data_points(
 
 pub fn convert_network_data_points(
     current_data: &data_farmer::DataCollection, is_frozen: bool, need_four_points: bool,
+    network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
+    network_use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
-    let (rx, tx) = get_rx_tx_data_points(current_data, is_frozen);
+    let (rx, tx) = get_rx_tx_data_points(
+        current_data,
+        is_frozen,
+        network_scale_type,
+        network_unit_type,
+        network_use_binary_prefix,
+    );
 
-    let total_rx_converted_result: (f64, String);
-    let rx_converted_result: (f64, String);
-    let total_tx_converted_result: (f64, String);
-    let tx_converted_result: (f64, String);
+    let unit = match network_unit_type {
+        DataUnit::Byte => "B",
+        DataUnit::Bit => "b",
+    };
 
-    rx_converted_result = get_exact_byte_values(current_data.network_harvest.rx, false);
-    total_rx_converted_result = get_exact_byte_values(current_data.network_harvest.total_rx, false);
+    let (rx_data, tx_data, total_rx_data, total_tx_data) = match network_unit_type {
+        DataUnit::Byte => (
+            current_data.network_harvest.rx / 8,
+            current_data.network_harvest.tx / 8,
+            current_data.network_harvest.total_rx / 8,
+            current_data.network_harvest.total_tx / 8,
+        ),
+        DataUnit::Bit => (
+            current_data.network_harvest.rx,
+            current_data.network_harvest.tx,
+            current_data.network_harvest.total_rx / 8, // We always make this bytes...
+            current_data.network_harvest.total_tx / 8,
+        ),
+    };
 
-    tx_converted_result = get_exact_byte_values(current_data.network_harvest.tx, false);
-    total_tx_converted_result = get_exact_byte_values(current_data.network_harvest.total_tx, false);
+    let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, String)) =
+        if network_use_binary_prefix {
+            (
+                get_binary_prefix(rx_data, unit), // If this isn't obvious why there's two functions, one you can configure the unit, the other is always bytes
+                get_binary_bytes(total_rx_data),
+            )
+        } else {
+            (
+                get_decimal_prefix(rx_data, unit),
+                get_decimal_bytes(total_rx_data),
+            )
+        };
+
+    let (tx_converted_result, total_tx_converted_result): ((f64, String), (f64, String)) =
+        if network_use_binary_prefix {
+            (
+                get_binary_prefix(tx_data, unit),
+                get_binary_bytes(total_tx_data),
+            )
+        } else {
+            (
+                get_decimal_prefix(tx_data, unit),
+                get_decimal_bytes(total_tx_data),
+            )
+        };
 
     if need_four_points {
         let rx_display = format!("{:.*}{}", 1, rx_converted_result.0, rx_converted_result.1);
@@ -441,20 +515,42 @@ pub fn convert_network_data_points(
         }
     } else {
         let rx_display = format!(
-            "RX: {:<9} All: {:<9}",
-            format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1),
-            format!(
-                "{:.1}{:3}",
-                total_rx_converted_result.0, total_rx_converted_result.1
-            )
+            "RX: {:<8}  All: {}",
+            if network_use_binary_prefix {
+                format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1)
+            } else {
+                format!("{:.1}{:2}", rx_converted_result.0, rx_converted_result.1)
+            },
+            if network_use_binary_prefix {
+                format!(
+                    "{:.1}{:3}",
+                    total_rx_converted_result.0, total_rx_converted_result.1
+                )
+            } else {
+                format!(
+                    "{:.1}{:2}",
+                    total_rx_converted_result.0, total_rx_converted_result.1
+                )
+            }
         );
         let tx_display = format!(
-            "TX: {:<9} All: {:<9}",
-            format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1),
-            format!(
-                "{:.1}{:3}",
-                total_tx_converted_result.0, total_tx_converted_result.1
-            )
+            "TX: {:<8}  All: {}",
+            if network_use_binary_prefix {
+                format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1)
+            } else {
+                format!("{:.1}{:2}", tx_converted_result.0, tx_converted_result.1)
+            },
+            if network_use_binary_prefix {
+                format!(
+                    "{:.1}{:3}",
+                    total_tx_converted_result.0, total_tx_converted_result.1
+                )
+            } else {
+                format!(
+                    "{:.1}{:2}",
+                    total_tx_converted_result.0, total_tx_converted_result.1
+                )
+            }
         );
 
         ConvertedNetworkData {
@@ -492,10 +588,10 @@ pub fn convert_process_data(
         existing_converted_process_data.keys().copied().collect();
 
     for process in &current_data.process_harvest {
-        let converted_rps = get_exact_byte_values(process.read_bytes_per_sec, false);
-        let converted_wps = get_exact_byte_values(process.write_bytes_per_sec, false);
-        let converted_total_read = get_exact_byte_values(process.total_read_bytes, false);
-        let converted_total_write = get_exact_byte_values(process.total_write_bytes, false);
+        let converted_rps = get_binary_bytes(process.read_bytes_per_sec);
+        let converted_wps = get_binary_bytes(process.write_bytes_per_sec);
+        let converted_total_read = get_binary_bytes(process.total_read_bytes);
+        let converted_total_write = get_binary_bytes(process.total_write_bytes);
 
         let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
         let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
@@ -530,7 +626,7 @@ pub fn convert_process_data(
                 process_entry.cpu_percent_usage = process.cpu_usage_percent;
                 process_entry.mem_percent_usage = process.mem_usage_percent;
                 process_entry.mem_usage_bytes = process.mem_usage_bytes;
-                process_entry.mem_usage_str = get_exact_byte_values(process.mem_usage_bytes, false);
+                process_entry.mem_usage_str = get_binary_bytes(process.mem_usage_bytes);
                 process_entry.group_pids = vec![process.pid];
                 process_entry.read_per_sec = read_per_sec;
                 process_entry.write_per_sec = write_per_sec;
@@ -556,7 +652,7 @@ pub fn convert_process_data(
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
                     mem_usage_bytes: process.mem_usage_bytes,
-                    mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
+                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes),
                     group_pids: vec![process.pid],
                     read_per_sec,
                     write_per_sec,
@@ -586,7 +682,7 @@ pub fn convert_process_data(
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
                     mem_usage_bytes: process.mem_usage_bytes,
-                    mem_usage_str: get_exact_byte_values(process.mem_usage_bytes, false),
+                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes),
                     group_pids: vec![process.pid],
                     read_per_sec,
                     write_per_sec,
@@ -1085,10 +1181,10 @@ pub fn group_process_data(
         .iter()
         .map(|(identifier, process_details)| {
             let p = process_details.clone();
-            let converted_rps = get_exact_byte_values(p.read_per_sec as u64, false);
-            let converted_wps = get_exact_byte_values(p.write_per_sec as u64, false);
-            let converted_total_read = get_exact_byte_values(p.total_read as u64, false);
-            let converted_total_write = get_exact_byte_values(p.total_write as u64, false);
+            let converted_rps = get_binary_bytes(p.read_per_sec as u64);
+            let converted_wps = get_binary_bytes(p.write_per_sec as u64);
+            let converted_total_read = get_binary_bytes(p.total_read as u64);
+            let converted_total_write = get_binary_bytes(p.total_write as u64);
 
             let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
             let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
@@ -1107,7 +1203,7 @@ pub fn group_process_data(
                 cpu_percent_usage: p.cpu_percent_usage,
                 mem_percent_usage: p.mem_percent_usage,
                 mem_usage_bytes: p.mem_usage_bytes,
-                mem_usage_str: get_exact_byte_values(p.mem_usage_bytes, false),
+                mem_usage_str: get_binary_bytes(p.mem_usage_bytes),
                 group_pids: p.group_pids,
                 read_per_sec,
                 write_per_sec,

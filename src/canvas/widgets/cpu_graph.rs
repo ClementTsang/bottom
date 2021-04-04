@@ -4,7 +4,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::{
     app::{layout_manager::WidgetDirection, App},
     canvas::{
-        drawing_utils::{get_column_widths, get_start_position},
+        drawing_utils::{get_column_widths, get_start_position, interpolate_points},
         Painter,
     },
     constants::*,
@@ -146,32 +146,34 @@ impl CpuGraphWidget for Painter {
             ];
 
             let y_axis_labels = vec![
-                Span::styled("0%", self.colours.graph_style),
+                Span::styled("  0%", self.colours.graph_style),
                 Span::styled("100%", self.colours.graph_style),
             ];
+
+            let time_start = -(cpu_widget_state.current_display_time as f64);
 
             let x_axis = if app_state.app_config_fields.hide_time
                 || (app_state.app_config_fields.autohide_time
                     && cpu_widget_state.autohide_timer.is_none())
             {
-                Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+                Axis::default().bounds([time_start, 0.0])
             } else if let Some(time) = cpu_widget_state.autohide_timer {
                 if std::time::Instant::now().duration_since(time).as_millis()
                     < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
                 {
                     Axis::default()
-                        .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+                        .bounds([time_start, 0.0])
                         .style(self.colours.graph_style)
                         .labels(display_time_labels)
                 } else {
                     cpu_widget_state.autohide_timer = None;
-                    Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+                    Axis::default().bounds([time_start, 0.0])
                 }
             } else if draw_loc.height < TIME_LABEL_HEIGHT_LIMIT {
-                Axis::default().bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+                Axis::default().bounds([time_start, 0.0])
             } else {
                 Axis::default()
-                    .bounds([-(cpu_widget_state.current_display_time as f64), 0.0])
+                    .bounds([time_start, 0.0])
                     .style(self.colours.graph_style)
                     .labels(display_time_labels)
             };
@@ -184,6 +186,59 @@ impl CpuGraphWidget for Painter {
             let use_dot = app_state.app_config_fields.use_dot;
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
             let current_scroll_position = cpu_widget_state.scroll_state.current_scroll_position;
+
+            let interpolated_cpu_points = cpu_data
+                .iter_mut()
+                .enumerate()
+                .map(|(itx, cpu)| {
+                    let to_show = if current_scroll_position == ALL_POSITION {
+                        true
+                    } else {
+                        itx == current_scroll_position
+                    };
+
+                    if to_show {
+                        if let Some(end_pos) = cpu
+                            .cpu_data
+                            .iter()
+                            .position(|(time, _data)| *time >= time_start)
+                        {
+                            if end_pos > 1 {
+                                let start_pos = end_pos - 1;
+                                let outside_point = cpu.cpu_data.get(start_pos);
+                                let inside_point = cpu.cpu_data.get(end_pos);
+
+                                if let (Some(outside_point), Some(inside_point)) =
+                                    (outside_point, inside_point)
+                                {
+                                    let old = *outside_point;
+
+                                    let new_point = (
+                                        time_start,
+                                        interpolate_points(outside_point, inside_point, time_start),
+                                    );
+
+                                    if let Some(to_replace) = cpu.cpu_data.get_mut(start_pos) {
+                                        *to_replace = new_point;
+                                        Some((start_pos, old))
+                                    } else {
+                                        None // Failed to get mutable reference.
+                                    }
+                                } else {
+                                    None // Point somehow doesn't exist in our data
+                                }
+                            } else {
+                                None // Point is already "leftmost", no need to interpolate.
+                            }
+                        } else {
+                            None // There is no point.
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+
             let dataset_vector: Vec<Dataset<'_>> = if current_scroll_position == ALL_POSITION {
                 cpu_data
                     .iter()
@@ -311,6 +366,18 @@ impl CpuGraphWidget for Painter {
                     .y_axis(y_axis),
                 draw_loc,
             );
+
+            // Reset interpolated points
+            cpu_data
+                .iter_mut()
+                .zip(interpolated_cpu_points)
+                .for_each(|(cpu, interpolation)| {
+                    if let Some((index, old_value)) = interpolation {
+                        if let Some(to_replace) = cpu.cpu_data.get_mut(index) {
+                            *to_replace = old_value;
+                        }
+                    }
+                });
         }
     }
 

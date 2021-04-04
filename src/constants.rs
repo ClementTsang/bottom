@@ -474,6 +474,12 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #show_table_scroll_position = false
 # Show processes as their commands by default in the process widget.
 #process_command = false
+# Displays the network widget with binary prefixes.
+#network_use_binary_prefix = false
+# Displays the network widget using bytes.
+#network_use_bytes = false
+# Displays the network widget with a log scale.
+#network_use_log = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.

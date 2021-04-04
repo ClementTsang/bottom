@@ -18,6 +18,7 @@ pub fn get_matches() -> clap::ArgMatches<'static> {
     build_app().get_matches()
 }
 
+// TODO: Refactor this a bit, it's quite messy atm
 pub fn build_app() -> App<'static, 'static> {
     // Temps
     let kelvin = Arg::with_name("kelvin")
@@ -383,6 +384,30 @@ The minimum is 1s (1000), and defaults to 15s (15000).\n\n\n",
 Defaults to showing the process widget in tree mode.\n\n",
         );
 
+    let network_use_bytes = Arg::with_name("network_use_bytes")
+        .long("network_use_bytes")
+        .help("Displays the network widget using bytes.")
+        .long_help(
+            "\
+Displays the network widget using bytes.  Defaults to bits.\n\n",
+        );
+
+    let network_use_log = Arg::with_name("network_use_log")
+        .long("network_use_log")
+        .help("Displays the network widget with a log scale.")
+        .long_help(
+            "\
+Displays the network widget with a log scale.  Defaults to a non-log scale.\n\n",
+        );
+
+    let network_use_binary_prefix = Arg::with_name("network_use_binary_prefix")
+        .long("network_use_binary_prefix")
+        .help("Displays the network widget with binary prefixes.")
+        .long_help(
+            "\
+Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rather than a decimal prefix (i.e. kilobits, megabits).  Defaults to decimal prefixes.\n\n\n",
+        );
+
     App::new(crate_name!())
         .setting(AppSettings::UnifiedHelpMessage)
         .version(crate_version!())
@@ -422,6 +447,9 @@ Defaults to showing the process widget in tree mode.\n\n",
         .arg(regex)
         .arg(time_delta)
         .arg(tree)
+        .arg(network_use_bytes)
+        .arg(network_use_log)
+        .arg(network_use_binary_prefix)
         .arg(current_usage)
         .arg(use_old_network_legend)
         .arg(whole_word)

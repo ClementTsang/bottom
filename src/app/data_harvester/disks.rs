@@ -10,21 +10,21 @@ pub struct DiskHarvest {
 }
 
 #[derive(Clone, Debug)]
-pub struct IOData {
+pub struct IoData {
     pub read_bytes: u64,
     pub write_bytes: u64,
 }
 
-pub type IOHarvest = std::collections::HashMap<String, Option<IOData>>;
+pub type IoHarvest = std::collections::HashMap<String, Option<IoData>>;
 
-pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IOHarvest>> {
+pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IoHarvest>> {
     if !actually_get {
         return Ok(None);
     }
 
     use futures::StreamExt;
 
-    let mut io_hash: std::collections::HashMap<String, Option<IOData>> =
+    let mut io_hash: std::collections::HashMap<String, Option<IoData>> =
         std::collections::HashMap::new();
 
     let counter_stream = heim::disk::io_counters().await?;
@@ -37,7 +37,7 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
             // FIXME: [MOUNT POINT] Add the filter here I guess?
             io_hash.insert(
                 mount_point.to_string(),
-                Some(IOData {
+                Some(IoData {
                     read_bytes: io.read_bytes().get::<heim::units::information::byte>(),
                     write_bytes: io.write_bytes().get::<heim::units::information::byte>(),
                 }),

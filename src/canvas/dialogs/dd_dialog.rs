@@ -72,11 +72,11 @@ impl KillDialog for Painter {
     ) {
         if cfg!(target_os = "windows") || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
-                KillSignal::KILL(_) => (
+                KillSignal::Kill(_) => (
                     Span::styled("Yes", self.colours.currently_selected_text_style),
                     Span::raw("No"),
                 ),
-                KillSignal::CANCEL => (
+                KillSignal::Cancel => (
                     Span::raw("Yes"),
                     Span::styled("No", self.colours.currently_selected_text_style),
                 ),
@@ -249,8 +249,8 @@ impl KillDialog for Painter {
                     .split(*button_draw_loc)[1];
 
                 let mut selected = match app_state.delete_dialog_state.selected_signal {
-                    KillSignal::CANCEL => 0,
-                    KillSignal::KILL(signal) => signal,
+                    KillSignal::Cancel => 0,
+                    KillSignal::Kill(signal) => signal,
                 };
                 // 32+33 are skipped
                 if selected > 31 {
