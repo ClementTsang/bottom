@@ -298,7 +298,7 @@ pub fn convert_swap_data_points(
 pub fn convert_mem_labels(
     current_data: &data_farmer::DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
-    fn return_unit_and_numerator_for_kb(mem_total_kb: u64) -> (&'static str, f64) {
+    fn return_unit_and_numerator_for_mem_kb(mem_total_kb: u64) -> (&'static str, f64) {
         if mem_total_kb < 1024 {
             // Stay with KiB
             ("KB", 1.0)
@@ -328,7 +328,7 @@ pub fn convert_mem_labels(
                     }
                 ),
                 {
-                    let (unit, numerator) = return_unit_and_numerator_for_kb(
+                    let (unit, numerator) = return_unit_and_numerator_for_mem_kb(
                         current_data.memory_harvest.mem_total_in_kib,
                     );
 
@@ -357,7 +357,7 @@ pub fn convert_mem_labels(
                     }
                 ),
                 {
-                    let (unit, numerator) = return_unit_and_numerator_for_kb(
+                    let (unit, numerator) = return_unit_and_numerator_for_mem_kb(
                         current_data.swap_harvest.mem_total_in_kib,
                     );
 
