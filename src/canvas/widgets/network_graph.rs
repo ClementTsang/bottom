@@ -98,16 +98,16 @@ impl NetworkGraphWidget for Painter {
                 match network_scale_type {
                     AxisScaling::Log => {
                         if network_use_binary_prefix {
-                            LOG_MEGA_LIMIT
-                        } else {
                             LOG_MEBI_LIMIT
+                        } else {
+                            LOG_MEGA_LIMIT
                         }
                     }
                     AxisScaling::Linear => {
                         if network_use_binary_prefix {
-                            MEGA_LIMIT_F64
-                        } else {
                             MEBI_LIMIT_F64
+                        } else {
+                            MEGA_LIMIT_F64
                         }
                     }
                 }
@@ -313,17 +313,9 @@ impl NetworkGraphWidget for Painter {
                 }
                 AxisScaling::Log => {
                     let (m_limit, g_limit, t_limit) = if network_use_binary_prefix {
-                        (
-                            LOG_MEBI_LIMIT,
-                            LOG_GIBI_LIMIT,
-                            LOG_TEBI_LIMIT,
-                        )
+                        (LOG_MEBI_LIMIT, LOG_GIBI_LIMIT, LOG_TEBI_LIMIT)
                     } else {
-                        (
-                            LOG_MEGA_LIMIT,
-                            LOG_GIGA_LIMIT,
-                            LOG_TERA_LIMIT,
-                        )
+                        (LOG_MEGA_LIMIT, LOG_GIGA_LIMIT, LOG_TERA_LIMIT)
                     };
 
                     if max_entry < m_limit {
