@@ -588,10 +588,10 @@ pub fn convert_process_data(
         existing_converted_process_data.keys().copied().collect();
 
     for process in &current_data.process_harvest {
-        let converted_rps = get_binary_bytes(process.read_bytes_per_sec);
-        let converted_wps = get_binary_bytes(process.write_bytes_per_sec);
-        let converted_total_read = get_binary_bytes(process.total_read_bytes);
-        let converted_total_write = get_binary_bytes(process.total_write_bytes);
+        let converted_rps = get_decimal_bytes(process.read_bytes_per_sec);
+        let converted_wps = get_decimal_bytes(process.write_bytes_per_sec);
+        let converted_total_read = get_decimal_bytes(process.total_read_bytes);
+        let converted_total_write = get_decimal_bytes(process.total_write_bytes);
 
         let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
         let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
@@ -600,6 +600,8 @@ pub fn convert_process_data(
             "{:.*}{}",
             0, converted_total_write.0, converted_total_write.1
         );
+
+        let mem_usage_str = get_decimal_bytes(process.mem_usage_bytes);
 
         let user = {
             #[cfg(target_family = "unix")]
@@ -626,7 +628,7 @@ pub fn convert_process_data(
                 process_entry.cpu_percent_usage = process.cpu_usage_percent;
                 process_entry.mem_percent_usage = process.mem_usage_percent;
                 process_entry.mem_usage_bytes = process.mem_usage_bytes;
-                process_entry.mem_usage_str = get_binary_bytes(process.mem_usage_bytes);
+                process_entry.mem_usage_str = mem_usage_str;
                 process_entry.group_pids = vec![process.pid];
                 process_entry.read_per_sec = read_per_sec;
                 process_entry.write_per_sec = write_per_sec;
@@ -652,7 +654,7 @@ pub fn convert_process_data(
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
                     mem_usage_bytes: process.mem_usage_bytes,
-                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes),
+                    mem_usage_str,
                     group_pids: vec![process.pid],
                     read_per_sec,
                     write_per_sec,
@@ -682,7 +684,7 @@ pub fn convert_process_data(
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
                     mem_usage_bytes: process.mem_usage_bytes,
-                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes),
+                    mem_usage_str,
                     group_pids: vec![process.pid],
                     read_per_sec,
                     write_per_sec,
