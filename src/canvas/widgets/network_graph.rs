@@ -98,16 +98,16 @@ impl NetworkGraphWidget for Painter {
                 match network_scale_type {
                     AxisScaling::Log => {
                         if network_use_binary_prefix {
-                            LOG_MEBI_LIMIT
+                            LOG_KIBI_LIMIT
                         } else {
-                            LOG_MEGA_LIMIT
+                            LOG_KILO_LIMIT
                         }
                     }
                     AxisScaling::Linear => {
                         if network_use_binary_prefix {
-                            MEBI_LIMIT_F64
+                            KIBI_LIMIT_F64
                         } else {
-                            MEGA_LIMIT_F64
+                            KILO_LIMIT_F64
                         }
                     }
                 }
