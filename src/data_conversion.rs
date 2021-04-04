@@ -118,13 +118,13 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
         .zip(&current_data.io_labels)
         .for_each(|(disk, (io_read, io_write))| {
             let free_space_fmt = if let Some(free_space) = disk.free_space {
-                let converted_free_space = get_decimal_bytes(free_space, false);
+                let converted_free_space = get_decimal_bytes(free_space);
                 format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1)
             } else {
                 "N/A".to_string()
             };
             let total_space_fmt = if let Some(total_space) = disk.total_space {
-                let converted_total_space = get_decimal_bytes(total_space, false);
+                let converted_total_space = get_decimal_bytes(total_space);
                 format!(
                     "{:.*}{}",
                     0, converted_total_space.0, converted_total_space.1
@@ -467,26 +467,26 @@ pub fn convert_network_data_points(
     let (rx_converted_result, total_rx_converted_result): ((f64, String), (f64, String)) =
         if network_use_binary_prefix {
             (
-                get_binary_prefix(rx_data, false, unit),
-                get_binary_bytes(total_rx_data, false),
+                get_binary_prefix(rx_data, unit),
+                get_binary_bytes(total_rx_data),
             )
         } else {
             (
-                get_decimal_prefix(rx_data, false, unit),
-                get_decimal_bytes(total_rx_data, false),
+                get_decimal_prefix(rx_data, unit),
+                get_decimal_bytes(total_rx_data),
             )
         };
 
     let (tx_converted_result, total_tx_converted_result): ((f64, String), (f64, String)) =
         if network_use_binary_prefix {
             (
-                get_binary_prefix(tx_data, false, unit),
-                get_binary_bytes(total_tx_data, false),
+                get_binary_prefix(tx_data, unit),
+                get_binary_bytes(total_tx_data),
             )
         } else {
             (
-                get_decimal_prefix(tx_data, false, unit),
-                get_decimal_bytes(total_tx_data, false),
+                get_decimal_prefix(tx_data, unit),
+                get_decimal_bytes(total_tx_data),
             )
         };
 
@@ -584,10 +584,10 @@ pub fn convert_process_data(
         existing_converted_process_data.keys().copied().collect();
 
     for process in &current_data.process_harvest {
-        let converted_rps = get_binary_bytes(process.read_bytes_per_sec, false);
-        let converted_wps = get_binary_bytes(process.write_bytes_per_sec, false);
-        let converted_total_read = get_binary_bytes(process.total_read_bytes, false);
-        let converted_total_write = get_binary_bytes(process.total_write_bytes, false);
+        let converted_rps = get_binary_bytes(process.read_bytes_per_sec);
+        let converted_wps = get_binary_bytes(process.write_bytes_per_sec);
+        let converted_total_read = get_binary_bytes(process.total_read_bytes);
+        let converted_total_write = get_binary_bytes(process.total_write_bytes);
 
         let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
         let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
@@ -622,7 +622,7 @@ pub fn convert_process_data(
                 process_entry.cpu_percent_usage = process.cpu_usage_percent;
                 process_entry.mem_percent_usage = process.mem_usage_percent;
                 process_entry.mem_usage_bytes = process.mem_usage_bytes;
-                process_entry.mem_usage_str = get_binary_bytes(process.mem_usage_bytes, false);
+                process_entry.mem_usage_str = get_binary_bytes(process.mem_usage_bytes);
                 process_entry.group_pids = vec![process.pid];
                 process_entry.read_per_sec = read_per_sec;
                 process_entry.write_per_sec = write_per_sec;
@@ -648,7 +648,7 @@ pub fn convert_process_data(
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
                     mem_usage_bytes: process.mem_usage_bytes,
-                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes, false),
+                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes),
                     group_pids: vec![process.pid],
                     read_per_sec,
                     write_per_sec,
@@ -678,7 +678,7 @@ pub fn convert_process_data(
                     cpu_percent_usage: process.cpu_usage_percent,
                     mem_percent_usage: process.mem_usage_percent,
                     mem_usage_bytes: process.mem_usage_bytes,
-                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes, false),
+                    mem_usage_str: get_binary_bytes(process.mem_usage_bytes),
                     group_pids: vec![process.pid],
                     read_per_sec,
                     write_per_sec,
@@ -1177,10 +1177,10 @@ pub fn group_process_data(
         .iter()
         .map(|(identifier, process_details)| {
             let p = process_details.clone();
-            let converted_rps = get_binary_bytes(p.read_per_sec as u64, false);
-            let converted_wps = get_binary_bytes(p.write_per_sec as u64, false);
-            let converted_total_read = get_binary_bytes(p.total_read as u64, false);
-            let converted_total_write = get_binary_bytes(p.total_write as u64, false);
+            let converted_rps = get_binary_bytes(p.read_per_sec as u64);
+            let converted_wps = get_binary_bytes(p.write_per_sec as u64);
+            let converted_total_read = get_binary_bytes(p.total_read as u64);
+            let converted_total_write = get_binary_bytes(p.total_write as u64);
 
             let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
             let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
@@ -1199,7 +1199,7 @@ pub fn group_process_data(
                 cpu_percent_usage: p.cpu_percent_usage,
                 mem_percent_usage: p.mem_percent_usage,
                 mem_usage_bytes: p.mem_usage_bytes,
-                mem_usage_str: get_binary_bytes(p.mem_usage_bytes, false),
+                mem_usage_str: get_binary_bytes(p.mem_usage_bytes),
                 group_pids: p.group_pids,
                 read_per_sec,
                 write_per_sec,

@@ -293,8 +293,8 @@ impl DataCollection {
                         *io_prev = (io_r_pt, io_w_pt);
 
                         if let Some(io_labels) = self.io_labels.get_mut(itx) {
-                            let converted_read = get_decimal_bytes(r_rate, false);
-                            let converted_write = get_decimal_bytes(w_rate, false);
+                            let converted_read = get_decimal_bytes(r_rate);
+                            let converted_write = get_decimal_bytes(w_rate);
                             *io_labels = (
                                 format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
                                 format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
