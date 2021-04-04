@@ -22,11 +22,13 @@ pub const LOG_KILO_LIMIT: f64 = 3.0;
 pub const LOG_MEGA_LIMIT: f64 = 6.0;
 pub const LOG_GIGA_LIMIT: f64 = 9.0;
 pub const LOG_TERA_LIMIT: f64 = 12.0;
+pub const LOG_PETA_LIMIT: f64 = 15.0;
 
 pub const LOG_KIBI_LIMIT: f64 = 10.0;
 pub const LOG_MEBI_LIMIT: f64 = 20.0;
 pub const LOG_GIBI_LIMIT: f64 = 30.0;
 pub const LOG_TEBI_LIMIT: f64 = 40.0;
+pub const LOG_PEBI_LIMIT: f64 = 50.0;
 
 pub const LOG_KILO_LIMIT_U32: u32 = 3;
 pub const LOG_MEGA_LIMIT_U32: u32 = 6;

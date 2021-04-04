@@ -86,11 +86,11 @@ impl NetworkGraphWidget for Painter {
         /// Point is of time, data
         type Point = (f64, f64);
 
-        /// Returns the max data point given a time.
+        /// Returns the max data point and time given a time.
         fn get_max_entry(
             rx: &[Point], tx: &[Point], time_start: f64, network_scale_type: &AxisScaling,
             network_use_binary_prefix: bool,
-        ) -> f64 {
+        ) -> (f64, f64) {
             /// Determines a "fake" max value in circumstances where we couldn't find one from the data.
             fn calculate_missing_max(
                 network_scale_type: &AxisScaling, network_use_binary_prefix: bool,
@@ -135,24 +135,32 @@ impl NetworkGraphWidget for Painter {
 
             // Then, find the maximal rx/tx so we know how to scale, and return it.
             match (filtered_rx, filtered_tx) {
-                (None, None) => {
-                    calculate_missing_max(network_scale_type, network_use_binary_prefix)
-                }
+                (None, None) => (
+                    time_start,
+                    calculate_missing_max(network_scale_type, network_use_binary_prefix),
+                ),
                 (None, Some(filtered_tx)) => {
                     match filtered_tx
                         .iter()
                         .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
                     {
-                        Some((_, max_val)) => {
+                        Some((best_time, max_val)) => {
                             if *max_val == 0.0 {
-                                calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                                (
+                                    time_start,
+                                    calculate_missing_max(
+                                        network_scale_type,
+                                        network_use_binary_prefix,
+                                    ),
+                                )
                             } else {
-                                *max_val
+                                (*best_time, *max_val)
                             }
                         }
-                        None => {
-                            calculate_missing_max(network_scale_type, network_use_binary_prefix)
-                        }
+                        None => (
+                            time_start,
+                            calculate_missing_max(network_scale_type, network_use_binary_prefix),
+                        ),
                     }
                 }
                 (Some(filtered_rx), None) => {
@@ -160,16 +168,23 @@ impl NetworkGraphWidget for Painter {
                         .iter()
                         .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
                     {
-                        Some((_, max_val)) => {
+                        Some((best_time, max_val)) => {
                             if *max_val == 0.0 {
-                                calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                                (
+                                    time_start,
+                                    calculate_missing_max(
+                                        network_scale_type,
+                                        network_use_binary_prefix,
+                                    ),
+                                )
                             } else {
-                                *max_val
+                                (*best_time, *max_val)
                             }
                         }
-                        None => {
-                            calculate_missing_max(network_scale_type, network_use_binary_prefix)
-                        }
+                        None => (
+                            time_start,
+                            calculate_missing_max(network_scale_type, network_use_binary_prefix),
+                        ),
                     }
                 }
                 (Some(filtered_rx), Some(filtered_tx)) => {
@@ -178,16 +193,23 @@ impl NetworkGraphWidget for Painter {
                         .chain(filtered_tx)
                         .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
                     {
-                        Some((_, max_val)) => {
+                        Some((best_time, max_val)) => {
                             if *max_val == 0.0 {
-                                calculate_missing_max(network_scale_type, network_use_binary_prefix)
+                                (
+                                    *best_time,
+                                    calculate_missing_max(
+                                        network_scale_type,
+                                        network_use_binary_prefix,
+                                    ),
+                                )
                             } else {
-                                *max_val
+                                (*best_time, *max_val)
                             }
                         }
-                        None => {
-                            calculate_missing_max(network_scale_type, network_use_binary_prefix)
-                        }
+                        None => (
+                            time_start,
+                            calculate_missing_max(network_scale_type, network_use_binary_prefix),
+                        ),
                     }
                 }
             }
@@ -198,12 +220,11 @@ impl NetworkGraphWidget for Painter {
             max_entry: f64, network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
             network_use_binary_prefix: bool,
         ) -> (f64, Vec<String>) {
-            // So, we're going with an approach like this:
+            // So, we're going with an approach like this for linear data:
             // - Main goal is to maximize the amount of information displayed given a specific height.
             //   We don't want to drown out some data if the ranges are too far though!  Nor do we want to filter
             //   out too much data...
             // - Change the y-axis unit (kilo/kibi, mega/mebi...) dynamically based on max load.
-            //
             //
             // The idea is we take the top value, build our scale such that each "point" is a scaled version of that.
             // So for example, let's say I use 390 Mb/s.  If I drew 4 segments, it would be 97.5, 195, 292.5, 390, and
@@ -214,28 +235,21 @@ impl NetworkGraphWidget for Painter {
             // properly space them all out... we just work with that and space it out properly.
             //
             // Dynamic chart idea based off of FreeNAS's chart design.
+            //
+            // ===
+            //
+            // For log data, we just use the old method of log intervals (kilo/mega/giga/etc.).  Keep it nice and simple.
 
             // Now just check the largest unit we correspond to... then proceed to build some entries from there!
-            let (k_limit, m_limit, g_limit, t_limit) = match network_scale_type {
-                AxisScaling::Log => {
-                    if network_use_binary_prefix {
-                        (
-                            LOG_KIBI_LIMIT,
-                            LOG_MEBI_LIMIT,
-                            LOG_GIBI_LIMIT,
-                            LOG_TEBI_LIMIT,
-                        )
-                    } else {
-                        (
-                            LOG_KILO_LIMIT,
-                            LOG_MEGA_LIMIT,
-                            LOG_GIGA_LIMIT,
-                            LOG_TERA_LIMIT,
-                        )
-                    }
-                }
+
+            let unit_char = match network_unit_type {
+                DataUnit::Byte => "B",
+                DataUnit::Bit => "b",
+            };
+
+            match network_scale_type {
                 AxisScaling::Linear => {
-                    if network_use_binary_prefix {
+                    let (k_limit, m_limit, g_limit, t_limit) = if network_use_binary_prefix {
                         (
                             KIBI_LIMIT_F64,
                             MEBI_LIMIT_F64,
@@ -249,91 +263,196 @@ impl NetworkGraphWidget for Painter {
                             GIGA_LIMIT_F64,
                             TERA_LIMIT_F64,
                         )
-                    }
+                    };
+
+                    let bumped_max_entry = max_entry * 1.5; // We use the bumped up version to calculate our unit type.
+                    let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) =
+                        if bumped_max_entry < k_limit {
+                            (max_entry, "", unit_char)
+                        } else if bumped_max_entry < m_limit {
+                            (
+                                max_entry / k_limit,
+                                if network_use_binary_prefix { "Ki" } else { "K" },
+                                unit_char,
+                            )
+                        } else if bumped_max_entry < g_limit {
+                            (
+                                max_entry / m_limit,
+                                if network_use_binary_prefix { "Mi" } else { "M" },
+                                unit_char,
+                            )
+                        } else if bumped_max_entry < t_limit {
+                            (
+                                max_entry / g_limit,
+                                if network_use_binary_prefix { "Gi" } else { "G" },
+                                unit_char,
+                            )
+                        } else {
+                            (
+                                max_entry / t_limit,
+                                if network_use_binary_prefix { "Ti" } else { "T" },
+                                unit_char,
+                            )
+                        };
+
+                    // Finally, build an acceptable range starting from there, using the given height!
+                    // Note we try to put more of a weight on the bottom section vs. the top, since the top has less data.
+
+                    let base_unit = max_value_scaled;
+                    let labels: Vec<String> = vec![
+                        format!("0{}{}", unit_prefix, unit_type),
+                        format!("{:.1}", base_unit * 0.5),
+                        format!("{:.1}", base_unit),
+                        format!("{:.1}", base_unit * 1.5),
+                    ]
+                    .into_iter()
+                    .map(|s| format!("{:>5}", s)) // Pull 5 as the longest legend value is generally going to be 5 digits (if they somehow hit over 5 terabits per second)
+                    .collect();
+
+                    (bumped_max_entry, labels)
                 }
-            };
-
-            let bumped_max_entry = max_entry * 1.5; // We use the bumped up version to calculate our unit type.
-            let (max_value_scaled, unit_prefix, unit_type): (f64, &str, &str) =
-                if bumped_max_entry < k_limit {
-                    (
-                        max_entry,
-                        "",
-                        match network_unit_type {
-                            DataUnit::Byte => "B",
-                            DataUnit::Bit => "b",
-                        },
-                    )
-                } else if bumped_max_entry < m_limit {
-                    (
-                        max_entry / k_limit,
-                        if network_use_binary_prefix { "Ki" } else { "K" },
-                        match network_unit_type {
-                            DataUnit::Byte => "B",
-                            DataUnit::Bit => "b",
-                        },
-                    )
-                } else if bumped_max_entry < g_limit {
-                    (
-                        max_entry / m_limit,
-                        if network_use_binary_prefix { "Mi" } else { "M" },
-                        match network_unit_type {
-                            DataUnit::Byte => "B",
-                            DataUnit::Bit => "b",
-                        },
-                    )
-                } else if bumped_max_entry < t_limit {
-                    (
-                        max_entry / g_limit,
-                        if network_use_binary_prefix { "Gi" } else { "G" },
-                        match network_unit_type {
-                            DataUnit::Byte => "B",
-                            DataUnit::Bit => "b",
-                        },
-                    )
-                } else {
-                    (
-                        max_entry / t_limit,
-                        if network_use_binary_prefix { "Ti" } else { "T" },
-                        match network_unit_type {
-                            DataUnit::Byte => "B",
-                            DataUnit::Bit => "b",
-                        },
-                    )
-                };
-
-            // Finally, build an acceptable range starting from there, using the given height!
-            // Note we try to put more of a weight on the bottom section vs. the top, since the top has less data.
-
-            let base_unit = match network_scale_type {
                 AxisScaling::Log => {
-                    if network_use_binary_prefix {
-                        f64::exp2(max_value_scaled)
+                    let (m_limit, g_limit, t_limit) = if network_use_binary_prefix {
+                        (
+                            LOG_MEBI_LIMIT,
+                            LOG_GIBI_LIMIT,
+                            LOG_TEBI_LIMIT,
+                        )
                     } else {
-                        10.0_f64.powf(max_value_scaled)
+                        (
+                            LOG_MEGA_LIMIT,
+                            LOG_GIGA_LIMIT,
+                            LOG_TERA_LIMIT,
+                        )
+                    };
+
+                    if max_entry < m_limit {
+                        (
+                            m_limit,
+                            vec![
+                                format!(
+                                    "{}0{}",
+                                    if network_use_binary_prefix { "  " } else { " " },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Ki" } else { "K" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Mi" } else { "M" },
+                                    unit_char
+                                ),
+                            ],
+                        )
+                    } else if max_entry < g_limit {
+                        (
+                            g_limit,
+                            vec![
+                                format!(
+                                    "{}0{}",
+                                    if network_use_binary_prefix { "  " } else { " " },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Ki" } else { "K" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Mi" } else { "M" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Gi" } else { "G" },
+                                    unit_char
+                                ),
+                            ],
+                        )
+                    } else if max_entry < t_limit {
+                        (
+                            t_limit,
+                            vec![
+                                format!(
+                                    "{}0{}",
+                                    if network_use_binary_prefix { "  " } else { " " },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Ki" } else { "K" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Mi" } else { "M" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Gi" } else { "G" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Ti" } else { "T" },
+                                    unit_char
+                                ),
+                            ],
+                        )
+                    } else {
+                        // I really doubt anyone's transferring beyond petabyte speeds...
+                        (
+                            if network_use_binary_prefix {
+                                LOG_PEBI_LIMIT
+                            } else {
+                                LOG_PETA_LIMIT
+                            },
+                            vec![
+                                format!(
+                                    "{}0{}",
+                                    if network_use_binary_prefix { "  " } else { " " },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Ki" } else { "K" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Mi" } else { "M" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Gi" } else { "G" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Ti" } else { "T" },
+                                    unit_char
+                                ),
+                                format!(
+                                    "1{}{}",
+                                    if network_use_binary_prefix { "Pi" } else { "P" },
+                                    unit_char
+                                ),
+                            ],
+                        )
                     }
                 }
-                AxisScaling::Linear => max_value_scaled,
-            };
-            let labels: Vec<String> = vec![
-                format!("0{}{}", unit_prefix, unit_type),
-                format!("{:.1}", base_unit * 0.5),
-                format!("{:.1}", base_unit),
-                format!("{:.1}", base_unit * 1.5),
-            ]
-            .into_iter()
-            .map(|s| format!("{:>5}", s))
-            .collect();
-
-            (bumped_max_entry, labels)
+            }
         }
 
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
             let network_data_rx: &mut [(f64, f64)] = &mut app_state.canvas_data.network_data_rx;
             let network_data_tx: &mut [(f64, f64)] = &mut app_state.canvas_data.network_data_tx;
-
-            // FIXME: [NETWORK] Can we make this run just once, and cache the results,
-            // and only update if the max value might exceed, or if the time updates?
 
             let time_start = -(network_widget_state.current_display_time as f64);
 
@@ -453,8 +572,14 @@ impl NetworkGraphWidget for Painter {
                 None // There is no point.
             };
 
+            // TODO: Cache network results: Only update if:
+            // - Force update (includes time interval change)
+            // - Old max time is off screen
+            // - A new time interval is better and does not fit (check from end of vector to last checked; we only want to update if it is TOO big!)
+
             // Find the maximal rx/tx so we know how to scale, and return it.
-            let max_entry = get_max_entry(
+
+            let (_best_time, max_entry) = get_max_entry(
                 network_data_rx,
                 network_data_tx,
                 time_start,
@@ -468,6 +593,11 @@ impl NetworkGraphWidget for Painter {
                 &app_state.app_config_fields.network_unit_type,
                 app_state.app_config_fields.network_use_binary_prefix,
             );
+
+            // Cache results.
+            // network_widget_state.draw_max_range_cache = max_range;
+            // network_widget_state.draw_time_start_cache = best_time;
+            // network_widget_state.draw_labels_cache = labels;
 
             let y_axis_labels = labels
                 .iter()

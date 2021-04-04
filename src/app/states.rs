@@ -690,9 +690,9 @@ impl ProcState {
 pub struct NetWidgetState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
-    pub draw_max_range_cache: f64,
-    pub draw_labels_cache: Vec<String>,
-    pub draw_time_start_cache: f64,
+    // pub draw_max_range_cache: f64,
+    // pub draw_labels_cache: Vec<String>,
+    // pub draw_time_start_cache: f64,
     // TODO: Re-enable these when we move net details state-side!
     // pub unit_type: DataUnitTypes,
     // pub scale_type: AxisScaling,
@@ -708,9 +708,9 @@ impl NetWidgetState {
         NetWidgetState {
             current_display_time,
             autohide_timer,
-            draw_max_range_cache: 0.0,
-            draw_labels_cache: vec![],
-            draw_time_start_cache: 0.0,
+            // draw_max_range_cache: 0.0,
+            // draw_labels_cache: vec![],
+            // draw_time_start_cache: 0.0,
             // unit_type,
             // scale_type,
         }
