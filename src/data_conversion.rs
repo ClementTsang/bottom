@@ -1034,13 +1034,13 @@ pub fn tree_process_data(
                 mut total_read,
                 mut total_write,
             ) = (
-                converted_process_data.cpu_percent_usage,
-                converted_process_data.mem_percent_usage,
+                (converted_process_data.cpu_percent_usage * 10.0).round() / 10.0,
+                (converted_process_data.mem_percent_usage * 10.0).round() / 10.0,
                 converted_process_data.mem_usage_bytes,
-                converted_process_data.rps_f64,
-                converted_process_data.wps_f64,
-                converted_process_data.tr_f64,
-                converted_process_data.tw_f64,
+                (converted_process_data.rps_f64 * 10.0).round() / 10.0,
+                (converted_process_data.wps_f64 * 10.0).round() / 10.0,
+                (converted_process_data.tr_f64 * 10.0).round() / 10.0,
+                (converted_process_data.tw_f64 * 10.0).round() / 10.0,
             );
 
             if let Some(children) = parent_child_mapping.get(&parent_pid) {
@@ -1128,6 +1128,14 @@ pub fn tree_process_data(
                 // since this runs *after* pruning steps.
                 if p.is_collapsed_entry {
                     if let Some(children) = parent_child_mapping.get(&p.pid) {
+                        // Do some rounding.
+                        p.cpu_percent_usage = (p.cpu_percent_usage * 10.0).round() / 10.0;
+                        p.mem_percent_usage = (p.mem_percent_usage * 10.0).round() / 10.0;
+                        p.rps_f64 = (p.rps_f64 * 10.0).round() / 10.0;
+                        p.wps_f64 = (p.wps_f64 * 10.0).round() / 10.0;
+                        p.tr_f64 = (p.tr_f64 * 10.0).round() / 10.0;
+                        p.tw_f64 = (p.tw_f64 * 10.0).round() / 10.0;
+
                         for &child_pid in children {
                             // Let's just do a simple DFS traversal...
                             let (
@@ -1151,25 +1159,21 @@ pub fn tree_process_data(
                             p.wps_f64 += child_wps;
                             p.tr_f64 += child_total_read;
                             p.tw_f64 += child_total_write;
-
-                            let converted_rps = get_decimal_bytes(p.rps_f64 as u64);
-                            let converted_wps = get_decimal_bytes(p.wps_f64 as u64);
-                            let converted_total_read = get_decimal_bytes(p.tr_f64 as u64);
-                            let converted_total_write = get_decimal_bytes(p.tw_f64 as u64);
-
-                            p.read_per_sec =
-                                format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-                            p.write_per_sec =
-                                format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-                            p.total_read = format!(
-                                "{:.*}{}",
-                                0, converted_total_read.0, converted_total_read.1
-                            );
-                            p.total_write = format!(
-                                "{:.*}{}",
-                                0, converted_total_write.0, converted_total_write.1
-                            );
                         }
+
+                        let converted_rps = get_decimal_bytes(p.rps_f64 as u64);
+                        let converted_wps = get_decimal_bytes(p.wps_f64 as u64);
+                        let converted_total_read = get_decimal_bytes(p.tr_f64 as u64);
+                        let converted_total_write = get_decimal_bytes(p.tw_f64 as u64);
+
+                        p.read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
+                        p.write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
+                        p.total_read =
+                            format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
+                        p.total_write = format!(
+                            "{:.*}{}",
+                            0, converted_total_write.0, converted_total_write.1
+                        );
                     }
                 }
 
