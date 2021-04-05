@@ -1019,6 +1019,62 @@ pub fn tree_process_data(
         (explored_pids, lines)
     }
 
+    /// Returns the total sum of CPU, MEM%, MEM, R/s, W/s, Total Read, and Total Write via DFS traversal.
+    fn get_usage_of_all_children(
+        parent_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
+        pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
+    ) -> (f64, f64, u64, f64, f64, f64, f64) {
+        if let Some(&converted_process_data) = pid_process_mapping.get(&parent_pid) {
+            let (
+                mut cpu,
+                mut mem_percent,
+                mut mem,
+                mut rps,
+                mut wps,
+                mut total_read,
+                mut total_write,
+            ) = (
+                (converted_process_data.cpu_percent_usage * 10.0).round() / 10.0,
+                (converted_process_data.mem_percent_usage * 10.0).round() / 10.0,
+                converted_process_data.mem_usage_bytes,
+                (converted_process_data.rps_f64 * 10.0).round() / 10.0,
+                (converted_process_data.wps_f64 * 10.0).round() / 10.0,
+                (converted_process_data.tr_f64 * 10.0).round() / 10.0,
+                (converted_process_data.tw_f64 * 10.0).round() / 10.0,
+            );
+
+            if let Some(children) = parent_child_mapping.get(&parent_pid) {
+                for &child_pid in children {
+                    let (
+                        child_cpu,
+                        child_mem_percent,
+                        child_mem,
+                        child_rps,
+                        child_wps,
+                        child_total_read,
+                        child_total_write,
+                    ) = get_usage_of_all_children(
+                        child_pid,
+                        parent_child_mapping,
+                        pid_process_mapping,
+                    );
+
+                    cpu += child_cpu;
+                    mem_percent += child_mem_percent;
+                    mem += child_mem;
+                    rps += child_rps;
+                    wps += child_wps;
+                    total_read += child_total_read;
+                    total_write += child_total_write;
+                }
+            }
+
+            (cpu, mem_percent, mem, rps, wps, total_read, total_write)
+        } else {
+            (0.0_f64, 0.0_f64, 0, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64)
+        }
+    }
+
     let mut to_sort_vec = Vec::new();
     for pid in pids_to_explore {
         if let Some(process) = pid_process_mapping.get(&pid) {
@@ -1051,9 +1107,9 @@ pub fn tree_process_data(
     explored_pids
         .iter()
         .zip(lines)
-        .filter_map(|(pid, prefix)| match pid_process_mapping.remove(pid) {
+        .filter_map(|(pid, prefix)| match pid_process_mapping.get(pid) {
             Some(process) => {
-                let mut p = process.clone();
+                let mut p = (*process).clone();
                 p.process_description_prefix = Some(format!(
                     "{}{}{}",
                     prefix,
@@ -1064,6 +1120,62 @@ pub fn tree_process_data(
                         &p.name
                     }
                 ));
+
+                // As part of https://github.com/ClementTsang/bottom/issues/424, also append their statistics to the parent if
+                // collapsed.
+                //
+                // Note that this will technically be "missing" entries, it collapses + sums based on what is visible
+                // since this runs *after* pruning steps.
+                if p.is_collapsed_entry {
+                    if let Some(children) = parent_child_mapping.get(&p.pid) {
+                        // Do some rounding.
+                        p.cpu_percent_usage = (p.cpu_percent_usage * 10.0).round() / 10.0;
+                        p.mem_percent_usage = (p.mem_percent_usage * 10.0).round() / 10.0;
+                        p.rps_f64 = (p.rps_f64 * 10.0).round() / 10.0;
+                        p.wps_f64 = (p.wps_f64 * 10.0).round() / 10.0;
+                        p.tr_f64 = (p.tr_f64 * 10.0).round() / 10.0;
+                        p.tw_f64 = (p.tw_f64 * 10.0).round() / 10.0;
+
+                        for &child_pid in children {
+                            // Let's just do a simple DFS traversal...
+                            let (
+                                child_cpu,
+                                child_mem_percent,
+                                child_mem,
+                                child_rps,
+                                child_wps,
+                                child_total_read,
+                                child_total_write,
+                            ) = get_usage_of_all_children(
+                                child_pid,
+                                &parent_child_mapping,
+                                &pid_process_mapping,
+                            );
+
+                            p.cpu_percent_usage += child_cpu;
+                            p.mem_percent_usage += child_mem_percent;
+                            p.mem_usage_bytes += child_mem;
+                            p.rps_f64 += child_rps;
+                            p.wps_f64 += child_wps;
+                            p.tr_f64 += child_total_read;
+                            p.tw_f64 += child_total_write;
+                        }
+
+                        let converted_rps = get_decimal_bytes(p.rps_f64 as u64);
+                        let converted_wps = get_decimal_bytes(p.wps_f64 as u64);
+                        let converted_total_read = get_decimal_bytes(p.tr_f64 as u64);
+                        let converted_total_write = get_decimal_bytes(p.tw_f64 as u64);
+
+                        p.read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
+                        p.write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
+                        p.total_read =
+                            format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
+                        p.total_write = format!(
+                            "{:.*}{}",
+                            0, converted_total_write.0, converted_total_write.1
+                        );
+                    }
+                }
 
                 Some(p)
             }
@@ -1186,10 +1298,12 @@ pub fn group_process_data(
         .iter()
         .map(|(identifier, process_details)| {
             let p = process_details.clone();
-            let converted_rps = get_binary_bytes(p.read_per_sec as u64);
-            let converted_wps = get_binary_bytes(p.write_per_sec as u64);
-            let converted_total_read = get_binary_bytes(p.total_read as u64);
-            let converted_total_write = get_binary_bytes(p.total_write as u64);
+
+            // FIXME: Unify this step in the three locations it is used to one function.
+            let converted_rps = get_decimal_bytes(p.read_per_sec as u64);
+            let converted_wps = get_decimal_bytes(p.write_per_sec as u64);
+            let converted_total_read = get_decimal_bytes(p.total_read as u64);
+            let converted_total_write = get_decimal_bytes(p.total_write as u64);
 
             let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
             let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
@@ -1208,7 +1322,7 @@ pub fn group_process_data(
                 cpu_percent_usage: p.cpu_percent_usage,
                 mem_percent_usage: p.mem_percent_usage,
                 mem_usage_bytes: p.mem_usage_bytes,
-                mem_usage_str: get_binary_bytes(p.mem_usage_bytes),
+                mem_usage_str: get_decimal_bytes(p.mem_usage_bytes),
                 group_pids: p.group_pids,
                 read_per_sec,
                 write_per_sec,

@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#437](https://github.com/ClementTsang/bottom/pull/437): Redo dynamic network y-axis, add linear scaling, unit type, and prefix options.
 
+- [#445](https://github.com/ClementTsang/bottom/pull/445): Collapsing in tree mode sums usage to parent.
+
 ## Changes
 
 - [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.
