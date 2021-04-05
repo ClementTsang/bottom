@@ -1298,6 +1298,8 @@ pub fn group_process_data(
         .iter()
         .map(|(identifier, process_details)| {
             let p = process_details.clone();
+
+            // FIXME: Unify this step in the three locations it is used to one function.
             let converted_rps = get_decimal_bytes(p.read_per_sec as u64);
             let converted_wps = get_decimal_bytes(p.write_per_sec as u64);
             let converted_total_read = get_decimal_bytes(p.total_read as u64);
