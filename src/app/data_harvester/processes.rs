@@ -12,7 +12,7 @@ use crate::utils::error;
 use crate::utils::error::BottomError;
 
 #[cfg(target_os = "linux")]
-use fnv::{FnvHashMap, FnvHashSet};
+use fxhash::{FxHashMap, FxHashSet};
 
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
@@ -338,9 +338,9 @@ fn get_uid_and_gid(path: &Path) -> (Option<u32>, Option<u32>) {
 #[allow(clippy::too_many_arguments)]
 #[cfg(target_os = "linux")]
 fn read_proc(
-    pid: Pid, cpu_usage: f64, cpu_fraction: f64,
-    pid_mapping: &mut FnvHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
-    time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
+    pid: Pid, cpu_usage: f64, cpu_fraction: f64, pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>,
+    use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
+    page_file_kb: u64,
 ) -> error::Result<ProcessHarvest> {
     use std::io::prelude::*;
     use std::io::BufReader;
@@ -491,13 +491,13 @@ fn read_proc(
 #[cfg(target_os = "linux")]
 pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
-    pid_mapping: &mut FnvHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
+    pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
-        let mut pids_to_clear: FnvHashSet<Pid> = pid_mapping.keys().cloned().collect();
+        let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {
                 if let Ok(dir) = dir {

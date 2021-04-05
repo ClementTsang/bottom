@@ -43,7 +43,7 @@ crossterm = "0.18.2"
 ctrlc = { version = "3.1", features = ["termination"] }
 clap = "2.33"
 dirs-next = "2.0.0"
-fnv = "1.0.7"
+fxhash = "0.2.1"
 futures = "0.3.12"
 indexmap = "~1.6"
 itertools = "0.10.0"

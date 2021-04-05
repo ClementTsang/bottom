@@ -6,6 +6,7 @@ use crate::{
     utils::{self, gen_util::*},
 };
 use data_harvester::processes::ProcessSorting;
+use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
 use std::collections::{HashMap, VecDeque};
 
@@ -584,7 +585,7 @@ pub fn convert_process_data(
     // TODO [THREAD]: Thread highlighting and hiding support
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
-    let mut complete_pid_set: fnv::FnvHashSet<Pid> =
+    let mut complete_pid_set: fxhash::FxHashSet<Pid> =
         existing_converted_process_data.keys().copied().collect();
 
     for process in &current_data.process_harvest {
@@ -724,10 +725,12 @@ pub fn tree_process_data(
 
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
-    let mut parent_child_mapping: HashMap<Pid, IndexSet<Pid>> = HashMap::default();
+    let mut parent_child_mapping: HashMap<Pid, IndexSet<Pid, FxBuildHasher>> = HashMap::default();
     let mut pid_process_mapping: HashMap<Pid, &ConvertedProcessData> = HashMap::default(); // We actually already have this stored, but it's unfiltered... oh well.
-    let mut orphan_set: IndexSet<Pid> = IndexSet::new();
-    let mut collapsed_set: IndexSet<Pid> = IndexSet::new();
+    let mut orphan_set: IndexSet<Pid, FxBuildHasher> =
+        IndexSet::with_hasher(FxBuildHasher::default());
+    let mut collapsed_set: IndexSet<Pid, FxBuildHasher> =
+        IndexSet::with_hasher(FxBuildHasher::default());
 
     filtered_process_data.iter().for_each(|process| {
         if let Some(ppid) = process.ppid {
@@ -740,7 +743,7 @@ pub fn tree_process_data(
         // Create a mapping for the process if it DNE.
         parent_child_mapping
             .entry(process.pid)
-            .or_insert_with(IndexSet::new);
+            .or_insert_with(|| IndexSet::with_hasher(FxBuildHasher::default()));
         pid_process_mapping.insert(process.pid, process);
 
         if process.is_collapsed_entry {
@@ -752,7 +755,7 @@ pub fn tree_process_data(
             orphan_set.remove(&process.pid);
             parent_child_mapping
                 .entry(ppid)
-                .or_insert_with(IndexSet::new)
+                .or_insert_with(|| IndexSet::with_hasher(FxBuildHasher::default()))
                 .insert(process.pid);
         }
     });
@@ -777,10 +780,9 @@ pub fn tree_process_data(
 
     /// A post-order traversal to correctly prune entire branches that only contain children
     /// that are disabled and themselves are also disabled ~~wait that sounds wrong~~.
-    ///
     /// Basically, go through the hashmap, and prune out all branches that are no longer relevant.
     fn prune_disabled_pids(
-        current_pid: Pid, parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid>>,
+        current_pid: Pid, parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
         pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
     ) -> bool {
         // Let's explore all the children first, and make sure they (and their children)
@@ -816,7 +818,7 @@ pub fn tree_process_data(
 
     fn sort_remaining_pids(
         current_pid: Pid, sort_type: &ProcessSorting, is_sort_descending: bool,
-        parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid>>,
+        parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
         pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
     ) {
         // Sorting is special for tree data.  So, by default, things are "sorted"
@@ -855,7 +857,7 @@ pub fn tree_process_data(
                     .iter()
                     .rev()
                     .map(|(pid, _proc)| *pid)
-                    .collect::<IndexSet<Pid>>();
+                    .collect::<IndexSet<Pid, FxBuildHasher>>();
             }
         }
     }
@@ -964,8 +966,8 @@ pub fn tree_process_data(
     /// A DFS traversal to correctly build the prefix lines (the pretty '├' and '─' lines) and
     /// the correct order to the PID tree as a vector.
     fn build_explored_pids(
-        current_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid>>,
-        prev_drawn_lines: &str, collapsed_set: &IndexSet<Pid>,
+        current_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
+        prev_drawn_lines: &str, collapsed_set: &IndexSet<Pid, FxBuildHasher>,
     ) -> (Vec<Pid>, Vec<String>) {
         let mut explored_pids: Vec<Pid> = vec![current_pid];
         let mut lines: Vec<String> = vec![];
@@ -1062,6 +1064,7 @@ pub fn tree_process_data(
                         &p.name
                     }
                 ));
+
                 Some(p)
             }
             None => None,
