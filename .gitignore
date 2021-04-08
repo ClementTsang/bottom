@@ -25,3 +25,6 @@ sample_configs/testing.toml
 
 # Wix
 /wix/
+
+# Cargo-deny
+deny.toml

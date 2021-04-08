@@ -110,3 +110,4 @@ output = "bottom_x86_64_installer.msi"
 version = "1"
 default-features = false
 features = ["user-hooks"]
+

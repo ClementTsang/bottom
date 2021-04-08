@@ -575,6 +575,27 @@ pub enum ProcessNamingType {
     Path,
 }
 
+/// Given read/s, write/s, total read, and total write values, return 4 strings that represent read/s, write/s, total read, and total write
+fn get_disk_io_strings(
+    rps: u64, wps: u64, total_read: u64, total_write: u64,
+) -> (String, String, String, String) {
+    // Note we always use bytes for total read/write here (for now).
+    let converted_rps = get_decimal_bytes(rps);
+    let converted_wps = get_decimal_bytes(wps);
+    let converted_total_read = get_decimal_bytes(total_read);
+    let converted_total_write = get_decimal_bytes(total_write);
+
+    (
+        format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1),
+        format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1),
+        format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1),
+        format!(
+            "{:.*}{}",
+            0, converted_total_write.0, converted_total_write.1
+        ),
+    )
+}
+
 /// Because we needed to UPDATE data entries rather than REPLACING entries, we instead update
 /// the existing vector.
 pub fn convert_process_data(
@@ -589,17 +610,11 @@ pub fn convert_process_data(
         existing_converted_process_data.keys().copied().collect();
 
     for process in &current_data.process_harvest {
-        let converted_rps = get_decimal_bytes(process.read_bytes_per_sec);
-        let converted_wps = get_decimal_bytes(process.write_bytes_per_sec);
-        let converted_total_read = get_decimal_bytes(process.total_read_bytes);
-        let converted_total_write = get_decimal_bytes(process.total_write_bytes);
-
-        let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-        let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-        let total_read = format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
-        let total_write = format!(
-            "{:.*}{}",
-            0, converted_total_write.0, converted_total_write.1
+        let (read_per_sec, write_per_sec, total_read, total_write) = get_disk_io_strings(
+            process.read_bytes_per_sec,
+            process.write_bytes_per_sec,
+            process.total_read_bytes,
+            process.total_write_bytes,
         );
 
         let mem_usage_str = get_decimal_bytes(process.mem_usage_bytes);
@@ -1161,19 +1176,17 @@ pub fn tree_process_data(
                             p.tw_f64 += child_total_write;
                         }
 
-                        let converted_rps = get_decimal_bytes(p.rps_f64 as u64);
-                        let converted_wps = get_decimal_bytes(p.wps_f64 as u64);
-                        let converted_total_read = get_decimal_bytes(p.tr_f64 as u64);
-                        let converted_total_write = get_decimal_bytes(p.tw_f64 as u64);
-
-                        p.read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-                        p.write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-                        p.total_read =
-                            format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
-                        p.total_write = format!(
-                            "{:.*}{}",
-                            0, converted_total_write.0, converted_total_write.1
+                        let disk_io_strings = get_disk_io_strings(
+                            p.rps_f64 as u64,
+                            p.wps_f64 as u64,
+                            p.tr_f64 as u64,
+                            p.tw_f64 as u64,
                         );
+
+                        p.read_per_sec = disk_io_strings.0;
+                        p.write_per_sec = disk_io_strings.1;
+                        p.total_read = disk_io_strings.2;
+                        p.total_write = disk_io_strings.3;
                     }
                 }
 
@@ -1253,6 +1266,9 @@ pub fn stringify_process_data(
         .collect()
 }
 
+/// Takes a set of converted process data and groups it together.
+///
+/// To be honest, I really don't like how this is done, even though I've rewritten this like 3 times.
 pub fn group_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: bool,
 ) -> Vec<ConvertedProcessData> {
@@ -1299,18 +1315,11 @@ pub fn group_process_data(
         .map(|(identifier, process_details)| {
             let p = process_details.clone();
 
-            // FIXME: Unify this step in the three locations it is used to one function.
-            let converted_rps = get_decimal_bytes(p.read_per_sec as u64);
-            let converted_wps = get_decimal_bytes(p.write_per_sec as u64);
-            let converted_total_read = get_decimal_bytes(p.total_read as u64);
-            let converted_total_write = get_decimal_bytes(p.total_write as u64);
-
-            let read_per_sec = format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1);
-            let write_per_sec = format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1);
-            let total_read = format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1);
-            let total_write = format!(
-                "{:.*}{}",
-                0, converted_total_write.0, converted_total_write.1
+            let (read_per_sec, write_per_sec, total_read, total_write) = get_disk_io_strings(
+                p.read_per_sec as u64,
+                p.write_per_sec as u64,
+                p.total_read as u64,
+                p.total_write as u64,
             );
 
             ConvertedProcessData {
