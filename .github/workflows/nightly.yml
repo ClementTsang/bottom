@@ -24,7 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sleep for a few seconds.
+      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation.
         run: sleep 10
 
       - name: Create nightly GitHub release
@@ -206,6 +206,8 @@ jobs:
           cp target/${{ matrix.triple.target }}/release/btm ./btm
           tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion
           echo "ASSET=bottom_${{ matrix.triple.target }}.tar.gz" >> $GITHUB_ENV
+
+      # TODO: Move this elsewhere; do this all at once, and do not continue if any fails.  Store artifacts.  Do the same for deployment.
 
       - name: Upload main release
         uses: actions/upload-release-asset@v1.0.1

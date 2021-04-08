@@ -320,6 +320,7 @@ pub fn handle_force_redraws(app: &mut App) {
         app.cpu_state.force_update = None;
     }
 
+    // FIXME: [OPT] Prefer reassignment over new vecs?
     if app.mem_state.force_update.is_some() {
         app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection, app.is_frozen);
         app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection, app.is_frozen);
