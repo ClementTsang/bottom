@@ -10,13 +10,9 @@ assignees: ""
 
 _A clear and concise description of what the bug is and what the expected behaviour was. If applicable, add screenshots to help explain your problem:_
 
-## To reproduce
+## How to reproduce
 
-_Steps on how to reproduce the behaviour:_
-
-1. Go to...
-2. Click on...
-3. See problem...
+_Steps on how to reproduce the behaviour.  Please try to include this section so I can reproduce your problem in order to fix it.  If you are using any runtime flags (i.e. `btm --group`) please mention them as part of this.:_
 
 ## bottom version
 
