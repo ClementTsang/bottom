@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#449](https://github.com/ClementTsang/bottom/pull/449): Add decimal place to actual memory usage in process widget for values greater or equal to 1GiB.
 
+- [#450](https://github.com/ClementTsang/bottom/pull/450): Tweak `default-light` colour scheme to look less terrible on white terminals.
+
 ## Bug Fixes
 
 - [#416](https://github.com/ClementTsang/bottom/pull/416): Fixes grouped vs ungrouped modes in the processes widget having inconsistent spacing.
