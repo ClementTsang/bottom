@@ -19,7 +19,7 @@ use std::{time::Instant, vec::Vec};
 use crate::app::data_harvester::load_avg::LoadAvgHarvest;
 use crate::{
     data_harvester::{batteries, cpu, disks, load_avg, mem, network, processes, temperature, Data},
-    utils::gen_util::get_decimal_bytes,
+    utils::gen_util::{get_decimal_bytes, GIGA_LIMIT},
 };
 use regex::Regex;
 
@@ -296,8 +296,16 @@ impl DataCollection {
                             let converted_read = get_decimal_bytes(r_rate);
                             let converted_write = get_decimal_bytes(w_rate);
                             *io_labels = (
-                                format!("{:.*}{}/s", 0, converted_read.0, converted_read.1),
-                                format!("{:.*}{}/s", 0, converted_write.0, converted_write.1),
+                                if r_rate >= GIGA_LIMIT {
+                                    format!("{:.*}{}/s", 1, converted_read.0, converted_read.1)
+                                } else {
+                                    format!("{:.*}{}/s", 0, converted_read.0, converted_read.1)
+                                },
+                                if w_rate >= GIGA_LIMIT {
+                                    format!("{:.*}{}/s", 1, converted_write.0, converted_write.1)
+                                } else {
+                                    format!("{:.*}{}/s", 0, converted_write.0, converted_write.1)
+                                },
                             );
                         }
                     }

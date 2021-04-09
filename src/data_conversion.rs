@@ -586,13 +586,32 @@ fn get_disk_io_strings(
     let converted_total_write = get_decimal_bytes(total_write);
 
     (
-        format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1),
-        format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1),
-        format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1),
-        format!(
-            "{:.*}{}",
-            0, converted_total_write.0, converted_total_write.1
-        ),
+        if rps >= GIGA_LIMIT {
+            format!("{:.*}{}/s", 1, converted_rps.0, converted_rps.1)
+        } else {
+            format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1)
+        },
+        if wps >= GIGA_LIMIT {
+            format!("{:.*}{}/s", 1, converted_wps.0, converted_wps.1)
+        } else {
+            format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1)
+        },
+        if total_read >= GIGA_LIMIT {
+            format!("{:.*}{}", 1, converted_total_read.0, converted_total_read.1)
+        } else {
+            format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1)
+        },
+        if total_write >= GIGA_LIMIT {
+            format!(
+                "{:.*}{}",
+                1, converted_total_write.0, converted_total_write.1
+            )
+        } else {
+            format!(
+                "{:.*}{}",
+                0, converted_total_write.0, converted_total_write.1
+            )
+        },
     )
 }
 
