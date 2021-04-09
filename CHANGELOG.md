@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#443](https://github.com/ClementTsang/bottom/pull/443): Make process widget consistent with disk widget in using decimal prefixes (kilo, mega, etc.) for memory usage and writes/reads.
 
+- [#450](https://github.com/ClementTsang/bottom/pull/450): Tweak `default-light` colour scheme to look less terrible on white terminals.
+
 ## Bug Fixes
 
 - [#416](https://github.com/ClementTsang/bottom/pull/416): Fixes grouped vs ungrouped modes in the processes widget having inconsistent spacing.

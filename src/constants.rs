@@ -47,6 +47,8 @@ pub static DEFAULT_LIGHT_MODE_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(||
     swap_color: Some("red".to_string()),
     rx_color: Some("blue".to_string()),
     tx_color: Some("red".to_string()),
+    rx_total_color: Some("LightBlue".to_string()),
+    tx_total_color: Some("LightRed".to_string()),
     cpu_core_colors: Some(vec![
         "LightMagenta".to_string(),
         "LightBlue".to_string(),
