@@ -1236,7 +1236,7 @@ pub fn stringify_process_data(
                     (format!("{:.1}%", process.cpu_percent_usage), None),
                     (
                         if mem_enabled {
-                            if process.mem_usage_str.0 < 0.05 {
+                            if process.mem_usage_bytes <= GIBI_LIMIT {
                                 format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
                             } else {
                                 format!("{:.1}{}", process.mem_usage_str.0, process.mem_usage_str.1)
