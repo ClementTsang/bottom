@@ -43,6 +43,19 @@ pub static DEFAULT_LIGHT_MODE_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(||
     selected_text_color: Some("white".to_string()),
     graph_color: Some("black".to_string()),
     disabled_text_color: Some("gray".to_string()),
+    ram_color: Some("blue".to_string()),
+    swap_color: Some("red".to_string()),
+    rx_color: Some("blue".to_string()),
+    tx_color: Some("red".to_string()),
+    cpu_core_colors: Some(vec![
+        "LightMagenta".to_string(),
+        "LightBlue".to_string(),
+        "LightRed".to_string(),
+        "Cyan".to_string(),
+        "Green".to_string(),
+        "Blue".to_string(),
+        "Red".to_string(),
+    ]),
     ..ConfigColours::default()
 });
 
