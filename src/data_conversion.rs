@@ -617,7 +617,7 @@ pub fn convert_process_data(
             process.total_write_bytes,
         );
 
-        let mem_usage_str = get_decimal_bytes(process.mem_usage_bytes);
+        let mem_usage_str = get_binary_bytes(process.mem_usage_bytes);
 
         let user = {
             #[cfg(target_family = "unix")]
@@ -1236,7 +1236,11 @@ pub fn stringify_process_data(
                     (format!("{:.1}%", process.cpu_percent_usage), None),
                     (
                         if mem_enabled {
-                            format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                            if process.mem_usage_bytes <= GIBI_LIMIT {
+                                format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                            } else {
+                                format!("{:.1}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+                            }
                         } else {
                             format!("{:.1}%", process.mem_percent_usage)
                         },
