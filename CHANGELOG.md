@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#450](https://github.com/ClementTsang/bottom/pull/450): Tweak `default-light` colour scheme to look less terrible on white terminals.
 
+- [#451](https://github.com/ClementTsang/bottom/pull/451): Add decimal place to disk values larger than 1GB for total read/write in process widgets, and read/write per second in process widgets and disk widgets.
+
 ## Bug Fixes
 
 - [#416](https://github.com/ClementTsang/bottom/pull/416): Fixes grouped vs ungrouped modes in the processes widget having inconsistent spacing.
