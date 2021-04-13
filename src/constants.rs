@@ -479,7 +479,7 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #hide_table_gap = false
 # Disable mouse clicks
 #disable_click = false
-# Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light"
+# Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"
 #color = "default"
 # Show memory values in the processes widget as values by default
 #mem_as_value = false
