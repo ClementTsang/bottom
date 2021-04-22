@@ -574,6 +574,13 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #case_sensitive = false
 #whole_word = false
 
+#[mount_filter]
+#is_list_ignored = false
+#list = ["/mnt/.*", "/boot"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
+
 #[temp_filter]
 #is_list_ignored = false
 #list = ["cpu", "wifi"]

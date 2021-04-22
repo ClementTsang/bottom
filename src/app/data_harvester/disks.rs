@@ -34,7 +34,6 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
         if let Ok(io) = io {
             let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
 
-            // FIXME: [MOUNT POINT] Add the filter here I guess?
             io_hash.insert(
                 mount_point.to_string(),
                 Some(IoData {
@@ -49,7 +48,7 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
 }
 
 pub async fn get_disk_usage(
-    actually_get: bool, name_filter: &Option<Filter>,
+    actually_get: bool, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     if !actually_get {
         return Ok(None);
@@ -108,21 +107,49 @@ pub async fn get_disk_usage(
                 .unwrap_or("Name Unavailable"))
             .to_string();
 
-            let to_keep = if let Some(filter) = name_filter {
-                let mut ret = filter.is_list_ignored;
-                for r in &filter.list {
-                    if r.is_match(&name) {
-                        ret = !filter.is_list_ignored;
-                        break;
+            // Precedence ordering in the case where name and mount filters disagree, "allow" takes precedence over "deny".
+            //
+            // For implementation, we do this as follows:
+            // 1. Is the entry allowed through any filter? That is, does it match an entry in a filter where `is_list_ignored` is `false`? If so, we always keep this entry.
+            // 2. Is the entry denied through any filter? That is, does it match an entry in a filter where `is_list_ignored` is `true`? If so, we always deny this entry.
+            // 3. Anything else is allowed.
+
+            let filter_check_map = [(disk_filter, &name), (mount_filter, &mount_point)];
+
+            let matches_allow_list = filter_check_map.iter().any(|(filter, text)| {
+                if let Some(filter) = filter {
+                    if !filter.is_list_ignored {
+                        for r in &filter.list {
+                            if r.is_match(text) {
+                                return true;
+                            }
+                        }
                     }
                 }
-                ret
-            } else {
+                false
+            });
+
+            let to_keep = if matches_allow_list {
                 true
+            } else {
+                // If it matches in a reject filter, then reject. If not, keep.
+                !filter_check_map.iter().any(|(filter, text)| {
+                    if let Some(filter) = filter {
+                        if filter.is_list_ignored {
+                            for r in &filter.list {
+                                if r.is_match(text) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    false
+                })
             };
 
             if to_keep {
-                // The usage line fails in some cases (Void linux + LUKS, see https://github.com/ClementTsang/bottom/issues/419)
+                // The usage line can fail in some cases (Void linux + LUKS, see https://github.com/ClementTsang/bottom/issues/419)
+                // So, we check it like this instead, rather than using ?.
                 if let Ok(usage) = heim::disk::usage(partition.mount_point().to_path_buf()).await {
                     vec_disks.push(DiskHarvest {
                         free_space: Some(usage.free().get::<heim::units::information::byte>()),

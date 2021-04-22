@@ -72,6 +72,7 @@ pub struct AppConfigFields {
 #[derive(Debug, Clone)]
 pub struct DataFilters {
     pub disk_filter: Option<Filter>,
+    pub mount_filter: Option<Filter>,
     pub temp_filter: Option<Filter>,
     pub net_filter: Option<Filter>,
 }

@@ -30,6 +30,7 @@ pub struct Config {
     pub colors: Option<ConfigColours>,
     pub row: Option<Vec<Row>>,
     pub disk_filter: Option<IgnoreList>,
+    pub mount_filter: Option<IgnoreList>,
     pub temp_filter: Option<IgnoreList>,
     pub net_filter: Option<IgnoreList>,
 }
@@ -440,6 +441,8 @@ pub fn build_app(
 
     let disk_filter =
         get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;
+    let mount_filter = get_ignore_list(&config.mount_filter)
+        .context("Update 'mount_filter' in your config file")?;
     let temp_filter =
         get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
     let net_filter =
@@ -502,6 +505,7 @@ pub fn build_app(
         .used_widgets(used_widgets)
         .filters(DataFilters {
             disk_filter,
+            mount_filter,
             temp_filter,
             net_filter,
         })
