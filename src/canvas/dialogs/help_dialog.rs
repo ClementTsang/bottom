@@ -57,8 +57,6 @@ impl HelpDialog for Painter {
                         });
 
                         app_state.help_dialog_state.index_shortcuts[itx] = 0;
-                        prev_section_len = section.len() as u16 + buffer;
-                        overflow_buffer += buffer;
                     } else {
                         section.iter().for_each(|text_line| {
                             buffer += UnicodeWidthStr::width(*text_line).saturating_sub(1) as u16
@@ -69,9 +67,9 @@ impl HelpDialog for Painter {
                             app_state.help_dialog_state.index_shortcuts[itx - 1]
                                 + 1
                                 + prev_section_len;
-                        prev_section_len = section.len() as u16 + buffer;
-                        overflow_buffer += buffer;
                     }
+                    prev_section_len = section.len() as u16 + buffer;
+                    overflow_buffer += buffer;
                 });
 
             app_state.help_dialog_state.scroll_state.max_scroll_index =
