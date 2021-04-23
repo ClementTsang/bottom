@@ -116,6 +116,8 @@ pub async fn get_disk_usage(
 
             let filter_check_map = [(disk_filter, &name), (mount_filter, &mount_point)];
 
+            // This represents case 1.  That is, if there is a match in an allowing list - if there is, then
+            // immediately allow it!
             let matches_allow_list = filter_check_map.iter().any(|(filter, text)| {
                 if let Some(filter) = filter {
                     if !filter.is_list_ignored {
@@ -132,7 +134,8 @@ pub async fn get_disk_usage(
             let to_keep = if matches_allow_list {
                 true
             } else {
-                // If it matches in a reject filter, then reject. If not, keep.
+                // If it doesn't match an allow list, then check if it is denied.
+                // That is, if it matches in a reject filter, then reject.  Otherwise, we always keep it.
                 !filter_check_map.iter().any(|(filter, text)| {
                     if let Some(filter) = filter {
                         if filter.is_list_ignored {
