@@ -148,8 +148,9 @@ pub async fn get_disk_usage(
             };
 
             if to_keep {
-                // The usage line can fail in some cases (Void linux + LUKS, see https://github.com/ClementTsang/bottom/issues/419)
-                // So, we check it like this instead, rather than using ?.
+                // The usage line can fail in some cases (for example, if you use Void Linux + LUKS,
+                // see https://github.com/ClementTsang/bottom/issues/419 for details).  As such, check
+                // it like this instead.
                 if let Ok(usage) = heim::disk::usage(partition.mount_point().to_path_buf()).await {
                     vec_disks.push(DiskHarvest {
                         free_space: Some(usage.free().get::<heim::units::information::byte>()),
