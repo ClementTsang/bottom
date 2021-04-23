@@ -233,7 +233,9 @@ fn default_as_true() -> bool {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct IgnoreList {
     #[serde(default = "default_as_true")]
-    pub is_list_ignored: bool, // TODO: Deprecate and/or rename.  Maybe flip it and make it "allow_entries"?
+    // TODO: Deprecate and/or rename, current name sounds awful.
+    // Maybe to something like "deny_entries"?  Currently it defaults to a denylist anyways, so maybe "allow_entries"?
+    pub is_list_ignored: bool,
     pub list: Vec<String>,
     #[serde(default = "bool::default")]
     pub regex: bool,
