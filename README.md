@@ -720,59 +720,46 @@ and get the following CPU donut:
 
 #### Disk, temperature, and network filtering
 
-You can hide specific disks, temperature sensors, and networks by name in the config file via `disk_filter`, `temp_filter`, and `net_filter` respectively. Regex (`regex = true`), case-sensitivity (`case_sensitive = true`), and matching only the entire word (`whole_word = true`) are supported, but are off by default.
+You can hide specific disks, temperature sensors, and networks by name in the config file via `disk_filter` and `mount_filter`, `temp_filter`, and `net_filter` respectively. Regex (`regex = true`), case-sensitivity (`case_sensitive = true`), and matching only if the entire word matches (`whole_word = true`) are supported, but are off by default. Filters default to denying entries that match and can be toggled by setting `is_list_ignored` to `false` in the config file.
 
-For example, let's say , given this disk list:
+For example, here's a disk list:
 
-![Disk filter not ignoring list](./assets/disk_filter_pre.png)
+![Disk no filter](./assets/disk_no_filter.png)
 
-I wish to _only_ show disks that follow the form `/dev/sda\d+`, or `/dev/nvme0n1p2`:
+This would filter out some entries by disk name:
+
+```toml
+[disk_filter]
+is_list_ignored = true
+list = ["/dev/sda"]
+regex = true
+case_sensitive = false
+whole_word = false
+```
+
+![Disk widget with just disk name filter](./assets/disk_name_filter.png)
+
+If there are two potentially conflicting filters (i.e. when you are using both a disk and mount filter), the filter that explicitly allows an entry takes precedence over a filter that explicitly denies one. So for example, let's say I set a disk filter accepting anything with `/dev/sda`, but deny anything with `/mnt/.*` or `/`. So I write the config like:
 
 ```toml
 [disk_filter]
 is_list_ignored = false
-list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
+list = ["/dev/sda"]
 regex = true
-```
+case_sensitive = false
+whole_word = false
 
-![Disk filter not ignoring list](./assets/disk_filter_post.png)
-
-This would ignore anything that does not match either of these two conditions. If I instead wish to ignore anything that matches this list, then I can set `is_list_ignored = true` instead:
-
-![Disk filter ignoring list](./assets/disk_filter_post2.png)
-
-Likewise, I can do something similar for `temp_filter`:
-
-![Temp filter before](./assets/temp_filter_pre.png)
-
-If I, say, only wanted to see any entry with the words "cpu" or "wifi" in it, case sensitive:
-
-```toml
-[temp_filter]
-is_list_ignored = false
-list = ["cpu", "wifi"]
-case_sensitive = true
-```
-
-![Temp filter after](./assets/temp_filter_post.png)
-
-Now, flipping to `case_sensitive = false` would instead show:
-
-![Temp filter after with case sensitivity off](./assets/temp_filter_post2.png)
-
-Lastly, let's say I want to filter out _exactly_ "iwlwifi_1" from my results. I could do:
-
-```toml
-[temp_filter]
+[mount_filter]
 is_list_ignored = true
-list = ["iwlwifi_1"]
-case_sensitive = true
+list = ["/mnt/.*", "/"]
+regex = true
+case_sensitive = false
 whole_word = true
 ```
 
-This will match the entire word, "iwlwifi_1", and ignore any result that exactly matches it:
+Which gives me:
 
-![Temp filter after with whole_word](./assets/temp_filter_post3.png)
+![Disk widget with disk name and mount filter](./assets/disk_name_mount_filter.png)
 
 ### Battery
 
