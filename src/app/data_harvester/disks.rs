@@ -64,7 +64,7 @@ pub async fn get_disk_usage(
         if let Ok(partition) = part {
             let symlink: std::ffi::OsString;
 
-            let disk_name = (if let Some(device) = partition.device() {
+            let name = (if let Some(device) = partition.device() {
                 // See if this disk is actually mounted elsewhere on Linux...
                 // This is a workaround to properly map I/O in some cases (i.e. disk encryption), see
                 // https://github.com/ClementTsang/bottom/issues/419
@@ -114,7 +114,7 @@ pub async fn get_disk_usage(
             // 2. Is the entry denied through any filter? That is, does it match an entry in a filter where `is_list_ignored` is `true`? If so, we always deny this entry.
             // 3. Anything else is allowed.
 
-            let filter_check_map = [(disk_filter, &disk_name), (mount_filter, &mount_point)];
+            let filter_check_map = [(disk_filter, &name), (mount_filter, &mount_point)];
 
             let matches_allow_list = filter_check_map.iter().any(|(filter, text)| {
                 if let Some(filter) = filter {
@@ -156,7 +156,7 @@ pub async fn get_disk_usage(
                         used_space: Some(usage.used().get::<heim::units::information::byte>()),
                         total_space: Some(usage.total().get::<heim::units::information::byte>()),
                         mount_point,
-                        name: disk_name,
+                        name,
                     });
                 } else {
                     vec_disks.push(DiskHarvest {
@@ -164,7 +164,7 @@ pub async fn get_disk_usage(
                         used_space: None,
                         total_space: None,
                         mount_point,
-                        name: disk_name,
+                        name,
                     });
                 }
             }
