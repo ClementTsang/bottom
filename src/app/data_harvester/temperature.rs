@@ -21,7 +21,7 @@ impl Default for TemperatureType {
     }
 }
 
-fn is_temp_filtered(filter: &Option<Filter>, text: &String) -> bool {
+fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
     if let Some(filter) = filter {
         if filter.is_list_ignored {
             let mut ret = true;
