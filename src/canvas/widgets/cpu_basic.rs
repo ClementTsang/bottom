@@ -199,7 +199,7 @@ impl CpuBasicWidget for Painter {
             if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
                 widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
                 widget.bottom_right_corner =
-                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+                    Some((draw_loc.x + draw_loc.width - 1, draw_loc.y + draw_loc.height - 1));
             }
         }
     }
