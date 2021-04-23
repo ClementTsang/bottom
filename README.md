@@ -722,11 +722,11 @@ and get the following CPU donut:
 
 You can hide specific disks, temperature sensors, and networks by name in the config file via `disk_filter` and `mount_filter`, `temp_filter`, and `net_filter` respectively. Regex (`regex = true`), case-sensitivity (`case_sensitive = true`), and matching only if the entire word matches (`whole_word = true`) are supported, but are off by default. Filters default to denying entries that match and can be toggled by setting `is_list_ignored` to `false` in the config file.
 
-For example, here's a disk list:
+For example, here's the disk widget with no filter:
 
 ![Disk no filter](./assets/disk_no_filter.png)
 
-This would filter out some entries by disk name:
+The following in the config file would filter out some entries by disk name:
 
 ```toml
 [disk_filter]
