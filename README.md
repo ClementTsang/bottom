@@ -739,7 +739,7 @@ whole_word = false
 
 ![Disk widget with just disk name filter](./assets/disk_name_filter.png)
 
-If there are two potentially conflicting filters (i.e. when you are using both a disk and mount filter), the filter that explicitly allows an entry takes precedence over a filter that explicitly denies one. So for example, let's say I set a disk filter accepting anything with `/dev/sda`, but deny anything with `/mnt/.*` or `/`. So I write the config like:
+If there are two potentially conflicting filters (i.e. when you are using both a disk and mount filter), the filter that explicitly allows an entry takes precedence over a filter that explicitly denies one. So for example, let's say I set a disk filter accepting anything with `/dev/sda`, but deny anything with `/mnt/.*` or `/`. So to do so, I write in the config file:
 
 ```toml
 [disk_filter]
