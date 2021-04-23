@@ -225,13 +225,22 @@ impl ConfigColours {
     }
 }
 
+/// Workaround as per https://github.com/serde-rs/serde/issues/1030
+fn default_as_true() -> bool {
+    true
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct IgnoreList {
-    pub is_list_ignored: bool,
+    #[serde(default = "default_as_true")]
+    pub is_list_ignored: bool, // TODO: Deprecate and/or rename.  Maybe flip it and make it "allow_entries"?
     pub list: Vec<String>,
-    pub regex: Option<bool>,
-    pub case_sensitive: Option<bool>,
-    pub whole_word: Option<bool>,
+    #[serde(default = "bool::default")]
+    pub regex: bool,
+    #[serde(default = "bool::default")]
+    pub case_sensitive: bool,
+    #[serde(default = "bool::default")]
+    pub whole_word: bool,
 }
 
 pub fn build_app(
@@ -931,34 +940,22 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> error::Result<Option<Fil
             .list
             .iter()
             .map(|name| {
-                let use_regex = if let Some(use_regex) = ignore_list.regex {
-                    use_regex
-                } else {
-                    false
-                };
-                let use_cs = if let Some(use_cs) = ignore_list.case_sensitive {
-                    use_cs
-                } else {
-                    false
-                };
-                let whole_word = if let Some(whole_word) = ignore_list.whole_word {
-                    whole_word
-                } else {
-                    false
-                };
-
                 let escaped_string: String;
                 let res = format!(
                     "{}{}{}{}",
-                    if whole_word { "^" } else { "" },
-                    if use_cs { "" } else { "(?i)" },
-                    if use_regex {
+                    if ignore_list.whole_word { "^" } else { "" },
+                    if ignore_list.case_sensitive {
+                        ""
+                    } else {
+                        "(?i)"
+                    },
+                    if ignore_list.regex {
                         name
                     } else {
                         escaped_string = regex::escape(name);
                         &escaped_string
                     },
-                    if whole_word { "$" } else { "" },
+                    if ignore_list.whole_word { "$" } else { "" },
                 );
 
                 Regex::new(&res)

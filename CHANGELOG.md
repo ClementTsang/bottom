@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#451](https://github.com/ClementTsang/bottom/pull/451): Add decimal place to disk values larger than 1GB for total read/write in process widgets, and read/write per second in process widgets and disk widgets.
 
-- [](): Added a mount point filter for the disk widget. Also tweaked how the filter system works - see the PR for details.
+- [#455](https://github.com/ClementTsang/bottom/pull/455): Added a mount point filter for the disk widget. Also tweaked how the filter system works - see the PR for details.
 
 ## Bug Fixes
 
