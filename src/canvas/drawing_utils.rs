@@ -151,14 +151,11 @@ pub fn get_search_start_position(
             if current_cursor_position <= *cursor_bar {
                 // If it's past the first element, then show from that element downwards
                 *cursor_bar = current_cursor_position;
-                *cursor_bar
             } else if current_cursor_position >= *cursor_bar + num_columns {
                 *cursor_bar = current_cursor_position - num_columns;
-                *cursor_bar
-            } else {
-                // Else, don't change what our start position is from whatever it is set to!
-                *cursor_bar
             }
+            // Else, don't change what our start position is from whatever it is set to!
+            *cursor_bar
         }
     }
 }
@@ -191,14 +188,11 @@ pub fn get_start_position(
             if currently_selected_position <= *scroll_position_bar {
                 // If it's past the first element, then show from that element downwards
                 *scroll_position_bar = currently_selected_position;
-                *scroll_position_bar
             } else if currently_selected_position >= *scroll_position_bar + num_rows {
                 *scroll_position_bar = currently_selected_position - num_rows;
-                *scroll_position_bar
-            } else {
-                // Else, don't change what our start position is from whatever it is set to!
-                *scroll_position_bar
             }
+            // Else, don't change what our start position is from whatever it is set to!
+            *scroll_position_bar
         }
     }
 }
