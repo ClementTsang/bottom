@@ -565,24 +565,31 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #    default=true
 
 
-# Filters - you can hide specific temperature and disks using filters.  This is admittedly a bit
-# hard to use as of now, and there is a planned interface for managing this in the future:
+# Filters - you can hide specific temperature sensors, network interfaces, and disks using filters.  This is admittedly
+# a bit hard to use as of now, and there is a planned in-app interface for managing this in the future:
 #[disk_filter]
-#is_list_ignored = false
+#is_list_ignored = true
 #list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
 #regex = true
 #case_sensitive = false
 #whole_word = false
 
+#[mount_filter]
+#is_list_ignored = true
+#list = ["/mnt/.*", "/boot"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
+
 #[temp_filter]
-#is_list_ignored = false
+#is_list_ignored = true
 #list = ["cpu", "wifi"]
 #regex = false
 #case_sensitive = false
 #whole_word = false
 
 #[net_filter]
-#is_list_ignored = false
+#is_list_ignored = true
 #list = ["virbr0.*"]
 #regex = true
 #case_sensitive = false

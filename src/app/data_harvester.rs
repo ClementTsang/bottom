@@ -325,8 +325,11 @@ impl DataCollector {
             }
         };
         let mem_data_fut = mem::get_mem_data(self.widgets_to_harvest.use_mem);
-        let disk_data_fut =
-            disks::get_disk_usage(self.widgets_to_harvest.use_disk, &self.filters.disk_filter);
+        let disk_data_fut = disks::get_disk_usage(
+            self.widgets_to_harvest.use_disk,
+            &self.filters.disk_filter,
+            &self.filters.mount_filter,
+        );
         let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
         let temp_data_fut = {
             #[cfg(not(target_os = "linux"))]

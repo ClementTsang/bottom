@@ -21,6 +21,25 @@ impl Default for TemperatureType {
     }
 }
 
+fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
+    if let Some(filter) = filter {
+        if filter.is_list_ignored {
+            let mut ret = true;
+            for r in &filter.list {
+                if r.is_match(text) {
+                    ret = false;
+                    break;
+                }
+            }
+            ret
+        } else {
+            true
+        }
+    } else {
+        true
+    }
+}
+
 #[cfg(not(target_os = "linux"))]
 pub async fn get_temperature_data(
     sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool, filter: &Option<Filter>,
@@ -45,20 +64,7 @@ pub async fn get_temperature_data(
     for component in sensor_data {
         let name = component.get_label().to_string();
 
-        let to_keep = if let Some(filter) = filter {
-            let mut ret = filter.is_list_ignored;
-            for r in &filter.list {
-                if r.is_match(&name) {
-                    ret = !filter.is_list_ignored;
-                    break;
-                }
-            }
-            ret
-        } else {
-            true
-        };
-
-        if to_keep {
+        if is_temp_filtered(filter, &name) {
             temperature_vec.push(TempHarvest {
                 name,
                 temperature: match temp_type {
@@ -104,20 +110,7 @@ pub async fn get_temperature_data(
                 (None, None) => String::default(),
             };
 
-            let to_keep = if let Some(filter) = filter {
-                let mut ret = filter.is_list_ignored;
-                for r in &filter.list {
-                    if r.is_match(&name) {
-                        ret = !filter.is_list_ignored;
-                        break;
-                    }
-                }
-                ret
-            } else {
-                true
-            };
-
-            if to_keep {
+            if is_temp_filtered(filter, &name) {
                 temperature_vec.push(TempHarvest {
                     name,
                     temperature: match temp_type {
