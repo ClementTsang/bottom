@@ -536,24 +536,15 @@ impl Painter {
                 }
 
                 let actual_cpu_data_len = app_state.canvas_data.cpu_data.len().saturating_sub(1);
-
-                // This fixes #397, apparently if the height is 1, it can't render the CPU bars...
-                let cpu_height = {
-                    let c = (actual_cpu_data_len / 4) as u16
-                        + (if actual_cpu_data_len % 4 == 0 { 0 } else { 1 });
-
-                    if c <= 1 {
-                        1
-                    } else {
-                        c
-                    }
-                };
+                let cpu_height = (actual_cpu_data_len / 4) as u16
+                    + (if actual_cpu_data_len % 4 == 0 { 0 } else { 1 });
 
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .margin(0)
                     .constraints([
-                        Constraint::Length(cpu_height),
+                        Constraint::Length(cpu_height + if cpu_height <= 1 { 1 } else { 0 }), // This fixes #397, apparently if the height is 1, it can't render the CPU bars...
+                        Constraint::Length(if cpu_height <= 1 { 0 } else { 1 }),
                         Constraint::Length(2),
                         Constraint::Length(2),
                         Constraint::Min(5),
@@ -563,7 +554,7 @@ impl Painter {
                 let middle_chunks = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-                    .split(vertical_chunks[1]);
+                    .split(vertical_chunks[2]);
                 self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
                 self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);
                 self.draw_basic_network(&mut f, app_state, middle_chunks[1], 3);
@@ -576,7 +567,7 @@ impl Painter {
                         Disk => self.draw_disk_table(
                             &mut f,
                             app_state,
-                            vertical_chunks[3],
+                            vertical_chunks[4],
                             false,
                             widget_id,
                         ),
@@ -590,7 +581,7 @@ impl Painter {
                             self.draw_process_features(
                                 &mut f,
                                 app_state,
-                                vertical_chunks[3],
+                                vertical_chunks[4],
                                 false,
                                 wid,
                             );
@@ -598,14 +589,14 @@ impl Painter {
                         Temp => self.draw_temp_table(
                             &mut f,
                             app_state,
-                            vertical_chunks[3],
+                            vertical_chunks[4],
                             false,
                             widget_id,
                         ),
                         Battery => self.draw_battery_display(
                             &mut f,
                             app_state,
-                            vertical_chunks[3],
+                            vertical_chunks[4],
                             false,
                             widget_id,
                         ),
@@ -614,7 +605,7 @@ impl Painter {
                 }
 
                 if let Some(widget_id) = later_widget_id {
-                    self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[2], widget_id);
+                    self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[3], widget_id);
                 }
             } else {
                 // Draws using the passed in (or default) layout.
