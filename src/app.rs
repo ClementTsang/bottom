@@ -2888,7 +2888,6 @@ impl App {
                     self.delete_dialog_state.selected_signal = KillSignal::Cancel
                 }
                 Some((_, _, _, _, idx)) => {
-                    debug!("IDX: {}", idx);
                     if *idx > 31 {
                         self.delete_dialog_state.selected_signal = KillSignal::Kill(*idx + 2)
                     } else {
