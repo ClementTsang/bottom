@@ -138,16 +138,16 @@ impl BasicTableArrows for Painter {
             if app_state.should_get_widget_bounds() {
                 if let Some(basic_table) = &mut app_state.basic_table_widget_state {
                     basic_table.left_tlc =
-                        Some((margined_draw_loc[0].x - 1, margined_draw_loc[0].y + 1));
+                        Some((margined_draw_loc[0].x, margined_draw_loc[0].y + 1));
                     basic_table.left_brc = Some((
-                        margined_draw_loc[0].x + margined_draw_loc[0].width - 1,
-                        margined_draw_loc[0].y + 1,
+                        margined_draw_loc[0].x + margined_draw_loc[0].width,
+                        margined_draw_loc[0].y + 2,
                     ));
                     basic_table.right_tlc =
-                        Some((margined_draw_loc[2].x - 1, margined_draw_loc[2].y + 1));
+                        Some((margined_draw_loc[2].x, margined_draw_loc[2].y + 1));
                     basic_table.right_brc = Some((
-                        margined_draw_loc[2].x + margined_draw_loc[2].width - 1,
-                        margined_draw_loc[2].y + 1,
+                        margined_draw_loc[2].x + margined_draw_loc[2].width,
+                        margined_draw_loc[2].y + 2,
                     ));
                 }
             }
