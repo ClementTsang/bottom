@@ -108,26 +108,29 @@ impl KillDialog for Painter {
             );
 
             if app_state.should_get_widget_bounds() {
-                // Note to future readers on why there's a -1:
-                // Normally, for a mouse bound check, we overshoot by 1 and use >= and < for our bounds check; that is,
-                // we overshot by one but use a < equality check instead.
-                // However, for the dd buttons, we instead properly store the bounds here and use >= and <=.  It's just
-                // easier to do it that way in this case.
-                // See https://github.com/ClementTsang/bottom/pull/459 for more details.
+                // This is kinda weird, but the gist is:
+                // - We have three sections; we put our mouse bounding box for the "yes" button at the very right edge
+                //   of the left section and 3 characters back.  We then give it a buffer size of 1 on the x-coordinate.
+                // - Same for the "no" button, except it is the right section and we do it from the start of the right
+                //   section.
+                //
+                // Lastly, note that we have the 
                 app_state.delete_dialog_state.button_positions = vec![
+                    // Yes
                     (
-                        button_layout[2].x,
+                        button_layout[0].x + button_layout[0].width - 4,
+                        button_layout[0].y,
+                        button_layout[0].x + button_layout[0].width,
+                        button_layout[0].y,
+                        if cfg!(target_os = "windows") { 1 } else { 15 },
+                    ),
+                    // No
+                    (
+                        button_layout[2].x - 1,
                         button_layout[2].y,
-                        button_layout[2].x + button_layout[2].width - 1,
+                        button_layout[2].x + 2,
                         button_layout[2].y,
                         0,
-                    ),
-                    (
-                        button_layout[0].x,
-                        button_layout[0].y,
-                        button_layout[0].x + button_layout[0].width - 1,
-                        button_layout[0].y,
-                        1,
                     ),
                 ];
             }
