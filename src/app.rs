@@ -2947,6 +2947,7 @@ impl App {
         ) {
             let border_offset = if self.is_drawing_border() { 1 } else { 0 };
 
+            // This check ensures the click isn't actually just clicking on the bottom border.
             if y < (brc_y - border_offset) {
                 match &self.current_widget.widget_type {
                     BottomWidgetType::Proc
