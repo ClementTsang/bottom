@@ -2809,7 +2809,7 @@ impl App {
         // Pretty dead simple - iterate through the widget map and go to the widget where the click
         // is within.
 
-        // TODO: [REFACTOR] might want to refactor this, it's ugly as sin.
+        // TODO: [REFACTOR] might want to refactor this, it's really ugly.
         // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently everything
         // is grouped up as an app state.  We should separate stuff like event state and gui state and etc.
 
@@ -2826,7 +2826,8 @@ impl App {
                 Some((right_brc_x, right_brc_y)),
             ) = (bt.left_tlc, bt.left_brc, bt.right_tlc, bt.right_brc)
             {
-                if (x >= left_tlc_x && y >= left_tlc_y) && (x <= left_brc_x && y <= left_brc_y) {
+                if (x >= left_tlc_x && y >= left_tlc_y) && (x < left_brc_x && y < left_brc_y) {
+                    // Case for the left "button"
                     if let Some(new_widget) =
                         self.widget_map.get(&(bt.currently_displayed_widget_id))
                     {
@@ -2846,8 +2847,9 @@ impl App {
                         return;
                     }
                 } else if (x >= right_tlc_x && y >= right_tlc_y)
-                    && (x <= right_brc_x && y <= right_brc_y)
+                    && (x < right_brc_x && y < right_brc_y)
                 {
+                    // Case for the right "button"
                     if let Some(new_widget) =
                         self.widget_map.get(&(bt.currently_displayed_widget_id))
                     {
@@ -2879,7 +2881,7 @@ impl App {
         if self.is_in_dialog() {
             match self.delete_dialog_state.button_positions.iter().find(
                 |(tl_x, tl_y, br_x, br_y, _idx)| {
-                    (x >= *tl_x && y >= *tl_y) && (x <= *br_x && y <= *br_y)
+                    (x >= *tl_x && y >= *tl_y) && (x < *br_x && y < *br_y)
                 },
             ) {
                 Some((_, _, _, _, 0)) => {
@@ -2905,7 +2907,7 @@ impl App {
             if let (Some((tlc_x, tlc_y)), Some((brc_x, brc_y))) =
                 (widget.top_left_corner, widget.bottom_right_corner)
             {
-                if (x >= tlc_x && y >= tlc_y) && (x <= brc_x && y <= brc_y) {
+                if (x >= tlc_x && y >= tlc_y) && (x < brc_x && y < brc_y) {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                         self.current_widget = new_widget.clone();
 
@@ -3103,7 +3105,7 @@ impl App {
                             for (itx, ((tlc_x, tlc_y), (brc_x, brc_y))) in
                                 tab_spacing.iter().enumerate()
                             {
-                                if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y) {
+                                if (x >= *tlc_x && y >= *tlc_y) && (x < *brc_x && y < *brc_y) {
                                     battery_widget_state.currently_selected_battery_index = itx;
                                     break;
                                 }
