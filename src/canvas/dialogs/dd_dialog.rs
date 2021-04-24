@@ -108,6 +108,12 @@ impl KillDialog for Painter {
             );
 
             if app_state.should_get_widget_bounds() {
+                // Note to future readers on why there's a -1:
+                // Normally, for a mouse bound check, we overshoot by 1 and use >= and < for our bounds check; that is,
+                // we overshot by one but use a < equality check instead.
+                // However, for the dd buttons, we instead properly store the bounds here and use >= and <=.  It's just
+                // easier to do it that way in this case.
+                // See https://github.com/ClementTsang/bottom/pull/459 for more details.
                 app_state.delete_dialog_state.button_positions = vec![
                     (
                         button_layout[2].x,
