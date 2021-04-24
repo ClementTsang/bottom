@@ -108,20 +108,31 @@ impl KillDialog for Painter {
             );
 
             if app_state.should_get_widget_bounds() {
+                // This is kinda weird, but the gist is:
+                // - We have three sections; we put our mouse bounding box for the "yes" button at the very right edge
+                //   of the left section and 3 characters back.  We then give it a buffer size of 1 on the x-coordinate.
+                // - Same for the "no" button, except it is the right section and we do it from the start of the right
+                //   section.
+                //
+                // Lastly, note that mouse detection for the dd buttons assume correct widths.  As such, we correct
+                // them here and check with >= and <= mouse bound checks, as opposed to how we do it elsewhere with
+                // >= and <.  See https://github.com/ClementTsang/bottom/pull/459 for details.
                 app_state.delete_dialog_state.button_positions = vec![
+                    // Yes
                     (
-                        button_layout[2].x,
-                        button_layout[2].y,
-                        button_layout[2].x + button_layout[2].width,
-                        button_layout[2].y + button_layout[2].height,
-                        0,
-                    ),
-                    (
-                        button_layout[0].x,
+                        button_layout[0].x + button_layout[0].width - 4,
                         button_layout[0].y,
                         button_layout[0].x + button_layout[0].width,
-                        button_layout[0].y + button_layout[0].height,
-                        1,
+                        button_layout[0].y,
+                        if cfg!(target_os = "windows") { 1 } else { 15 },
+                    ),
+                    // No
+                    (
+                        button_layout[2].x - 1,
+                        button_layout[2].y,
+                        button_layout[2].x + 2,
+                        button_layout[2].y,
+                        0,
                     ),
                 ];
             }

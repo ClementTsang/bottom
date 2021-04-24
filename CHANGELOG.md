@@ -65,8 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#425](https://github.com/ClementTsang/bottom/pull/425): Fixed a bug allowing grouped mode in tree mode if already in grouped mode.
 
-- [#458](https://github.com/ClementTsang/bottom/pull/458): Fix basic mode having really broken click bounding boxes.
-
 ## [0.5.7] - 2021-01-30
 
 ## Bug Fixes

@@ -2809,7 +2809,7 @@ impl App {
         // Pretty dead simple - iterate through the widget map and go to the widget where the click
         // is within.
 
-        // TODO: [REFACTOR] might want to refactor this, it's ugly as sin.
+        // TODO: [REFACTOR] might want to refactor this, it's really ugly.
         // TODO: [REFACTOR] Might wanna refactor ALL state things in general, currently everything
         // is grouped up as an app state.  We should separate stuff like event state and gui state and etc.
 
@@ -2826,7 +2826,8 @@ impl App {
                 Some((right_brc_x, right_brc_y)),
             ) = (bt.left_tlc, bt.left_brc, bt.right_tlc, bt.right_brc)
             {
-                if (x >= left_tlc_x && y >= left_tlc_y) && (x <= left_brc_x && y <= left_brc_y) {
+                if (x >= left_tlc_x && y >= left_tlc_y) && (x < left_brc_x && y < left_brc_y) {
+                    // Case for the left "button" in the simple arrow.
                     if let Some(new_widget) =
                         self.widget_map.get(&(bt.currently_displayed_widget_id))
                     {
@@ -2846,8 +2847,9 @@ impl App {
                         return;
                     }
                 } else if (x >= right_tlc_x && y >= right_tlc_y)
-                    && (x <= right_brc_x && y <= right_brc_y)
+                    && (x < right_brc_x && y < right_brc_y)
                 {
+                    // Case for the right "button" in the simple arrow.
                     if let Some(new_widget) =
                         self.widget_map.get(&(bt.currently_displayed_widget_id))
                     {
@@ -2905,7 +2907,7 @@ impl App {
             if let (Some((tlc_x, tlc_y)), Some((brc_x, brc_y))) =
                 (widget.top_left_corner, widget.bottom_right_corner)
             {
-                if (x >= tlc_x && y >= tlc_y) && (x <= brc_x && y <= brc_y) {
+                if (x >= tlc_x && y >= tlc_y) && (x < brc_x && y < brc_y) {
                     if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
                         self.current_widget = new_widget.clone();
 
@@ -2939,179 +2941,187 @@ impl App {
         }
 
         // Now handle click propagation down to widget.
-        if let Some((_tlc_x, tlc_y)) = &self.current_widget.top_left_corner {
-            match &self.current_widget.widget_type {
-                BottomWidgetType::Proc
-                | BottomWidgetType::ProcSort
-                | BottomWidgetType::CpuLegend
-                | BottomWidgetType::Temp
-                | BottomWidgetType::Disk => {
-                    // Get our index...
-                    let clicked_entry = y - *tlc_y;
-                    // + 1 so we start at 0.
-                    let border_offset = if self.is_drawing_border() { 1 } else { 0 };
-                    let header_gap_offset = 1 + if self.is_drawing_gap(&self.current_widget) {
-                        self.app_config_fields.table_gap
-                    } else {
-                        0
-                    };
-                    let offset = border_offset + header_gap_offset;
-                    if clicked_entry >= offset {
-                        let offset_clicked_entry = clicked_entry - offset;
-                        match &self.current_widget.widget_type {
-                            BottomWidgetType::Proc => {
-                                if let Some(proc_widget_state) = self
-                                    .proc_state
-                                    .get_widget_state(self.current_widget.widget_id)
-                                {
-                                    if let Some(visual_index) =
-                                        proc_widget_state.scroll_state.table_state.selected()
-                                    {
-                                        // If in tree mode, also check to see if this click is on
-                                        // the same entry as the already selected one - if it is,
-                                        // then we minimize.
+        if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
+            &self.current_widget.top_left_corner,
+            &self.current_widget.bottom_right_corner,
+        ) {
+            let border_offset = if self.is_drawing_border() { 1 } else { 0 };
 
-                                        let previous_scroll_position =
-                                            proc_widget_state.scroll_state.current_scroll_position;
-                                        let is_tree_mode = proc_widget_state.is_tree_mode;
-
-                                        let new_position = self.increment_process_position(
-                                            offset_clicked_entry as i64 - visual_index as i64,
-                                        );
-
-                                        if is_tree_mode {
-                                            if let Some(new_position) = new_position {
-                                                if previous_scroll_position == new_position {
-                                                    self.toggle_collapsing_process_branch();
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            BottomWidgetType::ProcSort => {
-                                if let Some(proc_widget_state) = self
-                                    .proc_state
-                                    .get_widget_state(self.current_widget.widget_id - 2)
-                                {
-                                    if let Some(visual_index) =
-                                        proc_widget_state.columns.column_state.selected()
-                                    {
-                                        self.increment_process_sort_position(
-                                            offset_clicked_entry as i64 - visual_index as i64,
-                                        );
-                                    }
-                                }
-                            }
-                            BottomWidgetType::CpuLegend => {
-                                if let Some(cpu_widget_state) = self
-                                    .cpu_state
-                                    .get_widget_state(self.current_widget.widget_id - 1)
-                                {
-                                    if let Some(visual_index) =
-                                        cpu_widget_state.scroll_state.table_state.selected()
-                                    {
-                                        self.increment_cpu_legend_position(
-                                            offset_clicked_entry as i64 - visual_index as i64,
-                                        );
-                                    }
-                                }
-                            }
-                            BottomWidgetType::Temp => {
-                                if let Some(temp_widget_state) = self
-                                    .temp_state
-                                    .get_widget_state(self.current_widget.widget_id)
-                                {
-                                    if let Some(visual_index) =
-                                        temp_widget_state.scroll_state.table_state.selected()
-                                    {
-                                        self.increment_temp_position(
-                                            offset_clicked_entry as i64 - visual_index as i64,
-                                        );
-                                    }
-                                }
-                            }
-                            BottomWidgetType::Disk => {
-                                if let Some(disk_widget_state) = self
-                                    .disk_state
-                                    .get_widget_state(self.current_widget.widget_id)
-                                {
-                                    if let Some(visual_index) =
-                                        disk_widget_state.scroll_state.table_state.selected()
-                                    {
-                                        self.increment_disk_position(
-                                            offset_clicked_entry as i64 - visual_index as i64,
-                                        );
-                                    }
-                                }
-                            }
-                            _ => {}
-                        }
-                    } else {
-                        // We might have clicked on a header!  Check if we only exceeded the table + border offset, and
-                        // it's implied we exceeded the gap offset.
-                        if clicked_entry == border_offset {
-                            #[allow(clippy::single_match)]
+            // This check ensures the click isn't actually just clicking on the bottom border.
+            if y < (brc_y - border_offset) {
+                match &self.current_widget.widget_type {
+                    BottomWidgetType::Proc
+                    | BottomWidgetType::ProcSort
+                    | BottomWidgetType::CpuLegend
+                    | BottomWidgetType::Temp
+                    | BottomWidgetType::Disk => {
+                        // Get our index...
+                        let clicked_entry = y - *tlc_y;
+                        // + 1 so we start at 0.
+                        let header_gap_offset = 1 + if self.is_drawing_gap(&self.current_widget) {
+                            self.app_config_fields.table_gap
+                        } else {
+                            0
+                        };
+                        let offset = border_offset + header_gap_offset;
+                        if clicked_entry >= offset {
+                            let offset_clicked_entry = clicked_entry - offset;
                             match &self.current_widget.widget_type {
                                 BottomWidgetType::Proc => {
                                     if let Some(proc_widget_state) = self
                                         .proc_state
-                                        .get_mut_widget_state(self.current_widget.widget_id)
+                                        .get_widget_state(self.current_widget.widget_id)
                                     {
-                                        // Let's now check if it's a column header.
-                                        if let (Some(y_loc), Some(x_locs)) = (
-                                            &proc_widget_state.columns.column_header_y_loc,
-                                            &proc_widget_state.columns.column_header_x_locs,
-                                        ) {
-                                            // debug!("x, y: {}, {}", x, y);
-                                            // debug!("y_loc: {}", y_loc);
-                                            // debug!("x_locs: {:?}", x_locs);
+                                        if let Some(visual_index) =
+                                            proc_widget_state.scroll_state.table_state.selected()
+                                        {
+                                            // If in tree mode, also check to see if this click is on
+                                            // the same entry as the already selected one - if it is,
+                                            // then we minimize.
 
-                                            if y == *y_loc {
-                                                for (itx, (x_left, x_right)) in
-                                                    x_locs.iter().enumerate()
-                                                {
-                                                    if x >= *x_left && x <= *x_right {
-                                                        // Found our column!
-                                                        proc_widget_state
-                                                            .columns
-                                                            .set_to_sorted_index_from_visual_index(
-                                                                itx,
-                                                            );
-                                                        proc_widget_state
-                                                            .update_sorting_with_columns();
-                                                        self.proc_state.force_update =
-                                                            Some(self.current_widget.widget_id);
-                                                        break;
+                                            let previous_scroll_position = proc_widget_state
+                                                .scroll_state
+                                                .current_scroll_position;
+                                            let is_tree_mode = proc_widget_state.is_tree_mode;
+
+                                            let new_position = self.increment_process_position(
+                                                offset_clicked_entry as i64 - visual_index as i64,
+                                            );
+
+                                            if is_tree_mode {
+                                                if let Some(new_position) = new_position {
+                                                    if previous_scroll_position == new_position {
+                                                        self.toggle_collapsing_process_branch();
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
+                                BottomWidgetType::ProcSort => {
+                                    if let Some(proc_widget_state) = self
+                                        .proc_state
+                                        .get_widget_state(self.current_widget.widget_id - 2)
+                                    {
+                                        if let Some(visual_index) =
+                                            proc_widget_state.columns.column_state.selected()
+                                        {
+                                            self.increment_process_sort_position(
+                                                offset_clicked_entry as i64 - visual_index as i64,
+                                            );
+                                        }
+                                    }
+                                }
+                                BottomWidgetType::CpuLegend => {
+                                    if let Some(cpu_widget_state) = self
+                                        .cpu_state
+                                        .get_widget_state(self.current_widget.widget_id - 1)
+                                    {
+                                        if let Some(visual_index) =
+                                            cpu_widget_state.scroll_state.table_state.selected()
+                                        {
+                                            self.increment_cpu_legend_position(
+                                                offset_clicked_entry as i64 - visual_index as i64,
+                                            );
+                                        }
+                                    }
+                                }
+                                BottomWidgetType::Temp => {
+                                    if let Some(temp_widget_state) = self
+                                        .temp_state
+                                        .get_widget_state(self.current_widget.widget_id)
+                                    {
+                                        if let Some(visual_index) =
+                                            temp_widget_state.scroll_state.table_state.selected()
+                                        {
+                                            self.increment_temp_position(
+                                                offset_clicked_entry as i64 - visual_index as i64,
+                                            );
+                                        }
+                                    }
+                                }
+                                BottomWidgetType::Disk => {
+                                    if let Some(disk_widget_state) = self
+                                        .disk_state
+                                        .get_widget_state(self.current_widget.widget_id)
+                                    {
+                                        if let Some(visual_index) =
+                                            disk_widget_state.scroll_state.table_state.selected()
+                                        {
+                                            self.increment_disk_position(
+                                                offset_clicked_entry as i64 - visual_index as i64,
+                                            );
+                                        }
+                                    }
+                                }
                                 _ => {}
                             }
-                        }
-                    }
-                }
-                BottomWidgetType::Battery => {
-                    if let Some(battery_widget_state) = self
-                        .battery_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        if let Some(tab_spacing) = &battery_widget_state.tab_click_locs {
-                            for (itx, ((tlc_x, tlc_y), (brc_x, brc_y))) in
-                                tab_spacing.iter().enumerate()
-                            {
-                                if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y) {
-                                    battery_widget_state.currently_selected_battery_index = itx;
-                                    break;
+                        } else {
+                            // We might have clicked on a header!  Check if we only exceeded the table + border offset, and
+                            // it's implied we exceeded the gap offset.
+                            if clicked_entry == border_offset {
+                                #[allow(clippy::single_match)]
+                                match &self.current_widget.widget_type {
+                                    BottomWidgetType::Proc => {
+                                        if let Some(proc_widget_state) = self
+                                            .proc_state
+                                            .get_mut_widget_state(self.current_widget.widget_id)
+                                        {
+                                            // Let's now check if it's a column header.
+                                            if let (Some(y_loc), Some(x_locs)) = (
+                                                &proc_widget_state.columns.column_header_y_loc,
+                                                &proc_widget_state.columns.column_header_x_locs,
+                                            ) {
+                                                // debug!("x, y: {}, {}", x, y);
+                                                // debug!("y_loc: {}", y_loc);
+                                                // debug!("x_locs: {:?}", x_locs);
+
+                                                if y == *y_loc {
+                                                    for (itx, (x_left, x_right)) in
+                                                        x_locs.iter().enumerate()
+                                                    {
+                                                        if x >= *x_left && x <= *x_right {
+                                                            // Found our column!
+                                                            proc_widget_state
+                                                            .columns
+                                                            .set_to_sorted_index_from_visual_index(
+                                                                itx,
+                                                            );
+                                                            proc_widget_state
+                                                                .update_sorting_with_columns();
+                                                            self.proc_state.force_update =
+                                                                Some(self.current_widget.widget_id);
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    _ => {}
                                 }
                             }
                         }
                     }
+                    BottomWidgetType::Battery => {
+                        if let Some(battery_widget_state) = self
+                            .battery_state
+                            .get_mut_widget_state(self.current_widget.widget_id)
+                        {
+                            if let Some(tab_spacing) = &battery_widget_state.tab_click_locs {
+                                for (itx, ((tlc_x, tlc_y), (brc_x, brc_y))) in
+                                    tab_spacing.iter().enumerate()
+                                {
+                                    if (x >= *tlc_x && y >= *tlc_y) && (x < *brc_x && y < *brc_y) {
+                                        battery_widget_state.currently_selected_battery_index = itx;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
                 }
-                _ => {}
             }
         }
     }
