@@ -112,15 +112,15 @@ impl KillDialog for Painter {
                     (
                         button_layout[2].x,
                         button_layout[2].y,
-                        button_layout[2].x + button_layout[2].width,
-                        button_layout[2].y + button_layout[2].height,
+                        button_layout[2].x + button_layout[2].width - 1,
+                        button_layout[2].y,
                         0,
                     ),
                     (
                         button_layout[0].x,
                         button_layout[0].y,
-                        button_layout[0].x + button_layout[0].width,
-                        button_layout[0].y + button_layout[0].height,
+                        button_layout[0].x + button_layout[0].width - 1,
+                        button_layout[0].y,
                         1,
                     ),
                 ];
