@@ -189,6 +189,7 @@ pub async fn get_cpu_data_list(
         })
     }
 
-    // Ok(Vec::from(cpu_deque.drain(0..5).collect::<Vec<_>>()))
+    // Ok(Vec::from(cpu_deque.drain(0..3).collect::<Vec<_>>())) // For artificially limiting the CPU results
+
     Ok(Vec::from(cpu_deque))
 }
