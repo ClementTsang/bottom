@@ -28,3 +28,6 @@ sample_configs/testing.toml
 
 # Cargo-deny
 deny.toml
+
+# vscode
+.vscode
