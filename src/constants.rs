@@ -430,7 +430,8 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 // Config and flags
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 
-pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  All of the settings are commented
+// TODO: Eventually deprecate this.
+pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  All of the settings are commented
 # out by default; if you wish to change them uncomment and modify as you see
 # fit.
 
@@ -495,6 +496,8 @@ pub const OLD_CONFIG_TEXT: &str = r##"# This is a default config file for bottom
 #network_use_bytes = false
 # Displays the network widget with a log scale.
 #network_use_log = false
+# Show a more advanced process kill screen
+#advanced_kill = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
