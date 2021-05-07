@@ -187,6 +187,13 @@ sudo emerge sys-process/bottom::dm9pZCAq
 nix-env -i bottom
 ```
 
+### Solus
+
+```
+sudo eopkg it bottom
+```
+
+
 ### Homebrew
 
 ```bash
