@@ -496,8 +496,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #network_use_bytes = false
 # Displays the network widget with a log scale.
 #network_use_log = false
-# Show a more advanced process kill screen
-#advanced_kill = false
+# Hides advanced options to stop a process on Unix-like systems.
+#disable_advanced_kill = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.

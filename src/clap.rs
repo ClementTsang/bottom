@@ -187,12 +187,12 @@ Puts the CPU chart legend to the left side rather than the right side.\n\n",
 When searching for a process, enables regex by default.\n\n",
         );
 
-    let advanced_kill = Arg::with_name("advanced_kill")
-        .long("advanced_kill")
-        .help("Shows more options when killing a process on Unix-like systems.")
+    let disable_advanced_kill = Arg::with_name("disable_advanced_kill")
+        .long("disable_advanced_kill")
+        .help("Hides advanced options to stop a process on Unix-like systems.")
         .long_help(
             "\
-Shows more options when killing a process on Unix-like systems.\n\n",
+Hides advanced options to stop a process on Unix-like systems.  The only option shown is -15.\n\n",
         );
 
     let show_table_scroll_position = Arg::with_name("show_table_scroll_position")
@@ -441,7 +441,7 @@ Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rathe
         .arg(hide_time)
         .arg(show_table_scroll_position)
         .arg(left_legend)
-        .arg(advanced_kill)
+        .arg(disable_advanced_kill)
         // .arg(no_write)
         .arg(rate)
         .arg(regex)
