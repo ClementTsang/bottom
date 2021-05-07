@@ -158,7 +158,7 @@ pub struct ConfigFlags {
     pub process_command: Option<bool>,
 
     #[builder(default, setter(strip_option))]
-    pub advanced_kill: Option<bool>,
+    pub disable_advanced_kill: Option<bool>,
 
     #[builder(default, setter(strip_option))]
     pub network_use_bytes: Option<bool>,
@@ -285,7 +285,7 @@ pub fn build_app(
     let show_memory_as_values = get_mem_as_value(matches, config);
     let is_default_tree = get_is_default_tree(matches, config);
     let is_default_command = get_is_default_process_command(matches, config);
-    let is_advanced_kill = get_is_using_advanced_kill(matches, config);
+    let is_advanced_kill = !get_is_advanced_kill_disabled(matches, config);
 
     let network_unit_type = get_network_unit_type(matches, config);
     let network_scale_type = get_network_scale_type(matches, config);
@@ -1044,12 +1044,12 @@ fn get_is_default_process_command(matches: &clap::ArgMatches<'static>, config: &
     false
 }
 
-fn get_is_using_advanced_kill(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("advanced_kill") {
+fn get_is_advanced_kill_disabled(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+    if matches.is_present("disable_advanced_kill") {
         return true;
     } else if let Some(flags) = &config.flags {
-        if let Some(advanced_kill) = flags.advanced_kill {
-            return advanced_kill;
+        if let Some(disable_advanced_kill) = flags.disable_advanced_kill {
+            return disable_advanced_kill;
         }
     }
     false
