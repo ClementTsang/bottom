@@ -193,7 +193,6 @@ nix-env -i bottom
 sudo eopkg it bottom
 ```
 
-
 ### Homebrew
 
 ```bash
