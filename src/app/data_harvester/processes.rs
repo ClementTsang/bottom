@@ -233,10 +233,7 @@ fn read_path_contents(path: &Path) -> std::io::Result<String> {
 fn get_linux_process_state(stat: &[&str]) -> (char, String) {
     // The -2 offset is because of us cutting off name + pid, normally it's 2
     if let Some(first_char) = stat[0].chars().collect::<Vec<char>>().first() {
-        (
-            *first_char,
-            ProcessStatus::from(*first_char).to_string().to_string(),
-        )
+        (*first_char, ProcessStatus::from(*first_char).to_string())
     } else {
         ('?', String::default())
     }
