@@ -601,7 +601,7 @@ pub fn get_process_data(
                 write_bytes_per_sec: disk_usage.written_bytes,
                 total_read_bytes: disk_usage.total_read_bytes,
                 total_write_bytes: disk_usage.total_written_bytes,
-                process_state: process_val.status().to_string().to_string(),
+                process_state: process_val.status().to_string(),
                 process_state_char: convert_process_status_to_char(process_val.status()),
                 uid: Some(process_val.uid),
                 gid: Some(process_val.gid),
@@ -625,7 +625,7 @@ pub fn get_process_data(
                 write_bytes_per_sec: disk_usage.written_bytes,
                 total_read_bytes: disk_usage.total_read_bytes,
                 total_write_bytes: disk_usage.total_written_bytes,
-                process_state: process_val.status().to_string().to_string(),
+                process_state: process_val.status().to_string(),
                 process_state_char: convert_process_status_to_char(process_val.status()),
             });
         }
@@ -633,7 +633,7 @@ pub fn get_process_data(
 
     #[cfg(target_os = "macos")]
     {
-        let unknown_state = ProcessStatus::Unknown(0).to_string().to_string();
+        let unknown_state = ProcessStatus::Unknown(0).to_string();
         let cpu_usage_unknown_pids: Vec<i32> = process_vector
             .iter()
             .filter(|process| process.process_state == unknown_state)
