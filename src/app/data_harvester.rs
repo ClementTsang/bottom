@@ -80,9 +80,7 @@ pub struct DataCollector {
     pub data: Data,
     #[cfg(not(target_os = "linux"))]
     sys: System,
-    #[cfg(target_os = "linux")]
     previous_cpu_times: Vec<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
-    #[cfg(target_os = "linux")]
     previous_average_cpu_time: Option<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
     #[cfg(target_os = "linux")]
     pid_mapping: FxHashMap<crate::Pid, processes::PrevProcDetails>,
