@@ -65,6 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#425](https://github.com/ClementTsang/bottom/pull/425): Fixed a bug allowing grouped mode in tree mode if already in grouped mode.
 
+- [#467](https://github.com/ClementTsang/bottom/pull/467): Switched CPU usage data source to fix a bug on Windows where occasionally CPU usage would be stuck at 0%.
+
 ## [0.5.7] - 2021-01-30
 
 ## Bug Fixes

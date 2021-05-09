@@ -80,9 +80,7 @@ pub struct DataCollector {
     pub data: Data,
     #[cfg(not(target_os = "linux"))]
     sys: System,
-    #[cfg(target_os = "linux")]
     previous_cpu_times: Vec<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
-    #[cfg(target_os = "linux")]
     previous_average_cpu_time: Option<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
     #[cfg(target_os = "linux")]
     pid_mapping: FxHashMap<crate::Pid, processes::PrevProcDetails>,
@@ -111,9 +109,7 @@ impl DataCollector {
             data: Data::default(),
             #[cfg(not(target_os = "linux"))]
             sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
-            #[cfg(target_os = "linux")]
             previous_cpu_times: vec![],
-            #[cfg(target_os = "linux")]
             previous_average_cpu_time: None,
             #[cfg(target_os = "linux")]
             pid_mapping: FxHashMap::default(),
@@ -216,9 +212,6 @@ impl DataCollector {
     pub async fn update_data(&mut self) {
         #[cfg(not(target_os = "linux"))]
         {
-            if self.widgets_to_harvest.use_cpu {
-                self.sys.refresh_cpu();
-            }
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
@@ -235,22 +228,14 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            #[cfg(not(target_os = "linux"))]
+            if let Ok(cpu_data) = cpu::get_cpu_data_list(
+                self.show_average_cpu,
+                &mut self.previous_cpu_times,
+                &mut self.previous_average_cpu_time,
+            )
+            .await
             {
-                self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
-            }
-
-            #[cfg(target_os = "linux")]
-            {
-                if let Ok(cpu_data) = cpu::get_cpu_data_list(
-                    self.show_average_cpu,
-                    &mut self.previous_cpu_times,
-                    &mut self.previous_average_cpu_time,
-                )
-                .await
-                {
-                    self.data.cpu = Some(cpu_data);
-                }
+                self.data.cpu = Some(cpu_data);
             }
 
             #[cfg(target_family = "unix")]
