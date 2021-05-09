@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#437](https://github.com/ClementTsang/bottom/pull/437): Add linear interpolation step in drawing step to pr event missing entries on the right side of charts.
 
-- [#443](https://github.com/ClementTsang/bottom/pull/443): Make process widget consistent with disk widget in using decimal prefixes (kilo, mega, etc.) for memory usage and writes/reads.
+- [#443](https://github.com/ClementTsang/bottom/pull/443): Make process widget consistent with disk widget in using decimal prefixes (kilo, mega, etc.) for writes/reads.
 
 - [#449](https://github.com/ClementTsang/bottom/pull/449): Add decimal place to actual memory usage in process widget for values greater or equal to 1GiB.
 
