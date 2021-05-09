@@ -233,7 +233,10 @@ fn read_path_contents(path: &Path) -> std::io::Result<String> {
 fn get_linux_process_state(stat: &[&str]) -> (char, String) {
     // The -2 offset is because of us cutting off name + pid, normally it's 2
     if let Some(first_char) = stat[0].chars().collect::<Vec<char>>().first() {
-        (*first_char, ProcessStatus::from(*first_char).to_string())
+        (
+            *first_char,
+            ProcessStatus::from(*first_char).to_string().to_string(),
+        )
     } else {
         ('?', String::default())
     }
@@ -601,7 +604,7 @@ pub fn get_process_data(
                 write_bytes_per_sec: disk_usage.written_bytes,
                 total_read_bytes: disk_usage.total_read_bytes,
                 total_write_bytes: disk_usage.total_written_bytes,
-                process_state: process_val.status().to_string(),
+                process_state: process_val.status().to_string().to_string(),
                 process_state_char: convert_process_status_to_char(process_val.status()),
                 uid: Some(process_val.uid),
                 gid: Some(process_val.gid),
@@ -625,7 +628,7 @@ pub fn get_process_data(
                 write_bytes_per_sec: disk_usage.written_bytes,
                 total_read_bytes: disk_usage.total_read_bytes,
                 total_write_bytes: disk_usage.total_written_bytes,
-                process_state: process_val.status().to_string(),
+                process_state: process_val.status().to_string().to_string(),
                 process_state_char: convert_process_status_to_char(process_val.status()),
             });
         }
@@ -633,7 +636,7 @@ pub fn get_process_data(
 
     #[cfg(target_os = "macos")]
     {
-        let unknown_state = ProcessStatus::Unknown(0).to_string();
+        let unknown_state = ProcessStatus::Unknown(0).to_string().to_string();
         let cpu_usage_unknown_pids: Vec<i32> = process_vector
             .iter()
             .filter(|process| process.process_state == unknown_state)
