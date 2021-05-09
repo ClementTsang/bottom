@@ -216,9 +216,6 @@ impl DataCollector {
     pub async fn update_data(&mut self) {
         #[cfg(not(target_os = "linux"))]
         {
-            if self.widgets_to_harvest.use_cpu {
-                self.sys.refresh_cpu();
-            }
             if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
@@ -235,22 +232,14 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            #[cfg(not(target_os = "linux"))]
+            if let Ok(cpu_data) = cpu::get_cpu_data_list(
+                self.show_average_cpu,
+                &mut self.previous_cpu_times,
+                &mut self.previous_average_cpu_time,
+            )
+            .await
             {
-                self.data.cpu = Some(cpu::get_cpu_data_list(&self.sys, self.show_average_cpu));
-            }
-
-            #[cfg(target_os = "linux")]
-            {
-                if let Ok(cpu_data) = cpu::get_cpu_data_list(
-                    self.show_average_cpu,
-                    &mut self.previous_cpu_times,
-                    &mut self.previous_average_cpu_time,
-                )
-                .await
-                {
-                    self.data.cpu = Some(cpu_data);
-                }
+                self.data.cpu = Some(cpu_data);
             }
 
             #[cfg(target_family = "unix")]
@@ -272,28 +261,17 @@ impl DataCollector {
 
         if self.widgets_to_harvest.use_proc {
             if let Ok(process_list) = {
-                #[cfg(target_os = "linux")]
-                {
-                    processes::get_process_data(
-                        &mut self.prev_idle,
-                        &mut self.prev_non_idle,
-                        &mut self.pid_mapping,
-                        self.use_current_cpu_total,
-                        current_instant
-                            .duration_since(self.last_collection_time)
-                            .as_secs(),
-                        self.mem_total_kb,
-                        self.page_file_size_kb,
-                    )
-                }
-                #[cfg(not(target_os = "linux"))]
-                {
-                    processes::get_process_data(
-                        &self.sys,
-                        self.use_current_cpu_total,
-                        self.mem_total_kb,
-                    )
-                }
+                processes::get_process_data(
+                    &mut self.prev_idle,
+                    &mut self.prev_non_idle,
+                    &mut self.pid_mapping,
+                    self.use_current_cpu_total,
+                    current_instant
+                        .duration_since(self.last_collection_time)
+                        .as_secs(),
+                    self.mem_total_kb,
+                    self.page_file_size_kb,
+                )
             } {
                 self.data.list_of_processes = Some(process_list);
             }
