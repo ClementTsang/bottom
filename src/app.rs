@@ -881,7 +881,7 @@ impl App {
                 .delete_dialog_state
                 .last_number_press
                 .map_or(100, |ins| ins.elapsed().as_millis())
-                > 500
+                >= 400
             {
                 self.delete_dialog_state.keyboard_signal_select = 0;
             }
