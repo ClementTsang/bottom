@@ -109,9 +109,7 @@ impl DataCollector {
             data: Data::default(),
             #[cfg(not(target_os = "linux"))]
             sys: System::new_with_specifics(sysinfo::RefreshKind::new()),
-            #[cfg(target_os = "linux")]
             previous_cpu_times: vec![],
-            #[cfg(target_os = "linux")]
             previous_average_cpu_time: None,
             #[cfg(target_os = "linux")]
             pid_mapping: FxHashMap::default(),
