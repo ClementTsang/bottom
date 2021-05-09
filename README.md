@@ -23,6 +23,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Fedora/CentOS](#fedoracentos)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
+  - [Solus](#solus)
   - [Homebrew](#homebrew)
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
