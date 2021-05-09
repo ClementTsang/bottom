@@ -10,35 +10,6 @@ pub type CpuHarvest = Vec<CpuData>;
 pub type PastCpuWork = f64;
 pub type PastCpuTotal = f64;
 
-#[cfg(not(target_os = "linux"))]
-use sysinfo::{ProcessorExt, System, SystemExt};
-
-#[cfg(not(target_os = "linux"))]
-pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CpuHarvest {
-    let cpu_data = sys.get_processors();
-    let avg_cpu_usage = sys.get_global_processor_info().get_cpu_usage();
-    let mut cpu_vec = vec![];
-
-    if show_average_cpu {
-        cpu_vec.push(CpuData {
-            cpu_prefix: "AVG".to_string(),
-            cpu_count: None,
-            cpu_usage: avg_cpu_usage as f64,
-        });
-    }
-
-    for (itx, cpu) in cpu_data.iter().enumerate() {
-        cpu_vec.push(CpuData {
-            cpu_prefix: "CPU".to_string(),
-            cpu_count: Some(itx),
-            cpu_usage: f64::from(cpu.get_cpu_usage()),
-        });
-    }
-
-    cpu_vec
-}
-
-#[cfg(target_os = "linux")]
 pub async fn get_cpu_data_list(
     show_average_cpu: bool, previous_cpu_times: &mut Vec<(PastCpuWork, PastCpuTotal)>,
     previous_average_cpu_time: &mut Option<(PastCpuWork, PastCpuTotal)>,
