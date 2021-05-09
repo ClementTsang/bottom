@@ -261,17 +261,28 @@ impl DataCollector {
 
         if self.widgets_to_harvest.use_proc {
             if let Ok(process_list) = {
-                processes::get_process_data(
-                    &mut self.prev_idle,
-                    &mut self.prev_non_idle,
-                    &mut self.pid_mapping,
-                    self.use_current_cpu_total,
-                    current_instant
-                        .duration_since(self.last_collection_time)
-                        .as_secs(),
-                    self.mem_total_kb,
-                    self.page_file_size_kb,
-                )
+                #[cfg(target_os = "linux")]
+                {
+                    processes::get_process_data(
+                        &mut self.prev_idle,
+                        &mut self.prev_non_idle,
+                        &mut self.pid_mapping,
+                        self.use_current_cpu_total,
+                        current_instant
+                            .duration_since(self.last_collection_time)
+                            .as_secs(),
+                        self.mem_total_kb,
+                        self.page_file_size_kb,
+                    )
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    processes::get_process_data(
+                        &self.sys,
+                        self.use_current_cpu_total,
+                        self.mem_total_kb,
+                    )
+                }
             } {
                 self.data.list_of_processes = Some(process_list);
             }

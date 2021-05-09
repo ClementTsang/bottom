@@ -26,8 +26,7 @@ pub async fn get_cpu_data_list(
                 (cpu_time.user() + cpu_time.system()).get::<heim::units::time::second>();
             (
                 working_time,
-                working_time
-                    + (cpu_time.idle() + cpu_time.io_wait()).get::<heim::units::time::second>(),
+                working_time + cpu_time.idle().get::<heim::units::time::second>(),
             )
         }
         #[cfg(target_os = "linux")]
