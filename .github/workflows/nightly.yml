@@ -82,19 +82,19 @@ jobs:
           #     cross: true,
           #   }
           # - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
-          # - {
-          #     os: "windows-2019",
-          #     target: "x86_64-pc-windows-msvc",
-          #     cross: false,
-          #   }
-          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: true }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+            }
+          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
               cross: false,
             }
 
-          # aarch64
+          # # aarch64
           # - {
           #     os: "ubuntu-18.04",
           #     target: "aarch64-unknown-linux-gnu",
