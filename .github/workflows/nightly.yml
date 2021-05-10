@@ -61,32 +61,32 @@ jobs:
       matrix:
         triple:
           # Standard x86-64 stuff, stable
-          - {
-              os: "ubuntu-16.04",
-              target: "x86_64-unknown-linux-gnu",
-              cross: false,
-            }
-          - {
-              os: "ubuntu-16.04",
-              target: "i686-unknown-linux-gnu",
-              cross: true,
-            }
-          - {
-              os: "ubuntu-18.04",
-              target: "x86_64-unknown-linux-musl",
-              cross: false,
-            }
-          - {
-              os: "ubuntu-18.04",
-              target: "i686-unknown-linux-musl",
-              cross: true,
-            }
-          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
-          - {
-              os: "windows-2019",
-              target: "x86_64-pc-windows-msvc",
-              cross: false,
-            }
+          # - {
+          #     os: "ubuntu-16.04",
+          #     target: "x86_64-unknown-linux-gnu",
+          #     cross: false,
+          #   }
+          # - {
+          #     os: "ubuntu-16.04",
+          #     target: "i686-unknown-linux-gnu",
+          #     cross: true,
+          #   }
+          # - {
+          #     os: "ubuntu-18.04",
+          #     target: "x86_64-unknown-linux-musl",
+          #     cross: false,
+          #   }
+          # - {
+          #     os: "ubuntu-18.04",
+          #     target: "i686-unknown-linux-musl",
+          #     cross: true,
+          #   }
+          # - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+          # - {
+          #     os: "windows-2019",
+          #     target: "x86_64-pc-windows-msvc",
+          #     cross: false,
+          #   }
           - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: true }
           - {
               os: "windows-2019",
@@ -95,25 +95,25 @@ jobs:
             }
 
           # aarch64
-          - {
-              os: "ubuntu-18.04",
-              target: "aarch64-unknown-linux-gnu",
-              cross: true,
-            }
+          # - {
+          #     os: "ubuntu-18.04",
+          #     target: "aarch64-unknown-linux-gnu",
+          #     cross: true,
+          #   }
 
-          # armv7
-          - {
-              os: "ubuntu-18.04",
-              target: "armv7-unknown-linux-gnueabihf",
-              cross: true,
-            }
+          # # armv7
+          # - {
+          #     os: "ubuntu-18.04",
+          #     target: "armv7-unknown-linux-gnueabihf",
+          #     cross: true,
+          #   }
 
-          # PowerPC 64 LE
-          - {
-              os: "ubuntu-18.04",
-              target: "powerpc64le-unknown-linux-gnu",
-              cross: true,
-            }
+          # # PowerPC 64 LE
+          # - {
+          #     os: "ubuntu-18.04",
+          #     target: "powerpc64le-unknown-linux-gnu",
+          #     cross: true,
+          #   }
 
     steps:
       - name: Checkout repository
