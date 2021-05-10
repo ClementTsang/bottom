@@ -22,8 +22,9 @@ class Bottom < Formula
 
     def caveats
       <<~EOS
-        Note that bottom may require elevated privileges to correctly display information for all processes.
-        You can do this with `sudo btm`.
+        Note that bottom might require elevated privileges to correctly display information for all processes. You
+        probably won't need it though, there are built-in methods to avoid this need.
+        If you find you really do need it, you can do this with `sudo btm`.
         You should be certain that you trust any software you grant root privileges.
       EOS
     end 
