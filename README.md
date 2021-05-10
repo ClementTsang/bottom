@@ -212,9 +212,8 @@ scoop install bottom
 
 ### Chocolatey
 
-Choco package located [here](https://chocolatey.org/packages/bottom). Since you cannot upload a
-new package while a previous one is being validated, the newest version of a release may take a while
-to appear.
+Choco package located [here](https://chocolatey.org/packages/bottom).
+Since validation of the package takes time, it may take a while to become available after a release.
 
 ```bash
 choco install bottom
