@@ -96,7 +96,7 @@ jobs:
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
-          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: true }
+          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
