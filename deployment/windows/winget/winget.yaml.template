@@ -1,16 +1,21 @@
-Id: Clement.bottom
-Version: $version
-Name: bottom
+PackageIdentifier: Clement.bottom
+PackageVersion: $version
+PackageName: bottom
 Publisher: Clement Tsang
 License: MIT License
 LicenseUrl: https://github.com/ClementTsang/bottom/blob/master/LICENSE
-AppMoniker: bottom
-Tags: tui, monitoring, terminal
-Description: Yet another cross-platform graphical process/system monitor. 
-Homepage: https://github.com/ClementTsang/bottom
+Moniker: bottom
+Tags:
+- tui
+- monitoring
+- terminal
+ShortDescription: Yet another cross-platform graphical process/system monitor.
+PackageUrl: https://github.com/ClementTsang/bottom
 Installers:
-  - Arch: x64
-    Url: https://github.com/ClementTsang/bottom/releases/download/$version/bottom_x86_64_installer.msi
-    Sha256: $hash1
-    InstallerType: msi
-    
+- Architecture: x64
+  InstallerUrl: https://github.com/ClementTsang/bottom/releases/download/$version/bottom_x86_64_installer.msi
+  InstallerSha256: $hash1
+  InstallerType: msi
+PackageLocale: en-US
+ManifestType: singleton
+ManifestVersion: 1.0.0

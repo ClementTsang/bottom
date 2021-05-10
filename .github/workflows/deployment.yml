@@ -264,7 +264,7 @@ jobs:
       - name: Build winget (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "${{ env.RELEASE_VERSION }}.yaml" "SHA256" "./bottom_x86_64_installer.msi"
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "Clement.bottom.yaml" "SHA256" "./bottom_x86_64_installer.msi"
 
       - name: Upload winget file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
@@ -273,8 +273,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.RELEASE_VERSION }}.yaml
-          asset_name: ${{ env.RELEASE_VERSION }}.yaml
+          asset_path: Clement.bottom.yaml
+          asset_name: Clement.bottom.yaml
           asset_content_type: application/octet-stream
 
       - name: Build Debian release (Linux x86-64 GNU)
