@@ -1202,6 +1202,8 @@ pub fn tree_process_data(
                             p.tw_f64 as u64,
                         );
 
+                        p.mem_usage_str = get_binary_bytes(p.mem_usage_bytes);
+
                         p.read_per_sec = disk_io_strings.0;
                         p.write_per_sec = disk_io_strings.1;
                         p.total_read = disk_io_strings.2;
