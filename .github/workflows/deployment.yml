@@ -63,6 +63,7 @@ jobs:
     name: build-release
     needs: [create-github-release]
     runs-on: ${{ matrix.triple.os }}
+    container: ${{ matrix.triple.container }}
     env:
       RUST_BACKTRACE: 1
     strategy:
@@ -74,6 +75,13 @@ jobs:
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+              container: quay.io/pypa/manylinux2014_x86_64,
+              suffix: "2-17",
             }
           - {
               os: "ubuntu-18.04",
@@ -213,8 +221,8 @@ jobs:
         shell: bash
         run: |
           cp target/${{ matrix.triple.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.triple.target }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz" >> $GITHUB_ENV
 
       - name: Upload main release
         uses: actions/upload-release-asset@v1.0.1
@@ -273,14 +281,14 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Build Debian release (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         run: |
           cargo install cargo-deb --version 1.29.0
           cargo deb
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
       - name: Upload Debian file (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
