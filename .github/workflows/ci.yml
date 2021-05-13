@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
+          - ubuntu-latest
           - macOS-latest
           - windows-2019
     steps:
@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-18.04
+          - ubuntu-latest
           - macOS-latest
           - windows-2019
     steps:
@@ -61,31 +61,33 @@ jobs:
     name: ${{ matrix.toolchain }} / ${{ matrix.triple.target }}
     needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
         triple:
           # Standard x86-64 stuff, stable
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: stable,
+              toTest: "true",
             }
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "i686-unknown-linux-gnu",
               cross: true,
               rust: stable,
             }
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "x86_64-unknown-linux-musl",
               cross: false,
               rust: stable,
             }
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "i686-unknown-linux-musl",
               cross: true,
               rust: stable,
@@ -95,6 +97,7 @@ jobs:
               target: "x86_64-apple-darwin",
               cross: false,
               rust: stable,
+              toTest: "true",
             }
           # Disabled, unfortunately.
           # - {
@@ -114,6 +117,7 @@ jobs:
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: stable,
+              toTest: "true",
             }
           - {
               os: "windows-2019",
@@ -124,7 +128,7 @@ jobs:
 
           # aarch64
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "aarch64-unknown-linux-gnu",
               cross: true,
               rust: stable,
@@ -132,7 +136,7 @@ jobs:
 
           # armv7
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
               rust: stable,
@@ -140,7 +144,7 @@ jobs:
 
           # armv6
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "arm-unknown-linux-gnueabihf",
               cross: true,
               rust: stable,
@@ -148,7 +152,7 @@ jobs:
 
           # PowerPC 64 LE
           - {
-              os: "ubuntu-18.04",
+              os: "ubuntu-latest",
               target: "powerpc64le-unknown-linux-gnu",
               cross: true,
               rust: stable,
@@ -182,31 +186,8 @@ jobs:
           args: --all-targets --verbose --target=${{ matrix.triple.target }} --no-default-features
           use-cross: ${{ matrix.triple.cross }}
 
-  # Run tests on a subset of platforms
-  tests:
-    needs: [check]
-    name: Test ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-18.04
-          - macOS-latest
-          - windows-2019
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - uses: Swatinem/rust-cache@v1
-
       - name: Run tests
+        if: matrix.triple.toTest == 'true'
         run: cargo test --no-fail-fast
         env:
           CARGO_HUSKY_DONT_INSTALL_HOOKS: true
