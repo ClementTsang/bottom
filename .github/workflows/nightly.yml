@@ -63,6 +63,7 @@ jobs:
     name: build-release
     needs: [create-github-release]
     runs-on: ${{ matrix.triple.os }}
+    container: ${{ matrix.triple.container }}
     env:
       RUST_BACKTRACE: 1
     strategy:
@@ -74,6 +75,13 @@ jobs:
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+              container: quay.io/pypa/manylinux2014_x86_64,
+              suffix: "2-17",
             }
           - {
               os: "ubuntu-18.04",
@@ -208,8 +216,8 @@ jobs:
         shell: bash
         run: |
           cp target/${{ matrix.triple.target }}/release/btm ./btm
-          tar -czvf bottom_${{ matrix.triple.target }}.tar.gz btm completion
-          echo "ASSET=bottom_${{ matrix.triple.target }}.tar.gz" >> $GITHUB_ENV
+          tar -czvf bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz" >> $GITHUB_ENV
 
       # TODO: Move this elsewhere; do this all at once, and do not continue if any fails.  Store artifacts.  Do the same for deployment.
 
@@ -245,14 +253,14 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Build Debian release (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && github.event.inputs.isMock == 'false'
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container != ""
         run: |
           cargo install cargo-deb --version 1.29.0
           cargo deb
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
       - name: Upload Debian file (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && github.event.inputs.isMock == 'false'
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container != "" && github.event.inputs.isMock == 'false'
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -260,80 +268,4 @@ jobs:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
           asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
-          asset_content_type: application/octet-stream
-
-  # I don't like doing it like this but it's the most convenient...
-  old-glibc-build-release:
-    name: old-glibc-build-release
-    needs: [create-github-release]
-    runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux2014_x86_64
-    env:
-      RUST_BACKTRACE: 1
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
-
-      - uses: actions/setup-python@v2
-
-      - name: Get release download URL
-        uses: actions/download-artifact@v2
-        with:
-          name: artifacts
-          path: artifacts
-
-      - name: Set release upload URL and release version
-        shell: bash
-        run: |
-          release_upload_url="$(cat ./artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          release_version="$(cat ./artifacts/release-version)"
-          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
-
-      - name: Validate release environment variables
-        run: |
-          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
-          echo "Release version: ${{ env.RELEASE_VERSION }}"
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          target: x86_64-unknown-linux-gnu
-
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --verbose --target=x86_64-unknown-linux-gnu --no-default-features
-          use-cross: ${{ matrix.triple.cross }}
-
-      - name: Move autocomplete to working directory
-        shell: bash
-        run: |
-          cp -r ./target/x86_64-unknown-linux-gnu/release/build/bottom-*/out completion
-
-      - name: Bundle release and completion
-        shell: bash
-        run: |
-          cp target/x86_64-unknown-linux-gnu/release/btm ./btm
-          tar -czvf bottom_x86_64-unknown-linux-gnu_glibc_2-17.tar.gz btm completion
-          echo "ASSET=bottom_x86_64-unknown-linux-gnu_glibc_2-17" >> $GITHUB_ENV
-
-      - name: Upload main release
-        if: github.event.inputs.isMock == 'false'
-        uses: actions/upload-release-asset@v1.0.1
-        id: upload
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
