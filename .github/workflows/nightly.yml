@@ -234,7 +234,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Build msi file (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc' && github.event.inputs.isMock == 'false'
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         shell: powershell
         run: |
           cargo install cargo-wix
