@@ -56,7 +56,7 @@ jobs:
 
       - run: cargo clippy --all-targets --workspace -- -D warnings
 
-  # Compile/check test.
+  # Compile/check/test.
   check:
     name: ${{ matrix.toolchain }} / ${{ matrix.triple.target }}
     needs: [rustfmt, clippy]
@@ -194,7 +194,7 @@ jobs:
           RUST_BACKTRACE: full
 
   complete:
-    needs: [tests]
+    needs: [check]
     name: CI Pipeline Complete
     runs-on: ubuntu-latest
     steps:
