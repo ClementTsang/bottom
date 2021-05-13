@@ -20,6 +20,9 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
+      - name: Check if mock
+        run: echo ${{ github.events.inputs.isMock }}
+
       - name: Delete tag and release
         uses: dev-drprasad/delete-tag-and-release@v0.1.3
         if: ${{ github.events.inputs.isMock }} == 'false'
