@@ -275,9 +275,8 @@ fn read_proc(
                             // We're only interested in the executable part... not the file path.
                             // That's for command.
                             first_part
-                                .split('/')
-                                .collect::<Vec<_>>()
-                                .last()
+                                .rsplit_once('/')
+                                .map(|(_prefix, suffix)| suffix)
                                 .unwrap_or(&truncated_name)
                                 .to_string()
                         } else {
