@@ -387,14 +387,12 @@ pub fn get_process_data(
                             let stat_live;
                             if fresh {
                                 stat = &prev_proc_details.process.stat;
+                            } else if let Ok(s) = prev_proc_details.process.stat() {
+                                stat_live = s;
+                                stat = &stat_live;
                             } else {
-                                if let Ok(s) = prev_proc_details.process.stat() {
-                                    stat_live = s;
-                                    stat = &stat_live;
-                                } else {
-                                    // Bail early.
-                                    return None;
-                                }
+                                // Bail early.
+                                return None;
                             }
 
                             if let Ok((process_harvest, new_process_times)) = read_proc(
