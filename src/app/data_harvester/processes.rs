@@ -507,7 +507,6 @@ pub fn get_process_data(
                 process_state: process_val.status().to_string(),
                 process_state_char: convert_process_status_to_char(process_val.status()),
                 uid: Some(process_val.uid),
-                gid: Some(process_val.gid),
             });
         }
         #[cfg(not(target_os = "macos"))]
