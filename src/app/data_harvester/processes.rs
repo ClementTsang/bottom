@@ -263,29 +263,32 @@ fn read_proc(
 
     let (command, name) = {
         let truncated_name = stat.comm.as_str();
-        let cmdline = process.cmdline()?;
-        if cmdline.is_empty() {
-            (format!("[{}]", truncated_name), truncated_name.to_string())
-        } else {
-            (
-                cmdline.join(" "),
-                if truncated_name.len() >= MAX_STAT_NAME_LEN {
-                    if let Some(first_part) = cmdline.first() {
-                        // We're only interested in the executable part... not the file path.
-                        // That's for command.
-                        first_part
-                            .split('/')
-                            .collect::<Vec<_>>()
-                            .last()
-                            .unwrap_or(&truncated_name)
-                            .to_string()
+        if let Ok(cmdline) = process.cmdline() {
+            if cmdline.is_empty() {
+                (format!("[{}]", truncated_name), truncated_name.to_string())
+            } else {
+                (
+                    cmdline.join(" "),
+                    if truncated_name.len() >= MAX_STAT_NAME_LEN {
+                        if let Some(first_part) = cmdline.first() {
+                            // We're only interested in the executable part... not the file path.
+                            // That's for command.
+                            first_part
+                                .split('/')
+                                .collect::<Vec<_>>()
+                                .last()
+                                .unwrap_or(&truncated_name)
+                                .to_string()
+                        } else {
+                            truncated_name.to_string()
+                        }
                     } else {
                         truncated_name.to_string()
-                    }
-                } else {
-                    truncated_name.to_string()
-                },
-            )
+                    },
+                )
+            }
+        } else {
+            (truncated_name.to_string(), truncated_name.to_string())
         }
     };
 
