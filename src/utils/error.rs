@@ -2,6 +2,9 @@ use beef::Cow;
 use std::result;
 use thiserror::Error;
 
+#[cfg(target_os = "linux")]
+use procfs::ProcError;
+
 /// A type alias for handling errors related to Bottom.
 pub type Result<T> = result::Result<T, BottomError>;
 
@@ -35,6 +38,10 @@ pub enum BottomError {
     /// An error that just signifies something minor went wrong; no message.
     #[error("Minor error.")]
     MinorError,
+    /// An error to represent errors with procfs
+    #[cfg(target_os = "linux")]
+    #[error("Procfs error, {0}")]
+    ProcfsError(String),
 }
 
 impl From<std::io::Error> for BottomError {
@@ -105,5 +112,25 @@ impl From<regex::Error> for BottomError {
             )
             .into(),
         )
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl From<ProcError> for BottomError {
+    fn from(err: ProcError) -> Self {
+        match err {
+            ProcError::PermissionDenied(p) => {
+                BottomError::ProcfsError(format!("Permission denied for {:?}", p))
+            }
+            ProcError::NotFound(p) => BottomError::ProcfsError(format!("{:?} not found", p)),
+            ProcError::Incomplete(p) => BottomError::ProcfsError(format!("{:?} incomplete", p)),
+            ProcError::Io(e, p) => {
+                BottomError::ProcfsError(format!("io error: {:?} for {:?}", e, p))
+            }
+            ProcError::Other(s) => BottomError::ProcfsError(format!("Other procfs error: {}", s)),
+            ProcError::InternalError(e) => {
+                BottomError::ProcfsError(format!("procfs internal error: {:?}", e))
+            }
+        }
     }
 }

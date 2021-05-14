@@ -1,9 +1,6 @@
 use crate::Pid;
-use std::path::PathBuf;
+use procfs::process::{Process, Stat};
 use sysinfo::ProcessStatus;
-
-#[cfg(target_os = "linux")]
-use std::path::Path;
 
 #[cfg(target_family = "unix")]
 use crate::utils::error;
@@ -90,39 +87,13 @@ pub struct ProcessHarvest {
     /// This is the *effective* user ID.
     #[cfg(target_family = "unix")]
     pub uid: Option<libc::uid_t>,
-
-    // TODO: Add real user ID
-    // pub real_uid: Option<u32>,
-    #[cfg(target_family = "unix")]
-    pub gid: Option<libc::gid_t>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct PrevProcDetails {
     pub total_read_bytes: u64,
     pub total_write_bytes: u64,
-    pub cpu_time: f64,
-    pub proc_stat_path: PathBuf,
-    pub proc_status_path: PathBuf,
-    // pub proc_statm_path: PathBuf,
-    // pub proc_exe_path: PathBuf,
-    pub proc_io_path: PathBuf,
-    pub proc_cmdline_path: PathBuf,
-    pub just_read: bool,
-}
-
-impl PrevProcDetails {
-    pub fn new(pid: Pid) -> Self {
-        PrevProcDetails {
-            proc_io_path: PathBuf::from(format!("/proc/{}/io", pid)),
-            // proc_exe_path: PathBuf::from(format!("/proc/{}/exe", pid)),
-            proc_stat_path: PathBuf::from(format!("/proc/{}/stat", pid)),
-            proc_status_path: PathBuf::from(format!("/proc/{}/status", pid)),
-            // proc_statm_path: PathBuf::from(format!("/proc/{}/statm", pid)),
-            proc_cmdline_path: PathBuf::from(format!("/proc/{}/cmdline", pid)),
-            ..PrevProcDetails::default()
-        }
-    }
+    pub cpu_time: u64,
 }
 
 #[cfg(target_family = "unix")]
@@ -214,60 +185,30 @@ fn cpu_usage_calculation(
     Ok((result, cpu_percentage))
 }
 
-#[cfg(target_os = "linux")]
-fn get_linux_process_vsize_rss(stat: &[&str]) -> (u64, u64) {
-    // Represents vsize and rss (bytes and page numbers respectively)
-    (
-        stat[20].parse::<u64>().unwrap_or(0),
-        stat[21].parse::<u64>().unwrap_or(0),
-    )
-}
-
-#[cfg(target_os = "linux")]
-/// Preferably use this only on small files.
-fn read_path_contents(path: &Path) -> std::io::Result<String> {
-    std::fs::read_to_string(path)
-}
-
-#[cfg(target_os = "linux")]
-fn get_linux_process_state(stat: &[&str]) -> (char, String) {
-    // The -2 offset is because of us cutting off name + pid, normally it's 2
-    if let Some(first_char) = stat[0].chars().collect::<Vec<char>>().first() {
-        (*first_char, ProcessStatus::from(*first_char).to_string())
-    } else {
-        ('?', String::default())
-    }
-}
-
+/// Returns the usage and a new set of process times.
 /// Note that cpu_fraction should be represented WITHOUT the x100 factor!
 #[cfg(target_os = "linux")]
 fn get_linux_cpu_usage(
-    proc_stats: &[&str], cpu_usage: f64, cpu_fraction: f64, prev_proc_val: &mut f64,
+    stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64,
     use_current_cpu_total: bool,
-) -> std::io::Result<f64> {
-    fn get_process_cpu_stats(stat: &[&str]) -> f64 {
-        // utime + stime (matches top), the -2 offset is because of us cutting off name + pid (normally 13, 14)
-        stat[11].parse::<f64>().unwrap_or(0_f64) + stat[12].parse::<f64>().unwrap_or(0_f64)
-    }
-
+) -> (f64, u64) {
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
-    let new_proc_val = get_process_cpu_stats(&proc_stats);
+    let new_proc_times = stat.utime + stat.stime;
+    let diff = (new_proc_times - prev_proc_times) as f64; // I HATE that it's done like this but there isn't a try_from for u64 -> f64... we can accept a bit of loss in the worst case though
 
     if cpu_usage == 0.0 {
-        Ok(0_f64)
+        (0.0, new_proc_times)
     } else if use_current_cpu_total {
-        let res = Ok((new_proc_val - *prev_proc_val) / cpu_usage * 100_f64);
-        *prev_proc_val = new_proc_val;
-        res
+        (diff / cpu_usage * 100_f64, new_proc_times)
     } else {
-        let res = Ok((new_proc_val - *prev_proc_val) / cpu_usage * 100_f64 * cpu_fraction);
-        *prev_proc_val = new_proc_val;
-        res
+        (diff / cpu_usage * 100_f64 * cpu_fraction, new_proc_times)
     }
 }
 
 #[cfg(target_os = "macos")]
-fn get_macos_cpu_usage(pids: &[i32]) -> std::io::Result<std::collections::HashMap<i32, f64>> {
+fn get_macos_process_cpu_usage(
+    pids: &[i32],
+) -> std::io::Result<std::collections::HashMap<i32, f64>> {
     use itertools::Itertools;
     let output = std::process::Command::new("ps")
         .args(&["-o", "pid=,pcpu=", "-p"])
@@ -296,163 +237,77 @@ fn get_macos_cpu_usage(pids: &[i32]) -> std::io::Result<std::collections::HashMa
     Ok(result)
 }
 
-#[cfg(target_os = "linux")]
-fn get_uid_and_gid(path: &Path) -> (Option<u32>, Option<u32>) {
-    // FIXME: [OPT] - can we merge our /stat and /status calls?
-    use std::io::prelude::*;
-    use std::io::BufReader;
-
-    if let Ok(file) = std::fs::File::open(path) {
-        let reader = BufReader::new(file);
-        let mut lines = reader.lines().skip(8);
-
-        let (_real_uid, effective_uid) = if let Some(Ok(read_uid_line)) = lines.next() {
-            let mut split_whitespace = read_uid_line.split_whitespace().skip(1);
-            (
-                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
-                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
-            )
-        } else {
-            (None, None)
-        };
-
-        let (_real_gid, effective_gid) = if let Some(Ok(read_gid_line)) = lines.next() {
-            let mut split_whitespace = read_gid_line.split_whitespace().skip(1);
-            (
-                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
-                split_whitespace.next().and_then(|x| x.parse::<u32>().ok()),
-            )
-        } else {
-            (None, None)
-        };
-
-        (effective_uid, effective_gid)
-    } else {
-        (None, None)
-    }
-}
-
 #[allow(clippy::too_many_arguments)]
 #[cfg(target_os = "linux")]
 fn read_proc(
-    pid: Pid, cpu_usage: f64, cpu_fraction: f64, pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>,
+    prev_proc: &PrevProcDetails, process: &Process, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
-    page_file_kb: u64,
-) -> error::Result<ProcessHarvest> {
-    use std::io::prelude::*;
-    use std::io::BufReader;
+) -> error::Result<(ProcessHarvest, u64)> {
+    use std::convert::TryFrom;
 
-    let pid_stat = pid_mapping
-        .entry(pid)
-        .or_insert_with(|| PrevProcDetails::new(pid));
-    let stat_results = read_path_contents(&pid_stat.proc_stat_path)?;
+    let stat = &process.stat;
 
-    // truncated_name may potentially be cut!  Hence why we do the bit of code after...
-    let truncated_name = stat_results
-        .splitn(2, '(')
-        .collect::<Vec<_>>()
-        .last()
-        .ok_or(BottomError::MinorError)?
-        .rsplitn(2, ')')
-        .collect::<Vec<_>>()
-        .last()
-        .ok_or(BottomError::MinorError)?
-        .to_string();
     let (command, name) = {
-        let cmd = read_path_contents(&pid_stat.proc_cmdline_path)?;
-        let trimmed_cmd = cmd.trim();
-        if trimmed_cmd.is_empty() {
-            (format!("[{}]", truncated_name), truncated_name)
+        let truncated_name = stat.comm.as_str();
+        let cmdline = process.cmdline()?;
+        if cmdline.is_empty() {
+            (format!("[{}]", truncated_name), truncated_name.to_string())
         } else {
-            // We split by spaces and null terminators.
-            let separated_strings = trimmed_cmd
-                .split_terminator(|c| c == '\0' || c == ' ')
-                .collect::<Vec<&str>>();
-
             (
-                separated_strings.join(" "),
+                cmdline.join(" "),
                 if truncated_name.len() >= MAX_STAT_NAME_LEN {
-                    if let Some(first_part) = separated_strings.first() {
+                    if let Some(first_part) = cmdline.first() {
                         // We're only interested in the executable part... not the file path.
                         // That's for command.
                         first_part
                             .split('/')
                             .collect::<Vec<_>>()
                             .last()
-                            .unwrap_or(&truncated_name.as_str())
+                            .unwrap_or(&truncated_name)
                             .to_string()
                     } else {
-                        truncated_name
+                        truncated_name.to_string()
                     }
                 } else {
-                    truncated_name
+                    truncated_name.to_string()
                 },
             )
         }
     };
-    let stat = stat_results
-        .split(')')
-        .collect::<Vec<_>>()
-        .last()
-        .ok_or(BottomError::MinorError)?
-        .split_whitespace()
-        .collect::<Vec<&str>>();
-    let (process_state_char, process_state) = get_linux_process_state(&stat);
-    let cpu_usage_percent = get_linux_cpu_usage(
+
+    let process_state_char = stat.state;
+    let process_state = ProcessStatus::from(process_state_char).to_string();
+    let (cpu_usage_percent, new_process_times) = get_linux_cpu_usage(
         &stat,
         cpu_usage,
         cpu_fraction,
-        &mut pid_stat.cpu_time,
+        prev_proc.cpu_time,
         use_current_cpu_total,
-    )?;
-    let parent_pid = stat[1].parse::<Pid>().ok();
-    let (_vsize, rss) = get_linux_process_vsize_rss(&stat);
-    let mem_usage_kb = rss * page_file_kb;
+    );
+    let parent_pid = Some(stat.ppid);
+    let mem_usage_bytes = u64::try_from(stat.rss_bytes()).unwrap_or(0);
+    let mem_usage_kb = mem_usage_bytes / 1024;
     let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
-    let mem_usage_bytes = mem_usage_kb * 1024;
 
     // This can fail if permission is denied!
 
     let (total_read_bytes, total_write_bytes, read_bytes_per_sec, write_bytes_per_sec) =
-        if let Ok(file) = std::fs::File::open(&pid_stat.proc_io_path) {
-            let reader = BufReader::new(file);
-            let mut lines = reader.lines().skip(4);
-
-            // Represents read_bytes and write_bytes, at the 5th and 6th lines (1-index, not 0-index)
-            let total_read_bytes = if let Some(Ok(read_bytes_line)) = lines.next() {
-                if let Some(read_bytes) = read_bytes_line.split_whitespace().last() {
-                    read_bytes.parse::<u64>().unwrap_or(0)
-                } else {
-                    0
-                }
-            } else {
-                0
-            };
-
-            let total_write_bytes = if let Some(Ok(write_bytes_line)) = lines.next() {
-                if let Some(write_bytes) = write_bytes_line.split_whitespace().last() {
-                    write_bytes.parse::<u64>().unwrap_or(0)
-                } else {
-                    0
-                }
-            } else {
-                0
-            };
+        if let Ok(io) = process.io() {
+            let total_read_bytes = io.read_bytes;
+            let total_write_bytes = io.write_bytes;
 
             let read_bytes_per_sec = if time_difference_in_secs == 0 {
                 0
             } else {
-                total_read_bytes.saturating_sub(pid_stat.total_read_bytes) / time_difference_in_secs
+                total_read_bytes.saturating_sub(prev_proc.total_read_bytes)
+                    / time_difference_in_secs
             };
             let write_bytes_per_sec = if time_difference_in_secs == 0 {
                 0
             } else {
-                total_write_bytes.saturating_sub(pid_stat.total_write_bytes)
+                total_write_bytes.saturating_sub(prev_proc.total_write_bytes)
                     / time_difference_in_secs
             };
-
-            pid_stat.total_read_bytes = total_read_bytes;
-            pid_stat.total_write_bytes = total_write_bytes;
 
             (
                 total_read_bytes,
@@ -464,55 +319,64 @@ fn read_proc(
             (0, 0, 0, 0)
         };
 
-    let (uid, gid) = get_uid_and_gid(&pid_stat.proc_status_path);
+    let uid = process.status().ok().map(|s| s.euid);
 
-    Ok(ProcessHarvest {
-        pid,
-        parent_pid,
-        cpu_usage_percent,
-        mem_usage_percent,
-        mem_usage_bytes,
-        name,
-        command,
-        read_bytes_per_sec,
-        write_bytes_per_sec,
-        total_read_bytes,
-        total_write_bytes,
-        process_state,
-        process_state_char,
-        uid,
-        gid,
-    })
+    Ok((
+        ProcessHarvest {
+            pid: stat.pid,
+            parent_pid,
+            cpu_usage_percent,
+            mem_usage_percent,
+            mem_usage_bytes,
+            name,
+            command,
+            read_bytes_per_sec,
+            write_bytes_per_sec,
+            total_read_bytes,
+            total_write_bytes,
+            process_state,
+            process_state_char,
+            uid,
+        },
+        new_process_times,
+    ))
 }
 
 #[cfg(target_os = "linux")]
 pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
-    time_difference_in_secs: u64, mem_total_kb: u64, page_file_kb: u64,
+    time_difference_in_secs: u64, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
+
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
-                    let pid = dir.file_name().to_string_lossy().trim().parse::<Pid>();
-                    if let Ok(pid) = pid {
-                        // I skip checking if the path is also a directory, it's not needed I think?
-                        if let Ok(process_object) = read_proc(
-                            pid,
-                            cpu_usage,
-                            cpu_fraction,
-                            pid_mapping,
-                            use_current_cpu_total,
-                            time_difference_in_secs,
-                            mem_total_kb,
-                            page_file_kb,
-                        ) {
-                            pids_to_clear.remove(&pid);
-                            return Some(process_object);
+                    if let Ok(pid) = dir.file_name().to_string_lossy().trim().parse::<Pid>() {
+                        if let Ok(process) = Process::new(pid) {
+                            let prev_proc_details = pid_mapping.entry(pid).or_default();
+                            if let Ok((process_harvest, new_process_times)) = read_proc(
+                                &prev_proc_details,
+                                &process,
+                                cpu_usage,
+                                cpu_fraction,
+                                use_current_cpu_total,
+                                time_difference_in_secs,
+                                mem_total_kb,
+                            ) {
+                                prev_proc_details.cpu_time = new_process_times;
+                                prev_proc_details.total_read_bytes =
+                                    process_harvest.total_read_bytes;
+                                prev_proc_details.total_write_bytes =
+                                    process_harvest.total_write_bytes;
+
+                                pids_to_clear.remove(&pid);
+                                return Some(process_harvest);
+                            }
                         }
                     }
                 }
@@ -639,7 +503,7 @@ pub fn get_process_data(
             .filter(|process| process.process_state == unknown_state)
             .map(|process| process.pid)
             .collect();
-        let cpu_usages = get_macos_cpu_usage(&cpu_usage_unknown_pids)?;
+        let cpu_usages = get_macos_process_cpu_usage(&cpu_usage_unknown_pids)?;
         for process in &mut process_vector {
             if cpu_usages.contains_key(&process.pid) {
                 process.cpu_usage_percent = if num_cpus == 0.0 {
