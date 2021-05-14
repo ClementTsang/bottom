@@ -17,7 +17,8 @@ use fxhash::{FxHashMap, FxHashSet};
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
 
-/// Maximum character length of a /proc/<PID>/stat process name that we'll accept.
+/// Maximum character length of a /proc/<PID>/stat process name.
+/// If it's equal or greater, then we instead refer to the command for the name.
 #[cfg(target_os = "linux")]
 const MAX_STAT_NAME_LEN: usize = 15;
 
