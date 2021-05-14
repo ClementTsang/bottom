@@ -98,8 +98,6 @@ pub struct DataCollector {
     widgets_to_harvest: UsedWidgets,
     battery_manager: Option<Manager>,
     battery_list: Option<Vec<Battery>>,
-    #[cfg(target_os = "linux")]
-    page_file_size_kb: u64,
     filters: DataFilters,
 }
 
@@ -127,13 +125,6 @@ impl DataCollector {
             widgets_to_harvest: UsedWidgets::default(),
             battery_manager: None,
             battery_list: None,
-            #[cfg(target_os = "linux")]
-            page_file_size_kb: unsafe {
-                // let page_file_size_kb = libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024;
-                // trace!("Page file size in KB: {}", page_file_size_kb);
-                // page_file_size_kb
-                libc::sysconf(libc::_SC_PAGESIZE) as u64 / 1024
-            },
             filters,
         }
     }
@@ -268,7 +259,6 @@ impl DataCollector {
                             .duration_since(self.last_collection_time)
                             .as_secs(),
                         self.mem_total_kb,
-                        self.page_file_size_kb,
                     )
                 }
                 #[cfg(not(target_os = "linux"))]
