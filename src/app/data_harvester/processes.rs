@@ -1,9 +1,12 @@
 use crate::Pid;
-use procfs::process::{Process, Stat};
+
 use sysinfo::ProcessStatus;
 
 #[cfg(target_family = "unix")]
 use crate::utils::error;
+
+#[cfg(target_os = "linux")]
+use procfs::process::{Process, Stat};
 
 #[cfg(target_os = "linux")]
 use crate::utils::error::BottomError;
@@ -89,11 +92,23 @@ pub struct ProcessHarvest {
     pub uid: Option<libc::uid_t>,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct PrevProcDetails {
     pub total_read_bytes: u64,
     pub total_write_bytes: u64,
     pub cpu_time: u64,
+    pub process: Process,
+}
+
+impl PrevProcDetails {
+    fn new(pid: Pid) -> error::Result<Self> {
+        Ok(Self {
+            total_read_bytes: 0,
+            total_write_bytes: 0,
+            cpu_time: 0,
+            process: Process::new(pid)?,
+        })
+    }
 }
 
 #[cfg(target_family = "unix")]
@@ -185,8 +200,7 @@ fn cpu_usage_calculation(
     Ok((result, cpu_percentage))
 }
 
-/// Returns the usage and a new set of process times.
-/// Note that cpu_fraction should be represented WITHOUT the x100 factor!
+/// Returns the usage and a new set of process times. Note: cpu_fraction should be represented WITHOUT the x100 factor!
 #[cfg(target_os = "linux")]
 fn get_linux_cpu_usage(
     stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64,
@@ -240,12 +254,12 @@ fn get_macos_process_cpu_usage(
 #[allow(clippy::too_many_arguments)]
 #[cfg(target_os = "linux")]
 fn read_proc(
-    prev_proc: &PrevProcDetails, process: &Process, cpu_usage: f64, cpu_fraction: f64,
+    prev_proc: &PrevProcDetails, stat: &Stat, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
 ) -> error::Result<(ProcessHarvest, u64)> {
     use std::convert::TryFrom;
 
-    let stat = &process.stat;
+    let process = &prev_proc.process;
 
     let (command, name) = {
         let truncated_name = stat.comm.as_str();
@@ -319,11 +333,11 @@ fn read_proc(
             (0, 0, 0, 0)
         };
 
-    let uid = process.status().ok().map(|s| s.euid);
+    let uid = Some(process.owner);
 
     Ok((
         ProcessHarvest {
-            pid: stat.pid,
+            pid: process.pid,
             parent_pid,
             cpu_usage_percent,
             mem_usage_percent,
@@ -357,11 +371,35 @@ pub fn get_process_data(
             .filter_map(|dir| {
                 if let Ok(dir) = dir {
                     if let Ok(pid) = dir.file_name().to_string_lossy().trim().parse::<Pid>() {
-                        if let Ok(process) = Process::new(pid) {
-                            let prev_proc_details = pid_mapping.entry(pid).or_default();
+                        let mut fresh = false;
+                        if !pid_mapping.contains_key(&pid) {
+                            if let Ok(ppd) = PrevProcDetails::new(pid) {
+                                pid_mapping.insert(pid, ppd);
+                                fresh = true;
+                            } else {
+                                // Bail early.
+                                return None;
+                            }
+                        };
+
+                        if let Some(prev_proc_details) = pid_mapping.get_mut(&pid) {
+                            let stat;
+                            let stat_live;
+                            if fresh {
+                                stat = &prev_proc_details.process.stat;
+                            } else {
+                                if let Ok(s) = prev_proc_details.process.stat() {
+                                    stat_live = s;
+                                    stat = &stat_live;
+                                } else {
+                                    // Bail early.
+                                    return None;
+                                }
+                            }
+
                             if let Ok((process_harvest, new_process_times)) = read_proc(
                                 &prev_proc_details,
-                                &process,
+                                stat,
                                 cpu_usage,
                                 cpu_fraction,
                                 use_current_cpu_total,
