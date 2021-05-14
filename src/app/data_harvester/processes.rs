@@ -93,6 +93,7 @@ pub struct ProcessHarvest {
     pub uid: Option<libc::uid_t>,
 }
 
+#[cfg(target_os = "linux")]
 #[derive(Debug, Clone)]
 pub struct PrevProcDetails {
     pub total_read_bytes: u64,
@@ -101,6 +102,7 @@ pub struct PrevProcDetails {
     pub process: Process,
 }
 
+#[cfg(target_os = "linux")]
 impl PrevProcDetails {
     fn new(pid: Pid) -> error::Result<Self> {
         Ok(Self {
