@@ -7,10 +7,6 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
-    inputs:
-      isMock:
-        description: "Mock nightly run, defaults to 'false'"
-        default: "false"
 
 jobs:
   create-github-release:
@@ -25,7 +21,6 @@ jobs:
 
       - name: Delete tag and release
         uses: dev-drprasad/delete-tag-and-release@v0.1.3
-        if: github.event.inputs.isMock == 'false'
         with:
           delete_release: true
           tag_name: nightly
@@ -38,7 +33,6 @@ jobs:
       - name: Create nightly GitHub release
         id: release
         uses: actions/create-release@v1
-        if: github.event.inputs.isMock == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -222,7 +216,7 @@ jobs:
       # TODO: Move this elsewhere; do this all at once, and do not continue if any fails.  Store artifacts.  Do the same for deployment.
 
       - name: Upload main release
-        if: github.event.inputs.isMock == 'false'
+        if:
         uses: actions/upload-release-asset@v1.0.1
         id: upload
         env:
@@ -242,7 +236,7 @@ jobs:
           cargo wix
 
       - name: Upload msi file (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc' && github.event.inputs.isMock == 'false'
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -260,7 +254,7 @@ jobs:
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
       - name: Upload Debian file (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock == 'false'
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
