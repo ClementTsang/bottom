@@ -7,6 +7,10 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      isMock:
+        description: "Mock nightly run, fill in with anything to trigger a mock build."
+        default: ""
 
 jobs:
   create-github-release:
@@ -17,22 +21,25 @@ jobs:
         run: mkdir artifacts
 
       - name: Check if mock
-        run: echo "github.event.inputs.isMock"
+        run: |
+          echo "${{ github.event.inputs.isMock }}";
 
       - name: Delete tag and release
         uses: dev-drprasad/delete-tag-and-release@v0.1.3
+        if: github.event.inputs.isMock == ''
         with:
           delete_release: true
           tag_name: nightly
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation.
+      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release.
         run: sleep 10
 
       - name: Create nightly GitHub release
         id: release
         uses: actions/create-release@v1
+        if: github.event.inputs.isMock == ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -216,7 +223,7 @@ jobs:
       # TODO: Move this elsewhere; do this all at once, and do not continue if any fails.  Store artifacts.  Do the same for deployment.
 
       - name: Upload main release
-        if:
+        if: github.event.inputs.isMock == ''
         uses: actions/upload-release-asset@v1.0.1
         id: upload
         env:
@@ -236,7 +243,7 @@ jobs:
           cargo wix
 
       - name: Upload msi file (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc' && github.event.inputs.isMock == ''
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -254,7 +261,7 @@ jobs:
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
       - name: Upload Debian file (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock == ''
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
