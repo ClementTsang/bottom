@@ -1,3 +1,14 @@
+//! Uses the battery crate from svartalf.
+//! Covers battery usage for:
+//! - Linux 2.6.39+
+//! - MacOS 10.10+
+//! - iOS
+//! - Windows 7+
+//! - FreeBSD
+//! - DragonFlyBSD
+//!
+//! For more information, see https://github.com/svartalf/rust-battery
+
 use battery::{
     units::{power::watt, ratio::percent, time::second},
     Battery, Manager,

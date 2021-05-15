@@ -2,98 +2,20 @@ use crate::Pid;
 
 use sysinfo::ProcessStatus;
 
-#[cfg(target_family = "unix")]
 use crate::utils::error;
 
-#[cfg(target_os = "linux")]
 use procfs::process::{Process, Stat};
 
-#[cfg(target_os = "linux")]
 use crate::utils::error::BottomError;
 
-#[cfg(target_os = "linux")]
 use fxhash::{FxHashMap, FxHashSet};
 
-#[cfg(not(target_os = "linux"))]
-use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
+use super::ProcessHarvest;
 
 /// Maximum character length of a /proc/<PID>/stat process name.
 /// If it's equal or greater, then we instead refer to the command for the name.
-#[cfg(target_os = "linux")]
 const MAX_STAT_NAME_LEN: usize = 15;
 
-// TODO: Add value so we know if it's sorted ascending or descending by default?
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum ProcessSorting {
-    CpuPercent,
-    Mem,
-    MemPercent,
-    Pid,
-    ProcessName,
-    Command,
-    ReadPerSecond,
-    WritePerSecond,
-    TotalRead,
-    TotalWrite,
-    State,
-    User,
-    Count,
-}
-
-impl std::fmt::Display for ProcessSorting {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match &self {
-                ProcessSorting::CpuPercent => "CPU%",
-                ProcessSorting::MemPercent => "Mem%",
-                ProcessSorting::Mem => "Mem",
-                ProcessSorting::ReadPerSecond => "R/s",
-                ProcessSorting::WritePerSecond => "W/s",
-                ProcessSorting::TotalRead => "T.Read",
-                ProcessSorting::TotalWrite => "T.Write",
-                ProcessSorting::State => "State",
-                ProcessSorting::ProcessName => "Name",
-                ProcessSorting::Command => "Command",
-                ProcessSorting::Pid => "PID",
-                ProcessSorting::Count => "Count",
-                ProcessSorting::User => "User",
-            }
-        )
-    }
-}
-
-impl Default for ProcessSorting {
-    fn default() -> Self {
-        ProcessSorting::CpuPercent
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct ProcessHarvest {
-    pub pid: Pid,
-    pub parent_pid: Option<Pid>, // Remember, parent_pid 0 is root...
-    pub cpu_usage_percent: f64,
-    pub mem_usage_percent: f64,
-    pub mem_usage_bytes: u64,
-    // pub rss_kb: u64,
-    // pub virt_kb: u64,
-    pub name: String,
-    pub command: String,
-    pub read_bytes_per_sec: u64,
-    pub write_bytes_per_sec: u64,
-    pub total_read_bytes: u64,
-    pub total_write_bytes: u64,
-    pub process_state: String,
-    pub process_state_char: char,
-
-    /// This is the *effective* user ID.
-    #[cfg(target_family = "unix")]
-    pub uid: Option<libc::uid_t>,
-}
-
-#[cfg(target_os = "linux")]
 #[derive(Debug, Clone)]
 pub struct PrevProcDetails {
     pub total_read_bytes: u64,
@@ -102,7 +24,6 @@ pub struct PrevProcDetails {
     pub process: Process,
 }
 
-#[cfg(target_os = "linux")]
 impl PrevProcDetails {
     fn new(pid: Pid) -> error::Result<Self> {
         Ok(Self {
@@ -114,36 +35,6 @@ impl PrevProcDetails {
     }
 }
 
-#[cfg(target_family = "unix")]
-#[derive(Debug, Default)]
-pub struct UserTable {
-    pub uid_user_mapping: std::collections::HashMap<libc::uid_t, String>,
-}
-
-#[cfg(target_family = "unix")]
-impl UserTable {
-    pub fn get_uid_to_username_mapping(&mut self, uid: libc::uid_t) -> error::Result<String> {
-        if let Some(user) = self.uid_user_mapping.get(&uid) {
-            Ok(user.clone())
-        } else {
-            // SAFETY: getpwuid returns a null pointer if no passwd entry is found for the uid
-            let passwd = unsafe { libc::getpwuid(uid) };
-
-            if passwd.is_null() {
-                return Err(error::BottomError::QueryError("Missing passwd".into()));
-            }
-
-            let username = unsafe { std::ffi::CStr::from_ptr((*passwd).pw_name) }
-                .to_str()?
-                .to_string();
-            self.uid_user_mapping.insert(uid, username.clone());
-
-            Ok(username)
-        }
-    }
-}
-
-#[cfg(target_os = "linux")]
 fn cpu_usage_calculation(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
 ) -> error::Result<(f64, f64)> {
@@ -204,7 +95,6 @@ fn cpu_usage_calculation(
 }
 
 /// Returns the usage and a new set of process times. Note: cpu_fraction should be represented WITHOUT the x100 factor!
-#[cfg(target_os = "linux")]
 fn get_linux_cpu_usage(
     stat: &Stat, cpu_usage: f64, cpu_fraction: f64, prev_proc_times: u64,
     use_current_cpu_total: bool,
@@ -222,40 +112,7 @@ fn get_linux_cpu_usage(
     }
 }
 
-#[cfg(target_os = "macos")]
-fn get_macos_process_cpu_usage(
-    pids: &[i32],
-) -> std::io::Result<std::collections::HashMap<i32, f64>> {
-    use itertools::Itertools;
-    let output = std::process::Command::new("ps")
-        .args(&["-o", "pid=,pcpu=", "-p"])
-        .arg(
-            // Has to look like this since otherwise, it you hit a `unstable_name_collisions` warning.
-            Itertools::intersperse(pids.iter().map(i32::to_string), ",".to_string())
-                .collect::<String>(),
-        )
-        .output()?;
-    let mut result = std::collections::HashMap::new();
-    String::from_utf8_lossy(&output.stdout)
-        .split_whitespace()
-        .chunks(2)
-        .into_iter()
-        .for_each(|chunk| {
-            let chunk: Vec<&str> = chunk.collect();
-            if chunk.len() != 2 {
-                panic!("Unexpected `ps` output");
-            }
-            let pid = chunk[0].parse();
-            let usage = chunk[1].parse();
-            if let (Ok(pid), Ok(usage)) = (pid, usage) {
-                result.insert(pid, usage);
-            }
-        });
-    Ok(result)
-}
-
 #[allow(clippy::too_many_arguments)]
-#[cfg(target_os = "linux")]
 fn read_proc(
     prev_proc: &PrevProcDetails, stat: &Stat, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
@@ -361,7 +218,6 @@ fn read_proc(
     ))
 }
 
-#[cfg(target_os = "linux")]
 pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
@@ -435,144 +291,5 @@ pub fn get_process_data(
         Err(BottomError::GenericError(
             "Could not calculate CPU usage.".to_string(),
         ))
-    }
-}
-
-#[cfg(not(target_os = "linux"))]
-pub fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
-) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    let mut process_vector: Vec<ProcessHarvest> = Vec::new();
-    let process_hashmap = sys.get_processes();
-    let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
-    let num_cpus = sys.get_processors().len() as f64;
-    for process_val in process_hashmap.values() {
-        let name = if process_val.name().is_empty() {
-            let process_cmd = process_val.cmd();
-            if process_cmd.len() > 1 {
-                process_cmd[0].clone()
-            } else {
-                let process_exe = process_val.exe().file_stem();
-                if let Some(exe) = process_exe {
-                    let process_exe_opt = exe.to_str();
-                    if let Some(exe_name) = process_exe_opt {
-                        exe_name.to_string()
-                    } else {
-                        "".to_string()
-                    }
-                } else {
-                    "".to_string()
-                }
-            }
-        } else {
-            process_val.name().to_string()
-        };
-        let command = {
-            let command = process_val.cmd().join(" ");
-            if command.is_empty() {
-                name.to_string()
-            } else {
-                command
-            }
-        };
-
-        let pcu = if cfg!(target_os = "windows") || num_cpus == 0.0 {
-            process_val.cpu_usage() as f64
-        } else {
-            process_val.cpu_usage() as f64 / num_cpus
-        };
-        let process_cpu_usage = if use_current_cpu_total && cpu_usage > 0.0 {
-            pcu / cpu_usage
-        } else {
-            pcu
-        };
-
-        let disk_usage = process_val.disk_usage();
-        #[cfg(target_os = "macos")]
-        {
-            process_vector.push(ProcessHarvest {
-                pid: process_val.pid(),
-                parent_pid: process_val.parent(),
-                name,
-                command,
-                mem_usage_percent: if mem_total_kb > 0 {
-                    process_val.memory() as f64 * 100.0 / mem_total_kb as f64
-                } else {
-                    0.0
-                },
-                mem_usage_bytes: process_val.memory() * 1024,
-                cpu_usage_percent: process_cpu_usage,
-                read_bytes_per_sec: disk_usage.read_bytes,
-                write_bytes_per_sec: disk_usage.written_bytes,
-                total_read_bytes: disk_usage.total_read_bytes,
-                total_write_bytes: disk_usage.total_written_bytes,
-                process_state: process_val.status().to_string(),
-                process_state_char: convert_process_status_to_char(process_val.status()),
-                uid: Some(process_val.uid),
-            });
-        }
-        #[cfg(not(target_os = "macos"))]
-        {
-            process_vector.push(ProcessHarvest {
-                pid: process_val.pid(),
-                parent_pid: process_val.parent(),
-                name,
-                command,
-                mem_usage_percent: if mem_total_kb > 0 {
-                    process_val.memory() as f64 * 100.0 / mem_total_kb as f64
-                } else {
-                    0.0
-                },
-                mem_usage_bytes: process_val.memory() * 1024,
-                cpu_usage_percent: process_cpu_usage,
-                read_bytes_per_sec: disk_usage.read_bytes,
-                write_bytes_per_sec: disk_usage.written_bytes,
-                total_read_bytes: disk_usage.total_read_bytes,
-                total_write_bytes: disk_usage.total_written_bytes,
-                process_state: process_val.status().to_string(),
-                process_state_char: convert_process_status_to_char(process_val.status()),
-            });
-        }
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        let unknown_state = ProcessStatus::Unknown(0).to_string();
-        let cpu_usage_unknown_pids: Vec<i32> = process_vector
-            .iter()
-            .filter(|process| process.process_state == unknown_state)
-            .map(|process| process.pid)
-            .collect();
-        let cpu_usages = get_macos_process_cpu_usage(&cpu_usage_unknown_pids)?;
-        for process in &mut process_vector {
-            if cpu_usages.contains_key(&process.pid) {
-                process.cpu_usage_percent = if num_cpus == 0.0 {
-                    *cpu_usages.get(&process.pid).unwrap()
-                } else {
-                    *cpu_usages.get(&process.pid).unwrap() / num_cpus
-                };
-            }
-        }
-    }
-
-    Ok(process_vector)
-}
-
-#[allow(unused_variables)]
-#[cfg(not(target_os = "linux"))]
-fn convert_process_status_to_char(status: ProcessStatus) -> char {
-    #[cfg(target_os = "macos")]
-    {
-        match status {
-            ProcessStatus::Run => 'R',
-            ProcessStatus::Sleep => 'S',
-            ProcessStatus::Idle => 'D',
-            ProcessStatus::Zombie => 'Z',
-            _ => '?',
-        }
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        'R'
     }
 }

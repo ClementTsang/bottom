@@ -243,6 +243,7 @@ dependencies = [
  "battery",
  "beef",
  "cargo-husky",
+ "cfg-if 1.0.0",
  "chrono",
  "clap",
  "crossterm",

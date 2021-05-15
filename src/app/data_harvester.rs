@@ -19,17 +19,18 @@ use super::DataFilters;
 pub mod batteries;
 pub mod cpu;
 pub mod disks;
-pub mod load_avg;
-pub mod mem;
+pub mod memory;
 pub mod network;
 pub mod processes;
 pub mod temperature;
+
+use memory as mem;
 
 #[derive(Clone, Debug)]
 pub struct Data {
     pub last_collection_time: Instant,
     pub cpu: Option<cpu::CpuHarvest>,
-    pub load_avg: Option<load_avg::LoadAvgHarvest>,
+    pub load_avg: Option<cpu::LoadAvgHarvest>,
     pub memory: Option<mem::MemHarvest>,
     pub swap: Option<mem::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
@@ -232,7 +233,7 @@ impl DataCollector {
             #[cfg(target_family = "unix")]
             {
                 // Load Average
-                if let Ok(load_avg_data) = load_avg::get_load_avg().await {
+                if let Ok(load_avg_data) = cpu::get_load_avg().await {
                     self.data.load_avg = Some(load_avg_data);
                 }
             }
