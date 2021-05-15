@@ -24,15 +24,13 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
-use memory as mem;
-
 #[derive(Clone, Debug)]
 pub struct Data {
     pub last_collection_time: Instant,
     pub cpu: Option<cpu::CpuHarvest>,
     pub load_avg: Option<cpu::LoadAvgHarvest>,
-    pub memory: Option<mem::MemHarvest>,
-    pub swap: Option<mem::MemHarvest>,
+    pub memory: Option<memory::MemHarvest>,
+    pub swap: Option<memory::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
     pub network: Option<network::NetworkHarvest>,
     pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
@@ -300,7 +298,7 @@ impl DataCollector {
                 )
             }
         };
-        let mem_data_fut = mem::get_mem_data(self.widgets_to_harvest.use_mem);
+        let mem_data_fut = memory::get_mem_data(self.widgets_to_harvest.use_mem);
         let disk_data_fut = disks::get_disk_usage(
             self.widgets_to_harvest.use_disk,
             &self.filters.disk_filter,
