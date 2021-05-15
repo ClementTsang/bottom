@@ -7,6 +7,10 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      isMock:
+        description: "Mock nightly run, fill in with anything to trigger a mock build."
+        default: ""
 
 jobs:
   create-github-release:
