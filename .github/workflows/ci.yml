@@ -60,7 +60,6 @@ jobs:
 
   # Compile/check/test.
   check:
-    name: ${{ matrix.toolchain }} / ${{ matrix.triple.target }}
     needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
