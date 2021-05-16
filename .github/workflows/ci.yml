@@ -100,7 +100,7 @@ jobs:
               rust: stable,
               toTest: "true",
             }
-          # Disabled, unfortunately.
+          # Big Sur builds are disabled, unfortunately.
           # - {
           #     os: "macOS-11.0",
           #     target: "x86_64-apple-darwin",
