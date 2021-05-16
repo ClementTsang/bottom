@@ -1,4 +1,4 @@
-//! Process data collection for macOS.
+//! Process data collection for macOS.  Uses sysinfo.
 
 use super::ProcessHarvest;
 use sysinfo::{ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};

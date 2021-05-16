@@ -1,3 +1,5 @@
+//! Process data collection for Linux.
+
 use crate::utils::error::{self, BottomError};
 use crate::Pid;
 

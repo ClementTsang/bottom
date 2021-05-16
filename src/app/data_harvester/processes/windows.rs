@@ -1,4 +1,4 @@
-//! Process data collection for Windows.
+//! Process data collection for Windows.  Uses sysinfo.
 
 use super::ProcessHarvest;
 use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};

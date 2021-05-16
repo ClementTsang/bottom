@@ -1,3 +1,5 @@
+//! Unix-specific parts of process collection.
+
 use crate::utils::error;
 
 #[derive(Debug, Default)]
