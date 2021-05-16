@@ -4,7 +4,7 @@
 //! For Windows, this is handled by sysinfo.
 
 cfg_if::cfg_if! {
-    if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {
+    if #[cfg(any(target_os = "linux", target_os = "macos"))] {
         pub mod heim;
         pub use self::heim::*;
     } else if #[cfg(target_os = "windows")] {

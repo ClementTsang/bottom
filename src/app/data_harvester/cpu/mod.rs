@@ -10,3 +10,5 @@ cfg_if::cfg_if! {
         pub use self::heim::*;
     }
 }
+
+pub type LoadAvgHarvest = [f32; 3];

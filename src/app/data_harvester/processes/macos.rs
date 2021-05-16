@@ -1,7 +1,7 @@
 //! Process data collection for macOS.
 
 use super::ProcessHarvest;
-use sysinfo::{ProcessStatus, System, SystemExt};
+use sysinfo::{ProcessExt, ProcessStatus, System, SystemExt};
 
 fn get_macos_process_cpu_usage(
     pids: &[i32],
