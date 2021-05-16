@@ -9,7 +9,6 @@ pub fn get_process_data(
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
-    let num_cpus = sys.get_processors().len() as f64;
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
