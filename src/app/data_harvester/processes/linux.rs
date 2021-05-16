@@ -1,16 +1,13 @@
+use crate::utils::error::{self, BottomError};
 use crate::Pid;
+
+use super::ProcessHarvest;
 
 use sysinfo::ProcessStatus;
 
-use crate::utils::error;
-
 use procfs::process::{Process, Stat};
 
-use crate::utils::error::BottomError;
-
 use fxhash::{FxHashMap, FxHashSet};
-
-use super::ProcessHarvest;
 
 /// Maximum character length of a /proc/<PID>/stat process name.
 /// If it's equal or greater, then we instead refer to the command for the name.

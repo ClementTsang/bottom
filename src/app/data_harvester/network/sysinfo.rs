@@ -1,3 +1,5 @@
+//! Gets network data via sysinfo.
+
 use super::NetworkHarvest;
 use std::time::Instant;
 

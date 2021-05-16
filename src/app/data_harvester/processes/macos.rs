@@ -1,5 +1,8 @@
 //! Process data collection for macOS.
 
+use super::ProcessHarvest;
+use sysinfo::{ProcessStatus, System};
+
 fn get_macos_process_cpu_usage(
     pids: &[i32],
 ) -> std::io::Result<std::collections::HashMap<i32, f64>> {

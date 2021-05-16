@@ -1,7 +1,6 @@
 //! macOS and Windows-specific things for Heim disk data collection.
 
 use heim::disk::Partition;
-use std::ffi::OsString;
 
 pub fn get_device_name(partition: &Partition) -> String {
     if let Some(device) = partition.device() {
