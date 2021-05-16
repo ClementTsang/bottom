@@ -1,6 +1,7 @@
-use crate::app::Filter;
+//! Gets temperature data via heim.
 
 use super::{is_temp_filtered, temp_vec_sort, TempHarvest, TemperatureType};
+use crate::app::Filter;
 
 pub async fn get_temperature_data(
     temp_type: &TemperatureType, actually_get: bool, filter: &Option<Filter>,

@@ -1,5 +1,8 @@
 //! Process data collection for Windows.
 
+use super::ProcessHarvest;
+use sysinfo::{System, SystemExt};
+
 pub fn get_process_data(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
