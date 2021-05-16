@@ -1,5 +1,15 @@
 use crate::app::Filter;
 
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "linux")] {
+        pub mod linux;
+        pub use linux::*;
+    } else if #[cfg(any(target_os = "macos", target_os = "windows"))] {
+        pub mod windows_macos;
+        pub use windows_macos::*;
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct DiskHarvest {
     pub name: String,
@@ -62,44 +72,7 @@ pub async fn get_disk_usage(
 
     while let Some(part) = partitions_stream.next().await {
         if let Ok(partition) = part {
-            let symlink: std::ffi::OsString;
-
-            let name = (if let Some(device) = partition.device() {
-                // See if this disk is actually mounted elsewhere on Linux...
-                // This is a workaround to properly map I/O in some cases (i.e. disk encryption), see
-                // https://github.com/ClementTsang/bottom/issues/419
-                if cfg!(target_os = "linux") {
-                    if let Ok(path) = std::fs::read_link(device) {
-                        if path.is_absolute() {
-                            symlink = path.into_os_string();
-                            symlink.as_os_str()
-                        } else {
-                            let mut combined_path = std::path::PathBuf::new();
-                            combined_path.push(device);
-                            combined_path.pop(); // Pop the current file...
-                            combined_path.push(path.clone());
-
-                            if let Ok(path) = std::fs::canonicalize(combined_path) {
-                                // Resolve the local path into an absolute one...
-                                symlink = path.into_os_string();
-                                symlink.as_os_str()
-                            } else {
-                                symlink = path.into_os_string();
-                                symlink.as_os_str()
-                            }
-                        }
-                    } else {
-                        device
-                    }
-                } else {
-                    device
-                }
-            } else {
-                std::ffi::OsStr::new("Name Unavailable")
-            }
-            .to_str()
-            .unwrap_or("Name Unavailable"))
-            .to_string();
+            let name = get_device_name(&partition);
 
             let mount_point = (partition
                 .mount_point()

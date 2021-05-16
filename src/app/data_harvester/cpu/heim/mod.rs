@@ -1,3 +1,23 @@
+//! CPU stats through heim.
+//! Supports macOS, Linux, and Windows.
+
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "linux")] {
+        pub mod linux;
+        pub use linux::*;
+    } else if #[cfg(any(target_os = "macos", target_os = "windows"))] {
+        pub mod windows_macos;
+        pub use windows_macos::*;
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(target_family = "unix")] {
+        pub mod unix;
+        pub use unix::*;
+    }
+}
+
 #[derive(Default, Debug, Clone)]
 pub struct CpuData {
     pub cpu_prefix: String,
@@ -10,42 +30,13 @@ pub type CpuHarvest = Vec<CpuData>;
 pub type PastCpuWork = f64;
 pub type PastCpuTotal = f64;
 
+use futures::StreamExt;
+use std::collections::VecDeque;
+
 pub async fn get_cpu_data_list(
     show_average_cpu: bool, previous_cpu_times: &mut Vec<(PastCpuWork, PastCpuTotal)>,
     previous_average_cpu_time: &mut Option<(PastCpuWork, PastCpuTotal)>,
 ) -> crate::error::Result<CpuHarvest> {
-    use futures::StreamExt;
-    #[cfg(target_os = "linux")]
-    use heim::cpu::os::linux::CpuTimeExt;
-    use std::collections::VecDeque;
-
-    fn convert_cpu_times(cpu_time: &heim::cpu::CpuTime) -> (f64, f64) {
-        #[cfg(not(target_os = "linux"))]
-        {
-            let working_time: f64 =
-                (cpu_time.user() + cpu_time.system()).get::<heim::units::time::second>();
-            (
-                working_time,
-                working_time + cpu_time.idle().get::<heim::units::time::second>(),
-            )
-        }
-        #[cfg(target_os = "linux")]
-        {
-            let working_time: f64 = (cpu_time.user()
-                + cpu_time.nice()
-                + cpu_time.system()
-                + cpu_time.irq()
-                + cpu_time.soft_irq()
-                + cpu_time.steal())
-            .get::<heim::units::time::second>();
-            (
-                working_time,
-                working_time
-                    + (cpu_time.idle() + cpu_time.io_wait()).get::<heim::units::time::second>(),
-            )
-        }
-    }
-
     fn calculate_cpu_usage_percentage(
         (previous_working_time, previous_total_time): (f64, f64),
         (current_working_time, current_total_time): (f64, f64),

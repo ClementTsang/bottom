@@ -1,3 +1,5 @@
+//! Data collection for memory via heim.
+
 #[derive(Debug, Clone)]
 pub struct MemHarvest {
     pub mem_total_in_kib: u64,

@@ -16,9 +16,8 @@ use once_cell::sync::Lazy;
 
 use std::{time::Instant, vec::Vec};
 
-use crate::app::data_harvester::load_avg::LoadAvgHarvest;
 use crate::{
-    data_harvester::{batteries, cpu, disks, load_avg, mem, network, processes, temperature, Data},
+    data_harvester::{batteries, cpu, disks, memory, network, processes, temperature, Data},
     utils::gen_util::{get_decimal_bytes, GIGA_LIMIT},
 };
 use regex::Regex;
@@ -51,10 +50,10 @@ pub struct DataCollection {
     pub frozen_instant: Option<Instant>,
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub network_harvest: network::NetworkHarvest,
-    pub memory_harvest: mem::MemHarvest,
-    pub swap_harvest: mem::MemHarvest,
+    pub memory_harvest: memory::MemHarvest,
+    pub swap_harvest: memory::MemHarvest,
     pub cpu_harvest: cpu::CpuHarvest,
-    pub load_avg_harvest: load_avg::LoadAvgHarvest,
+    pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_harvest: Vec<processes::ProcessHarvest>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IoHarvest,
@@ -71,10 +70,10 @@ impl Default for DataCollection {
             frozen_instant: None,
             timed_data_vec: Vec::default(),
             network_harvest: network::NetworkHarvest::default(),
-            memory_harvest: mem::MemHarvest::default(),
-            swap_harvest: mem::MemHarvest::default(),
+            memory_harvest: memory::MemHarvest::default(),
+            swap_harvest: memory::MemHarvest::default(),
             cpu_harvest: cpu::CpuHarvest::default(),
-            load_avg_harvest: load_avg::LoadAvgHarvest::default(),
+            load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_harvest: Vec::default(),
             disk_harvest: Vec::default(),
             io_harvest: disks::IoHarvest::default(),
@@ -90,8 +89,8 @@ impl DataCollection {
     pub fn reset(&mut self) {
         self.timed_data_vec = Vec::default();
         self.network_harvest = network::NetworkHarvest::default();
-        self.memory_harvest = mem::MemHarvest::default();
-        self.swap_harvest = mem::MemHarvest::default();
+        self.memory_harvest = memory::MemHarvest::default();
+        self.swap_harvest = memory::MemHarvest::default();
         self.cpu_harvest = cpu::CpuHarvest::default();
         self.process_harvest = Vec::default();
         self.disk_harvest = Vec::default();
@@ -180,7 +179,7 @@ impl DataCollection {
     }
 
     fn eat_memory_and_swap(
-        &mut self, memory: mem::MemHarvest, swap: mem::MemHarvest, new_entry: &mut TimedData,
+        &mut self, memory: memory::MemHarvest, swap: memory::MemHarvest, new_entry: &mut TimedData,
     ) {
         // trace!("Eating mem and swap.");
         // Memory
@@ -230,7 +229,7 @@ impl DataCollection {
         self.cpu_harvest = cpu.to_vec();
     }
 
-    fn eat_load_avg(&mut self, load_avg: LoadAvgHarvest, new_entry: &mut TimedData) {
+    fn eat_load_avg(&mut self, load_avg: cpu::LoadAvgHarvest, new_entry: &mut TimedData) {
         new_entry.load_avg_data = load_avg;
 
         self.load_avg_harvest = load_avg;

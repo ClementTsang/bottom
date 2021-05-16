@@ -19,8 +19,7 @@ use super::DataFilters;
 pub mod batteries;
 pub mod cpu;
 pub mod disks;
-pub mod load_avg;
-pub mod mem;
+pub mod memory;
 pub mod network;
 pub mod processes;
 pub mod temperature;
@@ -29,9 +28,9 @@ pub mod temperature;
 pub struct Data {
     pub last_collection_time: Instant,
     pub cpu: Option<cpu::CpuHarvest>,
-    pub load_avg: Option<load_avg::LoadAvgHarvest>,
-    pub memory: Option<mem::MemHarvest>,
-    pub swap: Option<mem::MemHarvest>,
+    pub load_avg: Option<cpu::LoadAvgHarvest>,
+    pub memory: Option<memory::MemHarvest>,
+    pub swap: Option<memory::MemHarvest>,
     pub temperature_sensors: Option<Vec<temperature::TempHarvest>>,
     pub network: Option<network::NetworkHarvest>,
     pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
@@ -232,7 +231,7 @@ impl DataCollector {
             #[cfg(target_family = "unix")]
             {
                 // Load Average
-                if let Ok(load_avg_data) = load_avg::get_load_avg().await {
+                if let Ok(load_avg_data) = cpu::get_load_avg().await {
                     self.data.load_avg = Some(load_avg_data);
                 }
             }
@@ -299,7 +298,7 @@ impl DataCollector {
                 )
             }
         };
-        let mem_data_fut = mem::get_mem_data(self.widgets_to_harvest.use_mem);
+        let mem_data_fut = memory::get_mem_data(self.widgets_to_harvest.use_mem);
         let disk_data_fut = disks::get_disk_usage(
             self.widgets_to_harvest.use_disk,
             &self.filters.disk_filter,

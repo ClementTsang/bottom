@@ -1,6 +1,7 @@
-pub type LoadAvgHarvest = [f32; 3];
+//! Unix-specific functions regarding CPU usage.
 
-#[cfg(target_family = "unix")]
+use crate::app::data_harvester::cpu::LoadAvgHarvest;
+
 pub async fn get_load_avg() -> crate::error::Result<LoadAvgHarvest> {
     let (one, five, fifteen) = heim::cpu::os::unix::loadavg().await?;
 
