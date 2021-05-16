@@ -193,13 +193,3 @@ jobs:
         env:
           CARGO_HUSKY_DONT_INSTALL_HOOKS: true
           RUST_BACKTRACE: full
-
-  complete:
-    needs: [check]
-    name: CI Pipeline Complete
-    runs-on: ubuntu-latest
-    steps:
-      - name: Echo completion
-        shell: bash
-        run: |
-          echo "Complete!"
