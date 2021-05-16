@@ -14,13 +14,13 @@ pub fn get_device_name(partition: &Partition) -> String {
                 let mut combined_path = std::path::PathBuf::new();
                 combined_path.push(device);
                 combined_path.pop(); // Pop the current file...
-                combined_path.push(path.clone());
+                combined_path.push(path);
 
-                if let Ok(path) = std::fs::canonicalize(combined_path) {
+                if let Ok(canon_path) = std::fs::canonicalize(combined_path) {
                     // Resolve the local path into an absolute one...
-                    path.into_os_string()
+                    canon_path.into_os_string()
                 } else {
-                    path.into_os_string()
+                    device.to_os_string()
                 }
             }
         } else {
