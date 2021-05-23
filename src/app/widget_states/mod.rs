@@ -46,7 +46,7 @@ pub enum CursorDirection {
 }
 
 /// AppScrollWidgetState deals with fields for a scrollable app's current state.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct AppScrollWidgetState {
     pub current_scroll_position: usize,
     pub previous_scroll_position: usize,
@@ -99,7 +99,7 @@ impl Default for AppHelpDialogState {
 }
 
 /// Meant for canvas operations involving table column widths.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CanvasTableWidthState {
     pub desired_column_widths: Vec<u16>,
     pub calculated_column_widths: Vec<u16>,

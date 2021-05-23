@@ -21,3 +21,15 @@ pub use network_basic::NetworkBasicWidget;
 pub use network_graph::NetworkGraphWidget;
 pub use process_table::ProcessTableWidget;
 pub use temp_table::TempTableWidget;
+
+pub mod element;
+pub use element::Element;
+
+pub mod scrollable_table;
+pub use scrollable_table::ScrollableTable;
+
+pub mod scroll_sort_table;
+pub use scroll_sort_table::ScrollSortTable;
+
+pub mod time_graph;
+pub use time_graph::TimeGraph;
