@@ -11,9 +11,8 @@ pub const STALE_MAX_MILLISECONDS: u64 = 600 * 1000; // Keep 10 minutes of data.
 pub const DEFAULT_TIME_MILLISECONDS: u64 = 60 * 1000; // Defaults to 1 min.
 pub const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
 pub const TIME_CHANGE_MILLISECONDS: u64 = 15 * 1000; // How much to increment each time
-pub const AUTOHIDE_TIMEOUT_MILLISECONDS: u64 = 5000; // 5 seconds to autohide
+pub const AUTOHIDE_TIMEOUT_MILLISECONDS: u128 = 5000; // 5 seconds to autohide
 
-pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 // How fast the screen refreshes
 pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
 pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;

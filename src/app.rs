@@ -68,10 +68,10 @@ pub struct AppConfigFields {
 #[derive(TypedBuilder)]
 pub struct AppState {
     #[builder(default = false, setter(skip))]
-    awaiting_second_char: bool,
+    awaiting_second_char: bool, // TODO: Move out to input
 
     #[builder(default, setter(skip))]
-    second_char: Option<char>,
+    second_char: Option<char>, // TODO: Move out to input
 
     #[builder(default, setter(skip))]
     pub dd_err: Option<String>,
@@ -83,7 +83,7 @@ pub struct AppState {
     pub is_frozen: bool,
 
     #[builder(default = Instant::now(), setter(skip))]
-    last_key_press: Instant,
+    last_key_press: Instant, // TODO: Move out to input
 
     #[builder(default, setter(skip))]
     pub canvas_data: canvas::DisplayableData,
@@ -129,11 +129,11 @@ pub struct AppState {
 }
 
 #[cfg(target_os = "windows")]
-const MAX_SIGNAL: usize = 1;
+const MAX_KILL_SIGNAL: usize = 1;
 #[cfg(target_os = "linux")]
-const MAX_SIGNAL: usize = 64;
+const MAX_KILL_SIGNAL: usize = 64;
 #[cfg(target_os = "macos")]
-const MAX_SIGNAL: usize = 31;
+const MAX_KILL_SIGNAL: usize = 31;
 
 impl AppState {
     pub fn reset(&mut self) {
@@ -967,7 +967,7 @@ impl AppState {
         if self.delete_dialog_state.is_showing_dd {
             let mut new_signal = match self.delete_dialog_state.selected_signal {
                 KillSignal::Cancel => 8,
-                KillSignal::Kill(signal) => min(signal + 8, MAX_SIGNAL),
+                KillSignal::Kill(signal) => min(signal + 8, MAX_KILL_SIGNAL),
             };
             if new_signal > 31 && new_signal < 42 {
                 new_signal += 2;
@@ -2133,7 +2133,7 @@ impl AppState {
                 .max_scroll_index
                 .saturating_sub(1);
         } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_SIGNAL);
+            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_KILL_SIGNAL);
         }
     }
 

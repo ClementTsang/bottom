@@ -61,6 +61,7 @@ pub enum BottomEvent<I, J> {
     MouseInput(J),
     Update(Box<data_harvester::Data>),
     Clean,
+    RequestRedraw,
 }
 
 #[derive(Debug)]
@@ -610,19 +611,27 @@ pub fn create_input_thread(
             if let Ok(poll) = poll(Duration::from_millis(20)) {
                 if poll {
                     if let Ok(event) = read() {
-                        if let Event::Key(key) = event {
-                            if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                    break;
+                        match event {
+                            Event::Key(key) => {
+                                if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+                                    if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                                        break;
+                                    }
+                                    keyboard_timer = Instant::now();
                                 }
-                                keyboard_timer = Instant::now();
                             }
-                        } else if let Event::Mouse(mouse) = event {
-                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-                                if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                    break;
+                            Event::Mouse(mouse) => {
+                                if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+                                    if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                        break;
+                                    }
+                                    mouse_timer = Instant::now();
                                 }
-                                mouse_timer = Instant::now();
+                            }
+                            Event::Resize(_, _) => {
+                                // if sender.send(BottomEvent::RequestRedraw).is_err() {
+                                //     break;
+                                // }
                             }
                         }
                     }

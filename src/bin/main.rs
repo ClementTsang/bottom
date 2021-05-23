@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
+use bottom::{canvas, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,
@@ -61,6 +61,30 @@ fn main() -> Result<()> {
         get_color_scheme(&matches, &config)?,
     )?;
 
+    // Set up up tui and crossterm
+    let mut stdout_val = stdout();
+    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
+    enable_raw_mode()?;
+
+    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
+    terminal.clear()?;
+    terminal.hide_cursor()?;
+
+    // Set panic hook
+    panic::set_hook(Box::new(|info| panic_hook(info)));
+
+    // Set termination hook
+    let is_terminated = Arc::new(AtomicBool::new(false));
+    {
+        let is_terminated = is_terminated.clone();
+        ctrlc::set_handler(move || {
+            is_terminated.store(true, Ordering::SeqCst);
+        })?;
+    }
+    let mut first_pass = true;
+
+    // ===== Start of actual thread creation and loop =====
+
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]
     let thread_termination_lock = Arc::new(Mutex::new(false));
@@ -107,46 +131,34 @@ fn main() -> Result<()> {
         app.used_widgets.clone(),
     );
 
-    // Set up up tui and crossterm
-    let mut stdout_val = stdout();
-    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
-    enable_raw_mode()?;
-
-    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
-    terminal.clear()?;
-    terminal.hide_cursor()?;
-
-    // Set panic hook
-    panic::set_hook(Box::new(|info| panic_hook(info)));
-
-    // Set termination hook
-    let is_terminated = Arc::new(AtomicBool::new(false));
-    let ist_clone = is_terminated.clone();
-    ctrlc::set_handler(move || {
-        ist_clone.store(true, Ordering::SeqCst);
-    })?;
-    let mut first_run = true;
-
     while !is_terminated.load(Ordering::SeqCst) {
-        if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
+        if let Ok(recv) = receiver.recv() {
             match recv {
                 BottomEvent::KeyInput(event) => {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
                     }
                     handle_force_redraws(&mut app);
+
+                    if try_drawing(&mut terminal, &mut app, &mut painter).is_err() {
+                        break;
+                    }
                 }
                 BottomEvent::MouseInput(event) => {
                     handle_mouse_event(event, &mut app);
                     handle_force_redraws(&mut app);
+
+                    if try_drawing(&mut terminal, &mut app, &mut painter).is_err() {
+                        break;
+                    }
                 }
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(data);
 
                     // This thing is required as otherwise, some widgets can't draw correctly w/o
                     // some data (or they need to be re-drawn).
-                    if first_run {
-                        first_run = false;
+                    if first_pass {
+                        first_pass = false;
                         app.is_force_redraw = true;
                     }
 
@@ -221,25 +233,29 @@ fn main() -> Result<()> {
                                 convert_battery_harvest(&app.data_collection);
                         }
                     }
+
+                    if try_drawing(&mut terminal, &mut app, &mut painter).is_err() {
+                        break;
+                    }
                 }
                 BottomEvent::Clean => {
                     app.data_collection
                         .clean_data(constants::STALE_MAX_MILLISECONDS);
                 }
+                BottomEvent::RequestRedraw => {
+                    if try_drawing(&mut terminal, &mut app, &mut painter).is_err() {
+                        break;
+                    }
+                }
             }
         }
-
-        // TODO: [OPT] Should not draw if no change (ie: scroll max)
-        try_drawing(&mut terminal, &mut app, &mut painter)?;
     }
 
-    // I think doing it in this order is safe...
-
     *thread_termination_lock.lock().unwrap() = true;
-
     thread_termination_cvar.notify_all();
-
     cleanup_terminal(&mut terminal)?;
+
+    // ===== End of actual thread creation and loop =====
 
     Ok(())
 }
