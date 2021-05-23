@@ -105,7 +105,6 @@ impl DataCollection {
     }
 
     pub fn clean_data(&mut self, max_time_millis: u64) {
-        // trace!("Cleaning data.");
         let current_time = Instant::now();
 
         let remove_index = match self
@@ -125,7 +124,6 @@ impl DataCollection {
     }
 
     pub fn eat_data(&mut self, harvested_data: Box<Data>) {
-        // trace!("Eating data now...");
         let harvested_time = harvested_data.last_collection_time;
         // trace!("Harvested time: {:?}", harvested_time);
         // trace!("New current instant: {:?}", self.current_instant);
@@ -181,7 +179,6 @@ impl DataCollection {
     fn eat_memory_and_swap(
         &mut self, memory: memory::MemHarvest, swap: memory::MemHarvest, new_entry: &mut TimedData,
     ) {
-        // trace!("Eating mem and swap.");
         // Memory
         let mem_percent = if memory.mem_total_in_kib > 0 {
             Some((memory.mem_used_in_kib as f64) / (memory.mem_total_in_kib as f64) * 100.0)
@@ -219,7 +216,6 @@ impl DataCollection {
     }
 
     fn eat_cpu(&mut self, cpu: Vec<cpu::CpuData>, new_entry: &mut TimedData) {
-        // trace!("Eating CPU.");
         // Note this only pre-calculates the data points - the names will be
         // within the local copy of cpu_harvest.  Since it's all sequential
         // it probably doesn't matter anyways.
@@ -236,7 +232,6 @@ impl DataCollection {
     }
 
     fn eat_temp(&mut self, temperature_sensors: Vec<temperature::TempHarvest>) {
-        // trace!("Eating temps.");
         // TODO: [PO] To implement
         self.temp_harvest = temperature_sensors.to_vec();
     }
@@ -244,7 +239,6 @@ impl DataCollection {
     fn eat_disks(
         &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
     ) {
-        // trace!("Eating disks.");
         // TODO: [PO] To implement
 
         let time_since_last_harvest = harvested_time
@@ -325,12 +319,10 @@ impl DataCollection {
     }
 
     fn eat_proc(&mut self, list_of_processes: Vec<processes::ProcessHarvest>) {
-        // trace!("Eating proc.");
         self.process_harvest = list_of_processes;
     }
 
     fn eat_battery(&mut self, list_of_batteries: Vec<batteries::BatteryHarvest>) {
-        // trace!("Eating batteries.");
         self.battery_harvest = list_of_batteries;
     }
 }

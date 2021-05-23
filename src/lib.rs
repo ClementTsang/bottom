@@ -594,9 +594,7 @@ pub fn create_input_thread(
     >,
     termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> std::thread::JoinHandle<()> {
-    // trace!("Creating input thread.");
     thread::spawn(move || {
-        // trace!("Spawned input thread.");
         let mut mouse_timer = Instant::now();
         let mut keyboard_timer = Instant::now();
 
@@ -604,7 +602,6 @@ pub fn create_input_thread(
             if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
                 // We don't block.
                 if *is_terminated {
-                    // trace!("Received termination lock in input thread!");
                     drop(is_terminated);
                     break;
                 }
@@ -612,13 +609,11 @@ pub fn create_input_thread(
             if let Ok(poll) = poll(Duration::from_millis(20)) {
                 if poll {
                     if let Ok(event) = read() {
-                        // trace!("Input thread received an event: {:?}", event);
                         if let Event::Key(key) = event {
                             if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
                                 if sender.send(BottomEvent::KeyInput(key)).is_err() {
                                     break;
                                 }
-                                // trace!("Input thread sent keyboard data.");
                                 keyboard_timer = Instant::now();
                             }
                         } else if let Event::Mouse(mouse) = event {
@@ -626,7 +621,6 @@ pub fn create_input_thread(
                                 if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
                                     break;
                                 }
-                                // trace!("Input thread sent mouse data.");
                                 mouse_timer = Instant::now();
                             }
                         }
@@ -634,7 +628,6 @@ pub fn create_input_thread(
                 }
             }
         }
-        // trace!("Input thread loop has closed.");
     })
 }
 
@@ -647,36 +640,31 @@ pub fn create_collection_thread(
     app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
     used_widget_set: UsedWidgets,
 ) -> std::thread::JoinHandle<()> {
-    // trace!("Creating collection thread.");
     let temp_type = app_config_fields.temperature_type.clone();
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_rate_in_milliseconds = app_config_fields.update_rate_in_milliseconds;
 
     thread::spawn(move || {
-        // trace!("Spawned collection thread.");
         let mut data_state = data_harvester::DataCollector::new(filters);
-        // trace!("Created default data state.");
+
         data_state.set_collected_data(used_widget_set);
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_show_average_cpu(show_average_cpu);
-        // trace!("Set default data state settings.");
 
         data_state.init();
-        // trace!("Data state is now fully initialized.");
+
         loop {
             // Check once at the very top...
             if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
                 // We don't block here.
                 if *is_terminated {
-                    // trace!("Received termination lock in collection thread!");
                     drop(is_terminated);
                     break;
                 }
             }
 
-            // trace!("Checking for collection control receiver event...");
             let mut update_time = update_rate_in_milliseconds;
             if let Ok(message) = control_receiver.try_recv() {
                 // trace!("Received message in collection thread: {:?}", message);
@@ -704,32 +692,26 @@ pub fn create_collection_thread(
             if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
                 // We don't block here.
                 if *is_terminated {
-                    // trace!("Received termination lock in collection thread!");
                     drop(is_terminated);
                     break;
                 }
             }
 
-            // trace!("Collection thread is updating and sending...");
             let event = BottomEvent::Update(Box::from(data_state.data));
             data_state.data = data_harvester::Data::default();
             if sender.send(event).is_err() {
-                // trace!("Error sending from collection thread...");
                 break;
             }
-            // trace!("No problem sending from collection thread!");
 
             if let Ok((is_terminated, _wait_timeout_result)) = termination_ctrl_cvar.wait_timeout(
                 termination_ctrl_lock.lock().unwrap(),
                 Duration::from_millis(update_time),
             ) {
                 if *is_terminated {
-                    // trace!("Received termination lock in collection thread from cvar!");
                     drop(is_terminated);
                     break;
                 }
             }
         }
-        // trace!("Collection thread loop has closed.");
     })
 }

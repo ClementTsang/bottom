@@ -151,7 +151,6 @@ impl DataCollector {
         }
 
         if self.widgets_to_harvest.use_battery {
-            // trace!("First run battery vec creation.");
             if let Ok(battery_manager) = Manager::new() {
                 if let Ok(batteries) = battery_manager.batteries() {
                     let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();
@@ -163,12 +162,10 @@ impl DataCollector {
             }
         }
 
-        // trace!("Running first run.");
         futures::executor::block_on(self.update_data());
-        // trace!("First run done.  Sleeping for 250ms...");
+
         std::thread::sleep(std::time::Duration::from_millis(250));
 
-        // trace!("First run done.  Running first run cleanup now.");
         self.data.cleanup();
 
         // trace!("Enabled widgets to harvest: {:#?}", self.widgets_to_harvest);
