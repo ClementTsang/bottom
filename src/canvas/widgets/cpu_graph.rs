@@ -2,7 +2,7 @@ use once_cell::sync::Lazy;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App},
+    app::{layout_manager::WidgetDirection, AppState},
     canvas::{
         drawing_utils::{get_column_widths, get_start_position, interpolate_points},
         Painter,
@@ -34,19 +34,19 @@ static CPU_LEGEND_HEADER_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
 
 pub trait CpuGraphWidget {
     fn draw_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     );
     fn draw_cpu_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     );
     fn draw_cpu_legend<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl CpuGraphWidget for Painter {
     fn draw_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     ) {
         if draw_loc.width as f64 * 0.15 <= 6.0 {
             // Skip drawing legend
@@ -132,7 +132,7 @@ impl CpuGraphWidget for Painter {
     }
 
     fn draw_cpu_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     ) {
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
@@ -382,7 +382,7 @@ impl CpuGraphWidget for Painter {
     }
 
     fn draw_cpu_legend<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     ) {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))

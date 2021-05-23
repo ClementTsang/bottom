@@ -1,5 +1,5 @@
 use crate::{
-    app::App,
+    app::AppState,
     canvas::{
         drawing_utils::{get_column_widths, get_search_start_position, get_start_position},
         Painter,
@@ -103,7 +103,7 @@ pub trait ProcessTableWidget {
     /// Draws and handles all process-related drawing.  Use this.
     /// - `widget_id` here represents the widget ID of the process widget itself!
     fn draw_process_features<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 
@@ -112,7 +112,7 @@ pub trait ProcessTableWidget {
     ///
     /// This should not be directly called.
     fn draw_processes_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 
@@ -122,7 +122,7 @@ pub trait ProcessTableWidget {
     ///
     /// This should not be directly called.
     fn draw_search_field<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 
@@ -132,14 +132,14 @@ pub trait ProcessTableWidget {
     ///
     /// This should not be directly called.
     fn draw_process_sort<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 }
 
 impl ProcessTableWidget for Painter {
     fn draw_process_features<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
@@ -185,7 +185,7 @@ impl ProcessTableWidget for Painter {
     }
 
     fn draw_processes_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
@@ -567,7 +567,7 @@ impl ProcessTableWidget for Painter {
     }
 
     fn draw_search_field<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         fn build_query<'a>(
@@ -786,7 +786,7 @@ impl ProcessTableWidget for Painter {
     }
 
     fn draw_process_sort<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         let is_on_widget = widget_id == app_state.current_widget.widget_id;

@@ -1,5 +1,5 @@
 use crate::{
-    app::App,
+    app::AppState,
     canvas::{drawing_utils::interpolate_points, Painter},
     constants::*,
 };
@@ -17,13 +17,13 @@ use unicode_segmentation::UnicodeSegmentation;
 
 pub trait MemGraphWidget {
     fn draw_memory_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl MemGraphWidget for Painter {
     fn draw_memory_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     ) {
         if let Some(mem_widget_state) = app_state.mem_state.widget_states.get_mut(&widget_id) {
             let mem_data: &mut [(f64, f64)] = &mut app_state.canvas_data.mem_data;
