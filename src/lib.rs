@@ -29,7 +29,7 @@ use crossterm::{
 use app::{
     data_harvester::{self, processes::ProcessSorting},
     layout_manager::{UsedWidgets, WidgetDirection},
-    App,
+    AppState,
 };
 use constants::*;
 use data_conversion::*;
@@ -71,7 +71,7 @@ pub enum ThreadControlEvent {
     UpdateUpdateTime(u64),
 }
 
-pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
+pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) {
     match event {
         MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
         MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
@@ -92,7 +92,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 pub fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<ThreadControlEvent>,
+    event: KeyEvent, app: &mut AppState, reset_sender: &std::sync::mpsc::Sender<ThreadControlEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
@@ -240,7 +240,7 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
 
 pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    app: &mut App, painter: &mut canvas::Painter,
+    app: &mut AppState, painter: &mut canvas::Painter,
 ) -> error::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
         cleanup_terminal(terminal)?;
@@ -300,7 +300,7 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     .unwrap();
 }
 
-pub fn handle_force_redraws(app: &mut App) {
+pub fn handle_force_redraws(app: &mut AppState) {
     // Currently we use an Option... because we might want to future-proof this
     // if we eventually get widget-specific redrawing!
     if app.proc_state.force_update_all {
@@ -343,7 +343,7 @@ pub fn handle_force_redraws(app: &mut App) {
 }
 
 #[allow(clippy::needless_collect)]
-pub fn update_all_process_lists(app: &mut App) {
+pub fn update_all_process_lists(app: &mut AppState) {
     // According to clippy, I can avoid a collect... but if I follow it,
     // I end up conflicting with the borrow checker since app is used within the closure... hm.
     if !app.is_frozen {
@@ -360,7 +360,7 @@ pub fn update_all_process_lists(app: &mut App) {
     }
 }
 
-fn update_final_process_list(app: &mut App, widget_id: u64) {
+fn update_final_process_list(app: &mut AppState, widget_id: u64) {
     let process_states = app
         .proc_state
         .widget_states

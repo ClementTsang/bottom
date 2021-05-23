@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use crate::{
-    app::App,
+    app::AppState,
     canvas::{drawing_utils::*, Painter},
     constants::*,
     data_conversion::ConvertedCpuData,
@@ -17,13 +17,13 @@ use tui::{
 
 pub trait CpuBasicWidget {
     fn draw_basic_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl CpuBasicWidget for Painter {
     fn draw_basic_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     ) {
         // Skip the first element, it's the "all" element
         if app_state.canvas_data.cpu_data.len() > 1 {

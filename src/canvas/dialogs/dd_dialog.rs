@@ -9,7 +9,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, KillSignal},
+    app::{AppState, KillSignal},
     canvas::Painter,
 };
 
@@ -17,19 +17,20 @@ const DD_BASE: &str = " Confirm Kill Process ── Esc to close ";
 const DD_ERROR_BASE: &str = " Error ── Esc to close ";
 
 pub trait KillDialog {
-    fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>>;
+    fn get_dd_spans(&self, app_state: &AppState) -> Option<Text<'_>>;
 
     fn draw_dd_confirm_buttons<B: Backend>(
-        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
+        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut AppState,
     );
 
     fn draw_dd_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut AppState,
+        draw_loc: Rect,
     ) -> bool;
 }
 
 impl KillDialog for Painter {
-    fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>> {
+    fn get_dd_spans(&self, app_state: &AppState) -> Option<Text<'_>> {
         if let Some(dd_err) = &app_state.dd_err {
             return Some(Text::from(vec![
                 Spans::default(),
@@ -68,7 +69,7 @@ impl KillDialog for Painter {
     }
 
     fn draw_dd_confirm_buttons<B: Backend>(
-        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
+        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut AppState,
     ) {
         if cfg!(target_os = "windows") || !app_state.app_config_fields.is_advanced_kill {
             let (yes_button, no_button) = match app_state.delete_dialog_state.selected_signal {
@@ -318,7 +319,8 @@ impl KillDialog for Painter {
     }
 
     fn draw_dd_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut AppState,
+        draw_loc: Rect,
     ) -> bool {
         if let Some(dd_text) = dd_text {
             let dd_title = if app_state.dd_err.is_some() {

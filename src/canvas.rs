@@ -13,14 +13,13 @@ use tui::{
 
 use canvas_colours::*;
 use dialogs::*;
-use screens::*;
 use widgets::*;
 
 use crate::{
     app::{
         self,
         layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
-        App,
+        AppState,
     },
     constants::*,
     data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
@@ -33,7 +32,6 @@ use crate::{
 mod canvas_colours;
 mod dialogs;
 mod drawing_utils;
-mod screens;
 mod widgets;
 
 /// Point is of time, data
@@ -299,7 +297,7 @@ impl Painter {
     }
 
     pub fn draw_data<B: Backend>(
-        &mut self, terminal: &mut Terminal<B>, app_state: &mut app::App,
+        &mut self, terminal: &mut Terminal<B>, app_state: &mut app::AppState,
     ) -> error::Result<()> {
         use BottomWidgetType::*;
 
@@ -521,13 +519,6 @@ impl Painter {
                     ),
                     _ => {}
                 }
-            } else if app_state.is_config_open {
-                let rect = Layout::default()
-                    .margin(0)
-                    .constraints([Constraint::Percentage(100)])
-                    .split(f.size())[0];
-
-                self.draw_config_screen(&mut f, app_state, rect)
             } else if app_state.app_config_fields.use_basic_mode {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.
@@ -715,7 +706,7 @@ impl Painter {
     }
 
     fn draw_widgets_with_constraints<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, widgets: &BottomColRow,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, widgets: &BottomColRow,
         widget_draw_locs: &[Rect],
     ) {
         use BottomWidgetType::*;

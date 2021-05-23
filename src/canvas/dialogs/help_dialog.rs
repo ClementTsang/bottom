@@ -1,6 +1,6 @@
 use unicode_width::UnicodeWidthStr;
 
-use crate::{app::App, canvas::Painter, constants};
+use crate::{app::AppState, canvas::Painter, constants};
 use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
@@ -14,14 +14,14 @@ const HELP_BASE: &str = " Help ── Esc to close ";
 
 pub trait HelpDialog {
     fn draw_help_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect,
     );
 }
 
 // TODO: [REFACTOR] Make generic dialog boxes to build off of instead?
 impl HelpDialog for Painter {
     fn draw_help_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect,
     ) {
         let help_title = Spans::from(vec![
             Span::styled(" Help ", self.colours.widget_title_style),

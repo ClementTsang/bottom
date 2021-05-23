@@ -2,7 +2,7 @@
 //! can actually handle.
 use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 use crate::{
-    app::{data_farmer, data_harvester, App, ProcWidgetState},
+    app::{data_farmer, data_harvester, AppState, ProcWidgetState},
     utils::{self, gen_util::*},
 };
 use data_harvester::processes::ProcessSorting;
@@ -83,7 +83,7 @@ pub struct ConvertedCpuData {
     pub legend_value: String,
 }
 
-pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
+pub fn convert_temp_row(app: &AppState) -> Vec<Vec<String>> {
     let current_data = &app.data_collection;
     let temp_type = &app.app_config_fields.temperature_type;
 

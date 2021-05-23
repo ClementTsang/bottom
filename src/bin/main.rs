@@ -50,7 +50,6 @@ fn main() -> Result<()> {
         &widget_layout,
         default_widget_id,
         &default_widget_type_option,
-        config_path,
     )?;
 
     // Create painter and set colours.
