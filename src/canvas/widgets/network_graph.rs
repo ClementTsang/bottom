@@ -3,7 +3,7 @@ use std::cmp::max;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{App, AxisScaling},
+    app::{AppState, AxisScaling},
     canvas::{
         drawing_utils::{get_column_widths, interpolate_points},
         Painter,
@@ -34,22 +34,22 @@ static NETWORK_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
 
 pub trait NetworkGraphWidget {
     fn draw_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     );
 
     fn draw_network_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
         hide_legend: bool,
     );
 
     fn draw_network_labels<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     );
 }
 
 impl NetworkGraphWidget for Painter {
     fn draw_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     ) {
         if app_state.app_config_fields.use_old_network_legend {
             let network_chunk = Layout::default()
@@ -80,7 +80,7 @@ impl NetworkGraphWidget for Painter {
     }
 
     fn draw_network_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
         hide_legend: bool,
     ) {
         /// Point is of time, data
@@ -618,7 +618,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.rx_style)
-                        .data(&network_data_rx)
+                        .data(network_data_rx)
                         .graph_type(tui::widgets::GraphType::Line),
                     Dataset::default()
                         .name(format!("TX: {:7}", app_state.canvas_data.tx_display))
@@ -628,7 +628,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.tx_style)
-                        .data(&network_data_tx)
+                        .data(network_data_tx)
                         .graph_type(tui::widgets::GraphType::Line),
                     Dataset::default()
                         .name(format!(
@@ -653,7 +653,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.rx_style)
-                        .data(&network_data_rx)
+                        .data(network_data_rx)
                         .graph_type(tui::widgets::GraphType::Line),
                     Dataset::default()
                         .name(&app_state.canvas_data.tx_display)
@@ -663,7 +663,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.tx_style)
-                        .data(&network_data_tx)
+                        .data(network_data_tx)
                         .graph_type(tui::widgets::GraphType::Line),
                 ]
             };
@@ -702,7 +702,7 @@ impl NetworkGraphWidget for Painter {
     }
 
     fn draw_network_labels<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, widget_id: u64,
     ) {
         let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
             0

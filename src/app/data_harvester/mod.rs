@@ -238,7 +238,7 @@ impl DataCollector {
         if let Some(battery_manager) = &self.battery_manager {
             if let Some(battery_list) = &mut self.battery_list {
                 self.data.list_of_batteries =
-                    Some(batteries::refresh_batteries(&battery_manager, battery_list));
+                    Some(batteries::refresh_batteries(battery_manager, battery_list));
             }
         }
 

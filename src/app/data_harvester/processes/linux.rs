@@ -137,7 +137,7 @@ fn read_proc(
                             first_part
                                 .rsplit_once('/')
                                 .map(|(_prefix, suffix)| suffix)
-                                .unwrap_or(&truncated_name)
+                                .unwrap_or(truncated_name)
                                 .to_string()
                         } else {
                             truncated_name.to_string()
@@ -155,7 +155,7 @@ fn read_proc(
     let process_state_char = stat.state;
     let process_state = ProcessStatus::from(process_state_char).to_string();
     let (cpu_usage_percent, new_process_times) = get_linux_cpu_usage(
-        &stat,
+        stat,
         cpu_usage,
         cpu_fraction,
         prev_proc.cpu_time,
@@ -258,7 +258,7 @@ pub fn get_process_data(
                             }
 
                             if let Ok((process_harvest, new_process_times)) = read_proc(
-                                &prev_proc_details,
+                                prev_proc_details,
                                 stat,
                                 cpu_usage,
                                 cpu_fraction,

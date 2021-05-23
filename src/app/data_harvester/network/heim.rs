@@ -25,7 +25,7 @@ pub async fn get_network_data(
                 if filter.is_list_ignored {
                     let mut ret = true;
                     for r in &filter.list {
-                        if r.is_match(&io.interface()) {
+                        if r.is_match(io.interface()) {
                             ret = false;
                             break;
                         }
