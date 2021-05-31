@@ -3,7 +3,7 @@
 ![ci](https://github.com/ClementTsang/bottom/workflows/ci/badge.svg)
 [![crates.io link](https://img.shields.io/crates/v/bottom.svg)](https://crates.io/crates/bottom)
 
-A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
+A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by [gtop](https://github.com/aksakalli/gtop), [gotop](https://github.com/xxxserxxx/gotop), and [htop](https://github.com/htop-dev/htop/).
 
 ![Quick demo recording showing off searching, expanding, and process killing.](assets/demo.gif) _Theme based on [gruvbox](https://github.com/morhetz/gruvbox)_ (`--color gruvbox`). _Font is [IBM Plex Mono](https://www.ibm.com/plex/), terminal is [Kitty](https://sw.kovidgoyal.net/kitty/)._
 
@@ -818,10 +818,8 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
 
 ## Thanks
 
-- This project is very much inspired by [gotop](https://github.com/cjbassi/gotop),
-  its successor [ytop](https://github.com/cjbassi/ytop), and [gtop](https://github.com/aksakalli/gtop).
-
-- Basic mode is heavily inspired by [htop's](https://hisham.hm/htop/) design.
+- This project is very much inspired by [gotop](https://github.com/xxxserxxx/gotop),
+  [ytop](https://github.com/cjbassi/ytop), [gtop](https://github.com/aksakalli/gtop), and [htop](https://github.com/htop-dev/htop/).
 
 - This application was written with many, _many_ libraries, and built on the
   work of many talented people. This application would be impossible without their
