@@ -570,7 +570,7 @@ By default, bottom will look at (based on [dirs](https://github.com/dirs-dev/dir
 
 | OS                                                                      | Location |
 | ----------------------------------------------------------------------- | -------- |
-| `~/.config/bottom/bottom.toml` or `$XDG_CONFIG_HOME/bottom/bottom.toml` | Linux    |
+| `~/.config/bottom/bottom.toml` or `$XDG_CONFIG_HOME/bottom/bottom.toml` | Linux/macOS    |
 | `$HOME/Library/Application Support/bottom/bottom.toml`                  | macOS    |
 | `C:\Users\<USER>\AppData\Roaming\bottom\bottom.toml`                    | Windows  |
 
