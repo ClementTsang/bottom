@@ -134,6 +134,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "briandipalma",
+      "name": "Brian Di Palma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1597820?v=4",
+      "profile": "https://github.com/briandipalma",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
