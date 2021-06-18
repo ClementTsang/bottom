@@ -1,5 +1,7 @@
 //! Process data collection for Linux.
 
+use std::collections::hash_map::Entry;
+
 use crate::utils::error::{self, BottomError};
 use crate::Pid;
 
@@ -232,9 +234,9 @@ pub fn get_process_data(
                 if let Ok(dir) = dir {
                     if let Ok(pid) = dir.file_name().to_string_lossy().trim().parse::<Pid>() {
                         let mut fresh = false;
-                        if !pid_mapping.contains_key(&pid) {
+                        if let Entry::Vacant(entry) = pid_mapping.entry(pid) {
                             if let Ok(ppd) = PrevProcDetails::new(pid) {
-                                pid_mapping.insert(pid, ppd);
+                                entry.insert(ppd);
                                 fresh = true;
                             } else {
                                 // Bail early.
