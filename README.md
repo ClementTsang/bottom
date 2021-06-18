@@ -24,6 +24,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [Solus](#solus)
+  - [MacPorts](#macports)
   - [Homebrew](#homebrew)
   - [Scoop](#scoop)
   - [Chocolatey](#chocolatey)
@@ -211,6 +212,13 @@ brew install bottom
 
 # If you need to be more specific, use:
 brew install clementtsang/bottom/bottom
+```
+
+### MacPorts
+
+```bash
+sudo port selfupdate
+sudo port install bottom
 ```
 
 ### Scoop
