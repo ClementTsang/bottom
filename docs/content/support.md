@@ -25,7 +25,7 @@ bottom from the repo/source, then please try that as well.
 
 #### macOS
 
-- The process widget may require elevated access (ex: `sudo btm`) to gather all data in some cases.
+- The process widget may require elevated access (ex: `sudo btm`) to gather all data in some cases. _Please note that you should be certain that you trust any software you grant root privileges._
 
 ## Unofficial support
 

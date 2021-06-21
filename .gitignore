@@ -34,3 +34,4 @@ deny.toml
 
 # mkdocs
 site/
+docs/site

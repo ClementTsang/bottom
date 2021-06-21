@@ -36,6 +36,8 @@ You may have to run the program with elevated privileges - for example:
 sudo btm
 ```
 
+_Please note that you should be certain that you trust any software you grant root privileges._
+
 There are measures taken to try to maximize the amount of information obtained without elevated privileges, but there may still be some limitations.
 
 ## My configuration file isn't working
