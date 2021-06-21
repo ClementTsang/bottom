@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       isMock:
-        description: "Mock nightly run, fill in with anything to trigger a mock build."
-        default: ""
+        description: "Replace to trigger a non-mock run."
+        default: "mock"
         required: false
 
 jobs:
@@ -24,23 +24,30 @@ jobs:
       - name: Check if mock
         run: |
           echo "${{ github.event.inputs.isMock }}";
+          if [[ -z "${{ github.event.inputs.isMock }}" ]]; then
+            echo "This is a scheduled nightly run."
+          elif [[ "${{ github.event.inputs.isMock }}" == "mock" ]]; then
+            echo "This is a mock run."
+          else
+            echo "This is NOT a mock run.  Watch for the generated files!"
+          fi
 
       - name: Delete tag and release
         uses: dev-drprasad/delete-tag-and-release@v0.1.3
-        if: github.event.inputs.isMock == ''
+        if: github.event.inputs.isMock != 'mock'
         with:
           delete_release: true
           tag_name: nightly
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release.
+      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
         run: sleep 10
 
       - name: Create nightly GitHub release
         id: release
         uses: actions/create-release@v1
-        if: github.event.inputs.isMock == ''
+        if: github.event.inputs.isMock != 'mock'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -172,12 +179,6 @@ jobs:
         with:
           args: install -y wixtoolset
 
-      - name: Install zip (Windows)
-        if: matrix.triple.os == 'windows-2019'
-        uses: crazy-max/ghaction-chocolatey@v1.4.0
-        with:
-          args: install -y zip
-
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -210,7 +211,8 @@ jobs:
         shell: bash
         run: |
           cp target/${{ matrix.triple.target }}/release/btm.exe btm.exe
-          zip -r bottom_${{ matrix.triple.target }}.zip "btm.exe" "completion"
+          7z a bottom_${{ matrix.triple.target }}.zip "btm.exe"
+          7z a bottom_${{ matrix.triple.target }}.zip "completion"
           echo "ASSET=bottom_${{ matrix.triple.target }}.zip" >> $GITHUB_ENV
 
       - name: Bundle release and completion (Linux and macOS)
@@ -224,7 +226,7 @@ jobs:
       # TODO: Move this elsewhere; do this all at once, and do not continue if any fails.  Store artifacts.  Do the same for deployment.
 
       - name: Upload main release
-        if: github.event.inputs.isMock == ''
+        if: github.event.inputs.isMock != 'mock'
         uses: actions/upload-release-asset@v1.0.1
         id: upload
         env:
@@ -244,7 +246,7 @@ jobs:
           cargo wix
 
       - name: Upload msi file (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc' && github.event.inputs.isMock == ''
+        if: matrix.triple.target == 'x86_64-pc-windows-msvc' && github.event.inputs.isMock != 'mock'
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -262,7 +264,7 @@ jobs:
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
       - name: Upload Debian file (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock == ''
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock != 'mock'
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -279,7 +281,7 @@ jobs:
           tar -C ./completion -czvf completion.tar.gz .
 
       - name: Release completion files (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock == ''
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock != 'mock'
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
