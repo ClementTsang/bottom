@@ -102,11 +102,16 @@ markdown_extensions:
   - pymdownx.superfences
   - mdx_truly_sane_lists # See https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
 
+extra:
 # Versioning
-# extra:
 #   version:
 #     provider: mike
 #     default: nightly
+  # GA
+  analytics:
+    provider: google
+    property: G-L04GTMT28R
+
 
 # Navigation
 nav:
