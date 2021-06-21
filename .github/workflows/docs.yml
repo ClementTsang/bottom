@@ -1,0 +1,27 @@
+name: docs
+on:
+  workflow_dispatch:
+    # inputs:
+    #   version:
+    #     description: "The documentation version to update. Defaults to nightly."
+    #     default: "nightly"
+    #     required: false
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+jobs:
+  build-documentation:
+    name: Build and deploy docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - run: pip install mkdocs-material
+      - run: pip install mdx_truly_sane_lists
+      - run: cd docs/
+      - run: mkdocs gh-deploy --force

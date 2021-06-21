@@ -24,6 +24,6 @@ _If relevant, ensure the following have been met:_
 
 - [ ] _Areas your change affects have been linted using rustfmt (`cargo fmt`)_
 - [ ] _The change has been tested and doesn't appear to cause any unintended breakage_
-- [ ] _Documentation has been added/updated if needed (README, help menu, etc.)_
+- [ ] _Documentation has been added/updated if needed (`README.md`, help menu, etc.)_
 - [ ] _The pull request passes the provided CI pipeline_
 - [ ] _There are no merge conflicts_

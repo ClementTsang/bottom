@@ -11,6 +11,7 @@ on:
       isMock:
         description: "Mock nightly run, fill in with anything to trigger a mock build."
         default: ""
+        required: false
 
 jobs:
   create-github-release:
