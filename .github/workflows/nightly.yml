@@ -10,7 +10,7 @@ on:
     inputs:
       isNotMock:
         description: "Fill in to trigger a non-mock run."
-        default: ""
+        default: "mock"
         required: false
 
 jobs:
@@ -25,7 +25,9 @@ jobs:
         run: |
           echo "${{ github.event.inputs.isNotMock }}";
           if [[ -z "${{ github.event.inputs.isNotMock }}" ]]; then
-            echo "This is a mock nightly run!"
+            echo "This is a scheduled nightly run."
+          elif [[ "${{ github.event.inputs.isNotMock }}" == "mock" ]]; then
+            echo "This is a mock run."
           else
             echo "This is NOT a mock run.  Watch for the generated files!"
           fi
