@@ -23,5 +23,6 @@ jobs:
           python-version: 3.x
       - run: pip install mkdocs-material
       - run: pip install mdx_truly_sane_lists
-      - run: cd docs/
-      - run: mkdocs gh-deploy --force
+      - run: |
+          cd docs/
+          mkdocs gh-deploy --force

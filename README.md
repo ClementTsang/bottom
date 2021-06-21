@@ -226,7 +226,7 @@ The release binaries are packaged with shell auto-completion files for bash, fis
 
 You can run bottom using `btm`.
 
-For help on flags, use `btm -h` for a quick overview or `btm --help` for more details.
+For help on flags, use `btm -h` for a quick overview or `btm --help` for more details. You can find more information on usage in the [documentation](https://clementtsang.github.io/bottom/).
 
 ## Configuration
 
