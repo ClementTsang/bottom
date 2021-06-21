@@ -1,0 +1,139 @@
+# Site information
+site_name: bottom
+site_author: Clement Tsang
+site_url: https://clementtsang.github.io/bottom
+site_description: >-
+  Yet another cross-platform graphical process/system monitor, inspired by gtop, gotop, and htop.
+docs_dir: "content/"
+
+# Project information
+repo_name: ClementTsang/bottom
+repo_url: https://github.com/ClementTsang/bottom
+
+# Theming
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.expand
+    - navigation.instant
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+extra_css:
+  - stylesheets/extra.css
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      anchorlink: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys:
+      # Override to make it case-sensitive
+      key_map: {
+        "a": "a",
+        "b": "b",
+        "c": "c",
+        "d": "d",
+        "e": "e",
+        "f": "f",
+        "g": "g",
+        "h": "h",
+        "i": "i",
+        "j": "j",
+        "k": "k",
+        "l": "l",
+        "m": "m",
+        "n": "n",
+        "o": "o",
+        "p": "p",
+        "q": "q",
+        "r": "r",
+        "s": "s",
+        "t": "t",
+        "u": "u",
+        "v": "v",
+        "w": "w",
+        "x": "x",
+        "y": "y",
+        "z": "z",
+        "A": "A",
+        "B": "B",
+        "C": "C",
+        "D": "D",
+        "E": "E",
+        "F": "F",
+        "G": "G",
+        "H": "H",
+        "I": "I",
+        "J": "J",
+        "K": "K",
+        "L": "L",
+        "M": "M",
+        "N": "N",
+        "O": "O",
+        "P": "P",
+        "Q": "Q",
+        "R": "R",
+        "S": "S",
+        "T": "T",
+        "U": "U",
+        "V": "V",
+        "W": "W",
+        "X": "X",
+        "Y": "Y",
+        "Z": "Z"
+      }
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - mdx_truly_sane_lists # See https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
+
+# Versioning
+# extra:
+#   version:
+#     provider: mike
+#     default: nightly
+
+# Navigation
+nav:
+  - "Home": index.md
+  - "Support": support.md
+  - "Usage":
+    - "General Usage": usage/general-usage.md
+    - "Widgets":
+      - "CPU Widget": usage/widgets/cpu.md
+      - "Memory Widget": usage/widgets/memory.md
+      - "Process Widget": usage/widgets/process.md
+      - "Disk Widget": usage/widgets/disk.md
+      - "Temperature Widget": usage/widgets/temperature.md
+      - "Network Widget": usage/widgets/network.md
+      - "Battery Widget": usage/widgets/battery.md
+    - "Basic Mode": usage/basic-mode.md
+  - "Configuration":
+      - "Command-line Flags": configuration/command-line-flags.md
+      - "Config File":
+        - "Default Config": configuration/config-file/default-config.md
+        - "Flags": configuration/config-file/flags.md
+        - "Theming": configuration/config-file/theming.md
+        - "Layout": configuration/config-file/layout.md
+        - "Data Filtering": configuration/config-file/data-filtering.md
+  - "Contribution":
+      - "Issues and Pull Requests": contribution/issues-and-pull-requests.md
+      - "Documentation": contribution/documentation.md
+      - "Development": contribution/development.md
+      - "Packaging and Distribution": contribution/packaging-and-distribution.md
+  - "Troubleshooting": troubleshooting.md

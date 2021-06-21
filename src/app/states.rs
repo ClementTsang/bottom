@@ -333,7 +333,6 @@ impl Default for ProcColumn {
     }
 }
 
-// TODO: [SORTING] Sort by clicking on column header (ie: click on cpu, sort/invert cpu sort)?
 impl ProcColumn {
     /// Returns its new status.
     pub fn toggle(&mut self, column: &ProcessSorting) -> Option<bool> {

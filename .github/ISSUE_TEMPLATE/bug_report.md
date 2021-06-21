@@ -6,60 +6,40 @@ labels: "bug"
 assignees: ""
 ---
 
+Before you report, please take a look at [Troubleshooting](https://clementtsang.github.io/bottom/troubleshooting) to see if there's already an answer to your problem.
+
+Also, **please fill in all fields if possible** - if the issue is too hard to reproduce or vague, it may not be fixed!
+
 ## Describe the bug
 
-_A clear and concise description of what the bug is and what the expected behaviour was. If applicable, add screenshots to help explain your problem:_
+Give a high level description of the bug.
 
-## How to reproduce
+## What operating system/architecture are you using?
 
-_Steps on how to reproduce the behaviour.  Please try to include this section so I can reproduce your problem in order to fix it.  If you are using any runtime flags (i.e. `btm --group`) please mention them as part of this.:_
+Please mention what operating system, version, and architecture you're experiencing the problem on (ex: macOS 10.13, x86_64). Please also ensure that your system is [on the list of supported systems](https://github.com/ClementTsang/bottom#support) - bug reports on unsupported systems are likely to be closed.
 
-## bottom version
+## What terminal are you using `bottom` on?
 
-_Use `btm -V` and report the version of bottom you have installed. Also, if you're not on the latest version, please [try that](https://github.com/ClementTsang/bottom/releases/latest) and see if the problem is already resolved._
+Please mention what terminal/terminal emulator you are using `bottom` on (ex: Konsole, Kitty).
 
-## bottom config file (if used)
+## What version are you on?
 
-_If you're using a config file, please include it in the report._
+Please ensure that the bug still exists on the [latest stable release](https://github.com/ClementTsang/bottom/releases/latest) or newer (i.e. nightly). If so, mention
+what version you are using here.
 
-## Installation method
+## How did you install `bottom`?
 
-_How did you install bottom? Note if it's not a supported method, I may not be able to help you._
+Please mention how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
 
-## Platform and environment information
+## How can we reproduce this?
 
-### Operating system, OS version, and architecture
+Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as possible, and include config files or flags if relevant.
+If maintainers cannot reproduce the bug, it will be very hard to fix it.
 
-_Please specify your operating system, the version, and architecture, so I can try to replicate your environment as best as possible. Note that the officially supported platforms are:_
+## What is the actual behaviour?
 
-- _macOS (`x86_64`)_
-- _Linux (`x86_64`, `i686`, `aarch64`)_
-- _Windows (`x86_64`, `i686`)_
+What is the _actual_ result of the given steps? Be detailed. Please include screenshots if the issue is a visual one.
 
-_If your platform is not listed, please be aware I do not officially support it and may be unable to fix this issue._
+## What is the expected behaviour?
 
-### Terminal (i.e. urxvt, kitty, etc.)
-
-_Sometimes this matters, so please mention your terminal/terminal emulator._
-
-### Shell (i.e. zsh, bash, etc.)
-
-_Again, sometimes this matters, so please mention your shell type if possible._
-
-### Miscellaneous system info
-
-_Not totally necessary, but if possible, include details like:_
-
-_RAM size:_
-
-_SWAP size:_
-
-_CPU and number of cores:_
-
-### Rust version
-
-_Check this with `rustc --version`. This is only relevant if your version of bottom isn't from a pre-built binary (i.e. Cargo). Otherwise, feel free to skip._
-
-## Additional context
-
-_If anything hasn't been covered by the above categories, feel free to include it here:_
+What do you believe the expected behaviour should be given these steps?

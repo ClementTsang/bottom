@@ -31,3 +31,6 @@ deny.toml
 
 # vscode
 .vscode
+
+# mkdocs
+site/

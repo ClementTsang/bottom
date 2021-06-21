@@ -684,6 +684,7 @@ impl App {
         {
             proc_widget_state.is_tree_mode = !proc_widget_state.is_tree_mode;
 
+            // FIXME: For consistency, either disable tree mode if grouped, or allow grouped mode if in tree mode.
             if proc_widget_state.is_tree_mode {
                 // Disable grouping if so!
                 proc_widget_state.is_grouped = false;
@@ -2999,6 +3000,7 @@ impl App {
                                     }
                                 }
                                 BottomWidgetType::ProcSort => {
+                                    // TODO: This should sort if you double click!
                                     if let Some(proc_widget_state) = self
                                         .proc_state
                                         .get_widget_state(self.current_widget.widget_id - 2)

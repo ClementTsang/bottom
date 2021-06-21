@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Got a good idea that hasn't already been mentioned?  Suggest it!
+about: Got a good idea that hasn't already been suggested?  Mention it here!
 title: ""
 labels: "feature"
 assignees: ""
@@ -8,8 +8,5 @@ assignees: ""
 
 ### Describe the feature request
 
-_What is the feature of interest? Be clear and concise._
-
-### Additional context/details
-
-_Provide any additional context or details here. What needs to be done, why, etc:_
+Please describe what behaviour you are looking for, the motivation for it, and use cases for where this feature would be helpful.
+Try to be clear and concise - more details are usually helpful, but don't ramble on too much.
