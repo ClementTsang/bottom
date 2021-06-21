@@ -24,7 +24,7 @@ jobs:
       - name: Check if mock
         run: |
           echo "${{ github.event.inputs.isNotMock }}";
-          if [[ -n "${{ github.event.inputs.isNotMock }}" ]]; then
+          if [[ -z "${{ github.event.inputs.isNotMock }}" ]]; then
             echo "This is a mock nightly run!"
           else
             echo "This is NOT a mock run.  Watch for the generated files!"
