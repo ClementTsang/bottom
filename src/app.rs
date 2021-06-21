@@ -3112,7 +3112,8 @@ impl App {
                                 for (itx, ((tlc_x, tlc_y), (brc_x, brc_y))) in
                                     tab_spacing.iter().enumerate()
                                 {
-                                    if (x >= *tlc_x && y >= *tlc_y) && (x < *brc_x && y < *brc_y) {
+                                    if (x >= *tlc_x && y >= *tlc_y) && (x <= *brc_x && y <= *brc_y)
+                                    {
                                         battery_widget_state.currently_selected_battery_index = itx;
                                         break;
                                     }

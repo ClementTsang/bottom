@@ -9,7 +9,7 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Tabs},
 };
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -129,29 +129,32 @@ impl BatteryDisplayWidget for Painter {
                     charge_percentage,
                 );
 
-                let battery_items: Vec<Vec<&str>> = vec![
-                    vec!["Charge %", &bars],
-                    vec!["Consumption", &battery_details.watt_consumption],
+                let battery_rows = vec![
+                    Row::new(vec![
+                        Cell::from("Charge %").style(self.colours.text_style),
+                        Cell::from(bars).style(if charge_percentage < 10.0 {
+                            self.colours.low_battery_colour
+                        } else if charge_percentage < 50.0 {
+                            self.colours.medium_battery_colour
+                        } else {
+                            self.colours.high_battery_colour
+                        }),
+                    ]),
+                    Row::new(vec!["Consumption", &battery_details.watt_consumption])
+                        .style(self.colours.text_style),
                     if let Some(duration_until_full) = &battery_details.duration_until_full {
-                        vec!["Time to full", duration_until_full]
+                        Row::new(vec!["Time to full", duration_until_full])
+                            .style(self.colours.text_style)
                     } else if let Some(duration_until_empty) = &battery_details.duration_until_empty
                     {
-                        vec!["Time to empty", duration_until_empty]
+                        Row::new(vec!["Time to empty", duration_until_empty])
+                            .style(self.colours.text_style)
                     } else {
-                        vec!["Time to full/empty", "N/A"]
+                        Row::new(vec!["Time to full/empty", "N/A"]).style(self.colours.text_style)
                     },
-                    vec!["Health %", &battery_details.health],
+                    Row::new(vec!["Health %", &battery_details.health])
+                        .style(self.colours.text_style),
                 ];
-
-                let battery_rows = battery_items.into_iter().map(|item| {
-                    Row::new(item).style(if charge_percentage < 10.0 {
-                        self.colours.low_battery_colour
-                    } else if charge_percentage < 50.0 {
-                        self.colours.medium_battery_colour
-                    } else {
-                        self.colours.high_battery_colour
-                    })
-                });
 
                 // Draw
                 f.render_widget(
@@ -183,14 +186,13 @@ impl BatteryDisplayWidget for Painter {
                     let mut tab_click_locs: Vec<((u16, u16), (u16, u16))> = vec![];
                     for battery in battery_names {
                         // +1 because there's a space after the tab label.
-                        let width =
-                            unicode_width::UnicodeWidthStr::width(battery.as_str()) as u16 + 1;
+                        let width = unicode_width::UnicodeWidthStr::width(battery.as_str()) as u16;
                         tab_click_locs
                             .push(((current_x, current_y), (current_x + width, current_y)));
 
-                        // +2 because we want to go one space past to get to the '|', then one MORE
+                        // +4 because we want to go one space, then one space past to get to the '|', then 2 more
                         // to start at the blank space before the tab label.
-                        current_x = current_x + width + 2;
+                        current_x += width + 4;
                     }
                     battery_widget_state.tab_click_locs = Some(tab_click_locs);
                 }
