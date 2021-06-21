@@ -24,6 +24,11 @@ jobs:
       - name: Check if mock
         run: |
           echo "${{ github.event.inputs.isNotMock }}";
+          if [[ -n "${{ github.event.inputs.isNotMock }}" ]] then;
+            echo "This is a mock nightly run!"
+          else
+            echo "This is NOT a mock run.  Watch for the generated files!"
+          fi
 
       - name: Delete tag and release
         uses: dev-drprasad/delete-tag-and-release@v0.1.3
@@ -34,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release.
+      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
         run: sleep 10
 
       - name: Create nightly GitHub release
