@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
+- [#504](https://github.com/ClementTsang/bottom/pull/504): Fixes two bugs causing the battery widget colours and mouse events to be broken.
+
 ## [0.6.1] - 2021-05-11
 
 ## Bug Fixes
