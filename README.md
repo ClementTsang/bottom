@@ -2,7 +2,7 @@
 
 [<img src="https://img.shields.io/github/workflow/status/ClementTsang/bottom/ci/master?style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amaster)
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io">](https://crates.io/crates/bottom)
-[<img src="https://img.shields.io/badge/documentation-bottom-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="documentation">](https://clementtsang.github.io/bottom)
+[<img src="https://img.shields.io/badge/docs-bottom-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="documentation">](https://clementtsang.github.io/bottom)
 
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by [gtop](https://github.com/aksakalli/gtop), [gotop](https://github.com/xxxserxxx/gotop), and [htop](https://github.com/htop-dev/htop/).
 
