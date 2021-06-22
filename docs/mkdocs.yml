@@ -122,10 +122,10 @@ nav:
     - "Widgets":
       - "CPU Widget": usage/widgets/cpu.md
       - "Memory Widget": usage/widgets/memory.md
+      - "Network Widget": usage/widgets/network.md
       - "Process Widget": usage/widgets/process.md
       - "Disk Widget": usage/widgets/disk.md
       - "Temperature Widget": usage/widgets/temperature.md
-      - "Network Widget": usage/widgets/network.md
       - "Battery Widget": usage/widgets/battery.md
     - "Basic Mode": usage/basic-mode.md
   - "Configuration":
