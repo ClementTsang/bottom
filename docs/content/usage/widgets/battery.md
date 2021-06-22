@@ -3,7 +3,7 @@
 The battery widget provides information about batteries on the system.
 
 <figure>
-    <img src="../../../assets/screenshots/battery.png" alt="A picture of an expanded battery widget."/>
+    <img src="../../../assets/screenshots/battery.webp" alt="A picture of an expanded battery widget."/>
 </figure>
 
 The battery widget can be enabled through either the `--battery` flag, the `battery = true` option in a config file, or specifying the widget in a custom layout.

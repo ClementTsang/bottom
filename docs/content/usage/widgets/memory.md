@@ -3,7 +3,7 @@
 The memory widget provides a visual representation of RAM and swap usage over time.
 
 <figure>
-    <img src="../../../assets/screenshots/memory.png" alt="A picture of an expanded memory widget."/>
+    <img src="../../../assets/screenshots/memory.webp" alt="A picture of an expanded memory widget."/>
 </figure>
 
 ## Features

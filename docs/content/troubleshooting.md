@@ -7,14 +7,14 @@ It's possible that your graphs won't look great out of the box due to the relian
 One example of this is seeing a bunch of missing font characters, caused when the terminal isn't configured properly to render braille fonts.
 
 <figure>
-    <img src="../assets/screenshots/troubleshooting/no_braille.png" alt="Example of a terminal with no braille font."/>
+    <img src="../assets/screenshots/troubleshooting/no_braille.webp" alt="Example of a terminal with no braille font."/>
     <figcaption>Powershell shown missing braille fonts</figcaption>
 </figure>
 
 Another example is when braille is rendered as a block of dots, with the non-coloured dots also appearing. This may look strange for some users, and it is also caused by misconfiguration or missing fonts.
 
 <figure>
-    <img src="../assets/screenshots/troubleshooting/weird_braille.png" alt="Example of a terminal with the wrong braille font."/>
+    <img src="../assets/screenshots/troubleshooting/weird_braille.webp" alt="Example of a terminal with the wrong braille font."/>
     <figcaption>Braille fonts rendering as a block of dots</figcaption>
 </figure>
 
@@ -24,7 +24,7 @@ and ensuring your terminal uses should work.
 Another alternative is to use the `--dot_marker` option to instead render graph charts using dots, which I've generally found to be better supported out of the box:
 
 <figure>
-    <img src="../assets/screenshots/troubleshooting/dots.png" alt="Example of running bottom with the dot marker flag"/>
+    <img src="../assets/screenshots/troubleshooting/dots.webp" alt="Example of running bottom with the dot marker flag"/>
     <figcaption>Example using <code>btm --dot_marker</code></figcaption>
 </figure>
 

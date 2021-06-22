@@ -3,7 +3,7 @@
 Basic mode is a special layout that removes all of the graphs and provides an interface that resembles (a very stripped-down version of) htop.
 
 <figure>
-    <img src="../../assets/screenshots/basic.png" alt="A picture of bottom's basic mode."/>
+    <img src="../../assets/screenshots/basic.webp" alt="A picture of bottom's basic mode."/>
 </figure>
 
 Basic mode can be enabled either through a command line flag:

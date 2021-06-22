@@ -4,7 +4,7 @@ The process widget displays a table containing information regarding a running p
 searching, and process control features.
 
 <figure>
-    <img src="../../../assets/screenshots/process/process_default.png" alt="A picture of an expanded process widget by default."/>
+    <img src="../../../assets/screenshots/process/process_default.webp" alt="A picture of an expanded process widget by default."/>
 </figure>
 
 ## Features
@@ -36,7 +36,7 @@ sorting by that column, reverse the sorting order.
 Alternatively, one can sort using the sort menu sub-widget, which is brought up using ++s++ or ++f6++, and can be controlled by arrow keys or the mouse.
 
 <figure>
-    <img src="../../../assets/screenshots/process/process_sort_menu.png" alt="A picture of an expanded process widget with the sort menu open."/>
+    <img src="../../../assets/screenshots/process/process_sort_menu.webp" alt="A picture of an expanded process widget with the sort menu open."/>
 </figure>
 
 ### Grouping
@@ -45,7 +45,7 @@ Pressing ++tab++ in the table will group entries with the same name together. Th
 is added together when displayed.
 
 <figure>
-    <img src="../../../assets/screenshots/process/process_grouped.png" alt="A picture of grouped mode in a process widget."/>
+    <img src="../../../assets/screenshots/process/process_grouped.webp" alt="A picture of grouped mode in a process widget."/>
 </figure>
 
 Note that the process state and user columns are disabled in this mode.
@@ -55,7 +55,7 @@ Note that the process state and user columns are disabled in this mode.
 Pressing ++t++ or ++f5++ in the table toggles tree mode in the process widget, displaying processes in regards to their parent-child process relationships.
 
 <figure>
-    <img src="../../../assets/screenshots/process/process_tree.png" alt="A picture of tree mode in a process widget."/>
+    <img src="../../../assets/screenshots/process/process_tree.webp" alt="A picture of tree mode in a process widget."/>
 </figure>
 
 A process in tree mode can also be "collapsed", hiding its children and any descendants, using either the ++minus++ or ++plus++ keys, or double clicking on an entry.
@@ -67,7 +67,7 @@ Lastly, note that in tree mode, processes cannot be grouped together due to the 
 You can show the full command instead of just the process name by pressing ++P++.
 
 <figure>
-    <img src="../../../assets/screenshots/process/process_full.png" alt="A picture of a process widget using full commands."/>
+    <img src="../../../assets/screenshots/process/process_full.webp" alt="A picture of a process widget using full commands."/>
 </figure>
 
 ### Search
@@ -75,31 +75,31 @@ You can show the full command instead of just the process name by pressing ++P++
 Pressing ++slash++ or ++ctrl+f++ will open up the search sub-widget. By default, just typing in something will search by the process name.
 
 <figure>
-    <img src="../../../assets/screenshots/process/search/search.png" alt="A picture of searching for a process with a simple search."/>
+    <img src="../../../assets/screenshots/process/search/search.webp" alt="A picture of searching for a process with a simple search."/>
 </figure>
 
 This search can be further enhanced by matching by case, matching the entire word, or by regex.
 
 <figure>
-    <img src="../../../assets/screenshots/process/search/regex.png" alt="A picture of searching for a process with a search condition that uses regex."/>
+    <img src="../../../assets/screenshots/process/search/regex.webp" alt="A picture of searching for a process with a search condition that uses regex."/>
 </figure>
 
 We are able to also search for multiple things/conditions.
 
 <figure>
-    <img src="../../../assets/screenshots/process/search/or.png" alt="A picture of searching for a process with a search condition that uses the or operator."/>
+    <img src="../../../assets/screenshots/process/search/or.webp" alt="A picture of searching for a process with a search condition that uses the or operator."/>
 </figure>
 
 And if our search uses a keyword, we need to use quotation marks around the term to properly search it.
 
 <figure>
-    <img src="../../../assets/screenshots/process/search/quotes.png" alt="A picture of searching for a process with a search condition that needs quotation marks."/>
+    <img src="../../../assets/screenshots/process/search/quotes.webp" alt="A picture of searching for a process with a search condition that needs quotation marks."/>
 </figure>
 
 Lastly, we can refine our search even further based on the other columns, like PID, CPU usage, etc., as well as grouping together conditions.
 
 <figure>
-    <img src="../../../assets/screenshots/process/search/cpu.png" alt="A picture of searching for a process with a search condition that uses the CPU keyword."/>
+    <img src="../../../assets/screenshots/process/search/cpu.webp" alt="A picture of searching for a process with a search condition that uses the CPU keyword."/>
 </figure>
 
 #### Keywords
