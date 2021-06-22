@@ -3,7 +3,7 @@
 The temperature widget provides a table of temperature sensors and their current temperature.
 
 <figure>
-    <img src="../../../assets/screenshots/temperature.png" alt="A picture of an expanded temperature widget."/>
+    <img src="../../../assets/screenshots/temperature.webp" alt="A picture of an expanded temperature widget."/>
 </figure>
 
 ## Features

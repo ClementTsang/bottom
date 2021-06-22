@@ -3,7 +3,7 @@
 The disk widget provides a table of useful disk and partition information, like I/O per second and total usage.
 
 <figure>
-    <img src="../../../assets/screenshots/disk.png" alt="A picture of an expanded disk widget."/>
+    <img src="../../../assets/screenshots/disk.webp" alt="A picture of an expanded disk widget."/>
 </figure>
 
 ## Features

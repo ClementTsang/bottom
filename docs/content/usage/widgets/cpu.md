@@ -3,7 +3,7 @@
 The CPU widget displays a visual representation of CPU usage over a time range.
 
 <figure>
-    <img src="../../../assets/screenshots/cpu.png" alt="A picture of an expanded CPU widget showing average CPU usage."/>
+    <img src="../../../assets/screenshots/cpu.webp" alt="A picture of an expanded CPU widget showing average CPU usage."/>
 </figure>
 
 ## Features
