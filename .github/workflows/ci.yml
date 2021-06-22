@@ -9,9 +9,15 @@ name: ci
 on:
   workflow_dispatch:
   pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
   push:
     branches:
       - master
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
 
 jobs:
   # Check rustfmt
