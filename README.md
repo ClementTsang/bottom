@@ -21,31 +21,38 @@ As (yet another) process/system visualization and management application, bottom
 
 - Graphical visualization widgets for:
 
-  - CPU usage over time, at an average and per-core level
-  - RAM and swap usage over time
-  - Network I/O usage over time
+  - [CPU usage](https://clementtsang.github.io/bottom/usage/widgets/cpu/) over time, at an average and per-core level
+  - [RAM and swap usage](https://clementtsang.github.io/bottom/usage/widgets/memory/) over time
+  - [Network I/O usage](https://clementtsang.github.io/bottom/usage/widgets/network/) over time
 
   with support for zooming in/out the current time interval displayed.
 
-- Widgets for displaying info about disk capacity/usage, temperature sensors, and battery.
+- Widgets for displaying info about:
 
-- A widget for displaying, sorting, and searching info about processes, as well as support for:
+  - [Disk capacity/usage](https://clementtsang.github.io/bottom/usage/widgets/disk/)
+  - [Temperature sensors](https://clementtsang.github.io/bottom/usage/widgets/temperature/)
+  - [Battery usage](https://clementtsang.github.io/bottom/usage/widgets/battery/)
+
+- [A process widget](https://clementtsang.github.io/bottom/usage/widgets/process/) for displaying, sorting, and searching info about processes, as well as support for:
 
   - Kill signals
   - Tree mode
 
 - Cross-platform support for Linux, macOS, and Windows, with more planned in the future.
 
-- Customizable behaviour that can be controlled with command-line flags or a config file, such as:
+- [Customizable behaviour](https://clementtsang.github.io/bottom/configuration/command-line-flags/) that can be controlled with command-line flags or a config file, such as:
 
   - Custom and pre-built colour themes
   - Changing the default behaviour of some widgets
   - Changing the layout of widgets
   - Filtering out entries in disk and temperature widgets
 
-- And some other nice stuff, like:
-  - An htop-inspired basic mode
-  - Expanding widgets of interest
+- Some other nice stuff, like:
+
+  - [An htop-inspired basic mode](https://clementtsang.github.io/bottom/usage/basic-mode/)
+  - [Expansion, which focuses on just one widget](https://clementtsang.github.io/bottom/usage/general-usage/#expansion)
+
+- And more!
 
 You can find more details in [the documentation](https://clementtsang.github.io/bottom/usage/general-usage/).
 
@@ -226,7 +233,10 @@ The release binaries are packaged with shell auto-completion files for bash, fis
 
 You can run bottom using `btm`.
 
-For help on flags, use `btm -h` for a quick overview or `btm --help` for more details. You can find more information on usage in the [documentation](https://clementtsang.github.io/bottom/).
+- For help on flags, use `btm -h` for a quick overview or `btm --help` for more details.
+- For info on key and mouse bindings, refer to the [documentation](https://clementtsang.github.io/bottom/) or press `?` inside bottom.
+
+You can generally find more information on usage in the [documentation](https://clementtsang.github.io/bottom/).
 
 ## Configuration
 
