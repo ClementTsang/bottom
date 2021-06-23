@@ -805,7 +805,7 @@ impl App {
                         self.proc_state.force_update = Some(self.current_widget.widget_id - 1);
                     }
                 } else {
-                    self.start_dd()
+                    self.start_killing_process()
                 }
             }
         }
@@ -1303,7 +1303,7 @@ impl App {
         }
     }
 
-    pub fn start_dd(&mut self) {
+    pub fn start_killing_process(&mut self) {
         self.reset_multi_tap_keys();
 
         if let Some(proc_widget_state) = self
@@ -1482,7 +1482,7 @@ impl App {
                             self.awaiting_second_char = false;
                             self.second_char = None;
 
-                            self.start_dd();
+                            self.start_killing_process();
                         }
                     }
 

@@ -271,7 +271,7 @@ pub const CPU_HELP_TEXT: [&str; 2] = [
 
 pub const PROCESS_HELP_TEXT: [&str; 15] = [
     "3 - Process widget",
-    "dd               Kill the selected process",
+    "dd, F9           Kill the selected process",
     "c                Sort by CPU usage, press again to reverse sorting order",
     "m                Sort by memory usage, press again to reverse sorting order",
     "p                Sort by PID name, press again to reverse sorting order",
