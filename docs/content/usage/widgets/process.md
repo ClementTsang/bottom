@@ -168,7 +168,7 @@ Note that key bindings are generally case-sensitive.
 | ++down++ , ++j++       | Move down within a widget                                        |
 | ++g+g++ , ++home++     | Jump to the first entry in the table                             |
 | ++G++ , ++end++        | Jump to the last entry in the table                              |
-| ++d+d++                | Send a kill signal to the selected process                       |
+| ++d+d++ , ++f9++       | Send a kill signal to the selected process                       |
 | ++c++                  | Sort by CPU usage, press again to reverse sorting order          |
 | ++m++                  | Sort by memory usage, press again to reverse sorting order       |
 | ++p++                  | Sort by PID name, press again to reverse sorting order           |

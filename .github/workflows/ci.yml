@@ -12,12 +12,14 @@ on:
     paths-ignore:
       - 'README.md'
       - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
   push:
     branches:
       - master
     paths-ignore:
       - 'README.md'
       - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
 
 jobs:
   # Check rustfmt
