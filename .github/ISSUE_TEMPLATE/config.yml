@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question
+    about: |
+      For discussions or questions about bottom.
+    url: https://github.com/ClementTsang/bottom/discussions/new
