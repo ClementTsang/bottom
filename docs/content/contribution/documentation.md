@@ -26,4 +26,6 @@ There are a few areas where documentation changes are often needed:
 
    - For changes to the extended documentation, you'll want [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), and `mdx_truly_sane_lists` installed to provide live reloading and preview for your changes. You can do so through `pip` or your system's package managers. While you don't _need_ these, it'll probably help in making and validating changes.
 
+     You may also want [Mike](https://github.com/jimporter/mike), but it isn't really needed.
+
 3. Once you have your documentation changes done, submit it as a pull request. For more information regarding that, refer to [Issues and Pull Requests](http://127.0.0.1:8000/contribution/issues-and-pull-requests/).
