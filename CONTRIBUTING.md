@@ -26,5 +26,5 @@ The expected workflow for a pull request is:
 
 ## Further reading
 
-- For details on contributing to documentation, see [here](https://clementtsang.github.io/bottom/contribution/documentation/).
-- For details on packaging and distribution, see [here](https://clementtsang.github.io/bottom/contribution/packaging-and-distribution/).
+- For details on contributing to documentation, see [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
+- For details on packaging and distribution, see [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/).
