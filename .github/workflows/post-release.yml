@@ -1,0 +1,100 @@
+# Actions to run after releasing a version.
+name: post-release
+
+on:
+  release:
+    types: [published]
+
+env:
+  # Assign commit authorship to official Github Actions bot when pushing to the `gh-pages` branch:
+  GIT_USER: 'github-actions[bot]'
+  GIT_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set env
+        run: |
+          export RELEASE_VERSION=${{ github.event.release.tag_name }}
+          echo "RELEASE_VERSION=${RELEASE_VERSION:1}" >> $GITHUB_ENV
+
+      - name: Test env
+        run: |
+          echo $RELEASE_VERSION
+
+      - name: Make sure you're not on master...
+        run: |
+          if [[ $RELEASE_VERSION == "master" ]]; then
+            exit 1
+          fi
+
+      - name: Make sure you're not on nightly...
+        run: |
+          if [[ $RELEASE_VERSION == "nightly" ]]; then
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - run: pip install mkdocs-material
+
+      - run: pip install mdx_truly_sane_lists
+
+      - run: pip install mike
+
+      - name: Configure git user and email
+        run: |
+          git config --global user.name ${GIT_USER}
+          git config --global user.email ${GIT_EMAIL}
+          echo Name: $(git config --get user.name)
+          echo Email: $(git config --get user.email)
+
+      - name: Build and deploy docs with mike
+        run: |
+          cd docs
+          mike deploy --push --update-aliases ${RELEASE_VERSION} stable
+
+  packaging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Test env
+        run: |
+          echo $RELEASE_VERSION
+
+      - name: Make sure you're not on master...
+        run: |
+          if [[ $RELEASE_VERSION == "master" ]]; then
+            exit 1
+          fi
+
+      - name: Make sure you're not on nightly...
+        run: |
+          if [[ $RELEASE_VERSION == "nightly" ]]; then
+            exit 1
+          fi
+
+      - name: Trigger homebrew
+        run: |
+          curl -X POST https://api.github.com/repos/ClementTsang/homebrew-bottom/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
+          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
+
+      - name: Trigger choco
+        run: |
+          curl -X POST https://api.github.com/repos/ClementTsang/choco-bottom/dispatches \
+          -H 'Accept: application/vnd.github.everest-preview+json' \
+          -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
+          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'

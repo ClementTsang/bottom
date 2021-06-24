@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.2]/[0.7.0] - Unreleased
 
+## Features
+
+- [#518](https://github.com/ClementTsang/bottom/pull/518): Add `F9` key as an alternative process kill key.
+
 ## Bug Fixes
 
 - [#504](https://github.com/ClementTsang/bottom/pull/504): Fixes two bugs causing the battery widget colours and mouse events to be broken.

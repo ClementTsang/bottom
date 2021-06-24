@@ -103,10 +103,10 @@ markdown_extensions:
   - mdx_truly_sane_lists # See https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
 
 extra:
-# Versioning
-#   version:
-#     provider: mike
-#     default: nightly
+  # Versioning
+  version:
+    provider: mike
+    default: nightly
   # GA
   analytics:
     provider: google
