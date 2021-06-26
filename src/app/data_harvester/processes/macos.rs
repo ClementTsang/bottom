@@ -117,10 +117,10 @@ pub fn get_process_data(
     let cpu_usages = get_macos_process_cpu_usage(&cpu_usage_unknown_pids)?;
     for process in &mut process_vector {
         if cpu_usages.contains_key(&process.pid) {
-            process.cpu_usage_percent = if num_cpus == 0.0 {
+            process.cpu_usage_percent = if num_processors == 0.0 {
                 *cpu_usages.get(&process.pid).unwrap()
             } else {
-                *cpu_usages.get(&process.pid).unwrap() / num_cpus
+                *cpu_usages.get(&process.pid).unwrap() / num_processors
             };
         }
     }
