@@ -294,7 +294,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Build AUR PKGBUILD (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu'
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         run: |
           curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.RELEASE_VERSION }}.tar.gz"
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.RELEASE_VERSION }}.tar.gz"
