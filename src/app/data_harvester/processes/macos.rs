@@ -40,7 +40,7 @@ pub fn get_process_data(
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.get_processes();
     let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
-    let num_cpus = sys.get_processors().len() as f64;
+    let num_processors = sys.get_processors().len() as f64;
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
@@ -72,7 +72,7 @@ pub fn get_process_data(
         };
 
         let pcu = {
-            let p = process_val.cpu_usage() as f64 / num_cpus;
+            let p = process_val.cpu_usage() as f64 / num_processors;
             if p.is_nan() {
                 process_val.cpu_usage() as f64
             } else {
@@ -117,10 +117,10 @@ pub fn get_process_data(
     let cpu_usages = get_macos_process_cpu_usage(&cpu_usage_unknown_pids)?;
     for process in &mut process_vector {
         if cpu_usages.contains_key(&process.pid) {
-            process.cpu_usage_percent = if num_cpus == 0.0 {
+            process.cpu_usage_percent = if num_processors == 0.0 {
                 *cpu_usages.get(&process.pid).unwrap()
             } else {
-                *cpu_usages.get(&process.pid).unwrap() / num_cpus
+                *cpu_usages.get(&process.pid).unwrap() / num_processors
             };
         }
     }
