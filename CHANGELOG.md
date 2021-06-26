@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#504](https://github.com/ClementTsang/bottom/pull/504): Fixes two bugs causing the battery widget colours and mouse events to be broken.
 
+- [#525](https://github.com/ClementTsang/bottom/pull/525): Fixes Windows process CPU usage not being divided by the number of cores.
+
 ## [0.6.1] - 2021-05-11
 
 ## Bug Fixes
