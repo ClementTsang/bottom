@@ -20,6 +20,8 @@ on:
       - 'README.md'
       - 'docs/**'
       - '.github/ISSUE_TEMPLATE/**'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
 
 jobs:
   # Check rustfmt
