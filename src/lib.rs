@@ -46,6 +46,7 @@ pub mod canvas;
 pub mod clap;
 pub mod constants;
 pub mod data_conversion;
+mod drawing;
 pub mod options;
 pub mod units;
 
@@ -239,6 +240,7 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
     }
 }
 
+/// TODO: This function is useless.
 pub fn try_drawing(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
     app: &mut AppState, painter: &mut canvas::Painter,

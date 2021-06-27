@@ -56,6 +56,7 @@ sysinfo = "0.18.2"
 thiserror = "1.0.24"
 toml = "0.5.8"
 tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
+twox-hash = "1.6.0"
 typed-builder = "0.9.0"
 unicode-segmentation = "1.7.1"
 unicode-width = "0.1"
