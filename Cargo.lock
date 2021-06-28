@@ -237,7 +237,7 @@ dependencies = [
 
 [[package]]
 name = "bottom"
-version = "0.6.2-nightly"
+version = "0.6.3-nightly"
 dependencies = [
  "anyhow",
  "assert_cmd",

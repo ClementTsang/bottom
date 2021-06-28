@@ -95,7 +95,7 @@ yay -S bottom
 yay -S bottom-bin
 ```
 
-### Debian
+### Debian/Ubuntu
 
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
