@@ -78,3 +78,7 @@ If you want to use a config file in another location, use the `--config` or `-C`
 ```bash
 btm -C path_to_config
 ```
+
+## My installation through snap has some widgets that are blank/show no data
+
+Make sure bottom is given the correct permissions. [Snapcraft](https://snapcraft.io/docs/interface-management) explains how to do so.
