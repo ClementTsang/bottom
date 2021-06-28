@@ -39,7 +39,6 @@ jobs:
           echo Name: $(git config --get user.name)
           echo Email: $(git config --get user.email)
 
-
       - name: Build and deploy docs with mike
         run: |
           cd docs

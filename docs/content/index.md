@@ -8,7 +8,7 @@ This site serves as documentation for bottom, as well as an extension to the [`R
 
 !!! Warning
 
-    Some areas of this documentation is still in progress, and should get better in time.  Feel free to suggest/contribute changes!
+    Some areas of this documentation are still in progress, and should get better in time.  Feel free to suggest/contribute changes!
 
 ## Installation
 
