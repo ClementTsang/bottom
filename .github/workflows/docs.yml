@@ -44,5 +44,3 @@ jobs:
         run: |
           cd docs
           mike deploy nightly --push
-          mike set-default --push nightly
-
