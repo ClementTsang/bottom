@@ -13,10 +13,13 @@ hash_type = args[4]
 # Deployment files
 deployment_file_path_1 = args[5]
 deployment_file_path_2 = args[6] if len(args) > 6 else None
+deployment_file_path_3 = args[7] if len(args) > 7 else None
 
 print("Generating package for file: %s" % deployment_file_path_1)
 if deployment_file_path_2 is not None:
     print("and for file: %s" % deployment_file_path_2)
+if deployment_file_path_3 is not None:
+    print("and for file: %s" % deployment_file_path_3)
 print("     VERSION: %s" % version)
 print("     TEMPLATE PATH: %s" % template_file_path)
 print("     SAVING AT: %s" % generated_file_path)
@@ -31,8 +34,7 @@ def get_hash(deployment_file):
     elif str.lower(hash_type) == "sha1":
         deployment_hash = hashlib.sha1(deployment_file.read()).hexdigest()
     else:
-        print(
-            'Unsupported hash format "%s".  Please use SHA512, SHA256, or SHA1.', hash_type)
+        print('Unsupported hash format "%s".  Please use SHA512, SHA256, or SHA1.', hash_type)
         exit(1)
 
     print("Generated hash: %s" % str(deployment_hash))
@@ -47,11 +49,19 @@ with open(deployment_file_path_1, "rb") as deployment_file_1:
         with open(deployment_file_path_2, "rb") as deployment_file_2:
             deployment_hash_2 = get_hash(deployment_file_2)
 
+    deployment_hash_3 = None
+    if deployment_file_path_3 is not None:
+        with open(deployment_file_path_3, "rb") as deployment_file_3:
+            deployment_hash_3 = get_hash(deployment_file_3)
+
     with open(template_file_path, "r") as template_file:
         template = Template(template_file.read())
-        substitute = template.safe_substitute(
-            version=version, hash1=deployment_hash_1) if deployment_hash_2 is None else template.safe_substitute(
-            version=version, hash1=deployment_hash_1, hash2=deployment_hash_2)
+        substitute = template.safe_substitute(version=version, hash1=deployment_hash_1)
+        if deployment_hash_2 is not None:
+            substitute = template.safe_substitute(version=version, hash2=deployment_hash_2)
+        if deployment_hash_3 is not None:
+            substitute = template.safe_substitute(version=version, hash3=deployment_hash_3)
+
         print("\n================== Generated package file ==================\n")
         print(substitute)
         print("\n============================================================\n")

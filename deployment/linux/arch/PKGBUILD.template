@@ -2,7 +2,7 @@
 
 pkgname=bottom
 pkgver=$version
-pkgrel=0
+pkgrel=1
 pkgdesc="A cross-platform graphical process/system monitor with a customizable interface and a multitude of features."
 provides=('bottom')
 makedepends=('cargo')

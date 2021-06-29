@@ -299,25 +299,20 @@ jobs:
           curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.RELEASE_VERSION }}.tar.gz"
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.RELEASE_VERSION }}.tar.gz"
 
-      - name: Build AUR binary PKGBUILD (Linux x86-64 GNU)
+      - name: Tar AUR PKGBUILD (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz"
+          tar -czvf arch_PKGBUILD.tar.gz PKGBUILD
 
-      - name: Tar AUR PKGBUILDs
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
-        run: |
-          tar -czvf arch.tar.gz PKGBUILD_BIN PKGBUILD
-
-      - name: Upload AUR PKGBUILDs (Linux x86-64 GNU)
+      - name: Upload AUR PKGBUILD (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: arch.tar.gz
-          asset_name: arch.tar.gz
+          asset_path: arch_PKGBUILD.tar.gz
+          asset_name: arch_PKGBUILD.tar.gz
           asset_content_type: application/octet-stream
 
   additional-file-generation:
@@ -378,6 +373,27 @@ jobs:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: bottom.rb
           asset_name: bottom.rb
+          asset_content_type: application/octet-stream
+
+      - name: Build AUR PKGBUILD-bin
+        run: |
+          curl -LO https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-unknown-linux-gnu.tar.gz
+          curl -LO https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_aarch64-unknown-linux-gnu.tar.gz
+          curl -LO https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_armv7-unknown-linux-gnueabihf.tar.gz
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz" "./bottom_aarch64-unknown-linux-gnu.tar.gz" "./bottom_armv7-unknown-linux-gnueabihf.tar.gz"
+
+      - name: Tar AUR PKGBUILD-bin
+        run: |
+          tar -czvf arch_PKGBUILD_bin.tar.gz PKGBUILD
+
+      - name: Upload AUR PKGBUILD-bin
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: arch_PKGBUILD_bin.tar.gz
+          asset_name: arch_PKGBUILD_bin.tar.gz
           asset_content_type: application/octet-stream
 
       - name: Compress completion files (Linux x86-64 GNU)
