@@ -241,7 +241,7 @@ jobs:
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         shell: powershell
         run: |
-          cargo install cargo-wix
+          cargo install cargo-wix --version 0.3.1 --locked
           cargo wix init
           cargo wix
 
@@ -259,7 +259,7 @@ jobs:
       - name: Build Debian release (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         run: |
-          cargo install cargo-deb --version 1.29.0
+          cargo install cargo-deb --version 1.29.0 --locked
           cargo deb
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
