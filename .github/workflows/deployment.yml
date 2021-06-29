@@ -380,7 +380,7 @@ jobs:
           curl -LO https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_x86_64-unknown-linux-gnu.tar.gz
           curl -LO https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_aarch64-unknown-linux-gnu.tar.gz
           curl -LO https://github.com/ClementTsang/bottom/releases/download/${{ env.RELEASE_VERSION }}/bottom_armv7-unknown-linux-gnueabihf.tar.gz
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD_BIN" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz" "./bottom_aarch64-unknown-linux-gnu.tar.gz" "./bottom_armv7-unknown-linux-gnueabihf.tar.gz"
+          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD" "SHA512" "./bottom_x86_64-unknown-linux-gnu.tar.gz" "./bottom_aarch64-unknown-linux-gnu.tar.gz" "./bottom_armv7-unknown-linux-gnueabihf.tar.gz"
 
       - name: Tar AUR PKGBUILD-bin
         run: |
