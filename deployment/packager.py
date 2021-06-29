@@ -56,11 +56,16 @@ with open(deployment_file_path_1, "rb") as deployment_file_1:
 
     with open(template_file_path, "r") as template_file:
         template = Template(template_file.read())
-        substitute = template.safe_substitute(version=version, hash1=deployment_hash_1)
+
+        substitutes = dict()
+        substitutes["version"] = version
+        substitutes["hash1"] = deployment_hash_1
         if deployment_hash_2 is not None:
-            substitute = substitute.safe_substitute(version=version, hash2=deployment_hash_2)
+            substitutes["hash2"] = deployment_hash_2
         if deployment_hash_3 is not None:
-            substitute = substitute.safe_substitute(version=version, hash3=deployment_hash_3)
+            substitutes["hash3"] = deployment_hash_3
+
+        substitute = template.safe_substitute(substitutes)
 
         print("\n================== Generated package file ==================\n")
         print(substitute)
