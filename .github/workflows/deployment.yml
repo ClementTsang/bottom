@@ -236,7 +236,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Add download asset to artifact if required
-        if: matrix.triple.artifact = true
+        if: matrix.triple.artifact = 'true'
         run: cp ${{ env.ASSET }} artifacts/
 
       - name: Upload artifacts
