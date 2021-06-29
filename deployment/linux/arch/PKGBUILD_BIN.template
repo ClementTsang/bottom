@@ -2,21 +2,23 @@
 
 pkgname=bottom-bin
 pkgver=$version
-pkgrel=0
+pkgrel=1
 pkgdesc='A cross-platform graphical process/system monitor with a customizable interface and a multitude of features.'
 provides=('bottom')
 conflicts=('bottom')
-arch=('x86_64')
+arch=('x86_64' 'aarch64' 'armv7h')
 url="https://github.com/ClementTsang/bottom"
 license=(MIT)
-source=(
-    archive-${pkgver}.tar.gz::${url}/releases/download/${pkgver}/bottom_x86_64-unknown-linux-gnu.tar.gz
-    LICENSE::${url}/raw/${pkgver}/LICENSE
-)
-sha512sums=(
-    '$hash1'
-    SKIP
-)
+
+source=(LICENSE::${url}/raw/${pkgver}/LICENSE)
+source_x86_64=(archive-${pkgver}.tar.gz::${url}/releases/download/${pkgver}/bottom_x86_64-unknown-linux-gnu.tar.gz)
+source_aarch64=(archive-${pkgver}.tar.gz::${url}/releases/download/${pkgver}/bottom_aarch64-unknown-linux-gnu.tar.gz)
+source_armv7h=(archive-${pkgver}.tar.gz::${url}/releases/download/${pkgver}/bottom_armv7-unknown-linux-gnueabihf.tar.gz)
+
+sha512sums=(SKIP)
+sha512sums_x86_64=('$hash1')
+sha512sums_aarch64=('$hash2')
+sha512sums_armv7h=('$hash3')
 
 package() {
     install -Dm755 btm "$pkgdir"/usr/bin/btm

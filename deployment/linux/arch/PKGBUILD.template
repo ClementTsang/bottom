@@ -2,11 +2,11 @@
 
 pkgname=bottom
 pkgver=$version
-pkgrel=0
+pkgrel=1
 pkgdesc="A cross-platform graphical process/system monitor with a customizable interface and a multitude of features."
 provides=('bottom')
 makedepends=('cargo')
-arch=('x86_64')
+arch=('x86_64' 'aarch64' 'armv7h')
 url="https://github.com/ClementTsang/bottom"
 source=("$pkgname-$pkgver.tar.gz::https://github.com/ClementTsang/bottom/archive/$pkgver.tar.gz")
 license=('MIT')
