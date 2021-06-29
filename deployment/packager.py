@@ -58,9 +58,9 @@ with open(deployment_file_path_1, "rb") as deployment_file_1:
         template = Template(template_file.read())
         substitute = template.safe_substitute(version=version, hash1=deployment_hash_1)
         if deployment_hash_2 is not None:
-            substitute = template.safe_substitute(version=version, hash2=deployment_hash_2)
+            substitute = substitute.safe_substitute(version=version, hash2=deployment_hash_2)
         if deployment_hash_3 is not None:
-            substitute = template.safe_substitute(version=version, hash3=deployment_hash_3)
+            substitute = substitute.safe_substitute(version=version, hash3=deployment_hash_3)
 
         print("\n================== Generated package file ==================\n")
         print(substitute)
