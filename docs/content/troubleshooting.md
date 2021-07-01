@@ -19,9 +19,10 @@ Another example is when braille is rendered as a block of dots, with the non-col
 </figure>
 
 In either case, you may need to install a specific font and configure your terminal to use it. For example, installing [UBraille](https://yudit.org/download/fonts/UBraille/)
-and ensuring your terminal uses should work.
+and ensuring your terminal uses it should work.
 
-Another alternative is to use the `--dot_marker` option to instead render graph charts using dots, which I've generally found to be better supported out of the box:
+Another alternative is to use the `--dot_marker` option to render graph charts using dots instead of the braille characters, which generally seems better supported out of the box,
+at the expense of looking less intricate:
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/dots.webp" alt="Example of running bottom with the dot marker flag"/>
