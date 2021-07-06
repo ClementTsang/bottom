@@ -161,6 +161,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "yellowsquid",
+      "name": "Greg Brown",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46519298?v=4",
+      "profile": "https://github.com/yellowsquid",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
