@@ -13,6 +13,8 @@ fn get_binary_location() -> String {
 #[test]
 fn test_small_rate() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-r")
         .arg("249")
         .assert()
@@ -25,6 +27,8 @@ fn test_small_rate() {
 #[test]
 fn test_large_default_time() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-t")
         .arg("18446744073709551616")
         .assert()
@@ -37,6 +41,8 @@ fn test_large_default_time() {
 #[test]
 fn test_small_default_time() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-t")
         .arg("900")
         .assert()
@@ -49,6 +55,8 @@ fn test_small_default_time() {
 #[test]
 fn test_large_delta_time() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-d")
         .arg("18446744073709551616")
         .assert()
@@ -61,6 +69,8 @@ fn test_large_delta_time() {
 #[test]
 fn test_small_delta_time() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-d")
         .arg("900")
         .assert()
@@ -73,6 +83,8 @@ fn test_small_delta_time() {
 #[test]
 fn test_large_rate() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-r")
         .arg("18446744073709551616")
         .assert()
@@ -86,6 +98,8 @@ fn test_large_rate() {
 fn test_negative_rate() {
     // This test should auto fail due to how clap works
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-r")
         .arg("-1000")
         .assert()
@@ -98,6 +112,8 @@ fn test_negative_rate() {
 #[test]
 fn test_invalid_rate() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-r")
         .arg("100-1000")
         .assert()
@@ -108,6 +124,8 @@ fn test_invalid_rate() {
 #[test]
 fn test_conflicting_temps() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("-c")
         .arg("-f")
         .assert()
@@ -120,6 +138,8 @@ fn test_conflicting_temps() {
 #[test]
 fn test_invalid_default_widget_1() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("--default_widget_type")
         .arg("fake_widget")
         .assert()
@@ -130,6 +150,8 @@ fn test_invalid_default_widget_1() {
 #[test]
 fn test_invalid_default_widget_2() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("--default_widget_type")
         .arg("cpu")
         .arg("--default_widget_count")
@@ -144,6 +166,8 @@ fn test_invalid_default_widget_2() {
 #[test]
 fn test_missing_default_widget_type() {
     Command::new(get_binary_location())
+        .arg("-C")
+        .arg("./tests/empty_config.toml")
         .arg("--default_widget_count")
         .arg("3")
         .assert()
