@@ -11,7 +11,7 @@ A cross-platform graphical process/system monitor with a customizable interface 
     <img src="assets/demo.gif" alt="Quick demo recording showing off searching, expanding, and process killing."/>
     <center>
     <figcaption>
-      <a href="https://github.com/morhetz/gruvbox">Gruvbox theme</a> (<code>--color gruvbox</code>) with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> running on <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
+      Demo GIF using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--color gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
     </figcaption>
     </center>
 </figure>
