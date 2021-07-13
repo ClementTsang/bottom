@@ -56,6 +56,7 @@ impl<'a, B: Backend> Widget<B> for Carousel<'a, B> {
         // Draw arrows
 
         // Now draw the rest of the element...
+        todo!()
     }
 
     fn layout(&self, bounds: tui::layout::Rect) -> crate::drawing::Node {

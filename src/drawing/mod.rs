@@ -13,8 +13,8 @@ pub use hasher::Hasher;
 
 use crate::utils::error;
 
-/// The draw function.  Draws the entire app.
-/// Goes through a few phases:
+/// The paint function.  Draws the entire app.
+/// Intended to go through a few phases:
 ///
 /// 0. Create our "Element" tree from "Widgets".  This is from our given [`Widget`] representation.
 ///    This should have access to app state, and we can do caching checks here to see if we can avoid computations.
@@ -26,11 +26,11 @@ use crate::utils::error;
 /// This is *sort of* like how Flutter does it.  We have our Widget tree, which is the non-instantiated representation
 /// of our hierarchy.  We then actually instantiate this into Elements.  Then, we finally actually lay it out, which
 /// would correspond to the RenderObject tree.  Then, we draw!
-pub fn draw<B: Backend>(
+pub fn paint<B: Backend>(
     terminal: &mut Terminal<B>, root: &mut Element<'_, B>,
 ) -> error::Result<()> {
     terminal.draw(|ctx| {
-        // Current implementation does zero caching.
+        // Current implementation does zero caching.  Just blind draws.  Sorry~
 
         let layout = root.layout(ctx.size());
         root.draw(ctx, &layout);

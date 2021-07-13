@@ -183,8 +183,4 @@ where
     fn height(&self) -> Constraint {
         self.height
     }
-
-    fn on_event(&mut self, event: Event) -> EventStatus {
-        EventStatus::Ignored
-    }
 }
