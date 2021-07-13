@@ -1,5 +1,4 @@
-use beef::Cow;
-use std::result;
+use std::{borrow::Cow, result};
 use thiserror::Error;
 
 #[cfg(target_os = "linux")]

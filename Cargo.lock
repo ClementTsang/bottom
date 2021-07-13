@@ -210,12 +210,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "beef"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6736e2428df2ca2848d846c43e88745121a6654696e349ce0054a420815a7409"
-
-[[package]]
 name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -243,7 +237,6 @@ dependencies = [
  "assert_cmd",
  "backtrace",
  "battery",
- "beef",
  "cargo-husky",
  "cfg-if 1.0.0",
  "chrono",
