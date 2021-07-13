@@ -70,15 +70,6 @@ where
     fn height(&self) -> tui::layout::Constraint {
         self.height
     }
-
-    fn on_event(&mut self, event: Event) -> crate::drawing::EventStatus {
-        // Support the enter key and a left click action.
-        crate::drawing::EventStatus::Ignored
-        // match event {
-        //     Event::Mouse(event) => todo!(),
-        //     Event::Keyboard(event) => todo!(),
-        // }
-    }
 }
 
 impl<'a, B: Backend> From<Text<'a>> for Element<'a, B> {

@@ -14,7 +14,7 @@ pub trait Widget<B: Backend> {
     // fn hash(&self, state: &mut Hasher);
 
     /// How the [`Widget`] should handle an event.  Defaults to ignoring the event.
-    fn on_event(&mut self, event: Event) -> EventStatus {
+    fn on_event(&mut self, _event: Event) -> EventStatus {
         EventStatus::Ignored
     }
 

@@ -206,14 +206,6 @@ impl<'a, B: Backend> Widget<B> for TimeGraph<'a> {
     fn height(&self) -> Constraint {
         self.height
     }
-
-    fn on_event(&mut self, event: Event) -> EventStatus {
-        crate::drawing::EventStatus::Ignored
-        // match event {
-        //     Event::Mouse(event) => todo!(),
-        //     Event::Keyboard(event) => todo!(),
-        // }
-    }
 }
 
 /// Interpolates between two points.  Mainly used to help fill in tui-rs blanks in certain situations.

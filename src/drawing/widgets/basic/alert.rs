@@ -1,4 +1,7 @@
-use tui::{backend::Backend, layout::Constraint};
+use tui::{
+    backend::Backend,
+    layout::{Constraint, Rect},
+};
 
 use crate::drawing::{Axis, Button, Element, Event, Text, View, Widget};
 
@@ -51,22 +54,15 @@ impl<'a, B: Backend> Widget<B> for Alert<'a, B> {
         self.body.draw(ctx, node);
     }
 
-    fn layout(&self, bounds: tui::layout::Rect) -> crate::drawing::Node {
+    fn layout(&self, bounds: Rect) -> crate::drawing::Node {
         self.body.layout(bounds)
     }
 
-    fn width(&self) -> tui::layout::Constraint {
+    fn width(&self) -> Constraint {
         self.body.width()
     }
 
-    fn height(&self) -> tui::layout::Constraint {
+    fn height(&self) -> Constraint {
         self.body.height()
-    }
-    fn on_event(&mut self, event: Event) -> crate::drawing::EventStatus {
-        crate::drawing::EventStatus::Ignored
-        // match event {
-        //     Event::Mouse(event) => todo!(),
-        //     Event::Keyboard(event) => todo!(),
-        // }
     }
 }
