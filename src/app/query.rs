@@ -6,8 +6,8 @@ use crate::{
         Result,
     },
 };
-use std::collections::VecDeque;
 use std::fmt::Debug;
+use std::{borrow::Cow, collections::VecDeque};
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
 const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
@@ -79,7 +79,7 @@ impl ProcessQuery for ProcWidgetState {
                         break;
                     }
                 } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
-                    return Err(QueryError(beef::Cow::borrowed("Comparison not valid here")));
+                    return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
                 } else {
                     break;
                 }
@@ -118,7 +118,7 @@ impl ProcessQuery for ProcWidgetState {
                         break;
                     }
                 } else if COMPARISON_LIST.contains(&queue_top.to_lowercase().as_str()) {
-                    return Err(QueryError(beef::Cow::borrowed("Comparison not valid here")));
+                    return Err(QueryError(Cow::Borrowed("Comparison not valid here")));
                 } else {
                     break;
                 }
@@ -164,9 +164,7 @@ impl ProcessQuery for ProcWidgetState {
                     }
                 } else if queue_top == "(" {
                     if query.is_empty() {
-                        return Err(QueryError(beef::Cow::borrowed(
-                            "Missing closing parentheses",
-                        )));
+                        return Err(QueryError(Cow::Borrowed("Missing closing parentheses")));
                     }
 
                     let mut list_of_ors = VecDeque::new();
