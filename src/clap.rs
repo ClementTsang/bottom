@@ -146,7 +146,7 @@ Hides the spacing between table headers and entries.\n\n",
 
     let hide_time = Arg::with_name("hide_time")
         .long("hide_time")
-        .help("Completely hides the time scaling.")
+        .help("Hides the time scale.")
         .long_help(
             "\
 Completely hides the time scaling from being shown.\n\n",

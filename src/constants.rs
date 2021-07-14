@@ -469,6 +469,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #default_time_value = 60000
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
+# Hides the time scale.
+#hide_time = false
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
