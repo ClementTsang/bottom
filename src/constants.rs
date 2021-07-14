@@ -480,6 +480,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #use_old_network_legend = false
 # Remove space in tables
 #hide_table_gap = false
+# Show the battery widgets
+#battery = false
 # Disable mouse clicks
 #disable_click = false
 # Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"

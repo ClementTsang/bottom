@@ -80,9 +80,6 @@ pub struct ConfigFlags {
     pub regex: Option<bool>,
 
     #[builder(default, setter(strip_option))]
-    pub default_widget: Option<String>,
-
-    #[builder(default, setter(strip_option))]
     pub basic: Option<bool>,
 
     #[builder(default, setter(strip_option))]
@@ -145,6 +142,7 @@ pub struct ConfigFlags {
     #[builder(default, setter(strip_option))]
     pub search_regex_enabled_widgets: Option<Vec<WidgetIdEnabled>>,
 
+    // End hack
     #[builder(default, setter(strip_option))]
     pub mem_as_value: Option<bool>,
 
