@@ -1,5 +1,5 @@
 use crate::{
-    app::App,
+    app::AppState,
     canvas::{drawing_utils::calculate_basic_use_bars, Painter},
     constants::*,
 };
@@ -15,14 +15,14 @@ use unicode_segmentation::UnicodeSegmentation;
 
 pub trait BatteryDisplayWidget {
     fn draw_battery_display<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     );
 }
 
 impl BatteryDisplayWidget for Painter {
     fn draw_battery_display<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
+        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
