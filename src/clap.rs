@@ -53,7 +53,7 @@ option.\n\n",
         .help("Temporarily shows the time scale in graphs.")
         .long_help(
             "\
-Automatically hides the time scaling in graphs after being
+Automatically hides the time scale in graphs after being
 shown for a brief moment when zoomed in/out.  If time is
 disabled via --hide_time then this will have no effect.\n\n\n",
         );
@@ -149,7 +149,7 @@ Hides the spacing between table headers and entries.\n\n",
         .help("Hides the time scale.")
         .long_help(
             "\
-Completely hides the time scaling from being shown.\n\n",
+Completely hides the time scale from being shown.\n\n",
         );
 
     let process_command = Arg::with_name("process_command")
