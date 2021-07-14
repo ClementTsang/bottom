@@ -22,7 +22,7 @@ Most of the [command line flags](../../command-line-flags) have config file equi
 | `rate`                       | Unsigned Int (represents milliseconds)                                                         | Sets a refresh rate in ms.                                     |
 | `default_time_value`         | Unsigned Int (represents milliseconds)                                                         | Default time value for graphs in ms.                           |
 | `time_delta`                 | Unsigned Int (represents milliseconds)                                                         | The amount in ms changed upon zooming.                         |
-| `hide_time`                  | Boolean                                                                                        | Hides the time scaling.                                        |
+| `hide_time`                  | Boolean                                                                                        | Hides the time scale.                                          |
 | `temperature_type`           | String (one of ["k", "f", "c", "kelvin", "fahrenheit", "celsius"])                             | Sets the temperature unit type.                                |
 | `default_widget_type`        | String (one of ["cpu", "proc", "net", "temp", "mem", "disk"], same as layout options)          | Sets the default widget type, use --help for more info.        |
 | `default_widget_count`       | Unsigned Int (represents which `default_widget_type`)                                          | Sets the n'th selected widget type as the default.             |
