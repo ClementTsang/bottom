@@ -469,6 +469,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #default_time_value = 60000
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
+# Hides the time scale.
+#hide_time = false
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
@@ -478,6 +480,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #use_old_network_legend = false
 # Remove space in tables
 #hide_table_gap = false
+# Show the battery widgets
+#battery = false
 # Disable mouse clicks
 #disable_click = false
 # Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"

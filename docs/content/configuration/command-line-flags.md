@@ -27,7 +27,7 @@ The following flags can be provided to bottom in the command line to change the 
 | `-h, --help`                          | Prints help information. Use --help for more info.             |
 | `-a, --hide_avg_cpu`                  | Hides the average CPU usage.                                   |
 | `--hide_table_gap`                    | Hides the spacing between table headers and entries.           |
-| `--hide_time`                         | Completely hides the time scaling.                             |
+| `--hide_time`                         | Hides the time scale.                                          |
 | `-k, --kelvin`                        | Sets the temperature type to Kelvin.                           |
 | `-l, --left_legend`                   | Puts the CPU chart legend to the left side.                    |
 | `--mem_as_value`                      | Defaults to showing process memory usage by value.             |
