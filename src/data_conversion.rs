@@ -300,22 +300,19 @@ pub fn convert_mem_labels(
     current_data: &data_farmer::DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
-    ///
-    /// Yes, this function is a bit of a lie.  But people seem to generally expect, say, GiB when what they actually
-    /// wanted calculated was GiB.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
         if mem_total_kib < 1024 {
             // Stay with KiB
-            ("KB", 1.0)
-        } else if mem_total_kib < 1_048_576 {
+            ("KiB", 1.0)
+        } else if mem_total_kib < MEBI_LIMIT {
             // Use MiB
-            ("MB", 1024.0)
-        } else if mem_total_kib < 1_073_741_824 {
+            ("MiB", KIBI_LIMIT_F64)
+        } else if mem_total_kib < GIBI_LIMIT {
             // Use GiB
-            ("GB", 1_048_576.0)
+            ("GiB", MEBI_LIMIT_F64)
         } else {
             // Use TiB
-            ("TB", 1_073_741_824.0)
+            ("TiB", GIBI_LIMIT_F64)
         }
     }
 
@@ -324,13 +321,9 @@ pub fn convert_mem_labels(
             Some((
                 format!(
                     "{:3.0}%",
-                    match current_data.memory_harvest.mem_total_in_kib {
-                        0 => 0.0,
-                        _ =>
-                            current_data.memory_harvest.mem_used_in_kib as f64
-                                / current_data.memory_harvest.mem_total_in_kib as f64
-                                * 100.0,
-                    }
+                    current_data.memory_harvest.mem_used_in_kib as f64
+                        / current_data.memory_harvest.mem_total_in_kib as f64
+                        * 100.0
                 ),
                 {
                     let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
@@ -353,24 +346,20 @@ pub fn convert_mem_labels(
             Some((
                 format!(
                     "{:3.0}%",
-                    match current_data.swap_harvest.mem_total_in_kib {
-                        0 => 0.0,
-                        _ =>
-                            current_data.swap_harvest.mem_used_in_kib as f64
-                                / current_data.swap_harvest.mem_total_in_kib as f64
-                                * 100.0,
-                    }
+                    current_data.swap_harvest.mem_used_in_kib as f64
+                        / current_data.swap_harvest.mem_total_in_kib as f64
+                        * 100.0
                 ),
                 {
-                    let (unit, numerator) = return_unit_and_denominator_for_mem_kib(
+                    let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
                         current_data.swap_harvest.mem_total_in_kib,
                     );
 
                     format!(
                         "   {:.1}{}/{:.1}{}",
-                        current_data.swap_harvest.mem_used_in_kib as f64 / numerator,
+                        current_data.swap_harvest.mem_used_in_kib as f64 / denominator,
                         unit,
-                        (current_data.swap_harvest.mem_total_in_kib as f64 / numerator),
+                        (current_data.swap_harvest.mem_total_in_kib as f64 / denominator),
                         unit
                     )
                 },
