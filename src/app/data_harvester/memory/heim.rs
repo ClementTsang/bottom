@@ -33,14 +33,46 @@ pub async fn get_mem_data(
 pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let memory = heim::memory::memory().await?;
 
-    let mem_total_in_kb = memory.total().get::<heim::units::information::kibibyte>();
+    let (mem_total_in_kib, mem_used_in_kib) = {
+        #[cfg(target_os = "linux")]
+        {
+            // For Linux, the "kilobyte" value in the .total call is actually kibibytes - see
+            // https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/s2-proc-meminfo
+            //
+            // Heim parses this as kilobytes (https://github.com/heim-rs/heim/blob/master/heim-memory/src/sys/linux/memory.rs#L82)
+            // even though it probably shouldn't...
+
+            use heim::memory::os::linux::MemoryExt;
+            (
+                memory.total().get::<heim::units::information::kilobyte>(),
+                memory.used().get::<heim::units::information::kibibyte>(),
+            )
+        }
+        #[cfg(target_os = "macos")]
+        {
+            use heim::memory::os::macos::MemoryExt;
+            (
+                memory.total().get::<heim::units::information::kibibyte>(),
+                memory.active().get::<heim::units::information::kibibyte>()
+                    + memory.wire().get::<heim::units::information::kibibyte>(),
+            )
+        }
+        #[cfg(target_os = "windows")]
+        {
+            let mem_total_in_kib = memory.total().get::<heim::units::information::kibibyte>();
+            (
+                mem_total_in_kib,
+                mem_total_in_kib
+                    - memory
+                        .available()
+                        .get::<heim::units::information::kibibyte>(),
+            )
+        }
+    };
 
     Ok(Some(MemHarvest {
-        mem_total_in_kib: mem_total_in_kb,
-        mem_used_in_kib: mem_total_in_kb
-            - memory
-                .available()
-                .get::<heim::units::information::kibibyte>(),
+        mem_total_in_kib,
+        mem_used_in_kib,
     }))
 }
 
