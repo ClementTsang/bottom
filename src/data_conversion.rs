@@ -321,9 +321,7 @@ pub fn convert_mem_labels(
             Some((
                 format!(
                     "{:3.0}%",
-                    current_data.memory_harvest.mem_used_in_kib as f64
-                        / current_data.memory_harvest.mem_total_in_kib as f64
-                        * 100.0
+                    current_data.memory_harvest.use_percent.unwrap_or(0.0)
                 ),
                 {
                     let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
@@ -346,9 +344,7 @@ pub fn convert_mem_labels(
             Some((
                 format!(
                     "{:3.0}%",
-                    current_data.swap_harvest.mem_used_in_kib as f64
-                        / current_data.swap_harvest.mem_total_in_kib as f64
-                        * 100.0
+                    current_data.swap_harvest.use_percent.unwrap_or(0.0)
                 ),
                 {
                     let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
