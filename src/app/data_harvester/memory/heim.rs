@@ -43,30 +43,31 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             // even though it probably shouldn't...
 
             use heim::memory::os::linux::MemoryExt;
-
+            use heim::units::information::kilobyte;
             (
-                memory.total().get::<heim::units::information::kilobyte>(),
-                memory.used().get::<heim::units::information::kilobyte>(),
+                memory.total().get::<kilobyte>(),
+                memory.total().get::<kilobyte>()
+                    - memory.free().get::<kilobyte>()
+                    - memory.buffers().get::<kilobyte>()
+                    - memory.cached().get::<kilobyte>(),
             )
         }
         #[cfg(target_os = "macos")]
         {
             use heim::memory::os::macos::MemoryExt;
+            use heim::units::information::kibibyte;
             (
-                memory.total().get::<heim::units::information::kibibyte>(),
-                memory.active().get::<heim::units::information::kibibyte>()
-                    + memory.wire().get::<heim::units::information::kibibyte>(),
+                memory.total().get::<kibibyte>(),
+                memory.active().get::<kibibyte>() + memory.wire().get::<kibibyte>(),
             )
         }
         #[cfg(target_os = "windows")]
         {
-            let mem_total_in_kib = memory.total().get::<heim::units::information::kibibyte>();
+            use heim::units::information::kibibyte;
+            let mem_total_in_kib = memory.total().get::<kibibyte>();
             (
                 mem_total_in_kib,
-                mem_total_in_kib
-                    - memory
-                        .available()
-                        .get::<heim::units::information::kibibyte>(),
+                mem_total_in_kib - memory.available().get::<kibibyte>(),
             )
         }
     };
@@ -80,8 +81,22 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
 pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let memory = heim::memory::swap().await?;
 
-    Ok(Some(MemHarvest {
-        mem_total_in_kib: memory.total().get::<heim::units::information::kibibyte>(),
-        mem_used_in_kib: memory.used().get::<heim::units::information::kibibyte>(),
-    }))
+    #[cfg(target_os = "linux")]
+    {
+        // Similar story to above - heim parses this information incorrectly, kilobytes = kibibytes here.
+
+        use heim::units::information::kilobyte;
+        Ok(Some(MemHarvest {
+            mem_total_in_kib: memory.total().get::<kilobyte>(),
+            mem_used_in_kib: memory.used().get::<kilobyte>(),
+        }))
+    }
+    #[cfg(any(target_os = "windows", target_os = "macos"))]
+    {
+        use heim::units::information::kibibyte;
+        Ok(Some(MemHarvest {
+            mem_total_in_kib: memory.total().get::<kibibyte>(),
+            mem_used_in_kib: memory.used().get::<kibibyte>(),
+        }))
+    }
 }
