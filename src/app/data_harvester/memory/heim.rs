@@ -23,8 +23,6 @@ pub async fn get_mem_data(
 }
 
 pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
-    let memory = heim::memory::memory().await?;
-
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "linux")]
         {
@@ -34,15 +32,17 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             // Heim parses this as kilobytes (https://github.com/heim-rs/heim/blob/master/heim-memory/src/sys/linux/memory.rs#L82)
             // even though it probably shouldn't...
 
-            use heim::memory::os::linux::MemoryExt;
-            use heim::units::information::kilobyte;
+            let mem_info = procfs::Meminfo::new()?;
             (
-                memory.total().get::<kilobyte>(),
-                memory.used().get::<kilobyte>(),
+                mem_info.mem_total / 1024,
+                (mem_info.mem_total - mem_info.mem_free - mem_info.cached - mem_info.buffers)
+                    / 1024,
             )
         }
         #[cfg(target_os = "macos")]
         {
+            let memory = heim::memory::memory().await?;
+
             use heim::memory::os::macos::MemoryExt;
             use heim::units::information::kibibyte;
             (
@@ -52,6 +52,8 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
         }
         #[cfg(target_os = "windows")]
         {
+            let memory = heim::memory::memory().await?;
+
             use heim::units::information::kibibyte;
             let mem_total_in_kib = memory.total().get::<kibibyte>();
             (
@@ -60,14 +62,16 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             )
         }
     };
+    debug!("mem_total_in_kib: {}", mem_total_in_kib);
+    debug!("mem_used_in_kib: {}", mem_used_in_kib);
 
     Ok(Some(MemHarvest {
         mem_total_in_kib,
         mem_used_in_kib,
         use_percent: if mem_total_in_kib == 0 {
-            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
-        } else {
             None
+        } else {
+            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
         },
     }))
 }
@@ -99,9 +103,9 @@ pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> 
         mem_total_in_kib,
         mem_used_in_kib,
         use_percent: if mem_total_in_kib == 0 {
-            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
-        } else {
             None
+        } else {
+            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
         },
     }))
 }
