@@ -1,18 +1,10 @@
 //! Data collection for memory via heim.
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct MemHarvest {
     pub mem_total_in_kib: u64,
     pub mem_used_in_kib: u64,
-}
-
-impl Default for MemHarvest {
-    fn default() -> Self {
-        MemHarvest {
-            mem_total_in_kib: 0,
-            mem_used_in_kib: 0,
-        }
-    }
+    pub use_percent: Option<f64>,
 }
 
 pub async fn get_mem_data(
@@ -72,28 +64,44 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     Ok(Some(MemHarvest {
         mem_total_in_kib,
         mem_used_in_kib,
+        use_percent: if mem_total_in_kib == 0 {
+            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
+        } else {
+            None
+        },
     }))
 }
 
 pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let memory = heim::memory::swap().await?;
 
-    #[cfg(target_os = "linux")]
-    {
-        // Similar story to above - heim parses this information incorrectly, kilobytes = kibibytes here.
+    let (mem_total_in_kib, mem_used_in_kib) = {
+        #[cfg(target_os = "linux")]
+        {
+            // Similar story to above - heim parses this information incorrectly as far as I can tell, so kilobytes = kibibytes here.
+            use heim::units::information::kilobyte;
+            (
+                memory.total().get::<kilobyte>(),
+                memory.used().get::<kilobyte>(),
+            )
+        }
+        #[cfg(any(target_os = "windows", target_os = "macos"))]
+        {
+            use heim::units::information::kibibyte;
+            (
+                memory.total().get::<kibibyte>(),
+                memory.used().get::<kibibyte>(),
+            )
+        }
+    };
 
-        use heim::units::information::kilobyte;
-        Ok(Some(MemHarvest {
-            mem_total_in_kib: memory.total().get::<kilobyte>(),
-            mem_used_in_kib: memory.used().get::<kilobyte>(),
-        }))
-    }
-    #[cfg(any(target_os = "windows", target_os = "macos"))]
-    {
-        use heim::units::information::kibibyte;
-        Ok(Some(MemHarvest {
-            mem_total_in_kib: memory.total().get::<kibibyte>(),
-            mem_used_in_kib: memory.used().get::<kibibyte>(),
-        }))
-    }
+    Ok(Some(MemHarvest {
+        mem_total_in_kib,
+        mem_used_in_kib,
+        use_percent: if mem_total_in_kib == 0 {
+            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
+        } else {
+            None
+        },
+    }))
 }
