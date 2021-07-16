@@ -61,8 +61,6 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             )
         }
     };
-    debug!("mem_total_in_kib: {}", mem_total_in_kib);
-    debug!("mem_used_in_kib: {}", mem_used_in_kib);
 
     Ok(Some(MemHarvest {
         mem_total_in_kib,
