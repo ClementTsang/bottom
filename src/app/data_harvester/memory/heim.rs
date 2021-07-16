@@ -43,9 +43,10 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             // even though it probably shouldn't...
 
             use heim::memory::os::linux::MemoryExt;
+
             (
                 memory.total().get::<heim::units::information::kilobyte>(),
-                memory.used().get::<heim::units::information::kibibyte>(),
+                memory.used().get::<heim::units::information::kilobyte>(),
             )
         }
         #[cfg(target_os = "macos")]
