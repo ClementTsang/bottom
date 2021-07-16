@@ -46,10 +46,7 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             use heim::units::information::kilobyte;
             (
                 memory.total().get::<kilobyte>(),
-                memory.total().get::<kilobyte>()
-                    - memory.free().get::<kilobyte>()
-                    - memory.buffers().get::<kilobyte>()
-                    - memory.cached().get::<kilobyte>(),
+                memory.used().get::<kilobyte>(),
             )
         }
         #[cfg(target_os = "macos")]
