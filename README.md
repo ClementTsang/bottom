@@ -100,8 +100,8 @@ yay -S bottom-bin
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.2/bottom_0.6.2_amd64.deb
-sudo dpkg -i bottom_0.6.2_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.3/bottom_0.6.3_amd64.deb
+sudo dpkg -i bottom_0.6.3_amd64.deb
 ```
 
 ### Fedora/CentOS
@@ -176,7 +176,7 @@ Since validation of the package takes time, it may take a while to become availa
 choco install bottom
 
 # The version number may be required for newer releases during the approval process:
-choco install bottom --version=0.6.2
+choco install bottom --version=0.6.3
 ```
 
 ### winget
@@ -202,8 +202,8 @@ There are a few ways to go about doing this manually. Note that in all cases, yo
 rustup update stable
 
 # Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.6.2.tar.gz
-tar -xzvf 0.6.2.tar.gz
+curl -LO https://github.com/ClementTsang/bottom/archive/0.6.3.tar.gz
+tar -xzvf 0.6.3.tar.gz
 cargo install --path .
 
 # Clone from master and install manually
