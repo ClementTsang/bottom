@@ -26,7 +26,48 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "linux")]
         {
-            let mem_info = procfs::Meminfo::new()?;
+            use smol::fs::read_to_string;
+            let meminfo = read_to_string("/proc/meminfo").await?;
+
+            // All values are in KiB by default.
+            let mut mem_total = 0;
+            let mut cached = 0;
+            let mut s_reclaimable = 0;
+            let mut shmem = 0;
+            let mut buffers = 0;
+            let mut mem_free = 0;
+
+            let mut keys_read: u8 = 0;
+            const TOTAL_KEYS_NEEDED: u8 = 6;
+
+            for line in meminfo.lines() {
+                if let Some((label, value)) = line.split_once(':') {
+                    let to_write = match label {
+                        "MemTotal" => &mut mem_total,
+                        "MemFree" => &mut mem_free,
+                        "Buffers" => &mut buffers,
+                        "Cached" => &mut cached,
+                        "Shmem" => &mut shmem,
+                        "SReclaimable" => &mut s_reclaimable,
+                        _ => {
+                            continue;
+                        }
+                    };
+
+                    if let Some((number, _unit)) = value.trim_start().split_once(' ') {
+                        // Parse the value, remember it's in KiB!
+                        if let Ok(number) = number.parse::<u64>() {
+                            *to_write = number;
+
+                            // We only need a few keys, so we can bail early.
+                            keys_read += 1;
+                            if keys_read == TOTAL_KEYS_NEEDED {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
             // Let's preface this by saying that memory usage calculations are... not straightforward.
             // There are conflicting implementations everywhere.
@@ -39,14 +80,13 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             // Another implementation, commonly used in other things, is to skip the shmem part of the calculation,
             // which matches gopsutil and stuff like free.
 
-            let total = mem_info.mem_total / 1024;
-            let cached_mem =
-                mem_info.cached + mem_info.s_reclaimable.unwrap_or(0) - mem_info.shmem.unwrap_or(0);
-            let used_diff = (mem_info.mem_free + cached_mem + mem_info.buffers) / 1024;
+            let total = mem_total;
+            let cached_mem = cached + s_reclaimable - shmem;
+            let used_diff = mem_free + cached_mem + buffers;
             let used = if total >= used_diff {
                 total - used_diff
             } else {
-                total - mem_info.mem_free
+                total - mem_free
             };
 
             (total, used)

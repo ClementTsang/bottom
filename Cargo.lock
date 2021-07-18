@@ -258,6 +258,7 @@ dependencies = [
  "procfs",
  "regex",
  "serde",
+ "smol",
  "sysinfo",
  "thiserror",
  "toml",

@@ -68,8 +68,9 @@ log = { version = "0.4.14", optional = true }
 libc = "0.2.86"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "memory", "net", "sensors"] }
+heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
 procfs = "0.9.1"
+smol = "1.2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "memory", "net"] }
