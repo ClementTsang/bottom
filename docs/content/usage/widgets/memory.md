@@ -8,7 +8,7 @@ The memory widget provides a visual representation of RAM and swap usage over ti
 
 ## Features
 
-The legend displays the current usage in terms of percentage and actual usage.
+The legend displays the current usage in terms of percentage and actual usage in binary units (KiB, MiB, GiB, etc.).
 If the total RAM or swap available is 0, then it is automatically hidden from the legend and graph.
 
 One can also adjust the displayed time range through either the keyboard or mouse, with a range of 30s to 600s.
