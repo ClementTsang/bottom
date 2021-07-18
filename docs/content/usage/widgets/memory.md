@@ -28,3 +28,11 @@ Note that key bindings are generally case-sensitive.
 | Binding      | Action                                                         |
 | ------------ | -------------------------------------------------------------- |
 | ++"Scroll"++ | Scrolling up or down zooms in or out of the graph respectively |
+
+## Calculations
+
+Memory usage is calculated using the following formula:
+
+```
+
+```
