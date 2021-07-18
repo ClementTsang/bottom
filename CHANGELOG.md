@@ -12,7 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Bug Fixes
 
 - [#542](https://github.com/ClementTsang/bottom/pull/542): Fixes missing config options in the default generated config file.
-- [#545](https://github.com/ClementTsang/bottom/pull/545): Fixes inaccurate memory usage/totals in macOS and Linux.
+- [#545](https://github.com/ClementTsang/bottom/pull/545): Fixes inaccurate memory usage/totals in macOS and Linux, switch unit to binary prefix.
+
+## Changes
+
+- [#547](https://github.com/ClementTsang/bottom/pull/547): Switch memory usage calculation to match htop.
 
 ## [0.6.2] - 2021-06-26
 

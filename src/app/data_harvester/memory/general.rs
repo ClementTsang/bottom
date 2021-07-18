@@ -23,27 +23,38 @@ pub async fn get_mem_data(
 }
 
 pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
-    let memory = heim::memory::memory().await?;
-
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "linux")]
         {
-            use heim::memory::os::linux::MemoryExt;
-            use heim::units::information::kilobyte;
+            let mem_info = procfs::Meminfo::new()?;
 
-            // For Linux, the "kilobyte" value in the .total call is actually kibibytes - see
-            // https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/s2-proc-meminfo
+            // Let's preface this by saying that memory usage calculations are... not straightforward.
+            // There are conflicting implementations everywhere.
             //
-            // Heim parses this as kilobytes (https://github.com/heim-rs/heim/blob/master/heim-memory/src/sys/linux/memory.rs#L82)
-            // even though it probably shouldn't...
+            // Now that we've added this preface (mainly for future reference), the current implementation below for usage
+            // is based on htop's calculation formula. See
+            // https://github.com/htop-dev/htop/blob/976c6123f41492aaf613b9d172eef1842fb7b0a3/linux/LinuxProcessList.c#L1584
+            // for implementation details as of writing.
+            //
+            // Another implementation, commonly used in other things, is to skip the shmem part of the calculation,
+            // which matches gopsutil and stuff like free.
 
-            (
-                memory.total().get::<kilobyte>(),
-                memory.used().get::<kilobyte>(),
-            )
+            let total = mem_info.mem_total / 1024;
+            let cached_mem =
+                mem_info.cached + mem_info.s_reclaimable.unwrap_or(0) - mem_info.shmem.unwrap_or(0);
+            let used_diff = (mem_info.mem_free + cached_mem + mem_info.buffers) / 1024;
+            let used = if total >= used_diff {
+                total - used_diff
+            } else {
+                total - mem_info.mem_free
+            };
+
+            (total, used)
         }
         #[cfg(target_os = "macos")]
         {
+            let memory = heim::memory::memory().await?;
+
             use heim::memory::os::macos::MemoryExt;
             use heim::units::information::kibibyte;
             (
@@ -53,6 +64,8 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
         }
         #[cfg(target_os = "windows")]
         {
+            let memory = heim::memory::memory().await?;
+
             use heim::units::information::kibibyte;
             let mem_total_in_kib = memory.total().get::<kibibyte>();
             (
