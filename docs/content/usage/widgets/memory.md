@@ -31,8 +31,10 @@ Note that key bindings are generally case-sensitive.
 
 ## Calculations
 
-Memory usage is calculated using the following formula:
+Memory usage is calculated using the following formula based on values from `/proc/meminfo` (based on [htop's implementation](https://github.com/htop-dev/htop/blob/976c6123f41492aaf613b9d172eef1842fb7b0a3/linux/LinuxProcessList.c#L1584)):
 
 ```
-
+MemTotal - MemFree - Buffers - (Cached + SReclaimable - Shmem)
 ```
+
+You can find more info on `/proc/meminfo` and its fields [here](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/s2-proc-meminfo).
