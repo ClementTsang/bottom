@@ -492,6 +492,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#calculations" class="md-nav__link">
+    Calculations
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -852,6 +859,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#calculations" class="md-nav__link">
+    Calculations
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -918,6 +932,11 @@ If the total RAM or swap available is 0, then it is automatically hidden from th
 </tr>
 </tbody>
 </table>
+<h2 id="calculations"><a class="toclink" href="#calculations">Calculations</a></h2>
+<p>Memory usage is calculated using the following formula based on values from <code>/proc/meminfo</code> (based on <a href="https://github.com/htop-dev/htop/blob/976c6123f41492aaf613b9d172eef1842fb7b0a3/linux/LinuxProcessList.c#L1584">htop's implementation</a>):</p>
+<div class="highlight"><pre><span></span><code>MemTotal - MemFree - Buffers - (Cached + SReclaimable - Shmem)
+</code></pre></div>
+<p>You can find more info on <code>/proc/meminfo</code> and its fields <a href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/s2-proc-meminfo">here</a>.</p>
                 
               
               
