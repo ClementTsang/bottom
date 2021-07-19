@@ -84,15 +84,12 @@ cargo install bottom
 cargo install bottom --locked
 ```
 
-### AUR
+### Arch Linux
 
-The normal package can be found [here](https://aur.archlinux.org/packages/bottom/), while the binary package found [here](https://aur.archlinux.org/packages/bottom-bin/):
+There is an official package that can be installed with `pacman`:
 
 ```bash
-yay -S bottom
-
-# If you instead want a pre-built binary:
-yay -S bottom-bin
+sudo pacman -Syu bottom
 ```
 
 ### Debian/Ubuntu
