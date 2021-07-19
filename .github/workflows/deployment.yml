@@ -1,7 +1,6 @@
-# How we deploy a release.  Covers binary builds.  Also manages packaging for AUR, winget, choco, and homebrew.
+# How we deploy a release.  Covers binary builds.  Also manages packaging for winget, choco, and homebrew.
 #
-# Based on:
-# - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
+# Based on https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
 name: deployment
 
@@ -298,28 +297,6 @@ jobs:
           asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
           asset_content_type: application/octet-stream
 
-      - name: Build AUR PKGBUILD (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
-        run: |
-          curl -LO "https://github.com/ClementTsang/bottom/archive/${{ env.RELEASE_VERSION }}.tar.gz"
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD.template" "./PKGBUILD" "SHA512" "./${{ env.RELEASE_VERSION }}.tar.gz"
-
-      - name: Tar AUR PKGBUILD (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
-        run: |
-          tar -czvf arch_PKGBUILD.tar.gz PKGBUILD
-
-      - name: Upload AUR PKGBUILD (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: arch_PKGBUILD.tar.gz
-          asset_name: arch_PKGBUILD.tar.gz
-          asset_content_type: application/octet-stream
-
   additional-file-generation:
     needs: [build-release]
     name: additional-file-generation
@@ -378,24 +355,6 @@ jobs:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: bottom.rb
           asset_name: bottom.rb
-          asset_content_type: application/octet-stream
-
-      - name: Build AUR PKGBUILD-bin
-        run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/linux/arch/PKGBUILD_BIN.template" "./PKGBUILD" "SHA512" "./artifacts/bottom_x86_64-unknown-linux-gnu.tar.gz" "./artifacts/bottom_aarch64-unknown-linux-gnu.tar.gz" "./artifacts/bottom_armv7-unknown-linux-gnueabihf.tar.gz"
-
-      - name: Tar AUR PKGBUILD-bin
-        run: |
-          tar -czvf arch_PKGBUILD_bin.tar.gz PKGBUILD
-
-      - name: Upload AUR PKGBUILD-bin
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: arch_PKGBUILD_bin.tar.gz
-          asset_name: arch_PKGBUILD_bin.tar.gz
           asset_content_type: application/octet-stream
 
       - name: Compress completion files (Linux x86-64 GNU)
