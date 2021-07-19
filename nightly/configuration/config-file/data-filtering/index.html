@@ -16,7 +16,7 @@
         <link rel="canonical" href="https://clementtsang.github.io/bottom/nightly/configuration/config-file/data-filtering/">
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.1, mkdocs-material-7.1.10">
+      <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.1.11">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.1fe995fd.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.3754935a.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.f1a3b89f.min.css">
@@ -803,7 +803,7 @@
 </div>
 <p>You can hide specific disks, temperature sensors, and networks by name in the config file via <code>disk_filter</code> and <code>mount_filter</code>, <code>temp_filter</code>, and <code>net_filter</code> respectively. Regex (<code>regex = true</code>), case-sensitivity (<code>case_sensitive = true</code>), and matching only if the entire word matches (<code>whole_word = true</code>) are supported, but are off by default. Filters default to denying entries that match and can be toggled by setting <code>is_list_ignored</code> to <code>false</code> in the config file.</p>
 <p>For example, here's the disk widget with no filter:</p>
-<p><img alt="Disk no filter" src="/assets/screenshots/config/disk-filtering/disk_no_filter.webp" /></p>
+<p><img alt="Disk no filter" src="../../../assets/screenshots/config/disk-filtering/disk_no_filter.webp" /></p>
 <p>The following in the config file would filter out some entries by disk name:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk_filter]</span>
 <span class="n">is_list_ignored</span> <span class="o">=</span> <span class="kc">true</span>
@@ -812,7 +812,7 @@
 <span class="n">case_sensitive</span> <span class="o">=</span> <span class="kc">false</span>
 <span class="n">whole_word</span> <span class="o">=</span> <span class="kc">false</span>
 </code></pre></div>
-<p><img alt="Disk widget with just disk name filter" src="/assets/screenshots/config/disk-filtering/disk_name_filter.webp" /></p>
+<p><img alt="Disk widget with just disk name filter" src="../../../assets/screenshots/config/disk-filtering/disk_name_filter.webp" /></p>
 <p>If there are two potentially conflicting filters (i.e. when you are using both a disk and mount filter), the filter that explicitly allows an entry takes precedence over a filter that explicitly denies one. So for example, let's say we set a disk filter accepting anything with <code>/dev/sda</code>, but deny anything with <code>/mnt/.*</code> or <code>/</code>. So to do so, we write in the config file:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[disk_filter]</span>
 <span class="n">is_list_ignored</span> <span class="o">=</span> <span class="kc">false</span>
@@ -829,7 +829,7 @@
 <span class="n">whole_word</span> <span class="o">=</span> <span class="kc">true</span>
 </code></pre></div>
 <p>This gives us:</p>
-<p><img alt="Disk widget with disk name and mount filter" src="/assets/screenshots/config/disk-filtering/disk_name_mount_filter.webp" /></p>
+<p><img alt="Disk widget with disk name and mount filter" src="../../../assets/screenshots/config/disk-filtering/disk_name_mount_filter.webp" /></p>
                 
               
               
