@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.4]/[0.7.0] - Unreleased
 
+## Internal Changes
+
+- [#551](https://github.com/ClementTsang/bottom/pull/551): Disable AUR package generation in release pipeline since it's now in community.
+
 ## [0.6.3] - 2021-07-18
 
 ## Changes
