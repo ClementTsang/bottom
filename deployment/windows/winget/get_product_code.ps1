@@ -1,3 +1,5 @@
+# From https://stackoverflow.com/a/31919297
+
 $path = $args[0]
 
 $comObjWI = New-Object -ComObject WindowsInstaller.Installer
