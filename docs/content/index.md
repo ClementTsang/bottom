@@ -4,7 +4,7 @@ title: Home
 
 # `bottom`
 
-This site serves as documentation for bottom, as well as an extension to the [`README.md`](https://github.com/ClementTsang/bottom#readme).
+This site serves as extended documentation for bottom alongside the [`README.md`](https://github.com/ClementTsang/bottom#readme).
 
 !!! Warning
 
