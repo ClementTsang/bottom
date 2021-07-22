@@ -267,8 +267,8 @@ jobs:
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
         run: |
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "Clement.bottom.yaml" "SHA256" "./bottom_x86_64_installer.msi"
-          $Code = powershell ./deployment/winget/get_product_code.ps1 ./bottom_x86_64_installer.msi
-          python "./deployment/winget/product_code.py" Clement.bottom.yaml $Code
+          $Code = powershell ./deployment/windows/winget/get_product_code.ps1 ./bottom_x86_64_installer.msi
+          python "./deployment/windows/winget/product_code.py" Clement.bottom.yaml $Code
 
       - name: Upload winget file (Windows x86-64 MSVC)
         if: matrix.triple.target == 'x86_64-pc-windows-msvc'
