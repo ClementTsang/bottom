@@ -435,8 +435,8 @@ pub fn convert_network_data_points(
     );
 
     let unit = match network_unit_type {
-        DataUnit::Byte => "B",
-        DataUnit::Bit => "b",
+        DataUnit::Byte => "B/s",
+        DataUnit::Bit => "b/s",
     };
 
     let (rx_data, tx_data, total_rx_data, total_tx_data) = match network_unit_type {
@@ -501,7 +501,7 @@ pub fn convert_network_data_points(
         }
     } else {
         let rx_display = format!(
-            "RX: {:<8}  All: {}",
+            "RX: {:<10}  All: {}",
             if network_use_binary_prefix {
                 format!("{:.1}{:3}", rx_converted_result.0, rx_converted_result.1)
             } else {
@@ -520,7 +520,7 @@ pub fn convert_network_data_points(
             }
         );
         let tx_display = format!(
-            "TX: {:<8}  All: {}",
+            "TX: {:<10}  All: {}",
             if network_use_binary_prefix {
                 format!("{:.1}{:3}", tx_converted_result.0, tx_converted_result.1)
             } else {
