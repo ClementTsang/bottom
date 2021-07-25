@@ -179,6 +179,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "grawlinson",
+      "name": "George Rawlinson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4408051?v=4",
+      "profile": "https://github.com/grawlinson",
+      "contributions": [
+        "doc",
+        "platform"
+      ]
     }
   ],
   "contributorsPerLine": 7,
