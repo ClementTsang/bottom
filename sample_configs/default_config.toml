@@ -36,6 +36,8 @@
 #default_time_value = 60000
 # The time delta on each zoom in/out action (in milliseconds).
 #time_delta = 15000
+# Hides the time scale.
+#hide_time = false
 # Override layout default widget
 #default_widget_type = "proc"
 #default_widget_count = 1
@@ -45,14 +47,28 @@
 #use_old_network_legend = false
 # Remove space in tables
 #hide_table_gap = false
+# Show the battery widgets
+#battery = false
 # Disable mouse clicks
 #disable_click = false
-# Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light"
+# Built-in themes.  Valid values are "default", "default-light", "gruvbox", "gruvbox-light", "nord", "nord-light"
 #color = "default"
 # Show memory values in the processes widget as values by default
 #mem_as_value = false
 # Show tree mode by default in the processes widget.
 #tree = false
+# Shows an indicator in table widgets tracking where in the list you are.
+#show_table_scroll_position = false
+# Show processes as their commands by default in the process widget.
+#process_command = false
+# Displays the network widget with binary prefixes.
+#network_use_binary_prefix = false
+# Displays the network widget using bytes.
+#network_use_bytes = false
+# Displays the network widget with a log scale.
+#network_use_log = false
+# Hides advanced options to stop a process on Unix-like systems.
+#disable_advanced_kill = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
@@ -123,16 +139,32 @@
 #    default=true
 
 
-# Filters - you can hide specific temperature and disks using filters.  This is admittedly a bit
-# hard to use as of now, and there is a planned interface for managing this in the future:
+# Filters - you can hide specific temperature sensors, network interfaces, and disks using filters.  This is admittedly
+# a bit hard to use as of now, and there is a planned in-app interface for managing this in the future:
 #[disk_filter]
-#is_list_ignored = false
+#is_list_ignored = true
 #list = ["/dev/sda\\d+", "/dev/nvme0n1p2"]
 #regex = true
 #case_sensitive = false
+#whole_word = false
+
+#[mount_filter]
+#is_list_ignored = true
+#list = ["/mnt/.*", "/boot"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
 
 #[temp_filter]
-#is_list_ignored = false
+#is_list_ignored = true
 #list = ["cpu", "wifi"]
 #regex = false
 #case_sensitive = false
+#whole_word = false
+
+#[net_filter]
+#is_list_ignored = true
+#list = ["virbr0.*"]
+#regex = true
+#case_sensitive = false
+#whole_word = false
