@@ -20,7 +20,7 @@ Please mention what operating system, version, and architecture you're experienc
 
 ## What terminal are you using `bottom` on?
 
-Please mention what terminal/terminal emulator you are using `bottom` on (ex: Konsole, Kitty).
+Please mention what terminal/terminal emulator you are using `bottom` on (ex: Konsole, Kitty), as well as their version and any relevant settings.
 
 ## What version are you on?
 
@@ -33,8 +33,7 @@ Please mention how you installed `bottom`. If you manually compiled it, please a
 
 ## How can we reproduce this?
 
-Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as possible, and include config files or flags if relevant.
-If maintainers cannot reproduce the bug, it will be very hard to fix it.
+Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as possible, and include config files or flags if relevant. If maintainers cannot reproduce the bug, it will be very hard to fix it.
 
 ## What is the actual behaviour?
 
