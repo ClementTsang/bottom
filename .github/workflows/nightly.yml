@@ -141,6 +141,13 @@ jobs:
               cross: true,
             }
 
+          # Risc-V 64gc
+          - {
+              os: "ubuntu-18.04",
+              target: "riscv64gc-unknown-linux-gnu",
+              cross: true,
+            }
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -204,7 +211,7 @@ jobs:
           cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out completion
 
       - name: Strip release binary (macOS or Linux x86-64/i686)
-        if: matrix.triple.os != 'windows-2019' && matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+        if: matrix.triple.os != 'windows-2019' && matrix.triple.cross != true
         run: |
           strip target/${{ matrix.triple.target }}/release/btm
 

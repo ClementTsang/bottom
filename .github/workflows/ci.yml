@@ -25,14 +25,14 @@ on:
 
 jobs:
   rustfmt:
-    runs-on: ${{ matrix.triple.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        triple:
-          - { os: "ubuntu-latest", target: "x86_64-unknown-linux-gnu" }
-          - { os: "macOS-latest", target: "x86_64-apple-darwin" }
-          - { os: "windows-2019", target: "x86_64-pc-windows-msvc" }
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          - windows-2019
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -43,20 +43,18 @@ jobs:
           components: rustfmt
 
       - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ matrix.triple.target }}
 
       - run: cargo fmt --all -- --check
 
   clippy:
-    runs-on: ${{ matrix.triple.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        triple:
-          - { os: "ubuntu-latest", target: "x86_64-unknown-linux-gnu" }
-          - { os: "macOS-latest", target: "x86_64-apple-darwin" }
-          - { os: "windows-2019", target: "x86_64-pc-windows-msvc" }
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          - windows-2019
     steps:
       - uses: actions/checkout@v2
 
@@ -68,8 +66,6 @@ jobs:
           components: clippy
 
       - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ matrix.triple.target }}
 
       - run: cargo clippy --all-targets --workspace -- -D warnings
 
