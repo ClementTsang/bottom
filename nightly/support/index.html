@@ -16,7 +16,7 @@
         <link rel="canonical" href="https://clementtsang.github.io/bottom/nightly/support/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.2.0">
+      <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.2.2">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.fe914879.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.1118c9be.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ba0d045b.min.css">
@@ -972,13 +972,15 @@ bottom from the repo/source, then please try that as well.</p>
 <li>The process widget may require elevated access (ex: <code>sudo btm</code>) to gather all data in some cases. <em>Please note that you should be certain that you trust any software you grant root privileges.</em></li>
 </ul>
 <h2 id="unofficial-support"><a class="toclink" href="#unofficial-support">Unofficial support</a></h2>
-<p>Systems and architectures that aren't officially supported may still work, but there are no guarantees on how much will work. Furthermore,
-while it will depend on the problem at the end of the day, <em>issues on unsupported platforms are likely to go unfixed</em>.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>bottom is tested to build on other ARM and PowerPC architectures through <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml">CI</a>,
-but since they are not officially tested to work on a sample platform, they are only unofficially supported.</p>
-</div>
+<p>Systems and architectures that aren't officially supported may still work, but there are no guarantees on how much will work. For example, it might only compile, or it might run with bugs/broken features.
+Furthermore, while it will depend on the problem at the end of the day, <em>issues on unsupported platforms are likely to go unfixed</em>.</p>
+<p>Unofficially supported platforms known to compile/work:</p>
+<ul>
+<li>Linux on ARMv7 and ARMv6 (tested to compile in <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml">CI</a>)</li>
+<li>macOS <code>AArch64</code> (tested to compile in <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml">CI</a>)</li>
+<li>Linux on PowerPC 64 LE (tested to compile in <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml">CI</a>)</li>
+<li>Linux on an RISC-V (tested to compile in <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml">CI</a>, tested to run on an <a href="https://github.com/ClementTsang/bottom/issues/564">Allwinner D1 Nezha</a>)</li>
+</ul>
 <h3 id="known-problems_1"><a class="toclink" href="#known-problems_1">Known problems</a></h3>
 <ul>
 <li>M1-based macOS devices may have issues with temperature sensors not returning anything.</li>
@@ -1058,10 +1060,10 @@ but since they are not officially tested to work on a sample platform, they are 
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top", "navigation.expand", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.53c85856.min.js", "version": {"default": "nightly", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top", "navigation.expand", "navigation.instant"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.709b4209.min.js", "version": {"default": "nightly", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.716f8af4.min.js"></script>
+      <script src="../assets/javascripts/bundle.2b46852b.min.js"></script>
       
     
   </body>
