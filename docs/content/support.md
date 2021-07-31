@@ -32,10 +32,12 @@ bottom from the repo/source, then please try that as well.
 Systems and architectures that aren't officially supported may still work, but there are no guarantees on how much will work. Furthermore,
 while it will depend on the problem at the end of the day, _issues on unsupported platforms are likely to go unfixed_.
 
-!!! note
+Unofficially supported platforms known to compile/work:
 
-    bottom is tested to build on other ARM and PowerPC architectures through [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml),
-    but since they are not officially tested to work on a sample platform, they are only unofficially supported.
+- Linux on ARMv7 and ARMv6 (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml))
+- macOS `AArch64` (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml))
+- Linux on PowerPC 64 LE (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml))
+- Linux on an Allwinner D1 Nezha/RISC-V (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml))
 
 ### Known problems
 
