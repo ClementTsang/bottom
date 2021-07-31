@@ -534,7 +534,7 @@ impl App {
                     *mapping = is_ignoring_case;
 
                     flags.search_case_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(&map));
+                        Some(WidgetIdEnabled::create_from_hashmap(map));
                 } else {
                     // Map doesn't exist yet... initialize ourselves.
                     let mut map = HashMap::default();
@@ -592,7 +592,7 @@ impl App {
                     *mapping = is_searching_whole_word;
 
                     flags.search_whole_word_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(&map));
+                        Some(WidgetIdEnabled::create_from_hashmap(map));
                 } else {
                     // Map doesn't exist yet... initialize ourselves.
                     let mut map = HashMap::default();
@@ -650,7 +650,7 @@ impl App {
                     *mapping = is_searching_whole_word;
 
                     flags.search_regex_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(&map));
+                        Some(WidgetIdEnabled::create_from_hashmap(map));
                 } else {
                     // Map doesn't exist yet... initialize ourselves.
                     let mut map = HashMap::default();
@@ -1763,7 +1763,7 @@ impl App {
                 WidgetDirection::Up => self.current_widget.up_neighbour,
                 WidgetDirection::Down => self.current_widget.down_neighbour,
             }) {
-                if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                if let Some(new_widget) = self.widget_map.get(new_widget_id) {
                     match &new_widget.widget_type {
                         BottomWidgetType::Temp
                         | BottomWidgetType::Proc
@@ -2909,7 +2909,7 @@ impl App {
                 (widget.top_left_corner, widget.bottom_right_corner)
             {
                 if (x >= tlc_x && y >= tlc_y) && (x < brc_x && y < brc_y) {
-                    if let Some(new_widget) = self.widget_map.get(&new_widget_id) {
+                    if let Some(new_widget) = self.widget_map.get(new_widget_id) {
                         self.current_widget = new_widget.clone();
 
                         match &self.current_widget.widget_type {

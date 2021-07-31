@@ -249,10 +249,10 @@ pub fn build_app(
     config_path: Option<PathBuf>,
 ) -> Result<App> {
     use BottomWidgetType::*;
-    let autohide_time = get_autohide_time(&matches, &config);
-    let default_time_value = get_default_time_value(&matches, &config)
+    let autohide_time = get_autohide_time(matches, config);
+    let default_time_value = get_default_time_value(matches, config)
         .context("Update 'default_time_value' in your config file.")?;
-    let use_basic_mode = get_use_basic_mode(&matches, &config);
+    let use_basic_mode = get_use_basic_mode(matches, config);
 
     // For processes
     let is_grouped = get_app_grouping(matches, config);

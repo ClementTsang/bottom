@@ -10,21 +10,20 @@ on:
   workflow_dispatch:
   pull_request:
     paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '.github/ISSUE_TEMPLATE/**'
+      - "README.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
   push:
     branches:
       - master
     paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - 'CHANGELOG.md'
-      - 'CONTRIBUTING.md'
+      - "README.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "CHANGELOG.md"
+      - "CONTRIBUTING.md"
 
 jobs:
-  # Check rustfmt
   rustfmt:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -44,10 +43,9 @@ jobs:
           components: rustfmt
 
       - uses: Swatinem/rust-cache@v1
-      
+
       - run: cargo fmt --all -- --check
 
-  # Check clippy.  Note that this doesn't check ARM.
   clippy:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -68,8 +66,6 @@ jobs:
           components: clippy
 
       - uses: Swatinem/rust-cache@v1
-
-      # TODO: Can probably put cache here in the future; I'm worried if this will cause issues with clippy though since cargo check breaks it; maybe wait until 1.52, when fix lands.
 
       - run: cargo clippy --all-targets --workspace -- -D warnings
 
@@ -174,6 +170,14 @@ jobs:
               rust: stable,
             }
 
+          # Risc-V 64gc
+          - {
+              os: "ubuntu-latest",
+              target: "riscv64gc-unknown-linux-gnu",
+              cross: true,
+              rust: stable,
+            }
+
           # macOS ARM
           - {
               os: "macOS-latest",
@@ -194,6 +198,8 @@ jobs:
           target: ${{ matrix.triple.target }}
 
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.triple.target }}
 
       - name: Check
         uses: actions-rs/cargo@v1
