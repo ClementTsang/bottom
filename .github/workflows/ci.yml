@@ -202,6 +202,8 @@ jobs:
           target: ${{ matrix.triple.target }}
 
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.triple.target }}
 
       - name: Check
         uses: actions-rs/cargo@v1
