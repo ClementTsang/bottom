@@ -419,7 +419,7 @@ impl ProcessTableWidget for Painter {
                     proc_widget_state.table_width_state.calculated_column_widths =
                         get_column_widths(
                             draw_loc.width,
-                            &hard_widths,
+                            hard_widths,
                             &soft_widths_min,
                             soft_widths_max,
                             &(proc_widget_state
@@ -803,7 +803,7 @@ impl ProcessTableWidget for Painter {
                     proc_widget_state
                         .columns
                         .column_mapping
-                        .get(&column_type)
+                        .get(column_type)
                         .unwrap()
                         .enabled
                 })

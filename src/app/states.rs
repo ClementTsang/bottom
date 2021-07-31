@@ -383,7 +383,7 @@ impl ProcColumn {
         self.ordered_columns
             .iter()
             .filter_map(|column_type| {
-                if let Some(col_map) = self.column_mapping.get(&column_type) {
+                if let Some(col_map) = self.column_mapping.get(column_type) {
                     if col_map.enabled {
                         Some(1)
                     } else {
@@ -429,7 +429,7 @@ impl ProcColumn {
         self.ordered_columns
             .iter()
             .filter_map(|column_type| {
-                let mapping = self.column_mapping.get(&column_type).unwrap();
+                let mapping = self.column_mapping.get(column_type).unwrap();
                 let mut command_str = String::default();
                 if let Some(command) = mapping.shortcut {
                     command_str = format!("({})", command);

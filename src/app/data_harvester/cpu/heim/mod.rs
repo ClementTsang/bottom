@@ -102,7 +102,7 @@ pub async fn get_cpu_data_list(
                 .enumerate()
                 .map(|(itx, (current_cpu, (past_cpu_work, past_cpu_total)))| {
                     if let Ok(cpu_time) = current_cpu {
-                        let present_times = convert_cpu_times(&cpu_time);
+                        let present_times = convert_cpu_times(cpu_time);
 
                         (
                             present_times,

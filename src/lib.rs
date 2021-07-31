@@ -409,7 +409,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                 .filter_map(|(_pid, process)| {
                     if !is_invalid_or_blank {
                         if let Some(process_filter) = process_filter {
-                            if process_filter.check(&process, is_using_command) {
+                            if process_filter.check(process, is_using_command) {
                                 Some(process)
                             } else {
                                 None
@@ -455,7 +455,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 
             app.canvas_data.stringified_process_data_map.insert(
                 widget_id,
-                stringify_process_data(&proc_widget_state, &finalized_process_data),
+                stringify_process_data(proc_widget_state, &finalized_process_data),
             );
             app.canvas_data
                 .finalized_process_data_map

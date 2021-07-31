@@ -701,7 +701,7 @@ impl Painter {
                                 &mut f,
                                 app_state,
                                 widgets,
-                                &widget_draw_locs,
+                                widget_draw_locs,
                             );
                         });
                 }

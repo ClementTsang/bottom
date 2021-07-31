@@ -618,7 +618,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.rx_style)
-                        .data(&network_data_rx)
+                        .data(network_data_rx)
                         .graph_type(tui::widgets::GraphType::Line),
                     Dataset::default()
                         .name(format!("TX: {:7}", app_state.canvas_data.tx_display))
@@ -628,7 +628,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.tx_style)
-                        .data(&network_data_tx)
+                        .data(network_data_tx)
                         .graph_type(tui::widgets::GraphType::Line),
                     Dataset::default()
                         .name(format!(
@@ -653,7 +653,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.rx_style)
-                        .data(&network_data_rx)
+                        .data(network_data_rx)
                         .graph_type(tui::widgets::GraphType::Line),
                     Dataset::default()
                         .name(&app_state.canvas_data.tx_display)
@@ -663,7 +663,7 @@ impl NetworkGraphWidget for Painter {
                             Marker::Braille
                         })
                         .style(self.colours.tx_style)
-                        .data(&network_data_tx)
+                        .data(network_data_tx)
                         .graph_type(tui::widgets::GraphType::Line),
                 ]
             };
