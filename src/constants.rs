@@ -22,6 +22,14 @@ pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
+// For kill signals
+#[cfg(target_os = "windows")]
+pub const MAX_SIGNAL: usize = 1;
+#[cfg(target_os = "linux")]
+pub const MAX_SIGNAL: usize = 64;
+#[cfg(target_os = "macos")]
+pub const MAX_SIGNAL: usize = 31;
+
 // Side borders
 pub static SIDE_BORDERS: Lazy<tui::widgets::Borders> =
     Lazy::new(|| tui::widgets::Borders::from_bits_truncate(20));

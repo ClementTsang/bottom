@@ -4,7 +4,7 @@ pub mod filter;
 pub mod layout_manager;
 mod process_killer;
 pub mod query;
-pub mod widget_states;
+pub mod widgets;
 
 use std::{
     cmp::{max, min},
@@ -21,10 +21,11 @@ use data_farmer::*;
 use data_harvester::{processes, temperature};
 pub use filter::*;
 use layout_manager::*;
-pub use widget_states::*;
+pub use widgets::*;
 
 use crate::{
-    canvas, constants,
+    canvas,
+    constants::{self, MAX_SIGNAL},
     units::data_units::DataUnit,
     utils::error::{BottomError, Result},
     Pid,
@@ -127,13 +128,6 @@ pub struct AppState {
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
 }
-
-#[cfg(target_os = "windows")]
-const MAX_SIGNAL: usize = 1;
-#[cfg(target_os = "linux")]
-const MAX_SIGNAL: usize = 64;
-#[cfg(target_os = "macos")]
-const MAX_SIGNAL: usize = 31;
 
 impl AppState {
     pub fn reset(&mut self) {

@@ -4,26 +4,26 @@ use tui::widgets::TableState;
 
 use crate::{app::layout_manager::BottomWidgetType, constants};
 
-pub mod process_state;
-pub use process_state::*;
+pub mod process;
+pub use process::*;
 
-pub mod net_state;
-pub use net_state::*;
+pub mod net;
+pub use net::*;
 
-pub mod mem_state;
-pub use mem_state::*;
+pub mod mem;
+pub use mem::*;
 
-pub mod cpu_state;
-pub use cpu_state::*;
+pub mod cpu;
+pub use cpu::*;
 
-pub mod disk_state;
-pub use disk_state::*;
+pub mod disk;
+pub use disk::*;
 
-pub mod battery_state;
-pub use battery_state::*;
+pub mod battery;
+pub use self::battery::*;
 
-pub mod temp_state;
-pub use temp_state::*;
+pub mod temp;
+pub use temp::*;
 
 #[derive(Debug)]
 pub enum ScrollDirection {

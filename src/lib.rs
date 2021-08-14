@@ -82,13 +82,10 @@ pub enum EventResult {
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) -> EventResult {
     match event.kind {
-        MouseEventKind::Down(button) => match button {
-            MouseButton::Left => {
-                app.on_left_mouse_up(event.column, event.row);
-                EventResult::Redraw
-            }
-            _ => EventResult::Continue,
-        },
+        MouseEventKind::Down(MouseButton::Left) => {
+            app.on_left_mouse_up(event.column, event.row);
+            EventResult::Redraw
+        }
         MouseEventKind::ScrollUp => {
             app.handle_scroll_up();
             EventResult::Redraw
