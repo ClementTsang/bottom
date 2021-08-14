@@ -8,7 +8,7 @@ use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,
-    io::{stdout, Write},
+    io::stdout,
     panic,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -96,7 +96,7 @@ fn main() -> Result<()> {
     };
 
     // Event loop
-    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
+    let (collection_sender, collection_thread_ctrl_receiver) = mpsc::channel();
     let _collection_thread = create_collection_thread(
         sender,
         collection_thread_ctrl_receiver,
@@ -131,15 +131,29 @@ fn main() -> Result<()> {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
                 BottomEvent::KeyInput(event) => {
-                    if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
+                    match handle_key_event(event, &mut app, &collection_sender) {
+                        EventResult::Quit => {
+                            break;
+                        }
+                        EventResult::Redraw => {
+                            // TODO: Be even more granular!  Maybe the event triggered no change, then we shouldn't redraw.
+                            force_redraw(&mut app);
+                            try_drawing(&mut terminal, &mut app, &mut painter)?;
+                        }
+                        EventResult::Continue => {}
+                    }
+                }
+                BottomEvent::MouseInput(event) => match handle_mouse_event(event, &mut app) {
+                    EventResult::Quit => {
                         break;
                     }
-                    handle_force_redraws(&mut app);
-                }
-                BottomEvent::MouseInput(event) => {
-                    handle_mouse_event(event, &mut app);
-                    handle_force_redraws(&mut app);
-                }
+                    EventResult::Redraw => {
+                        // TODO: Be even more granular!  Maybe the event triggered no change, then we shouldn't redraw.
+                        force_redraw(&mut app);
+                        try_drawing(&mut terminal, &mut app, &mut painter)?;
+                    }
+                    EventResult::Continue => {}
+                },
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(data);
 
@@ -220,6 +234,8 @@ fn main() -> Result<()> {
                             app.canvas_data.battery_data =
                                 convert_battery_harvest(&app.data_collection);
                         }
+
+                        try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
                 }
                 BottomEvent::Clean => {
@@ -228,17 +244,11 @@ fn main() -> Result<()> {
                 }
             }
         }
-
-        // TODO: [OPT] Should not draw if no change (ie: scroll max)
-        try_drawing(&mut terminal, &mut app, &mut painter)?;
     }
 
     // I think doing it in this order is safe...
-
     *thread_termination_lock.lock().unwrap() = true;
-
     thread_termination_cvar.notify_all();
-
     cleanup_terminal(&mut terminal)?;
 
     Ok(())

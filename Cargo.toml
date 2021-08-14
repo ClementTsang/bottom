@@ -38,7 +38,7 @@ anyhow = "1.0.40"
 backtrace = "0.3.59"
 battery = "0.7.8"
 chrono = "0.4.19"
-crossterm = "0.18.2"
+crossterm = "0.20.0"
 ctrlc = { version = "3.1.9", features = ["termination"] }
 clap = "2.33"
 cfg-if = "1.0"
@@ -55,7 +55,7 @@ serde = { version = "1.0.125", features = ["derive"] }
 sysinfo = "0.18.2"
 thiserror = "1.0.24"
 toml = "0.5.8"
-tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
+tui = { version = "0.16.0", features = ["crossterm"], default-features = false }
 typed-builder = "0.9.0"
 unicode-segmentation = "1.7.1"
 unicode-width = "0.1"

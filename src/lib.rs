@@ -20,7 +20,10 @@ use std::{
 };
 
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
+    event::{
+        read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent,
+        MouseEventKind,
+    },
     execute,
     style::Print,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
@@ -71,29 +74,36 @@ pub enum ThreadControlEvent {
     UpdateUpdateTime(u64),
 }
 
-pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) {
-    match event {
-        MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
-        MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
-        MouseEvent::Down(button, x, y, _modifiers) => {
-            if !app.app_config_fields.disable_click {
-                match button {
-                    crossterm::event::MouseButton::Left => {
-                        // Trigger left click widget activity
-                        app.on_left_mouse_up(x, y);
-                    }
-                    crossterm::event::MouseButton::Right => {}
-                    _ => {}
-                }
-            }
-        }
-        _ => {}
-    };
+pub enum EventResult {
+    Quit,
+    Redraw,
+    Continue,
 }
 
-pub fn handle_key_event_or_break(
+pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) -> EventResult {
+    match event.kind {
+        MouseEventKind::Down(button) => match button {
+            MouseButton::Left => {
+                app.on_left_mouse_up(event.column, event.row);
+                EventResult::Redraw
+            }
+            _ => EventResult::Continue,
+        },
+        MouseEventKind::ScrollUp => {
+            app.handle_scroll_up();
+            EventResult::Redraw
+        }
+        MouseEventKind::ScrollDown => {
+            app.handle_scroll_down();
+            EventResult::Redraw
+        }
+        _ => EventResult::Continue,
+    }
+}
+
+pub fn handle_key_event(
     event: KeyEvent, app: &mut AppState, reset_sender: &std::sync::mpsc::Sender<ThreadControlEvent>,
-) -> bool {
+) -> EventResult {
     // debug!("KeyEvent: {:?}", event);
 
     // TODO: [PASTE] Note that this does NOT support some emojis like flags.  This is due to us
@@ -104,7 +114,7 @@ pub fn handle_key_event_or_break(
     if event.modifiers.is_empty() {
         // Required catch for searching - otherwise you couldn't search with q.
         if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
-            return true;
+            return EventResult::Quit;
         }
         match event.code {
             KeyCode::End => app.skip_to_last(),
@@ -125,7 +135,9 @@ pub fn handle_key_event_or_break(
             KeyCode::F(5) => app.toggle_tree_mode(),
             KeyCode::F(6) => app.toggle_sort(),
             KeyCode::F(9) => app.start_killing_process(),
-            _ => {}
+            _ => {
+                return EventResult::Continue;
+            }
         }
     } else {
         // Otherwise, track the modifier as well...
@@ -140,7 +152,7 @@ pub fn handle_key_event_or_break(
             }
         } else if let KeyModifiers::CONTROL = event.modifiers {
             if event.code == KeyCode::Char('c') {
-                return true;
+                return EventResult::Quit;
             }
 
             match event.code {
@@ -166,7 +178,9 @@ pub fn handle_key_event_or_break(
                 // Can't do now, CTRL+BACKSPACE doesn't work and graphemes
                 // are hard to iter while truncating last (eloquently).
                 // KeyCode::Backspace => app.skip_word_backspace(),
-                _ => {}
+                _ => {
+                    return EventResult::Continue;
+                }
             }
         } else if let KeyModifiers::SHIFT = event.modifiers {
             match event.code {
@@ -175,12 +189,14 @@ pub fn handle_key_event_or_break(
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char(caught_char) => app.on_char_key(caught_char),
-                _ => {}
+                _ => {
+                    return EventResult::Continue;
+                }
             }
         }
     }
 
-    false
+    EventResult::Redraw
 }
 
 pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBuf>> {
@@ -300,7 +316,7 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     .unwrap();
 }
 
-pub fn handle_force_redraws(app: &mut AppState) {
+pub fn force_redraw(app: &mut AppState) {
     // Currently we use an Option... because we might want to future-proof this
     // if we eventually get widget-specific redrawing!
     if app.proc_state.force_update_all {
@@ -607,25 +623,30 @@ pub fn create_input_thread(
                     break;
                 }
             }
-            if let Ok(poll) = poll(Duration::from_millis(20)) {
-                if poll {
-                    if let Ok(event) = read() {
-                        if let Event::Key(key) = event {
-                            if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                    break;
-                                }
-                                keyboard_timer = Instant::now();
+
+            if let Ok(event) = read() {
+                match event {
+                    Event::Key(event) => {
+                        if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+                            if sender.send(BottomEvent::KeyInput(event)).is_err() {
+                                break;
                             }
-                        } else if let Event::Mouse(mouse) = event {
+                            keyboard_timer = Instant::now();
+                        }
+                    }
+                    Event::Mouse(event) => match &event.kind {
+                        MouseEventKind::Drag(_) => {}
+                        MouseEventKind::Moved => {}
+                        _ => {
                             if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-                                if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                if sender.send(BottomEvent::MouseInput(event)).is_err() {
                                     break;
                                 }
                                 mouse_timer = Instant::now();
                             }
                         }
-                    }
+                    },
+                    Event::Resize(_, _) => {}
                 }
             }
         }
