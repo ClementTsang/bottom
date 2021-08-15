@@ -1,5 +1,6 @@
 pub mod data_farmer;
 pub mod data_harvester;
+pub mod event;
 pub mod filter;
 pub mod layout_manager;
 mod process_killer;

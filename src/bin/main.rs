@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
+use bottom::{app::event::EventResult, canvas, constants::*, data_conversion::*, options::*, *};
 
 use std::{
     boxed::Box,

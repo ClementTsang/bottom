@@ -1,8 +1,15 @@
 use std::time::Instant;
 
-use tui::widgets::TableState;
+use crossterm::event::{KeyEvent, MouseEvent};
+use tui::{layout::Rect, widgets::TableState};
 
-use crate::{app::layout_manager::BottomWidgetType, constants};
+use crate::{
+    app::{event::EventResult, layout_manager::BottomWidgetType},
+    constants,
+};
+
+pub mod base;
+pub use base::*;
 
 pub mod process;
 pub use process::*;
@@ -24,6 +31,34 @@ pub use self::battery::*;
 
 pub mod temp;
 pub use temp::*;
+
+#[allow(unused_variables)]
+pub trait Widget {
+    type UpdateState;
+
+    /// Handles a [`KeyEvent`].
+    ///
+    /// Defaults to returning [`EventResult::Continue`], indicating nothing should be done.
+    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+        EventResult::Continue
+    }
+
+    /// Handles a [`MouseEvent`].  `x` and `y` represent *relative* mouse coordinates to the [`Widget`] - those should
+    /// be used as opposed to the coordinates in the `event` unless you need absolute coordinates for some reason!
+    ///
+    /// Defaults to returning [`EventResult::Continue`], indicating nothing should be done.
+    fn handle_mouse_event(&mut self, event: MouseEvent, x: u16, y: u16) -> EventResult {
+        EventResult::Continue
+    }
+
+    /// Updates a [`Widget`].  Defaults to doing nothing.
+    fn update(&mut self, update_state: Self::UpdateState) {}
+
+    /// Returns a [`Widget`]'s bounding box, if possible.  Defaults to returning [`None`].
+    fn bounding_box(&self) -> Option<Rect> {
+        None
+    }
+}
 
 #[derive(Debug)]
 pub enum ScrollDirection {

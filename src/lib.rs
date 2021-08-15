@@ -31,6 +31,7 @@ use crossterm::{
 
 use app::{
     data_harvester::{self, processes::ProcessSorting},
+    event::EventResult,
     layout_manager::{UsedWidgets, WidgetDirection},
     AppState,
 };
@@ -72,12 +73,6 @@ pub enum ThreadControlEvent {
     UpdateConfig(Box<app::AppConfigFields>),
     UpdateUsedWidgets(Box<UsedWidgets>),
     UpdateUpdateTime(u64),
-}
-
-pub enum EventResult {
-    Quit,
-    Redraw,
-    Continue,
 }
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) -> EventResult {
