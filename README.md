@@ -190,34 +190,35 @@ and installing via the `.msi` file.
 
 You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
-### Building
+### Manually
 
-There are a few ways to go about doing this manually. Note that in all cases, you would want to build using the most recent version of stable Rust:
+There are a few ways to go about doing this manually. Note that you probably want
+to do so using the most recent version of stable Rust, which is how the binaries are built:
 
 ```bash
-# If required, update Rust on the stable channel
+# If required, update Rust on the stable channel first
 rustup update stable
 
-# Download from releases and install
+# Option 1 - Download from releases and install
 curl -LO https://github.com/ClementTsang/bottom/archive/0.6.3.tar.gz
 tar -xzvf 0.6.3.tar.gz
 cargo install --path .
 
-# Clone from master and install manually
+# Option 2 - Clone from master and install manually
 git clone https://github.com/ClementTsang/bottom
 cd bottom
 cargo install --path .
 
-# Clone and install the newest master version all via Cargo
+# Option 3 - Clone and install directly from the repo all via Cargo
 cargo install --git https://github.com/ClementTsang/bottom
 ```
 
 ### Binaries
 
-You can also try to use the generated release binaries and manually install them:
+You can also try to use the generated release binaries and manually install on your system:
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
-- [Latest nightly version](https://github.com/ClementTsang/bottom/releases/tag/nightly), which is generated daily off of the master branch at 00:00 UTC
+- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
 
 #### Auto-completion
 
@@ -234,9 +235,9 @@ The release binaries are packaged with shell auto-completion files for bash, fis
 You can run bottom using `btm`.
 
 - For help on flags, use `btm -h` for a quick overview or `btm --help` for more details.
-- For info on key and mouse bindings, refer to the [documentation](https://clementtsang.github.io/bottom/nightly/) or press `?` inside bottom.
+- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation](https://clementtsang.github.io/bottom/nightly/).
 
-You can generally find more information on usage in the [documentation](https://clementtsang.github.io/bottom/nightly/).
+You can find more information on usage in the [documentation](https://clementtsang.github.io/bottom/nightly/).
 
 ## Configuration
 
