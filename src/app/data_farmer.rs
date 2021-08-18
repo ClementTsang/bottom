@@ -16,8 +16,11 @@ use once_cell::sync::Lazy;
 
 use std::{time::Instant, vec::Vec};
 
+#[cfg(feature = "battery")]
+use crate::data_harvester::batteries;
+
 use crate::{
-    data_harvester::{batteries, cpu, disks, memory, network, processes, temperature, Data},
+    data_harvester::{cpu, disks, memory, network, processes, temperature, Data},
     utils::gen_util::{get_decimal_bytes, GIGA_LIMIT},
 };
 use regex::Regex;
@@ -60,6 +63,7 @@ pub struct DataCollection {
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
     pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
+    #[cfg(feature = "battery")]
     pub battery_harvest: Vec<batteries::BatteryHarvest>,
 }
 
@@ -80,6 +84,7 @@ impl Default for DataCollection {
             io_labels_and_prev: Vec::default(),
             io_labels: Vec::default(),
             temp_harvest: Vec::default(),
+            #[cfg(feature = "battery")]
             battery_harvest: Vec::default(),
         }
     }
@@ -97,7 +102,10 @@ impl DataCollection {
         self.io_harvest = disks::IoHarvest::default();
         self.io_labels_and_prev = Vec::default();
         self.temp_harvest = Vec::default();
-        self.battery_harvest = Vec::default();
+        #[cfg(feature = "battery")]
+        {
+            self.battery_harvest = Vec::default();
+        }
     }
 
     pub fn set_frozen_time(&mut self) {
@@ -166,9 +174,12 @@ impl DataCollection {
             self.eat_proc(list_of_processes);
         }
 
-        // Battery
-        if let Some(list_of_batteries) = harvested_data.list_of_batteries {
-            self.eat_battery(list_of_batteries);
+        #[cfg(feature = "battery")]
+        {
+            // Battery
+            if let Some(list_of_batteries) = harvested_data.list_of_batteries {
+                self.eat_battery(list_of_batteries);
+            }
         }
 
         // And we're done eating.  Update time and push the new entry!
@@ -312,6 +323,7 @@ impl DataCollection {
         self.process_harvest = list_of_processes;
     }
 
+    #[cfg(feature = "battery")]
     fn eat_battery(&mut self, list_of_batteries: Vec<batteries::BatteryHarvest>) {
         self.battery_harvest = list_of_batteries;
     }

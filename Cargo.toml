@@ -31,12 +31,11 @@ opt-level = 3
 codegen-units = 1
 
 [features]
-default = ["fern", "log"]
+default = ["fern", "log", "battery"]
 
 [dependencies]
 anyhow = "1.0.40"
 backtrace = "0.3.59"
-battery = "0.7.8"
 chrono = "0.4.19"
 crossterm = "0.18.2"
 ctrlc = { version = "3.1.9", features = ["termination"] }
@@ -63,6 +62,7 @@ unicode-width = "0.1"
 # For debugging only... disable on release builds with --no-default-target for no?  TODO: Redo this.
 fern = { version = "0.6.0", optional = true }
 log = { version = "0.4.14", optional = true }
+battery = { version = "0.7.8", optional = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.86"
