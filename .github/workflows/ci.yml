@@ -205,7 +205,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-targets --verbose --target=${{ matrix.triple.target }} --no-default-features
+          args: --all-targets --verbose --target=${{ matrix.triple.target }} --features "battery"
           use-cross: ${{ matrix.triple.cross }}
 
       - name: Run tests
