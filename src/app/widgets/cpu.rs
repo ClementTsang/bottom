@@ -1,6 +1,14 @@
 use std::{collections::HashMap, time::Instant};
 
-use super::{AppScrollWidgetState, CanvasTableWidthState};
+use crossterm::event::{KeyEvent, MouseEvent};
+use tui::layout::Rect;
+
+use crate::app::event::EventResult;
+
+use super::{
+    does_point_intersect_rect, text_table::TextTableUpdateData, AppScrollWidgetState,
+    CanvasTableWidthState, TextTable, TimeGraph, Widget,
+};
 
 pub struct CpuWidgetState {
     pub current_display_time: u64,
@@ -43,5 +51,90 @@ impl CpuState {
 
     pub fn get_widget_state(&self, widget_id: u64) -> Option<&CpuWidgetState> {
         self.widget_states.get(&widget_id)
+    }
+}
+
+enum CpuGraphSelection {
+    Graph,
+    Legend,
+    None,
+}
+
+/// Whether the [`CpuGraph`]'s legend is placed on the left or right.
+pub enum CpuGraphLegendPosition {
+    Left,
+    Right,
+}
+
+pub struct CpuGraphUpdateData {
+    pub legend_data: Option<TextTableUpdateData>,
+}
+
+/// A widget designed to show CPU usage via a graph, along with a side legend implemented as a [`TextTable`].
+pub struct CpuGraph {
+    graph: TimeGraph,
+    legend: TextTable,
+    pub legend_position: CpuGraphLegendPosition,
+
+    bounds: Rect,
+    selected: CpuGraphSelection,
+}
+
+impl CpuGraph {
+    /// Creates a new [`CpuGraph`].
+    pub fn new(
+        graph: TimeGraph, legend: TextTable, legend_position: CpuGraphLegendPosition,
+    ) -> Self {
+        Self {
+            graph,
+            legend,
+            legend_position,
+            bounds: Rect::default(),
+            selected: CpuGraphSelection::None,
+        }
+    }
+}
+
+impl Widget for CpuGraph {
+    type UpdateData = CpuGraphUpdateData;
+
+    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+        match self.selected {
+            CpuGraphSelection::Graph => self.graph.handle_key_event(event),
+            CpuGraphSelection::Legend => self.legend.handle_key_event(event),
+            CpuGraphSelection::None => EventResult::Continue,
+        }
+    }
+
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+        // Check where we clicked (and switch the selected field if required) and fire the handler from there.
+        // Note we assume that the
+
+        let global_x = event.column;
+        let global_y = event.row;
+
+        if does_point_intersect_rect(global_x, global_y, self.graph.bounds()) {
+            self.selected = CpuGraphSelection::Graph;
+            self.graph.handle_mouse_event(event)
+        } else if does_point_intersect_rect(global_x, global_y, self.legend.bounds()) {
+            self.selected = CpuGraphSelection::Legend;
+            self.legend.handle_mouse_event(event)
+        } else {
+            EventResult::Continue
+        }
+    }
+
+    fn update(&mut self, update_data: Self::UpdateData) {
+        if let Some(legend_data) = update_data.legend_data {
+            self.legend.update(legend_data);
+        }
+    }
+
+    fn bounds(&self) -> Rect {
+        self.bounds
+    }
+
+    fn set_bounds(&mut self, new_bounds: Rect) {
+        self.bounds = new_bounds;
     }
 }

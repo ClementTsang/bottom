@@ -43,6 +43,7 @@ ctrlc = { version = "3.1.9", features = ["termination"] }
 clap = "2.33"
 cfg-if = "1.0"
 dirs = "3.0.2"
+enum_dispatch = "0.3.7"
 futures = "0.3.14"
 futures-timer = "3.0.2"
 fxhash = "0.2.1"

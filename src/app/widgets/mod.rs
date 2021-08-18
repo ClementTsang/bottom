@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use crossterm::event::{KeyEvent, MouseEvent};
+use enum_dispatch::enum_dispatch;
 use tui::{layout::Rect, widgets::TableState};
 
 use crate::{
@@ -32,9 +33,10 @@ pub use self::battery::*;
 pub mod temp;
 pub use temp::*;
 
+#[enum_dispatch]
 #[allow(unused_variables)]
 pub trait Widget {
-    type UpdateState;
+    type UpdateData;
 
     /// Handles a [`KeyEvent`].
     ///
@@ -43,21 +45,36 @@ pub trait Widget {
         EventResult::Continue
     }
 
-    /// Handles a [`MouseEvent`].  `x` and `y` represent *relative* mouse coordinates to the [`Widget`] - those should
-    /// be used as opposed to the coordinates in the `event` unless you need absolute coordinates for some reason!
+    /// Handles a [`MouseEvent`].
     ///
     /// Defaults to returning [`EventResult::Continue`], indicating nothing should be done.
-    fn handle_mouse_event(&mut self, event: MouseEvent, x: u16, y: u16) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
         EventResult::Continue
     }
 
-    /// Updates a [`Widget`].  Defaults to doing nothing.
-    fn update(&mut self, update_state: Self::UpdateState) {}
+    /// Updates a [`Widget`] with new data from some state outside of its control.  Defaults to doing nothing.
+    fn update(&mut self, update_data: Self::UpdateData) {}
 
-    /// Returns a [`Widget`]'s bounding box, if possible.  Defaults to returning [`None`].
-    fn bounding_box(&self) -> Option<Rect> {
-        None
-    }
+    /// Returns a [`Widget`]'s bounding box.  Note that these are defined in *global*, *absolute*
+    /// coordinates.
+    fn bounds(&self) -> Rect;
+
+    /// Updates a [`Widget`]s bounding box.
+    fn set_bounds(&mut self, new_bounds: Rect);
+}
+
+#[enum_dispatch(BottomWidget)]
+enum BottomWidget {
+    MemGraph,
+    TempTable,
+    DiskTable,
+    CpuGraph,
+    NetGraph,
+    OldNetGraph,
+}
+
+pub fn does_point_intersect_rect(x: u16, y: u16, rect: Rect) -> bool {
+    x >= rect.left() && x <= rect.right() && y >= rect.top() && y <= rect.bottom()
 }
 
 #[derive(Debug)]

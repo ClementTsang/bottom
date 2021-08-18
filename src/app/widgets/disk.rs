@@ -1,6 +1,14 @@
 use std::collections::HashMap;
 
-use super::{AppScrollWidgetState, CanvasTableWidthState};
+use crossterm::event::{KeyEvent, MouseEvent};
+use tui::layout::Rect;
+
+use crate::app::event::EventResult;
+
+use super::{
+    text_table::TextTableUpdateData, AppScrollWidgetState, CanvasTableWidthState, TextTable,
+    Widget,
+};
 
 pub struct DiskWidgetState {
     pub scroll_state: AppScrollWidgetState,
@@ -31,5 +39,45 @@ impl DiskState {
 
     pub fn get_widget_state(&self, widget_id: u64) -> Option<&DiskWidgetState> {
         self.widget_states.get(&widget_id)
+    }
+}
+
+/// A table displaying disk data.  Essentially a wrapper around a [`TextTable`].
+pub struct DiskTable {
+    table: TextTable,
+    bounds: Rect,
+}
+
+impl DiskTable {
+    /// Creates a new [`DiskTable`].
+    pub fn new(table: TextTable) -> Self {
+        Self {
+            table,
+            bounds: Rect::default(),
+        }
+    }
+}
+
+impl Widget for DiskTable {
+    type UpdateData = TextTableUpdateData;
+
+    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+        self.table.handle_key_event(event)
+    }
+
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+        self.table.handle_mouse_event(event)
+    }
+
+    fn update(&mut self, update_data: Self::UpdateData) {
+        self.table.update(update_data);
+    }
+
+    fn bounds(&self) -> Rect {
+        self.bounds
+    }
+
+    fn set_bounds(&mut self, new_bounds: Rect) {
+        self.bounds = new_bounds;
     }
 }

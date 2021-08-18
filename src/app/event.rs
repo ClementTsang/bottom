@@ -7,14 +7,20 @@ pub enum EventResult {
 }
 
 enum MultiKeyState {
+    /// Currently not waiting on any next input.
     Idle,
+
+    /// Waiting for the next input, with a given trigger [`Instant`].
     Waiting {
+        /// When it was triggered.
         trigger_instant: Instant,
+
+        /// What part of the pattern it is at.
         checked_index: usize,
     },
 }
 
-/// The possible outcomes of calling [`MultiKey::input`] on a [`MultiKey`].
+/// The possible outcomes of calling [`MultiKey::input`].
 pub enum MultiKeyResult {
     /// Returned when a character was *accepted*, but has not completed the sequence required.
     Accepted,
@@ -34,6 +40,7 @@ pub struct MultiKey {
 }
 
 impl MultiKey {
+    /// Creates a new [`MultiKey`] with a given pattern and timeout.
     pub fn register(pattern: Vec<char>, timeout: Duration) -> Self {
         Self {
             state: MultiKeyState::Idle,
@@ -42,10 +49,18 @@ impl MultiKey {
         }
     }
 
-    pub fn reset(&mut self) {
+    /// Resets to an idle state.
+    fn reset(&mut self) {
         self.state = MultiKeyState::Idle;
     }
 
+    /// Handles a char input and returns the current status of the [`MultiKey`] after, which is one of:
+    /// - Accepting the char and moving to the next state
+    /// - Completing the multi-key pattern
+    /// - Rejecting it
+    ///
+    /// Note that if a [`MultiKey`] only "times out" upon calling this - if it has timed out, it will first reset
+    /// before trying to check the char.
     pub fn input(&mut self, c: char) -> MultiKeyResult {
         match &mut self.state {
             MultiKeyState::Idle => {

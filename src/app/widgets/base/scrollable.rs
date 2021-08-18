@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crossterm::event::{KeyEvent, KeyModifiers, MouseButton, MouseEvent};
-use tui::widgets::TableState;
+use tui::{layout::Rect, widgets::TableState};
 
 use crate::app::{
     event::{EventResult, MultiKey, MultiKeyResult},
@@ -13,7 +13,8 @@ pub enum ScrollDirection {
     Down,
 }
 
-/// A "scrollable" [`Widget`] component.  Intended for use as part of another [`Widget]].
+/// A "scrollable" [`Widget`] component.  Intended for use as part of another [`Widget`] - as such, it does
+/// not have any bounds or the like.
 pub struct Scrollable {
     current_index: usize,
     previous_index: usize,
@@ -22,6 +23,8 @@ pub struct Scrollable {
 
     tui_state: TableState,
     gg_manager: MultiKey,
+
+    bounds: Rect,
 }
 
 impl Scrollable {
@@ -34,6 +37,7 @@ impl Scrollable {
             num_items,
             tui_state: TableState::default(),
             gg_manager: MultiKey::register(vec!['g', 'g'], Duration::from_millis(400)),
+            bounds: Rect::default(),
         }
     }
 
@@ -127,7 +131,7 @@ impl Scrollable {
 }
 
 impl Widget for Scrollable {
-    type UpdateState = usize;
+    type UpdateData = usize;
 
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         use crossterm::event::KeyCode::{Char, Down, Up};
@@ -151,18 +155,18 @@ impl Widget for Scrollable {
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent, _x: u16, y: u16) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
         match event.kind {
             crossterm::event::MouseEventKind::Down(MouseButton::Left) => {
                 // This requires a bit of fancy calculation.  The main trick is remembering that
                 // we are using a *visual* index here - not what is the actual index!  Luckily, we keep track of that
                 // inside our linked copy of TableState!
-                //
+
                 // Note that y is assumed to be *relative*;
                 // we assume that y starts at where the list starts (and there are no gaps or whatever).
+                let y = usize::from(event.row - self.bounds.top());
 
                 if let Some(selected) = self.tui_state.selected() {
-                    let y = y as usize;
                     if y > selected {
                         let offset = y - selected;
                         return self.move_down(offset);
@@ -190,5 +194,13 @@ impl Widget for Scrollable {
         if new_num_items <= self.previous_index {
             self.previous_index = new_num_items - 1;
         }
+    }
+
+    fn bounds(&self) -> Rect {
+        self.bounds
+    }
+
+    fn set_bounds(&mut self, new_bounds: Rect) {
+        self.bounds = new_bounds;
     }
 }

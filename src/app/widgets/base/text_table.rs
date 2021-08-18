@@ -1,9 +1,7 @@
+use crossterm::event::{KeyEvent, MouseEvent};
 use tui::layout::Rect;
 
-use crate::{
-    app::{event::EventResult, Scrollable, Widget},
-    constants::TABLE_GAP_HEIGHT_LIMIT,
-};
+use crate::app::{event::EventResult, Scrollable, Widget};
 
 struct Column {
     name: &'static str,
@@ -18,7 +16,7 @@ struct Column {
 impl Column {}
 
 /// The [`Widget::UpdateState`] of a [`TextTable`].
-pub struct TextTableUpdateState {
+pub struct TextTableUpdateData {
     num_items: Option<usize>,
     columns: Option<Vec<Column>>,
 }
@@ -35,7 +33,7 @@ pub struct TextTable {
     show_gap: bool,
 
     /// The bounding box of the [`TextTable`].
-    bounds: Rect, // TODO: I kinda want to remove this...
+    bounds: Rect, // TODO: Consider moving bounds to something else???
 
     /// Which index we're sorting by.
     sort_index: usize,
@@ -91,26 +89,20 @@ impl TextTable {
     pub fn column_names(&self) -> Vec<&'static str> {
         self.columns.iter().map(|column| column.name).collect()
     }
-
-    fn is_drawing_gap(&self) -> bool {
-        if !self.show_gap {
-            false
-        } else {
-            self.bounds.height >= TABLE_GAP_HEIGHT_LIMIT
-        }
-    }
 }
 
 impl Widget for TextTable {
-    type UpdateState = TextTableUpdateState;
+    type UpdateData = TextTableUpdateData;
 
-    fn handle_key_event(&mut self, event: crossterm::event::KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         self.scrollable.handle_key_event(event)
     }
 
-    fn handle_mouse_event(
-        &mut self, event: crossterm::event::MouseEvent, x: u16, y: u16,
-    ) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+        // Note these are representing RELATIVE coordinates!
+        let x = event.column - self.bounds.left();
+        let y = event.row - self.bounds.top();
+
         if y == 0 {
             for (index, column) in self.columns.iter().enumerate() {
                 let (start, end) = column.x_bounds;
@@ -120,23 +112,29 @@ impl Widget for TextTable {
             }
 
             EventResult::Continue
-        } else if self.is_drawing_gap() {
-            self.scrollable.handle_mouse_event(event, x, y - 1)
         } else {
-            self.scrollable.handle_mouse_event(event, x, y - 2)
+            self.scrollable.handle_mouse_event(event)
         }
     }
 
-    fn update(&mut self, update_state: Self::UpdateState) {
-        if let Some(num_items) = update_state.num_items {
+    fn update(&mut self, update_data: Self::UpdateData) {
+        if let Some(num_items) = update_data.num_items {
             self.scrollable.update(num_items);
         }
 
-        if let Some(columns) = update_state.columns {
+        if let Some(columns) = update_data.columns {
             self.columns = columns;
             if self.columns.len() <= self.sort_index {
                 self.sort_index = self.columns.len() - 1;
             }
         }
+    }
+
+    fn bounds(&self) -> Rect {
+        self.bounds
+    }
+
+    fn set_bounds(&mut self, new_bounds: Rect) {
+        self.bounds = new_bounds;
     }
 }

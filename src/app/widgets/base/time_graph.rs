@@ -1,14 +1,17 @@
 use std::time::{Duration, Instant};
 
 use crossterm::event::{KeyEvent, KeyModifiers, MouseEvent};
+use tui::layout::Rect;
 
 use crate::app::{event::EventResult, Widget};
 
+#[derive(Clone)]
 pub enum AutohideTimerState {
     Hidden,
     Running(Instant),
 }
 
+#[derive(Clone)]
 pub enum AutohideTimer {
     Disabled,
     Enabled {
@@ -58,6 +61,8 @@ pub struct TimeGraph {
     min_duration: u64,
     max_duration: u64,
     time_interval: u64,
+
+    bounds: Rect,
 }
 
 impl TimeGraph {
@@ -72,9 +77,11 @@ impl TimeGraph {
             min_duration,
             max_duration,
             time_interval,
+            bounds: Rect::default(),
         }
     }
 
+    /// Handles a char `c`.
     fn handle_char(&mut self, c: char) -> EventResult {
         match c {
             '-' => self.zoom_out(),
@@ -132,7 +139,7 @@ impl TimeGraph {
 }
 
 impl Widget for TimeGraph {
-    type UpdateState = ();
+    type UpdateData = ();
 
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         use crossterm::event::KeyCode::Char;
@@ -147,11 +154,19 @@ impl Widget for TimeGraph {
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent, _x: u16, _y: u16) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
         match event.kind {
             crossterm::event::MouseEventKind::ScrollDown => self.zoom_out(),
             crossterm::event::MouseEventKind::ScrollUp => self.zoom_in(),
             _ => EventResult::Continue,
         }
+    }
+
+    fn bounds(&self) -> Rect {
+        self.bounds
+    }
+
+    fn set_bounds(&mut self, new_bounds: Rect) {
+        self.bounds = new_bounds;
     }
 }
