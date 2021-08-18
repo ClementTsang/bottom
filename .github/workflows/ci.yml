@@ -208,6 +208,14 @@ jobs:
           args: --all-targets --verbose --target=${{ matrix.triple.target }} --features "battery"
           use-cross: ${{ matrix.triple.cross }}
 
+      - name: Check without battery
+        if: matrix.triple.toTest == 'true'
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --all-targets --verbose --target=${{ matrix.triple.target }}
+          use-cross: ${{ matrix.triple.cross }}
+
       - name: Run tests
         if: matrix.triple.toTest == 'true'
         run: cargo test --no-fail-fast
