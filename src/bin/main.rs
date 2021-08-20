@@ -217,9 +217,12 @@ fn main() -> Result<()> {
                         }
 
                         // Battery
-                        if app.used_widgets.use_battery {
-                            app.canvas_data.battery_data =
-                                convert_battery_harvest(&app.data_collection);
+                        #[cfg(feature = "battery")]
+                        {
+                            if app.used_widgets.use_battery {
+                                app.canvas_data.battery_data =
+                                    convert_battery_harvest(&app.data_collection);
+                            }
                         }
                     }
                 }

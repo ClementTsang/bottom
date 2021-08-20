@@ -945,10 +945,12 @@ impl std::str::FromStr for BottomWidgetType {
             "temp" | "temperature" => Ok(BottomWidgetType::Temp),
             "disk" => Ok(BottomWidgetType::Disk),
             "empty" => Ok(BottomWidgetType::Empty),
-            "battery" | "batt" => Ok(BottomWidgetType::Battery),
-            _ => Err(BottomError::ConfigError(format!(
-                "\"{}\" is an invalid widget name.
-
+            "battery" | "batt" if cfg!(feature = "battery") => Ok(BottomWidgetType::Battery),
+            _ => {
+                if cfg!(feature = "battery") {
+                    Err(BottomError::ConfigError(format!(
+                        "\"{}\" is an invalid widget name.
+        
 Supported widget names:
 +--------------------------+
 |            cpu           |
@@ -966,8 +968,31 @@ Supported widget names:
 |       batt, battery      |
 +--------------------------+
                 ",
-                s
-            ))),
+                        s
+                    )))
+                } else {
+                    Err(BottomError::ConfigError(format!(
+                        "\"{}\" is an invalid widget name.
+
+Supported widget names:
++--------------------------+
+|            cpu           |
++--------------------------+
+|        mem, memory       |
++--------------------------+
+|       net, network       |
++--------------------------+
+| proc, process, processes |
++--------------------------+
+|     temp, temperature    |
++--------------------------+
+|           disk           |
++--------------------------+
+                ",
+                        s
+                    )))
+                }
+            }
         }
     }
 }
