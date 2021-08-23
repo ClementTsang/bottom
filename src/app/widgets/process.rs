@@ -811,4 +811,8 @@ impl Component for ProcessManager {
     }
 }
 
-impl Widget for ProcessManager {}
+impl Widget for ProcessManager {
+    fn get_pretty_name(&self) -> &'static str {
+        "Processes"
+    }
+}

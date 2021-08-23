@@ -73,4 +73,8 @@ impl Component for DiskTable {
     }
 }
 
-impl Widget for DiskTable {}
+impl Widget for DiskTable {
+    fn get_pretty_name(&self) -> &'static str {
+        "Disk"
+    }
+}

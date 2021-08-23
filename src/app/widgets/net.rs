@@ -145,7 +145,11 @@ impl Component for NetGraph {
     }
 }
 
-impl Widget for NetGraph {}
+impl Widget for NetGraph {
+    fn get_pretty_name(&self) -> &'static str {
+        "Network"
+    }
+}
 
 /// A widget denoting network usage via a graph and a separate, single row table. This is built on [`NetGraph`],
 /// and the main difference is that it also contains a bounding box for the graph + text.
@@ -186,4 +190,8 @@ impl Component for OldNetGraph {
     }
 }
 
-impl Widget for OldNetGraph {}
+impl Widget for OldNetGraph {
+    fn get_pretty_name(&self) -> &'static str {
+        "Network"
+    }
+}

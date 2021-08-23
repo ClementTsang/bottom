@@ -53,4 +53,8 @@ impl Component for BatteryTable {
     }
 }
 
-impl Widget for BatteryTable {}
+impl Widget for BatteryTable {
+    fn get_pretty_name(&self) -> &'static str {
+        "Battery"
+    }
+}

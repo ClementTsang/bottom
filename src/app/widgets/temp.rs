@@ -73,4 +73,8 @@ impl Component for TempTable {
     }
 }
 
-impl Widget for TempTable {}
+impl Widget for TempTable {
+    fn get_pretty_name(&self) -> &'static str {
+        "Temperature"
+    }
+}

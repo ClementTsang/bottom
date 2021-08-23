@@ -92,6 +92,8 @@ pub trait Widget {
     fn handle_widget_selection_down(&mut self) -> SelectionAction {
         SelectionAction::NotHandled
     }
+
+    fn get_pretty_name(&self) -> &'static str;
 }
 
 /// The "main" widgets that are used by bottom to display information!

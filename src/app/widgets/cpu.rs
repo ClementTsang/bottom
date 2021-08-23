@@ -124,4 +124,8 @@ impl Component for CpuGraph {
     }
 }
 
-impl Widget for CpuGraph {}
+impl Widget for CpuGraph {
+    fn get_pretty_name(&self) -> &'static str {
+        "CPU"
+    }
+}

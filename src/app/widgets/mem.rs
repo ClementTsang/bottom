@@ -74,4 +74,8 @@ impl Component for MemGraph {
     }
 }
 
-impl Widget for MemGraph {}
+impl Widget for MemGraph {
+    fn get_pretty_name(&self) -> &'static str {
+        "Memory"
+    }
+}
