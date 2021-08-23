@@ -1,16 +1,23 @@
 use std::collections::HashMap;
 
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
 use unicode_segmentation::GraphemeCursor;
 
-use tui::widgets::TableState;
+use tui::{layout::Rect, widgets::TableState};
 
 use crate::{
-    app::query::*,
+    app::{
+        event::{EventResult, MultiKey, MultiKeyResult},
+        query::*,
+    },
     data_harvester::processes::{self, ProcessSorting},
 };
 use ProcessSorting::*;
 
-use super::{AppScrollWidgetState, CanvasTableWidthState, CursorDirection, ScrollDirection};
+use super::{
+    does_point_intersect_rect, AppScrollWidgetState, CanvasTableWidthState, Component,
+    CursorDirection, ScrollDirection, TextInput, TextTable, Widget,
+};
 
 /// AppSearchState deals with generic searching (I might do this in the future).
 pub struct AppSearchState {
@@ -606,3 +613,202 @@ impl ProcState {
         self.widget_states.get(&widget_id)
     }
 }
+
+/// The currently selected part of a [`ProcessManager`]
+enum ProcessManagerSelection {
+    Processes,
+    Sort,
+    Search,
+}
+
+#[derive(Default)]
+/// The state of the search modifiers.
+struct SearchModifiers {
+    enable_case_sensitive: bool,
+    enable_whole_word: bool,
+    enable_regex: bool,
+}
+
+/// A searchable, sortable table to manage processes.
+pub struct ProcessManager {
+    bounds: Rect,
+    process_table: TextTable,
+    sort_table: TextTable,
+    search_input: TextInput,
+
+    dd_multi: MultiKey,
+
+    selected: ProcessManagerSelection,
+
+    in_tree_mode: bool,
+    show_sort: bool,
+    show_search: bool,
+
+    search_modifiers: SearchModifiers,
+}
+
+impl ProcessManager {
+    /// Creates a new [`ProcessManager`].
+    pub fn new(default_in_tree_mode: bool) -> Self {
+        Self {
+            bounds: Rect::default(),
+            process_table: TextTable::new(0, vec![]), // TODO: Do this
+            sort_table: TextTable::new(0, vec![]),    // TODO: Do this too
+            search_input: TextInput::new(),
+            dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Use a static arrayvec
+            selected: ProcessManagerSelection::Processes,
+            in_tree_mode: default_in_tree_mode,
+            show_sort: false,
+            show_search: false,
+            search_modifiers: SearchModifiers::default(),
+        }
+    }
+
+    fn open_search(&mut self) -> EventResult {
+        if let ProcessManagerSelection::Search = self.selected {
+            EventResult::NoRedraw
+        } else {
+            self.show_search = true;
+            self.selected = ProcessManagerSelection::Search;
+            EventResult::Redraw
+        }
+    }
+
+    fn open_sort(&mut self) -> EventResult {
+        if let ProcessManagerSelection::Sort = self.selected {
+            EventResult::NoRedraw
+        } else {
+            self.show_sort = true;
+            self.selected = ProcessManagerSelection::Sort;
+            EventResult::Redraw
+        }
+    }
+
+    /// Returns whether the process manager is searching the current term with the restriction that it must
+    /// match entire word.
+    pub fn is_searching_whole_word(&self) -> bool {
+        self.search_modifiers.enable_whole_word
+    }
+
+    /// Returns whether the process manager is searching the current term using regex.
+    pub fn is_searching_with_regex(&self) -> bool {
+        self.search_modifiers.enable_regex
+    }
+
+    /// Returns whether the process manager is searching the current term with the restriction that case-sensitivity
+    /// matters.
+    pub fn is_case_sensitive(&self) -> bool {
+        self.search_modifiers.enable_case_sensitive
+    }
+}
+
+impl Component for ProcessManager {
+    fn bounds(&self) -> Rect {
+        self.bounds
+    }
+
+    fn set_bounds(&mut self, new_bounds: Rect) {
+        self.bounds = new_bounds;
+    }
+
+    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+        match self.selected {
+            ProcessManagerSelection::Processes => {
+                // Try to catch some stuff first...
+                if event.modifiers.is_empty() {
+                    match event.code {
+                        KeyCode::Tab => {
+                            // Handle grouping/ungrouping
+                        }
+                        KeyCode::Char('P') => {
+                            // Show full command/process name
+                        }
+                        KeyCode::Char('d') => {
+                            match self.dd_multi.input('d') {
+                                MultiKeyResult::Completed => {
+                                    // Kill the selected process(es)
+                                }
+                                MultiKeyResult::Accepted | MultiKeyResult::Rejected => {
+                                    return EventResult::NoRedraw;
+                                }
+                            }
+                        }
+                        KeyCode::Char('/') => {
+                            return self.open_search();
+                        }
+                        KeyCode::Char('%') => {
+                            // Handle switching memory usage type
+                        }
+                        KeyCode::Char('+') => {
+                            // Expand a branch
+                        }
+                        KeyCode::Char('-') => {
+                            // Collapse a branch
+                        }
+                        KeyCode::Char('t') | KeyCode::F(5) => {
+                            self.in_tree_mode = !self.in_tree_mode;
+                            return EventResult::Redraw;
+                        }
+                        KeyCode::F(6) => {
+                            return self.open_sort();
+                        }
+                        KeyCode::F(9) => {
+                            // Kill the selected process(es)
+                        }
+                        _ => {}
+                    }
+                } else if let KeyModifiers::CONTROL = event.modifiers {
+                    if let KeyCode::Char('f') = event.code {
+                        return self.open_search();
+                    }
+                } else if let KeyModifiers::SHIFT = event.modifiers {
+                    if let KeyCode::Char('P') = event.code {
+                        // Show full command/process name
+                    }
+                }
+
+                self.process_table.handle_key_event(event)
+            }
+            ProcessManagerSelection::Sort => {
+                if event.modifiers.is_empty() {
+                    match event.code {
+                        KeyCode::F(1) => {}
+                        KeyCode::F(2) => {}
+                        KeyCode::F(3) => {}
+                        _ => {}
+                    }
+                } else if let KeyModifiers::ALT = event.modifiers {
+                    match event.code {
+                        KeyCode::Char('c') | KeyCode::Char('C') => {}
+                        KeyCode::Char('w') | KeyCode::Char('W') => {}
+                        KeyCode::Char('r') | KeyCode::Char('R') => {}
+                        _ => {}
+                    }
+                }
+
+                self.sort_table.handle_key_event(event)
+            }
+            ProcessManagerSelection::Search => self.search_input.handle_key_event(event),
+        }
+    }
+
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+        let global_x = event.column;
+        let global_y = event.row;
+
+        if does_point_intersect_rect(global_x, global_y, self.process_table.bounds()) {
+            self.selected = ProcessManagerSelection::Processes;
+            self.process_table.handle_mouse_event(event)
+        } else if does_point_intersect_rect(global_x, global_y, self.sort_table.bounds()) {
+            self.selected = ProcessManagerSelection::Sort;
+            self.sort_table.handle_mouse_event(event)
+        } else if does_point_intersect_rect(global_x, global_y, self.search_input.bounds()) {
+            self.selected = ProcessManagerSelection::Search;
+            self.search_input.handle_mouse_event(event)
+        } else {
+            EventResult::NoRedraw
+        }
+    }
+}
+
+impl Widget for ProcessManager {}

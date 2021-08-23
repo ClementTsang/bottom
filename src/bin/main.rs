@@ -140,7 +140,7 @@ fn main() -> Result<()> {
                             force_redraw(&mut app);
                             try_drawing(&mut terminal, &mut app, &mut painter)?;
                         }
-                        EventResult::Continue => {}
+                        EventResult::NoRedraw => {}
                     }
                 }
                 BottomEvent::MouseInput(event) => match handle_mouse_event(event, &mut app) {
@@ -152,7 +152,7 @@ fn main() -> Result<()> {
                         force_redraw(&mut app);
                         try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
-                    EventResult::Continue => {}
+                    EventResult::NoRedraw => {}
                 },
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(data);

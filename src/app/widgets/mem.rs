@@ -5,7 +5,7 @@ use tui::layout::Rect;
 
 use crate::app::event::EventResult;
 
-use super::{TimeGraph, Widget};
+use super::{Component, TimeGraph, Widget};
 
 pub struct MemWidgetState {
     pub current_display_time: u64,
@@ -56,9 +56,7 @@ impl MemGraph {
     }
 }
 
-impl Widget for MemGraph {
-    type UpdateData = ();
-
+impl Component for MemGraph {
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         self.graph.handle_key_event(event)
     }
@@ -75,3 +73,5 @@ impl Widget for MemGraph {
         self.graph.set_bounds(new_bounds);
     }
 }
+
+impl Widget for MemGraph {}

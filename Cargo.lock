@@ -251,6 +251,7 @@ dependencies = [
  "fxhash",
  "heim",
  "indexmap",
+ "indextree",
  "itertools",
  "libc",
  "log",
@@ -881,6 +882,12 @@ dependencies = [
  "autocfg",
  "hashbrown",
 ]
+
+[[package]]
+name = "indextree"
+version = "4.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "990980c3d268c9b99df35e813eca2b8d1ee08606f6d2bb325edbd0b0c68f9ffe"
 
 [[package]]
 name = "instant"

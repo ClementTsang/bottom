@@ -6,8 +6,8 @@ use tui::layout::Rect;
 use crate::app::event::EventResult;
 
 use super::{
-    does_point_intersect_rect, text_table::TextTableUpdateData, AppScrollWidgetState,
-    CanvasTableWidthState, TextTable, TimeGraph, Widget,
+    does_point_intersect_rect, AppScrollWidgetState, CanvasTableWidthState, Component, TextTable,
+    TimeGraph, Widget,
 };
 
 pub struct CpuWidgetState {
@@ -66,10 +66,6 @@ pub enum CpuGraphLegendPosition {
     Right,
 }
 
-pub struct CpuGraphUpdateData {
-    pub legend_data: Option<TextTableUpdateData>,
-}
-
 /// A widget designed to show CPU usage via a graph, along with a side legend implemented as a [`TextTable`].
 pub struct CpuGraph {
     graph: TimeGraph,
@@ -95,21 +91,16 @@ impl CpuGraph {
     }
 }
 
-impl Widget for CpuGraph {
-    type UpdateData = CpuGraphUpdateData;
-
+impl Component for CpuGraph {
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         match self.selected {
             CpuGraphSelection::Graph => self.graph.handle_key_event(event),
             CpuGraphSelection::Legend => self.legend.handle_key_event(event),
-            CpuGraphSelection::None => EventResult::Continue,
+            CpuGraphSelection::None => EventResult::NoRedraw,
         }
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        // Check where we clicked (and switch the selected field if required) and fire the handler from there.
-        // Note we assume that the
-
         let global_x = event.column;
         let global_y = event.row;
 
@@ -120,13 +111,7 @@ impl Widget for CpuGraph {
             self.selected = CpuGraphSelection::Legend;
             self.legend.handle_mouse_event(event)
         } else {
-            EventResult::Continue
-        }
-    }
-
-    fn update(&mut self, update_data: Self::UpdateData) {
-        if let Some(legend_data) = update_data.legend_data {
-            self.legend.update(legend_data);
+            EventResult::NoRedraw
         }
     }
 
@@ -138,3 +123,5 @@ impl Widget for CpuGraph {
         self.bounds = new_bounds;
     }
 }
+
+impl Widget for CpuGraph {}

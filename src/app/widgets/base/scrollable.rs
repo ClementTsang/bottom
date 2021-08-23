@@ -1,11 +1,9 @@
-use std::time::Duration;
-
 use crossterm::event::{KeyEvent, KeyModifiers, MouseButton, MouseEvent};
 use tui::{layout::Rect, widgets::TableState};
 
 use crate::app::{
     event::{EventResult, MultiKey, MultiKeyResult},
-    Widget,
+    Component,
 };
 
 pub enum ScrollDirection {
@@ -36,7 +34,7 @@ impl Scrollable {
             scroll_direction: ScrollDirection::Down,
             num_items,
             tui_state: TableState::default(),
-            gg_manager: MultiKey::register(vec!['g', 'g'], Duration::from_millis(400)),
+            gg_manager: MultiKey::register(vec!['g', 'g']), // TODO: Use a static arrayvec
             bounds: Rect::default(),
         }
     }
@@ -79,7 +77,7 @@ impl Scrollable {
 
             EventResult::Redraw
         } else {
-            EventResult::Continue
+            EventResult::NoRedraw
         }
     }
 
@@ -90,7 +88,7 @@ impl Scrollable {
 
             EventResult::Redraw
         } else {
-            EventResult::Continue
+            EventResult::NoRedraw
         }
     }
 
@@ -104,7 +102,7 @@ impl Scrollable {
 
                 EventResult::Redraw
             } else {
-                EventResult::Continue
+                EventResult::NoRedraw
             }
         } else {
             self.update_index(new_index);
@@ -121,18 +119,28 @@ impl Scrollable {
 
                 EventResult::Redraw
             } else {
-                EventResult::Continue
+                EventResult::NoRedraw
             }
         } else {
             self.update_index(new_index);
             EventResult::Redraw
         }
     }
+
+    pub fn update_num_items(&mut self, num_items: usize) {
+        self.num_items = num_items;
+
+        if num_items <= self.current_index {
+            self.current_index = num_items - 1;
+        }
+
+        if num_items <= self.previous_index {
+            self.previous_index = num_items - 1;
+        }
+    }
 }
 
-impl Widget for Scrollable {
-    type UpdateData = usize;
-
+impl Component for Scrollable {
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         use crossterm::event::KeyCode::{Char, Down, Up};
 
@@ -144,14 +152,14 @@ impl Widget for Scrollable {
                 Char('k') => self.move_up(1),
                 Char('g') => match self.gg_manager.input('g') {
                     MultiKeyResult::Completed => self.skip_to_first(),
-                    MultiKeyResult::Accepted => EventResult::Continue,
-                    MultiKeyResult::Rejected => EventResult::Continue,
+                    MultiKeyResult::Accepted => EventResult::NoRedraw,
+                    MultiKeyResult::Rejected => EventResult::NoRedraw,
                 },
                 Char('G') => self.skip_to_last(),
-                _ => EventResult::Continue,
+                _ => EventResult::NoRedraw,
             }
         } else {
-            EventResult::Continue
+            EventResult::NoRedraw
         }
     }
 
@@ -176,23 +184,11 @@ impl Widget for Scrollable {
                     }
                 }
 
-                EventResult::Continue
+                EventResult::NoRedraw
             }
             crossterm::event::MouseEventKind::ScrollDown => self.move_down(1),
             crossterm::event::MouseEventKind::ScrollUp => self.move_up(1),
-            _ => EventResult::Continue,
-        }
-    }
-
-    fn update(&mut self, new_num_items: usize) {
-        self.num_items = new_num_items;
-
-        if new_num_items <= self.current_index {
-            self.current_index = new_num_items - 1;
-        }
-
-        if new_num_items <= self.previous_index {
-            self.previous_index = new_num_items - 1;
+            _ => EventResult::NoRedraw,
         }
     }
 

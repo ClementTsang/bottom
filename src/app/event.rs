@@ -1,11 +1,30 @@
 use std::time::{Duration, Instant};
 
+const MAX_TIMEOUT: Duration = Duration::from_millis(400);
+
+/// The results of handling some user input event, like a mouse or key event, signifying what
+/// the program should then do next.
 pub enum EventResult {
+    /// Kill the program.
     Quit,
+
+    /// Trigger a redraw.
     Redraw,
-    Continue,
+
+    /// Don't trigger a redraw.
+    NoRedraw,
 }
 
+/// How a widget should handle a widget selection request.
+pub enum SelectionAction {
+    /// This event occurs if the widget internally handled the selection action.
+    Handled,
+
+    /// This event occurs if the widget did not handle the selection action; the caller must handle it.
+    NotHandled,
+}
+
+/// The states a [`MultiKey`] can be in.
 enum MultiKeyState {
     /// Currently not waiting on any next input.
     Idle,
@@ -36,16 +55,14 @@ pub enum MultiKeyResult {
 pub struct MultiKey {
     state: MultiKeyState,
     pattern: Vec<char>,
-    timeout: Duration,
 }
 
 impl MultiKey {
     /// Creates a new [`MultiKey`] with a given pattern and timeout.
-    pub fn register(pattern: Vec<char>, timeout: Duration) -> Self {
+    pub fn register(pattern: Vec<char>) -> Self {
         Self {
             state: MultiKeyState::Idle,
             pattern,
-            timeout,
         }
     }
 
@@ -81,7 +98,7 @@ impl MultiKey {
                 trigger_instant,
                 checked_index,
             } => {
-                if trigger_instant.elapsed() > self.timeout {
+                if trigger_instant.elapsed() > MAX_TIMEOUT {
                     // Just reset and recursively call (putting it into Idle).
                     self.reset();
                     self.input(c)

@@ -5,10 +5,7 @@ use tui::layout::Rect;
 
 use crate::app::event::EventResult;
 
-use super::{
-    text_table::TextTableUpdateData, AppScrollWidgetState, CanvasTableWidthState, TextTable,
-    Widget,
-};
+use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, Widget};
 
 pub struct TempWidgetState {
     pub scroll_state: AppScrollWidgetState,
@@ -58,19 +55,13 @@ impl TempTable {
     }
 }
 
-impl Widget for TempTable {
-    type UpdateData = TextTableUpdateData;
-
+impl Component for TempTable {
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         self.table.handle_key_event(event)
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
         self.table.handle_mouse_event(event)
-    }
-
-    fn update(&mut self, update_data: Self::UpdateData) {
-        self.table.update(update_data);
     }
 
     fn bounds(&self) -> Rect {
@@ -81,3 +72,5 @@ impl Widget for TempTable {
         self.bounds = new_bounds;
     }
 }
+
+impl Widget for TempTable {}

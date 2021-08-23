@@ -1,4 +1,4 @@
-//! A collection of basic widgets.
+//! A collection of basic components.
 
 pub mod text_table;
 pub use text_table::TextTable;

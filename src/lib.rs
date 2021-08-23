@@ -89,7 +89,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) -> EventResult 
             app.handle_scroll_down();
             EventResult::Redraw
         }
-        _ => EventResult::Continue,
+        _ => EventResult::NoRedraw,
     }
 }
 
@@ -128,7 +128,7 @@ pub fn handle_key_event(
             KeyCode::F(6) => app.toggle_sort(),
             KeyCode::F(9) => app.start_killing_process(),
             _ => {
-                return EventResult::Continue;
+                return EventResult::NoRedraw;
             }
         }
     } else {
@@ -171,7 +171,7 @@ pub fn handle_key_event(
                 // are hard to iter while truncating last (eloquently).
                 // KeyCode::Backspace => app.skip_word_backspace(),
                 _ => {
-                    return EventResult::Continue;
+                    return EventResult::NoRedraw;
                 }
             }
         } else if let KeyModifiers::SHIFT = event.modifiers {
@@ -182,7 +182,7 @@ pub fn handle_key_event(
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char(caught_char) => app.on_char_key(caught_char),
                 _ => {
-                    return EventResult::Continue;
+                    return EventResult::NoRedraw;
                 }
             }
         }

@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use crossterm::event::{KeyEvent, KeyModifiers, MouseEvent};
 use tui::layout::Rect;
 
-use crate::app::{event::EventResult, Widget};
+use crate::app::{event::EventResult, Component};
 
 #[derive(Clone)]
 pub enum AutohideTimerState {
@@ -23,7 +23,9 @@ pub enum AutohideTimer {
 impl AutohideTimer {
     fn trigger_display_timer(&mut self) {
         match self {
-            AutohideTimer::Disabled => todo!(),
+            AutohideTimer::Disabled => {
+                // Does nothing.
+            }
             AutohideTimer::Enabled {
                 state,
                 show_duration: _,
@@ -35,7 +37,9 @@ impl AutohideTimer {
 
     pub fn update_display_timer(&mut self) {
         match self {
-            AutohideTimer::Disabled => {}
+            AutohideTimer::Disabled => {
+                // Does nothing.
+            }
             AutohideTimer::Enabled {
                 state,
                 show_duration,
@@ -87,7 +91,7 @@ impl TimeGraph {
             '-' => self.zoom_out(),
             '+' => self.zoom_in(),
             '=' => self.reset_zoom(),
-            _ => EventResult::Continue,
+            _ => EventResult::NoRedraw,
         }
     }
 
@@ -105,7 +109,7 @@ impl TimeGraph {
 
             EventResult::Redraw
         } else {
-            EventResult::Continue
+            EventResult::NoRedraw
         }
     }
 
@@ -123,13 +127,13 @@ impl TimeGraph {
 
             EventResult::Redraw
         } else {
-            EventResult::Continue
+            EventResult::NoRedraw
         }
     }
 
     fn reset_zoom(&mut self) -> EventResult {
         if self.current_display_time == self.default_time_value {
-            EventResult::Continue
+            EventResult::NoRedraw
         } else {
             self.current_display_time = self.default_time_value;
             self.autohide_timer.trigger_display_timer();
@@ -138,19 +142,17 @@ impl TimeGraph {
     }
 }
 
-impl Widget for TimeGraph {
-    type UpdateData = ();
-
+impl Component for TimeGraph {
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         use crossterm::event::KeyCode::Char;
 
         if event.modifiers == KeyModifiers::NONE || event.modifiers == KeyModifiers::SHIFT {
             match event.code {
                 Char(c) => self.handle_char(c),
-                _ => EventResult::Continue,
+                _ => EventResult::NoRedraw,
             }
         } else {
-            EventResult::Continue
+            EventResult::NoRedraw
         }
     }
 
@@ -158,7 +160,7 @@ impl Widget for TimeGraph {
         match event.kind {
             crossterm::event::MouseEventKind::ScrollDown => self.zoom_out(),
             crossterm::event::MouseEventKind::ScrollUp => self.zoom_in(),
-            _ => EventResult::Continue,
+            _ => EventResult::NoRedraw,
         }
     }
 

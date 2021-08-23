@@ -1,5 +1,9 @@
 use std::collections::HashMap;
 
+use tui::layout::Rect;
+
+use super::{Component, Widget};
+
 #[derive(Default)]
 pub struct BatteryWidgetState {
     pub currently_selected_battery_index: usize,
@@ -23,3 +27,30 @@ impl BatteryState {
         self.widget_states.get(&widget_id)
     }
 }
+
+// TODO: Implement battery widget.
+/// A table displaying battery information on a per-battery basis.
+pub struct BatteryTable {
+    bounds: Rect,
+}
+
+impl BatteryTable {
+    /// Creates a new [`BatteryTable`].
+    pub fn new() -> Self {
+        Self {
+            bounds: Rect::default(),
+        }
+    }
+}
+
+impl Component for BatteryTable {
+    fn bounds(&self) -> tui::layout::Rect {
+        self.bounds
+    }
+
+    fn set_bounds(&mut self, new_bounds: tui::layout::Rect) {
+        self.bounds = new_bounds;
+    }
+}
+
+impl Widget for BatteryTable {}

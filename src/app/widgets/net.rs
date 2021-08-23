@@ -2,7 +2,7 @@ use std::{collections::HashMap, time::Instant};
 
 use tui::layout::Rect;
 
-use super::{TimeGraph, Widget};
+use super::{Component, TimeGraph, Widget};
 
 pub struct NetWidgetState {
     pub current_display_time: u64,
@@ -55,7 +55,9 @@ impl NetState {
     }
 }
 
-struct NetGraphCache {
+/// A struct containing useful cached information for a [`NetGraph`].
+#[derive(Clone)]
+pub struct NetGraphCache {
     max_range: f64,
     labels: Vec<String>,
     time_start: f64,
@@ -71,9 +73,10 @@ enum NetGraphCacheState {
 ///
 /// As of now, this is essentially just a wrapper around a [`TimeGraph`].
 pub struct NetGraph {
+    /// The graph itself.  Just a [`TimeGraph`].
     graph: TimeGraph,
 
-    // Cached details; probably want to move at some point...
+    // Cached details for drawing purposes; probably want to move at some point...
     draw_cache: NetGraphCacheState,
 }
 
@@ -86,6 +89,7 @@ impl NetGraph {
         }
     }
 
+    /// Updates the associated cache on a [`NetGraph`].
     pub fn set_cache(&mut self, max_range: f64, labels: Vec<String>, time_start: f64) {
         self.draw_cache = NetGraphCacheState::Cached(NetGraphCache {
             max_range,
@@ -94,17 +98,32 @@ impl NetGraph {
         })
     }
 
+    /// Returns whether the [`NetGraph`] contains a cache from drawing.
     pub fn is_cached(&self) -> bool {
         match self.draw_cache {
             NetGraphCacheState::Uncached => false,
             NetGraphCacheState::Cached(_) => true,
         }
     }
+
+    /// Returns a reference to the [`NetGraphCache`] tied to the [`NetGraph`] if there is one.
+    pub fn get_cache(&self) -> Option<&NetGraphCache> {
+        match &self.draw_cache {
+            NetGraphCacheState::Uncached => None,
+            NetGraphCacheState::Cached(cache) => Some(cache),
+        }
+    }
+
+    /// Returns an owned copy of the [`NetGraphCache`] tied to the [`NetGraph`] if there is one.
+    pub fn get_cache_owned(&self) -> Option<NetGraphCache> {
+        match &self.draw_cache {
+            NetGraphCacheState::Uncached => None,
+            NetGraphCacheState::Cached(cache) => Some(cache.clone()),
+        }
+    }
 }
 
-impl Widget for NetGraph {
-    type UpdateData = ();
-
+impl Component for NetGraph {
     fn bounds(&self) -> Rect {
         self.graph.bounds()
     }
@@ -126,6 +145,8 @@ impl Widget for NetGraph {
     }
 }
 
+impl Widget for NetGraph {}
+
 /// A widget denoting network usage via a graph and a separate, single row table. This is built on [`NetGraph`],
 /// and the main difference is that it also contains a bounding box for the graph + text.
 pub struct OldNetGraph {
@@ -143,9 +164,7 @@ impl OldNetGraph {
     }
 }
 
-impl Widget for OldNetGraph {
-    type UpdateData = ();
-
+impl Component for OldNetGraph {
     fn bounds(&self) -> Rect {
         self.bounds
     }
@@ -166,3 +185,5 @@ impl Widget for OldNetGraph {
         self.graph.handle_mouse_event(event)
     }
 }
+
+impl Widget for OldNetGraph {}
