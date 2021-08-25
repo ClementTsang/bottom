@@ -1,25 +1,45 @@
 use std::time::{Duration, Instant};
 
+use tui::layout::Rect;
+
 const MAX_TIMEOUT: Duration = Duration::from_millis(400);
+
+/// These are "signals" that are sent along with an [`EventResult`] to signify a potential additional action
+/// that the caller must do, along with the "core" result of either drawing or redrawing.
+pub enum ReturnSignal {
+    /// Do nothing.
+    Nothing,
+    /// A signal returned when some process widget was told to try to kill a process (or group of processes).
+    KillProcess,
+}
+
+/// The results of handling a [`ReturnSignal`].
+pub enum ReturnSignalResult {
+    /// Kill the program.
+    Quit,
+    /// Trigger a redraw.
+    Redraw,
+    /// Don't trigger a redraw.
+    NoRedraw,
+}
 
 /// The results of handling some user input event, like a mouse or key event, signifying what
 /// the program should then do next.
 pub enum EventResult {
     /// Kill the program.
     Quit,
-
     /// Trigger a redraw.
     Redraw,
-
     /// Don't trigger a redraw.
     NoRedraw,
+    /// Return a signal.
+    Signal(ReturnSignal),
 }
 
 /// How a widget should handle a widget selection request.
 pub enum SelectionAction {
     /// This event occurs if the widget internally handled the selection action.
     Handled,
-
     /// This event occurs if the widget did not handle the selection action; the caller must handle it.
     NotHandled,
 }
@@ -28,7 +48,6 @@ pub enum SelectionAction {
 enum MultiKeyState {
     /// Currently not waiting on any next input.
     Idle,
-
     /// Waiting for the next input, with a given trigger [`Instant`].
     Waiting {
         /// When it was triggered.
@@ -43,10 +62,8 @@ enum MultiKeyState {
 pub enum MultiKeyResult {
     /// Returned when a character was *accepted*, but has not completed the sequence required.
     Accepted,
-
     /// Returned when a character is accepted and completes the sequence.
     Completed,
-
     /// Returned if a character breaks the sequence or if it has already timed out.
     Rejected,
 }
@@ -123,4 +140,9 @@ impl MultiKey {
             }
         }
     }
+}
+
+/// Checks whether points `(x, y)` intersect a given [`Rect`].
+pub fn does_point_intersect_rect(x: u16, y: u16, rect: Rect) -> bool {
+    x >= rect.left() && x <= rect.right() && y >= rect.top() && y <= rect.bottom()
 }

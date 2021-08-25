@@ -1,14 +1,24 @@
-use crate::error::{BottomError, Result};
+use crate::{
+    app::{DiskTable, MemGraph, NetGraph, OldNetGraph, ProcessManager, TempTable},
+    error::{BottomError, Result},
+    options::layout_options::{Row, RowChildren},
+};
+use fxhash::FxHashMap;
+use indextree::{Arena, NodeId};
 use std::collections::BTreeMap;
+use tui::layout::Constraint;
 use typed_builder::*;
 
+use crate::app::widgets::Widget;
 use crate::constants::DEFAULT_WIDGET_ID;
+
+use super::{event::SelectionAction, CpuGraph, TextTable, TimeGraph, TmpBottomWidget};
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
 #[derive(Clone, Debug)]
 pub struct BottomLayout {
-    pub rows: Vec<BottomRow>,
+    pub rows: Vec<OldBottomRow>,
     pub total_row_height_ratio: u32,
 }
 
@@ -535,7 +545,7 @@ impl BottomLayout {
     pub fn init_basic_default(use_battery: bool) -> Self {
         let table_widgets = if use_battery {
             vec![
-                BottomCol::builder()
+                OldBottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![BottomColRow::builder()
                         .canvas_handle_height(true)
@@ -549,7 +559,7 @@ impl BottomLayout {
                             .build()])
                         .build()])
                     .build(),
-                BottomCol::builder()
+                OldBottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![
                         BottomColRow::builder()
@@ -593,7 +603,7 @@ impl BottomLayout {
                             .build(),
                     ])
                     .build(),
-                BottomCol::builder()
+                OldBottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![BottomColRow::builder()
                         .canvas_handle_height(true)
@@ -607,7 +617,7 @@ impl BottomLayout {
                             .build()])
                         .build()])
                     .build(),
-                BottomCol::builder()
+                OldBottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![BottomColRow::builder()
                         .canvas_handle_height(true)
@@ -624,7 +634,7 @@ impl BottomLayout {
             ]
         } else {
             vec![
-                BottomCol::builder()
+                OldBottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![BottomColRow::builder()
                         .canvas_handle_height(true)
@@ -638,7 +648,7 @@ impl BottomLayout {
                             .build()])
                         .build()])
                     .build(),
-                BottomCol::builder()
+                OldBottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![
                         BottomColRow::builder()
@@ -679,7 +689,7 @@ impl BottomLayout {
                             .build(),
                     ])
                     .build(),
-                BottomCol::builder()
+                OldBottomCol::builder()
                     .canvas_handle_width(true)
                     .children(vec![BottomColRow::builder()
                         .canvas_handle_height(true)
@@ -699,9 +709,9 @@ impl BottomLayout {
         BottomLayout {
             total_row_height_ratio: 3,
             rows: vec![
-                BottomRow::builder()
+                OldBottomRow::builder()
                     .canvas_handle_height(true)
-                    .children(vec![BottomCol::builder()
+                    .children(vec![OldBottomCol::builder()
                         .canvas_handle_width(true)
                         .children(vec![BottomColRow::builder()
                             .canvas_handle_height(true)
@@ -714,9 +724,9 @@ impl BottomLayout {
                             .build()])
                         .build()])
                     .build(),
-                BottomRow::builder()
+                OldBottomRow::builder()
                     .canvas_handle_height(true)
-                    .children(vec![BottomCol::builder()
+                    .children(vec![OldBottomCol::builder()
                         .canvas_handle_width(true)
                         .children(vec![BottomColRow::builder()
                             .canvas_handle_height(true)
@@ -741,9 +751,9 @@ impl BottomLayout {
                             .build()])
                         .build()])
                     .build(),
-                BottomRow::builder()
+                OldBottomRow::builder()
                     .canvas_handle_height(true)
-                    .children(vec![BottomCol::builder()
+                    .children(vec![OldBottomCol::builder()
                         .canvas_handle_width(true)
                         .children(vec![BottomColRow::builder()
                             .canvas_handle_height(true)
@@ -756,7 +766,7 @@ impl BottomLayout {
                             .build()])
                         .build()])
                     .build(),
-                BottomRow::builder()
+                OldBottomRow::builder()
                     .canvas_handle_height(true)
                     .children(table_widgets)
                     .build(),
@@ -767,8 +777,8 @@ impl BottomLayout {
 
 /// Represents a single row in the layout.
 #[derive(Clone, Debug, TypedBuilder)]
-pub struct BottomRow {
-    pub children: Vec<BottomCol>,
+pub struct OldBottomRow {
+    pub children: Vec<OldBottomCol>,
 
     #[builder(default = 1)]
     pub total_col_ratio: u32,
@@ -787,7 +797,7 @@ pub struct BottomRow {
 /// contains only ONE element, it is still a column (rather than either a col or
 /// a widget, as per the config, for simplicity's sake).
 #[derive(Clone, Debug, TypedBuilder)]
-pub struct BottomCol {
+pub struct OldBottomCol {
     pub children: Vec<BottomColRow>,
 
     #[builder(default = 1)]
@@ -972,13 +982,479 @@ Supported widget names:
     }
 }
 
-#[derive(Clone, Default, Debug)]
-pub struct UsedWidgets {
-    pub use_cpu: bool,
-    pub use_mem: bool,
-    pub use_net: bool,
-    pub use_proc: bool,
-    pub use_disk: bool,
-    pub use_temp: bool,
-    pub use_battery: bool,
+// --- New stuff ---
+
+/// Represents a row in the layout tree.
+#[derive(PartialEq, Eq)]
+pub struct RowLayout {
+    last_selected_index: usize,
+    pub constraint: Constraint,
+}
+
+impl Default for RowLayout {
+    fn default() -> Self {
+        Self {
+            last_selected_index: 0,
+            constraint: Constraint::Min(0),
+        }
+    }
+}
+
+/// Represents a column in the layout tree.
+#[derive(PartialEq, Eq)]
+pub struct ColLayout {
+    last_selected_index: usize,
+    pub constraint: Constraint,
+}
+
+impl Default for ColLayout {
+    fn default() -> Self {
+        Self {
+            last_selected_index: 0,
+            constraint: Constraint::Min(0),
+        }
+    }
+}
+
+/// Represents a widget in the layout tree.
+#[derive(PartialEq, Eq)]
+pub struct WidgetLayout {
+    pub constraint: Constraint,
+}
+
+impl Default for WidgetLayout {
+    fn default() -> Self {
+        Self {
+            constraint: Constraint::Min(0),
+        }
+    }
+}
+
+/// A [`LayoutNode`] represents a single node in the overall widget hierarchy. Each node is one of:
+/// - [`LayoutNode::Row`] (a a non-leaf that distributes its children horizontally)
+/// - [`LayoutNode::Col`] (a non-leaf node that distributes its children vertically)
+/// - [`LayoutNode::Widget`] (a leaf node that contains the ID of the widget it is associated with)
+#[derive(PartialEq, Eq)]
+pub enum LayoutNode {
+    Row(RowLayout),
+    Col(ColLayout),
+    Widget(WidgetLayout),
+}
+
+/// Relative movement direction from the currently selected widget.
+pub enum MovementDirection {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+/// A wrapper struct to simplify the output of [`create_layout_tree`].
+pub struct LayoutCreationOutput {
+    pub layout_tree: Arena<LayoutNode>,
+    pub root: NodeId,
+    pub widget_lookup_map: FxHashMap<NodeId, TmpBottomWidget>,
+    pub selected: Option<NodeId>,
+}
+
+/// Creates a new [`Arena<LayoutNode>`] from the given config and returns it, along with the [`NodeId`] representing
+/// the root of the newly created [`Arena`], a mapping from [`NodeId`]s to [`BottomWidget`]s, and optionally, a default
+/// selected [`NodeId`].
+// FIXME: This is currently jury-rigged "glue" just to work with the existing config system! We are NOT keeping it like this, it's too awful to keep like this!
+pub fn create_layout_tree(
+    rows: &[Row], process_defaults: crate::options::ProcessDefaults,
+    app_config_fields: &super::AppConfigFields,
+) -> Result<LayoutCreationOutput> {
+    fn add_widget_to_map(
+        widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, widget_type: &str,
+        widget_id: NodeId, process_defaults: &crate::options::ProcessDefaults,
+        app_config_fields: &super::AppConfigFields,
+    ) -> Result<()> {
+        match widget_type.parse::<BottomWidgetType>()? {
+            BottomWidgetType::Cpu => {
+                let graph = TimeGraph::from_config(app_config_fields);
+                let legend = TextTable::new(vec![("CPU", None, false), ("Use%", None, false)]);
+                let legend_position = super::CpuGraphLegendPosition::Right;
+
+                widget_lookup_map.insert(
+                    widget_id,
+                    CpuGraph::new(graph, legend, legend_position).into(),
+                );
+            }
+            BottomWidgetType::Mem => {
+                let graph = TimeGraph::from_config(app_config_fields);
+                widget_lookup_map.insert(widget_id, MemGraph::new(graph).into());
+            }
+            BottomWidgetType::Net => {
+                let graph = TimeGraph::from_config(app_config_fields);
+                if app_config_fields.use_old_network_legend {
+                    widget_lookup_map.insert(widget_id, OldNetGraph::new(graph).into());
+                } else {
+                    widget_lookup_map.insert(widget_id, NetGraph::new(graph).into());
+                }
+            }
+            BottomWidgetType::Proc => {
+                widget_lookup_map.insert(
+                    widget_id,
+                    ProcessManager::new(process_defaults.is_tree).into(),
+                );
+            }
+            BottomWidgetType::Temp => {
+                let table = TextTable::new(vec![("Sensor", None, false), ("Temp", None, false)]);
+                widget_lookup_map.insert(widget_id, TempTable::new(table).into());
+            }
+            BottomWidgetType::Disk => {
+                let table = TextTable::new(vec![
+                    ("Disk", None, false),
+                    ("Mount", None, false),
+                    ("Used", None, false),
+                    ("Free", None, false),
+                    ("Total", None, false),
+                    ("R/s", None, false),
+                    ("W/s", None, false),
+                ]);
+                widget_lookup_map.insert(widget_id, DiskTable::new(table).into());
+            }
+            BottomWidgetType::Battery => {}
+            _ => {}
+        }
+
+        Ok(())
+    }
+
+    let mut layout_tree = Arena::new();
+    let root_id = layout_tree.new_node(LayoutNode::Col(ColLayout::default()));
+    let mut widget_lookup_map = FxHashMap::default();
+    let mut selected = None;
+
+    let row_sum: u32 = rows.iter().map(|row| row.ratio.unwrap_or(1)).sum();
+    for row in rows {
+        let ratio = row.ratio.unwrap_or(1);
+        let layout_node = LayoutNode::Row(RowLayout {
+            constraint: Constraint::Ratio(ratio, row_sum),
+            ..Default::default()
+        });
+        let row_id = layout_tree.new_node(layout_node);
+        root_id.append(row_id, &mut layout_tree);
+
+        if let Some(cols) = &row.child {
+            let col_sum: u32 = cols
+                .iter()
+                .map(|col| match col {
+                    RowChildren::Widget(widget) => widget.ratio.unwrap_or(1),
+                    RowChildren::Col { ratio, child: _ } => ratio.unwrap_or(1),
+                })
+                .sum();
+
+            for col in cols {
+                match col {
+                    RowChildren::Widget(widget) => {
+                        let widget_node = LayoutNode::Widget(WidgetLayout {
+                            constraint: Constraint::Ratio(widget.ratio.unwrap_or(1), col_sum),
+                        });
+                        let widget_id = layout_tree.new_node(widget_node);
+                        row_id.append(widget_id, &mut layout_tree);
+
+                        if let Some(true) = widget.default {
+                            selected = Some(widget_id);
+                        }
+                        add_widget_to_map(
+                            &mut widget_lookup_map,
+                            &widget.widget_type,
+                            widget_id,
+                            &process_defaults,
+                            app_config_fields,
+                        )?;
+                    }
+                    RowChildren::Col {
+                        ratio,
+                        child: children,
+                    } => {
+                        let col_node = LayoutNode::Col(ColLayout {
+                            constraint: Constraint::Ratio(ratio.unwrap_or(1), col_sum),
+                            ..Default::default()
+                        });
+                        let col_id = layout_tree.new_node(col_node);
+                        row_id.append(col_id, &mut layout_tree);
+
+                        let child_sum: u32 =
+                            children.iter().map(|child| child.ratio.unwrap_or(1)).sum();
+
+                        for child in children {
+                            let widget_node = LayoutNode::Widget(WidgetLayout {
+                                constraint: Constraint::Ratio(child.ratio.unwrap_or(1), child_sum),
+                            });
+                            let widget_id = layout_tree.new_node(widget_node);
+                            col_id.append(widget_id, &mut layout_tree);
+
+                            if let Some(true) = child.default {
+                                selected = Some(widget_id);
+                            }
+                            add_widget_to_map(
+                                &mut widget_lookup_map,
+                                &child.widget_type,
+                                widget_id,
+                                &process_defaults,
+                                app_config_fields,
+                            )?;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(LayoutCreationOutput {
+        layout_tree,
+        root: root_id,
+        widget_lookup_map,
+        selected,
+    })
+}
+
+/// Attempts to find and return the selected [`BottomWidgetId`] after moving in a direction.
+///
+/// Note this function assumes a properly built tree - if not, bad things may happen! We generally assume that:
+/// - Only [`LayoutNode::Widget`]s are leaves.
+/// - Only [`LayoutNode::Row`]s or [`LayoutNode::Col`]s are non-leaves.
+pub fn move_widget_selection(
+    layout_tree: &mut Arena<LayoutNode>, current_widget: &mut TmpBottomWidget,
+    current_widget_id: NodeId, direction: MovementDirection,
+) -> NodeId {
+    // We first give our currently-selected widget a chance to react to the movement - it may handle it internally!
+    let handled = match direction {
+        MovementDirection::Left => current_widget.handle_widget_selection_left(),
+        MovementDirection::Right => current_widget.handle_widget_selection_right(),
+        MovementDirection::Up => current_widget.handle_widget_selection_up(),
+        MovementDirection::Down => current_widget.handle_widget_selection_down(),
+    };
+
+    match handled {
+        SelectionAction::Handled => {
+            // If it was handled by the widget, then we don't have to do anything - return the current one.
+            current_widget_id
+        }
+        SelectionAction::NotHandled => {
+            /// Keeps traversing up the `layout_tree` until it hits a parent where `current_id` is a child and parent
+            /// is a [`LayoutNode::Row`], returning its parent's [`NodeId`] and the child's [`NodeId`] (in that order).
+            /// If this crawl fails (i.e. hits a root, it is an invalid tree for some reason), it returns [`None`].
+            fn find_first_row(
+                layout_tree: &Arena<LayoutNode>, current_id: NodeId,
+            ) -> Option<(NodeId, NodeId)> {
+                layout_tree
+                    .get(current_id)
+                    .and_then(|current_node| current_node.parent())
+                    .and_then(|parent_id| {
+                        layout_tree
+                            .get(parent_id)
+                            .map(|parent_node| (parent_id, parent_node))
+                    })
+                    .and_then(|(parent_id, parent_node)| match parent_node.get() {
+                        LayoutNode::Row(_) => Some((parent_id, current_id)),
+                        LayoutNode::Col(_) => find_first_row(layout_tree, parent_id),
+                        LayoutNode::Widget(_) => None,
+                    })
+            }
+
+            /// Keeps traversing up the `layout_tree` until it hits a parent where `current_id` is a child and parent
+            /// is a [`LayoutNode::Col`], returning its parent's [`NodeId`] and the child's [`NodeId`] (in that order).
+            /// If this crawl fails (i.e. hits a root, it is an invalid tree for some reason), it returns [`None`].
+            fn find_first_col(
+                layout_tree: &Arena<LayoutNode>, current_id: NodeId,
+            ) -> Option<(NodeId, NodeId)> {
+                layout_tree
+                    .get(current_id)
+                    .and_then(|current_node| current_node.parent())
+                    .and_then(|parent_id| {
+                        layout_tree
+                            .get(parent_id)
+                            .map(|parent_node| (parent_id, parent_node))
+                    })
+                    .and_then(|(parent_id, parent_node)| match parent_node.get() {
+                        LayoutNode::Row(_) => find_first_col(layout_tree, parent_id),
+                        LayoutNode::Col(_) => Some((parent_id, current_id)),
+                        LayoutNode::Widget(_) => None,
+                    })
+            }
+
+            /// Descends to a leaf.
+            fn descend_to_leaf(layout_tree: &Arena<LayoutNode>, current_id: NodeId) -> NodeId {
+                if let Some(current_node) = layout_tree.get(current_id) {
+                    match current_node.get() {
+                        LayoutNode::Row(RowLayout {
+                            last_selected_index,
+                            constraint: _,
+                        })
+                        | LayoutNode::Col(ColLayout {
+                            last_selected_index,
+                            constraint: _,
+                        }) => {
+                            if let Some(next_child) =
+                                current_id.children(layout_tree).nth(*last_selected_index)
+                            {
+                                descend_to_leaf(layout_tree, next_child)
+                            } else {
+                                current_id
+                            }
+                        }
+                        LayoutNode::Widget(_) => {
+                            // Halt!
+                            current_id
+                        }
+                    }
+                } else {
+                    current_id
+                }
+            }
+
+            // If it was NOT handled by the current widget, then move in the correct direction; we can rely
+            // on the tree layout to help us decide where to go.
+            // Movement logic is inspired by i3. When we enter a new column/row, we go to the *last* selected
+            // element; if we can't, go to the nearest one.
+            match direction {
+                MovementDirection::Left => {
+                    // When we move "left":
+                    // 1. Look for the parent of the current widget.
+                    // 2. Depending on whether it is a Row or Col:
+                    //  a) If we are in a Row, try to move to the child (it can be a Row, Col, or Widget) before it,
+                    //     and update the last-selected index. If we can't (i.e. we are the first element), then
+                    //     instead move to the parent, and try again to select the element before it. If there is
+                    //     no parent (i.e. we hit the root), then just return the original index.
+                    //  b) If we are in a Col, then just try to move to the parent. If there is no
+                    //     parent (i.e. we hit the root), then just return the original index.
+                    //  c) A Widget should be impossible to select.
+                    // 3. Assuming we have now selected a new child, then depending on what the child is:
+                    //  a) If we are in a Row or Col, then take the last selected index, and repeat step 3 until you hit
+                    //     a Widget.
+                    //  b) If we are in a Widget, return the corresponding NodeId.
+
+                    fn find_left(
+                        layout_tree: &mut Arena<LayoutNode>, current_id: NodeId,
+                    ) -> NodeId {
+                        if let Some((parent_id, child_id)) = find_first_row(layout_tree, current_id)
+                        {
+                            if let Some(prev_sibling) =
+                                child_id.preceding_siblings(layout_tree).nth(1)
+                            {
+                                // Subtract one from the currently selected index...
+                                if let Some(parent) = layout_tree.get_mut(parent_id) {
+                                    if let LayoutNode::Row(row) = parent.get_mut() {
+                                        row.last_selected_index =
+                                            row.last_selected_index.saturating_sub(1);
+                                    }
+                                }
+
+                                // Now descend downwards!
+                                descend_to_leaf(layout_tree, prev_sibling)
+                            } else {
+                                // Darn, we can't go further back! Recurse on this ID.
+                                find_left(layout_tree, child_id)
+                            }
+                        } else {
+                            // Failed, just return the current ID.
+                            current_id
+                        }
+                    }
+                    find_left(layout_tree, current_widget_id)
+                }
+                MovementDirection::Right => {
+                    // When we move "right", repeat the steps for "left", but instead try to move to the child *after*
+                    // it in all cases.
+
+                    fn find_right(
+                        layout_tree: &mut Arena<LayoutNode>, current_id: NodeId,
+                    ) -> NodeId {
+                        if let Some((parent_id, child_id)) = find_first_row(layout_tree, current_id)
+                        {
+                            if let Some(prev_sibling) =
+                                child_id.following_siblings(layout_tree).nth(1)
+                            {
+                                // Add one to the currently selected index...
+                                if let Some(parent) = layout_tree.get_mut(parent_id) {
+                                    if let LayoutNode::Row(row) = parent.get_mut() {
+                                        row.last_selected_index += 1;
+                                    }
+                                }
+
+                                // Now descend downwards!
+                                descend_to_leaf(layout_tree, prev_sibling)
+                            } else {
+                                // Darn, we can't go further back! Recurse on this ID.
+                                find_right(layout_tree, child_id)
+                            }
+                        } else {
+                            // Failed, just return the current ID.
+                            current_id
+                        }
+                    }
+                    find_right(layout_tree, current_widget_id)
+                }
+                MovementDirection::Up => {
+                    // When we move "up", copy the steps for "left", but switch "Row" and "Col".  We instead want to move
+                    // vertically, so we want to now avoid Rows and look for Cols!
+
+                    fn find_above(
+                        layout_tree: &mut Arena<LayoutNode>, current_id: NodeId,
+                    ) -> NodeId {
+                        if let Some((parent_id, child_id)) = find_first_col(layout_tree, current_id)
+                        {
+                            if let Some(prev_sibling) =
+                                child_id.preceding_siblings(layout_tree).nth(1)
+                            {
+                                // Subtract one from the currently selected index...
+                                if let Some(parent) = layout_tree.get_mut(parent_id) {
+                                    if let LayoutNode::Col(row) = parent.get_mut() {
+                                        row.last_selected_index =
+                                            row.last_selected_index.saturating_sub(1);
+                                    }
+                                }
+
+                                // Now descend downwards!
+                                descend_to_leaf(layout_tree, prev_sibling)
+                            } else {
+                                // Darn, we can't go further back! Recurse on this ID.
+                                find_above(layout_tree, child_id)
+                            }
+                        } else {
+                            // Failed, just return the current ID.
+                            current_id
+                        }
+                    }
+                    find_above(layout_tree, current_widget_id)
+                }
+                MovementDirection::Down => {
+                    // See "up"'s steps, but now we're going for the child *after* the currently selected one in all
+                    // cases.
+
+                    fn find_below(
+                        layout_tree: &mut Arena<LayoutNode>, current_id: NodeId,
+                    ) -> NodeId {
+                        if let Some((parent_id, child_id)) = find_first_col(layout_tree, current_id)
+                        {
+                            if let Some(prev_sibling) =
+                                child_id.following_siblings(layout_tree).nth(1)
+                            {
+                                // Add one to the currently selected index...
+                                if let Some(parent) = layout_tree.get_mut(parent_id) {
+                                    if let LayoutNode::Col(row) = parent.get_mut() {
+                                        row.last_selected_index += 1;
+                                    }
+                                }
+
+                                // Now descend downwards!
+                                descend_to_leaf(layout_tree, prev_sibling)
+                            } else {
+                                // Darn, we can't go further back! Recurse on this ID.
+                                find_below(layout_tree, child_id)
+                            }
+                        } else {
+                            // Failed, just return the current ID.
+                            current_id
+                        }
+                    }
+                    find_below(layout_tree, current_widget_id)
+                }
+            }
+        }
+    }
 }

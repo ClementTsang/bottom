@@ -51,9 +51,9 @@ pub struct TextTable {
 }
 
 impl TextTable {
-    pub fn new(num_items: usize, columns: Vec<(&'static str, Option<KeyEvent>, bool)>) -> Self {
+    pub fn new(columns: Vec<(&'static str, Option<KeyEvent>, bool)>) -> Self {
         Self {
-            scrollable: Scrollable::new(num_items),
+            scrollable: Scrollable::new(0),
             columns: columns
                 .into_iter()
                 .map(|(name, shortcut, default_descending)| Column {

@@ -32,8 +32,8 @@ use crossterm::{
 use app::{
     data_harvester::{self, processes::ProcessSorting},
     event::EventResult,
-    layout_manager::{UsedWidgets, WidgetDirection},
-    AppState,
+    layout_manager::WidgetDirection,
+    AppState, UsedWidgets,
 };
 use constants::*;
 use data_conversion::*;
@@ -60,9 +60,9 @@ pub type Pid = usize;
 pub type Pid = libc::pid_t;
 
 #[derive(Debug)]
-pub enum BottomEvent<I, J> {
-    KeyInput(I),
-    MouseInput(J),
+pub enum BottomEvent {
+    KeyInput(KeyEvent),
+    MouseInput(MouseEvent),
     Update(Box<data_harvester::Data>),
     Clean,
 }
@@ -598,10 +598,7 @@ fn sort_process_data(
 }
 
 pub fn create_input_thread(
-    sender: std::sync::mpsc::Sender<
-        BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
-    >,
-    termination_ctrl_lock: Arc<Mutex<bool>>,
+    sender: std::sync::mpsc::Sender<BottomEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> std::thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut mouse_timer = Instant::now();
@@ -646,9 +643,7 @@ pub fn create_input_thread(
 }
 
 pub fn create_collection_thread(
-    sender: std::sync::mpsc::Sender<
-        BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
-    >,
+    sender: std::sync::mpsc::Sender<BottomEvent>,
     control_receiver: std::sync::mpsc::Receiver<ThreadControlEvent>,
     termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
     app_config_fields: &app::AppConfigFields, filters: app::DataFilters,

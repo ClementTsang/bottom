@@ -1,10 +1,6 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-    time::Instant,
-};
+use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     app::{layout_manager::*, *},
@@ -178,168 +174,38 @@ pub struct IgnoreList {
     pub whole_word: bool,
 }
 
-pub fn build_app(
-    matches: &clap::ArgMatches<'static>, config: &mut Config, widget_layout: &BottomLayout,
-    default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-) -> Result<AppState> {
-    use BottomWidgetType::*;
+/// Represents the default states of all process widgets.
+pub struct ProcessDefaults {
+    pub is_grouped: bool,
+    pub is_case_sensitive: bool,
+    pub is_match_whole_word: bool,
+    pub is_use_regex: bool,
+    pub is_show_mem_as_values: bool,
+    pub is_tree: bool,
+    pub is_command: bool,
+}
+
+pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Result<AppState> {
+    // Process defaults
+    let process_defaults = ProcessDefaults {
+        is_grouped: get_process_grouping(matches, config),
+        is_case_sensitive: get_case_sensitive(matches, config),
+        is_match_whole_word: get_match_whole_word(matches, config),
+        is_use_regex: get_use_regex(matches, config),
+        is_show_mem_as_values: get_mem_as_value(matches, config),
+        is_tree: get_is_default_tree(matches, config),
+        is_command: get_is_default_process_command(matches, config),
+    };
+
+    // App config fields
     let autohide_time = get_autohide_time(matches, config);
     let default_time_value = get_default_time_value(matches, config)
         .context("Update 'default_time_value' in your config file.")?;
     let use_basic_mode = get_use_basic_mode(matches, config);
-
-    // For processes
-    let is_grouped = get_app_grouping(matches, config);
-    let is_case_sensitive = get_app_case_sensitive(matches, config);
-    let is_match_whole_word = get_app_match_whole_word(matches, config);
-    let is_use_regex = get_app_use_regex(matches, config);
-
-    let mut widget_map = HashMap::new();
-    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
-    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
-    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
-    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
-    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
-    let mut disk_state_map: HashMap<u64, DiskWidgetState> = HashMap::new();
-    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
-
-    let autohide_timer = if autohide_time {
-        Some(Instant::now())
-    } else {
-        None
-    };
-
-    let mut initial_widget_id: u64 = default_widget_id;
-    let mut initial_widget_type = Proc;
-    let is_custom_layout = config.row.is_some();
-    let mut used_widget_set = HashSet::new();
-
-    let show_memory_as_values = get_mem_as_value(matches, config);
-    let is_default_tree = get_is_default_tree(matches, config);
-    let is_default_command = get_is_default_process_command(matches, config);
     let is_advanced_kill = !get_is_advanced_kill_disabled(matches, config);
-
     let network_unit_type = get_network_unit_type(matches, config);
     let network_scale_type = get_network_scale_type(matches, config);
     let network_use_binary_prefix = get_network_use_binary_prefix(matches, config);
-
-    for row in &widget_layout.rows {
-        for col in &row.children {
-            for col_row in &col.children {
-                for widget in &col_row.children {
-                    widget_map.insert(widget.widget_id, widget.clone());
-                    if let Some(default_widget_type) = &default_widget_type_option {
-                        if !is_custom_layout || use_basic_mode {
-                            match widget.widget_type {
-                                BasicCpu => {
-                                    if let Cpu = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
-                                }
-                                BasicMem => {
-                                    if let Mem = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
-                                }
-                                BasicNet => {
-                                    if let Net = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
-                                }
-                                _ => {
-                                    if *default_widget_type == widget.widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = widget.widget_type.clone();
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    used_widget_set.insert(widget.widget_type.clone());
-
-                    match widget.widget_type {
-                        Cpu => {
-                            cpu_state_map.insert(
-                                widget.widget_id,
-                                CpuWidgetState::init(default_time_value, autohide_timer),
-                            );
-                        }
-                        Mem => {
-                            mem_state_map.insert(
-                                widget.widget_id,
-                                MemWidgetState::init(default_time_value, autohide_timer),
-                            );
-                        }
-                        Net => {
-                            net_state_map.insert(
-                                widget.widget_id,
-                                NetWidgetState::init(
-                                    default_time_value,
-                                    autohide_timer,
-                                    // network_unit_type.clone(),
-                                    // network_scale_type.clone(),
-                                ),
-                            );
-                        }
-                        Proc => {
-                            proc_state_map.insert(
-                                widget.widget_id,
-                                ProcWidgetState::init(
-                                    is_case_sensitive,
-                                    is_match_whole_word,
-                                    is_use_regex,
-                                    is_grouped,
-                                    show_memory_as_values,
-                                    is_default_tree,
-                                    is_default_command,
-                                ),
-                            );
-                        }
-                        Disk => {
-                            disk_state_map.insert(widget.widget_id, DiskWidgetState::init());
-                        }
-                        Temp => {
-                            temp_state_map.insert(widget.widget_id, TempWidgetState::init());
-                        }
-                        Battery => {
-                            battery_state_map
-                                .insert(widget.widget_id, BatteryWidgetState::default());
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        }
-    }
-
-    let basic_table_widget_state = if use_basic_mode {
-        Some(match initial_widget_type {
-            Proc | Disk | Temp => BasicTableWidgetState {
-                currently_displayed_widget_type: initial_widget_type,
-                currently_displayed_widget_id: initial_widget_id,
-                widget_id: 100,
-                left_tlc: None,
-                left_brc: None,
-                right_tlc: None,
-                right_brc: None,
-            },
-            _ => BasicTableWidgetState {
-                currently_displayed_widget_type: Proc,
-                currently_displayed_widget_id: DEFAULT_WIDGET_ID,
-                widget_id: 100,
-                left_tlc: None,
-                left_brc: None,
-                right_tlc: None,
-                right_brc: None,
-            },
-        })
-    } else {
-        None
-    };
 
     let app_config_fields = AppConfigFields {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
@@ -372,14 +238,20 @@ pub fn build_app(
         network_use_binary_prefix,
     };
 
-    let used_widgets = UsedWidgets {
-        use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
-        use_mem: used_widget_set.get(&Mem).is_some() || used_widget_set.get(&BasicMem).is_some(),
-        use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
-        use_proc: used_widget_set.get(&Proc).is_some(),
-        use_disk: used_widget_set.get(&Disk).is_some(),
-        use_temp: used_widget_set.get(&Temp).is_some(),
-        use_battery: used_widget_set.get(&Battery).is_some(),
+    let layout_tree_output = if get_use_basic_mode(matches, config) {
+        todo!()
+    } else if let Some(row) = &config.row {
+        create_layout_tree(row, process_defaults, &app_config_fields)?
+    } else {
+        if get_use_battery(matches, config) {
+            let rows = toml::from_str::<Config>(DEFAULT_BATTERY_LAYOUT)?
+                .row
+                .unwrap();
+            create_layout_tree(&rows, process_defaults, &app_config_fields)?
+        } else {
+            let rows = toml::from_str::<Config>(DEFAULT_LAYOUT)?.row.unwrap();
+            create_layout_tree(&rows, process_defaults, &app_config_fields)?
+        }
     };
 
     let disk_filter =
@@ -390,63 +262,39 @@ pub fn build_app(
         get_ignore_list(&config.temp_filter).context("Update 'temp_filter' in your config file")?;
     let net_filter =
         get_ignore_list(&config.net_filter).context("Update 'net_filter' in your config file")?;
+    let data_filter = DataFilters {
+        disk_filter,
+        mount_filter,
+        temp_filter,
+        net_filter,
+    };
 
-    // One more thing - we have to update the search settings of our proc_state_map, and create the hashmaps if needed!
-    // Note that if you change your layout, this might not actually match properly... not sure if/where we should deal with that...
-    if let Some(flags) = &mut config.flags {
-        if flags.case_sensitive.is_none() && !matches.is_present("case_sensitive") {
-            if let Some(search_case_enabled_widgets) = &flags.search_case_enabled_widgets {
-                for widget in search_case_enabled_widgets {
-                    if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.process_search_state.is_ignoring_case = !widget.enabled;
-                    }
-                }
-            }
-        }
+    // Ok(AppState::builder()
+    //     .app_config_fields(app_config_fields)
+    //     .cpu_state(CpuState::init(cpu_state_map))
+    //     .mem_state(MemState::init(mem_state_map))
+    //     .net_state(NetState::init(net_state_map))
+    //     .proc_state(ProcState::init(proc_state_map))
+    //     .disk_state(DiskState::init(disk_state_map))
+    //     .temp_state(TempState::init(temp_state_map))
+    //     .battery_state(BatteryState::init(battery_state_map))
+    //     .basic_table_widget_state(basic_table_widget_state)
+    //     .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // TODO: [UNWRAP] - many of the unwraps are fine (like this one) but do a once-over and/or switch to expect?
+    //     .widget_map(widget_map)
+    //     .used_widgets(used_widgets)
+    //     .filters(DataFilters {
+    //         disk_filter,
+    //         mount_filter,
+    //         temp_filter,
+    //         net_filter,
+    //     })
+    //     .build())
 
-        if flags.whole_word.is_none() && !matches.is_present("whole_word") {
-            if let Some(search_whole_word_enabled_widgets) =
-                &flags.search_whole_word_enabled_widgets
-            {
-                for widget in search_whole_word_enabled_widgets {
-                    if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.process_search_state.is_searching_whole_word = widget.enabled;
-                    }
-                }
-            }
-        }
-
-        if flags.regex.is_none() && !matches.is_present("regex") {
-            if let Some(search_regex_enabled_widgets) = &flags.search_regex_enabled_widgets {
-                for widget in search_regex_enabled_widgets {
-                    if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.process_search_state.is_searching_with_regex = widget.enabled;
-                    }
-                }
-            }
-        }
-    }
-
-    Ok(AppState::builder()
-        .app_config_fields(app_config_fields)
-        .cpu_state(CpuState::init(cpu_state_map))
-        .mem_state(MemState::init(mem_state_map))
-        .net_state(NetState::init(net_state_map))
-        .proc_state(ProcState::init(proc_state_map))
-        .disk_state(DiskState::init(disk_state_map))
-        .temp_state(TempState::init(temp_state_map))
-        .battery_state(BatteryState::init(battery_state_map))
-        .basic_table_widget_state(basic_table_widget_state)
-        .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // TODO: [UNWRAP] - many of the unwraps are fine (like this one) but do a once-over and/or switch to expect?
-        .widget_map(widget_map)
-        .used_widgets(used_widgets)
-        .filters(DataFilters {
-            disk_filter,
-            mount_filter,
-            temp_filter,
-            net_filter,
-        })
-        .build())
+    Ok(AppState::new(
+        app_config_fields,
+        data_filter,
+        layout_tree_output,
+    ))
 }
 
 pub fn get_widget_layout(
@@ -684,7 +532,7 @@ fn get_time_interval(matches: &clap::ArgMatches<'static>, config: &Config) -> er
     Ok(time_interval as u64)
 }
 
-pub fn get_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+pub fn get_process_grouping(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("group") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -695,7 +543,7 @@ pub fn get_app_grouping(matches: &clap::ArgMatches<'static>, config: &Config) ->
     false
 }
 
-pub fn get_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+pub fn get_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("case_sensitive") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -706,7 +554,7 @@ pub fn get_app_case_sensitive(matches: &clap::ArgMatches<'static>, config: &Conf
     false
 }
 
-pub fn get_app_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+pub fn get_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("whole_word") {
         return true;
     } else if let Some(flags) = &config.flags {
@@ -717,7 +565,7 @@ pub fn get_app_match_whole_word(matches: &clap::ArgMatches<'static>, config: &Co
     false
 }
 
-pub fn get_app_use_regex(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
+pub fn get_use_regex(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
     if matches.is_present("regex") {
         return true;
     } else if let Some(flags) = &config.flags {

@@ -3,7 +3,10 @@ use std::time::{Duration, Instant};
 use crossterm::event::{KeyEvent, KeyModifiers, MouseEvent};
 use tui::layout::Rect;
 
-use crate::app::{event::EventResult, Component};
+use crate::{
+    app::{event::EventResult, AppConfigFields, Component},
+    constants::{AUTOHIDE_TIMEOUT_MILLISECONDS, STALE_MAX_MILLISECONDS, STALE_MIN_MILLISECONDS},
+};
 
 #[derive(Clone)]
 pub enum AutohideTimerState {
@@ -13,7 +16,8 @@ pub enum AutohideTimerState {
 
 #[derive(Clone)]
 pub enum AutohideTimer {
-    Disabled,
+    AlwaysShow,
+    AlwaysHide,
     Enabled {
         state: AutohideTimerState,
         show_duration: Duration,
@@ -21,10 +25,10 @@ pub enum AutohideTimer {
 }
 
 impl AutohideTimer {
-    fn trigger_display_timer(&mut self) {
+    fn start_display_timer(&mut self) {
         match self {
-            AutohideTimer::Disabled => {
-                // Does nothing.
+            AutohideTimer::AlwaysShow | AutohideTimer::AlwaysHide => {
+                // Do nothing.
             }
             AutohideTimer::Enabled {
                 state,
@@ -37,8 +41,8 @@ impl AutohideTimer {
 
     pub fn update_display_timer(&mut self) {
         match self {
-            AutohideTimer::Disabled => {
-                // Does nothing.
+            AutohideTimer::AlwaysShow | AutohideTimer::AlwaysHide => {
+                // Do nothing.
             }
             AutohideTimer::Enabled {
                 state,
@@ -70,6 +74,7 @@ pub struct TimeGraph {
 }
 
 impl TimeGraph {
+    /// Creates a new [`TimeGraph`].  All time values are in milliseconds.
     pub fn new(
         start_value: u64, autohide_timer: AutohideTimer, min_duration: u64, max_duration: u64,
         time_interval: u64,
@@ -83,6 +88,26 @@ impl TimeGraph {
             time_interval,
             bounds: Rect::default(),
         }
+    }
+
+    /// Creates a new [`TimeGraph`] given an [`AppConfigFields`].
+    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+        Self::new(
+            app_config_fields.default_time_value,
+            if app_config_fields.hide_time {
+                AutohideTimer::AlwaysHide
+            } else if app_config_fields.autohide_time {
+                AutohideTimer::Enabled {
+                    state: AutohideTimerState::Running(Instant::now()),
+                    show_duration: Duration::from_millis(AUTOHIDE_TIMEOUT_MILLISECONDS),
+                }
+            } else {
+                AutohideTimer::AlwaysShow
+            },
+            STALE_MIN_MILLISECONDS,
+            STALE_MAX_MILLISECONDS,
+            app_config_fields.time_interval,
+        )
     }
 
     /// Handles a char `c`.
@@ -100,12 +125,12 @@ impl TimeGraph {
 
         if new_time >= self.min_duration {
             self.current_display_time = new_time;
-            self.autohide_timer.trigger_display_timer();
+            self.autohide_timer.start_display_timer();
 
             EventResult::Redraw
         } else if new_time != self.min_duration {
             self.current_display_time = self.min_duration;
-            self.autohide_timer.trigger_display_timer();
+            self.autohide_timer.start_display_timer();
 
             EventResult::Redraw
         } else {
@@ -118,12 +143,12 @@ impl TimeGraph {
 
         if new_time <= self.max_duration {
             self.current_display_time = new_time;
-            self.autohide_timer.trigger_display_timer();
+            self.autohide_timer.start_display_timer();
 
             EventResult::Redraw
         } else if new_time != self.max_duration {
             self.current_display_time = self.max_duration;
-            self.autohide_timer.trigger_display_timer();
+            self.autohide_timer.start_display_timer();
 
             EventResult::Redraw
         } else {
@@ -136,7 +161,7 @@ impl TimeGraph {
             EventResult::NoRedraw
         } else {
             self.current_display_time = self.default_time_value;
-            self.autohide_timer.trigger_display_timer();
+            self.autohide_timer.start_display_timer();
             EventResult::Redraw
         }
     }

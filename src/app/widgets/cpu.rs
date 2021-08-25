@@ -3,12 +3,9 @@ use std::{collections::HashMap, time::Instant};
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::layout::Rect;
 
-use crate::app::event::EventResult;
+use crate::app::event::{does_point_intersect_rect, EventResult};
 
-use super::{
-    does_point_intersect_rect, AppScrollWidgetState, CanvasTableWidthState, Component, TextTable,
-    TimeGraph, Widget,
-};
+use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, TimeGraph, Widget};
 
 pub struct CpuWidgetState {
     pub current_display_time: u64,

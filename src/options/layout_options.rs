@@ -16,7 +16,7 @@ impl Row {
         &self, iter_id: &mut u64, total_height_ratio: &mut u32, default_widget_id: &mut u64,
         default_widget_type: &Option<BottomWidgetType>, default_widget_count: &mut u64,
         left_legend: bool,
-    ) -> Result<BottomRow> {
+    ) -> Result<OldBottomRow> {
         // TODO: In the future we want to also add percentages.
         // But for MVP, we aren't going to bother.
         let row_ratio = self.ratio.unwrap_or(1);
@@ -55,7 +55,7 @@ impl Row {
                             BottomWidgetType::Cpu => {
                                 let cpu_id = *iter_id;
                                 *iter_id += 1;
-                                BottomCol::builder()
+                                OldBottomCol::builder()
                                     .col_width_ratio(width_ratio)
                                     .children(if left_legend {
                                         vec![BottomColRow::builder()
@@ -108,7 +108,7 @@ impl Row {
                                 let proc_id = *iter_id;
                                 let proc_search_id = *iter_id + 1;
                                 *iter_id += 2;
-                                BottomCol::builder()
+                                OldBottomCol::builder()
                                     .total_col_row_ratio(2)
                                     .col_width_ratio(width_ratio)
                                     .children(vec![
@@ -144,7 +144,7 @@ impl Row {
                                     ])
                                     .build()
                             }
-                            _ => BottomCol::builder()
+                            _ => OldBottomCol::builder()
                                 .col_width_ratio(width_ratio)
                                 .children(vec![BottomColRow::builder()
                                     .children(vec![BottomWidget::builder()
@@ -310,7 +310,7 @@ impl Row {
                         }
 
                         children.push(
-                            BottomCol::builder()
+                            OldBottomCol::builder()
                                 .total_col_row_ratio(total_col_row_ratio)
                                 .col_width_ratio(col_width_ratio)
                                 .children(col_row_children)
@@ -321,7 +321,7 @@ impl Row {
             }
         }
 
-        Ok(BottomRow::builder()
+        Ok(OldBottomRow::builder()
             .total_col_ratio(total_col_ratio)
             .row_height_ratio(row_ratio)
             .children(children)

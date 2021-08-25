@@ -7,7 +7,7 @@ use tui::{layout::Rect, widgets::TableState};
 
 use crate::{
     app::{
-        event::{EventResult, MultiKey, MultiKeyResult},
+        event::{does_point_intersect_rect, EventResult, MultiKey, MultiKeyResult},
         query::*,
     },
     data_harvester::processes::{self, ProcessSorting},
@@ -15,8 +15,8 @@ use crate::{
 use ProcessSorting::*;
 
 use super::{
-    does_point_intersect_rect, AppScrollWidgetState, CanvasTableWidthState, Component,
-    CursorDirection, ScrollDirection, TextInput, TextTable, Widget,
+    AppScrollWidgetState, CanvasTableWidthState, Component, CursorDirection, ScrollDirection,
+    TextInput, TextTable, Widget,
 };
 
 /// AppSearchState deals with generic searching (I might do this in the future).
@@ -652,8 +652,8 @@ impl ProcessManager {
     pub fn new(default_in_tree_mode: bool) -> Self {
         Self {
             bounds: Rect::default(),
-            process_table: TextTable::new(0, vec![]), // TODO: Do this
-            sort_table: TextTable::new(0, vec![]),    // TODO: Do this too
+            process_table: TextTable::new(vec![]), // TODO: Do this
+            sort_table: TextTable::new(vec![]),    // TODO: Do this too
             search_input: TextInput::new(),
             dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Use a static arrayvec
             selected: ProcessManagerSelection::Processes,

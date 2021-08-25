@@ -154,15 +154,15 @@ impl Widget for NetGraph {
 /// A widget denoting network usage via a graph and a separate, single row table. This is built on [`NetGraph`],
 /// and the main difference is that it also contains a bounding box for the graph + text.
 pub struct OldNetGraph {
-    graph: NetGraph,
+    net_graph: NetGraph,
     bounds: Rect,
 }
 
 impl OldNetGraph {
     /// Creates a new [`OldNetGraph`].
-    pub fn new(graph: NetGraph) -> Self {
+    pub fn new(graph: TimeGraph) -> Self {
         Self {
-            graph,
+            net_graph: NetGraph::new(graph),
             bounds: Rect::default(),
         }
     }
@@ -180,13 +180,13 @@ impl Component for OldNetGraph {
     fn handle_key_event(
         &mut self, event: crossterm::event::KeyEvent,
     ) -> crate::app::event::EventResult {
-        self.graph.handle_key_event(event)
+        self.net_graph.handle_key_event(event)
     }
 
     fn handle_mouse_event(
         &mut self, event: crossterm::event::MouseEvent,
     ) -> crate::app::event::EventResult {
-        self.graph.handle_mouse_event(event)
+        self.net_graph.handle_mouse_event(event)
     }
 }
 

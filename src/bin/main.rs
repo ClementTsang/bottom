@@ -39,18 +39,12 @@ fn main() -> Result<()> {
         .context("Unable to properly parse or create the config file.")?;
 
     // Get widget layout separately
-    let (widget_layout, default_widget_id, default_widget_type_option) =
+    let (widget_layout, _default_widget_id, _default_widget_type_option) =
         get_widget_layout(&matches, &config)
             .context("Found an issue while trying to build the widget layout.")?;
 
     // Create "app" struct, which will control most of the program and store settings/state
-    let mut app = build_app(
-        &matches,
-        &mut config,
-        &widget_layout,
-        default_widget_id,
-        &default_widget_type_option,
-    )?;
+    let mut app = build_app(&matches, &mut config)?;
 
     // Create painter and set colours.
     let mut painter = canvas::Painter::init(
@@ -67,10 +61,11 @@ fn main() -> Result<()> {
     let thread_termination_cvar = Arc::new(Condvar::new());
 
     // Set up input handling
-    let (sender, receiver) = mpsc::channel();
+    let (sender, receiver) = mpsc::channel(); // FIXME: Make this bounded, prevents overloading.
     let _input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop
+    // TODO: Probably worth spinning this off into an async thread or something...
     let _cleaning_thread = {
         let lock = thread_termination_lock.clone();
         let cvar = thread_termination_cvar.clone();
@@ -140,7 +135,7 @@ fn main() -> Result<()> {
                             force_redraw(&mut app);
                             try_drawing(&mut terminal, &mut app, &mut painter)?;
                         }
-                        EventResult::NoRedraw => {}
+                        _ => {}
                     }
                 }
                 BottomEvent::MouseInput(event) => match handle_mouse_event(event, &mut app) {
@@ -152,7 +147,7 @@ fn main() -> Result<()> {
                         force_redraw(&mut app);
                         try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
-                    EventResult::NoRedraw => {}
+                    _ => {}
                 },
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(data);

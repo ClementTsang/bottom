@@ -13,6 +13,9 @@ use std::{
     time::Instant,
 };
 
+use crossterm::event::{KeyEvent, KeyModifiers};
+use fxhash::FxHashMap;
+use indextree::{Arena, NodeId};
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
@@ -29,8 +32,10 @@ use crate::{
     constants::{self, MAX_SIGNAL},
     units::data_units::DataUnit,
     utils::error::{BottomError, Result},
-    Pid,
+    BottomEvent, Pid,
 };
+
+use self::event::{does_point_intersect_rect, EventResult, ReturnSignal};
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
@@ -38,6 +43,17 @@ const MAX_SEARCH_LENGTH: usize = 200;
 pub enum AxisScaling {
     Log,
     Linear,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct UsedWidgets {
+    pub use_cpu: bool,
+    pub use_mem: bool,
+    pub use_net: bool,
+    pub use_proc: bool,
+    pub use_disk: bool,
+    pub use_temp: bool,
+    pub use_battery: bool,
 }
 
 /// AppConfigFields is meant to cover basic fields that would normally be set
@@ -67,14 +83,9 @@ pub struct AppConfigFields {
     pub network_use_binary_prefix: bool,
 }
 
+// FIXME: Get rid of TypedBuilder here!
 #[derive(TypedBuilder)]
 pub struct AppState {
-    #[builder(default = false, setter(skip))]
-    awaiting_second_char: bool,
-
-    #[builder(default, setter(skip))]
-    second_char: Option<char>,
-
     #[builder(default, setter(skip))]
     pub dd_err: Option<String>,
 
@@ -93,12 +104,6 @@ pub struct AppState {
     #[builder(default, setter(skip))]
     pub data_collection: DataCollection,
 
-    #[builder(default, setter(skip))]
-    pub delete_dialog_state: AppDeleteDialogState,
-
-    #[builder(default, setter(skip))]
-    pub help_dialog_state: AppHelpDialogState,
-
     #[builder(default = false, setter(skip))]
     pub is_expanded: bool,
 
@@ -115,6 +120,18 @@ pub struct AppState {
     #[builder(default, setter(skip))]
     pub user_table: processes::UserTable,
 
+    pub used_widgets: UsedWidgets,
+    pub filters: DataFilters,
+    pub app_config_fields: AppConfigFields,
+
+    // --- Possibly delete? ---
+    #[builder(default, setter(skip))]
+    pub delete_dialog_state: AppDeleteDialogState,
+
+    #[builder(default, setter(skip))]
+    pub help_dialog_state: AppHelpDialogState,
+
+    // --- TO DELETE---
     pub cpu_state: CpuState,
     pub mem_state: MemState,
     pub net_state: NetState,
@@ -123,14 +140,31 @@ pub struct AppState {
     pub disk_state: DiskState,
     pub battery_state: BatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
-    pub app_config_fields: AppConfigFields,
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget: BottomWidget,
-    pub used_widgets: UsedWidgets,
-    pub filters: DataFilters,
+
+    #[builder(default = false, setter(skip))]
+    awaiting_second_char: bool,
+
+    #[builder(default, setter(skip))]
+    second_char: Option<char>,
+
+    // --- NEW STUFF ---
+    pub selected_widget: NodeId,
+    pub widget_lookup_map: FxHashMap<NodeId, TmpBottomWidget>,
+    pub layout_tree: Arena<LayoutNode>,
+    pub layout_tree_root: NodeId,
 }
 
 impl AppState {
+    /// Creates a new [`AppState`].
+    pub fn new(
+        _app_config_fields: AppConfigFields, _filters: DataFilters,
+        _layout_tree_output: LayoutCreationOutput,
+    ) -> Self {
+        todo!()
+    }
+
     pub fn reset(&mut self) {
         // Reset multi
         self.reset_multi_tap_keys();
@@ -176,6 +210,79 @@ impl AppState {
         self.dd_err = None;
     }
 
+    /// Handles a global [`KeyEvent`], and returns [`Some(EventResult)`] if the global shortcut is consumed by some global
+    /// shortcut. If not, it returns [`None`].
+    fn handle_global_shortcut(&mut self, event: KeyEvent) -> Option<EventResult> {
+        // TODO: Write this.
+
+        if event.modifiers.is_empty() {
+            todo!()
+        } else if let KeyModifiers::ALT = event.modifiers {
+            todo!()
+        } else {
+            None
+        }
+    }
+
+    /// Handles a [`BottomEvent`] and updates the [`AppState`] if needed. Returns an [`EventResult`] indicating
+    /// whether the app now requires a redraw.
+    pub fn handle_event(&mut self, event: BottomEvent) -> EventResult {
+        match event {
+            BottomEvent::KeyInput(event) => {
+                if let Some(event_result) = self.handle_global_shortcut(event) {
+                    // See if it's caught by a global shortcut first...
+                    event_result
+                } else if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
+                    // If it isn't, send it to the current widget!
+                    widget.handle_key_event(event)
+                } else {
+                    EventResult::NoRedraw
+                }
+            }
+            BottomEvent::MouseInput(event) => {
+                // Not great, but basically a blind lookup through the table for anything that clips the click location.
+                // TODO: Would be cool to use a kd-tree or something like that in the future.
+
+                let x = event.column;
+                let y = event.row;
+
+                for (id, widget) in self.widget_lookup_map.iter_mut() {
+                    if does_point_intersect_rect(x, y, widget.bounds()) {
+                        if self.selected_widget == *id {
+                            self.selected_widget = *id;
+                            return widget.handle_mouse_event(event);
+                        } else {
+                            // If the aren't equal, *force* a redraw.
+                            self.selected_widget = *id;
+                            widget.handle_mouse_event(event);
+                            return EventResult::Redraw;
+                        }
+                    }
+                }
+
+                EventResult::NoRedraw
+            }
+            BottomEvent::Update(new_data) => {
+                if !self.is_frozen {
+                    // TODO: Update all data, and redraw.
+                    EventResult::Redraw
+                } else {
+                    EventResult::NoRedraw
+                }
+            }
+            BottomEvent::Clean => {
+                self.data_collection
+                    .clean_data(constants::STALE_MAX_MILLISECONDS);
+                EventResult::NoRedraw
+            }
+        }
+    }
+
+    /// Handles a [`ReturnSignal`], and returns
+    pub fn handle_return_signal(&mut self, return_signal: ReturnSignal) -> EventResult {
+        todo!()
+    }
+
     pub fn on_esc(&mut self) {
         self.reset_multi_tap_keys();
         if self.is_in_dialog() {
@@ -200,6 +307,7 @@ impl AppState {
                                 .process_search_state
                                 .search_state
                                 .is_enabled = false;
+
                             current_proc_state.is_sort_open = false;
                             self.is_force_redraw = true;
                             return;
