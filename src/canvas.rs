@@ -95,8 +95,6 @@ impl FromStr for ColourScheme {
 /// Handles the canvas' state.  TODO: [OPT] implement this.
 pub struct Painter {
     pub colours: CanvasColours,
-    height: u16,
-    width: u16,
     styled_help_text: Vec<Spans<'static>>,
     is_mac_os: bool, // FIXME: This feels out of place...
     row_constraints: Vec<Constraint>,
@@ -182,8 +180,6 @@ impl Painter {
 
         let mut painter = Painter {
             colours: CanvasColours::default(),
-            height: 0,
-            width: 0,
             styled_help_text: Vec::default(),
             is_mac_os: cfg!(target_os = "macos"),
             row_constraints,
@@ -313,36 +309,6 @@ impl Painter {
             let terminal_height = terminal_size.height;
             let terminal_width = terminal_size.width;
 
-            if (self.height == 0 && self.width == 0)
-                || (self.height != terminal_height || self.width != terminal_width)
-            {
-                app_state.is_force_redraw = true;
-                self.height = terminal_height;
-                self.width = terminal_width;
-            }
-
-            if app_state.should_get_widget_bounds() {
-                // If we're force drawing, reset ALL mouse boundaries.
-                for widget in app_state.widget_map.values_mut() {
-                    widget.top_left_corner = None;
-                    widget.bottom_right_corner = None;
-                }
-
-                // Reset dd_dialog...
-                app_state.delete_dialog_state.button_positions = vec![];
-
-                // Reset battery dialog...
-                for battery_widget in app_state.battery_state.widget_states.values_mut() {
-                    battery_widget.tab_click_locs = None;
-                }
-
-                // Reset column headers for sorting in process widget...
-                for proc_widget in app_state.proc_state.widget_states.values_mut() {
-                    proc_widget.columns.column_header_y_loc = None;
-                    proc_widget.columns.column_header_x_locs = None;
-                }
-            }
-
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
@@ -461,39 +427,45 @@ impl Painter {
                     .constraints([Constraint::Percentage(100)])
                     .split(terminal_size);
                 match &app_state.current_widget.widget_type {
-                    Cpu => self.draw_cpu(
+                    Cpu => draw_cpu(
+                        self,
                         &mut f,
                         app_state,
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
-                    CpuLegend => self.draw_cpu(
+                    CpuLegend => draw_cpu(
+                        self,
                         &mut f,
                         app_state,
                         rect[0],
                         app_state.current_widget.widget_id - 1,
                     ),
-                    Mem | BasicMem => self.draw_memory_graph(
+                    Mem | BasicMem => draw_memory_graph(
+                        self,
                         &mut f,
                         app_state,
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
-                    Disk => self.draw_disk_table(
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id,
-                    ),
-                    Temp => self.draw_temp_table(
+                    Disk => draw_disk_table(
+                        self,
                         &mut f,
                         app_state,
                         rect[0],
                         true,
                         app_state.current_widget.widget_id,
                     ),
-                    Net => self.draw_network_graph(
+                    Temp => draw_temp_table(
+                        self,
+                        &mut f,
+                        app_state,
+                        rect[0],
+                        true,
+                        app_state.current_widget.widget_id,
+                    ),
+                    Net => draw_network_graph(
+                        self,
                         &mut f,
                         app_state,
                         rect[0],
@@ -508,9 +480,10 @@ impl Painter {
                                 _ => 0,
                             };
 
-                        self.draw_process_features(&mut f, app_state, rect[0], true, widget_id);
+                        draw_process_features(self, &mut f, app_state, rect[0], true, widget_id);
                     }
-                    Battery => self.draw_battery_display(
+                    Battery => draw_battery_display(
+                        self,
                         &mut f,
                         app_state,
                         rect[0],
@@ -555,16 +528,17 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
                     .split(vertical_chunks[1]);
-                self.draw_basic_cpu(&mut f, app_state, vertical_chunks[0], 1);
-                self.draw_basic_memory(&mut f, app_state, middle_chunks[0], 2);
-                self.draw_basic_network(&mut f, app_state, middle_chunks[1], 3);
+                draw_basic_cpu(self, &mut f, app_state, vertical_chunks[0], 1);
+                draw_basic_memory(self, &mut f, app_state, middle_chunks[0], 2);
+                draw_basic_network(self, &mut f, app_state, middle_chunks[1], 3);
 
                 let mut later_widget_id: Option<u64> = None;
                 if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
                     let widget_id = basic_table_widget_state.currently_displayed_widget_id;
                     later_widget_id = Some(widget_id);
                     match basic_table_widget_state.currently_displayed_widget_type {
-                        Disk => self.draw_disk_table(
+                        Disk => draw_disk_table(
+                            self,
                             &mut f,
                             app_state,
                             vertical_chunks[3],
@@ -578,7 +552,8 @@ impl Painter {
                                     ProcSort => 2,
                                     _ => 0,
                                 };
-                            self.draw_process_features(
+                            draw_process_features(
+                                self,
                                 &mut f,
                                 app_state,
                                 vertical_chunks[3],
@@ -586,14 +561,16 @@ impl Painter {
                                 wid,
                             );
                         }
-                        Temp => self.draw_temp_table(
+                        Temp => draw_temp_table(
+                            self,
                             &mut f,
                             app_state,
                             vertical_chunks[3],
                             false,
                             widget_id,
                         ),
-                        Battery => self.draw_battery_display(
+                        Battery => draw_battery_display(
+                            self,
                             &mut f,
                             app_state,
                             vertical_chunks[3],
@@ -605,7 +582,7 @@ impl Painter {
                 }
 
                 if let Some(widget_id) = later_widget_id {
-                    self.draw_basic_table_arrows(&mut f, app_state, vertical_chunks[2], widget_id);
+                    draw_basic_table_arrows(self, &mut f, app_state, vertical_chunks[2], widget_id);
                 }
             } else {
                 // Draws using the passed in (or default) layout.
@@ -713,23 +690,25 @@ impl Painter {
         for (widget, widget_draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
             match &widget.widget_type {
                 Empty => {}
-                Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
-                Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
-                Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
+                Cpu => draw_cpu(self, f, app_state, *widget_draw_loc, widget.widget_id),
+                Mem => draw_memory_graph(self, f, app_state, *widget_draw_loc, widget.widget_id),
+                Net => draw_network(self, f, app_state, *widget_draw_loc, widget.widget_id),
                 Temp => {
-                    self.draw_temp_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
+                    draw_temp_table(self, f, app_state, *widget_draw_loc, true, widget.widget_id)
                 }
                 Disk => {
-                    self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
+                    draw_disk_table(self, f, app_state, *widget_draw_loc, true, widget.widget_id)
                 }
-                Proc => self.draw_process_features(
+                Proc => draw_process_features(
+                    self,
                     f,
                     app_state,
                     *widget_draw_loc,
                     true,
                     widget.widget_id,
                 ),
-                Battery => self.draw_battery_display(
+                Battery => draw_battery_display(
+                    self,
                     f,
                     app_state,
                     *widget_draw_loc,

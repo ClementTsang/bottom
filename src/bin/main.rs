@@ -233,6 +233,12 @@ fn main() -> Result<()> {
                         try_drawing(&mut terminal, &mut app, &mut painter)?;
                     }
                 }
+                BottomEvent::Resize {
+                    width: _,
+                    height: _,
+                } => {
+                    try_drawing(&mut terminal, &mut app, &mut painter)?;
+                }
                 BottomEvent::Clean => {
                     app.data_collection
                         .clean_data(constants::STALE_MAX_MILLISECONDS);

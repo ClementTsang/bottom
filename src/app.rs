@@ -270,6 +270,10 @@ impl AppState {
                     EventResult::NoRedraw
                 }
             }
+            BottomEvent::Resize {
+                width: _,
+                height: _,
+            } => EventResult::Redraw,
             BottomEvent::Clean => {
                 self.data_collection
                     .clean_data(constants::STALE_MAX_MILLISECONDS);

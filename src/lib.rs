@@ -64,6 +64,7 @@ pub enum BottomEvent {
     KeyInput(KeyEvent),
     MouseInput(MouseEvent),
     Update(Box<data_harvester::Data>),
+    Resize { width: u16, height: u16 },
     Clean,
 }
 
@@ -635,7 +636,11 @@ pub fn create_input_thread(
                             }
                         }
                     },
-                    Event::Resize(_, _) => {}
+                    Event::Resize(width, height) => {
+                        if sender.send(BottomEvent::Resize { width, height }).is_err() {
+                            break;
+                        }
+                    }
                 }
             }
         }
