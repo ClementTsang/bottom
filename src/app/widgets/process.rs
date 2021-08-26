@@ -3,13 +3,19 @@ use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
 use unicode_segmentation::GraphemeCursor;
 
-use tui::{layout::Rect, widgets::TableState};
+use tui::{
+    backend::Backend,
+    layout::Rect,
+    widgets::{Block, TableState},
+    Frame,
+};
 
 use crate::{
     app::{
         event::{does_point_intersect_rect, EventResult, MultiKey, MultiKeyResult},
         query::*,
     },
+    canvas::{DisplayableData, Painter},
     data_harvester::processes::{self, ProcessSorting},
 };
 use ProcessSorting::*;
@@ -590,6 +596,7 @@ impl ProcWidgetState {
     }
 }
 
+#[derive(Default)]
 pub struct ProcState {
     pub widget_states: HashMap<u64, ProcWidgetState>,
     pub force_update: Option<u64>,
@@ -814,5 +821,23 @@ impl Component for ProcessManager {
 impl Widget for ProcessManager {
     fn get_pretty_name(&self) -> &'static str {
         "Processes"
+    }
+
+    fn draw<B: Backend>(
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, block: Block<'_>,
+        data: &DisplayableData,
+    ) {
+        let draw_area = block.inner(area);
+        let (process_table, widths, mut tui_state) = self.process_table.create_draw_table(
+            painter,
+            &vec![], // TODO: Fix this
+            draw_area,
+        );
+
+        f.render_stateful_widget(
+            process_table.block(block).widths(&widths),
+            area,
+            &mut tui_state,
+        );
     }
 }

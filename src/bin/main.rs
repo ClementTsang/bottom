@@ -38,17 +38,11 @@ fn main() -> Result<()> {
     let mut config: Config = create_or_get_config(&config_path)
         .context("Unable to properly parse or create the config file.")?;
 
-    // Get widget layout separately
-    let (widget_layout, _default_widget_id, _default_widget_type_option) =
-        get_widget_layout(&matches, &config)
-            .context("Found an issue while trying to build the widget layout.")?;
-
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(&matches, &mut config)?;
 
     // Create painter and set colours.
     let mut painter = canvas::Painter::init(
-        widget_layout,
         app.app_config_fields.table_gap,
         app.app_config_fields.use_basic_mode,
         &config,

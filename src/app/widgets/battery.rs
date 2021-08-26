@@ -10,6 +10,7 @@ pub struct BatteryWidgetState {
     pub tab_click_locs: Option<Vec<((u16, u16), (u16, u16))>>,
 }
 
+#[derive(Default)]
 pub struct BatteryState {
     pub widget_states: HashMap<u64, BatteryWidgetState>,
 }
@@ -30,16 +31,28 @@ impl BatteryState {
 
 // TODO: Implement battery widget.
 /// A table displaying battery information on a per-battery basis.
+#[derive(Default)]
 pub struct BatteryTable {
     bounds: Rect,
+    selected_index: usize,
+    batteries: Vec<String>,
 }
 
 impl BatteryTable {
     /// Creates a new [`BatteryTable`].
-    pub fn new() -> Self {
+    pub fn new(batteries: Vec<String>) -> Self {
         Self {
-            bounds: Rect::default(),
+            batteries,
+            ..Default::default()
         }
+    }
+
+    pub fn index(&self) -> usize {
+        self.selected_index
+    }
+
+    pub fn batteries(&self) -> &[String] {
+        &self.batteries
     }
 }
 

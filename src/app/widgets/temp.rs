@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 
 use crossterm::event::{KeyEvent, MouseEvent};
-use tui::layout::Rect;
+use tui::{backend::Backend, layout::Rect, widgets::Block, Frame};
 
-use crate::app::event::EventResult;
+use crate::{
+    app::{event::EventResult, text_table::Column},
+    canvas::{DisplayableData, Painter},
+};
 
 use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, Widget};
 
@@ -21,6 +24,7 @@ impl TempWidgetState {
     }
 }
 
+#[derive(Default)]
 pub struct TempState {
     pub widget_states: HashMap<u64, TempWidgetState>,
 }
@@ -45,9 +49,14 @@ pub struct TempTable {
     bounds: Rect,
 }
 
-impl TempTable {
-    /// Creates a new [`TempTable`].
-    pub fn new(table: TextTable) -> Self {
+impl Default for TempTable {
+    fn default() -> Self {
+        let table = TextTable::new(vec![
+            Column::new_flex("Sensor", None, false, 1.0),
+            Column::new_hard("Temp", None, false, Some(4)),
+        ])
+        .left_to_right(false);
+
         Self {
             table,
             bounds: Rect::default(),
@@ -76,5 +85,17 @@ impl Component for TempTable {
 impl Widget for TempTable {
     fn get_pretty_name(&self) -> &'static str {
         "Temperature"
+    }
+
+    fn draw<B: Backend>(
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, block: Block<'_>,
+        data: &DisplayableData,
+    ) {
+        let draw_area = block.inner(area);
+        let (table, widths, mut tui_state) =
+            self.table
+                .create_draw_table(painter, &data.temp_sensor_data, draw_area);
+
+        f.render_stateful_widget(table.block(block).widths(&widths), area, &mut tui_state);
     }
 }

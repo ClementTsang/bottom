@@ -33,6 +33,8 @@ impl NetWidgetState {
         }
     }
 }
+
+#[derive(Default)]
 pub struct NetState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, NetWidgetState>,
@@ -65,7 +67,10 @@ pub struct NetGraphCache {
 
 enum NetGraphCacheState {
     Uncached,
-    Cached(NetGraphCache),
+    Cached {
+        cached_area: Rect,
+        data: NetGraphCache,
+    },
 }
 
 /// A widget denoting network usage via a graph. This version is self-contained within a single [`TimeGraph`];
@@ -90,36 +95,53 @@ impl NetGraph {
     }
 
     /// Updates the associated cache on a [`NetGraph`].
-    pub fn set_cache(&mut self, max_range: f64, labels: Vec<String>, time_start: f64) {
-        self.draw_cache = NetGraphCacheState::Cached(NetGraphCache {
-            max_range,
-            labels,
-            time_start,
-        })
+    pub fn set_cache(&mut self, area: Rect, max_range: f64, labels: Vec<String>, time_start: f64) {
+        self.draw_cache = NetGraphCacheState::Cached {
+            cached_area: area,
+            data: NetGraphCache {
+                max_range,
+                labels,
+                time_start,
+            },
+        }
     }
 
     /// Returns whether the [`NetGraph`] contains a cache from drawing.
-    pub fn is_cached(&self) -> bool {
-        match self.draw_cache {
+    pub fn is_cache_valid(&self, area: Rect) -> bool {
+        match &self.draw_cache {
             NetGraphCacheState::Uncached => false,
-            NetGraphCacheState::Cached(_) => true,
+            NetGraphCacheState::Cached {
+                cached_area,
+                data: _,
+            } => *cached_area == area,
         }
     }
 
-    /// Returns a reference to the [`NetGraphCache`] tied to the [`NetGraph`] if there is one.
+    /// Returns a reference to the [`NetGraphCache`] tied to the [`NetGraph`].
     pub fn get_cache(&self) -> Option<&NetGraphCache> {
         match &self.draw_cache {
             NetGraphCacheState::Uncached => None,
-            NetGraphCacheState::Cached(cache) => Some(cache),
+            NetGraphCacheState::Cached {
+                cached_area: _,
+                data,
+            } => Some(data),
         }
     }
 
-    /// Returns an owned copy of the [`NetGraphCache`] tied to the [`NetGraph`] if there is one.
+    /// Returns the [`NetGraphCache`] tied to the [`NetGraph`].
     pub fn get_cache_owned(&self) -> Option<NetGraphCache> {
         match &self.draw_cache {
             NetGraphCacheState::Uncached => None,
-            NetGraphCacheState::Cached(cache) => Some(cache.clone()),
+            NetGraphCacheState::Cached {
+                cached_area: _,
+                data,
+            } => Some(data.clone()),
         }
+    }
+
+    /// A wrapper function around checking the cache validity and setting/getting the cache.
+    pub fn check_get_cache(&mut self) -> NetGraphCache {
+        todo!()
     }
 }
 

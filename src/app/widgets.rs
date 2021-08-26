@@ -2,13 +2,19 @@ use std::time::Instant;
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use enum_dispatch::enum_dispatch;
-use tui::{layout::Rect, widgets::TableState};
+use tui::{
+    backend::Backend,
+    layout::Rect,
+    widgets::{Block, TableState},
+    Frame,
+};
 
 use crate::{
     app::{
         event::{EventResult, SelectionAction},
         layout_manager::BottomWidgetType,
     },
+    canvas::{DisplayableData, Painter},
     constants,
 };
 
@@ -64,6 +70,7 @@ pub trait Component {
 
 /// A trait for actual fully-fledged widgets to be displayed in bottom.
 #[enum_dispatch]
+#[allow(unused_variables)]
 pub trait Widget {
     /// Updates a [`Widget`] given some data.  Defaults to doing nothing.
     fn update(&mut self) {}
@@ -92,10 +99,21 @@ pub trait Widget {
         SelectionAction::NotHandled
     }
 
+    /// Returns a [`Widget`]'s "pretty" display name.
     fn get_pretty_name(&self) -> &'static str;
+
+    /// Draws a [`Widget`]. Defaults to doing nothing.
+    fn draw<B: Backend>(
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, block: Block<'_>,
+        data: &DisplayableData,
+    ) {
+        // TODO: Remove the default implementation in the future!
+        // TODO: Do another pass on ALL of the draw code - currently it's just glue, it should eventually be done properly!
+    }
 }
 
 /// The "main" widgets that are used by bottom to display information!
+#[allow(clippy::large_enum_variant)]
 #[enum_dispatch(Component, Widget)]
 pub enum TmpBottomWidget {
     MemGraph,

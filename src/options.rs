@@ -242,16 +242,14 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
         todo!()
     } else if let Some(row) = &config.row {
         create_layout_tree(row, process_defaults, &app_config_fields)?
+    } else if get_use_battery(matches, config) {
+        let rows = toml::from_str::<Config>(DEFAULT_BATTERY_LAYOUT)?
+            .row
+            .unwrap();
+        create_layout_tree(&rows, process_defaults, &app_config_fields)?
     } else {
-        if get_use_battery(matches, config) {
-            let rows = toml::from_str::<Config>(DEFAULT_BATTERY_LAYOUT)?
-                .row
-                .unwrap();
-            create_layout_tree(&rows, process_defaults, &app_config_fields)?
-        } else {
-            let rows = toml::from_str::<Config>(DEFAULT_LAYOUT)?.row.unwrap();
-            create_layout_tree(&rows, process_defaults, &app_config_fields)?
-        }
+        let rows = toml::from_str::<Config>(DEFAULT_LAYOUT)?.row.unwrap();
+        create_layout_tree(&rows, process_defaults, &app_config_fields)?
     };
 
     let disk_filter =

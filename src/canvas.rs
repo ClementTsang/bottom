@@ -1,11 +1,12 @@
-use itertools::izip;
 use std::{collections::HashMap, str::FromStr};
 
+use fxhash::FxHashMap;
+use indextree::{Arena, NodeId};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Span, Spans},
-    widgets::Paragraph,
+    widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
 };
 
@@ -13,14 +14,9 @@ use tui::{
 
 use canvas_colours::*;
 use dialogs::*;
-use widgets::*;
 
 use crate::{
-    app::{
-        self,
-        layout_manager::{BottomColRow, BottomLayout, BottomWidgetType},
-        AppState,
-    },
+    app::{self, layout_manager::LayoutNode, widgets::Widget, TmpBottomWidget},
     constants::*,
     data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
     options::Config,
@@ -31,8 +27,8 @@ use crate::{
 
 mod canvas_colours;
 mod dialogs;
+pub mod drawing; // TODO: Remove pub access at some point!
 mod drawing_utils;
-mod widgets;
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -92,102 +88,23 @@ impl FromStr for ColourScheme {
     }
 }
 
-/// Handles the canvas' state.  TODO: [OPT] implement this.
+/// Handles the canvas' state.
 pub struct Painter {
     pub colours: CanvasColours,
     styled_help_text: Vec<Spans<'static>>,
     is_mac_os: bool, // FIXME: This feels out of place...
-    row_constraints: Vec<Constraint>,
-    col_constraints: Vec<Vec<Constraint>>,
-    col_row_constraints: Vec<Vec<Vec<Constraint>>>,
-    layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
-    derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
-    widget_layout: BottomLayout,
+
     table_height_offset: u16,
 }
 
 impl Painter {
     pub fn init(
-        widget_layout: BottomLayout, table_gap: u16, is_basic_mode: bool, config: &Config,
-        colour_scheme: ColourScheme,
+        table_gap: u16, is_basic_mode: bool, config: &Config, colour_scheme: ColourScheme,
     ) -> anyhow::Result<Self> {
-        // Now for modularity; we have to also initialize the base layouts!
-        // We want to do this ONCE and reuse; after this we can just construct
-        // based on the console size.
-
-        let mut row_constraints = Vec::new();
-        let mut col_constraints = Vec::new();
-        let mut col_row_constraints = Vec::new();
-        let mut layout_constraints = Vec::new();
-
-        widget_layout.rows.iter().for_each(|row| {
-            if row.canvas_handle_height {
-                row_constraints.push(Constraint::Length(0));
-            } else {
-                row_constraints.push(Constraint::Ratio(
-                    row.row_height_ratio,
-                    widget_layout.total_row_height_ratio,
-                ));
-            }
-
-            let mut new_col_constraints = Vec::new();
-            let mut new_widget_constraints = Vec::new();
-            let mut new_col_row_constraints = Vec::new();
-            row.children.iter().for_each(|col| {
-                if col.canvas_handle_width {
-                    new_col_constraints.push(Constraint::Length(0));
-                } else {
-                    new_col_constraints
-                        .push(Constraint::Ratio(col.col_width_ratio, row.total_col_ratio));
-                }
-
-                let mut new_new_col_row_constraints = Vec::new();
-                let mut new_new_widget_constraints = Vec::new();
-                col.children.iter().for_each(|col_row| {
-                    if col_row.canvas_handle_height {
-                        new_new_col_row_constraints.push(Constraint::Length(0));
-                    } else if col_row.flex_grow {
-                        new_new_col_row_constraints.push(Constraint::Min(0));
-                    } else {
-                        new_new_col_row_constraints.push(Constraint::Ratio(
-                            col_row.col_row_height_ratio,
-                            col.total_col_row_ratio,
-                        ));
-                    }
-
-                    let mut new_new_new_widget_constraints = Vec::new();
-                    col_row.children.iter().for_each(|widget| {
-                        if widget.canvas_handle_width {
-                            new_new_new_widget_constraints.push(Constraint::Length(0));
-                        } else if widget.flex_grow {
-                            new_new_new_widget_constraints.push(Constraint::Min(0));
-                        } else {
-                            new_new_new_widget_constraints.push(Constraint::Ratio(
-                                widget.width_ratio,
-                                col_row.total_widget_ratio,
-                            ));
-                        }
-                    });
-                    new_new_widget_constraints.push(new_new_new_widget_constraints);
-                });
-                new_col_row_constraints.push(new_new_col_row_constraints);
-                new_widget_constraints.push(new_new_widget_constraints);
-            });
-            col_row_constraints.push(new_col_row_constraints);
-            layout_constraints.push(new_widget_constraints);
-            col_constraints.push(new_col_constraints);
-        });
-
         let mut painter = Painter {
             colours: CanvasColours::default(),
             styled_help_text: Vec::default(),
             is_mac_os: cfg!(target_os = "macos"),
-            row_constraints,
-            col_constraints,
-            col_row_constraints,
-            layout_constraints,
-            widget_layout,
-            derived_widget_draw_locs: Vec::default(),
             table_height_offset: if is_basic_mode { 2 } else { 4 } + table_gap,
         };
 
@@ -295,10 +212,8 @@ impl Painter {
     pub fn draw_data<B: Backend>(
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::AppState,
     ) -> error::Result<()> {
-        use BottomWidgetType::*;
-
         terminal.draw(|mut f| {
-            let (terminal_size, frozen_draw_loc) = if app_state.is_frozen {
+            let (draw_area, frozen_draw_loc) = if app_state.is_frozen {
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])
                     .split(f.size());
@@ -306,8 +221,8 @@ impl Painter {
             } else {
                 (f.size(), None)
             };
-            let terminal_height = terminal_size.height;
-            let terminal_width = terminal_size.width;
+            let terminal_height = draw_area.height;
+            let terminal_width = draw_area.width;
 
             if app_state.help_dialog_state.is_showing_help {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
@@ -319,7 +234,7 @@ impl Painter {
                         Constraint::Length(gen_help_len),
                         Constraint::Length(border_len),
                     ])
-                    .split(terminal_size);
+                    .split(draw_area);
 
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
@@ -402,7 +317,7 @@ impl Painter {
                         Constraint::Length(text_height),
                         Constraint::Length(vertical_bordering),
                     ])
-                    .split(terminal_size);
+                    .split(draw_area);
 
                 let horizontal_bordering = terminal_width.saturating_sub(text_width) / 2;
                 let middle_dialog_chunk = Layout::default()
@@ -422,257 +337,98 @@ impl Painter {
                     self.draw_frozen_indicator(&mut f, frozen_draw_loc);
                 }
 
-                let rect = Layout::default()
-                    .margin(0)
-                    .constraints([Constraint::Percentage(100)])
-                    .split(terminal_size);
-                match &app_state.current_widget.widget_type {
-                    Cpu => draw_cpu(
-                        self,
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                    ),
-                    CpuLegend => draw_cpu(
-                        self,
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id - 1,
-                    ),
-                    Mem | BasicMem => draw_memory_graph(
-                        self,
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                    ),
-                    Disk => draw_disk_table(
-                        self,
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id,
-                    ),
-                    Temp => draw_temp_table(
-                        self,
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id,
-                    ),
-                    Net => draw_network_graph(
-                        self,
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                        false,
-                    ),
-                    Proc | ProcSearch | ProcSort => {
-                        let widget_id = app_state.current_widget.widget_id
-                            - match &app_state.current_widget.widget_type {
-                                ProcSearch => 1,
-                                ProcSort => 2,
-                                _ => 0,
-                            };
-
-                        draw_process_features(self, &mut f, app_state, rect[0], true, widget_id);
-                    }
-                    Battery => draw_battery_display(
-                        self,
-                        &mut f,
-                        app_state,
-                        rect[0],
-                        true,
-                        app_state.current_widget.widget_id,
-                    ),
-                    _ => {}
-                }
-            } else if app_state.app_config_fields.use_basic_mode {
-                // Basic mode.  This basically removes all graphs but otherwise
-                // the same info.
-                if let Some(frozen_draw_loc) = frozen_draw_loc {
-                    self.draw_frozen_indicator(&mut f, frozen_draw_loc);
-                }
-
-                let actual_cpu_data_len = app_state.canvas_data.cpu_data.len().saturating_sub(1);
-
-                // This fixes #397, apparently if the height is 1, it can't render the CPU bars...
-                let cpu_height = {
-                    let c = (actual_cpu_data_len / 4) as u16
-                        + (if actual_cpu_data_len % 4 == 0 { 0 } else { 1 });
-
-                    if c <= 1 {
-                        1
-                    } else {
-                        c
-                    }
-                };
-
-                let vertical_chunks = Layout::default()
-                    .direction(Direction::Vertical)
-                    .margin(0)
-                    .constraints([
-                        Constraint::Length(cpu_height),
-                        Constraint::Length(2),
-                        Constraint::Length(2),
-                        Constraint::Min(5),
-                    ])
-                    .split(terminal_size);
-
-                let middle_chunks = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-                    .split(vertical_chunks[1]);
-                draw_basic_cpu(self, &mut f, app_state, vertical_chunks[0], 1);
-                draw_basic_memory(self, &mut f, app_state, middle_chunks[0], 2);
-                draw_basic_network(self, &mut f, app_state, middle_chunks[1], 3);
-
-                let mut later_widget_id: Option<u64> = None;
-                if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
-                    let widget_id = basic_table_widget_state.currently_displayed_widget_id;
-                    later_widget_id = Some(widget_id);
-                    match basic_table_widget_state.currently_displayed_widget_type {
-                        Disk => draw_disk_table(
-                            self,
-                            &mut f,
-                            app_state,
-                            vertical_chunks[3],
-                            false,
-                            widget_id,
-                        ),
-                        Proc | ProcSort => {
-                            let wid = widget_id
-                                - match basic_table_widget_state.currently_displayed_widget_type {
-                                    ProcSearch => 1,
-                                    ProcSort => 2,
-                                    _ => 0,
-                                };
-                            draw_process_features(
-                                self,
-                                &mut f,
-                                app_state,
-                                vertical_chunks[3],
-                                false,
-                                wid,
-                            );
-                        }
-                        Temp => draw_temp_table(
-                            self,
-                            &mut f,
-                            app_state,
-                            vertical_chunks[3],
-                            false,
-                            widget_id,
-                        ),
-                        Battery => draw_battery_display(
-                            self,
-                            &mut f,
-                            app_state,
-                            vertical_chunks[3],
-                            false,
-                            widget_id,
-                        ),
-                        _ => {}
-                    }
-                }
-
-                if let Some(widget_id) = later_widget_id {
-                    draw_basic_table_arrows(self, &mut f, app_state, vertical_chunks[2], widget_id);
+                let canvas_data = &app_state.canvas_data;
+                if let Some(current_widget) = app_state
+                    .widget_lookup_map
+                    .get_mut(&app_state.selected_widget)
+                {
+                    let block = Block::default()
+                        .border_style(self.colours.highlighted_border_style)
+                        .borders(Borders::ALL);
+                    current_widget.draw(self, f, draw_area, block, canvas_data);
                 }
             } else {
-                // Draws using the passed in (or default) layout.
+                /// A simple traversal through the `arena`.
+                fn traverse_and_draw_tree<B: Backend>(
+                    node: NodeId, arena: &Arena<LayoutNode>, area: Rect, f: &mut Frame<'_, B>,
+                    lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, painter: &Painter,
+                    canvas_data: &DisplayableData, selected_id: NodeId,
+                ) {
+                    if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
+                        match layout_node {
+                            LayoutNode::Row(row) => {
+                                let split_area = Layout::default()
+                                    .direction(Direction::Horizontal)
+                                    .constraints(row.constraints.clone())
+                                    .split(area);
+
+                                for (child, child_area) in node.children(arena).zip(split_area) {
+                                    traverse_and_draw_tree(
+                                        child,
+                                        arena,
+                                        child_area,
+                                        f,
+                                        lookup_map,
+                                        painter,
+                                        canvas_data,
+                                        selected_id,
+                                    );
+                                }
+                            }
+                            LayoutNode::Col(col) => {
+                                let split_area = Layout::default()
+                                    .direction(Direction::Vertical)
+                                    .constraints(col.constraints.clone())
+                                    .split(area);
+
+                                for (child, child_area) in node.children(arena).zip(split_area) {
+                                    traverse_and_draw_tree(
+                                        child,
+                                        arena,
+                                        child_area,
+                                        f,
+                                        lookup_map,
+                                        painter,
+                                        canvas_data,
+                                        selected_id,
+                                    );
+                                }
+                            }
+                            LayoutNode::Widget => {
+                                if let Some(widget) = lookup_map.get_mut(&node) {
+                                    let block = Block::default()
+                                        .border_style(if selected_id == node {
+                                            painter.colours.highlighted_border_style
+                                        } else {
+                                            painter.colours.border_style
+                                        })
+                                        .borders(Borders::ALL);
+                                    widget.draw(painter, f, area, block, canvas_data);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if let Some(frozen_draw_loc) = frozen_draw_loc {
                     self.draw_frozen_indicator(&mut f, frozen_draw_loc);
                 }
 
-                if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
-                    let draw_locs = Layout::default()
-                        .margin(0)
-                        .constraints(self.row_constraints.as_ref())
-                        .direction(Direction::Vertical)
-                        .split(terminal_size);
-
-                    self.derived_widget_draw_locs = izip!(
-                        draw_locs,
-                        &self.col_constraints,
-                        &self.col_row_constraints,
-                        &self.layout_constraints,
-                        &self.widget_layout.rows
-                    )
-                    .map(
-                        |(
-                            draw_loc,
-                            col_constraint,
-                            col_row_constraint,
-                            row_constraint_vec,
-                            cols,
-                        )| {
-                            izip!(
-                                Layout::default()
-                                    .constraints(col_constraint.as_ref())
-                                    .direction(Direction::Horizontal)
-                                    .split(draw_loc)
-                                    .into_iter(),
-                                col_row_constraint,
-                                row_constraint_vec,
-                                &cols.children
-                            )
-                            .map(|(split_loc, constraint, col_constraint_vec, col_rows)| {
-                                izip!(
-                                    Layout::default()
-                                        .constraints(constraint.as_ref())
-                                        .direction(Direction::Vertical)
-                                        .split(split_loc)
-                                        .into_iter(),
-                                    col_constraint_vec,
-                                    &col_rows.children
-                                )
-                                .map(|(draw_loc, col_row_constraint_vec, widgets)| {
-                                    // Note that col_row_constraint_vec CONTAINS the widget constraints
-                                    let widget_draw_locs = Layout::default()
-                                        .constraints(col_row_constraint_vec.as_ref())
-                                        .direction(Direction::Horizontal)
-                                        .split(draw_loc);
-
-                                    // Side effect, draw here.
-                                    self.draw_widgets_with_constraints(
-                                        &mut f,
-                                        app_state,
-                                        widgets,
-                                        &widget_draw_locs,
-                                    );
-
-                                    widget_draw_locs
-                                })
-                                .collect()
-                            })
-                            .collect()
-                        },
-                    )
-                    .collect();
-                } else {
-                    self.widget_layout
-                        .rows
-                        .iter()
-                        .map(|row| &row.children)
-                        .flatten()
-                        .map(|col| &col.children)
-                        .flatten()
-                        .zip(self.derived_widget_draw_locs.iter().flatten().flatten())
-                        .for_each(|(widgets, widget_draw_locs)| {
-                            self.draw_widgets_with_constraints(
-                                &mut f,
-                                app_state,
-                                widgets,
-                                widget_draw_locs,
-                            );
-                        });
-                }
+                let root = &app_state.layout_tree_root;
+                let arena = &app_state.layout_tree;
+                let canvas_data = &app_state.canvas_data;
+                let selected_id = app_state.selected_widget;
+                let lookup_map = &mut app_state.widget_lookup_map;
+                traverse_and_draw_tree(
+                    *root,
+                    arena,
+                    draw_area,
+                    f,
+                    lookup_map,
+                    self,
+                    canvas_data,
+                    selected_id,
+                );
             }
         })?;
 
@@ -680,43 +436,5 @@ impl Painter {
         app_state.is_determining_widget_boundary = false;
 
         Ok(())
-    }
-
-    fn draw_widgets_with_constraints<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut AppState, widgets: &BottomColRow,
-        widget_draw_locs: &[Rect],
-    ) {
-        use BottomWidgetType::*;
-        for (widget, widget_draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
-            match &widget.widget_type {
-                Empty => {}
-                Cpu => draw_cpu(self, f, app_state, *widget_draw_loc, widget.widget_id),
-                Mem => draw_memory_graph(self, f, app_state, *widget_draw_loc, widget.widget_id),
-                Net => draw_network(self, f, app_state, *widget_draw_loc, widget.widget_id),
-                Temp => {
-                    draw_temp_table(self, f, app_state, *widget_draw_loc, true, widget.widget_id)
-                }
-                Disk => {
-                    draw_disk_table(self, f, app_state, *widget_draw_loc, true, widget.widget_id)
-                }
-                Proc => draw_process_features(
-                    self,
-                    f,
-                    app_state,
-                    *widget_draw_loc,
-                    true,
-                    widget.widget_id,
-                ),
-                Battery => draw_battery_display(
-                    self,
-                    f,
-                    app_state,
-                    *widget_draw_loc,
-                    true,
-                    widget.widget_id,
-                ),
-                _ => {}
-            }
-        }
     }
 }

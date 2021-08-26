@@ -1,5 +1,7 @@
 use crate::{
-    app::{DiskTable, MemGraph, NetGraph, OldNetGraph, ProcessManager, TempTable},
+    app::{
+        text_table::Column, DiskTable, MemGraph, NetGraph, OldNetGraph, ProcessManager, TempTable,
+    },
     error::{BottomError, Result},
     options::layout_options::{Row, RowChildren},
 };
@@ -12,7 +14,7 @@ use typed_builder::*;
 use crate::app::widgets::Widget;
 use crate::constants::DEFAULT_WIDGET_ID;
 
-use super::{event::SelectionAction, CpuGraph, TextTable, TimeGraph, TmpBottomWidget};
+use super::{event::SelectionAction, CpuGraph, TextTable, TimeGraph, TmpBottomWidget, UsedWidgets};
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
@@ -985,49 +987,17 @@ Supported widget names:
 // --- New stuff ---
 
 /// Represents a row in the layout tree.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Default)]
 pub struct RowLayout {
     last_selected_index: usize,
-    pub constraint: Constraint,
-}
-
-impl Default for RowLayout {
-    fn default() -> Self {
-        Self {
-            last_selected_index: 0,
-            constraint: Constraint::Min(0),
-        }
-    }
+    pub constraints: Vec<Constraint>,
 }
 
 /// Represents a column in the layout tree.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Default)]
 pub struct ColLayout {
     last_selected_index: usize,
-    pub constraint: Constraint,
-}
-
-impl Default for ColLayout {
-    fn default() -> Self {
-        Self {
-            last_selected_index: 0,
-            constraint: Constraint::Min(0),
-        }
-    }
-}
-
-/// Represents a widget in the layout tree.
-#[derive(PartialEq, Eq)]
-pub struct WidgetLayout {
-    pub constraint: Constraint,
-}
-
-impl Default for WidgetLayout {
-    fn default() -> Self {
-        Self {
-            constraint: Constraint::Min(0),
-        }
-    }
+    pub constraints: Vec<Constraint>,
 }
 
 /// A [`LayoutNode`] represents a single node in the overall widget hierarchy. Each node is one of:
@@ -1038,7 +1008,21 @@ impl Default for WidgetLayout {
 pub enum LayoutNode {
     Row(RowLayout),
     Col(ColLayout),
-    Widget(WidgetLayout),
+    Widget,
+}
+
+impl LayoutNode {
+    pub fn set_constraints(&mut self, constraints: Vec<Constraint>) {
+        match self {
+            LayoutNode::Row(row) => {
+                row.constraints = constraints;
+            }
+            LayoutNode::Col(col) => {
+                col.constraints = constraints;
+            }
+            LayoutNode::Widget => {}
+        }
+    }
 }
 
 /// Relative movement direction from the currently selected widget.
@@ -1054,7 +1038,8 @@ pub struct LayoutCreationOutput {
     pub layout_tree: Arena<LayoutNode>,
     pub root: NodeId,
     pub widget_lookup_map: FxHashMap<NodeId, TmpBottomWidget>,
-    pub selected: Option<NodeId>,
+    pub selected: NodeId,
+    pub used_widgets: UsedWidgets,
 }
 
 /// Creates a new [`Arena<LayoutNode>`] from the given config and returns it, along with the [`NodeId`] representing
@@ -1066,14 +1051,17 @@ pub fn create_layout_tree(
     app_config_fields: &super::AppConfigFields,
 ) -> Result<LayoutCreationOutput> {
     fn add_widget_to_map(
-        widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, widget_type: &str,
+        widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, widget_type: BottomWidgetType,
         widget_id: NodeId, process_defaults: &crate::options::ProcessDefaults,
         app_config_fields: &super::AppConfigFields,
     ) -> Result<()> {
-        match widget_type.parse::<BottomWidgetType>()? {
+        match widget_type {
             BottomWidgetType::Cpu => {
                 let graph = TimeGraph::from_config(app_config_fields);
-                let legend = TextTable::new(vec![("CPU", None, false), ("Use%", None, false)]);
+                let legend = TextTable::new(vec![
+                    Column::new_flex("CPU", None, false, 0.5),
+                    Column::new_flex("Use%", None, false, 0.5),
+                ]);
                 let legend_position = super::CpuGraphLegendPosition::Right;
 
                 widget_lookup_map.insert(
@@ -1100,20 +1088,10 @@ pub fn create_layout_tree(
                 );
             }
             BottomWidgetType::Temp => {
-                let table = TextTable::new(vec![("Sensor", None, false), ("Temp", None, false)]);
-                widget_lookup_map.insert(widget_id, TempTable::new(table).into());
+                widget_lookup_map.insert(widget_id, TempTable::default().into());
             }
             BottomWidgetType::Disk => {
-                let table = TextTable::new(vec![
-                    ("Disk", None, false),
-                    ("Mount", None, false),
-                    ("Used", None, false),
-                    ("Free", None, false),
-                    ("Total", None, false),
-                    ("R/s", None, false),
-                    ("W/s", None, false),
-                ]);
-                widget_lookup_map.insert(widget_id, DiskTable::new(table).into());
+                widget_lookup_map.insert(widget_id, DiskTable::default().into());
             }
             BottomWidgetType::Battery => {}
             _ => {}
@@ -1125,19 +1103,20 @@ pub fn create_layout_tree(
     let mut layout_tree = Arena::new();
     let root_id = layout_tree.new_node(LayoutNode::Col(ColLayout::default()));
     let mut widget_lookup_map = FxHashMap::default();
-    let mut selected = None;
+    let mut first_selected = None;
+    let mut first_widget_seen = None; // Backup
+    let mut used_widgets = UsedWidgets::default();
 
     let row_sum: u32 = rows.iter().map(|row| row.ratio.unwrap_or(1)).sum();
+    let mut root_constraints = Vec::with_capacity(rows.len());
     for row in rows {
-        let ratio = row.ratio.unwrap_or(1);
-        let layout_node = LayoutNode::Row(RowLayout {
-            constraint: Constraint::Ratio(ratio, row_sum),
-            ..Default::default()
-        });
+        root_constraints.push(Constraint::Ratio(row.ratio.unwrap_or(1), row_sum));
+        let layout_node = LayoutNode::Row(RowLayout::default());
         let row_id = layout_tree.new_node(layout_node);
         root_id.append(row_id, &mut layout_tree);
 
         if let Some(cols) = &row.child {
+            let mut row_constraints = Vec::with_capacity(cols.len());
             let col_sum: u32 = cols
                 .iter()
                 .map(|col| match col {
@@ -1149,18 +1128,24 @@ pub fn create_layout_tree(
             for col in cols {
                 match col {
                     RowChildren::Widget(widget) => {
-                        let widget_node = LayoutNode::Widget(WidgetLayout {
-                            constraint: Constraint::Ratio(widget.ratio.unwrap_or(1), col_sum),
-                        });
-                        let widget_id = layout_tree.new_node(widget_node);
+                        row_constraints.push(Constraint::Ratio(widget.ratio.unwrap_or(1), col_sum));
+                        let widget_id = layout_tree.new_node(LayoutNode::Widget);
                         row_id.append(widget_id, &mut layout_tree);
 
                         if let Some(true) = widget.default {
-                            selected = Some(widget_id);
+                            first_selected = Some(widget_id);
                         }
+
+                        if first_widget_seen.is_none() {
+                            first_widget_seen = Some(widget_id);
+                        }
+
+                        let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
+                        used_widgets.add(&widget_type);
+
                         add_widget_to_map(
                             &mut widget_lookup_map,
-                            &widget.widget_type,
+                            widget_type,
                             widget_id,
                             &process_defaults,
                             app_config_fields,
@@ -1170,38 +1155,65 @@ pub fn create_layout_tree(
                         ratio,
                         child: children,
                     } => {
-                        let col_node = LayoutNode::Col(ColLayout {
-                            constraint: Constraint::Ratio(ratio.unwrap_or(1), col_sum),
-                            ..Default::default()
-                        });
+                        row_constraints.push(Constraint::Ratio(ratio.unwrap_or(1), col_sum));
+                        let col_node = LayoutNode::Col(ColLayout::default());
                         let col_id = layout_tree.new_node(col_node);
                         row_id.append(col_id, &mut layout_tree);
 
                         let child_sum: u32 =
                             children.iter().map(|child| child.ratio.unwrap_or(1)).sum();
 
+                        let mut col_constraints = Vec::with_capacity(children.len());
                         for child in children {
-                            let widget_node = LayoutNode::Widget(WidgetLayout {
-                                constraint: Constraint::Ratio(child.ratio.unwrap_or(1), child_sum),
-                            });
-                            let widget_id = layout_tree.new_node(widget_node);
+                            col_constraints
+                                .push(Constraint::Ratio(child.ratio.unwrap_or(1), child_sum));
+                            let widget_id = layout_tree.new_node(LayoutNode::Widget);
                             col_id.append(widget_id, &mut layout_tree);
 
                             if let Some(true) = child.default {
-                                selected = Some(widget_id);
+                                first_selected = Some(widget_id);
                             }
+
+                            if first_widget_seen.is_none() {
+                                first_widget_seen = Some(widget_id);
+                            }
+
+                            let widget_type = child.widget_type.parse::<BottomWidgetType>()?;
+                            used_widgets.add(&widget_type);
+
                             add_widget_to_map(
                                 &mut widget_lookup_map,
-                                &child.widget_type,
+                                widget_type,
                                 widget_id,
                                 &process_defaults,
                                 app_config_fields,
                             )?;
                         }
+                        layout_tree[col_id]
+                            .get_mut()
+                            .set_constraints(col_constraints);
                     }
                 }
             }
+            layout_tree[row_id]
+                .get_mut()
+                .set_constraints(row_constraints);
         }
+    }
+    layout_tree[root_id]
+        .get_mut()
+        .set_constraints(root_constraints);
+
+    let selected: NodeId;
+
+    if let Some(first_selected) = first_selected {
+        selected = first_selected;
+    } else if let Some(first_widget_seen) = first_widget_seen {
+        selected = first_widget_seen;
+    } else {
+        return Err(BottomError::ConfigError(
+            "A layout cannot contain zero widgets!".to_string(),
+        ));
     }
 
     Ok(LayoutCreationOutput {
@@ -1209,6 +1221,7 @@ pub fn create_layout_tree(
         root: root_id,
         widget_lookup_map,
         selected,
+        used_widgets,
     })
 }
 
@@ -1252,7 +1265,7 @@ pub fn move_widget_selection(
                     .and_then(|(parent_id, parent_node)| match parent_node.get() {
                         LayoutNode::Row(_) => Some((parent_id, current_id)),
                         LayoutNode::Col(_) => find_first_row(layout_tree, parent_id),
-                        LayoutNode::Widget(_) => None,
+                        LayoutNode::Widget => None,
                     })
             }
 
@@ -1273,7 +1286,7 @@ pub fn move_widget_selection(
                     .and_then(|(parent_id, parent_node)| match parent_node.get() {
                         LayoutNode::Row(_) => find_first_col(layout_tree, parent_id),
                         LayoutNode::Col(_) => Some((parent_id, current_id)),
-                        LayoutNode::Widget(_) => None,
+                        LayoutNode::Widget => None,
                     })
             }
 
@@ -1283,11 +1296,11 @@ pub fn move_widget_selection(
                     match current_node.get() {
                         LayoutNode::Row(RowLayout {
                             last_selected_index,
-                            constraint: _,
+                            constraints: _,
                         })
                         | LayoutNode::Col(ColLayout {
                             last_selected_index,
-                            constraint: _,
+                            constraints: _,
                         }) => {
                             if let Some(next_child) =
                                 current_id.children(layout_tree).nth(*last_selected_index)
@@ -1297,7 +1310,7 @@ pub fn move_widget_selection(
                                 current_id
                             }
                         }
-                        LayoutNode::Widget(_) => {
+                        LayoutNode::Widget => {
                             // Halt!
                             current_id
                         }

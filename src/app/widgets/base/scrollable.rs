@@ -131,12 +131,16 @@ impl Scrollable {
         self.num_items = num_items;
 
         if num_items <= self.current_index {
-            self.current_index = num_items - 1;
+            self.current_index = num_items.saturating_sub(1);
         }
 
         if num_items <= self.previous_index {
-            self.previous_index = num_items - 1;
+            self.previous_index = num_items.saturating_sub(1);
         }
+    }
+
+    pub fn num_items(&self) -> usize {
+        self.num_items
     }
 }
 

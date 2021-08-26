@@ -21,6 +21,7 @@ impl MemWidgetState {
     }
 }
 
+#[derive(Default)]
 pub struct MemState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, MemWidgetState>,

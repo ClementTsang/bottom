@@ -19,8 +19,6 @@ use indextree::{Arena, NodeId};
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
-use typed_builder::*;
-
 use data_farmer::*;
 use data_harvester::{processes, temperature};
 pub use filter::*;
@@ -56,6 +54,35 @@ pub struct UsedWidgets {
     pub use_battery: bool,
 }
 
+impl UsedWidgets {
+    pub fn add(&mut self, widget_type: &BottomWidgetType) {
+        match widget_type {
+            BottomWidgetType::Cpu | BottomWidgetType::BasicCpu => {
+                self.use_cpu = true;
+            }
+            BottomWidgetType::Mem | BottomWidgetType::BasicMem => {
+                self.use_mem = true;
+            }
+            BottomWidgetType::Net | BottomWidgetType::BasicNet => {
+                self.use_net = true;
+            }
+            BottomWidgetType::Proc => {
+                self.use_proc = true;
+            }
+            BottomWidgetType::Temp => {
+                self.use_temp = true;
+            }
+            BottomWidgetType::Disk => {
+                self.use_disk = true;
+            }
+            BottomWidgetType::Battery => {
+                self.use_battery = true;
+            }
+            _ => {}
+        }
+    }
+}
+
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
 #[derive(Debug)]
@@ -72,7 +99,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
-    pub table_gap: u16,
+    pub table_gap: u16, // TODO: Just make this a bool...
     pub disable_click: bool,
     pub no_write: bool,
     pub show_table_scroll_position: bool,
@@ -83,55 +110,32 @@ pub struct AppConfigFields {
     pub network_use_binary_prefix: bool,
 }
 
-// FIXME: Get rid of TypedBuilder here!
-#[derive(TypedBuilder)]
 pub struct AppState {
-    #[builder(default, setter(skip))]
     pub dd_err: Option<String>,
 
-    #[builder(default, setter(skip))]
     to_delete_process_list: Option<(String, Vec<Pid>)>,
 
-    #[builder(default = false, setter(skip))]
     pub is_frozen: bool,
 
-    #[builder(default = Instant::now(), setter(skip))]
-    last_key_press: Instant,
-
-    #[builder(default, setter(skip))]
     pub canvas_data: canvas::DisplayableData,
 
-    #[builder(default, setter(skip))]
     pub data_collection: DataCollection,
 
-    #[builder(default = false, setter(skip))]
     pub is_expanded: bool,
 
-    #[builder(default = false, setter(skip))]
-    pub is_force_redraw: bool,
-
-    #[builder(default = false, setter(skip))]
-    pub is_determining_widget_boundary: bool,
-
-    #[builder(default = false, setter(skip))]
-    pub basic_mode_use_percent: bool,
-
     #[cfg(target_family = "unix")]
-    #[builder(default, setter(skip))]
     pub user_table: processes::UserTable,
 
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
     pub app_config_fields: AppConfigFields,
 
-    // --- Possibly delete? ---
-    #[builder(default, setter(skip))]
+    // --- Eventually delete/rewrite ---
     pub delete_dialog_state: AppDeleteDialogState,
 
-    #[builder(default, setter(skip))]
     pub help_dialog_state: AppHelpDialogState,
 
-    // --- TO DELETE---
+    // --- TO DELETE ---
     pub cpu_state: CpuState,
     pub mem_state: MemState,
     pub net_state: NetState,
@@ -143,11 +147,17 @@ pub struct AppState {
     pub widget_map: HashMap<u64, BottomWidget>,
     pub current_widget: BottomWidget,
 
-    #[builder(default = false, setter(skip))]
+    last_key_press: Instant,
+
     awaiting_second_char: bool,
 
-    #[builder(default, setter(skip))]
     second_char: Option<char>,
+
+    pub basic_mode_use_percent: bool,
+
+    pub is_force_redraw: bool,
+
+    pub is_determining_widget_boundary: bool,
 
     // --- NEW STUFF ---
     pub selected_widget: NodeId,
@@ -159,10 +169,53 @@ pub struct AppState {
 impl AppState {
     /// Creates a new [`AppState`].
     pub fn new(
-        _app_config_fields: AppConfigFields, _filters: DataFilters,
-        _layout_tree_output: LayoutCreationOutput,
+        app_config_fields: AppConfigFields, filters: DataFilters,
+        layout_tree_output: LayoutCreationOutput,
     ) -> Self {
-        todo!()
+        let LayoutCreationOutput {
+            layout_tree,
+            root: layout_tree_root,
+            widget_lookup_map,
+            selected: selected_widget,
+            used_widgets,
+        } = layout_tree_output;
+
+        Self {
+            app_config_fields,
+            filters,
+            used_widgets,
+            selected_widget,
+            widget_lookup_map,
+            layout_tree,
+            layout_tree_root,
+
+            // Use defaults.
+            dd_err: Default::default(),
+            to_delete_process_list: Default::default(),
+            is_frozen: Default::default(),
+            canvas_data: Default::default(),
+            data_collection: Default::default(),
+            is_expanded: Default::default(),
+            user_table: Default::default(),
+            delete_dialog_state: Default::default(),
+            help_dialog_state: Default::default(),
+            cpu_state: Default::default(),
+            mem_state: Default::default(),
+            net_state: Default::default(),
+            proc_state: Default::default(),
+            temp_state: Default::default(),
+            disk_state: Default::default(),
+            battery_state: Default::default(),
+            basic_table_widget_state: Default::default(),
+            widget_map: Default::default(),
+            current_widget: Default::default(),
+            last_key_press: Instant::now(),
+            awaiting_second_char: Default::default(),
+            second_char: Default::default(),
+            basic_mode_use_percent: Default::default(),
+            is_force_redraw: Default::default(),
+            is_determining_widget_boundary: Default::default(),
+        }
     }
 
     pub fn reset(&mut self) {
@@ -248,12 +301,13 @@ impl AppState {
 
                 for (id, widget) in self.widget_lookup_map.iter_mut() {
                     if does_point_intersect_rect(x, y, widget.bounds()) {
-                        if self.selected_widget == *id {
-                            self.selected_widget = *id;
+                        let is_id_selected = self.selected_widget == *id;
+                        self.selected_widget = *id;
+
+                        if is_id_selected {
                             return widget.handle_mouse_event(event);
                         } else {
                             // If the aren't equal, *force* a redraw.
-                            self.selected_widget = *id;
                             widget.handle_mouse_event(event);
                             return EventResult::Redraw;
                         }
@@ -262,10 +316,10 @@ impl AppState {
 
                 EventResult::NoRedraw
             }
-            BottomEvent::Update(new_data) => {
+            BottomEvent::Update(_new_data) => {
                 if !self.is_frozen {
                     // TODO: Update all data, and redraw.
-                    EventResult::Redraw
+                    todo!()
                 } else {
                     EventResult::NoRedraw
                 }
@@ -282,9 +336,14 @@ impl AppState {
         }
     }
 
-    /// Handles a [`ReturnSignal`], and returns
+    /// Handles a [`ReturnSignal`], and returns an [`EventResult`].
     pub fn handle_return_signal(&mut self, return_signal: ReturnSignal) -> EventResult {
-        todo!()
+        match return_signal {
+            ReturnSignal::Nothing => EventResult::NoRedraw,
+            ReturnSignal::KillProcess => {
+                todo!()
+            }
+        }
     }
 
     pub fn on_esc(&mut self) {

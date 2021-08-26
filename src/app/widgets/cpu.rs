@@ -29,6 +29,7 @@ impl CpuWidgetState {
     }
 }
 
+#[derive(Default)]
 pub struct CpuState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, CpuWidgetState>,
