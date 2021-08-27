@@ -4,7 +4,13 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{app::event::EventResult, canvas, constants::*, data_conversion::*, options::*, *};
+use bottom::{
+    app::event::{EventResult, ReturnSignalResult},
+    canvas,
+    constants::*,
+    options::*,
+    *,
+};
 
 use std::{
     boxed::Box,
@@ -85,7 +91,8 @@ fn main() -> Result<()> {
     };
 
     // Event loop
-    let (collection_sender, collection_thread_ctrl_receiver) = mpsc::channel();
+    // TODO: Add back collection sender
+    let (_collection_sender, collection_thread_ctrl_receiver) = mpsc::channel();
     let _collection_thread = create_collection_thread(
         sender,
         collection_thread_ctrl_receiver,
@@ -114,129 +121,30 @@ fn main() -> Result<()> {
     ctrlc::set_handler(move || {
         ist_clone.store(true, Ordering::SeqCst);
     })?;
-    let mut first_run = true;
 
     while !is_terminated.load(Ordering::SeqCst) {
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
-            match recv {
-                BottomEvent::KeyInput(event) => {
-                    match handle_key_event(event, &mut app, &collection_sender) {
-                        EventResult::Quit => {
-                            break;
-                        }
-                        EventResult::Redraw => {
-                            // TODO: Be even more granular!  Maybe the event triggered no change, then we shouldn't redraw.
-                            force_redraw(&mut app);
-                            try_drawing(&mut terminal, &mut app, &mut painter)?;
-                        }
-                        _ => {}
-                    }
+            match app.handle_event(recv) {
+                EventResult::Quit => {
+                    break;
                 }
-                BottomEvent::MouseInput(event) => match handle_mouse_event(event, &mut app) {
-                    EventResult::Quit => {
-                        break;
-                    }
-                    EventResult::Redraw => {
-                        // TODO: Be even more granular!  Maybe the event triggered no change, then we shouldn't redraw.
-                        force_redraw(&mut app);
-                        try_drawing(&mut terminal, &mut app, &mut painter)?;
-                    }
-                    _ => {}
-                },
-                BottomEvent::Update(data) => {
-                    app.data_collection.eat_data(data);
-
-                    // This thing is required as otherwise, some widgets can't draw correctly w/o
-                    // some data (or they need to be re-drawn).
-                    if first_run {
-                        first_run = false;
-                        app.is_force_redraw = true;
-                    }
-
-                    if !app.is_frozen {
-                        // Convert all data into tui-compliant components
-
-                        // Network
-                        if app.used_widgets.use_net {
-                            let network_data = convert_network_data_points(
-                                &app.data_collection,
-                                false,
-                                app.app_config_fields.use_basic_mode
-                                    || app.app_config_fields.use_old_network_legend,
-                                &app.app_config_fields.network_scale_type,
-                                &app.app_config_fields.network_unit_type,
-                                app.app_config_fields.network_use_binary_prefix,
-                            );
-                            app.canvas_data.network_data_rx = network_data.rx;
-                            app.canvas_data.network_data_tx = network_data.tx;
-                            app.canvas_data.rx_display = network_data.rx_display;
-                            app.canvas_data.tx_display = network_data.tx_display;
-                            if let Some(total_rx_display) = network_data.total_rx_display {
-                                app.canvas_data.total_rx_display = total_rx_display;
-                            }
-                            if let Some(total_tx_display) = network_data.total_tx_display {
-                                app.canvas_data.total_tx_display = total_tx_display;
-                            }
-                        }
-
-                        // Disk
-                        if app.used_widgets.use_disk {
-                            app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
-                        }
-
-                        // Temperatures
-                        if app.used_widgets.use_temp {
-                            app.canvas_data.temp_sensor_data = convert_temp_row(&app);
-                        }
-
-                        // Memory
-                        if app.used_widgets.use_mem {
-                            app.canvas_data.mem_data =
-                                convert_mem_data_points(&app.data_collection, false);
-                            app.canvas_data.swap_data =
-                                convert_swap_data_points(&app.data_collection, false);
-                            let (memory_labels, swap_labels) =
-                                convert_mem_labels(&app.data_collection);
-
-                            app.canvas_data.mem_labels = memory_labels;
-                            app.canvas_data.swap_labels = swap_labels;
-                        }
-
-                        if app.used_widgets.use_cpu {
-                            // CPU
-
-                            convert_cpu_data_points(
-                                &app.data_collection,
-                                &mut app.canvas_data.cpu_data,
-                                false,
-                            );
-                            app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
-                        }
-
-                        // Processes
-                        if app.used_widgets.use_proc {
-                            update_all_process_lists(&mut app);
-                        }
-
-                        // Battery
-                        if app.used_widgets.use_battery {
-                            app.canvas_data.battery_data =
-                                convert_battery_harvest(&app.data_collection);
-                        }
-
-                        try_drawing(&mut terminal, &mut app, &mut painter)?;
-                    }
-                }
-                BottomEvent::Resize {
-                    width: _,
-                    height: _,
-                } => {
+                EventResult::Redraw => {
                     try_drawing(&mut terminal, &mut app, &mut painter)?;
                 }
-                BottomEvent::Clean => {
-                    app.data_collection
-                        .clean_data(constants::STALE_MAX_MILLISECONDS);
+                EventResult::NoRedraw => {
+                    continue;
                 }
+                EventResult::Signal(signal) => match app.handle_return_signal(signal) {
+                    ReturnSignalResult::Quit => {
+                        break;
+                    }
+                    ReturnSignalResult::Redraw => {
+                        try_drawing(&mut terminal, &mut app, &mut painter)?;
+                    }
+                    ReturnSignalResult::NoRedraw => {
+                        continue;
+                    }
+                },
             }
         }
     }

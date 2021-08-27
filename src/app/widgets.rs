@@ -2,12 +2,7 @@ use std::time::Instant;
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use enum_dispatch::enum_dispatch;
-use tui::{
-    backend::Backend,
-    layout::Rect,
-    widgets::{Block, TableState},
-    Frame,
-};
+use tui::{backend::Backend, layout::Rect, widgets::TableState, Frame};
 
 use crate::{
     app::{
@@ -66,6 +61,14 @@ pub trait Component {
 
     /// Updates a [`Component`]s bounding box to `new_bounds`.
     fn set_bounds(&mut self, new_bounds: Rect);
+
+    /// Returns whether a [`MouseEvent`] intersects a [`Component`].
+    fn does_intersect_mouse(&self, event: &MouseEvent) -> bool {
+        let x = event.column;
+        let y = event.row;
+        let rect = self.bounds();
+        x >= rect.left() && x <= rect.right() && y >= rect.top() && y <= rect.bottom()
+    }
 }
 
 /// A trait for actual fully-fledged widgets to be displayed in bottom.
@@ -104,8 +107,8 @@ pub trait Widget {
 
     /// Draws a [`Widget`]. Defaults to doing nothing.
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, block: Block<'_>,
-        data: &DisplayableData,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, data: &DisplayableData,
+        selected: bool,
     ) {
         // TODO: Remove the default implementation in the future!
         // TODO: Do another pass on ALL of the draw code - currently it's just glue, it should eventually be done properly!

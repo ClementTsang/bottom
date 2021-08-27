@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Instant};
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::layout::Rect;
 
-use crate::app::event::{does_point_intersect_rect, EventResult};
+use crate::app::event::EventResult;
 
 use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, TimeGraph, Widget};
 
@@ -99,13 +99,10 @@ impl Component for CpuGraph {
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        let global_x = event.column;
-        let global_y = event.row;
-
-        if does_point_intersect_rect(global_x, global_y, self.graph.bounds()) {
+        if self.graph.does_intersect_mouse(&event) {
             self.selected = CpuGraphSelection::Graph;
             self.graph.handle_mouse_event(event)
-        } else if does_point_intersect_rect(global_x, global_y, self.legend.bounds()) {
+        } else if self.legend.does_intersect_mouse(&event) {
             self.selected = CpuGraphSelection::Legend;
             self.legend.handle_mouse_event(event)
         } else {

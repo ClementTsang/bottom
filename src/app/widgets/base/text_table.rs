@@ -1,9 +1,9 @@
 use std::{
     borrow::Cow,
-    cmp::{max, min},
+    cmp::{max, min, Ordering},
 };
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use tui::{
     layout::{Constraint, Rect},
     text::Text,
@@ -24,6 +24,13 @@ pub enum DesiredColumnWidth {
     Flex { desired: u16, max_percentage: f64 },
 }
 
+/// A [`ColumnType`] is a
+pub trait ColumnType {
+    type DataType;
+
+    fn sort_function(a: Self::DataType, b: Self::DataType) -> Ordering;
+}
+
 /// A [`Column`] represents some column in a [`TextTable`].
 #[derive(Debug)]
 pub struct Column {
@@ -33,7 +40,7 @@ pub struct Column {
 
     // TODO: I would remove these in the future, storing them here feels weird...
     pub desired_width: DesiredColumnWidth,
-    pub x_bounds: (u16, u16),
+    pub x_bounds: Option<(u16, u16)>,
 }
 
 impl Column {
@@ -44,7 +51,7 @@ impl Column {
     ) -> Self {
         Self {
             name,
-            x_bounds: (0, 0),
+            x_bounds: None,
             shortcut: shortcut.map(|e| {
                 let modifier = if e.modifiers.is_empty() {
                     ""
@@ -90,16 +97,17 @@ impl Column {
     }
 
     /// Creates a new [`Column`] with a hard desired width. If none is specified,
-    /// it will instead use the name's length.
+    /// it will instead use the name's length + 1.
     pub fn new_hard(
         name: &'static str, shortcut: Option<KeyEvent>, default_descending: bool,
         hard_length: Option<u16>,
     ) -> Self {
+        // TODO: It should really be based on the shortcut name...
         Column::new(
             name,
             shortcut,
             default_descending,
-            DesiredColumnWidth::Hard(hard_length.unwrap_or(name.len() as u16)),
+            DesiredColumnWidth::Hard(hard_length.unwrap_or(name.len() as u16 + 1)),
         )
     }
 
@@ -238,7 +246,7 @@ impl TextTable {
     }
 
     pub fn get_desired_column_widths(
-        columns: &[Column], data: &[Vec<String>],
+        columns: &[Column], data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
     ) -> Vec<DesiredColumnWidth> {
         columns
             .iter()
@@ -248,8 +256,22 @@ impl TextTable {
                     let max_len = data
                         .iter()
                         .filter_map(|c| c.get(column_index))
-                        .max_by(|x, y| x.len().cmp(&y.len()))
-                        .map(|s| s.len())
+                        .max_by(|(x, short_x), (y, short_y)| {
+                            let x = if let Some(short_x) = short_x {
+                                short_x
+                            } else {
+                                x
+                            };
+
+                            let y = if let Some(short_y) = short_y {
+                                short_y
+                            } else {
+                                y
+                            };
+
+                            x.len().cmp(&y.len())
+                        })
+                        .map(|(s, _)| s.len())
                         .unwrap_or(0) as u16;
 
                     DesiredColumnWidth::Hard(max(max_len, width))
@@ -262,16 +284,16 @@ impl TextTable {
             .collect::<Vec<_>>()
     }
 
-    fn get_cache(&mut self, area: Rect, data: &[Vec<String>]) -> Vec<u16> {
+    fn get_cache(
+        &mut self, area: Rect, data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
+    ) -> Vec<u16> {
         fn calculate_column_widths(
             left_to_right: bool, mut desired_widths: Vec<DesiredColumnWidth>, total_width: u16,
         ) -> Vec<u16> {
-            debug!("OG desired widths: {:?}", desired_widths);
             let mut total_width_left = total_width;
             if !left_to_right {
                 desired_widths.reverse();
             }
-            debug!("Desired widths: {:?}", desired_widths);
 
             let mut column_widths: Vec<u16> = Vec::with_capacity(desired_widths.len());
             for width in desired_widths {
@@ -303,7 +325,6 @@ impl TextTable {
                     }
                 }
             }
-            debug!("Initial column widths: {:?}", column_widths);
 
             if !column_widths.is_empty() {
                 let amount_per_slot = total_width_left / column_widths.len() as u16;
@@ -321,8 +342,6 @@ impl TextTable {
                 }
             }
 
-            debug!("Column widths: {:?}", column_widths);
-
             column_widths
         }
 
@@ -330,9 +349,11 @@ impl TextTable {
         if data.is_empty() {
             vec![0; self.columns.len()]
         } else {
-            match &mut self.cached_column_widths {
+            let was_cached: bool;
+            let column_widths = match &mut self.cached_column_widths {
                 CachedColumnWidths::Uncached => {
                     // Always recalculate.
+                    was_cached = false;
                     let desired_widths = TextTable::get_desired_column_widths(&self.columns, data);
                     let calculated_widths =
                         calculate_column_widths(self.left_to_right, desired_widths, area.width);
@@ -349,6 +370,7 @@ impl TextTable {
                 } => {
                     if *cached_area != area {
                         // Recalculate!
+                        was_cached = false;
                         let desired_widths =
                             TextTable::get_desired_column_widths(&self.columns, data);
                         let calculated_widths =
@@ -358,10 +380,22 @@ impl TextTable {
 
                         calculated_widths
                     } else {
+                        was_cached = true;
                         cached_data.clone()
                     }
                 }
+            };
+
+            if !was_cached {
+                let mut column_start = 0;
+                for (column, width) in self.columns.iter_mut().zip(&column_widths) {
+                    let column_end = column_start + *width;
+                    column.x_bounds = Some((column_start, column_end));
+                    column_start = column_end + 1;
+                }
             }
+
+            column_widths
         }
     }
 
@@ -372,9 +406,9 @@ impl TextTable {
     /// Note if the number of columns don't match in the [`TextTable`] and data,
     /// it will only create as many columns as it can grab data from both sources from.
     pub fn create_draw_table(
-        &mut self, painter: &Painter, data: &[Vec<String>], area: Rect,
+        &mut self, painter: &Painter, data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
+        area: Rect,
     ) -> (Table<'_>, Vec<Constraint>, TableState) {
-        // TODO: Change data: &[Vec<String>] to &[Vec<Cow<'static, str>>]
         use tui::widgets::Row;
 
         let table_gap = if !self.show_gap || area.height < TABLE_GAP_HEIGHT_LIMIT {
@@ -383,15 +417,16 @@ impl TextTable {
             1
         };
 
+        self.update_num_items(data.len());
         self.set_bounds(area);
-        let scrollable_height = area.height.saturating_sub(1 + table_gap);
+        let table_extras = 1 + table_gap;
+        let scrollable_height = area.height.saturating_sub(table_extras);
         self.scrollable.set_bounds(Rect::new(
             area.x,
-            area.y + 1 + table_gap,
+            area.y + table_extras,
             area.width,
             scrollable_height,
         ));
-        self.update_num_items(data.len());
 
         // Calculate widths first, since we need them later.
         let calculated_widths = self.get_cache(area, data);
@@ -403,7 +438,7 @@ impl TextTable {
         // Then calculate rows. We truncate the amount of data read based on height,
         // as well as truncating some entries based on available width.
         let data_slice = {
-            let start = self.scrollable.index();
+            let start = self.scrollable.get_list_start(scrollable_height as usize);
             let end = std::cmp::min(
                 self.scrollable.num_items(),
                 start + scrollable_height as usize,
@@ -411,17 +446,25 @@ impl TextTable {
             &data[start..end]
         };
         let rows = data_slice.iter().map(|row| {
-            Row::new(row.iter().zip(&calculated_widths).map(|(cell, width)| {
-                let width = *width as usize;
-                let graphemes =
-                    UnicodeSegmentation::graphemes(cell.as_str(), true).collect::<Vec<&str>>();
-                let grapheme_width = graphemes.len();
-                if width < grapheme_width && width > 1 {
-                    Text::raw(format!("{}…", graphemes[..(width - 1)].concat()))
-                } else {
-                    Text::raw(cell.to_owned())
-                }
-            }))
+            Row::new(
+                row.iter()
+                    .zip(&calculated_widths)
+                    .map(|((text, shrunk_text), width)| {
+                        let width = *width as usize;
+                        let graphemes = UnicodeSegmentation::graphemes(text.as_ref(), true)
+                            .collect::<Vec<&str>>();
+                        let grapheme_width = graphemes.len();
+                        if width < grapheme_width && width > 1 {
+                            if let Some(shrunk_text) = shrunk_text {
+                                Text::raw(shrunk_text.clone())
+                            } else {
+                                Text::raw(format!("{}…", graphemes[..(width - 1)].concat()))
+                            }
+                        } else {
+                            Text::raw(text.to_owned())
+                        }
+                    }),
+            )
         });
 
         // Now build up our headers...
@@ -430,8 +473,7 @@ impl TextTable {
             .bottom_margin(table_gap);
 
         // And return tui-rs's [`TableState`].
-        let mut tui_state = TableState::default();
-        tui_state.select(Some(self.scrollable.index()));
+        let tui_state = self.scrollable.tui_state();
 
         (
             Table::new(rows)
@@ -464,25 +506,33 @@ impl Component for TextTable {
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        // Note these are representing RELATIVE coordinates!
-        let x = event.column - self.bounds.left();
-        let y = event.row - self.bounds.top();
+        if let MouseEventKind::Down(MouseButton::Left) = event.kind {
+            if !self.does_intersect_mouse(&event) {
+                return EventResult::NoRedraw;
+            }
 
-        if y == 0 {
-            for (index, column) in self.columns.iter().enumerate() {
-                let (start, end) = column.x_bounds;
-                if start >= x && end <= y {
-                    if self.sort_index == index {
-                        // Just flip the sort if we're already sorting by this.
-                        self.sort_ascending = !self.sort_ascending;
-                    } else {
-                        self.sort_index = index;
-                        self.sort_ascending = !column.default_descending;
+            // Note these are representing RELATIVE coordinates! They *need* the above intersection check for validity!
+            let x = event.column - self.bounds.left();
+            let y = event.row - self.bounds.top();
+
+            if y == 0 {
+                for (index, column) in self.columns.iter().enumerate() {
+                    if let Some((start, end)) = column.x_bounds {
+                        if x >= start && x <= end {
+                            if self.sort_index == index {
+                                // Just flip the sort if we're already sorting by this.
+                                self.sort_ascending = !self.sort_ascending;
+                            } else {
+                                self.sort_index = index;
+                                self.sort_ascending = !column.default_descending;
+                            }
+                            return EventResult::Redraw;
+                        }
                     }
                 }
             }
 
-            EventResult::NoRedraw
+            self.scrollable.handle_mouse_event(event)
         } else {
             self.scrollable.handle_mouse_event(event)
         }

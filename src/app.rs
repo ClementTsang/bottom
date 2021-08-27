@@ -13,7 +13,7 @@ use std::{
     time::Instant,
 };
 
-use crossterm::event::{KeyEvent, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind};
 use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
 use unicode_segmentation::GraphemeCursor;
@@ -28,12 +28,14 @@ pub use widgets::*;
 use crate::{
     canvas,
     constants::{self, MAX_SIGNAL},
+    data_conversion::*,
     units::data_units::DataUnit,
+    update_final_process_list,
     utils::error::{BottomError, Result},
     BottomEvent, Pid,
 };
 
-use self::event::{does_point_intersect_rect, EventResult, ReturnSignal};
+use self::event::{EventResult, ReturnSignal, ReturnSignalResult};
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
@@ -269,9 +271,38 @@ impl AppState {
         // TODO: Write this.
 
         if event.modifiers.is_empty() {
-            todo!()
-        } else if let KeyModifiers::ALT = event.modifiers {
-            todo!()
+            match event.code {
+                KeyCode::Esc => {
+                    if self.is_expanded {
+                        self.is_expanded = false;
+                        Some(EventResult::Redraw)
+                    } else if self.help_dialog_state.is_showing_help {
+                        self.help_dialog_state.is_showing_help = false;
+                        self.help_dialog_state.scroll_state.current_scroll_index = 0;
+                        Some(EventResult::Redraw)
+                    } else if self.delete_dialog_state.is_showing_dd {
+                        self.close_dd();
+                        Some(EventResult::Redraw)
+                    } else {
+                        None
+                    }
+                }
+                KeyCode::Char('q') => Some(EventResult::Quit),
+                KeyCode::Char('e') => {
+                    self.is_expanded = !self.is_expanded;
+                    Some(EventResult::Redraw)
+                }
+                KeyCode::Char('?') => {
+                    self.help_dialog_state.is_showing_help = true;
+                    Some(EventResult::Redraw)
+                }
+                _ => None,
+            }
+        } else if let KeyModifiers::CONTROL = event.modifiers {
+            match event.code {
+                KeyCode::Char('c') => Some(EventResult::Quit),
+                _ => None,
+            }
         } else {
             None
         }
@@ -296,30 +327,49 @@ impl AppState {
                 // Not great, but basically a blind lookup through the table for anything that clips the click location.
                 // TODO: Would be cool to use a kd-tree or something like that in the future.
 
-                let x = event.column;
-                let y = event.row;
-
-                for (id, widget) in self.widget_lookup_map.iter_mut() {
-                    if does_point_intersect_rect(x, y, widget.bounds()) {
-                        let is_id_selected = self.selected_widget == *id;
-                        self.selected_widget = *id;
-
-                        if is_id_selected {
-                            return widget.handle_mouse_event(event);
+                match &event.kind {
+                    MouseEventKind::Down(MouseButton::Left) => {
+                        if self.is_expanded {
+                            if let Some(widget) =
+                                self.widget_lookup_map.get_mut(&self.selected_widget)
+                            {
+                                return widget.handle_mouse_event(event);
+                            }
                         } else {
-                            // If the aren't equal, *force* a redraw.
-                            widget.handle_mouse_event(event);
-                            return EventResult::Redraw;
+                            for (id, widget) in self.widget_lookup_map.iter_mut() {
+                                if widget.does_intersect_mouse(&event) {
+                                    let is_id_selected = self.selected_widget == *id;
+                                    self.selected_widget = *id;
+
+                                    if is_id_selected {
+                                        return widget.handle_mouse_event(event);
+                                    } else {
+                                        // If the aren't equal, *force* a redraw.
+                                        widget.handle_mouse_event(event);
+                                        return EventResult::Redraw;
+                                    }
+                                }
+                            }
                         }
                     }
+                    MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                        if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget)
+                        {
+                            return widget.handle_mouse_event(event);
+                        }
+                    }
+                    _ => {}
                 }
 
                 EventResult::NoRedraw
             }
-            BottomEvent::Update(_new_data) => {
+            BottomEvent::Update(new_data) => {
+                self.data_collection.eat_data(new_data);
+
                 if !self.is_frozen {
-                    // TODO: Update all data, and redraw.
-                    todo!()
+                    self.convert_data();
+
+                    EventResult::Redraw
                 } else {
                     EventResult::NoRedraw
                 }
@@ -336,13 +386,95 @@ impl AppState {
         }
     }
 
-    /// Handles a [`ReturnSignal`], and returns an [`EventResult`].
-    pub fn handle_return_signal(&mut self, return_signal: ReturnSignal) -> EventResult {
+    /// Handles a [`ReturnSignal`], and returns an [`ReturnSignalResult`].
+    pub fn handle_return_signal(&mut self, return_signal: ReturnSignal) -> ReturnSignalResult {
         match return_signal {
-            ReturnSignal::Nothing => EventResult::NoRedraw,
             ReturnSignal::KillProcess => {
                 todo!()
             }
+        }
+    }
+
+    fn convert_data(&mut self) {
+        // TODO: Probably refactor this.
+
+        // Network
+        if self.used_widgets.use_net {
+            let network_data = convert_network_data_points(
+                &self.data_collection,
+                false,
+                self.app_config_fields.use_basic_mode
+                    || self.app_config_fields.use_old_network_legend,
+                &self.app_config_fields.network_scale_type,
+                &self.app_config_fields.network_unit_type,
+                self.app_config_fields.network_use_binary_prefix,
+            );
+            self.canvas_data.network_data_rx = network_data.rx;
+            self.canvas_data.network_data_tx = network_data.tx;
+            self.canvas_data.rx_display = network_data.rx_display;
+            self.canvas_data.tx_display = network_data.tx_display;
+            if let Some(total_rx_display) = network_data.total_rx_display {
+                self.canvas_data.total_rx_display = total_rx_display;
+            }
+            if let Some(total_tx_display) = network_data.total_tx_display {
+                self.canvas_data.total_tx_display = total_tx_display;
+            }
+        }
+
+        // Disk
+        if self.used_widgets.use_disk {
+            self.canvas_data.disk_data = convert_disk_row(&self.data_collection);
+        }
+
+        // Temperatures
+        if self.used_widgets.use_temp {
+            self.canvas_data.temp_sensor_data = convert_temp_row(&self);
+        }
+
+        // Memory
+        if self.used_widgets.use_mem {
+            self.canvas_data.mem_data = convert_mem_data_points(&self.data_collection, false);
+            self.canvas_data.swap_data = convert_swap_data_points(&self.data_collection, false);
+            let (memory_labels, swap_labels) = convert_mem_labels(&self.data_collection);
+
+            self.canvas_data.mem_labels = memory_labels;
+            self.canvas_data.swap_labels = swap_labels;
+        }
+
+        if self.used_widgets.use_cpu {
+            // CPU
+            convert_cpu_data_points(&self.data_collection, &mut self.canvas_data.cpu_data, false);
+            self.canvas_data.load_avg_data = self.data_collection.load_avg_harvest;
+        }
+
+        // Processes
+        if self.used_widgets.use_proc {
+            self.update_all_process_lists();
+        }
+
+        // Battery
+        if self.used_widgets.use_battery {
+            self.canvas_data.battery_data = convert_battery_harvest(&self.data_collection);
+        }
+    }
+
+    #[allow(clippy::needless_collect)]
+    fn update_all_process_lists(&mut self) {
+        // TODO: Probably refactor this.
+
+        // According to clippy, I can avoid a collect... but if I follow it,
+        // I end up conflicting with the borrow checker since app is used within the closure... hm.
+        if !self.is_frozen {
+            let widget_ids = self
+                .proc_state
+                .widget_states
+                .keys()
+                .cloned()
+                .collect::<Vec<_>>();
+
+            widget_ids.into_iter().for_each(|widget_id| {
+                update_final_process_list(self, widget_id);
+            });
         }
     }
 
@@ -1316,41 +1448,41 @@ impl AppState {
     pub fn start_killing_process(&mut self) {
         self.reset_multi_tap_keys();
 
-        if let Some(proc_widget_state) = self
-            .proc_state
-            .widget_states
-            .get(&self.current_widget.widget_id)
-        {
-            if let Some(corresponding_filtered_process_list) = self
-                .canvas_data
-                .finalized_process_data_map
-                .get(&self.current_widget.widget_id)
-            {
-                if proc_widget_state.scroll_state.current_scroll_position
-                    < corresponding_filtered_process_list.len()
-                {
-                    let current_process: (String, Vec<Pid>);
-                    if self.is_grouped(self.current_widget.widget_id) {
-                        if let Some(process) = &corresponding_filtered_process_list
-                            .get(proc_widget_state.scroll_state.current_scroll_position)
-                        {
-                            current_process = (process.name.to_string(), process.group_pids.clone())
-                        } else {
-                            return;
-                        }
-                    } else {
-                        let process = corresponding_filtered_process_list
-                            [proc_widget_state.scroll_state.current_scroll_position]
-                            .clone();
-                        current_process = (process.name.clone(), vec![process.pid])
-                    };
+        // if let Some(proc_widget_state) = self
+        //     .proc_state
+        //     .widget_states
+        //     .get(&self.current_widget.widget_id)
+        // {
+        //     if let Some(corresponding_filtered_process_list) = self
+        //         .canvas_data
+        //         .finalized_process_data_map
+        //         .get(&self.current_widget.widget_id)
+        //     {
+        //         if proc_widget_state.scroll_state.current_scroll_position
+        //             < corresponding_filtered_process_list.len()
+        //         {
+        //             let current_process: (String, Vec<Pid>);
+        //             if self.is_grouped(self.current_widget.widget_id) {
+        //                 if let Some(process) = &corresponding_filtered_process_list
+        //                     .get(proc_widget_state.scroll_state.current_scroll_position)
+        //                 {
+        //                     current_process = (process.name.to_string(), process.group_pids.clone())
+        //                 } else {
+        //                     return;
+        //                 }
+        //             } else {
+        //                 let process = corresponding_filtered_process_list
+        //                     [proc_widget_state.scroll_state.current_scroll_position]
+        //                     .clone();
+        //                 current_process = (process.name.clone(), vec![process.pid])
+        //             };
 
-                    self.to_delete_process_list = Some(current_process);
-                    self.delete_dialog_state.is_showing_dd = true;
-                    self.is_determining_widget_boundary = true;
-                }
-            }
-        }
+        //             self.to_delete_process_list = Some(current_process);
+        //             self.delete_dialog_state.is_showing_dd = true;
+        //             self.is_determining_widget_boundary = true;
+        //         }
+        //     }
+        // }
     }
 
     pub fn on_char_key(&mut self, caught_char: char) {
@@ -2222,85 +2354,85 @@ impl AppState {
     }
 
     pub fn skip_to_last(&mut self) {
-        if !self.ignore_normal_keybinds() {
-            match self.current_widget.widget_type {
-                BottomWidgetType::Proc => {
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        if let Some(finalized_process_data) = self
-                            .canvas_data
-                            .finalized_process_data_map
-                            .get(&self.current_widget.widget_id)
-                        {
-                            if !self.canvas_data.finalized_process_data_map.is_empty() {
-                                proc_widget_state.scroll_state.current_scroll_position =
-                                    finalized_process_data.len() - 1;
-                                proc_widget_state.scroll_state.scroll_direction =
-                                    ScrollDirection::Down;
-                            }
-                        }
-                    }
-                }
-                BottomWidgetType::ProcSort => {
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id - 2)
-                    {
-                        proc_widget_state.columns.current_scroll_position =
-                            proc_widget_state.columns.get_enabled_columns_len() - 1;
-                        proc_widget_state.columns.scroll_direction = ScrollDirection::Down;
-                    }
-                }
-                BottomWidgetType::Temp => {
-                    if let Some(temp_widget_state) = self
-                        .temp_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        if !self.canvas_data.temp_sensor_data.is_empty() {
-                            temp_widget_state.scroll_state.current_scroll_position =
-                                self.canvas_data.temp_sensor_data.len() - 1;
-                            temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
-                        }
-                    }
-                }
-                BottomWidgetType::Disk => {
-                    if let Some(disk_widget_state) = self
-                        .disk_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        if !self.canvas_data.disk_data.is_empty() {
-                            disk_widget_state.scroll_state.current_scroll_position =
-                                self.canvas_data.disk_data.len() - 1;
-                            disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
-                        }
-                    }
-                }
-                BottomWidgetType::CpuLegend => {
-                    if let Some(cpu_widget_state) = self
-                        .cpu_state
-                        .get_mut_widget_state(self.current_widget.widget_id - 1)
-                    {
-                        let cap = self.canvas_data.cpu_data.len();
-                        if cap > 0 {
-                            cpu_widget_state.scroll_state.current_scroll_position = cap - 1;
-                            cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
-                        }
-                    }
-                }
-                _ => {}
-            }
-            self.reset_multi_tap_keys();
-        } else if self.help_dialog_state.is_showing_help {
-            self.help_dialog_state.scroll_state.current_scroll_index = self
-                .help_dialog_state
-                .scroll_state
-                .max_scroll_index
-                .saturating_sub(1);
-        } else if self.delete_dialog_state.is_showing_dd {
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_SIGNAL);
-        }
+        // if !self.ignore_normal_keybinds() {
+        //     match self.current_widget.widget_type {
+        //         BottomWidgetType::Proc => {
+        //             if let Some(proc_widget_state) = self
+        //                 .proc_state
+        //                 .get_mut_widget_state(self.current_widget.widget_id)
+        //             {
+        //                 if let Some(finalized_process_data) = self
+        //                     .canvas_data
+        //                     .finalized_process_data_map
+        //                     .get(&self.current_widget.widget_id)
+        //                 {
+        //                     if !self.canvas_data.finalized_process_data_map.is_empty() {
+        //                         proc_widget_state.scroll_state.current_scroll_position =
+        //                             finalized_process_data.len() - 1;
+        //                         proc_widget_state.scroll_state.scroll_direction =
+        //                             ScrollDirection::Down;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         BottomWidgetType::ProcSort => {
+        //             if let Some(proc_widget_state) = self
+        //                 .proc_state
+        //                 .get_mut_widget_state(self.current_widget.widget_id - 2)
+        //             {
+        //                 proc_widget_state.columns.current_scroll_position =
+        //                     proc_widget_state.columns.get_enabled_columns_len() - 1;
+        //                 proc_widget_state.columns.scroll_direction = ScrollDirection::Down;
+        //             }
+        //         }
+        //         BottomWidgetType::Temp => {
+        //             if let Some(temp_widget_state) = self
+        //                 .temp_state
+        //                 .get_mut_widget_state(self.current_widget.widget_id)
+        //             {
+        //                 if !self.canvas_data.temp_sensor_data.is_empty() {
+        //                     temp_widget_state.scroll_state.current_scroll_position =
+        //                         self.canvas_data.temp_sensor_data.len() - 1;
+        //                     temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+        //                 }
+        //             }
+        //         }
+        //         BottomWidgetType::Disk => {
+        //             if let Some(disk_widget_state) = self
+        //                 .disk_state
+        //                 .get_mut_widget_state(self.current_widget.widget_id)
+        //             {
+        //                 if !self.canvas_data.disk_data.is_empty() {
+        //                     disk_widget_state.scroll_state.current_scroll_position =
+        //                         self.canvas_data.disk_data.len() - 1;
+        //                     disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+        //                 }
+        //             }
+        //         }
+        //         BottomWidgetType::CpuLegend => {
+        //             if let Some(cpu_widget_state) = self
+        //                 .cpu_state
+        //                 .get_mut_widget_state(self.current_widget.widget_id - 1)
+        //             {
+        //                 let cap = self.canvas_data.cpu_data.len();
+        //                 if cap > 0 {
+        //                     cpu_widget_state.scroll_state.current_scroll_position = cap - 1;
+        //                     cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+        //                 }
+        //             }
+        //         }
+        //         _ => {}
+        //     }
+        //     self.reset_multi_tap_keys();
+        // } else if self.help_dialog_state.is_showing_help {
+        //     self.help_dialog_state.scroll_state.current_scroll_index = self
+        //         .help_dialog_state
+        //         .scroll_state
+        //         .max_scroll_index
+        //         .saturating_sub(1);
+        // } else if self.delete_dialog_state.is_showing_dd {
+        //     self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_SIGNAL);
+        // }
     }
 
     pub fn decrement_position_count(&mut self) {
@@ -2381,35 +2513,35 @@ impl AppState {
     }
 
     /// Returns the new position.
-    fn increment_process_position(&mut self, num_to_change_by: i64) -> Option<usize> {
-        if let Some(proc_widget_state) = self
-            .proc_state
-            .get_mut_widget_state(self.current_widget.widget_id)
-        {
-            let current_posn = proc_widget_state.scroll_state.current_scroll_position;
-            if let Some(finalized_process_data) = self
-                .canvas_data
-                .finalized_process_data_map
-                .get(&self.current_widget.widget_id)
-            {
-                if current_posn as i64 + num_to_change_by >= 0
-                    && current_posn as i64 + num_to_change_by < finalized_process_data.len() as i64
-                {
-                    proc_widget_state.scroll_state.current_scroll_position =
-                        (current_posn as i64 + num_to_change_by) as usize;
-                } else {
-                    return None;
-                }
-            }
+    fn increment_process_position(&mut self, _num_to_change_by: i64) -> Option<usize> {
+        // if let Some(proc_widget_state) = self
+        //     .proc_state
+        //     .get_mut_widget_state(self.current_widget.widget_id)
+        // {
+        //     let current_posn = proc_widget_state.scroll_state.current_scroll_position;
+        //     if let Some(finalized_process_data) = self
+        //         .canvas_data
+        //         .finalized_process_data_map
+        //         .get(&self.current_widget.widget_id)
+        //     {
+        //         if current_posn as i64 + num_to_change_by >= 0
+        //             && current_posn as i64 + num_to_change_by < finalized_process_data.len() as i64
+        //         {
+        //             proc_widget_state.scroll_state.current_scroll_position =
+        //                 (current_posn as i64 + num_to_change_by) as usize;
+        //         } else {
+        //             return None;
+        //         }
+        //     }
 
-            if num_to_change_by < 0 {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
-            } else {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
-            }
+        //     if num_to_change_by < 0 {
+        //         proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
+        //     } else {
+        //         proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+        //     }
 
-            return Some(proc_widget_state.scroll_state.current_scroll_position);
-        }
+        //     return Some(proc_widget_state.scroll_state.current_scroll_position);
+        // }
 
         None
     }
@@ -2537,32 +2669,32 @@ impl AppState {
     }
 
     fn toggle_collapsing_process_branch(&mut self) {
-        if let Some(proc_widget_state) = self
-            .proc_state
-            .widget_states
-            .get_mut(&self.current_widget.widget_id)
-        {
-            let current_posn = proc_widget_state.scroll_state.current_scroll_position;
+        // if let Some(proc_widget_state) = self
+        //     .proc_state
+        //     .widget_states
+        //     .get_mut(&self.current_widget.widget_id)
+        // {
+        //     let current_posn = proc_widget_state.scroll_state.current_scroll_position;
 
-            if let Some(displayed_process_list) = self
-                .canvas_data
-                .finalized_process_data_map
-                .get(&self.current_widget.widget_id)
-            {
-                if let Some(corresponding_process) = displayed_process_list.get(current_posn) {
-                    let corresponding_pid = corresponding_process.pid;
+        //     if let Some(displayed_process_list) = self
+        //         .canvas_data
+        //         .finalized_process_data_map
+        //         .get(&self.current_widget.widget_id)
+        //     {
+        //         if let Some(corresponding_process) = displayed_process_list.get(current_posn) {
+        //             let corresponding_pid = corresponding_process.pid;
 
-                    if let Some(process_data) = self
-                        .canvas_data
-                        .single_process_data
-                        .get_mut(&corresponding_pid)
-                    {
-                        process_data.is_collapsed_entry = !process_data.is_collapsed_entry;
-                        self.proc_state.force_update = Some(self.current_widget.widget_id);
-                    }
-                }
-            }
-        }
+        //             if let Some(process_data) = self
+        //                 .canvas_data
+        //                 .single_process_data
+        //                 .get_mut(&corresponding_pid)
+        //             {
+        //                 process_data.is_collapsed_entry = !process_data.is_collapsed_entry;
+        //                 self.proc_state.force_update = Some(self.current_widget.widget_id);
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     fn zoom_out(&mut self) {

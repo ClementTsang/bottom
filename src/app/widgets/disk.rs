@@ -1,7 +1,12 @@
 use std::collections::HashMap;
 
 use crossterm::event::{KeyEvent, MouseEvent};
-use tui::{backend::Backend, layout::Rect, widgets::Block, Frame};
+use tui::{
+    backend::Backend,
+    layout::Rect,
+    widgets::{Block, Borders},
+    Frame,
+};
 
 use crate::{
     app::{event::EventResult, text_table::Column},
@@ -92,13 +97,28 @@ impl Widget for DiskTable {
     }
 
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, block: Block<'_>,
-        data: &DisplayableData,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, data: &DisplayableData,
+        selected: bool,
     ) {
+        let block = Block::default()
+            .border_style(if selected {
+                painter.colours.highlighted_border_style
+            } else {
+                painter.colours.border_style
+            })
+            .borders(Borders::ALL);
+
+        self.set_bounds(area);
         let draw_area = block.inner(area);
         let (table, widths, mut tui_state) =
             self.table
                 .create_draw_table(painter, &data.disk_data, draw_area);
+
+        let table = table.highlight_style(if selected {
+            painter.colours.currently_selected_text_style
+        } else {
+            painter.colours.text_style
+        });
 
         f.render_stateful_widget(table.block(block).widths(&widths), area, &mut tui_state);
     }

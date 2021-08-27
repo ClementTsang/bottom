@@ -8,6 +8,7 @@ use crate::{
 use data_harvester::processes::ProcessSorting;
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
+use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 
 /// Point is of time, data
@@ -83,81 +84,97 @@ pub struct ConvertedCpuData {
     pub legend_value: String,
 }
 
-pub fn convert_temp_row(app: &AppState) -> Vec<Vec<String>> {
+pub fn convert_temp_row(
+    app: &AppState,
+) -> Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>> {
     let current_data = &app.data_collection;
     let temp_type = &app.app_config_fields.temperature_type;
 
-    let mut sensor_vector: Vec<Vec<String>> = current_data
-        .temp_harvest
-        .iter()
-        .map(|temp_harvest| {
-            vec![
-                temp_harvest.name.clone(),
-                (temp_harvest.temperature.ceil() as u64).to_string()
-                    + match temp_type {
-                        data_harvester::temperature::TemperatureType::Celsius => "°C",
-                        data_harvester::temperature::TemperatureType::Kelvin => "K",
-                        data_harvester::temperature::TemperatureType::Fahrenheit => "°F",
-                    },
-            ]
-        })
-        .collect();
+    if current_data.temp_harvest.is_empty() {
+        vec![vec![
+            ("No Sensors Found".into(), Some("N/A".into())),
+            ("".into(), None),
+        ]]
+    } else {
+        let (unit_long, unit_short) = match temp_type {
+            data_harvester::temperature::TemperatureType::Celsius => ("°C", "C"),
+            data_harvester::temperature::TemperatureType::Kelvin => ("K", "K"),
+            data_harvester::temperature::TemperatureType::Fahrenheit => ("°F", "F"),
+        };
 
-    if sensor_vector.is_empty() {
-        sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()]);
+        current_data
+            .temp_harvest
+            .iter()
+            .map(|temp_harvest| {
+                let val = temp_harvest.temperature.ceil().to_string();
+                vec![
+                    (temp_harvest.name.clone().into(), None),
+                    (
+                        format!("{}{}", val, unit_long).into(),
+                        Some(format!("{}{}", val, unit_short).into()),
+                    ),
+                ]
+            })
+            .collect()
     }
-
-    sensor_vector
 }
 
-pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<String>> {
-    let mut disk_vector: Vec<Vec<String>> = Vec::new();
+pub fn convert_disk_row(
+    current_data: &data_farmer::DataCollection,
+) -> Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>> {
+    if current_data.disk_harvest.is_empty() {
+        vec![vec![
+            ("No Disks Found".into(), Some("N/A".into())),
+            ("".into(), None),
+        ]]
+    } else {
+        current_data
+            .disk_harvest
+            .iter()
+            .zip(&current_data.io_labels)
+            .map(|(disk, (io_read, io_write))| {
+                let free_space_fmt = if let Some(free_space) = disk.free_space {
+                    let converted_free_space = get_decimal_bytes(free_space);
+                    Cow::Owned(format!(
+                        "{:.*}{}",
+                        0, converted_free_space.0, converted_free_space.1
+                    ))
+                } else {
+                    "N/A".into()
+                };
+                let total_space_fmt = if let Some(total_space) = disk.total_space {
+                    let converted_total_space = get_decimal_bytes(total_space);
+                    Cow::Owned(format!(
+                        "{:.*}{}",
+                        0, converted_total_space.0, converted_total_space.1
+                    ))
+                } else {
+                    "N/A".into()
+                };
 
-    current_data
-        .disk_harvest
-        .iter()
-        .zip(&current_data.io_labels)
-        .for_each(|(disk, (io_read, io_write))| {
-            let free_space_fmt = if let Some(free_space) = disk.free_space {
-                let converted_free_space = get_decimal_bytes(free_space);
-                format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1)
-            } else {
-                "N/A".to_string()
-            };
-            let total_space_fmt = if let Some(total_space) = disk.total_space {
-                let converted_total_space = get_decimal_bytes(total_space);
-                format!(
-                    "{:.*}{}",
-                    0, converted_total_space.0, converted_total_space.1
-                )
-            } else {
-                "N/A".to_string()
-            };
+                let usage_fmt = if let (Some(used_space), Some(total_space)) =
+                    (disk.used_space, disk.total_space)
+                {
+                    Cow::Owned(format!(
+                        "{:.0}%",
+                        used_space as f64 / total_space as f64 * 100_f64
+                    ))
+                } else {
+                    "N/A".into()
+                };
 
-            let usage_fmt = if let (Some(used_space), Some(total_space)) =
-                (disk.used_space, disk.total_space)
-            {
-                format!("{:.0}%", used_space as f64 / total_space as f64 * 100_f64)
-            } else {
-                "N/A".to_string()
-            };
-
-            disk_vector.push(vec![
-                disk.name.to_string(),
-                disk.mount_point.to_string(),
-                usage_fmt,
-                free_space_fmt,
-                total_space_fmt,
-                io_read.to_string(),
-                io_write.to_string(),
-            ]);
-        });
-
-    if disk_vector.is_empty() {
-        disk_vector.push(vec!["No Disks Found".to_string(), "".to_string()]);
+                vec![
+                    (disk.name.clone().into(), None),
+                    (disk.mount_point.clone().into(), None),
+                    (usage_fmt, None),
+                    (free_space_fmt, None),
+                    (total_space_fmt, None),
+                    (io_read.clone().into(), None),
+                    (io_write.clone().into(), None),
+                ]
+            })
+            .collect::<Vec<_>>()
     }
-
-    disk_vector
 }
 
 pub fn convert_cpu_data_points(

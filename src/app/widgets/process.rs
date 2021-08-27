@@ -1,22 +1,23 @@
 use std::collections::HashMap;
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use unicode_segmentation::GraphemeCursor;
 
 use tui::{
     backend::Backend,
     layout::Rect,
-    widgets::{Block, TableState},
+    widgets::{Block, Borders, TableState},
     Frame,
 };
 
 use crate::{
     app::{
-        event::{does_point_intersect_rect, EventResult, MultiKey, MultiKeyResult},
+        event::{EventResult, MultiKey, MultiKeyResult},
         query::*,
     },
     canvas::{DisplayableData, Painter},
     data_harvester::processes::{self, ProcessSorting},
+    options::ProcessDefaults,
 };
 use ProcessSorting::*;
 
@@ -648,7 +649,7 @@ pub struct ProcessManager {
     selected: ProcessManagerSelection,
 
     in_tree_mode: bool,
-    show_sort: bool,
+    show_sort: bool, // TODO: Add this for temp and disk???
     show_search: bool,
 
     search_modifiers: SearchModifiers,
@@ -656,19 +657,28 @@ pub struct ProcessManager {
 
 impl ProcessManager {
     /// Creates a new [`ProcessManager`].
-    pub fn new(default_in_tree_mode: bool) -> Self {
-        Self {
+    pub fn new(process_defaults: &ProcessDefaults) -> Self {
+        let process_table_columns = vec![];
+
+        let mut manager = Self {
             bounds: Rect::default(),
-            process_table: TextTable::new(vec![]), // TODO: Do this
-            sort_table: TextTable::new(vec![]),    // TODO: Do this too
+            process_table: TextTable::new(process_table_columns), // TODO: Do this
+            sort_table: TextTable::new(vec![]),                   // TODO: Do this too
             search_input: TextInput::new(),
-            dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Use a static arrayvec
+            dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Maybe use something static...
             selected: ProcessManagerSelection::Processes,
-            in_tree_mode: default_in_tree_mode,
+            in_tree_mode: false,
             show_sort: false,
             show_search: false,
             search_modifiers: SearchModifiers::default(),
-        }
+        };
+
+        manager.set_tree_mode(process_defaults.is_tree);
+        manager
+    }
+
+    fn set_tree_mode(&mut self, in_tree_mode: bool) {
+        self.in_tree_mode = in_tree_mode;
     }
 
     fn open_search(&mut self) -> EventResult {
@@ -800,20 +810,27 @@ impl Component for ProcessManager {
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        let global_x = event.column;
-        let global_y = event.row;
-
-        if does_point_intersect_rect(global_x, global_y, self.process_table.bounds()) {
-            self.selected = ProcessManagerSelection::Processes;
-            self.process_table.handle_mouse_event(event)
-        } else if does_point_intersect_rect(global_x, global_y, self.sort_table.bounds()) {
-            self.selected = ProcessManagerSelection::Sort;
-            self.sort_table.handle_mouse_event(event)
-        } else if does_point_intersect_rect(global_x, global_y, self.search_input.bounds()) {
-            self.selected = ProcessManagerSelection::Search;
-            self.search_input.handle_mouse_event(event)
-        } else {
-            EventResult::NoRedraw
+        match &event.kind {
+            MouseEventKind::Down(MouseButton::Left) => {
+                if self.process_table.does_intersect_mouse(&event) {
+                    self.selected = ProcessManagerSelection::Processes;
+                    self.process_table.handle_mouse_event(event)
+                } else if self.sort_table.does_intersect_mouse(&event) {
+                    self.selected = ProcessManagerSelection::Sort;
+                    self.sort_table.handle_mouse_event(event)
+                } else if self.search_input.does_intersect_mouse(&event) {
+                    self.selected = ProcessManagerSelection::Search;
+                    self.search_input.handle_mouse_event(event)
+                } else {
+                    EventResult::NoRedraw
+                }
+            }
+            MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => match self.selected {
+                ProcessManagerSelection::Processes => self.process_table.handle_mouse_event(event),
+                ProcessManagerSelection::Sort => self.sort_table.handle_mouse_event(event),
+                ProcessManagerSelection::Search => self.search_input.handle_mouse_event(event),
+            },
+            _ => EventResult::NoRedraw,
         }
     }
 }
@@ -824,15 +841,30 @@ impl Widget for ProcessManager {
     }
 
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, block: Block<'_>,
-        data: &DisplayableData,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, data: &DisplayableData,
+        selected: bool,
     ) {
+        let block = Block::default()
+            .border_style(if selected {
+                painter.colours.highlighted_border_style
+            } else {
+                painter.colours.border_style
+            })
+            .borders(Borders::ALL);
+
+        self.set_bounds(area);
         let draw_area = block.inner(area);
         let (process_table, widths, mut tui_state) = self.process_table.create_draw_table(
             painter,
             &vec![], // TODO: Fix this
             draw_area,
         );
+
+        let process_table = process_table.highlight_style(if selected {
+            painter.colours.currently_selected_text_style
+        } else {
+            painter.colours.text_style
+        });
 
         f.render_stateful_widget(
             process_table.block(block).widths(&widths),

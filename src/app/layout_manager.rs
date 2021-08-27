@@ -1082,10 +1082,7 @@ pub fn create_layout_tree(
                 }
             }
             BottomWidgetType::Proc => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    ProcessManager::new(process_defaults.is_tree).into(),
-                );
+                widget_lookup_map.insert(widget_id, ProcessManager::new(process_defaults).into());
             }
             BottomWidgetType::Temp => {
                 widget_lookup_map.insert(widget_id, TempTable::default().into());

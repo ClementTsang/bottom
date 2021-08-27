@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{borrow::Cow, collections::HashMap, str::FromStr};
 
 use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
@@ -6,7 +6,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph},
+    widgets::Paragraph,
     Frame, Terminal,
 };
 
@@ -41,11 +41,10 @@ pub struct DisplayableData {
     pub total_tx_display: String,
     pub network_data_rx: Vec<Point>,
     pub network_data_tx: Vec<Point>,
-    pub disk_data: Vec<Vec<String>>,
-    pub temp_sensor_data: Vec<Vec<String>>,
+    pub disk_data: Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>>,
+    pub temp_sensor_data: Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>>,
     pub single_process_data: HashMap<Pid, ConvertedProcessData>, // Contains single process data, key is PID
-    pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>, // What's actually displayed, key is the widget ID.
-    pub stringified_process_data_map: HashMap<u64, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled, key is the widget ID
+    pub stringified_process_data_map: HashMap<NodeId, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled, key is the widget ID
 
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
@@ -342,10 +341,7 @@ impl Painter {
                     .widget_lookup_map
                     .get_mut(&app_state.selected_widget)
                 {
-                    let block = Block::default()
-                        .border_style(self.colours.highlighted_border_style)
-                        .borders(Borders::ALL);
-                    current_widget.draw(self, f, draw_area, block, canvas_data);
+                    current_widget.draw(self, f, draw_area, canvas_data, true);
                 }
             } else {
                 /// A simple traversal through the `arena`.
@@ -396,14 +392,7 @@ impl Painter {
                             }
                             LayoutNode::Widget => {
                                 if let Some(widget) = lookup_map.get_mut(&node) {
-                                    let block = Block::default()
-                                        .border_style(if selected_id == node {
-                                            painter.colours.highlighted_border_style
-                                        } else {
-                                            painter.colours.border_style
-                                        })
-                                        .borders(Borders::ALL);
-                                    widget.draw(painter, f, area, block, canvas_data);
+                                    widget.draw(painter, f, area, canvas_data, selected_id == node);
                                 }
                             }
                         }

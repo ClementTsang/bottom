@@ -7,6 +7,7 @@ use crate::{
     constants::*,
 };
 
+use indextree::NodeId;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -101,9 +102,9 @@ static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE: Lazy<Vec<Option<f64>>> = La
 
 pub fn draw_process_features<B: Backend>(
     painter: &Painter, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect,
-    draw_border: bool, widget_id: u64,
+    draw_border: bool, widget_id: NodeId,
 ) {
-    if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
+    if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&1) {
         let search_height = if draw_border { 5 } else { 3 };
         let is_sort_open = process_widget_state.is_sort_open;
         let header_len = process_widget_state.columns.longest_header_len;
@@ -122,7 +123,7 @@ pub fn draw_process_features<B: Backend>(
                 app_state,
                 processes_chunk[1],
                 draw_border,
-                widget_id + 1,
+                widget_id,
             );
         }
 
@@ -133,14 +134,7 @@ pub fn draw_process_features<B: Backend>(
                 .split(proc_draw_loc);
             proc_draw_loc = processes_chunk[1];
 
-            draw_process_sort(
-                painter,
-                f,
-                app_state,
-                processes_chunk[0],
-                draw_border,
-                widget_id + 2,
-            );
+            draw_process_sort(painter, f, app_state, processes_chunk[0], draw_border, 1);
         }
 
         draw_processes_table(painter, f, app_state, proc_draw_loc, draw_border, widget_id);
@@ -149,17 +143,17 @@ pub fn draw_process_features<B: Backend>(
 
 fn draw_processes_table<B: Backend>(
     painter: &Painter, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect,
-    draw_border: bool, widget_id: u64,
+    draw_border: bool, widget_id: NodeId,
 ) {
     let should_get_widget_bounds = app_state.should_get_widget_bounds();
-    if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+    if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&1) {
         let recalculate_column_widths =
             should_get_widget_bounds || proc_widget_state.requires_redraw;
         if proc_widget_state.requires_redraw {
             proc_widget_state.requires_redraw = false;
         }
 
-        let is_on_widget = widget_id == app_state.current_widget.widget_id;
+        let is_on_widget = false;
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
             .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
@@ -178,7 +172,7 @@ fn draw_processes_table<B: Backend>(
         let title_base = if app_state.app_config_fields.show_table_scroll_position {
             if let Some(finalized_process_data) = app_state
                 .canvas_data
-                .finalized_process_data_map
+                .stringified_process_data_map
                 .get(&widget_id)
             {
                 let title = format!(
@@ -511,7 +505,7 @@ fn draw_processes_table<B: Backend>(
 
         if app_state.should_get_widget_bounds() {
             // Update draw loc in widget map
-            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+            if let Some(widget) = app_state.widget_map.get_mut(&1) {
                 widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
                 widget.bottom_right_corner = Some((
                     margined_draw_loc.x + margined_draw_loc.width,
@@ -524,7 +518,7 @@ fn draw_processes_table<B: Backend>(
 
 fn draw_search_field<B: Backend>(
     painter: &Painter, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect,
-    draw_border: bool, widget_id: u64,
+    draw_border: bool, _widget_id: NodeId,
 ) {
     fn build_query<'a>(
         is_on_widget: bool, grapheme_indices: GraphemeIndices<'a>, start_position: usize,
@@ -565,8 +559,8 @@ fn draw_search_field<B: Backend>(
     }
 
     // TODO: Make the cursor scroll back if there's space!
-    if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&(widget_id - 1)) {
-        let is_on_widget = widget_id == app_state.current_widget.widget_id;
+    if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&1) {
+        let is_on_widget = false;
         let num_columns = usize::from(draw_loc.width);
         let search_title = "> ";
 
@@ -728,7 +722,7 @@ fn draw_search_field<B: Backend>(
 
         if app_state.should_get_widget_bounds() {
             // Update draw loc in widget map
-            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
+            if let Some(widget) = app_state.widget_map.get_mut(&1) {
                 widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
                 widget.bottom_right_corner = Some((
                     margined_draw_loc.x + margined_draw_loc.width,

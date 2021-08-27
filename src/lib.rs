@@ -369,108 +369,109 @@ pub fn update_all_process_lists(app: &mut AppState) {
     }
 }
 
-fn update_final_process_list(app: &mut AppState, widget_id: u64) {
-    let process_states = app
-        .proc_state
-        .widget_states
-        .get(&widget_id)
-        .map(|process_state| {
-            (
-                process_state
-                    .process_search_state
-                    .search_state
-                    .is_invalid_or_blank_search(),
-                process_state.is_using_command,
-                process_state.is_grouped,
-                process_state.is_tree_mode,
-            )
-        });
+fn update_final_process_list(_app: &mut AppState, _widget_id: u64) {
+    // TODO: [STATE] FINISH THIS
+    // let process_states = app
+    //     .proc_state
+    //     .widget_states
+    //     .get(&widget_id)
+    //     .map(|process_state| {
+    //         (
+    //             process_state
+    //                 .process_search_state
+    //                 .search_state
+    //                 .is_invalid_or_blank_search(),
+    //             process_state.is_using_command,
+    //             process_state.is_grouped,
+    //             process_state.is_tree_mode,
+    //         )
+    //     });
 
-    if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
-        if !app.is_frozen {
-            convert_process_data(
-                &app.data_collection,
-                &mut app.canvas_data.single_process_data,
-                #[cfg(target_family = "unix")]
-                &mut app.user_table,
-            );
-        }
-        let process_filter = app.get_process_filter(widget_id);
-        let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
-            app.canvas_data
-                .single_process_data
-                .iter()
-                .map(|(_pid, process)| {
-                    let mut process_clone = process.clone();
-                    if !is_invalid_or_blank {
-                        if let Some(process_filter) = process_filter {
-                            process_clone.is_disabled_entry =
-                                !process_filter.check(&process_clone, is_using_command);
-                        }
-                    }
-                    process_clone
-                })
-                .collect::<Vec<_>>()
-        } else {
-            app.canvas_data
-                .single_process_data
-                .iter()
-                .filter_map(|(_pid, process)| {
-                    if !is_invalid_or_blank {
-                        if let Some(process_filter) = process_filter {
-                            if process_filter.check(process, is_using_command) {
-                                Some(process)
-                            } else {
-                                None
-                            }
-                        } else {
-                            Some(process)
-                        }
-                    } else {
-                        Some(process)
-                    }
-                })
-                .cloned()
-                .collect::<Vec<_>>()
-        };
+    // if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
+    //     if !app.is_frozen {
+    //         convert_process_data(
+    //             &app.data_collection,
+    //             &mut app.canvas_data.single_process_data,
+    //             #[cfg(target_family = "unix")]
+    //             &mut app.user_table,
+    //         );
+    //     }
+    //     let process_filter = app.get_process_filter(widget_id);
+    //     let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
+    //         app.canvas_data
+    //             .single_process_data
+    //             .iter()
+    //             .map(|(_pid, process)| {
+    //                 let mut process_clone = process.clone();
+    //                 if !is_invalid_or_blank {
+    //                     if let Some(process_filter) = process_filter {
+    //                         process_clone.is_disabled_entry =
+    //                             !process_filter.check(&process_clone, is_using_command);
+    //                     }
+    //                 }
+    //                 process_clone
+    //             })
+    //             .collect::<Vec<_>>()
+    //     } else {
+    //         app.canvas_data
+    //             .single_process_data
+    //             .iter()
+    //             .filter_map(|(_pid, process)| {
+    //                 if !is_invalid_or_blank {
+    //                     if let Some(process_filter) = process_filter {
+    //                         if process_filter.check(process, is_using_command) {
+    //                             Some(process)
+    //                         } else {
+    //                             None
+    //                         }
+    //                     } else {
+    //                         Some(process)
+    //                     }
+    //                 } else {
+    //                     Some(process)
+    //                 }
+    //             })
+    //             .cloned()
+    //             .collect::<Vec<_>>()
+    //     };
 
-        if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-            let mut finalized_process_data = if is_tree {
-                tree_process_data(
-                    &filtered_process_data,
-                    is_using_command,
-                    &proc_widget_state.process_sorting_type,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            } else if is_grouped {
-                group_process_data(&filtered_process_data, is_using_command)
-            } else {
-                filtered_process_data
-            };
+    //     if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
+    //         let mut finalized_process_data = if is_tree {
+    //             tree_process_data(
+    //                 &filtered_process_data,
+    //                 is_using_command,
+    //                 &proc_widget_state.process_sorting_type,
+    //                 proc_widget_state.is_process_sort_descending,
+    //             )
+    //         } else if is_grouped {
+    //             group_process_data(&filtered_process_data, is_using_command)
+    //         } else {
+    //             filtered_process_data
+    //         };
 
-            // Note tree mode is sorted well before this, as it's special.
-            if !is_tree {
-                sort_process_data(&mut finalized_process_data, proc_widget_state);
-            }
+    //         // Note tree mode is sorted well before this, as it's special.
+    //         if !is_tree {
+    //             sort_process_data(&mut finalized_process_data, proc_widget_state);
+    //         }
 
-            if proc_widget_state.scroll_state.current_scroll_position
-                >= finalized_process_data.len()
-            {
-                proc_widget_state.scroll_state.current_scroll_position =
-                    finalized_process_data.len().saturating_sub(1);
-                proc_widget_state.scroll_state.previous_scroll_position = 0;
-                proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
-            }
+    //         if proc_widget_state.scroll_state.current_scroll_position
+    //             >= finalized_process_data.len()
+    //         {
+    //             proc_widget_state.scroll_state.current_scroll_position =
+    //                 finalized_process_data.len().saturating_sub(1);
+    //             proc_widget_state.scroll_state.previous_scroll_position = 0;
+    //             proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
+    //         }
 
-            app.canvas_data.stringified_process_data_map.insert(
-                widget_id,
-                stringify_process_data(proc_widget_state, &finalized_process_data),
-            );
-            app.canvas_data
-                .finalized_process_data_map
-                .insert(widget_id, finalized_process_data);
-        }
-    }
+    //         app.canvas_data.stringified_process_data_map.insert(
+    //             widget_id,
+    //             stringify_process_data(proc_widget_state, &finalized_process_data),
+    //         );
+    //         app.canvas_data
+    //             .finalized_process_data_map
+    //             .insert(widget_id, finalized_process_data);
+    //     }
+    // }
 }
 
 fn sort_process_data(

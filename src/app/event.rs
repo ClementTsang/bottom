@@ -1,14 +1,10 @@
 use std::time::{Duration, Instant};
 
-use tui::layout::Rect;
-
 const MAX_TIMEOUT: Duration = Duration::from_millis(400);
 
 /// These are "signals" that are sent along with an [`EventResult`] to signify a potential additional action
 /// that the caller must do, along with the "core" result of either drawing or redrawing.
 pub enum ReturnSignal {
-    /// Do nothing.
-    Nothing,
     /// A signal returned when some process widget was told to try to kill a process (or group of processes).
     KillProcess,
 }
@@ -140,9 +136,4 @@ impl MultiKey {
             }
         }
     }
-}
-
-/// Checks whether points `(x, y)` intersect a given [`Rect`].
-pub fn does_point_intersect_rect(x: u16, y: u16, rect: Rect) -> bool {
-    x >= rect.left() && x <= rect.right() && y >= rect.top() && y <= rect.bottom()
 }

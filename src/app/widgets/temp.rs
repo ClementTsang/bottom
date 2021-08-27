@@ -1,7 +1,12 @@
 use std::collections::HashMap;
 
 use crossterm::event::{KeyEvent, MouseEvent};
-use tui::{backend::Backend, layout::Rect, widgets::Block, Frame};
+use tui::{
+    backend::Backend,
+    layout::Rect,
+    widgets::{Block, Borders},
+    Frame,
+};
 
 use crate::{
     app::{event::EventResult, text_table::Column},
@@ -52,7 +57,7 @@ pub struct TempTable {
 impl Default for TempTable {
     fn default() -> Self {
         let table = TextTable::new(vec![
-            Column::new_flex("Sensor", None, false, 1.0),
+            Column::new_flex("Sensor", None, false, 0.8),
             Column::new_hard("Temp", None, false, Some(4)),
         ])
         .left_to_right(false);
@@ -88,13 +93,28 @@ impl Widget for TempTable {
     }
 
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, block: Block<'_>,
-        data: &DisplayableData,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, data: &DisplayableData,
+        selected: bool,
     ) {
+        let block = Block::default()
+            .border_style(if selected {
+                painter.colours.highlighted_border_style
+            } else {
+                painter.colours.border_style
+            })
+            .borders(Borders::ALL); // TODO: Also do the scrolling indicator!
+
+        self.set_bounds(area);
         let draw_area = block.inner(area);
         let (table, widths, mut tui_state) =
             self.table
                 .create_draw_table(painter, &data.temp_sensor_data, draw_area);
+
+        let table = table.highlight_style(if selected {
+            painter.colours.currently_selected_text_style
+        } else {
+            painter.colours.text_style
+        });
 
         f.render_stateful_widget(table.block(block).widths(&widths), area, &mut tui_state);
     }
