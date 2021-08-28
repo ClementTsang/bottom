@@ -9,11 +9,11 @@ use tui::{
 };
 
 use crate::{
-    app::{event::EventResult, text_table::Column},
+    app::{event::EventResult, sort_text_table::SortableColumn},
     canvas::{DisplayableData, Painter},
 };
 
-use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, Widget};
+use super::{AppScrollWidgetState, CanvasTableWidthState, Component, SortableTextTable, Widget};
 
 pub struct TempWidgetState {
     pub scroll_state: AppScrollWidgetState,
@@ -50,17 +50,17 @@ impl TempState {
 
 /// A table displaying disk data.  Essentially a wrapper around a [`TextTable`].
 pub struct TempTable {
-    table: TextTable,
+    table: SortableTextTable,
     bounds: Rect,
 }
 
 impl Default for TempTable {
     fn default() -> Self {
-        let table = TextTable::new(vec![
-            Column::new_flex("Sensor", None, false, 0.8),
-            Column::new_hard("Temp", None, false, Some(4)),
+        let table = SortableTextTable::new(vec![
+            SortableColumn::new_flex("Sensor".into(), None, false, 0.8),
+            SortableColumn::new_hard("Temp".into(), None, false, Some(5)),
         ])
-        .left_to_right(false);
+        .default_ltr(false);
 
         Self {
             table,
@@ -108,6 +108,7 @@ impl Widget for TempTable {
         let draw_area = block.inner(area);
         let (table, widths, mut tui_state) =
             self.table
+                .table
                 .create_draw_table(painter, &data.temp_sensor_data, draw_area);
 
         let table = table.highlight_style(if selected {

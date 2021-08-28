@@ -5,7 +5,9 @@ use tui::layout::Rect;
 
 use crate::app::event::EventResult;
 
-use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, TimeGraph, Widget};
+use super::{
+    AppScrollWidgetState, CanvasTableWidthState, Component, SortableTextTable, TimeGraph, Widget,
+};
 
 pub struct CpuWidgetState {
     pub current_display_time: u64,
@@ -67,7 +69,7 @@ pub enum CpuGraphLegendPosition {
 /// A widget designed to show CPU usage via a graph, along with a side legend implemented as a [`TextTable`].
 pub struct CpuGraph {
     graph: TimeGraph,
-    legend: TextTable,
+    legend: SortableTextTable,
     pub legend_position: CpuGraphLegendPosition,
 
     bounds: Rect,
@@ -77,7 +79,7 @@ pub struct CpuGraph {
 impl CpuGraph {
     /// Creates a new [`CpuGraph`].
     pub fn new(
-        graph: TimeGraph, legend: TextTable, legend_position: CpuGraphLegendPosition,
+        graph: TimeGraph, legend: SortableTextTable, legend_position: CpuGraphLegendPosition,
     ) -> Self {
         Self {
             graph,

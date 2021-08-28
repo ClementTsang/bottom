@@ -23,7 +23,7 @@ use ProcessSorting::*;
 
 use super::{
     AppScrollWidgetState, CanvasTableWidthState, Component, CursorDirection, ScrollDirection,
-    TextInput, TextTable, Widget,
+    SortableTextTable, TextInput, TextTable, Widget,
 };
 
 /// AppSearchState deals with generic searching (I might do this in the future).
@@ -640,7 +640,7 @@ struct SearchModifiers {
 /// A searchable, sortable table to manage processes.
 pub struct ProcessManager {
     bounds: Rect,
-    process_table: TextTable,
+    process_table: SortableTextTable,
     sort_table: TextTable,
     search_input: TextInput,
 
@@ -662,8 +662,8 @@ impl ProcessManager {
 
         let mut manager = Self {
             bounds: Rect::default(),
-            process_table: TextTable::new(process_table_columns), // TODO: Do this
-            sort_table: TextTable::new(vec![]),                   // TODO: Do this too
+            process_table: SortableTextTable::new(process_table_columns), // TODO: Do this
+            sort_table: TextTable::new(vec![]),                           // TODO: Do this too
             search_input: TextInput::new(),
             dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Maybe use something static...
             selected: ProcessManagerSelection::Processes,
@@ -854,7 +854,7 @@ impl Widget for ProcessManager {
 
         self.set_bounds(area);
         let draw_area = block.inner(area);
-        let (process_table, widths, mut tui_state) = self.process_table.create_draw_table(
+        let (process_table, widths, mut tui_state) = self.process_table.table.create_draw_table(
             painter,
             &vec![], // TODO: Fix this
             draw_area,

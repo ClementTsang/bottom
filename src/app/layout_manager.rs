@@ -1,6 +1,7 @@
 use crate::{
     app::{
-        text_table::Column, DiskTable, MemGraph, NetGraph, OldNetGraph, ProcessManager, TempTable,
+        sort_text_table::SortableColumn, DiskTable, MemGraph, NetGraph, OldNetGraph,
+        ProcessManager, TempTable,
     },
     error::{BottomError, Result},
     options::layout_options::{Row, RowChildren},
@@ -14,7 +15,9 @@ use typed_builder::*;
 use crate::app::widgets::Widget;
 use crate::constants::DEFAULT_WIDGET_ID;
 
-use super::{event::SelectionAction, CpuGraph, TextTable, TimeGraph, TmpBottomWidget, UsedWidgets};
+use super::{
+    event::SelectionAction, CpuGraph, SortableTextTable, TimeGraph, TmpBottomWidget, UsedWidgets,
+};
 
 /// Represents a more usable representation of the layout, derived from the
 /// config.
@@ -1058,9 +1061,9 @@ pub fn create_layout_tree(
         match widget_type {
             BottomWidgetType::Cpu => {
                 let graph = TimeGraph::from_config(app_config_fields);
-                let legend = TextTable::new(vec![
-                    Column::new_flex("CPU", None, false, 0.5),
-                    Column::new_flex("Use%", None, false, 0.5),
+                let legend = SortableTextTable::new(vec![
+                    SortableColumn::new_flex("CPU".into(), None, false, 0.5),
+                    SortableColumn::new_flex("Use%".into(), None, false, 0.5),
                 ]);
                 let legend_position = super::CpuGraphLegendPosition::Right;
 

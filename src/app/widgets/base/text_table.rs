@@ -1,9 +1,9 @@
 use std::{
     borrow::Cow,
-    cmp::{max, min, Ordering},
+    cmp::{max, min},
 };
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
+use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{
     layout::{Constraint, Rect},
     text::Text,
@@ -24,107 +24,76 @@ pub enum DesiredColumnWidth {
     Flex { desired: u16, max_percentage: f64 },
 }
 
-/// A [`ColumnType`] is a
-pub trait ColumnType {
-    type DataType;
+/// A trait that must be implemented for anything using a [`TextTable`].
+#[allow(unused_variables)]
+pub trait TableColumn {
+    fn display_name(&self) -> Cow<'static, str>;
 
-    fn sort_function(a: Self::DataType, b: Self::DataType) -> Ordering;
+    fn get_desired_width(&self) -> &DesiredColumnWidth;
+
+    fn get_x_bounds(&self) -> Option<(u16, u16)>;
+
+    fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>);
 }
 
-/// A [`Column`] represents some column in a [`TextTable`].
+/// A [`SimpleColumn`] represents some column in a [`TextTable`].
 #[derive(Debug)]
-pub struct Column {
-    pub name: &'static str,
-    pub shortcut: Option<(KeyEvent, String)>,
-    pub default_descending: bool,
+pub struct SimpleColumn {
+    name: Cow<'static, str>,
 
     // TODO: I would remove these in the future, storing them here feels weird...
-    pub desired_width: DesiredColumnWidth,
-    pub x_bounds: Option<(u16, u16)>,
+    desired_width: DesiredColumnWidth,
+    x_bounds: Option<(u16, u16)>,
 }
 
-impl Column {
-    /// Creates a new [`Column`].
-    pub fn new(
-        name: &'static str, shortcut: Option<KeyEvent>, default_descending: bool,
-        desired_width: DesiredColumnWidth,
-    ) -> Self {
+impl SimpleColumn {
+    /// Creates a new [`SimpleColumn`].
+    pub fn new(name: Cow<'static, str>, desired_width: DesiredColumnWidth) -> Self {
         Self {
             name,
             x_bounds: None,
-            shortcut: shortcut.map(|e| {
-                let modifier = if e.modifiers.is_empty() {
-                    ""
-                } else if let KeyModifiers::ALT = e.modifiers {
-                    "Alt+"
-                } else if let KeyModifiers::SHIFT = e.modifiers {
-                    "Shift+"
-                } else if let KeyModifiers::CONTROL = e.modifiers {
-                    "Ctrl+"
-                } else {
-                    // For now, that's all we support, though combos/more could be added.
-                    ""
-                };
-
-                let key: Cow<'static, str> = match e.code {
-                    KeyCode::Backspace => "Backspace".into(),
-                    KeyCode::Enter => "Enter".into(),
-                    KeyCode::Left => "Left".into(),
-                    KeyCode::Right => "Right".into(),
-                    KeyCode::Up => "Up".into(),
-                    KeyCode::Down => "Down".into(),
-                    KeyCode::Home => "Home".into(),
-                    KeyCode::End => "End".into(),
-                    KeyCode::PageUp => "PgUp".into(),
-                    KeyCode::PageDown => "PgDown".into(),
-                    KeyCode::Tab => "Tab".into(),
-                    KeyCode::BackTab => "BackTab".into(),
-                    KeyCode::Delete => "Del".into(),
-                    KeyCode::Insert => "Insert".into(),
-                    KeyCode::F(num) => format!("F{}", num).into(),
-                    KeyCode::Char(c) => format!("{}", c).into(),
-                    KeyCode::Null => "Null".into(),
-                    KeyCode::Esc => "Esc".into(),
-                };
-
-                let shortcut_name = format!("({}{})", modifier, key);
-
-                (e, shortcut_name)
-            }),
-            default_descending,
             desired_width,
         }
     }
 
-    /// Creates a new [`Column`] with a hard desired width. If none is specified,
+    /// Creates a new [`SimpleColumn`] with a hard desired width. If none is specified,
     /// it will instead use the name's length + 1.
-    pub fn new_hard(
-        name: &'static str, shortcut: Option<KeyEvent>, default_descending: bool,
-        hard_length: Option<u16>,
-    ) -> Self {
-        // TODO: It should really be based on the shortcut name...
-        Column::new(
+    pub fn new_hard(name: Cow<'static, str>, hard_length: Option<u16>) -> Self {
+        let name_len = name.len();
+        SimpleColumn::new(
             name,
-            shortcut,
-            default_descending,
-            DesiredColumnWidth::Hard(hard_length.unwrap_or(name.len() as u16 + 1)),
+            DesiredColumnWidth::Hard(hard_length.unwrap_or(name_len as u16 + 1)),
         )
     }
 
-    /// Creates a new [`Column`] with a flexible desired width.
-    pub fn new_flex(
-        name: &'static str, shortcut: Option<KeyEvent>, default_descending: bool,
-        max_percentage: f64,
-    ) -> Self {
-        Column::new(
+    /// Creates a new [`SimpleColumn`] with a flexible desired width.
+    pub fn new_flex(name: Cow<'static, str>, max_percentage: f64) -> Self {
+        let name_len = name.len();
+        SimpleColumn::new(
             name,
-            shortcut,
-            default_descending,
             DesiredColumnWidth::Flex {
-                desired: name.len() as u16,
+                desired: name_len as u16,
                 max_percentage,
             },
         )
+    }
+}
+
+impl TableColumn for SimpleColumn {
+    fn display_name(&self) -> Cow<'static, str> {
+        self.name.clone()
+    }
+
+    fn get_desired_width(&self) -> &DesiredColumnWidth {
+        &self.desired_width
+    }
+
+    fn get_x_bounds(&self) -> Option<(u16, u16)> {
+        self.x_bounds
+    }
+
+    fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>) {
+        self.x_bounds = x_bounds;
     }
 }
 
@@ -138,47 +107,45 @@ enum CachedColumnWidths {
 }
 
 /// A sortable, scrollable table with columns.
-pub struct TextTable {
+pub struct TextTable<C = SimpleColumn>
+where
+    C: TableColumn,
+{
     /// Controls the scrollable state.
-    scrollable: Scrollable,
+    pub scrollable: Scrollable,
 
     /// The columns themselves.
-    columns: Vec<Column>,
+    pub columns: Vec<C>,
 
     /// Cached column width data.
     cached_column_widths: CachedColumnWidths,
 
     /// Whether to show a gap between the column headers and the columns.
-    show_gap: bool,
+    pub show_gap: bool,
 
     /// The bounding box of the [`TextTable`].
-    bounds: Rect, // TODO: Consider moving bounds to something else???
-
-    /// Which index we're sorting by.
-    sort_index: usize,
-
-    /// Whether we're sorting by ascending order.
-    sort_ascending: bool,
+    pub bounds: Rect, // TODO: Consider moving bounds to something else???
 
     /// Whether we draw columns from left-to-right.
-    left_to_right: bool,
+    pub left_to_right: bool,
 }
 
-impl TextTable {
-    pub fn new(columns: Vec<Column>) -> Self {
+impl<C> TextTable<C>
+where
+    C: TableColumn,
+{
+    pub fn new(columns: Vec<C>) -> Self {
         Self {
             scrollable: Scrollable::new(0),
             columns,
             cached_column_widths: CachedColumnWidths::Uncached,
             show_gap: true,
             bounds: Rect::default(),
-            sort_index: 0,
-            sort_ascending: true,
             left_to_right: true,
         }
     }
 
-    pub fn left_to_right(mut self, ltr: bool) -> Self {
+    pub fn default_ltr(mut self, ltr: bool) -> Self {
         self.left_to_right = ltr;
         self
     }
@@ -188,50 +155,10 @@ impl TextTable {
         self
     }
 
-    pub fn sort_index(mut self, sort_index: usize) -> Self {
-        self.sort_index = sort_index;
-        self
-    }
-
-    pub fn column_names(&self) -> Vec<&'static str> {
-        self.columns.iter().map(|column| column.name).collect()
-    }
-
-    pub fn sorted_column_names(&self) -> Vec<String> {
-        const UP_ARROW: char = '▲';
-        const DOWN_ARROW: char = '▼';
-
+    pub fn displayed_column_names(&self) -> Vec<Cow<'static, str>> {
         self.columns
             .iter()
-            .enumerate()
-            .map(|(index, column)| {
-                if index == self.sort_index {
-                    format!(
-                        "{}{}{}",
-                        column.name,
-                        if let Some(shortcut) = &column.shortcut {
-                            shortcut.1.as_str()
-                        } else {
-                            ""
-                        },
-                        if self.sort_ascending {
-                            UP_ARROW
-                        } else {
-                            DOWN_ARROW
-                        }
-                    )
-                } else {
-                    format!(
-                        "{}{}",
-                        column.name,
-                        if let Some(shortcut) = &column.shortcut {
-                            shortcut.1.as_str()
-                        } else {
-                            ""
-                        }
-                    )
-                }
-            })
+            .map(|column| column.display_name())
             .collect()
     }
 
@@ -239,19 +166,19 @@ impl TextTable {
         self.scrollable.update_num_items(num_items);
     }
 
-    pub fn update_a_column(&mut self, index: usize, column: Column) {
+    pub fn update_single_column(&mut self, index: usize, column: C) {
         if let Some(c) = self.columns.get_mut(index) {
             *c = column;
         }
     }
 
     pub fn get_desired_column_widths(
-        columns: &[Column], data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
+        columns: &[C], data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
     ) -> Vec<DesiredColumnWidth> {
         columns
             .iter()
             .enumerate()
-            .map(|(column_index, c)| match c.desired_width {
+            .map(|(column_index, c)| match c.get_desired_width() {
                 DesiredColumnWidth::Hard(width) => {
                     let max_len = data
                         .iter()
@@ -274,12 +201,12 @@ impl TextTable {
                         .map(|(s, _)| s.len())
                         .unwrap_or(0) as u16;
 
-                    DesiredColumnWidth::Hard(max(max_len, width))
+                    DesiredColumnWidth::Hard(max(max_len, *width))
                 }
                 DesiredColumnWidth::Flex {
                     desired: _,
                     max_percentage: _,
-                } => c.desired_width.clone(),
+                } => c.get_desired_width().clone(),
             })
             .collect::<Vec<_>>()
     }
@@ -390,7 +317,7 @@ impl TextTable {
                 let mut column_start = 0;
                 for (column, width) in self.columns.iter_mut().zip(&column_widths) {
                     let column_end = column_start + *width;
-                    column.x_bounds = Some((column_start, column_end));
+                    column.set_x_bounds(Some((column_start, column_end)));
                     column_start = column_end + 1;
                 }
             }
@@ -468,7 +395,7 @@ impl TextTable {
         });
 
         // Now build up our headers...
-        let header = Row::new(self.sorted_column_names())
+        let header = Row::new(self.displayed_column_names())
             .style(painter.colours.table_header_style)
             .bottom_margin(table_gap);
 
@@ -483,59 +410,23 @@ impl TextTable {
             tui_state,
         )
     }
+
+    /// Creates a [`Table`] representing the sort list.
+    pub fn create_sort_list(&mut self) -> (Table<'_>, TableState) {
+        todo!()
+    }
 }
 
-impl Component for TextTable {
+impl<C> Component for TextTable<C>
+where
+    C: TableColumn,
+{
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
-        for (index, column) in self.columns.iter().enumerate() {
-            if let Some((shortcut, _)) = column.shortcut {
-                if shortcut == event {
-                    if self.sort_index == index {
-                        // Just flip the sort if we're already sorting by this.
-                        self.sort_ascending = !self.sort_ascending;
-                    } else {
-                        self.sort_index = index;
-                        self.sort_ascending = !column.default_descending;
-                    }
-                    return EventResult::Redraw;
-                }
-            }
-        }
-
         self.scrollable.handle_key_event(event)
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        if let MouseEventKind::Down(MouseButton::Left) = event.kind {
-            if !self.does_intersect_mouse(&event) {
-                return EventResult::NoRedraw;
-            }
-
-            // Note these are representing RELATIVE coordinates! They *need* the above intersection check for validity!
-            let x = event.column - self.bounds.left();
-            let y = event.row - self.bounds.top();
-
-            if y == 0 {
-                for (index, column) in self.columns.iter().enumerate() {
-                    if let Some((start, end)) = column.x_bounds {
-                        if x >= start && x <= end {
-                            if self.sort_index == index {
-                                // Just flip the sort if we're already sorting by this.
-                                self.sort_ascending = !self.sort_ascending;
-                            } else {
-                                self.sort_index = index;
-                                self.sort_ascending = !column.default_descending;
-                            }
-                            return EventResult::Redraw;
-                        }
-                    }
-                }
-            }
-
-            self.scrollable.handle_mouse_event(event)
-        } else {
-            self.scrollable.handle_mouse_event(event)
-        }
+        self.scrollable.handle_mouse_event(event)
     }
 
     fn bounds(&self) -> Rect {
