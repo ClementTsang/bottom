@@ -2,6 +2,11 @@ use std::collections::HashMap;
 
 use tui::layout::Rect;
 
+use crate::{
+    app::data_farmer::DataCollection,
+    data_conversion::{convert_battery_harvest, ConvertedBatteryData},
+};
+
 use super::{Component, Widget};
 
 #[derive(Default)]
@@ -36,6 +41,7 @@ pub struct BatteryTable {
     bounds: Rect,
     selected_index: usize,
     batteries: Vec<String>,
+    battery_data: Vec<ConvertedBatteryData>,
 }
 
 impl BatteryTable {
@@ -69,5 +75,9 @@ impl Component for BatteryTable {
 impl Widget for BatteryTable {
     fn get_pretty_name(&self) -> &'static str {
         "Battery"
+    }
+
+    fn update_data(&mut self, data_collection: &DataCollection) {
+        self.battery_data = convert_battery_harvest(data_collection);
     }
 }

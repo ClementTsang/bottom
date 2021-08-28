@@ -19,7 +19,7 @@ use indextree::{Arena, NodeId};
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
-use data_farmer::*;
+pub use data_farmer::*;
 use data_harvester::{processes, temperature};
 pub use filter::*;
 use layout_manager::*;
@@ -28,9 +28,7 @@ pub use widgets::*;
 use crate::{
     canvas,
     constants::{self, MAX_SIGNAL},
-    data_conversion::*,
     units::data_units::DataUnit,
-    update_final_process_list,
     utils::error::{BottomError, Result},
     BottomEvent, Pid,
 };
@@ -367,7 +365,10 @@ impl AppState {
                 self.data_collection.eat_data(new_data);
 
                 if !self.is_frozen {
-                    self.convert_data();
+                    let data_collection = &self.data_collection;
+                    self.widget_lookup_map
+                        .iter_mut()
+                        .for_each(|(_id, widget)| widget.update_data(data_collection));
 
                     EventResult::Redraw
                 } else {
@@ -392,89 +393,6 @@ impl AppState {
             ReturnSignal::KillProcess => {
                 todo!()
             }
-        }
-    }
-
-    fn convert_data(&mut self) {
-        // TODO: Probably refactor this.
-
-        // Network
-        if self.used_widgets.use_net {
-            let network_data = convert_network_data_points(
-                &self.data_collection,
-                false,
-                self.app_config_fields.use_basic_mode
-                    || self.app_config_fields.use_old_network_legend,
-                &self.app_config_fields.network_scale_type,
-                &self.app_config_fields.network_unit_type,
-                self.app_config_fields.network_use_binary_prefix,
-            );
-            self.canvas_data.network_data_rx = network_data.rx;
-            self.canvas_data.network_data_tx = network_data.tx;
-            self.canvas_data.rx_display = network_data.rx_display;
-            self.canvas_data.tx_display = network_data.tx_display;
-            if let Some(total_rx_display) = network_data.total_rx_display {
-                self.canvas_data.total_rx_display = total_rx_display;
-            }
-            if let Some(total_tx_display) = network_data.total_tx_display {
-                self.canvas_data.total_tx_display = total_tx_display;
-            }
-        }
-
-        // Disk
-        if self.used_widgets.use_disk {
-            self.canvas_data.disk_data = convert_disk_row(&self.data_collection);
-        }
-
-        // Temperatures
-        if self.used_widgets.use_temp {
-            self.canvas_data.temp_sensor_data = convert_temp_row(&self);
-        }
-
-        // Memory
-        if self.used_widgets.use_mem {
-            self.canvas_data.mem_data = convert_mem_data_points(&self.data_collection, false);
-            self.canvas_data.swap_data = convert_swap_data_points(&self.data_collection, false);
-            let (memory_labels, swap_labels) = convert_mem_labels(&self.data_collection);
-
-            self.canvas_data.mem_labels = memory_labels;
-            self.canvas_data.swap_labels = swap_labels;
-        }
-
-        if self.used_widgets.use_cpu {
-            // CPU
-            convert_cpu_data_points(&self.data_collection, &mut self.canvas_data.cpu_data, false);
-            self.canvas_data.load_avg_data = self.data_collection.load_avg_harvest;
-        }
-
-        // Processes
-        if self.used_widgets.use_proc {
-            self.update_all_process_lists();
-        }
-
-        // Battery
-        if self.used_widgets.use_battery {
-            self.canvas_data.battery_data = convert_battery_harvest(&self.data_collection);
-        }
-    }
-
-    #[allow(clippy::needless_collect)]
-    fn update_all_process_lists(&mut self) {
-        // TODO: Probably refactor this.
-
-        // According to clippy, I can avoid a collect... but if I follow it,
-        // I end up conflicting with the borrow checker since app is used within the closure... hm.
-        if !self.is_frozen {
-            let widget_ids = self
-                .proc_state
-                .widget_states
-                .keys()
-                .cloned()
-                .collect::<Vec<_>>();
-
-            widget_ids.into_iter().for_each(|widget_id| {
-                update_final_process_list(self, widget_id);
-            });
         }
     }
 

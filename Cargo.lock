@@ -246,6 +246,7 @@ dependencies = [
  "dirs",
  "enum_dispatch",
  "fern",
+ "float-ord",
  "futures",
  "futures-timer",
  "fxhash",
@@ -583,6 +584,12 @@ checksum = "e1267f4ac4f343772758f7b1bdcbe767c218bbab93bb432acbf5162bbf85a6c4"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "float-ord"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ce81f49ae8a0482e4c55ea62ebbd7e5a686af544c00b9d090bba3ff9be97b3d"
 
 [[package]]
 name = "futures"

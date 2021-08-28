@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, str::FromStr};
+use std::{collections::HashMap, str::FromStr};
 
 use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
@@ -16,7 +16,13 @@ use canvas_colours::*;
 use dialogs::*;
 
 use crate::{
-    app::{self, layout_manager::LayoutNode, widgets::Widget, TmpBottomWidget},
+    app::{
+        self,
+        layout_manager::LayoutNode,
+        text_table::TextTableData,
+        widgets::{Component, Widget},
+        TmpBottomWidget,
+    },
     constants::*,
     data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
     options::Config,
@@ -41,16 +47,16 @@ pub struct DisplayableData {
     pub total_tx_display: String,
     pub network_data_rx: Vec<Point>,
     pub network_data_tx: Vec<Point>,
-    pub disk_data: Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>>,
-    pub temp_sensor_data: Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>>,
+    pub disk_data: TextTableData,
+    pub temp_sensor_data: TextTableData,
     pub single_process_data: HashMap<Pid, ConvertedProcessData>, // Contains single process data, key is PID
     pub stringified_process_data_map: HashMap<NodeId, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled, key is the widget ID
 
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
-
-    pub mem_data: Vec<Point>, // TODO: Switch this and all data points over to a better data structure...
+    pub mem_data: Vec<Point>,
     pub swap_data: Vec<Point>,
+
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<ConvertedCpuData>,
     pub battery_data: Vec<ConvertedBatteryData>,
@@ -336,12 +342,12 @@ impl Painter {
                     self.draw_frozen_indicator(&mut f, frozen_draw_loc);
                 }
 
-                let canvas_data = &app_state.canvas_data;
                 if let Some(current_widget) = app_state
                     .widget_lookup_map
                     .get_mut(&app_state.selected_widget)
                 {
-                    current_widget.draw(self, f, draw_area, canvas_data, true);
+                    current_widget.set_bounds(draw_area);
+                    current_widget.draw(self, f, draw_area, true);
                 }
             } else {
                 /// A simple traversal through the `arena`.
@@ -392,7 +398,8 @@ impl Painter {
                             }
                             LayoutNode::Widget => {
                                 if let Some(widget) = lookup_map.get_mut(&node) {
-                                    widget.draw(painter, f, area, canvas_data, selected_id == node);
+                                    widget.set_bounds(area);
+                                    widget.draw(painter, f, area, selected_id == node);
                                 }
                             }
                         }

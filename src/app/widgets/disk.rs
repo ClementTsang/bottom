@@ -9,11 +9,15 @@ use tui::{
 };
 
 use crate::{
-    app::{event::EventResult, sort_text_table::SortableColumn},
-    canvas::{DisplayableData, Painter},
+    app::{data_farmer::DataCollection, event::EventResult, sort_text_table::SortableColumn},
+    canvas::Painter,
+    data_conversion::convert_disk_row,
 };
 
-use super::{AppScrollWidgetState, CanvasTableWidthState, Component, SortableTextTable, Widget};
+use super::{
+    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component,
+    SortableTextTable, Widget,
+};
 
 pub struct DiskWidgetState {
     pub scroll_state: AppScrollWidgetState,
@@ -52,6 +56,8 @@ impl DiskState {
 pub struct DiskTable {
     table: SortableTextTable,
     bounds: Rect,
+
+    display_data: TextTableData,
 }
 
 impl Default for DiskTable {
@@ -69,6 +75,7 @@ impl Default for DiskTable {
         Self {
             table,
             bounds: Rect::default(),
+            display_data: Default::default(),
         }
     }
 }
@@ -97,8 +104,7 @@ impl Widget for DiskTable {
     }
 
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, data: &DisplayableData,
-        selected: bool,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
         let block = Block::default()
             .border_style(if selected {
@@ -108,19 +114,12 @@ impl Widget for DiskTable {
             })
             .borders(Borders::ALL);
 
-        self.set_bounds(area);
-        let draw_area = block.inner(area);
-        let (table, widths, mut tui_state) =
-            self.table
-                .table
-                .create_draw_table(painter, &data.disk_data, draw_area);
+        self.table
+            .table
+            .draw_tui_table(painter, f, &self.display_data, block, area, selected);
+    }
 
-        let table = table.highlight_style(if selected {
-            painter.colours.currently_selected_text_style
-        } else {
-            painter.colours.text_style
-        });
-
-        f.render_stateful_widget(table.block(block).widths(&widths), area, &mut tui_state);
+    fn update_data(&mut self, data_collection: &DataCollection) {
+        self.display_data = convert_disk_row(data_collection);
     }
 }

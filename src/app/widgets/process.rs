@@ -14,16 +14,17 @@ use crate::{
     app::{
         event::{EventResult, MultiKey, MultiKeyResult},
         query::*,
+        DataCollection,
     },
-    canvas::{DisplayableData, Painter},
+    canvas::Painter,
     data_harvester::processes::{self, ProcessSorting},
     options::ProcessDefaults,
 };
 use ProcessSorting::*;
 
 use super::{
-    AppScrollWidgetState, CanvasTableWidthState, Component, CursorDirection, ScrollDirection,
-    SortableTextTable, TextInput, TextTable, Widget,
+    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component,
+    CursorDirection, ScrollDirection, SortableTextTable, TextInput, TextTable, Widget,
 };
 
 /// AppSearchState deals with generic searching (I might do this in the future).
@@ -653,6 +654,8 @@ pub struct ProcessManager {
     show_search: bool,
 
     search_modifiers: SearchModifiers,
+
+    display_data: TextTableData,
 }
 
 impl ProcessManager {
@@ -671,6 +674,7 @@ impl ProcessManager {
             show_sort: false,
             show_search: false,
             search_modifiers: SearchModifiers::default(),
+            display_data: Default::default(),
         };
 
         manager.set_tree_mode(process_defaults.is_tree);
@@ -813,14 +817,29 @@ impl Component for ProcessManager {
         match &event.kind {
             MouseEventKind::Down(MouseButton::Left) => {
                 if self.process_table.does_intersect_mouse(&event) {
-                    self.selected = ProcessManagerSelection::Processes;
-                    self.process_table.handle_mouse_event(event)
+                    if let ProcessManagerSelection::Processes = self.selected {
+                        self.process_table.handle_mouse_event(event)
+                    } else {
+                        self.selected = ProcessManagerSelection::Processes;
+                        self.process_table.handle_mouse_event(event);
+                        EventResult::Redraw
+                    }
                 } else if self.sort_table.does_intersect_mouse(&event) {
-                    self.selected = ProcessManagerSelection::Sort;
-                    self.sort_table.handle_mouse_event(event)
+                    if let ProcessManagerSelection::Sort = self.selected {
+                        self.sort_table.handle_mouse_event(event)
+                    } else {
+                        self.selected = ProcessManagerSelection::Sort;
+                        self.sort_table.handle_mouse_event(event);
+                        EventResult::Redraw
+                    }
                 } else if self.search_input.does_intersect_mouse(&event) {
-                    self.selected = ProcessManagerSelection::Search;
-                    self.search_input.handle_mouse_event(event)
+                    if let ProcessManagerSelection::Search = self.selected {
+                        self.search_input.handle_mouse_event(event)
+                    } else {
+                        self.selected = ProcessManagerSelection::Search;
+                        self.search_input.handle_mouse_event(event);
+                        EventResult::Redraw
+                    }
                 } else {
                     EventResult::NoRedraw
                 }
@@ -841,8 +860,7 @@ impl Widget for ProcessManager {
     }
 
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, data: &DisplayableData,
-        selected: bool,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
         let block = Block::default()
             .border_style(if selected {
@@ -852,24 +870,15 @@ impl Widget for ProcessManager {
             })
             .borders(Borders::ALL);
 
-        self.set_bounds(area);
-        let draw_area = block.inner(area);
-        let (process_table, widths, mut tui_state) = self.process_table.table.create_draw_table(
+        self.process_table.table.draw_tui_table(
             painter,
-            &vec![], // TODO: Fix this
-            draw_area,
-        );
-
-        let process_table = process_table.highlight_style(if selected {
-            painter.colours.currently_selected_text_style
-        } else {
-            painter.colours.text_style
-        });
-
-        f.render_stateful_widget(
-            process_table.block(block).widths(&widths),
+            f,
+            &self.display_data, // TODO: Fix this
+            block,
             area,
-            &mut tui_state,
+            selected,
         );
     }
+
+    fn update_data(&mut self, data_collection: &DataCollection) {}
 }

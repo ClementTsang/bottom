@@ -2,13 +2,17 @@ use std::borrow::Cow;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use tui::{
+    backend::Backend,
     layout::Rect,
-    widgets::{Table, TableState},
+    widgets::{Block, Table, TableState},
 };
 
-use crate::app::{event::EventResult, Component, TextTable};
+use crate::{
+    app::{event::EventResult, Component, TextTable},
+    canvas::Painter,
+};
 
-use super::text_table::{DesiredColumnWidth, SimpleColumn, TableColumn};
+use super::text_table::{DesiredColumnWidth, SimpleColumn, TableColumn, TextTableData};
 
 fn get_shortcut_name(e: &KeyEvent) -> String {
     let modifier = if e.modifiers.is_empty() {
@@ -182,6 +186,10 @@ impl SortableTextTable {
         self
     }
 
+    pub fn current_index(&self) -> usize {
+        self.table.current_index()
+    }
+
     fn set_sort_index(&mut self, new_index: usize) {
         if new_index == self.sort_index {
             if let Some(column) = self.table.columns.get_mut(self.sort_index) {
@@ -216,6 +224,18 @@ impl SortableTextTable {
 
             self.sort_index = new_index;
         }
+    }
+
+    /// Draws a [`Table`] given the [`TextTable`] and the given data.
+    ///
+    /// Note if the number of columns don't match in the [`TextTable`] and data,
+    /// it will only create as many columns as it can grab data from both sources from.
+    pub fn draw_tui_table<B: Backend>(
+        &mut self, painter: &Painter, f: &mut tui::Frame<'_, B>, data: &TextTableData,
+        block: Block<'_>, block_area: Rect, show_selected_entry: bool,
+    ) {
+        self.table
+            .draw_tui_table(painter, f, data, block, block_area, show_selected_entry);
     }
 
     /// Creates a [`Table`] representing the sort list.

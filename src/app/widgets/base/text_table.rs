@@ -5,9 +5,12 @@ use std::{
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{
+    backend::Backend,
     layout::{Constraint, Rect},
+    style::Style,
     text::Text,
-    widgets::{Table, TableState},
+    widgets::{Block, Table},
+    Frame,
 };
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -35,6 +38,8 @@ pub trait TableColumn {
 
     fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>);
 }
+
+pub type TextTableData = Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>, Option<Style>)>>;
 
 /// A [`SimpleColumn`] represents some column in a [`TextTable`].
 #[derive(Debug)]
@@ -128,6 +133,9 @@ where
 
     /// Whether we draw columns from left-to-right.
     pub left_to_right: bool,
+
+    /// Whether to enable selection.
+    pub selectable: bool,
 }
 
 impl<C> TextTable<C>
@@ -142,6 +150,7 @@ where
             show_gap: true,
             bounds: Rect::default(),
             left_to_right: true,
+            selectable: true,
         }
     }
 
@@ -152,6 +161,11 @@ where
 
     pub fn try_show_gap(mut self, show_gap: bool) -> Self {
         self.show_gap = show_gap;
+        self
+    }
+
+    pub fn unselectable(mut self) -> Self {
+        self.selectable = false;
         self
     }
 
@@ -172,8 +186,12 @@ where
         }
     }
 
+    pub fn current_index(&self) -> usize {
+        self.scrollable.current_index()
+    }
+
     pub fn get_desired_column_widths(
-        columns: &[C], data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
+        columns: &[C], data: &TextTableData,
     ) -> Vec<DesiredColumnWidth> {
         columns
             .iter()
@@ -183,22 +201,22 @@ where
                     let max_len = data
                         .iter()
                         .filter_map(|c| c.get(column_index))
-                        .max_by(|(x, short_x), (y, short_y)| {
-                            let x = if let Some(short_x) = short_x {
-                                short_x
+                        .max_by(|(a, short_a, _a_style), (b, short_b, _b_style)| {
+                            let a_len = if let Some(short_a) = short_a {
+                                short_a.len()
                             } else {
-                                x
+                                a.len()
                             };
 
-                            let y = if let Some(short_y) = short_y {
-                                short_y
+                            let b_len = if let Some(short_b) = short_b {
+                                short_b.len()
                             } else {
-                                y
+                                b.len()
                             };
 
-                            x.len().cmp(&y.len())
+                            a_len.cmp(&b_len)
                         })
-                        .map(|(s, _)| s.len())
+                        .map(|(longest_data_str, _, _)| longest_data_str.len())
                         .unwrap_or(0) as u16;
 
                     DesiredColumnWidth::Hard(max(max_len, *width))
@@ -211,9 +229,7 @@ where
             .collect::<Vec<_>>()
     }
 
-    fn get_cache(
-        &mut self, area: Rect, data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
-    ) -> Vec<u16> {
+    fn get_cache(&mut self, area: Rect, data: &TextTableData) -> Vec<u16> {
         fn calculate_column_widths(
             left_to_right: bool, mut desired_widths: Vec<DesiredColumnWidth>, total_width: u16,
         ) -> Vec<u16> {
@@ -326,37 +342,37 @@ where
         }
     }
 
-    /// Creates a [`Table`] given the [`TextTable`] and the given data, along with its
-    /// widths (because for some reason a [`Table`] only borrows the constraints...?)
-    /// and [`TableState`] (so we know which row is selected).
+    /// Draws a [`Table`] given the [`TextTable`] and the given data.
     ///
     /// Note if the number of columns don't match in the [`TextTable`] and data,
     /// it will only create as many columns as it can grab data from both sources from.
-    pub fn create_draw_table(
-        &mut self, painter: &Painter, data: &[Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>],
-        area: Rect,
-    ) -> (Table<'_>, Vec<Constraint>, TableState) {
+    pub fn draw_tui_table<B: Backend>(
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableData, block: Block<'_>,
+        block_area: Rect, show_selected_entry: bool,
+    ) {
         use tui::widgets::Row;
 
-        let table_gap = if !self.show_gap || area.height < TABLE_GAP_HEIGHT_LIMIT {
+        let inner_area = block.inner(block_area);
+
+        let table_gap = if !self.show_gap || inner_area.height < TABLE_GAP_HEIGHT_LIMIT {
             0
         } else {
             1
         };
 
         self.update_num_items(data.len());
-        self.set_bounds(area);
+        self.set_bounds(inner_area);
         let table_extras = 1 + table_gap;
-        let scrollable_height = area.height.saturating_sub(table_extras);
+        let scrollable_height = inner_area.height.saturating_sub(table_extras);
         self.scrollable.set_bounds(Rect::new(
-            area.x,
-            area.y + table_extras,
-            area.width,
+            inner_area.x,
+            inner_area.y + table_extras,
+            inner_area.width,
             scrollable_height,
         ));
 
         // Calculate widths first, since we need them later.
-        let calculated_widths = self.get_cache(area, data);
+        let calculated_widths = self.get_cache(inner_area, data);
         let widths = calculated_widths
             .iter()
             .map(|column| Constraint::Length(*column))
@@ -373,25 +389,28 @@ where
             &data[start..end]
         };
         let rows = data_slice.iter().map(|row| {
-            Row::new(
-                row.iter()
-                    .zip(&calculated_widths)
-                    .map(|((text, shrunk_text), width)| {
-                        let width = *width as usize;
-                        let graphemes = UnicodeSegmentation::graphemes(text.as_ref(), true)
-                            .collect::<Vec<&str>>();
-                        let grapheme_width = graphemes.len();
-                        if width < grapheme_width && width > 1 {
-                            if let Some(shrunk_text) = shrunk_text {
-                                Text::raw(shrunk_text.clone())
-                            } else {
-                                Text::raw(format!("{}…", graphemes[..(width - 1)].concat()))
-                            }
+            Row::new(row.iter().zip(&calculated_widths).map(
+                |((text, shrunk_text, opt_style), width)| {
+                    let text_style = opt_style.unwrap_or(painter.colours.text_style);
+
+                    let width = *width as usize;
+                    let graphemes =
+                        UnicodeSegmentation::graphemes(text.as_ref(), true).collect::<Vec<&str>>();
+                    let grapheme_width = graphemes.len();
+                    if width < grapheme_width && width > 1 {
+                        if let Some(shrunk_text) = shrunk_text {
+                            Text::styled(shrunk_text.clone(), text_style)
                         } else {
-                            Text::raw(text.to_owned())
+                            Text::styled(
+                                format!("{}…", graphemes[..(width - 1)].concat()),
+                                text_style,
+                            )
                         }
-                    }),
-            )
+                    } else {
+                        Text::styled(text.to_owned(), text_style)
+                    }
+                },
+            ))
         });
 
         // Now build up our headers...
@@ -399,21 +418,24 @@ where
             .style(painter.colours.table_header_style)
             .bottom_margin(table_gap);
 
-        // And return tui-rs's [`TableState`].
-        let tui_state = self.scrollable.tui_state();
+        let table = Table::new(rows)
+            .header(header)
+            .style(painter.colours.text_style)
+            .highlight_style(if show_selected_entry {
+                painter.colours.currently_selected_text_style
+            } else {
+                painter.colours.text_style
+            });
 
-        (
-            Table::new(rows)
-                .header(header)
-                .style(painter.colours.text_style),
-            widths,
-            tui_state,
-        )
-    }
-
-    /// Creates a [`Table`] representing the sort list.
-    pub fn create_sort_list(&mut self) -> (Table<'_>, TableState) {
-        todo!()
+        if self.selectable {
+            f.render_stateful_widget(
+                table.block(block).widths(&widths),
+                block_area,
+                self.scrollable.tui_state(),
+            );
+        } else {
+            f.render_widget(table.block(block).widths(&widths), block_area);
+        }
     }
 }
 
@@ -422,11 +444,19 @@ where
     C: TableColumn,
 {
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
-        self.scrollable.handle_key_event(event)
+        if self.selectable {
+            self.scrollable.handle_key_event(event)
+        } else {
+            EventResult::NoRedraw
+        }
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        self.scrollable.handle_mouse_event(event)
+        if self.selectable {
+            self.scrollable.handle_mouse_event(event)
+        } else {
+            EventResult::NoRedraw
+        }
     }
 
     fn bounds(&self) -> Rect {

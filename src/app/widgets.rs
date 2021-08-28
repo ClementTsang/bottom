@@ -9,9 +9,11 @@ use crate::{
         event::{EventResult, SelectionAction},
         layout_manager::BottomWidgetType,
     },
-    canvas::{DisplayableData, Painter},
+    canvas::Painter,
     constants,
 };
+
+mod tui_widgets;
 
 pub mod base;
 pub use base::*;
@@ -36,6 +38,8 @@ pub use self::battery::*;
 
 pub mod temp;
 pub use temp::*;
+
+use super::data_farmer::DataCollection;
 
 /// A trait for things that are drawn with state.
 #[enum_dispatch]
@@ -75,9 +79,6 @@ pub trait Component {
 #[enum_dispatch]
 #[allow(unused_variables)]
 pub trait Widget {
-    /// Updates a [`Widget`] given some data.  Defaults to doing nothing.
-    fn update(&mut self) {}
-
     /// Handles what to do when trying to respond to a widget selection movement to the left.
     /// Defaults to just moving to the next-possible widget in that direction.
     fn handle_widget_selection_left(&mut self) -> SelectionAction {
@@ -107,12 +108,13 @@ pub trait Widget {
 
     /// Draws a [`Widget`]. Defaults to doing nothing.
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, data: &DisplayableData,
-        selected: bool,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
         // TODO: Remove the default implementation in the future!
-        // TODO: Do another pass on ALL of the draw code - currently it's just glue, it should eventually be done properly!
     }
+
+    /// How a [`Widget`] updates its internal displayed data. Defaults to doing nothing.
+    fn update_data(&mut self, data_collection: &DataCollection) {}
 }
 
 /// The "main" widgets that are used by bottom to display information!

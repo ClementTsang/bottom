@@ -61,7 +61,7 @@ impl Scrollable {
     }
 
     /// Returns the currently selected index of the [`Scrollable`].
-    pub fn index(&self) -> usize {
+    pub fn current_index(&self) -> usize {
         self.current_index
     }
 
@@ -195,8 +195,8 @@ impl Scrollable {
         self.num_items
     }
 
-    pub fn tui_state(&self) -> TableState {
-        self.tui_state.clone()
+    pub fn tui_state(&mut self) -> &mut TableState {
+        &mut self.tui_state
     }
 }
 

@@ -1,9 +1,16 @@
-use std::{collections::HashMap, time::Instant};
+use std::{borrow::Cow, collections::HashMap, time::Instant};
 
 use crossterm::event::{KeyEvent, MouseEvent};
-use tui::layout::Rect;
+use tui::{
+    backend::Backend,
+    layout::Rect,
+    widgets::{Block, Borders},
+};
 
-use crate::app::event::EventResult;
+use crate::{
+    app::{event::EventResult, time_graph::TimeGraphData, DataCollection},
+    data_conversion::{convert_mem_data_points, convert_mem_labels, convert_swap_data_points},
+};
 
 use super::{Component, TimeGraph, Widget};
 
@@ -48,12 +55,22 @@ impl MemState {
 /// around [`TimeGraph`] as of now.
 pub struct MemGraph {
     graph: TimeGraph,
+    mem_labels: Option<(String, String)>,
+    swap_labels: Option<(String, String)>,
+    mem_data: Vec<(f64, f64)>,
+    swap_data: Vec<(f64, f64)>,
 }
 
 impl MemGraph {
     /// Creates a new [`MemGraph`].
     pub fn new(graph: TimeGraph) -> Self {
-        Self { graph }
+        Self {
+            graph,
+            mem_labels: Default::default(),
+            swap_labels: Default::default(),
+            mem_data: Default::default(),
+            swap_data: Default::default(),
+        }
     }
 }
 
@@ -78,5 +95,59 @@ impl Component for MemGraph {
 impl Widget for MemGraph {
     fn get_pretty_name(&self) -> &'static str {
         "Memory"
+    }
+
+    fn draw<B: Backend>(
+        &mut self, painter: &crate::canvas::Painter, f: &mut tui::Frame<'_, B>, area: Rect,
+        selected: bool,
+    ) {
+        let block = Block::default()
+            .border_style(if selected {
+                painter.colours.highlighted_border_style
+            } else {
+                painter.colours.border_style
+            })
+            .borders(Borders::ALL);
+
+        let mut chart_data = Vec::with_capacity(2);
+        if let Some((label_percent, label_frac)) = &self.mem_labels {
+            let mem_label = format!("RAM:{}{}", label_percent, label_frac);
+            chart_data.push(TimeGraphData {
+                data: &self.mem_data,
+                label: Some(mem_label.into()),
+                style: painter.colours.ram_style,
+            });
+        }
+        if let Some((label_percent, label_frac)) = &self.swap_labels {
+            let swap_label = format!("SWP:{}{}", label_percent, label_frac);
+            chart_data.push(TimeGraphData {
+                data: &self.swap_data,
+                label: Some(swap_label.into()),
+                style: painter.colours.swap_style,
+            });
+        }
+
+        const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
+        let y_bound_labels: [Cow<'static, str>; 2] = ["0%".into(), "100%".into()];
+
+        self.graph.draw_tui_chart(
+            painter,
+            f,
+            &chart_data,
+            &y_bound_labels,
+            Y_BOUNDS,
+            false,
+            block,
+            area,
+        );
+    }
+
+    fn update_data(&mut self, data_collection: &DataCollection) {
+        self.mem_data = convert_mem_data_points(data_collection, false); // TODO: I think the "is_frozen" part is useless... it's always false now.
+        self.swap_data = convert_swap_data_points(data_collection, false);
+        let (memory_labels, swap_labels) = convert_mem_labels(data_collection);
+
+        self.mem_labels = memory_labels;
+        self.swap_labels = swap_labels;
     }
 }

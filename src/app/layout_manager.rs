@@ -1,8 +1,5 @@
 use crate::{
-    app::{
-        sort_text_table::SortableColumn, DiskTable, MemGraph, NetGraph, OldNetGraph,
-        ProcessManager, TempTable,
-    },
+    app::{DiskTable, MemGraph, NetGraph, OldNetGraph, ProcessManager, TempTable},
     error::{BottomError, Result},
     options::layout_options::{Row, RowChildren},
 };
@@ -16,7 +13,7 @@ use crate::app::widgets::Widget;
 use crate::constants::DEFAULT_WIDGET_ID;
 
 use super::{
-    event::SelectionAction, CpuGraph, SortableTextTable, TimeGraph, TmpBottomWidget, UsedWidgets,
+    event::SelectionAction, AppConfigFields, CpuGraph, TimeGraph, TmpBottomWidget, UsedWidgets,
 };
 
 /// Represents a more usable representation of the layout, derived from the
@@ -1051,44 +1048,43 @@ pub struct LayoutCreationOutput {
 // FIXME: This is currently jury-rigged "glue" just to work with the existing config system! We are NOT keeping it like this, it's too awful to keep like this!
 pub fn create_layout_tree(
     rows: &[Row], process_defaults: crate::options::ProcessDefaults,
-    app_config_fields: &super::AppConfigFields,
+    app_config_fields: &AppConfigFields,
 ) -> Result<LayoutCreationOutput> {
     fn add_widget_to_map(
         widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, widget_type: BottomWidgetType,
         widget_id: NodeId, process_defaults: &crate::options::ProcessDefaults,
-        app_config_fields: &super::AppConfigFields,
+        app_config_fields: &AppConfigFields,
     ) -> Result<()> {
         match widget_type {
             BottomWidgetType::Cpu => {
-                let graph = TimeGraph::from_config(app_config_fields);
-                let legend = SortableTextTable::new(vec![
-                    SortableColumn::new_flex("CPU".into(), None, false, 0.5),
-                    SortableColumn::new_flex("Use%".into(), None, false, 0.5),
-                ]);
-                let legend_position = super::CpuGraphLegendPosition::Right;
-
-                widget_lookup_map.insert(
-                    widget_id,
-                    CpuGraph::new(graph, legend, legend_position).into(),
-                );
+                widget_lookup_map
+                    .insert(widget_id, CpuGraph::from_config(app_config_fields).into());
             }
             BottomWidgetType::Mem => {
                 let graph = TimeGraph::from_config(app_config_fields);
                 widget_lookup_map.insert(widget_id, MemGraph::new(graph).into());
             }
             BottomWidgetType::Net => {
-                let graph = TimeGraph::from_config(app_config_fields);
                 if app_config_fields.use_old_network_legend {
-                    widget_lookup_map.insert(widget_id, OldNetGraph::new(graph).into());
+                    widget_lookup_map.insert(
+                        widget_id,
+                        OldNetGraph::from_config(app_config_fields).into(),
+                    );
                 } else {
-                    widget_lookup_map.insert(widget_id, NetGraph::new(graph).into());
+                    widget_lookup_map
+                        .insert(widget_id, NetGraph::from_config(app_config_fields).into());
                 }
             }
             BottomWidgetType::Proc => {
                 widget_lookup_map.insert(widget_id, ProcessManager::new(process_defaults).into());
             }
             BottomWidgetType::Temp => {
-                widget_lookup_map.insert(widget_id, TempTable::default().into());
+                widget_lookup_map.insert(
+                    widget_id,
+                    TempTable::default()
+                        .set_temp_type(app_config_fields.temperature_type.clone())
+                        .into(),
+                );
             }
             BottomWidgetType::Disk => {
                 widget_lookup_map.insert(widget_id, DiskTable::default().into());

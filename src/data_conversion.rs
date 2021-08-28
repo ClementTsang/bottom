@@ -1,8 +1,11 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
+use crate::app::data_harvester::temperature::TemperatureType;
+use crate::app::text_table::TextTableData;
+use crate::app::DataCollection;
 use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 use crate::{
-    app::{data_farmer, data_harvester, AppState, ProcWidgetState},
+    app::{data_harvester, ProcWidgetState},
     utils::{self, gen_util::*},
 };
 use data_harvester::processes::ProcessSorting;
@@ -85,15 +88,12 @@ pub struct ConvertedCpuData {
 }
 
 pub fn convert_temp_row(
-    app: &AppState,
-) -> Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>> {
-    let current_data = &app.data_collection;
-    let temp_type = &app.app_config_fields.temperature_type;
-
+    current_data: &DataCollection, temp_type: &TemperatureType,
+) -> TextTableData {
     if current_data.temp_harvest.is_empty() {
         vec![vec![
-            ("No Sensors Found".into(), Some("N/A".into())),
-            ("".into(), None),
+            ("No Sensors Found".into(), Some("N/A".into()), None),
+            ("".into(), None, None),
         ]]
     } else {
         let (unit_long, unit_short) = match temp_type {
@@ -108,10 +108,11 @@ pub fn convert_temp_row(
             .map(|temp_harvest| {
                 let val = temp_harvest.temperature.ceil().to_string();
                 vec![
-                    (temp_harvest.name.clone().into(), None),
+                    (temp_harvest.name.clone().into(), None, None),
                     (
                         format!("{}{}", val, unit_long).into(),
                         Some(format!("{}{}", val, unit_short).into()),
+                        None,
                     ),
                 ]
             })
@@ -119,13 +120,11 @@ pub fn convert_temp_row(
     }
 }
 
-pub fn convert_disk_row(
-    current_data: &data_farmer::DataCollection,
-) -> Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>)>> {
+pub fn convert_disk_row(current_data: &DataCollection) -> TextTableData {
     if current_data.disk_harvest.is_empty() {
         vec![vec![
-            ("No Disks Found".into(), Some("N/A".into())),
-            ("".into(), None),
+            ("No Disks Found".into(), Some("N/A".into()), None),
+            ("".into(), None, None),
         ]]
     } else {
         current_data
@@ -164,13 +163,13 @@ pub fn convert_disk_row(
                 };
 
                 vec![
-                    (disk.name.clone().into(), None),
-                    (disk.mount_point.clone().into(), None),
-                    (usage_fmt, None),
-                    (free_space_fmt, None),
-                    (total_space_fmt, None),
-                    (io_read.clone().into(), None),
-                    (io_write.clone().into(), None),
+                    (disk.name.clone().into(), None, None),
+                    (disk.mount_point.clone().into(), None, None),
+                    (usage_fmt, None, None),
+                    (free_space_fmt, None, None),
+                    (total_space_fmt, None, None),
+                    (io_read.clone().into(), None, None),
+                    (io_write.clone().into(), None, None),
                 ]
             })
             .collect::<Vec<_>>()
@@ -178,8 +177,7 @@ pub fn convert_disk_row(
 }
 
 pub fn convert_cpu_data_points(
-    current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
-    is_frozen: bool,
+    current_data: &DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>, is_frozen: bool,
 ) {
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
@@ -257,9 +255,7 @@ pub fn convert_cpu_data_points(
     }
 }
 
-pub fn convert_mem_data_points(
-    current_data: &data_farmer::DataCollection, is_frozen: bool,
-) -> Vec<Point> {
+pub fn convert_mem_data_points(current_data: &DataCollection, is_frozen: bool) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
@@ -285,9 +281,7 @@ pub fn convert_mem_data_points(
     result
 }
 
-pub fn convert_swap_data_points(
-    current_data: &data_farmer::DataCollection, is_frozen: bool,
-) -> Vec<Point> {
+pub fn convert_swap_data_points(current_data: &DataCollection, is_frozen: bool) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
@@ -314,7 +308,7 @@ pub fn convert_swap_data_points(
 }
 
 pub fn convert_mem_labels(
-    current_data: &data_farmer::DataCollection,
+    current_data: &DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
@@ -333,6 +327,7 @@ pub fn convert_mem_labels(
         }
     }
 
+    // TODO: Should probably make this only return none if no data is left/visible?
     (
         if current_data.memory_harvest.mem_total_in_kib > 0 {
             Some((
@@ -384,7 +379,7 @@ pub fn convert_mem_labels(
 }
 
 pub fn get_rx_tx_data_points(
-    current_data: &data_farmer::DataCollection, is_frozen: bool, network_scale_type: &AxisScaling,
+    current_data: &DataCollection, is_frozen: bool, network_scale_type: &AxisScaling,
     network_unit_type: &DataUnit, network_use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
@@ -439,7 +434,7 @@ pub fn get_rx_tx_data_points(
 }
 
 pub fn convert_network_data_points(
-    current_data: &data_farmer::DataCollection, is_frozen: bool, need_four_points: bool,
+    current_data: &DataCollection, is_frozen: bool, need_four_points: bool,
     network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
     network_use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
@@ -620,7 +615,7 @@ fn get_disk_io_strings(
 /// Because we needed to UPDATE data entries rather than REPLACING entries, we instead update
 /// the existing vector.
 pub fn convert_process_data(
-    current_data: &data_farmer::DataCollection,
+    current_data: &DataCollection,
     existing_converted_process_data: &mut HashMap<Pid, ConvertedProcessData>,
     #[cfg(target_family = "unix")] user_table: &mut data_harvester::processes::UserTable,
 ) {
@@ -1379,9 +1374,7 @@ pub fn group_process_data(
         .collect::<Vec<_>>()
 }
 
-pub fn convert_battery_harvest(
-    current_data: &data_farmer::DataCollection,
-) -> Vec<ConvertedBatteryData> {
+pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBatteryData> {
     current_data
         .battery_harvest
         .iter()
