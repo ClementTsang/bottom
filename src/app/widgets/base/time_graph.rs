@@ -220,6 +220,7 @@ impl TimeGraph {
         ]
     }
 
+    /// Returns the current display time boundary.
     pub fn get_current_display_time(&self) -> u64 {
         self.current_display_time
     }

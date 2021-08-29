@@ -130,8 +130,8 @@ impl SortableColumn {
 
 impl TableColumn for SortableColumn {
     fn display_name(&self) -> Cow<'static, str> {
-        const UP_ARROW: &'static str = "▲";
-        const DOWN_ARROW: &'static str = "▼";
+        const UP_ARROW: &str = "▲";
+        const DOWN_ARROW: &str = "▼";
         format!(
             "{}{}",
             self.internal.display_name(),

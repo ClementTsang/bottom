@@ -158,13 +158,11 @@ impl Scrollable {
         let new_index = self.current_index + change_by;
         if new_index >= self.num_items {
             EventResult::NoRedraw
+        } else if self.current_index == new_index {
+            EventResult::NoRedraw
         } else {
-            if self.current_index == new_index {
-                EventResult::NoRedraw
-            } else {
-                self.update_index(new_index);
-                EventResult::Redraw
-            }
+            self.update_index(new_index);
+            EventResult::Redraw
         }
     }
 

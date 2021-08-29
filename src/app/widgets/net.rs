@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant};
+use std::{borrow::Cow, collections::HashMap, time::Instant};
 
 use tui::{
     backend::Backend,
@@ -401,17 +401,14 @@ fn adjust_network_data_point(
 /// A struct containing useful cached information for a [`NetGraph`].
 #[derive(Clone)]
 pub struct NetGraphCache {
-    max_range: f64,
-    labels: Vec<String>,
-    time_start: f64,
+    max_value: f64,
+    cached_upper_bound: f64,
+    labels: Vec<Cow<'static, str>>,
 }
 
 enum NetGraphCacheState {
     Uncached,
-    Cached {
-        cached_area: Rect,
-        data: NetGraphCache,
-    },
+    Cached(NetGraphCache),
 }
 
 /// A widget denoting network usage via a graph. This version is self-contained within a single [`TimeGraph`];
@@ -419,7 +416,7 @@ enum NetGraphCacheState {
 ///
 /// As of now, this is essentially just a wrapper around a [`TimeGraph`].
 pub struct NetGraph {
-    /// The graph itself.  Just a [`TimeGraph`].
+    /// The graph itself. Just a [`TimeGraph`].
     graph: TimeGraph,
 
     // Cached details for drawing purposes; probably want to move at some point...
@@ -466,54 +463,54 @@ impl NetGraph {
         self
     }
 
-    /// Updates the associated cache on a [`NetGraph`].
-    pub fn set_cache(&mut self, area: Rect, max_range: f64, labels: Vec<String>, time_start: f64) {
-        self.draw_cache = NetGraphCacheState::Cached {
-            cached_area: area,
-            data: NetGraphCache {
-                max_range,
-                labels,
-                time_start,
-            },
-        }
-    }
+    /// Sets the draw cache for a [`NetGraph`].
+    pub fn set_draw_cache(&mut self) {
+        let current_time = -(self.graph.get_current_display_time() as f64);
+        let (_current_max_time, current_max_value) = get_max_entry(
+            &self.network_data_rx,
+            &self.network_data_tx,
+            current_time,
+            &self.scale_type,
+            self.use_binary_prefix,
+        );
 
-    /// Returns whether the [`NetGraph`] contains a cache from drawing.
-    pub fn is_cache_valid(&self, area: Rect) -> bool {
-        match &self.draw_cache {
-            NetGraphCacheState::Uncached => false,
-            NetGraphCacheState::Cached {
-                cached_area,
-                data: _,
-            } => *cached_area == area,
-        }
-    }
+        match &mut self.draw_cache {
+            NetGraphCacheState::Uncached => {
+                debug!("No cache!");
 
-    /// Returns a reference to the [`NetGraphCache`] tied to the [`NetGraph`].
-    pub fn get_cache(&self) -> Option<&NetGraphCache> {
-        match &self.draw_cache {
-            NetGraphCacheState::Uncached => None,
-            NetGraphCacheState::Cached {
-                cached_area: _,
-                data,
-            } => Some(data),
-        }
-    }
+                let (cached_upper_bound, labels) = adjust_network_data_point(
+                    current_max_value,
+                    &self.scale_type,
+                    &self.unit_type,
+                    self.use_binary_prefix,
+                );
 
-    /// Returns the [`NetGraphCache`] tied to the [`NetGraph`].
-    pub fn get_cache_owned(&self) -> Option<NetGraphCache> {
-        match &self.draw_cache {
-            NetGraphCacheState::Uncached => None,
-            NetGraphCacheState::Cached {
-                cached_area: _,
-                data,
-            } => Some(data.clone()),
-        }
-    }
+                let labels: Vec<Cow<'static, str>> = labels.into_iter().map(Into::into).collect();
 
-    /// A wrapper function around checking the cache validity and setting/getting the cache.
-    pub fn check_get_cache(&mut self) -> NetGraphCache {
-        todo!()
+                self.draw_cache = NetGraphCacheState::Cached(NetGraphCache {
+                    max_value: current_max_value,
+                    cached_upper_bound,
+                    labels: labels.clone(),
+                });
+            }
+            NetGraphCacheState::Cached(cache) => {
+                if current_max_value != cache.max_value {
+                    // Invalidated.
+                    let (upper_bound, labels) = adjust_network_data_point(
+                        current_max_value,
+                        &self.scale_type,
+                        &self.unit_type,
+                        self.use_binary_prefix,
+                    );
+
+                    *cache = NetGraphCache {
+                        max_value: current_max_value,
+                        cached_upper_bound: upper_bound,
+                        labels: labels.into_iter().map(Into::into).collect(),
+                    };
+                }
+            }
+        }
     }
 }
 
@@ -555,6 +552,8 @@ impl Widget for NetGraph {
             })
             .borders(Borders::ALL);
 
+        self.set_draw_cache();
+
         let chart_data = vec![
             TimeGraphData {
                 data: &self.network_data_rx,
@@ -576,28 +575,16 @@ impl Widget for NetGraph {
             },
         ];
 
-        let (_best_time, max_entry) = get_max_entry(
-            &self.network_data_rx,
-            &self.network_data_tx,
-            -(self.graph.get_current_display_time() as f64),
-            &self.scale_type,
-            self.use_binary_prefix,
-        );
-
-        let (max_range, labels) = adjust_network_data_point(
-            max_entry,
-            &self.scale_type,
-            &self.unit_type,
-            self.use_binary_prefix,
-        );
-        let y_bounds = [0.0, max_range];
-        let y_bound_labels = labels.into_iter().map(Into::into).collect::<Vec<_>>();
+        let (y_bounds, y_bound_labels) = match &self.draw_cache {
+            NetGraphCacheState::Cached(cache) => ([0.0, cache.cached_upper_bound], &cache.labels),
+            NetGraphCacheState::Uncached => unreachable!(),
+        };
 
         self.graph.draw_tui_chart(
             painter,
             f,
             &chart_data,
-            &y_bound_labels,
+            y_bound_labels,
             y_bounds,
             false,
             block,
