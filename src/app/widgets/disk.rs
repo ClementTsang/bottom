@@ -9,7 +9,7 @@ use tui::{
 };
 
 use crate::{
-    app::{data_farmer::DataCollection, event::EventResult, sort_text_table::SortableColumn},
+    app::{data_farmer::DataCollection, event::EventResult, sort_text_table::SimpleSortableColumn},
     canvas::Painter,
     data_conversion::convert_disk_row,
 };
@@ -63,13 +63,13 @@ pub struct DiskTable {
 impl Default for DiskTable {
     fn default() -> Self {
         let table = SortableTextTable::new(vec![
-            SortableColumn::new_flex("Disk".into(), None, false, 0.2),
-            SortableColumn::new_flex("Mount".into(), None, false, 0.2),
-            SortableColumn::new_hard("Used".into(), None, false, Some(5)),
-            SortableColumn::new_hard("Free".into(), None, false, Some(6)),
-            SortableColumn::new_hard("Total".into(), None, false, Some(6)),
-            SortableColumn::new_hard("R/s".into(), None, false, Some(7)),
-            SortableColumn::new_hard("W/s".into(), None, false, Some(7)),
+            SimpleSortableColumn::new_flex("Disk".into(), None, false, 0.2),
+            SimpleSortableColumn::new_flex("Mount".into(), None, false, 0.2),
+            SimpleSortableColumn::new_hard("Used".into(), None, false, Some(5)),
+            SimpleSortableColumn::new_hard("Free".into(), None, false, Some(6)),
+            SimpleSortableColumn::new_hard("Total".into(), None, false, Some(6)),
+            SimpleSortableColumn::new_hard("R/s".into(), None, false, Some(7)),
+            SimpleSortableColumn::new_hard("W/s".into(), None, false, Some(7)),
         ]);
 
         Self {

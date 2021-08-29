@@ -23,8 +23,10 @@ use crate::{
 use ProcessSorting::*;
 
 use super::{
-    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component,
-    CursorDirection, ScrollDirection, SortableTextTable, TextInput, TextTable, Widget,
+    sort_text_table::{SimpleSortableColumn, SortableColumn},
+    text_table::TextTableData,
+    AppScrollWidgetState, CanvasTableWidthState, Component, CursorDirection, ScrollDirection,
+    SortableTextTable, TextInput, TextTable, Widget,
 };
 
 /// AppSearchState deals with generic searching (I might do this in the future).
@@ -638,10 +640,198 @@ struct SearchModifiers {
     enable_regex: bool,
 }
 
+enum FlexColumn {
+    Flex(f64),
+    Hard(Option<u16>),
+}
+
+pub enum ProcessSortType {
+    Pid,
+    Count,
+    Name,
+    Command,
+    Cpu,
+    Mem,
+    MemPercent,
+    Rps,
+    Wps,
+    TotalRead,
+    TotalWrite,
+    User,
+    State,
+}
+
+impl ProcessSortType {
+    fn to_str(&self) -> &'static str {
+        match self {
+            ProcessSortType::Pid => "PID",
+            ProcessSortType::Count => "Count",
+            ProcessSortType::Name => "Name",
+            ProcessSortType::Command => "Command",
+            ProcessSortType::Cpu => "Cpu",
+            ProcessSortType::Mem => "Mem",
+            ProcessSortType::MemPercent => "Mem%",
+            ProcessSortType::Rps => "R/s",
+            ProcessSortType::Wps => "W/s",
+            ProcessSortType::TotalRead => "T.Read",
+            ProcessSortType::TotalWrite => "T.Write",
+            ProcessSortType::User => "User",
+            ProcessSortType::State => "State",
+        }
+    }
+
+    fn shortcut(&self) -> Option<KeyEvent> {
+        match self {
+            ProcessSortType::Pid => Some(KeyEvent::new(KeyCode::Char('p'), KeyModifiers::NONE)),
+            ProcessSortType::Count => None,
+            ProcessSortType::Name => Some(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE)),
+            ProcessSortType::Command => None,
+            ProcessSortType::Cpu => Some(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE)),
+            ProcessSortType::Mem => Some(KeyEvent::new(KeyCode::Char('m'), KeyModifiers::NONE)),
+            ProcessSortType::MemPercent => {
+                Some(KeyEvent::new(KeyCode::Char('m'), KeyModifiers::NONE))
+            }
+            ProcessSortType::Rps => None,
+            ProcessSortType::Wps => None,
+            ProcessSortType::TotalRead => None,
+            ProcessSortType::TotalWrite => None,
+            ProcessSortType::User => None,
+            ProcessSortType::State => None,
+        }
+    }
+
+    fn column_type(&self) -> FlexColumn {
+        use FlexColumn::*;
+
+        match self {
+            ProcessSortType::Pid => Hard(Some(7)),
+            ProcessSortType::Count => Hard(Some(8)),
+            ProcessSortType::Name => Flex(0.3),
+            ProcessSortType::Command => Flex(0.7),
+            ProcessSortType::Cpu => Hard(Some(8)),
+            ProcessSortType::Mem => Hard(Some(8)),
+            ProcessSortType::MemPercent => Hard(Some(8)),
+            ProcessSortType::Rps => Hard(Some(8)),
+            ProcessSortType::Wps => Hard(Some(8)),
+            ProcessSortType::TotalRead => Hard(Some(7)),
+            ProcessSortType::TotalWrite => Hard(Some(8)),
+            ProcessSortType::User => Flex(0.1),
+            ProcessSortType::State => Flex(0.2),
+        }
+    }
+
+    fn default_descending(&self) -> bool {
+        match self {
+            ProcessSortType::Pid => false,
+            ProcessSortType::Count => true,
+            ProcessSortType::Name => false,
+            ProcessSortType::Command => false,
+            ProcessSortType::Cpu => true,
+            ProcessSortType::Mem => true,
+            ProcessSortType::MemPercent => true,
+            ProcessSortType::Rps => true,
+            ProcessSortType::Wps => true,
+            ProcessSortType::TotalRead => true,
+            ProcessSortType::TotalWrite => true,
+            ProcessSortType::User => false,
+            ProcessSortType::State => false,
+        }
+    }
+}
+
+/// A thin wrapper around a [`SortableColumn`] to help keep track of
+/// how to sort given a chosen column.
+pub struct ProcessSortColumn {
+    /// The underlying column.
+    sortable_column: SimpleSortableColumn,
+
+    /// The *type* of column. Useful for determining how to sort.
+    sort_type: ProcessSortType,
+}
+
+impl ProcessSortColumn {
+    pub fn new(sort_type: ProcessSortType) -> Self {
+        let sortable_column = {
+            let name = sort_type.to_str().into();
+            let shortcut = sort_type.shortcut();
+            let default_descending = sort_type.default_descending();
+
+            match sort_type.column_type() {
+                FlexColumn::Flex(max_percentage) => SimpleSortableColumn::new_flex(
+                    name,
+                    shortcut,
+                    default_descending,
+                    max_percentage,
+                ),
+                FlexColumn::Hard(hard_length) => {
+                    SimpleSortableColumn::new_hard(name, shortcut, default_descending, hard_length)
+                }
+            }
+        };
+
+        Self {
+            sortable_column,
+            sort_type,
+        }
+    }
+
+    pub fn sort_process(&self) {
+        match &self.sort_type {
+            ProcessSortType::Pid => {}
+            ProcessSortType::Count => {}
+            ProcessSortType::Name => {}
+            ProcessSortType::Command => {}
+            ProcessSortType::Cpu => {}
+            ProcessSortType::Mem => {}
+            ProcessSortType::MemPercent => {}
+            ProcessSortType::Rps => {}
+            ProcessSortType::Wps => {}
+            ProcessSortType::TotalRead => {}
+            ProcessSortType::TotalWrite => {}
+            ProcessSortType::User => {}
+            ProcessSortType::State => {}
+        }
+    }
+}
+
+impl SortableColumn for ProcessSortColumn {
+    fn shortcut(&self) -> &Option<(KeyEvent, String)> {
+        self.sortable_column.shortcut()
+    }
+
+    fn default_descending(&self) -> bool {
+        self.sortable_column.default_descending()
+    }
+
+    fn sorting_status(&self) -> super::sort_text_table::SortStatus {
+        self.sortable_column.sorting_status()
+    }
+
+    fn set_sorting_status(&mut self, sorting_status: super::sort_text_table::SortStatus) {
+        self.sortable_column.set_sorting_status(sorting_status)
+    }
+
+    fn display_name(&self) -> std::borrow::Cow<'static, str> {
+        self.sortable_column.display_name()
+    }
+
+    fn get_desired_width(&self) -> &super::text_table::DesiredColumnWidth {
+        self.sortable_column.get_desired_width()
+    }
+
+    fn get_x_bounds(&self) -> Option<(u16, u16)> {
+        self.sortable_column.get_x_bounds()
+    }
+
+    fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>) {
+        self.sortable_column.set_x_bounds(x_bounds)
+    }
+}
+
 /// A searchable, sortable table to manage processes.
 pub struct ProcessManager {
     bounds: Rect,
-    process_table: SortableTextTable,
+    process_table: SortableTextTable<ProcessSortColumn>,
     sort_table: TextTable,
     search_input: TextInput,
 
@@ -661,12 +851,26 @@ pub struct ProcessManager {
 impl ProcessManager {
     /// Creates a new [`ProcessManager`].
     pub fn new(process_defaults: &ProcessDefaults) -> Self {
-        let process_table_columns = vec![];
+        let process_table_columns = vec![
+            ProcessSortColumn::new(ProcessSortType::Pid),
+            ProcessSortColumn::new(ProcessSortType::Name),
+            ProcessSortColumn::new(ProcessSortType::Cpu),
+            ProcessSortColumn::new(ProcessSortType::MemPercent),
+            ProcessSortColumn::new(ProcessSortType::Rps),
+            ProcessSortColumn::new(ProcessSortType::Wps),
+            ProcessSortColumn::new(ProcessSortType::TotalRead),
+            ProcessSortColumn::new(ProcessSortType::TotalWrite),
+            #[cfg(target_family = "unix")]
+            ProcessSortColumn::new(ProcessSortType::User),
+            ProcessSortColumn::new(ProcessSortType::State),
+        ];
+
+        let process_table = SortableTextTable::new(process_table_columns).default_sort_index(2);
 
         let mut manager = Self {
             bounds: Rect::default(),
-            process_table: SortableTextTable::new(process_table_columns), // TODO: Do this
-            sort_table: TextTable::new(vec![]),                           // TODO: Do this too
+            process_table,
+            sort_table: TextTable::new(vec![]), // TODO: Do this too
             search_input: TextInput::new(),
             dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Maybe use something static...
             selected: ProcessManagerSelection::Processes,
@@ -870,14 +1074,8 @@ impl Widget for ProcessManager {
             })
             .borders(Borders::ALL);
 
-        self.process_table.table.draw_tui_table(
-            painter,
-            f,
-            &self.display_data, // TODO: Fix this
-            block,
-            area,
-            selected,
-        );
+        self.process_table
+            .draw_tui_table(painter, f, &self.display_data, block, area, selected);
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {}

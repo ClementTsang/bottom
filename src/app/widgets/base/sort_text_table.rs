@@ -52,34 +52,80 @@ fn get_shortcut_name(e: &KeyEvent) -> String {
     format!("({}{})", modifier, key).into()
 }
 
-#[derive(Debug)]
-enum SortStatus {
+#[derive(Copy, Clone, Debug)]
+pub enum SortStatus {
     NotSorting,
     SortAscending,
     SortDescending,
 }
 
-/// A [`SortableColumn`] represents some column in a [`SortableTextTable`].
+/// A trait for sortable columns.
+pub trait SortableColumn {
+    /// Returns the shortcut for the column, if it exists.
+    fn shortcut(&self) -> &Option<(KeyEvent, String)>;
+
+    /// Returns whether the column defaults to sorting in descending order or not.
+    fn default_descending(&self) -> bool;
+
+    /// Returns whether the column is currently selected for sorting, and if so,
+    /// what direction.
+    fn sorting_status(&self) -> SortStatus;
+
+    /// Sets the sorting status.
+    fn set_sorting_status(&mut self, sorting_status: SortStatus);
+
+    fn display_name(&self) -> Cow<'static, str>;
+
+    fn get_desired_width(&self) -> &DesiredColumnWidth;
+
+    fn get_x_bounds(&self) -> Option<(u16, u16)>;
+
+    fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>);
+}
+
+impl<T> TableColumn for T
+where
+    T: SortableColumn,
+{
+    fn display_name(&self) -> Cow<'static, str> {
+        self.display_name()
+    }
+
+    fn get_desired_width(&self) -> &DesiredColumnWidth {
+        self.get_desired_width()
+    }
+
+    fn get_x_bounds(&self) -> Option<(u16, u16)> {
+        self.get_x_bounds()
+    }
+
+    fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>) {
+        self.set_x_bounds(x_bounds)
+    }
+}
+
+/// A [`SimpleSortableColumn`] represents some column in a [`SortableTextTable`].
 #[derive(Debug)]
-pub struct SortableColumn {
+pub struct SimpleSortableColumn {
     pub shortcut: Option<(KeyEvent, String)>,
     pub default_descending: bool,
     pub internal: SimpleColumn,
-    sorting: SortStatus,
+
+    /// Whether this column is currently selected for sorting, and which direction.
+    sorting_status: SortStatus,
 }
 
-impl SortableColumn {
-    /// Creates a new [`SortableColumn`].
+impl SimpleSortableColumn {
+    /// Creates a new [`SimpleSortableColumn`].
     fn new(
-        shortcut_name: Cow<'static, str>, shortcut: Option<KeyEvent>, default_descending: bool,
-        desired_width: DesiredColumnWidth,
+        full_name: Cow<'static, str>, shortcut: Option<(KeyEvent, String)>,
+        default_descending: bool, desired_width: DesiredColumnWidth,
     ) -> Self {
-        let shortcut = shortcut.map(|e| (e, get_shortcut_name(&e)));
         Self {
             shortcut,
             default_descending,
-            internal: SimpleColumn::new(shortcut_name, desired_width),
-            sorting: SortStatus::NotSorting,
+            internal: SimpleColumn::new(full_name, desired_width),
+            sorting_status: SortStatus::NotSorting,
         }
     }
 
@@ -89,18 +135,22 @@ impl SortableColumn {
         name: Cow<'static, str>, shortcut: Option<KeyEvent>, default_descending: bool,
         hard_length: Option<u16>,
     ) -> Self {
-        let shortcut_name = if let Some(shortcut) = shortcut {
-            get_shortcut_name(&shortcut).into()
+        let (full_name, shortcut) = if let Some(shortcut) = shortcut {
+            let shortcut_name = get_shortcut_name(&shortcut);
+            (
+                format!("{}{}", name, shortcut_name).into(),
+                Some((shortcut, shortcut_name)),
+            )
         } else {
-            name
+            (name, None)
         };
-        let shortcut_name_len = shortcut_name.len();
+        let full_name_len = full_name.len();
 
-        SortableColumn::new(
-            shortcut_name,
+        SimpleSortableColumn::new(
+            full_name,
             shortcut,
             default_descending,
-            DesiredColumnWidth::Hard(hard_length.unwrap_or(shortcut_name_len as u16 + 1)),
+            DesiredColumnWidth::Hard(hard_length.unwrap_or(full_name_len as u16 + 1)),
         )
     }
 
@@ -109,33 +159,53 @@ impl SortableColumn {
         name: Cow<'static, str>, shortcut: Option<KeyEvent>, default_descending: bool,
         max_percentage: f64,
     ) -> Self {
-        let shortcut_name = if let Some(shortcut) = shortcut {
-            get_shortcut_name(&shortcut).into()
+        let (full_name, shortcut) = if let Some(shortcut) = shortcut {
+            let shortcut_name = get_shortcut_name(&shortcut);
+            (
+                format!("{}{}", name, shortcut_name).into(),
+                Some((shortcut, shortcut_name)),
+            )
         } else {
-            name
+            (name, None)
         };
-        let shortcut_name_len = shortcut_name.len();
+        let full_name_len = full_name.len();
 
-        SortableColumn::new(
-            shortcut_name,
+        SimpleSortableColumn::new(
+            full_name,
             shortcut,
             default_descending,
             DesiredColumnWidth::Flex {
-                desired: shortcut_name_len as u16,
+                desired: full_name_len as u16,
                 max_percentage,
             },
         )
     }
 }
 
-impl TableColumn for SortableColumn {
+impl SortableColumn for SimpleSortableColumn {
+    fn shortcut(&self) -> &Option<(KeyEvent, String)> {
+        &self.shortcut
+    }
+
+    fn default_descending(&self) -> bool {
+        self.default_descending
+    }
+
+    fn sorting_status(&self) -> SortStatus {
+        self.sorting_status
+    }
+
+    fn set_sorting_status(&mut self, sorting_status: SortStatus) {
+        self.sorting_status = sorting_status;
+    }
+
     fn display_name(&self) -> Cow<'static, str> {
         const UP_ARROW: &str = "▲";
         const DOWN_ARROW: &str = "▼";
         format!(
             "{}{}",
             self.internal.display_name(),
-            match &self.sorting {
+            match &self.sorting_status {
                 SortStatus::NotSorting => "",
                 SortStatus::SortAscending => UP_ARROW,
                 SortStatus::SortDescending => DOWN_ARROW,
@@ -158,16 +228,22 @@ impl TableColumn for SortableColumn {
 }
 
 /// A sortable, scrollable table with columns.
-pub struct SortableTextTable {
+pub struct SortableTextTable<S = SimpleSortableColumn>
+where
+    S: SortableColumn,
+{
     /// Which index we're sorting by.
     sort_index: usize,
 
     /// The underlying [`TextTable`].
-    pub table: TextTable<SortableColumn>,
+    pub table: TextTable<S>,
 }
 
-impl SortableTextTable {
-    pub fn new(columns: Vec<SortableColumn>) -> Self {
+impl<S> SortableTextTable<S>
+where
+    S: SortableColumn,
+{
+    pub fn new(columns: Vec<S>) -> Self {
         let mut st = Self {
             sort_index: 0,
             table: TextTable::new(columns),
@@ -193,32 +269,32 @@ impl SortableTextTable {
     fn set_sort_index(&mut self, new_index: usize) {
         if new_index == self.sort_index {
             if let Some(column) = self.table.columns.get_mut(self.sort_index) {
-                match column.sorting {
+                match column.sorting_status() {
                     SortStatus::NotSorting => {
-                        if column.default_descending {
-                            column.sorting = SortStatus::SortDescending;
+                        if column.default_descending() {
+                            column.set_sorting_status(SortStatus::SortDescending);
                         } else {
-                            column.sorting = SortStatus::SortAscending;
+                            column.set_sorting_status(SortStatus::SortAscending);
                         }
                     }
                     SortStatus::SortAscending => {
-                        column.sorting = SortStatus::SortDescending;
+                        column.set_sorting_status(SortStatus::SortDescending);
                     }
                     SortStatus::SortDescending => {
-                        column.sorting = SortStatus::SortAscending;
+                        column.set_sorting_status(SortStatus::SortAscending);
                     }
                 }
             }
         } else {
             if let Some(column) = self.table.columns.get_mut(self.sort_index) {
-                column.sorting = SortStatus::NotSorting;
+                column.set_sorting_status(SortStatus::NotSorting);
             }
 
             if let Some(column) = self.table.columns.get_mut(new_index) {
-                if column.default_descending {
-                    column.sorting = SortStatus::SortDescending;
+                if column.default_descending() {
+                    column.set_sorting_status(SortStatus::SortDescending);
                 } else {
-                    column.sorting = SortStatus::SortAscending;
+                    column.set_sorting_status(SortStatus::SortAscending);
                 }
             }
 
@@ -244,10 +320,13 @@ impl SortableTextTable {
     }
 }
 
-impl Component for SortableTextTable {
+impl<S> Component for SortableTextTable<S>
+where
+    S: SortableColumn,
+{
     fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
         for (index, column) in self.table.columns.iter().enumerate() {
-            if let Some((shortcut, _)) = column.shortcut {
+            if let &Some((shortcut, _)) = column.shortcut() {
                 if shortcut == event {
                     self.set_sort_index(index);
                     return EventResult::Redraw;
@@ -270,7 +349,7 @@ impl Component for SortableTextTable {
 
             if y == 0 {
                 for (index, column) in self.table.columns.iter().enumerate() {
-                    if let Some((start, end)) = column.internal.get_x_bounds() {
+                    if let Some((start, end)) = column.get_x_bounds() {
                         if x >= start && x <= end {
                             self.set_sort_index(index);
                             return EventResult::Redraw;

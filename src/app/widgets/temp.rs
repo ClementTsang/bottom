@@ -11,7 +11,7 @@ use tui::{
 use crate::{
     app::{
         data_farmer::DataCollection, data_harvester::temperature::TemperatureType,
-        event::EventResult, sort_text_table::SortableColumn,
+        event::EventResult, sort_text_table::SimpleSortableColumn,
     },
     canvas::Painter,
     data_conversion::convert_temp_row,
@@ -66,8 +66,8 @@ pub struct TempTable {
 impl Default for TempTable {
     fn default() -> Self {
         let table = SortableTextTable::new(vec![
-            SortableColumn::new_flex("Sensor".into(), None, false, 0.8),
-            SortableColumn::new_hard("Temp".into(), None, false, Some(5)),
+            SimpleSortableColumn::new_flex("Sensor".into(), None, false, 0.8),
+            SimpleSortableColumn::new_hard("Temp".into(), None, false, Some(5)),
         ])
         .default_ltr(false);
 

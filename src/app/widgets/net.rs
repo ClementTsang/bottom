@@ -476,8 +476,6 @@ impl NetGraph {
 
         match &mut self.draw_cache {
             NetGraphCacheState::Uncached => {
-                debug!("No cache!");
-
                 let (cached_upper_bound, labels) = adjust_network_data_point(
                     current_max_value,
                     &self.scale_type,

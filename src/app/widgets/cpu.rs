@@ -9,7 +9,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::EventResult, sort_text_table::SortableColumn, time_graph::TimeGraphData,
+        event::EventResult, sort_text_table::SimpleSortableColumn, time_graph::TimeGraphData,
         AppConfigFields, DataCollection,
     },
     canvas::Painter,
@@ -96,8 +96,8 @@ impl CpuGraph {
     pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
         let graph = TimeGraph::from_config(app_config_fields);
         let legend = SortableTextTable::new(vec![
-            SortableColumn::new_flex("CPU".into(), None, false, 0.5),
-            SortableColumn::new_flex("Use%".into(), None, false, 0.5),
+            SimpleSortableColumn::new_flex("CPU".into(), None, false, 0.5),
+            SimpleSortableColumn::new_flex("Use%".into(), None, false, 0.5),
         ]);
         let legend_position = if app_config_fields.left_legend {
             CpuGraphLegendPosition::Left
