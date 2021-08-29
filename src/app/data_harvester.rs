@@ -96,6 +96,9 @@ pub struct DataCollector {
     battery_manager: Option<Manager>,
     battery_list: Option<Vec<Battery>>,
     filters: DataFilters,
+
+    #[cfg(target_family = "unix")]
+    user_table: self::processes::UserTable,
 }
 
 impl DataCollector {
@@ -123,6 +126,8 @@ impl DataCollector {
             battery_manager: None,
             battery_list: None,
             filters,
+            #[cfg(target_family = "unix")]
+            user_table: Default::default(),
         }
     }
 
@@ -253,9 +258,19 @@ impl DataCollector {
                             .duration_since(self.last_collection_time)
                             .as_secs(),
                         self.mem_total_kb,
+                        &mut self.user_table,
                     )
                 }
-                #[cfg(not(target_os = "linux"))]
+                #[cfg(target_os = "macos")]
+                {
+                    processes::get_process_data(
+                        &self.sys,
+                        self.use_current_cpu_total,
+                        self.mem_total_kb,
+                        &mut self.user_table,
+                    )
+                }
+                #[cfg(target_os = "windows")]
                 {
                     processes::get_process_data(
                         &self.sys,

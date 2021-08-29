@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
+use float_ord::FloatOrd;
+use itertools::Itertools;
 use unicode_segmentation::GraphemeCursor;
 
 use tui::{
@@ -12,20 +14,20 @@ use tui::{
 
 use crate::{
     app::{
-        event::{EventResult, MultiKey, MultiKeyResult},
+        data_harvester::processes::ProcessHarvest,
+        event::{MultiKey, MultiKeyResult, WidgetEventResult},
         query::*,
         DataCollection,
     },
     canvas::Painter,
-    data_conversion::{get_disk_io_strings, get_string_with_bytes},
+    data_conversion::get_string_with_bytes,
     data_harvester::processes::{self, ProcessSorting},
     options::ProcessDefaults,
-    utils::gen_util::{get_binary_bytes, GIBI_LIMIT},
 };
 use ProcessSorting::*;
 
 use super::{
-    sort_text_table::{SimpleSortableColumn, SortableColumn},
+    sort_text_table::{SimpleSortableColumn, SortStatus, SortableColumn},
     text_table::TextTableData,
     AppScrollWidgetState, CanvasTableWidthState, Component, CursorDirection, ScrollDirection,
     SortableTextTable, TextInput, TextTable, Widget,
@@ -670,7 +672,7 @@ impl ProcessSortType {
             ProcessSortType::Count => "Count",
             ProcessSortType::Name => "Name",
             ProcessSortType::Command => "Command",
-            ProcessSortType::Cpu => "Cpu",
+            ProcessSortType::Cpu => "CPU%",
             ProcessSortType::Mem => "Mem",
             ProcessSortType::MemPercent => "Mem%",
             ProcessSortType::Rps => "R/s",
@@ -708,7 +710,7 @@ impl ProcessSortType {
         match self {
             ProcessSortType::Pid => Hard(Some(7)),
             ProcessSortType::Count => Hard(Some(8)),
-            ProcessSortType::Name => Flex(0.4),
+            ProcessSortType::Name => Flex(0.35),
             ProcessSortType::Command => Flex(0.7),
             ProcessSortType::Cpu => Hard(Some(8)),
             ProcessSortType::Mem => Hard(Some(8)),
@@ -717,8 +719,8 @@ impl ProcessSortType {
             ProcessSortType::Wps => Hard(Some(8)),
             ProcessSortType::TotalRead => Hard(Some(7)),
             ProcessSortType::TotalWrite => Hard(Some(8)),
-            ProcessSortType::User => Flex(0.075),
-            ProcessSortType::State => Hard(Some(1)),
+            ProcessSortType::User => Flex(0.08),
+            ProcessSortType::State => Hard(Some(8)),
         }
     }
 
@@ -891,23 +893,23 @@ impl ProcessManager {
         self.in_tree_mode = in_tree_mode;
     }
 
-    fn open_search(&mut self) -> EventResult {
+    fn open_search(&mut self) -> WidgetEventResult {
         if let ProcessManagerSelection::Search = self.selected {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         } else {
             self.show_search = true;
             self.selected = ProcessManagerSelection::Search;
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         }
     }
 
-    fn open_sort(&mut self) -> EventResult {
+    fn open_sort(&mut self) -> WidgetEventResult {
         if let ProcessManagerSelection::Sort = self.selected {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         } else {
             self.show_sort = true;
             self.selected = ProcessManagerSelection::Sort;
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         }
     }
 
@@ -938,7 +940,7 @@ impl Component for ProcessManager {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         match self.selected {
             ProcessManagerSelection::Processes => {
                 // Try to catch some stuff first...
@@ -956,7 +958,7 @@ impl Component for ProcessManager {
                                     // Kill the selected process(es)
                                 }
                                 MultiKeyResult::Accepted | MultiKeyResult::Rejected => {
-                                    return EventResult::NoRedraw;
+                                    return WidgetEventResult::NoRedraw;
                                 }
                             }
                         }
@@ -974,7 +976,7 @@ impl Component for ProcessManager {
                         }
                         KeyCode::Char('t') | KeyCode::F(5) => {
                             self.in_tree_mode = !self.in_tree_mode;
-                            return EventResult::Redraw;
+                            return WidgetEventResult::Redraw;
                         }
                         KeyCode::F(6) => {
                             return self.open_sort();
@@ -1019,7 +1021,7 @@ impl Component for ProcessManager {
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         match &event.kind {
             MouseEventKind::Down(MouseButton::Left) => {
                 if self.process_table.does_intersect_mouse(&event) {
@@ -1027,8 +1029,13 @@ impl Component for ProcessManager {
                         self.process_table.handle_mouse_event(event)
                     } else {
                         self.selected = ProcessManagerSelection::Processes;
-                        self.process_table.handle_mouse_event(event);
-                        EventResult::Redraw
+                        match self.process_table.handle_mouse_event(event) {
+                            WidgetEventResult::Quit => WidgetEventResult::Quit,
+                            WidgetEventResult::Redraw | WidgetEventResult::NoRedraw => {
+                                WidgetEventResult::Redraw
+                            }
+                            WidgetEventResult::Signal(s) => WidgetEventResult::Signal(s),
+                        }
                     }
                 } else if self.sort_table.does_intersect_mouse(&event) {
                     if let ProcessManagerSelection::Sort = self.selected {
@@ -1036,7 +1043,7 @@ impl Component for ProcessManager {
                     } else {
                         self.selected = ProcessManagerSelection::Sort;
                         self.sort_table.handle_mouse_event(event);
-                        EventResult::Redraw
+                        WidgetEventResult::Redraw
                     }
                 } else if self.search_input.does_intersect_mouse(&event) {
                     if let ProcessManagerSelection::Search = self.selected {
@@ -1044,10 +1051,10 @@ impl Component for ProcessManager {
                     } else {
                         self.selected = ProcessManagerSelection::Search;
                         self.search_input.handle_mouse_event(event);
-                        EventResult::Redraw
+                        WidgetEventResult::Redraw
                     }
                 } else {
-                    EventResult::NoRedraw
+                    WidgetEventResult::NoRedraw
                 }
             }
             MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => match self.selected {
@@ -1055,7 +1062,7 @@ impl Component for ProcessManager {
                 ProcessManagerSelection::Sort => self.sort_table.handle_mouse_event(event),
                 ProcessManagerSelection::Search => self.search_input.handle_mouse_event(event),
             },
-            _ => EventResult::NoRedraw,
+            _ => WidgetEventResult::NoRedraw,
         }
     }
 }
@@ -1081,87 +1088,125 @@ impl Widget for ProcessManager {
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {
-        self.display_data = data_collection
+        let filtered_sorted_iterator = data_collection
             .process_harvest
             .iter()
-            .filter_map(|process| {
-                let row = self
-                    .process_table
-                    .columns()
-                    .iter()
-                    .map(|column| match &column.sort_type {
-                        ProcessSortType::Pid => (process.pid.to_string().into(), None, None),
-                        ProcessSortType::Count => ("".into(), None, None),
-                        ProcessSortType::Name => (process.name.clone().into(), None, None),
-                        ProcessSortType::Command => (process.command.clone().into(), None, None),
-                        ProcessSortType::Cpu => (
-                            format!("{:.1}%", process.cpu_usage_percent).into(),
-                            None,
-                            None,
-                        ),
-                        ProcessSortType::Mem => (
-                            get_string_with_bytes(process.mem_usage_bytes).into(),
-                            None,
-                            None,
-                        ),
-                        ProcessSortType::MemPercent => (
-                            format!("{:.1}%", process.mem_usage_percent).into(),
-                            None,
-                            None,
-                        ),
-                        ProcessSortType::Rps => (
-                            get_string_with_bytes(process.read_bytes_per_sec).into(),
-                            None,
-                            None,
-                        ),
-                        ProcessSortType::Wps => (
-                            get_string_with_bytes(process.write_bytes_per_sec).into(),
-                            None,
-                            None,
-                        ),
-                        ProcessSortType::TotalRead => (
-                            get_string_with_bytes(process.total_read_bytes).into(),
-                            None,
-                            None,
-                        ),
-                        ProcessSortType::TotalWrite => (
-                            get_string_with_bytes(process.total_write_bytes).into(),
-                            None,
-                            None,
-                        ),
-                        ProcessSortType::User => {
-                            let user = {
-                                #[cfg(target_family = "unix")]
-                                {
-                                    if let Some(uid) = process.uid {
-                                        data_collection
-                                            .user_table
-                                            .borrow_mut()
-                                            .get_uid_to_username_mapping(uid)
-                                            .map(|s| s.into())
-                                            .unwrap_or("N/A".into())
-                                    } else {
-                                        "N/A".into()
-                                    }
-                                }
-                                #[cfg(not(target_family = "unix"))]
-                                {
-                                    "N/A".into()
-                                }
-                            };
-
-                            (user, None, None)
-                        }
-                        ProcessSortType::State => (
-                            process.process_state.clone().into(),
-                            Some(process.process_state_char.to_string().into()),
-                            None,
-                        ),
-                    })
-                    .collect::<Vec<_>>();
-
-                Some(row)
+            .filter(|process| {
+                // TODO: Filtering
+                true
             })
-            .collect::<Vec<_>>();
+            .sorted_by(match self.process_table.current_column().sort_type {
+                ProcessSortType::Pid => {
+                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.pid.cmp(&b.pid)
+                }
+                ProcessSortType::Count => {
+                    todo!()
+                }
+                ProcessSortType::Name => {
+                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.name.cmp(&b.name)
+                }
+                ProcessSortType::Command => {
+                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.command.cmp(&b.command)
+                }
+                ProcessSortType::Cpu => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                    FloatOrd(a.cpu_usage_percent).cmp(&FloatOrd(b.cpu_usage_percent))
+                },
+                ProcessSortType::Mem => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                    a.mem_usage_bytes.cmp(&b.mem_usage_bytes)
+                },
+                ProcessSortType::MemPercent => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                    FloatOrd(a.mem_usage_percent).cmp(&FloatOrd(b.mem_usage_percent))
+                },
+                ProcessSortType::Rps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                    a.read_bytes_per_sec.cmp(&b.read_bytes_per_sec)
+                },
+                ProcessSortType::Wps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                    a.write_bytes_per_sec.cmp(&b.write_bytes_per_sec)
+                },
+                ProcessSortType::TotalRead => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                    a.total_read_bytes.cmp(&b.total_read_bytes)
+                },
+                ProcessSortType::TotalWrite => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                    a.total_write_bytes.cmp(&b.total_write_bytes)
+                },
+                ProcessSortType::User => {
+                    #[cfg(target_family = "unix")]
+                    {
+                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.user.cmp(&b.user)
+                    }
+                    #[cfg(not(target_family = "unix"))]
+                    {
+                        |_a: &&ProcessHarvest, _b: &&ProcessHarvest| Ord::Eq
+                    }
+                }
+                ProcessSortType::State => {
+                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.process_state.cmp(&b.process_state)
+                }
+            });
+
+        self.display_data = if let SortStatus::SortDescending = self
+            .process_table
+            .current_column()
+            .sortable_column
+            .sorting_status()
+        {
+            itertools::Either::Left(filtered_sorted_iterator.rev())
+        } else {
+            itertools::Either::Right(filtered_sorted_iterator)
+        }
+        .map(|process| {
+            self.process_table
+                .columns()
+                .iter()
+                .map(|column| match &column.sort_type {
+                    ProcessSortType::Pid => (process.pid.to_string().into(), None, None),
+                    ProcessSortType::Count => ("".into(), None, None),
+                    ProcessSortType::Name => (process.name.clone().into(), None, None),
+                    ProcessSortType::Command => (process.command.clone().into(), None, None),
+                    ProcessSortType::Cpu => (
+                        format!("{:.1}%", process.cpu_usage_percent).into(),
+                        None,
+                        None,
+                    ),
+                    ProcessSortType::Mem => (
+                        get_string_with_bytes(process.mem_usage_bytes).into(),
+                        None,
+                        None,
+                    ),
+                    ProcessSortType::MemPercent => (
+                        format!("{:.1}%", process.mem_usage_percent).into(),
+                        None,
+                        None,
+                    ),
+                    ProcessSortType::Rps => (
+                        get_string_with_bytes(process.read_bytes_per_sec).into(),
+                        None,
+                        None,
+                    ),
+                    ProcessSortType::Wps => (
+                        get_string_with_bytes(process.write_bytes_per_sec).into(),
+                        None,
+                        None,
+                    ),
+                    ProcessSortType::TotalRead => (
+                        get_string_with_bytes(process.total_read_bytes).into(),
+                        None,
+                        None,
+                    ),
+                    ProcessSortType::TotalWrite => (
+                        get_string_with_bytes(process.total_write_bytes).into(),
+                        None,
+                        None,
+                    ),
+                    ProcessSortType::User => (process.user.clone(), None, None),
+                    ProcessSortType::State => (
+                        process.process_state.clone().into(),
+                        None, // Currently disabled; what happens if you try to sort in the shortened form?
+                        None,
+                    ),
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
     }
 }

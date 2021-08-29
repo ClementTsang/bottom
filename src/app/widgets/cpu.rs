@@ -9,7 +9,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::EventResult, sort_text_table::SimpleSortableColumn, time_graph::TimeGraphData,
+        event::WidgetEventResult, sort_text_table::SimpleSortableColumn, time_graph::TimeGraphData,
         AppConfigFields, DataCollection,
     },
     canvas::Painter,
@@ -120,22 +120,22 @@ impl CpuGraph {
 }
 
 impl Component for CpuGraph {
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         match self.selected {
             CpuGraphSelection::Graph => self.graph.handle_key_event(event),
             CpuGraphSelection::Legend => self.legend.handle_key_event(event),
-            CpuGraphSelection::None => EventResult::NoRedraw,
+            CpuGraphSelection::None => WidgetEventResult::NoRedraw,
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         if self.graph.does_intersect_mouse(&event) {
             if let CpuGraphSelection::Graph = self.selected {
                 self.graph.handle_mouse_event(event)
             } else {
                 self.selected = CpuGraphSelection::Graph;
                 self.graph.handle_mouse_event(event);
-                EventResult::Redraw
+                WidgetEventResult::Redraw
             }
         } else if self.legend.does_intersect_mouse(&event) {
             if let CpuGraphSelection::Legend = self.selected {
@@ -143,10 +143,10 @@ impl Component for CpuGraph {
             } else {
                 self.selected = CpuGraphSelection::Legend;
                 self.legend.handle_mouse_event(event);
-                EventResult::Redraw
+                WidgetEventResult::Redraw
             }
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
@@ -184,7 +184,7 @@ impl Widget for CpuGraph {
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         let y_bound_labels: [Cow<'static, str>; 2] = ["0%".into(), "100%".into()];
 
-        let current_index = self.legend.current_index();
+        let current_index = self.legend.current_scroll_index();
         let sliced_cpu_data = if current_index == 0 {
             &self.display_data[..]
         } else {
@@ -301,6 +301,7 @@ impl Widget for CpuGraph {
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {
+        // TODO: *Maybe* look into only taking in enough data for the current retention?  Though this isn't great, it means you have to be like process with the whole updating thing.
         convert_cpu_data_points(data_collection, &mut self.display_data, false); // TODO: Again, the "is_frozen" is probably useless
         self.load_avg_data = data_collection.load_avg_harvest;
     }

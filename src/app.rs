@@ -33,7 +33,7 @@ use crate::{
     BottomEvent, Pid,
 };
 
-use self::event::{EventResult, ReturnSignal, ReturnSignalResult};
+use self::event::{EventResult, ReturnSignal, WidgetEventResult};
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
@@ -302,6 +302,26 @@ impl AppState {
         }
     }
 
+    /// Quick and dirty handler to convert [`WidgetEventResult`]s to [`EventResult`]s, and handle [`ReturnSignal`]s.
+    fn convert_widget_event_result(&mut self, w: WidgetEventResult) -> EventResult {
+        match w {
+            WidgetEventResult::Quit => EventResult::Quit,
+            WidgetEventResult::Redraw => EventResult::Redraw,
+            WidgetEventResult::NoRedraw => EventResult::NoRedraw,
+            WidgetEventResult::Signal(signal) => match signal {
+                ReturnSignal::KillProcess => {
+                    todo!()
+                }
+                ReturnSignal::Update => {
+                    if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
+                        widget.update_data(&self.data_collection);
+                    }
+                    EventResult::Redraw
+                }
+            },
+        }
+    }
+
     /// Handles a [`BottomEvent`] and updates the [`AppState`] if needed. Returns an [`EventResult`] indicating
     /// whether the app now requires a redraw.
     pub fn handle_event(&mut self, event: BottomEvent) -> EventResult {
@@ -312,7 +332,8 @@ impl AppState {
                     event_result
                 } else if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
                     // If it isn't, send it to the current widget!
-                    widget.handle_key_event(event)
+                    let result = widget.handle_key_event(event);
+                    self.convert_widget_event_result(result)
                 } else {
                     EventResult::NoRedraw
                 }
@@ -327,7 +348,8 @@ impl AppState {
                             if let Some(widget) =
                                 self.widget_lookup_map.get_mut(&self.selected_widget)
                             {
-                                return widget.handle_mouse_event(event);
+                                let result = widget.handle_mouse_event(event);
+                                return self.convert_widget_event_result(result);
                             }
                         } else {
                             for (id, widget) in self.widget_lookup_map.iter_mut() {
@@ -336,10 +358,12 @@ impl AppState {
                                     self.selected_widget = *id;
 
                                     if is_id_selected {
-                                        return widget.handle_mouse_event(event);
+                                        let result = widget.handle_mouse_event(event);
+                                        return self.convert_widget_event_result(result);
                                     } else {
                                         // If the aren't equal, *force* a redraw.
-                                        widget.handle_mouse_event(event);
+                                        let result = widget.handle_mouse_event(event);
+                                        let _ = self.convert_widget_event_result(result);
                                         return EventResult::Redraw;
                                     }
                                 }
@@ -349,7 +373,8 @@ impl AppState {
                     MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
                         if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget)
                         {
-                            return widget.handle_mouse_event(event);
+                            let result = widget.handle_mouse_event(event);
+                            return self.convert_widget_event_result(result);
                         }
                     }
                     _ => {}
@@ -379,15 +404,6 @@ impl AppState {
                 self.data_collection
                     .clean_data(constants::STALE_MAX_MILLISECONDS);
                 EventResult::NoRedraw
-            }
-        }
-    }
-
-    /// Handles a [`ReturnSignal`], and returns an [`ReturnSignalResult`].
-    pub fn handle_return_signal(&mut self, return_signal: ReturnSignal) -> ReturnSignalResult {
-        match return_signal {
-            ReturnSignal::KillProcess => {
-                todo!()
             }
         }
     }

@@ -5,7 +5,7 @@ use std::collections::hash_map::Entry;
 use crate::utils::error::{self, BottomError};
 use crate::Pid;
 
-use super::ProcessHarvest;
+use super::{ProcessHarvest, UserTable};
 
 use sysinfo::ProcessStatus;
 
@@ -117,6 +117,7 @@ fn get_linux_cpu_usage(
 fn read_proc(
     prev_proc: &PrevProcDetails, stat: &Stat, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
+    user_table: &mut UserTable,
 ) -> error::Result<(ProcessHarvest, u64)> {
     use std::convert::TryFrom;
 
@@ -196,7 +197,7 @@ fn read_proc(
             (0, 0, 0, 0)
         };
 
-    let uid = Some(process.owner);
+    let uid = process.owner;
 
     Ok((
         ProcessHarvest {
@@ -214,6 +215,10 @@ fn read_proc(
             process_state,
             process_state_char,
             uid,
+            user: user_table
+                .get_uid_to_username_mapping(uid)
+                .map(Into::into)
+                .unwrap_or("N/A".into()),
         },
         new_process_times,
     ))
@@ -222,7 +227,7 @@ fn read_proc(
 pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
     pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
-    time_difference_in_secs: u64, mem_total_kb: u64,
+    time_difference_in_secs: u64, mem_total_kb: u64, user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
@@ -265,6 +270,7 @@ pub fn get_process_data(
                                 use_current_cpu_total,
                                 time_difference_in_secs,
                                 mem_total_kb,
+                                user_table,
                             ) {
                                 prev_proc_details.cpu_time = new_process_times;
                                 prev_proc_details.total_read_bytes =

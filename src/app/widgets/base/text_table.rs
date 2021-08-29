@@ -15,7 +15,7 @@ use tui::{
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{event::EventResult, Component, Scrollable},
+    app::{event::WidgetEventResult, Component, Scrollable},
     canvas::Painter,
     constants::TABLE_GAP_HEIGHT_LIMIT,
 };
@@ -186,7 +186,7 @@ where
         }
     }
 
-    pub fn current_index(&self) -> usize {
+    pub fn current_scroll_index(&self) -> usize {
         self.scrollable.current_index()
     }
 
@@ -342,7 +342,7 @@ where
         }
     }
 
-    /// Draws a [`Table`] given the [`TextTable`] and the given data.
+    /// Draws a [`Table`] on screen..
     ///
     /// Note if the number of columns don't match in the [`TextTable`] and data,
     /// it will only create as many columns as it can grab data from both sources from.
@@ -443,19 +443,19 @@ impl<C> Component for TextTable<C>
 where
     C: TableColumn,
 {
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         if self.selectable {
             self.scrollable.handle_key_event(event)
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         if self.selectable {
             self.scrollable.handle_mouse_event(event)
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 

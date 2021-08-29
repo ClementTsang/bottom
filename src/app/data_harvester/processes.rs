@@ -23,6 +23,8 @@ cfg_if::cfg_if! {
     }
 }
 
+use std::borrow::Cow;
+
 use crate::Pid;
 
 // TODO: Add value so we know if it's sorted ascending or descending by default?
@@ -93,5 +95,8 @@ pub struct ProcessHarvest {
 
     /// This is the *effective* user ID.
     #[cfg(target_family = "unix")]
-    pub uid: Option<libc::uid_t>,
+    pub uid: libc::uid_t,
+
+    #[cfg(target_family = "unix")]
+    pub user: Cow<'static, str>,
 }

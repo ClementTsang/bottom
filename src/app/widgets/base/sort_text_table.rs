@@ -1,14 +1,13 @@
 use std::borrow::Cow;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
-use tui::{
-    backend::Backend,
-    layout::Rect,
-    widgets::{Block, Table, TableState},
-};
+use tui::{backend::Backend, layout::Rect, widgets::Block};
 
 use crate::{
-    app::{event::EventResult, Component, TextTable},
+    app::{
+        event::{ReturnSignal, WidgetEventResult},
+        Component, TextTable,
+    },
     canvas::Painter,
 };
 
@@ -243,6 +242,7 @@ impl<S> SortableTextTable<S>
 where
     S: SortableColumn,
 {
+    /// Creates a new [`SortableTextTable`]. Note that `columns` cannot be empty.
     pub fn new(columns: Vec<S>) -> Self {
         let mut st = Self {
             sort_index: 0,
@@ -262,8 +262,13 @@ where
         self
     }
 
-    pub fn current_index(&self) -> usize {
-        self.table.current_index()
+    pub fn current_scroll_index(&self) -> usize {
+        self.table.current_scroll_index()
+    }
+
+    /// Returns the current column.
+    pub fn current_column(&self) -> &S {
+        &self.table.columns[self.sort_index]
     }
 
     pub fn columns(&self) -> &[S] {
@@ -310,7 +315,7 @@ where
         }
     }
 
-    /// Draws a [`Table`] given the [`TextTable`] and the given data.
+    /// Draws a [`tui::widgets::Table`] on screen.
     ///
     /// Note if the number of columns don't match in the [`TextTable`] and data,
     /// it will only create as many columns as it can grab data from both sources from.
@@ -327,12 +332,12 @@ impl<S> Component for SortableTextTable<S>
 where
     S: SortableColumn,
 {
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         for (index, column) in self.table.columns.iter().enumerate() {
             if let &Some((shortcut, _)) = column.shortcut() {
                 if shortcut == event {
                     self.set_sort_index(index);
-                    return EventResult::Redraw;
+                    return WidgetEventResult::Signal(ReturnSignal::Update);
                 }
             }
         }
@@ -340,10 +345,10 @@ where
         self.table.scrollable.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         if let MouseEventKind::Down(MouseButton::Left) = event.kind {
             if !self.does_intersect_mouse(&event) {
-                return EventResult::NoRedraw;
+                return WidgetEventResult::NoRedraw;
             }
 
             // Note these are representing RELATIVE coordinates! They *need* the above intersection check for validity!
@@ -355,7 +360,7 @@ where
                     if let Some((start, end)) = column.get_x_bounds() {
                         if x >= start && x <= end {
                             self.set_sort_index(index);
-                            return EventResult::Redraw;
+                            return WidgetEventResult::Signal(ReturnSignal::Update);
                         }
                     }
                 }

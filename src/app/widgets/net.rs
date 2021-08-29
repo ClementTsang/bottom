@@ -523,13 +523,13 @@ impl Component for NetGraph {
 
     fn handle_key_event(
         &mut self, event: crossterm::event::KeyEvent,
-    ) -> crate::app::event::EventResult {
+    ) -> crate::app::event::WidgetEventResult {
         self.graph.handle_key_event(event)
     }
 
     fn handle_mouse_event(
         &mut self, event: crossterm::event::MouseEvent,
-    ) -> crate::app::event::EventResult {
+    ) -> crate::app::event::WidgetEventResult {
         self.graph.handle_mouse_event(event)
     }
 }
@@ -648,13 +648,13 @@ impl Component for OldNetGraph {
 
     fn handle_key_event(
         &mut self, event: crossterm::event::KeyEvent,
-    ) -> crate::app::event::EventResult {
+    ) -> crate::app::event::WidgetEventResult {
         self.net_graph.handle_key_event(event)
     }
 
     fn handle_mouse_event(
         &mut self, event: crossterm::event::MouseEvent,
-    ) -> crate::app::event::EventResult {
+    ) -> crate::app::event::WidgetEventResult {
         self.net_graph.handle_mouse_event(event)
     }
 }

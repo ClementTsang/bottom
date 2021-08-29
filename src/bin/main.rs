@@ -4,13 +4,7 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{
-    app::event::{EventResult, ReturnSignalResult},
-    canvas,
-    constants::*,
-    options::*,
-    *,
-};
+use bottom::{app::event::EventResult, canvas, constants::*, options::*, *};
 
 use std::{
     boxed::Box,
@@ -134,17 +128,6 @@ fn main() -> Result<()> {
                 EventResult::NoRedraw => {
                     continue;
                 }
-                EventResult::Signal(signal) => match app.handle_return_signal(signal) {
-                    ReturnSignalResult::Quit => {
-                        break;
-                    }
-                    ReturnSignalResult::Redraw => {
-                        try_drawing(&mut terminal, &mut app, &mut painter)?;
-                    }
-                    ReturnSignalResult::NoRedraw => {
-                        continue;
-                    }
-                },
             }
         }
     }

@@ -8,7 +8,7 @@ use tui::{
 };
 
 use crate::{
-    app::{event::EventResult, time_graph::TimeGraphData, DataCollection},
+    app::{event::WidgetEventResult, time_graph::TimeGraphData, DataCollection},
     data_conversion::{convert_mem_data_points, convert_mem_labels, convert_swap_data_points},
 };
 
@@ -75,11 +75,11 @@ impl MemGraph {
 }
 
 impl Component for MemGraph {
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         self.graph.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         self.graph.handle_mouse_event(event)
     }
 

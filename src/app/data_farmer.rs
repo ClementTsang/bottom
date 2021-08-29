@@ -14,7 +14,7 @@
 /// more points as this is used!
 use once_cell::sync::Lazy;
 
-use std::{cell::RefCell, collections::HashMap, time::Instant, vec::Vec};
+use std::{collections::HashMap, time::Instant, vec::Vec};
 
 use crate::{
     data_harvester::{batteries, cpu, disks, memory, network, processes, temperature, Data},
@@ -22,8 +22,6 @@ use crate::{
     Pid,
 };
 use regex::Regex;
-
-use super::data_harvester::processes::UserTable;
 
 pub type TimeOffset = f64;
 pub type Value = f64;
@@ -65,8 +63,6 @@ pub struct DataCollection {
     pub io_labels: Vec<(String, String)>,
     pub temp_harvest: Vec<temperature::TempHarvest>,
     pub battery_harvest: Vec<batteries::BatteryHarvest>,
-    #[cfg(target_family = "unix")]
-    pub user_table: RefCell<UserTable>,
 }
 
 impl Default for DataCollection {
@@ -88,8 +84,6 @@ impl Default for DataCollection {
             io_labels: Vec::default(),
             temp_harvest: Vec::default(),
             battery_harvest: Vec::default(),
-            #[cfg(target_family = "unix")]
-            user_table: RefCell::new(UserTable::default()),
         }
     }
 }
@@ -107,10 +101,6 @@ impl DataCollection {
         self.io_labels_and_prev = Vec::default();
         self.temp_harvest = Vec::default();
         self.battery_harvest = Vec::default();
-        #[cfg(target_family = "unix")]
-        {
-            *self.user_table.borrow_mut() = UserTable::default();
-        }
     }
 
     pub fn set_frozen_time(&mut self) {

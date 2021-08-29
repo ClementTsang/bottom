@@ -2,7 +2,7 @@ use crossterm::event::{KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEve
 use tui::{layout::Rect, widgets::TableState};
 
 use crate::app::{
-    event::{EventResult, MultiKey, MultiKeyResult},
+    event::{WidgetEventResult, MultiKey, MultiKeyResult},
     Component,
 };
 
@@ -128,56 +128,56 @@ impl Scrollable {
         }
     }
 
-    fn skip_to_first(&mut self) -> EventResult {
+    fn skip_to_first(&mut self) -> WidgetEventResult {
         if self.current_index != 0 {
             self.update_index(0);
 
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
-    fn skip_to_last(&mut self) -> EventResult {
+    fn skip_to_last(&mut self) -> WidgetEventResult {
         let last_index = self.num_items - 1;
         if self.current_index != last_index {
             self.update_index(last_index);
 
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
     /// Moves *downward* by *incrementing* the current index.
-    fn move_down(&mut self, change_by: usize) -> EventResult {
+    fn move_down(&mut self, change_by: usize) -> WidgetEventResult {
         if self.num_items == 0 {
-            return EventResult::NoRedraw;
+            return WidgetEventResult::NoRedraw;
         }
 
         let new_index = self.current_index + change_by;
         if new_index >= self.num_items {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         } else if self.current_index == new_index {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         } else {
             self.update_index(new_index);
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         }
     }
 
     /// Moves *upward* by *decrementing* the current index.
-    fn move_up(&mut self, change_by: usize) -> EventResult {
+    fn move_up(&mut self, change_by: usize) -> WidgetEventResult {
         if self.num_items == 0 {
-            return EventResult::NoRedraw;
+            return WidgetEventResult::NoRedraw;
         }
 
         let new_index = self.current_index.saturating_sub(change_by);
         if self.current_index == new_index {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         } else {
             self.update_index(new_index);
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         }
     }
 
@@ -199,7 +199,7 @@ impl Scrollable {
 }
 
 impl Component for Scrollable {
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         use crossterm::event::KeyCode::{Char, Down, Up};
 
         if event.modifiers == KeyModifiers::NONE || event.modifiers == KeyModifiers::SHIFT {
@@ -210,18 +210,18 @@ impl Component for Scrollable {
                 Char('k') => self.move_up(1),
                 Char('g') => match self.gg_manager.input('g') {
                     MultiKeyResult::Completed => self.skip_to_first(),
-                    MultiKeyResult::Accepted => EventResult::NoRedraw,
-                    MultiKeyResult::Rejected => EventResult::NoRedraw,
+                    MultiKeyResult::Accepted => WidgetEventResult::NoRedraw,
+                    MultiKeyResult::Rejected => WidgetEventResult::NoRedraw,
                 },
                 Char('G') => self.skip_to_last(),
-                _ => EventResult::NoRedraw,
+                _ => WidgetEventResult::NoRedraw,
             }
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         match event.kind {
             MouseEventKind::Down(MouseButton::Left) => {
                 if self.does_intersect_mouse(&event) {
@@ -244,11 +244,11 @@ impl Component for Scrollable {
                     }
                 }
 
-                EventResult::NoRedraw
+                WidgetEventResult::NoRedraw
             }
             MouseEventKind::ScrollDown => self.move_down(1),
             MouseEventKind::ScrollUp => self.move_up(1),
-            _ => EventResult::NoRedraw,
+            _ => WidgetEventResult::NoRedraw,
         }
     }
 

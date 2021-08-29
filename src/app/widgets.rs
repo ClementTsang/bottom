@@ -6,7 +6,7 @@ use tui::{backend::Backend, layout::Rect, widgets::TableState, Frame};
 
 use crate::{
     app::{
-        event::{EventResult, SelectionAction},
+        event::{WidgetEventResult, SelectionAction},
         layout_manager::BottomWidgetType,
     },
     canvas::Painter,
@@ -48,15 +48,15 @@ pub trait Component {
     /// Handles a [`KeyEvent`].
     ///
     /// Defaults to returning [`EventResult::NoRedraw`], indicating nothing should be done.
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
-        EventResult::NoRedraw
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+        WidgetEventResult::NoRedraw
     }
 
     /// Handles a [`MouseEvent`].
     ///
     /// Defaults to returning [`EventResult::Continue`], indicating nothing should be done.
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        EventResult::NoRedraw
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+        WidgetEventResult::NoRedraw
     }
 
     /// Returns a [`Component`]'s bounding box.  Note that these are defined in *global*, *absolute*

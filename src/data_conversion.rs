@@ -621,11 +621,7 @@ pub fn convert_process_data(
         let user = {
             #[cfg(target_family = "unix")]
             {
-                if let Some(uid) = process.uid {
-                    user_table.get_uid_to_username_mapping(uid).ok()
-                } else {
-                    None
-                }
+                user_table.get_uid_to_username_mapping(process.uid).ok()
             }
             #[cfg(not(target_family = "unix"))]
             {

@@ -1,6 +1,6 @@
 //! Process data collection for macOS.  Uses sysinfo.
 
-use super::ProcessHarvest;
+use super::{ProcessHarvest, UserTable};
 use sysinfo::{ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
 
 fn get_macos_process_cpu_usage(
@@ -35,7 +35,7 @@ fn get_macos_process_cpu_usage(
 }
 
 pub fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
+    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64, user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.get_processes();
@@ -104,7 +104,11 @@ pub fn get_process_data(
             total_write_bytes: disk_usage.total_written_bytes,
             process_state: process_val.status().to_string(),
             process_state_char: convert_process_status_to_char(process_val.status()),
-            uid: Some(process_val.uid),
+            uid: process_val.uid,
+            user: user_table
+                .get_uid_to_username_mapping(uid)
+                .map(Into::into)
+                .unwrap_or("N/A".into()),
         });
     }
 

@@ -2,15 +2,23 @@ use std::time::{Duration, Instant};
 
 const MAX_TIMEOUT: Duration = Duration::from_millis(400);
 
-/// These are "signals" that are sent along with an [`EventResult`] to signify a potential additional action
+/// These are "signals" that are sent along with an [`WidgetEventResult`] to signify a potential additional action
 /// that the caller must do, along with the "core" result of either drawing or redrawing.
 pub enum ReturnSignal {
     /// A signal returned when some process widget was told to try to kill a process (or group of processes).
+    ///
+    /// This return signal should trigger a redraw when handled.
     KillProcess,
+
+    /// A signal returned when a widget needs the app state to re-trigger its update call. Usually needed for
+    /// widgets where the displayed contents are built only on update.
+    ///
+    /// This return signal should trigger a redraw when handled.
+    Update,
 }
 
-/// The results of handling a [`ReturnSignal`].
-pub enum ReturnSignalResult {
+/// The results of handling an event by the [`AppState`].
+pub enum EventResult {
     /// Kill the program.
     Quit,
     /// Trigger a redraw.
@@ -19,9 +27,9 @@ pub enum ReturnSignalResult {
     NoRedraw,
 }
 
-/// The results of handling some user input event, like a mouse or key event, signifying what
-/// the program should then do next.
-pub enum EventResult {
+/// The results of a widget handling some event, like a mouse or key event,
+/// signifying what the program should then do next.
+pub enum WidgetEventResult {
     /// Kill the program.
     Quit,
     /// Trigger a redraw.

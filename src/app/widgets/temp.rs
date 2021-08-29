@@ -11,7 +11,7 @@ use tui::{
 use crate::{
     app::{
         data_farmer::DataCollection, data_harvester::temperature::TemperatureType,
-        event::EventResult, sort_text_table::SimpleSortableColumn,
+        event::WidgetEventResult, sort_text_table::SimpleSortableColumn,
     },
     canvas::Painter,
     data_conversion::convert_temp_row,
@@ -89,11 +89,11 @@ impl TempTable {
 }
 
 impl Component for TempTable {
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         self.table.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         self.table.handle_mouse_event(event)
     }
 

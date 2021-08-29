@@ -15,7 +15,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::EventResult,
+        event::WidgetEventResult,
         widgets::tui_widgets::{
             custom_legend_chart::{Axis, Dataset},
             TimeChart,
@@ -155,58 +155,58 @@ impl TimeGraph {
     }
 
     /// Handles a char `c`.
-    fn handle_char(&mut self, c: char) -> EventResult {
+    fn handle_char(&mut self, c: char) -> WidgetEventResult {
         match c {
             '-' => self.zoom_out(),
             '+' => self.zoom_in(),
             '=' => self.reset_zoom(),
-            _ => EventResult::NoRedraw,
+            _ => WidgetEventResult::NoRedraw,
         }
     }
 
-    fn zoom_in(&mut self) -> EventResult {
+    fn zoom_in(&mut self) -> WidgetEventResult {
         let new_time = self.current_display_time.saturating_sub(self.time_interval);
 
         if new_time >= self.min_duration {
             self.current_display_time = new_time;
             self.autohide_timer.start_display_timer();
 
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         } else if new_time != self.min_duration {
             self.current_display_time = self.min_duration;
             self.autohide_timer.start_display_timer();
 
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
-    fn zoom_out(&mut self) -> EventResult {
+    fn zoom_out(&mut self) -> WidgetEventResult {
         let new_time = self.current_display_time + self.time_interval;
 
         if new_time <= self.max_duration {
             self.current_display_time = new_time;
             self.autohide_timer.start_display_timer();
 
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         } else if new_time != self.max_duration {
             self.current_display_time = self.max_duration;
             self.autohide_timer.start_display_timer();
 
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
-    fn reset_zoom(&mut self) -> EventResult {
+    fn reset_zoom(&mut self) -> WidgetEventResult {
         if self.current_display_time == self.default_time_value {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         } else {
             self.current_display_time = self.default_time_value;
             self.autohide_timer.start_display_timer();
-            EventResult::Redraw
+            WidgetEventResult::Redraw
         }
     }
 
@@ -296,24 +296,24 @@ impl TimeGraph {
 }
 
 impl Component for TimeGraph {
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         use crossterm::event::KeyCode::Char;
 
         if event.modifiers == KeyModifiers::NONE || event.modifiers == KeyModifiers::SHIFT {
             match event.code {
                 Char(c) => self.handle_char(c),
-                _ => EventResult::NoRedraw,
+                _ => WidgetEventResult::NoRedraw,
             }
         } else {
-            EventResult::NoRedraw
+            WidgetEventResult::NoRedraw
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         match event.kind {
             MouseEventKind::ScrollDown => self.zoom_out(),
             MouseEventKind::ScrollUp => self.zoom_in(),
-            _ => EventResult::NoRedraw,
+            _ => WidgetEventResult::NoRedraw,
         }
     }
 
