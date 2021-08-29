@@ -573,43 +573,26 @@ pub enum ProcessNamingType {
 }
 
 /// Given read/s, write/s, total read, and total write values, return 4 strings that represent read/s, write/s, total read, and total write
-fn get_disk_io_strings(
+pub fn get_disk_io_strings(
     rps: u64, wps: u64, total_read: u64, total_write: u64,
 ) -> (String, String, String, String) {
-    // Note we always use bytes for total read/write here (for now).
-    let converted_rps = get_decimal_bytes(rps);
-    let converted_wps = get_decimal_bytes(wps);
-    let converted_total_read = get_decimal_bytes(total_read);
-    let converted_total_write = get_decimal_bytes(total_write);
-
     (
-        if rps >= GIGA_LIMIT {
-            format!("{:.*}{}/s", 1, converted_rps.0, converted_rps.1)
-        } else {
-            format!("{:.*}{}/s", 0, converted_rps.0, converted_rps.1)
-        },
-        if wps >= GIGA_LIMIT {
-            format!("{:.*}{}/s", 1, converted_wps.0, converted_wps.1)
-        } else {
-            format!("{:.*}{}/s", 0, converted_wps.0, converted_wps.1)
-        },
-        if total_read >= GIGA_LIMIT {
-            format!("{:.*}{}", 1, converted_total_read.0, converted_total_read.1)
-        } else {
-            format!("{:.*}{}", 0, converted_total_read.0, converted_total_read.1)
-        },
-        if total_write >= GIGA_LIMIT {
-            format!(
-                "{:.*}{}",
-                1, converted_total_write.0, converted_total_write.1
-            )
-        } else {
-            format!(
-                "{:.*}{}",
-                0, converted_total_write.0, converted_total_write.1
-            )
-        },
+        get_string_with_bytes(rps),
+        get_string_with_bytes(wps),
+        get_string_with_bytes(total_read),
+        get_string_with_bytes(total_write),
     )
+}
+
+/// Returns a string given a value that is converted to the closest SI-variant.
+/// If the value is greater than a giga-X, then it will return a decimal place.
+pub fn get_string_with_bytes(value: u64) -> String {
+    let converted_values = get_decimal_bytes(value);
+    if value >= GIGA_LIMIT {
+        format!("{:.*}{}/s", 1, converted_values.0, converted_values.1)
+    } else {
+        format!("{:.*}{}/s", 0, converted_values.0, converted_values.1)
+    }
 }
 
 /// Because we needed to UPDATE data entries rather than REPLACING entries, we instead update

@@ -169,18 +169,18 @@ where
         self
     }
 
-    pub fn displayed_column_names(&self) -> Vec<Cow<'static, str>> {
+    fn displayed_column_names(&self) -> Vec<Cow<'static, str>> {
         self.columns
             .iter()
             .map(|column| column.display_name())
             .collect()
     }
 
-    pub fn update_num_items(&mut self, num_items: usize) {
+    pub fn set_num_items(&mut self, num_items: usize) {
         self.scrollable.update_num_items(num_items);
     }
 
-    pub fn update_single_column(&mut self, index: usize, column: C) {
+    pub fn set_column(&mut self, index: usize, column: C) {
         if let Some(c) = self.columns.get_mut(index) {
             *c = column;
         }
@@ -360,7 +360,7 @@ where
             1
         };
 
-        self.update_num_items(data.len());
+        self.set_num_items(data.len());
         self.set_bounds(inner_area);
         let table_extras = 1 + table_gap;
         let scrollable_height = inner_area.height.saturating_sub(table_extras);

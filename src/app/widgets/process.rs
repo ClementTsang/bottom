@@ -17,8 +17,10 @@ use crate::{
         DataCollection,
     },
     canvas::Painter,
+    data_conversion::{get_disk_io_strings, get_string_with_bytes},
     data_harvester::processes::{self, ProcessSorting},
     options::ProcessDefaults,
+    utils::gen_util::{get_binary_bytes, GIBI_LIMIT},
 };
 use ProcessSorting::*;
 
@@ -706,7 +708,7 @@ impl ProcessSortType {
         match self {
             ProcessSortType::Pid => Hard(Some(7)),
             ProcessSortType::Count => Hard(Some(8)),
-            ProcessSortType::Name => Flex(0.3),
+            ProcessSortType::Name => Flex(0.4),
             ProcessSortType::Command => Flex(0.7),
             ProcessSortType::Cpu => Hard(Some(8)),
             ProcessSortType::Mem => Hard(Some(8)),
@@ -715,8 +717,8 @@ impl ProcessSortType {
             ProcessSortType::Wps => Hard(Some(8)),
             ProcessSortType::TotalRead => Hard(Some(7)),
             ProcessSortType::TotalWrite => Hard(Some(8)),
-            ProcessSortType::User => Flex(0.1),
-            ProcessSortType::State => Flex(0.2),
+            ProcessSortType::User => Flex(0.075),
+            ProcessSortType::State => Hard(Some(1)),
         }
     }
 
@@ -1078,5 +1080,88 @@ impl Widget for ProcessManager {
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);
     }
 
-    fn update_data(&mut self, data_collection: &DataCollection) {}
+    fn update_data(&mut self, data_collection: &DataCollection) {
+        self.display_data = data_collection
+            .process_harvest
+            .iter()
+            .filter_map(|process| {
+                let row = self
+                    .process_table
+                    .columns()
+                    .iter()
+                    .map(|column| match &column.sort_type {
+                        ProcessSortType::Pid => (process.pid.to_string().into(), None, None),
+                        ProcessSortType::Count => ("".into(), None, None),
+                        ProcessSortType::Name => (process.name.clone().into(), None, None),
+                        ProcessSortType::Command => (process.command.clone().into(), None, None),
+                        ProcessSortType::Cpu => (
+                            format!("{:.1}%", process.cpu_usage_percent).into(),
+                            None,
+                            None,
+                        ),
+                        ProcessSortType::Mem => (
+                            get_string_with_bytes(process.mem_usage_bytes).into(),
+                            None,
+                            None,
+                        ),
+                        ProcessSortType::MemPercent => (
+                            format!("{:.1}%", process.mem_usage_percent).into(),
+                            None,
+                            None,
+                        ),
+                        ProcessSortType::Rps => (
+                            get_string_with_bytes(process.read_bytes_per_sec).into(),
+                            None,
+                            None,
+                        ),
+                        ProcessSortType::Wps => (
+                            get_string_with_bytes(process.write_bytes_per_sec).into(),
+                            None,
+                            None,
+                        ),
+                        ProcessSortType::TotalRead => (
+                            get_string_with_bytes(process.total_read_bytes).into(),
+                            None,
+                            None,
+                        ),
+                        ProcessSortType::TotalWrite => (
+                            get_string_with_bytes(process.total_write_bytes).into(),
+                            None,
+                            None,
+                        ),
+                        ProcessSortType::User => {
+                            let user = {
+                                #[cfg(target_family = "unix")]
+                                {
+                                    if let Some(uid) = process.uid {
+                                        data_collection
+                                            .user_table
+                                            .borrow_mut()
+                                            .get_uid_to_username_mapping(uid)
+                                            .map(|s| s.into())
+                                            .unwrap_or("N/A".into())
+                                    } else {
+                                        "N/A".into()
+                                    }
+                                }
+                                #[cfg(not(target_family = "unix"))]
+                                {
+                                    "N/A".into()
+                                }
+                            };
+
+                            (user, None, None)
+                        }
+                        ProcessSortType::State => (
+                            process.process_state.clone().into(),
+                            Some(process.process_state_char.to_string().into()),
+                            None,
+                        ),
+                    })
+                    .collect::<Vec<_>>();
+
+                Some(row)
+            })
+            .collect::<Vec<_>>();
+    }
 }

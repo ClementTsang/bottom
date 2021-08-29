@@ -123,9 +123,6 @@ pub struct AppState {
 
     pub is_expanded: bool,
 
-    #[cfg(target_family = "unix")]
-    pub user_table: processes::UserTable,
-
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
     pub app_config_fields: AppConfigFields,
@@ -196,7 +193,6 @@ impl AppState {
             canvas_data: Default::default(),
             data_collection: Default::default(),
             is_expanded: Default::default(),
-            user_table: Default::default(),
             delete_dialog_state: Default::default(),
             help_dialog_state: Default::default(),
             cpu_state: Default::default(),

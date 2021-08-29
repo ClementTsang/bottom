@@ -266,6 +266,14 @@ where
         self.table.current_index()
     }
 
+    pub fn columns(&self) -> &[S] {
+        &self.table.columns
+    }
+
+    pub fn set_column(&mut self, column: S, index: usize) {
+        self.table.set_column(index, column)
+    }
+
     fn set_sort_index(&mut self, new_index: usize) {
         if new_index == self.sort_index {
             if let Some(column) = self.table.columns.get_mut(self.sort_index) {
@@ -312,11 +320,6 @@ where
     ) {
         self.table
             .draw_tui_table(painter, f, data, block, block_area, show_selected_entry);
-    }
-
-    /// Creates a [`Table`] representing the sort list.
-    pub fn create_sort_list(&mut self) -> (Table<'_>, TableState) {
-        todo!()
     }
 }
 
