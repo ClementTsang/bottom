@@ -6,7 +6,7 @@ labels: "bug"
 assignees: ""
 ---
 
-Before you report, please take a look at [Troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting) to see if there's already an answer to your problem. Also check out [existing issues](https://github.com/ClementTsang/bottom/issues) and [known problems](https://clementtsang.github.io/bottom/nightly/support/#known-problems) to see if your problem is already reported/known.
+Before you report, please take a look at [Troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting) to see if there's already an answer to your problem. Also check out [existing issues](https://github.com/ClementTsang/bottom/issues) and [known problems](https://clementtsang.github.io/bottom/nightly/support/#known-problems) to see if your problem is already reported/known/fixed.
 
 Also, **please fill in all fields if possible** - if the issue is too hard to reproduce or vague, it may not be fixed!
 
@@ -24,8 +24,7 @@ Please mention what terminal/terminal emulator you are using `bottom` on (ex: Ko
 
 ## What version are you on?
 
-Please ensure that the bug still exists on the [latest stable release](https://github.com/ClementTsang/bottom/releases/latest) or newer (i.e. nightly). If so, mention
-what version you are using here.
+Please mention which version of bottom you're running (`btm -V`, nightly, etc.)!
 
 ## How did you install `bottom`?
 
