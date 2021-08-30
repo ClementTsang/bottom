@@ -2,7 +2,7 @@ use crossterm::event::{KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEve
 use tui::{layout::Rect, widgets::TableState};
 
 use crate::app::{
-    event::{WidgetEventResult, MultiKey, MultiKeyResult},
+    event::{MultiKey, MultiKeyResult, WidgetEventResult},
     Component,
 };
 
@@ -110,7 +110,7 @@ impl Scrollable {
     }
 
     /// Update the index with this!  This will automatically update the scroll direction as well!
-    fn update_index(&mut self, new_index: usize) {
+    pub fn set_index(&mut self, new_index: usize) {
         use std::cmp::Ordering;
 
         match new_index.cmp(&self.current_index) {
@@ -130,7 +130,7 @@ impl Scrollable {
 
     fn skip_to_first(&mut self) -> WidgetEventResult {
         if self.current_index != 0 {
-            self.update_index(0);
+            self.set_index(0);
 
             WidgetEventResult::Redraw
         } else {
@@ -141,7 +141,7 @@ impl Scrollable {
     fn skip_to_last(&mut self) -> WidgetEventResult {
         let last_index = self.num_items - 1;
         if self.current_index != last_index {
-            self.update_index(last_index);
+            self.set_index(last_index);
 
             WidgetEventResult::Redraw
         } else {
@@ -161,7 +161,7 @@ impl Scrollable {
         } else if self.current_index == new_index {
             WidgetEventResult::NoRedraw
         } else {
-            self.update_index(new_index);
+            self.set_index(new_index);
             WidgetEventResult::Redraw
         }
     }
@@ -176,12 +176,12 @@ impl Scrollable {
         if self.current_index == new_index {
             WidgetEventResult::NoRedraw
         } else {
-            self.update_index(new_index);
+            self.set_index(new_index);
             WidgetEventResult::Redraw
         }
     }
 
-    pub fn update_num_items(&mut self, num_items: usize) {
+    pub fn set_num_items(&mut self, num_items: usize) {
         self.num_items = num_items;
 
         if num_items <= self.current_index {

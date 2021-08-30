@@ -17,3 +17,6 @@ pub use text_input::TextInput;
 
 pub mod carousel;
 pub use carousel::Carousel;
+
+pub mod sort_menu;
+pub use sort_menu::SortMenu;

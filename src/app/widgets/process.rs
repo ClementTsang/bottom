@@ -7,7 +7,7 @@ use unicode_segmentation::GraphemeCursor;
 
 use tui::{
     backend::Backend,
-    layout::Rect,
+    layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, Borders, TableState},
     Frame,
 };
@@ -15,7 +15,7 @@ use tui::{
 use crate::{
     app::{
         data_harvester::processes::ProcessHarvest,
-        event::{MultiKey, MultiKeyResult, WidgetEventResult},
+        event::{MultiKey, MultiKeyResult, ReturnSignal, WidgetEventResult},
         query::*,
         DataCollection,
     },
@@ -30,7 +30,7 @@ use super::{
     sort_text_table::{SimpleSortableColumn, SortStatus, SortableColumn},
     text_table::TextTableData,
     AppScrollWidgetState, CanvasTableWidthState, Component, CursorDirection, ScrollDirection,
-    SortableTextTable, TextInput, TextTable, Widget,
+    SortMenu, SortableTextTable, TextInput, Widget,
 };
 
 /// AppSearchState deals with generic searching (I might do this in the future).
@@ -836,11 +836,17 @@ impl SortableColumn for ProcessSortColumn {
     }
 }
 
+enum ProcessSortState {
+    Shown,
+    Hidden,
+}
+
 /// A searchable, sortable table to manage processes.
 pub struct ProcessManager {
     bounds: Rect,
     process_table: SortableTextTable<ProcessSortColumn>,
-    sort_table: TextTable,
+    sort_menu: SortMenu,
+
     search_input: TextInput,
 
     dd_multi: MultiKey,
@@ -848,7 +854,7 @@ pub struct ProcessManager {
     selected: ProcessManagerSelection,
 
     in_tree_mode: bool,
-    show_sort: bool, // TODO: Add this for temp and disk???
+    sort_status: ProcessSortState,
     show_search: bool,
 
     search_modifiers: SearchModifiers,
@@ -873,17 +879,15 @@ impl ProcessManager {
             ProcessSortColumn::new(ProcessSortType::State),
         ];
 
-        let process_table = SortableTextTable::new(process_table_columns).default_sort_index(2);
-
         let mut manager = Self {
             bounds: Rect::default(),
-            process_table,
-            sort_table: TextTable::new(vec![]), // TODO: Do this too
+            sort_menu: SortMenu::new(process_table_columns.len()),
+            process_table: SortableTextTable::new(process_table_columns).default_sort_index(2),
             search_input: TextInput::new(),
             dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Maybe use something static...
             selected: ProcessManagerSelection::Processes,
             in_tree_mode: false,
-            show_sort: false,
+            sort_status: ProcessSortState::Hidden,
             show_search: false,
             search_modifiers: SearchModifiers::default(),
             display_data: Default::default(),
@@ -911,7 +915,9 @@ impl ProcessManager {
         if let ProcessManagerSelection::Sort = self.selected {
             WidgetEventResult::NoRedraw
         } else {
-            self.show_sort = true;
+            self.sort_menu
+                .set_index(self.process_table.current_sorting_column_index());
+            self.sort_status = ProcessSortState::Shown;
             self.selected = ProcessManagerSelection::Sort;
             WidgetEventResult::Redraw
         }
@@ -945,6 +951,20 @@ impl Component for ProcessManager {
     }
 
     fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+        // "Global" handling:
+        match event.code {
+            KeyCode::Esc => {
+                if let ProcessSortState::Shown = self.sort_status {
+                    self.sort_status = ProcessSortState::Hidden;
+                    if let ProcessManagerSelection::Sort = self.selected {
+                        self.selected = ProcessManagerSelection::Processes;
+                    }
+                    return WidgetEventResult::Redraw;
+                }
+            }
+            _ => {}
+        }
+
         match self.selected {
             ProcessManagerSelection::Processes => {
                 // Try to catch some stuff first...
@@ -982,7 +1002,7 @@ impl Component for ProcessManager {
                             self.in_tree_mode = !self.in_tree_mode;
                             return WidgetEventResult::Redraw;
                         }
-                        KeyCode::F(6) => {
+                        KeyCode::Char('s') | KeyCode::F(6) => {
                             return self.open_sort();
                         }
                         KeyCode::F(9) => {
@@ -1003,6 +1023,18 @@ impl Component for ProcessManager {
                 self.process_table.handle_key_event(event)
             }
             ProcessManagerSelection::Sort => {
+                match event.code {
+                    KeyCode::Enter if event.modifiers.is_empty() => {
+                        self.process_table
+                            .set_sort_index(self.sort_menu.current_index());
+                        return WidgetEventResult::Signal(ReturnSignal::Update);
+                    }
+                    _ => {}
+                }
+
+                self.sort_menu.handle_key_event(event)
+            }
+            ProcessManagerSelection::Search => {
                 if event.modifiers.is_empty() {
                     match event.code {
                         KeyCode::F(1) => {}
@@ -1019,9 +1051,8 @@ impl Component for ProcessManager {
                     }
                 }
 
-                self.sort_table.handle_key_event(event)
+                self.search_input.handle_key_event(event)
             }
-            ProcessManagerSelection::Search => self.search_input.handle_key_event(event),
         }
     }
 
@@ -1041,12 +1072,12 @@ impl Component for ProcessManager {
                             WidgetEventResult::Signal(s) => WidgetEventResult::Signal(s),
                         }
                     }
-                } else if self.sort_table.does_border_intersect_mouse(&event) {
+                } else if self.sort_menu.does_border_intersect_mouse(&event) {
                     if let ProcessManagerSelection::Sort = self.selected {
-                        self.sort_table.handle_mouse_event(event)
+                        self.sort_menu.handle_mouse_event(event)
                     } else {
                         self.selected = ProcessManagerSelection::Sort;
-                        self.sort_table.handle_mouse_event(event);
+                        self.sort_menu.handle_mouse_event(event);
                         WidgetEventResult::Redraw
                     }
                 } else if self.search_input.does_border_intersect_mouse(&event) {
@@ -1063,7 +1094,7 @@ impl Component for ProcessManager {
             }
             MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => match self.selected {
                 ProcessManagerSelection::Processes => self.process_table.handle_mouse_event(event),
-                ProcessManagerSelection::Sort => self.sort_table.handle_mouse_event(event),
+                ProcessManagerSelection::Sort => self.sort_menu.handle_mouse_event(event),
                 ProcessManagerSelection::Search => self.search_input.handle_mouse_event(event),
             },
             _ => WidgetEventResult::NoRedraw,
@@ -1079,16 +1110,76 @@ impl Widget for ProcessManager {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let block = Block::default()
-            .border_style(if selected {
-                painter.colours.highlighted_border_style
-            } else {
-                painter.colours.border_style
-            })
-            .borders(Borders::ALL);
+        match self.sort_status {
+            ProcessSortState::Shown => {
+                const SORT_CONSTRAINTS: [Constraint; 2] =
+                    [Constraint::Length(10), Constraint::Min(0)];
 
-        self.process_table
-            .draw_tui_table(painter, f, &self.display_data, block, area, selected);
+                let split_area = Layout::default()
+                    .margin(0)
+                    .direction(Direction::Horizontal)
+                    .constraints(SORT_CONSTRAINTS)
+                    .split(area);
+
+                let sort_block = Block::default()
+                    .border_style(if selected {
+                        if let ProcessManagerSelection::Sort = self.selected {
+                            painter.colours.highlighted_border_style
+                        } else {
+                            painter.colours.border_style
+                        }
+                    } else {
+                        painter.colours.border_style
+                    })
+                    .borders(Borders::ALL);
+                self.sort_menu.draw_sort_menu(
+                    painter,
+                    f,
+                    self.process_table.columns(),
+                    sort_block,
+                    split_area[0],
+                );
+
+                let process_block = Block::default()
+                    .border_style(if selected {
+                        if let ProcessManagerSelection::Processes = self.selected {
+                            painter.colours.highlighted_border_style
+                        } else {
+                            painter.colours.border_style
+                        }
+                    } else {
+                        painter.colours.border_style
+                    })
+                    .borders(Borders::ALL);
+
+                self.process_table.draw_tui_table(
+                    painter,
+                    f,
+                    &self.display_data,
+                    process_block,
+                    split_area[1],
+                    selected,
+                );
+            }
+            ProcessSortState::Hidden => {
+                let block = Block::default()
+                    .border_style(if selected {
+                        painter.colours.highlighted_border_style
+                    } else {
+                        painter.colours.border_style
+                    })
+                    .borders(Borders::ALL);
+
+                self.process_table.draw_tui_table(
+                    painter,
+                    f,
+                    &self.display_data,
+                    block,
+                    area,
+                    selected,
+                );
+            }
+        }
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {
@@ -1099,58 +1190,60 @@ impl Widget for ProcessManager {
                 // TODO: Filtering
                 true
             })
-            .sorted_by(match self.process_table.current_column().sort_type {
-                ProcessSortType::Pid => {
-                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.pid.cmp(&b.pid)
-                }
-                ProcessSortType::Count => {
-                    todo!()
-                }
-                ProcessSortType::Name => {
-                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.name.cmp(&b.name)
-                }
-                ProcessSortType::Command => {
-                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.command.cmp(&b.command)
-                }
-                ProcessSortType::Cpu => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                    FloatOrd(a.cpu_usage_percent).cmp(&FloatOrd(b.cpu_usage_percent))
-                },
-                ProcessSortType::Mem => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                    a.mem_usage_bytes.cmp(&b.mem_usage_bytes)
-                },
-                ProcessSortType::MemPercent => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                    FloatOrd(a.mem_usage_percent).cmp(&FloatOrd(b.mem_usage_percent))
-                },
-                ProcessSortType::Rps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                    a.read_bytes_per_sec.cmp(&b.read_bytes_per_sec)
-                },
-                ProcessSortType::Wps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                    a.write_bytes_per_sec.cmp(&b.write_bytes_per_sec)
-                },
-                ProcessSortType::TotalRead => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                    a.total_read_bytes.cmp(&b.total_read_bytes)
-                },
-                ProcessSortType::TotalWrite => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                    a.total_write_bytes.cmp(&b.total_write_bytes)
-                },
-                ProcessSortType::User => {
-                    #[cfg(target_family = "unix")]
-                    {
-                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.user.cmp(&b.user)
+            .sorted_by(
+                match self.process_table.current_sorting_column().sort_type {
+                    ProcessSortType::Pid => {
+                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.pid.cmp(&b.pid)
                     }
-                    #[cfg(not(target_family = "unix"))]
-                    {
-                        |_a: &&ProcessHarvest, _b: &&ProcessHarvest| Ord::Eq
+                    ProcessSortType::Count => {
+                        todo!()
                     }
-                }
-                ProcessSortType::State => {
-                    |a: &&ProcessHarvest, b: &&ProcessHarvest| a.process_state.cmp(&b.process_state)
-                }
-            });
+                    ProcessSortType::Name => {
+                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.name.cmp(&b.name)
+                    }
+                    ProcessSortType::Command => {
+                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.command.cmp(&b.command)
+                    }
+                    ProcessSortType::Cpu => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        FloatOrd(a.cpu_usage_percent).cmp(&FloatOrd(b.cpu_usage_percent))
+                    },
+                    ProcessSortType::Mem => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        a.mem_usage_bytes.cmp(&b.mem_usage_bytes)
+                    },
+                    ProcessSortType::MemPercent => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        FloatOrd(a.mem_usage_percent).cmp(&FloatOrd(b.mem_usage_percent))
+                    },
+                    ProcessSortType::Rps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        a.read_bytes_per_sec.cmp(&b.read_bytes_per_sec)
+                    },
+                    ProcessSortType::Wps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        a.write_bytes_per_sec.cmp(&b.write_bytes_per_sec)
+                    },
+                    ProcessSortType::TotalRead => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        a.total_read_bytes.cmp(&b.total_read_bytes)
+                    },
+                    ProcessSortType::TotalWrite => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        a.total_write_bytes.cmp(&b.total_write_bytes)
+                    },
+                    ProcessSortType::User => {
+                        #[cfg(target_family = "unix")]
+                        {
+                            |a: &&ProcessHarvest, b: &&ProcessHarvest| a.user.cmp(&b.user)
+                        }
+                        #[cfg(not(target_family = "unix"))]
+                        {
+                            |_a: &&ProcessHarvest, _b: &&ProcessHarvest| Ord::Eq
+                        }
+                    }
+                    ProcessSortType::State => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
+                        a.process_state.cmp(&b.process_state)
+                    },
+                },
+            );
 
         self.display_data = if let SortStatus::SortDescending = self
             .process_table
-            .current_column()
+            .current_sorting_column()
             .sortable_column
             .sorting_status()
         {

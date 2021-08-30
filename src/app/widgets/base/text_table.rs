@@ -173,6 +173,10 @@ where
         self
     }
 
+    pub fn columns(&self) -> &[C] {
+        &self.columns
+    }
+
     fn displayed_column_names(&self) -> Vec<Cow<'static, str>> {
         self.columns
             .iter()
@@ -181,7 +185,7 @@ where
     }
 
     pub fn set_num_items(&mut self, num_items: usize) {
-        self.scrollable.update_num_items(num_items);
+        self.scrollable.set_num_items(num_items);
     }
 
     pub fn set_column(&mut self, index: usize, column: C) {

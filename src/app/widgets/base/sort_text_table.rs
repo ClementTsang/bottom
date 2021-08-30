@@ -257,9 +257,6 @@ where
 
     /// The underlying [`TextTable`].
     pub table: TextTable<S>,
-
-    /// A corresponding "sort" menu.
-    pub sort_menu: TextTable,
 }
 
 impl<S> SortableTextTable<S>
@@ -268,15 +265,9 @@ where
 {
     /// Creates a new [`SortableTextTable`]. Note that `columns` cannot be empty.
     pub fn new(columns: Vec<S>) -> Self {
-        let sort_menu_columns = columns
-            .iter()
-            .map(|column| SimpleColumn::new_hard(column.original_name().clone(), None))
-            .collect::<Vec<_>>();
-
         let mut st = Self {
             sort_index: 0,
             table: TextTable::new(columns),
-            sort_menu: TextTable::new(sort_menu_columns),
         };
         st.set_sort_index(0);
         st
@@ -296,9 +287,14 @@ where
         self.table.current_scroll_index()
     }
 
-    /// Returns the current column.
-    pub fn current_column(&self) -> &S {
+    /// Returns the current column the table is sorting by.
+    pub fn current_sorting_column(&self) -> &S {
         &self.table.columns[self.sort_index]
+    }
+
+    /// Returns the current column index the table is sorting by.
+    pub fn current_sorting_column_index(&self) -> usize {
+        self.sort_index
     }
 
     pub fn columns(&self) -> &[S] {
@@ -309,7 +305,7 @@ where
         self.table.set_column(index, column)
     }
 
-    fn set_sort_index(&mut self, new_index: usize) {
+    pub fn set_sort_index(&mut self, new_index: usize) {
         if new_index == self.sort_index {
             if let Some(column) = self.table.columns.get_mut(self.sort_index) {
                 match column.sorting_status() {
@@ -355,12 +351,6 @@ where
     ) {
         self.table
             .draw_tui_table(painter, f, data, block, block_area, show_selected_entry);
-    }
-
-    /// Draws a [`tui::widgets::Table`] on screen corresponding to the sort columns of this [`SortableTextTable`].
-    pub fn draw_sort_table<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, block: Block<'_>, block_area: Rect,
-    ) {
     }
 }
 

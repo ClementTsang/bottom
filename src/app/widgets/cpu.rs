@@ -174,15 +174,11 @@ impl Widget for CpuGraph {
             }
         };
 
-        // debug!("Area: {:?}", area);
-
         let split_area = Layout::default()
             .margin(0)
             .direction(Direction::Horizontal)
             .constraints(constraints)
             .split(area);
-
-        // debug!("Split area: {:?}", split_area);
 
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         let y_bound_labels: [Cow<'static, str>; 2] = ["0%".into(), "100%".into()];

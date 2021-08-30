@@ -359,16 +359,41 @@ impl Painter {
                     if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
                         match layout_node {
                             LayoutNode::Row(row) => {
-                                let split_area = Layout::default()
-                                    .margin(0)
-                                    .direction(Direction::Horizontal)
-                                    .constraints(row.constraints.clone())
-                                    .split(area);
+                                let split_area = {
+                                    let initial_split = Layout::default()
+                                        .margin(0)
+                                        .direction(Direction::Horizontal)
+                                        .constraints(row.constraints.clone())
+                                        .split(area);
 
-                                // debug!(
-                                //     "Row - constraints: {:#?}, split_area: {:#?}",
-                                //     row.constraints, split_area
-                                // );
+                                    if initial_split.is_empty() {
+                                        vec![]
+                                    } else {
+                                        let mut checked_split =
+                                            Vec::with_capacity(initial_split.len());
+                                        let mut right_value = initial_split[0].right();
+                                        checked_split.push(initial_split[0]);
+
+                                        for rect in initial_split[1..].iter() {
+                                            if right_value == rect.left() {
+                                                right_value = rect.right();
+                                                checked_split.push(*rect);
+                                            } else {
+                                                let diff = rect.x.saturating_sub(right_value);
+                                                let new_rect = Rect::new(
+                                                    right_value,
+                                                    rect.y,
+                                                    rect.width + diff,
+                                                    rect.height,
+                                                );
+                                                right_value = new_rect.right();
+                                                checked_split.push(new_rect);
+                                            }
+                                        }
+
+                                        checked_split
+                                    }
+                                };
 
                                 for (child, child_area) in node.children(arena).zip(split_area) {
                                     traverse_and_draw_tree(
@@ -384,16 +409,41 @@ impl Painter {
                                 }
                             }
                             LayoutNode::Col(col) => {
-                                let split_area = Layout::default()
-                                    .margin(0)
-                                    .direction(Direction::Vertical)
-                                    .constraints(col.constraints.clone())
-                                    .split(area);
+                                let split_area = {
+                                    let initial_split = Layout::default()
+                                        .margin(0)
+                                        .direction(Direction::Vertical)
+                                        .constraints(col.constraints.clone())
+                                        .split(area);
 
-                                // debug!(
-                                //     "Col - constraints: {:#?}, split_area: {:#?}",
-                                //     col.constraints, split_area
-                                // );
+                                    if initial_split.is_empty() {
+                                        vec![]
+                                    } else {
+                                        let mut checked_split =
+                                            Vec::with_capacity(initial_split.len());
+                                        let mut bottom_value = initial_split[0].bottom();
+                                        checked_split.push(initial_split[0]);
+
+                                        for rect in initial_split[1..].iter() {
+                                            if bottom_value == rect.top() {
+                                                bottom_value = rect.bottom();
+                                                checked_split.push(*rect);
+                                            } else {
+                                                let diff = rect.y.saturating_sub(bottom_value);
+                                                let new_rect = Rect::new(
+                                                    rect.x,
+                                                    bottom_value,
+                                                    rect.width,
+                                                    rect.height + diff,
+                                                );
+                                                bottom_value = new_rect.bottom();
+                                                checked_split.push(new_rect);
+                                            }
+                                        }
+
+                                        checked_split
+                                    }
+                                };
 
                                 for (child, child_area) in node.children(arena).zip(split_area) {
                                     traverse_and_draw_tree(
@@ -409,8 +459,6 @@ impl Painter {
                                 }
                             }
                             LayoutNode::Widget => {
-                                // debug!("Widget - area: {:#?}", area);
-
                                 if let Some(widget) = lookup_map.get_mut(&node) {
                                     widget.set_bounds(area);
                                     widget.draw(painter, f, area, selected_id == node);
