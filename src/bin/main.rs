@@ -116,8 +116,11 @@ fn main() -> Result<()> {
         ist_clone.store(true, Ordering::SeqCst);
     })?;
 
+    // Paint once first.
+    try_drawing(&mut terminal, &mut app, &mut painter)?;
+
     while !is_terminated.load(Ordering::SeqCst) {
-        if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
+        if let Ok(recv) = receiver.recv() {
             match app.handle_event(recv) {
                 EventResult::Quit => {
                     break;
@@ -129,6 +132,8 @@ fn main() -> Result<()> {
                     continue;
                 }
             }
+        } else {
+            break;
         }
     }
 

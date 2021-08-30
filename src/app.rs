@@ -353,11 +353,11 @@ impl AppState {
                             }
                         } else {
                             for (id, widget) in self.widget_lookup_map.iter_mut() {
-                                if widget.does_intersect_mouse(&event) {
-                                    let is_id_selected = self.selected_widget == *id;
+                                if widget.does_border_intersect_mouse(&event) {
+                                    let was_id_already_selected = self.selected_widget == *id;
                                     self.selected_widget = *id;
 
-                                    if is_id_selected {
+                                    if was_id_already_selected {
                                         let result = widget.handle_mouse_event(event);
                                         return self.convert_widget_event_result(result);
                                     } else {

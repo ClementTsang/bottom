@@ -434,6 +434,8 @@ pub struct NetGraph {
     pub use_binary_prefix: bool,
 
     hide_legend: bool,
+
+    bounds: Rect,
 }
 
 impl NetGraph {
@@ -454,6 +456,7 @@ impl NetGraph {
             unit_type: app_config_fields.network_unit_type.clone(),
             use_binary_prefix: app_config_fields.network_use_binary_prefix,
             hide_legend: false,
+            bounds: Rect::default(),
         }
     }
 
@@ -514,11 +517,11 @@ impl NetGraph {
 
 impl Component for NetGraph {
     fn bounds(&self) -> Rect {
-        self.graph.bounds()
+        self.bounds
     }
 
     fn set_bounds(&mut self, new_bounds: Rect) {
-        self.graph.set_bounds(new_bounds);
+        self.bounds = new_bounds;
     }
 
     fn handle_key_event(

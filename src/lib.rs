@@ -31,7 +31,7 @@ use crossterm::{
 
 use app::{
     data_harvester::{self, processes::ProcessSorting},
-    event::WidgetEventResult,
+    event::EventResult,
     layout_manager::WidgetDirection,
     AppState, UsedWidgets,
 };
@@ -76,27 +76,27 @@ pub enum ThreadControlEvent {
     UpdateUpdateTime(u64),
 }
 
-pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) -> WidgetEventResult {
+pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) -> EventResult {
     match event.kind {
         MouseEventKind::Down(MouseButton::Left) => {
             app.on_left_mouse_up(event.column, event.row);
-            WidgetEventResult::Redraw
+            EventResult::Redraw
         }
         MouseEventKind::ScrollUp => {
             app.handle_scroll_up();
-            WidgetEventResult::Redraw
+            EventResult::Redraw
         }
         MouseEventKind::ScrollDown => {
             app.handle_scroll_down();
-            WidgetEventResult::Redraw
+            EventResult::Redraw
         }
-        _ => WidgetEventResult::NoRedraw,
+        _ => EventResult::NoRedraw,
     }
 }
 
 pub fn handle_key_event(
     event: KeyEvent, app: &mut AppState, reset_sender: &std::sync::mpsc::Sender<ThreadControlEvent>,
-) -> WidgetEventResult {
+) -> EventResult {
     // debug!("KeyEvent: {:?}", event);
 
     // TODO: [PASTE] Note that this does NOT support some emojis like flags.  This is due to us
@@ -107,7 +107,7 @@ pub fn handle_key_event(
     if event.modifiers.is_empty() {
         // Required catch for searching - otherwise you couldn't search with q.
         if event.code == KeyCode::Char('q') && !app.is_in_search_widget() {
-            return WidgetEventResult::Quit;
+            return EventResult::Quit;
         }
         match event.code {
             KeyCode::End => app.skip_to_last(),
@@ -129,7 +129,7 @@ pub fn handle_key_event(
             KeyCode::F(6) => app.toggle_sort(),
             KeyCode::F(9) => app.start_killing_process(),
             _ => {
-                return WidgetEventResult::NoRedraw;
+                return EventResult::NoRedraw;
             }
         }
     } else {
@@ -145,7 +145,7 @@ pub fn handle_key_event(
             }
         } else if let KeyModifiers::CONTROL = event.modifiers {
             if event.code == KeyCode::Char('c') {
-                return WidgetEventResult::Quit;
+                return EventResult::Quit;
             }
 
             match event.code {
@@ -172,7 +172,7 @@ pub fn handle_key_event(
                 // are hard to iter while truncating last (eloquently).
                 // KeyCode::Backspace => app.skip_word_backspace(),
                 _ => {
-                    return WidgetEventResult::NoRedraw;
+                    return EventResult::NoRedraw;
                 }
             }
         } else if let KeyModifiers::SHIFT = event.modifiers {
@@ -183,13 +183,13 @@ pub fn handle_key_event(
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
                 KeyCode::Char(caught_char) => app.on_char_key(caught_char),
                 _ => {
-                    return WidgetEventResult::NoRedraw;
+                    return EventResult::NoRedraw;
                 }
             }
         }
     }
 
-    WidgetEventResult::Redraw
+    EventResult::Redraw
 }
 
 pub fn read_config(config_location: Option<&str>) -> error::Result<Option<PathBuf>> {
@@ -474,7 +474,7 @@ fn update_final_process_list(_app: &mut AppState, _widget_id: u64) {
     // }
 }
 
-fn sort_process_data(
+fn _sort_process_data(
     to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
 ) {
     to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());

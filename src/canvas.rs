@@ -360,9 +360,15 @@ impl Painter {
                         match layout_node {
                             LayoutNode::Row(row) => {
                                 let split_area = Layout::default()
+                                    .margin(0)
                                     .direction(Direction::Horizontal)
                                     .constraints(row.constraints.clone())
                                     .split(area);
+
+                                // debug!(
+                                //     "Row - constraints: {:#?}, split_area: {:#?}",
+                                //     row.constraints, split_area
+                                // );
 
                                 for (child, child_area) in node.children(arena).zip(split_area) {
                                     traverse_and_draw_tree(
@@ -379,9 +385,15 @@ impl Painter {
                             }
                             LayoutNode::Col(col) => {
                                 let split_area = Layout::default()
+                                    .margin(0)
                                     .direction(Direction::Vertical)
                                     .constraints(col.constraints.clone())
                                     .split(area);
+
+                                // debug!(
+                                //     "Col - constraints: {:#?}, split_area: {:#?}",
+                                //     col.constraints, split_area
+                                // );
 
                                 for (child, child_area) in node.children(arena).zip(split_area) {
                                     traverse_and_draw_tree(
@@ -397,6 +409,8 @@ impl Painter {
                                 }
                             }
                             LayoutNode::Widget => {
+                                // debug!("Widget - area: {:#?}", area);
+
                                 if let Some(widget) = lookup_map.get_mut(&node) {
                                     widget.set_bounds(area);
                                     widget.draw(painter, f, area, selected_id == node);

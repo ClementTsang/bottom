@@ -9,14 +9,17 @@ use tui::{
 };
 
 use crate::{
-    app::{data_farmer::DataCollection, event::WidgetEventResult, sort_text_table::SimpleSortableColumn},
+    app::{
+        data_farmer::DataCollection, event::WidgetEventResult,
+        sort_text_table::SimpleSortableColumn,
+    },
     canvas::Painter,
     data_conversion::convert_disk_row,
 };
 
 use super::{
-    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component,
-    SortableTextTable, Widget,
+    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component, TextTable,
+    Widget,
 };
 
 pub struct DiskWidgetState {
@@ -52,9 +55,9 @@ impl DiskState {
     }
 }
 
-/// A table displaying disk data.  Essentially a wrapper around a [`TextTable`].
+/// A table displaying disk data.
 pub struct DiskTable {
-    table: SortableTextTable,
+    table: TextTable<SimpleSortableColumn>,
     bounds: Rect,
 
     display_data: TextTableData,
@@ -62,7 +65,7 @@ pub struct DiskTable {
 
 impl Default for DiskTable {
     fn default() -> Self {
-        let table = SortableTextTable::new(vec![
+        let table = TextTable::new(vec![
             SimpleSortableColumn::new_flex("Disk".into(), None, false, 0.2),
             SimpleSortableColumn::new_flex("Mount".into(), None, false, 0.2),
             SimpleSortableColumn::new_hard("Used".into(), None, false, Some(5)),
@@ -115,7 +118,6 @@ impl Widget for DiskTable {
             .borders(Borders::ALL);
 
         self.table
-            .table
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);
     }
 

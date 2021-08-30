@@ -6,7 +6,7 @@ use tui::{backend::Backend, layout::Rect, widgets::TableState, Frame};
 
 use crate::{
     app::{
-        event::{WidgetEventResult, SelectionAction},
+        event::{SelectionAction, WidgetEventResult},
         layout_manager::BottomWidgetType,
     },
     canvas::Painter,
@@ -63,15 +63,36 @@ pub trait Component {
     /// coordinates.
     fn bounds(&self) -> Rect;
 
-    /// Updates a [`Component`]s bounding box to `new_bounds`.
+    /// Updates a [`Component`]'s bounding box to `new_bounds`.
     fn set_bounds(&mut self, new_bounds: Rect);
 
-    /// Returns whether a [`MouseEvent`] intersects a [`Component`].
-    fn does_intersect_mouse(&self, event: &MouseEvent) -> bool {
+    /// Returns a [`Component`]'s bounding box, *including the border*. Defaults to just returning the normal bounds.
+    ///   Note that these are defined in *global*, *absolute* coordinates.
+    fn border_bounds(&self) -> Rect {
+        self.bounds()
+    }
+
+    /// Updates a [`Component`]'s bounding box to `new_bounds`.  Defaults to just setting the normal bounds.
+    fn set_border_bounds(&mut self, new_bounds: Rect) {
+        self.set_bounds(new_bounds);
+    }
+
+    /// Returns whether a [`MouseEvent`] intersects a [`Component`]'s bounds.
+    fn does_bounds_intersect_mouse(&self, event: &MouseEvent) -> bool {
         let x = event.column;
         let y = event.row;
-        let rect = self.bounds();
-        x >= rect.left() && x <= rect.right() && y >= rect.top() && y <= rect.bottom()
+        let bounds = self.bounds();
+
+        x >= bounds.left() && x < bounds.right() && y >= bounds.top() && y < bounds.bottom()
+    }
+
+    /// Returns whether a [`MouseEvent`] intersects a [`Component`]'s bounds, including any borders, if there are.
+    fn does_border_intersect_mouse(&self, event: &MouseEvent) -> bool {
+        let x = event.column;
+        let y = event.row;
+        let bounds = self.border_bounds();
+
+        x >= bounds.left() && x < bounds.right() && y >= bounds.top() && y < bounds.bottom()
     }
 }
 

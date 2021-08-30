@@ -131,6 +131,9 @@ where
     /// The bounding box of the [`TextTable`].
     pub bounds: Rect, // TODO: Consider moving bounds to something else???
 
+    /// The bounds including the border, if there is one.
+    pub border_bounds: Rect,
+
     /// Whether we draw columns from left-to-right.
     pub left_to_right: bool,
 
@@ -149,6 +152,7 @@ where
             cached_column_widths: CachedColumnWidths::Uncached,
             show_gap: true,
             bounds: Rect::default(),
+            border_bounds: Rect::default(),
             left_to_right: true,
             selectable: true,
         }
@@ -342,7 +346,7 @@ where
         }
     }
 
-    /// Draws a [`Table`] on screen..
+    /// Draws a [`Table`] on screen corresponding to the [`TextTable`].
     ///
     /// Note if the number of columns don't match in the [`TextTable`] and data,
     /// it will only create as many columns as it can grab data from both sources from.
@@ -353,7 +357,6 @@ where
         use tui::widgets::Row;
 
         let inner_area = block.inner(block_area);
-
         let table_gap = if !self.show_gap || inner_area.height < TABLE_GAP_HEIGHT_LIMIT {
             0
         } else {
@@ -361,6 +364,7 @@ where
         };
 
         self.set_num_items(data.len());
+        self.set_border_bounds(block_area);
         self.set_bounds(inner_area);
         let table_extras = 1 + table_gap;
         let scrollable_height = inner_area.height.saturating_sub(table_extras);
@@ -465,5 +469,13 @@ where
 
     fn set_bounds(&mut self, new_bounds: Rect) {
         self.bounds = new_bounds;
+    }
+
+    fn border_bounds(&self) -> Rect {
+        self.border_bounds
+    }
+
+    fn set_border_bounds(&mut self, new_bounds: Rect) {
+        self.border_bounds = new_bounds;
     }
 }

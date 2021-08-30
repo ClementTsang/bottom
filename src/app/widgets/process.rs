@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use float_ord::FloatOrd;
@@ -799,6 +799,10 @@ impl ProcessSortColumn {
 }
 
 impl SortableColumn for ProcessSortColumn {
+    fn original_name(&self) -> &Cow<'static, str> {
+        self.sortable_column.original_name()
+    }
+
     fn shortcut(&self) -> &Option<(KeyEvent, String)> {
         self.sortable_column.shortcut()
     }
@@ -815,7 +819,7 @@ impl SortableColumn for ProcessSortColumn {
         self.sortable_column.set_sorting_status(sorting_status)
     }
 
-    fn display_name(&self) -> std::borrow::Cow<'static, str> {
+    fn display_name(&self) -> Cow<'static, str> {
         self.sortable_column.display_name()
     }
 
@@ -1024,7 +1028,7 @@ impl Component for ProcessManager {
     fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         match &event.kind {
             MouseEventKind::Down(MouseButton::Left) => {
-                if self.process_table.does_intersect_mouse(&event) {
+                if self.process_table.does_border_intersect_mouse(&event) {
                     if let ProcessManagerSelection::Processes = self.selected {
                         self.process_table.handle_mouse_event(event)
                     } else {
@@ -1037,7 +1041,7 @@ impl Component for ProcessManager {
                             WidgetEventResult::Signal(s) => WidgetEventResult::Signal(s),
                         }
                     }
-                } else if self.sort_table.does_intersect_mouse(&event) {
+                } else if self.sort_table.does_border_intersect_mouse(&event) {
                     if let ProcessManagerSelection::Sort = self.selected {
                         self.sort_table.handle_mouse_event(event)
                     } else {
@@ -1045,7 +1049,7 @@ impl Component for ProcessManager {
                         self.sort_table.handle_mouse_event(event);
                         WidgetEventResult::Redraw
                     }
-                } else if self.search_input.does_intersect_mouse(&event) {
+                } else if self.search_input.does_border_intersect_mouse(&event) {
                     if let ProcessManagerSelection::Search = self.selected {
                         self.search_input.handle_mouse_event(event)
                     } else {

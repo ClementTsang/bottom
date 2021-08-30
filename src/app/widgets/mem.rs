@@ -59,6 +59,7 @@ pub struct MemGraph {
     swap_labels: Option<(String, String)>,
     mem_data: Vec<(f64, f64)>,
     swap_data: Vec<(f64, f64)>,
+    bounds: Rect,
 }
 
 impl MemGraph {
@@ -70,6 +71,7 @@ impl MemGraph {
             swap_labels: Default::default(),
             mem_data: Default::default(),
             swap_data: Default::default(),
+            bounds: Rect::default(),
         }
     }
 }
@@ -84,11 +86,11 @@ impl Component for MemGraph {
     }
 
     fn bounds(&self) -> Rect {
-        self.graph.bounds()
+        self.bounds
     }
 
     fn set_bounds(&mut self, new_bounds: Rect) {
-        self.graph.set_bounds(new_bounds);
+        self.bounds = new_bounds;
     }
 }
 

@@ -224,7 +224,7 @@ impl Component for Scrollable {
     fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         match event.kind {
             MouseEventKind::Down(MouseButton::Left) => {
-                if self.does_intersect_mouse(&event) {
+                if self.does_bounds_intersect_mouse(&event) {
                     // This requires a bit of fancy calculation.  The main trick is remembering that
                     // we are using a *visual* index here - not what is the actual index!  Luckily, we keep track of that
                     // inside our linked copy of TableState!

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
-use tui::{backend::Backend, layout::Rect, widgets::Block};
+use tui::{backend::Backend, layout::Rect, widgets::Block, Frame};
 
 use crate::{
     app::{
@@ -60,6 +60,9 @@ pub enum SortStatus {
 
 /// A trait for sortable columns.
 pub trait SortableColumn {
+    /// Returns the original name of the column.
+    fn original_name(&self) -> &Cow<'static, str>;
+
     /// Returns the shortcut for the column, if it exists.
     fn shortcut(&self) -> &Option<(KeyEvent, String)>;
 
@@ -73,12 +76,18 @@ pub trait SortableColumn {
     /// Sets the sorting status.
     fn set_sorting_status(&mut self, sorting_status: SortStatus);
 
+    // ----- The following are required since SortableColumn implements TableColumn -----
+
+    /// Returns the displayed name on the column when drawing.
     fn display_name(&self) -> Cow<'static, str>;
 
+    /// Returns the desired width of the column when drawing.
     fn get_desired_width(&self) -> &DesiredColumnWidth;
 
+    /// Returns the x bounds of a column. The y is assumed to be 0, relative to the table..
     fn get_x_bounds(&self) -> Option<(u16, u16)>;
 
+    /// Sets the x bounds of a column.
     fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>);
 }
 
@@ -106,8 +115,11 @@ where
 /// A [`SimpleSortableColumn`] represents some column in a [`SortableTextTable`].
 #[derive(Debug)]
 pub struct SimpleSortableColumn {
+    original_name: Cow<'static, str>,
     pub shortcut: Option<(KeyEvent, String)>,
     pub default_descending: bool,
+    x_bounds: Option<(u16, u16)>,
+
     pub internal: SimpleColumn,
 
     /// Whether this column is currently selected for sorting, and which direction.
@@ -117,12 +129,15 @@ pub struct SimpleSortableColumn {
 impl SimpleSortableColumn {
     /// Creates a new [`SimpleSortableColumn`].
     fn new(
-        full_name: Cow<'static, str>, shortcut: Option<(KeyEvent, String)>,
-        default_descending: bool, desired_width: DesiredColumnWidth,
+        original_name: Cow<'static, str>, full_name: Cow<'static, str>,
+        shortcut: Option<(KeyEvent, String)>, default_descending: bool,
+        desired_width: DesiredColumnWidth,
     ) -> Self {
         Self {
+            original_name,
             shortcut,
             default_descending,
+            x_bounds: None,
             internal: SimpleColumn::new(full_name, desired_width),
             sorting_status: SortStatus::NotSorting,
         }
@@ -141,11 +156,12 @@ impl SimpleSortableColumn {
                 Some((shortcut, shortcut_name)),
             )
         } else {
-            (name, None)
+            (name.clone(), None)
         };
         let full_name_len = full_name.len();
 
         SimpleSortableColumn::new(
+            name,
             full_name,
             shortcut,
             default_descending,
@@ -165,11 +181,12 @@ impl SimpleSortableColumn {
                 Some((shortcut, shortcut_name)),
             )
         } else {
-            (name, None)
+            (name.clone(), None)
         };
         let full_name_len = full_name.len();
 
         SimpleSortableColumn::new(
+            name,
             full_name,
             shortcut,
             default_descending,
@@ -182,6 +199,10 @@ impl SimpleSortableColumn {
 }
 
 impl SortableColumn for SimpleSortableColumn {
+    fn original_name(&self) -> &Cow<'static, str> {
+        &self.original_name
+    }
+
     fn shortcut(&self) -> &Option<(KeyEvent, String)> {
         &self.shortcut
     }
@@ -236,6 +257,9 @@ where
 
     /// The underlying [`TextTable`].
     pub table: TextTable<S>,
+
+    /// A corresponding "sort" menu.
+    pub sort_menu: TextTable,
 }
 
 impl<S> SortableTextTable<S>
@@ -244,9 +268,15 @@ where
 {
     /// Creates a new [`SortableTextTable`]. Note that `columns` cannot be empty.
     pub fn new(columns: Vec<S>) -> Self {
+        let sort_menu_columns = columns
+            .iter()
+            .map(|column| SimpleColumn::new_hard(column.original_name().clone(), None))
+            .collect::<Vec<_>>();
+
         let mut st = Self {
             sort_index: 0,
             table: TextTable::new(columns),
+            sort_menu: TextTable::new(sort_menu_columns),
         };
         st.set_sort_index(0);
         st
@@ -317,14 +347,20 @@ where
 
     /// Draws a [`tui::widgets::Table`] on screen.
     ///
-    /// Note if the number of columns don't match in the [`TextTable`] and data,
+    /// Note if the number of columns don't match in the [`SortableTextTable`] and data,
     /// it will only create as many columns as it can grab data from both sources from.
     pub fn draw_tui_table<B: Backend>(
-        &mut self, painter: &Painter, f: &mut tui::Frame<'_, B>, data: &TextTableData,
-        block: Block<'_>, block_area: Rect, show_selected_entry: bool,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableData, block: Block<'_>,
+        block_area: Rect, show_selected_entry: bool,
     ) {
         self.table
             .draw_tui_table(painter, f, data, block, block_area, show_selected_entry);
+    }
+
+    /// Draws a [`tui::widgets::Table`] on screen corresponding to the sort columns of this [`SortableTextTable`].
+    pub fn draw_sort_table<B: Backend>(
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, block: Block<'_>, block_area: Rect,
+    ) {
     }
 }
 
@@ -347,7 +383,7 @@ where
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         if let MouseEventKind::Down(MouseButton::Left) = event.kind {
-            if !self.does_intersect_mouse(&event) {
+            if !self.does_bounds_intersect_mouse(&event) {
                 return WidgetEventResult::NoRedraw;
             }
 
@@ -373,10 +409,18 @@ where
     }
 
     fn bounds(&self) -> Rect {
-        self.table.bounds
+        self.table.bounds()
     }
 
     fn set_bounds(&mut self, new_bounds: Rect) {
-        self.table.bounds = new_bounds;
+        self.table.set_bounds(new_bounds)
+    }
+
+    fn border_bounds(&self) -> Rect {
+        self.table.border_bounds()
+    }
+
+    fn set_border_bounds(&mut self, new_bounds: Rect) {
+        self.table.set_border_bounds(new_bounds)
     }
 }

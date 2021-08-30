@@ -18,8 +18,8 @@ use crate::{
 };
 
 use super::{
-    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component,
-    SortableTextTable, Widget,
+    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component, TextTable,
+    Widget,
 };
 
 pub struct TempWidgetState {
@@ -55,9 +55,9 @@ impl TempState {
     }
 }
 
-/// A table displaying disk data.  Essentially a wrapper around a [`TextTable`].
+/// A table displaying disk data..
 pub struct TempTable {
-    table: SortableTextTable,
+    table: TextTable<SimpleSortableColumn>,
     bounds: Rect,
     display_data: TextTableData,
     temp_type: TemperatureType,
@@ -65,7 +65,7 @@ pub struct TempTable {
 
 impl Default for TempTable {
     fn default() -> Self {
-        let table = SortableTextTable::new(vec![
+        let table = TextTable::new(vec![
             SimpleSortableColumn::new_flex("Sensor".into(), None, false, 0.8),
             SimpleSortableColumn::new_hard("Temp".into(), None, false, Some(5)),
         ])
@@ -123,7 +123,6 @@ impl Widget for TempTable {
             .borders(Borders::ALL); // TODO: Also do the scrolling indicator!
 
         self.table
-            .table
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);
     }
 

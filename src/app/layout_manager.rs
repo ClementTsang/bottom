@@ -1001,13 +1001,16 @@ pub struct ColLayout {
 }
 
 /// A [`LayoutNode`] represents a single node in the overall widget hierarchy. Each node is one of:
-/// - [`LayoutNode::Row`] (a a non-leaf that distributes its children horizontally)
+/// - [`LayoutNode::Row`] (a non-leaf that distributes its children horizontally)
 /// - [`LayoutNode::Col`] (a non-leaf node that distributes its children vertically)
 /// - [`LayoutNode::Widget`] (a leaf node that contains the ID of the widget it is associated with)
 #[derive(PartialEq, Eq)]
 pub enum LayoutNode {
+    /// A non-leaf that distributes its children horizontally
     Row(RowLayout),
+    /// A non-leaf node that distributes its children vertically
     Col(ColLayout),
+    /// A leaf node that contains the ID of the widget it is associated with
     Widget,
 }
 

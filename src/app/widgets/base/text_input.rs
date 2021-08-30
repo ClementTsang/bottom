@@ -12,6 +12,7 @@ pub struct TextInput {
     text: String,
     cursor_index: usize,
     bounds: Rect,
+    border_bounds: Rect,
 }
 
 impl TextInput {
@@ -90,6 +91,14 @@ impl Component for TextInput {
 
     fn set_bounds(&mut self, new_bounds: Rect) {
         self.bounds = new_bounds;
+    }
+
+    fn border_bounds(&self) -> Rect {
+        self.border_bounds
+    }
+
+    fn set_border_bounds(&mut self, new_bounds: Rect) {
+        self.border_bounds = new_bounds;
     }
 
     fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {

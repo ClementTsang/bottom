@@ -4,6 +4,7 @@ const MAX_TIMEOUT: Duration = Duration::from_millis(400);
 
 /// These are "signals" that are sent along with an [`WidgetEventResult`] to signify a potential additional action
 /// that the caller must do, along with the "core" result of either drawing or redrawing.
+#[derive(Debug)]
 pub enum ReturnSignal {
     /// A signal returned when some process widget was told to try to kill a process (or group of processes).
     ///
@@ -18,6 +19,7 @@ pub enum ReturnSignal {
 }
 
 /// The results of handling an event by the [`AppState`].
+#[derive(Debug)]
 pub enum EventResult {
     /// Kill the program.
     Quit,
@@ -29,6 +31,7 @@ pub enum EventResult {
 
 /// The results of a widget handling some event, like a mouse or key event,
 /// signifying what the program should then do next.
+#[derive(Debug)]
 pub enum WidgetEventResult {
     /// Kill the program.
     Quit,

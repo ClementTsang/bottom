@@ -111,6 +111,7 @@ pub struct TimeGraph {
     time_interval: u64,
 
     bounds: Rect,
+    border_bounds: Rect,
 
     use_dot: bool,
 }
@@ -129,6 +130,7 @@ impl TimeGraph {
             max_duration,
             time_interval,
             bounds: Rect::default(),
+            border_bounds: Rect::default(),
             use_dot,
         }
     }
@@ -236,6 +238,7 @@ impl TimeGraph {
     ) {
         let inner_area = block.inner(block_area);
 
+        self.set_border_bounds(block_area);
         self.set_bounds(inner_area);
 
         let time_start = -(self.current_display_time as f64);
@@ -323,5 +326,13 @@ impl Component for TimeGraph {
 
     fn set_bounds(&mut self, new_bounds: Rect) {
         self.bounds = new_bounds;
+    }
+
+    fn border_bounds(&self) -> Rect {
+        self.border_bounds
+    }
+
+    fn set_border_bounds(&mut self, new_bounds: Rect) {
+        self.border_bounds = new_bounds;
     }
 }

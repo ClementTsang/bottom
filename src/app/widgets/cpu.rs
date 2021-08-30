@@ -16,9 +16,7 @@ use crate::{
     data_conversion::{convert_cpu_data_points, ConvertedCpuData},
 };
 
-use super::{
-    AppScrollWidgetState, CanvasTableWidthState, Component, SortableTextTable, TimeGraph, Widget,
-};
+use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, TimeGraph, Widget};
 
 pub struct CpuWidgetState {
     pub current_display_time: u64,
@@ -77,10 +75,10 @@ pub enum CpuGraphLegendPosition {
     Right,
 }
 
-/// A widget designed to show CPU usage via a graph, along with a side legend implemented as a [`TextTable`].
+/// A widget designed to show CPU usage via a graph, along with a side legend in a table.
 pub struct CpuGraph {
     graph: TimeGraph,
-    legend: SortableTextTable,
+    legend: TextTable<SimpleSortableColumn>,
     legend_position: CpuGraphLegendPosition,
     showing_avg: bool,
 
@@ -95,7 +93,7 @@ impl CpuGraph {
     /// Creates a new [`CpuGraph`] from a config.
     pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
         let graph = TimeGraph::from_config(app_config_fields);
-        let legend = SortableTextTable::new(vec![
+        let legend = TextTable::new(vec![
             SimpleSortableColumn::new_flex("CPU".into(), None, false, 0.5),
             SimpleSortableColumn::new_flex("Use%".into(), None, false, 0.5),
         ]);
@@ -129,7 +127,7 @@ impl Component for CpuGraph {
     }
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
-        if self.graph.does_intersect_mouse(&event) {
+        if self.graph.does_border_intersect_mouse(&event) {
             if let CpuGraphSelection::Graph = self.selected {
                 self.graph.handle_mouse_event(event)
             } else {
@@ -137,7 +135,7 @@ impl Component for CpuGraph {
                 self.graph.handle_mouse_event(event);
                 WidgetEventResult::Redraw
             }
-        } else if self.legend.does_intersect_mouse(&event) {
+        } else if self.legend.does_border_intersect_mouse(&event) {
             if let CpuGraphSelection::Legend = self.selected {
                 self.legend.handle_mouse_event(event)
             } else {
@@ -176,10 +174,15 @@ impl Widget for CpuGraph {
             }
         };
 
+        // debug!("Area: {:?}", area);
+
         let split_area = Layout::default()
+            .margin(0)
             .direction(Direction::Horizontal)
             .constraints(constraints)
             .split(area);
+
+        // debug!("Split area: {:?}", split_area);
 
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         let y_bound_labels: [Cow<'static, str>; 2] = ["0%".into(), "100%".into()];
