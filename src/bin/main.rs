@@ -42,12 +42,7 @@ fn main() -> Result<()> {
     let mut app = build_app(&matches, &mut config)?;
 
     // Create painter and set colours.
-    let mut painter = canvas::Painter::init(
-        app.app_config_fields.table_gap,
-        app.app_config_fields.use_basic_mode,
-        &config,
-        get_color_scheme(&matches, &config)?,
-    )?;
+    let mut painter = canvas::Painter::init(&config, get_color_scheme(&matches, &config)?)?;
 
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]

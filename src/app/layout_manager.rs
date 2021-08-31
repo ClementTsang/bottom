@@ -1,12 +1,18 @@
 use crate::{
-    app::{DiskTable, MemGraph, NetGraph, OldNetGraph, ProcessManager, TempTable},
+    app::{
+        BasicCpu, BasicMem, BasicNet, BatteryTable, Carousel, DiskTable, Empty, MemGraph, NetGraph,
+        OldNetGraph, ProcessManager, TempTable,
+    },
     error::{BottomError, Result},
-    options::layout_options::{Row, RowChildren},
+    options::{
+        layout_options::{LayoutRule, Row, RowChildren},
+        ProcessDefaults,
+    },
 };
 use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
-use std::collections::BTreeMap;
-use tui::layout::Constraint;
+use std::{cmp::min, collections::BTreeMap};
+use tui::layout::Rect;
 use typed_builder::*;
 
 use crate::app::widgets::Widget;
@@ -910,6 +916,7 @@ pub enum BottomWidgetType {
     BasicNet,
     BasicTables,
     Battery,
+    Carousel,
 }
 
 impl BottomWidgetType {
@@ -958,6 +965,9 @@ impl std::str::FromStr for BottomWidgetType {
             "disk" => Ok(BottomWidgetType::Disk),
             "empty" => Ok(BottomWidgetType::Empty),
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
+            "bcpu" => Ok(BottomWidgetType::BasicCpu),
+            "bmem" => Ok(BottomWidgetType::BasicMem),
+            "bnet" => Ok(BottomWidgetType::BasicNet),
             _ => Err(BottomError::ConfigError(format!(
                 "\"{}\" is an invalid widget name.
 
@@ -987,43 +997,73 @@ Supported widget names:
 // --- New stuff ---
 
 /// Represents a row in the layout tree.
-#[derive(PartialEq, Eq, Default)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct RowLayout {
     last_selected_index: usize,
-    pub constraints: Vec<Constraint>,
+    pub parent_rule: LayoutRule,
+    pub bound: Rect,
+}
+
+impl RowLayout {
+    fn new(parent_rule: LayoutRule) -> Self {
+        Self {
+            last_selected_index: 0,
+            parent_rule,
+            bound: Rect::default(),
+        }
+    }
 }
 
 /// Represents a column in the layout tree.
-#[derive(PartialEq, Eq, Default)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct ColLayout {
     last_selected_index: usize,
-    pub constraints: Vec<Constraint>,
+    pub parent_rule: LayoutRule,
+    pub bound: Rect,
+}
+
+impl ColLayout {
+    fn new(parent_rule: LayoutRule) -> Self {
+        Self {
+            last_selected_index: 0,
+            parent_rule,
+            bound: Rect::default(),
+        }
+    }
+}
+
+/// Represents a widget in the layout tree.
+#[derive(PartialEq, Eq, Clone, Default)]
+pub struct WidgetLayout {
+    pub bound: Rect,
 }
 
 /// A [`LayoutNode`] represents a single node in the overall widget hierarchy. Each node is one of:
 /// - [`LayoutNode::Row`] (a non-leaf that distributes its children horizontally)
 /// - [`LayoutNode::Col`] (a non-leaf node that distributes its children vertically)
 /// - [`LayoutNode::Widget`] (a leaf node that contains the ID of the widget it is associated with)
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum LayoutNode {
     /// A non-leaf that distributes its children horizontally
     Row(RowLayout),
     /// A non-leaf node that distributes its children vertically
     Col(ColLayout),
     /// A leaf node that contains the ID of the widget it is associated with
-    Widget,
+    Widget(WidgetLayout),
 }
 
 impl LayoutNode {
-    pub fn set_constraints(&mut self, constraints: Vec<Constraint>) {
+    fn set_bound(&mut self, bound: Rect) {
         match self {
             LayoutNode::Row(row) => {
-                row.constraints = constraints;
+                row.bound = bound;
             }
             LayoutNode::Col(col) => {
-                col.constraints = constraints;
+                col.bound = bound;
             }
-            LayoutNode::Widget => {}
+            LayoutNode::Widget(widget) => {
+                widget.bound = bound;
+            }
         }
     }
 }
@@ -1050,86 +1090,140 @@ pub struct LayoutCreationOutput {
 /// selected [`NodeId`].
 // FIXME: This is currently jury-rigged "glue" just to work with the existing config system! We are NOT keeping it like this, it's too awful to keep like this!
 pub fn create_layout_tree(
-    rows: &[Row], process_defaults: crate::options::ProcessDefaults,
-    app_config_fields: &AppConfigFields,
+    rows: &[Row], process_defaults: ProcessDefaults, app_config_fields: &AppConfigFields,
 ) -> Result<LayoutCreationOutput> {
     fn add_widget_to_map(
         widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, widget_type: BottomWidgetType,
-        widget_id: NodeId, process_defaults: &crate::options::ProcessDefaults,
-        app_config_fields: &AppConfigFields,
+        widget_id: NodeId, process_defaults: &ProcessDefaults, app_config_fields: &AppConfigFields,
+        width: LayoutRule, height: LayoutRule,
     ) -> Result<()> {
         match widget_type {
             BottomWidgetType::Cpu => {
-                widget_lookup_map
-                    .insert(widget_id, CpuGraph::from_config(app_config_fields).into());
+                widget_lookup_map.insert(
+                    widget_id,
+                    CpuGraph::from_config(app_config_fields)
+                        .width(width)
+                        .height(height)
+                        .into(),
+                );
             }
             BottomWidgetType::Mem => {
                 let graph = TimeGraph::from_config(app_config_fields);
-                widget_lookup_map.insert(widget_id, MemGraph::new(graph).into());
+                widget_lookup_map.insert(
+                    widget_id,
+                    MemGraph::new(graph).width(width).height(height).into(),
+                );
             }
             BottomWidgetType::Net => {
                 if app_config_fields.use_old_network_legend {
                     widget_lookup_map.insert(
                         widget_id,
-                        OldNetGraph::from_config(app_config_fields).into(),
+                        OldNetGraph::from_config(app_config_fields)
+                            .width(width)
+                            .height(height)
+                            .into(),
                     );
                 } else {
-                    widget_lookup_map
-                        .insert(widget_id, NetGraph::from_config(app_config_fields).into());
+                    widget_lookup_map.insert(
+                        widget_id,
+                        NetGraph::from_config(app_config_fields)
+                            .width(width)
+                            .height(height)
+                            .into(),
+                    );
                 }
             }
             BottomWidgetType::Proc => {
-                widget_lookup_map.insert(widget_id, ProcessManager::new(process_defaults).into());
+                widget_lookup_map.insert(
+                    widget_id,
+                    ProcessManager::new(process_defaults)
+                        .width(width)
+                        .height(height)
+                        .basic_mode(app_config_fields.use_basic_mode)
+                        .into(),
+                );
             }
             BottomWidgetType::Temp => {
                 widget_lookup_map.insert(
                     widget_id,
                     TempTable::default()
                         .set_temp_type(app_config_fields.temperature_type.clone())
+                        .width(width)
+                        .height(height)
+                        .basic_mode(app_config_fields.use_basic_mode)
                         .into(),
                 );
             }
             BottomWidgetType::Disk => {
-                widget_lookup_map.insert(widget_id, DiskTable::default().into());
+                widget_lookup_map.insert(
+                    widget_id,
+                    DiskTable::default()
+                        .width(width)
+                        .height(height)
+                        .basic_mode(app_config_fields.use_basic_mode)
+                        .into(),
+                );
             }
-            BottomWidgetType::Battery => {}
+            BottomWidgetType::Battery => {
+                widget_lookup_map.insert(
+                    widget_id,
+                    BatteryTable::default()
+                        .width(width)
+                        .height(height)
+                        .basic_mode(app_config_fields.use_basic_mode)
+                        .into(),
+                );
+            }
+            BottomWidgetType::BasicCpu => {
+                widget_lookup_map.insert(
+                    widget_id,
+                    BasicCpu::from_config(app_config_fields).width(width).into(),
+                );
+            }
+            BottomWidgetType::BasicMem => {
+                widget_lookup_map.insert(widget_id, BasicMem::default().width(width).into());
+            }
+            BottomWidgetType::BasicNet => {
+                widget_lookup_map.insert(
+                    widget_id,
+                    BasicNet::from_config(app_config_fields).width(width).into(),
+                );
+            }
+            BottomWidgetType::Empty => {
+                widget_lookup_map.insert(
+                    widget_id,
+                    Empty::default().width(width).height(height).into(),
+                );
+            }
             _ => {}
         }
 
         Ok(())
     }
 
-    let mut layout_tree = Arena::new();
-    let root_id = layout_tree.new_node(LayoutNode::Col(ColLayout::default()));
+    let mut arena = Arena::new();
+    let root_id = arena.new_node(LayoutNode::Col(ColLayout::new(LayoutRule::Expand {
+        ratio: 1,
+    })));
     let mut widget_lookup_map = FxHashMap::default();
     let mut first_selected = None;
-    let mut first_widget_seen = None; // Backup
+    let mut first_widget_seen = None; // Backup selected widget
     let mut used_widgets = UsedWidgets::default();
 
-    let row_sum: u32 = rows.iter().map(|row| row.ratio.unwrap_or(1)).sum();
-    let mut root_constraints = Vec::with_capacity(rows.len());
     for row in rows {
-        root_constraints.push(Constraint::Ratio(row.ratio.unwrap_or(1), row_sum));
-        let layout_node = LayoutNode::Row(RowLayout::default());
-        let row_id = layout_tree.new_node(layout_node);
-        root_id.append(row_id, &mut layout_tree);
+        let row_id = arena.new_node(LayoutNode::Row(RowLayout::new(
+            row.ratio
+                .map(|ratio| LayoutRule::Expand { ratio })
+                .unwrap_or(LayoutRule::Child),
+        )));
+        root_id.append(row_id, &mut arena);
 
-        if let Some(cols) = &row.child {
-            let mut row_constraints = Vec::with_capacity(cols.len());
-            let col_sum: u32 = cols
-                .iter()
-                .map(|col| match col {
-                    RowChildren::Widget(widget) => widget.ratio.unwrap_or(1),
-                    RowChildren::Col { ratio, child: _ } => ratio.unwrap_or(1),
-                })
-                .sum();
-
-            for col in cols {
-                match col {
+        if let Some(children) = &row.child {
+            for child in children {
+                match child {
                     RowChildren::Widget(widget) => {
-                        row_constraints.push(Constraint::Ratio(widget.ratio.unwrap_or(1), col_sum));
-                        let widget_id = layout_tree.new_node(LayoutNode::Widget);
-                        row_id.append(widget_id, &mut layout_tree);
+                        let widget_id = arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
+                        row_id.append(widget_id, &mut arena);
 
                         if let Some(true) = widget.default {
                             first_selected = Some(widget_id);
@@ -1148,28 +1242,108 @@ pub fn create_layout_tree(
                             widget_id,
                             &process_defaults,
                             app_config_fields,
+                            widget.rule.unwrap_or_default(),
+                            LayoutRule::default(),
                         )?;
+                    }
+                    RowChildren::Carousel {
+                        carousel_children,
+                        default,
+                    } => {
+                        if !carousel_children.is_empty() {
+                            let mut child_ids = Vec::with_capacity(carousel_children.len());
+                            let carousel_widget_id =
+                                arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
+                            row_id.append(carousel_widget_id, &mut arena);
+
+                            // Add the first widget as a default widget if needed.
+                            {
+                                let widget_id =
+                                    arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
+                                carousel_widget_id.append(widget_id, &mut arena);
+
+                                let widget_type =
+                                    carousel_children[0].parse::<BottomWidgetType>()?;
+                                used_widgets.add(&widget_type);
+
+                                if let Some(true) = default {
+                                    first_selected = Some(widget_id);
+                                }
+
+                                if first_widget_seen.is_none() {
+                                    first_widget_seen = Some(widget_id);
+                                }
+
+                                add_widget_to_map(
+                                    &mut widget_lookup_map,
+                                    widget_type,
+                                    widget_id,
+                                    &process_defaults,
+                                    app_config_fields,
+                                    LayoutRule::default(),
+                                    LayoutRule::default(),
+                                )?;
+
+                                child_ids.push(widget_id);
+                            }
+
+                            // Handle the rest of the children.
+                            for child in carousel_children[1..].iter() {
+                                let widget_id =
+                                    arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
+                                carousel_widget_id.append(widget_id, &mut arena);
+
+                                let widget_type = child.parse::<BottomWidgetType>()?;
+                                used_widgets.add(&widget_type);
+
+                                add_widget_to_map(
+                                    &mut widget_lookup_map,
+                                    widget_type,
+                                    widget_id,
+                                    &process_defaults,
+                                    app_config_fields,
+                                    LayoutRule::default(),
+                                    LayoutRule::default(),
+                                )?;
+
+                                child_ids.push(widget_id);
+                            }
+
+                            widget_lookup_map.insert(
+                                carousel_widget_id,
+                                Carousel::new(
+                                    child_ids
+                                        .into_iter()
+                                        .filter_map(|child_id| {
+                                            if let Some(w) = widget_lookup_map.get(&child_id) {
+                                                Some((child_id, w.get_pretty_name().into()))
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .collect(),
+                                )
+                                .into(),
+                            );
+                        }
                     }
                     RowChildren::Col {
                         ratio,
-                        child: children,
+                        child: col_child,
                     } => {
-                        row_constraints.push(Constraint::Ratio(ratio.unwrap_or(1), col_sum));
-                        let col_node = LayoutNode::Col(ColLayout::default());
-                        let col_id = layout_tree.new_node(col_node);
-                        row_id.append(col_id, &mut layout_tree);
+                        let col_id = arena.new_node(LayoutNode::Col(ColLayout::new(
+                            ratio
+                                .map(|ratio| LayoutRule::Expand { ratio })
+                                .unwrap_or(LayoutRule::Child),
+                        )));
+                        row_id.append(col_id, &mut arena);
 
-                        let child_sum: u32 =
-                            children.iter().map(|child| child.ratio.unwrap_or(1)).sum();
+                        for widget in col_child {
+                            let widget_id =
+                                arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
+                            col_id.append(widget_id, &mut arena);
 
-                        let mut col_constraints = Vec::with_capacity(children.len());
-                        for child in children {
-                            col_constraints
-                                .push(Constraint::Ratio(child.ratio.unwrap_or(1), child_sum));
-                            let widget_id = layout_tree.new_node(LayoutNode::Widget);
-                            col_id.append(widget_id, &mut layout_tree);
-
-                            if let Some(true) = child.default {
+                            if let Some(true) = widget.default {
                                 first_selected = Some(widget_id);
                             }
 
@@ -1177,7 +1351,7 @@ pub fn create_layout_tree(
                                 first_widget_seen = Some(widget_id);
                             }
 
-                            let widget_type = child.widget_type.parse::<BottomWidgetType>()?;
+                            let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
                             used_widgets.add(&widget_type);
 
                             add_widget_to_map(
@@ -1186,25 +1360,17 @@ pub fn create_layout_tree(
                                 widget_id,
                                 &process_defaults,
                                 app_config_fields,
+                                LayoutRule::default(),
+                                widget.rule.unwrap_or_default(),
                             )?;
                         }
-                        layout_tree[col_id]
-                            .get_mut()
-                            .set_constraints(col_constraints);
                     }
                 }
             }
-            layout_tree[row_id]
-                .get_mut()
-                .set_constraints(row_constraints);
         }
     }
-    layout_tree[root_id]
-        .get_mut()
-        .set_constraints(root_constraints);
 
     let selected: NodeId;
-
     if let Some(first_selected) = first_selected {
         selected = first_selected;
     } else if let Some(first_widget_seen) = first_widget_seen {
@@ -1216,7 +1382,7 @@ pub fn create_layout_tree(
     }
 
     Ok(LayoutCreationOutput {
-        layout_tree,
+        layout_tree: arena,
         root: root_id,
         widget_lookup_map,
         selected,
@@ -1264,7 +1430,7 @@ pub fn move_widget_selection(
                     .and_then(|(parent_id, parent_node)| match parent_node.get() {
                         LayoutNode::Row(_) => Some((parent_id, current_id)),
                         LayoutNode::Col(_) => find_first_row(layout_tree, parent_id),
-                        LayoutNode::Widget => None,
+                        LayoutNode::Widget(_) => None,
                     })
             }
 
@@ -1285,21 +1451,23 @@ pub fn move_widget_selection(
                     .and_then(|(parent_id, parent_node)| match parent_node.get() {
                         LayoutNode::Row(_) => find_first_col(layout_tree, parent_id),
                         LayoutNode::Col(_) => Some((parent_id, current_id)),
-                        LayoutNode::Widget => None,
+                        LayoutNode::Widget(_) => None,
                     })
             }
 
-            /// Descends to a leaf.
+            /// Descends to a leaf node.
             fn descend_to_leaf(layout_tree: &Arena<LayoutNode>, current_id: NodeId) -> NodeId {
                 if let Some(current_node) = layout_tree.get(current_id) {
                     match current_node.get() {
                         LayoutNode::Row(RowLayout {
                             last_selected_index,
-                            constraints: _,
+                            parent_rule: _,
+                            bound: _,
                         })
                         | LayoutNode::Col(ColLayout {
                             last_selected_index,
-                            constraints: _,
+                            parent_rule: _,
+                            bound: _,
                         }) => {
                             if let Some(next_child) =
                                 current_id.children(layout_tree).nth(*last_selected_index)
@@ -1309,8 +1477,9 @@ pub fn move_widget_selection(
                                 current_id
                             }
                         }
-                        LayoutNode::Widget => {
+                        LayoutNode::Widget(_) => {
                             // Halt!
+                            // TODO: How does this handle carousel?
                             current_id
                         }
                     }
@@ -1469,4 +1638,318 @@ pub fn move_widget_selection(
             }
         }
     }
+}
+
+/// Generates the bounds for each node in the `arena, taking into account per-leaf desires,
+/// and finally storing the calculated bounds in the given `arena`.
+///
+/// Stored bounds are given in *relative* coordinates - they are relative to their parents.
+/// That is, you may have a child widget "start" at (0, 0), but its parent is actually at x = 5,s
+/// so the absolute coordinate of the child widget is actually (5, 0).
+///
+/// The algorithm is mostly based on the algorithm used by Flutter, adapted to work for
+/// our use case. For more information, check out both:
+///
+/// - [How the constraint system works in Flutter](https://flutter.dev/docs/development/ui/layout/constraints)
+/// - [How Flutter does sublinear layout](https://flutter.dev/docs/resources/inside-flutter#sublinear-layout)
+pub fn generate_layout(
+    root: NodeId, arena: &mut Arena<LayoutNode>, area: Rect,
+    lookup_map: &FxHashMap<NodeId, TmpBottomWidget>,
+) {
+    // TODO: [Layout] Add some caching/dirty mechanisms to reduce calls.
+
+    /// A [`Size`] is a set of widths and heights that a node in our layout wants to be.
+    #[derive(Default, Clone, Copy, Debug)]
+    struct Size {
+        width: u16,
+        height: u16,
+    }
+
+    /// A [`LayoutConstraint`] is just a set of maximal widths/heights.
+    #[derive(Clone, Copy, Debug)]
+    struct LayoutConstraints {
+        max_width: u16,
+        max_height: u16,
+    }
+
+    impl LayoutConstraints {
+        fn new(max_width: u16, max_height: u16) -> Self {
+            Self {
+                max_width,
+                max_height,
+            }
+        }
+
+        /// Shrinks the width of itself given another width.
+        fn shrink_width(&mut self, width: u16) {
+            self.max_width = self.max_width.saturating_sub(width);
+        }
+
+        /// Shrinks the height of itself given another height.
+        fn shrink_height(&mut self, height: u16) {
+            self.max_height = self.max_height.saturating_sub(height);
+        }
+
+        /// Returns a new [`LayoutConstraints`] with a new width given a ratio.
+        fn ratio_width(&self, numerator: u32, denominator: u32) -> Self {
+            Self {
+                max_width: (self.max_width as u32 * numerator / denominator) as u16,
+                max_height: self.max_height,
+            }
+        }
+
+        /// Returns a new [`LayoutConstraints`] with a new height given a ratio.
+        fn ratio_height(&self, numerator: u32, denominator: u32) -> Self {
+            Self {
+                max_width: self.max_width,
+                max_height: (self.max_height as u32 * numerator / denominator) as u16,
+            }
+        }
+    }
+
+    /// The internal recursive call to build a layout. Builds off of `arena` and stores bounds inside it.
+    fn layout(
+        node: NodeId, arena: &mut Arena<LayoutNode>,
+        lookup_map: &FxHashMap<NodeId, TmpBottomWidget>, mut constraints: LayoutConstraints,
+    ) -> Size {
+        if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
+            match layout_node {
+                LayoutNode::Row(row) => {
+                    let children = node.children(arena).collect::<Vec<_>>();
+                    let mut row_bounds = vec![Size::default(); children.len()];
+
+                    if let LayoutRule::Length { length } = row.parent_rule {
+                        constraints.max_height = length;
+                    }
+
+                    let (flexible_indices, inflexible_indices): (Vec<_>, Vec<_>) = children
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(itx, node)| {
+                            if let Some(layout_node) = arena.get(*node).map(|n| n.get()) {
+                                match layout_node {
+                                    LayoutNode::Row(RowLayout { parent_rule, .. })
+                                    | LayoutNode::Col(ColLayout { parent_rule, .. }) => {
+                                        match parent_rule {
+                                            LayoutRule::Expand { ratio } => {
+                                                Some((itx, true, *ratio))
+                                            }
+                                            LayoutRule::Child => Some((itx, false, 0)),
+                                            LayoutRule::Length { .. } => Some((itx, false, 0)),
+                                        }
+                                    }
+                                    LayoutNode::Widget(_) => {
+                                        if let Some(widget) = lookup_map.get(node) {
+                                            match widget.width() {
+                                                LayoutRule::Expand { ratio } => {
+                                                    Some((itx, true, ratio))
+                                                }
+                                                LayoutRule::Child => Some((itx, false, 0)),
+                                                LayoutRule::Length { .. } => Some((itx, false, 0)),
+                                            }
+                                        } else {
+                                            None
+                                        }
+                                    }
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                        .partition(|(_itx, is_flex, _ratio)| *is_flex);
+
+                    // First handle non-flexible children.
+                    for (index, _, _) in inflexible_indices {
+                        // The unchecked get is safe, since the index is obtained by iterating through the children
+                        // vector in the first place.
+                        let child = unsafe { children.get_unchecked(index) };
+                        let desired_size = layout(*child, arena, lookup_map, constraints);
+
+                        constraints.shrink_width(desired_size.width);
+
+                        // This won't panic, since the two vectors are the same length.
+                        row_bounds[index] = desired_size;
+                    }
+
+                    // Handle flexible children now.
+                    let denominator: u32 = flexible_indices.iter().map(|(_, _, ratio)| ratio).sum();
+                    let original_constraints = constraints.clone();
+                    let mut split_constraints = flexible_indices
+                        .iter()
+                        .map(|(_, _, numerator)| {
+                            let constraint =
+                                original_constraints.ratio_width(*numerator, denominator);
+                            constraints.shrink_width(constraint.max_width);
+
+                            constraint
+                        })
+                        .collect::<Vec<_>>();
+                    (0..constraints.max_width)
+                        .zip(&mut split_constraints)
+                        .for_each(|(_, split_constraint)| {
+                            split_constraint.max_width += 1;
+                        });
+
+                    for ((index, _, _), constraint) in
+                        flexible_indices.into_iter().zip(split_constraints)
+                    {
+                        // The unchecked get is safe, since the index is obtained by iterating through the children
+                        // vector in the first place.
+                        let child = unsafe { children.get_unchecked(index) };
+                        let desired_size = layout(*child, arena, lookup_map, constraint);
+
+                        // This won't panic, since the two vectors are the same length.
+                        row_bounds[index] = desired_size;
+                    }
+
+                    // Now let's turn each Size into a relative Rect!
+                    let mut current_x = 0;
+                    row_bounds.iter().zip(children).for_each(|(size, child)| {
+                        let bound = Rect::new(current_x, 0, size.width, size.height);
+                        current_x += size.width;
+                        if let Some(node) = arena.get_mut(child) {
+                            node.get_mut().set_bound(bound);
+                        }
+                    });
+
+                    Size {
+                        height: row_bounds.iter().map(|size| size.height).max().unwrap_or(0),
+                        width: row_bounds.into_iter().map(|size| size.width).sum(),
+                    }
+                }
+                LayoutNode::Col(col) => {
+                    let children = node.children(arena).collect::<Vec<_>>();
+                    let mut col_bounds = vec![Size::default(); children.len()];
+
+                    if let LayoutRule::Length { length } = col.parent_rule {
+                        constraints.max_width = length;
+                    }
+
+                    let (flexible_indices, inflexible_indices): (Vec<_>, Vec<_>) = children
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(itx, node)| {
+                            if let Some(layout_node) = arena.get(*node).map(|n| n.get()) {
+                                match layout_node {
+                                    LayoutNode::Row(RowLayout { parent_rule, .. })
+                                    | LayoutNode::Col(ColLayout { parent_rule, .. }) => {
+                                        match parent_rule {
+                                            LayoutRule::Expand { ratio } => {
+                                                Some((itx, true, *ratio))
+                                            }
+                                            LayoutRule::Child => Some((itx, false, 0)),
+                                            LayoutRule::Length { .. } => Some((itx, false, 0)),
+                                        }
+                                    }
+                                    LayoutNode::Widget(_) => {
+                                        if let Some(widget) = lookup_map.get(node) {
+                                            match widget.height() {
+                                                LayoutRule::Expand { ratio } => {
+                                                    Some((itx, true, ratio))
+                                                }
+                                                LayoutRule::Child => Some((itx, false, 0)),
+                                                LayoutRule::Length { length: _ } => {
+                                                    Some((itx, false, 0))
+                                                }
+                                            }
+                                        } else {
+                                            None
+                                        }
+                                    }
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                        .partition(|(_itx, is_flex, _ratio)| *is_flex);
+
+                    for (index, _, _) in inflexible_indices {
+                        // The unchecked get is safe, since the index is obtained by iterating through the children
+                        // vector in the first place.
+                        let child = unsafe { children.get_unchecked(index) };
+                        let desired_size = layout(*child, arena, lookup_map, constraints);
+
+                        constraints.shrink_height(desired_size.height);
+
+                        // This won't panic, since the two vectors are the same length.
+                        col_bounds[index] = desired_size;
+                    }
+
+                    let denominator: u32 = flexible_indices.iter().map(|(_, _, ratio)| ratio).sum();
+                    let original_constraints = constraints.clone();
+                    let mut split_constraints = flexible_indices
+                        .iter()
+                        .map(|(_, _, numerator)| {
+                            let new_constraint =
+                                original_constraints.ratio_height(*numerator, denominator);
+                            constraints.shrink_height(new_constraint.max_height);
+
+                            new_constraint
+                        })
+                        .collect::<Vec<_>>();
+                    (0..constraints.max_height)
+                        .zip(&mut split_constraints)
+                        .for_each(|(_, split_constraint)| {
+                            split_constraint.max_height += 1;
+                        });
+
+                    for ((index, _, _), constraint) in
+                        flexible_indices.into_iter().zip(split_constraints)
+                    {
+                        // The unchecked get is safe, since the index is obtained by iterating through the children
+                        // vector in the first place.
+                        let child = unsafe { children.get_unchecked(index) };
+                        let desired_size = layout(*child, arena, lookup_map, constraint);
+
+                        // This won't panic, since the two vectors are the same length.
+                        col_bounds[index] = desired_size;
+                    }
+
+                    // Now let's turn each Size into a relative Rect!
+                    let mut current_y = 0;
+                    col_bounds.iter().zip(children).for_each(|(size, child)| {
+                        let bound = Rect::new(0, current_y, size.width, size.height);
+                        current_y += size.height;
+                        if let Some(node) = arena.get_mut(child) {
+                            node.get_mut().set_bound(bound);
+                        }
+                    });
+
+                    Size {
+                        width: col_bounds.iter().map(|size| size.width).max().unwrap_or(0),
+                        height: col_bounds.into_iter().map(|size| size.height).sum(),
+                    }
+                }
+                LayoutNode::Widget(_) => {
+                    if let Some(widget) = lookup_map.get(&node) {
+                        let width = match widget.width() {
+                            LayoutRule::Expand { ratio: _ } => constraints.max_width,
+                            LayoutRule::Length { length } => min(length, constraints.max_width),
+                            LayoutRule::Child => constraints.max_width,
+                        };
+
+                        let height = match widget.height() {
+                            LayoutRule::Expand { ratio: _ } => constraints.max_height,
+                            LayoutRule::Length { length } => min(length, constraints.max_height),
+                            LayoutRule::Child => constraints.max_height,
+                        };
+
+                        Size { width, height }
+                    } else {
+                        Size::default()
+                    }
+                }
+            }
+        } else {
+            Size::default()
+        }
+    }
+
+    // And this is all you need to call, the layout function will do it all~
+    layout(
+        root,
+        arena,
+        lookup_map,
+        LayoutConstraints::new(area.width, area.height),
+    );
 }

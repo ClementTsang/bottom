@@ -238,10 +238,18 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
         network_use_binary_prefix,
     };
 
-    let layout_tree_output = if get_use_basic_mode(matches, config) {
-        todo!()
-    } else if let Some(row) = &config.row {
+    let layout_tree_output = if let Some(row) = &config.row {
         create_layout_tree(row, process_defaults, &app_config_fields)?
+    } else if get_use_basic_mode(matches, config) {
+        if get_use_battery(matches, config) {
+            let rows = toml::from_str::<Config>(DEFAULT_BASIC_BATTERY_LAYOUT)?
+                .row
+                .unwrap();
+            create_layout_tree(&rows, process_defaults, &app_config_fields)?
+        } else {
+            let rows = toml::from_str::<Config>(DEFAULT_BASIC_LAYOUT)?.row.unwrap();
+            create_layout_tree(&rows, process_defaults, &app_config_fields)?
+        }
     } else if get_use_battery(matches, config) {
         let rows = toml::from_str::<Config>(DEFAULT_BATTERY_LAYOUT)?
             .row
@@ -295,70 +303,70 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
     ))
 }
 
-pub fn get_widget_layout(
-    matches: &clap::ArgMatches<'static>, config: &Config,
-) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let left_legend = get_use_left_legend(matches, config);
-    let (default_widget_type, mut default_widget_count) =
-        get_default_widget_and_count(matches, config)?;
-    let mut default_widget_id = 1;
+// pub fn get_widget_layout(
+//     matches: &clap::ArgMatches<'static>, config: &Config,
+// ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
+//     let left_legend = get_use_left_legend(matches, config);
+//     let (default_widget_type, mut default_widget_count) =
+//         get_default_widget_and_count(matches, config)?;
+//     let mut default_widget_id = 1;
 
-    let bottom_layout = if get_use_basic_mode(matches, config) {
-        default_widget_id = DEFAULT_WIDGET_ID;
+//     let bottom_layout = if get_use_basic_mode(matches, config) {
+//         default_widget_id = DEFAULT_WIDGET_ID;
 
-        BottomLayout::init_basic_default(get_use_battery(matches, config))
-    } else {
-        let ref_row: Vec<Row>; // Required to handle reference
-        let rows = match &config.row {
-            Some(r) => r,
-            None => {
-                // This cannot (like it really shouldn't) fail!
-                ref_row = toml::from_str::<Config>(if get_use_battery(matches, config) {
-                    DEFAULT_BATTERY_LAYOUT
-                } else {
-                    DEFAULT_LAYOUT
-                })?
-                .row
-                .unwrap();
-                &ref_row
-            }
-        };
+//         BottomLayout::init_basic_default(get_use_battery(matches, config))
+//     } else {
+//         let ref_row: Vec<Row>; // Required to handle reference
+//         let rows = match &config.row {
+//             Some(r) => r,
+//             None => {
+//                 // This cannot (like it really shouldn't) fail!
+//                 ref_row = toml::from_str::<Config>(if get_use_battery(matches, config) {
+//                     DEFAULT_BATTERY_LAYOUT
+//                 } else {
+//                     DEFAULT_LAYOUT
+//                 })?
+//                 .row
+//                 .unwrap();
+//                 &ref_row
+//             }
+//         };
 
-        let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
-        let mut total_height_ratio = 0;
+//         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
+//         let mut total_height_ratio = 0;
 
-        let mut ret_bottom_layout = BottomLayout {
-            rows: rows
-                .iter()
-                .map(|row| {
-                    row.convert_row_to_bottom_row(
-                        &mut iter_id,
-                        &mut total_height_ratio,
-                        &mut default_widget_id,
-                        &default_widget_type,
-                        &mut default_widget_count,
-                        left_legend,
-                    )
-                })
-                .collect::<error::Result<Vec<_>>>()?,
-            total_row_height_ratio: total_height_ratio,
-        };
+//         let mut ret_bottom_layout = BottomLayout {
+//             rows: rows
+//                 .iter()
+//                 .map(|row| {
+//                     row.convert_row_to_bottom_row(
+//                         &mut iter_id,
+//                         &mut total_height_ratio,
+//                         &mut default_widget_id,
+//                         &default_widget_type,
+//                         &mut default_widget_count,
+//                         left_legend,
+//                     )
+//                 })
+//                 .collect::<error::Result<Vec<_>>>()?,
+//             total_row_height_ratio: total_height_ratio,
+//         };
 
-        // Confirm that we have at least ONE widget left - if not, error out!
-        if iter_id > 0 {
-            ret_bottom_layout.get_movement_mappings();
-            // debug!("Bottom layout: {:#?}", ret_bottom_layout);
+//         // Confirm that we have at least ONE widget left - if not, error out!
+//         if iter_id > 0 {
+//             ret_bottom_layout.get_movement_mappings();
+//             // debug!("Bottom layout: {:#?}", ret_bottom_layout);
 
-            ret_bottom_layout
-        } else {
-            return Err(error::BottomError::ConfigError(
-                "please have at least one widget under the '[[row]]' section.".to_string(),
-            ));
-        }
-    };
+//             ret_bottom_layout
+//         } else {
+//             return Err(error::BottomError::ConfigError(
+//                 "please have at least one widget under the '[[row]]' section.".to_string(),
+//             ));
+//         }
+//     };
 
-    Ok((bottom_layout, default_widget_id, default_widget_type))
-}
+//     Ok((bottom_layout, default_widget_id, default_widget_type))
+// }
 
 fn get_update_rate_in_milliseconds(
     matches: &clap::ArgMatches<'static>, config: &Config,

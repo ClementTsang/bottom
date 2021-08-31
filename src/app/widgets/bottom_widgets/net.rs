@@ -10,15 +10,14 @@ use tui::{
 use crate::{
     app::{
         data_farmer::DataCollection, text_table::SimpleColumn, time_graph::TimeGraphData,
-        AppConfigFields, AxisScaling,
+        AppConfigFields, AxisScaling, Component, TextTable, TimeGraph, Widget,
     },
     canvas::Painter,
     data_conversion::convert_network_data_points,
+    options::layout_options::LayoutRule,
     units::data_units::DataUnit,
     utils::gen_util::*,
 };
-
-use super::{Component, TextTable, TimeGraph, Widget};
 
 pub struct NetWidgetState {
     pub current_display_time: u64,
@@ -436,6 +435,8 @@ pub struct NetGraph {
     hide_legend: bool,
 
     bounds: Rect,
+    width: LayoutRule,
+    height: LayoutRule,
 }
 
 impl NetGraph {
@@ -457,12 +458,26 @@ impl NetGraph {
             use_binary_prefix: app_config_fields.network_use_binary_prefix,
             hide_legend: false,
             bounds: Rect::default(),
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
         }
     }
 
     /// Hides the legend. Only really useful for [`OldNetGraph`].
     pub fn hide_legend(mut self) -> Self {
         self.hide_legend = true;
+        self
+    }
+
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
         self
     }
 
@@ -613,6 +628,14 @@ impl Widget for NetGraph {
             self.total_tx_display = total_tx_display;
         }
     }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
+    }
 }
 
 /// A widget denoting network usage via a graph and a separate, single row table. This is built on [`NetGraph`],
@@ -621,6 +644,8 @@ pub struct OldNetGraph {
     net_graph: NetGraph,
     table: TextTable,
     bounds: Rect,
+    width: LayoutRule,
+    height: LayoutRule,
 }
 
 impl OldNetGraph {
@@ -636,7 +661,21 @@ impl OldNetGraph {
             ])
             .unselectable(),
             bounds: Rect::default(),
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
         }
+    }
+
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
+        self
     }
 }
 
@@ -731,5 +770,13 @@ impl Widget for OldNetGraph {
         if let Some(total_tx_display) = network_data.total_tx_display {
             self.net_graph.total_tx_display = total_tx_display;
         }
+    }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
     }
 }

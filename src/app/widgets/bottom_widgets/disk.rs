@@ -11,15 +11,12 @@ use tui::{
 use crate::{
     app::{
         data_farmer::DataCollection, event::WidgetEventResult,
-        sort_text_table::SimpleSortableColumn,
+        sort_text_table::SimpleSortableColumn, text_table::TextTableData, AppScrollWidgetState,
+        CanvasTableWidthState, Component, TextTable, Widget,
     },
     canvas::Painter,
     data_conversion::convert_disk_row,
-};
-
-use super::{
-    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component, TextTable,
-    Widget,
+    options::layout_options::LayoutRule,
 };
 
 pub struct DiskWidgetState {
@@ -61,6 +58,10 @@ pub struct DiskTable {
     bounds: Rect,
 
     display_data: TextTableData,
+
+    width: LayoutRule,
+    height: LayoutRule,
+    block_border: Borders,
 }
 
 impl Default for DiskTable {
@@ -79,7 +80,33 @@ impl Default for DiskTable {
             table,
             bounds: Rect::default(),
             display_data: Default::default(),
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
+            block_border: Borders::ALL,
         }
+    }
+}
+
+impl DiskTable {
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
+        self
+    }
+
+    /// Sets the block border style.
+    pub fn basic_mode(mut self, basic_mode: bool) -> Self {
+        if basic_mode {
+            self.block_border = *crate::constants::SIDE_BORDERS;
+        }
+
+        self
     }
 }
 
@@ -103,7 +130,7 @@ impl Component for DiskTable {
 
 impl Widget for DiskTable {
     fn get_pretty_name(&self) -> &'static str {
-        "Disk"
+        "Disks"
     }
 
     fn draw<B: Backend>(
@@ -115,7 +142,7 @@ impl Widget for DiskTable {
             } else {
                 painter.colours.border_style
             })
-            .borders(Borders::ALL);
+            .borders(self.block_border.clone());
 
         self.table
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);
@@ -123,5 +150,13 @@ impl Widget for DiskTable {
 
     fn update_data(&mut self, data_collection: &DataCollection) {
         self.display_data = convert_disk_row(data_collection);
+    }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
     }
 }

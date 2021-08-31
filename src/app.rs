@@ -282,8 +282,12 @@ impl AppState {
                 }
                 KeyCode::Char('q') => EventResult::Quit,
                 KeyCode::Char('e') => {
-                    self.is_expanded = !self.is_expanded;
-                    EventResult::Redraw
+                    if self.app_config_fields.use_basic_mode {
+                        EventResult::NoRedraw
+                    } else {
+                        self.is_expanded = !self.is_expanded;
+                        EventResult::Redraw
+                    }
                 }
                 KeyCode::Char('?') => {
                     self.help_dialog_state.is_showing_help = true;
@@ -353,14 +357,29 @@ impl AppState {
                         } else {
                             for (id, widget) in self.widget_lookup_map.iter_mut() {
                                 if widget.does_border_intersect_mouse(&event) {
-                                    let was_id_already_selected = self.selected_widget == *id;
-                                    self.selected_widget = *id;
-
                                     let result = widget.handle_mouse_event(event);
+
+                                    let new_id;
+                                    match widget.selectable_type() {
+                                        SelectableType::Selectable => {
+                                            new_id = *id;
+                                        }
+                                        SelectableType::Unselectable => {
+                                            let result = widget.handle_mouse_event(event);
+                                            return self.convert_widget_event_result(result);
+                                        }
+                                        SelectableType::Redirect(redirected_id) => {
+                                            new_id = redirected_id;
+                                        }
+                                    }
+
+                                    let was_id_already_selected = self.selected_widget == new_id;
+                                    self.selected_widget = new_id;
+
                                     if was_id_already_selected {
                                         return self.convert_widget_event_result(result);
                                     } else {
-                                        // If the aren't equal, *force* a redraw.
+                                        // If the weren't equal, *force* a redraw.
                                         let _ = self.convert_widget_event_result(result);
                                         return EventResult::Redraw;
                                     }

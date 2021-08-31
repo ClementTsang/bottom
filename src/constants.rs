@@ -383,11 +383,11 @@ pub static HELP_TEXT: Lazy<Vec<Vec<&'static str>>> = Lazy::new(|| {
 // Default layouts
 pub const DEFAULT_LAYOUT: &str = r##"
 [[row]]
-  ratio=30
+  ratio=32
   [[row.child]]
   type="cpu"
 [[row]]
-    ratio=40
+    ratio=36
     [[row.child]]
       ratio=4
       type="mem"
@@ -398,7 +398,7 @@ pub const DEFAULT_LAYOUT: &str = r##"
       [[row.child.child]]
         type="disk"
 [[row]]
-  ratio=30
+  ratio=32
   [[row.child]]
     type="net"
   [[row.child]]
@@ -408,15 +408,15 @@ pub const DEFAULT_LAYOUT: &str = r##"
 
 pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 [[row]]
-  ratio=30
+  ratio=32
   [[row.child]]
     ratio=2
-  type="cpu"
+    type="cpu"
   [[row.child]]
     ratio=1
-  type="battery"
+    type="battery"
 [[row]]
-    ratio=40
+    ratio=36
     [[row.child]]
       ratio=4
       type="mem"
@@ -427,7 +427,7 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
       [[row.child.child]]
         type="disk"
 [[row]]
-  ratio=30
+  ratio=32
   [[row.child]]
     type="net"
   [[row.child]]
@@ -437,6 +437,42 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 
 pub const DEFAULT_BASIC_LAYOUT: &str = r##"
 [[row]]
+  [[row.child]]
+  type = "bcpu"
+[[row]]
+  [[row.child]]
+    type = "bmem"
+  [[row.child]]
+    type = "bnet"
+[[row]]
+  [[row.child]]
+    [[row.child.child]]
+      length = 1
+      type = "empty"
+[[row]]
+  [[row.child]]
+    default = true
+    carousel_children = ["proc", "temp", "disk"]
+"##;
+
+pub const DEFAULT_BASIC_BATTERY_LAYOUT: &str = r##"
+[[row]]
+  [[row.child]]
+  type = "bcpu"
+[[row]]
+  [[row.child]]
+    type = "bmem"
+  [[row.child]]
+    type = "bnet"
+[[row]]
+  [[row.child]]
+    [[row.child.child]]
+      length = 1
+      type = "empty"
+[[row]]
+  [[row.child]]
+    default = true
+    carousel_children = ["proc", "temp", "disk", "battery"]
 "##;
 
 // Config and flags

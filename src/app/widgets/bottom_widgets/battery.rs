@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 
-use tui::layout::Rect;
+use tui::{layout::Rect, widgets::Borders};
 
 use crate::{
-    app::data_farmer::DataCollection,
+    app::{data_farmer::DataCollection, Component, Widget},
     data_conversion::{convert_battery_harvest, ConvertedBatteryData},
+    options::layout_options::LayoutRule,
 };
-
-use super::{Component, Widget};
 
 #[derive(Default)]
 pub struct BatteryWidgetState {
@@ -36,29 +35,60 @@ impl BatteryState {
 
 // TODO: Implement battery widget.
 /// A table displaying battery information on a per-battery basis.
-#[derive(Default)]
 pub struct BatteryTable {
     bounds: Rect,
     selected_index: usize,
     batteries: Vec<String>,
     battery_data: Vec<ConvertedBatteryData>,
+    width: LayoutRule,
+    height: LayoutRule,
+    block_border: Borders,
+}
+
+impl Default for BatteryTable {
+    fn default() -> Self {
+        Self {
+            batteries: vec![],
+            bounds: Default::default(),
+            selected_index: 0,
+            battery_data: Default::default(),
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
+            block_border: Borders::ALL,
+        }
+    }
 }
 
 impl BatteryTable {
-    /// Creates a new [`BatteryTable`].
-    pub fn new(batteries: Vec<String>) -> Self {
-        Self {
-            batteries,
-            ..Default::default()
-        }
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
     }
 
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
+        self
+    }
+
+    /// Returns the index of the currently selected battery.
     pub fn index(&self) -> usize {
         self.selected_index
     }
 
+    /// Returns a reference to the battery names.
     pub fn batteries(&self) -> &[String] {
         &self.batteries
+    }
+
+    /// Sets the block border style.
+    pub fn basic_mode(mut self, basic_mode: bool) -> Self {
+        if basic_mode {
+            self.block_border = *crate::constants::SIDE_BORDERS;
+        }
+
+        self
     }
 }
 
@@ -79,5 +109,13 @@ impl Widget for BatteryTable {
 
     fn update_data(&mut self, data_collection: &DataCollection) {
         self.battery_data = convert_battery_harvest(data_collection);
+    }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
     }
 }

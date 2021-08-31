@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use enum_dispatch::enum_dispatch;
+use indextree::NodeId;
 use tui::{backend::Backend, layout::Rect, widgets::TableState, Frame};
 
 use crate::{
@@ -11,6 +12,7 @@ use crate::{
     },
     canvas::Painter,
     constants,
+    options::layout_options::LayoutRule,
 };
 
 mod tui_widgets;
@@ -18,26 +20,8 @@ mod tui_widgets;
 pub mod base;
 pub use base::*;
 
-pub mod process;
-pub use process::*;
-
-pub mod net;
-pub use net::*;
-
-pub mod mem;
-pub use mem::*;
-
-pub mod cpu;
-pub use cpu::*;
-
-pub mod disk;
-pub use disk::*;
-
-pub mod battery;
-pub use self::battery::*;
-
-pub mod temp;
-pub use temp::*;
+pub mod bottom_widgets;
+pub use bottom_widgets::*;
 
 use super::data_farmer::DataCollection;
 
@@ -131,15 +115,38 @@ pub trait Widget {
     /// Returns a [`Widget`]'s "pretty" display name.
     fn get_pretty_name(&self) -> &'static str;
 
-    /// Draws a [`Widget`]. Defaults to doing nothing.
+    /// Draws a [`Widget`]. The default implementation draws nothing.
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        // TODO: Remove the default implementation in the future!
     }
 
-    /// How a [`Widget`] updates its internal displayed data. Defaults to doing nothing.
+    /// How a [`Widget`] updates its internal data that'll be displayed. Called after every data harvest.
+    /// The default implementation does nothing with the data.
     fn update_data(&mut self, data_collection: &DataCollection) {}
+
+    /// Returns the desired width from the [`Widget`].
+    fn width(&self) -> LayoutRule;
+
+    /// Returns the desired height from the [`Widget`].
+    fn height(&self) -> LayoutRule;
+
+    /// Returns whether this [`Widget`] can be expanded. The default implementation returns `true`.
+    fn expandable(&self) -> bool {
+        true
+    }
+
+    /// Returns whether this [`Widget`] can be selected. The default implementation returns [`SelectableType::Selectable`].
+    fn selectable_type(&self) -> SelectableType {
+        SelectableType::Selectable
+    }
+}
+
+/// Whether a widget can be selected, not selected, or redirected upon selection.
+pub enum SelectableType {
+    Selectable,
+    Unselectable,
+    Redirect(NodeId),
 }
 
 /// The "main" widgets that are used by bottom to display information!
@@ -154,6 +161,11 @@ pub enum TmpBottomWidget {
     OldNetGraph,
     ProcessManager,
     BatteryTable,
+    BasicCpu,
+    BasicMem,
+    BasicNet,
+    Carousel,
+    Empty,
 }
 
 // ----- Old stuff below -----

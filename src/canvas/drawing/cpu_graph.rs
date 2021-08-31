@@ -380,148 +380,148 @@ fn draw_cpu_legend<B: Backend>(
     painter: &Painter, f: &mut Frame<'_, B>, app_state: &mut AppState, draw_loc: Rect,
     widget_id: u64,
 ) {
-    let recalculate_column_widths = app_state.should_get_widget_bounds();
-    if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1)) {
-        cpu_widget_state.is_legend_hidden = false;
-        let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
-        let cpu_table_state = &mut cpu_widget_state.scroll_state.table_state;
-        let is_on_widget = widget_id == app_state.current_widget.widget_id;
-        let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
-            0
-        } else {
-            app_state.app_config_fields.table_gap
-        };
-        let start_position = get_start_position(
-            usize::from(
-                (draw_loc.height + (1 - table_gap)).saturating_sub(painter.table_height_offset),
-            ),
-            &cpu_widget_state.scroll_state.scroll_direction,
-            &mut cpu_widget_state.scroll_state.previous_scroll_position,
-            cpu_widget_state.scroll_state.current_scroll_position,
-            app_state.is_force_redraw,
-        );
-        cpu_table_state.select(Some(
-            cpu_widget_state
-                .scroll_state
-                .current_scroll_position
-                .saturating_sub(start_position),
-        ));
+    // let recalculate_column_widths = app_state.should_get_widget_bounds();
+    // if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1)) {
+    //     cpu_widget_state.is_legend_hidden = false;
+    //     let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
+    //     let cpu_table_state = &mut cpu_widget_state.scroll_state.table_state;
+    //     let is_on_widget = widget_id == app_state.current_widget.widget_id;
+    //     let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
+    //         0
+    //     } else {
+    //         app_state.app_config_fields.table_gap
+    //     };
+    //     let start_position = get_start_position(
+    //         usize::from(
+    //             (draw_loc.height + (1 - table_gap)).saturating_sub(painter.table_height_offset),
+    //         ),
+    //         &cpu_widget_state.scroll_state.scroll_direction,
+    //         &mut cpu_widget_state.scroll_state.previous_scroll_position,
+    //         cpu_widget_state.scroll_state.current_scroll_position,
+    //         app_state.is_force_redraw,
+    //     );
+    //     cpu_table_state.select(Some(
+    //         cpu_widget_state
+    //             .scroll_state
+    //             .current_scroll_position
+    //             .saturating_sub(start_position),
+    //     ));
 
-        let sliced_cpu_data = &cpu_data[start_position..];
+    //     let sliced_cpu_data = &cpu_data[start_position..];
 
-        let offset_scroll_index = cpu_widget_state
-            .scroll_state
-            .current_scroll_position
-            .saturating_sub(start_position);
-        let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
+    //     let offset_scroll_index = cpu_widget_state
+    //         .scroll_state
+    //         .current_scroll_position
+    //         .saturating_sub(start_position);
+    //     let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
-        // Calculate widths
-        if recalculate_column_widths {
-            cpu_widget_state.table_width_state.desired_column_widths = vec![6, 4];
-            cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
-                draw_loc.width,
-                &[None, None],
-                &(CPU_LEGEND_HEADER_LENS
-                    .iter()
-                    .map(|width| Some(*width))
-                    .collect::<Vec<_>>()),
-                &[Some(0.5), Some(0.5)],
-                &(cpu_widget_state
-                    .table_width_state
-                    .desired_column_widths
-                    .iter()
-                    .map(|width| Some(*width))
-                    .collect::<Vec<_>>()),
-                false,
-            );
-        }
+    //     // Calculate widths
+    //     if recalculate_column_widths {
+    //         cpu_widget_state.table_width_state.desired_column_widths = vec![6, 4];
+    //         cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
+    //             draw_loc.width,
+    //             &[None, None],
+    //             &(CPU_LEGEND_HEADER_LENS
+    //                 .iter()
+    //                 .map(|width| Some(*width))
+    //                 .collect::<Vec<_>>()),
+    //             &[Some(0.5), Some(0.5)],
+    //             &(cpu_widget_state
+    //                 .table_width_state
+    //                 .desired_column_widths
+    //                 .iter()
+    //                 .map(|width| Some(*width))
+    //                 .collect::<Vec<_>>()),
+    //             false,
+    //         );
+    //     }
 
-        let dcw = &cpu_widget_state.table_width_state.desired_column_widths;
-        let ccw = &cpu_widget_state.table_width_state.calculated_column_widths;
-        let cpu_rows = sliced_cpu_data.iter().enumerate().map(|(itx, cpu)| {
-            let mut truncated_name =
-                if let (Some(desired_column_width), Some(calculated_column_width)) =
-                    (dcw.get(0), ccw.get(0))
-                {
-                    if *desired_column_width > *calculated_column_width {
-                        Text::raw(&cpu.short_cpu_name)
-                    } else {
-                        Text::raw(&cpu.cpu_name)
-                    }
-                } else {
-                    Text::raw(&cpu.cpu_name)
-                };
+    //     let dcw = &cpu_widget_state.table_width_state.desired_column_widths;
+    //     let ccw = &cpu_widget_state.table_width_state.calculated_column_widths;
+    //     let cpu_rows = sliced_cpu_data.iter().enumerate().map(|(itx, cpu)| {
+    //         let mut truncated_name =
+    //             if let (Some(desired_column_width), Some(calculated_column_width)) =
+    //                 (dcw.get(0), ccw.get(0))
+    //             {
+    //                 if *desired_column_width > *calculated_column_width {
+    //                     Text::raw(&cpu.short_cpu_name)
+    //                 } else {
+    //                     Text::raw(&cpu.cpu_name)
+    //                 }
+    //             } else {
+    //                 Text::raw(&cpu.cpu_name)
+    //             };
 
-            let is_first_column_hidden = if let Some(calculated_column_width) = ccw.get(0) {
-                *calculated_column_width == 0
-            } else {
-                false
-            };
+    //         let is_first_column_hidden = if let Some(calculated_column_width) = ccw.get(0) {
+    //             *calculated_column_width == 0
+    //         } else {
+    //             false
+    //         };
 
-            let truncated_legend = if is_first_column_hidden && cpu.legend_value.is_empty() {
-                // For the case where we only have room for one column, display "All" in the normally blank area.
-                Text::raw("All")
-            } else {
-                Text::raw(&cpu.legend_value)
-            };
+    //         let truncated_legend = if is_first_column_hidden && cpu.legend_value.is_empty() {
+    //             // For the case where we only have room for one column, display "All" in the normally blank area.
+    //             Text::raw("All")
+    //         } else {
+    //             Text::raw(&cpu.legend_value)
+    //         };
 
-            if !is_first_column_hidden
-                && itx == offset_scroll_index
-                && itx + start_position == ALL_POSITION
-            {
-                truncated_name.patch_style(painter.colours.currently_selected_text_style);
-                Row::new(vec![truncated_name, truncated_legend])
-            } else {
-                let cpu_string_row = vec![truncated_name, truncated_legend];
+    //         if !is_first_column_hidden
+    //             && itx == offset_scroll_index
+    //             && itx + start_position == ALL_POSITION
+    //         {
+    //             truncated_name.patch_style(painter.colours.currently_selected_text_style);
+    //             Row::new(vec![truncated_name, truncated_legend])
+    //         } else {
+    //             let cpu_string_row = vec![truncated_name, truncated_legend];
 
-                Row::new(cpu_string_row).style(if itx == offset_scroll_index {
-                    painter.colours.currently_selected_text_style
-                } else if itx + start_position == ALL_POSITION {
-                    painter.colours.all_colour_style
-                } else if show_avg_cpu {
-                    if itx + start_position == AVG_POSITION {
-                        painter.colours.avg_colour_style
-                    } else {
-                        painter.colours.cpu_colour_styles[(itx + start_position - AVG_POSITION - 1)
-                            % painter.colours.cpu_colour_styles.len()]
-                    }
-                } else {
-                    painter.colours.cpu_colour_styles[(itx + start_position - ALL_POSITION - 1)
-                        % painter.colours.cpu_colour_styles.len()]
-                })
-            }
-        });
+    //             Row::new(cpu_string_row).style(if itx == offset_scroll_index {
+    //                 painter.colours.currently_selected_text_style
+    //             } else if itx + start_position == ALL_POSITION {
+    //                 painter.colours.all_colour_style
+    //             } else if show_avg_cpu {
+    //                 if itx + start_position == AVG_POSITION {
+    //                     painter.colours.avg_colour_style
+    //                 } else {
+    //                     painter.colours.cpu_colour_styles[(itx + start_position - AVG_POSITION - 1)
+    //                         % painter.colours.cpu_colour_styles.len()]
+    //                 }
+    //             } else {
+    //                 painter.colours.cpu_colour_styles[(itx + start_position - ALL_POSITION - 1)
+    //                     % painter.colours.cpu_colour_styles.len()]
+    //             })
+    //         }
+    //     });
 
-        // Note we don't set highlight_style, as it should always be shown for this widget.
-        let border_and_title_style = if is_on_widget {
-            painter.colours.highlighted_border_style
-        } else {
-            painter.colours.border_style
-        };
+    //     // Note we don't set highlight_style, as it should always be shown for this widget.
+    //     let border_and_title_style = if is_on_widget {
+    //         painter.colours.highlighted_border_style
+    //     } else {
+    //         painter.colours.border_style
+    //     };
 
-        // Draw
-        f.render_stateful_widget(
-            Table::new(cpu_rows)
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .border_style(border_and_title_style),
-                )
-                .header(
-                    Row::new(CPU_LEGEND_HEADER.to_vec())
-                        .style(painter.colours.table_header_style)
-                        .bottom_margin(table_gap),
-                )
-                .widths(
-                    &(cpu_widget_state
-                        .table_width_state
-                        .calculated_column_widths
-                        .iter()
-                        .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                        .collect::<Vec<_>>()),
-                ),
-            draw_loc,
-            cpu_table_state,
-        );
-    }
+    //     // Draw
+    //     f.render_stateful_widget(
+    //         Table::new(cpu_rows)
+    //             .block(
+    //                 Block::default()
+    //                     .borders(Borders::ALL)
+    //                     .border_style(border_and_title_style),
+    //             )
+    //             .header(
+    //                 Row::new(CPU_LEGEND_HEADER.to_vec())
+    //                     .style(painter.colours.table_header_style)
+    //                     .bottom_margin(table_gap),
+    //             )
+    //             .widths(
+    //                 &(cpu_widget_state
+    //                     .table_width_state
+    //                     .calculated_column_widths
+    //                     .iter()
+    //                     .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+    //                     .collect::<Vec<_>>()),
+    //             ),
+    //         draw_loc,
+    //         cpu_table_state,
+    //     );
+    // }
 }

@@ -11,15 +11,12 @@ use tui::{
 use crate::{
     app::{
         data_farmer::DataCollection, data_harvester::temperature::TemperatureType,
-        event::WidgetEventResult, sort_text_table::SimpleSortableColumn,
+        event::WidgetEventResult, sort_text_table::SimpleSortableColumn, text_table::TextTableData,
+        AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, Widget,
     },
     canvas::Painter,
     data_conversion::convert_temp_row,
-};
-
-use super::{
-    text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component, TextTable,
-    Widget,
+    options::layout_options::LayoutRule,
 };
 
 pub struct TempWidgetState {
@@ -61,6 +58,9 @@ pub struct TempTable {
     bounds: Rect,
     display_data: TextTableData,
     temp_type: TemperatureType,
+    width: LayoutRule,
+    height: LayoutRule,
+    block_border: Borders,
 }
 
 impl Default for TempTable {
@@ -76,6 +76,9 @@ impl Default for TempTable {
             bounds: Rect::default(),
             display_data: Default::default(),
             temp_type: TemperatureType::default(),
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
+            block_border: Borders::ALL,
         }
     }
 }
@@ -84,6 +87,27 @@ impl TempTable {
     /// Sets the [`TemperatureType`] for the [`TempTable`].
     pub fn set_temp_type(mut self, temp_type: TemperatureType) -> Self {
         self.temp_type = temp_type;
+        self
+    }
+
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
+        self
+    }
+
+    /// Sets the block border style.
+    pub fn basic_mode(mut self, basic_mode: bool) -> Self {
+        if basic_mode {
+            self.block_border = *crate::constants::SIDE_BORDERS;
+        }
+
         self
     }
 }
@@ -120,7 +144,7 @@ impl Widget for TempTable {
             } else {
                 painter.colours.border_style
             })
-            .borders(Borders::ALL); // TODO: Also do the scrolling indicator!
+            .borders(self.block_border.clone()); // TODO: Also do the scrolling indicator!
 
         self.table
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);
@@ -128,5 +152,13 @@ impl Widget for TempTable {
 
     fn update_data(&mut self, data_collection: &DataCollection) {
         self.display_data = convert_temp_row(data_collection, &self.temp_type);
+    }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
     }
 }

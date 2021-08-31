@@ -18,7 +18,7 @@ use dialogs::*;
 use crate::{
     app::{
         self,
-        layout_manager::LayoutNode,
+        layout_manager::{generate_layout, ColLayout, LayoutNode, RowLayout},
         text_table::TextTableData,
         widgets::{Component, Widget},
         TmpBottomWidget,
@@ -97,20 +97,13 @@ impl FromStr for ColourScheme {
 pub struct Painter {
     pub colours: CanvasColours,
     styled_help_text: Vec<Spans<'static>>,
-    is_mac_os: bool, // FIXME: This feels out of place...
-
-    table_height_offset: u16,
 }
 
 impl Painter {
-    pub fn init(
-        table_gap: u16, is_basic_mode: bool, config: &Config, colour_scheme: ColourScheme,
-    ) -> anyhow::Result<Self> {
+    pub fn init(config: &Config, colour_scheme: ColourScheme) -> anyhow::Result<Self> {
         let mut painter = Painter {
             colours: CanvasColours::default(),
             styled_help_text: Vec::default(),
-            is_mac_os: cfg!(target_os = "macos"),
-            table_height_offset: if is_basic_mode { 2 } else { 4 } + table_gap,
         };
 
         if let ColourScheme::Custom = colour_scheme {
@@ -350,148 +343,109 @@ impl Painter {
                     current_widget.draw(self, f, draw_area, true);
                 }
             } else {
-                /// A simple traversal through the `arena`.
+                /// A simple traversal through the `arena`, drawing all leaf elements.
                 fn traverse_and_draw_tree<B: Backend>(
-                    node: NodeId, arena: &Arena<LayoutNode>, area: Rect, f: &mut Frame<'_, B>,
+                    node: NodeId, arena: &Arena<LayoutNode>, f: &mut Frame<'_, B>,
                     lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, painter: &Painter,
-                    canvas_data: &DisplayableData, selected_id: NodeId,
+                    canvas_data: &DisplayableData, selected_id: NodeId, offset_x: u16,
+                    offset_y: u16,
                 ) {
                     if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
                         match layout_node {
-                            LayoutNode::Row(row) => {
-                                let split_area = {
-                                    let initial_split = Layout::default()
-                                        .margin(0)
-                                        .direction(Direction::Horizontal)
-                                        .constraints(row.constraints.clone())
-                                        .split(area);
-
-                                    if initial_split.is_empty() {
-                                        vec![]
-                                    } else {
-                                        let mut checked_split =
-                                            Vec::with_capacity(initial_split.len());
-                                        let mut right_value = initial_split[0].right();
-                                        checked_split.push(initial_split[0]);
-
-                                        for rect in initial_split[1..].iter() {
-                                            if right_value == rect.left() {
-                                                right_value = rect.right();
-                                                checked_split.push(*rect);
-                                            } else {
-                                                let diff = rect.x.saturating_sub(right_value);
-                                                let new_rect = Rect::new(
-                                                    right_value,
-                                                    rect.y,
-                                                    rect.width + diff,
-                                                    rect.height,
-                                                );
-                                                right_value = new_rect.right();
-                                                checked_split.push(new_rect);
-                                            }
-                                        }
-
-                                        checked_split
-                                    }
-                                };
-
-                                for (child, child_area) in node.children(arena).zip(split_area) {
+                            LayoutNode::Row(RowLayout { bound, .. })
+                            | LayoutNode::Col(ColLayout { bound, .. }) => {
+                                for child in node.children(arena) {
                                     traverse_and_draw_tree(
                                         child,
                                         arena,
-                                        child_area,
                                         f,
                                         lookup_map,
                                         painter,
                                         canvas_data,
                                         selected_id,
+                                        offset_x + bound.x,
+                                        offset_y + bound.y,
                                     );
                                 }
                             }
-                            LayoutNode::Col(col) => {
-                                let split_area = {
-                                    let initial_split = Layout::default()
-                                        .margin(0)
-                                        .direction(Direction::Vertical)
-                                        .constraints(col.constraints.clone())
-                                        .split(area);
+                            LayoutNode::Widget(widget_layout) => {
+                                let bound = widget_layout.bound;
+                                let area = Rect::new(
+                                    bound.x + offset_x,
+                                    bound.y + offset_y,
+                                    bound.width,
+                                    bound.height,
+                                );
 
-                                    if initial_split.is_empty() {
-                                        vec![]
-                                    } else {
-                                        let mut checked_split =
-                                            Vec::with_capacity(initial_split.len());
-                                        let mut bottom_value = initial_split[0].bottom();
-                                        checked_split.push(initial_split[0]);
-
-                                        for rect in initial_split[1..].iter() {
-                                            if bottom_value == rect.top() {
-                                                bottom_value = rect.bottom();
-                                                checked_split.push(*rect);
-                                            } else {
-                                                let diff = rect.y.saturating_sub(bottom_value);
-                                                let new_rect = Rect::new(
-                                                    rect.x,
-                                                    bottom_value,
-                                                    rect.width,
-                                                    rect.height + diff,
-                                                );
-                                                bottom_value = new_rect.bottom();
-                                                checked_split.push(new_rect);
-                                            }
-                                        }
-
-                                        checked_split
-                                    }
-                                };
-
-                                for (child, child_area) in node.children(arena).zip(split_area) {
-                                    traverse_and_draw_tree(
-                                        child,
-                                        arena,
-                                        child_area,
-                                        f,
-                                        lookup_map,
-                                        painter,
-                                        canvas_data,
-                                        selected_id,
-                                    );
-                                }
-                            }
-                            LayoutNode::Widget => {
                                 if let Some(widget) = lookup_map.get_mut(&node) {
-                                    widget.set_bounds(area);
-                                    widget.draw(painter, f, area, selected_id == node);
+                                    // debug!(
+                                    //     "Original bound: {:?}, offset_x: {}, offset_y: {}, area: {:?}, widget: {}",
+                                    //     bound,
+                                    //     offset_x,
+                                    //     offset_y,
+                                    //     area,
+                                    //     widget.get_pretty_name()
+                                    // );
+
+                                    if let TmpBottomWidget::Carousel(carousel) = widget {
+                                        let carousel: &mut crate::app::widgets::Carousel =
+                                            carousel.into();
+
+                                        let remaining_area =
+                                            carousel.draw_carousel(painter, f, area);
+                                        if let Some(to_draw_node) =
+                                            carousel.get_currently_selected()
+                                        {
+                                            if let Some(child_widget) =
+                                                lookup_map.get_mut(&to_draw_node)
+                                            {
+                                                debug!(
+                                                    "Selected ID: {:?}, to_draw_node: {:?}",
+                                                    selected_id, to_draw_node
+                                                );
+                                                child_widget.set_bounds(remaining_area);
+                                                child_widget.draw(
+                                                    painter,
+                                                    f,
+                                                    remaining_area,
+                                                    selected_id == to_draw_node,
+                                                );
+                                            }
+                                        }
+                                    } else {
+                                        widget.set_bounds(area);
+                                        widget.draw(painter, f, area, selected_id == node);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
                 if let Some(frozen_draw_loc) = frozen_draw_loc {
                     self.draw_frozen_indicator(&mut f, frozen_draw_loc);
                 }
 
                 let root = &app_state.layout_tree_root;
-                let arena = &app_state.layout_tree;
+                let arena = &mut app_state.layout_tree;
                 let canvas_data = &app_state.canvas_data;
                 let selected_id = app_state.selected_widget;
+
+                generate_layout(*root, arena, draw_area, &app_state.widget_lookup_map);
+
                 let lookup_map = &mut app_state.widget_lookup_map;
                 traverse_and_draw_tree(
                     *root,
-                    arena,
-                    draw_area,
+                    &arena,
                     f,
                     lookup_map,
                     self,
                     canvas_data,
                     selected_id,
+                    0,
+                    0,
                 );
             }
         })?;
-
-        app_state.is_force_redraw = false;
-        app_state.is_determining_widget_boundary = false;
 
         Ok(())
     }

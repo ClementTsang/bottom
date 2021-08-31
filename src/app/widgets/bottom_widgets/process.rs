@@ -17,17 +17,18 @@ use crate::{
         data_harvester::processes::ProcessHarvest,
         event::{MultiKey, MultiKeyResult, ReturnSignal, WidgetEventResult},
         query::*,
+        text_table::DesiredColumnWidth,
         DataCollection,
     },
     canvas::Painter,
     data_conversion::get_string_with_bytes,
     data_harvester::processes::{self, ProcessSorting},
-    options::ProcessDefaults,
+    options::{layout_options::LayoutRule, ProcessDefaults},
     utils::error::BottomError,
 };
 use ProcessSorting::*;
 
-use super::{
+use crate::app::{
     does_bound_intersect_coordinate,
     sort_text_table::{SimpleSortableColumn, SortStatus, SortableColumn},
     text_table::TextTableData,
@@ -800,11 +801,11 @@ impl SortableColumn for ProcessSortColumn {
         self.sortable_column.default_descending()
     }
 
-    fn sorting_status(&self) -> super::sort_text_table::SortStatus {
+    fn sorting_status(&self) -> SortStatus {
         self.sortable_column.sorting_status()
     }
 
-    fn set_sorting_status(&mut self, sorting_status: super::sort_text_table::SortStatus) {
+    fn set_sorting_status(&mut self, sorting_status: SortStatus) {
         self.sortable_column.set_sorting_status(sorting_status)
     }
 
@@ -812,7 +813,7 @@ impl SortableColumn for ProcessSortColumn {
         self.sortable_column.display_name()
     }
 
-    fn get_desired_width(&self) -> &super::text_table::DesiredColumnWidth {
+    fn get_desired_width(&self) -> &DesiredColumnWidth {
         self.sortable_column.get_desired_width()
     }
 
@@ -847,6 +848,11 @@ pub struct ProcessManager {
     display_data: TextTableData,
 
     process_filter: Option<Result<Query, BottomError>>,
+
+    block_border: Borders,
+
+    width: LayoutRule,
+    height: LayoutRule,
 }
 
 impl ProcessManager {
@@ -880,10 +886,34 @@ impl ProcessManager {
             search_modifiers: SearchModifiers::default(),
             display_data: Default::default(),
             process_filter: None,
+            block_border: Borders::ALL,
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
         };
 
         manager.set_tree_mode(process_defaults.is_tree);
         manager
+    }
+
+    /// Sets the block border style.
+    pub fn basic_mode(mut self, basic_mode: bool) -> Self {
+        if basic_mode {
+            self.block_border = *crate::constants::SIDE_BORDERS;
+        }
+
+        self
+    }
+
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
+        self
     }
 
     fn set_tree_mode(&mut self, in_tree_mode: bool) {
@@ -1277,7 +1307,7 @@ impl Widget for ProcessManager {
             } else {
                 painter.colours.border_style
             })
-            .borders(Borders::ALL);
+            .borders(self.block_border.clone());
 
         self.process_table.draw_tui_table(
             painter,
@@ -1487,5 +1517,13 @@ impl Widget for ProcessManager {
                 .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>();
+    }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
     }
 }

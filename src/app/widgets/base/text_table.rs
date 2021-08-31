@@ -384,6 +384,9 @@ where
         use tui::widgets::Row;
 
         let inner_area = block.inner(block_area);
+        if inner_area.height < 2 {
+            return;
+        }
         let table_gap = if !self.show_gap || inner_area.height < TABLE_GAP_HEIGHT_LIMIT {
             0
         } else {

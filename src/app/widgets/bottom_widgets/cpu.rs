@@ -5,18 +5,19 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, Borders},
+    Frame,
 };
 
 use crate::{
     app::{
         event::WidgetEventResult, sort_text_table::SimpleSortableColumn, time_graph::TimeGraphData,
-        AppConfigFields, DataCollection,
+        AppConfigFields, AppScrollWidgetState, CanvasTableWidthState, Component, DataCollection,
+        TextTable, TimeGraph, Widget,
     },
     canvas::Painter,
     data_conversion::{convert_cpu_data_points, ConvertedCpuData},
+    options::layout_options::LayoutRule,
 };
-
-use super::{AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, TimeGraph, Widget};
 
 pub struct CpuWidgetState {
     pub current_display_time: u64,
@@ -87,6 +88,9 @@ pub struct CpuGraph {
 
     display_data: Vec<ConvertedCpuData>,
     load_avg_data: [f32; 3],
+
+    width: LayoutRule,
+    height: LayoutRule,
 }
 
 impl CpuGraph {
@@ -113,7 +117,21 @@ impl CpuGraph {
             selected: CpuGraphSelection::None,
             display_data: Default::default(),
             load_avg_data: [0.0; 3],
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
         }
+    }
+
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
+        self
     }
 }
 
@@ -163,7 +181,7 @@ impl Widget for CpuGraph {
     }
 
     fn draw<B: Backend>(
-        &mut self, painter: &Painter, f: &mut tui::Frame<'_, B>, area: Rect, selected: bool,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
         let constraints = match self.legend_position {
             CpuGraphLegendPosition::Left => {
@@ -303,5 +321,13 @@ impl Widget for CpuGraph {
         // TODO: *Maybe* look into only taking in enough data for the current retention?  Though this isn't great, it means you have to be like process with the whole updating thing.
         convert_cpu_data_points(data_collection, &mut self.display_data, false); // TODO: Again, the "is_frozen" is probably useless
         self.load_avg_data = data_collection.load_avg_harvest;
+    }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
     }
 }

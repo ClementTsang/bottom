@@ -1,4 +1,3 @@
-use crate::app;
 use std::cmp::{max, min};
 
 /// Return a (hard)-width vector for column widths.
@@ -117,85 +116,79 @@ pub fn get_column_widths(
     filtered_column_widths
 }
 
-/// FIXME: [command move] This is a greedy method of determining column widths.  This is reserved for columns where we are okay with
-/// shoving information as far right as required.
-// pub fn greedy_get_column_widths() -> Vec<u16> {
-//     vec![]
+// pub fn get_search_start_position(
+//     num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
+//     current_cursor_position: usize, is_force_redraw: bool,
+// ) -> usize {
+//     if is_force_redraw {
+//         *cursor_bar = 0;
+//     }
+
+//     match cursor_direction {
+//         app::CursorDirection::Right => {
+//             if current_cursor_position < *cursor_bar + num_columns {
+//                 // If, using previous_scrolled_position, we can see the element
+//                 // (so within that and + num_rows) just reuse the current previously scrolled position
+//                 *cursor_bar
+//             } else if current_cursor_position >= num_columns {
+//                 // Else if the current position past the last element visible in the list, omit
+//                 // until we can see that element
+//                 *cursor_bar = current_cursor_position - num_columns;
+//                 *cursor_bar
+//             } else {
+//                 // Else, if it is not past the last element visible, do not omit anything
+//                 0
+//             }
+//         }
+//         app::CursorDirection::Left => {
+//             if current_cursor_position <= *cursor_bar {
+//                 // If it's past the first element, then show from that element downwards
+//                 *cursor_bar = current_cursor_position;
+//             } else if current_cursor_position >= *cursor_bar + num_columns {
+//                 *cursor_bar = current_cursor_position - num_columns;
+//             }
+//             // Else, don't change what our start position is from whatever it is set to!
+//             *cursor_bar
+//         }
+//     }
 // }
 
-pub fn get_search_start_position(
-    num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
-    current_cursor_position: usize, is_force_redraw: bool,
-) -> usize {
-    if is_force_redraw {
-        *cursor_bar = 0;
-    }
+// pub fn get_start_position(
+//     num_rows: usize, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut usize,
+//     currently_selected_position: usize, is_force_redraw: bool,
+// ) -> usize {
+//     if is_force_redraw {
+//         *scroll_position_bar = 0;
+//     }
 
-    match cursor_direction {
-        app::CursorDirection::Right => {
-            if current_cursor_position < *cursor_bar + num_columns {
-                // If, using previous_scrolled_position, we can see the element
-                // (so within that and + num_rows) just reuse the current previously scrolled position
-                *cursor_bar
-            } else if current_cursor_position >= num_columns {
-                // Else if the current position past the last element visible in the list, omit
-                // until we can see that element
-                *cursor_bar = current_cursor_position - num_columns;
-                *cursor_bar
-            } else {
-                // Else, if it is not past the last element visible, do not omit anything
-                0
-            }
-        }
-        app::CursorDirection::Left => {
-            if current_cursor_position <= *cursor_bar {
-                // If it's past the first element, then show from that element downwards
-                *cursor_bar = current_cursor_position;
-            } else if current_cursor_position >= *cursor_bar + num_columns {
-                *cursor_bar = current_cursor_position - num_columns;
-            }
-            // Else, don't change what our start position is from whatever it is set to!
-            *cursor_bar
-        }
-    }
-}
-
-pub fn get_start_position(
-    num_rows: usize, scroll_direction: &app::ScrollDirection, scroll_position_bar: &mut usize,
-    currently_selected_position: usize, is_force_redraw: bool,
-) -> usize {
-    if is_force_redraw {
-        *scroll_position_bar = 0;
-    }
-
-    match scroll_direction {
-        app::ScrollDirection::Down => {
-            if currently_selected_position < *scroll_position_bar + num_rows {
-                // If, using previous_scrolled_position, we can see the element
-                // (so within that and + num_rows) just reuse the current previously scrolled position
-                *scroll_position_bar
-            } else if currently_selected_position >= num_rows {
-                // Else if the current position past the last element visible in the list, omit
-                // until we can see that element
-                *scroll_position_bar = currently_selected_position - num_rows;
-                *scroll_position_bar
-            } else {
-                // Else, if it is not past the last element visible, do not omit anything
-                0
-            }
-        }
-        app::ScrollDirection::Up => {
-            if currently_selected_position <= *scroll_position_bar {
-                // If it's past the first element, then show from that element downwards
-                *scroll_position_bar = currently_selected_position;
-            } else if currently_selected_position >= *scroll_position_bar + num_rows {
-                *scroll_position_bar = currently_selected_position - num_rows;
-            }
-            // Else, don't change what our start position is from whatever it is set to!
-            *scroll_position_bar
-        }
-    }
-}
+//     match scroll_direction {
+//         app::ScrollDirection::Down => {
+//             if currently_selected_position < *scroll_position_bar + num_rows {
+//                 // If, using previous_scrolled_position, we can see the element
+//                 // (so within that and + num_rows) just reuse the current previously scrolled position
+//                 *scroll_position_bar
+//             } else if currently_selected_position >= num_rows {
+//                 // Else if the current position past the last element visible in the list, omit
+//                 // until we can see that element
+//                 *scroll_position_bar = currently_selected_position - num_rows;
+//                 *scroll_position_bar
+//             } else {
+//                 // Else, if it is not past the last element visible, do not omit anything
+//                 0
+//             }
+//         }
+//         app::ScrollDirection::Up => {
+//             if currently_selected_position <= *scroll_position_bar {
+//                 // If it's past the first element, then show from that element downwards
+//                 *scroll_position_bar = currently_selected_position;
+//             } else if currently_selected_position >= *scroll_position_bar + num_rows {
+//                 *scroll_position_bar = currently_selected_position - num_rows;
+//             }
+//             // Else, don't change what our start position is from whatever it is set to!
+//             *scroll_position_bar
+//         }
+//     }
+// }
 
 /// Calculate how many bars are to be
 /// drawn within basic mode's components.

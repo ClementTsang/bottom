@@ -9,10 +9,10 @@ use tui::{
 
 use crate::{
     app::{event::WidgetEventResult, time_graph::TimeGraphData, DataCollection},
+    app::{Component, TimeGraph, Widget},
     data_conversion::{convert_mem_data_points, convert_mem_labels, convert_swap_data_points},
+    options::layout_options::LayoutRule,
 };
-
-use super::{Component, TimeGraph, Widget};
 
 pub struct MemWidgetState {
     pub current_display_time: u64,
@@ -60,6 +60,8 @@ pub struct MemGraph {
     mem_data: Vec<(f64, f64)>,
     swap_data: Vec<(f64, f64)>,
     bounds: Rect,
+    width: LayoutRule,
+    height: LayoutRule,
 }
 
 impl MemGraph {
@@ -72,7 +74,21 @@ impl MemGraph {
             mem_data: Default::default(),
             swap_data: Default::default(),
             bounds: Rect::default(),
+            width: LayoutRule::default(),
+            height: LayoutRule::default(),
         }
+    }
+
+    /// Sets the width.
+    pub fn width(mut self, width: LayoutRule) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the height.
+    pub fn height(mut self, height: LayoutRule) -> Self {
+        self.height = height;
+        self
     }
 }
 
@@ -151,5 +167,13 @@ impl Widget for MemGraph {
 
         self.mem_labels = memory_labels;
         self.swap_labels = swap_labels;
+    }
+
+    fn width(&self) -> LayoutRule {
+        self.width
+    }
+
+    fn height(&self) -> LayoutRule {
+        self.height
     }
 }
