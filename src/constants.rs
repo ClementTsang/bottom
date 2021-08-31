@@ -435,6 +435,10 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
     default=true
 "##;
 
+pub const DEFAULT_BASIC_LAYOUT: &str = r##"
+[[row]]
+"##;
+
 // Config and flags
 pub const DEFAULT_CONFIG_FILE_PATH: &str = "bottom/bottom.toml";
 

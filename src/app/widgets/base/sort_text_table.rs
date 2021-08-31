@@ -301,8 +301,28 @@ where
         &self.table.columns
     }
 
-    pub fn set_column(&mut self, column: S, index: usize) {
-        self.table.set_column(index, column)
+    pub fn set_column(&mut self, mut column: S, index: usize) {
+        if let Some(old_column) = self.table.columns().get(index) {
+            column.set_sorting_status(old_column.sorting_status());
+        }
+        self.table.set_column(index, column);
+    }
+
+    pub fn add_column(&mut self, column: S, index: usize) {
+        self.table.add_column(index, column);
+    }
+
+    pub fn remove_column(&mut self, index: usize, new_sort_index: Option<usize>) {
+        self.table.remove_column(index);
+
+        // Reset the sort index either a supplied one or a new one if needed.
+        if index == self.sort_index {
+            if let Some(new_sort_index) = new_sort_index {
+                self.set_sort_index(new_sort_index);
+            } else {
+                self.set_sort_index(0);
+            }
+        }
     }
 
     pub fn set_sort_index(&mut self, new_index: usize) {
@@ -339,6 +359,10 @@ where
 
             self.sort_index = new_index;
         }
+    }
+
+    pub fn invalidate_cached_columns(&mut self) {
+        self.table.invalidate_cached_columns();
     }
 
     /// Draws a [`tui::widgets::Table`] on screen.

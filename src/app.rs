@@ -1374,7 +1374,7 @@ impl AppState {
     }
 
     pub fn start_killing_process(&mut self) {
-        self.reset_multi_tap_keys();
+        todo!()
 
         // if let Some(proc_widget_state) = self
         //     .proc_state

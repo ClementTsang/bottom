@@ -44,7 +44,7 @@ pub struct TextInput {
 }
 
 impl Default for TextInput {
-     fn default() -> Self {
+    fn default() -> Self {
         Self {
             text: Default::default(),
             bounds: Default::default(),
@@ -100,15 +100,17 @@ impl TextInput {
     fn move_word_forward(&mut self) -> WidgetEventResult {
         let current_index = self.cursor.cur_cursor();
 
-        for (index, _word) in self.text[current_index..].unicode_word_indices() {
-            if index > current_index {
-                self.cursor.set_cursor(index);
-                self.cursor_direction = CursorDirection::Right;
-                return WidgetEventResult::Redraw;
+        if current_index < self.text.len() {
+            for (index, _word) in self.text[current_index..].unicode_word_indices() {
+                if index > 0 {
+                    self.cursor.set_cursor(index + current_index);
+                    self.cursor_direction = CursorDirection::Right;
+                    return WidgetEventResult::Redraw;
+                }
             }
+            self.cursor.set_cursor(self.text.len());
         }
 
-        self.cursor.set_cursor(self.text.len());
         WidgetEventResult::Redraw
     }
 

@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashMap};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use float_ord::FloatOrd;
-use itertools::Itertools;
+use itertools::{Either, Itertools};
 use unicode_segmentation::GraphemeCursor;
 
 use tui::{
@@ -928,6 +928,64 @@ impl ProcessManager {
     pub fn is_case_sensitive(&self) -> bool {
         self.search_modifiers.enable_case_sensitive
     }
+
+    fn is_using_command(&self) -> bool {
+        matches!(
+            self.process_table.columns()[1].sort_type,
+            ProcessSortType::Command
+        )
+    }
+
+    fn toggle_command(&mut self) -> WidgetEventResult {
+        if self.is_using_command() {
+            self.process_table
+                .set_column(ProcessSortColumn::new(ProcessSortType::Name), 1);
+        } else {
+            self.process_table
+                .set_column(ProcessSortColumn::new(ProcessSortType::Command), 1);
+        }
+
+        // Invalidate row cache.
+        self.process_table.invalidate_cached_columns();
+
+        WidgetEventResult::Signal(ReturnSignal::Update)
+    }
+
+    fn is_grouped(&self) -> bool {
+        matches!(
+            self.process_table.columns()[0].sort_type,
+            ProcessSortType::Count
+        )
+    }
+
+    fn toggle_grouped(&mut self) -> WidgetEventResult {
+        if self.is_grouped() {
+            self.process_table
+                .set_column(ProcessSortColumn::new(ProcessSortType::Pid), 0);
+
+            self.process_table
+                .add_column(ProcessSortColumn::new(ProcessSortType::State), 8);
+            #[cfg(target_family = "unix")]
+            {
+                self.process_table
+                    .add_column(ProcessSortColumn::new(ProcessSortType::User), 8);
+            }
+        } else {
+            self.process_table
+                .set_column(ProcessSortColumn::new(ProcessSortType::Count), 0);
+
+            #[cfg(target_family = "unix")]
+            {
+                self.process_table.remove_column(9, Some(2));
+            }
+            self.process_table.remove_column(8, Some(2));
+        }
+
+        // Invalidate row cache.
+        self.process_table.invalidate_cached_columns();
+
+        WidgetEventResult::Signal(ReturnSignal::Update)
+    }
 }
 
 impl Component for ProcessManager {
@@ -964,9 +1022,11 @@ impl Component for ProcessManager {
                     match event.code {
                         KeyCode::Tab => {
                             // Handle grouping/ungrouping
+                            return self.toggle_grouped();
                         }
                         KeyCode::Char('P') => {
                             // Show full command/process name
+                            return self.toggle_command();
                         }
                         KeyCode::Char('d') => {
                             match self.dd_multi.input('d') {
@@ -1009,6 +1069,7 @@ impl Component for ProcessManager {
                 } else if let KeyModifiers::SHIFT = event.modifiers {
                     if let KeyCode::Char('P') = event.code {
                         // Show full command/process name
+                        return self.toggle_command();
                     }
                 }
 
@@ -1229,29 +1290,74 @@ impl Widget for ProcessManager {
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {
-        let filtered_sorted_iterator = data_collection
-            .process_harvest
-            .iter()
-            .filter(|process| {
-                if let Some(Ok(query)) = &self.process_filter {
-                    query.check(
-                        process,
-                        matches!(
-                            self.process_table.columns()[1].sort_type,
-                            ProcessSortType::Command
-                        ),
-                    )
+        let mut id_pid_map: HashMap<String, ProcessHarvest>;
+
+        let filtered_iter = data_collection.process_harvest.iter().filter(|process| {
+            if let Some(Ok(query)) = &self.process_filter {
+                query.check(process, self.is_using_command())
+            } else {
+                true
+            }
+        });
+
+        let filtered_grouped_iter = if self.is_grouped() {
+            id_pid_map = HashMap::new();
+            filtered_iter.for_each(|process_harvest| {
+                let id = if self.is_using_command() {
+                    &process_harvest.command
                 } else {
-                    true
+                    &process_harvest.name
+                };
+
+                if let Some(grouped_process_harvest) = id_pid_map.get_mut(id) {
+                    grouped_process_harvest.cpu_usage_percent += process_harvest.cpu_usage_percent;
+                    grouped_process_harvest.mem_usage_bytes += process_harvest.mem_usage_bytes;
+                    grouped_process_harvest.mem_usage_percent += process_harvest.mem_usage_percent;
+                    grouped_process_harvest.read_bytes_per_sec +=
+                        process_harvest.read_bytes_per_sec;
+                    grouped_process_harvest.write_bytes_per_sec +=
+                        process_harvest.write_bytes_per_sec;
+                    grouped_process_harvest.total_read_bytes += process_harvest.total_read_bytes;
+                    grouped_process_harvest.total_write_bytes += process_harvest.total_write_bytes;
+                } else {
+                    id_pid_map.insert(id.clone(), process_harvest.clone());
                 }
-            })
-            .sorted_by(
+            });
+
+            Either::Left(id_pid_map.values())
+        } else {
+            Either::Right(filtered_iter)
+        };
+
+        let filtered_sorted_iter = if let ProcessSortType::Count =
+            self.process_table.current_sorting_column().sort_type
+        {
+            let mut v = filtered_grouped_iter.collect::<Vec<_>>();
+            v.sort_by_cached_key(|k| {
+                if self.is_using_command() {
+                    data_collection
+                        .process_cmd_pid_map
+                        .get(&k.command)
+                        .map(|v| v.len())
+                        .unwrap_or(0)
+                } else {
+                    data_collection
+                        .process_name_pid_map
+                        .get(&k.name)
+                        .map(|v| v.len())
+                        .unwrap_or(0)
+                }
+            });
+            Either::Left(v.into_iter())
+        } else {
+            Either::Right(filtered_grouped_iter.sorted_by(
                 match self.process_table.current_sorting_column().sort_type {
                     ProcessSortType::Pid => {
                         |a: &&ProcessHarvest, b: &&ProcessHarvest| a.pid.cmp(&b.pid)
                     }
                     ProcessSortType::Count => {
-                        todo!()
+                        // This case should be impossible by the above check.
+                        unreachable!()
                     }
                     ProcessSortType::Name => {
                         |a: &&ProcessHarvest, b: &&ProcessHarvest| a.name.cmp(&b.name)
@@ -1287,14 +1393,15 @@ impl Widget for ProcessManager {
                         }
                         #[cfg(not(target_family = "unix"))]
                         {
-                            |_a: &&ProcessHarvest, _b: &&ProcessHarvest| Ord::Eq
+                            |_a: &&ProcessHarvest, _b: &&ProcessHarvest| std::cmp::Ordering::Equal
                         }
                     }
                     ProcessSortType::State => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
                         a.process_state.cmp(&b.process_state)
                     },
                 },
-            );
+            ))
+        };
 
         self.display_data = if let SortStatus::SortDescending = self
             .process_table
@@ -1302,9 +1409,9 @@ impl Widget for ProcessManager {
             .sortable_column
             .sorting_status()
         {
-            itertools::Either::Left(filtered_sorted_iterator.rev())
+            Either::Left(filtered_sorted_iter.rev())
         } else {
-            itertools::Either::Right(filtered_sorted_iterator)
+            Either::Right(filtered_sorted_iter)
         }
         .map(|process| {
             self.process_table
@@ -1312,7 +1419,27 @@ impl Widget for ProcessManager {
                 .iter()
                 .map(|column| match &column.sort_type {
                     ProcessSortType::Pid => (process.pid.to_string().into(), None, None),
-                    ProcessSortType::Count => ("".into(), None, None),
+                    ProcessSortType::Count => (
+                        if self.is_using_command() {
+                            data_collection
+                                .process_cmd_pid_map
+                                .get(&process.command)
+                                .map(|v| v.len())
+                                .unwrap_or(0)
+                                .to_string()
+                                .into()
+                        } else {
+                            data_collection
+                                .process_name_pid_map
+                                .get(&process.name)
+                                .map(|v| v.len())
+                                .unwrap_or(0)
+                                .to_string()
+                                .into()
+                        },
+                        None,
+                        None,
+                    ),
                     ProcessSortType::Name => (process.name.clone().into(), None, None),
                     ProcessSortType::Command => (process.command.clone().into(), None, None),
                     ProcessSortType::Cpu => (

@@ -56,7 +56,8 @@ pub struct DataCollection {
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
     pub process_harvest: Vec<processes::ProcessHarvest>,
-    pub process_count_mapping: HashMap<String, Pid>,
+    pub process_name_pid_map: HashMap<String, Vec<Pid>>,
+    pub process_cmd_pid_map: HashMap<String, Vec<Pid>>,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IoHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
@@ -77,7 +78,8 @@ impl Default for DataCollection {
             cpu_harvest: cpu::CpuHarvest::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
             process_harvest: Vec::default(),
-            process_count_mapping: HashMap::default(),
+            process_name_pid_map: HashMap::default(),
+            process_cmd_pid_map: HashMap::default(),
             disk_harvest: Vec::default(),
             io_harvest: disks::IoHarvest::default(),
             io_labels_and_prev: Vec::default(),
@@ -312,6 +314,27 @@ impl DataCollection {
     }
 
     fn eat_proc(&mut self, list_of_processes: Vec<processes::ProcessHarvest>) {
+        // TODO: Probably more efficient to do this in the data collection step, but it's fine for now.
+        self.process_name_pid_map.clear();
+        self.process_cmd_pid_map.clear();
+        list_of_processes.iter().for_each(|process_harvest| {
+            if let Some(entry) = self.process_name_pid_map.get_mut(&process_harvest.name) {
+                entry.push(process_harvest.pid);
+            } else {
+                self.process_name_pid_map
+                    .insert(process_harvest.name.to_string(), vec![process_harvest.pid]);
+            }
+
+            if let Some(entry) = self.process_cmd_pid_map.get_mut(&process_harvest.command) {
+                entry.push(process_harvest.pid);
+            } else {
+                self.process_cmd_pid_map.insert(
+                    process_harvest.command.to_string(),
+                    vec![process_harvest.pid],
+                );
+            }
+        });
+
         self.process_harvest = list_of_processes;
     }
 

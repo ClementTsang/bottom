@@ -195,6 +195,18 @@ where
         }
     }
 
+    pub fn add_column(&mut self, index: usize, column: C) {
+        if self.columns.len() >= index {
+            self.columns.insert(index, column);
+        }
+    }
+
+    pub fn remove_column(&mut self, index: usize) {
+        if self.columns.len() > index {
+            self.columns.remove(index);
+        }
+    }
+
     pub fn current_scroll_index(&self) -> usize {
         self.scrollable.current_index()
     }
@@ -358,6 +370,10 @@ where
 
             column_widths
         }
+    }
+
+    pub fn invalidate_cached_columns(&mut self) {
+        self.cached_column_widths = CachedColumnWidths::Uncached;
     }
 
     /// Draws a [`Table`] on screen corresponding to the [`TextTable`].
