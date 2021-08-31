@@ -603,6 +603,7 @@ pub fn create_input_thread(
     sender: std::sync::mpsc::Sender<BottomEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> std::thread::JoinHandle<()> {
     thread::spawn(move || {
+        // TODO: Maybe experiment with removing these timers. Look into using buffers instead?
         let mut mouse_timer = Instant::now();
         let mut keyboard_timer = Instant::now();
 

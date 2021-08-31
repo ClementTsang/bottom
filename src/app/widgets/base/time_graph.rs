@@ -257,7 +257,7 @@ impl TimeGraph {
             .style(painter.colours.graph_style)
             .labels(
                 y_bound_labels
-                    .into_iter()
+                    .iter()
                     .map(|label| Span::styled(label.clone(), painter.colours.graph_style))
                     .collect(),
             );

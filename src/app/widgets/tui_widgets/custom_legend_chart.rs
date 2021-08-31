@@ -481,11 +481,7 @@ impl<'a> Widget for TimeChart<'a> {
                         ) {
                             let interpolated_point = (
                                 self.x_axis.bounds[0],
-                                interpolate_point(
-                                    &older_point,
-                                    &newer_point,
-                                    self.x_axis.bounds[0],
-                                ),
+                                interpolate_point(older_point, newer_point, self.x_axis.bounds[0]),
                             );
 
                             ctx.draw(&Points {
@@ -522,11 +518,7 @@ impl<'a> Widget for TimeChart<'a> {
                         ) {
                             let interpolated_point = (
                                 self.x_axis.bounds[1],
-                                interpolate_point(
-                                    &older_point,
-                                    &newer_point,
-                                    self.x_axis.bounds[1],
-                                ),
+                                interpolate_point(older_point, newer_point, self.x_axis.bounds[1]),
                             );
 
                             ctx.draw(&Points {

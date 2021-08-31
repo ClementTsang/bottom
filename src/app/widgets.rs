@@ -83,7 +83,7 @@ pub trait Component {
         let y = event.row;
         let bounds = self.bounds();
 
-        x >= bounds.left() && x < bounds.right() && y >= bounds.top() && y < bounds.bottom()
+        does_bound_intersect_coordinate(x, y, bounds)
     }
 
     /// Returns whether a [`MouseEvent`] intersects a [`Component`]'s bounds, including any borders, if there are.
@@ -92,8 +92,12 @@ pub trait Component {
         let y = event.row;
         let bounds = self.border_bounds();
 
-        x >= bounds.left() && x < bounds.right() && y >= bounds.top() && y < bounds.bottom()
+        does_bound_intersect_coordinate(x, y, bounds)
     }
+}
+
+pub fn does_bound_intersect_coordinate(x: u16, y: u16, bounds: Rect) -> bool {
+    x >= bounds.left() && x < bounds.right() && y >= bounds.top() && y < bounds.bottom()
 }
 
 /// A trait for actual fully-fledged widgets to be displayed in bottom.

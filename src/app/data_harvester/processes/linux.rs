@@ -218,7 +218,7 @@ fn read_proc(
             user: user_table
                 .get_uid_to_username_mapping(uid)
                 .map(Into::into)
-                .unwrap_or("N/A".into()),
+                .unwrap_or_else(|_| "N/A".into()),
         },
         new_process_times,
     ))

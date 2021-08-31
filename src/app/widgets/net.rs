@@ -495,7 +495,7 @@ impl NetGraph {
                 });
             }
             NetGraphCacheState::Cached(cache) => {
-                if current_max_value != cache.max_value {
+                if (current_max_value - cache.max_value).abs() > f64::EPSILON {
                     // Invalidated.
                     let (upper_bound, labels) = adjust_network_data_point(
                         current_max_value,
@@ -692,7 +692,7 @@ impl Widget for OldNetGraph {
         self.table.draw_tui_table(
             painter,
             f,
-            &vec![vec![
+            &[vec![
                 (
                     self.net_graph.rx_display.clone().into(),
                     None,

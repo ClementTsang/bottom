@@ -49,7 +49,7 @@ impl SortMenu {
 
         let data = columns
             .iter()
-            .map(|c| vec![(c.original_name().clone().into(), None, None)])
+            .map(|c| vec![(c.original_name().clone(), None, None)])
             .collect::<Vec<_>>();
 
         self.table

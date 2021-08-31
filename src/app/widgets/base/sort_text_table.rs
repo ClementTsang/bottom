@@ -11,7 +11,7 @@ use crate::{
     canvas::Painter,
 };
 
-use super::text_table::{DesiredColumnWidth, SimpleColumn, TableColumn, TextTableData};
+use super::text_table::{DesiredColumnWidth, SimpleColumn, TableColumn, TextTableDataRef};
 
 fn get_shortcut_name(e: &KeyEvent) -> String {
     let modifier = if e.modifiers.is_empty() {
@@ -48,7 +48,7 @@ fn get_shortcut_name(e: &KeyEvent) -> String {
         KeyCode::Esc => "Esc".into(),
     };
 
-    format!("({}{})", modifier, key).into()
+    format!("({}{})", modifier, key)
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -346,8 +346,8 @@ where
     /// Note if the number of columns don't match in the [`SortableTextTable`] and data,
     /// it will only create as many columns as it can grab data from both sources from.
     pub fn draw_tui_table<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableData, block: Block<'_>,
-        block_area: Rect, show_selected_entry: bool,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableDataRef,
+        block: Block<'_>, block_area: Rect, show_selected_entry: bool,
     ) {
         self.table
             .draw_tui_table(painter, f, data, block, block_area, show_selected_entry);
@@ -360,7 +360,7 @@ where
 {
     fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         for (index, column) in self.table.columns.iter().enumerate() {
-            if let &Some((shortcut, _)) = column.shortcut() {
+            if let Some((shortcut, _)) = *column.shortcut() {
                 if shortcut == event {
                     self.set_sort_index(index);
                     return WidgetEventResult::Signal(ReturnSignal::Update);

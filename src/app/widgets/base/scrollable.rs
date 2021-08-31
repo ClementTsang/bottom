@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crossterm::event::{KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use tui::{layout::Rect, widgets::TableState};
 
@@ -83,7 +85,6 @@ impl Scrollable {
                 } else if self.current_index >= num_visible_rows {
                     // Else if the current position past the last element visible in the list, omit
                     // until we can see that element.  The +1 is of how indexes start at 0.
-
                     self.window_index.index = self.current_index - num_visible_rows + 1;
                     self.window_index.index
                 } else {
@@ -96,6 +97,8 @@ impl Scrollable {
                     // If it's past the first element, then show from that element downwards
                     self.window_index.index = self.current_index;
                 } else if self.current_index >= self.window_index.index + num_visible_rows {
+                    // Else, if the current index is off screen (sometimes caused by a sudden size change),
+                    // just put it so that the selected index is the last entry,
                     self.window_index.index = self.current_index - num_visible_rows + 1;
                 }
                 // Else, don't change what our start position is from whatever it is set to!
@@ -111,8 +114,6 @@ impl Scrollable {
 
     /// Update the index with this!  This will automatically update the scroll direction as well!
     pub fn set_index(&mut self, new_index: usize) {
-        use std::cmp::Ordering;
-
         match new_index.cmp(&self.current_index) {
             Ordering::Greater => {
                 self.current_index = new_index;
@@ -156,9 +157,7 @@ impl Scrollable {
         }
 
         let new_index = self.current_index + change_by;
-        if new_index >= self.num_items {
-            WidgetEventResult::NoRedraw
-        } else if self.current_index == new_index {
+        if new_index >= self.num_items || self.current_index == new_index {
             WidgetEventResult::NoRedraw
         } else {
             self.set_index(new_index);
@@ -234,12 +233,16 @@ impl Component for Scrollable {
                     let y = usize::from(event.row - self.bounds.top());
 
                     if let Some(selected) = self.tui_state.selected() {
-                        if y > selected {
-                            let offset = y - selected;
-                            return self.move_down(offset);
-                        } else if y < selected {
-                            let offset = selected - y;
-                            return self.move_up(offset);
+                        match y.cmp(&selected) {
+                            Ordering::Less => {
+                                let offset = selected - y;
+                                return self.move_up(offset);
+                            }
+                            Ordering::Equal => {}
+                            Ordering::Greater => {
+                                let offset = y - selected;
+                                return self.move_down(offset);
+                            }
                         }
                     }
                 }

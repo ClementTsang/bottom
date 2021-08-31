@@ -40,6 +40,7 @@ pub trait TableColumn {
 }
 
 pub type TextTableData = Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>, Option<Style>)>>;
+pub type TextTableDataRef = [Vec<(Cow<'static, str>, Option<Cow<'static, str>>, Option<Style>)>];
 
 /// A [`SimpleColumn`] represents some column in a [`TextTable`].
 #[derive(Debug)]
@@ -199,7 +200,7 @@ where
     }
 
     pub fn get_desired_column_widths(
-        columns: &[C], data: &TextTableData,
+        columns: &[C], data: &TextTableDataRef,
     ) -> Vec<DesiredColumnWidth> {
         columns
             .iter()
@@ -237,7 +238,7 @@ where
             .collect::<Vec<_>>()
     }
 
-    fn get_cache(&mut self, area: Rect, data: &TextTableData) -> Vec<u16> {
+    fn get_cache(&mut self, area: Rect, data: &TextTableDataRef) -> Vec<u16> {
         fn calculate_column_widths(
             left_to_right: bool, mut desired_widths: Vec<DesiredColumnWidth>, total_width: u16,
         ) -> Vec<u16> {
@@ -296,9 +297,18 @@ where
             column_widths
         }
 
-        // If empty, do NOT save the cache!  We have to get it again when it updates.
+        // If empty, get the cached values if they exist; if they don't, do not cache!
         if data.is_empty() {
-            vec![0; self.columns.len()]
+            match &self.cached_column_widths {
+                CachedColumnWidths::Uncached => {
+                    let desired_widths = TextTable::get_desired_column_widths(&self.columns, data);
+                    calculate_column_widths(self.left_to_right, desired_widths, area.width)
+                }
+                CachedColumnWidths::Cached {
+                    cached_area: _,
+                    cached_data,
+                } => cached_data.clone(),
+            }
         } else {
             let was_cached: bool;
             let column_widths = match &mut self.cached_column_widths {
@@ -351,12 +361,9 @@ where
     }
 
     /// Draws a [`Table`] on screen corresponding to the [`TextTable`].
-    ///
-    /// Note if the number of columns don't match in the [`TextTable`] and data,
-    /// it will only create as many columns as it can grab data from both sources from.
     pub fn draw_tui_table<B: Backend>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableData, block: Block<'_>,
-        block_area: Rect, show_selected_entry: bool,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableDataRef,
+        block: Block<'_>, block_area: Rect, show_selected_entry: bool,
     ) {
         use tui::widgets::Row;
 

@@ -259,9 +259,8 @@ impl AppState {
         self.dd_err = None;
     }
 
-    /// Handles a global [`KeyEvent`], and returns [`Some(EventResult)`] if the global shortcut is consumed by some global
-    /// shortcut. If not, it returns [`None`].
-    fn handle_global_shortcut(&mut self, event: KeyEvent) -> Option<EventResult> {
+    /// Handles a global [`KeyEvent`], and returns an [`EventResult`].
+    fn handle_global_shortcut(&mut self, event: KeyEvent) -> EventResult {
         // TODO: Write this.
 
         if event.modifiers.is_empty() {
@@ -269,36 +268,36 @@ impl AppState {
                 KeyCode::Esc => {
                     if self.is_expanded {
                         self.is_expanded = false;
-                        Some(EventResult::Redraw)
+                        EventResult::Redraw
                     } else if self.help_dialog_state.is_showing_help {
                         self.help_dialog_state.is_showing_help = false;
                         self.help_dialog_state.scroll_state.current_scroll_index = 0;
-                        Some(EventResult::Redraw)
+                        EventResult::Redraw
                     } else if self.delete_dialog_state.is_showing_dd {
                         self.close_dd();
-                        Some(EventResult::Redraw)
+                        EventResult::Redraw
                     } else {
-                        None
+                        EventResult::NoRedraw
                     }
                 }
-                KeyCode::Char('q') => Some(EventResult::Quit),
+                KeyCode::Char('q') => EventResult::Quit,
                 KeyCode::Char('e') => {
                     self.is_expanded = !self.is_expanded;
-                    Some(EventResult::Redraw)
+                    EventResult::Redraw
                 }
                 KeyCode::Char('?') => {
                     self.help_dialog_state.is_showing_help = true;
-                    Some(EventResult::Redraw)
+                    EventResult::Redraw
                 }
-                _ => None,
+                _ => EventResult::NoRedraw,
             }
         } else if let KeyModifiers::CONTROL = event.modifiers {
             match event.code {
-                KeyCode::Char('c') => Some(EventResult::Quit),
-                _ => None,
+                KeyCode::Char('c') => EventResult::Quit,
+                _ => EventResult::NoRedraw,
             }
         } else {
-            None
+            EventResult::NoRedraw
         }
     }
 
@@ -327,15 +326,15 @@ impl AppState {
     pub fn handle_event(&mut self, event: BottomEvent) -> EventResult {
         match event {
             BottomEvent::KeyInput(event) => {
-                if let Some(event_result) = self.handle_global_shortcut(event) {
-                    // See if it's caught by a global shortcut first...
-                    event_result
-                } else if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-                    // If it isn't, send it to the current widget!
+                if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
                     let result = widget.handle_key_event(event);
-                    self.convert_widget_event_result(result)
+                    match self.convert_widget_event_result(result) {
+                        EventResult::Quit => EventResult::Quit,
+                        EventResult::Redraw => EventResult::Redraw,
+                        EventResult::NoRedraw => self.handle_global_shortcut(event),
+                    }
                 } else {
-                    EventResult::NoRedraw
+                    self.handle_global_shortcut(event)
                 }
             }
             BottomEvent::MouseInput(event) => {
@@ -357,12 +356,11 @@ impl AppState {
                                     let was_id_already_selected = self.selected_widget == *id;
                                     self.selected_widget = *id;
 
+                                    let result = widget.handle_mouse_event(event);
                                     if was_id_already_selected {
-                                        let result = widget.handle_mouse_event(event);
                                         return self.convert_widget_event_result(result);
                                     } else {
                                         // If the aren't equal, *force* a redraw.
-                                        let result = widget.handle_mouse_event(event);
                                         let _ = self.convert_widget_event_result(result);
                                         return EventResult::Redraw;
                                     }
