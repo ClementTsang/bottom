@@ -26,11 +26,11 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: pip install mkdocs-material
+      - run: pip install mkdocs-material==7.2.6
 
-      - run: pip install mdx_truly_sane_lists
+      - run: pip install mdx_truly_sane_lists==1.2
 
-      - run: pip install mike
+      - run: pip install mike==1.1.0
 
       - name: Configure git user and email
         run: |
