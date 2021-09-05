@@ -10,8 +10,6 @@ use tui::{
     Frame, Terminal,
 };
 
-// use ordered_float::OrderedFloat;
-
 use canvas_colours::*;
 use dialogs::*;
 
@@ -33,8 +31,6 @@ use crate::{
 
 mod canvas_colours;
 mod dialogs;
-pub mod drawing; // TODO: Remove pub access at some point!
-mod drawing_utils;
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -191,7 +187,7 @@ impl Painter {
         self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
     }
 
-    // FIXME: [CONFIG] write this, should call painter init and any changed colour functions...
+    // TODO: [CONFIG] write this, should call painter init and any changed colour functions...
     pub fn update_painter_colours(&mut self) {}
 
     fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {

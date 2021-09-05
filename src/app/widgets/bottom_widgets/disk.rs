@@ -24,15 +24,6 @@ pub struct DiskWidgetState {
     pub table_width_state: CanvasTableWidthState,
 }
 
-impl DiskWidgetState {
-    pub fn init() -> Self {
-        DiskWidgetState {
-            scroll_state: AppScrollWidgetState::default(),
-            table_width_state: CanvasTableWidthState::default(),
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct DiskState {
     pub widget_states: HashMap<u64, DiskWidgetState>,

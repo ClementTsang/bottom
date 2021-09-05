@@ -1,6 +1,6 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use crate::{
     app::{layout_manager::*, *},
@@ -103,18 +103,6 @@ pub struct ConfigFlags {
 pub struct WidgetIdEnabled {
     id: u64,
     enabled: bool,
-}
-
-impl WidgetIdEnabled {
-    pub fn create_from_hashmap(hashmap: &HashMap<u64, bool>) -> Vec<WidgetIdEnabled> {
-        hashmap
-            .iter()
-            .map(|(id, enabled)| WidgetIdEnabled {
-                id: *id,
-                enabled: *enabled,
-            })
-            .collect()
-    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -275,98 +263,12 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
         net_filter,
     };
 
-    // Ok(AppState::builder()
-    //     .app_config_fields(app_config_fields)
-    //     .cpu_state(CpuState::init(cpu_state_map))
-    //     .mem_state(MemState::init(mem_state_map))
-    //     .net_state(NetState::init(net_state_map))
-    //     .proc_state(ProcState::init(proc_state_map))
-    //     .disk_state(DiskState::init(disk_state_map))
-    //     .temp_state(TempState::init(temp_state_map))
-    //     .battery_state(BatteryState::init(battery_state_map))
-    //     .basic_table_widget_state(basic_table_widget_state)
-    //     .current_widget(widget_map.get(&initial_widget_id).unwrap().clone()) // TODO: [UNWRAP] - many of the unwraps are fine (like this one) but do a once-over and/or switch to expect?
-    //     .widget_map(widget_map)
-    //     .used_widgets(used_widgets)
-    //     .filters(DataFilters {
-    //         disk_filter,
-    //         mount_filter,
-    //         temp_filter,
-    //         net_filter,
-    //     })
-    //     .build())
-
     Ok(AppState::new(
         app_config_fields,
         data_filter,
         layout_tree_output,
     ))
 }
-
-// pub fn get_widget_layout(
-//     matches: &clap::ArgMatches<'static>, config: &Config,
-// ) -> error::Result<(BottomLayout, u64, Option<BottomWidgetType>)> {
-//     let left_legend = get_use_left_legend(matches, config);
-//     let (default_widget_type, mut default_widget_count) =
-//         get_default_widget_and_count(matches, config)?;
-//     let mut default_widget_id = 1;
-
-//     let bottom_layout = if get_use_basic_mode(matches, config) {
-//         default_widget_id = DEFAULT_WIDGET_ID;
-
-//         BottomLayout::init_basic_default(get_use_battery(matches, config))
-//     } else {
-//         let ref_row: Vec<Row>; // Required to handle reference
-//         let rows = match &config.row {
-//             Some(r) => r,
-//             None => {
-//                 // This cannot (like it really shouldn't) fail!
-//                 ref_row = toml::from_str::<Config>(if get_use_battery(matches, config) {
-//                     DEFAULT_BATTERY_LAYOUT
-//                 } else {
-//                     DEFAULT_LAYOUT
-//                 })?
-//                 .row
-//                 .unwrap();
-//                 &ref_row
-//             }
-//         };
-
-//         let mut iter_id = 0; // A lazy way of forcing unique IDs *shrugs*
-//         let mut total_height_ratio = 0;
-
-//         let mut ret_bottom_layout = BottomLayout {
-//             rows: rows
-//                 .iter()
-//                 .map(|row| {
-//                     row.convert_row_to_bottom_row(
-//                         &mut iter_id,
-//                         &mut total_height_ratio,
-//                         &mut default_widget_id,
-//                         &default_widget_type,
-//                         &mut default_widget_count,
-//                         left_legend,
-//                     )
-//                 })
-//                 .collect::<error::Result<Vec<_>>>()?,
-//             total_row_height_ratio: total_height_ratio,
-//         };
-
-//         // Confirm that we have at least ONE widget left - if not, error out!
-//         if iter_id > 0 {
-//             ret_bottom_layout.get_movement_mappings();
-//             // debug!("Bottom layout: {:#?}", ret_bottom_layout);
-
-//             ret_bottom_layout
-//         } else {
-//             return Err(error::BottomError::ConfigError(
-//                 "please have at least one widget under the '[[row]]' section.".to_string(),
-//             ));
-//         }
-//     };
-
-//     Ok((bottom_layout, default_widget_id, default_widget_type))
-// }
 
 fn get_update_rate_in_milliseconds(
     matches: &clap::ArgMatches<'static>, config: &Config,
@@ -603,59 +505,6 @@ fn get_autohide_time(matches: &clap::ArgMatches<'static>, config: &Config) -> bo
     }
 
     false
-}
-
-fn get_default_widget_and_count(
-    matches: &clap::ArgMatches<'static>, config: &Config,
-) -> error::Result<(Option<BottomWidgetType>, u64)> {
-    let widget_type = if let Some(widget_type) = matches.value_of("default_widget_type") {
-        let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
-        if let BottomWidgetType::Empty = parsed_widget {
-            None
-        } else {
-            Some(parsed_widget)
-        }
-    } else if let Some(flags) = &config.flags {
-        if let Some(widget_type) = &flags.default_widget_type {
-            let parsed_widget = widget_type.parse::<BottomWidgetType>()?;
-            if let BottomWidgetType::Empty = parsed_widget {
-                None
-            } else {
-                Some(parsed_widget)
-            }
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-
-    let widget_count = if let Some(widget_count) = matches.value_of("default_widget_count") {
-        Some(widget_count.parse::<u128>()?)
-    } else if let Some(flags) = &config.flags {
-        flags
-            .default_widget_count
-            .map(|widget_count| widget_count as u128)
-    } else {
-        None
-    };
-
-    match (widget_type, widget_count) {
-        (Some(widget_type), Some(widget_count)) => {
-            if widget_count > std::u64::MAX as u128 {
-                Err(BottomError::ConfigError(
-                    "set your widget count to be at most unsigned INT_MAX.".to_string(),
-                ))
-            } else {
-                Ok((Some(widget_type), widget_count as u64))
-            }
-        }
-        (Some(widget_type), None) => Ok((Some(widget_type), 1)),
-        (None, Some(_widget_count)) =>  Err(BottomError::ConfigError(
-            "cannot set 'default_widget_count' by itself, it must be used with 'default_widget_type'.".to_string(),
-        )),
-        (None, None) => Ok((None, 1))
-    }
 }
 
 fn get_disable_click(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {

@@ -739,7 +739,7 @@ const BRANCH_VERTICAL: char = '│';
 const BRANCH_SPLIT: char = '├';
 const BRANCH_HORIZONTAL: char = '─';
 
-pub fn tree_process_data(
+fn tree_process_data(
     filtered_process_data: &[ConvertedProcessData], is_using_command: bool,
     sorting_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
@@ -1207,7 +1207,7 @@ pub fn tree_process_data(
 }
 
 // FIXME: [OPT] This is an easy target for optimization, too many to_strings!
-pub fn stringify_process_data(
+fn stringify_process_data(
     proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
 ) -> Vec<(Vec<(String, Option<String>)>, bool)> {
     let is_proc_widget_grouped = proc_widget_state.is_grouped;
@@ -1282,7 +1282,7 @@ pub fn stringify_process_data(
 /// Takes a set of converted process data and groups it together.
 ///
 /// To be honest, I really don't like how this is done, even though I've rewritten this like 3 times.
-pub fn group_process_data(
+fn group_process_data(
     single_process_data: &[ConvertedProcessData], is_using_command: bool,
 ) -> Vec<ConvertedProcessData> {
     #[derive(Clone, Default, Debug)]

@@ -21,7 +21,7 @@ use std::{
 
 use crossterm::{
     event::{
-        read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent,
+        read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
     execute,
@@ -30,13 +30,12 @@ use crossterm::{
 };
 
 use app::{
-    data_harvester::{self, processes::ProcessSorting},
+    data_harvester::{self},
     event::EventResult,
     layout_manager::WidgetDirection,
     AppState, UsedWidgets,
 };
 use constants::*;
-use data_conversion::*;
 use options::*;
 use utils::error;
 
@@ -74,24 +73,6 @@ pub enum ThreadControlEvent {
     UpdateConfig(Box<app::AppConfigFields>),
     UpdateUsedWidgets(Box<UsedWidgets>),
     UpdateUpdateTime(u64),
-}
-
-pub fn handle_mouse_event(event: MouseEvent, app: &mut AppState) -> EventResult {
-    match event.kind {
-        MouseEventKind::Down(MouseButton::Left) => {
-            app.on_left_mouse_up(event.column, event.row);
-            EventResult::Redraw
-        }
-        MouseEventKind::ScrollUp => {
-            app.handle_scroll_up();
-            EventResult::Redraw
-        }
-        MouseEventKind::ScrollDown => {
-            app.handle_scroll_down();
-            EventResult::Redraw
-        }
-        _ => EventResult::NoRedraw,
-    }
 }
 
 pub fn handle_key_event(
@@ -307,296 +288,6 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
         )),
     )
     .unwrap();
-}
-
-pub fn force_redraw(app: &mut AppState) {
-    // Currently we use an Option... because we might want to future-proof this
-    // if we eventually get widget-specific redrawing!
-    if app.proc_state.force_update_all {
-        update_all_process_lists(app);
-        app.proc_state.force_update_all = false;
-    } else if let Some(widget_id) = app.proc_state.force_update {
-        update_final_process_list(app, widget_id);
-        app.proc_state.force_update = None;
-    }
-
-    if app.cpu_state.force_update.is_some() {
-        convert_cpu_data_points(
-            &app.data_collection,
-            &mut app.canvas_data.cpu_data,
-            app.is_frozen,
-        );
-        app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
-        app.cpu_state.force_update = None;
-    }
-
-    // FIXME: [OPT] Prefer reassignment over new vectors?
-    if app.mem_state.force_update.is_some() {
-        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection, app.is_frozen);
-        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection, app.is_frozen);
-        app.mem_state.force_update = None;
-    }
-
-    if app.net_state.force_update.is_some() {
-        let (rx, tx) = get_rx_tx_data_points(
-            &app.data_collection,
-            app.is_frozen,
-            &app.app_config_fields.network_scale_type,
-            &app.app_config_fields.network_unit_type,
-            app.app_config_fields.network_use_binary_prefix,
-        );
-        app.canvas_data.network_data_rx = rx;
-        app.canvas_data.network_data_tx = tx;
-        app.net_state.force_update = None;
-    }
-}
-
-#[allow(clippy::needless_collect)]
-pub fn update_all_process_lists(app: &mut AppState) {
-    // According to clippy, I can avoid a collect... but if I follow it,
-    // I end up conflicting with the borrow checker since app is used within the closure... hm.
-    if !app.is_frozen {
-        let widget_ids = app
-            .proc_state
-            .widget_states
-            .keys()
-            .cloned()
-            .collect::<Vec<_>>();
-
-        widget_ids.into_iter().for_each(|widget_id| {
-            update_final_process_list(app, widget_id);
-        });
-    }
-}
-
-fn update_final_process_list(_app: &mut AppState, _widget_id: u64) {
-    // TODO: [STATE] FINISH THIS
-    // let process_states = app
-    //     .proc_state
-    //     .widget_states
-    //     .get(&widget_id)
-    //     .map(|process_state| {
-    //         (
-    //             process_state
-    //                 .process_search_state
-    //                 .search_state
-    //                 .is_invalid_or_blank_search(),
-    //             process_state.is_using_command,
-    //             process_state.is_grouped,
-    //             process_state.is_tree_mode,
-    //         )
-    //     });
-
-    // if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
-    //     if !app.is_frozen {
-    //         convert_process_data(
-    //             &app.data_collection,
-    //             &mut app.canvas_data.single_process_data,
-    //             #[cfg(target_family = "unix")]
-    //             &mut app.user_table,
-    //         );
-    //     }
-    //     let process_filter = app.get_process_filter(widget_id);
-    //     let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
-    //         app.canvas_data
-    //             .single_process_data
-    //             .iter()
-    //             .map(|(_pid, process)| {
-    //                 let mut process_clone = process.clone();
-    //                 if !is_invalid_or_blank {
-    //                     if let Some(process_filter) = process_filter {
-    //                         process_clone.is_disabled_entry =
-    //                             !process_filter.check(&process_clone, is_using_command);
-    //                     }
-    //                 }
-    //                 process_clone
-    //             })
-    //             .collect::<Vec<_>>()
-    //     } else {
-    //         app.canvas_data
-    //             .single_process_data
-    //             .iter()
-    //             .filter_map(|(_pid, process)| {
-    //                 if !is_invalid_or_blank {
-    //                     if let Some(process_filter) = process_filter {
-    //                         if process_filter.check(process, is_using_command) {
-    //                             Some(process)
-    //                         } else {
-    //                             None
-    //                         }
-    //                     } else {
-    //                         Some(process)
-    //                     }
-    //                 } else {
-    //                     Some(process)
-    //                 }
-    //             })
-    //             .cloned()
-    //             .collect::<Vec<_>>()
-    //     };
-
-    //     if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-    //         let mut finalized_process_data = if is_tree {
-    //             tree_process_data(
-    //                 &filtered_process_data,
-    //                 is_using_command,
-    //                 &proc_widget_state.process_sorting_type,
-    //                 proc_widget_state.is_process_sort_descending,
-    //             )
-    //         } else if is_grouped {
-    //             group_process_data(&filtered_process_data, is_using_command)
-    //         } else {
-    //             filtered_process_data
-    //         };
-
-    //         // Note tree mode is sorted well before this, as it's special.
-    //         if !is_tree {
-    //             sort_process_data(&mut finalized_process_data, proc_widget_state);
-    //         }
-
-    //         if proc_widget_state.scroll_state.current_scroll_position
-    //             >= finalized_process_data.len()
-    //         {
-    //             proc_widget_state.scroll_state.current_scroll_position =
-    //                 finalized_process_data.len().saturating_sub(1);
-    //             proc_widget_state.scroll_state.previous_scroll_position = 0;
-    //             proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
-    //         }
-
-    //         app.canvas_data.stringified_process_data_map.insert(
-    //             widget_id,
-    //             stringify_process_data(proc_widget_state, &finalized_process_data),
-    //         );
-    //         app.canvas_data
-    //             .finalized_process_data_map
-    //             .insert(widget_id, finalized_process_data);
-    //     }
-    // }
-}
-
-fn _sort_process_data(
-    to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
-) {
-    to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
-
-    match &proc_widget_state.process_sorting_type {
-        ProcessSorting::CpuPercent => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.cpu_percent_usage,
-                    b.cpu_percent_usage,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::Mem => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.mem_usage_bytes,
-                    b.mem_usage_bytes,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::MemPercent => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.mem_percent_usage,
-                    b.mem_percent_usage,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::ProcessName => {
-            // Don't repeat if false... it sorts by name by default anyways.
-            if proc_widget_state.is_process_sort_descending {
-                to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
-                if proc_widget_state.is_process_sort_descending {
-                    to_sort_vec.reverse();
-                }
-            }
-        }
-        ProcessSorting::Command => {
-            to_sort_vec.sort_by_cached_key(|c| c.command.to_lowercase());
-            if proc_widget_state.is_process_sort_descending {
-                to_sort_vec.reverse();
-            }
-        }
-        ProcessSorting::Pid => {
-            if !proc_widget_state.is_grouped {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        a.pid,
-                        b.pid,
-                        proc_widget_state.is_process_sort_descending,
-                    )
-                });
-            }
-        }
-        ProcessSorting::ReadPerSecond => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.rps_f64,
-                    b.rps_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::WritePerSecond => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.wps_f64,
-                    b.wps_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::TotalRead => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.tr_f64,
-                    b.tr_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::TotalWrite => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.tw_f64,
-                    b.tw_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::State => {
-            to_sort_vec.sort_by_cached_key(|c| c.process_state.to_lowercase());
-            if proc_widget_state.is_process_sort_descending {
-                to_sort_vec.reverse();
-            }
-        }
-        ProcessSorting::User => to_sort_vec.sort_by(|a, b| match (&a.user, &b.user) {
-            (Some(user_a), Some(user_b)) => utils::gen_util::get_ordering(
-                user_a.to_lowercase(),
-                user_b.to_lowercase(),
-                proc_widget_state.is_process_sort_descending,
-            ),
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            (None, None) => std::cmp::Ordering::Less,
-        }),
-        ProcessSorting::Count => {
-            if proc_widget_state.is_grouped {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        a.group_pids.len(),
-                        b.group_pids.len(),
-                        proc_widget_state.is_process_sort_descending,
-                    )
-                });
-            }
-        }
-    }
 }
 
 pub fn create_input_thread(

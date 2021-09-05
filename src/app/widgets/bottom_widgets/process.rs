@@ -119,9 +119,6 @@ impl ProcessSearchState {
 pub struct ColumnInfo {
     pub enabled: bool,
     pub shortcut: Option<&'static str>,
-    // FIXME: Move column width logic here!
-    // pub hard_width: Option<u16>,
-    // pub max_soft_width: Option<f64>,
 }
 
 pub struct ProcColumn {
@@ -419,59 +416,6 @@ pub struct ProcWidgetState {
 }
 
 impl ProcWidgetState {
-    pub fn init(
-        is_case_sensitive: bool, is_match_whole_word: bool, is_use_regex: bool, is_grouped: bool,
-        show_memory_as_values: bool, is_tree_mode: bool, is_using_command: bool,
-    ) -> Self {
-        let mut process_search_state = ProcessSearchState::default();
-
-        if is_case_sensitive {
-            // By default it's off
-            process_search_state.search_toggle_ignore_case();
-        }
-        if is_match_whole_word {
-            process_search_state.search_toggle_whole_word();
-        }
-        if is_use_regex {
-            process_search_state.search_toggle_regex();
-        }
-
-        let (process_sorting_type, is_process_sort_descending) = if is_tree_mode {
-            (processes::ProcessSorting::Pid, false)
-        } else {
-            (processes::ProcessSorting::CpuPercent, true)
-        };
-
-        // TODO: If we add customizable columns, this should pull from config
-        let mut columns = ProcColumn::default();
-        columns.set_to_sorted_index_from_type(&process_sorting_type);
-        if is_grouped {
-            // Normally defaults to showing by PID, toggle count on instead.
-            columns.toggle(&ProcessSorting::Count);
-            columns.toggle(&ProcessSorting::Pid);
-        }
-        if show_memory_as_values {
-            // Normally defaults to showing by percent, toggle value on instead.
-            columns.toggle(&ProcessSorting::Mem);
-            columns.toggle(&ProcessSorting::MemPercent);
-        }
-
-        ProcWidgetState {
-            process_search_state,
-            is_grouped,
-            scroll_state: AppScrollWidgetState::default(),
-            process_sorting_type,
-            is_process_sort_descending,
-            is_using_command,
-            current_column_index: 0,
-            is_sort_open: false,
-            columns,
-            is_tree_mode,
-            table_width_state: CanvasTableWidthState::default(),
-            requires_redraw: false,
-        }
-    }
-
     /// Updates sorting when using the column list.
     /// ...this really should be part of the ProcColumn struct (along with the sorting fields),
     /// but I'm too lazy.
@@ -620,14 +564,6 @@ pub struct ProcState {
 }
 
 impl ProcState {
-    pub fn init(widget_states: HashMap<u64, ProcWidgetState>) -> Self {
-        ProcState {
-            widget_states,
-            force_update: None,
-            force_update_all: false,
-        }
-    }
-
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut ProcWidgetState> {
         self.widget_states.get_mut(&widget_id)
     }
