@@ -131,15 +131,15 @@ pub fn draw_battery_display<B: Backend>(
                 ]),
                 Row::new(vec!["Consumption", &battery_details.watt_consumption])
                     .style(painter.colours.text_style),
-                if let Some(duration_until_full) = &battery_details.duration_until_full {
-                    Row::new(vec!["Time to full", duration_until_full])
-                        .style(painter.colours.text_style)
-                } else if let Some(duration_until_empty) = &battery_details.duration_until_empty {
-                    Row::new(vec!["Time to empty", duration_until_empty])
-                        .style(painter.colours.text_style)
-                } else {
-                    Row::new(vec!["Time to full/empty", "N/A"]).style(painter.colours.text_style)
-                },
+                // if let Some(duration_until_full) = &battery_details.duration_until_full {
+                //     Row::new(vec!["Time to full", duration_until_full])
+                //         .style(painter.colours.text_style)
+                // } else if let Some(duration_until_empty) = &battery_details.duration_until_empty {
+                //     Row::new(vec!["Time to empty", duration_until_empty])
+                //         .style(painter.colours.text_style)
+                // } else {
+                //     Row::new(vec!["Time to full/empty", "N/A"]).style(painter.colours.text_style)
+                // },
                 Row::new(vec!["Health %", &battery_details.health])
                     .style(painter.colours.text_style),
             ];

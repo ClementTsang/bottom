@@ -200,7 +200,6 @@ impl Widget for Carousel {
 
     fn selectable_type(&self) -> SelectableType {
         if let Some(node) = self.get_currently_selected() {
-            debug!("node: {:?}", node);
             SelectableType::Redirect(node)
         } else {
             SelectableType::Unselectable

@@ -144,7 +144,7 @@ impl Widget for TempTable {
             } else {
                 painter.colours.border_style
             })
-            .borders(self.block_border.clone()); // TODO: Also do the scrolling indicator!
+            .borders(self.block_border.clone());
 
         self.table
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);

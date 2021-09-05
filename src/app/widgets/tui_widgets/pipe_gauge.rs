@@ -86,10 +86,7 @@ impl<'a> Widget for PipeGauge<'a> {
             return;
         }
 
-        let ratio = self.ratio;
-        let start_label = self
-            .start_label
-            .unwrap_or_else(move || Spans::from(format!("{:.0}%", ratio * 100.0)));
+        let start_label = self.start_label.unwrap_or_else(move || Spans::from(""));
 
         let (col, row) = buf.set_spans(
             gauge_area.left(),
@@ -131,8 +128,8 @@ impl<'a> Widget for PipeGauge<'a> {
                 sub_modifier: self.gauge_style.sub_modifier,
             });
         }
-        for col in end..gauge_end {
-            buf.get_mut(col, row).set_symbol(" ");
-        }
+        // for col in end..gauge_end {
+        //     buf.get_mut(col, row).set_symbol(" ");
+        // }
     }
 }

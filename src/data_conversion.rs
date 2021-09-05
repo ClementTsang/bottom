@@ -17,13 +17,25 @@ use std::collections::{HashMap, VecDeque};
 /// Point is of time, data
 type Point = (f64, f64);
 
+#[derive(Debug)]
+pub enum BatteryDuration {
+    Charging { short: String, long: String },
+    Discharging { short: String, long: String },
+    Neither,
+}
+
+impl Default for BatteryDuration {
+    fn default() -> Self {
+        Self::Neither
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
     pub battery_name: String,
     pub charge_percentage: f64,
     pub watt_consumption: String,
-    pub duration_until_full: Option<String>,
-    pub duration_until_empty: Option<String>,
+    pub charge_times: BatteryDuration,
     pub health: String,
 }
 
@@ -1362,37 +1374,40 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
             battery_name: format!("Battery {}", itx),
             charge_percentage: battery_harvest.charge_percent,
             watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
-            duration_until_empty: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
+            charge_times: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
                 let time = chrono::Duration::seconds(secs_till_empty);
                 let num_minutes = time.num_minutes() - time.num_hours() * 60;
                 let num_seconds = time.num_seconds() - time.num_minutes() * 60;
-                Some(format!(
-                    "{} hour{}, {} minute{}, {} second{}",
-                    time.num_hours(),
-                    if time.num_hours() == 1 { "" } else { "s" },
-                    num_minutes,
-                    if num_minutes == 1 { "" } else { "s" },
-                    num_seconds,
-                    if num_seconds == 1 { "" } else { "s" },
-                ))
-            } else {
-                None
-            },
-            duration_until_full: if let Some(secs_till_full) = battery_harvest.secs_until_full {
+                BatteryDuration::Discharging {
+                    long: format!(
+                        "{} hour{}, {} minute{}, {} second{}",
+                        time.num_hours(),
+                        if time.num_hours() == 1 { "" } else { "s" },
+                        num_minutes,
+                        if num_minutes == 1 { "" } else { "s" },
+                        num_seconds,
+                        if num_seconds == 1 { "" } else { "s" },
+                    ),
+                    short: format!("{}:{:02}:{:02}", time.num_hours(), num_minutes, num_seconds),
+                }
+            } else if let Some(secs_till_full) = battery_harvest.secs_until_full {
                 let time = chrono::Duration::seconds(secs_till_full); // FIXME [DEP]: Can I get rid of chrono?
                 let num_minutes = time.num_minutes() - time.num_hours() * 60;
                 let num_seconds = time.num_seconds() - time.num_minutes() * 60;
-                Some(format!(
-                    "{} hour{}, {} minute{}, {} second{}",
-                    time.num_hours(),
-                    if time.num_hours() == 1 { "" } else { "s" },
-                    num_minutes,
-                    if num_minutes == 1 { "" } else { "s" },
-                    num_seconds,
-                    if num_seconds == 1 { "" } else { "s" },
-                ))
+                BatteryDuration::Charging {
+                    long: format!(
+                        "{} hour{}, {} minute{}, {} second{}",
+                        time.num_hours(),
+                        if time.num_hours() == 1 { "" } else { "s" },
+                        num_minutes,
+                        if num_minutes == 1 { "" } else { "s" },
+                        num_seconds,
+                        if num_seconds == 1 { "" } else { "s" },
+                    ),
+                    short: format!("{}:{:02}:{:02}", time.num_hours(), num_minutes, num_seconds),
+                }
             } else {
-                None
+                BatteryDuration::Neither
             },
             health: format!("{:.2}%", battery_harvest.health_percent),
         })

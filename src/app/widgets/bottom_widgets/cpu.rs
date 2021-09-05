@@ -10,7 +10,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::WidgetEventResult, sort_text_table::SimpleSortableColumn, time_graph::TimeGraphData,
+        event::WidgetEventResult, text_table::SimpleColumn, time_graph::TimeGraphData,
         AppConfigFields, AppScrollWidgetState, CanvasTableWidthState, Component, DataCollection,
         TextTable, TimeGraph, Widget,
     },
@@ -79,7 +79,7 @@ pub enum CpuGraphLegendPosition {
 /// A widget designed to show CPU usage via a graph, along with a side legend in a table.
 pub struct CpuGraph {
     graph: TimeGraph,
-    legend: TextTable<SimpleSortableColumn>,
+    legend: TextTable<SimpleColumn>,
     legend_position: CpuGraphLegendPosition,
     showing_avg: bool,
 
@@ -98,9 +98,10 @@ impl CpuGraph {
     pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
         let graph = TimeGraph::from_config(app_config_fields);
         let legend = TextTable::new(vec![
-            SimpleSortableColumn::new_flex("CPU".into(), None, false, 0.5),
-            SimpleSortableColumn::new_flex("Use%".into(), None, false, 0.5),
-        ]);
+            SimpleColumn::new_flex("CPU".into(), 0.5),
+            SimpleColumn::new_hard("Use%".into(), None),
+        ])
+        .default_ltr(false);
         let legend_position = if app_config_fields.left_legend {
             CpuGraphLegendPosition::Left
         } else {
