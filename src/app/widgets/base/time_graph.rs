@@ -23,7 +23,10 @@ use crate::{
         AppConfigFields, Component,
     },
     canvas::Painter,
-    constants::{AUTOHIDE_TIMEOUT_MILLISECONDS, STALE_MAX_MILLISECONDS, STALE_MIN_MILLISECONDS},
+    constants::{
+        AUTOHIDE_TIMEOUT_MILLISECONDS, STALE_MAX_MILLISECONDS, STALE_MIN_MILLISECONDS,
+        TIME_LABEL_HEIGHT_LIMIT,
+    },
 };
 
 #[derive(Clone)]
@@ -169,7 +172,9 @@ impl TimeGraph {
     fn zoom_in(&mut self) -> WidgetEventResult {
         let new_time = self.current_display_time.saturating_sub(self.time_interval);
 
-        if new_time >= self.min_duration {
+        if self.current_display_time == new_time {
+            WidgetEventResult::NoRedraw
+        } else if new_time >= self.min_duration {
             self.current_display_time = new_time;
             self.autohide_timer.start_display_timer();
 
@@ -187,7 +192,9 @@ impl TimeGraph {
     fn zoom_out(&mut self) -> WidgetEventResult {
         let new_time = self.current_display_time + self.time_interval;
 
-        if new_time <= self.max_duration {
+        if self.current_display_time == new_time {
+            WidgetEventResult::NoRedraw
+        } else if new_time <= self.max_duration {
             self.current_display_time = new_time;
             self.autohide_timer.start_display_timer();
 
@@ -246,7 +253,7 @@ impl TimeGraph {
             let x_axis = Axis::default()
                 .bounds([time_start, 0.0])
                 .style(painter.colours.graph_style);
-            if self.autohide_timer.is_showing() {
+            if inner_area.height >= TIME_LABEL_HEIGHT_LIMIT && self.autohide_timer.is_showing() {
                 x_axis.labels(self.get_x_axis_labels(painter))
             } else {
                 x_axis
@@ -261,6 +268,7 @@ impl TimeGraph {
                     .map(|label| Span::styled(label.clone(), painter.colours.graph_style))
                     .collect(),
             );
+        // TODO: [Small size bug] There's a rendering issue if you use a very short window with how some legend entries are hidden. It sometimes hides the 0; instead, it should hide middle entries!
 
         let mut datasets: Vec<Dataset<'_>> = data
             .iter()

@@ -518,13 +518,7 @@ impl Widget for NetGraph {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let block = Block::default()
-            .border_style(if selected {
-                painter.colours.highlighted_border_style
-            } else {
-                painter.colours.border_style
-            })
-            .borders(Borders::ALL);
+        let block = self.block(painter, selected, Borders::ALL);
 
         self.set_draw_cache();
 
@@ -686,6 +680,7 @@ impl Widget for OldNetGraph {
                 painter.colours.border_style
             })
             .borders(Borders::ALL);
+
         self.table.draw_tui_table(
             painter,
             f,

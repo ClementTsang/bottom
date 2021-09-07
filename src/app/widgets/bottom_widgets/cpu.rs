@@ -80,7 +80,7 @@ impl CpuGraph {
         let graph = TimeGraph::from_config(app_config_fields);
         let legend = TextTable::new(vec![
             SimpleColumn::new_flex("CPU".into(), 0.5),
-            SimpleColumn::new_hard("Use%".into(), None),
+            SimpleColumn::new_hard("Use".into(), None),
         ])
         .default_ltr(false);
         let legend_position = if app_config_fields.left_legend {
@@ -165,12 +165,17 @@ impl Widget for CpuGraph {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let constraints = match self.legend_position {
-            CpuGraphLegendPosition::Left => {
-                [Constraint::Percentage(15), Constraint::Percentage(85)]
-            }
-            CpuGraphLegendPosition::Right => {
-                [Constraint::Percentage(85), Constraint::Percentage(15)]
+        let constraints = {
+            const CPU_LEGEND_MIN_WIDTH: u16 = 10;
+            let (legend_constraint, cpu_constraint) =
+                if area.width * 15 / 100 < CPU_LEGEND_MIN_WIDTH {
+                    (Constraint::Length(CPU_LEGEND_MIN_WIDTH), Constraint::Min(0))
+                } else {
+                    (Constraint::Percentage(15), Constraint::Percentage(85))
+                };
+            match self.legend_position {
+                CpuGraphLegendPosition::Left => [legend_constraint, cpu_constraint],
+                CpuGraphLegendPosition::Right => [cpu_constraint, legend_constraint],
             }
         };
 
@@ -179,6 +184,11 @@ impl Widget for CpuGraph {
             .direction(Direction::Horizontal)
             .constraints(constraints)
             .split(area);
+
+        let (graph_block_area, legend_block_area) = match self.legend_position {
+            CpuGraphLegendPosition::Left => (split_area[1], split_area[0]),
+            CpuGraphLegendPosition::Right => (split_area[0], split_area[1]),
+        };
 
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         let y_bound_labels: [Cow<'static, str>; 2] = ["0%".into(), "100%".into()];
@@ -217,6 +227,35 @@ impl Widget for CpuGraph {
             })
             .collect::<Vec<_>>();
 
+        let graph_block = self.block(
+            painter,
+            selected && matches!(&self.selected, CpuGraphSelection::Graph),
+            Borders::ALL,
+        );
+
+        self.graph.draw_tui_chart(
+            painter,
+            f,
+            &cpu_data,
+            &y_bound_labels,
+            Y_BOUNDS,
+            true,
+            graph_block,
+            graph_block_area,
+        );
+
+        let legend_block = Block::default()
+            .border_style(if selected {
+                if let CpuGraphSelection::Legend = &self.selected {
+                    painter.colours.highlighted_border_style
+                } else {
+                    painter.colours.border_style
+                }
+            } else {
+                painter.colours.border_style
+            })
+            .borders(Borders::ALL);
+
         let legend_data = self
             .display_data
             .iter()
@@ -248,46 +287,6 @@ impl Widget for CpuGraph {
                 ]
             })
             .collect::<Vec<_>>();
-
-        let graph_block = Block::default()
-            .border_style(if selected {
-                if let CpuGraphSelection::Graph = &self.selected {
-                    painter.colours.highlighted_border_style
-                } else {
-                    painter.colours.border_style
-                }
-            } else {
-                painter.colours.border_style
-            })
-            .borders(Borders::ALL);
-
-        let legend_block = Block::default()
-            .border_style(if selected {
-                if let CpuGraphSelection::Legend = &self.selected {
-                    painter.colours.highlighted_border_style
-                } else {
-                    painter.colours.border_style
-                }
-            } else {
-                painter.colours.border_style
-            })
-            .borders(Borders::ALL);
-
-        let (graph_block_area, legend_block_area) = match self.legend_position {
-            CpuGraphLegendPosition::Left => (split_area[1], split_area[0]),
-            CpuGraphLegendPosition::Right => (split_area[0], split_area[1]),
-        };
-
-        self.graph.draw_tui_chart(
-            painter,
-            f,
-            &cpu_data,
-            &y_bound_labels,
-            Y_BOUNDS,
-            true,
-            graph_block,
-            graph_block_area,
-        );
 
         self.legend.draw_tui_table(
             painter,

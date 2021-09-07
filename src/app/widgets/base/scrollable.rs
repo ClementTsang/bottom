@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::cmp::{min, Ordering};
 
 use crossterm::event::{KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use tui::{layout::Rect, widgets::TableState};
@@ -76,20 +76,18 @@ impl Scrollable {
             self.window_index.cached_area = self.bounds;
         }
 
-        let list_start = match self.scroll_direction {
+        match self.scroll_direction {
             ScrollDirection::Down => {
                 if self.current_index < self.window_index.index + num_visible_rows {
                     // If, using the current window index, we can see the element
                     // (so within that and + num_visible_rows) just reuse the current previously scrolled position
-                    self.window_index.index
                 } else if self.current_index >= num_visible_rows {
-                    // Else if the current position past the last element visible in the list, omit
-                    // until we can see that element.  The +1 is of how indexes start at 0.
+                    // Else if the current position is past the last element visible in the list, omit
+                    // until we can see that element. The +1 is because of how indexes start at 0.
                     self.window_index.index = self.current_index - num_visible_rows + 1;
-                    self.window_index.index
                 } else {
                     // Else, if it is not past the last element visible, do not omit anything
-                    0
+                    self.window_index.index = 0;
                 }
             }
             ScrollDirection::Up => {
@@ -101,15 +99,17 @@ impl Scrollable {
                     // just put it so that the selected index is the last entry,
                     self.window_index.index = self.current_index - num_visible_rows + 1;
                 }
-                // Else, don't change what our start position is from whatever it is set to!
-                self.window_index.index
             }
-        };
+        }
 
-        self.tui_state
-            .select(Some(self.current_index.saturating_sub(list_start)));
+        // Ensure we don't select a non-existent index.
+        self.window_index.index = min(self.num_items.saturating_sub(1), self.window_index.index);
 
-        list_start
+        self.tui_state.select(Some(
+            self.current_index.saturating_sub(self.window_index.index),
+        ));
+
+        self.window_index.index
     }
 
     /// Update the index with this!  This will automatically update the scroll direction as well!

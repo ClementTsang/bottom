@@ -1315,11 +1315,9 @@ pub fn create_layout_tree(
                                     child_ids
                                         .into_iter()
                                         .filter_map(|child_id| {
-                                            if let Some(w) = widget_lookup_map.get(&child_id) {
-                                                Some((child_id, w.get_pretty_name().into()))
-                                            } else {
-                                                None
-                                            }
+                                            widget_lookup_map
+                                                .get(&child_id)
+                                                .map(|w| (child_id, w.get_pretty_name().into()))
                                         })
                                         .collect(),
                                 )
@@ -1773,7 +1771,7 @@ pub fn generate_layout(
 
                     // Handle flexible children now.
                     let denominator: u32 = flexible_indices.iter().map(|(_, _, ratio)| ratio).sum();
-                    let original_constraints = constraints.clone();
+                    let original_constraints = constraints;
                     let mut split_constraints = flexible_indices
                         .iter()
                         .map(|(_, _, numerator)| {
@@ -1876,7 +1874,7 @@ pub fn generate_layout(
                     }
 
                     let denominator: u32 = flexible_indices.iter().map(|(_, _, ratio)| ratio).sum();
-                    let original_constraints = constraints.clone();
+                    let original_constraints = constraints;
                     let mut split_constraints = flexible_indices
                         .iter()
                         .map(|(_, _, numerator)| {

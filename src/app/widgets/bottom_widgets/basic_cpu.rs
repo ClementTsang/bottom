@@ -175,13 +175,12 @@ impl Widget for BasicCpu {
                         "{:3}",
                         data.cpu_count
                             .map(|c| c.to_string())
-                            .unwrap_or(data.cpu_prefix.clone())
+                            .unwrap_or_else(|| data.cpu_prefix.clone())
                     ),
                     format!("{:3.0}%", data.cpu_usage.round()),
                 )
             })
             .collect::<Vec<_>>();
-
     }
 
     fn width(&self) -> LayoutRule {

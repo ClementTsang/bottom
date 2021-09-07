@@ -384,10 +384,7 @@ impl Painter {
                                     // );
 
                                     if let TmpBottomWidget::Carousel(carousel) = widget {
-                                        let carousel: &mut crate::app::widgets::Carousel =
-                                            carousel.into();
-
-                                        let remaining_area =
+                                        let remaining_area: Rect =
                                             carousel.draw_carousel(painter, f, area);
                                         if let Some(to_draw_node) =
                                             carousel.get_currently_selected()
@@ -395,10 +392,6 @@ impl Painter {
                                             if let Some(child_widget) =
                                                 lookup_map.get_mut(&to_draw_node)
                                             {
-                                                debug!(
-                                                    "Selected ID: {:?}, to_draw_node: {:?}",
-                                                    selected_id, to_draw_node
-                                                );
                                                 child_widget.set_bounds(remaining_area);
                                                 child_widget.draw(
                                                     painter,
@@ -431,7 +424,7 @@ impl Painter {
                 let lookup_map = &mut app_state.widget_lookup_map;
                 traverse_and_draw_tree(
                     *root,
-                    &arena,
+                    arena,
                     f,
                     lookup_map,
                     self,

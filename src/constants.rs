@@ -20,7 +20,7 @@ pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 
 // Limits for when we should stop showing table gaps/labels (anything less means not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 5;
-pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
+pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 5;
 
 // For kill signals
 #[cfg(target_os = "windows")]

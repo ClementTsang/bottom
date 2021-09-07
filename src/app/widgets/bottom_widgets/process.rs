@@ -1233,17 +1233,11 @@ impl Widget for ProcessManager {
             area
         };
 
-        let process_block = Block::default()
-            .border_style(if selected {
-                if let ProcessManagerSelection::Processes = self.selected {
-                    painter.colours.highlighted_border_style
-                } else {
-                    painter.colours.border_style
-                }
-            } else {
-                painter.colours.border_style
-            })
-            .borders(self.block_border.clone());
+        let process_block = self.block(
+            painter,
+            selected && matches!(self.selected, ProcessManagerSelection::Processes),
+            self.block_border,
+        );
 
         self.process_table.draw_tui_table(
             painter,

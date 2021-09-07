@@ -3,7 +3,13 @@ use std::time::Instant;
 use crossterm::event::{KeyEvent, MouseEvent};
 use enum_dispatch::enum_dispatch;
 use indextree::NodeId;
-use tui::{backend::Backend, layout::Rect, widgets::TableState, Frame};
+use tui::{
+    backend::Backend,
+    layout::Rect,
+    text::Span,
+    widgets::{Block, Borders, TableState},
+    Frame,
+};
 
 use crate::{
     app::{
@@ -114,6 +120,30 @@ pub trait Widget {
 
     /// Returns a [`Widget`]'s "pretty" display name.
     fn get_pretty_name(&self) -> &'static str;
+
+    /// Returns a new [`Block`]. The default implementation returns
+    /// a basic [`Block`] with different border colours based on selected state.
+    fn block<'a>(&self, painter: &'a Painter, is_selected: bool, borders: Borders) -> Block<'a> {
+        let has_top_bottom_border =
+            borders.contains(Borders::TOP) || borders.contains(Borders::BOTTOM);
+
+        let block = Block::default()
+            .border_style(if is_selected {
+                painter.colours.highlighted_border_style
+            } else {
+                painter.colours.border_style
+            })
+            .borders(borders);
+
+        if has_top_bottom_border {
+            block.title(Span::styled(
+                format!(" {} ", self.get_pretty_name()),
+                painter.colours.widget_title_style,
+            ))
+        } else {
+            block
+        }
+    }
 
     /// Draws a [`Widget`]. The default implementation draws nothing.
     fn draw<B: Backend>(

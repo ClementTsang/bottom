@@ -8,7 +8,7 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Tabs},
+    widgets::{Borders, Paragraph, Tabs},
     Frame,
 };
 
@@ -144,11 +144,11 @@ impl Component for BatteryTable {
 
     fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
         for (itx, bound) in self.tab_bounds.iter().enumerate() {
-            if does_bound_intersect_coordinate(event.column, event.row, *bound) {
-                if itx < self.battery_data.len() {
-                    self.selected_index = itx;
-                    return WidgetEventResult::Redraw;
-                }
+            if does_bound_intersect_coordinate(event.column, event.row, *bound)
+                && itx < self.battery_data.len()
+            {
+                self.selected_index = itx;
+                return WidgetEventResult::Redraw;
             }
         }
         WidgetEventResult::NoRedraw
@@ -178,13 +178,7 @@ impl Widget for BatteryTable {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let block = Block::default()
-            .border_style(if selected {
-                painter.colours.highlighted_border_style
-            } else {
-                painter.colours.border_style
-            })
-            .borders(self.block_border.clone());
+        let block = self.block(painter, selected, self.block_border);
 
         let inner_area = block.inner(area);
         const CONSTRAINTS: [Constraint; 2] = [Constraint::Length(1), Constraint::Min(0)];
@@ -192,29 +186,31 @@ impl Widget for BatteryTable {
             .direction(Direction::Vertical)
             .constraints(CONSTRAINTS)
             .split(inner_area);
-        let tab_area = Rect::new(
-            split_area[0].x.saturating_sub(1),
-            split_area[0].y,
-            split_area[0].width,
-            split_area[0].height,
-        );
-        let data_area = if inner_area.height >= TABLE_GAP_HEIGHT_LIMIT && split_area[1].height > 0 {
-            Rect::new(
-                split_area[1].x,
-                split_area[1].y + 1,
-                split_area[1].width,
-                split_area[1].height - 1,
-            )
-        } else {
-            split_area[1]
-        };
 
         if self.battery_data.is_empty() {
             f.render_widget(
                 Paragraph::new("No batteries found").style(painter.colours.text_style),
-                tab_area,
+                split_area[0],
             );
         } else {
+            let tab_area = Rect::new(
+                split_area[0].x.saturating_sub(1),
+                split_area[0].y,
+                split_area[0].width,
+                split_area[0].height,
+            );
+            let data_area =
+                if inner_area.height >= TABLE_GAP_HEIGHT_LIMIT && split_area[1].height > 0 {
+                    Rect::new(
+                        split_area[1].x,
+                        split_area[1].y + 1,
+                        split_area[1].width,
+                        split_area[1].height - 1,
+                    )
+                } else {
+                    split_area[1]
+                };
+
             let battery_tab_names = self
                 .battery_data
                 .iter()

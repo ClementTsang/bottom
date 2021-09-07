@@ -1,12 +1,7 @@
 use std::collections::HashMap;
 
 use crossterm::event::{KeyEvent, MouseEvent};
-use tui::{
-    backend::Backend,
-    layout::Rect,
-    widgets::{Block, Borders},
-    Frame,
-};
+use tui::{backend::Backend, layout::Rect, widgets::Borders, Frame};
 
 use crate::{
     app::{
@@ -138,13 +133,7 @@ impl Widget for TempTable {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let block = Block::default()
-            .border_style(if selected {
-                painter.colours.highlighted_border_style
-            } else {
-                painter.colours.border_style
-            })
-            .borders(self.block_border.clone());
+        let block = self.block(painter, selected, self.block_border);
 
         self.table
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);

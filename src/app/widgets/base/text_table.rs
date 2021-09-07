@@ -255,6 +255,7 @@ where
             left_to_right: bool, mut desired_widths: Vec<DesiredColumnWidth>, total_width: u16,
         ) -> Vec<u16> {
             let mut total_width_left = total_width;
+            let num_widths = desired_widths.len();
             if !left_to_right {
                 desired_widths.reverse();
             }
@@ -302,6 +303,7 @@ where
                 }
 
                 if !left_to_right {
+                    column_widths.extend(vec![0; num_widths.saturating_sub(column_widths.len())]);
                     column_widths.reverse();
                 }
             }
@@ -384,7 +386,8 @@ where
         use tui::widgets::Row;
 
         let inner_area = block.inner(block_area);
-        if inner_area.height < 2 {
+        if inner_area.height < 1 {
+            f.render_widget(block, block_area);
             return;
         }
         let table_gap = if !self.show_gap || inner_area.height < TABLE_GAP_HEIGHT_LIMIT {
@@ -415,11 +418,13 @@ where
         // Then calculate rows. We truncate the amount of data read based on height,
         // as well as truncating some entries based on available width.
         let data_slice = {
+            // Note: `get_list_start` already ensures `start` is within the bounds of the number of items, so no need to check!
             let start = self.scrollable.get_list_start(scrollable_height as usize);
-            let end = std::cmp::min(
+            let end = min(
                 self.scrollable.num_items(),
                 start + scrollable_height as usize,
             );
+
             &data[start..end]
         };
         let rows = data_slice.iter().map(|row| {

@@ -64,7 +64,7 @@ impl Carousel {
 
     /// Returns the currently selected [`NodeId`] if possible.
     pub fn get_currently_selected(&self) -> Option<NodeId> {
-        self.children.get(self.index).map(|i| i.0.clone())
+        self.children.get(self.index).map(|i| i.0)
     }
 
     fn get_next(&self) -> Option<&(NodeId, Cow<'static, str>)> {
