@@ -336,7 +336,7 @@ impl Painter {
                     .get_mut(&app_state.selected_widget)
                 {
                     current_widget.set_bounds(draw_area);
-                    current_widget.draw(self, f, draw_area, true);
+                    current_widget.draw(self, f, draw_area, true, true);
                 }
             } else {
                 /// A simple traversal through the `arena`, drawing all leaf elements.
@@ -398,12 +398,13 @@ impl Painter {
                                                     f,
                                                     remaining_area,
                                                     selected_id == to_draw_node,
+                                                    false,
                                                 );
                                             }
                                         }
                                     } else {
                                         widget.set_bounds(area);
-                                        widget.draw(painter, f, area, selected_id == node);
+                                        widget.draw(painter, f, area, selected_id == node, false);
                                     }
                                 }
                             }

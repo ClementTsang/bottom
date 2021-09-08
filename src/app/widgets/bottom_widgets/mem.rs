@@ -87,9 +87,13 @@ impl Widget for MemGraph {
 
     fn draw<B: Backend>(
         &mut self, painter: &crate::canvas::Painter, f: &mut tui::Frame<'_, B>, area: Rect,
-        selected: bool,
+        selected: bool, expanded: bool,
     ) {
-        let block = self.block().selected(selected).build(painter);
+        let block = self
+            .block()
+            .selected(selected)
+            .expanded(expanded)
+            .build(painter, area);
 
         let mut chart_data = Vec::with_capacity(2);
         if let Some((label_percent, label_frac)) = &self.mem_labels {

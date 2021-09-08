@@ -1,8 +1,11 @@
 use crossterm::event::{KeyEvent, MouseEvent};
-use tui::{backend::Backend, layout::Rect, widgets::Block, Frame};
+use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::{
-    app::{event::WidgetEventResult, text_table::SimpleColumn, Component, TextTable},
+    app::{
+        event::WidgetEventResult, text_table::SimpleColumn, widgets::tui_stuff::BlockBuilder,
+        Component, TextTable,
+    },
     canvas::Painter,
 };
 
@@ -42,7 +45,7 @@ impl SortMenu {
 
     /// Draws a [`tui::widgets::Table`] on screen corresponding to the sort columns of this [`SortableTextTable`].
     pub fn draw_sort_menu<B: Backend, C: SortableColumn>(
-        &mut self, painter: &Painter, f: &mut Frame<'_, B>, columns: &[C], block: Block<'_>,
+        &mut self, painter: &Painter, f: &mut Frame<'_, B>, columns: &[C], block: BlockBuilder,
         block_area: Rect,
     ) {
         self.set_bounds(block_area);
@@ -53,7 +56,7 @@ impl SortMenu {
             .collect::<Vec<_>>();
 
         self.table
-            .draw_tui_table(painter, f, &data, block, block_area, true);
+            .draw_tui_table(painter, f, &data, block, block_area, true, false);
     }
 }
 

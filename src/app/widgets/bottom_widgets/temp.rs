@@ -56,6 +56,7 @@ pub struct TempTable {
     width: LayoutRule,
     height: LayoutRule,
     block_border: Borders,
+    show_scroll_index: bool,
 }
 
 impl Default for TempTable {
@@ -74,6 +75,7 @@ impl Default for TempTable {
             width: LayoutRule::default(),
             height: LayoutRule::default(),
             block_border: Borders::ALL,
+            show_scroll_index: false,
         }
     }
 }
@@ -105,6 +107,12 @@ impl TempTable {
 
         self
     }
+
+    /// Sets whether to show the scroll index.
+    pub fn show_scroll_index(mut self, show_scroll_index: bool) -> Self {
+        self.show_scroll_index = show_scroll_index;
+        self
+    }
 }
 
 impl Component for TempTable {
@@ -132,15 +140,23 @@ impl Widget for TempTable {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        expanded: bool,
     ) {
         let block = self
             .block()
             .selected(selected)
             .borders(self.block_border)
-            .build(painter);
+            .expanded(expanded);
 
-        self.table
-            .draw_tui_table(painter, f, &self.display_data, block, area, selected);
+        self.table.draw_tui_table(
+            painter,
+            f,
+            &self.display_data,
+            block,
+            area,
+            selected,
+            self.show_scroll_index,
+        );
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {

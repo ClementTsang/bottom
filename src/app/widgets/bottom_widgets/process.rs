@@ -789,6 +789,8 @@ pub struct ProcessManager {
 
     width: LayoutRule,
     height: LayoutRule,
+
+    show_scroll_index: bool,
 }
 
 impl ProcessManager {
@@ -825,6 +827,7 @@ impl ProcessManager {
             block_border: Borders::ALL,
             width: LayoutRule::default(),
             height: LayoutRule::default(),
+            show_scroll_index: false,
         };
 
         manager.set_tree_mode(process_defaults.is_tree);
@@ -854,6 +857,12 @@ impl ProcessManager {
 
     fn set_tree_mode(&mut self, in_tree_mode: bool) {
         self.in_tree_mode = in_tree_mode;
+    }
+
+    /// Sets whether to show the scroll index.
+    pub fn show_scroll_index(mut self, show_scroll_index: bool) -> Self {
+        self.show_scroll_index = show_scroll_index;
+        self
     }
 
     fn open_search(&mut self) -> WidgetEventResult {
@@ -1147,6 +1156,7 @@ impl Widget for ProcessManager {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        expanded: bool,
     ) {
         let area = if self.show_search {
             const SEARCH_CONSTRAINTS: [Constraint; 2] = [Constraint::Min(0), Constraint::Length(4)];
@@ -1209,17 +1219,10 @@ impl Widget for ProcessManager {
                 .constraints(SORT_CONSTRAINTS)
                 .split(area);
 
-            let sort_block = Block::default()
-                .border_style(if selected {
-                    if let ProcessManagerSelection::Sort = self.selected {
-                        painter.colours.highlighted_border_style
-                    } else {
-                        painter.colours.border_style
-                    }
-                } else {
-                    painter.colours.border_style
-                })
-                .borders(Borders::ALL);
+            let sort_block = self
+                .block()
+                .selected(selected && matches!(self.selected, ProcessManagerSelection::Sort))
+                .hide_title(true);
             self.sort_menu.draw_sort_menu(
                 painter,
                 f,
@@ -1237,7 +1240,7 @@ impl Widget for ProcessManager {
             .block()
             .selected(selected && matches!(self.selected, ProcessManagerSelection::Processes))
             .borders(self.block_border)
-            .build(painter);
+            .expanded(expanded && !self.show_sort && !self.show_search);
 
         self.process_table.draw_tui_table(
             painter,
@@ -1246,6 +1249,7 @@ impl Widget for ProcessManager {
             process_block,
             area,
             selected,
+            self.show_scroll_index,
         );
     }
 

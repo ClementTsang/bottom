@@ -117,7 +117,7 @@ pub trait Widget {
     /// Returns a [`Widget`]'s "pretty" display name.
     fn get_pretty_name(&self) -> &'static str;
 
-    /// Returns a new [`BlockBuilder`], which can become a [`Block`] if [`BlockBuilder::build`] is called.
+    /// Returns a new [`BlockBuilder`], which can become a [`tui::widgets::Block`] if [`BlockBuilder::build`] is called.
     /// The default implementation builds a [`Block`] that has all 4 borders with no selection or expansion.
     fn block(&self) -> BlockBuilder {
         BlockBuilder::new(self.get_pretty_name())
@@ -126,6 +126,7 @@ pub trait Widget {
     /// Draws a [`Widget`]. The default implementation draws nothing.
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        expanded: bool,
     ) {
     }
 

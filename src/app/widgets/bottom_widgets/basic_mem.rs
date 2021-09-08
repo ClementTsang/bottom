@@ -8,8 +8,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::WidgetEventResult, widgets::tui_stuff::PipeGauge, Component, DataCollection,
-        Widget,
+        event::WidgetEventResult, widgets::tui_stuff::PipeGauge, Component, DataCollection, Widget,
     },
     canvas::Painter,
     constants::SIDE_BORDERS,
@@ -73,6 +72,7 @@ impl Widget for BasicMem {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        _expanded: bool,
     ) {
         let block = Block::default()
             .borders(*SIDE_BORDERS)

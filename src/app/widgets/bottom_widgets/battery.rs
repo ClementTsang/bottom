@@ -177,12 +177,14 @@ impl Widget for BatteryTable {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        expanded: bool,
     ) {
         let block = self
             .block()
             .selected(selected)
             .borders(self.block_border)
-            .build(painter);
+            .expanded(expanded)
+            .build(painter, area);
 
         let inner_area = block.inner(area);
         const CONSTRAINTS: [Constraint; 2] = [Constraint::Length(1), Constraint::Min(0)];

@@ -67,6 +67,15 @@ impl Scrollable {
         self.current_index
     }
 
+    /// Returns the text indicator [`String`].
+    pub fn text_indicator(&self) -> String {
+        format!(
+            "({} of {})",
+            min(self.current_index + 1, self.num_items),
+            self.num_items
+        )
+    }
+
     /// Returns the start of the [`Scrollable`] when displayed.
     pub fn get_list_start(&mut self, num_visible_rows: usize) -> usize {
         // So it's probably confusing - what is the "window index"?

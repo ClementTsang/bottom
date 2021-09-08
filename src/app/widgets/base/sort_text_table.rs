@@ -1,11 +1,12 @@
 use std::borrow::Cow;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
-use tui::{backend::Backend, layout::Rect, widgets::Block, Frame};
+use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::{
     app::{
         event::{ReturnSignal, WidgetEventResult},
+        widgets::tui_stuff::BlockBuilder,
         Component, TextTable,
     },
     canvas::Painter,
@@ -371,10 +372,18 @@ where
     /// it will only create as many columns as it can grab data from both sources from.
     pub fn draw_tui_table<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableDataRef,
-        block: Block<'_>, block_area: Rect, show_selected_entry: bool,
+        block: BlockBuilder, block_area: Rect, show_selected_entry: bool,
+        show_scroll_position: bool,
     ) {
-        self.table
-            .draw_tui_table(painter, f, data, block, block_area, show_selected_entry);
+        self.table.draw_tui_table(
+            painter,
+            f,
+            data,
+            block,
+            block_area,
+            show_selected_entry,
+            show_scroll_position,
+        );
     }
 }
 

@@ -68,6 +68,7 @@ impl Widget for BasicNet {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        _expanded: bool,
     ) {
         let block = Block::default()
             .borders(*SIDE_BORDERS)

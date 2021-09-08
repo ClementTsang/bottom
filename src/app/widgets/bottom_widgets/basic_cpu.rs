@@ -59,6 +59,7 @@ impl Widget for BasicCpu {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        _expanded: bool,
     ) {
         const CONSTRAINTS: [Constraint; 2 * REQUIRED_COLUMNS - 1] = [
             Constraint::Ratio(1, REQUIRED_COLUMNS as u32),

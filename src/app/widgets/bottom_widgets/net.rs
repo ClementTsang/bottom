@@ -3,14 +3,14 @@ use std::{borrow::Cow, collections::HashMap, time::Instant};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Block, Borders},
     Frame,
 };
 
 use crate::{
     app::{
         data_farmer::DataCollection, text_table::SimpleColumn, time_graph::TimeGraphData,
-        AppConfigFields, AxisScaling, Component, TextTable, TimeGraph, Widget,
+        widgets::tui_stuff::BlockBuilder, AppConfigFields, AxisScaling, Component, TextTable,
+        TimeGraph, Widget,
     },
     canvas::Painter,
     data_conversion::convert_network_data_points,
@@ -517,8 +517,13 @@ impl Widget for NetGraph {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        expanded: bool,
     ) {
-        let block = self.block().selected(selected).build(painter);
+        let block = self
+            .block()
+            .selected(selected)
+            .expanded(expanded)
+            .build(painter, area);
 
         self.set_draw_cache();
 
@@ -660,6 +665,7 @@ impl Widget for OldNetGraph {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        expanded: bool,
     ) {
         const CONSTRAINTS: [Constraint; 2] = [Constraint::Min(0), Constraint::Length(4)];
 
@@ -671,15 +677,10 @@ impl Widget for OldNetGraph {
         let graph_area = split_area[0];
         let table_area = split_area[1];
 
-        self.net_graph.draw(painter, f, graph_area, selected);
+        self.net_graph
+            .draw(painter, f, graph_area, selected, expanded);
 
-        let table_block = Block::default()
-            .border_style(if selected {
-                painter.colours.highlighted_border_style
-            } else {
-                painter.colours.border_style
-            })
-            .borders(Borders::ALL);
+        let table_block = BlockBuilder::new("").hide_title(true);
 
         self.table.draw_tui_table(
             painter,
@@ -701,6 +702,7 @@ impl Widget for OldNetGraph {
             table_block,
             table_area,
             selected,
+            false,
         );
     }
 

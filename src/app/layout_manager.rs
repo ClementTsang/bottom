@@ -1140,6 +1140,7 @@ pub fn create_layout_tree(
                         .width(width)
                         .height(height)
                         .basic_mode(app_config_fields.use_basic_mode)
+                        .show_scroll_index(app_config_fields.show_table_scroll_position)
                         .into(),
                 );
             }
@@ -1151,6 +1152,7 @@ pub fn create_layout_tree(
                         .width(width)
                         .height(height)
                         .basic_mode(app_config_fields.use_basic_mode)
+                        .show_scroll_index(app_config_fields.show_table_scroll_position)
                         .into(),
                 );
             }
@@ -1161,6 +1163,7 @@ pub fn create_layout_tree(
                         .width(width)
                         .height(height)
                         .basic_mode(app_config_fields.use_basic_mode)
+                        .show_scroll_index(app_config_fields.show_table_scroll_position)
                         .into(),
                 );
             }

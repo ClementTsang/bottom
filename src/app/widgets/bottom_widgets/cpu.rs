@@ -4,7 +4,6 @@ use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Block, Borders},
     Frame,
 };
 
@@ -164,6 +163,7 @@ impl Widget for CpuGraph {
 
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
+        expanded: bool,
     ) {
         let constraints = {
             const CPU_LEGEND_MIN_WIDTH: u16 = 10;
@@ -230,7 +230,8 @@ impl Widget for CpuGraph {
         let graph_block = self
             .block()
             .selected(selected && matches!(&self.selected, CpuGraphSelection::Graph))
-            .build(painter);
+            .expanded(expanded)
+            .build(painter, graph_block_area);
 
         self.graph.draw_tui_chart(
             painter,
@@ -243,17 +244,11 @@ impl Widget for CpuGraph {
             graph_block_area,
         );
 
-        let legend_block = Block::default()
-            .border_style(if selected {
-                if let CpuGraphSelection::Legend = &self.selected {
-                    painter.colours.highlighted_border_style
-                } else {
-                    painter.colours.border_style
-                }
-            } else {
-                painter.colours.border_style
-            })
-            .borders(Borders::ALL);
+        let legend_block = self
+            .block()
+            .selected(selected && matches!(&self.selected, CpuGraphSelection::Legend))
+            .expanded(expanded)
+            .hide_title(true);
 
         let legend_data = self
             .display_data
@@ -294,6 +289,7 @@ impl Widget for CpuGraph {
             legend_block,
             legend_block_area,
             true,
+            false,
         );
     }
 

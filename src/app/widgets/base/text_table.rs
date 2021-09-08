@@ -9,13 +9,13 @@ use tui::{
     layout::{Constraint, Rect},
     style::Style,
     text::Text,
-    widgets::{Block, Table},
+    widgets::Table,
     Frame,
 };
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{event::WidgetEventResult, Component, Scrollable},
+    app::{event::WidgetEventResult, widgets::tui_stuff::BlockBuilder, Component, Scrollable},
     canvas::Painter,
     constants::TABLE_GAP_HEIGHT_LIMIT,
 };
@@ -381,9 +381,20 @@ where
     /// Draws a [`Table`] on screen corresponding to the [`TextTable`].
     pub fn draw_tui_table<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, data: &TextTableDataRef,
-        block: Block<'_>, block_area: Rect, show_selected_entry: bool,
+        block: BlockBuilder, block_area: Rect, show_selected_entry: bool,
+        show_scroll_position: bool,
     ) {
         use tui::widgets::Row;
+
+        self.set_num_items(data.len());
+
+        let block = block
+            .extra_text(if show_scroll_position {
+                Some(self.scrollable.text_indicator())
+            } else {
+                None
+            })
+            .build(painter, block_area);
 
         let inner_area = block.inner(block_area);
         if inner_area.height < 1 {
@@ -396,7 +407,6 @@ where
             1
         };
 
-        self.set_num_items(data.len());
         self.set_border_bounds(block_area);
         self.set_bounds(inner_area);
         let table_extras = 1 + table_gap;
