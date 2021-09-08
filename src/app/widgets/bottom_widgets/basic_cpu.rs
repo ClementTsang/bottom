@@ -8,7 +8,7 @@ use tui::{
 };
 
 use crate::{
-    app::{widgets::tui_widgets::PipeGauge, AppConfigFields, Component, DataCollection, Widget},
+    app::{widgets::tui_stuff::PipeGauge, AppConfigFields, Component, DataCollection, Widget},
     canvas::Painter,
     constants::SIDE_BORDERS,
     options::layout_options::LayoutRule,

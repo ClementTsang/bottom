@@ -1233,11 +1233,11 @@ impl Widget for ProcessManager {
             area
         };
 
-        let process_block = self.block(
-            painter,
-            selected && matches!(self.selected, ProcessManagerSelection::Processes),
-            self.block_border,
-        );
+        let process_block = self
+            .block()
+            .selected(selected && matches!(self.selected, ProcessManagerSelection::Processes))
+            .borders(self.block_border)
+            .build(painter);
 
         self.process_table.draw_tui_table(
             painter,

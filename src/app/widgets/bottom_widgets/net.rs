@@ -518,7 +518,7 @@ impl Widget for NetGraph {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let block = self.block(painter, selected, Borders::ALL);
+        let block = self.block().selected(selected).build(painter);
 
         self.set_draw_cache();
 

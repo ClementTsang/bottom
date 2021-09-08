@@ -15,7 +15,7 @@ use tui::{
 use crate::{
     app::{
         data_farmer::DataCollection, does_bound_intersect_coordinate, event::WidgetEventResult,
-        widgets::tui_widgets::PipeGauge, Component, Widget,
+        widgets::tui_stuff::PipeGauge, Component, Widget,
     },
     canvas::Painter,
     constants::TABLE_GAP_HEIGHT_LIMIT,
@@ -178,7 +178,11 @@ impl Widget for BatteryTable {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let block = self.block(painter, selected, self.block_border);
+        let block = self
+            .block()
+            .selected(selected)
+            .borders(self.block_border)
+            .build(painter);
 
         let inner_area = block.inner(area);
         const CONSTRAINTS: [Constraint; 2] = [Constraint::Length(1), Constraint::Min(0)];

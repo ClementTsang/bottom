@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::HashMap, time::Instant};
 
 use crossterm::event::{KeyEvent, MouseEvent};
-use tui::{backend::Backend, layout::Rect, widgets::Borders};
+use tui::{backend::Backend, layout::Rect};
 
 use crate::{
     app::{event::WidgetEventResult, time_graph::TimeGraphData, DataCollection},
@@ -89,7 +89,7 @@ impl Widget for MemGraph {
         &mut self, painter: &crate::canvas::Painter, f: &mut tui::Frame<'_, B>, area: Rect,
         selected: bool,
     ) {
-        let block = self.block(painter, selected, Borders::ALL);
+        let block = self.block().selected(selected).build(painter);
 
         let mut chart_data = Vec::with_capacity(2);
         if let Some((label_percent, label_frac)) = &self.mem_labels {

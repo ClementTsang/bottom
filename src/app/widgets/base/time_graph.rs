@@ -16,7 +16,7 @@ use tui::{
 use crate::{
     app::{
         event::WidgetEventResult,
-        widgets::tui_widgets::{
+        widgets::tui_stuff::{
             custom_legend_chart::{Axis, Dataset},
             TimeChart,
         },

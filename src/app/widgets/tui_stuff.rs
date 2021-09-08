@@ -3,3 +3,6 @@ pub use custom_legend_chart::TimeChart;
 
 pub mod pipe_gauge;
 pub use pipe_gauge::PipeGauge;
+
+pub mod block_builder;
+pub use block_builder::BlockBuilder;

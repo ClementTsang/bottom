@@ -227,11 +227,10 @@ impl Widget for CpuGraph {
             })
             .collect::<Vec<_>>();
 
-        let graph_block = self.block(
-            painter,
-            selected && matches!(&self.selected, CpuGraphSelection::Graph),
-            Borders::ALL,
-        );
+        let graph_block = self
+            .block()
+            .selected(selected && matches!(&self.selected, CpuGraphSelection::Graph))
+            .build(painter);
 
         self.graph.draw_tui_chart(
             painter,

@@ -133,7 +133,11 @@ impl Widget for TempTable {
     fn draw<B: Backend>(
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
     ) {
-        let block = self.block(painter, selected, self.block_border);
+        let block = self
+            .block()
+            .selected(selected)
+            .borders(self.block_border)
+            .build(painter);
 
         self.table
             .draw_tui_table(painter, f, &self.display_data, block, area, selected);

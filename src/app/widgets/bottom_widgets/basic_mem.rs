@@ -8,7 +8,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::WidgetEventResult, widgets::tui_widgets::PipeGauge, Component, DataCollection,
+        event::WidgetEventResult, widgets::tui_stuff::PipeGauge, Component, DataCollection,
         Widget,
     },
     canvas::Painter,
