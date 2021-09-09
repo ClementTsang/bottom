@@ -8,7 +8,7 @@ use unicode_segmentation::GraphemeCursor;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Block, Borders, TableState},
+    widgets::{Borders, TableState},
     Frame,
 };
 
@@ -18,6 +18,7 @@ use crate::{
         event::{MultiKey, MultiKeyResult, ReturnSignal, WidgetEventResult},
         query::*,
         text_table::DesiredColumnWidth,
+        widgets::tui_stuff::BlockBuilder,
         DataCollection,
     },
     canvas::Painter,
@@ -961,6 +962,20 @@ impl ProcessManager {
 
         WidgetEventResult::Signal(ReturnSignal::Update)
     }
+
+    fn hide_sort(&mut self) {
+        self.show_sort = false;
+        if let ProcessManagerSelection::Sort = self.selected {
+            self.selected = ProcessManagerSelection::Processes;
+        }
+    }
+
+    fn hide_search(&mut self) {
+        self.show_search = false;
+        if let ProcessManagerSelection::Search = self.selected {
+            self.selected = ProcessManagerSelection::Processes;
+        }
+    }
 }
 
 impl Component for ProcessManager {
@@ -974,19 +989,27 @@ impl Component for ProcessManager {
 
     fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
         // "Global" handling:
+
         if let KeyCode::Esc = event.code {
-            if self.show_sort {
-                self.show_sort = false;
-                if let ProcessManagerSelection::Sort = self.selected {
-                    self.selected = ProcessManagerSelection::Processes;
+            match self.selected {
+                ProcessManagerSelection::Processes => {
+                    if self.show_sort {
+                        self.hide_sort();
+                        return WidgetEventResult::Redraw;
+                    } else if self.show_search {
+                        self.hide_search();
+                        return WidgetEventResult::Redraw;
+                    }
                 }
-                return WidgetEventResult::Redraw;
-            } else if self.show_search {
-                self.show_search = false;
-                if let ProcessManagerSelection::Search = self.selected {
-                    self.selected = ProcessManagerSelection::Processes;
+                ProcessManagerSelection::Sort if self.show_sort => {
+                    self.hide_sort();
+                    return WidgetEventResult::Redraw;
                 }
-                return WidgetEventResult::Redraw;
+                ProcessManagerSelection::Search if self.show_search => {
+                    self.hide_search();
+                    return WidgetEventResult::Redraw;
+                }
+                _ => {}
             }
         }
 
@@ -1159,28 +1182,30 @@ impl Widget for ProcessManager {
         expanded: bool,
     ) {
         let area = if self.show_search {
-            const SEARCH_CONSTRAINTS: [Constraint; 2] = [Constraint::Min(0), Constraint::Length(4)];
+            let search_constraints: [Constraint; 2] = [
+                Constraint::Min(0),
+                if self.block_border.contains(Borders::TOP) {
+                    Constraint::Length(4)
+                } else {
+                    Constraint::Length(2)
+                },
+            ];
             const INTERNAL_SEARCH_CONSTRAINTS: [Constraint; 2] = [Constraint::Length(1); 2];
 
             let vertical_split_area = Layout::default()
                 .margin(0)
                 .direction(Direction::Vertical)
-                .constraints(SEARCH_CONSTRAINTS)
+                .constraints(search_constraints)
                 .split(area);
 
-            let is_search_selected = if selected {
-                matches!(self.selected, ProcessManagerSelection::Search)
-            } else {
-                false
-            };
+            let is_search_selected =
+                selected && matches!(self.selected, ProcessManagerSelection::Search);
 
-            let search_block = Block::default()
-                .border_style(if is_search_selected {
-                    painter.colours.highlighted_border_style
-                } else {
-                    painter.colours.border_style
-                })
-                .borders(Borders::ALL);
+            // TODO: [Redesign] this currently uses a separate box - maybe fold this into the main box?
+            let search_block = BlockBuilder::new("")
+                .selected(is_search_selected)
+                .hide_title(true)
+                .build(painter, vertical_split_area[1]);
 
             self.search_block_bounds = vertical_split_area[1];
 
