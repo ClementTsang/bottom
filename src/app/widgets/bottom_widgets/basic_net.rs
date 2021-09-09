@@ -109,7 +109,6 @@ impl Widget for BasicNet {
     fn update_data(&mut self, data_collection: &DataCollection) {
         let network_data = convert_network_data_points(
             data_collection,
-            false, // TODO: I think the is_frozen here is also useless; see mem and cpu
             true,
             &AxisScaling::Linear,
             &self.unit_type,

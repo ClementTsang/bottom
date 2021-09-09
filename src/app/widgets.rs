@@ -149,6 +149,9 @@ pub trait Widget {
     fn selectable_type(&self) -> SelectableType {
         SelectableType::Selectable
     }
+
+    /// Resets state in a [`Widget`]; used when a reset signal is given. The default implementation does nothing.
+    fn reset(&mut self) {}
 }
 
 /// Whether a widget can be selected, not selected, or redirected upon selection.

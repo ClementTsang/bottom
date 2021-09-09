@@ -15,7 +15,7 @@ use tui::{
 use crate::{
     app::{
         data_harvester::processes::ProcessHarvest,
-        event::{MultiKey, MultiKeyResult, ReturnSignal, WidgetEventResult},
+        event::{MultiKey, MultiKeyResult, ReturnSignal, SelectionAction, WidgetEventResult},
         query::*,
         text_table::DesiredColumnWidth,
         widgets::tui_stuff::BlockBuilder,
@@ -575,6 +575,7 @@ impl ProcState {
 }
 
 /// The currently selected part of a [`ProcessManager`]
+#[derive(PartialEq, Eq, Clone, Copy)]
 enum ProcessManagerSelection {
     Processes,
     Sort,
@@ -775,6 +776,7 @@ pub struct ProcessManager {
     dd_multi: MultiKey,
 
     selected: ProcessManagerSelection,
+    prev_selected: ProcessManagerSelection,
 
     in_tree_mode: bool,
     show_sort: bool,
@@ -819,6 +821,7 @@ impl ProcessManager {
             search_block_bounds: Rect::default(),
             dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: Maybe use something static...
             selected: ProcessManagerSelection::Processes,
+            prev_selected: ProcessManagerSelection::Processes,
             in_tree_mode: false,
             show_sort: false,
             show_search: false,
@@ -871,6 +874,7 @@ impl ProcessManager {
             WidgetEventResult::NoRedraw
         } else {
             self.show_search = true;
+            self.prev_selected = self.selected;
             self.selected = ProcessManagerSelection::Search;
             WidgetEventResult::Redraw
         }
@@ -883,6 +887,7 @@ impl ProcessManager {
             self.sort_menu
                 .set_index(self.process_table.current_sorting_column_index());
             self.show_sort = true;
+            self.prev_selected = self.selected;
             self.selected = ProcessManagerSelection::Sort;
             WidgetEventResult::Redraw
         }
@@ -966,6 +971,7 @@ impl ProcessManager {
     fn hide_sort(&mut self) {
         self.show_sort = false;
         if let ProcessManagerSelection::Sort = self.selected {
+            self.prev_selected = self.selected;
             self.selected = ProcessManagerSelection::Processes;
         }
     }
@@ -973,6 +979,7 @@ impl ProcessManager {
     fn hide_search(&mut self) {
         self.show_search = false;
         if let ProcessManagerSelection::Search = self.selected {
+            self.prev_selected = self.selected;
             self.selected = ProcessManagerSelection::Processes;
         }
     }
@@ -1129,6 +1136,7 @@ impl Component for ProcessManager {
                     if let ProcessManagerSelection::Processes = self.selected {
                         self.process_table.handle_mouse_event(event)
                     } else {
+                        self.prev_selected = self.selected;
                         self.selected = ProcessManagerSelection::Processes;
                         match self.process_table.handle_mouse_event(event) {
                             WidgetEventResult::Quit => WidgetEventResult::Quit,
@@ -1142,6 +1150,7 @@ impl Component for ProcessManager {
                     if let ProcessManagerSelection::Sort = self.selected {
                         self.sort_menu.handle_mouse_event(event)
                     } else {
+                        self.prev_selected = self.selected;
                         self.selected = ProcessManagerSelection::Sort;
                         self.sort_menu.handle_mouse_event(event);
                         WidgetEventResult::Redraw
@@ -1154,6 +1163,7 @@ impl Component for ProcessManager {
                     if let ProcessManagerSelection::Search = self.selected {
                         self.search_input.handle_mouse_event(event)
                     } else {
+                        self.prev_selected = self.selected;
                         self.selected = ProcessManagerSelection::Search;
                         self.search_input.handle_mouse_event(event);
                         WidgetEventResult::Redraw
@@ -1261,9 +1271,11 @@ impl Widget for ProcessManager {
             area
         };
 
+        let process_selected =
+            selected && matches!(self.selected, ProcessManagerSelection::Processes);
         let process_block = self
             .block()
-            .selected(selected && matches!(self.selected, ProcessManagerSelection::Processes))
+            .selected(process_selected)
             .borders(self.block_border)
             .expanded(expanded && !self.show_sort && !self.show_search);
 
@@ -1273,7 +1285,7 @@ impl Widget for ProcessManager {
             &self.display_data,
             process_block,
             area,
-            selected,
+            process_selected,
             self.show_scroll_index,
         );
     }
@@ -1484,5 +1496,70 @@ impl Widget for ProcessManager {
 
     fn height(&self) -> LayoutRule {
         self.height
+    }
+
+    fn handle_widget_selection_left(&mut self) -> SelectionAction {
+        if self.show_sort {
+            if let ProcessManagerSelection::Processes = self.selected {
+                self.prev_selected = self.selected;
+                self.selected = ProcessManagerSelection::Sort;
+                SelectionAction::Handled
+            } else {
+                SelectionAction::NotHandled
+            }
+        } else {
+            SelectionAction::NotHandled
+        }
+    }
+
+    fn handle_widget_selection_right(&mut self) -> SelectionAction {
+        if self.show_sort {
+            if let ProcessManagerSelection::Sort = self.selected {
+                self.prev_selected = self.selected;
+                self.selected = ProcessManagerSelection::Processes;
+                SelectionAction::Handled
+            } else {
+                SelectionAction::NotHandled
+            }
+        } else {
+            SelectionAction::NotHandled
+        }
+    }
+
+    fn handle_widget_selection_up(&mut self) -> SelectionAction {
+        if self.show_search {
+            if let ProcessManagerSelection::Search = self.selected {
+                let prev = self.prev_selected;
+                self.prev_selected = self.selected;
+                if self.show_sort && prev == ProcessManagerSelection::Sort {
+                    self.selected = ProcessManagerSelection::Sort;
+                } else {
+                    self.selected = ProcessManagerSelection::Processes;
+                }
+                SelectionAction::Handled
+            } else {
+                SelectionAction::NotHandled
+            }
+        } else {
+            SelectionAction::NotHandled
+        }
+    }
+
+    fn handle_widget_selection_down(&mut self) -> SelectionAction {
+        if self.show_search {
+            if let ProcessManagerSelection::Processes = self.selected {
+                self.prev_selected = self.selected;
+                self.selected = ProcessManagerSelection::Search;
+                SelectionAction::Handled
+            } else if self.show_sort && self.selected == ProcessManagerSelection::Sort {
+                self.prev_selected = self.selected;
+                self.selected = ProcessManagerSelection::Search;
+                SelectionAction::Handled
+            } else {
+                SelectionAction::NotHandled
+            }
+        } else {
+            SelectionAction::NotHandled
+        }
     }
 }

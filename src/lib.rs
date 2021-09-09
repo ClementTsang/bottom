@@ -21,7 +21,7 @@ use std::{
 
 use crossterm::{
     event::{
-        read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
+        poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
     execute,
@@ -251,16 +251,11 @@ pub fn cleanup_terminal(
     )?;
     terminal.show_cursor()?;
 
-    // if is_debug {
-    //     let mut tmp_dir = std::env::temp_dir();
-    //     tmp_dir.push("bottom_debug.log");
-    //     println!("Your debug file is located at {:?}", tmp_dir.as_os_str());
-    // }
-
     Ok(())
 }
 
 /// Based on https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs
+#[allow(clippy::mutex_atomic)]
 pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let mut stdout = stdout();
 
@@ -307,31 +302,36 @@ pub fn create_input_thread(
                 }
             }
 
-            if let Ok(event) = read() {
-                match event {
-                    Event::Key(event) => {
-                        if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                            if sender.send(BottomEvent::KeyInput(event)).is_err() {
-                                break;
+            if let Ok(poll) = poll(Duration::from_millis(20)) {
+                if poll {
+                    if let Ok(event) = read() {
+                        match event {
+                            Event::Key(event) => {
+                                if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+                                    if sender.send(BottomEvent::KeyInput(event)).is_err() {
+                                        break;
+                                    }
+                                    keyboard_timer = Instant::now();
+                                }
                             }
-                            keyboard_timer = Instant::now();
-                        }
-                    }
-                    Event::Mouse(event) => match &event.kind {
-                        MouseEventKind::Drag(_) => {}
-                        MouseEventKind::Moved => {}
-                        _ => {
-                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-                                if sender.send(BottomEvent::MouseInput(event)).is_err() {
+                            Event::Mouse(event) => match &event.kind {
+                                MouseEventKind::Drag(_) => {}
+                                MouseEventKind::Moved => {}
+                                _ => {
+                                    if Instant::now().duration_since(mouse_timer).as_millis() >= 20
+                                    {
+                                        if sender.send(BottomEvent::MouseInput(event)).is_err() {
+                                            break;
+                                        }
+                                        mouse_timer = Instant::now();
+                                    }
+                                }
+                            },
+                            Event::Resize(width, height) => {
+                                if sender.send(BottomEvent::Resize { width, height }).is_err() {
                                     break;
                                 }
-                                mouse_timer = Instant::now();
                             }
-                        }
-                    },
-                    Event::Resize(width, height) => {
-                        if sender.send(BottomEvent::Resize { width, height }).is_err() {
-                            break;
                         }
                     }
                 }

@@ -9,7 +9,9 @@ use tui::{
 
 use crate::{
     app::{
-        event::WidgetEventResult, text_table::SimpleColumn, time_graph::TimeGraphData,
+        event::{SelectionAction, WidgetEventResult},
+        text_table::SimpleColumn,
+        time_graph::TimeGraphData,
         AppConfigFields, AppScrollWidgetState, CanvasTableWidthState, Component, DataCollection,
         TextTable, TimeGraph, Widget,
     },
@@ -47,7 +49,6 @@ impl CpuState {
 enum CpuGraphSelection {
     Graph,
     Legend,
-    None,
 }
 
 /// Whether the [`CpuGraph`]'s legend is placed on the left or right.
@@ -95,7 +96,7 @@ impl CpuGraph {
             legend_position,
             showing_avg,
             bounds: Rect::default(),
-            selected: CpuGraphSelection::None,
+            selected: CpuGraphSelection::Graph,
             display_data: Default::default(),
             load_avg_data: [0.0; 3],
             width: LayoutRule::default(),
@@ -121,7 +122,6 @@ impl Component for CpuGraph {
         match self.selected {
             CpuGraphSelection::Graph => self.graph.handle_key_event(event),
             CpuGraphSelection::Legend => self.legend.handle_key_event(event),
-            CpuGraphSelection::None => WidgetEventResult::NoRedraw,
         }
     }
 
@@ -190,6 +190,55 @@ impl Widget for CpuGraph {
             CpuGraphLegendPosition::Right => (split_area[0], split_area[1]),
         };
 
+        let legend_block = self
+            .block()
+            .selected(selected && matches!(&self.selected, CpuGraphSelection::Legend))
+            .expanded(expanded)
+            .hide_title(true);
+
+        let legend_data = self
+            .display_data
+            .iter()
+            .enumerate()
+            .map(|(cpu_index, core_data)| {
+                let style = Some(if cpu_index == 0 {
+                    painter.colours.all_colour_style
+                } else if self.showing_avg && cpu_index == 1 {
+                    painter.colours.avg_colour_style
+                } else {
+                    let cpu_style_index = if self.showing_avg {
+                        // No underflow should occur, as if cpu_index was
+                        // 1 and avg is showing, it's caught by the above case!
+                        cpu_index - 2
+                    } else {
+                        cpu_index - 1
+                    };
+                    painter.colours.cpu_colour_styles
+                        [cpu_style_index % painter.colours.cpu_colour_styles.len()]
+                });
+
+                vec![
+                    (
+                        core_data.cpu_name.clone().into(),
+                        Some(core_data.short_cpu_name.clone().into()),
+                        style,
+                    ),
+                    (core_data.legend_value.clone().into(), None, style),
+                ]
+            })
+            .collect::<Vec<_>>();
+
+        // TODO: You MUST draw the table first, otherwise the index may mismatch after a reset. This is a bad gotcha - we should look into auto-updating the table's length!
+        self.legend.draw_tui_table(
+            painter,
+            f,
+            &legend_data,
+            legend_block,
+            legend_block_area,
+            true,
+            false,
+        );
+
         const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
         let y_bound_labels: [Cow<'static, str>; 2] = ["0%".into(), "100%".into()];
 
@@ -243,59 +292,10 @@ impl Widget for CpuGraph {
             graph_block,
             graph_block_area,
         );
-
-        let legend_block = self
-            .block()
-            .selected(selected && matches!(&self.selected, CpuGraphSelection::Legend))
-            .expanded(expanded)
-            .hide_title(true);
-
-        let legend_data = self
-            .display_data
-            .iter()
-            .enumerate()
-            .map(|(cpu_index, core_data)| {
-                let style = Some(if cpu_index == 0 {
-                    painter.colours.all_colour_style
-                } else if self.showing_avg && cpu_index == 1 {
-                    painter.colours.avg_colour_style
-                } else {
-                    let cpu_style_index = if self.showing_avg {
-                        // No underflow should occur, as if cpu_index was
-                        // 1 and avg is showing, it's caught by the above case!
-                        cpu_index - 2
-                    } else {
-                        cpu_index - 1
-                    };
-                    painter.colours.cpu_colour_styles
-                        [cpu_style_index % painter.colours.cpu_colour_styles.len()]
-                });
-
-                vec![
-                    (
-                        core_data.cpu_name.clone().into(),
-                        Some(core_data.short_cpu_name.clone().into()),
-                        style,
-                    ),
-                    (core_data.legend_value.clone().into(), None, style),
-                ]
-            })
-            .collect::<Vec<_>>();
-
-        self.legend.draw_tui_table(
-            painter,
-            f,
-            &legend_data,
-            legend_block,
-            legend_block_area,
-            true,
-            false,
-        );
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {
-        // TODO: *Maybe* look into only taking in enough data for the current retention?  Though this isn't great, it means you have to be like process with the whole updating thing.
-        convert_cpu_data_points(data_collection, &mut self.display_data, false); // TODO: Again, the "is_frozen" is probably useless
+        convert_cpu_data_points(data_collection, &mut self.display_data);
         self.load_avg_data = data_collection.load_avg_harvest;
     }
 
@@ -305,5 +305,47 @@ impl Widget for CpuGraph {
 
     fn height(&self) -> LayoutRule {
         self.height
+    }
+
+    fn handle_widget_selection_left(&mut self) -> SelectionAction {
+        match self.legend_position {
+            CpuGraphLegendPosition::Left => {
+                if let CpuGraphSelection::Graph = self.selected {
+                    self.selected = CpuGraphSelection::Legend;
+                    SelectionAction::Handled
+                } else {
+                    SelectionAction::NotHandled
+                }
+            }
+            CpuGraphLegendPosition::Right => {
+                if let CpuGraphSelection::Legend = self.selected {
+                    self.selected = CpuGraphSelection::Graph;
+                    SelectionAction::Handled
+                } else {
+                    SelectionAction::NotHandled
+                }
+            }
+        }
+    }
+
+    fn handle_widget_selection_right(&mut self) -> SelectionAction {
+        match self.legend_position {
+            CpuGraphLegendPosition::Left => {
+                if let CpuGraphSelection::Legend = self.selected {
+                    self.selected = CpuGraphSelection::Graph;
+                    SelectionAction::Handled
+                } else {
+                    SelectionAction::NotHandled
+                }
+            }
+            CpuGraphLegendPosition::Right => {
+                if let CpuGraphSelection::Graph = self.selected {
+                    self.selected = CpuGraphSelection::Legend;
+                    SelectionAction::Handled
+                } else {
+                    SelectionAction::NotHandled
+                }
+            }
+        }
     }
 }

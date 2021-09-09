@@ -51,7 +51,7 @@ fn main() -> Result<()> {
 
     // Set up input handling
     let (sender, receiver) = mpsc::channel(); // FIXME: Make this bounded, prevents overloading.
-    let _input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
+    let input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop
     // TODO: Probably worth spinning this off into an async thread or something...
@@ -102,6 +102,7 @@ fn main() -> Result<()> {
     terminal.hide_cursor()?;
 
     // Set panic hook
+    // TODO: Make this close all the child threads too!
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
     // Set termination hook
@@ -135,6 +136,8 @@ fn main() -> Result<()> {
     // I think doing it in this order is safe...
     *thread_termination_lock.lock().unwrap() = true;
     thread_termination_cvar.notify_all();
+
+    let _ = input_thread.join();
     cleanup_terminal(&mut terminal)?;
 
     Ok(())

@@ -104,18 +104,28 @@ pub struct AppConfigFields {
     pub no_write: bool,
     pub show_table_scroll_position: bool,
     pub is_advanced_kill: bool,
-    // TODO: Remove these, move network details state-side.
     pub network_unit_type: DataUnit,
     pub network_scale_type: AxisScaling,
     pub network_use_binary_prefix: bool,
+}
+
+/// The [`FrozenState`] indicates whether the application state should be frozen; if it is, save a snapshot of
+/// the data collected at that instant.
+pub enum FrozenState {
+    NotFrozen,
+    Frozen(DataCollection),
+}
+
+impl Default for FrozenState {
+    fn default() -> Self {
+        Self::NotFrozen
+    }
 }
 
 pub struct AppState {
     pub dd_err: Option<String>,
 
     to_delete_process_list: Option<(String, Vec<Pid>)>,
-
-    pub is_frozen: bool,
 
     pub canvas_data: canvas::DisplayableData,
 
@@ -161,6 +171,7 @@ pub struct AppState {
     pub widget_lookup_map: FxHashMap<NodeId, TmpBottomWidget>,
     pub layout_tree: Arena<LayoutNode>,
     pub layout_tree_root: NodeId,
+    frozen_state: FrozenState,
 }
 
 impl AppState {
@@ -189,7 +200,6 @@ impl AppState {
             // Use defaults.
             dd_err: Default::default(),
             to_delete_process_list: Default::default(),
-            is_frozen: Default::default(),
             canvas_data: Default::default(),
             data_collection: Default::default(),
             is_expanded: Default::default(),
@@ -211,37 +221,30 @@ impl AppState {
             basic_mode_use_percent: Default::default(),
             is_force_redraw: Default::default(),
             is_determining_widget_boundary: Default::default(),
+            frozen_state: Default::default(),
+        }
+    }
+
+    pub fn is_frozen(&self) -> bool {
+        matches!(self.frozen_state, FrozenState::Frozen(_))
+    }
+
+    pub fn toggle_freeze(&mut self) {
+        if matches!(self.frozen_state, FrozenState::Frozen(_)) {
+            self.frozen_state = FrozenState::NotFrozen;
+        } else {
+            self.frozen_state = FrozenState::Frozen(self.data_collection.clone());
         }
     }
 
     pub fn reset(&mut self) {
-        // Reset multi
-        self.reset_multi_tap_keys();
-
-        // Reset dialog state
-        self.help_dialog_state.is_showing_help = false;
-        self.delete_dialog_state.is_showing_dd = false;
-
-        // Close all searches and reset it
-        self.proc_state
-            .widget_states
+        // Call reset on all widgets.
+        self.widget_lookup_map
             .values_mut()
-            .for_each(|state| {
-                state.process_search_state.search_state.reset();
-            });
-        self.proc_state.force_update_all = true;
-
-        // Clear current delete list
-        self.to_delete_process_list = None;
-        self.dd_err = None;
+            .for_each(|widget| widget.reset());
 
         // Unfreeze.
-        self.is_frozen = false;
-
-        // Reset zoom
-        self.reset_cpu_zoom();
-        self.reset_mem_zoom();
-        self.reset_net_zoom();
+        self.frozen_state = FrozenState::NotFrozen;
 
         // Reset data
         self.data_collection.reset();
@@ -259,10 +262,77 @@ impl AppState {
         self.dd_err = None;
     }
 
+    /// Handles a global event involving a char.
+    fn handle_global_char(&mut self, c: char) -> EventResult {
+        if c.is_ascii_control() {
+            EventResult::NoRedraw
+        } else {
+            // Check for case-sensitive bindings first.
+            match c {
+                'H' | 'A' => self.move_to_widget(MovementDirection::Left),
+                'L' | 'D' => self.move_to_widget(MovementDirection::Right),
+                'K' | 'W' => self.move_to_widget(MovementDirection::Up),
+                'J' | 'S' => self.move_to_widget(MovementDirection::Down),
+                _ => {
+                    let c = c.to_ascii_lowercase();
+                    match c {
+                        'q' => EventResult::Quit,
+                        'e' => {
+                            if self.app_config_fields.use_basic_mode {
+                                EventResult::NoRedraw
+                            } else {
+                                self.is_expanded = !self.is_expanded;
+                                EventResult::Redraw
+                            }
+                        }
+                        '?' => {
+                            self.help_dialog_state.is_showing_help = true;
+                            EventResult::Redraw
+                        }
+                        'f' => {
+                            self.toggle_freeze();
+                            if !self.is_frozen() {
+                                let data_collection = &self.data_collection;
+                                self.widget_lookup_map
+                                    .iter_mut()
+                                    .for_each(|(_id, widget)| widget.update_data(data_collection));
+                            }
+                            EventResult::Redraw
+                        }
+                        _ => EventResult::NoRedraw,
+                    }
+                }
+            }
+        }
+    }
+
+    /// Moves to a widget.
+    fn move_to_widget(&mut self, direction: MovementDirection) -> EventResult {
+        let layout_tree = &mut self.layout_tree;
+        let previous_selected = self.selected_widget;
+        if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
+            match move_widget_selection(layout_tree, widget, self.selected_widget, direction) {
+                MoveWidgetResult::ForceRedraw(new_widget_id) => {
+                    self.selected_widget = new_widget_id;
+                    EventResult::Redraw
+                }
+                MoveWidgetResult::NodeId(new_widget_id) => {
+                    self.selected_widget = new_widget_id;
+
+                    if previous_selected != self.selected_widget {
+                        EventResult::Redraw
+                    } else {
+                        EventResult::NoRedraw
+                    }
+                }
+            }
+        } else {
+            EventResult::NoRedraw
+        }
+    }
+
     /// Handles a global [`KeyEvent`], and returns an [`EventResult`].
     fn handle_global_shortcut(&mut self, event: KeyEvent) -> EventResult {
-        // TODO: Write this.
-
         if event.modifiers.is_empty() {
             match event.code {
                 KeyCode::Esc => {
@@ -280,24 +350,33 @@ impl AppState {
                         EventResult::NoRedraw
                     }
                 }
-                KeyCode::Char('q') => EventResult::Quit,
-                KeyCode::Char('e') => {
-                    if self.app_config_fields.use_basic_mode {
-                        EventResult::NoRedraw
-                    } else {
-                        self.is_expanded = !self.is_expanded;
-                        EventResult::Redraw
-                    }
-                }
-                KeyCode::Char('?') => {
-                    self.help_dialog_state.is_showing_help = true;
-                    EventResult::Redraw
-                }
+                KeyCode::Char(c) => self.handle_global_char(c),
                 _ => EventResult::NoRedraw,
             }
         } else if let KeyModifiers::CONTROL = event.modifiers {
             match event.code {
-                KeyCode::Char('c') => EventResult::Quit,
+                KeyCode::Char('c') | KeyCode::Char('C') => EventResult::Quit,
+                KeyCode::Char('r') | KeyCode::Char('R') => {
+                    self.reset();
+                    let data_collection = &self.data_collection;
+                    self.widget_lookup_map
+                        .iter_mut()
+                        .for_each(|(_id, widget)| widget.update_data(data_collection));
+                    EventResult::Redraw
+                }
+                KeyCode::Left => self.move_to_widget(MovementDirection::Left),
+                KeyCode::Right => self.move_to_widget(MovementDirection::Right),
+                KeyCode::Up => self.move_to_widget(MovementDirection::Up),
+                KeyCode::Down => self.move_to_widget(MovementDirection::Down),
+                _ => EventResult::NoRedraw,
+            }
+        } else if let KeyModifiers::SHIFT = event.modifiers {
+            match event.code {
+                KeyCode::Left => self.move_to_widget(MovementDirection::Left),
+                KeyCode::Right => self.move_to_widget(MovementDirection::Right),
+                KeyCode::Up => self.move_to_widget(MovementDirection::Up),
+                KeyCode::Down => self.move_to_widget(MovementDirection::Down),
+                KeyCode::Char(c) => self.handle_global_char(c),
                 _ => EventResult::NoRedraw,
             }
         } else {
@@ -317,7 +396,14 @@ impl AppState {
                 }
                 ReturnSignal::Update => {
                     if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-                        widget.update_data(&self.data_collection);
+                        match &self.frozen_state {
+                            FrozenState::NotFrozen => {
+                                widget.update_data(&self.data_collection);
+                            }
+                            FrozenState::Frozen(frozen_data) => {
+                                widget.update_data(frozen_data);
+                            }
+                        }
                     }
                     EventResult::Redraw
                 }
@@ -379,7 +465,11 @@ impl AppState {
                                     if was_id_already_selected {
                                         return self.convert_widget_event_result(result);
                                     } else {
-                                        // If the weren't equal, *force* a redraw.
+                                        // If the weren't equal, *force* a redraw, and correct the layout tree.
+                                        correct_layout_last_selections(
+                                            &mut self.layout_tree,
+                                            self.selected_widget,
+                                        );
                                         let _ = self.convert_widget_event_result(result);
                                         return EventResult::Redraw;
                                     }
@@ -402,7 +492,7 @@ impl AppState {
             BottomEvent::Update(new_data) => {
                 self.data_collection.eat_data(new_data);
 
-                if !self.is_frozen {
+                if !self.is_frozen() {
                     let data_collection = &self.data_collection;
                     self.widget_lookup_map
                         .iter_mut()
@@ -1599,12 +1689,7 @@ impl AppState {
             'G' => self.skip_to_last(),
             'k' => self.on_up_key(),
             'j' => self.on_down_key(),
-            'f' => {
-                self.is_frozen = !self.is_frozen;
-                if self.is_frozen {
-                    self.data_collection.set_frozen_time();
-                }
-            }
+            'f' => {}
             'C' => {
                 // self.open_config(),
             }

@@ -189,17 +189,9 @@ pub fn convert_disk_row(current_data: &DataCollection) -> TextTableData {
 }
 
 pub fn convert_cpu_data_points(
-    current_data: &DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>, is_frozen: bool,
+    current_data: &DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
 ) {
-    let current_time = if is_frozen {
-        if let Some(frozen_instant) = current_data.frozen_instant {
-            frozen_instant
-        } else {
-            current_data.current_instant
-        }
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     // Initialize cpu_data_vector if the lengths don't match...
     if let Some((_time, data)) = &current_data.timed_data_vec.last() {
@@ -250,34 +242,32 @@ pub fn convert_cpu_data_points(
                     cpu.legend_value = format!("{:.0}%", cpu_usage.round());
                 });
         }
-    }
 
-    for (time, data) in &current_data.timed_data_vec {
-        let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
+        for (time, data) in &current_data.timed_data_vec {
+            let time_from_start: f64 =
+                (current_time.duration_since(*time).as_millis() as f64).floor();
 
-        for (itx, cpu) in data.cpu_data.iter().enumerate() {
-            if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                cpu_data.cpu_data.push((-time_from_start, *cpu));
+            for (itx, cpu) in data.cpu_data.iter().enumerate() {
+                if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
+                    cpu_data.cpu_data.push((-time_from_start, *cpu));
+                }
+            }
+
+            if *time == current_time {
+                break;
             }
         }
-
-        if *time == current_time {
-            break;
+    } else {
+        // No data, clear if non-empty. This is usually the case after a reset.
+        if !existing_cpu_data.is_empty() {
+            *existing_cpu_data = vec![];
         }
     }
 }
 
-pub fn convert_mem_data_points(current_data: &DataCollection, is_frozen: bool) -> Vec<Point> {
+pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if is_frozen {
-        if let Some(frozen_instant) = current_data.frozen_instant {
-            frozen_instant
-        } else {
-            current_data.current_instant
-        }
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(mem_data) = data.mem_data {
@@ -293,17 +283,9 @@ pub fn convert_mem_data_points(current_data: &DataCollection, is_frozen: bool) -
     result
 }
 
-pub fn convert_swap_data_points(current_data: &DataCollection, is_frozen: bool) -> Vec<Point> {
+pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if is_frozen {
-        if let Some(frozen_instant) = current_data.frozen_instant {
-            frozen_instant
-        } else {
-            current_data.current_instant
-        }
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(swap_data) = data.swap_data {
@@ -391,21 +373,13 @@ pub fn convert_mem_labels(
 }
 
 pub fn get_rx_tx_data_points(
-    current_data: &DataCollection, is_frozen: bool, network_scale_type: &AxisScaling,
-    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
+    current_data: &DataCollection, network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
+    network_use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
 
-    let current_time = if is_frozen {
-        if let Some(frozen_instant) = current_data.frozen_instant {
-            frozen_instant
-        } else {
-            current_data.current_instant
-        }
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
@@ -446,13 +420,11 @@ pub fn get_rx_tx_data_points(
 }
 
 pub fn convert_network_data_points(
-    current_data: &DataCollection, is_frozen: bool, need_four_points: bool,
-    network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
-    network_use_binary_prefix: bool,
+    current_data: &DataCollection, need_four_points: bool, network_scale_type: &AxisScaling,
+    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
     let (rx, tx) = get_rx_tx_data_points(
         current_data,
-        is_frozen,
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,

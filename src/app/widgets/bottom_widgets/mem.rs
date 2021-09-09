@@ -129,8 +129,8 @@ impl Widget for MemGraph {
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {
-        self.mem_data = convert_mem_data_points(data_collection, false); // TODO: I think the "is_frozen" part is useless... it's always false now.
-        self.swap_data = convert_swap_data_points(data_collection, false);
+        self.mem_data = convert_mem_data_points(data_collection);
+        self.swap_data = convert_swap_data_points(data_collection);
         let (memory_labels, swap_labels) = convert_mem_labels(data_collection);
 
         self.mem_labels = memory_labels;

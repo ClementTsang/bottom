@@ -568,7 +568,6 @@ impl Widget for NetGraph {
     fn update_data(&mut self, data_collection: &DataCollection) {
         let network_data = convert_network_data_points(
             data_collection,
-            false, // TODO: I think the is_frozen here is also useless; see mem and cpu
             false,
             &self.scale_type,
             &self.unit_type,
@@ -709,7 +708,6 @@ impl Widget for OldNetGraph {
     fn update_data(&mut self, data_collection: &DataCollection) {
         let network_data = convert_network_data_points(
             data_collection,
-            false, // TODO: I think the is_frozen here is also useless; see mem and cpu
             true,
             &self.net_graph.scale_type,
             &self.net_graph.unit_type,

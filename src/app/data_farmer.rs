@@ -26,7 +26,7 @@ use regex::Regex;
 pub type TimeOffset = f64;
 pub type Value = f64;
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct TimedData {
     pub rx_data: Value,
     pub tx_data: Value,
@@ -41,14 +41,14 @@ pub struct TimedData {
 /// collected, and what is needed to convert into a displayable form.
 ///
 /// If the app is *frozen* - that is, we do not want to *display* any changing
-/// data, keep updating this, don't convert to canvas displayable data!
+/// data, keep updating this. As of 2021-09-08, we just clone the current collection
+/// when it freezes to have a snapshot floating around.
 ///
 /// Note that with this method, the *app* thread is responsible for cleaning -
 /// not the data collector.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct DataCollection {
     pub current_instant: Instant,
-    pub frozen_instant: Option<Instant>,
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: memory::MemHarvest,
@@ -70,7 +70,6 @@ impl Default for DataCollection {
     fn default() -> Self {
         DataCollection {
             current_instant: Instant::now(),
-            frozen_instant: None,
             timed_data_vec: Vec::default(),
             network_harvest: network::NetworkHarvest::default(),
             memory_harvest: memory::MemHarvest::default(),
@@ -92,21 +91,19 @@ impl Default for DataCollection {
 
 impl DataCollection {
     pub fn reset(&mut self) {
-        self.timed_data_vec = Vec::default();
-        self.network_harvest = network::NetworkHarvest::default();
-        self.memory_harvest = memory::MemHarvest::default();
-        self.swap_harvest = memory::MemHarvest::default();
-        self.cpu_harvest = cpu::CpuHarvest::default();
-        self.process_harvest = Vec::default();
-        self.disk_harvest = Vec::default();
-        self.io_harvest = disks::IoHarvest::default();
-        self.io_labels_and_prev = Vec::default();
-        self.temp_harvest = Vec::default();
-        self.battery_harvest = Vec::default();
-    }
-
-    pub fn set_frozen_time(&mut self) {
-        self.frozen_instant = Some(self.current_instant);
+        self.timed_data_vec = Default::default();
+        self.network_harvest = Default::default();
+        self.memory_harvest = Default::default();
+        self.swap_harvest = Default::default();
+        self.cpu_harvest = Default::default();
+        self.process_harvest = Default::default();
+        self.process_name_pid_map = Default::default();
+        self.process_cmd_pid_map = Default::default();
+        self.disk_harvest = Default::default();
+        self.io_harvest = Default::default();
+        self.io_labels_and_prev = Default::default();
+        self.temp_harvest = Default::default();
+        self.battery_harvest = Default::default();
     }
 
     pub fn clean_data(&mut self, max_time_millis: u64) {

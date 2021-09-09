@@ -45,7 +45,7 @@ pub enum WidgetEventResult {
 
 /// How a widget should handle a widget selection request.
 pub enum SelectionAction {
-    /// This event occurs if the widget internally handled the selection action.
+    /// This event occurs if the widget internally handled the selection action. A redraw is required.
     Handled,
     /// This event occurs if the widget did not handle the selection action; the caller must handle it.
     NotHandled,

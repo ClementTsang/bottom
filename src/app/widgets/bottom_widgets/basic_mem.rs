@@ -129,7 +129,7 @@ impl Widget for BasicMem {
 
         // TODO: [Data update optimization] Probably should just make another function altogether for basic mode.
         self.mem_data = if let (Some(data), Some((_, fraction))) = (
-            convert_mem_data_points(data_collection, false).last(),
+            convert_mem_data_points(data_collection).last(),
             memory_labels,
         ) {
             (
@@ -141,7 +141,7 @@ impl Widget for BasicMem {
             (0.0, "0.0B/0.0B".to_string(), "0%".to_string())
         };
         self.swap_data = if let (Some(data), Some((_, fraction))) = (
-            convert_swap_data_points(data_collection, false).last(),
+            convert_swap_data_points(data_collection).last(),
             swap_labels,
         ) {
             Some((

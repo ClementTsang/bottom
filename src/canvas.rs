@@ -207,7 +207,7 @@ impl Painter {
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::AppState,
     ) -> error::Result<()> {
         terminal.draw(|mut f| {
-            let (draw_area, frozen_draw_loc) = if app_state.is_frozen {
+            let (draw_area, frozen_draw_loc) = if app_state.is_frozen() {
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])
                     .split(f.size());
