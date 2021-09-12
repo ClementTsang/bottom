@@ -225,7 +225,7 @@ jobs:
         shell: bash
         run: |
           mkdir completion
-          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/ completion
+          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/. completion
 
       - name: Strip release binary (macOS or Linux x86-64/i686)
         if: matrix.triple.strip == true
