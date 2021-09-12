@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.6.3"
+version = "0.6.4"
 authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 edition = "2018"
 repository = "https://github.com/ClementTsang/bottom"
