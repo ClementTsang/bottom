@@ -9,15 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
-- [#557](https://github.com/ClementTsang/bottom/pull/557): Add '/s' to network usage legend.
+- [#557](https://github.com/ClementTsang/bottom/pull/557): Add '/s' to network usage legend to better indicate that it's a per-second change.
 
 ## Bug Fixes
 
-- [](): Updates the procfs library to not crash on kernel version >255.
+- [#575](https://github.com/ClementTsang/bottom/pull/575): Updates the procfs library to not crash on kernel version >255.
 
 ## Internal Changes
 
 - [#551](https://github.com/ClementTsang/bottom/pull/551): Disable AUR package generation in release pipeline since it's now in community.
+- [#570](https://github.com/ClementTsang/bottom/pull/570): Make battery features optional in compilation.
 
 ## [0.6.3] - 2021-07-18
 
