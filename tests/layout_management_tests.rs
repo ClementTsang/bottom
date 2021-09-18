@@ -1,7 +1,9 @@
 //! Mocks layout management, so we can check if we broke anything.
 
 use bottom::app::layout_manager::{BottomLayout, BottomWidgetType};
-use bottom::constants::{DEFAULT_BATTERY_LAYOUT, DEFAULT_LAYOUT, DEFAULT_WIDGET_ID};
+#[cfg(feature = "battery")]
+use bottom::constants::DEFAULT_BATTERY_LAYOUT;
+use bottom::constants::{DEFAULT_LAYOUT, DEFAULT_WIDGET_ID};
 use bottom::options::{layout_options::Row, Config};
 use bottom::utils::error;
 
@@ -126,6 +128,7 @@ fn test_default_movement() {
     );
 }
 
+#[cfg(feature = "battery")]
 #[test]
 /// Tests battery movement in the default setup.
 fn test_default_battery_movement() {
