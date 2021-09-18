@@ -198,6 +198,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "bowlofeggs",
+      "name": "Randy Barlow",
+      "avatar_url": "https://avatars.githubusercontent.com/u/354506?v=4",
+      "profile": "https://electronsweatshop.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
