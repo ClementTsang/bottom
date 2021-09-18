@@ -189,6 +189,15 @@
         "doc",
         "platform"
       ]
+    },
+    {
+      "login": "adiabatic",
+      "name": "adiabatic",
+      "avatar_url": "https://avatars.githubusercontent.com/u/101246?v=4",
+      "profile": "https://www.frogorbits.com/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
