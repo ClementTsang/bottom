@@ -1,4 +1,4 @@
-# How we deploy a release.  Covers binary builds.  Also manages packaging for winget, choco, and homebrew.
+# How we deploy a release.  Covers binary builds.  Also manages packaging for winget and choco.
 #
 # Based on https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
@@ -371,20 +371,6 @@ jobs:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: choco.zip
           asset_name: choco.zip
-          asset_content_type: application/octet-stream
-
-      - name: Execute Homebrew packaging script
-        run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/macos/homebrew/bottom.rb.template" "./bottom.rb" "SHA256" "./artifacts/bottom_x86_64-apple-darwin.tar.gz" "./artifacts/bottom_x86_64-unknown-linux-musl.tar.gz";
-
-      - name: Upload bottom.rb to release
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: bottom.rb
-          asset_name: bottom.rb
           asset_content_type: application/octet-stream
 
       - name: Compress completion files (Linux x86-64 GNU)
