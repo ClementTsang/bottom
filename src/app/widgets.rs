@@ -7,11 +7,10 @@ use tui::{backend::Backend, layout::Rect, widgets::TableState, Frame};
 
 use crate::{
     app::{
-        event::{SelectionAction, WidgetEventResult},
+        event::{ComponentEventResult, SelectionAction},
         layout_manager::BottomWidgetType,
     },
     canvas::Painter,
-    constants,
     options::layout_options::LayoutRule,
 };
 
@@ -20,12 +19,15 @@ mod tui_stuff;
 pub mod base;
 pub use base::*;
 
+pub mod dialogs;
+pub use dialogs::*;
+
 pub mod bottom_widgets;
 pub use bottom_widgets::*;
 
 use self::tui_stuff::BlockBuilder;
 
-use super::data_farmer::DataCollection;
+use super::{data_farmer::DataCollection, event::EventResult};
 
 /// A trait for things that are drawn with state.
 #[enum_dispatch]
@@ -33,16 +35,16 @@ use super::data_farmer::DataCollection;
 pub trait Component {
     /// Handles a [`KeyEvent`].
     ///
-    /// Defaults to returning [`EventResult::NoRedraw`], indicating nothing should be done.
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
-        WidgetEventResult::NoRedraw
+    /// Defaults to returning [`ComponentEventResult::Unhandled`], indicating the component does not handle this event.
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
+        ComponentEventResult::Unhandled
     }
 
     /// Handles a [`MouseEvent`].
     ///
-    /// Defaults to returning [`EventResult::Continue`], indicating nothing should be done.
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
-        WidgetEventResult::NoRedraw
+    /// Defaults to returning [`ComponentEventResult::Unhandled`], indicating the component does not handle this event.
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
+        ComponentEventResult::Unhandled
     }
 
     /// Returns a [`Component`]'s bounding box.  Note that these are defined in *global*, *absolute*
@@ -180,6 +182,41 @@ pub enum TmpBottomWidget {
     Empty,
 }
 
+/// The states a dialog can be in. Consists of either:
+/// - [`DialogState::Hidden`] - the dialog is currently not showing.
+/// - [`DialogState::Shown`] - the dialog is showing.
+#[derive(Debug)]
+pub enum DialogState<D: Default + Component> {
+    Hidden,
+    Shown(D),
+}
+
+impl<D> Default for DialogState<D>
+where
+    D: Default + Component,
+{
+    fn default() -> Self {
+        DialogState::Hidden
+    }
+}
+
+impl<D> DialogState<D>
+where
+    D: Default + Component,
+{
+    pub fn is_showing(&self) -> bool {
+        matches!(self, DialogState::Shown(_))
+    }
+
+    pub fn hide(&mut self) {
+        *self = DialogState::Hidden;
+    }
+
+    pub fn show(&mut self) {
+        *self = DialogState::Shown(D::default());
+    }
+}
+
 // ----- Old stuff below -----
 
 #[derive(Debug)]
@@ -250,7 +287,27 @@ impl Default for AppHelpDialogState {
         AppHelpDialogState {
             is_showing_help: false,
             scroll_state: ParagraphScrollState::default(),
-            index_shortcuts: vec![0; constants::HELP_TEXT.len()],
+            index_shortcuts: vec![],
+        }
+    }
+}
+
+impl AppHelpDialogState {
+    pub fn increment(&mut self) -> EventResult {
+        if self.scroll_state.current_scroll_index < self.scroll_state.max_scroll_index {
+            self.scroll_state.current_scroll_index += 1;
+            EventResult::Redraw
+        } else {
+            EventResult::NoRedraw
+        }
+    }
+
+    pub fn decrement(&mut self) -> EventResult {
+        if self.scroll_state.current_scroll_index > 0 {
+            self.scroll_state.current_scroll_index -= 1;
+            EventResult::Redraw
+        } else {
+            EventResult::NoRedraw
         }
     }
 }

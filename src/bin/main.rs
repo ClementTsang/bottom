@@ -50,7 +50,7 @@ fn main() -> Result<()> {
     let thread_termination_cvar = Arc::new(Condvar::new());
 
     // Set up input handling
-    let (sender, receiver) = mpsc::channel(); // FIXME: Make this bounded, prevents overloading.
+    let (sender, receiver) = mpsc::channel();
     let input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop

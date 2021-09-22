@@ -15,7 +15,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::WidgetEventResult,
+        event::ComponentEventResult,
         widgets::tui_stuff::{
             custom_legend_chart::{Axis, Dataset},
             TimeChart,
@@ -160,62 +160,62 @@ impl TimeGraph {
     }
 
     /// Handles a char `c`.
-    fn handle_char(&mut self, c: char) -> WidgetEventResult {
+    fn handle_char(&mut self, c: char) -> ComponentEventResult {
         match c {
             '-' => self.zoom_out(),
             '+' => self.zoom_in(),
             '=' => self.reset_zoom(),
-            _ => WidgetEventResult::NoRedraw,
+            _ => ComponentEventResult::NoRedraw,
         }
     }
 
-    fn zoom_in(&mut self) -> WidgetEventResult {
+    fn zoom_in(&mut self) -> ComponentEventResult {
         let new_time = self.current_display_time.saturating_sub(self.time_interval);
 
         if self.current_display_time == new_time {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         } else if new_time >= self.min_duration {
             self.current_display_time = new_time;
             self.autohide_timer.start_display_timer();
 
-            WidgetEventResult::Redraw
+            ComponentEventResult::Redraw
         } else if new_time != self.min_duration {
             self.current_display_time = self.min_duration;
             self.autohide_timer.start_display_timer();
 
-            WidgetEventResult::Redraw
+            ComponentEventResult::Redraw
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         }
     }
 
-    fn zoom_out(&mut self) -> WidgetEventResult {
+    fn zoom_out(&mut self) -> ComponentEventResult {
         let new_time = self.current_display_time + self.time_interval;
 
         if self.current_display_time == new_time {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         } else if new_time <= self.max_duration {
             self.current_display_time = new_time;
             self.autohide_timer.start_display_timer();
 
-            WidgetEventResult::Redraw
+            ComponentEventResult::Redraw
         } else if new_time != self.max_duration {
             self.current_display_time = self.max_duration;
             self.autohide_timer.start_display_timer();
 
-            WidgetEventResult::Redraw
+            ComponentEventResult::Redraw
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         }
     }
 
-    fn reset_zoom(&mut self) -> WidgetEventResult {
+    fn reset_zoom(&mut self) -> ComponentEventResult {
         if self.current_display_time == self.default_time_value {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         } else {
             self.current_display_time = self.default_time_value;
             self.autohide_timer.start_display_timer();
-            WidgetEventResult::Redraw
+            ComponentEventResult::Redraw
         }
     }
 
@@ -307,24 +307,24 @@ impl TimeGraph {
 }
 
 impl Component for TimeGraph {
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         use crossterm::event::KeyCode::Char;
 
         if event.modifiers == KeyModifiers::NONE || event.modifiers == KeyModifiers::SHIFT {
             match event.code {
                 Char(c) => self.handle_char(c),
-                _ => WidgetEventResult::NoRedraw,
+                _ => ComponentEventResult::Unhandled,
             }
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::Unhandled
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         match event.kind {
             MouseEventKind::ScrollDown => self.zoom_out(),
             MouseEventKind::ScrollUp => self.zoom_in(),
-            _ => WidgetEventResult::NoRedraw,
+            _ => ComponentEventResult::Unhandled,
         }
     }
 

@@ -1,5 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, time::Instant};
 
+use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -8,9 +9,9 @@ use tui::{
 
 use crate::{
     app::{
-        data_farmer::DataCollection, text_table::SimpleColumn, time_graph::TimeGraphData,
-        widgets::tui_stuff::BlockBuilder, AppConfigFields, AxisScaling, Component, TextTable,
-        TimeGraph, Widget,
+        data_farmer::DataCollection, event::ComponentEventResult, text_table::SimpleColumn,
+        time_graph::TimeGraphData, widgets::tui_stuff::BlockBuilder, AppConfigFields, AxisScaling,
+        Component, TextTable, TimeGraph, Widget,
     },
     canvas::Painter,
     data_conversion::convert_network_data_points,
@@ -497,15 +498,11 @@ impl Component for NetGraph {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(
-        &mut self, event: crossterm::event::KeyEvent,
-    ) -> crate::app::event::WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         self.graph.handle_key_event(event)
     }
 
-    fn handle_mouse_event(
-        &mut self, event: crossterm::event::MouseEvent,
-    ) -> crate::app::event::WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         self.graph.handle_mouse_event(event)
     }
 }
@@ -522,7 +519,7 @@ impl Widget for NetGraph {
         let block = self
             .block()
             .selected(selected)
-            .expanded(expanded)
+            .show_esc(expanded)
             .build(painter, area);
 
         self.set_draw_cache();
@@ -644,15 +641,11 @@ impl Component for OldNetGraph {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(
-        &mut self, event: crossterm::event::KeyEvent,
-    ) -> crate::app::event::WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         self.net_graph.handle_key_event(event)
     }
 
-    fn handle_mouse_event(
-        &mut self, event: crossterm::event::MouseEvent,
-    ) -> crate::app::event::WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         self.net_graph.handle_mouse_event(event)
     }
 }

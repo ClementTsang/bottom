@@ -10,7 +10,7 @@ use crate::canvas::Painter;
 pub struct BlockBuilder {
     borders: Borders,
     selected: bool,
-    expanded: bool,
+    show_esc: bool,
     name: &'static str,
     hide_title: bool,
     extra_text: Option<String>,
@@ -22,7 +22,7 @@ impl BlockBuilder {
         Self {
             borders: Borders::ALL,
             selected: false,
-            expanded: false,
+            show_esc: false,
             name,
             hide_title: false,
             extra_text: None,
@@ -35,9 +35,9 @@ impl BlockBuilder {
         self
     }
 
-    /// Indicates that this block is currently expanded, and should be drawn as such.
-    pub fn expanded(mut self, expanded: bool) -> Self {
-        self.expanded = expanded;
+    /// Indicates that this block should show esc, and should be drawn as such.
+    pub fn show_esc(mut self, show_esc: bool) -> Self {
+        self.show_esc = show_esc;
         self
     }
 
@@ -64,12 +64,14 @@ impl BlockBuilder {
         let has_title = !self.hide_title
             && (self.borders.contains(Borders::TOP) || self.borders.contains(Borders::BOTTOM));
 
+        let border_style = if self.selected {
+            painter.colours.highlighted_border_style
+        } else {
+            painter.colours.border_style
+        };
+
         let block = Block::default()
-            .border_style(if self.selected {
-                painter.colours.highlighted_border_style
-            } else {
-                painter.colours.border_style
-            })
+            .border_style(border_style)
             .borders(self.borders);
 
         let inner_width = block.inner(area).width as usize;
@@ -82,12 +84,11 @@ impl BlockBuilder {
             let mut title_len = name.width();
             let mut title = vec![name, Span::from(""), Span::from(""), Span::from("")];
 
-            if self.expanded {
+            if self.show_esc {
                 const EXPAND_TEXT: &str = " Esc to go back ";
                 const EXPAND_TEXT_LEN: usize = EXPAND_TEXT.len();
 
-                let expand_span =
-                    Span::styled(EXPAND_TEXT, painter.colours.highlighted_border_style);
+                let expand_span = Span::styled(EXPAND_TEXT, border_style);
 
                 if title_len + EXPAND_TEXT_LEN <= inner_width {
                     title_len += EXPAND_TEXT_LEN;
@@ -107,16 +108,9 @@ impl BlockBuilder {
                 }
             }
 
-            if self.expanded {
+            if self.show_esc {
                 let difference = inner_width.saturating_sub(title_len);
-                title[2] = Span::styled(
-                    "─".repeat(difference),
-                    if self.selected {
-                        painter.colours.highlighted_border_style
-                    } else {
-                        painter.colours.border_style
-                    },
-                );
+                title[2] = Span::styled("─".repeat(difference), border_style);
             }
 
             block.title(title)

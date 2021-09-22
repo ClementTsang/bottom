@@ -27,7 +27,6 @@ use std::borrow::Cow;
 
 use crate::Pid;
 
-// TODO: Add value so we know if it's sorted ascending or descending by default?
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ProcessSorting {
     CpuPercent,

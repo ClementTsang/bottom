@@ -5,7 +5,7 @@ use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::{
     app::{
-        event::{ReturnSignal, WidgetEventResult},
+        event::{ReturnSignal, ComponentEventResult},
         widgets::tui_stuff::BlockBuilder,
         Component, TextTable,
     },
@@ -391,12 +391,12 @@ impl<S> Component for SortableTextTable<S>
 where
     S: SortableColumn,
 {
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         for (index, column) in self.table.columns.iter().enumerate() {
             if let Some((shortcut, _)) = *column.shortcut() {
                 if shortcut == event {
                     self.set_sort_index(index);
-                    return WidgetEventResult::Signal(ReturnSignal::Update);
+                    return ComponentEventResult::Signal(ReturnSignal::Update);
                 }
             }
         }
@@ -404,10 +404,10 @@ where
         self.table.scrollable.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         if let MouseEventKind::Down(MouseButton::Left) = event.kind {
             if !self.does_bounds_intersect_mouse(&event) {
-                return WidgetEventResult::NoRedraw;
+                return ComponentEventResult::NoRedraw;
             }
 
             // Note these are representing RELATIVE coordinates! They *need* the above intersection check for validity!
@@ -419,7 +419,7 @@ where
                     if let Some((start, end)) = column.get_x_bounds() {
                         if x >= start && x <= end {
                             self.set_sort_index(index);
-                            return WidgetEventResult::Signal(ReturnSignal::Update);
+                            return ComponentEventResult::Signal(ReturnSignal::Update);
                         }
                     }
                 }

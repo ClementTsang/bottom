@@ -224,15 +224,12 @@ impl DataCollection {
     }
 
     fn eat_temp(&mut self, temperature_sensors: Vec<temperature::TempHarvest>) {
-        // TODO: [PO] To implement
         self.temp_harvest = temperature_sensors.to_vec();
     }
 
     fn eat_disks(
         &mut self, disks: Vec<disks::DiskHarvest>, io: disks::IoHarvest, harvested_time: Instant,
     ) {
-        // TODO: [PO] To implement
-
         let time_since_last_harvest = harvested_time
             .duration_since(self.current_instant)
             .as_secs_f64();

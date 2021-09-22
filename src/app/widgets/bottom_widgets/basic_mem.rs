@@ -8,7 +8,8 @@ use tui::{
 
 use crate::{
     app::{
-        event::WidgetEventResult, widgets::tui_stuff::PipeGauge, Component, DataCollection, Widget,
+        event::ComponentEventResult, widgets::tui_stuff::PipeGauge, Component, DataCollection,
+        Widget,
     },
     canvas::Painter,
     constants::SIDE_BORDERS,
@@ -54,13 +55,13 @@ impl Component for BasicMem {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         match event.code {
-            KeyCode::Char('%') if event.modifiers.is_empty() => {
+            KeyCode::Char('%') => {
                 self.use_percent = !self.use_percent;
-                WidgetEventResult::Redraw
+                ComponentEventResult::Redraw
             }
-            _ => WidgetEventResult::NoRedraw,
+            _ => ComponentEventResult::Unhandled,
         }
     }
 }

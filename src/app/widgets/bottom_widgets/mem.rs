@@ -4,7 +4,7 @@ use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{backend::Backend, layout::Rect};
 
 use crate::{
-    app::{event::WidgetEventResult, time_graph::TimeGraphData, DataCollection},
+    app::{event::ComponentEventResult, time_graph::TimeGraphData, DataCollection},
     app::{Component, TimeGraph, Widget},
     data_conversion::{convert_mem_data_points, convert_mem_labels, convert_swap_data_points},
     options::layout_options::LayoutRule,
@@ -63,11 +63,11 @@ impl MemGraph {
 }
 
 impl Component for MemGraph {
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         self.graph.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         self.graph.handle_mouse_event(event)
     }
 
@@ -92,7 +92,7 @@ impl Widget for MemGraph {
         let block = self
             .block()
             .selected(selected)
-            .expanded(expanded)
+            .show_esc(expanded)
             .build(painter, area);
 
         let mut chart_data = Vec::with_capacity(2);

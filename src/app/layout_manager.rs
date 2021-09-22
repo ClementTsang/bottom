@@ -1511,7 +1511,6 @@ pub fn move_widget_selection(
                         }
                         LayoutNode::Widget(_) => {
                             // Halt!
-                            // TODO: How does this handle carousel?
                             current_id
                         }
                     }

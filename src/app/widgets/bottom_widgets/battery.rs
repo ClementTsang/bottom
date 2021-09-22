@@ -14,7 +14,7 @@ use tui::{
 
 use crate::{
     app::{
-        data_farmer::DataCollection, does_bound_intersect_coordinate, event::WidgetEventResult,
+        data_farmer::DataCollection, does_bound_intersect_coordinate, event::ComponentEventResult,
         widgets::tui_stuff::PipeGauge, Component, Widget,
     },
     canvas::Painter,
@@ -114,44 +114,44 @@ impl Component for BatteryTable {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         if event.modifiers.is_empty() {
             match event.code {
                 KeyCode::Left => {
                     let current_index = self.selected_index;
                     self.decrement_index();
                     if current_index == self.selected_index {
-                        WidgetEventResult::NoRedraw
+                        ComponentEventResult::NoRedraw
                     } else {
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 }
                 KeyCode::Right => {
                     let current_index = self.selected_index;
                     self.increment_index();
                     if current_index == self.selected_index {
-                        WidgetEventResult::NoRedraw
+                        ComponentEventResult::NoRedraw
                     } else {
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 }
-                _ => WidgetEventResult::NoRedraw,
+                _ => ComponentEventResult::Unhandled,
             }
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::Unhandled
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         for (itx, bound) in self.tab_bounds.iter().enumerate() {
             if does_bound_intersect_coordinate(event.column, event.row, *bound)
                 && itx < self.battery_data.len()
             {
                 self.selected_index = itx;
-                return WidgetEventResult::Redraw;
+                return ComponentEventResult::Redraw;
             }
         }
-        WidgetEventResult::NoRedraw
+        ComponentEventResult::Unhandled
     }
 }
 
@@ -183,7 +183,7 @@ impl Widget for BatteryTable {
             .block()
             .selected(selected)
             .borders(self.block_border)
-            .expanded(expanded)
+            .show_esc(expanded)
             .build(painter, area);
 
         let inner_area = block.inner(area);

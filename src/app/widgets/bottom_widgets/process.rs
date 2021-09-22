@@ -15,7 +15,7 @@ use tui::{
 use crate::{
     app::{
         data_harvester::processes::ProcessHarvest,
-        event::{MultiKey, MultiKeyResult, ReturnSignal, SelectionAction, WidgetEventResult},
+        event::{ComponentEventResult, MultiKey, MultiKeyResult, ReturnSignal, SelectionAction},
         query::*,
         text_table::DesiredColumnWidth,
         widgets::tui_stuff::BlockBuilder,
@@ -869,27 +869,27 @@ impl ProcessManager {
         self
     }
 
-    fn open_search(&mut self) -> WidgetEventResult {
+    fn open_search(&mut self) -> ComponentEventResult {
         if let ProcessManagerSelection::Search = self.selected {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         } else {
             self.show_search = true;
             self.prev_selected = self.selected;
             self.selected = ProcessManagerSelection::Search;
-            WidgetEventResult::Redraw
+            ComponentEventResult::Redraw
         }
     }
 
-    fn open_sort(&mut self) -> WidgetEventResult {
+    fn open_sort(&mut self) -> ComponentEventResult {
         if let ProcessManagerSelection::Sort = self.selected {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         } else {
             self.sort_menu
                 .set_index(self.process_table.current_sorting_column_index());
             self.show_sort = true;
             self.prev_selected = self.selected;
             self.selected = ProcessManagerSelection::Sort;
-            WidgetEventResult::Redraw
+            ComponentEventResult::Redraw
         }
     }
 
@@ -917,7 +917,7 @@ impl ProcessManager {
         )
     }
 
-    fn toggle_command(&mut self) -> WidgetEventResult {
+    fn toggle_command(&mut self) -> ComponentEventResult {
         if self.is_using_command() {
             self.process_table
                 .set_column(ProcessSortColumn::new(ProcessSortType::Name), 1);
@@ -929,7 +929,7 @@ impl ProcessManager {
         // Invalidate row cache.
         self.process_table.invalidate_cached_columns();
 
-        WidgetEventResult::Signal(ReturnSignal::Update)
+        ComponentEventResult::Signal(ReturnSignal::Update)
     }
 
     fn is_grouped(&self) -> bool {
@@ -939,7 +939,7 @@ impl ProcessManager {
         )
     }
 
-    fn toggle_grouped(&mut self) -> WidgetEventResult {
+    fn toggle_grouped(&mut self) -> ComponentEventResult {
         if self.is_grouped() {
             self.process_table
                 .set_column(ProcessSortColumn::new(ProcessSortType::Pid), 0);
@@ -965,7 +965,7 @@ impl ProcessManager {
         // Invalidate row cache.
         self.process_table.invalidate_cached_columns();
 
-        WidgetEventResult::Signal(ReturnSignal::Update)
+        ComponentEventResult::Signal(ReturnSignal::Update)
     }
 
     fn hide_sort(&mut self) {
@@ -994,7 +994,7 @@ impl Component for ProcessManager {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         // "Global" handling:
 
         if let KeyCode::Esc = event.code {
@@ -1002,19 +1002,19 @@ impl Component for ProcessManager {
                 ProcessManagerSelection::Processes => {
                     if self.show_sort {
                         self.hide_sort();
-                        return WidgetEventResult::Redraw;
+                        return ComponentEventResult::Redraw;
                     } else if self.show_search {
                         self.hide_search();
-                        return WidgetEventResult::Redraw;
+                        return ComponentEventResult::Redraw;
                     }
                 }
                 ProcessManagerSelection::Sort if self.show_sort => {
                     self.hide_sort();
-                    return WidgetEventResult::Redraw;
+                    return ComponentEventResult::Redraw;
                 }
                 ProcessManagerSelection::Search if self.show_search => {
                     self.hide_search();
-                    return WidgetEventResult::Redraw;
+                    return ComponentEventResult::Redraw;
                 }
                 _ => {}
             }
@@ -1039,7 +1039,7 @@ impl Component for ProcessManager {
                                     // Kill the selected process(es)
                                 }
                                 MultiKeyResult::Accepted | MultiKeyResult::Rejected => {
-                                    return WidgetEventResult::NoRedraw;
+                                    return ComponentEventResult::NoRedraw;
                                 }
                             }
                         }
@@ -1057,7 +1057,7 @@ impl Component for ProcessManager {
                         }
                         KeyCode::Char('t') | KeyCode::F(5) => {
                             self.in_tree_mode = !self.in_tree_mode;
-                            return WidgetEventResult::Redraw;
+                            return ComponentEventResult::Redraw;
                         }
                         KeyCode::Char('s') | KeyCode::F(6) => {
                             return self.open_sort();
@@ -1086,7 +1086,7 @@ impl Component for ProcessManager {
                         KeyCode::Enter => {
                             self.process_table
                                 .set_sort_index(self.sort_menu.current_index());
-                            return WidgetEventResult::Signal(ReturnSignal::Update);
+                            return ComponentEventResult::Signal(ReturnSignal::Update);
                         }
                         KeyCode::Char('/') => {
                             return self.open_search();
@@ -1115,7 +1115,7 @@ impl Component for ProcessManager {
                 }
 
                 let handle_output = self.search_input.handle_key_event(event);
-                if let WidgetEventResult::Signal(ReturnSignal::Update) = handle_output {
+                if let ComponentEventResult::Signal(ReturnSignal::Update) = handle_output {
                     self.process_filter = Some(parse_query(
                         self.search_input.query(),
                         self.is_searching_whole_word(),
@@ -1129,7 +1129,7 @@ impl Component for ProcessManager {
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         match &event.kind {
             MouseEventKind::Down(MouseButton::Left) => {
                 if self.process_table.does_border_intersect_mouse(&event) {
@@ -1139,11 +1139,10 @@ impl Component for ProcessManager {
                         self.prev_selected = self.selected;
                         self.selected = ProcessManagerSelection::Processes;
                         match self.process_table.handle_mouse_event(event) {
-                            WidgetEventResult::Quit => WidgetEventResult::Quit,
-                            WidgetEventResult::Redraw | WidgetEventResult::NoRedraw => {
-                                WidgetEventResult::Redraw
-                            }
-                            WidgetEventResult::Signal(s) => WidgetEventResult::Signal(s),
+                            ComponentEventResult::Unhandled
+                            | ComponentEventResult::Redraw
+                            | ComponentEventResult::NoRedraw => ComponentEventResult::Redraw,
+                            ComponentEventResult::Signal(s) => ComponentEventResult::Signal(s),
                         }
                     }
                 } else if self.sort_menu.does_border_intersect_mouse(&event) {
@@ -1153,7 +1152,7 @@ impl Component for ProcessManager {
                         self.prev_selected = self.selected;
                         self.selected = ProcessManagerSelection::Sort;
                         self.sort_menu.handle_mouse_event(event);
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 } else if does_bound_intersect_coordinate(
                     event.column,
@@ -1166,10 +1165,10 @@ impl Component for ProcessManager {
                         self.prev_selected = self.selected;
                         self.selected = ProcessManagerSelection::Search;
                         self.search_input.handle_mouse_event(event);
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 } else {
-                    WidgetEventResult::NoRedraw
+                    ComponentEventResult::Unhandled
                 }
             }
             MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => match self.selected {
@@ -1177,7 +1176,7 @@ impl Component for ProcessManager {
                 ProcessManagerSelection::Sort => self.sort_menu.handle_mouse_event(event),
                 ProcessManagerSelection::Search => self.search_input.handle_mouse_event(event),
             },
-            _ => WidgetEventResult::NoRedraw,
+            _ => ComponentEventResult::Unhandled,
         }
     }
 }
@@ -1195,9 +1194,9 @@ impl Widget for ProcessManager {
             let search_constraints: [Constraint; 2] = [
                 Constraint::Min(0),
                 if self.block_border.contains(Borders::TOP) {
-                    Constraint::Length(4)
+                    Constraint::Length(5)
                 } else {
-                    Constraint::Length(2)
+                    Constraint::Length(3)
                 },
             ];
             const INTERNAL_SEARCH_CONSTRAINTS: [Constraint; 2] = [Constraint::Length(1); 2];
@@ -1277,7 +1276,7 @@ impl Widget for ProcessManager {
             .block()
             .selected(process_selected)
             .borders(self.block_border)
-            .expanded(expanded && !self.show_sort && !self.show_search);
+            .show_esc(expanded && !self.show_sort && !self.show_search);
 
         self.process_table.draw_tui_table(
             painter,

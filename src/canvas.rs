@@ -5,7 +5,7 @@ use indextree::{Arena, NodeId};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    text::{Span, Spans},
+    text::Span,
     widgets::Paragraph,
     Frame, Terminal,
 };
@@ -19,7 +19,7 @@ use crate::{
         layout_manager::{generate_layout, ColLayout, LayoutNode, RowLayout},
         text_table::TextTableData,
         widgets::{Component, Widget},
-        TmpBottomWidget,
+        DialogState, TmpBottomWidget,
     },
     constants::*,
     data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
@@ -92,14 +92,12 @@ impl FromStr for ColourScheme {
 /// Handles the canvas' state.
 pub struct Painter {
     pub colours: CanvasColours,
-    styled_help_text: Vec<Spans<'static>>,
 }
 
 impl Painter {
     pub fn init(config: &Config, colour_scheme: ColourScheme) -> anyhow::Result<Self> {
         let mut painter = Painter {
             colours: CanvasColours::default(),
-            styled_help_text: Vec::default(),
         };
 
         if let ColourScheme::Custom = colour_scheme {
@@ -107,7 +105,6 @@ impl Painter {
         } else {
             painter.generate_colour_scheme(colour_scheme)?;
         }
-        painter.complete_painter_init();
 
         Ok(painter)
     }
@@ -153,43 +150,6 @@ impl Painter {
         Ok(())
     }
 
-    /// Must be run once before drawing, but after setting colours.
-    /// This is to set some remaining styles and text.
-    fn complete_painter_init(&mut self) {
-        let mut styled_help_spans = Vec::new();
-
-        // Init help text:
-        (*HELP_TEXT).iter().enumerate().for_each(|(itx, section)| {
-            if itx == 0 {
-                styled_help_spans.extend(
-                    section
-                        .iter()
-                        .map(|&text| Span::styled(text, self.colours.text_style))
-                        .collect::<Vec<_>>(),
-                );
-            } else {
-                // Not required check but it runs only a few times... so whatever ig, prevents me from
-                // being dumb and leaving a help text section only one line long.
-                if section.len() > 1 {
-                    styled_help_spans.push(Span::raw(""));
-                    styled_help_spans
-                        .push(Span::styled(section[0], self.colours.table_header_style));
-                    styled_help_spans.extend(
-                        section[1..]
-                            .iter()
-                            .map(|&text| Span::styled(text, self.colours.text_style))
-                            .collect::<Vec<_>>(),
-                    );
-                }
-            }
-        });
-
-        self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
-    }
-
-    // TODO: [CONFIG] write this, should call painter init and any changed colour functions...
-    pub fn update_painter_colours(&mut self) {}
-
     fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {
         f.render_widget(
             Paragraph::new(Span::styled(
@@ -218,7 +178,7 @@ impl Painter {
             let terminal_height = draw_area.height;
             let terminal_width = draw_area.width;
 
-            if app_state.help_dialog_state.is_showing_help {
+            if let DialogState::Shown(help_dialog) = &mut app_state.help_dialog {
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
                 let vertical_dialog_chunk = Layout::default()
@@ -248,7 +208,7 @@ impl Painter {
                     })
                     .split(vertical_dialog_chunk[1]);
 
-                self.draw_help_dialog(&mut f, app_state, middle_dialog_chunk[1]);
+                help_dialog.draw_help(&self, f, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
                 // TODO: This needs the paragraph wrap feature from tui-rs to be pushed to complete... but for now it's pretty close!
                 // The main problem right now is that I cannot properly calculate the height offset since

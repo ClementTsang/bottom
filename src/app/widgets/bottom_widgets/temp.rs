@@ -6,8 +6,9 @@ use tui::{backend::Backend, layout::Rect, widgets::Borders, Frame};
 use crate::{
     app::{
         data_farmer::DataCollection, data_harvester::temperature::TemperatureType,
-        event::WidgetEventResult, sort_text_table::SimpleSortableColumn, text_table::TextTableData,
-        AppScrollWidgetState, CanvasTableWidthState, Component, TextTable, Widget,
+        event::ComponentEventResult, sort_text_table::SimpleSortableColumn,
+        text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component,
+        TextTable, Widget,
     },
     canvas::Painter,
     data_conversion::convert_temp_row,
@@ -116,11 +117,11 @@ impl TempTable {
 }
 
 impl Component for TempTable {
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         self.table.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         self.table.handle_mouse_event(event)
     }
 
@@ -146,7 +147,7 @@ impl Widget for TempTable {
             .block()
             .selected(selected)
             .borders(self.block_border)
-            .expanded(expanded);
+            .show_esc(expanded);
 
         self.table.draw_tui_table(
             painter,

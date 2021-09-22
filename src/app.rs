@@ -13,7 +13,7 @@ use std::{
     time::Instant,
 };
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
 use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
 use unicode_segmentation::GraphemeCursor;
@@ -33,7 +33,7 @@ use crate::{
     BottomEvent, Pid,
 };
 
-use self::event::{EventResult, ReturnSignal, WidgetEventResult};
+use self::event::{ComponentEventResult, EventResult, ReturnSignal};
 
 const MAX_SEARCH_LENGTH: usize = 200;
 
@@ -140,8 +140,6 @@ pub struct AppState {
     // --- Eventually delete/rewrite ---
     pub delete_dialog_state: AppDeleteDialogState,
 
-    pub help_dialog_state: AppHelpDialogState,
-
     // --- TO DELETE ---
     pub cpu_state: CpuState,
     pub mem_state: MemState,
@@ -172,6 +170,8 @@ pub struct AppState {
     pub layout_tree: Arena<LayoutNode>,
     pub layout_tree_root: NodeId,
     frozen_state: FrozenState,
+
+    pub help_dialog: DialogState<HelpDialog>,
 }
 
 impl AppState {
@@ -204,7 +204,6 @@ impl AppState {
             data_collection: Default::default(),
             is_expanded: Default::default(),
             delete_dialog_state: Default::default(),
-            help_dialog_state: Default::default(),
             cpu_state: Default::default(),
             mem_state: Default::default(),
             net_state: Default::default(),
@@ -222,6 +221,7 @@ impl AppState {
             is_force_redraw: Default::default(),
             is_determining_widget_boundary: Default::default(),
             frozen_state: Default::default(),
+            help_dialog: Default::default(),
         }
     }
 
@@ -277,7 +277,7 @@ impl AppState {
                     let c = c.to_ascii_lowercase();
                     match c {
                         'q' => EventResult::Quit,
-                        'e' => {
+                        'e' if !self.help_dialog.is_showing() => {
                             if self.app_config_fields.use_basic_mode {
                                 EventResult::NoRedraw
                             } else {
@@ -285,11 +285,11 @@ impl AppState {
                                 EventResult::Redraw
                             }
                         }
-                        '?' => {
-                            self.help_dialog_state.is_showing_help = true;
+                        '?' if !self.help_dialog.is_showing() => {
+                            self.help_dialog.show();
                             EventResult::Redraw
                         }
-                        'f' => {
+                        'f' if !self.help_dialog.is_showing() => {
                             self.toggle_freeze();
                             if !self.is_frozen() {
                                 let data_collection = &self.data_collection;
@@ -331,17 +331,59 @@ impl AppState {
         }
     }
 
+    /// Quick and dirty handler to convert [`ComponentEventResult`]s to [`EventResult`]s, and handle [`ReturnSignal`]s.
+    fn convert_widget_event_result(&mut self, w: ComponentEventResult) -> EventResult {
+        match w {
+            ComponentEventResult::Unhandled => EventResult::NoRedraw,
+            ComponentEventResult::Redraw => EventResult::Redraw,
+            ComponentEventResult::NoRedraw => EventResult::NoRedraw,
+            ComponentEventResult::Signal(signal) => match signal {
+                ReturnSignal::KillProcess => {
+                    todo!()
+                }
+                ReturnSignal::Update => {
+                    if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
+                        match &self.frozen_state {
+                            FrozenState::NotFrozen => {
+                                widget.update_data(&self.data_collection);
+                            }
+                            FrozenState::Frozen(frozen_data) => {
+                                widget.update_data(frozen_data);
+                            }
+                        }
+                    }
+                    EventResult::Redraw
+                }
+            },
+        }
+    }
+
+    /// Handles a [`KeyEvent`], and returns an [`EventResult`].
+    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
+        let result = if let DialogState::Shown(help_dialog) = &mut self.help_dialog {
+            help_dialog.handle_key_event(event)
+        } else if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
+            widget.handle_key_event(event)
+        } else {
+            ComponentEventResult::Unhandled
+        };
+
+        match result {
+            ComponentEventResult::Unhandled => self.handle_global_key_event(event),
+            _ => self.convert_widget_event_result(result),
+        }
+    }
+
     /// Handles a global [`KeyEvent`], and returns an [`EventResult`].
-    fn handle_global_shortcut(&mut self, event: KeyEvent) -> EventResult {
+    fn handle_global_key_event(&mut self, event: KeyEvent) -> EventResult {
         if event.modifiers.is_empty() {
             match event.code {
                 KeyCode::Esc => {
                     if self.is_expanded {
                         self.is_expanded = false;
                         EventResult::Redraw
-                    } else if self.help_dialog_state.is_showing_help {
-                        self.help_dialog_state.is_showing_help = false;
-                        self.help_dialog_state.scroll_state.current_scroll_index = 0;
+                    } else if self.help_dialog.is_showing() {
+                        self.help_dialog.hide();
                         EventResult::Redraw
                     } else if self.delete_dialog_state.is_showing_dd {
                         self.close_dd();
@@ -350,8 +392,13 @@ impl AppState {
                         EventResult::NoRedraw
                     }
                 }
-                KeyCode::Char(c) => self.handle_global_char(c),
-                _ => EventResult::NoRedraw,
+                _ => {
+                    if let KeyCode::Char(c) = event.code {
+                        self.handle_global_char(c)
+                    } else {
+                        EventResult::NoRedraw
+                    }
+                }
             }
         } else if let KeyModifiers::CONTROL = event.modifiers {
             match event.code {
@@ -384,30 +431,55 @@ impl AppState {
         }
     }
 
-    /// Quick and dirty handler to convert [`WidgetEventResult`]s to [`EventResult`]s, and handle [`ReturnSignal`]s.
-    fn convert_widget_event_result(&mut self, w: WidgetEventResult) -> EventResult {
-        match w {
-            WidgetEventResult::Quit => EventResult::Quit,
-            WidgetEventResult::Redraw => EventResult::Redraw,
-            WidgetEventResult::NoRedraw => EventResult::NoRedraw,
-            WidgetEventResult::Signal(signal) => match signal {
-                ReturnSignal::KillProcess => {
-                    todo!()
-                }
-                ReturnSignal::Update => {
-                    if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-                        match &self.frozen_state {
-                            FrozenState::NotFrozen => {
-                                widget.update_data(&self.data_collection);
-                            }
-                            FrozenState::Frozen(frozen_data) => {
-                                widget.update_data(frozen_data);
-                            }
+    /// Handles a [`MouseEvent`].
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
+        if let DialogState::Shown(help_dialog) = &mut self.help_dialog {
+            let result = help_dialog.handle_mouse_event(event);
+            self.convert_widget_event_result(result)
+        } else if self.is_expanded {
+            if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
+                let result = widget.handle_mouse_event(event);
+                self.convert_widget_event_result(result)
+            } else {
+                EventResult::NoRedraw
+            }
+        } else {
+            let mut returned_result = EventResult::NoRedraw;
+            for (id, widget) in self.widget_lookup_map.iter_mut() {
+                if widget.does_border_intersect_mouse(&event) {
+                    let result = widget.handle_mouse_event(event);
+
+                    let new_id;
+                    match widget.selectable_type() {
+                        SelectableType::Selectable => {
+                            new_id = *id;
+                        }
+                        SelectableType::Unselectable => {
+                            let result = widget.handle_mouse_event(event);
+                            return self.convert_widget_event_result(result);
+                        }
+                        SelectableType::Redirect(redirected_id) => {
+                            new_id = redirected_id;
                         }
                     }
-                    EventResult::Redraw
+
+                    let was_id_already_selected = self.selected_widget == new_id;
+                    self.selected_widget = new_id;
+
+                    if was_id_already_selected {
+                        returned_result = self.convert_widget_event_result(result);
+                        break;
+                    } else {
+                        // If the weren't equal, *force* a redraw, and correct the layout tree.
+                        correct_layout_last_selections(&mut self.layout_tree, self.selected_widget);
+                        let _ = self.convert_widget_event_result(result);
+                        returned_result = EventResult::Redraw;
+                        break;
+                    }
                 }
-            },
+            }
+
+            returned_result
         }
     }
 
@@ -415,82 +487,15 @@ impl AppState {
     /// whether the app now requires a redraw.
     pub fn handle_event(&mut self, event: BottomEvent) -> EventResult {
         match event {
-            BottomEvent::KeyInput(event) => {
-                if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-                    let result = widget.handle_key_event(event);
-                    match self.convert_widget_event_result(result) {
-                        EventResult::Quit => EventResult::Quit,
-                        EventResult::Redraw => EventResult::Redraw,
-                        EventResult::NoRedraw => self.handle_global_shortcut(event),
-                    }
-                } else {
-                    self.handle_global_shortcut(event)
-                }
-            }
+            BottomEvent::KeyInput(event) => self.handle_key_event(event),
             BottomEvent::MouseInput(event) => {
                 // Not great, but basically a blind lookup through the table for anything that clips the click location.
-                // TODO: Would be cool to use a kd-tree or something like that in the future.
-
-                match &event.kind {
-                    MouseEventKind::Down(MouseButton::Left) => {
-                        if self.is_expanded {
-                            if let Some(widget) =
-                                self.widget_lookup_map.get_mut(&self.selected_widget)
-                            {
-                                let result = widget.handle_mouse_event(event);
-                                return self.convert_widget_event_result(result);
-                            }
-                        } else {
-                            for (id, widget) in self.widget_lookup_map.iter_mut() {
-                                if widget.does_border_intersect_mouse(&event) {
-                                    let result = widget.handle_mouse_event(event);
-
-                                    let new_id;
-                                    match widget.selectable_type() {
-                                        SelectableType::Selectable => {
-                                            new_id = *id;
-                                        }
-                                        SelectableType::Unselectable => {
-                                            let result = widget.handle_mouse_event(event);
-                                            return self.convert_widget_event_result(result);
-                                        }
-                                        SelectableType::Redirect(redirected_id) => {
-                                            new_id = redirected_id;
-                                        }
-                                    }
-
-                                    let was_id_already_selected = self.selected_widget == new_id;
-                                    self.selected_widget = new_id;
-
-                                    if was_id_already_selected {
-                                        return self.convert_widget_event_result(result);
-                                    } else {
-                                        // If the weren't equal, *force* a redraw, and correct the layout tree.
-                                        correct_layout_last_selections(
-                                            &mut self.layout_tree,
-                                            self.selected_widget,
-                                        );
-                                        let _ = self.convert_widget_event_result(result);
-                                        return EventResult::Redraw;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
-                        if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget)
-                        {
-                            let result = widget.handle_mouse_event(event);
-                            return self.convert_widget_event_result(result);
-                        }
-                    }
-                    _ => {}
-                }
-
-                EventResult::NoRedraw
+                self.handle_mouse_event(event)
             }
             BottomEvent::Update(new_data) => {
                 self.data_collection.eat_data(new_data);
+
+                // TODO: Optimization for dialogs; don't redraw here.
 
                 if !self.is_frozen() {
                     let data_collection = &self.data_collection;
@@ -515,78 +520,6 @@ impl AppState {
         }
     }
 
-    pub fn on_esc(&mut self) {
-        self.reset_multi_tap_keys();
-        if self.is_in_dialog() {
-            if self.help_dialog_state.is_showing_help {
-                self.help_dialog_state.is_showing_help = false;
-                self.help_dialog_state.scroll_state.current_scroll_index = 0;
-            } else {
-                self.close_dd();
-            }
-
-            self.is_force_redraw = true;
-        } else {
-            match self.current_widget.widget_type {
-                BottomWidgetType::Proc => {
-                    if let Some(current_proc_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        if current_proc_state.is_search_enabled() || current_proc_state.is_sort_open
-                        {
-                            current_proc_state
-                                .process_search_state
-                                .search_state
-                                .is_enabled = false;
-
-                            current_proc_state.is_sort_open = false;
-                            self.is_force_redraw = true;
-                            return;
-                        }
-                    }
-                }
-                BottomWidgetType::ProcSearch => {
-                    if let Some(current_proc_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id - 1)
-                    {
-                        if current_proc_state.is_search_enabled() {
-                            current_proc_state
-                                .process_search_state
-                                .search_state
-                                .is_enabled = false;
-                            self.move_widget_selection(&WidgetDirection::Up);
-                            self.is_force_redraw = true;
-                            return;
-                        }
-                    }
-                }
-                BottomWidgetType::ProcSort => {
-                    if let Some(current_proc_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id - 2)
-                    {
-                        if current_proc_state.is_sort_open {
-                            current_proc_state.columns.current_scroll_position =
-                                current_proc_state.columns.backup_prev_scroll_position;
-                            current_proc_state.is_sort_open = false;
-                            self.move_widget_selection(&WidgetDirection::Right);
-                            self.is_force_redraw = true;
-                            return;
-                        }
-                    }
-                }
-                _ => {}
-            }
-
-            if self.is_expanded {
-                self.is_expanded = false;
-                self.is_force_redraw = true;
-            }
-        }
-    }
-
     pub fn is_in_search_widget(&self) -> bool {
         matches!(
             self.current_widget.widget_type,
@@ -600,7 +533,7 @@ impl AppState {
     }
 
     fn is_in_dialog(&self) -> bool {
-        self.help_dialog_state.is_showing_help || self.delete_dialog_state.is_showing_dd
+        self.delete_dialog_state.is_showing_dd
     }
 
     fn ignore_normal_keybinds(&self) -> bool {
@@ -1097,7 +1030,7 @@ impl AppState {
     pub fn on_up_key(&mut self) {
         if !self.is_in_dialog() {
             self.decrement_position_count();
-        } else if self.help_dialog_state.is_showing_help {
+        } else if self.help_dialog.is_showing() {
             self.help_scroll_up();
         } else if self.delete_dialog_state.is_showing_dd {
             #[cfg(target_os = "windows")]
@@ -1118,7 +1051,7 @@ impl AppState {
     pub fn on_down_key(&mut self) {
         if !self.is_in_dialog() {
             self.increment_position_count();
-        } else if self.help_dialog_state.is_showing_help {
+        } else if self.help_dialog.is_showing() {
             self.help_scroll_down();
         } else if self.delete_dialog_state.is_showing_dd {
             #[cfg(target_os = "windows")]
@@ -1596,19 +1529,9 @@ impl AppState {
                 }
             }
             self.handle_char(caught_char);
-        } else if self.help_dialog_state.is_showing_help {
+        } else if self.help_dialog.is_showing() {
             match caught_char {
-                '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                    let potential_index = caught_char.to_digit(10);
-                    if let Some(potential_index) = potential_index {
-                        if (potential_index as usize) < self.help_dialog_state.index_shortcuts.len()
-                        {
-                            self.help_scroll_to_or_max(
-                                self.help_dialog_state.index_shortcuts[potential_index as usize],
-                            );
-                        }
-                    }
-                }
+                '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {}
                 'j' | 'k' | 'g' | 'G' => self.handle_char(caught_char),
                 _ => {}
             }
@@ -1792,7 +1715,7 @@ impl AppState {
                 }
             }
             '?' => {
-                self.help_dialog_state.is_showing_help = true;
+                self.help_dialog.show();
                 self.is_force_redraw = true;
             }
             'H' | 'A' => self.move_widget_selection(&WidgetDirection::Left),
@@ -1863,7 +1786,6 @@ impl AppState {
     }
 
     fn expand_widget(&mut self) {
-        // TODO: [BASIC] Expansion in basic mode.
         if !self.ignore_normal_keybinds() && !self.app_config_fields.use_basic_mode {
             // Pop-out mode.  We ignore if in process search.
 
@@ -2256,7 +2178,7 @@ impl AppState {
                 {
                     if proc_widget_state.is_sort_open {
                         if let Some(proc_sort_widget) = self.widget_map.get(&new_widget_id) {
-                            self.current_widget = proc_sort_widget.clone(); // TODO: Could I remove this clone w/ static references?
+                            self.current_widget = proc_sort_widget.clone();
                         }
                     }
                 }
@@ -2378,8 +2300,8 @@ impl AppState {
                 _ => {}
             }
             self.reset_multi_tap_keys();
-        } else if self.help_dialog_state.is_showing_help {
-            self.help_dialog_state.scroll_state.current_scroll_index = 0;
+        } else if self.help_dialog.is_showing() {
+            // self.help_dialog_state.scroll_state.current_scroll_index = 0;
         } else if self.delete_dialog_state.is_showing_dd {
             self.delete_dialog_state.selected_signal = KillSignal::Cancel;
         }
@@ -2517,26 +2439,17 @@ impl AppState {
     }
 
     fn help_scroll_up(&mut self) {
-        if self.help_dialog_state.scroll_state.current_scroll_index > 0 {
-            self.help_dialog_state.scroll_state.current_scroll_index -= 1;
-        }
+        // if self.help_dialog_state.scroll_state.current_scroll_index > 0 {
+        //     self.help_dialog_state.scroll_state.current_scroll_index -= 1;
+        // }
     }
 
     fn help_scroll_down(&mut self) {
-        if self.help_dialog_state.scroll_state.current_scroll_index + 1
-            < self.help_dialog_state.scroll_state.max_scroll_index
-        {
-            self.help_dialog_state.scroll_state.current_scroll_index += 1;
-        }
-    }
-
-    fn help_scroll_to_or_max(&mut self, new_position: u16) {
-        if new_position < self.help_dialog_state.scroll_state.max_scroll_index {
-            self.help_dialog_state.scroll_state.current_scroll_index = new_position;
-        } else {
-            self.help_dialog_state.scroll_state.current_scroll_index =
-                self.help_dialog_state.scroll_state.max_scroll_index - 1;
-        }
+        // if self.help_dialog_state.scroll_state.current_scroll_index + 1
+        //     < self.help_dialog_state.scroll_state.max_scroll_index
+        // {
+        //     self.help_dialog_state.scroll_state.current_scroll_index += 1;
+        // }
     }
 
     fn on_plus(&mut self) {

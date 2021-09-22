@@ -5,7 +5,7 @@ use tui::{backend::Backend, layout::Rect, widgets::Borders, Frame};
 
 use crate::{
     app::{
-        data_farmer::DataCollection, event::WidgetEventResult,
+        data_farmer::DataCollection, event::ComponentEventResult,
         sort_text_table::SimpleSortableColumn, text_table::TextTableData, AppScrollWidgetState,
         CanvasTableWidthState, Component, TextTable, Widget,
     },
@@ -105,11 +105,11 @@ impl DiskTable {
 }
 
 impl Component for DiskTable {
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         self.table.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         self.table.handle_mouse_event(event)
     }
 
@@ -135,7 +135,7 @@ impl Widget for DiskTable {
             .block()
             .selected(selected)
             .borders(self.block_border)
-            .expanded(expanded);
+            .show_esc(expanded);
 
         self.table.draw_tui_table(
             painter,

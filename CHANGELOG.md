@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
-- [#557](https://github.com/ClementTsang/bottom/pull/557): Add '/s' to network usage legend.
+- [#557](https://github.com/ClementTsang/bottom/pull/557): Add '/s' to network usage legend to indicate "per second".
 
 ## Internal Changes
 

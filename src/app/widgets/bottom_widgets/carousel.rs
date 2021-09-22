@@ -12,7 +12,7 @@ use tui::{
 
 use crate::{
     app::{
-        does_bound_intersect_coordinate, event::WidgetEventResult, Component, SelectableType,
+        does_bound_intersect_coordinate, event::ComponentEventResult, Component, SelectableType,
         Widget,
     },
     canvas::Painter,
@@ -164,7 +164,7 @@ impl Component for Carousel {
         self.bounds = new_bounds;
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         match event.kind {
             crossterm::event::MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
                 let x = event.column;
@@ -172,15 +172,15 @@ impl Component for Carousel {
 
                 if does_bound_intersect_coordinate(x, y, self.left_button_bounds) {
                     self.decrement_index();
-                    WidgetEventResult::Redraw
+                    ComponentEventResult::Redraw
                 } else if does_bound_intersect_coordinate(x, y, self.right_button_bounds) {
                     self.increment_index();
-                    WidgetEventResult::Redraw
+                    ComponentEventResult::Redraw
                 } else {
-                    WidgetEventResult::NoRedraw
+                    ComponentEventResult::Unhandled
                 }
             }
-            _ => WidgetEventResult::NoRedraw,
+            _ => ComponentEventResult::Unhandled,
         }
     }
 }

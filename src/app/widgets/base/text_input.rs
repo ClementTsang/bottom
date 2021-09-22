@@ -13,8 +13,8 @@ use unicode_width::UnicodeWidthStr;
 use crate::{
     app::{
         event::{
+            ComponentEventResult::{self},
             ReturnSignal,
-            WidgetEventResult::{self},
         },
         Component,
     },
@@ -85,19 +85,19 @@ impl TextInput {
         }
     }
 
-    fn clear_text(&mut self) -> WidgetEventResult {
+    fn clear_text(&mut self) -> ComponentEventResult {
         if self.text.is_empty() {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         } else {
             self.text = String::default();
             self.cursor = GraphemeCursor::new(0, 0, true);
             self.window_index = Default::default();
             self.cursor_direction = CursorDirection::Left;
-            WidgetEventResult::Signal(ReturnSignal::Update)
+            ComponentEventResult::Signal(ReturnSignal::Update)
         }
     }
 
-    fn move_word_forward(&mut self) -> WidgetEventResult {
+    fn move_word_forward(&mut self) -> ComponentEventResult {
         let current_index = self.cursor.cur_cursor();
 
         if current_index < self.text.len() {
@@ -105,30 +105,30 @@ impl TextInput {
                 if index > 0 {
                     self.cursor.set_cursor(index + current_index);
                     self.cursor_direction = CursorDirection::Right;
-                    return WidgetEventResult::Redraw;
+                    return ComponentEventResult::Redraw;
                 }
             }
             self.cursor.set_cursor(self.text.len());
         }
 
-        WidgetEventResult::Redraw
+        ComponentEventResult::Redraw
     }
 
-    fn move_word_back(&mut self) -> WidgetEventResult {
+    fn move_word_back(&mut self) -> ComponentEventResult {
         let current_index = self.cursor.cur_cursor();
 
         for (index, _word) in self.text[..current_index].unicode_word_indices().rev() {
             if index < current_index {
                 self.cursor.set_cursor(index);
                 self.cursor_direction = CursorDirection::Left;
-                return WidgetEventResult::Redraw;
+                return ComponentEventResult::Redraw;
             }
         }
 
-        WidgetEventResult::NoRedraw
+        ComponentEventResult::NoRedraw
     }
 
-    fn clear_word_from_cursor(&mut self) -> WidgetEventResult {
+    fn clear_word_from_cursor(&mut self) -> ComponentEventResult {
         // Fairly simple logic - create the word index iterator, skip the word that intersects with the current
         // cursor location, draw the rest, update the string.
         let current_index = self.cursor.cur_cursor();
@@ -147,16 +147,16 @@ impl TextInput {
         }
 
         if start_delete_index == current_index {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         } else {
             self.text.drain(start_delete_index..current_index);
             self.cursor = GraphemeCursor::new(start_delete_index, self.text.len(), true);
             self.cursor_direction = CursorDirection::Left;
-            WidgetEventResult::Signal(ReturnSignal::Update)
+            ComponentEventResult::Signal(ReturnSignal::Update)
         }
     }
 
-    fn clear_previous_grapheme(&mut self) -> WidgetEventResult {
+    fn clear_previous_grapheme(&mut self) -> ComponentEventResult {
         let current_index = self.cursor.cur_cursor();
 
         if current_index > 0 {
@@ -166,13 +166,13 @@ impl TextInput {
             self.cursor = GraphemeCursor::new(new_index, self.text.len(), true);
             self.cursor_direction = CursorDirection::Left;
 
-            WidgetEventResult::Signal(ReturnSignal::Update)
+            ComponentEventResult::Signal(ReturnSignal::Update)
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         }
     }
 
-    fn clear_current_grapheme(&mut self) -> WidgetEventResult {
+    fn clear_current_grapheme(&mut self) -> ComponentEventResult {
         let current_index = self.cursor.cur_cursor();
 
         if current_index < self.text.len() {
@@ -182,19 +182,19 @@ impl TextInput {
             self.cursor = GraphemeCursor::new(current_index, self.text.len(), true);
             self.cursor_direction = CursorDirection::Left;
 
-            WidgetEventResult::Signal(ReturnSignal::Update)
+            ComponentEventResult::Signal(ReturnSignal::Update)
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         }
     }
 
-    fn insert_character(&mut self, c: char) -> WidgetEventResult {
+    fn insert_character(&mut self, c: char) -> ComponentEventResult {
         let current_index = self.cursor.cur_cursor();
         self.text.insert(current_index, c);
         self.cursor = GraphemeCursor::new(current_index, self.text.len(), true);
         self.move_forward();
 
-        WidgetEventResult::Signal(ReturnSignal::Update)
+        ComponentEventResult::Signal(ReturnSignal::Update)
     }
 
     /// Updates the window indexes and returns the start index.
@@ -296,29 +296,29 @@ impl Component for TextInput {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         if event.modifiers.is_empty() {
             match event.code {
                 KeyCode::Left => {
                     let original_cursor = self.cursor.cur_cursor();
                     if self.move_back() == original_cursor {
-                        WidgetEventResult::NoRedraw
+                        ComponentEventResult::NoRedraw
                     } else {
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 }
                 KeyCode::Right => {
                     let original_cursor = self.cursor.cur_cursor();
                     if self.move_forward() == original_cursor {
-                        WidgetEventResult::NoRedraw
+                        ComponentEventResult::NoRedraw
                     } else {
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 }
                 KeyCode::Backspace => self.clear_previous_grapheme(),
                 KeyCode::Delete => self.clear_current_grapheme(),
                 KeyCode::Char(c) => self.insert_character(c),
-                _ => WidgetEventResult::NoRedraw,
+                _ => ComponentEventResult::Unhandled,
             }
         } else if let KeyModifiers::CONTROL = event.modifiers {
             match event.code {
@@ -326,46 +326,46 @@ impl Component for TextInput {
                     let prev_index = self.cursor.cur_cursor();
                     self.cursor.set_cursor(0);
                     if self.cursor.cur_cursor() == prev_index {
-                        WidgetEventResult::NoRedraw
+                        ComponentEventResult::NoRedraw
                     } else {
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 }
                 KeyCode::Char('e') => {
                     let prev_index = self.cursor.cur_cursor();
                     self.cursor.set_cursor(self.text.len());
                     if self.cursor.cur_cursor() == prev_index {
-                        WidgetEventResult::NoRedraw
+                        ComponentEventResult::NoRedraw
                     } else {
-                        WidgetEventResult::Redraw
+                        ComponentEventResult::Redraw
                     }
                 }
                 KeyCode::Char('u') => self.clear_text(),
                 KeyCode::Char('w') => self.clear_word_from_cursor(),
                 KeyCode::Char('h') => self.clear_previous_grapheme(),
-                _ => WidgetEventResult::NoRedraw,
+                _ => ComponentEventResult::Unhandled,
             }
         } else if let KeyModifiers::ALT = event.modifiers {
             match event.code {
                 KeyCode::Char('b') => self.move_word_back(),
                 KeyCode::Char('f') => self.move_word_forward(),
-                _ => WidgetEventResult::NoRedraw,
+                _ => ComponentEventResult::Unhandled,
             }
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::Unhandled
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         // We are assuming this is within bounds...
 
         let x = event.column;
         let widget_x = self.bounds.x + 2;
         if x >= widget_x {
-            // TODO: do this
-            WidgetEventResult::Redraw
+            // TODO: Do this at some point after refactor
+            ComponentEventResult::Redraw
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::NoRedraw
         }
     }
 }

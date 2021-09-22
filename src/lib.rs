@@ -98,7 +98,7 @@ pub fn handle_key_event(
             KeyCode::Left => app.on_left_key(),
             KeyCode::Right => app.on_right_key(),
             KeyCode::Char(caught_char) => app.on_char_key(caught_char),
-            KeyCode::Esc => app.on_esc(),
+            // KeyCode::Esc => app.on_esc(),
             KeyCode::Enter => app.on_enter(),
             KeyCode::Tab => app.on_tab(),
             KeyCode::Backspace => app.on_backspace(),

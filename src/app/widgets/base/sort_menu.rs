@@ -3,7 +3,7 @@ use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::{
     app::{
-        event::WidgetEventResult, text_table::SimpleColumn, widgets::tui_stuff::BlockBuilder,
+        event::ComponentEventResult, text_table::SimpleColumn, widgets::tui_stuff::BlockBuilder,
         Component, TextTable,
     },
     canvas::Painter,
@@ -69,11 +69,11 @@ impl Component for SortMenu {
         self.bounds = new_bounds;
     }
 
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         self.table.handle_key_event(event)
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         self.table.handle_mouse_event(event)
     }
 }

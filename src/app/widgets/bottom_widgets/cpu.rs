@@ -9,7 +9,7 @@ use tui::{
 
 use crate::{
     app::{
-        event::{SelectionAction, WidgetEventResult},
+        event::{ComponentEventResult, SelectionAction},
         text_table::SimpleColumn,
         time_graph::TimeGraphData,
         AppConfigFields, AppScrollWidgetState, CanvasTableWidthState, Component, DataCollection,
@@ -118,21 +118,21 @@ impl CpuGraph {
 }
 
 impl Component for CpuGraph {
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         match self.selected {
             CpuGraphSelection::Graph => self.graph.handle_key_event(event),
             CpuGraphSelection::Legend => self.legend.handle_key_event(event),
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         if self.graph.does_border_intersect_mouse(&event) {
             if let CpuGraphSelection::Graph = self.selected {
                 self.graph.handle_mouse_event(event)
             } else {
                 self.selected = CpuGraphSelection::Graph;
                 self.graph.handle_mouse_event(event);
-                WidgetEventResult::Redraw
+                ComponentEventResult::Redraw
             }
         } else if self.legend.does_border_intersect_mouse(&event) {
             if let CpuGraphSelection::Legend = self.selected {
@@ -140,10 +140,10 @@ impl Component for CpuGraph {
             } else {
                 self.selected = CpuGraphSelection::Legend;
                 self.legend.handle_mouse_event(event);
-                WidgetEventResult::Redraw
+                ComponentEventResult::Redraw
             }
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::Unhandled
         }
     }
 
@@ -193,7 +193,7 @@ impl Widget for CpuGraph {
         let legend_block = self
             .block()
             .selected(selected && matches!(&self.selected, CpuGraphSelection::Legend))
-            .expanded(expanded)
+            .show_esc(expanded)
             .hide_title(true);
 
         let legend_data = self
@@ -279,7 +279,7 @@ impl Widget for CpuGraph {
         let graph_block = self
             .block()
             .selected(selected && matches!(&self.selected, CpuGraphSelection::Graph))
-            .expanded(expanded)
+            .show_esc(expanded)
             .build(painter, graph_block_area);
 
         self.graph.draw_tui_chart(

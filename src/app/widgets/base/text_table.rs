@@ -15,7 +15,7 @@ use tui::{
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{event::WidgetEventResult, widgets::tui_stuff::BlockBuilder, Component, Scrollable},
+    app::{event::ComponentEventResult, widgets::tui_stuff::BlockBuilder, Component, Scrollable},
     canvas::Painter,
     constants::TABLE_GAP_HEIGHT_LIMIT,
 };
@@ -130,7 +130,7 @@ where
     pub show_gap: bool,
 
     /// The bounding box of the [`TextTable`].
-    pub bounds: Rect, // TODO: Consider moving bounds to something else???
+    pub bounds: Rect, // TODO: Consider moving bounds to something else?
 
     /// The bounds including the border, if there is one.
     pub border_bounds: Rect,
@@ -492,19 +492,19 @@ impl<C> Component for TextTable<C>
 where
     C: TableColumn,
 {
-    fn handle_key_event(&mut self, event: KeyEvent) -> WidgetEventResult {
+    fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         if self.selectable {
             self.scrollable.handle_key_event(event)
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::Unhandled
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> WidgetEventResult {
+    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
         if self.selectable {
             self.scrollable.handle_mouse_event(event)
         } else {
-            WidgetEventResult::NoRedraw
+            ComponentEventResult::Unhandled
         }
     }
 

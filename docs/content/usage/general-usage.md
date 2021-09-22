@@ -42,7 +42,7 @@ Note that key bindings are generally case-sensitive.
 | ++q++ , ++ctrl+c++                                           | Quit                                                         |
 | ++esc++                                                      | Close dialog windows, search, widgets, or exit expanded mode |
 | ++ctrl+r++                                                   | Resets any collected data                                    |
-| ++f++                                                        | Toggles freezing, which stops new data from being shown     |
+| ++f++                                                        | Toggles freezing, stopping new data from being shown         |
 | ++question++                                                 | Open help menu                                               |
 | ++e++                                                        | Toggle expanding the currently selected widget               |
 | ++ctrl+up++ <br/> ++shift+up++ <br/> ++K++ <br/> ++W++       | Select the widget above                                      |
