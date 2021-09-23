@@ -305,7 +305,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: x86_64-pc-windows-msvc
+          key: x86_64-pc-windows-msvc-msi
 
       - name: Build msi file
         shell: powershell
@@ -366,7 +366,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: x86_64-unknown-linux-gnu
+          key: x86_64-unknown-linux-gnu-deb
 
       - name: Build Debian release
         run: |

@@ -308,16 +308,16 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: x86_64-pc-windows-msvc
+          key: x86_64-pc-windows-msvc-msi
 
-      - name: Build msi file (Windows x86-64 MSVC)
+      - name: Build msi file
         shell: powershell
         run: |
           cargo install cargo-wix --version 0.3.1 --locked
           cargo wix init
           cargo wix
 
-      - name: Upload msi file (Windows x86-64 MSVC)
+      - name: Upload msi file
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -327,13 +327,13 @@ jobs:
           asset_name: bottom_x86_64_installer.msi
           asset_content_type: application/octet-stream
 
-      - name: Build winget (Windows x86-64 MSVC)
+      - name: Build winget
         run: |
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "Clement.bottom.yaml" "SHA256" "./bottom_x86_64_installer.msi"
           $Code = powershell ./deployment/windows/winget/get_product_code.ps1 ./bottom_x86_64_installer.msi
           python "./deployment/windows/winget/product_code.py" Clement.bottom.yaml $Code
 
-      - name: Upload winget file (Windows x86-64 MSVC)
+      - name: Upload winget file
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -386,7 +386,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
         with:
-          key: x86_64-unknown-linux-gnu
+          key: x86_64-unknown-linux-gnu-deb
 
       - name: Build Debian release (Linux x86-64 GNU)
         run: |
