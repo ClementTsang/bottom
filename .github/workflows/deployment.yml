@@ -165,8 +165,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v2
-
       - name: Get release download URL
         uses: actions/download-artifact@v2
         with:
@@ -354,8 +352,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 1
-
-      - uses: actions/setup-python@v2
 
       - name: Get release download URL
         uses: actions/download-artifact@v2
