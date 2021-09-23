@@ -92,16 +92,20 @@ assets = [
     ["target/release/btm", "usr/bin/", "755"],
     ["LICENSE", "usr/share/doc/btm/", "644"],
     [
-        "completion/btm.bash",
+        "target/release/build/bottom-*/out/btm.bash",
         "usr/share/bash-completion/completions/btm",
         "644",
     ],
     [
-        "completion/btm.fish",
+        "target/release/build/bottom-*/out/btm.fish",
         "usr/share/fish/vendor_completions.d/btm.fish",
         "644",
     ],
-    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
+    [
+        "target/release/build/bottom-*/out/_btm",
+        "usr/share/zsh/vendor-completions/",
+        "644",
+    ],
 ]
 extended-description = """\
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of
