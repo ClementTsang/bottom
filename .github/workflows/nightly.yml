@@ -244,6 +244,12 @@ jobs:
           asset_name: ${{ env.ASSET }}
           asset_content_type: application/octet-stream
 
+      - name: Compress completion files (Linux x86-64 GNU)
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
+        shell: bash
+        run: |
+          tar -C ./completion -czvf completion.tar.gz .
+
       - name: Release completion files (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock != 'mock'
         uses: actions/upload-release-asset@v1.0.1
