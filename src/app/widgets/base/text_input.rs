@@ -297,7 +297,7 @@ impl Component for TextInput {
     }
 
     fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
-        if event.modifiers.is_empty() {
+        if event.modifiers.is_empty() || event.modifiers == KeyModifiers::SHIFT {
             match event.code {
                 KeyCode::Left => {
                     let original_cursor = self.cursor.cur_cursor();
@@ -356,16 +356,17 @@ impl Component for TextInput {
         }
     }
 
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> ComponentEventResult {
+    fn handle_mouse_event(&mut self, _event: MouseEvent) -> ComponentEventResult {
         // We are assuming this is within bounds...
 
-        let x = event.column;
-        let widget_x = self.bounds.x + 2;
-        if x >= widget_x {
-            // TODO: Do this at some point after refactor
-            ComponentEventResult::Redraw
-        } else {
-            ComponentEventResult::NoRedraw
-        }
+        // let x = event.column;
+        // let widget_x = self.bounds.x + 2;
+        // if x >= widget_x {
+        //     // TODO: Do this at some point after refactor
+        //     ComponentEventResult::Redraw
+        // } else {
+        //     ComponentEventResult::NoRedraw
+        // }
+        ComponentEventResult::Unhandled
     }
 }

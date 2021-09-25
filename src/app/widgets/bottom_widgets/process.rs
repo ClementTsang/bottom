@@ -3,12 +3,14 @@ use std::{borrow::Cow, collections::HashMap};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use float_ord::FloatOrd;
 use itertools::{Either, Itertools};
+use once_cell::unsync::Lazy;
 use unicode_segmentation::GraphemeCursor;
 
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Borders, TableState},
+    text::{Span, Spans},
+    widgets::{Borders, Paragraph, TableState},
     Frame,
 };
 
@@ -590,6 +592,20 @@ struct SearchModifiers {
     enable_regex: bool,
 }
 
+impl SearchModifiers {
+    fn toggle_case_sensitive(&mut self) {
+        self.enable_case_sensitive = !self.enable_case_sensitive;
+    }
+
+    fn toggle_whole_word(&mut self) {
+        self.enable_whole_word = !self.enable_whole_word;
+    }
+
+    fn toggle_regex(&mut self) {
+        self.enable_regex = !self.enable_regex;
+    }
+}
+
 enum FlexColumn {
     Flex(f64),
     Hard(Option<u16>),
@@ -983,6 +999,24 @@ impl ProcessManager {
             self.selected = ProcessManagerSelection::Processes;
         }
     }
+
+    /// Toggles the search case-sensitivity status for the [`ProcessManager`].
+    fn toggle_search_case_sensitive(&mut self) -> ComponentEventResult {
+        self.search_modifiers.toggle_case_sensitive();
+        ComponentEventResult::Signal(ReturnSignal::Update)
+    }
+
+    /// Toggle whether to search for the whole word for the [`ProcessManager`].
+    fn toggle_search_whole_word(&mut self) -> ComponentEventResult {
+        self.search_modifiers.toggle_whole_word();
+        ComponentEventResult::Signal(ReturnSignal::Update)
+    }
+
+    /// Toggle whether to search with regex for the [`ProcessManager`].
+    fn toggle_search_regex(&mut self) -> ComponentEventResult {
+        self.search_modifiers.toggle_regex();
+        ComponentEventResult::Signal(ReturnSignal::Update)
+    }
 }
 
 impl Component for ProcessManager {
@@ -1100,28 +1134,44 @@ impl Component for ProcessManager {
             ProcessManagerSelection::Search => {
                 if event.modifiers.is_empty() {
                     match event.code {
-                        KeyCode::F(1) => {}
-                        KeyCode::F(2) => {}
-                        KeyCode::F(3) => {}
+                        KeyCode::F(1) => {
+                            return self.toggle_search_case_sensitive();
+                        }
+                        KeyCode::F(2) => {
+                            return self.toggle_search_whole_word();
+                        }
+                        KeyCode::F(3) => {
+                            return self.toggle_search_regex();
+                        }
                         _ => {}
                     }
                 } else if let KeyModifiers::ALT = event.modifiers {
                     match event.code {
-                        KeyCode::Char('c') | KeyCode::Char('C') => {}
-                        KeyCode::Char('w') | KeyCode::Char('W') => {}
-                        KeyCode::Char('r') | KeyCode::Char('R') => {}
+                        KeyCode::Char('c') | KeyCode::Char('C') => {
+                            return self.toggle_search_case_sensitive();
+                        }
+                        KeyCode::Char('w') | KeyCode::Char('W') => {
+                            return self.toggle_search_whole_word();
+                        }
+                        KeyCode::Char('r') | KeyCode::Char('R') => {
+                            return self.toggle_search_regex();
+                        }
                         _ => {}
                     }
                 }
 
                 let handle_output = self.search_input.handle_key_event(event);
                 if let ComponentEventResult::Signal(ReturnSignal::Update) = handle_output {
-                    self.process_filter = Some(parse_query(
-                        self.search_input.query(),
-                        self.is_searching_whole_word(),
-                        !self.is_case_sensitive(),
-                        self.is_searching_with_regex(),
-                    ));
+                    if !self.search_input.query().is_empty() {
+                        self.process_filter = Some(parse_query(
+                            self.search_input.query(),
+                            self.is_searching_whole_word(),
+                            !self.is_case_sensitive(),
+                            self.is_searching_with_regex(),
+                        ));
+                    } else {
+                        self.process_filter = None;
+                    }
                 }
 
                 handle_output
@@ -1190,7 +1240,7 @@ impl Widget for ProcessManager {
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
         expanded: bool,
     ) {
-        let area = if self.show_search {
+        let draw_area = if self.show_search {
             let search_constraints: [Constraint; 2] = [
                 Constraint::Min(0),
                 if self.block_border.contains(Borders::TOP) {
@@ -1199,7 +1249,7 @@ impl Widget for ProcessManager {
                     Constraint::Length(3)
                 },
             ];
-            const INTERNAL_SEARCH_CONSTRAINTS: [Constraint; 2] = [Constraint::Length(1); 2];
+            const INTERNAL_SEARCH_CONSTRAINTS: [Constraint; 3] = [Constraint::Length(1); 3];
 
             let vertical_split_area = Layout::default()
                 .margin(0)
@@ -1224,7 +1274,7 @@ impl Widget for ProcessManager {
                 .constraints(INTERNAL_SEARCH_CONSTRAINTS)
                 .split(search_block.inner(vertical_split_area[1]));
 
-            if !internal_split_area.is_empty() {
+            if internal_split_area[0].height > 0 {
                 self.search_input.draw_text_input(
                     painter,
                     f,
@@ -1233,8 +1283,80 @@ impl Widget for ProcessManager {
                 );
             }
 
-            if internal_split_area.len() == 2 {
-                // TODO: Draw buttons
+            if internal_split_area[1].height > 0 {
+                if let Some(Err(err)) = &self.process_filter {
+                    f.render_widget(
+                        Paragraph::new(tui::text::Span::styled(
+                            err.to_string(),
+                            painter.colours.invalid_query_style,
+                        )),
+                        internal_split_area[1],
+                    );
+                }
+            }
+
+            if internal_split_area[2].height > 0 {
+                let case_text: Lazy<String> = Lazy::new(|| {
+                    format!(
+                        "Case({})",
+                        if cfg!(target_os = "macos") {
+                            "F1"
+                        } else {
+                            "Alt+C"
+                        }
+                    )
+                });
+
+                let whole_word_text: Lazy<String> = Lazy::new(|| {
+                    format!(
+                        "Whole({})",
+                        if cfg!(target_os = "macos") {
+                            "F2"
+                        } else {
+                            "Alt+W"
+                        }
+                    )
+                });
+
+                let regex_text: Lazy<String> = Lazy::new(|| {
+                    format!(
+                        "Regex({})",
+                        if cfg!(target_os = "macos") {
+                            "F3"
+                        } else {
+                            "Alt+R"
+                        }
+                    )
+                });
+
+                let case_style = if self.is_case_sensitive() {
+                    painter.colours.currently_selected_text_style
+                } else {
+                    painter.colours.text_style
+                };
+
+                let whole_word_style = if self.is_searching_whole_word() {
+                    painter.colours.currently_selected_text_style
+                } else {
+                    painter.colours.text_style
+                };
+
+                let regex_style = if self.is_searching_with_regex() {
+                    painter.colours.currently_selected_text_style
+                } else {
+                    painter.colours.text_style
+                };
+
+                f.render_widget(
+                    Paragraph::new(Spans::from(vec![
+                        Span::styled(&*case_text, case_style),
+                        Span::raw("  "), // TODO: Smartly space it out in the future...
+                        Span::styled(&*whole_word_text, whole_word_style),
+                        Span::raw("  "),
+                        Span::styled(&*regex_text, regex_style),
+                    ])),
+                    internal_split_area[2],
+                )
             }
 
             f.render_widget(search_block, vertical_split_area[1]);
@@ -1244,14 +1366,14 @@ impl Widget for ProcessManager {
             area
         };
 
-        let area = if self.show_sort {
+        let draw_area = if self.show_sort {
             const SORT_CONSTRAINTS: [Constraint; 2] = [Constraint::Length(10), Constraint::Min(0)];
 
             let horizontal_split_area = Layout::default()
                 .margin(0)
                 .direction(Direction::Horizontal)
                 .constraints(SORT_CONSTRAINTS)
-                .split(area);
+                .split(draw_area);
 
             let sort_block = self
                 .block()
@@ -1267,7 +1389,7 @@ impl Widget for ProcessManager {
 
             horizontal_split_area[1]
         } else {
-            area
+            draw_area
         };
 
         let process_selected =
@@ -1283,7 +1405,7 @@ impl Widget for ProcessManager {
             f,
             &self.display_data,
             process_block,
-            area,
+            draw_area,
             process_selected,
             self.show_scroll_index,
         );

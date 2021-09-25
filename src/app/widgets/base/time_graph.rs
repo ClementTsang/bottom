@@ -165,7 +165,7 @@ impl TimeGraph {
             '-' => self.zoom_out(),
             '+' => self.zoom_in(),
             '=' => self.reset_zoom(),
-            _ => ComponentEventResult::NoRedraw,
+            _ => ComponentEventResult::Unhandled,
         }
     }
 

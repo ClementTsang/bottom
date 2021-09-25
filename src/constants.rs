@@ -404,7 +404,7 @@ pub static HELP_TEXT: Lazy<[Vec<[&'static str; 2]>; 7]> = Lazy::new(|| {
     ]
 });
 
-pub const HELP_TITLES: [&'static str; 7] = [
+pub const HELP_TITLES: [&str; 7] = [
     GENERAL_HELP_TITLE,
     CPU_HELP_TITLE,
     PROCESS_HELP_TITLE,
