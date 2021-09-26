@@ -287,9 +287,8 @@ pub const PROCESS_HELP_TEXT: [&str; 15] = [
     "click on header  Sorts the entries by that column, click again to invert the sort",
 ];
 
-pub const SEARCH_HELP_TEXT: [&str; 49] = [
+pub const SEARCH_HELP_TEXT: [&str; 48] = [
     "4 - Process search widget",
-    "Tab              Toggle between searching for PID and name",
     "Esc              Close the search widget (retains the filter)",
     "Ctrl-a           Skip to the start of the search query",
     "Ctrl-e           Skip to the end of the search query",
