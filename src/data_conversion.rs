@@ -1337,6 +1337,7 @@ fn group_process_data(
         .collect::<Vec<_>>()
 }
 
+#[cfg(feature = "battery")]
 pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBatteryData> {
     current_data
         .battery_harvest

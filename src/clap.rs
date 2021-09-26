@@ -14,6 +14,72 @@ FLAGS:
 const USAGE: &str = "
     btm [FLAG]";
 
+const DEFAULT_WIDGET_TYPE_STR: &str = if cfg!(feature = "battery") {
+    "\
+Sets which widget type to use as the default widget.
+For the default layout, this defaults to the 'process' widget.
+For a custom layout, it defaults to the first widget it sees.
+
+For example, suppose we have a layout that looks like:
++-------------------+-----------------------+
+|      CPU (1)      |        CPU (2)        |
++---------+---------+-------------+---------+
+| Process | CPU (3) | Temperature | CPU (4) |
++---------+---------+-------------+---------+
+
+Setting '--default_widget_type Temp' will make the Temperature
+widget selected by default.
+
+Supported widget names:
++--------------------------+
+|            cpu           |
++--------------------------+
+|        mem, memory       |
++--------------------------+
+|       net, network       |
++--------------------------+
+| proc, process, processes |
++--------------------------+
+|     temp, temperature    |
++--------------------------+
+|           disk           |
++--------------------------+
+|       batt, battery      |
++--------------------------+
+\n\n"
+} else {
+    "\
+Sets which widget type to use as the default widget.
+For the default layout, this defaults to the 'process' widget.
+For a custom layout, it defaults to the first widget it sees.
+
+For example, suppose we have a layout that looks like:
++-------------------+-----------------------+
+|      CPU (1)      |        CPU (2)        |
++---------+---------+-------------+---------+
+| Process | CPU (3) | Temperature | CPU (4) |
++---------+---------+-------------+---------+
+
+Setting '--default_widget_type Temp' will make the Temperature
+widget selected by default.
+
+Supported widget names:
++--------------------------+
+|            cpu           |
++--------------------------+
+|        mem, memory       |
++--------------------------+
+|       net, network       |
++--------------------------+
+| proc, process, processes |
++--------------------------+
+|     temp, temperature    |
++--------------------------+
+|           disk           |
++--------------------------+
+\n\n"
+};
+
 pub fn get_matches() -> clap::ArgMatches<'static> {
     build_app().get_matches()
 }
@@ -65,14 +131,6 @@ disabled via --hide_time then this will have no effect.\n\n\n",
             "\
 Hides graphs and uses a more basic look.  Design is largely
 inspired by htop's.\n\n",
-        );
-    let battery = Arg::with_name("battery")
-        .long("battery")
-        .help("Shows the battery widget.")
-        .long_help(
-            "\
-Shows the battery widget in default or basic mode. No effect on
-custom layouts.\n\n",
         );
     let case_sensitive = Arg::with_name("case_sensitive")
         .short("S")
@@ -318,40 +376,7 @@ use CPU (3) as the default instead.
         .takes_value(true)
         .value_name("WIDGET TYPE")
         .help("Sets the default widget type, use --help for more info.")
-        .long_help(
-            "\
-Sets which widget type to use as the default widget.
-For the default layout, this defaults to the 'process' widget.
-For a custom layout, it defaults to the first widget it sees.
-
-For example, suppose we have a layout that looks like:
-+-------------------+-----------------------+
-|      CPU (1)      |        CPU (2)        |
-+---------+---------+-------------+---------+
-| Process | CPU (3) | Temperature | CPU (4) |
-+---------+---------+-------------+---------+
-
-Setting '--default_widget_type Temp' will make the Temperature
-widget selected by default.
-
-Supported widget names:
-+--------------------------+
-|            cpu           |
-+--------------------------+
-|        mem, memory       |
-+--------------------------+
-|       net, network       |
-+--------------------------+
-| proc, process, processes |
-+--------------------------+
-|     temp, temperature    |
-+--------------------------+
-|           disk           |
-+--------------------------+
-|       batt, battery      |
-+--------------------------+
-\n\n",
-        );
+        .long_help(DEFAULT_WIDGET_TYPE_STR);
     let rate = Arg::with_name("rate")
         .short("r")
         .long("rate")
@@ -408,7 +433,7 @@ Displays the network widget with a log scale.  Defaults to a non-log scale.\n\n"
 Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rather than a decimal prefix (i.e. kilobits, megabits).  Defaults to decimal prefixes.\n\n\n",
         );
 
-    App::new(crate_name!())
+    let app = App::new(crate_name!())
         .setting(AppSettings::UnifiedHelpMessage)
         .version(crate_version!())
         .author(crate_authors!())
@@ -423,12 +448,10 @@ Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rathe
         .group(ArgGroup::with_name("TEMPERATURE_TYPE").args(&["kelvin", "fahrenheit", "celsius"]))
         .arg(autohide_time)
         .arg(basic)
-        .arg(battery)
         .arg(case_sensitive)
         .arg(process_command)
         .arg(config_location)
         .arg(color)
-        // .arg(debug)
         .arg(mem_as_value)
         .arg(default_time_value)
         .arg(default_widget_count)
@@ -442,7 +465,6 @@ Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rathe
         .arg(show_table_scroll_position)
         .arg(left_legend)
         .arg(disable_advanced_kill)
-        // .arg(no_write)
         .arg(rate)
         .arg(regex)
         .arg(time_delta)
@@ -452,5 +474,21 @@ Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rathe
         .arg(network_use_binary_prefix)
         .arg(current_usage)
         .arg(use_old_network_legend)
-        .arg(whole_word)
+        .arg(whole_word);
+
+    let app = if cfg!(feature = "battery") {
+        let battery = Arg::with_name("battery")
+            .long("battery")
+            .help("Shows the battery widget.")
+            .long_help(
+                "\
+Shows the battery widget in default or basic mode. No effect on
+custom layouts.\n\n",
+            );
+        app.arg(battery)
+    } else {
+        app
+    };
+
+    app
 }

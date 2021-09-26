@@ -1,5 +1,5 @@
 # Creates nightly deployment builds for main targets.  Note this does not cover package distribution channels,
-# such as choco, Homebrew, etc.
+# such as choco.
 
 name: nightly
 
@@ -84,6 +84,7 @@ jobs:
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
+              strip: true,
             }
           - {
               os: "ubuntu-18.04",
@@ -91,23 +92,32 @@ jobs:
               cross: false,
               container: quay.io/pypa/manylinux2014_x86_64,
               suffix: "2-17",
+              strip: true,
             }
           - {
               os: "ubuntu-18.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
+              strip: true,
             }
           - {
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
+              strip: true,
             }
           - {
               os: "ubuntu-18.04",
               target: "i686-unknown-linux-musl",
               cross: true,
+              strip: true,
             }
-          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+          - {
+              os: "macOS-latest",
+              target: "x86_64-apple-darwin",
+              cross: false,
+              strip: true,
+            }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
@@ -141,13 +151,18 @@ jobs:
               cross: true,
             }
 
+          # Risc-V 64gc
+          - {
+              os: "ubuntu-18.04",
+              target: "riscv64gc-unknown-linux-gnu",
+              cross: true,
+            }
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 1
-
-      - uses: actions/setup-python@v2
 
       - name: Get release download URL
         uses: actions/download-artifact@v2
@@ -168,17 +183,6 @@ jobs:
           echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
-      - name: Install Net-Framework-Core (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
-        shell: powershell
-        run: Install-WindowsFeature Net-Framework-Core
-
-      - name: Install wixtoolset (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
-        uses: crazy-max/ghaction-chocolatey@v1.4.0
-        with:
-          args: install -y wixtoolset
-
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -188,21 +192,24 @@ jobs:
           target: ${{ matrix.triple.target }}
 
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.triple.target }}
 
       - name: Build
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --verbose --target=${{ matrix.triple.target }} --no-default-features
+          args: --release --verbose --target=${{ matrix.triple.target }} --features "battery"
           use-cross: ${{ matrix.triple.cross }}
 
       - name: Move autocomplete to working directory
         shell: bash
         run: |
-          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out completion
+          mkdir completion
+          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/. completion
 
       - name: Strip release binary (macOS or Linux x86-64/i686)
-        if: matrix.triple.os != 'windows-2019' && matrix.triple.target != 'aarch64-unknown-linux-gnu' && matrix.triple.target != 'armv7-unknown-linux-gnueabihf' && matrix.triple.target != 'powerpc64le-unknown-linux-gnu'
+        if: matrix.triple.strip == true
         run: |
           strip target/${{ matrix.triple.target }}/release/btm
 
@@ -225,8 +232,6 @@ jobs:
           tar -czvf bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz btm completion
           echo "ASSET=bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz" >> $GITHUB_ENV
 
-      # TODO: Move this elsewhere; do this all at once, and do not continue if any fails.  Store artifacts.  Do the same for deployment.
-
       - name: Upload main release
         if: github.event.inputs.isMock != 'mock'
         uses: actions/upload-release-asset@v1.0.1
@@ -237,43 +242,6 @@ jobs:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.ASSET }}
           asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
-
-      - name: Build msi file (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc'
-        shell: powershell
-        run: |
-          cargo install cargo-wix --version 0.3.1 --locked
-          cargo wix init
-          cargo wix
-
-      - name: Upload msi file (Windows x86-64 MSVC)
-        if: matrix.triple.target == 'x86_64-pc-windows-msvc' && github.event.inputs.isMock != 'mock'
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: bottom_x86_64_installer.msi
-          asset_name: bottom_x86_64_installer.msi
-          asset_content_type: application/octet-stream
-
-      - name: Build Debian release (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
-        run: |
-          cargo install cargo-deb --version 1.29.0 --locked
-          cargo deb
-          cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
-
-      - name: Upload Debian file (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock != 'mock'
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
-          asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
           asset_content_type: application/octet-stream
 
       - name: Compress completion files (Linux x86-64 GNU)
@@ -291,4 +259,134 @@ jobs:
           upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: completion.tar.gz
           asset_name: completion.tar.gz
+          asset_content_type: application/octet-stream
+
+  build-msi:
+    name: build-msi
+    needs: [create-github-release]
+    runs-on: "windows-2019"
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Get release download URL
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Set release upload URL and release version
+        shell: bash
+        run: |
+          release_upload_url="$(cat ./artifacts/release-upload-url)"
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          release_version="$(cat ./artifacts/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Validate release environment variables
+        run: |
+          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+
+      - name: Install Net-Framework-Core
+        shell: powershell
+        run: Install-WindowsFeature Net-Framework-Core
+
+      - name: Install wixtoolset
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with:
+          args: install -y wixtoolset
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: x86_64-pc-windows-msvc-msi
+
+      - name: Build msi file
+        shell: powershell
+        run: |
+          cargo install cargo-wix --version 0.3.1 --locked
+          cargo wix init
+          cargo wix
+
+      - name: Upload msi file
+        if: github.event.inputs.isMock != 'mock'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom_x86_64_installer.msi
+          asset_name: bottom_x86_64_installer.msi
+          asset_content_type: application/octet-stream
+
+  build-deb:
+    name: build-deb
+    needs: [create-github-release]
+    runs-on: "ubuntu-18.04"
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Get release download URL
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Set release upload URL and release version
+        shell: bash
+        run: |
+          release_upload_url="$(cat ./artifacts/release-upload-url)"
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          release_version="$(cat ./artifacts/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Validate release environment variables
+        run: |
+          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: x86_64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: x86_64-unknown-linux-gnu-deb
+
+      - name: Build Debian release
+        run: |
+          cargo install cargo-deb --version 1.29.0 --locked
+          cargo deb
+          cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+
+      - name: Upload Debian file if not mock
+        if: github.event.inputs.isMock != 'mock'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
           asset_content_type: application/octet-stream

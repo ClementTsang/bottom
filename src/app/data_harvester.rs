@@ -8,12 +8,14 @@ use fxhash::FxHashMap;
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
 
+#[cfg(feature = "battery")]
 use battery::{Battery, Manager};
 
 use futures::join;
 
 use super::{DataFilters, UsedWidgets};
 
+#[cfg(feature = "battery")]
 pub mod batteries;
 pub mod cpu;
 pub mod disks;
@@ -34,6 +36,7 @@ pub struct Data {
     pub list_of_processes: Option<Vec<processes::ProcessHarvest>>,
     pub disks: Option<Vec<disks::DiskHarvest>>,
     pub io: Option<disks::IoHarvest>,
+    #[cfg(feature = "battery")]
     pub list_of_batteries: Option<Vec<batteries::BatteryHarvest>>,
 }
 
@@ -50,6 +53,7 @@ impl Default for Data {
             disks: None,
             io: None,
             network: None,
+            #[cfg(feature = "battery")]
             list_of_batteries: None,
         }
     }
@@ -93,7 +97,9 @@ pub struct DataCollector {
     total_tx: u64,
     show_average_cpu: bool,
     widgets_to_harvest: UsedWidgets,
+    #[cfg(feature = "battery")]
     battery_manager: Option<Manager>,
+    #[cfg(feature = "battery")]
     battery_list: Option<Vec<Battery>>,
     filters: DataFilters,
 
@@ -123,7 +129,9 @@ impl DataCollector {
             total_tx: 0,
             show_average_cpu: false,
             widgets_to_harvest: UsedWidgets::default(),
+            #[cfg(feature = "battery")]
             battery_manager: None,
+            #[cfg(feature = "battery")]
             battery_list: None,
             filters,
             #[cfg(target_family = "unix")]
@@ -153,13 +161,16 @@ impl DataCollector {
             }
         }
 
-        if self.widgets_to_harvest.use_battery {
-            if let Ok(battery_manager) = Manager::new() {
-                if let Ok(batteries) = battery_manager.batteries() {
-                    let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();
-                    if !battery_list.is_empty() {
-                        self.battery_list = Some(battery_list);
-                        self.battery_manager = Some(battery_manager);
+        #[cfg(feature = "battery")]
+        {
+            if self.widgets_to_harvest.use_battery {
+                if let Ok(battery_manager) = Manager::new() {
+                    if let Ok(batteries) = battery_manager.batteries() {
+                        let battery_list: Vec<Battery> = batteries.filter_map(Result::ok).collect();
+                        if !battery_list.is_empty() {
+                            self.battery_list = Some(battery_list);
+                            self.battery_manager = Some(battery_manager);
+                        }
                     }
                 }
             }
@@ -238,10 +249,13 @@ impl DataCollector {
         }
 
         // Batteries
-        if let Some(battery_manager) = &self.battery_manager {
-            if let Some(battery_list) = &mut self.battery_list {
-                self.data.list_of_batteries =
-                    Some(batteries::refresh_batteries(battery_manager, battery_list));
+        #[cfg(feature = "battery")]
+        {
+            if let Some(battery_manager) = &self.battery_manager {
+                if let Some(battery_list) = &mut self.battery_list {
+                    self.data.list_of_batteries =
+                        Some(batteries::refresh_batteries(battery_manager, battery_list));
+                }
             }
         }
 

@@ -5,15 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.4]/[0.7.0] - Unreleased
+## [0.6.5]/[0.7.0] - Unreleased
+
+## [0.6.4] - 2021-09-12
 
 ## Changes
 
 - [#557](https://github.com/ClementTsang/bottom/pull/557): Add '/s' to network usage legend to indicate "per second".
 
+## Bug Fixes
+
+- [#575](https://github.com/ClementTsang/bottom/pull/575): Updates the procfs library to not crash on kernel version >255.
+
 ## Internal Changes
 
 - [#551](https://github.com/ClementTsang/bottom/pull/551): Disable AUR package generation in release pipeline since it's now in community.
+- [#570](https://github.com/ClementTsang/bottom/pull/570): Make battery features optional in compilation.
 
 ## [0.6.3] - 2021-07-18
 

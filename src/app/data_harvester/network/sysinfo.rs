@@ -22,7 +22,7 @@ pub async fn get_network_data(
         let to_keep = if let Some(filter) = filter {
             let mut ret = filter.is_list_ignored;
             for r in &filter.list {
-                if r.is_match(&name) {
+                if r.is_match(name) {
                     ret = !filter.is_list_ignored;
                     break;
                 }

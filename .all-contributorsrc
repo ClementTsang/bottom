@@ -189,6 +189,24 @@
         "doc",
         "platform"
       ]
+    },
+    {
+      "login": "adiabatic",
+      "name": "adiabatic",
+      "avatar_url": "https://avatars.githubusercontent.com/u/101246?v=4",
+      "profile": "https://www.frogorbits.com/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "bowlofeggs",
+      "name": "Randy Barlow",
+      "avatar_url": "https://avatars.githubusercontent.com/u/354506?v=4",
+      "profile": "https://electronsweatshop.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

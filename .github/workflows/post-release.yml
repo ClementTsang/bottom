@@ -7,8 +7,8 @@ on:
 
 env:
   # Assign commit authorship to official Github Actions bot when pushing to the `gh-pages` branch:
-  GIT_USER: 'github-actions[bot]'
-  GIT_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+  GIT_USER: "github-actions[bot]"
+  GIT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
 
 jobs:
   docs:
@@ -43,11 +43,11 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: pip install mkdocs-material
+      - run: pip install mkdocs-material==7.2.6
 
-      - run: pip install mdx_truly_sane_lists
+      - run: pip install mdx_truly_sane_lists==1.2
 
-      - run: pip install mike
+      - run: pip install mike==1.1.0
 
       - name: Configure git user and email
         run: |
@@ -84,13 +84,6 @@ jobs:
           if [[ $RELEASE_VERSION == "nightly" ]]; then
             exit 1
           fi
-
-      - name: Trigger homebrew
-        run: |
-          curl -X POST https://api.github.com/repos/ClementTsang/homebrew-bottom/dispatches \
-          -H 'Accept: application/vnd.github.everest-preview+json' \
-          -u ${{ secrets.BOTTOM_PACKAGE_DEPLOYMENT }} \
-          --data '{ "event_type": "update", "client_payload": { "version": "'"$RELEASE_VERSION"'" } }'
 
       - name: Trigger choco
         run: |

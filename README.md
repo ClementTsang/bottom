@@ -97,8 +97,8 @@ sudo pacman -Syu bottom
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
-curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.3/bottom_0.6.3_amd64.deb
-sudo dpkg -i bottom_0.6.3_amd64.deb
+curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.4/bottom_0.6.4_amd64.deb
+sudo dpkg -i bottom_0.6.4_amd64.deb
 ```
 
 ### Fedora/CentOS
@@ -144,11 +144,7 @@ sudo eopkg it bottom
 ### Homebrew
 
 ```bash
-brew tap clementtsang/bottom
 brew install bottom
-
-# If you need to be more specific, use:
-brew install clementtsang/bottom/bottom
 ```
 
 ### MacPorts
@@ -173,7 +169,7 @@ Since validation of the package takes time, it may take a while to become availa
 choco install bottom
 
 # The version number may be required for newer releases during the approval process:
-choco install bottom --version=0.6.3
+choco install bottom --version=0.6.4
 ```
 
 ### winget
@@ -190,34 +186,35 @@ and installing via the `.msi` file.
 
 You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
-### Building
+### Manually
 
-There are a few ways to go about doing this manually. Note that in all cases, you would want to build using the most recent version of stable Rust:
+There are a few ways to go about doing this manually. Note that you probably want
+to do so using the most recent version of stable Rust, which is how the binaries are built:
 
 ```bash
-# If required, update Rust on the stable channel
+# If required, update Rust on the stable channel first
 rustup update stable
 
-# Download from releases and install
-curl -LO https://github.com/ClementTsang/bottom/archive/0.6.3.tar.gz
-tar -xzvf 0.6.3.tar.gz
+# Option 1 - Download from releases and install
+curl -LO https://github.com/ClementTsang/bottom/archive/0.6.4.tar.gz
+tar -xzvf 0.6.4.tar.gz
 cargo install --path .
 
-# Clone from master and install manually
+# Option 2 - Clone from master and install manually
 git clone https://github.com/ClementTsang/bottom
 cd bottom
 cargo install --path .
 
-# Clone and install the newest master version all via Cargo
+# Option 3 - Clone and install directly from the repo all via Cargo
 cargo install --git https://github.com/ClementTsang/bottom
 ```
 
 ### Binaries
 
-You can also try to use the generated release binaries and manually install them:
+You can also try to use the generated release binaries and manually install on your system:
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
-- [Latest nightly version](https://github.com/ClementTsang/bottom/releases/tag/nightly), which is generated daily off of the master branch at 00:00 UTC
+- [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
 
 #### Auto-completion
 
@@ -234,9 +231,9 @@ The release binaries are packaged with shell auto-completion files for bash, fis
 You can run bottom using `btm`.
 
 - For help on flags, use `btm -h` for a quick overview or `btm --help` for more details.
-- For info on key and mouse bindings, refer to the [documentation](https://clementtsang.github.io/bottom/nightly/) or press `?` inside bottom.
+- For info on key and mouse bindings, press `?` inside bottom or refer to the [documentation](https://clementtsang.github.io/bottom/nightly/).
 
-You can generally find more information on usage in the [documentation](https://clementtsang.github.io/bottom/nightly/).
+You can find more information on usage in the [documentation](https://clementtsang.github.io/bottom/nightly/).
 
 ## Configuration
 
@@ -283,6 +280,10 @@ Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoj
     <td align="center"><a href="https://github.com/yellowsquid"><img src="https://avatars.githubusercontent.com/u/46519298?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Greg Brown</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yellowsquid" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/TotalCaesar659"><img src="https://avatars.githubusercontent.com/u/14265316?v=4?s=100" width="100px;" alt=""/><br /><sub><b>TotalCaesar659</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=TotalCaesar659" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/grawlinson"><img src="https://avatars.githubusercontent.com/u/4408051?v=4?s=100" width="100px;" alt=""/><br /><sub><b>George Rawlinson</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=grawlinson" title="Documentation">📖</a> <a href="#platform-grawlinson" title="Packaging/porting to new platform">📦</a></td>
+    <td align="center"><a href="https://www.frogorbits.com/"><img src="https://avatars.githubusercontent.com/u/101246?v=4?s=100" width="100px;" alt=""/><br /><sub><b>adiabatic</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=adiabatic" title="Documentation">📖</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://electronsweatshop.com"><img src="https://avatars.githubusercontent.com/u/354506?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Randy Barlow</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=bowlofeggs" title="Code">💻</a></td>
   </tr>
 </table>
 

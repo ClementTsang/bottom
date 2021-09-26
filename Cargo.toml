@@ -31,12 +31,11 @@ opt-level = 3
 codegen-units = 1
 
 [features]
-default = ["fern", "log"]
+default = ["fern", "log", "battery"]
 
 [dependencies]
 anyhow = "1.0.40"
 backtrace = "0.3.59"
-battery = "0.7.8"
 chrono = "0.4.19"
 crossterm = "0.20.0"
 ctrlc = { version = "3.1.9", features = ["termination"] }
@@ -64,16 +63,17 @@ typed-builder = "0.9.0"
 unicode-segmentation = "1.8.0"
 unicode-width = "0.1"
 
-# For debugging only... disable on release builds with --no-default-target for no?  TODO: Redo this.
+# For debugging only... disable on release builds with for now?  TODO: Redo this.
 fern = { version = "0.6.0", optional = true }
 log = { version = "0.4.14", optional = true }
+battery = { version = "0.7.8", optional = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.86"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
-procfs = "0.9.1"
+procfs = "0.10.1"
 smol = "1.2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -96,16 +96,20 @@ assets = [
     ["target/release/btm", "usr/bin/", "755"],
     ["LICENSE", "usr/share/doc/btm/", "644"],
     [
-        "completion/btm.bash",
+        "target/release/build/bottom-*/out/btm.bash",
         "usr/share/bash-completion/completions/btm",
         "644",
     ],
     [
-        "completion/btm.fish",
+        "target/release/build/bottom-*/out/btm.fish",
         "usr/share/fish/vendor_completions.d/btm.fish",
         "644",
     ],
-    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
+    [
+        "target/release/build/bottom-*/out/_btm",
+        "usr/share/zsh/vendor-completions/",
+        "644",
+    ],
 ]
 extended-description = """\
 A cross-platform graphical process/system monitor with a customizable interface and a multitude of
