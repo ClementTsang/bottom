@@ -1,9 +1,6 @@
 use crate::options::ConfigColours;
 use once_cell::sync::Lazy;
 
-// Default widget ID
-pub const DEFAULT_WIDGET_ID: u64 = 56709;
-
 // How long to store data.
 pub const STALE_MAX_MILLISECONDS: u64 = 600 * 1000; // Keep 10 minutes of data.
 
@@ -320,8 +317,7 @@ pub const PROCESS_HELP_TEXT: [[&str; 2]; 14] = [
 ];
 
 pub const SEARCH_TEXT_HELP_TITLE: &str = "Process Search";
-pub const SEARCH_HELP_TEXT: [[&str; 2]; 48] = [
-    ["Tab", "Toggle between searching for PID and name"],
+pub const SEARCH_HELP_TEXT: [[&str; 2]; 47] = [
     ["Esc", "Close the search widget (retains the filter)"],
     ["Ctrl-a", "Skip to the start of the search query"],
     ["Ctrl-e", "Skip to the end of the search query"],

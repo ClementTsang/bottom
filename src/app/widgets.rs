@@ -1,8 +1,7 @@
-use std::time::Instant;
+use std::{fmt::Debug, time::Instant};
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use enum_dispatch::enum_dispatch;
-use indextree::NodeId;
 use tui::{backend::Backend, layout::Rect, widgets::TableState, Frame};
 
 use crate::{
@@ -160,7 +159,6 @@ pub trait Widget {
 pub enum SelectableType {
     Selectable,
     Unselectable,
-    Redirect(NodeId),
 }
 
 /// The "main" widgets that are used by bottom to display information!
@@ -180,6 +178,26 @@ pub enum TmpBottomWidget {
     BasicNet,
     Carousel,
     Empty,
+}
+
+impl Debug for TmpBottomWidget {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MemGraph(_) => write!(f, "MemGraph"),
+            Self::TempTable(_) => write!(f, "TempTable"),
+            Self::DiskTable(_) => write!(f, "DiskTable"),
+            Self::CpuGraph(_) => write!(f, "CpuGraph"),
+            Self::NetGraph(_) => write!(f, "NetGraph"),
+            Self::OldNetGraph(_) => write!(f, "OldNetGraph"),
+            Self::ProcessManager(_) => write!(f, "ProcessManager"),
+            Self::BatteryTable(_) => write!(f, "BatteryTable"),
+            Self::BasicCpu(_) => write!(f, "BasicCpu"),
+            Self::BasicMem(_) => write!(f, "BasicMem"),
+            Self::BasicNet(_) => write!(f, "BasicNet"),
+            Self::Carousel(_) => write!(f, "Carousel"),
+            Self::Empty(_) => write!(f, "Empty"),
+        }
+    }
 }
 
 /// The states a dialog can be in. Consists of either:

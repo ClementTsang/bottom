@@ -140,6 +140,7 @@ impl KillDialog for Painter {
         } else {
             #[cfg(target_family = "unix")]
             {
+                // TODO: Can probably make this const.
                 let signal_text;
                 #[cfg(target_os = "linux")]
                 {

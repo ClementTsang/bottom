@@ -1,7 +1,7 @@
 use tui::layout::Rect;
 
 use crate::{
-    app::{Component, Widget},
+    app::{Component, SelectableType, Widget},
     options::layout_options::LayoutRule,
 };
 
@@ -35,8 +35,6 @@ impl Empty {
 
 impl Component for Empty {
     fn bounds(&self) -> Rect {
-        // TODO: Maybe think of how to store this without making it available for clicking. Separate bounds out to the layout? Might
-        // need to keep the bounds calculations for some components, so maybe implement it specifically for them.
         Rect::default()
     }
 
@@ -54,5 +52,9 @@ impl Widget for Empty {
 
     fn height(&self) -> LayoutRule {
         self.height
+    }
+
+    fn selectable_type(&self) -> SelectableType {
+        SelectableType::Unselectable
     }
 }

@@ -285,6 +285,24 @@ impl TextInput {
             area,
         );
     }
+
+    fn move_left(&mut self) -> ComponentEventResult {
+        let original_cursor = self.cursor.cur_cursor();
+        if self.move_back() == original_cursor {
+            ComponentEventResult::NoRedraw
+        } else {
+            ComponentEventResult::Redraw
+        }
+    }
+
+    fn move_right(&mut self) -> ComponentEventResult {
+        let original_cursor = self.cursor.cur_cursor();
+        if self.move_forward() == original_cursor {
+            ComponentEventResult::NoRedraw
+        } else {
+            ComponentEventResult::Redraw
+        }
+    }
 }
 
 impl Component for TextInput {
@@ -299,22 +317,8 @@ impl Component for TextInput {
     fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
         if event.modifiers.is_empty() || event.modifiers == KeyModifiers::SHIFT {
             match event.code {
-                KeyCode::Left => {
-                    let original_cursor = self.cursor.cur_cursor();
-                    if self.move_back() == original_cursor {
-                        ComponentEventResult::NoRedraw
-                    } else {
-                        ComponentEventResult::Redraw
-                    }
-                }
-                KeyCode::Right => {
-                    let original_cursor = self.cursor.cur_cursor();
-                    if self.move_forward() == original_cursor {
-                        ComponentEventResult::NoRedraw
-                    } else {
-                        ComponentEventResult::Redraw
-                    }
-                }
+                KeyCode::Left => self.move_left(),
+                KeyCode::Right => self.move_right(),
                 KeyCode::Backspace => self.clear_previous_grapheme(),
                 KeyCode::Delete => self.clear_current_grapheme(),
                 KeyCode::Char(c) => self.insert_character(c),
@@ -349,6 +353,8 @@ impl Component for TextInput {
             match event.code {
                 KeyCode::Char('b') => self.move_word_back(),
                 KeyCode::Char('f') => self.move_word_forward(),
+                KeyCode::Char('h') => self.move_left(),
+                KeyCode::Char('l') => self.move_right(),
                 _ => ComponentEventResult::Unhandled,
             }
         } else {

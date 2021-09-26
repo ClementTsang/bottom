@@ -215,6 +215,8 @@ impl Painter {
                 // line-wrapping is NOT the same as taking the width of the text and dividing by width.
                 // So, I need the height AFTER wrapping.
                 // See: https://github.com/fdehau/tui-rs/pull/349.  Land this after this pushes to release.
+                //
+                // ADDENDUM: I could probably use the same textwrap trick I did with the help menu for this.
 
                 let dd_text = self.get_dd_spans(app_state);
 
@@ -334,15 +336,6 @@ impl Painter {
                                 );
 
                                 if let Some(widget) = lookup_map.get_mut(&node) {
-                                    // debug!(
-                                    //     "Original bound: {:?}, offset_x: {}, offset_y: {}, area: {:?}, widget: {}",
-                                    //     bound,
-                                    //     offset_x,
-                                    //     offset_y,
-                                    //     area,
-                                    //     widget.get_pretty_name()
-                                    // );
-
                                     if let TmpBottomWidget::Carousel(carousel) = widget {
                                         let remaining_area: Rect =
                                             carousel.draw_carousel(painter, f, area);
@@ -357,7 +350,7 @@ impl Painter {
                                                     painter,
                                                     f,
                                                     remaining_area,
-                                                    selected_id == to_draw_node,
+                                                    selected_id == node,
                                                     false,
                                                 );
                                             }

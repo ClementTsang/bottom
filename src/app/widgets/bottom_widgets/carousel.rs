@@ -12,14 +12,15 @@ use tui::{
 
 use crate::{
     app::{
-        does_bound_intersect_coordinate, event::ComponentEventResult, Component, SelectableType,
-        Widget,
+        does_bound_intersect_coordinate,
+        event::{ComponentEventResult, SelectionAction},
+        Component, Widget,
     },
     canvas::Painter,
     options::layout_options::LayoutRule,
 };
 
-/// A container that "holds"" multiple [`BottomWidget`]s through their [`NodeId`]s.
+/// A container that "holds" multiple [`BottomWidget`]s through their [`NodeId`]s.
 #[derive(PartialEq, Eq)]
 pub struct Carousel {
     index: usize,
@@ -109,7 +110,7 @@ impl Carousel {
             .direction(tui::layout::Direction::Vertical)
             .split(area);
 
-        self.set_bounds(split_area[0]);
+        self.set_bounds(area);
 
         if let Some((_prev_id, prev_element_name)) = self.get_prev() {
             let prev_arrow_text = Spans::from(Span::styled(
@@ -198,11 +199,15 @@ impl Widget for Carousel {
         self.height
     }
 
-    fn selectable_type(&self) -> SelectableType {
-        if let Some(node) = self.get_currently_selected() {
-            SelectableType::Redirect(node)
-        } else {
-            SelectableType::Unselectable
-        }
+    fn handle_widget_selection_left(&mut self) -> SelectionAction {
+        // Override to move to the left widget
+        self.decrement_index();
+        SelectionAction::Handled
+    }
+
+    fn handle_widget_selection_right(&mut self) -> SelectionAction {
+        // Override to move to the right widget
+        self.increment_index();
+        SelectionAction::Handled
     }
 }

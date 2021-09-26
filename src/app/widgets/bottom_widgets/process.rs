@@ -984,6 +984,24 @@ impl ProcessManager {
         ComponentEventResult::Signal(ReturnSignal::Update)
     }
 
+    fn toggle_memory(&mut self) -> ComponentEventResult {
+        if matches!(
+            self.process_table.columns()[3].sort_type,
+            ProcessSortType::MemPercent
+        ) {
+            self.process_table
+                .set_column(ProcessSortColumn::new(ProcessSortType::Mem), 3);
+        } else {
+            self.process_table
+                .set_column(ProcessSortColumn::new(ProcessSortType::MemPercent), 3);
+        }
+
+        // Invalidate row cache.
+        self.process_table.invalidate_cached_columns(); // TODO: This should be automatically called somehow after sets/removes to avoid forgetting it - maybe do a queue system?
+
+        ComponentEventResult::Signal(ReturnSignal::Update)
+    }
+
     fn hide_sort(&mut self) {
         self.show_sort = false;
         if let ProcessManagerSelection::Sort = self.selected {
@@ -1081,7 +1099,7 @@ impl Component for ProcessManager {
                             return self.open_search();
                         }
                         KeyCode::Char('%') => {
-                            // Handle switching memory usage type
+                            return self.toggle_memory();
                         }
                         KeyCode::Char('+') => {
                             // Expand a branch

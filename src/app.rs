@@ -308,26 +308,36 @@ impl AppState {
 
     /// Moves to a widget.
     fn move_to_widget(&mut self, direction: MovementDirection) -> EventResult {
-        let layout_tree = &mut self.layout_tree;
-        let previous_selected = self.selected_widget;
-        if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-            match move_widget_selection(layout_tree, widget, self.selected_widget, direction) {
-                MoveWidgetResult::ForceRedraw(new_widget_id) => {
-                    self.selected_widget = new_widget_id;
-                    EventResult::Redraw
-                }
-                MoveWidgetResult::NodeId(new_widget_id) => {
-                    self.selected_widget = new_widget_id;
+        match if self.is_expanded {
+            move_expanded_widget_selection(
+                &mut self.widget_lookup_map,
+                self.selected_widget,
+                direction,
+            )
+        } else {
+            let layout_tree = &mut self.layout_tree;
 
-                    if previous_selected != self.selected_widget {
-                        EventResult::Redraw
-                    } else {
-                        EventResult::NoRedraw
-                    }
+            move_widget_selection(
+                layout_tree,
+                &mut self.widget_lookup_map,
+                self.selected_widget,
+                direction,
+            )
+        } {
+            MoveWidgetResult::ForceRedraw(new_widget_id) => {
+                self.selected_widget = new_widget_id;
+                EventResult::Redraw
+            }
+            MoveWidgetResult::NodeId(new_widget_id) => {
+                let previous_selected = self.selected_widget;
+                self.selected_widget = new_widget_id;
+
+                if previous_selected != self.selected_widget {
+                    EventResult::Redraw
+                } else {
+                    EventResult::NoRedraw
                 }
             }
-        } else {
-            EventResult::NoRedraw
         }
     }
 
@@ -448,33 +458,29 @@ impl AppState {
             for (id, widget) in self.widget_lookup_map.iter_mut() {
                 if widget.does_border_intersect_mouse(&event) {
                     let result = widget.handle_mouse_event(event);
-
-                    let new_id;
                     match widget.selectable_type() {
                         SelectableType::Selectable => {
-                            new_id = *id;
+                            let was_id_already_selected = self.selected_widget == *id;
+                            self.selected_widget = *id;
+
+                            if was_id_already_selected {
+                                returned_result = self.convert_widget_event_result(result);
+                                break;
+                            } else {
+                                // If the weren't equal, *force* a redraw, and correct the layout tree.
+                                correct_layout_last_selections(
+                                    &mut self.layout_tree,
+                                    self.selected_widget,
+                                );
+                                let _ = self.convert_widget_event_result(result);
+                                returned_result = EventResult::Redraw;
+                                break;
+                            }
                         }
                         SelectableType::Unselectable => {
                             let result = widget.handle_mouse_event(event);
                             return self.convert_widget_event_result(result);
                         }
-                        SelectableType::Redirect(redirected_id) => {
-                            new_id = redirected_id;
-                        }
-                    }
-
-                    let was_id_already_selected = self.selected_widget == new_id;
-                    self.selected_widget = new_id;
-
-                    if was_id_already_selected {
-                        returned_result = self.convert_widget_event_result(result);
-                        break;
-                    } else {
-                        // If the weren't equal, *force* a redraw, and correct the layout tree.
-                        correct_layout_last_selections(&mut self.layout_tree, self.selected_widget);
-                        let _ = self.convert_widget_event_result(result);
-                        returned_result = EventResult::Redraw;
-                        break;
                     }
                 }
             }
