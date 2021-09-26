@@ -198,7 +198,6 @@ Note that key bindings are generally case-sensitive.
 | ------------------------------------- | -------------------------------------------- |
 | ++left++ <br/> ++h++ <br/> ++alt+h++  | Moves the cursor left                        |
 | ++right++ <br/> ++l++ <br/> ++alt+l++ | Moves the cursor right                       |
-| ++tab++                               | Toggle between searching by PID or name      |
 | ++esc++                               | Close the search widget (retains the filter) |
 | ++ctrl+a++                            | Skip to the start of the search query        |
 | ++ctrl+e++                            | Skip to the end of the search query          |
