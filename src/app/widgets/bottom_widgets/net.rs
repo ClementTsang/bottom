@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, time::Instant};
+use std::borrow::Cow;
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{
@@ -19,19 +19,6 @@ use crate::{
     units::data_units::DataUnit,
     utils::gen_util::*,
 };
-
-pub struct NetWidgetState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
-}
-
-#[derive(Default)]
-pub struct NetState {
-    pub force_update: Option<u64>,
-    pub widget_states: HashMap<u64, NetWidgetState>,
-}
-
-// --- NEW STUFF BELOW ---
 
 /// Returns the max data point and time given a time.
 fn get_max_entry(

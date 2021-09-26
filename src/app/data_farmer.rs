@@ -319,7 +319,7 @@ impl DataCollection {
     }
 
     fn eat_proc(&mut self, list_of_processes: Vec<processes::ProcessHarvest>) {
-        // TODO: Probably more efficient to do this in the data collection step, but it's fine for now.
+        // TODO: [Optimization] Probably more efficient to do this in the data collection step, but it's fine for now.
         self.process_name_pid_map.clear();
         self.process_cmd_pid_map.clear();
         list_of_processes.iter().for_each(|process_harvest| {

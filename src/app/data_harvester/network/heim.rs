@@ -39,7 +39,7 @@ pub async fn get_network_data(
             };
 
             if to_keep {
-                // TODO: Use bytes as the default instead, perhaps?
+                // TODO: [Optimization] Optimization (Potential)Use bytes as the default instead, perhaps?
                 // Since you might have to do a double conversion (bytes -> bits -> bytes) in some cases;
                 // but if you stick to bytes, then in the bytes, case, you do no conversion, and in the bits case,
                 // you only do one conversion...

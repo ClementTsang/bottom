@@ -1,42 +1,16 @@
-use std::collections::HashMap;
-
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{backend::Backend, layout::Rect, widgets::Borders, Frame};
 
 use crate::{
     app::{
         data_farmer::DataCollection, event::ComponentEventResult,
-        sort_text_table::SimpleSortableColumn, text_table::TextTableData, AppScrollWidgetState,
-        CanvasTableWidthState, Component, TextTable, Widget,
+        sort_text_table::SimpleSortableColumn, text_table::TextTableData, Component, TextTable,
+        Widget,
     },
     canvas::Painter,
     data_conversion::convert_disk_row,
     options::layout_options::LayoutRule,
 };
-
-pub struct DiskWidgetState {
-    pub scroll_state: AppScrollWidgetState,
-    pub table_width_state: CanvasTableWidthState,
-}
-
-#[derive(Default)]
-pub struct DiskState {
-    pub widget_states: HashMap<u64, DiskWidgetState>,
-}
-
-impl DiskState {
-    pub fn init(widget_states: HashMap<u64, DiskWidgetState>) -> Self {
-        DiskState { widget_states }
-    }
-
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut DiskWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&DiskWidgetState> {
-        self.widget_states.get(&widget_id)
-    }
-}
 
 /// A table displaying disk data.
 pub struct DiskTable {

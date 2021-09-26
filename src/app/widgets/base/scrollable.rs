@@ -57,7 +57,7 @@ impl Scrollable {
             scroll_direction: ScrollDirection::Down,
             num_items,
             tui_state,
-            gg_manager: MultiKey::register(vec!['g', 'g']), // TODO: Use a static arrayvec
+            gg_manager: MultiKey::register(vec!['g', 'g']), // TODO: [Optimization] Use a static arrayvec
             bounds: Rect::default(),
         }
     }

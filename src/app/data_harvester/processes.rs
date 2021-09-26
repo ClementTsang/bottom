@@ -27,6 +27,7 @@ use std::borrow::Cow;
 
 use crate::Pid;
 
+// FIXME: [URGENT] Delete this.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ProcessSorting {
     CpuPercent,

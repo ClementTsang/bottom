@@ -7,24 +7,20 @@ mod process_killer;
 pub mod query;
 pub mod widgets;
 
-use std::{collections::HashMap, time::Instant};
+use std::time::Instant;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
 use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
-use unicode_width::UnicodeWidthStr;
 
 pub use data_farmer::*;
-use data_harvester::{processes, temperature};
+use data_harvester::temperature;
 pub use filter::*;
 use layout_manager::*;
 pub use widgets::*;
 
 use crate::{
-    canvas, constants,
-    units::data_units::DataUnit,
-    utils::error::{BottomError, Result},
-    BottomEvent, Pid,
+    canvas, constants, units::data_units::DataUnit, utils::error::Result, BottomEvent, Pid,
 };
 
 use self::event::{ComponentEventResult, EventResult, ReturnSignal};
@@ -91,7 +87,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
-    pub table_gap: u16, // TODO: Just make this a bool...
+    pub table_gap: u16, // TODO: [Config, Refactor] Just make this a bool...
     pub disable_click: bool,
     pub no_write: bool,
     pub show_table_scroll_position: bool,
@@ -129,23 +125,8 @@ pub struct AppState {
     pub filters: DataFilters,
     pub app_config_fields: AppConfigFields,
 
-    // --- Eventually delete/rewrite ---
+    // --- FIXME: TO DELETE/REWRITE ---
     pub delete_dialog_state: AppDeleteDialogState,
-
-    // --- TO DELETE ---
-    pub cpu_state: CpuState,
-    pub mem_state: MemState,
-    pub net_state: NetState,
-    pub proc_state: ProcState,
-    pub temp_state: TempState,
-    pub disk_state: DiskState,
-    pub battery_state: BatteryState,
-    pub basic_table_widget_state: Option<BasicTableWidgetState>,
-    pub widget_map: HashMap<u64, BottomWidget>,
-    pub current_widget: BottomWidget,
-
-    pub basic_mode_use_percent: bool,
-
     pub is_force_redraw: bool,
 
     pub is_determining_widget_boundary: bool,
@@ -190,17 +171,6 @@ impl AppState {
             data_collection: Default::default(),
             is_expanded: Default::default(),
             delete_dialog_state: Default::default(),
-            cpu_state: Default::default(),
-            mem_state: Default::default(),
-            net_state: Default::default(),
-            proc_state: Default::default(),
-            temp_state: Default::default(),
-            disk_state: Default::default(),
-            battery_state: Default::default(),
-            basic_table_widget_state: Default::default(),
-            widget_map: Default::default(),
-            current_widget: Default::default(),
-            basic_mode_use_percent: Default::default(),
             is_force_redraw: Default::default(),
             is_determining_widget_boundary: Default::default(),
             frozen_state: Default::default(),
@@ -484,7 +454,7 @@ impl AppState {
             BottomEvent::Update(new_data) => {
                 self.data_collection.eat_data(new_data);
 
-                // TODO: Optimization for dialogs; don't redraw here.
+                // TODO: [Optimization] Optimization for dialogs - don't redraw on an update!
 
                 if !self.is_frozen() {
                     let data_collection = &self.data_collection;
@@ -506,104 +476,6 @@ impl AppState {
                     .clean_data(constants::STALE_MAX_MILLISECONDS);
                 EventResult::NoRedraw
             }
-        }
-    }
-
-    pub fn is_in_search_widget(&self) -> bool {
-        matches!(
-            self.current_widget.widget_type,
-            BottomWidgetType::ProcSearch
-        )
-    }
-
-    fn is_in_dialog(&self) -> bool {
-        self.delete_dialog_state.is_showing_dd
-    }
-
-    fn ignore_normal_keybinds(&self) -> bool {
-        self.is_in_dialog()
-    }
-
-    pub fn on_tab(&mut self) {
-        // Allow usage whilst only in processes
-
-        if !self.ignore_normal_keybinds() {
-            match self.current_widget.widget_type {
-                BottomWidgetType::Cpu => {
-                    if let Some(cpu_widget_state) = self
-                        .cpu_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        cpu_widget_state.is_multi_graph_mode =
-                            !cpu_widget_state.is_multi_graph_mode;
-                    }
-                }
-                BottomWidgetType::Proc => {
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id)
-                    {
-                        // Do NOT allow when in tree mode!
-                        if !proc_widget_state.is_tree_mode {
-                            // Toggles process widget grouping state
-                            proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
-
-                            // Forcefully switch off column if we were on it...
-                            if (proc_widget_state.is_grouped
-                                && (proc_widget_state.process_sorting_type
-                                    == processes::ProcessSorting::Pid
-                                    || proc_widget_state.process_sorting_type
-                                        == processes::ProcessSorting::User
-                                    || proc_widget_state.process_sorting_type
-                                        == processes::ProcessSorting::State))
-                                || (!proc_widget_state.is_grouped
-                                    && proc_widget_state.process_sorting_type
-                                        == processes::ProcessSorting::Count)
-                            {
-                                proc_widget_state.process_sorting_type =
-                                    processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
-                                proc_widget_state.is_process_sort_descending = true;
-                            }
-
-                            proc_widget_state.columns.set_to_sorted_index_from_type(
-                                &proc_widget_state.process_sorting_type,
-                            );
-
-                            proc_widget_state.columns.try_set(
-                                &processes::ProcessSorting::State,
-                                !(proc_widget_state.is_grouped),
-                            );
-
-                            #[cfg(target_family = "unix")]
-                            proc_widget_state.columns.try_set(
-                                &processes::ProcessSorting::User,
-                                !(proc_widget_state.is_grouped),
-                            );
-
-                            proc_widget_state
-                                .columns
-                                .toggle(&processes::ProcessSorting::Count);
-                            proc_widget_state
-                                .columns
-                                .toggle(&processes::ProcessSorting::Pid);
-
-                            proc_widget_state.requires_redraw = true;
-                            self.proc_state.force_update = Some(self.current_widget.widget_id);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
-
-    /// I don't like this, but removing it causes a bunch of breakage.
-    /// Use ``proc_widget_state.is_grouped`` if possible!
-    pub fn is_grouped(&self, widget_id: u64) -> bool {
-        if let Some(proc_widget_state) = self.proc_state.widget_states.get(&widget_id) {
-            proc_widget_state.is_grouped
-        } else {
-            false
         }
     }
 
@@ -642,149 +514,122 @@ impl AppState {
     }
 
     pub fn on_left_key(&mut self) {
-        if !self.is_in_dialog() {
-            match self.current_widget.widget_type {
-                BottomWidgetType::ProcSearch => {
-                    let is_in_search_widget = self.is_in_search_widget();
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id - 1)
-                    {
-                        if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.get_search_cursor_position();
-                            proc_widget_state
-                                .search_walk_back(proc_widget_state.get_search_cursor_position());
-                            if proc_widget_state.get_search_cursor_position() < prev_cursor {
-                                let str_slice = &proc_widget_state
-                                    .process_search_state
-                                    .search_state
-                                    .current_search_query
-                                    [proc_widget_state.get_search_cursor_position()..prev_cursor];
-                                proc_widget_state
-                                    .process_search_state
-                                    .search_state
-                                    .char_cursor_position -= UnicodeWidthStr::width(str_slice);
-                                proc_widget_state
-                                    .process_search_state
-                                    .search_state
-                                    .cursor_direction = CursorDirection::Left;
-                            }
-                        }
-                    }
-                }
-                BottomWidgetType::Battery => {
-                    if !self.canvas_data.battery_data.is_empty() {
-                        if let Some(battery_widget_state) = self
-                            .battery_state
-                            .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index > 0 {
-                                battery_widget_state.currently_selected_battery_index -= 1;
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    match self.delete_dialog_state.selected_signal {
-                        KillSignal::Kill(prev_signal) => {
-                            self.delete_dialog_state.selected_signal = match prev_signal - 1 {
-                                0 => KillSignal::Cancel,
-                                // 32+33 are skipped
-                                33 => KillSignal::Kill(31),
-                                signal => KillSignal::Kill(signal),
-                            };
-                        }
-                        KillSignal::Cancel => {}
-                    };
-                } else {
-                    self.delete_dialog_state.selected_signal = KillSignal::default();
-                }
-            }
-            #[cfg(target_os = "windows")]
-            {
-                self.delete_dialog_state.selected_signal = KillSignal::Kill(1);
-            }
-        }
+        // if !self.is_in_dialog() {
+        //     match self.current_widget.widget_type {
+        //         BottomWidgetType::ProcSearch => {
+        //             let is_in_search_widget = self.is_in_search_widget();
+        //             if let Some(proc_widget_state) = self
+        //                 .proc_state
+        //                 .get_mut_widget_state(self.current_widget.widget_id - 1)
+        //             {
+        //                 if is_in_search_widget {
+        //                     let prev_cursor = proc_widget_state.get_search_cursor_position();
+        //                     proc_widget_state
+        //                         .search_walk_back(proc_widget_state.get_search_cursor_position());
+        //                     if proc_widget_state.get_search_cursor_position() < prev_cursor {
+        //                         let str_slice = &proc_widget_state
+        //                             .process_search_state
+        //                             .search_state
+        //                             .current_search_query
+        //                             [proc_widget_state.get_search_cursor_position()..prev_cursor];
+        //                         proc_widget_state
+        //                             .process_search_state
+        //                             .search_state
+        //                             .char_cursor_position -= UnicodeWidthStr::width(str_slice);
+        //                         proc_widget_state
+        //                             .process_search_state
+        //                             .search_state
+        //                             .cursor_direction = CursorDirection::Left;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         _ => {}
+        //     }
+        // } else if self.delete_dialog_state.is_showing_dd {
+        //     #[cfg(target_family = "unix")]
+        //     {
+        //         if self.app_config_fields.is_advanced_kill {
+        //             match self.delete_dialog_state.selected_signal {
+        //                 KillSignal::Kill(prev_signal) => {
+        //                     self.delete_dialog_state.selected_signal = match prev_signal - 1 {
+        //                         0 => KillSignal::Cancel,
+        //                         // 32+33 are skipped
+        //                         33 => KillSignal::Kill(31),
+        //                         signal => KillSignal::Kill(signal),
+        //                     };
+        //                 }
+        //                 KillSignal::Cancel => {}
+        //             };
+        //         } else {
+        //             self.delete_dialog_state.selected_signal = KillSignal::default();
+        //         }
+        //     }
+        //     #[cfg(target_os = "windows")]
+        //     {
+        //         self.delete_dialog_state.selected_signal = KillSignal::Kill(1);
+        //     }
+        // }
     }
 
     pub fn on_right_key(&mut self) {
-        if !self.is_in_dialog() {
-            match self.current_widget.widget_type {
-                BottomWidgetType::ProcSearch => {
-                    let is_in_search_widget = self.is_in_search_widget();
-                    if let Some(proc_widget_state) = self
-                        .proc_state
-                        .get_mut_widget_state(self.current_widget.widget_id - 1)
-                    {
-                        if is_in_search_widget {
-                            let prev_cursor = proc_widget_state.get_search_cursor_position();
-                            proc_widget_state.search_walk_forward(
-                                proc_widget_state.get_search_cursor_position(),
-                            );
-                            if proc_widget_state.get_search_cursor_position() > prev_cursor {
-                                let str_slice = &proc_widget_state
-                                    .process_search_state
-                                    .search_state
-                                    .current_search_query
-                                    [prev_cursor..proc_widget_state.get_search_cursor_position()];
-                                proc_widget_state
-                                    .process_search_state
-                                    .search_state
-                                    .char_cursor_position += UnicodeWidthStr::width(str_slice);
-                                proc_widget_state
-                                    .process_search_state
-                                    .search_state
-                                    .cursor_direction = CursorDirection::Right;
-                            }
-                        }
-                    }
-                }
-                BottomWidgetType::Battery => {
-                    if !self.canvas_data.battery_data.is_empty() {
-                        let battery_count = self.canvas_data.battery_data.len();
-                        if let Some(battery_widget_state) = self
-                            .battery_state
-                            .get_mut_widget_state(self.current_widget.widget_id)
-                        {
-                            if battery_widget_state.currently_selected_battery_index
-                                < battery_count - 1
-                            {
-                                battery_widget_state.currently_selected_battery_index += 1;
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-        } else if self.delete_dialog_state.is_showing_dd {
-            #[cfg(target_family = "unix")]
-            {
-                if self.app_config_fields.is_advanced_kill {
-                    let new_signal = match self.delete_dialog_state.selected_signal {
-                        KillSignal::Cancel => 1,
-                        // 32+33 are skipped
-                        #[cfg(target_os = "linux")]
-                        KillSignal::Kill(31) => 34,
-                        #[cfg(target_os = "macos")]
-                        KillSignal::Kill(31) => 31,
-                        KillSignal::Kill(64) => 64,
-                        KillSignal::Kill(signal) => signal + 1,
-                    };
-                    self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
-                } else {
-                    self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-                }
-            }
-            #[cfg(target_os = "windows")]
-            {
-                self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-            }
-        }
+        // if !self.is_in_dialog() {
+        //     match self.current_widget.widget_type {
+        //         BottomWidgetType::ProcSearch => {
+        //             let is_in_search_widget = self.is_in_search_widget();
+        //             if let Some(proc_widget_state) = self
+        //                 .proc_state
+        //                 .get_mut_widget_state(self.current_widget.widget_id - 1)
+        //             {
+        //                 if is_in_search_widget {
+        //                     let prev_cursor = proc_widget_state.get_search_cursor_position();
+        //                     proc_widget_state.search_walk_forward(
+        //                         proc_widget_state.get_search_cursor_position(),
+        //                     );
+        //                     if proc_widget_state.get_search_cursor_position() > prev_cursor {
+        //                         let str_slice = &proc_widget_state
+        //                             .process_search_state
+        //                             .search_state
+        //                             .current_search_query
+        //                             [prev_cursor..proc_widget_state.get_search_cursor_position()];
+        //                         proc_widget_state
+        //                             .process_search_state
+        //                             .search_state
+        //                             .char_cursor_position += UnicodeWidthStr::width(str_slice);
+        //                         proc_widget_state
+        //                             .process_search_state
+        //                             .search_state
+        //                             .cursor_direction = CursorDirection::Right;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         _ => {}
+        //     }
+        // } else if self.delete_dialog_state.is_showing_dd {
+        //     #[cfg(target_family = "unix")]
+        //     {
+        //         if self.app_config_fields.is_advanced_kill {
+        //             let new_signal = match self.delete_dialog_state.selected_signal {
+        //                 KillSignal::Cancel => 1,
+        //                 // 32+33 are skipped
+        //                 #[cfg(target_os = "linux")]
+        //                 KillSignal::Kill(31) => 34,
+        //                 #[cfg(target_os = "macos")]
+        //                 KillSignal::Kill(31) => 31,
+        //                 KillSignal::Kill(64) => 64,
+        //                 KillSignal::Kill(signal) => signal + 1,
+        //             };
+        //             self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
+        //         } else {
+        //             self.delete_dialog_state.selected_signal = KillSignal::Cancel;
+        //         }
+        //     }
+        //     #[cfg(target_os = "windows")]
+        //     {
+        //         self.delete_dialog_state.selected_signal = KillSignal::Cancel;
+        //     }
+        // }
     }
 
     pub fn start_killing_process(&mut self) {
@@ -828,35 +673,38 @@ impl AppState {
     }
 
     pub fn kill_highlighted_process(&mut self) -> Result<()> {
-        if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            if let Some(current_selected_processes) = &self.to_delete_process_list {
-                #[cfg(target_family = "unix")]
-                let signal = match self.delete_dialog_state.selected_signal {
-                    KillSignal::Kill(sig) => sig,
-                    KillSignal::Cancel => 15, // should never happen, so just TERM
-                };
-                for pid in &current_selected_processes.1 {
-                    #[cfg(target_family = "unix")]
-                    {
-                        process_killer::kill_process_given_pid(*pid, signal)?;
-                    }
-                    #[cfg(target_os = "windows")]
-                    {
-                        process_killer::kill_process_given_pid(*pid)?;
-                    }
-                }
-            }
-            self.to_delete_process_list = None;
-            Ok(())
-        } else {
-            Err(BottomError::GenericError(
-                "Cannot kill processes if the current widget is not the Process widget!"
-                    .to_string(),
-            ))
-        }
+        // if let BottomWidgetType::Proc = self.current_widget.widget_type {
+        //     if let Some(current_selected_processes) = &self.to_delete_process_list {
+        //         #[cfg(target_family = "unix")]
+        //         let signal = match self.delete_dialog_state.selected_signal {
+        //             KillSignal::Kill(sig) => sig,
+        //             KillSignal::Cancel => 15, // should never happen, so just TERM
+        //         };
+        //         for pid in &current_selected_processes.1 {
+        //             #[cfg(target_family = "unix")]
+        //             {
+        //                 process_killer::kill_process_given_pid(*pid, signal)?;
+        //             }
+        //             #[cfg(target_os = "windows")]
+        //             {
+        //                 process_killer::kill_process_given_pid(*pid)?;
+        //             }
+        //         }
+        //     }
+        //     self.to_delete_process_list = None;
+        //     Ok(())
+        // } else {
+        //     Err(BottomError::GenericError(
+        //         "Cannot kill processes if the current widget is not the Process widget!"
+        //             .to_string(),
+        //     ))
+        // }
+
+        Ok(())
     }
 
     pub fn get_to_delete_processes(&self) -> Option<(String, Vec<Pid>)> {
-        self.to_delete_process_list.clone()
+        // self.to_delete_process_list.clone()
+        todo!()
     }
 }

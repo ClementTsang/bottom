@@ -34,7 +34,7 @@ pub struct HelpDialog {
     gg_manager: MultiKey,
 
     /// A jury-rigged solution for shortcut indices.
-    /// TODO: THIS DOES NOT SCALE WELL!
+    /// TODO: [Refactor] Shortcut indices system - THIS DOES NOT SCALE WELL IN THE FUTURE! Write a better system like multikey (but for multiple combos).
     shortcut_indices: FxHashMap<u32, usize>,
 }
 

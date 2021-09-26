@@ -193,7 +193,7 @@ impl Painter {
                 let middle_dialog_chunk = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(if terminal_width < 100 {
-                        // TODO: [REFACTOR] The point we start changing size at currently hard-coded in.
+                        // TODO: [Drawing, Hard-coded] The point we start changing size at currently hard-coded in.
                         [
                             Constraint::Percentage(0),
                             Constraint::Percentage(100),
@@ -210,7 +210,8 @@ impl Painter {
 
                 help_dialog.draw_help(&self, f, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
-                // TODO: This needs the paragraph wrap feature from tui-rs to be pushed to complete... but for now it's pretty close!
+                // TODO: [Drawing] Better dd sizing needs the paragraph wrap feature from tui-rs to be pushed to
+                // complete... but for now it's pretty close!
                 // The main problem right now is that I cannot properly calculate the height offset since
                 // line-wrapping is NOT the same as taking the width of the text and dividing by width.
                 // So, I need the height AFTER wrapping.

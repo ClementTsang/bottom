@@ -1,7 +1,4 @@
-use std::{
-    cmp::{max, min},
-    collections::HashMap,
-};
+use std::cmp::{max, min};
 
 use crossterm::event::{KeyCode, KeyEvent, MouseEvent};
 use tui::{
@@ -22,23 +19,6 @@ use crate::{
     data_conversion::{convert_battery_harvest, ConvertedBatteryData},
     options::layout_options::LayoutRule,
 };
-
-#[derive(Default)]
-pub struct BatteryWidgetState {
-    pub currently_selected_battery_index: usize,
-    pub tab_click_locs: Option<Vec<((u16, u16), (u16, u16))>>,
-}
-
-#[derive(Default)]
-pub struct BatteryState {
-    pub widget_states: HashMap<u64, BatteryWidgetState>,
-}
-
-impl BatteryState {
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut BatteryWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-}
 
 /// A table displaying battery information on a per-battery basis.
 pub struct BatteryTable {

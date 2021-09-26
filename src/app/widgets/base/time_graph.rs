@@ -45,7 +45,7 @@ pub enum AutohideTimer {
     },
 }
 
-// TODO: [AUTOHIDE] Not a fan of how this is done, as this should really "trigger" a draw when it's done.
+// TODO: [Refactor] Not a fan of how autohide is currently done, as this should really "trigger" a draw when it's done. Maybe use async/threads?
 impl AutohideTimer {
     fn start_display_timer(&mut self) {
         match self {

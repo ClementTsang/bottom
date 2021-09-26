@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, time::Instant};
+use std::borrow::Cow;
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{backend::Backend, layout::Rect};
@@ -9,17 +9,6 @@ use crate::{
     data_conversion::{convert_mem_data_points, convert_mem_labels, convert_swap_data_points},
     options::layout_options::LayoutRule,
 };
-
-pub struct MemWidgetState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
-}
-
-#[derive(Default)]
-pub struct MemState {
-    pub force_update: Option<u64>,
-    pub widget_states: HashMap<u64, MemWidgetState>,
-}
 
 /// A widget that deals with displaying memory usage on a [`TimeGraph`].  Basically just a wrapper
 /// around [`TimeGraph`] as of now.

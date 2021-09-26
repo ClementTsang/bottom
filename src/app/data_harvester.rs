@@ -149,7 +149,7 @@ impl DataCollector {
             self.sys.refresh_memory();
             self.mem_total_kb = self.sys.get_total_memory();
 
-            // TODO: Would be good to get this and network list running on a timer instead...?
+            // TODO: [Data Collection] Would be good to get this and network list running on a timer instead...?
             // Refresh components list once...
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components_list();

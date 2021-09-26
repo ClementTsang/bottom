@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{backend::Backend, layout::Rect, widgets::Borders, Frame};
 
@@ -7,48 +5,14 @@ use crate::{
     app::{
         data_farmer::DataCollection, data_harvester::temperature::TemperatureType,
         event::ComponentEventResult, sort_text_table::SimpleSortableColumn,
-        text_table::TextTableData, AppScrollWidgetState, CanvasTableWidthState, Component,
-        TextTable, Widget,
+        text_table::TextTableData, Component, TextTable, Widget,
     },
     canvas::Painter,
     data_conversion::convert_temp_row,
     options::layout_options::LayoutRule,
 };
 
-pub struct TempWidgetState {
-    pub scroll_state: AppScrollWidgetState,
-    pub table_width_state: CanvasTableWidthState,
-}
-
-impl TempWidgetState {
-    pub fn init() -> Self {
-        TempWidgetState {
-            scroll_state: AppScrollWidgetState::default(),
-            table_width_state: CanvasTableWidthState::default(),
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct TempState {
-    pub widget_states: HashMap<u64, TempWidgetState>,
-}
-
-impl TempState {
-    pub fn init(widget_states: HashMap<u64, TempWidgetState>) -> Self {
-        TempState { widget_states }
-    }
-
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut TempWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&TempWidgetState> {
-        self.widget_states.get(&widget_id)
-    }
-}
-
-/// A table displaying disk data..
+/// A table displaying temperature data.
 pub struct TempTable {
     table: TextTable<SimpleSortableColumn>,
     bounds: Rect,

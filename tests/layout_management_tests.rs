@@ -1,3 +1,3 @@
-//! Mocks layout management, so we can check if we broke anything.
+//! Mocks layout management.
 
-// TODO: Redo testing.
+// FIXME: [URGENT] Redo testing for layout management.

@@ -38,31 +38,31 @@ impl KillDialog for Painter {
                 Spans::from(dd_err.clone()),
                 Spans::from("Please press ENTER or ESC to close this dialog."),
             ]));
-        } else if let Some(to_kill_processes) = app_state.get_to_delete_processes() {
-            if let Some(first_pid) = to_kill_processes.1.first() {
-                return Some(Text::from(vec![
-                    Spans::from(""),
-                    if app_state.is_grouped(app_state.current_widget.widget_id) {
-                        if to_kill_processes.1.len() != 1 {
-                            Spans::from(format!(
-                                "Kill {} processes with the name \"{}\"?  Press ENTER to confirm.",
-                                to_kill_processes.1.len(),
-                                to_kill_processes.0
-                            ))
-                        } else {
-                            Spans::from(format!(
-                                "Kill 1 process with the name \"{}\"?  Press ENTER to confirm.",
-                                to_kill_processes.0
-                            ))
-                        }
-                    } else {
-                        Spans::from(format!(
-                            "Kill process \"{}\" with PID {}?  Press ENTER to confirm.",
-                            to_kill_processes.0, first_pid
-                        ))
-                    },
-                ]));
-            }
+        } else if let Some(_to_kill_processes) = app_state.get_to_delete_processes() {
+            // if let Some(first_pid) = to_kill_processes.1.first() {
+            //     return Some(Text::from(vec![
+            //         Spans::from(""),
+            //         if app_state.is_grouped(app_state.current_widget.widget_id) {
+            //             if to_kill_processes.1.len() != 1 {
+            //                 Spans::from(format!(
+            //                     "Kill {} processes with the name \"{}\"?  Press ENTER to confirm.",
+            //                     to_kill_processes.1.len(),
+            //                     to_kill_processes.0
+            //                 ))
+            //             } else {
+            //                 Spans::from(format!(
+            //                     "Kill 1 process with the name \"{}\"?  Press ENTER to confirm.",
+            //                     to_kill_processes.0
+            //                 ))
+            //             }
+            //         } else {
+            //             Spans::from(format!(
+            //                 "Kill process \"{}\" with PID {}?  Press ENTER to confirm.",
+            //                 to_kill_processes.0, first_pid
+            //             ))
+            //         },
+            //     ]));
+            // }
         }
 
         None
@@ -140,7 +140,7 @@ impl KillDialog for Painter {
         } else {
             #[cfg(target_family = "unix")]
             {
-                // TODO: Can probably make this const.
+                // TODO: [Optimization, Const] Can probably make this const.
                 let signal_text;
                 #[cfg(target_os = "linux")]
                 {

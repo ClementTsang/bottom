@@ -84,7 +84,7 @@ pub fn get_matches() -> clap::ArgMatches<'static> {
     build_app().get_matches()
 }
 
-// TODO: Refactor this a bit, it's quite messy atm
+// TODO: [Refactor] Refactor the clap app creation a bit, it's quite messy atm
 pub fn build_app() -> App<'static, 'static> {
     // Temps
     let kelvin = Arg::with_name("kelvin")
@@ -149,7 +149,7 @@ When searching for a process, enables case sensitivity by default.\n\n",
 Sets process CPU% usage to be based on the current system CPU% usage
 rather than total CPU usage.\n\n",
         );
-    // TODO: [DEBUG] Add a proper debugging solution.
+    // TODO: [Feature] Add a proper debugging solution. Potentially, add a "diagnose" option to just see if we can gather data.
     //     let debug = Arg::with_name("debug")
     //         .long("debug")
     //         .help("Enables debug logging.")
@@ -157,7 +157,6 @@ rather than total CPU usage.\n\n",
     //             "\
     // Enables debug logging.  The program will print where it logged to after running.",
     //         );
-    // TODO: [DIAGNOSE] Add a diagnose option to help with debugging.
     let disable_click = Arg::with_name("disable_click")
         .long("disable_click")
         .help("Disables mouse clicks.")
@@ -176,7 +175,7 @@ Uses a dot marker for graphs as opposed to the default braille
 marker.\n\n",
         );
 
-    let group = Arg::with_name("group") // FIXME: Rename this to something like "group_process", would be "breaking" though.
+    let group = Arg::with_name("group") // TODO: [Config, Refactor, Breaking] Rename this to something like "group_process", would be "breaking" though.
         .short("g")
         .long("group")
         .help("Groups processes with the same name by default.")

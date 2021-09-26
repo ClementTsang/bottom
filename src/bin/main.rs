@@ -54,7 +54,7 @@ fn main() -> Result<()> {
     let input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop
-    // TODO: Probably worth spinning this off into an async thread or something...
+    // TODO: [Refactor, Optimization (Potentially, maybe not)] Probably worth spinning this off into an async thread or something...
     let _cleaning_thread = {
         let lock = thread_termination_lock.clone();
         let cvar = thread_termination_cvar.clone();
@@ -80,7 +80,7 @@ fn main() -> Result<()> {
     };
 
     // Event loop
-    // TODO: Add back collection sender
+    // TODO: [Threads, Refactor, Config] Add back collection sender for config later if we need to change settings on the fly
     let (_collection_sender, collection_thread_ctrl_receiver) = mpsc::channel();
     let _collection_thread = create_collection_thread(
         sender,
@@ -102,7 +102,7 @@ fn main() -> Result<()> {
     terminal.hide_cursor()?;
 
     // Set panic hook
-    // TODO: Make this close all the child threads too!
+    // TODO: [Threads, Panic] Make this close all the child threads too!
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
     // Set termination hook

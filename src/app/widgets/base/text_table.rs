@@ -46,8 +46,6 @@ pub type TextTableDataRef = [Vec<(Cow<'static, str>, Option<Cow<'static, str>>, 
 #[derive(Debug)]
 pub struct SimpleColumn {
     name: Cow<'static, str>,
-
-    // TODO: I would remove these in the future, storing them here feels weird...
     desired_width: DesiredColumnWidth,
     x_bounds: Option<(u16, u16)>,
 }
@@ -130,7 +128,7 @@ where
     pub show_gap: bool,
 
     /// The bounding box of the [`TextTable`].
-    pub bounds: Rect, // TODO: Consider moving bounds to something else?
+    pub bounds: Rect, // TODO: [Refactor, Drawing] Consider moving bounds to something else?
 
     /// The bounds including the border, if there is one.
     pub border_bounds: Rect,

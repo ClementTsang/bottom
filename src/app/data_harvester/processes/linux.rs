@@ -229,8 +229,6 @@ pub fn get_process_data(
     pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
-    // TODO: [PROC THREADS] Add threads
-
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
         let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
 

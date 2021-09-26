@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, time::Instant};
+use std::borrow::Cow;
 
 use crossterm::event::{KeyEvent, MouseEvent};
 use tui::{
@@ -12,38 +12,12 @@ use crate::{
         event::{ComponentEventResult, SelectionAction},
         text_table::SimpleColumn,
         time_graph::TimeGraphData,
-        AppConfigFields, AppScrollWidgetState, CanvasTableWidthState, Component, DataCollection,
-        TextTable, TimeGraph, Widget,
+        AppConfigFields, Component, DataCollection, TextTable, TimeGraph, Widget,
     },
     canvas::Painter,
     data_conversion::{convert_cpu_data_points, ConvertedCpuData},
     options::layout_options::LayoutRule,
 };
-
-pub struct CpuWidgetState {
-    pub current_display_time: u64,
-    pub is_legend_hidden: bool,
-    pub autohide_timer: Option<Instant>,
-    pub scroll_state: AppScrollWidgetState,
-    pub is_multi_graph_mode: bool,
-    pub table_width_state: CanvasTableWidthState,
-}
-
-#[derive(Default)]
-pub struct CpuState {
-    pub force_update: Option<u64>,
-    pub widget_states: HashMap<u64, CpuWidgetState>,
-}
-
-impl CpuState {
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut CpuWidgetState> {
-        self.widget_states.get_mut(&widget_id)
-    }
-
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&CpuWidgetState> {
-        self.widget_states.get(&widget_id)
-    }
-}
 
 /// Which part of the [`CpuGraph`] is currently selected.
 enum CpuGraphSelection {
@@ -228,7 +202,7 @@ impl Widget for CpuGraph {
             })
             .collect::<Vec<_>>();
 
-        // TODO: You MUST draw the table first, otherwise the index may mismatch after a reset. This is a bad gotcha - we should look into auto-updating the table's length!
+        // TODO: [Gotcha, Refactor] You MUST draw the table first, otherwise the index may mismatch after a reset. This is a bad gotcha - we should look into auto-updating the table's length!
         self.legend.draw_tui_table(
             painter,
             f,

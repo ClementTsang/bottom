@@ -52,7 +52,6 @@ impl From<heim::Error> for BottomError {
     }
 }
 
-
 impl From<std::num::ParseIntError> for BottomError {
     fn from(err: std::num::ParseIntError) -> Self {
         BottomError::ConfigError(err.to_string())

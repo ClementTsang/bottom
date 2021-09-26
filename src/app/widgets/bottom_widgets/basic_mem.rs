@@ -128,7 +128,7 @@ impl Widget for BasicMem {
     fn update_data(&mut self, data_collection: &DataCollection) {
         let (memory_labels, swap_labels) = convert_mem_labels(data_collection);
 
-        // TODO: [Data update optimization] Probably should just make another function altogether for basic mode.
+        // TODO: [Optimization] Probably should just make another function altogether for just basic mem mode.
         self.mem_data = if let (Some(data), Some((_, fraction))) = (
             convert_mem_data_points(data_collection).last(),
             memory_labels,

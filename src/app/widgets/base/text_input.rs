@@ -262,7 +262,7 @@ impl TextInput {
 
         let after_cursor = graphemes.map(|(_, grapheme)| grapheme).collect::<String>();
 
-        // FIXME: This is NOT done!  This is an incomplete (but kinda working) implementation, for now.
+        // FIXME: [AFTER REFACTOR] This is NOT done!  This is an incomplete (but kinda working) implementation, for now.
 
         let search_text = vec![Spans::from(vec![
             Span::styled(
@@ -365,10 +365,10 @@ impl Component for TextInput {
     fn handle_mouse_event(&mut self, _event: MouseEvent) -> ComponentEventResult {
         // We are assuming this is within bounds...
 
+        // TODO: [Feature] Add mouse input for text input cursor
         // let x = event.column;
         // let widget_x = self.bounds.x + 2;
         // if x >= widget_x {
-        //     // TODO: Do this at some point after refactor
         //     ComponentEventResult::Redraw
         // } else {
         //     ComponentEventResult::NoRedraw

@@ -332,7 +332,7 @@ pub struct LayoutCreationOutput {
 /// Creates a new [`Arena<LayoutNode>`] from the given config and returns it, along with the [`NodeId`] representing
 /// the root of the newly created [`Arena`], a mapping from [`NodeId`]s to [`BottomWidget`]s, and optionally, a default
 /// selected [`NodeId`].
-// FIXME: This is currently jury-rigged "glue" just to work with the existing config system! We are NOT keeping it like this, it's too awful to keep like this!
+// FIXME: [AFTER REFACTOR] This is currently jury-rigged "glue" just to work with the existing config system! We are NOT keeping it like this, it's too awful to keep like this!
 pub fn create_layout_tree(
     rows: &[Row], process_defaults: ProcessDefaults, app_config_fields: &AppConfigFields,
 ) -> Result<LayoutCreationOutput> {
@@ -924,6 +924,7 @@ pub fn move_widget_selection(
                 if let Some(proposed_widget) = widget_lookup_map.get_mut(&proposed_id) {
                     match proposed_widget.selectable_type() {
                         SelectableType::Unselectable => {
+                            // FIXME: [URGENT] Test this; make sure this cannot recurse infinitely!  Maybe through a unit test too.
                             // Try to move again recursively.
                             move_widget_selection(
                                 layout_tree,
@@ -960,7 +961,7 @@ pub fn generate_layout(
     root: NodeId, arena: &mut Arena<LayoutNode>, area: Rect,
     lookup_map: &FxHashMap<NodeId, TmpBottomWidget>,
 ) {
-    // TODO: [Layout] Add some caching/dirty mechanisms to reduce calls.
+    // TODO: [Optimization, Layout] Add some caching/dirty mechanisms to reduce calls.
 
     /// A [`Size`] is a set of widths and heights that a node in our layout wants to be.
     #[derive(Default, Clone, Copy, Debug)]

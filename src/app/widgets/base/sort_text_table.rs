@@ -5,7 +5,7 @@ use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::{
     app::{
-        event::{ReturnSignal, ComponentEventResult},
+        event::{ComponentEventResult, ReturnSignal},
         widgets::tui_stuff::BlockBuilder,
         Component, TextTable,
     },

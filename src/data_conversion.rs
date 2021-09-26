@@ -3,11 +3,11 @@
 use crate::app::data_harvester::temperature::TemperatureType;
 use crate::app::text_table::TextTableData;
 use crate::app::DataCollection;
-use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 use crate::{
-    app::{data_harvester, ProcWidgetState},
+    app::data_harvester,
     utils::{self, gen_util::*},
 };
+use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 use data_harvester::processes::ProcessSorting;
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
@@ -47,7 +47,7 @@ pub struct ConvertedNetworkData {
     pub tx_display: String,
     pub total_rx_display: Option<String>,
     pub total_tx_display: Option<String>,
-    // TODO: [NETWORKING] add min/max/mean of each
+    // TODO: [Feature] Networking - add the following stats in the future!
     // min_rx : f64,
     // max_rx : f64,
     // mean_rx: f64,
@@ -56,7 +56,7 @@ pub struct ConvertedNetworkData {
     // mean_tx: f64,
 }
 
-// TODO: [REFACTOR] Process data... stuff really needs a rewrite.  Again.
+// TODO: [Refactor] Process data might need some refactoring lol
 #[derive(Clone, Default, Debug)]
 pub struct ConvertedProcessData {
     pub pid: Pid,
@@ -321,7 +321,7 @@ pub fn convert_mem_labels(
         }
     }
 
-    // TODO: Should probably make this only return none if no data is left/visible?
+    // TODO: [Refactor] Should probably make this only return none if no data is left/visible?
     (
         if current_data.memory_harvest.mem_total_in_kib > 0 {
             Some((
@@ -586,7 +586,7 @@ pub fn convert_process_data(
     existing_converted_process_data: &mut HashMap<Pid, ConvertedProcessData>,
     #[cfg(target_family = "unix")] user_table: &mut data_harvester::processes::UserTable,
 ) {
-    // TODO [THREAD]: Thread highlighting and hiding support
+    // TODO: [Feature] Thread highlighting and hiding support; can we also count number of threads per process and display it as a column?
     // For macOS see https://github.com/hishamhm/htop/pull/848/files
 
     let mut complete_pid_set: fxhash::FxHashSet<Pid> =
@@ -715,7 +715,7 @@ fn tree_process_data(
     filtered_process_data: &[ConvertedProcessData], is_using_command: bool,
     sorting_type: &ProcessSorting, is_sort_descending: bool,
 ) -> Vec<ConvertedProcessData> {
-    // TODO: [TREE] Option to sort usage by total branch usage or individual value usage?
+    // TODO: [Feature] Option to sort usage by total branch usage or individual value usage?
 
     // Let's first build up a (really terrible) parent -> child mapping...
     // At the same time, let's make a mapping of PID -> process data!
@@ -1178,78 +1178,79 @@ fn tree_process_data(
         .collect::<Vec<_>>()
 }
 
-// FIXME: [OPT] This is an easy target for optimization, too many to_strings!
-fn stringify_process_data(
-    proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
-) -> Vec<(Vec<(String, Option<String>)>, bool)> {
-    let is_proc_widget_grouped = proc_widget_state.is_grouped;
-    let is_using_command = proc_widget_state.is_using_command;
-    let is_tree = proc_widget_state.is_tree_mode;
-    let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
+// FIXME: [URGENT] Delete this
+// // TODO: [Optimization] This is an easy target for optimization, too many to_strings!
+// fn stringify_process_data(
+//     proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
+// ) -> Vec<(Vec<(String, Option<String>)>, bool)> {
+//     let is_proc_widget_grouped = proc_widget_state.is_grouped;
+//     let is_using_command = proc_widget_state.is_using_command;
+//     let is_tree = proc_widget_state.is_tree_mode;
+//     let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
 
-    finalized_process_data
-        .iter()
-        .map(|process| {
-            (
-                vec![
-                    (
-                        if is_proc_widget_grouped {
-                            process.group_pids.len().to_string()
-                        } else {
-                            process.pid.to_string()
-                        },
-                        None,
-                    ),
-                    (
-                        if is_tree {
-                            if let Some(prefix) = &process.process_description_prefix {
-                                prefix.clone()
-                            } else {
-                                String::default()
-                            }
-                        } else if is_using_command {
-                            process.command.clone()
-                        } else {
-                            process.name.clone()
-                        },
-                        None,
-                    ),
-                    (format!("{:.1}%", process.cpu_percent_usage), None),
-                    (
-                        if mem_enabled {
-                            if process.mem_usage_bytes <= GIBI_LIMIT {
-                                format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
-                            } else {
-                                format!("{:.1}{}", process.mem_usage_str.0, process.mem_usage_str.1)
-                            }
-                        } else {
-                            format!("{:.1}%", process.mem_percent_usage)
-                        },
-                        None,
-                    ),
-                    (process.read_per_sec.clone(), None),
-                    (process.write_per_sec.clone(), None),
-                    (process.total_read.clone(), None),
-                    (process.total_write.clone(), None),
-                    #[cfg(target_family = "unix")]
-                    (
-                        if let Some(user) = &process.user {
-                            user.clone()
-                        } else {
-                            "N/A".to_string()
-                        },
-                        None,
-                    ),
-                    (
-                        process.process_state.clone(),
-                        Some(process.process_char.to_string()),
-                    ),
-                ],
-                process.is_disabled_entry,
-            )
-        })
-        .collect()
-}
+//     finalized_process_data
+//         .iter()
+//         .map(|process| {
+//             (
+//                 vec![
+//                     (
+//                         if is_proc_widget_grouped {
+//                             process.group_pids.len().to_string()
+//                         } else {
+//                             process.pid.to_string()
+//                         },
+//                         None,
+//                     ),
+//                     (
+//                         if is_tree {
+//                             if let Some(prefix) = &process.process_description_prefix {
+//                                 prefix.clone()
+//                             } else {
+//                                 String::default()
+//                             }
+//                         } else if is_using_command {
+//                             process.command.clone()
+//                         } else {
+//                             process.name.clone()
+//                         },
+//                         None,
+//                     ),
+//                     (format!("{:.1}%", process.cpu_percent_usage), None),
+//                     (
+//                         if mem_enabled {
+//                             if process.mem_usage_bytes <= GIBI_LIMIT {
+//                                 format!("{:.0}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+//                             } else {
+//                                 format!("{:.1}{}", process.mem_usage_str.0, process.mem_usage_str.1)
+//                             }
+//                         } else {
+//                             format!("{:.1}%", process.mem_percent_usage)
+//                         },
+//                         None,
+//                     ),
+//                     (process.read_per_sec.clone(), None),
+//                     (process.write_per_sec.clone(), None),
+//                     (process.total_read.clone(), None),
+//                     (process.total_write.clone(), None),
+//                     #[cfg(target_family = "unix")]
+//                     (
+//                         if let Some(user) = &process.user {
+//                             user.clone()
+//                         } else {
+//                             "N/A".to_string()
+//                         },
+//                         None,
+//                     ),
+//                     (
+//                         process.process_state.clone(),
+//                         Some(process.process_char.to_string()),
+//                     ),
+//                 ],
+//                 process.is_disabled_entry,
+//             )
+//         })
+//         .collect()
+// }
 
 /// Takes a set of converted process data and groups it together.
 ///
@@ -1364,7 +1365,7 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
                     short: format!("{}:{:02}:{:02}", time.num_hours(), num_minutes, num_seconds),
                 }
             } else if let Some(secs_till_full) = battery_harvest.secs_until_full {
-                let time = chrono::Duration::seconds(secs_till_full); // FIXME [DEP]: Can I get rid of chrono?
+                let time = chrono::Duration::seconds(secs_till_full); // TODO: [Dependencies] Can I get rid of chrono?
                 let num_minutes = time.num_minutes() - time.num_hours() * 60;
                 let num_seconds = time.num_seconds() - time.num_minutes() * 60;
                 BatteryDuration::Charging {
