@@ -59,7 +59,6 @@ thiserror = "1.0.24"
 textwrap = "0.14.2"
 toml = "0.5.8"
 tui = { version = "0.16.0", features = ["crossterm"], default-features = false }
-typed-builder = "0.9.0"
 unicode-segmentation = "1.8.0"
 unicode-width = "0.1"
 

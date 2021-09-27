@@ -399,7 +399,10 @@ where
             f.render_widget(block, block_area);
             return;
         }
-        let table_gap = if !self.show_gap || inner_area.height < TABLE_GAP_HEIGHT_LIMIT {
+        let table_gap = if !self.show_gap
+            || (data.len() + 2 > inner_area.height.into()
+                && inner_area.height < TABLE_GAP_HEIGHT_LIMIT)
+        {
             0
         } else {
             1

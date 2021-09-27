@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
@@ -17,46 +17,17 @@ use crate::{
     app::{
         self,
         layout_manager::{generate_layout, ColLayout, LayoutNode, RowLayout},
-        text_table::TextTableData,
         widgets::{Component, Widget},
         DialogState, TmpBottomWidget,
     },
     constants::*,
-    data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
     options::Config,
     utils::error,
     utils::error::BottomError,
-    Pid,
 };
 
 mod canvas_colours;
 mod dialogs;
-
-/// Point is of time, data
-type Point = (f64, f64);
-
-#[derive(Default)]
-pub struct DisplayableData {
-    pub rx_display: String,
-    pub tx_display: String,
-    pub total_rx_display: String,
-    pub total_tx_display: String,
-    pub network_data_rx: Vec<Point>,
-    pub network_data_tx: Vec<Point>,
-    pub disk_data: TextTableData,
-    pub temp_sensor_data: TextTableData,
-    pub single_process_data: HashMap<Pid, ConvertedProcessData>, // Contains single process data, key is PID
-    pub stringified_process_data_map: HashMap<NodeId, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled, key is the widget ID
-
-    pub mem_labels: Option<(String, String)>,
-    pub swap_labels: Option<(String, String)>,
-    pub mem_data: Vec<Point>,
-    pub swap_data: Vec<Point>,
-
-    pub load_avg_data: [f32; 3],
-    pub cpu_data: Vec<ConvertedCpuData>,
-    pub battery_data: Vec<ConvertedBatteryData>,
-}
 
 #[derive(Debug)]
 pub enum ColourScheme {
@@ -208,7 +179,7 @@ impl Painter {
                     })
                     .split(vertical_dialog_chunk[1]);
 
-                help_dialog.draw_help(&self, f, middle_dialog_chunk[1]);
+                help_dialog.draw_help(self, f, middle_dialog_chunk[1]);
             } else if app_state.delete_dialog_state.is_showing_dd {
                 // TODO: [Drawing] Better dd sizing needs the paragraph wrap feature from tui-rs to be pushed to
                 // complete... but for now it's pretty close!
@@ -306,8 +277,7 @@ impl Painter {
                 fn traverse_and_draw_tree<B: Backend>(
                     node: NodeId, arena: &Arena<LayoutNode>, f: &mut Frame<'_, B>,
                     lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, painter: &Painter,
-                    canvas_data: &DisplayableData, selected_id: NodeId, offset_x: u16,
-                    offset_y: u16,
+                    selected_id: NodeId, offset_x: u16, offset_y: u16,
                 ) {
                     if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
                         match layout_node {
@@ -320,7 +290,6 @@ impl Painter {
                                         f,
                                         lookup_map,
                                         painter,
-                                        canvas_data,
                                         selected_id,
                                         offset_x + bound.x,
                                         offset_y + bound.y,
@@ -371,23 +340,12 @@ impl Painter {
 
                 let root = &app_state.layout_tree_root;
                 let arena = &mut app_state.layout_tree;
-                let canvas_data = &app_state.canvas_data;
                 let selected_id = app_state.selected_widget;
 
                 generate_layout(*root, arena, draw_area, &app_state.widget_lookup_map);
 
                 let lookup_map = &mut app_state.widget_lookup_map;
-                traverse_and_draw_tree(
-                    *root,
-                    arena,
-                    f,
-                    lookup_map,
-                    self,
-                    canvas_data,
-                    selected_id,
-                    0,
-                    0,
-                );
+                traverse_and_draw_tree(*root, arena, f, lookup_map, self, selected_id, 0, 0);
             }
         })?;
 

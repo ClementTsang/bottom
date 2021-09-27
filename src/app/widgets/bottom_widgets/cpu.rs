@@ -56,7 +56,8 @@ impl CpuGraph {
             SimpleColumn::new_flex("CPU".into(), 0.5),
             SimpleColumn::new_hard("Use".into(), None),
         ])
-        .default_ltr(false);
+        .default_ltr(false)
+        .try_show_gap(app_config_fields.table_gap);
         let legend_position = if app_config_fields.left_legend {
             CpuGraphLegendPosition::Left
         } else {

@@ -274,8 +274,8 @@ where
         st
     }
 
-    pub fn default_ltr(mut self, ltr: bool) -> Self {
-        self.table = self.table.default_ltr(ltr);
+    pub fn try_show_gap(mut self, show_gap: bool) -> Self {
+        self.table = self.table.try_show_gap(show_gap);
         self
     }
 

@@ -31,9 +31,6 @@ pub enum BottomError {
     /// An error to represent errors with querying.
     #[error("Query error, {0}")]
     QueryError(Cow<'static, str>),
-    /// An error that just signifies something minor went wrong; no message.
-    #[error("Minor error.")]
-    MinorError,
     /// An error to represent errors with procfs
     #[cfg(target_os = "linux")]
     #[error("Procfs error, {0}")]

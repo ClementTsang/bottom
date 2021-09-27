@@ -185,6 +185,7 @@ impl Widget for BatteryTable {
                 split_area[0].width,
                 split_area[0].height,
             );
+            // FIXME: [URGENT] See if this should be changed; TABLE_GAP_HEIGHT_LIMIT should be removed maybe. May also need to grab the table gap from the config?
             let data_area =
                 if inner_area.height >= TABLE_GAP_HEIGHT_LIMIT && split_area[1].height > 0 {
                     Rect::new(

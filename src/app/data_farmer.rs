@@ -26,17 +26,14 @@ use crate::{
 };
 use regex::Regex;
 
-pub type TimeOffset = f64;
-pub type Value = f64;
-
 #[derive(Clone, Debug, Default)]
 pub struct TimedData {
-    pub rx_data: Value,
-    pub tx_data: Value,
-    pub cpu_data: Vec<Value>,
+    pub rx_data: f64,
+    pub tx_data: f64,
+    pub cpu_data: Vec<f64>,
     pub load_avg_data: [f32; 3],
-    pub mem_data: Option<Value>,
-    pub swap_data: Option<Value>,
+    pub mem_data: Option<f64>,
+    pub swap_data: Option<f64>,
 }
 
 /// AppCollection represents the pooled data stored within the main app

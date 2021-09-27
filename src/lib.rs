@@ -42,7 +42,7 @@ pub mod clap;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
-pub mod units;
+pub(crate) mod units;
 
 #[cfg(target_family = "windows")]
 pub type Pid = usize;

@@ -10,10 +10,8 @@ pub const STALE_MIN_MILLISECONDS: u64 = 30 * 1000; // Lowest is 30 seconds
 pub const TIME_CHANGE_MILLISECONDS: u64 = 15 * 1000; // How much to increment each time
 pub const AUTOHIDE_TIMEOUT_MILLISECONDS: u64 = 5000; // 5 seconds to autohide
 
-pub const TICK_RATE_IN_MILLISECONDS: u64 = 200;
 // How fast the screen refreshes
 pub const DEFAULT_REFRESH_RATE_IN_MILLISECONDS: u64 = 1000;
-pub const MAX_KEY_TIMEOUT_IN_MILLISECONDS: u64 = 1000;
 
 // Limits for when we should stop showing table gaps/labels (anything less means not shown)
 pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 5;
@@ -30,14 +28,6 @@ pub const MAX_SIGNAL: usize = 31;
 // Side borders
 pub static SIDE_BORDERS: Lazy<tui::widgets::Borders> =
     Lazy::new(|| tui::widgets::Borders::from_bits_truncate(20));
-pub static TOP_LEFT_RIGHT: Lazy<tui::widgets::Borders> =
-    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(22));
-pub static BOTTOM_LEFT_RIGHT: Lazy<tui::widgets::Borders> =
-    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(28));
-pub static DEFAULT_TEXT_STYLE: Lazy<tui::style::Style> =
-    Lazy::new(|| tui::style::Style::default().fg(tui::style::Color::Gray));
-pub static DEFAULT_HEADER_STYLE: Lazy<tui::style::Style> =
-    Lazy::new(|| tui::style::Style::default().fg(tui::style::Color::LightBlue));
 
 // Colour profiles
 pub static DEFAULT_LIGHT_MODE_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours {

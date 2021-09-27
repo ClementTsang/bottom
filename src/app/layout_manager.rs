@@ -13,137 +13,12 @@ use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
 use std::cmp::min;
 use tui::layout::Rect;
-use typed_builder::*;
 
 use crate::app::widgets::Widget;
 
 use super::{
     event::SelectionAction, AppConfigFields, CpuGraph, TimeGraph, TmpBottomWidget, UsedWidgets,
 };
-
-/// Represents a more usable representation of the layout, derived from the
-/// config.
-#[derive(Clone, Debug)]
-pub struct BottomLayout {
-    pub rows: Vec<OldBottomRow>,
-    pub total_row_height_ratio: u32,
-}
-
-/// Represents a single row in the layout.
-#[derive(Clone, Debug, TypedBuilder)]
-pub struct OldBottomRow {
-    pub children: Vec<OldBottomCol>,
-
-    #[builder(default = 1)]
-    pub total_col_ratio: u32,
-
-    #[builder(default = 1)]
-    pub row_height_ratio: u32,
-
-    #[builder(default = false)]
-    pub canvas_handle_height: bool,
-
-    #[builder(default = false)]
-    pub flex_grow: bool,
-}
-
-/// Represents a single column in the layout.  We assume that even if the column
-/// contains only ONE element, it is still a column (rather than either a col or
-/// a widget, as per the config, for simplicity's sake).
-#[derive(Clone, Debug, TypedBuilder)]
-pub struct OldBottomCol {
-    pub children: Vec<BottomColRow>,
-
-    #[builder(default = 1)]
-    pub total_col_row_ratio: u32,
-
-    #[builder(default = 1)]
-    pub col_width_ratio: u32,
-
-    #[builder(default = false)]
-    pub canvas_handle_width: bool,
-
-    #[builder(default = false)]
-    pub flex_grow: bool,
-}
-
-#[derive(Clone, Default, Debug, TypedBuilder)]
-pub struct BottomColRow {
-    pub children: Vec<BottomWidget>,
-
-    #[builder(default = 1)]
-    pub total_widget_ratio: u32,
-
-    #[builder(default = 1)]
-    pub col_row_height_ratio: u32,
-
-    #[builder(default = false)]
-    pub canvas_handle_height: bool,
-
-    #[builder(default = false)]
-    pub flex_grow: bool,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum WidgetDirection {
-    Left,
-    Right,
-    Up,
-    Down,
-}
-
-impl WidgetDirection {
-    pub fn is_opposite(&self, other_direction: &WidgetDirection) -> bool {
-        match &self {
-            WidgetDirection::Left => *other_direction == WidgetDirection::Right,
-            WidgetDirection::Right => *other_direction == WidgetDirection::Left,
-            WidgetDirection::Up => *other_direction == WidgetDirection::Down,
-            WidgetDirection::Down => *other_direction == WidgetDirection::Up,
-        }
-    }
-}
-
-/// Represents a single widget.
-#[derive(Debug, Default, Clone, TypedBuilder)]
-pub struct BottomWidget {
-    pub widget_type: BottomWidgetType,
-    pub widget_id: u64,
-
-    #[builder(default = 1)]
-    pub width_ratio: u32,
-
-    #[builder(default = None)]
-    pub left_neighbour: Option<u64>,
-
-    #[builder(default = None)]
-    pub right_neighbour: Option<u64>,
-
-    #[builder(default = None)]
-    pub up_neighbour: Option<u64>,
-
-    #[builder(default = None)]
-    pub down_neighbour: Option<u64>,
-
-    /// If set to true, the canvas will override any ratios.
-    #[builder(default = false)]
-    pub canvas_handle_width: bool,
-
-    /// Whether we want this widget to take up all available room (and ignore any ratios).
-    #[builder(default = false)]
-    pub flex_grow: bool,
-
-    /// The value is the direction to bounce, as well as the parent offset.
-    #[builder(default = None)]
-    pub parent_reflector: Option<(WidgetDirection, u64)>,
-
-    /// Top left corner when drawn, for mouse click detection.  (x, y)
-    #[builder(default = None)]
-    pub top_left_corner: Option<(u16, u16)>,
-
-    /// Bottom right corner when drawn, for mouse click detection.  (x, y)
-    #[builder(default = None)]
-    pub bottom_right_corner: Option<(u16, u16)>,
-}
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum BottomWidgetType {
@@ -237,8 +112,6 @@ Supported widget names:
         }
     }
 }
-
-// --- New stuff ---
 
 /// Represents a row in the layout tree.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -380,7 +253,7 @@ pub fn create_layout_tree(
             BottomWidgetType::Proc => {
                 widget_lookup_map.insert(
                     widget_id,
-                    ProcessManager::new(process_defaults)
+                    ProcessManager::new(process_defaults, app_config_fields)
                         .width(width)
                         .height(height)
                         .basic_mode(app_config_fields.use_basic_mode)
@@ -391,7 +264,7 @@ pub fn create_layout_tree(
             BottomWidgetType::Temp => {
                 widget_lookup_map.insert(
                     widget_id,
-                    TempTable::default()
+                    TempTable::from_config(app_config_fields)
                         .set_temp_type(app_config_fields.temperature_type.clone())
                         .width(width)
                         .height(height)
@@ -403,7 +276,7 @@ pub fn create_layout_tree(
             BottomWidgetType::Disk => {
                 widget_lookup_map.insert(
                     widget_id,
-                    DiskTable::default()
+                    DiskTable::from_config(app_config_fields)
                         .width(width)
                         .height(height)
                         .basic_mode(app_config_fields.use_basic_mode)
@@ -620,7 +493,7 @@ pub fn create_layout_tree(
 ///
 /// We can do this by just going through the ancestors, starting from the widget itself.
 pub fn correct_layout_last_selections(arena: &mut Arena<LayoutNode>, selected: NodeId) {
-    let mut selected_ancestors = selected.ancestors(&arena).collect::<Vec<_>>();
+    let mut selected_ancestors = selected.ancestors(arena).collect::<Vec<_>>();
     let prev_node = selected_ancestors.pop();
     if let Some(mut prev_node) = prev_node {
         for node in selected_ancestors {

@@ -78,7 +78,8 @@ impl Default for ProcessSorting {
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
     pub pid: Pid,
-    pub parent_pid: Option<Pid>, // Remember, parent_pid 0 is root...
+    pub parent_pid: Option<Pid>,
+    pub children_pids: Vec<Pid>,
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
     pub mem_usage_bytes: u64,
@@ -93,10 +94,11 @@ pub struct ProcessHarvest {
     pub process_state: String,
     pub process_state_char: char,
 
-    /// This is the *effective* user ID.
+    /// This is the *effective* user ID. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
     pub uid: libc::uid_t,
 
+    /// This is the process' user. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
     pub user: Cow<'static, str>,
 }

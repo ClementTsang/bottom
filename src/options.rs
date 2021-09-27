@@ -211,11 +211,7 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
         hide_time: get_hide_time(matches, config),
         autohide_time,
         use_old_network_legend: get_use_old_network_legend(matches, config),
-        table_gap: if get_hide_table_gap(matches, config) {
-            0
-        } else {
-            1
-        },
+        table_gap: !get_hide_table_gap(matches, config),
         disable_click: get_disable_click(matches, config),
         // no_write: get_no_write(matches, config),
         no_write: false,
@@ -546,18 +542,6 @@ fn get_use_battery(matches: &clap::ArgMatches<'static>, config: &Config) -> bool
     } else if let Some(flags) = &config.flags {
         if let Some(battery) = flags.battery {
             return battery;
-        }
-    }
-    false
-}
-
-#[allow(dead_code)]
-fn get_no_write(matches: &clap::ArgMatches<'static>, config: &Config) -> bool {
-    if matches.is_present("no_write") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(no_write) = flags.no_write {
-            return no_write;
         }
     }
     false

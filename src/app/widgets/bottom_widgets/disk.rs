@@ -4,8 +4,8 @@ use tui::{backend::Backend, layout::Rect, widgets::Borders, Frame};
 use crate::{
     app::{
         data_farmer::DataCollection, event::ComponentEventResult,
-        sort_text_table::SimpleSortableColumn, text_table::TextTableData, Component, TextTable,
-        Widget,
+        sort_text_table::SimpleSortableColumn, text_table::TextTableData, AppConfigFields,
+        Component, TextTable, Widget,
     },
     canvas::Painter,
     data_conversion::convert_disk_row,
@@ -25,8 +25,9 @@ pub struct DiskTable {
     show_scroll_index: bool,
 }
 
-impl Default for DiskTable {
-    fn default() -> Self {
+impl DiskTable {
+    /// Creates a [`DiskTable`] from a config.
+    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
         let table = TextTable::new(vec![
             SimpleSortableColumn::new_flex("Disk".into(), None, false, 0.2),
             SimpleSortableColumn::new_flex("Mount".into(), None, false, 0.2),
@@ -35,7 +36,8 @@ impl Default for DiskTable {
             SimpleSortableColumn::new_hard("Total".into(), None, false, Some(6)),
             SimpleSortableColumn::new_hard("R/s".into(), None, false, Some(7)),
             SimpleSortableColumn::new_hard("W/s".into(), None, false, Some(7)),
-        ]);
+        ])
+        .try_show_gap(app_config_fields.table_gap);
 
         Self {
             table,
@@ -47,9 +49,7 @@ impl Default for DiskTable {
             show_scroll_index: false,
         }
     }
-}
 
-impl DiskTable {
     /// Sets the width.
     pub fn width(mut self, width: LayoutRule) -> Self {
         self.width = width;

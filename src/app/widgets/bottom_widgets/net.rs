@@ -599,6 +599,7 @@ impl OldNetGraph {
                 SimpleColumn::new_flex("Total RX".into(), 0.25),
                 SimpleColumn::new_flex("Total TX".into(), 0.25),
             ])
+            .try_show_gap(config.table_gap)
             .unselectable(),
             bounds: Rect::default(),
             width: LayoutRule::default(),
@@ -646,11 +647,14 @@ impl Widget for OldNetGraph {
         &mut self, painter: &Painter, f: &mut Frame<'_, B>, area: Rect, selected: bool,
         expanded: bool,
     ) {
-        const CONSTRAINTS: [Constraint; 2] = [Constraint::Min(0), Constraint::Length(4)];
+        let constraints = [
+            Constraint::Min(0),
+            Constraint::Length(if self.table.show_gap { 5 } else { 4 }),
+        ];
 
         let split_area = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(CONSTRAINTS)
+            .constraints(constraints)
             .split(area);
 
         let graph_area = split_area[0];

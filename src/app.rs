@@ -19,9 +19,7 @@ pub use filter::*;
 use layout_manager::*;
 pub use widgets::*;
 
-use crate::{
-    canvas, constants, units::data_units::DataUnit, utils::error::Result, BottomEvent, Pid,
-};
+use crate::{constants, units::data_units::DataUnit, utils::error::Result, BottomEvent, Pid};
 
 use self::event::{ComponentEventResult, EventResult, ReturnSignal};
 
@@ -87,7 +85,7 @@ pub struct AppConfigFields {
     pub hide_time: bool,
     pub autohide_time: bool,
     pub use_old_network_legend: bool,
-    pub table_gap: u16, // TODO: [Config, Refactor] Just make this a bool...
+    pub table_gap: bool,
     pub disable_click: bool,
     pub no_write: bool,
     pub show_table_scroll_position: bool,
@@ -101,7 +99,7 @@ pub struct AppConfigFields {
 /// the data collected at that instant.
 pub enum FrozenState {
     NotFrozen,
-    Frozen(DataCollection),
+    Frozen(Box<DataCollection>),
 }
 
 impl Default for FrozenState {
@@ -114,8 +112,6 @@ pub struct AppState {
     pub dd_err: Option<String>,
 
     to_delete_process_list: Option<(String, Vec<Pid>)>,
-
-    pub canvas_data: canvas::DisplayableData,
 
     pub data_collection: DataCollection,
 
@@ -167,7 +163,6 @@ impl AppState {
             // Use defaults.
             dd_err: Default::default(),
             to_delete_process_list: Default::default(),
-            canvas_data: Default::default(),
             data_collection: Default::default(),
             is_expanded: Default::default(),
             delete_dialog_state: Default::default(),
@@ -186,7 +181,7 @@ impl AppState {
         if matches!(self.frozen_state, FrozenState::Frozen(_)) {
             self.frozen_state = FrozenState::NotFrozen;
         } else {
-            self.frozen_state = FrozenState::Frozen(self.data_collection.clone());
+            self.frozen_state = FrozenState::Frozen(Box::new(self.data_collection.clone()));
         }
     }
 
@@ -418,7 +413,6 @@ impl AppState {
 
                             if was_id_already_selected {
                                 returned_result = self.convert_widget_event_result(result);
-                                break;
                             } else {
                                 // If the weren't equal, *force* a redraw, and correct the layout tree.
                                 correct_layout_last_selections(
@@ -427,8 +421,8 @@ impl AppState {
                                 );
                                 let _ = self.convert_widget_event_result(result);
                                 returned_result = EventResult::Redraw;
-                                break;
                             }
+                            break;
                         }
                         SelectableType::Unselectable => {
                             let result = widget.handle_mouse_event(event);

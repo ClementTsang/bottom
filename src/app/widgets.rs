@@ -138,11 +138,6 @@ pub trait Widget {
     /// Returns the desired height from the [`Widget`].
     fn height(&self) -> LayoutRule;
 
-    /// Returns whether this [`Widget`] can be expanded. The default implementation returns `true`.
-    fn expandable(&self) -> bool {
-        true
-    }
-
     /// Returns whether this [`Widget`] can be selected. The default implementation returns [`SelectableType::Selectable`].
     fn selectable_type(&self) -> SelectableType {
         SelectableType::Selectable

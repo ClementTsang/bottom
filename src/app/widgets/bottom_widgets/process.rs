@@ -20,7 +20,7 @@ use crate::{
         query::*,
         text_table::DesiredColumnWidth,
         widgets::tui_stuff::BlockBuilder,
-        DataCollection,
+        AppConfigFields, DataCollection,
     },
     canvas::Painter,
     data_conversion::get_string_with_bytes,
@@ -273,7 +273,7 @@ pub struct ProcessManager {
 
 impl ProcessManager {
     /// Creates a new [`ProcessManager`].
-    pub fn new(process_defaults: &ProcessDefaults) -> Self {
+    pub fn new(process_defaults: &ProcessDefaults, config: &AppConfigFields) -> Self {
         let process_table_columns = vec![
             ProcessSortColumn::new(ProcessSortType::Pid),
             ProcessSortColumn::new(ProcessSortType::Name),
@@ -290,8 +290,10 @@ impl ProcessManager {
 
         let mut manager = Self {
             bounds: Rect::default(),
-            sort_menu: SortMenu::new(process_table_columns.len()),
-            process_table: SortableTextTable::new(process_table_columns).default_sort_index(2),
+            sort_menu: SortMenu::new(process_table_columns.len()).try_show_gap(config.table_gap),
+            process_table: SortableTextTable::new(process_table_columns)
+                .default_sort_index(2)
+                .try_show_gap(config.table_gap),
             search_input: TextInput::default(),
             search_block_bounds: Rect::default(),
             dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: [Optimization] Maybe use something static/const/arrayvec?...
@@ -494,6 +496,12 @@ impl ProcessManager {
         self.search_modifiers.toggle_regex();
         ComponentEventResult::Signal(ReturnSignal::Update)
     }
+
+    /// Toggles tree mode.
+    fn toggle_tree_mode(&mut self) -> ComponentEventResult {
+        self.in_tree_mode = !self.in_tree_mode;
+        ComponentEventResult::Signal(ReturnSignal::Update)
+    }
 }
 
 impl Component for ProcessManager {
@@ -567,8 +575,7 @@ impl Component for ProcessManager {
                             // Collapse a branch
                         }
                         KeyCode::Char('t') | KeyCode::F(5) => {
-                            self.in_tree_mode = !self.in_tree_mode;
-                            return ComponentEventResult::Redraw;
+                            return self.toggle_tree_mode();
                         }
                         KeyCode::Char('s') | KeyCode::F(6) => {
                             return self.open_sort();

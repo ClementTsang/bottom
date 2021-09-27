@@ -203,6 +203,7 @@ fn read_proc(
         ProcessHarvest {
             pid: process.pid,
             parent_pid,
+            children_pids: vec![],
             cpu_usage_percent,
             mem_usage_percent,
             mem_usage_bytes,

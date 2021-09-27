@@ -33,6 +33,11 @@ impl SortMenu {
         }
     }
 
+    pub fn try_show_gap(mut self, show_gap: bool) -> Self {
+        self.table = self.table.try_show_gap(show_gap);
+        self
+    }
+
     /// Updates the index of the [`SortMenu`].
     pub fn set_index(&mut self, index: usize) {
         self.table.scrollable.set_index(index);

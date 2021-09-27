@@ -266,7 +266,6 @@ dependencies = [
  "thiserror",
  "toml",
  "tui",
- "typed-builder",
  "unicode-segmentation",
  "unicode-width",
  "winapi",
@@ -1527,17 +1526,6 @@ dependencies = [
  "crossterm",
  "unicode-segmentation",
  "unicode-width",
-]
-
-[[package]]
-name = "typed-builder"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a46ee5bd706ff79131be9c94e7edcb82b703c487766a114434e5790361cf08c5"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
