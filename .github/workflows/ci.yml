@@ -118,7 +118,7 @@ jobs:
           - {
               os: "windows-2019",
               target: "i686-pc-windows-msvc",
-              cross: true,
+              cross: false,
               rust: stable,
             }
           - {
