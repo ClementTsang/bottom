@@ -69,7 +69,7 @@ jobs:
 
       - run: cargo clippy --all-targets --workspace -- -D warnings
 
-  # Compile/check/test.
+  # Run cargo --check on all platforms
   check:
     needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
@@ -78,13 +78,12 @@ jobs:
       fail-fast: false
       matrix:
         triple:
-          # Standard x86-64 stuff, stable
+          # x86 or x64
           - {
               os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
               rust: stable,
-              toTest: "true",
             }
           - {
               os: "ubuntu-latest",
@@ -92,51 +91,42 @@ jobs:
               cross: true,
               rust: stable,
             }
-          # - {
-          #     os: "ubuntu-latest",
-          #     target: "x86_64-unknown-linux-musl",
-          #     cross: false,
-          #     rust: stable,
-          #   }
-          # - {
-          #     os: "ubuntu-latest",
-          #     target: "i686-unknown-linux-musl",
-          #     cross: true,
-          #     rust: stable,
-          #   }
+          - {
+              os: "ubuntu-latest",
+              target: "x86_64-unknown-linux-musl",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "ubuntu-latest",
+              target: "i686-unknown-linux-musl",
+              cross: true,
+              rust: stable,
+            }
           - {
               os: "macOS-latest",
               target: "x86_64-apple-darwin",
               cross: false,
               rust: stable,
-              toTest: "true",
             }
-          # Big Sur builds are disabled, unfortunately.
-          # - {
-          #     os: "macOS-11.0",
-          #     target: "x86_64-apple-darwin",
-          #     cross: false,
-          #     rust: stable,
-          #   }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
               cross: false,
               rust: stable,
-              toTest: "true",
             }
           - {
               os: "windows-2019",
               target: "i686-pc-windows-msvc",
-              cross: true,
+              cross: false,
               rust: stable,
             }
-          # - {
-          #     os: "windows-2019",
-          #     target: "x86_64-pc-windows-gnu",
-          #     cross: false,
-          #     rust: stable,
-          #   }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-gnu",
+              cross: false,
+              rust: stable,
+            }
 
           # aarch64
           - {
@@ -208,16 +198,100 @@ jobs:
           args: --all-targets --verbose --target=${{ matrix.triple.target }} --features "battery"
           use-cross: ${{ matrix.triple.cross }}
 
+  # Check without the battery feature enabled on x86-64 for supported operating systems
+  check-without-battery:
+    needs: [rustfmt, clippy]
+    runs-on: ${{ matrix.triple.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        triple:
+          - {
+              os: "ubuntu-latest",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "macOS-latest",
+              target: "x86_64-apple-darwin",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+              rust: stable,
+            }
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.triple.rust }}
+          override: true
+          target: ${{ matrix.triple.target }}
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.triple.target }}
+
       - name: Check without battery feature on the main 3
-        if: matrix.triple.toTest == 'true'
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-targets --verbose --target=${{ matrix.triple.target }}
+          args: --all-targets --verbose --target=${{ matrix.triple.target }} --no-default-features
           use-cross: ${{ matrix.triple.cross }}
 
+  # Run tests x86-64 for supported operating systems
+  test:
+    needs: [rustfmt, clippy]
+    runs-on: ${{ matrix.triple.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        triple:
+          - {
+              os: "ubuntu-latest",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "macOS-latest",
+              target: "x86_64-apple-darwin",
+              cross: false,
+              rust: stable,
+            }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+              rust: stable,
+            }
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.triple.rust }}
+          override: true
+          target: ${{ matrix.triple.target }}
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.triple.target }}
+
       - name: Run tests
-        if: matrix.triple.toTest == 'true'
         run: cargo test --no-fail-fast
         env:
           CARGO_HUSKY_DONT_INSTALL_HOOKS: true
