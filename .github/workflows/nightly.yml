@@ -264,7 +264,7 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv bottom_x86_64_installer.msi
+          mv bottom_x86_64_installer.msi release
 
       - name: Save msi file as artifacts
         uses: actions/upload-artifact@v2
@@ -323,7 +323,7 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          mv bottom_${{ env.RELEASE_VERSION }}_amd64.deb release
 
       - name: Save Debian file as artifacts
         uses: actions/upload-artifact@v2
