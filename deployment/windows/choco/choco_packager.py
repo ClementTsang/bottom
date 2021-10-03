@@ -49,7 +49,7 @@ with open(deployment_file_path_32, "rb") as deployment_file_32, open(
     with open(ps1_template, "r") as template_file:
         template = Template(template_file.read())
         substitute = template.safe_substitute(version=version, hash_32=hash_32, hash_64=hash_64)
-        print("\n================== Generated chocolateyinstall file ==================\n")
+        print("\n================== Generated chocolatey-install file ==================\n")
         print(substitute)
         print("\n============================================================\n")
 

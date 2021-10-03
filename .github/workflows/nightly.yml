@@ -14,8 +14,8 @@ on:
         required: false
 
 jobs:
-  create-github-release:
-    name: create-github-release
+  initialize-job:
+    name: initialize-job
     runs-on: ubuntu-latest
     steps:
       - name: Create artifacts directory
@@ -32,33 +32,6 @@ jobs:
             echo "This is NOT a mock run.  Watch for the generated files!"
           fi
 
-      - name: Delete tag and release
-        uses: dev-drprasad/delete-tag-and-release@v0.1.3
-        if: github.event.inputs.isMock != 'mock'
-        with:
-          delete_release: true
-          tag_name: nightly
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
-        run: sleep 10
-
-      - name: Create nightly GitHub release
-        id: release
-        uses: actions/create-release@v1
-        if: github.event.inputs.isMock != 'mock'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          draft: false
-          tag_name: nightly
-          release_name: nightly
-          prerelease: true
-
-      - name: Save release upload URL to artifact
-        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
-
       - name: Save version number to artifact
         run: echo "nightly" > artifacts/release-version
 
@@ -70,7 +43,7 @@ jobs:
 
   build-release:
     name: build-release
-    needs: [create-github-release]
+    needs: [initialize-job]
     runs-on: ${{ matrix.triple.os }}
     container: ${{ matrix.triple.container }}
     env:
@@ -164,25 +137,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get release download URL
-        uses: actions/download-artifact@v2
-        with:
-          name: artifacts
-          path: artifacts
-
-      - name: Set release upload URL and release version
-        shell: bash
-        run: |
-          release_upload_url="$(cat ./artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          release_version="$(cat ./artifacts/release-version)"
-          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
-
-      - name: Validate release environment variables
-        run: |
-          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
-          echo "Release version: ${{ env.RELEASE_VERSION }}"
-
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -232,17 +186,11 @@ jobs:
           tar -czvf bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz btm completion
           echo "ASSET=bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz" >> $GITHUB_ENV
 
-      - name: Upload main release
-        if: github.event.inputs.isMock != 'mock'
-        uses: actions/upload-release-asset@v1.0.1
-        id: upload
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Save release file to artifacts
+        uses: actions/upload-artifact@v1
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
+          name: artifacts/release/${{ env.ASSET }}
+          path: ${{ env.ASSET }}
 
       - name: Compress completion files (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
@@ -250,20 +198,16 @@ jobs:
         run: |
           tar -C ./completion -czvf completion.tar.gz .
 
-      - name: Release completion files (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == '' && github.event.inputs.isMock != 'mock'
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Save completion file to artifacts (Linux x86-64 GNU)
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
+        uses: actions/upload-artifact@v1
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: completion.tar.gz
-          asset_name: completion.tar.gz
-          asset_content_type: application/octet-stream
+          name: artifacts/release/completion.tar.gz
+          path: completion.tar.gz
 
   build-msi:
     name: build-msi
-    needs: [create-github-release]
+    needs: [initialize-job]
     runs-on: "windows-2019"
     env:
       RUST_BACKTRACE: 1
@@ -320,20 +264,15 @@ jobs:
           cargo wix init
           cargo wix
 
-      - name: Upload msi file
-        if: github.event.inputs.isMock != 'mock'
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Save msi file to artifacts
+        uses: actions/upload-artifact@v1
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: bottom_x86_64_installer.msi
-          asset_name: bottom_x86_64_installer.msi
-          asset_content_type: application/octet-stream
+          name: artifacts/release/bottom_x86_64_installer.msi
+          path: bottom_x86_64_installer.msi
 
   build-deb:
     name: build-deb
-    needs: [create-github-release]
+    needs: [initialize-job]
     runs-on: "ubuntu-18.04"
     env:
       RUST_BACKTRACE: 1
@@ -380,13 +319,42 @@ jobs:
           cargo deb
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
-      - name: Upload Debian file if not mock
+      - name: Save Debian file to artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts/release/bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+
+  upload-release:
+    name: upload-release
+    runs-on: ubuntu-latest
+    needs: [build-release, build-deb, build-msi]
+    steps:
+      - name: Get artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Delete tag and release
+        uses: dev-drprasad/delete-tag-and-release@v0.1.3
         if: github.event.inputs.isMock != 'mock'
-        uses: actions/upload-release-asset@v1.0.1
+        with:
+          delete_release: true
+          tag_name: nightly
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
+        run: sleep 10
+
+      - name: Upload all saved release files if not mock
+        uses: softprops/action-gh-release@v1
+        if: github.event.inputs.isMock != 'mock'
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
-          asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
-          asset_content_type: application/octet-stream
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: ./artifacts/release/*
+          prerelease: true
+          tag_name: "nightly"
+          draft: false
+          fail_on_unmatched_files: true
