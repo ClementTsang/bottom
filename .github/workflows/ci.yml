@@ -242,7 +242,6 @@ jobs:
           key: ${{ matrix.triple.target }}
 
       - name: Check without battery feature on the main 3
-        if: matrix.triple.toTest == 'true'
         uses: actions-rs/cargo@v1
         with:
           command: check
@@ -293,7 +292,6 @@ jobs:
           key: ${{ matrix.triple.target }}
 
       - name: Run tests
-        if: matrix.triple.toTest == 'true'
         run: cargo test --no-fail-fast
         env:
           CARGO_HUSKY_DONT_INSTALL_HOOKS: true
