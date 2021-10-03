@@ -355,6 +355,11 @@ jobs:
       - name: Sleep for a few seconds to prevent timing issues between the deletion and creation of the release
         run: sleep 10
 
+      - name: Print out all release files
+        run: |
+          echo "All generated release files:"
+          ls ./release
+
       - name: Upload all saved release files if not mock
         uses: softprops/action-gh-release@v1
         if: github.event.inputs.isMock != 'mock'
