@@ -68,7 +68,7 @@ jobs:
           - {
               os: "ubuntu-18.04",
               target: "i686-unknown-linux-gnu",
-              cross: true,
+              cross: false,
               strip: true,
             }
           - {
