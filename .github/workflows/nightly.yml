@@ -33,7 +33,7 @@ jobs:
         run: echo "nightly" > release-version
 
       - name: Upload release-version as artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           retention-days: 7
           name: release-version
@@ -198,7 +198,7 @@ jobs:
           mv completion.tar.gz release
 
       - name: Save release files as artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           retention-days: 7
           name: release
@@ -267,7 +267,7 @@ jobs:
           mv bottom_x86_64_installer.msi
 
       - name: Save msi file as artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           retention-days: 7
           name: release
@@ -326,7 +326,7 @@ jobs:
           mv bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
       - name: Save Debian file as artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           retention-days: 7
           name: release
