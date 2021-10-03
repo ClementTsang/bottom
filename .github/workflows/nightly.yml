@@ -35,7 +35,7 @@ jobs:
       - name: Upload release-version as artifact
         uses: actions/upload-artifact@v2
         with:
-          retention-days: 7
+          retention-days: 1
           name: release-version
           path: release-version
 
@@ -200,7 +200,7 @@ jobs:
       - name: Save release files as artifacts
         uses: actions/upload-artifact@v2
         with:
-          retention-days: 7
+          retention-days: 1
           name: release
           path: release
 
@@ -269,7 +269,7 @@ jobs:
       - name: Save msi file as artifacts
         uses: actions/upload-artifact@v2
         with:
-          retention-days: 7
+          retention-days: 1
           name: release
           path: release
 
@@ -328,7 +328,7 @@ jobs:
       - name: Save Debian file as artifacts
         uses: actions/upload-artifact@v2
         with:
-          retention-days: 7
+          retention-days: 1
           name: release
           path: release
 
