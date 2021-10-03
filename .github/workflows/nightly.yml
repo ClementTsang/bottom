@@ -225,7 +225,7 @@ jobs:
       - name: Set release version
         shell: bash
         run: |
-          release_version="$(cat ./release-version)"
+          release_version="$(cat ./release-version/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
       - name: Validate release environment variables
@@ -294,7 +294,7 @@ jobs:
       - name: Set release upload URL and release version
         shell: bash
         run: |
-          release_version="$(cat ./release-version)"
+          release_version="$(cat ./release-version/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
       - name: Validate release environment variables
