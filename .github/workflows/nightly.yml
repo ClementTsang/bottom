@@ -357,7 +357,7 @@ jobs:
 
       - name: Print out all release files
         run: |
-          echo "Generated $(ls | wc -l) files:"
+          echo "Generated $(ls ./release | wc -l) files:"
           ls ./release
 
       - name: Upload all saved release files if not mock
