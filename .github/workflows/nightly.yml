@@ -68,7 +68,7 @@ jobs:
           - {
               os: "ubuntu-18.04",
               target: "i686-unknown-linux-gnu",
-              cross: false,
+              cross: true,
               strip: true,
             }
           - {
@@ -142,13 +142,6 @@ jobs:
           toolchain: stable
           override: true
           target: ${{ matrix.triple.target }}
-
-      - name: Install gcc-multilib for (Linux i686)
-        if: matrix.triple.target == 'i686-unknown-linux-gnu' || matrix.triple.target == 'i686-unknown-linux-musl'
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt update
-          sudo apt install gcc-multilib -y
 
       - uses: Swatinem/rust-cache@v1
         with:
