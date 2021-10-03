@@ -245,7 +245,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-targets --verbose --target=${{ matrix.triple.target }}
+          args: --all-targets --verbose --target=${{ matrix.triple.target }} --no-default-features
           use-cross: ${{ matrix.triple.cross }}
 
   # Run tests x86-64 for supported operating systems
