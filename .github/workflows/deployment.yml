@@ -384,10 +384,9 @@ jobs:
           python "./deployment/windows/choco/choco_packager.py" "./release/bottom_i686-pc-windows-msvc.zip" "./release/bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolatey_install.ps1.template" "bottom.nuspec" "tools/chocolatey_install.ps1" "tools/"
           zip -r choco.zip "bottom.nuspec" "tools"
 
-      - name: Create release directory for artifact, move file
+      - name: Move release file into release directory
         shell: bash
         run: |
-          mkdir release
           mv choco.zip release/
 
       - name: Save release as artifact
