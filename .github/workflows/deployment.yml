@@ -139,12 +139,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get release version
-        uses: actions/download-artifact@v2
-        with:
-          name: release-version
-          path: release-version
-
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
