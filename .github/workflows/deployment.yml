@@ -15,13 +15,10 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  create-github-release:
-    name: create-github-release
+  initialize-release-job:
+    name: initialize-release-job
     runs-on: ubuntu-latest
     steps:
-      - name: Create artifacts directory
-        run: mkdir artifacts
-
       - name: Get the release version from the tag
         if: env.VERSION == ''
         run: |
@@ -36,31 +33,19 @@ jobs:
         run: |
           echo "Version being built against is version ${{ env.VERSION }}"!
 
-      - name: Create GitHub release
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          draft: true
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }} Release
-
-      - name: Save release upload URL to artifact
-        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
-
       - name: Save version number to artifact
-        run: echo "${{ env.VERSION }}" > artifacts/release-version
+        run: echo "${{ env.VERSION }}" > release-version
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+      - name: Upload release-version as artifact
+        uses: actions/upload-artifact@v2
         with:
-          name: artifacts
-          path: artifacts
+          retention-days: 3
+          name: release-version
+          path: release-version
 
   build-release:
     name: build-release
-    needs: [create-github-release]
+    needs: [initialize-release-job]
     runs-on: ${{ matrix.triple.os }}
     container: ${{ matrix.triple.container }}
     env:
@@ -74,7 +59,6 @@ jobs:
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
-              artifact: true,
               strip: true,
             }
           - {
@@ -95,7 +79,6 @@ jobs:
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
-              artifact: true,
               strip: true,
             }
           - {
@@ -108,21 +91,14 @@ jobs:
               os: "macOS-latest",
               target: "x86_64-apple-darwin",
               cross: false,
-              artifact: true,
               strip: true,
             }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
               cross: false,
-              artifact: true,
             }
-          - {
-              os: "windows-2019",
-              target: "i686-pc-windows-msvc",
-              cross: false,
-              artifact: true,
-            }
+          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-gnu",
@@ -134,7 +110,6 @@ jobs:
               os: "ubuntu-18.04",
               target: "aarch64-unknown-linux-gnu",
               cross: true,
-              artifact: true,
             }
 
           # armv7
@@ -142,7 +117,6 @@ jobs:
               os: "ubuntu-18.04",
               target: "armv7-unknown-linux-gnueabihf",
               cross: true,
-              artifact: true,
             }
 
           # PowerPC 64 LE
@@ -165,24 +139,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get release download URL
+      - name: Get release version
         uses: actions/download-artifact@v2
         with:
-          name: artifacts
-          path: artifacts
-
-      - name: Set release upload URL and release version
-        shell: bash
-        run: |
-          release_upload_url="$(cat ./artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          release_version="$(cat ./artifacts/release-version)"
-          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
-
-      - name: Validate release environment variables
-        run: |
-          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
-          echo "Release version: ${{ env.RELEASE_VERSION }}"
+          name: release-version
+          path: release-version
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -233,47 +194,29 @@ jobs:
           tar -czvf bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz btm completion
           echo "ASSET=bottom_${{ matrix.triple.target }}${{ matrix.triple.suffix }}.tar.gz" >> $GITHUB_ENV
 
-      - name: Upload main release
-        uses: actions/upload-release-asset@v1.0.1
-        id: upload
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
-
-      - name: Add download asset to artifact if required
-        if: matrix.triple.artifact == true
-        run: cp ${{ env.ASSET }} artifacts/
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: artifacts
-          path: artifacts
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv ${{ env.ASSET }} release/
 
       - name: Compress completion files (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         shell: bash
         run: |
           tar -C ./completion -czvf completion.tar.gz .
+          mv completion.tar.gz release/
 
-      - name: Release completion files (Linux x86-64 GNU)
-        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: completion.tar.gz
-          asset_name: completion.tar.gz
-          asset_content_type: application/octet-stream
+          retention-days: 3
+          name: release
+          path: release
 
   build-msi:
     name: build-msi
-    needs: [create-github-release]
+    needs: [initialize-release-job]
     runs-on: "windows-2019"
     env:
       RUST_BACKTRACE: 1
@@ -285,23 +228,20 @@ jobs:
 
       - uses: actions/setup-python@v2
 
-      - name: Get release download URL
+      - name: Get release version
         uses: actions/download-artifact@v2
         with:
-          name: artifacts
-          path: artifacts
+          name: release-version
+          path: release-version
 
-      - name: Set release upload URL and release version
+      - name: Set release version
         shell: bash
         run: |
-          release_upload_url="$(cat ./artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          release_version="$(cat ./artifacts/release-version)"
+          release_version="$(cat ./release-version/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-      - name: Validate release environment variables
+      - name: Validate release version
         run: |
-          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install Net-Framework-Core (Windows x86-64 MSVC)
@@ -332,35 +272,29 @@ jobs:
           cargo wix init
           cargo wix
 
-      - name: Upload msi file
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: bottom_x86_64_installer.msi
-          asset_name: bottom_x86_64_installer.msi
-          asset_content_type: application/octet-stream
-
       - name: Build winget
         run: |
           python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "Clement.bottom.yaml" "SHA256" "./bottom_x86_64_installer.msi"
           $Code = powershell ./deployment/windows/winget/get_product_code.ps1 ./bottom_x86_64_installer.msi
           python "./deployment/windows/winget/product_code.py" Clement.bottom.yaml $Code
 
-      - name: Upload winget file
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create release directory for artifact, move files
+        shell: bash
+        run: |
+          mkdir release
+          mv bottom_x86_64_installer.msi release/
+          mv Clement.bottom.yaml release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: Clement.bottom.yaml
-          asset_name: Clement.bottom.yaml
-          asset_content_type: application/octet-stream
+          retention-days: 3
+          name: release
+          path: release
 
   build-deb:
     name: build-deb
-    needs: [create-github-release]
+    needs: [initialize-release-job]
     runs-on: "ubuntu-18.04"
     env:
       RUST_BACKTRACE: 1
@@ -370,23 +304,20 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get release download URL
+      - name: Get release version
         uses: actions/download-artifact@v2
         with:
-          name: artifacts
-          path: artifacts
+          name: release-version
+          path: release-version
 
-      - name: Set release upload URL and release version
+      - name: Set release version
         shell: bash
         run: |
-          release_upload_url="$(cat ./artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          release_version="$(cat ./artifacts/release-version)"
+          release_version="$(cat ./release-version/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-      - name: Validate release environment variables
+      - name: Validate release version
         run: |
-          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install toolchain
@@ -407,19 +338,22 @@ jobs:
           cargo deb
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
-      - name: Upload Debian file (Linux x86-64 GNU)
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
-          asset_name: bottom_${{ env.RELEASE_VERSION }}_amd64.deb
-          asset_content_type: application/octet-stream
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv bottom_${{ env.RELEASE_VERSION }}_amd64.deb release/
 
-  additional-file-generation:
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 3
+          name: release
+          path: release
+
+  generate-choco:
     needs: [build-release]
-    name: additional-file-generation
+    name: generate-choco
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -429,23 +363,20 @@ jobs:
 
       - uses: actions/setup-python@v2
 
-      - name: Get release download URL
+      - name: Get release version
         uses: actions/download-artifact@v2
         with:
-          name: artifacts
-          path: artifacts
+          name: release-version
+          path: release-version
 
-      - name: Set release upload URL, download URL and version
+      - name: Set release version
         shell: bash
         run: |
-          release_upload_url="$(cat ./artifacts/release-upload-url)"
-          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-          release_version="$(cat ./artifacts/release-version)"
+          release_version="$(cat ./release-version/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-      - name: Validate release environment variables
+      - name: Validate release version
         run: |
-          echo "Release upload url: ${{ env.RELEASE_UPLOAD_URL }}"
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Execute choco packaging script
@@ -453,12 +384,59 @@ jobs:
           python "./deployment/windows/choco/choco_packager.py" "./artifacts/bottom_i686-pc-windows-msvc.zip" "./artifacts/bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolatey_install.ps1.template" "bottom.nuspec" "tools/chocolatey_install.ps1" "tools/"
           zip -r choco.zip "bottom.nuspec" "tools"
 
-      - name: Upload choco.zip to release
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv choco.zip release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
         with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: choco.zip
-          asset_name: choco.zip
-          asset_content_type: application/octet-stream
+          retention-days: 3
+          name: release
+          path: release
+
+  upload-release:
+    name: upload-release
+    runs-on: ubuntu-latest
+    needs: [generate-choco, build-deb, build-msi]
+    steps:
+      - name: Get release version
+        uses: actions/download-artifact@v2
+        with:
+          name: release-version
+          path: release-version
+
+      - name: Set release version
+        shell: bash
+        run: |
+          release_version="$(cat ./release-version/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Validate release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+
+      - name: Get release artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: release
+          path: release
+
+      - name: Print out all release files
+        run: |
+          echo "Generated $(ls ./release | wc -l) files:"
+          ls ./release
+
+      - name: Upload all saved release files
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          tag_name: ${{ env.RELEASE_VERSION }}
+          draft: true
+          fail_on_unmatched_files: true
+          name: ${{ env.VERSION }} Release
+          files: |
+            ./release/*

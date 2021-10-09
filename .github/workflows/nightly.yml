@@ -216,7 +216,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get release download URL
+      - name: Get release version
         uses: actions/download-artifact@v2
         with:
           name: release-version
@@ -228,7 +228,7 @@ jobs:
           release_version="$(cat ./release-version/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-      - name: Validate release environment variables
+      - name: Validate release version
         run: |
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
@@ -285,19 +285,19 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get release download URL
+      - name: Get release version
         uses: actions/download-artifact@v2
         with:
           name: release-version
           path: release-version
 
-      - name: Set release upload URL and release version
+      - name: Set release version
         shell: bash
         run: |
           release_version="$(cat ./release-version/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-      - name: Validate release environment variables
+      - name: Validate release version
         run: |
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
