@@ -188,14 +188,14 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv ${{ env.ASSET }} release
+          mv ${{ env.ASSET }} release/
 
       - name: Compress completion files (Linux x86-64 GNU)
         if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
         shell: bash
         run: |
           tar -C ./completion -czvf completion.tar.gz .
-          mv completion.tar.gz release
+          mv completion.tar.gz release/
 
       - name: Save release files as artifacts
         uses: actions/upload-artifact@v2
@@ -264,7 +264,7 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv bottom_x86_64_installer.msi release
+          mv bottom_x86_64_installer.msi release/
 
       - name: Save msi file as artifacts
         uses: actions/upload-artifact@v2
@@ -323,7 +323,7 @@ jobs:
         shell: bash
         run: |
           mkdir release
-          mv bottom_${{ env.RELEASE_VERSION }}_amd64.deb release
+          mv bottom_${{ env.RELEASE_VERSION }}_amd64.deb release/
 
       - name: Save Debian file as artifacts
         uses: actions/upload-artifact@v2
