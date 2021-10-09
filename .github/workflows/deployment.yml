@@ -379,9 +379,15 @@ jobs:
         run: |
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
+      - name: Get release artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: release
+          path: release
+
       - name: Execute choco packaging script
         run: |
-          python "./deployment/windows/choco/choco_packager.py" "./artifacts/bottom_i686-pc-windows-msvc.zip" "./artifacts/bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolatey_install.ps1.template" "bottom.nuspec" "tools/chocolatey_install.ps1" "tools/"
+          python "./deployment/windows/choco/choco_packager.py" "./release/bottom_i686-pc-windows-msvc.zip" "./release/bottom_x86_64-pc-windows-msvc.zip" ${{ env.RELEASE_VERSION }} "./deployment/windows/choco/bottom.nuspec.template" "./deployment/windows/choco/chocolatey_install.ps1.template" "bottom.nuspec" "tools/chocolatey_install.ps1" "tools/"
           zip -r choco.zip "bottom.nuspec" "tools"
 
       - name: Create release directory for artifact, move file
@@ -438,5 +444,16 @@ jobs:
           draft: true
           fail_on_unmatched_files: true
           name: ${{ env.VERSION }} Release
+          body: |
+            <!-- Write summary here -->
+            ---
+
+            ## Features
+
+            ## Changes
+
+            ## Bug Fixes
+
+            ## Internal Changes
           files: |
             ./release/*
