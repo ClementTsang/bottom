@@ -38,7 +38,7 @@ jobs:
           python-version: 3.x
 
       - name: Install Python dependencies
-        run: pip install docs/requirements.txt
+        run: pip install -r docs/requirements.txt
 
       - name: Configure git user and email
         run: |
