@@ -59,7 +59,7 @@ typed-builder = "0.9.0"
 unicode-segmentation = "1.7.1"
 unicode-width = "0.1"
 
-# For debugging only... disable on release builds with for now?  TODO: Redo this.
+# Optional dependencies
 fern = { version = "0.6.0", optional = true }
 log = { version = "0.4.14", optional = true }
 battery = { version = "0.7.8", optional = true }
