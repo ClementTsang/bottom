@@ -194,15 +194,14 @@ dependencies = [
 [[package]]
 name = "battery"
 version = "0.7.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4b624268937c0e0a3edb7c27843f9e547c320d730c610d3b8e6e8e95b2026e4"
+source = "git+https://github.com/ClementTsang/rust-battery#a81af5960039891b83fe8ecdf767f197a63b9cde"
 dependencies = [
  "cfg-if",
  "core-foundation 0.7.0",
  "lazycell",
  "libc",
  "mach",
- "nix 0.19.1",
+ "nix 0.22.2",
  "num-traits",
  "uom",
  "winapi",
