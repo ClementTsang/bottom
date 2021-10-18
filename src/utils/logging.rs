@@ -4,9 +4,17 @@ pub fn init_logger(
 ) -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
+            let offset = time::OffsetDateTime::now_utc();
+
             out.finish(format_args!(
                 "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S:%f]"),
+                offset
+                    .format(&time::macros::format_description!(
+                        // The weird "[[[" is because we need to escape a bracket ("[[") to show one "[".
+                        // See https://time-rs.github.io/book/api/format-description.html
+                        "[[[year]-[month]-[day]][[[hour]:[minute]:[second][subsecond digits:9]]"
+                    ))
+                    .unwrap(),
                 record.target(),
                 record.level(),
                 message

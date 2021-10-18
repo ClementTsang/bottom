@@ -36,7 +36,6 @@ default = ["fern", "log", "battery"]
 [dependencies]
 anyhow = "1.0.40"
 backtrace = "0.3.59"
-chrono = "0.4.19"
 crossterm = "0.18.2"
 ctrlc = { version = "3.1.9", features = ["termination"] }
 clap = "2.33"
@@ -53,6 +52,7 @@ serde = { version = "1.0.125", features = ["derive"] }
 # Sysinfo is still used in Linux for the ProcessStatus
 sysinfo = "0.18.2"
 thiserror = "1.0.24"
+time = { version = "0.3.3", features = ["formatting", "local-offset", "macros"] }
 toml = "0.5.8"
 tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
 typed-builder = "0.9.0"
@@ -69,7 +69,7 @@ libc = "0.2.86"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
-procfs = "0.10.1"
+procfs = { version = "0.11.0", default-features = false }
 smol = "1.2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]

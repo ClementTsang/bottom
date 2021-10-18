@@ -1375,13 +1375,13 @@ pub fn convert_battery_harvest(
             charge_percentage: battery_harvest.charge_percent,
             watt_consumption: format!("{:.2}W", battery_harvest.power_consumption_rate_watts),
             duration_until_empty: if let Some(secs_till_empty) = battery_harvest.secs_until_empty {
-                let time = chrono::Duration::seconds(secs_till_empty);
-                let num_minutes = time.num_minutes() - time.num_hours() * 60;
-                let num_seconds = time.num_seconds() - time.num_minutes() * 60;
+                let time = time::Duration::seconds(secs_till_empty);
+                let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
+                let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
                 Some(format!(
                     "{} hour{}, {} minute{}, {} second{}",
-                    time.num_hours(),
-                    if time.num_hours() == 1 { "" } else { "s" },
+                    time.whole_hours(),
+                    if time.whole_hours() == 1 { "" } else { "s" },
                     num_minutes,
                     if num_minutes == 1 { "" } else { "s" },
                     num_seconds,
@@ -1391,13 +1391,13 @@ pub fn convert_battery_harvest(
                 None
             },
             duration_until_full: if let Some(secs_till_full) = battery_harvest.secs_until_full {
-                let time = chrono::Duration::seconds(secs_till_full); // FIXME [DEP]: Can I get rid of chrono?
-                let num_minutes = time.num_minutes() - time.num_hours() * 60;
-                let num_seconds = time.num_seconds() - time.num_minutes() * 60;
+                let time = time::Duration::seconds(secs_till_full);
+                let num_minutes = time.whole_minutes() - time.whole_hours() * 60;
+                let num_seconds = time.whole_seconds() - time.whole_minutes() * 60;
                 Some(format!(
                     "{} hour{}, {} minute{}, {} second{}",
-                    time.num_hours(),
-                    if time.num_hours() == 1 { "" } else { "s" },
+                    time.whole_hours(),
+                    if time.whole_hours() == 1 { "" } else { "s" },
                     num_minutes,
                     if num_minutes == 1 { "" } else { "s" },
                     num_seconds,
