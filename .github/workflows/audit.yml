@@ -1,3 +1,5 @@
+# A routine check to see if there are any Rust-specific security vulnerabilities in the repo we should be aware of.
+
 name: audit
 on:
   workflow_dispatch:
