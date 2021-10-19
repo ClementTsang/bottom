@@ -19,13 +19,17 @@ If you want to directly contribute documentation changes or code, follow this! T
 
 1. Fork the project.
 2. Make your changes locally.
-   - If you're making a documentation change, you may want to read [this page](https://clementtsang.github.io/bottom/nightly/contribution/documentation/), especially if you're touching mkdocs pages.
-   - If you add a new feature, it'll probably also need documentation changes - again, see [this page](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
 3. Commit and create a pull request to merge into the `master` branch. **Please follow the pull request template**.
 4. Wait for the tests to pass. These consist of clippy lints, rustfmt checks, and basic tests. **If you are a first time contributor, skip to the next step for now, as GitHub Actions requires approval to run.**
 5. Ask a maintainer to review your pull request. If changes are suggested or any comments are made, they should probably be addressed. Once it looks good, it'll be merged!
 
-## Further reading
+For more details, see [here](https://clementtsang.github.io/bottom/nightly/contribution/issues-and-pull-requests/).
 
-- For details on contributing to documentation, see [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
-- For details on packaging and distribution, see [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/).
+### Documentation
+
+For contributing to documentation, see [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
+
+### Packaging
+
+If you want to become a package maintainer, look [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+for instructions on how to build bottom and add installation instructions to the README.
