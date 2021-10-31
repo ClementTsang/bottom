@@ -163,7 +163,7 @@ fn read_proc(
         use_current_cpu_total,
     );
     let parent_pid = Some(stat.ppid);
-    let mem_usage_bytes = u64::try_from(stat.rss_bytes()).unwrap_or(0);
+    let mem_usage_bytes = u64::try_from(stat.rss_bytes()?).unwrap_or(0);
     let mem_usage_kb = mem_usage_bytes / 1024;
     let mem_usage_percent = mem_usage_kb as f64 / mem_total_kb as f64 * 100.0;
 

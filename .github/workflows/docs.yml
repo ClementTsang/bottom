@@ -5,13 +5,13 @@ on:
     branches:
       - master
     paths:
-      - 'docs/**'
-      - '.github/workflows/docs.yml'
+      - "docs/**"
+      - ".github/workflows/docs.yml"
 
 env:
   # Assign commit authorship to official Github Actions bot when pushing to the `gh-pages` branch:
-  GIT_USER: 'github-actions[bot]'
-  GIT_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+  GIT_USER: "github-actions[bot]"
+  GIT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
 
 jobs:
   build-documentation:
@@ -26,11 +26,8 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: pip install mkdocs-material==7.2.6
-
-      - run: pip install mdx_truly_sane_lists==1.2
-
-      - run: pip install mike==1.1.0
+      - name: Install Python dependencies
+        run: pip install -r docs/requirements.txt
 
       - name: Configure git user and email
         run: |

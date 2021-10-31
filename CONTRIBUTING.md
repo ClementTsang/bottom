@@ -15,16 +15,21 @@ Please use the [feature request template](https://github.com/ClementTsang/bottom
 
 ## Pull requests
 
-The expected workflow for a pull request is:
+If you want to directly contribute documentation changes or code, follow this! The expected workflow for a pull request is:
 
 1. Fork the project.
-2. Make your changes.
-3. Make any documentation changes if necessary - if you add a new feature, it'll probably need documentation changes. See [here](./documentation.md) for tips on documentation.
-4. Commit and create a pull request to merge into the `master` branch. **Please follow the pull request template**.
-5. Wait for the tests to pass. These consist of clippy lints, rustfmt checks, and basic tests. **If you are a first time contributor, you may need to skip this step for now, as GitHub Actions requires approval to run.**
-6. Ask a maintainer to review your pull request. If changes are suggested or any comments are made, they should probably be addressed. Once it looks good, it'll be merged!
+2. Make your changes locally.
+3. Commit and create a pull request to merge into the `master` branch. **Please follow the pull request template**.
+4. Wait for the tests to pass. These consist of clippy lints, rustfmt checks, and basic tests. **If you are a first time contributor, skip to the next step for now, as GitHub Actions requires approval to run.**
+5. Ask a maintainer to review your pull request. If changes are suggested or any comments are made, they should probably be addressed. Once it looks good, it'll be merged!
 
-## Further reading
+For more details, see [here](https://clementtsang.github.io/bottom/nightly/contribution/issues-and-pull-requests/).
 
-- For details on contributing to documentation, see [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
-- For details on packaging and distribution, see [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/).
+### Documentation
+
+For contributing to documentation, see [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
+
+### Packaging
+
+If you want to become a package maintainer, look [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+for instructions on how to build bottom and add installation instructions to the README.

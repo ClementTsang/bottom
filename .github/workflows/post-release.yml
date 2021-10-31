@@ -1,4 +1,4 @@
-# Actions to run after releasing a version.
+# Actions to run after releasing a version, like generating documentation via mkdocs or notifying packaging repos.
 name: post-release
 
 on:
@@ -27,15 +27,9 @@ jobs:
         run: |
           echo $RELEASE_VERSION
 
-      - name: Make sure you're not on master...
+      - name: Make sure you're not on master/main/nightly...
         run: |
-          if [[ $RELEASE_VERSION == "master" ]]; then
-            exit 1
-          fi
-
-      - name: Make sure you're not on nightly...
-        run: |
-          if [[ $RELEASE_VERSION == "nightly" ]]; then
+          if [[ $RELEASE_VERSION == "master" || $RELEASE_VERSION == "main" || $RELEASE_VERSION == "nightly" ]]; then
             exit 1
           fi
 
@@ -43,11 +37,8 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: pip install mkdocs-material==7.2.6
-
-      - run: pip install mdx_truly_sane_lists==1.2
-
-      - run: pip install mike==1.1.0
+      - name: Install Python dependencies
+        run: pip install -r docs/requirements.txt
 
       - name: Configure git user and email
         run: |

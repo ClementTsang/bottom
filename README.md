@@ -244,12 +244,13 @@ More details on configuration can be found [in the documentation](https://clemen
 
 ## Contribution
 
-Whether it's reporting problems, documentation, or code, contribution is always welcome! Please read
-[CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to contribute to bottom.
+Whether it's reporting bugs, suggesting features, maintaining packages, or submitting a PR,
+contribution is always welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to
+contribute to bottom.
 
 ### Contributors
 
-Thanks to all contributors ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks to all contributors:
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
