@@ -1,4 +1,4 @@
-# bottom
+# bottom (btm)
 
 [<img src="https://img.shields.io/github/workflow/status/ClementTsang/bottom/ci/master?style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amaster)
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
