@@ -207,6 +207,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "patricksjackson",
+      "name": "Patrick Jackson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/160646?v=4",
+      "profile": "http://jackson.dev",
+      "contributions": [
+        "ideas",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
