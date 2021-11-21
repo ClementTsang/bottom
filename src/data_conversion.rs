@@ -1,10 +1,9 @@
-//! This mainly concerns converting collected data into things that the canvas
-//! can actually handle.
+//! This mainly concerns converting collected data into things that the canvas can actually handle.
 use crate::app::data_harvester::temperature::TemperatureType;
 use crate::app::text_table::TextTableData;
 use crate::app::DataCollection;
 use crate::{app::data_harvester, utils::gen_util::*};
-use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
+use crate::{app::AxisScaling, units::data_units::DataUnit};
 
 use std::borrow::Cow;
 
@@ -48,39 +47,6 @@ pub struct ConvertedNetworkData {
     // min_tx: f64,
     // max_tx: f64,
     // mean_tx: f64,
-}
-
-// TODO: [Refactor] Process data might need some refactoring lol
-#[derive(Clone, Default, Debug)]
-pub struct ConvertedProcessData {
-    pub pid: Pid,
-    pub ppid: Option<Pid>,
-    pub name: String,
-    pub command: String,
-    pub is_thread: Option<bool>,
-    pub cpu_percent_usage: f64,
-    pub mem_percent_usage: f64,
-    pub mem_usage_bytes: u64,
-    pub mem_usage_str: (f64, String),
-    pub group_pids: Vec<Pid>,
-    pub read_per_sec: String,
-    pub write_per_sec: String,
-    pub total_read: String,
-    pub total_write: String,
-    pub rps_f64: f64,
-    pub wps_f64: f64,
-    pub tr_f64: f64,
-    pub tw_f64: f64,
-    pub process_state: String,
-    pub process_char: char,
-    pub user: Option<String>,
-
-    /// Prefix printed before the process when displayed.
-    pub process_description_prefix: Option<String>,
-    /// Whether to mark this process entry as disabled (mostly for tree mode).
-    pub is_disabled_entry: bool,
-    /// Whether this entry is collapsed, hiding all its children (for tree mode).
-    pub is_collapsed_entry: bool,
 }
 
 #[derive(Clone, Default, Debug)]

@@ -238,7 +238,7 @@ impl Component for Scrollable {
                     // we are using a *visual* index here - not what is the actual index!  Luckily, we keep track of that
                     // inside our linked copy of TableState!
 
-                    // Note that y is assumed to be *relative*;
+                    // Note that y is assumed to be relative;
                     // we assume that y starts at where the list starts (and there are no gaps or whatever).
                     let y = usize::from(event.row - self.bounds.top());
 

@@ -27,24 +27,6 @@ use std::borrow::Cow;
 
 use crate::Pid;
 
-// FIXME: [URGENT] Delete this.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum ProcessSorting {
-    CpuPercent,
-    Mem,
-    MemPercent,
-    Pid,
-    ProcessName,
-    Command,
-    ReadPerSecond,
-    WritePerSecond,
-    TotalRead,
-    TotalWrite,
-    State,
-    User,
-    Count,
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
     pub pid: Pid,
@@ -63,7 +45,7 @@ pub struct ProcessHarvest {
     pub process_state: String,
     pub process_state_char: char,
 
-    /// This is the *effective* user ID. This is only used on Unix platforms.
+    /// This is the effective user ID. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
     pub uid: libc::uid_t,
 
