@@ -89,7 +89,6 @@ pub fn get_process_data(
         process_vector.push(ProcessHarvest {
             pid: process_val.pid(),
             parent_pid: process_val.parent(),
-            children_pids: vec![],
             name,
             command,
             mem_usage_percent: if mem_total_kb > 0 {

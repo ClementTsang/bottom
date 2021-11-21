@@ -25,8 +25,6 @@ doc = false
 [profile.release]
 debug = 0
 lto = true
-# debug = true
-# lto = false
 opt-level = 3
 codegen-units = 1
 
@@ -36,7 +34,7 @@ default = ["fern", "log", "battery"]
 [dependencies]
 anyhow = "1.0.40"
 backtrace = "0.3.59"
-crossterm = "0.20.0"
+crossterm = "0.22.1"
 ctrlc = { version = "3.1.9", features = ["termination"] }
 clap = "2.33"
 cfg-if = "1.0"
@@ -45,12 +43,12 @@ enum_dispatch = "0.3.7"
 float-ord = "0.3.2"
 futures = "0.3.14"
 futures-timer = "3.0.2"
-fxhash = "0.2.1"
 indexmap = "1.6.2"
 indextree = "4.3.1"
 itertools = "0.10.0"
 once_cell = "1.5.2"
 regex = "1.5.4"
+rustc-hash = "1.1.0"
 serde = { version = "1.0.125", features = ["derive"] }
 # Sysinfo is still used in Linux for the ProcessStatus
 sysinfo = "0.18.2"

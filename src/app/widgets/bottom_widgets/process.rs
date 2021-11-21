@@ -1,13 +1,15 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, cell::RefCell, collections::HashMap};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use float_ord::FloatOrd;
 use itertools::{Either, Itertools};
 use once_cell::unsync::Lazy;
 
+use rustc_hash::{FxHashMap, FxHashSet};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
+    style::Style,
     text::{Span, Spans},
     widgets::{Borders, Paragraph},
     Frame,
@@ -18,14 +20,15 @@ use crate::{
         data_harvester::processes::ProcessHarvest,
         event::{ComponentEventResult, MultiKey, MultiKeyResult, ReturnSignal, SelectionAction},
         query::*,
-        text_table::DesiredColumnWidth,
+        text_table::{DesiredColumnWidth, TextTableRow},
         widgets::tui_stuff::BlockBuilder,
-        AppConfigFields, DataCollection,
+        AppConfigFields, DataCollection, ProcessData,
     },
     canvas::Painter,
-    data_conversion::get_string_with_bytes,
+    data_conversion::{get_string_with_bytes, get_string_with_bytes_per_second},
     options::{layout_options::LayoutRule, ProcessDefaults},
     utils::error::BottomError,
+    Pid,
 };
 
 use crate::app::{
@@ -140,7 +143,7 @@ impl ProcessSortType {
             ProcessSortType::Wps => Hard(Some(8)),
             ProcessSortType::TotalRead => Hard(Some(7)),
             ProcessSortType::TotalWrite => Hard(Some(8)),
-            ProcessSortType::User => Flex(0.08),
+            ProcessSortType::User => Flex(0.08), // FIXME: [URGENT] adjust this scaling
             ProcessSortType::State => Hard(Some(8)),
         }
     }
@@ -211,7 +214,7 @@ impl SortableColumn for ProcessSortColumn {
     }
 
     fn default_descending(&self) -> bool {
-        self.sortable_column.default_descending()
+        self.sortable_column.default_descending() // TODO: [Behaviour] not sure if I like this behaviour tbh
     }
 
     fn sorting_status(&self) -> SortStatus {
@@ -239,35 +242,37 @@ impl SortableColumn for ProcessSortColumn {
     }
 }
 
+#[derive(Default)]
+struct TreeData {
+    user_collapsed_pids: FxHashSet<Pid>,
+    sorted_pids: RefCell<Vec<Pid>>,
+}
+
+enum ManagerMode {
+    Normal,
+    Grouped,
+    Tree(TreeData),
+}
+
 /// A searchable, sortable table to manage processes.
 pub struct ProcessManager {
     bounds: Rect,
     process_table: SortableTextTable<ProcessSortColumn>,
     sort_menu: SortMenu,
     search_block_bounds: Rect,
-
     search_input: TextInput,
-
     dd_multi: MultiKey,
-
     selected: ProcessManagerSelection,
     prev_selected: ProcessManagerSelection,
-
-    in_tree_mode: bool,
+    manager_mode: ManagerMode,
     show_sort: bool,
     show_search: bool,
-
     search_modifiers: SearchModifiers,
-
     display_data: TextTableData,
-
     process_filter: Option<Result<Query, BottomError>>,
-
     block_border: Borders,
-
     width: LayoutRule,
     height: LayoutRule,
-
     show_scroll_index: bool,
 }
 
@@ -299,7 +304,7 @@ impl ProcessManager {
             dd_multi: MultiKey::register(vec!['d', 'd']), // TODO: [Optimization] Maybe use something static/const/arrayvec?...
             selected: ProcessManagerSelection::Processes,
             prev_selected: ProcessManagerSelection::Processes,
-            in_tree_mode: false,
+            manager_mode: ManagerMode::Normal,
             show_sort: false,
             show_search: false,
             search_modifiers: SearchModifiers::default(),
@@ -336,8 +341,12 @@ impl ProcessManager {
         self
     }
 
-    fn set_tree_mode(&mut self, in_tree_mode: bool) {
-        self.in_tree_mode = in_tree_mode;
+    fn set_tree_mode(&mut self, tree_mode: bool) {
+        self.manager_mode = if tree_mode {
+            ManagerMode::Tree(TreeData::default())
+        } else {
+            ManagerMode::Normal
+        };
     }
 
     /// Sets whether to show the scroll index.
@@ -409,39 +418,58 @@ impl ProcessManager {
         ComponentEventResult::Signal(ReturnSignal::Update)
     }
 
-    fn is_grouped(&self) -> bool {
-        matches!(
-            self.process_table.columns()[0].sort_type,
-            ProcessSortType::Count
-        )
+    fn disable_grouped(&mut self) {
+        self.manager_mode = ManagerMode::Normal;
+        self.process_table
+            .set_column(ProcessSortColumn::new(ProcessSortType::Pid), 0);
+
+        self.process_table
+            .add_column(ProcessSortColumn::new(ProcessSortType::State), 8);
+        #[cfg(target_family = "unix")]
+        {
+            self.process_table
+                .add_column(ProcessSortColumn::new(ProcessSortType::User), 8);
+        }
+    }
+
+    fn enable_grouped(&mut self) {
+        self.manager_mode = ManagerMode::Grouped;
+        self.process_table
+            .set_column(ProcessSortColumn::new(ProcessSortType::Count), 0);
+
+        #[cfg(target_family = "unix")]
+        {
+            self.process_table.remove_column(9, Some(2));
+        }
+        self.process_table.remove_column(8, Some(2));
     }
 
     fn toggle_grouped(&mut self) -> ComponentEventResult {
-        if self.is_grouped() {
-            self.process_table
-                .set_column(ProcessSortColumn::new(ProcessSortType::Pid), 0);
-
-            self.process_table
-                .add_column(ProcessSortColumn::new(ProcessSortType::State), 8);
-            #[cfg(target_family = "unix")]
-            {
-                self.process_table
-                    .add_column(ProcessSortColumn::new(ProcessSortType::User), 8);
-            }
-        } else {
-            self.process_table
-                .set_column(ProcessSortColumn::new(ProcessSortType::Count), 0);
-
-            #[cfg(target_family = "unix")]
-            {
-                self.process_table.remove_column(9, Some(2));
-            }
-            self.process_table.remove_column(8, Some(2));
+        match self.manager_mode {
+            ManagerMode::Grouped => self.disable_grouped(),
+            ManagerMode::Normal | ManagerMode::Tree { .. } => self.enable_grouped(),
         }
 
-        // Invalidate row cache.
         self.process_table.invalidate_cached_columns();
+        ComponentEventResult::Signal(ReturnSignal::Update)
+    }
 
+    /// Toggles tree mode.
+    fn toggle_tree_mode(&mut self) -> ComponentEventResult {
+        match self.manager_mode {
+            ManagerMode::Normal => {
+                self.set_tree_mode(true);
+            }
+            ManagerMode::Grouped => {
+                self.disable_grouped();
+                self.set_tree_mode(true);
+            }
+            ManagerMode::Tree { .. } => {
+                self.set_tree_mode(false);
+            }
+        }
+
+        self.process_table.invalidate_cached_columns();
         ComponentEventResult::Signal(ReturnSignal::Update)
     }
 
@@ -497,10 +525,493 @@ impl ProcessManager {
         ComponentEventResult::Signal(ReturnSignal::Update)
     }
 
-    /// Toggles tree mode.
-    fn toggle_tree_mode(&mut self) -> ComponentEventResult {
-        self.in_tree_mode = !self.in_tree_mode;
-        ComponentEventResult::Signal(ReturnSignal::Update)
+    /// Returns whether a [`ProcessHarvest`] matches the [`ProcessManager`]'s query. If there
+    /// is no query then it will always return true.
+    fn does_process_match_query(&self, process: &ProcessHarvest) -> bool {
+        if let Some(Ok(query)) = &self.process_filter {
+            query.check(process, self.is_using_command())
+        } else {
+            true
+        }
+    }
+
+    fn get_display_tree(
+        &self, tree_data: &TreeData, data_collection: &DataCollection,
+    ) -> TextTableData {
+        fn build_tree(
+            manager: &ProcessManager, data_collection: &DataCollection,
+            filtered_tree: &FxHashMap<Pid, Vec<Pid>>, matching_pids: &FxHashMap<Pid, bool>,
+            current_process: &ProcessHarvest, mut prefixes: Vec<String>, is_last: bool,
+            collapsed_pids: &FxHashSet<Pid>, sorted_pids: &mut Vec<Pid>,
+        ) -> TextTableData {
+            const BRANCH_ENDING: char = '└';
+            const BRANCH_VERTICAL: char = '│';
+            const BRANCH_SPLIT: char = '├';
+            const BRANCH_HORIZONTAL: char = '─';
+
+            sorted_pids.push(current_process.pid);
+
+            let ProcessData {
+                process_harvest,
+                process_name_pid_map,
+                process_cmd_pid_map,
+                ..
+            } = &data_collection.process_data;
+            let is_disabled = !*matching_pids.get(&current_process.pid).unwrap_or(&false);
+
+            if collapsed_pids.contains(&current_process.pid) {
+                let mut queue = if let Some(children) = filtered_tree.get(&current_process.pid) {
+                    children
+                        .iter()
+                        .filter_map(|child_pid| process_harvest.get(child_pid))
+                        .collect_vec()
+                } else {
+                    vec![]
+                };
+                let mut summed_process = current_process.clone();
+
+                while let Some(process) = queue.pop() {
+                    summed_process.add(process);
+                    if let Some(children) = filtered_tree.get(&process.pid) {
+                        queue.extend(
+                            children
+                                .iter()
+                                .filter_map(|child_pid| process_harvest.get(child_pid))
+                                .collect_vec(),
+                        );
+                    }
+                }
+
+                let prefix = if prefixes.is_empty() {
+                    "+ ".to_string()
+                } else {
+                    format!(
+                        "{}{}{} + ",
+                        prefixes.join(""),
+                        if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
+                        BRANCH_HORIZONTAL
+                    )
+                };
+
+                let process_text = manager.process_to_text(
+                    &summed_process,
+                    process_cmd_pid_map,
+                    process_name_pid_map,
+                    prefix,
+                    is_disabled,
+                );
+
+                vec![process_text]
+            } else {
+                let prefix = if prefixes.is_empty() {
+                    String::default()
+                } else {
+                    format!(
+                        "{}{}{} ",
+                        prefixes.join(""),
+                        if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
+                        BRANCH_HORIZONTAL
+                    )
+                };
+
+                let process_text = manager.process_to_text(
+                    current_process,
+                    process_cmd_pid_map,
+                    process_name_pid_map,
+                    prefix,
+                    is_disabled,
+                );
+
+                if let Some(children) = filtered_tree.get(&current_process.pid) {
+                    if prefixes.is_empty() {
+                        prefixes.push(String::default());
+                    } else {
+                        prefixes.push(if is_last {
+                            "   ".to_string()
+                        } else {
+                            format!("{}  ", BRANCH_VERTICAL)
+                        });
+                    }
+
+                    let mut children = children
+                        .iter()
+                        .filter_map(|child_pid| process_harvest.get(child_pid))
+                        .collect_vec();
+                    manager.sort_process_vec(&mut children, data_collection);
+                    let children_length = children.len();
+                    let children_text = children
+                        .into_iter()
+                        .enumerate()
+                        .map(|(itx, child_process)| {
+                            build_tree(
+                                manager,
+                                data_collection,
+                                filtered_tree,
+                                matching_pids,
+                                child_process,
+                                prefixes.clone(),
+                                itx + 1 == children_length,
+                                collapsed_pids,
+                                sorted_pids,
+                            )
+                        })
+                        .flatten()
+                        .collect_vec();
+
+                    std::iter::once(process_text)
+                        .chain(children_text)
+                        .collect_vec()
+                } else {
+                    vec![process_text]
+                }
+            }
+        }
+
+        fn filter_tree(
+            process_data: &ProcessData, matching_pids: &FxHashMap<Pid, bool>,
+        ) -> FxHashMap<Pid, Vec<Pid>> {
+            let ProcessData {
+                process_harvest,
+                orphan_pids,
+                ..
+            } = process_data;
+
+            let mut filtered_tree = FxHashMap::default();
+
+            fn traverse(
+                current_process: &ProcessHarvest, process_data: &ProcessData,
+                new_tree: &mut FxHashMap<Pid, Vec<Pid>>, matching_pids: &FxHashMap<Pid, bool>,
+            ) -> bool {
+                let ProcessData {
+                    process_harvest,
+                    process_parent_mapping,
+                    ..
+                } = process_data;
+
+                let is_process_matching =
+                    *matching_pids.get(&current_process.pid).unwrap_or(&false);
+
+                if let Some(children) = process_parent_mapping.get(&current_process.pid) {
+                    let results = children
+                        .iter()
+                        .filter_map(|pid| process_harvest.get(pid))
+                        .map(|child_process| {
+                            let contains_match =
+                                traverse(child_process, process_data, new_tree, matching_pids);
+
+                            if contains_match {
+                                new_tree
+                                    .entry(current_process.pid)
+                                    .or_default()
+                                    .push(child_process.pid);
+                            }
+
+                            contains_match || is_process_matching
+                        })
+                        .collect_vec();
+                    let has_matching_child = results.into_iter().any(|x| x);
+
+                    is_process_matching || has_matching_child
+                } else {
+                    is_process_matching
+                }
+            }
+
+            for orphan_pid in orphan_pids {
+                if let Some(orphan_process) = process_harvest.get(orphan_pid) {
+                    traverse(
+                        orphan_process,
+                        process_data,
+                        &mut filtered_tree,
+                        matching_pids,
+                    );
+                }
+            }
+
+            filtered_tree
+        }
+
+        let ProcessData {
+            process_harvest,
+            orphan_pids,
+            ..
+        } = &data_collection.process_data;
+
+        let TreeData {
+            user_collapsed_pids,
+            sorted_pids,
+        } = tree_data;
+        let sorted_pids = &mut *sorted_pids.borrow_mut();
+
+        let matching_pids = data_collection
+            .process_data
+            .process_harvest
+            .iter()
+            .map(|(pid, harvest)| (*pid, self.does_process_match_query(harvest)))
+            .collect::<FxHashMap<_, _>>();
+
+        let filtered_tree = filter_tree(&data_collection.process_data, &matching_pids);
+        let mut orphan_processes = orphan_pids
+            .iter()
+            .filter_map(|child| process_harvest.get(child))
+            .collect_vec();
+        self.sort_process_vec(&mut orphan_processes, data_collection);
+        let orphan_length = orphan_processes.len();
+
+        let mut new_sorted_pids = vec![];
+        let resulting_strings = orphan_processes
+            .into_iter()
+            .enumerate()
+            .filter_map(|(itx, p)| {
+                if filtered_tree.contains_key(&p.pid) {
+                    Some(build_tree(
+                        self,
+                        data_collection,
+                        &filtered_tree,
+                        &matching_pids,
+                        p,
+                        vec![],
+                        itx + 1 == orphan_length,
+                        &user_collapsed_pids,
+                        &mut new_sorted_pids,
+                    ))
+                } else {
+                    None
+                }
+            })
+            .flatten()
+            .collect_vec();
+
+        *sorted_pids = new_sorted_pids;
+
+        resulting_strings
+    }
+
+    fn get_display_normal(&self, data_collection: &DataCollection) -> TextTableData {
+        let mut id_pid_map: HashMap<String, ProcessHarvest>;
+        let filtered_iter = data_collection
+            .process_data
+            .process_harvest
+            .values()
+            .filter(|process| self.does_process_match_query(process));
+        let mut filtered_grouped_vec = if let ManagerMode::Grouped = self.manager_mode {
+            id_pid_map = HashMap::new();
+            filtered_iter.for_each(|process| {
+                let id = if self.is_using_command() {
+                    &process.command
+                } else {
+                    &process.name
+                };
+
+                if let Some(grouped_process_harvest) = id_pid_map.get_mut(id) {
+                    grouped_process_harvest.add(process);
+                } else {
+                    id_pid_map.insert(id.clone(), process.clone());
+                }
+            });
+
+            Either::Left(id_pid_map.values())
+        } else {
+            Either::Right(filtered_iter)
+        }
+        .collect::<Vec<_>>();
+
+        self.sort_process_vec(&mut filtered_grouped_vec, data_collection);
+
+        let cmd_pid_map = &data_collection.process_data.process_cmd_pid_map;
+        let name_pid_map = &data_collection.process_data.process_name_pid_map;
+        filtered_grouped_vec
+            .into_iter()
+            .map(|process| self.process_to_text(process, cmd_pid_map, name_pid_map, "", false))
+            .collect::<Vec<_>>()
+    }
+
+    fn is_reverse_sort(&self) -> bool {
+        matches!(
+            self.process_table
+                .current_sorting_column()
+                .sortable_column
+                .sorting_status(),
+            SortStatus::SortDescending
+        )
+    }
+
+    fn sort_process_vec(
+        &self, process_vec: &mut [&ProcessHarvest], data_collection: &DataCollection,
+    ) {
+        match self.process_table.current_sorting_column().sort_type {
+            ProcessSortType::Pid => {
+                process_vec.sort_by_key(|p| p.pid);
+            }
+            ProcessSortType::Count => {
+                if self.is_using_command() {
+                    process_vec.sort_by_cached_key(|p| {
+                        data_collection
+                            .process_data
+                            .process_cmd_pid_map
+                            .get(&p.command)
+                            .map(|v| v.len())
+                            .unwrap_or(0)
+                    });
+                } else {
+                    process_vec.sort_by_cached_key(|p| {
+                        data_collection
+                            .process_data
+                            .process_name_pid_map
+                            .get(&p.name)
+                            .map(|v| v.len())
+                            .unwrap_or(0)
+                    });
+                }
+            }
+            ProcessSortType::Name => {
+                process_vec.sort_by_key(|p| &p.name);
+            }
+            ProcessSortType::Command => {
+                process_vec.sort_by_key(|p| &p.command);
+            }
+            ProcessSortType::Cpu => {
+                process_vec.sort_by_key(|p| FloatOrd(p.cpu_usage_percent));
+            }
+            ProcessSortType::Mem => {
+                process_vec.sort_by_key(|p| p.mem_usage_bytes);
+            }
+            ProcessSortType::MemPercent => {
+                process_vec.sort_by_key(|p| FloatOrd(p.mem_usage_percent));
+            }
+            ProcessSortType::Rps => {
+                process_vec.sort_by_key(|p| p.read_bytes_per_sec);
+            }
+            ProcessSortType::Wps => {
+                process_vec.sort_by_key(|p| p.write_bytes_per_sec);
+            }
+            ProcessSortType::TotalRead => {
+                process_vec.sort_by_key(|p| p.total_read_bytes);
+            }
+            ProcessSortType::TotalWrite => {
+                process_vec.sort_by_key(|p| p.total_write_bytes);
+            }
+            ProcessSortType::User => {
+                // This comment prevents rustfmt from breaking the cfg block. Yeah, uh, don't ask.
+                #[cfg(target_family = "unix")]
+                {
+                    process_vec.sort_by_key(|p| &p.user);
+                }
+            }
+            ProcessSortType::State => {
+                process_vec.sort_by_key(|p| &p.process_state);
+            }
+        }
+
+        if self.is_reverse_sort() {
+            process_vec.reverse();
+        }
+    }
+
+    fn process_to_text<D: std::fmt::Display>(
+        &self, process: &ProcessHarvest, cmd_pid_map: &HashMap<String, Vec<Pid>>,
+        name_pid_map: &HashMap<String, Vec<Pid>>, prefix: D, disabled: bool,
+    ) -> TextTableRow {
+        let style = if disabled {
+            Some(Style::default())
+        } else {
+            None
+        };
+        self.process_table
+            .columns()
+            .iter()
+            .map(|column| match &column.sort_type {
+                ProcessSortType::Pid => (process.pid.to_string().into(), None, None),
+                ProcessSortType::Count => (
+                    if self.is_using_command() {
+                        cmd_pid_map
+                            .get(&process.command)
+                            .map(|v| v.len())
+                            .unwrap_or(0)
+                            .to_string()
+                            .into()
+                    } else {
+                        name_pid_map
+                            .get(&process.name)
+                            .map(|v| v.len())
+                            .unwrap_or(0)
+                            .to_string()
+                            .into()
+                    },
+                    None,
+                    style,
+                ),
+                ProcessSortType::Name => {
+                    (format!("{}{}", prefix, process.name).into(), None, style)
+                }
+                ProcessSortType::Command => {
+                    (format!("{}{}", prefix, process.command).into(), None, None)
+                }
+                ProcessSortType::Cpu => (
+                    format!("{:.1}%", process.cpu_usage_percent).into(),
+                    None,
+                    style,
+                ),
+                ProcessSortType::Mem => (
+                    get_string_with_bytes(process.mem_usage_bytes).into(),
+                    None,
+                    style,
+                ),
+                ProcessSortType::MemPercent => (
+                    format!("{:.1}%", process.mem_usage_percent).into(),
+                    None,
+                    style,
+                ),
+                ProcessSortType::Rps => (
+                    get_string_with_bytes_per_second(process.read_bytes_per_sec).into(),
+                    None,
+                    style,
+                ),
+                ProcessSortType::Wps => (
+                    get_string_with_bytes_per_second(process.write_bytes_per_sec).into(),
+                    None,
+                    style,
+                ),
+                ProcessSortType::TotalRead => (
+                    get_string_with_bytes(process.total_read_bytes).into(),
+                    None,
+                    style,
+                ),
+                ProcessSortType::TotalWrite => (
+                    get_string_with_bytes(process.total_write_bytes).into(),
+                    None,
+                    style,
+                ),
+                ProcessSortType::User => (process.user.clone(), None, style),
+                ProcessSortType::State => (
+                    process.process_state.clone().into(),
+                    None, // Currently disabled; what happens if you try to sort in the shortened form?
+                    style,
+                ),
+            })
+            .collect::<Vec<_>>()
+    }
+
+    fn tree_toggle_current_process(&mut self) -> ComponentEventResult {
+        if let ManagerMode::Tree(tree_data) = &mut self.manager_mode {
+            let TreeData {
+                user_collapsed_pids,
+                sorted_pids,
+            } = tree_data;
+            let sorted_pids = &*sorted_pids.borrow();
+
+            if let Some(current_pid) = sorted_pids.get(self.process_table.current_scroll_index()) {
+                if user_collapsed_pids.contains(current_pid) {
+                    user_collapsed_pids.remove(current_pid);
+                } else {
+                    user_collapsed_pids.insert(*current_pid);
+                }
+
+                return ComponentEventResult::Signal(ReturnSignal::Update);
+            }
+        }
+
+        ComponentEventResult::NoRedraw
     }
 }
 
@@ -514,8 +1025,6 @@ impl Component for ProcessManager {
     }
 
     fn handle_key_event(&mut self, event: KeyEvent) -> ComponentEventResult {
-        // "Global" handling:
-
         if let KeyCode::Esc = event.code {
             match self.selected {
                 ProcessManagerSelection::Processes => {
@@ -541,21 +1050,19 @@ impl Component for ProcessManager {
 
         match self.selected {
             ProcessManagerSelection::Processes => {
-                // Try to catch some stuff first...
                 if event.modifiers.is_empty() {
                     match event.code {
                         KeyCode::Tab => {
-                            // Handle grouping/ungrouping
                             return self.toggle_grouped();
                         }
                         KeyCode::Char('P') => {
-                            // Show full command/process name
                             return self.toggle_command();
                         }
                         KeyCode::Char('d') => {
                             match self.dd_multi.input('d') {
                                 MultiKeyResult::Completed => {
                                     // Kill the selected process(es)
+                                    todo!()
                                 }
                                 MultiKeyResult::Accepted | MultiKeyResult::Rejected => {
                                     return ComponentEventResult::NoRedraw;
@@ -568,11 +1075,8 @@ impl Component for ProcessManager {
                         KeyCode::Char('%') => {
                             return self.toggle_memory();
                         }
-                        KeyCode::Char('+') => {
-                            // Expand a branch
-                        }
-                        KeyCode::Char('-') => {
-                            // Collapse a branch
+                        KeyCode::Char('+') | KeyCode::Char('-') | KeyCode::Char('=') => {
+                            return self.tree_toggle_current_process();
                         }
                         KeyCode::Char('t') | KeyCode::F(5) => {
                             return self.toggle_tree_mode();
@@ -582,6 +1086,7 @@ impl Component for ProcessManager {
                         }
                         KeyCode::F(9) => {
                             // Kill the selected process(es)
+                            todo!()
                         }
                         _ => {}
                     }
@@ -591,7 +1096,6 @@ impl Component for ProcessManager {
                     }
                 } else if let KeyModifiers::SHIFT = event.modifiers {
                     if let KeyCode::Char('P') = event.code {
-                        // Show full command/process name
                         return self.toggle_command();
                     }
                 }
@@ -667,12 +1171,14 @@ impl Component for ProcessManager {
         match &event.kind {
             MouseEventKind::Down(MouseButton::Left) => {
                 if self.process_table.does_border_intersect_mouse(&event) {
+                    let event_result = self.process_table.handle_mouse_event(event);
+
                     if let ProcessManagerSelection::Processes = self.selected {
-                        self.process_table.handle_mouse_event(event)
+                        event_result
                     } else {
                         self.prev_selected = self.selected;
                         self.selected = ProcessManagerSelection::Processes;
-                        match self.process_table.handle_mouse_event(event) {
+                        match event_result {
                             ComponentEventResult::Unhandled
                             | ComponentEventResult::Redraw
                             | ComponentEventResult::NoRedraw => ComponentEventResult::Redraw,
@@ -884,6 +1390,15 @@ impl Widget for ProcessManager {
             .borders(self.block_border)
             .show_esc(expanded && !self.show_sort && !self.show_search);
 
+        // TODO: [Refactor] This is an ugly hack to add the disabled style... this could be solved by storing style locally to the widget.
+        self.display_data.iter_mut().for_each(|row| {
+            row.iter_mut().for_each(|col| {
+                if let Some(style) = &mut col.2 {
+                    *style = style.patch(painter.colours.disabled_text_style);
+                }
+            })
+        });
+
         self.process_table.draw_tui_table(
             painter,
             f,
@@ -896,203 +1411,10 @@ impl Widget for ProcessManager {
     }
 
     fn update_data(&mut self, data_collection: &DataCollection) {
-        let mut id_pid_map: HashMap<String, ProcessHarvest>;
-
-        let filtered_iter = data_collection.process_harvest.iter().filter(|process| {
-            if let Some(Ok(query)) = &self.process_filter {
-                query.check(process, self.is_using_command())
-            } else {
-                true
-            }
-        });
-
-        let filtered_grouped_iter = if self.is_grouped() {
-            id_pid_map = HashMap::new();
-            filtered_iter.for_each(|process_harvest| {
-                let id = if self.is_using_command() {
-                    &process_harvest.command
-                } else {
-                    &process_harvest.name
-                };
-
-                if let Some(grouped_process_harvest) = id_pid_map.get_mut(id) {
-                    grouped_process_harvest.cpu_usage_percent += process_harvest.cpu_usage_percent;
-                    grouped_process_harvest.mem_usage_bytes += process_harvest.mem_usage_bytes;
-                    grouped_process_harvest.mem_usage_percent += process_harvest.mem_usage_percent;
-                    grouped_process_harvest.read_bytes_per_sec +=
-                        process_harvest.read_bytes_per_sec;
-                    grouped_process_harvest.write_bytes_per_sec +=
-                        process_harvest.write_bytes_per_sec;
-                    grouped_process_harvest.total_read_bytes += process_harvest.total_read_bytes;
-                    grouped_process_harvest.total_write_bytes += process_harvest.total_write_bytes;
-                } else {
-                    id_pid_map.insert(id.clone(), process_harvest.clone());
-                }
-            });
-
-            Either::Left(id_pid_map.values())
-        } else {
-            Either::Right(filtered_iter)
+        self.display_data = match &self.manager_mode {
+            ManagerMode::Normal | ManagerMode::Grouped => self.get_display_normal(data_collection),
+            ManagerMode::Tree(tree_data) => self.get_display_tree(tree_data, data_collection),
         };
-
-        let filtered_sorted_iter = if let ProcessSortType::Count =
-            self.process_table.current_sorting_column().sort_type
-        {
-            let mut v = filtered_grouped_iter.collect::<Vec<_>>();
-            v.sort_by_cached_key(|k| {
-                if self.is_using_command() {
-                    data_collection
-                        .process_cmd_pid_map
-                        .get(&k.command)
-                        .map(|v| v.len())
-                        .unwrap_or(0)
-                } else {
-                    data_collection
-                        .process_name_pid_map
-                        .get(&k.name)
-                        .map(|v| v.len())
-                        .unwrap_or(0)
-                }
-            });
-            Either::Left(v.into_iter())
-        } else {
-            Either::Right(filtered_grouped_iter.sorted_by(
-                match self.process_table.current_sorting_column().sort_type {
-                    ProcessSortType::Pid => {
-                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.pid.cmp(&b.pid)
-                    }
-                    ProcessSortType::Count => {
-                        // This case should be impossible by the above check.
-                        unreachable!()
-                    }
-                    ProcessSortType::Name => {
-                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.name.cmp(&b.name)
-                    }
-                    ProcessSortType::Command => {
-                        |a: &&ProcessHarvest, b: &&ProcessHarvest| a.command.cmp(&b.command)
-                    }
-                    ProcessSortType::Cpu => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        FloatOrd(a.cpu_usage_percent).cmp(&FloatOrd(b.cpu_usage_percent))
-                    },
-                    ProcessSortType::Mem => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        a.mem_usage_bytes.cmp(&b.mem_usage_bytes)
-                    },
-                    ProcessSortType::MemPercent => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        FloatOrd(a.mem_usage_percent).cmp(&FloatOrd(b.mem_usage_percent))
-                    },
-                    ProcessSortType::Rps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        a.read_bytes_per_sec.cmp(&b.read_bytes_per_sec)
-                    },
-                    ProcessSortType::Wps => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        a.write_bytes_per_sec.cmp(&b.write_bytes_per_sec)
-                    },
-                    ProcessSortType::TotalRead => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        a.total_read_bytes.cmp(&b.total_read_bytes)
-                    },
-                    ProcessSortType::TotalWrite => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        a.total_write_bytes.cmp(&b.total_write_bytes)
-                    },
-                    ProcessSortType::User => {
-                        #[cfg(target_family = "unix")]
-                        {
-                            |a: &&ProcessHarvest, b: &&ProcessHarvest| a.user.cmp(&b.user)
-                        }
-                        #[cfg(not(target_family = "unix"))]
-                        {
-                            |_a: &&ProcessHarvest, _b: &&ProcessHarvest| std::cmp::Ordering::Equal
-                        }
-                    }
-                    ProcessSortType::State => |a: &&ProcessHarvest, b: &&ProcessHarvest| {
-                        a.process_state.cmp(&b.process_state)
-                    },
-                },
-            ))
-        };
-
-        self.display_data = if let SortStatus::SortDescending = self
-            .process_table
-            .current_sorting_column()
-            .sortable_column
-            .sorting_status()
-        {
-            Either::Left(filtered_sorted_iter.rev())
-        } else {
-            Either::Right(filtered_sorted_iter)
-        }
-        .map(|process| {
-            self.process_table
-                .columns()
-                .iter()
-                .map(|column| match &column.sort_type {
-                    ProcessSortType::Pid => (process.pid.to_string().into(), None, None),
-                    ProcessSortType::Count => (
-                        if self.is_using_command() {
-                            data_collection
-                                .process_cmd_pid_map
-                                .get(&process.command)
-                                .map(|v| v.len())
-                                .unwrap_or(0)
-                                .to_string()
-                                .into()
-                        } else {
-                            data_collection
-                                .process_name_pid_map
-                                .get(&process.name)
-                                .map(|v| v.len())
-                                .unwrap_or(0)
-                                .to_string()
-                                .into()
-                        },
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::Name => (process.name.clone().into(), None, None),
-                    ProcessSortType::Command => (process.command.clone().into(), None, None),
-                    ProcessSortType::Cpu => (
-                        format!("{:.1}%", process.cpu_usage_percent).into(),
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::Mem => (
-                        get_string_with_bytes(process.mem_usage_bytes).into(),
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::MemPercent => (
-                        format!("{:.1}%", process.mem_usage_percent).into(),
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::Rps => (
-                        get_string_with_bytes(process.read_bytes_per_sec).into(),
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::Wps => (
-                        get_string_with_bytes(process.write_bytes_per_sec).into(),
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::TotalRead => (
-                        get_string_with_bytes(process.total_read_bytes).into(),
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::TotalWrite => (
-                        get_string_with_bytes(process.total_write_bytes).into(),
-                        None,
-                        None,
-                    ),
-                    ProcessSortType::User => (process.user.clone(), None, None),
-                    ProcessSortType::State => (
-                        process.process_state.clone().into(),
-                        None, // Currently disabled; what happens if you try to sort in the shortened form?
-                        None,
-                    ),
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
     }
 
     fn width(&self) -> LayoutRule {

@@ -10,8 +10,8 @@ pub mod widgets;
 use std::time::Instant;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
-use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
+use rustc_hash::FxHashMap;
 
 pub use data_farmer::*;
 use data_harvester::temperature;
@@ -474,7 +474,7 @@ impl AppState {
     }
 
     #[cfg(target_family = "unix")]
-    pub fn on_number(&mut self, number_char: char) {
+    fn on_number(&mut self, number_char: char) {
         if self.delete_dialog_state.is_showing_dd {
             if self
                 .delete_dialog_state
@@ -507,7 +507,7 @@ impl AppState {
         }
     }
 
-    pub fn on_left_key(&mut self) {
+    fn on_left_key(&mut self) {
         // if !self.is_in_dialog() {
         //     match self.current_widget.widget_type {
         //         BottomWidgetType::ProcSearch => {
@@ -566,7 +566,7 @@ impl AppState {
         // }
     }
 
-    pub fn on_right_key(&mut self) {
+    fn on_right_key(&mut self) {
         // if !self.is_in_dialog() {
         //     match self.current_widget.widget_type {
         //         BottomWidgetType::ProcSearch => {
@@ -626,7 +626,7 @@ impl AppState {
         // }
     }
 
-    pub fn start_killing_process(&mut self) {
+    fn start_killing_process(&mut self) {
         todo!()
 
         // if let Some(proc_widget_state) = self
@@ -666,7 +666,7 @@ impl AppState {
         // }
     }
 
-    pub fn kill_highlighted_process(&mut self) -> Result<()> {
+    fn kill_highlighted_process(&mut self) -> Result<()> {
         // if let BottomWidgetType::Proc = self.current_widget.widget_type {
         //     if let Some(current_selected_processes) = &self.to_delete_process_list {
         //         #[cfg(target_family = "unix")]

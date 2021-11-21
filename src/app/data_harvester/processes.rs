@@ -45,41 +45,10 @@ pub enum ProcessSorting {
     Count,
 }
 
-impl std::fmt::Display for ProcessSorting {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match &self {
-                ProcessSorting::CpuPercent => "CPU%",
-                ProcessSorting::MemPercent => "Mem%",
-                ProcessSorting::Mem => "Mem",
-                ProcessSorting::ReadPerSecond => "R/s",
-                ProcessSorting::WritePerSecond => "W/s",
-                ProcessSorting::TotalRead => "T.Read",
-                ProcessSorting::TotalWrite => "T.Write",
-                ProcessSorting::State => "State",
-                ProcessSorting::ProcessName => "Name",
-                ProcessSorting::Command => "Command",
-                ProcessSorting::Pid => "PID",
-                ProcessSorting::Count => "Count",
-                ProcessSorting::User => "User",
-            }
-        )
-    }
-}
-
-impl Default for ProcessSorting {
-    fn default() -> Self {
-        ProcessSorting::CpuPercent
-    }
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
     pub pid: Pid,
     pub parent_pid: Option<Pid>,
-    pub children_pids: Vec<Pid>,
     pub cpu_usage_percent: f64,
     pub mem_usage_percent: f64,
     pub mem_usage_bytes: u64,
@@ -101,4 +70,16 @@ pub struct ProcessHarvest {
     /// This is the process' user. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
     pub user: Cow<'static, str>,
+}
+
+impl ProcessHarvest {
+    pub(crate) fn add(&mut self, rhs: &ProcessHarvest) {
+        self.cpu_usage_percent += rhs.cpu_usage_percent;
+        self.mem_usage_bytes += rhs.mem_usage_bytes;
+        self.mem_usage_percent += rhs.mem_usage_percent;
+        self.read_bytes_per_sec += rhs.read_bytes_per_sec;
+        self.write_bytes_per_sec += rhs.write_bytes_per_sec;
+        self.total_read_bytes += rhs.total_read_bytes;
+        self.total_write_bytes += rhs.total_write_bytes;
+    }
 }

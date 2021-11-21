@@ -1,3 +1,4 @@
+use itertools::Itertools;
 /// In charge of cleaning, processing, and managing data.  I couldn't think of
 /// a better name for the file.  Since I called data collection "harvesting",
 /// then this is the farmer I guess.
@@ -13,6 +14,7 @@
 /// memory usage and higher CPU usage - you will be trying to process more and
 /// more points as this is used!
 use once_cell::sync::Lazy;
+use rustc_hash::FxHashMap;
 
 use std::{collections::HashMap, time::Instant, vec::Vec};
 
@@ -26,6 +28,8 @@ use crate::{
 };
 use regex::Regex;
 
+use super::data_harvester::processes::ProcessHarvest;
+
 #[derive(Clone, Debug, Default)]
 pub struct TimedData {
     pub rx_data: f64,
@@ -34,6 +38,90 @@ pub struct TimedData {
     pub load_avg_data: [f32; 3],
     pub mem_data: Option<f64>,
     pub swap_data: Option<f64>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct ProcessData {
+    /// A PID to process data map.
+    pub process_harvest: FxHashMap<Pid, ProcessHarvest>,
+
+    /// A mapping from a process name to any PID with that name.
+    pub process_name_pid_map: HashMap<String, Vec<Pid>>,
+
+    /// A mapping from a process command to any PID with that name.
+    pub process_cmd_pid_map: HashMap<String, Vec<Pid>>,
+
+    /// A mapping between a process PID to any children process PIDs.
+    pub process_parent_mapping: FxHashMap<Pid, Vec<Pid>>,
+
+    /// PIDs corresponding to processes that have no parents.
+    pub orphan_pids: Vec<Pid>,
+}
+
+impl ProcessData {
+    fn ingest(&mut self, list_of_processes: Vec<ProcessHarvest>) {
+        // TODO: [Optimization] Probably more efficient to all of this in the data collection step, but it's fine for now.
+        self.process_name_pid_map.clear();
+        self.process_cmd_pid_map.clear();
+        self.process_parent_mapping.clear();
+
+        // Reverse as otherwise the pid mappings are in the wrong order.
+        list_of_processes.iter().rev().for_each(|process_harvest| {
+            if let Some(entry) = self.process_name_pid_map.get_mut(&process_harvest.name) {
+                entry.push(process_harvest.pid);
+            } else {
+                self.process_name_pid_map
+                    .insert(process_harvest.name.to_string(), vec![process_harvest.pid]);
+            }
+
+            if let Some(entry) = self.process_cmd_pid_map.get_mut(&process_harvest.command) {
+                entry.push(process_harvest.pid);
+            } else {
+                self.process_cmd_pid_map.insert(
+                    process_harvest.command.to_string(),
+                    vec![process_harvest.pid],
+                );
+            }
+
+            if let Some(parent_pid) = process_harvest.parent_pid {
+                if let Some(entry) = self.process_parent_mapping.get_mut(&parent_pid) {
+                    entry.push(process_harvest.pid);
+                } else {
+                    self.process_parent_mapping
+                        .insert(parent_pid, vec![process_harvest.pid]);
+                }
+            }
+        });
+
+        self.process_name_pid_map.shrink_to_fit();
+        self.process_cmd_pid_map.shrink_to_fit();
+        self.process_parent_mapping.shrink_to_fit();
+
+        let process_pid_map = list_of_processes
+            .into_iter()
+            .map(|process| (process.pid, process))
+            .collect();
+        self.process_harvest = process_pid_map;
+
+        // This also needs a quick sort + reverse to be in the correct order.
+        self.orphan_pids = self
+            .process_harvest
+            .iter()
+            .filter_map(|(pid, process_harvest)| {
+                if let Some(parent_pid) = process_harvest.parent_pid {
+                    if self.process_harvest.contains_key(&parent_pid) {
+                        None
+                    } else {
+                        Some(*pid)
+                    }
+                } else {
+                    Some(*pid)
+                }
+            })
+            .sorted()
+            .rev()
+            .collect();
+    }
 }
 
 /// AppCollection represents the pooled data stored within the main app
@@ -48,16 +136,14 @@ pub struct TimedData {
 /// not the data collector.
 #[derive(Clone, Debug)]
 pub struct DataCollection {
-    pub current_instant: Instant,
+    pub current_instant: Instant, // TODO: [Refactor] Can I get rid of this? If I could, then I could just use #[derive(Default)] too!
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: memory::MemHarvest,
     pub swap_harvest: memory::MemHarvest,
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
-    pub process_harvest: Vec<processes::ProcessHarvest>,
-    pub process_name_pid_map: HashMap<String, Vec<Pid>>,
-    pub process_cmd_pid_map: HashMap<String, Vec<Pid>>,
+    pub process_data: ProcessData,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IoHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
@@ -71,22 +157,20 @@ impl Default for DataCollection {
     fn default() -> Self {
         DataCollection {
             current_instant: Instant::now(),
-            timed_data_vec: Vec::default(),
-            network_harvest: network::NetworkHarvest::default(),
-            memory_harvest: memory::MemHarvest::default(),
-            swap_harvest: memory::MemHarvest::default(),
-            cpu_harvest: cpu::CpuHarvest::default(),
-            load_avg_harvest: cpu::LoadAvgHarvest::default(),
-            process_harvest: Vec::default(),
-            process_name_pid_map: HashMap::default(),
-            process_cmd_pid_map: HashMap::default(),
-            disk_harvest: Vec::default(),
-            io_harvest: disks::IoHarvest::default(),
-            io_labels_and_prev: Vec::default(),
-            io_labels: Vec::default(),
-            temp_harvest: Vec::default(),
+            timed_data_vec: Default::default(),
+            network_harvest: Default::default(),
+            memory_harvest: Default::default(),
+            swap_harvest: Default::default(),
+            cpu_harvest: Default::default(),
+            load_avg_harvest: Default::default(),
+            process_data: Default::default(),
+            disk_harvest: Default::default(),
+            io_harvest: Default::default(),
+            io_labels_and_prev: Default::default(),
+            io_labels: Default::default(),
+            temp_harvest: Default::default(),
             #[cfg(feature = "battery")]
-            battery_harvest: Vec::default(),
+            battery_harvest: Default::default(),
         }
     }
 }
@@ -98,9 +182,7 @@ impl DataCollection {
         self.memory_harvest = Default::default();
         self.swap_harvest = Default::default();
         self.cpu_harvest = Default::default();
-        self.process_harvest = Default::default();
-        self.process_name_pid_map = Default::default();
-        self.process_cmd_pid_map = Default::default();
+        self.process_data = Default::default();
         self.disk_harvest = Default::default();
         self.io_harvest = Default::default();
         self.io_labels_and_prev = Default::default();
@@ -132,8 +214,6 @@ impl DataCollection {
 
     pub fn eat_data(&mut self, harvested_data: Box<Data>) {
         let harvested_time = harvested_data.last_collection_time;
-        // trace!("Harvested time: {:?}", harvested_time);
-        // trace!("New current instant: {:?}", self.current_instant);
         let mut new_entry = TimedData::default();
 
         // Network
@@ -316,28 +396,7 @@ impl DataCollection {
     }
 
     fn eat_proc(&mut self, list_of_processes: Vec<processes::ProcessHarvest>) {
-        // TODO: [Optimization] Probably more efficient to do this in the data collection step, but it's fine for now.
-        self.process_name_pid_map.clear();
-        self.process_cmd_pid_map.clear();
-        list_of_processes.iter().for_each(|process_harvest| {
-            if let Some(entry) = self.process_name_pid_map.get_mut(&process_harvest.name) {
-                entry.push(process_harvest.pid);
-            } else {
-                self.process_name_pid_map
-                    .insert(process_harvest.name.to_string(), vec![process_harvest.pid]);
-            }
-
-            if let Some(entry) = self.process_cmd_pid_map.get_mut(&process_harvest.command) {
-                entry.push(process_harvest.pid);
-            } else {
-                self.process_cmd_pid_map.insert(
-                    process_harvest.command.to_string(),
-                    vec![process_harvest.pid],
-                );
-            }
-        });
-
-        self.process_harvest = list_of_processes;
+        self.process_data.ingest(list_of_processes);
     }
 
     #[cfg(feature = "battery")]

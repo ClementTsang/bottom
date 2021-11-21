@@ -299,7 +299,10 @@ pub const PROCESS_HELP_TEXT: [[&str; 2]; 14] = [
         "Toggle between values and percentages for memory usage",
     ],
     ["t, F5", "Toggle tree mode"],
-    ["+, -, click", "Collapse/expand a branch while in tree mode"],
+    [
+        "+, -, =, click",
+        "Collapse/expand a branch while in tree mode",
+    ],
     [
         "click on header",
         "Sorts the entries by that column, click again to invert the sort",
@@ -539,9 +542,6 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #time_delta = 15000
 # Hides the time scale.
 #hide_time = false
-# Override layout default widget
-#default_widget_type = "proc"
-#default_widget_count = 1
 # Use basic mode
 #basic = false
 # Use the old network legend style

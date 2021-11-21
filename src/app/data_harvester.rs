@@ -3,7 +3,7 @@
 use std::time::Instant;
 
 #[cfg(target_os = "linux")]
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};

@@ -11,7 +11,7 @@ use sysinfo::ProcessStatus;
 
 use procfs::process::{Process, Stat};
 
-use fxhash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 /// Maximum character length of a /proc/<PID>/stat process name.
 /// If it's equal or greater, then we instead refer to the command for the name.
@@ -203,7 +203,6 @@ fn read_proc(
         ProcessHarvest {
             pid: process.pid,
             parent_pid,
-            children_pids: vec![],
             cpu_usage_percent,
             mem_usage_percent,
             mem_usage_bytes,

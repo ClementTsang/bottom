@@ -1,8 +1,8 @@
 use std::cmp::min;
 
 use crossterm::event::{KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
-use fxhash::FxHashMap;
 use itertools::{EitherOrBoth, Itertools};
+use rustc_hash::FxHashMap;
 use tui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},

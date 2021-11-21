@@ -9,8 +9,8 @@ use crate::{
         ProcessDefaults,
     },
 };
-use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
+use rustc_hash::FxHashMap;
 use std::cmp::min;
 use tui::layout::Rect;
 

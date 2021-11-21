@@ -25,7 +25,7 @@ fn test_empty_layout() {
         .arg("./tests/invalid_configs/empty_layout.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("at least one widget"));
+        .stderr(predicate::str::contains("Configuration file error")); // FIXME: [Urgent] Use a const for the error pattern
 }
 
 #[test]
@@ -122,24 +122,4 @@ fn test_invalid_colour_string() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("invalid named colour"));
-}
-
-#[test]
-fn test_lone_default_widget_count() {
-    Command::new(get_binary_location())
-        .arg("-C")
-        .arg("./tests/invalid_configs/lone_default_widget_count.toml")
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains("it must be used with"));
-}
-
-#[test]
-fn test_invalid_default_widget_count() {
-    Command::new(get_binary_location())
-        .arg("-C")
-        .arg("./tests/invalid_configs/invalid_default_widget_count.toml")
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains("invalid number"));
 }

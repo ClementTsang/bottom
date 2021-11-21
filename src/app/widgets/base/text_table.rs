@@ -39,8 +39,9 @@ pub trait TableColumn {
     fn set_x_bounds(&mut self, x_bounds: Option<(u16, u16)>);
 }
 
-pub type TextTableData = Vec<Vec<(Cow<'static, str>, Option<Cow<'static, str>>, Option<Style>)>>;
-pub type TextTableDataRef = [Vec<(Cow<'static, str>, Option<Cow<'static, str>>, Option<Style>)>];
+pub(crate) type TextTableRow = Vec<(Cow<'static, str>, Option<Cow<'static, str>>, Option<Style>)>;
+pub(crate) type TextTableData = Vec<TextTableRow>;
+pub(crate) type TextTableDataRef = [TextTableRow];
 
 /// A [`SimpleColumn`] represents some column in a [`TextTable`].
 #[derive(Debug)]
@@ -468,14 +469,13 @@ where
             .style(painter.colours.table_header_style)
             .bottom_margin(table_gap);
 
-        let table = Table::new(rows)
+        let mut table = Table::new(rows)
             .header(header)
-            .style(painter.colours.text_style)
-            .highlight_style(if show_selected_entry {
-                painter.colours.currently_selected_text_style
-            } else {
-                painter.colours.text_style
-            });
+            .style(painter.colours.text_style);
+
+        if show_selected_entry {
+            table = table.highlight_style(painter.colours.currently_selected_text_style);
+        }
 
         if self.selectable {
             f.render_stateful_widget(

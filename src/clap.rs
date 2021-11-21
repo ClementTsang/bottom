@@ -14,72 +14,6 @@ FLAGS:
 const USAGE: &str = "
     btm [FLAG]";
 
-const DEFAULT_WIDGET_TYPE_STR: &str = if cfg!(feature = "battery") {
-    "\
-Sets which widget type to use as the default widget.
-For the default layout, this defaults to the 'process' widget.
-For a custom layout, it defaults to the first widget it sees.
-
-For example, suppose we have a layout that looks like:
-+-------------------+-----------------------+
-|      CPU (1)      |        CPU (2)        |
-+---------+---------+-------------+---------+
-| Process | CPU (3) | Temperature | CPU (4) |
-+---------+---------+-------------+---------+
-
-Setting '--default_widget_type Temp' will make the Temperature
-widget selected by default.
-
-Supported widget names:
-+--------------------------+
-|            cpu           |
-+--------------------------+
-|        mem, memory       |
-+--------------------------+
-|       net, network       |
-+--------------------------+
-| proc, process, processes |
-+--------------------------+
-|     temp, temperature    |
-+--------------------------+
-|           disk           |
-+--------------------------+
-|       batt, battery      |
-+--------------------------+
-\n\n"
-} else {
-    "\
-Sets which widget type to use as the default widget.
-For the default layout, this defaults to the 'process' widget.
-For a custom layout, it defaults to the first widget it sees.
-
-For example, suppose we have a layout that looks like:
-+-------------------+-----------------------+
-|      CPU (1)      |        CPU (2)        |
-+---------+---------+-------------+---------+
-| Process | CPU (3) | Temperature | CPU (4) |
-+---------+---------+-------------+---------+
-
-Setting '--default_widget_type Temp' will make the Temperature
-widget selected by default.
-
-Supported widget names:
-+--------------------------+
-|            cpu           |
-+--------------------------+
-|        mem, memory       |
-+--------------------------+
-|       net, network       |
-+--------------------------+
-| proc, process, processes |
-+--------------------------+
-|     temp, temperature    |
-+--------------------------+
-|           disk           |
-+--------------------------+
-\n\n"
-};
-
 pub fn get_matches() -> clap::ArgMatches<'static> {
     build_app().get_matches()
 }
@@ -345,37 +279,6 @@ it defaults to showing it by percentage.\n\n",
 Default time value for graphs in milliseconds.  The minimum
 time is 30s (30000), and the default is 60s (60000).\n\n\n",
         );
-    let default_widget_count = Arg::with_name("default_widget_count")
-        .long("default_widget_count")
-        .takes_value(true)
-        .requires_all(&["default_widget_type"])
-        .value_name("INT")
-        .help("Sets the n'th selected widget type as the default.")
-        .long_help(
-            "\
-Sets the n'th selected widget type to use as the default widget.
-Requires 'default_widget_type' to also be set, and defaults to 1.
-
-This reads from left to right, top to bottom.  For example, suppose
-we have a layout that looks like:
-+-------------------+-----------------------+
-|      CPU (1)      |        CPU (2)        |
-+---------+---------+-------------+---------+
-| Process | CPU (3) | Temperature | CPU (4) |
-+---------+---------+-------------+---------+
-
-And we set our default widget type to 'CPU'.  If we set
-'--default_widget_count 1', then it would use the CPU (1) as
-the default widget.  If we set '--default_widget_count 3', it would
-use CPU (3) as the default instead.
-\n\n",
-        );
-    let default_widget_type = Arg::with_name("default_widget_type")
-        .long("default_widget_type")
-        .takes_value(true)
-        .value_name("WIDGET TYPE")
-        .help("Sets the default widget type, use --help for more info.")
-        .long_help(DEFAULT_WIDGET_TYPE_STR);
     let rate = Arg::with_name("rate")
         .short("r")
         .long("rate")
@@ -453,8 +356,6 @@ Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rathe
         .arg(color)
         .arg(mem_as_value)
         .arg(default_time_value)
-        .arg(default_widget_count)
-        .arg(default_widget_type)
         .arg(disable_click)
         .arg(dot_marker)
         .arg(group)

@@ -59,10 +59,6 @@ pub struct ConfigFlags {
 
     pub hide_time: Option<bool>,
 
-    pub default_widget_type: Option<String>,
-
-    pub default_widget_count: Option<u64>,
-
     pub use_old_network_legend: Option<bool>,
 
     pub hide_table_gap: Option<bool>,

@@ -3,16 +3,10 @@
 use crate::app::data_harvester::temperature::TemperatureType;
 use crate::app::text_table::TextTableData;
 use crate::app::DataCollection;
-use crate::{
-    app::data_harvester,
-    utils::{self, gen_util::*},
-};
+use crate::{app::data_harvester, utils::gen_util::*};
 use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
-use data_harvester::processes::ProcessSorting;
-use fxhash::FxBuildHasher;
-use indexmap::IndexSet;
+
 use std::borrow::Cow;
-use std::collections::{HashMap, VecDeque};
 
 /// Point is of time, data
 type Point = (f64, f64);
@@ -558,9 +552,9 @@ pub fn get_disk_io_strings(
     )
 }
 
-/// Returns a string given a value that is converted to the closest SI-variant.
+/// Returns a string given a value that is converted to the closest SI-variant, per second.
 /// If the value is greater than a giga-X, then it will return a decimal place.
-pub fn get_string_with_bytes(value: u64) -> String {
+pub fn get_string_with_bytes_per_second(value: u64) -> String {
     let converted_values = get_decimal_bytes(value);
     if value >= GIGA_LIMIT {
         format!("{:.*}{}/s", 1, converted_values.0, converted_values.1)
@@ -569,476 +563,15 @@ pub fn get_string_with_bytes(value: u64) -> String {
     }
 }
 
-fn tree_process_data(
-    filtered_process_data: &[ConvertedProcessData], is_using_command: bool,
-    sorting_type: &ProcessSorting, is_sort_descending: bool,
-) -> Vec<ConvertedProcessData> {
-    const BRANCH_ENDING: char = '└';
-    const BRANCH_VERTICAL: char = '│';
-    const BRANCH_SPLIT: char = '├';
-    const BRANCH_HORIZONTAL: char = '─';
-
-    // TODO: [Feature] Option to sort usage by total branch usage or individual value usage?
-
-    // Let's first build up a (really terrible) parent -> child mapping...
-    // At the same time, let's make a mapping of PID -> process data!
-    let mut parent_child_mapping: HashMap<Pid, IndexSet<Pid, FxBuildHasher>> = HashMap::default();
-    let mut pid_process_mapping: HashMap<Pid, &ConvertedProcessData> = HashMap::default(); // We actually already have this stored, but it's unfiltered... oh well.
-    let mut orphan_set: IndexSet<Pid, FxBuildHasher> =
-        IndexSet::with_hasher(FxBuildHasher::default());
-    let mut collapsed_set: IndexSet<Pid, FxBuildHasher> =
-        IndexSet::with_hasher(FxBuildHasher::default());
-
-    filtered_process_data.iter().for_each(|process| {
-        if let Some(ppid) = process.ppid {
-            orphan_set.insert(ppid);
-        }
-        orphan_set.insert(process.pid);
-    });
-
-    filtered_process_data.iter().for_each(|process| {
-        // Create a mapping for the process if it DNE.
-        parent_child_mapping
-            .entry(process.pid)
-            .or_insert_with(|| IndexSet::with_hasher(FxBuildHasher::default()));
-        pid_process_mapping.insert(process.pid, process);
-
-        if process.is_collapsed_entry {
-            collapsed_set.insert(process.pid);
-        }
-
-        // Insert its mapping to the process' parent if needed (create if it DNE).
-        if let Some(ppid) = process.ppid {
-            orphan_set.remove(&process.pid);
-            parent_child_mapping
-                .entry(ppid)
-                .or_insert_with(|| IndexSet::with_hasher(FxBuildHasher::default()))
-                .insert(process.pid);
-        }
-    });
-
-    // Keep only orphans, or promote children of orphans to a top-level orphan
-    // if their parents DNE in our pid to process mapping...
-    let old_orphan_set = orphan_set.clone();
-    old_orphan_set.iter().for_each(|pid| {
-        if pid_process_mapping.get(pid).is_none() {
-            // DNE!  Promote the mapped children and remove the current parent...
-            orphan_set.remove(pid);
-            if let Some(children) = parent_child_mapping.get(pid) {
-                orphan_set.extend(children);
-            }
-        }
-    });
-
-    // Turn the parent-child mapping into a "list" via DFS...
-    let mut pids_to_explore: VecDeque<Pid> = orphan_set.into_iter().collect();
-    let mut explored_pids: Vec<Pid> = vec![];
-    let mut lines: Vec<String> = vec![];
-
-    /// A post-order traversal to correctly prune entire branches that only contain children
-    /// that are disabled and themselves are also disabled ~~wait that sounds wrong~~.
-    /// Basically, go through the hashmap, and prune out all branches that are no longer relevant.
-    fn prune_disabled_pids(
-        current_pid: Pid, parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
-        pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
-    ) -> bool {
-        // Let's explore all the children first, and make sure they (and their children)
-        // aren't all disabled...
-        let mut are_all_children_disabled = true;
-        if let Some(children) = parent_child_mapping.get(&current_pid) {
-            for child_pid in children.clone() {
-                let is_child_disabled =
-                    prune_disabled_pids(child_pid, parent_child_mapping, pid_process_mapping);
-
-                if is_child_disabled {
-                    if let Some(current_mapping) = parent_child_mapping.get_mut(&current_pid) {
-                        current_mapping.remove(&child_pid);
-                    }
-                } else if are_all_children_disabled {
-                    are_all_children_disabled = false;
-                }
-            }
-        }
-
-        // Now consider the current pid and whether to prune...
-        // If the node itself is not disabled, then never prune.  If it is, then check if all
-        // of its are disabled.
-        if let Some(process) = pid_process_mapping.get(&current_pid) {
-            if process.is_disabled_entry && are_all_children_disabled {
-                parent_child_mapping.remove(&current_pid);
-                return true;
-            }
-        }
-
-        false
+/// Returns a string given a value that is converted to the closest SI-variant.
+/// If the value is greater than a giga-X, then it will return a decimal place.
+pub fn get_string_with_bytes(value: u64) -> String {
+    let converted_values = get_decimal_bytes(value);
+    if value >= GIGA_LIMIT {
+        format!("{:.*}{}", 1, converted_values.0, converted_values.1)
+    } else {
+        format!("{:.*}{}", 0, converted_values.0, converted_values.1)
     }
-
-    fn sort_remaining_pids(
-        current_pid: Pid, sort_type: &ProcessSorting, is_sort_descending: bool,
-        parent_child_mapping: &mut HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
-        pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
-    ) {
-        // Sorting is special for tree data.  So, by default, things are "sorted"
-        // via the DFS.  Otherwise, since this is DFS of the scanned PIDs (which are in order),
-        // you actually get a REVERSE order --- so, you get higher PIDs earlier than lower ones.
-        //
-        // So how do we "sort"?  The current idea is that:
-        // - We sort *per-level*.  Say, I want to sort by CPU.  The "first level" is sorted
-        //   by CPU in terms of its usage.  All its direct children are sorted by CPU
-        //   with *their* siblings.  Etc.
-        // - The default is thus PIDs in ascending order.  We set it to this when
-        //   we first enable the mode.
-
-        // So first, let's look at the children... (post-order again)
-        if let Some(children) = parent_child_mapping.get(&current_pid) {
-            let mut to_sort_vec: Vec<(Pid, &ConvertedProcessData)> = vec![];
-            for child_pid in children.clone() {
-                if let Some(child_process) = pid_process_mapping.get(&child_pid) {
-                    to_sort_vec.push((child_pid, child_process));
-                }
-                sort_remaining_pids(
-                    child_pid,
-                    sort_type,
-                    is_sort_descending,
-                    parent_child_mapping,
-                    pid_process_mapping,
-                );
-            }
-
-            // Now let's sort the immediate children!
-            sort_vec(&mut to_sort_vec, sort_type, is_sort_descending);
-
-            // Need to reverse what we got, apparently...
-            if let Some(current_mapping) = parent_child_mapping.get_mut(&current_pid) {
-                *current_mapping = to_sort_vec
-                    .iter()
-                    .rev()
-                    .map(|(pid, _proc)| *pid)
-                    .collect::<IndexSet<Pid, FxBuildHasher>>();
-            }
-        }
-    }
-
-    fn sort_vec(
-        to_sort_vec: &mut Vec<(Pid, &ConvertedProcessData)>, sort_type: &ProcessSorting,
-        is_sort_descending: bool,
-    ) {
-        // Sort by PID first (descending)
-        to_sort_vec.sort_by(|a, b| utils::gen_util::get_ordering(a.1.pid, b.1.pid, false));
-
-        match sort_type {
-            ProcessSorting::CpuPercent => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        a.1.cpu_percent_usage,
-                        b.1.cpu_percent_usage,
-                        is_sort_descending,
-                    )
-                });
-            }
-            ProcessSorting::Mem => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        a.1.mem_usage_bytes,
-                        b.1.mem_usage_bytes,
-                        is_sort_descending,
-                    )
-                });
-            }
-            ProcessSorting::MemPercent => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        a.1.mem_percent_usage,
-                        b.1.mem_percent_usage,
-                        is_sort_descending,
-                    )
-                });
-            }
-            ProcessSorting::ProcessName => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        &a.1.name.to_lowercase(),
-                        &b.1.name.to_lowercase(),
-                        is_sort_descending,
-                    )
-                });
-            }
-            ProcessSorting::Command => to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    &a.1.command.to_lowercase(),
-                    &b.1.command.to_lowercase(),
-                    is_sort_descending,
-                )
-            }),
-            ProcessSorting::Pid => {
-                if is_sort_descending {
-                    to_sort_vec.sort_by(|a, b| {
-                        utils::gen_util::get_ordering(a.0, b.0, is_sort_descending)
-                    });
-                }
-            }
-            ProcessSorting::ReadPerSecond => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(a.1.rps_f64, b.1.rps_f64, is_sort_descending)
-                });
-            }
-            ProcessSorting::WritePerSecond => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(a.1.wps_f64, b.1.wps_f64, is_sort_descending)
-                });
-            }
-            ProcessSorting::TotalRead => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(a.1.tr_f64, b.1.tr_f64, is_sort_descending)
-                });
-            }
-            ProcessSorting::TotalWrite => {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(a.1.tw_f64, b.1.tw_f64, is_sort_descending)
-                });
-            }
-            ProcessSorting::State => to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    &a.1.process_state.to_lowercase(),
-                    &b.1.process_state.to_lowercase(),
-                    is_sort_descending,
-                )
-            }),
-            ProcessSorting::User => to_sort_vec.sort_by(|a, b| match (&a.1.user, &b.1.user) {
-                (Some(user_a), Some(user_b)) => utils::gen_util::get_ordering(
-                    user_a.to_lowercase(),
-                    user_b.to_lowercase(),
-                    is_sort_descending,
-                ),
-                (Some(_), None) => std::cmp::Ordering::Less,
-                (None, Some(_)) => std::cmp::Ordering::Greater,
-                (None, None) => std::cmp::Ordering::Less,
-            }),
-            ProcessSorting::Count => {
-                // Should never occur in this case, tree mode explicitly disables grouping.
-            }
-        }
-    }
-
-    /// A DFS traversal to correctly build the prefix lines (the pretty '├' and '─' lines) and
-    /// the correct order to the PID tree as a vector.
-    fn build_explored_pids(
-        current_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
-        prev_drawn_lines: &str, collapsed_set: &IndexSet<Pid, FxBuildHasher>,
-    ) -> (Vec<Pid>, Vec<String>) {
-        let mut explored_pids: Vec<Pid> = vec![current_pid];
-        let mut lines: Vec<String> = vec![];
-
-        if collapsed_set.contains(&current_pid) {
-            return (explored_pids, lines);
-        } else if let Some(children) = parent_child_mapping.get(&current_pid) {
-            for (itx, child) in children.iter().rev().enumerate() {
-                let new_drawn_lines = if itx == children.len() - 1 {
-                    format!("{}   ", prev_drawn_lines)
-                } else {
-                    format!("{}{}  ", prev_drawn_lines, BRANCH_VERTICAL)
-                };
-
-                let (pid_res, branch_res) = build_explored_pids(
-                    *child,
-                    parent_child_mapping,
-                    new_drawn_lines.as_str(),
-                    collapsed_set,
-                );
-
-                if itx == children.len() - 1 {
-                    lines.push(format!(
-                        "{}{}",
-                        prev_drawn_lines,
-                        if !new_drawn_lines.is_empty() {
-                            format!("{}{} ", BRANCH_ENDING, BRANCH_HORIZONTAL)
-                        } else {
-                            String::default()
-                        }
-                    ));
-                } else {
-                    lines.push(format!(
-                        "{}{}",
-                        prev_drawn_lines,
-                        if !new_drawn_lines.is_empty() {
-                            format!("{}{} ", BRANCH_SPLIT, BRANCH_HORIZONTAL)
-                        } else {
-                            String::default()
-                        }
-                    ));
-                }
-
-                explored_pids.extend(pid_res);
-                lines.extend(branch_res);
-            }
-        }
-
-        (explored_pids, lines)
-    }
-
-    /// Returns the total sum of CPU, MEM%, MEM, R/s, W/s, Total Read, and Total Write via DFS traversal.
-    fn get_usage_of_all_children(
-        parent_pid: Pid, parent_child_mapping: &HashMap<Pid, IndexSet<Pid, FxBuildHasher>>,
-        pid_process_mapping: &HashMap<Pid, &ConvertedProcessData>,
-    ) -> (f64, f64, u64, f64, f64, f64, f64) {
-        if let Some(&converted_process_data) = pid_process_mapping.get(&parent_pid) {
-            let (
-                mut cpu,
-                mut mem_percent,
-                mut mem,
-                mut rps,
-                mut wps,
-                mut total_read,
-                mut total_write,
-            ) = (
-                (converted_process_data.cpu_percent_usage * 10.0).round() / 10.0,
-                (converted_process_data.mem_percent_usage * 10.0).round() / 10.0,
-                converted_process_data.mem_usage_bytes,
-                (converted_process_data.rps_f64 * 10.0).round() / 10.0,
-                (converted_process_data.wps_f64 * 10.0).round() / 10.0,
-                (converted_process_data.tr_f64 * 10.0).round() / 10.0,
-                (converted_process_data.tw_f64 * 10.0).round() / 10.0,
-            );
-
-            if let Some(children) = parent_child_mapping.get(&parent_pid) {
-                for &child_pid in children {
-                    let (
-                        child_cpu,
-                        child_mem_percent,
-                        child_mem,
-                        child_rps,
-                        child_wps,
-                        child_total_read,
-                        child_total_write,
-                    ) = get_usage_of_all_children(
-                        child_pid,
-                        parent_child_mapping,
-                        pid_process_mapping,
-                    );
-
-                    cpu += child_cpu;
-                    mem_percent += child_mem_percent;
-                    mem += child_mem;
-                    rps += child_rps;
-                    wps += child_wps;
-                    total_read += child_total_read;
-                    total_write += child_total_write;
-                }
-            }
-
-            (cpu, mem_percent, mem, rps, wps, total_read, total_write)
-        } else {
-            (0.0_f64, 0.0_f64, 0, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64)
-        }
-    }
-
-    let mut to_sort_vec = Vec::new();
-    for pid in pids_to_explore {
-        if let Some(process) = pid_process_mapping.get(&pid) {
-            to_sort_vec.push((pid, *process));
-        }
-    }
-    sort_vec(&mut to_sort_vec, sorting_type, is_sort_descending);
-    pids_to_explore = to_sort_vec.iter().map(|(pid, _proc)| *pid).collect();
-
-    while let Some(current_pid) = pids_to_explore.pop_front() {
-        if !prune_disabled_pids(current_pid, &mut parent_child_mapping, &pid_process_mapping) {
-            sort_remaining_pids(
-                current_pid,
-                sorting_type,
-                is_sort_descending,
-                &mut parent_child_mapping,
-                &pid_process_mapping,
-            );
-
-            let (pid_res, branch_res) =
-                build_explored_pids(current_pid, &parent_child_mapping, "", &collapsed_set);
-            lines.push(String::default());
-            lines.extend(branch_res);
-            explored_pids.extend(pid_res);
-        }
-    }
-
-    // Now let's "rearrange" our current list of converted process data into the correct
-    // order required... and we're done!
-    explored_pids
-        .iter()
-        .zip(lines)
-        .filter_map(|(pid, prefix)| match pid_process_mapping.get(pid) {
-            Some(process) => {
-                let mut p = (*process).clone();
-                p.process_description_prefix = Some(format!(
-                    "{}{}{}",
-                    prefix,
-                    if p.is_collapsed_entry { "+ " } else { "" }, // I do the + sign thing here because I'm kinda too lazy to do it in the prefix, tbh.
-                    if is_using_command {
-                        &p.command
-                    } else {
-                        &p.name
-                    }
-                ));
-
-                // As part of https://github.com/ClementTsang/bottom/issues/424, also append their statistics to the parent if
-                // collapsed.
-                //
-                // Note that this will technically be "missing" entries, it collapses + sums based on what is visible
-                // since this runs *after* pruning steps.
-                if p.is_collapsed_entry {
-                    if let Some(children) = parent_child_mapping.get(&p.pid) {
-                        // Do some rounding.
-                        p.cpu_percent_usage = (p.cpu_percent_usage * 10.0).round() / 10.0;
-                        p.mem_percent_usage = (p.mem_percent_usage * 10.0).round() / 10.0;
-                        p.rps_f64 = (p.rps_f64 * 10.0).round() / 10.0;
-                        p.wps_f64 = (p.wps_f64 * 10.0).round() / 10.0;
-                        p.tr_f64 = (p.tr_f64 * 10.0).round() / 10.0;
-                        p.tw_f64 = (p.tw_f64 * 10.0).round() / 10.0;
-
-                        for &child_pid in children {
-                            // Let's just do a simple DFS traversal...
-                            let (
-                                child_cpu,
-                                child_mem_percent,
-                                child_mem,
-                                child_rps,
-                                child_wps,
-                                child_total_read,
-                                child_total_write,
-                            ) = get_usage_of_all_children(
-                                child_pid,
-                                &parent_child_mapping,
-                                &pid_process_mapping,
-                            );
-
-                            p.cpu_percent_usage += child_cpu;
-                            p.mem_percent_usage += child_mem_percent;
-                            p.mem_usage_bytes += child_mem;
-                            p.rps_f64 += child_rps;
-                            p.wps_f64 += child_wps;
-                            p.tr_f64 += child_total_read;
-                            p.tw_f64 += child_total_write;
-                        }
-
-                        let disk_io_strings = get_disk_io_strings(
-                            p.rps_f64 as u64,
-                            p.wps_f64 as u64,
-                            p.tr_f64 as u64,
-                            p.tw_f64 as u64,
-                        );
-
-                        p.mem_usage_str = get_binary_bytes(p.mem_usage_bytes);
-
-                        p.read_per_sec = disk_io_strings.0;
-                        p.write_per_sec = disk_io_strings.1;
-                        p.total_read = disk_io_strings.2;
-                        p.total_write = disk_io_strings.3;
-                    }
-                }
-
-                Some(p)
-            }
-            None => None,
-        })
-        .collect::<Vec<_>>()
 }
 
 #[cfg(feature = "battery")]
@@ -1065,7 +598,12 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
                         num_seconds,
                         if num_seconds == 1 { "" } else { "s" },
                     ),
-                    short: format!("{}:{:02}:{:02}", time.whole_hours(), num_minutes, num_seconds),
+                    short: format!(
+                        "{}:{:02}:{:02}",
+                        time.whole_hours(),
+                        num_minutes,
+                        num_seconds
+                    ),
                 }
             } else if let Some(secs_till_full) = battery_harvest.secs_until_full {
                 let time = time::Duration::seconds(secs_till_full); // TODO: [Dependencies] Can I get rid of chrono?
@@ -1081,7 +619,12 @@ pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBa
                         num_seconds,
                         if num_seconds == 1 { "" } else { "s" },
                     ),
-                    short: format!("{}:{:02}:{:02}", time.whole_hours(), num_minutes, num_seconds),
+                    short: format!(
+                        "{}:{:02}:{:02}",
+                        time.whole_hours(),
+                        num_minutes,
+                        num_seconds
+                    ),
                 }
             } else {
                 BatteryDuration::Neither

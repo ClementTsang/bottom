@@ -11,5 +11,3 @@ group_processes = false
 case_sensitive = false
 whole_word = false
 regex = true
-default_widget_type = "cpu"
-default_widget_count = 1

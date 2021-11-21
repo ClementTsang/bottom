@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use fxhash::FxHashMap;
 use indextree::{Arena, NodeId};
+use rustc_hash::FxHashMap;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},

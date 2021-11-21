@@ -288,9 +288,14 @@ where
         self.table.current_scroll_index()
     }
 
-    /// Returns the current column the table is sorting by.
+    /// Returns a reference to the current column the table is sorting by.
     pub fn current_sorting_column(&self) -> &S {
         &self.table.columns[self.sort_index]
+    }
+
+    /// Returns a mutable reference to the current column the table is sorting by.
+    pub fn current_mut_sorting_column(&mut self) -> &mut S {
+        &mut self.table.columns[self.sort_index]
     }
 
     /// Returns the current column index the table is sorting by.

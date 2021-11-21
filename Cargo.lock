@@ -239,7 +239,7 @@ dependencies = [
  "cargo-husky",
  "cfg-if",
  "clap",
- "crossterm",
+ "crossterm 0.22.1",
  "ctrlc",
  "dirs",
  "enum_dispatch",
@@ -247,7 +247,6 @@ dependencies = [
  "float-ord",
  "futures",
  "futures-timer",
- "fxhash",
  "heim",
  "indexmap",
  "indextree",
@@ -258,6 +257,7 @@ dependencies = [
  "predicates 1.0.8",
  "procfs",
  "regex",
+ "rustc-hash",
  "serde",
  "smol",
  "sysinfo",
@@ -434,7 +434,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0ebde6a9dd5e331cd6c6f48253254d117642c31653baa475e394657c59c1f7d"
 dependencies = [
  "bitflags",
- "crossterm_winapi",
+ "crossterm_winapi 0.8.0",
+ "libc",
+ "mio",
+ "parking_lot",
+ "signal-hook",
+ "signal-hook-mio",
+ "winapi",
+]
+
+[[package]]
+name = "crossterm"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c85525306c4291d1b73ce93c8acf9c339f9b213aef6c1d85c3830cbf1c16325c"
+dependencies = [
+ "bitflags",
+ "crossterm_winapi 0.9.0",
  "libc",
  "mio",
  "parking_lot",
@@ -448,6 +464,15 @@ name = "crossterm_winapi"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a6966607622438301997d3dac0d2f6e9a90c68bb6bc1785ea98456ab93c0507"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
+name = "crossterm_winapi"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ae1b35a484aa10e07fe0638d02301c5ad24de82d310ccbd2f3693da5f09bf1c"
 dependencies = [
  "winapi",
 ]
@@ -682,15 +707,6 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro-nested",
  "slab",
-]
-
-[[package]]
-name = "fxhash"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
-dependencies = [
- "byteorder",
 ]
 
 [[package]]
@@ -1307,6 +1323,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ef03e0a2b150c7a90d01faf6254c9c48a41e95fb2a8c2ac1c6f0d2b9aefc342"
 
 [[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1521,7 +1543,7 @@ checksum = "39c8ce4e27049eed97cfa363a5048b09d995e209994634a0efc26a14ab6c0c23"
 dependencies = [
  "bitflags",
  "cassowary",
- "crossterm",
+ "crossterm 0.20.0",
  "unicode-segmentation",
  "unicode-width",
 ]
