@@ -12,6 +12,7 @@ use crate::{
         event::{ComponentEventResult, SelectionAction},
         text_table::SimpleColumn,
         time_graph::TimeGraphData,
+        widgets::tui_stuff::BlockBuilder,
         AppConfigFields, Component, DataCollection, TextTable, TimeGraph, Widget,
     },
     canvas::Painter,
@@ -251,8 +252,14 @@ impl Widget for CpuGraph {
             })
             .collect::<Vec<_>>();
 
-        let graph_block = self
-            .block()
+        let name = format!(
+            "{} ─ {:.2} {:.2} {:.2}",
+            self.get_pretty_name(),
+            self.load_avg_data[0],
+            self.load_avg_data[1],
+            self.load_avg_data[2],
+        );
+        let graph_block = BlockBuilder::new(name)
             .selected(selected && matches!(&self.selected, CpuGraphSelection::Graph))
             .show_esc(expanded)
             .build(painter, graph_block_area);

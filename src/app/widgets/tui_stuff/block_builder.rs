@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use tui::{
     layout::Rect,
     text::Span,
@@ -11,19 +13,19 @@ pub struct BlockBuilder {
     borders: Borders,
     selected: bool,
     show_esc: bool,
-    name: &'static str,
+    name: Cow<'static, str>,
     hide_title: bool,
     extra_text: Option<String>,
 }
 
 impl BlockBuilder {
     /// Creates a new [`BlockBuilder`] with the name of block.
-    pub fn new(name: &'static str) -> Self {
+    pub fn new<S: Into<Cow<'static, str>>>(name: S) -> Self {
         Self {
             borders: Borders::ALL,
             selected: false,
             show_esc: false,
-            name,
+            name: name.into(),
             hide_title: false,
             extra_text: None,
         }
