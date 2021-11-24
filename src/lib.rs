@@ -42,6 +42,7 @@ pub mod clap;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
+pub(crate) mod tuine;
 pub(crate) mod units;
 
 // FIXME: Use newtype pattern for PID
