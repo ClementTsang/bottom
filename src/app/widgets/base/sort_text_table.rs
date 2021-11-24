@@ -307,6 +307,21 @@ where
         &self.table.columns
     }
 
+    pub fn reverse_current_sort(&mut self) {
+        if self.is_sort_descending() {
+            self.table.columns[self.sort_index].set_sorting_status(SortStatus::SortAscending);
+        } else {
+            self.table.columns[self.sort_index].set_sorting_status(SortStatus::SortDescending);
+        }
+    }
+
+    pub fn is_sort_descending(&self) -> bool {
+        matches!(
+            self.table.columns[self.sort_index].sorting_status(),
+            SortStatus::SortDescending
+        )
+    }
+
     pub fn set_column(&mut self, mut column: S, index: usize) {
         if let Some(old_column) = self.table.columns().get(index) {
             column.set_sorting_status(old_column.sorting_status());

@@ -538,253 +538,199 @@ impl ProcessManager {
     fn get_display_tree(
         &self, tree_data: &TreeData, data_collection: &DataCollection,
     ) -> TextTableData {
-        fn build_tree(
-            manager: &ProcessManager, data_collection: &DataCollection,
-            filtered_tree: &FxHashMap<Pid, Vec<Pid>>, matching_pids: &FxHashMap<Pid, bool>,
-            current_process: &ProcessHarvest, mut prefixes: Vec<String>, is_last: bool,
-            collapsed_pids: &FxHashSet<Pid>, sorted_pids: &mut Vec<Pid>,
-        ) -> TextTableData {
-            const BRANCH_ENDING: char = '└';
-            const BRANCH_VERTICAL: char = '│';
-            const BRANCH_SPLIT: char = '├';
-            const BRANCH_HORIZONTAL: char = '─';
-
-            sorted_pids.push(current_process.pid);
-
-            let ProcessData {
-                process_harvest,
-                process_name_pid_map,
-                process_cmd_pid_map,
-                ..
-            } = &data_collection.process_data;
-            let is_disabled = !*matching_pids.get(&current_process.pid).unwrap_or(&false);
-
-            if collapsed_pids.contains(&current_process.pid) {
-                let mut queue = if let Some(children) = filtered_tree.get(&current_process.pid) {
-                    children
-                        .iter()
-                        .filter_map(|child_pid| process_harvest.get(child_pid))
-                        .collect_vec()
-                } else {
-                    vec![]
-                };
-                let mut summed_process = current_process.clone();
-
-                while let Some(process) = queue.pop() {
-                    summed_process.add(process);
-                    if let Some(children) = filtered_tree.get(&process.pid) {
-                        queue.extend(
-                            children
-                                .iter()
-                                .filter_map(|child_pid| process_harvest.get(child_pid))
-                                .collect_vec(),
-                        );
-                    }
-                }
-
-                let prefix = if prefixes.is_empty() {
-                    "+ ".to_string()
-                } else {
-                    format!(
-                        "{}{}{} + ",
-                        prefixes.join(""),
-                        if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
-                        BRANCH_HORIZONTAL
-                    )
-                };
-
-                let process_text = manager.process_to_text(
-                    &summed_process,
-                    process_cmd_pid_map,
-                    process_name_pid_map,
-                    prefix,
-                    is_disabled,
-                );
-
-                vec![process_text]
-            } else {
-                let prefix = if prefixes.is_empty() {
-                    String::default()
-                } else {
-                    format!(
-                        "{}{}{} ",
-                        prefixes.join(""),
-                        if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
-                        BRANCH_HORIZONTAL
-                    )
-                };
-
-                let process_text = manager.process_to_text(
-                    current_process,
-                    process_cmd_pid_map,
-                    process_name_pid_map,
-                    prefix,
-                    is_disabled,
-                );
-
-                if let Some(children) = filtered_tree.get(&current_process.pid) {
-                    if prefixes.is_empty() {
-                        prefixes.push(String::default());
-                    } else {
-                        prefixes.push(if is_last {
-                            "   ".to_string()
-                        } else {
-                            format!("{}  ", BRANCH_VERTICAL)
-                        });
-                    }
-
-                    let mut children = children
-                        .iter()
-                        .filter_map(|child_pid| process_harvest.get(child_pid))
-                        .collect_vec();
-                    manager.sort_process_vec(&mut children, data_collection);
-                    let children_length = children.len();
-                    let children_text = children
-                        .into_iter()
-                        .enumerate()
-                        .map(|(itx, child_process)| {
-                            build_tree(
-                                manager,
-                                data_collection,
-                                filtered_tree,
-                                matching_pids,
-                                child_process,
-                                prefixes.clone(),
-                                itx + 1 == children_length,
-                                collapsed_pids,
-                                sorted_pids,
-                            )
-                        })
-                        .flatten()
-                        .collect_vec();
-
-                    std::iter::once(process_text)
-                        .chain(children_text)
-                        .collect_vec()
-                } else {
-                    vec![process_text]
-                }
-            }
-        }
-
-        fn filter_tree(
-            process_data: &ProcessData, matching_pids: &FxHashMap<Pid, bool>,
-        ) -> FxHashMap<Pid, Vec<Pid>> {
-            let ProcessData {
-                process_harvest,
-                orphan_pids,
-                ..
-            } = process_data;
-
-            let mut filtered_tree = FxHashMap::default();
-
-            fn traverse(
-                current_process: &ProcessHarvest, process_data: &ProcessData,
-                new_tree: &mut FxHashMap<Pid, Vec<Pid>>, matching_pids: &FxHashMap<Pid, bool>,
-            ) -> bool {
-                let ProcessData {
-                    process_harvest,
-                    process_parent_mapping,
-                    ..
-                } = process_data;
-
-                let is_process_matching =
-                    *matching_pids.get(&current_process.pid).unwrap_or(&false);
-
-                if let Some(children) = process_parent_mapping.get(&current_process.pid) {
-                    let results = children
-                        .iter()
-                        .filter_map(|pid| process_harvest.get(pid))
-                        .map(|child_process| {
-                            let contains_match =
-                                traverse(child_process, process_data, new_tree, matching_pids);
-
-                            if contains_match {
-                                new_tree
-                                    .entry(current_process.pid)
-                                    .or_default()
-                                    .push(child_process.pid);
-                            }
-
-                            contains_match || is_process_matching
-                        })
-                        .collect_vec();
-                    let has_matching_child = results.into_iter().any(|x| x);
-
-                    is_process_matching || has_matching_child
-                } else {
-                    is_process_matching
-                }
-            }
-
-            for orphan_pid in orphan_pids {
-                if let Some(orphan_process) = process_harvest.get(orphan_pid) {
-                    traverse(
-                        orphan_process,
-                        process_data,
-                        &mut filtered_tree,
-                        matching_pids,
-                    );
-                }
-            }
-
-            filtered_tree
-        }
+        const BRANCH_ENDING: char = '└';
+        const BRANCH_VERTICAL: char = '│';
+        const BRANCH_SPLIT: char = '├';
+        const BRANCH_HORIZONTAL: char = '─';
 
         let ProcessData {
             process_harvest,
+            process_cmd_pid_map,
+            process_name_pid_map,
+            process_parent_mapping,
             orphan_pids,
             ..
         } = &data_collection.process_data;
-
         let TreeData {
             user_collapsed_pids,
             sorted_pids,
         } = tree_data;
         let sorted_pids = &mut *sorted_pids.borrow_mut();
-
         let matching_pids = data_collection
             .process_data
             .process_harvest
             .iter()
             .map(|(pid, harvest)| (*pid, self.does_process_match_query(harvest)))
             .collect::<FxHashMap<_, _>>();
+        let filtered_tree = {
+            let mut filtered_tree = FxHashMap::default();
 
-        let filtered_tree = filter_tree(&data_collection.process_data, &matching_pids);
-        let mut orphan_processes = orphan_pids
-            .iter()
-            .filter_map(|child| process_harvest.get(child))
-            .collect_vec();
-        self.sort_process_vec(&mut orphan_processes, data_collection);
-        let orphan_length = orphan_processes.len();
+            let mut stack = orphan_pids
+                .iter()
+                .filter_map(|process| process_harvest.get(process))
+                .collect_vec();
+            let mut visited_pids = FxHashMap::default();
 
-        let mut new_sorted_pids = vec![];
-        let resulting_strings = orphan_processes
-            .into_iter()
-            .enumerate()
-            .filter_map(|(itx, p)| {
-                if filtered_tree.contains_key(&p.pid) {
-                    Some(build_tree(
-                        self,
-                        data_collection,
-                        &filtered_tree,
-                        &matching_pids,
-                        p,
-                        vec![],
-                        itx + 1 == orphan_length,
-                        &user_collapsed_pids,
-                        &mut new_sorted_pids,
-                    ))
+            while let Some(process) = stack.last() {
+                let is_process_matching = *matching_pids.get(&process.pid).unwrap_or(&false);
+
+                if let Some(children_pids) = process_parent_mapping.get(&process.pid) {
+                    if children_pids
+                        .iter()
+                        .all(|pid| visited_pids.contains_key(pid))
+                    {
+                        let shown_children = children_pids
+                            .iter()
+                            .filter(|pid| visited_pids.get(*pid).map(|b| *b).unwrap_or(false))
+                            .collect_vec();
+                        let is_shown = is_process_matching || !shown_children.is_empty();
+                        visited_pids.insert(process.pid, is_shown);
+
+                        if is_shown {
+                            filtered_tree.insert(
+                                process.pid,
+                                shown_children
+                                    .into_iter()
+                                    .filter_map(|pid| {
+                                        process_harvest.get(pid).map(|process| process.pid)
+                                    })
+                                    .collect_vec(),
+                            );
+                        }
+
+                        stack.pop();
+                    } else {
+                        children_pids
+                            .iter()
+                            .filter_map(|process| process_harvest.get(process))
+                            .rev()
+                            .for_each(|process| {
+                                stack.push(process);
+                            });
+                    }
                 } else {
-                    None
+                    visited_pids.insert(process.pid, is_process_matching);
+                    stack.pop();
                 }
-            })
-            .flatten()
-            .collect_vec();
+            }
 
-        *sorted_pids = new_sorted_pids;
+            filtered_tree
+        };
 
-        resulting_strings
+        {
+            let mut resulting_strings = vec![];
+            let mut prefixes = vec![];
+            let mut stack = orphan_pids
+                .iter()
+                .filter(|pid| filtered_tree.contains_key(*pid))
+                .filter_map(|child| process_harvest.get(child))
+                .collect_vec();
+            self.sort_process_vec(&mut stack, data_collection);
+
+            let mut length_stack = vec![stack.len()];
+
+            sorted_pids.clear();
+            while let (Some(process), Some(siblings_left)) = (stack.pop(), length_stack.last_mut())
+            {
+                *siblings_left -= 1;
+                sorted_pids.push(process.pid);
+
+                let is_disabled = !*matching_pids.get(&process.pid).unwrap_or(&false);
+                let is_last = *siblings_left == 0;
+
+                if user_collapsed_pids.contains(&process.pid) {
+                    let mut summed_process = process.clone();
+
+                    if let Some(children_pids) = filtered_tree.get(&process.pid) {
+                        let mut sum_queue = children_pids
+                            .iter()
+                            .filter_map(|child| process_harvest.get(child))
+                            .collect_vec();
+
+                        while let Some(process) = sum_queue.pop() {
+                            summed_process.add(process);
+
+                            if let Some(pids) = filtered_tree.get(&process.pid) {
+                                sum_queue
+                                    .extend(pids.iter().filter_map(|c| process_harvest.get(c)));
+                            }
+                        }
+                    }
+
+                    let prefix = if prefixes.is_empty() {
+                        "+ ".to_string()
+                    } else {
+                        format!(
+                            "{}{}{} + ",
+                            prefixes.join(""),
+                            if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
+                            BRANCH_HORIZONTAL
+                        )
+                    };
+
+                    let process_text = self.process_to_text(
+                        &summed_process,
+                        process_cmd_pid_map,
+                        process_name_pid_map,
+                        prefix,
+                        is_disabled,
+                    );
+                    resulting_strings.push(process_text);
+                } else {
+                    let prefix = if prefixes.is_empty() {
+                        String::default()
+                    } else {
+                        format!(
+                            "{}{}{} ",
+                            prefixes.join(""),
+                            if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
+                            BRANCH_HORIZONTAL
+                        )
+                    };
+                    let process_text = self.process_to_text(
+                        process,
+                        process_cmd_pid_map,
+                        process_name_pid_map,
+                        prefix,
+                        is_disabled,
+                    );
+                    resulting_strings.push(process_text);
+
+                    if let Some(children_pids) = filtered_tree.get(&process.pid) {
+                        if prefixes.is_empty() {
+                            prefixes.push(String::default());
+                        } else {
+                            prefixes.push(if is_last {
+                                "   ".to_string()
+                            } else {
+                                format!("{}  ", BRANCH_VERTICAL)
+                            });
+                        }
+
+                        let mut children = children_pids
+                            .iter()
+                            .filter_map(|child_pid| process_harvest.get(child_pid))
+                            .collect_vec();
+                        self.sort_process_vec(&mut children, data_collection);
+                        length_stack.push(children.len());
+                        stack.extend(children);
+                    }
+                }
+
+                while let Some(children_left) = length_stack.last() {
+                    if *children_left == 0 {
+                        length_stack.pop();
+                        prefixes.pop();
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            sorted_pids.shrink_to_fit();
+
+            resulting_strings
+        }
     }
 
     fn get_display_normal(&self, data_collection: &DataCollection) -> TextTableData {
@@ -826,14 +772,8 @@ impl ProcessManager {
             .collect::<Vec<_>>()
     }
 
-    fn is_reverse_sort(&self) -> bool {
-        matches!(
-            self.process_table
-                .current_sorting_column()
-                .sortable_column
-                .sorting_status(),
-            SortStatus::SortDescending
-        )
+    fn is_sort_descending(&self) -> bool {
+        self.process_table.is_sort_descending()
     }
 
     fn sort_process_vec(
@@ -903,7 +843,7 @@ impl ProcessManager {
             }
         }
 
-        if self.is_reverse_sort() {
+        if self.is_sort_descending() {
             process_vec.reverse();
         }
     }
@@ -1413,7 +1353,12 @@ impl Widget for ProcessManager {
     fn update_data(&mut self, data_collection: &DataCollection) {
         self.display_data = match &self.manager_mode {
             ManagerMode::Normal | ManagerMode::Grouped => self.get_display_normal(data_collection),
-            ManagerMode::Tree(tree_data) => self.get_display_tree(tree_data, data_collection),
+            ManagerMode::Tree(tree_data) => {
+                self.process_table.reverse_current_sort();
+                let data = self.get_display_tree(tree_data, data_collection);
+                self.process_table.reverse_current_sort();
+                data
+            }
         };
     }
 

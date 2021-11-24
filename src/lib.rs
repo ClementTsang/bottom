@@ -44,6 +44,7 @@ pub mod data_conversion;
 pub mod options;
 pub(crate) mod units;
 
+// FIXME: Use newtype pattern for PID
 #[cfg(target_family = "windows")]
 pub type Pid = usize;
 
