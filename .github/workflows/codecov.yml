@@ -1,6 +1,7 @@
-# Codecov generation via cargo-tarpaulin.
+# Code coverage generation via cargo-tarpaulin, and uploaded to
+# codecov.
 
-name: coverage
+name: codecov
 
 on:
   workflow_dispatch:
