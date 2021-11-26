@@ -1,0 +1,40 @@
+# Codecov generation via cargo-tarpaulin.
+
+name: coverage
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "CHANGELOG.md"
+      - "CONTRIBUTING.md"
+
+jobs:
+  test:
+    name: coverage
+    runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop
+      options: --security-opt seccomp=unconfined
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.triple.target }}
+
+      - name: Generate code coverage
+        run: |
+          cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          fail_ci_if_error: true
