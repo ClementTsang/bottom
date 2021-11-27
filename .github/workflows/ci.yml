@@ -78,8 +78,7 @@ jobs:
 
   # Run cargo --check on all platforms
   check:
-    needs: [pre_job, rustfmt, clippy]
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
     strategy:
@@ -208,8 +207,7 @@ jobs:
 
   # Check without the battery feature enabled on x86-64 for supported operating systems
   check-without-battery:
-    needs: [pre_job, rustfmt, clippy]
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
     strategy:
@@ -259,8 +257,7 @@ jobs:
 
   # Run tests x86-64 for supported operating systems
   test:
-    needs: [pre_job, rustfmt, clippy]
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
     strategy:
