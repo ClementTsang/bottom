@@ -1,28 +1,30 @@
-# Code coverage generation via cargo-tarpaulin, and uploaded to
-# codecov.
+# Code coverage generation via cargo-tarpaulin, and uploaded to codecov.
 
 name: codecov
 
 on:
   workflow_dispatch:
   pull_request:
-    paths-ignore:
-      - "README.md"
-      - "docs/**"
-      - ".github/ISSUE_TEMPLATE/**"
   push:
     branches:
       - master
-    paths-ignore:
-      - "README.md"
-      - "docs/**"
-      - ".github/ISSUE_TEMPLATE/**"
-      - "CHANGELOG.md"
-      - "CONTRIBUTING.md"
 
 jobs:
-  test:
-    name: coverage
+  pre_job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          concurrent_skipping: "same_content_newer"
+          skip_after_successful_duplicate: "true"
+          paths_ignore: '["**/README.md", "**/docs/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          do_not_skip: '["workflow_dispatch"]'
+
+  coverage:
+    needs: pre_job
     runs-on: ubuntu-latest
     container:
       image: xd009642/tarpaulin:develop
