@@ -1,5 +1,4 @@
-# Code coverage generation via cargo-tarpaulin, and uploaded to
-# codecov.
+# Code coverage generation via cargo-tarpaulin, and uploaded to codecov.
 
 name: codecov
 
