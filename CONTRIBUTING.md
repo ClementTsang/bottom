@@ -6,8 +6,9 @@ Contribution in any way is appreciated, whether it is reporting problems, fixing
 
 ### Bug reports
 
-When filing a bug report, please use the [bug report template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=bug&template=bug_report.md&title=) and fill in as much as you can. It is _incredibly_ difficult for a maintainer to fix
-a bug when it cannot be reproduced, and giving as much detail as possible generally helps to make it easier to reproduce the problem!
+When filing a bug report, use the [bug report template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=bug&template=bug_report.md&title=)
+and fill in as much as you can. It is _incredibly_ difficult for a maintainer to fix a bug when it cannot be reproduced,
+and giving as much detail as possible generally helps to make it easier to reproduce the problem!
 
 ### Feature requests
 
