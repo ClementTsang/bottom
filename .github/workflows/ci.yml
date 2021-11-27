@@ -24,7 +24,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
-          paths_ignore: '["**/README.md", "**/docs/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          paths: '["tests/**", "src/**", ".github/workflows/ci.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch"]'
 
   rustfmt:
