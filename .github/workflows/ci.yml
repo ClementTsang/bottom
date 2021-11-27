@@ -14,10 +14,15 @@ on:
       - master
 
 jobs:
-  pre_job:
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+  rustfmt:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          - windows-2019
     steps:
       - id: skip_check
         uses: fkirc/skip-duplicate-actions@master
@@ -27,20 +32,11 @@ jobs:
           paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
           do_not_skip: '["workflow_dispatch"]'
 
-  rustfmt:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - macOS-latest
-          - windows-2019
-    steps:
       - uses: actions/checkout@v2
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+
       - uses: actions-rs/toolchain@v1
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           profile: minimal
           toolchain: stable
@@ -48,12 +44,12 @@ jobs:
           components: rustfmt
 
       - uses: Swatinem/rust-cache@v1
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - run: cargo fmt --all -- --check
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
   clippy:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -63,9 +59,19 @@ jobs:
           - macOS-latest
           - windows-2019
     steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          concurrent_skipping: "same_content_newer"
+          skip_after_successful_duplicate: "true"
+          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          do_not_skip: '["workflow_dispatch"]'
+
       - uses: actions/checkout@v2
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - uses: actions-rs/toolchain@v1
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           profile: minimal
           toolchain: stable
@@ -73,8 +79,10 @@ jobs:
           components: clippy
 
       - uses: Swatinem/rust-cache@v1
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - run: cargo clippy --all-targets --workspace -- -D warnings
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
   # Run cargo --check on all platforms
   check:
