@@ -9,22 +9,26 @@ name: ci
 on:
   workflow_dispatch:
   pull_request:
-    paths-ignore:
-      - "README.md"
-      - "docs/**"
-      - ".github/ISSUE_TEMPLATE/**"
   push:
     branches:
       - master
-    paths-ignore:
-      - "README.md"
-      - "docs/**"
-      - ".github/ISSUE_TEMPLATE/**"
-      - "CHANGELOG.md"
-      - "CONTRIBUTING.md"
 
 jobs:
+  pre_job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          concurrent_skipping: "same_content_newer"
+          skip_after_successful_duplicate: "true"
+          paths_ignore: '["**/README.md", "**/docs/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          do_not_skip: '["workflow_dispatch"]'
+
   rustfmt:
+    needs: pre_job
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,6 +51,7 @@ jobs:
       - run: cargo fmt --all -- --check
 
   clippy:
+    needs: pre_job
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
