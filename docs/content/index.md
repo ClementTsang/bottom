@@ -8,7 +8,7 @@ This site serves as extended documentation for bottom alongside the [`README.md`
 
 !!! Warning
 
-    Some areas of this documentation are still in progress.  Feel free to suggest/contribute changes!
+    Some areas of this documentation are still in progress and may be missing details.  Feel free to suggest/contribute changes!
 
 ## Installation
 
