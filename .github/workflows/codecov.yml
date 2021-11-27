@@ -5,6 +5,11 @@ name: codecov
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+      - ".github/ISSUE_TEMPLATE/**"
   push:
     branches:
       - master
@@ -37,5 +42,4 @@ jobs:
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
         with:
-          token: ${{secrets.CODECOV_TOKEN}}
           fail_ci_if_error: true
