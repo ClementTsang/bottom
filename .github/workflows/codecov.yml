@@ -25,6 +25,7 @@ jobs:
 
   coverage:
     needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     container:
       image: xd009642/tarpaulin:develop
