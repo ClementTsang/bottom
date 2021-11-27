@@ -78,8 +78,7 @@ jobs:
 
   # Run cargo --check on all platforms
   check:
-    needs: [pre_job, rustfmt, clippy]
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
     strategy:
@@ -185,9 +184,19 @@ jobs:
             }
 
     steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          concurrent_skipping: "same_content_newer"
+          skip_after_successful_duplicate: "true"
+          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          do_not_skip: '["workflow_dispatch"]'
+
       - uses: actions/checkout@v2
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - name: Install toolchain
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -196,10 +205,12 @@ jobs:
           target: ${{ matrix.triple.target }}
 
       - uses: Swatinem/rust-cache@v1
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
 
       - name: Check
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/cargo@v1
         with:
           command: check
@@ -208,8 +219,7 @@ jobs:
 
   # Check without the battery feature enabled on x86-64 for supported operating systems
   check-without-battery:
-    needs: [pre_job, rustfmt, clippy]
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
     strategy:
@@ -236,9 +246,19 @@ jobs:
             }
 
     steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          concurrent_skipping: "same_content_newer"
+          skip_after_successful_duplicate: "true"
+          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          do_not_skip: '["workflow_dispatch"]'
+
       - uses: actions/checkout@v2
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - name: Install toolchain
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -247,10 +267,12 @@ jobs:
           target: ${{ matrix.triple.target }}
 
       - uses: Swatinem/rust-cache@v1
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
 
       - name: Check without battery feature on the main 3
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/cargo@v1
         with:
           command: check
@@ -259,8 +281,7 @@ jobs:
 
   # Run tests x86-64 for supported operating systems
   test:
-    needs: [pre_job, rustfmt, clippy]
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    needs: [rustfmt, clippy]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
     strategy:
@@ -287,9 +308,19 @@ jobs:
             }
 
     steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          concurrent_skipping: "same_content_newer"
+          skip_after_successful_duplicate: "true"
+          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          do_not_skip: '["workflow_dispatch"]'
+
       - uses: actions/checkout@v2
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - name: Install toolchain
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -298,10 +329,12 @@ jobs:
           target: ${{ matrix.triple.target }}
 
       - uses: Swatinem/rust-cache@v1
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
 
       - name: Run tests
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         run: cargo test --no-fail-fast
         env:
           CARGO_HUSKY_DONT_INSTALL_HOOKS: true
