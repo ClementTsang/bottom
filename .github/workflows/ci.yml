@@ -29,7 +29,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
-          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch"]'
 
       - uses: actions/checkout@v2
@@ -64,7 +64,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
-          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch"]'
 
       - uses: actions/checkout@v2
@@ -197,7 +197,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
-          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch"]'
 
       - uses: actions/checkout@v2
@@ -259,7 +259,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
-          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch"]'
 
       - uses: actions/checkout@v2
@@ -321,7 +321,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
-          paths_ignore: '["**/README.md", "**/docs/**", "assets/**", ".cargo-husky/**", ".all-contributorsrc", ".gitignore", ".markdownlint.json", "deployment/**", ".github/ISSUE_TEMPLATE/**", "CHANGELOG.md", "CONTRIBUTING.md"]'
+          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch"]'
 
       - uses: actions/checkout@v2
