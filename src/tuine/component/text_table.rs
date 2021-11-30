@@ -20,7 +20,7 @@ use crate::{
 pub use self::table_column::{TextColumn, TextColumnConstraint};
 use self::table_scroll_state::ScrollState as TextTableState;
 
-use super::Component;
+use super::{Component, ShouldRender};
 
 #[derive(Clone, Debug, Default)]
 pub struct StyleSheet {
@@ -29,7 +29,7 @@ pub struct StyleSheet {
     table_header: Style,
 }
 
-struct TextTableMsg {}
+pub enum TextTableMsg {}
 
 /// A sortable, scrollable table for text data.
 pub struct TextTable<'a> {
@@ -59,8 +59,6 @@ impl<'a> TextTable<'a> {
             style_sheet: StyleSheet::default(),
             sortable: false,
             table_gap: 0,
-            on_select: None,
-            on_select_click: None,
         }
     }
 
@@ -86,22 +84,6 @@ impl<'a> TextTable<'a> {
     /// Defaults to `false`.
     pub fn sortable(mut self, sortable: bool) -> Self {
         self.sortable = sortable;
-        self
-    }
-
-    /// What [`Message`] to send when a row is selected.
-    ///
-    /// Defaults to `None` (doing nothing).
-    pub fn on_select(mut self, on_select: Option<Message>) -> Self {
-        self.on_select = on_select;
-        self
-    }
-
-    /// What [`Message`] to send if a selected row is clicked on.
-    ///
-    /// Defaults to `None` (doing nothing).
-    pub fn on_select_click(mut self, on_select_click: Option<Message>) -> Self {
-        self.on_select_click = on_select_click;
         self
     }
 
@@ -157,7 +139,11 @@ impl<'a> TextTable<'a> {
 impl<'a> Component for TextTable<'a> {
     type Message = TextTableMsg;
 
-    fn on_event(&mut self, bounds: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
+    type Properties = ();
+
+    fn on_event(
+        &mut self, bounds: Rect, event: Event, messages: &mut Vec<Self::Message>,
+    ) -> Status {
         use crate::tuine::MouseBoundIntersect;
         use crossterm::event::{MouseButton, MouseEventKind};
 
@@ -188,6 +174,12 @@ impl<'a> Component for TextTable<'a> {
                 }
             }
         }
+    }
+
+    fn update(&mut self, message: Self::Message) -> ShouldRender {
+        match message {}
+
+        true
     }
 
     fn draw<B: Backend>(&mut self, bounds: Rect, frame: &mut Frame<'_, B>) {

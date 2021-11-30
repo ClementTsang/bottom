@@ -8,10 +8,16 @@ use tui::{backend::Backend, layout::Rect, Frame};
 
 use super::{Event, Status};
 
-/// A [`Component`] is an element that displays information and can be interacted with.
+pub type ShouldRender = bool;
+
+/// A  is an element that displays information and can be interacted with.
 #[allow(unused_variables)]
 pub trait Component {
+    /// How to inform a component after some event takes place. Typically some enum.
     type Message: 'static;
+
+    /// Information passed to the component from its parent.
+    type Properties;
 
     /// Handles an [`Event`]. Defaults to just ignoring the event.
     fn on_event(
@@ -20,8 +26,16 @@ pub trait Component {
         Status::Ignored
     }
 
-    fn update(&mut self, message: Self::Message) {}
+    /// How the component should handle a [`Self::Message`]. Defaults to doing nothing.
+    fn update(&mut self, message: Self::Message) -> ShouldRender {
+        false
+    }
 
-    /// Draws the [`Component`].
+    /// How the component should handle an update to its properties. Defaults to doing nothing.
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        false
+    }
+
+    /// Draws the component.
     fn draw<B: Backend>(&mut self, bounds: Rect, frame: &mut Frame<'_, B>);
 }
