@@ -14,13 +14,11 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuine::{Event, Status},
+    tuice::{Component, Event, Status},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
 use self::table_scroll_state::ScrollState as TextTableState;
-
-use super::{Component, ShouldRender};
 
 #[derive(Clone, Debug, Default)]
 pub struct StyleSheet {
@@ -32,19 +30,21 @@ pub struct StyleSheet {
 pub enum TextTableMsg {}
 
 /// A sortable, scrollable table for text data.
-pub struct TextTable<'a> {
+pub struct TextTable<'a, Message> {
     state: TextTableState,
     column_widths: Vec<u16>,
     columns: Vec<TextColumn>,
     show_gap: bool,
     show_selected_entry: bool,
-    data: Vec<Row<'a>>,
+    rows: Vec<Row<'a>>,
     style_sheet: StyleSheet,
     sortable: bool,
     table_gap: u16,
+    on_select: Option<Box<dyn Fn(usize) -> Message>>,
+    on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
 }
 
-impl<'a> TextTable<'a> {
+impl<'a, Message> TextTable<'a, Message> {
     pub fn new<S: Into<Cow<'static, str>>>(columns: Vec<S>) -> Self {
         Self {
             state: TextTableState::default(),
@@ -55,17 +55,27 @@ impl<'a> TextTable<'a> {
                 .collect(),
             show_gap: true,
             show_selected_entry: true,
-            data: Vec::default(),
+            rows: Vec::default(),
             style_sheet: StyleSheet::default(),
             sortable: false,
             table_gap: 0,
+            on_select: None,
+            on_selected_click: None,
         }
+    }
+
+    /// Sets the row to display in the table.
+    ///
+    /// Defaults to displaying no data if not set.
+    pub fn rows(mut self, rows: Vec<Row<'a>>) -> Self {
+        self.rows = rows;
+        self
     }
 
     /// Whether to try to show a gap between the table headers and data.
     /// Note that if there isn't enough room, the gap will still be hidden.
     ///
-    /// Defaults to `true`.
+    /// Defaults to `true` if not set.
     pub fn show_gap(mut self, show_gap: bool) -> Self {
         self.show_gap = show_gap;
         self
@@ -73,7 +83,7 @@ impl<'a> TextTable<'a> {
 
     /// Whether to highlight the selected entry.
     ///
-    /// Defaults to `true`.
+    /// Defaults to `true` if not set.
     pub fn show_selected_entry(mut self, show_selected_entry: bool) -> Self {
         self.show_selected_entry = show_selected_entry;
         self
@@ -81,9 +91,28 @@ impl<'a> TextTable<'a> {
 
     /// Whether the table should display as sortable.
     ///
-    /// Defaults to `false`.
+    /// Defaults to `false` if not set.
     pub fn sortable(mut self, sortable: bool) -> Self {
         self.sortable = sortable;
+        self
+    }
+
+    /// What to do when selecting an entry. Expects a boxed function that takes in
+    /// the currently selected index and returns a [`Message`].
+    ///
+    /// Defaults to `None` if not set.
+    pub fn on_select(mut self, on_select: Option<Box<dyn Fn(usize) -> Message>>) -> Self {
+        self.on_select = on_select;
+        self
+    }
+
+    /// What to do when clicking on an entry that is already selected.
+    ///
+    /// Defaults to `None` if not set.
+    pub fn on_selected_click(
+        mut self, on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
+    ) -> Self {
+        self.on_selected_click = on_selected_click;
         self
     }
 
@@ -136,19 +165,34 @@ impl<'a> TextTable<'a> {
     }
 }
 
-impl<'a> Component for TextTable<'a> {
-    type Message = TextTableMsg;
+impl<'a, Message, B> From<TextTable<'a, Message>> for Box<dyn Component<Message, B> + 'a>
+where
+    Message: 'a,
+    B: Backend,
+{
+    fn from(table: TextTable<'a, Message>) -> Self {
+        Box::new(table)
+    }
+}
 
-    type Properties = ();
-
-    fn on_event(
-        &mut self, bounds: Rect, event: Event, messages: &mut Vec<Self::Message>,
-    ) -> Status {
-        use crate::tuine::MouseBoundIntersect;
+impl<'a, Message, B> Component<Message, B> for TextTable<'a, Message>
+where
+    B: Backend,
+{
+    fn on_event(&mut self, bounds: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
+        use crate::tuice::MouseBoundIntersect;
         use crossterm::event::{MouseButton, MouseEventKind};
 
         match event {
-            Event::Keyboard(_) => Status::Ignored,
+            Event::Keyboard(key_event) => {
+                if key_event.modifiers.is_empty() {
+                    match key_event.code {
+                        _ => Status::Ignored,
+                    }
+                } else {
+                    Status::Ignored
+                }
+            }
             Event::Mouse(mouse_event) => {
                 if mouse_event.does_mouse_intersect_bounds(bounds) {
                     match mouse_event.kind {
@@ -156,8 +200,7 @@ impl<'a> Component for TextTable<'a> {
                             let y = mouse_event.row - bounds.top();
 
                             if self.sortable && y == 0 {
-                                // TODO: Do this
-                                Status::Captured
+                                todo!()
                             } else if y > self.table_gap {
                                 let visual_index = usize::from(y - self.table_gap);
                                 self.state.set_visual_index(visual_index)
@@ -165,8 +208,20 @@ impl<'a> Component for TextTable<'a> {
                                 Status::Ignored
                             }
                         }
-                        MouseEventKind::ScrollDown => self.state.move_down(1),
-                        MouseEventKind::ScrollUp => self.state.move_up(1),
+                        MouseEventKind::ScrollDown => {
+                            let status = self.state.move_down(1);
+                            if let Some(on_select) = &self.on_select {
+                                messages.push(on_select(self.state.current_index()));
+                            }
+                            status
+                        }
+                        MouseEventKind::ScrollUp => {
+                            let status = self.state.move_up(1);
+                            if let Some(on_select) = &self.on_select {
+                                messages.push(on_select(self.state.current_index()));
+                            }
+                            status
+                        }
                         _ => Status::Ignored,
                     }
                 } else {
@@ -176,15 +231,9 @@ impl<'a> Component for TextTable<'a> {
         }
     }
 
-    fn update(&mut self, message: Self::Message) -> ShouldRender {
-        match message {}
-
-        true
-    }
-
-    fn draw<B: Backend>(&mut self, bounds: Rect, frame: &mut Frame<'_, B>) {
+    fn draw(&mut self, bounds: Rect, frame: &mut Frame<'_, B>) {
         self.table_gap = if !self.show_gap
-            || (self.data.len() + 2 > bounds.height.into()
+            || (self.rows.len() + 2 > bounds.height.into()
                 && bounds.height < TABLE_GAP_HEIGHT_LIMIT)
         {
             0
@@ -212,7 +261,7 @@ impl<'a> Component for TextTable<'a> {
                 .display_start_index(bounds, scrollable_height as usize);
             let end = min(self.state.num_items(), start + scrollable_height as usize);
 
-            self.data[start..end].to_vec()
+            self.rows[start..end].to_vec()
         };
 
         // Now build up our headers...

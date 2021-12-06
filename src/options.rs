@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use crate::{
     app::{layout_manager::*, *},
-    canvas::ColourScheme,
+    canvas::{ColourScheme, Painter},
     constants::*,
     units::data_units::DataUnit,
     utils::error::{self, BottomError},
@@ -255,11 +255,8 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
         net_filter,
     };
 
-    Ok(AppState::new(
-        app_config_fields,
-        data_filter,
-        layout_tree_output,
-    ))
+    let painter = Painter::init(&config, get_color_scheme(&matches, &config)?)?;
+    AppState::new(app_config_fields, data_filter, layout_tree_output, painter)
 }
 
 fn get_update_rate_in_milliseconds(

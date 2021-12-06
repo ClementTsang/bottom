@@ -20,15 +20,16 @@ use std::{
 };
 
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, Event, KeyEvent, MouseEvent, MouseEventKind},
+    event::{poll, read, DisableMouseCapture, MouseEventKind},
     execute,
     style::Print,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
 
-use app::{data_harvester, AppState, UsedWidgets};
+use app::{data_harvester, AppMessages, UsedWidgets};
 use constants::*;
 use options::*;
+use tuice::{Event, RuntimeEvent};
 use utils::error;
 
 pub mod app;
@@ -42,7 +43,7 @@ pub mod clap;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
-pub(crate) mod tuine;
+pub mod tuice;
 pub(crate) mod units;
 
 // FIXME: Use newtype pattern for PID
@@ -51,15 +52,6 @@ pub type Pid = usize;
 
 #[cfg(target_family = "unix")]
 pub type Pid = libc::pid_t;
-
-#[derive(Debug)]
-pub enum BottomEvent {
-    KeyInput(KeyEvent),
-    MouseInput(MouseEvent),
-    Update(Box<data_harvester::Data>),
-    Resize { width: u16, height: u16 },
-    Clean,
-}
 
 #[derive(Debug)]
 pub enum ThreadControlEvent {
@@ -124,18 +116,6 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
     }
 }
 
-pub fn try_drawing(
-    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    app: &mut AppState, painter: &mut canvas::Painter,
-) -> error::Result<()> {
-    if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal)?;
-        return Err(err);
-    }
-
-    Ok(())
-}
-
 pub fn cleanup_terminal(
     terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
 ) -> error::Result<()> {
@@ -182,7 +162,8 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 }
 
 pub fn create_input_thread(
-    sender: std::sync::mpsc::Sender<BottomEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
+    sender: std::sync::mpsc::Sender<RuntimeEvent<AppMessages>>,
+    termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> std::thread::JoinHandle<()> {
     thread::spawn(move || {
         // TODO: [Optimization, Input] Maybe experiment with removing these timers. Look into using buffers instead?
@@ -202,29 +183,35 @@ pub fn create_input_thread(
                 if poll {
                     if let Ok(event) = read() {
                         match event {
-                            Event::Key(event) => {
+                            crossterm::event::Event::Key(event) => {
                                 if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                    if sender.send(BottomEvent::KeyInput(event)).is_err() {
+                                    if sender
+                                        .send(RuntimeEvent::UserInterface(Event::Keyboard(event)))
+                                        .is_err()
+                                    {
                                         break;
                                     }
                                     keyboard_timer = Instant::now();
                                 }
                             }
-                            Event::Mouse(event) => match &event.kind {
+                            crossterm::event::Event::Mouse(event) => match &event.kind {
                                 MouseEventKind::Drag(_) => {}
                                 MouseEventKind::Moved => {}
                                 _ => {
                                     if Instant::now().duration_since(mouse_timer).as_millis() >= 20
                                     {
-                                        if sender.send(BottomEvent::MouseInput(event)).is_err() {
+                                        if sender
+                                            .send(RuntimeEvent::UserInterface(Event::Mouse(event)))
+                                            .is_err()
+                                        {
                                             break;
                                         }
                                         mouse_timer = Instant::now();
                                     }
                                 }
                             },
-                            Event::Resize(width, height) => {
-                                if sender.send(BottomEvent::Resize { width, height }).is_err() {
+                            crossterm::event::Event::Resize(width, height) => {
+                                if sender.send(RuntimeEvent::Resize { width, height }).is_err() {
                                     break;
                                 }
                             }
@@ -237,7 +224,7 @@ pub fn create_input_thread(
 }
 
 pub fn create_collection_thread(
-    sender: std::sync::mpsc::Sender<BottomEvent>,
+    sender: std::sync::mpsc::Sender<RuntimeEvent<AppMessages>>,
     control_receiver: std::sync::mpsc::Receiver<ThreadControlEvent>,
     termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
     app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
@@ -300,7 +287,7 @@ pub fn create_collection_thread(
                 }
             }
 
-            let event = BottomEvent::Update(Box::from(data_state.data));
+            let event = RuntimeEvent::Custom(AppMessages::Update(Box::from(data_state.data)));
             data_state.data = data_harvester::Data::default();
             if sender.send(event).is_err() {
                 break;

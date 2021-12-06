@@ -17,7 +17,7 @@ use tui::layout::Rect;
 use crate::app::widgets::Widget;
 
 use super::{
-    event::SelectionAction, AppConfigFields, CpuGraph, TimeGraph, TmpBottomWidget, UsedWidgets,
+    event::SelectionAction, AppConfigFields, BottomWidget, CpuGraph, TimeGraph, UsedWidgets,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -197,7 +197,7 @@ pub enum MovementDirection {
 pub struct LayoutCreationOutput {
     pub layout_tree: Arena<LayoutNode>,
     pub root: NodeId,
-    pub widget_lookup_map: FxHashMap<NodeId, TmpBottomWidget>,
+    pub widget_lookup_map: FxHashMap<NodeId, BottomWidget>,
     pub selected: NodeId,
     pub used_widgets: UsedWidgets,
 }
@@ -210,7 +210,7 @@ pub fn create_layout_tree(
     rows: &[Row], process_defaults: ProcessDefaults, app_config_fields: &AppConfigFields,
 ) -> Result<LayoutCreationOutput> {
     fn add_widget_to_map(
-        widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, widget_type: BottomWidgetType,
+        widget_lookup_map: &mut FxHashMap<NodeId, BottomWidget>, widget_type: BottomWidgetType,
         widget_id: NodeId, process_defaults: &ProcessDefaults, app_config_fields: &AppConfigFields,
         width: LayoutRule, height: LayoutRule,
     ) -> Result<()> {
@@ -518,7 +518,7 @@ pub enum MoveWidgetResult {
 
 /// A more restricted movement, only within a single widget.
 pub fn move_expanded_widget_selection(
-    widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, current_widget_id: NodeId,
+    widget_lookup_map: &mut FxHashMap<NodeId, BottomWidget>, current_widget_id: NodeId,
     direction: MovementDirection,
 ) -> MoveWidgetResult {
     if let Some(current_widget) = widget_lookup_map.get_mut(&current_widget_id) {
@@ -542,9 +542,8 @@ pub fn move_expanded_widget_selection(
 /// - Only [`LayoutNode::Widget`]s are leaves.
 /// - Only [`LayoutNode::Row`]s or [`LayoutNode::Col`]s are non-leaves.
 pub fn move_widget_selection(
-    layout_tree: &mut Arena<LayoutNode>,
-    widget_lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, current_widget_id: NodeId,
-    direction: MovementDirection,
+    layout_tree: &mut Arena<LayoutNode>, widget_lookup_map: &mut FxHashMap<NodeId, BottomWidget>,
+    current_widget_id: NodeId, direction: MovementDirection,
 ) -> MoveWidgetResult {
     // We first give our currently-selected widget a chance to react to the movement - it may handle it internally!
     let handled = {
@@ -832,7 +831,7 @@ pub fn move_widget_selection(
 /// - [How Flutter does sublinear layout](https://flutter.dev/docs/resources/inside-flutter#sublinear-layout)
 pub fn generate_layout(
     root: NodeId, arena: &mut Arena<LayoutNode>, area: Rect,
-    lookup_map: &FxHashMap<NodeId, TmpBottomWidget>,
+    lookup_map: &FxHashMap<NodeId, BottomWidget>,
 ) {
     // TODO: [Optimization, Layout] Add some caching/dirty mechanisms to reduce calls.
 
@@ -887,8 +886,8 @@ pub fn generate_layout(
 
     /// The internal recursive call to build a layout. Builds off of `arena` and stores bounds inside it.
     fn layout(
-        node: NodeId, arena: &mut Arena<LayoutNode>,
-        lookup_map: &FxHashMap<NodeId, TmpBottomWidget>, mut constraints: LayoutConstraints,
+        node: NodeId, arena: &mut Arena<LayoutNode>, lookup_map: &FxHashMap<NodeId, BottomWidget>,
+        mut constraints: LayoutConstraints,
     ) -> Size {
         if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
             match layout_node {

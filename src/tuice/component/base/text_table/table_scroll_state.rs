@@ -1,7 +1,7 @@
 use std::cmp::{min, Ordering};
 use tui::{layout::Rect, widgets::TableState};
 
-use crate::tuine::Status;
+use crate::tuice::Status;
 
 #[derive(Debug, PartialEq, Eq)]
 enum ScrollDirection {
@@ -197,7 +197,7 @@ impl ScrollState {
 mod test {
     use tui::layout::Rect;
 
-    use crate::tuine::{text_table::table_scroll_state::ScrollDirection, Status};
+    use crate::tuice::{text_table::table_scroll_state::ScrollDirection, Status};
 
     use super::ScrollState;
 

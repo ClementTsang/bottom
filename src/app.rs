@@ -1,28 +1,44 @@
 pub mod data_farmer;
+use std::sync::{
+    atomic::{AtomicBool, Ordering::SeqCst},
+    Arc,
+};
+
+pub use data_farmer::*;
+
 pub mod data_harvester;
+use data_harvester::temperature;
+
 pub mod event;
+
 pub mod filter;
+pub use filter::*;
+
 pub mod layout_manager;
+use layout_manager::*;
+
+pub mod widgets;
+pub use widgets::*;
+
 mod process_killer;
 pub mod query;
-pub mod widgets;
 
-use std::time::Instant;
+mod frozen_state;
+use frozen_state::FrozenState;
 
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
+use crate::{
+    canvas::Painter,
+    constants,
+    tuice::{Application, Row},
+    units::data_units::DataUnit,
+    Pid,
+};
+
+use anyhow::Result;
 use indextree::{Arena, NodeId};
 use rustc_hash::FxHashMap;
 
-pub use data_farmer::*;
-use data_harvester::temperature;
-pub use filter::*;
-use layout_manager::*;
-pub use widgets::*;
-
-use crate::{constants, units::data_units::DataUnit, utils::error::Result, BottomEvent, Pid};
-
-use self::event::{ComponentEventResult, EventResult, ReturnSignal};
-
+// FIXME: Move this!
 #[derive(Debug, Clone)]
 pub enum AxisScaling {
     Log,
@@ -95,54 +111,55 @@ pub struct AppConfigFields {
     pub network_use_binary_prefix: bool,
 }
 
-/// The [`FrozenState`] indicates whether the application state should be frozen; if it is, save a snapshot of
-/// the data collected at that instant.
-pub enum FrozenState {
-    NotFrozen,
-    Frozen(Box<DataCollection>),
+#[derive(PartialEq, Eq)]
+enum CurrentScreen {
+    Main,
+    Expanded,
+    Help,
+    Delete,
 }
 
-impl Default for FrozenState {
+impl Default for CurrentScreen {
     fn default() -> Self {
-        Self::NotFrozen
+        Self::Main
     }
 }
 
+#[derive(Debug)]
+pub enum AppMessages {
+    Update(Box<data_harvester::Data>),
+    OpenHelp,
+    KillProcess { to_kill: Vec<Pid> },
+    ToggleFreeze,
+    Clean,
+    Stop,
+}
+
 pub struct AppState {
-    pub dd_err: Option<String>,
-
-    to_delete_process_list: Option<(String, Vec<Pid>)>,
-
     pub data_collection: DataCollection,
-
-    pub is_expanded: bool,
 
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
     pub app_config_fields: AppConfigFields,
 
-    // --- FIXME: TO DELETE/REWRITE ---
-    pub delete_dialog_state: AppDeleteDialogState,
-    pub is_force_redraw: bool,
-
-    pub is_determining_widget_boundary: bool,
-
     // --- NEW STUFF ---
     pub selected_widget: NodeId,
-    pub widget_lookup_map: FxHashMap<NodeId, TmpBottomWidget>,
+    pub widget_lookup_map: FxHashMap<NodeId, BottomWidget>,
     pub layout_tree: Arena<LayoutNode>,
     pub layout_tree_root: NodeId,
-    frozen_state: FrozenState,
 
-    pub help_dialog: DialogState<HelpDialog>,
+    frozen_state: FrozenState,
+    current_screen: CurrentScreen,
+    painter: Painter,
+    terminator: Arc<AtomicBool>,
 }
 
 impl AppState {
     /// Creates a new [`AppState`].
     pub fn new(
         app_config_fields: AppConfigFields, filters: DataFilters,
-        layout_tree_output: LayoutCreationOutput,
-    ) -> Self {
+        layout_tree_output: LayoutCreationOutput, painter: Painter,
+    ) -> Result<Self> {
         let LayoutCreationOutput {
             layout_tree,
             root: layout_tree_root,
@@ -151,7 +168,7 @@ impl AppState {
             used_widgets,
         } = layout_tree_output;
 
-        Self {
+        Ok(Self {
             app_config_fields,
             filters,
             used_widgets,
@@ -159,546 +176,83 @@ impl AppState {
             widget_lookup_map,
             layout_tree,
             layout_tree_root,
+            painter,
 
             // Use defaults.
-            dd_err: Default::default(),
-            to_delete_process_list: Default::default(),
             data_collection: Default::default(),
-            is_expanded: Default::default(),
-            delete_dialog_state: Default::default(),
-            is_force_redraw: Default::default(),
-            is_determining_widget_boundary: Default::default(),
             frozen_state: Default::default(),
-            help_dialog: Default::default(),
+            current_screen: Default::default(),
+
+            terminator: Self::register_terminator()?,
+        })
+    }
+
+    fn register_terminator() -> Result<Arc<AtomicBool>> {
+        let it = Arc::new(AtomicBool::new(false));
+        let it_clone = it.clone();
+        ctrlc::set_handler(move || {
+            it_clone.store(true, SeqCst);
+        })?;
+
+        Ok(it)
+    }
+
+    fn set_current_screen(&mut self, screen_type: CurrentScreen) {
+        if self.current_screen == screen_type {
+            self.current_screen = screen_type;
+            // TODO: Redraw
         }
     }
+}
 
-    pub fn is_frozen(&self) -> bool {
-        matches!(self.frozen_state, FrozenState::Frozen(_))
-    }
+impl Application for AppState {
+    type Message = AppMessages;
 
-    pub fn toggle_freeze(&mut self) {
-        if matches!(self.frozen_state, FrozenState::Frozen(_)) {
-            self.frozen_state = FrozenState::NotFrozen;
-        } else {
-            self.frozen_state = FrozenState::Frozen(Box::new(self.data_collection.clone()));
-        }
-    }
-
-    pub fn reset(&mut self) {
-        // Call reset on all widgets.
-        self.widget_lookup_map
-            .values_mut()
-            .for_each(|widget| widget.reset());
-
-        // Unfreeze.
-        self.frozen_state = FrozenState::NotFrozen;
-
-        // Reset data
-        self.data_collection.reset();
-    }
-
-    pub fn should_get_widget_bounds(&self) -> bool {
-        self.is_force_redraw || self.is_determining_widget_boundary
-    }
-
-    fn close_dd(&mut self) {
-        self.delete_dialog_state.is_showing_dd = false;
-        self.delete_dialog_state.selected_signal = KillSignal::default();
-        self.delete_dialog_state.scroll_pos = 0;
-        self.to_delete_process_list = None;
-        self.dd_err = None;
-    }
-
-    /// Handles a global event involving a char.
-    fn handle_global_char(&mut self, c: char) -> EventResult {
-        if c.is_ascii_control() {
-            EventResult::NoRedraw
-        } else {
-            // Check for case-sensitive bindings first.
-            match c {
-                'H' | 'A' => self.move_to_widget(MovementDirection::Left),
-                'L' | 'D' => self.move_to_widget(MovementDirection::Right),
-                'K' | 'W' => self.move_to_widget(MovementDirection::Up),
-                'J' | 'S' => self.move_to_widget(MovementDirection::Down),
-                _ => {
-                    let c = c.to_ascii_lowercase();
-                    match c {
-                        'q' => EventResult::Quit,
-                        'e' if !self.help_dialog.is_showing() => {
-                            if self.app_config_fields.use_basic_mode {
-                                EventResult::NoRedraw
-                            } else {
-                                self.is_expanded = !self.is_expanded;
-                                EventResult::Redraw
-                            }
-                        }
-                        '?' if !self.help_dialog.is_showing() => {
-                            self.help_dialog.show();
-                            EventResult::Redraw
-                        }
-                        'f' if !self.help_dialog.is_showing() => {
-                            self.toggle_freeze();
-                            if !self.is_frozen() {
-                                let data_collection = &self.data_collection;
-                                self.widget_lookup_map
-                                    .iter_mut()
-                                    .for_each(|(_id, widget)| widget.update_data(data_collection));
-                            }
-                            EventResult::Redraw
-                        }
-                        _ => EventResult::NoRedraw,
-                    }
-                }
-            }
-        }
-    }
-
-    /// Moves to a widget.
-    fn move_to_widget(&mut self, direction: MovementDirection) -> EventResult {
-        match if self.is_expanded {
-            move_expanded_widget_selection(
-                &mut self.widget_lookup_map,
-                self.selected_widget,
-                direction,
-            )
-        } else {
-            let layout_tree = &mut self.layout_tree;
-
-            move_widget_selection(
-                layout_tree,
-                &mut self.widget_lookup_map,
-                self.selected_widget,
-                direction,
-            )
-        } {
-            MoveWidgetResult::ForceRedraw(new_widget_id) => {
-                self.selected_widget = new_widget_id;
-                EventResult::Redraw
-            }
-            MoveWidgetResult::NodeId(new_widget_id) => {
-                let previous_selected = self.selected_widget;
-                self.selected_widget = new_widget_id;
-
-                if previous_selected != self.selected_widget {
-                    EventResult::Redraw
-                } else {
-                    EventResult::NoRedraw
-                }
-            }
-        }
-    }
-
-    /// Quick and dirty handler to convert [`ComponentEventResult`]s to [`EventResult`]s, and handle [`ReturnSignal`]s.
-    fn convert_widget_event_result(&mut self, w: ComponentEventResult) -> EventResult {
-        match w {
-            ComponentEventResult::Unhandled => EventResult::NoRedraw,
-            ComponentEventResult::Redraw => EventResult::Redraw,
-            ComponentEventResult::NoRedraw => EventResult::NoRedraw,
-            ComponentEventResult::Signal(signal) => match signal {
-                ReturnSignal::KillProcess => {
-                    todo!()
-                }
-                ReturnSignal::Update => {
-                    if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-                        match &self.frozen_state {
-                            FrozenState::NotFrozen => {
-                                widget.update_data(&self.data_collection);
-                            }
-                            FrozenState::Frozen(frozen_data) => {
-                                widget.update_data(frozen_data);
-                            }
-                        }
-                    }
-                    EventResult::Redraw
-                }
-            },
-        }
-    }
-
-    /// Handles a [`KeyEvent`], and returns an [`EventResult`].
-    fn handle_key_event(&mut self, event: KeyEvent) -> EventResult {
-        let result = if let DialogState::Shown(help_dialog) = &mut self.help_dialog {
-            help_dialog.handle_key_event(event)
-        } else if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-            widget.handle_key_event(event)
-        } else {
-            ComponentEventResult::Unhandled
-        };
-
-        match result {
-            ComponentEventResult::Unhandled => self.handle_global_key_event(event),
-            _ => self.convert_widget_event_result(result),
-        }
-    }
-
-    /// Handles a global [`KeyEvent`], and returns an [`EventResult`].
-    fn handle_global_key_event(&mut self, event: KeyEvent) -> EventResult {
-        if event.modifiers.is_empty() {
-            match event.code {
-                KeyCode::Esc => {
-                    if self.is_expanded {
-                        self.is_expanded = false;
-                        EventResult::Redraw
-                    } else if self.help_dialog.is_showing() {
-                        self.help_dialog.hide();
-                        EventResult::Redraw
-                    } else if self.delete_dialog_state.is_showing_dd {
-                        self.close_dd();
-                        EventResult::Redraw
-                    } else {
-                        EventResult::NoRedraw
-                    }
-                }
-                _ => {
-                    if let KeyCode::Char(c) = event.code {
-                        self.handle_global_char(c)
-                    } else {
-                        EventResult::NoRedraw
-                    }
-                }
-            }
-        } else if let KeyModifiers::CONTROL = event.modifiers {
-            match event.code {
-                KeyCode::Char('c') | KeyCode::Char('C') => EventResult::Quit,
-                KeyCode::Char('r') | KeyCode::Char('R') => {
-                    self.reset();
-                    let data_collection = &self.data_collection;
-                    self.widget_lookup_map
-                        .iter_mut()
-                        .for_each(|(_id, widget)| widget.update_data(data_collection));
-                    EventResult::Redraw
-                }
-                KeyCode::Left => self.move_to_widget(MovementDirection::Left),
-                KeyCode::Right => self.move_to_widget(MovementDirection::Right),
-                KeyCode::Up => self.move_to_widget(MovementDirection::Up),
-                KeyCode::Down => self.move_to_widget(MovementDirection::Down),
-                _ => EventResult::NoRedraw,
-            }
-        } else if let KeyModifiers::SHIFT = event.modifiers {
-            match event.code {
-                KeyCode::Left => self.move_to_widget(MovementDirection::Left),
-                KeyCode::Right => self.move_to_widget(MovementDirection::Right),
-                KeyCode::Up => self.move_to_widget(MovementDirection::Up),
-                KeyCode::Down => self.move_to_widget(MovementDirection::Down),
-                KeyCode::Char(c) => self.handle_global_char(c),
-                _ => EventResult::NoRedraw,
-            }
-        } else {
-            EventResult::NoRedraw
-        }
-    }
-
-    /// Handles a [`MouseEvent`].
-    fn handle_mouse_event(&mut self, event: MouseEvent) -> EventResult {
-        if let DialogState::Shown(help_dialog) = &mut self.help_dialog {
-            let result = help_dialog.handle_mouse_event(event);
-            self.convert_widget_event_result(result)
-        } else if self.is_expanded {
-            if let Some(widget) = self.widget_lookup_map.get_mut(&self.selected_widget) {
-                let result = widget.handle_mouse_event(event);
-                self.convert_widget_event_result(result)
-            } else {
-                EventResult::NoRedraw
-            }
-        } else {
-            let mut returned_result = EventResult::NoRedraw;
-            for (id, widget) in self.widget_lookup_map.iter_mut() {
-                if widget.does_border_intersect_mouse(&event) {
-                    let result = widget.handle_mouse_event(event);
-                    match widget.selectable_type() {
-                        SelectableType::Selectable => {
-                            let was_id_already_selected = self.selected_widget == *id;
-                            self.selected_widget = *id;
-
-                            if was_id_already_selected {
-                                returned_result = self.convert_widget_event_result(result);
-                            } else {
-                                // If the weren't equal, *force* a redraw, and correct the layout tree.
-                                correct_layout_last_selections(
-                                    &mut self.layout_tree,
-                                    self.selected_widget,
-                                );
-                                let _ = self.convert_widget_event_result(result);
-                                returned_result = EventResult::Redraw;
-                            }
-                            break;
-                        }
-                        SelectableType::Unselectable => {
-                            let result = widget.handle_mouse_event(event);
-                            return self.convert_widget_event_result(result);
-                        }
-                    }
-                }
-            }
-
-            returned_result
-        }
-    }
-
-    /// Handles a [`BottomEvent`] and updates the [`AppState`] if needed. Returns an [`EventResult`] indicating
-    /// whether the app now requires a redraw.
-    pub fn handle_event(&mut self, event: BottomEvent) -> EventResult {
-        match event {
-            BottomEvent::KeyInput(event) => self.handle_key_event(event),
-            BottomEvent::MouseInput(event) => {
-                // Not great, but basically a blind lookup through the table for anything that clips the click location.
-                self.handle_mouse_event(event)
-            }
-            BottomEvent::Update(new_data) => {
+    fn update(&mut self, message: Self::Message) {
+        match message {
+            AppMessages::Update(new_data) => {
                 self.data_collection.eat_data(new_data);
-
-                // TODO: [Optimization] Optimization for dialogs - don't redraw on an update!
-
-                if !self.is_frozen() {
-                    let data_collection = &self.data_collection;
-                    self.widget_lookup_map
-                        .iter_mut()
-                        .for_each(|(_id, widget)| widget.update_data(data_collection));
-
-                    EventResult::Redraw
-                } else {
-                    EventResult::NoRedraw
-                }
             }
-            BottomEvent::Resize {
-                width: _,
-                height: _,
-            } => EventResult::Redraw,
-            BottomEvent::Clean => {
+            AppMessages::OpenHelp => {
+                self.set_current_screen(CurrentScreen::Help);
+            }
+            AppMessages::KillProcess { to_kill } => {}
+            AppMessages::ToggleFreeze => {
+                self.frozen_state.toggle(&self.data_collection);
+            }
+            AppMessages::Clean => {
                 self.data_collection
                     .clean_data(constants::STALE_MAX_MILLISECONDS);
-                EventResult::NoRedraw
+            }
+            AppMessages::Stop => {
+                self.terminator.store(true, SeqCst);
             }
         }
     }
 
-    #[cfg(target_family = "unix")]
-    fn on_number(&mut self, number_char: char) {
-        if self.delete_dialog_state.is_showing_dd {
-            if self
-                .delete_dialog_state
-                .last_number_press
-                .map_or(100, |ins| ins.elapsed().as_millis())
-                >= 400
-            {
-                self.delete_dialog_state.keyboard_signal_select = 0;
-            }
-            let mut kbd_signal = self.delete_dialog_state.keyboard_signal_select * 10;
-            kbd_signal += number_char.to_digit(10).unwrap() as usize;
-            if kbd_signal > 64 {
-                kbd_signal %= 100;
-            }
-            #[cfg(target_os = "linux")]
-            if kbd_signal > 64 || kbd_signal == 32 || kbd_signal == 33 {
-                kbd_signal %= 10;
-            }
-            #[cfg(target_os = "macos")]
-            if kbd_signal > 31 {
-                kbd_signal %= 10;
-            }
-            self.delete_dialog_state.selected_signal = KillSignal::Kill(kbd_signal);
-            if kbd_signal < 10 {
-                self.delete_dialog_state.keyboard_signal_select = kbd_signal;
-            } else {
-                self.delete_dialog_state.keyboard_signal_select = 0;
-            }
-            self.delete_dialog_state.last_number_press = Some(Instant::now());
+    fn is_terminated(&self) -> bool {
+        self.terminator.load(SeqCst)
+    }
+
+    fn view(
+        &mut self,
+    ) -> Box<dyn crate::tuice::Component<Self::Message, crate::tuice::CrosstermBackend>> {
+        Box::new(Row::with_children(vec![crate::tuice::TextTable::new(
+            vec!["A", "B", "C"],
+        )]))
+    }
+
+    fn destroy(&mut self) {
+        // TODO: Eventually move some thread logic into the app creation, and destroy here?
+    }
+
+    fn global_event_handler(
+        &mut self, event: crate::tuice::Event, _messages: &mut Vec<Self::Message>,
+    ) {
+        use crate::tuice::Event;
+        match event {
+            Event::Keyboard(_) => {}
+            Event::Mouse(_) => {}
         }
-    }
-
-    fn on_left_key(&mut self) {
-        // if !self.is_in_dialog() {
-        //     match self.current_widget.widget_type {
-        //         BottomWidgetType::ProcSearch => {
-        //             let is_in_search_widget = self.is_in_search_widget();
-        //             if let Some(proc_widget_state) = self
-        //                 .proc_state
-        //                 .get_mut_widget_state(self.current_widget.widget_id - 1)
-        //             {
-        //                 if is_in_search_widget {
-        //                     let prev_cursor = proc_widget_state.get_search_cursor_position();
-        //                     proc_widget_state
-        //                         .search_walk_back(proc_widget_state.get_search_cursor_position());
-        //                     if proc_widget_state.get_search_cursor_position() < prev_cursor {
-        //                         let str_slice = &proc_widget_state
-        //                             .process_search_state
-        //                             .search_state
-        //                             .current_search_query
-        //                             [proc_widget_state.get_search_cursor_position()..prev_cursor];
-        //                         proc_widget_state
-        //                             .process_search_state
-        //                             .search_state
-        //                             .char_cursor_position -= UnicodeWidthStr::width(str_slice);
-        //                         proc_widget_state
-        //                             .process_search_state
-        //                             .search_state
-        //                             .cursor_direction = CursorDirection::Left;
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //         _ => {}
-        //     }
-        // } else if self.delete_dialog_state.is_showing_dd {
-        //     #[cfg(target_family = "unix")]
-        //     {
-        //         if self.app_config_fields.is_advanced_kill {
-        //             match self.delete_dialog_state.selected_signal {
-        //                 KillSignal::Kill(prev_signal) => {
-        //                     self.delete_dialog_state.selected_signal = match prev_signal - 1 {
-        //                         0 => KillSignal::Cancel,
-        //                         // 32+33 are skipped
-        //                         33 => KillSignal::Kill(31),
-        //                         signal => KillSignal::Kill(signal),
-        //                     };
-        //                 }
-        //                 KillSignal::Cancel => {}
-        //             };
-        //         } else {
-        //             self.delete_dialog_state.selected_signal = KillSignal::default();
-        //         }
-        //     }
-        //     #[cfg(target_os = "windows")]
-        //     {
-        //         self.delete_dialog_state.selected_signal = KillSignal::Kill(1);
-        //     }
-        // }
-    }
-
-    fn on_right_key(&mut self) {
-        // if !self.is_in_dialog() {
-        //     match self.current_widget.widget_type {
-        //         BottomWidgetType::ProcSearch => {
-        //             let is_in_search_widget = self.is_in_search_widget();
-        //             if let Some(proc_widget_state) = self
-        //                 .proc_state
-        //                 .get_mut_widget_state(self.current_widget.widget_id - 1)
-        //             {
-        //                 if is_in_search_widget {
-        //                     let prev_cursor = proc_widget_state.get_search_cursor_position();
-        //                     proc_widget_state.search_walk_forward(
-        //                         proc_widget_state.get_search_cursor_position(),
-        //                     );
-        //                     if proc_widget_state.get_search_cursor_position() > prev_cursor {
-        //                         let str_slice = &proc_widget_state
-        //                             .process_search_state
-        //                             .search_state
-        //                             .current_search_query
-        //                             [prev_cursor..proc_widget_state.get_search_cursor_position()];
-        //                         proc_widget_state
-        //                             .process_search_state
-        //                             .search_state
-        //                             .char_cursor_position += UnicodeWidthStr::width(str_slice);
-        //                         proc_widget_state
-        //                             .process_search_state
-        //                             .search_state
-        //                             .cursor_direction = CursorDirection::Right;
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //         _ => {}
-        //     }
-        // } else if self.delete_dialog_state.is_showing_dd {
-        //     #[cfg(target_family = "unix")]
-        //     {
-        //         if self.app_config_fields.is_advanced_kill {
-        //             let new_signal = match self.delete_dialog_state.selected_signal {
-        //                 KillSignal::Cancel => 1,
-        //                 // 32+33 are skipped
-        //                 #[cfg(target_os = "linux")]
-        //                 KillSignal::Kill(31) => 34,
-        //                 #[cfg(target_os = "macos")]
-        //                 KillSignal::Kill(31) => 31,
-        //                 KillSignal::Kill(64) => 64,
-        //                 KillSignal::Kill(signal) => signal + 1,
-        //             };
-        //             self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
-        //         } else {
-        //             self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-        //         }
-        //     }
-        //     #[cfg(target_os = "windows")]
-        //     {
-        //         self.delete_dialog_state.selected_signal = KillSignal::Cancel;
-        //     }
-        // }
-    }
-
-    fn start_killing_process(&mut self) {
-        todo!()
-
-        // if let Some(proc_widget_state) = self
-        //     .proc_state
-        //     .widget_states
-        //     .get(&self.current_widget.widget_id)
-        // {
-        //     if let Some(corresponding_filtered_process_list) = self
-        //         .canvas_data
-        //         .finalized_process_data_map
-        //         .get(&self.current_widget.widget_id)
-        //     {
-        //         if proc_widget_state.scroll_state.current_scroll_position
-        //             < corresponding_filtered_process_list.len()
-        //         {
-        //             let current_process: (String, Vec<Pid>);
-        //             if self.is_grouped(self.current_widget.widget_id) {
-        //                 if let Some(process) = &corresponding_filtered_process_list
-        //                     .get(proc_widget_state.scroll_state.current_scroll_position)
-        //                 {
-        //                     current_process = (process.name.to_string(), process.group_pids.clone())
-        //                 } else {
-        //                     return;
-        //                 }
-        //             } else {
-        //                 let process = corresponding_filtered_process_list
-        //                     [proc_widget_state.scroll_state.current_scroll_position]
-        //                     .clone();
-        //                 current_process = (process.name.clone(), vec![process.pid])
-        //             };
-
-        //             self.to_delete_process_list = Some(current_process);
-        //             self.delete_dialog_state.is_showing_dd = true;
-        //             self.is_determining_widget_boundary = true;
-        //         }
-        //     }
-        // }
-    }
-
-    fn kill_highlighted_process(&mut self) -> Result<()> {
-        // if let BottomWidgetType::Proc = self.current_widget.widget_type {
-        //     if let Some(current_selected_processes) = &self.to_delete_process_list {
-        //         #[cfg(target_family = "unix")]
-        //         let signal = match self.delete_dialog_state.selected_signal {
-        //             KillSignal::Kill(sig) => sig,
-        //             KillSignal::Cancel => 15, // should never happen, so just TERM
-        //         };
-        //         for pid in &current_selected_processes.1 {
-        //             #[cfg(target_family = "unix")]
-        //             {
-        //                 process_killer::kill_process_given_pid(*pid, signal)?;
-        //             }
-        //             #[cfg(target_os = "windows")]
-        //             {
-        //                 process_killer::kill_process_given_pid(*pid)?;
-        //             }
-        //         }
-        //     }
-        //     self.to_delete_process_list = None;
-        //     Ok(())
-        // } else {
-        //     Err(BottomError::GenericError(
-        //         "Cannot kill processes if the current widget is not the Process widget!"
-        //             .to_string(),
-        //     ))
-        // }
-
-        Ok(())
-    }
-
-    pub fn get_to_delete_processes(&self) -> Option<(String, Vec<Pid>)> {
-        // self.to_delete_process_list.clone()
-        todo!()
     }
 }

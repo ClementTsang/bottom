@@ -4,16 +4,13 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{app::event::EventResult, canvas, options::*, *};
+use bottom::{app::AppMessages, options::*, tuice::RuntimeEvent, *};
 
 use std::{
     boxed::Box,
     io::stdout,
     panic,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc, Arc, Condvar, Mutex,
-    },
+    sync::{mpsc, Arc, Condvar, Mutex},
     thread,
     time::Duration,
 };
@@ -39,10 +36,7 @@ fn main() -> Result<()> {
         .context("Unable to properly parse or create the config file.")?;
 
     // Create "app" struct, which will control most of the program and store settings/state
-    let mut app = build_app(&matches, &mut config)?;
-
-    // Create painter and set colours.
-    let mut painter = canvas::Painter::init(&config, get_color_scheme(&matches, &config)?)?;
+    let app = build_app(&matches, &mut config)?;
 
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]
@@ -71,7 +65,10 @@ fn main() -> Result<()> {
                         break;
                     }
                 }
-                if cleaning_sender.send(BottomEvent::Clean).is_err() {
+                if cleaning_sender
+                    .send(RuntimeEvent::Custom(AppMessages::Clean))
+                    .is_err()
+                {
                     // debug!("Failed to send cleaning sender...");
                     break;
                 }
@@ -105,33 +102,7 @@ fn main() -> Result<()> {
     // TODO: [Threads, Panic] Make this close all the child threads too!
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
-    // Set termination hook
-    let is_terminated = Arc::new(AtomicBool::new(false));
-    let ist_clone = is_terminated.clone();
-    ctrlc::set_handler(move || {
-        ist_clone.store(true, Ordering::SeqCst);
-    })?;
-
-    // Paint once first.
-    try_drawing(&mut terminal, &mut app, &mut painter)?;
-
-    while !is_terminated.load(Ordering::SeqCst) {
-        if let Ok(recv) = receiver.recv() {
-            match app.handle_event(recv) {
-                EventResult::Quit => {
-                    break;
-                }
-                EventResult::Redraw => {
-                    try_drawing(&mut terminal, &mut app, &mut painter)?;
-                }
-                EventResult::NoRedraw => {
-                    continue;
-                }
-            }
-        } else {
-            break;
-        }
-    }
+    tuice::launch_with_application(app, receiver);
 
     // I think doing it in this order is safe...
     *thread_termination_lock.lock().unwrap() = true;

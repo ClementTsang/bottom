@@ -4,21 +4,20 @@ use indextree::{Arena, NodeId};
 use rustc_hash::FxHashMap;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Layout, Rect},
     text::Span,
     widgets::Paragraph,
     Frame, Terminal,
 };
 
 use canvas_colours::*;
-use dialogs::*;
 
 use crate::{
     app::{
         self,
         layout_manager::{generate_layout, ColLayout, LayoutNode, RowLayout},
         widgets::{Component, Widget},
-        DialogState, TmpBottomWidget,
+        BottomWidget,
     },
     constants::*,
     options::Config,
@@ -27,7 +26,6 @@ use crate::{
 };
 
 mod canvas_colours;
-mod dialogs;
 
 #[derive(Debug)]
 pub enum ColourScheme {
@@ -138,7 +136,7 @@ impl Painter {
         &mut self, terminal: &mut Terminal<B>, app_state: &mut app::AppState,
     ) -> error::Result<()> {
         terminal.draw(|mut f| {
-            let (draw_area, frozen_draw_loc) = if app_state.is_frozen() {
+            let (draw_area, frozen_draw_loc) = if false {
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])
                     .split(f.size());
@@ -149,118 +147,7 @@ impl Painter {
             let terminal_height = draw_area.height;
             let terminal_width = draw_area.width;
 
-            if let DialogState::Shown(help_dialog) = &mut app_state.help_dialog {
-                let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
-                let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
-                let vertical_dialog_chunk = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([
-                        Constraint::Length(border_len),
-                        Constraint::Length(gen_help_len),
-                        Constraint::Length(border_len),
-                    ])
-                    .split(draw_area);
-
-                let middle_dialog_chunk = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(if terminal_width < 100 {
-                        // TODO: [Drawing, Hard-coded] The point we start changing size at currently hard-coded in.
-                        [
-                            Constraint::Percentage(0),
-                            Constraint::Percentage(100),
-                            Constraint::Percentage(0),
-                        ]
-                    } else {
-                        [
-                            Constraint::Percentage(20),
-                            Constraint::Percentage(60),
-                            Constraint::Percentage(20),
-                        ]
-                    })
-                    .split(vertical_dialog_chunk[1]);
-
-                help_dialog.draw_help(self, f, middle_dialog_chunk[1]);
-            } else if app_state.delete_dialog_state.is_showing_dd {
-                // TODO: [Drawing] Better dd sizing needs the paragraph wrap feature from tui-rs to be pushed to
-                // complete... but for now it's pretty close!
-                // The main problem right now is that I cannot properly calculate the height offset since
-                // line-wrapping is NOT the same as taking the width of the text and dividing by width.
-                // So, I need the height AFTER wrapping.
-                // See: https://github.com/fdehau/tui-rs/pull/349.  Land this after this pushes to release.
-                //
-                // ADDENDUM: I could probably use the same textwrap trick I did with the help menu for this.
-
-                let dd_text = self.get_dd_spans(app_state);
-
-                let text_width = if terminal_width < 100 {
-                    terminal_width * 90 / 100
-                } else {
-                    terminal_width * 50 / 100
-                };
-
-                let text_height = if cfg!(target_os = "windows")
-                    || !app_state.app_config_fields.is_advanced_kill
-                {
-                    7
-                } else {
-                    22
-                };
-
-                // let (text_width, text_height) = if let Some(dd_text) = &dd_text {
-                //     let width = if current_width < 100 {
-                //         current_width * 90 / 100
-                //     } else {
-                //         let min_possible_width = (current_width * 50 / 100) as usize;
-                //         let mut width = dd_text.width();
-
-                //         // This should theoretically never allow width to be 0... we can be safe and do an extra check though.
-                //         while width > (current_width as usize) && width / 2 > min_possible_width {
-                //             width /= 2;
-                //         }
-
-                //         std::cmp::max(width, min_possible_width) as u16
-                //     };
-
-                //     (
-                //         width,
-                //         (dd_text.height() + 2 + (dd_text.width() / width as usize)) as u16,
-                //     )
-                // } else {
-                //     // AFAIK this shouldn't happen, unless something went wrong...
-                //     (
-                //         if current_width < 100 {
-                //             current_width * 90 / 100
-                //         } else {
-                //             current_width * 50 / 100
-                //         },
-                //         7,
-                //     )
-                // };
-
-                let vertical_bordering = terminal_height.saturating_sub(text_height) / 2;
-                let vertical_dialog_chunk = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([
-                        Constraint::Length(vertical_bordering),
-                        Constraint::Length(text_height),
-                        Constraint::Length(vertical_bordering),
-                    ])
-                    .split(draw_area);
-
-                let horizontal_bordering = terminal_width.saturating_sub(text_width) / 2;
-                let middle_dialog_chunk = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([
-                        Constraint::Length(horizontal_bordering),
-                        Constraint::Length(text_width),
-                        Constraint::Length(horizontal_bordering),
-                    ])
-                    .split(vertical_dialog_chunk[1]);
-
-                // This is a bit nasty, but it works well... I guess.
-                app_state.delete_dialog_state.is_showing_dd =
-                    self.draw_dd_dialog(&mut f, dd_text, app_state, middle_dialog_chunk[1]);
-            } else if app_state.is_expanded {
+            if false {
                 if let Some(frozen_draw_loc) = frozen_draw_loc {
                     self.draw_frozen_indicator(&mut f, frozen_draw_loc);
                 }
@@ -276,7 +163,7 @@ impl Painter {
                 /// A simple traversal through the `arena`, drawing all leaf elements.
                 fn traverse_and_draw_tree<B: Backend>(
                     node: NodeId, arena: &Arena<LayoutNode>, f: &mut Frame<'_, B>,
-                    lookup_map: &mut FxHashMap<NodeId, TmpBottomWidget>, painter: &Painter,
+                    lookup_map: &mut FxHashMap<NodeId, BottomWidget>, painter: &Painter,
                     selected_id: NodeId, offset_x: u16, offset_y: u16,
                 ) {
                     if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
@@ -306,7 +193,7 @@ impl Painter {
                                 );
 
                                 if let Some(widget) = lookup_map.get_mut(&node) {
-                                    if let TmpBottomWidget::Carousel(carousel) = widget {
+                                    if let BottomWidget::Carousel(carousel) = widget {
                                         let remaining_area: Rect =
                                             carousel.draw_carousel(painter, f, area);
                                         if let Some(to_draw_node) =

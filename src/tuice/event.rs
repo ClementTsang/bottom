@@ -9,6 +9,7 @@ pub enum Status {
 }
 
 /// An [`Event`] represents some sort of user interface event.
+#[derive(Clone, Copy, Debug)]
 pub enum Event {
     /// A keyboard event
     Keyboard(KeyEvent),

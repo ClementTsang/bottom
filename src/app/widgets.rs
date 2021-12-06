@@ -156,7 +156,7 @@ pub enum SelectableType {
 /// The "main" widgets that are used by bottom to display information!
 #[allow(clippy::large_enum_variant)]
 #[enum_dispatch(Component, Widget)]
-pub enum TmpBottomWidget {
+pub enum BottomWidget {
     MemGraph,
     TempTable,
     DiskTable,
@@ -172,7 +172,7 @@ pub enum TmpBottomWidget {
     Empty,
 }
 
-impl Debug for TmpBottomWidget {
+impl Debug for BottomWidget {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::MemGraph(_) => write!(f, "MemGraph"),
@@ -189,41 +189,6 @@ impl Debug for TmpBottomWidget {
             Self::Carousel(_) => write!(f, "Carousel"),
             Self::Empty(_) => write!(f, "Empty"),
         }
-    }
-}
-
-/// The states a dialog can be in. Consists of either:
-/// - [`DialogState::Hidden`] - the dialog is currently not showing.
-/// - [`DialogState::Shown`] - the dialog is showing.
-#[derive(Debug)]
-pub enum DialogState<D: Default + Component> {
-    Hidden,
-    Shown(D),
-}
-
-impl<D> Default for DialogState<D>
-where
-    D: Default + Component,
-{
-    fn default() -> Self {
-        DialogState::Hidden
-    }
-}
-
-impl<D> DialogState<D>
-where
-    D: Default + Component,
-{
-    pub fn is_showing(&self) -> bool {
-        matches!(self, DialogState::Shown(_))
-    }
-
-    pub fn hide(&mut self) {
-        *self = DialogState::Hidden;
-    }
-
-    pub fn show(&mut self) {
-        *self = DialogState::Shown(D::default());
     }
 }
 
