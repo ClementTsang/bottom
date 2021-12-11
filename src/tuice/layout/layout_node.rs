@@ -1,12 +1,16 @@
 use tui::layout::Rect;
 
-/// A node for the layout tree.
-pub enum LayoutNode {
-    Leaf {
-        area: Rect,
-    },
-    Branch {
-        area: Rect,
-        children: Vec<LayoutNode>,
-    },
+#[derive(Default)]
+pub struct LayoutNode {
+    pub area: Rect,
+    pub children: Vec<LayoutNode>,
+}
+
+impl LayoutNode {
+    pub fn from_area(area: Rect) -> Self {
+        Self {
+            area,
+            children: vec![],
+        }
+    }
 }

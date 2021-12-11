@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuice::{Component, Context, Event, Status},
+    tuice::{Component, DrawContext, Event, Status},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
@@ -179,7 +179,7 @@ impl<'a, Message, B> Component<Message, B> for TextTable<'a, Message>
 where
     B: Backend,
 {
-    fn draw(&mut self, area: Rect, context: &Context, frame: &mut Frame<'_, B>) {
+    fn draw(&mut self, area: Rect, context: &DrawContext, frame: &mut Frame<'_, B>) {
         self.table_gap = if !self.show_gap
             || (self.rows.len() + 2 > area.height.into() && area.height < TABLE_GAP_HEIGHT_LIMIT)
         {

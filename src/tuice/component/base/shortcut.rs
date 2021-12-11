@@ -1,6 +1,6 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Component, Context, Event, Status};
+use crate::tuice::{Component, DrawContext, Event, Status};
 
 /// A [`Component`] to handle keyboard shortcuts and assign actions to them.
 ///
@@ -11,7 +11,7 @@ impl<Message, B> Component<Message, B> for Shortcut
 where
     B: Backend,
 {
-    fn draw(&mut self, _area: Rect, _context: &Context, _frame: &mut Frame<'_, B>) {
+    fn draw(&mut self, _area: Rect, _context: &DrawContext, _frame: &mut Frame<'_, B>) {
         todo!()
     }
 

@@ -1,6 +1,6 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Bounds, Component, Context, Event, LayoutNode, Length, Size, Status};
+use crate::tuice::{Bounds, Component, DrawContext, Event, Length, Size, Status, LayoutNode};
 
 pub struct Container<'a, Message, B>
 where
@@ -28,7 +28,7 @@ impl<'a, Message, B> Component<Message, B> for Container<'a, Message, B>
 where
     B: Backend,
 {
-    fn draw(&mut self, area: Rect, _context: &Context, _frame: &mut Frame<'_, B>) {
+    fn draw(&mut self, area: Rect, _context: &DrawContext, _frame: &mut Frame<'_, B>) {
         todo!()
     }
 
@@ -36,7 +36,7 @@ where
         todo!()
     }
 
-    fn layout(&self, bounds: Bounds) -> Size {
+    fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
         let width = match self.width {
             Length::Flex => {
                 todo!()

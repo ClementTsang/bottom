@@ -6,7 +6,7 @@ pub use widget::*;
 
 use tui::{layout::Rect, Frame};
 
-use super::{Bounds, Context, Event, LayoutNode, Size, Status};
+use super::{Bounds, DrawContext, Event, LayoutNode, Size, Status};
 
 /// A component displays information and can be interacted with.
 #[allow(unused_variables)]
@@ -15,7 +15,7 @@ where
     Backend: tui::backend::Backend,
 {
     /// Draws the component.
-    fn draw(&mut self, area: Rect, context: &Context, frame: &mut Frame<'_, Backend>);
+    fn draw(&mut self, area: Rect, context: &DrawContext, frame: &mut Frame<'_, Backend>);
 
     /// How a component should react to an [`Event`].
     ///
@@ -27,7 +27,7 @@ where
     /// How a component should size itself and its children, given some [`Bounds`].
     ///
     /// Defaults to returning a [`Size`] that fills up the bounds given.
-    fn layout(&self, bounds: Bounds) -> Size {
+    fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
         Size {
             width: bounds.max_width,
             height: bounds.max_height,
