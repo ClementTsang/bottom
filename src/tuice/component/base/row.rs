@@ -1,6 +1,6 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Component, Event, Status};
+use crate::tuice::{Bounds, Component, Context, Event, Size, Status};
 
 #[derive(Default)]
 pub struct Row<'a, Message, B>
@@ -29,14 +29,14 @@ impl<'a, Message, B> Component<Message, B> for Row<'a, Message, B>
 where
     B: Backend,
 {
-    fn draw(&mut self, bounds: Rect, frame: &mut Frame<'_, B>) {
+    fn draw(&mut self, area: Rect, context: &Context, frame: &mut Frame<'_, B>) {
         self.children.iter_mut().for_each(|child| {
             // TODO: This is just temp! We need layout!
-            child.draw(bounds, frame);
+            child.draw(area, context, frame);
         })
     }
 
-    fn on_event(&mut self, _bounds: Rect, _event: Event, _messages: &mut Vec<Message>) -> Status {
+    fn on_event(&mut self, _area: Rect, _event: Event, _messages: &mut Vec<Message>) -> Status {
         Status::Ignored
     }
 }

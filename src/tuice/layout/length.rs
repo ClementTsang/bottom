@@ -1,4 +1,4 @@
-/// Which strategy to use while laying out widgets.
+/// Which strategy to use while laying out things.
 pub enum Length {
     /// Fill in remaining space. Equivalent to `Length::FlexRatio(1)`.
     Flex,
@@ -8,4 +8,7 @@ pub enum Length {
 
     /// Fill in a fixed amount of space.
     Fixed(u16),
+
+    /// Let the child determine how large to make the component.
+    Child,
 }

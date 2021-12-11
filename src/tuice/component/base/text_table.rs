@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuice::{Component, Event, Status},
+    tuice::{Component, Context, Event, Status},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
@@ -179,7 +179,55 @@ impl<'a, Message, B> Component<Message, B> for TextTable<'a, Message>
 where
     B: Backend,
 {
-    fn on_event(&mut self, bounds: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
+    fn draw(&mut self, area: Rect, context: &Context, frame: &mut Frame<'_, B>) {
+        self.table_gap = if !self.show_gap
+            || (self.rows.len() + 2 > area.height.into() && area.height < TABLE_GAP_HEIGHT_LIMIT)
+        {
+            0
+        } else {
+            1
+        };
+
+        let table_extras = 1 + self.table_gap;
+        let scrollable_height = area.height.saturating_sub(table_extras);
+        self.update_column_widths(area);
+
+        // Calculate widths first, since we need them later.
+        let widths = self
+            .column_widths
+            .iter()
+            .map(|column| Constraint::Length(*column))
+            .collect::<Vec<_>>();
+
+        // Then calculate rows. We truncate the amount of data read based on height,
+        // as well as truncating some entries based on available width.
+        let data_slice = {
+            // Note: `get_list_start` already ensures `start` is within the bounds of the number of items, so no need to check!
+            let start = self
+                .state
+                .display_start_index(area, scrollable_height as usize);
+            let end = min(self.state.num_items(), start + scrollable_height as usize);
+
+            self.rows[start..end].to_vec()
+        };
+
+        // Now build up our headers...
+        let header = Row::new(self.columns.iter().map(|column| column.name.clone()))
+            .style(self.style_sheet.table_header)
+            .bottom_margin(self.table_gap);
+
+        let mut table = Table::new(data_slice)
+            .header(header)
+            .style(self.style_sheet.text);
+
+        if self.show_selected_entry {
+            table = table.highlight_style(self.style_sheet.selected_text);
+        }
+
+        frame.render_stateful_widget(table.widths(&widths), area, self.state.tui_state());
+    }
+
+    fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
         use crate::tuice::MouseBoundIntersect;
         use crossterm::event::{MouseButton, MouseEventKind};
 
@@ -194,10 +242,10 @@ where
                 }
             }
             Event::Mouse(mouse_event) => {
-                if mouse_event.does_mouse_intersect_bounds(bounds) {
+                if mouse_event.does_mouse_intersect_bounds(area) {
                     match mouse_event.kind {
                         MouseEventKind::Down(MouseButton::Left) => {
-                            let y = mouse_event.row - bounds.top();
+                            let y = mouse_event.row - area.top();
 
                             if self.sortable && y == 0 {
                                 todo!()
@@ -229,55 +277,6 @@ where
                 }
             }
         }
-    }
-
-    fn draw(&mut self, bounds: Rect, frame: &mut Frame<'_, B>) {
-        self.table_gap = if !self.show_gap
-            || (self.rows.len() + 2 > bounds.height.into()
-                && bounds.height < TABLE_GAP_HEIGHT_LIMIT)
-        {
-            0
-        } else {
-            1
-        };
-
-        let table_extras = 1 + self.table_gap;
-        let scrollable_height = bounds.height.saturating_sub(table_extras);
-        self.update_column_widths(bounds);
-
-        // Calculate widths first, since we need them later.
-        let widths = self
-            .column_widths
-            .iter()
-            .map(|column| Constraint::Length(*column))
-            .collect::<Vec<_>>();
-
-        // Then calculate rows. We truncate the amount of data read based on height,
-        // as well as truncating some entries based on available width.
-        let data_slice = {
-            // Note: `get_list_start` already ensures `start` is within the bounds of the number of items, so no need to check!
-            let start = self
-                .state
-                .display_start_index(bounds, scrollable_height as usize);
-            let end = min(self.state.num_items(), start + scrollable_height as usize);
-
-            self.rows[start..end].to_vec()
-        };
-
-        // Now build up our headers...
-        let header = Row::new(self.columns.iter().map(|column| column.name.clone()))
-            .style(self.style_sheet.table_header)
-            .bottom_margin(self.table_gap);
-
-        let mut table = Table::new(data_slice)
-            .header(header)
-            .style(self.style_sheet.text);
-
-        if self.show_selected_entry {
-            table = table.highlight_style(self.style_sheet.selected_text);
-        }
-
-        frame.render_stateful_widget(table.widths(&widths), bounds, self.state.tui_state());
     }
 }
 

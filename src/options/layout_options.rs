@@ -43,8 +43,15 @@ pub struct FinalWidget {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum LayoutRule {
+    /// Let the child decide how big to make the current node.
     Child,
+
+    /// Expand to whatever space is left; the `ratio` determines how
+    /// much space to take if there are more than one
+    /// [`LayoutRule::Expand`] component.
     Expand { ratio: u32 },
+
+    /// Take up exactly `length` space if possible.
     Length { length: u16 },
 }
 
