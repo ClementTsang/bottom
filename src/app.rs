@@ -29,7 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    tuice::{Application, Row},
+    tuice::{Application, Element, Row},
     units::data_units::DataUnit,
     Pid,
 };
@@ -234,12 +234,11 @@ impl Application for AppState {
         self.terminator.load(SeqCst)
     }
 
-    fn view(
-        &mut self,
-    ) -> Box<dyn crate::tuice::Component<Self::Message, crate::tuice::CrosstermBackend>> {
-        Box::new(Row::with_children(vec![crate::tuice::TextTable::new(
+    fn view(&mut self) -> Element<'static, Self::Message> {
+        use crate::tuice::TextTable;
+        Element::from(Row::with_children(vec![Element::from(TextTable::new(
             vec!["A", "B", "C"],
-        )]))
+        ))]))
     }
 
     fn destroy(&mut self) {

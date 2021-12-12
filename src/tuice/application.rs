@@ -2,7 +2,7 @@ use std::{fmt::Debug, sync::mpsc::Receiver};
 
 use super::{
     runtime::{self, RuntimeEvent},
-    Component, Event,
+    Element, Event,
 };
 
 /// An alias to the [`tui::backend::CrosstermBackend`] writing to [`std::io::Stdout`].
@@ -19,7 +19,7 @@ pub trait Application: Sized {
     /// always returning false.
     fn is_terminated(&self) -> bool;
 
-    fn view(&mut self) -> Box<dyn Component<Self::Message, CrosstermBackend>>;
+    fn view(&mut self) -> Element<'static, Self::Message>;
 
     /// To run upon stopping the application.
     fn destroy(&mut self) {}

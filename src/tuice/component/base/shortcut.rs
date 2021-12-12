@@ -1,17 +1,17 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Component, DrawContext, Event, Status};
+use crate::tuice::{Event, Status, TmpComponent};
 
 /// A [`Component`] to handle keyboard shortcuts and assign actions to them.
 ///
 /// Inspired by [Flutter's approach](https://docs.flutter.dev/development/ui/advanced/actions_and_shortcuts).
 pub struct Shortcut {}
 
-impl<Message, B> Component<Message, B> for Shortcut
-where
-    B: Backend,
-{
-    fn draw(&mut self, _area: Rect, _context: &DrawContext, _frame: &mut Frame<'_, B>) {
+impl<Message> TmpComponent<Message> for Shortcut {
+    fn draw<B>(&mut self, _area: Rect, _frame: &mut Frame<'_, B>)
+    where
+        B: Backend,
+    {
         todo!()
     }
 

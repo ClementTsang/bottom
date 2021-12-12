@@ -4,18 +4,19 @@ pub use base::*;
 pub mod widget;
 pub use widget::*;
 
+use enum_dispatch::enum_dispatch;
 use tui::{layout::Rect, Frame};
 
-use super::{Bounds, DrawContext, Event, LayoutNode, Size, Status};
+use super::{Bounds, Event, LayoutNode, Size, Status};
 
 /// A component displays information and can be interacted with.
 #[allow(unused_variables)]
-pub trait Component<Message, Backend>
-where
-    Backend: tui::backend::Backend,
-{
+#[enum_dispatch]
+pub trait TmpComponent<Message> {
     /// Draws the component.
-    fn draw(&mut self, area: Rect, context: &DrawContext, frame: &mut Frame<'_, Backend>);
+    fn draw<Backend>(&mut self, area: Rect, frame: &mut Frame<'_, Backend>)
+    where
+        Backend: tui::backend::Backend;
 
     /// How a component should react to an [`Event`].
     ///

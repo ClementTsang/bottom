@@ -1,14 +1,14 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Component, DrawContext, Event, Status};
+use crate::tuice::{Event, Status, TmpComponent};
 
 pub struct Block {}
 
-impl<Message, B> Component<Message, B> for Block
-where
-    B: Backend,
-{
-    fn draw(&mut self, _area: Rect, _context: &DrawContext, _frame: &mut Frame<'_, B>) {
+impl<Message> TmpComponent<Message> for Block {
+    fn draw<B>(&mut self, _area: Rect, _frame: &mut Frame<'_, B>)
+    where
+        B: Backend,
+    {
         todo!()
     }
 

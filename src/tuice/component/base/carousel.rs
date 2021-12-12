@@ -1,14 +1,14 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Component, DrawContext, Event, Status};
+use crate::tuice::{Event, Status, TmpComponent};
 
 pub struct Carousel {}
 
-impl<Message, B> Component<Message, B> for Carousel
-where
-    B: Backend,
-{
-    fn draw(&mut self, _area: Rect, _context: &DrawContext, _frame: &mut Frame<'_, B>) {
+impl<Message> TmpComponent<Message> for Carousel {
+    fn draw<B>(&mut self, _area: Rect, _frame: &mut Frame<'_, B>)
+    where
+        B: Backend,
+    {
         todo!()
     }
 

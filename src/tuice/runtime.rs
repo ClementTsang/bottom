@@ -4,7 +4,7 @@ use tui::layout::Rect;
 
 use crate::tuice::Status;
 
-use super::{Application, Event};
+use super::{Application, Event, TmpComponent};
 
 #[derive(Clone, Copy, Debug)]
 pub enum RuntimeEvent<Message> {
