@@ -1,6 +1,6 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Bounds, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
 
 /// A [`Container`] just contains a child, as well as being able to be sized.
 ///
@@ -38,7 +38,7 @@ impl<'a, Message> Container<'a, Message> {
 }
 
 impl<'a, Message> TmpComponent<Message> for Container<'a, Message> {
-    fn draw<B>(&mut self, area: Rect, _frame: &mut Frame<'_, B>)
+    fn draw<B>(&mut self, context: DrawContext<'_>, _frame: &mut Frame<'_, B>)
     where
         B: Backend,
     {

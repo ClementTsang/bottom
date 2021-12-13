@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuice::{Event, Status, TmpComponent},
+    tuice::{DrawContext, Event, Status, TmpComponent},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
@@ -166,12 +166,14 @@ impl<'a, Message> TextTable<'a, Message> {
 }
 
 impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
-    fn draw<B>(&mut self, area: Rect, frame: &mut Frame<'_, B>)
+    fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
     where
         B: Backend,
     {
+        let rect = context.rect();
+
         self.table_gap = if !self.show_gap
-            || (self.rows.len() + 2 > area.height.into() && area.height < TABLE_GAP_HEIGHT_LIMIT)
+            || (self.rows.len() + 2 > rect.height.into() && rect.height < TABLE_GAP_HEIGHT_LIMIT)
         {
             0
         } else {
@@ -179,8 +181,8 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
         };
 
         let table_extras = 1 + self.table_gap;
-        let scrollable_height = area.height.saturating_sub(table_extras);
-        self.update_column_widths(area);
+        let scrollable_height = rect.height.saturating_sub(table_extras);
+        self.update_column_widths(rect);
 
         // Calculate widths first, since we need them later.
         let widths = self
@@ -195,7 +197,7 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
             // Note: `get_list_start` already ensures `start` is within the bounds of the number of items, so no need to check!
             let start = self
                 .state
-                .display_start_index(area, scrollable_height as usize);
+                .display_start_index(rect, scrollable_height as usize);
             let end = min(self.state.num_items(), start + scrollable_height as usize);
 
             self.rows[start..end].to_vec()
@@ -214,7 +216,7 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
             table = table.highlight_style(self.style_sheet.selected_text);
         }
 
-        frame.render_stateful_widget(table.widths(&widths), area, self.state.tui_state());
+        frame.render_stateful_widget(table.widths(&widths), rect, self.state.tui_state());
     }
 
     fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {

@@ -1,15 +1,15 @@
 use tui::layout::Rect;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LayoutNode {
-    pub area: Rect,
+    pub rect: Rect,
     pub children: Vec<LayoutNode>,
 }
 
 impl LayoutNode {
-    pub fn from_area(area: Rect) -> Self {
+    pub fn from_rect(rect: Rect) -> Self {
         Self {
-            area,
+            rect,
             children: vec![],
         }
     }

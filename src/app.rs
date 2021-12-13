@@ -236,9 +236,7 @@ impl Application for AppState {
 
     fn view(&mut self) -> Element<'static, Self::Message> {
         use crate::tuice::TextTable;
-        Element::from(Row::with_children(vec![Element::from(TextTable::new(
-            vec!["A", "B", "C"],
-        ))]))
+        Row::with_children(vec![Element::from(TextTable::new(vec!["A", "B", "C"]))]).into()
     }
 
     fn destroy(&mut self) {

@@ -1,6 +1,6 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Bounds, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
 
 pub struct FlexElement<'a, Message> {
     /// Represents a ratio with other [`FlexElement`]s on how far to expand.
@@ -35,11 +35,11 @@ impl<'a, Message> FlexElement<'a, Message> {
         self
     }
 
-    pub(crate) fn draw<B>(&mut self, area: Rect, frame: &mut Frame<'_, B>)
+    pub(crate) fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
     where
         B: Backend,
     {
-        self.element.draw(area, frame)
+        self.element.draw(context, frame)
     }
 
     pub(crate) fn on_event(

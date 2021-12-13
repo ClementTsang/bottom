@@ -2,8 +2,8 @@ use enum_dispatch::enum_dispatch;
 use tui::{layout::Rect, Frame};
 
 use super::{
-    Block, Bounds, Carousel, Column, Container, Event, LayoutNode, Row, Shortcut, Size, Status,
-    TextTable, TmpComponent,
+    Block, Bounds, Carousel, Column, Container, DrawContext, Event, LayoutNode, Row, Shortcut,
+    Size, Status, TextTable, TmpComponent,
 };
 
 /// An [`Element`] is an instantiated [`Component`].

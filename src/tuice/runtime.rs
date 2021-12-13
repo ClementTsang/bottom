@@ -24,8 +24,8 @@ pub(crate) fn launch<A: Application + 'static>(
                 RuntimeEvent::UserInterface(event) => {
                     let mut messages = vec![];
 
-                    let bounds = Rect::default(); // TODO: TEMP
-                    match user_interface.on_event(bounds, event, &mut messages) {
+                    let rect = Rect::default(); // FIXME: TEMP
+                    match user_interface.on_event(rect, event, &mut messages) {
                         Status::Captured => {}
                         Status::Ignored => {
                             application.global_event_handler(event, &mut messages);
@@ -38,6 +38,7 @@ pub(crate) fn launch<A: Application + 'static>(
                     }
 
                     user_interface = application.view();
+                    // FIXME: Draw!
                 }
                 RuntimeEvent::Custom(message) => {
                     application.update(message);
