@@ -1,10 +1,10 @@
 use std::sync::mpsc::Receiver;
 
-use tui::layout::Rect;
+use tui::{backend::Backend, layout::Rect, Terminal};
 
 use crate::tuice::Status;
 
-use super::{Application, Event, TmpComponent};
+use super::{build_layout_tree, Application, Element, Event, TmpComponent};
 
 #[derive(Clone, Copy, Debug)]
 pub enum RuntimeEvent<Message> {
@@ -13,10 +13,15 @@ pub enum RuntimeEvent<Message> {
     Custom(Message),
 }
 
-pub(crate) fn launch<A: Application + 'static>(
-    mut application: A, receiver: Receiver<RuntimeEvent<A::Message>>,
-) {
+pub(crate) fn launch<A, B>(
+    mut application: A, receiver: Receiver<RuntimeEvent<A::Message>>, terminal: &mut Terminal<B>,
+) -> anyhow::Result<()>
+where
+    A: Application + 'static,
+    B: Backend,
+{
     let mut user_interface = application.view();
+    draw(&mut user_interface, terminal)?;
 
     while !application.is_terminated() {
         if let Ok(event) = receiver.recv() {
@@ -38,7 +43,7 @@ pub(crate) fn launch<A: Application + 'static>(
                     }
 
                     user_interface = application.view();
-                    // FIXME: Draw!
+                    draw(&mut user_interface, terminal)?;
                 }
                 RuntimeEvent::Custom(message) => {
                     application.update(message);
@@ -48,6 +53,8 @@ pub(crate) fn launch<A: Application + 'static>(
                     height: _,
                 } => {
                     user_interface = application.view();
+                    // FIXME: Also nuke any cache and the like...
+                    draw(&mut user_interface, terminal)?;
                 }
             }
         } else {
@@ -56,4 +63,21 @@ pub(crate) fn launch<A: Application + 'static>(
     }
 
     application.destroy();
+
+    Ok(())
+}
+
+fn draw<M, B>(user_interface: &mut Element<'_, M>, terminal: &mut Terminal<B>) -> anyhow::Result<()>
+where
+    B: Backend,
+{
+    terminal.draw(|frame| {
+        let rect = frame.size();
+        let layout = build_layout_tree(rect, &user_interface);
+        let context = super::DrawContext::root(&layout);
+
+        user_interface.draw(context, frame);
+    })?;
+
+    Ok(())
 }

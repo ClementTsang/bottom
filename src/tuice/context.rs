@@ -8,7 +8,13 @@ pub struct DrawContext<'a> {
 }
 
 impl<'a> DrawContext<'_> {
-    pub(crate) fn new() {}
+    /// Creates a new [`DrawContext`], with the offset set to `(0, 0)`.
+    pub(crate) fn root(root: &'a LayoutNode) -> DrawContext<'a> {
+        DrawContext {
+            current_node: root,
+            current_offset: (0, 0),
+        }
+    }
 
     pub(crate) fn rect(&self) -> Rect {
         self.current_node.rect

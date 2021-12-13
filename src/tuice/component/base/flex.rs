@@ -49,7 +49,7 @@ impl<'a, Message> FlexElement<'a, Message> {
     }
 
     pub(crate) fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
-        todo!()
+        self.element.layout(bounds, node)
     }
 }
 

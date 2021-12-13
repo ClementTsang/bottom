@@ -1,5 +1,7 @@
 use std::{fmt::Debug, sync::mpsc::Receiver};
 
+use tui::Terminal;
+
 use super::{
     runtime::{self, RuntimeEvent},
     Element, Event,
@@ -32,9 +34,13 @@ pub trait Application: Sized {
     fn global_event_handler(&mut self, event: Event, messages: &mut Vec<Self::Message>) {}
 }
 
-/// Launches some application with tuice.
-pub fn launch_with_application<A: Application + 'static>(
-    application: A, receiver: Receiver<RuntimeEvent<A::Message>>,
-) {
-    runtime::launch(application, receiver);
+/// Launches some application with tuice. Note this will take over the calling thread.
+pub fn launch_with_application<A, B>(
+    application: A, receiver: Receiver<RuntimeEvent<A::Message>>, terminal: &mut Terminal<B>,
+) -> anyhow::Result<()>
+where
+    A: Application + 'static,
+    B: tui::backend::Backend,
+{
+    runtime::launch(application, receiver, terminal)
 }
