@@ -238,11 +238,22 @@ impl Application for AppState {
         use crate::tuice::FlexElement;
         use crate::tuice::TextTable;
 
-        Flex::row_with_children(vec![
-            FlexElement::new(TextTable::new(vec!["A", "B", "C"])),
-            FlexElement::new(TextTable::new(vec!["D", "E", "F"])),
-        ])
-        .into()
+        Flex::column()
+            .with_flex_child(
+                Flex::row_with_children(vec![
+                    FlexElement::new(TextTable::new(vec!["A", "B", "C"])),
+                    FlexElement::new(TextTable::new(vec!["D", "E", "F"])),
+                ]),
+                1,
+            )
+            .with_flex_child(
+                Flex::row_with_children(vec![
+                    FlexElement::new(TextTable::new(vec!["G", "H", "I", "J"])),
+                    FlexElement::new(TextTable::new(vec!["K", "L", "M", "N"])),
+                ]),
+                2,
+            )
+            .into()
     }
 
     fn destroy(&mut self) {

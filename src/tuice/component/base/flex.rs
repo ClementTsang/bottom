@@ -1,4 +1,3 @@
-use itertools::izip;
 use tui::{backend::Backend, layout::Rect, Frame};
 
 pub mod flex_element;
@@ -111,9 +110,8 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
         let mut remaining_bounds = bounds;
         let mut children = vec![LayoutNode::default(); self.children.len()];
         let mut flexible_children_indexes = vec![];
-        let mut offsets = vec![];
-        let mut current_x = 0;
-        let mut current_y = 0;
+        let mut current_x_offset = 0;
+        let mut current_y_offset = 0;
         let mut sizes = Vec::with_capacity(self.children.len());
         let mut current_size = Size::default();
         let mut total_flex = 0;
@@ -129,16 +127,6 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
                     let size = child.child_layout(remaining_bounds, child_node);
                     current_size += size;
                     remaining_bounds.shrink_size(size);
-                    offsets.push((current_x, current_y));
-
-                    match self.alignment {
-                        Axis::Horizontal => {
-                            current_x += size.width;
-                        }
-                        Axis::Vertical => {
-                            current_y += size.height;
-                        }
-                    }
 
                     sizes.push(size);
                 } else {
@@ -161,9 +149,6 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
             let new_size =
                 child.ratio_layout(remaining_bounds, total_flex, child_node, self.alignment);
             current_size += new_size;
-            offsets.push((current_x, current_y));
-            current_x += new_size.width;
-
             *size = new_size;
         });
 
@@ -181,12 +166,21 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
         // Now that we're done determining sizes, convert all children into the appropriate
         // layout nodes.  Remember - parents determine children, and so, we determine
         // children here!
-        izip!(sizes, offsets, children.iter_mut()).for_each(
-            |(size, offset, child): (Size, (u16, u16), &mut LayoutNode)| {
-                let rect = Rect::new(offset.0, offset.1, size.width, size.height);
-                child.rect = rect;
-            },
-        );
+        sizes
+            .iter()
+            .zip(children.iter_mut())
+            .for_each(|(size, child)| {
+                child.rect = Rect::new(current_x_offset, current_y_offset, size.width, size.height);
+
+                match self.alignment {
+                    Axis::Horizontal => {
+                        current_x_offset += size.width;
+                    }
+                    Axis::Vertical => {
+                        current_y_offset += size.height;
+                    }
+                }
+            });
         node.children = children;
 
         current_size
