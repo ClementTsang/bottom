@@ -4,11 +4,8 @@ pub use text_table::{TextColumn, TextColumnConstraint, TextTable};
 pub mod shortcut;
 pub use shortcut::Shortcut;
 
-pub mod row;
-pub use row::Row;
-
-pub mod column;
-pub use column::Column;
+pub mod flex;
+pub use flex::{Axis, Flex, FlexElement};
 
 pub mod block;
 pub use block::Block;
@@ -18,6 +15,3 @@ pub use carousel::Carousel;
 
 pub mod container;
 pub use container::Container;
-
-pub mod flex;
-pub use flex::*;

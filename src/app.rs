@@ -29,7 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    tuice::{Application, Element, Row},
+    tuice::{Application, Element, Flex},
     units::data_units::DataUnit,
     Pid,
 };
@@ -235,8 +235,14 @@ impl Application for AppState {
     }
 
     fn view(&mut self) -> Element<'static, Self::Message> {
+        use crate::tuice::FlexElement;
         use crate::tuice::TextTable;
-        Row::with_children(vec![Element::from(TextTable::new(vec!["A", "B", "C"]))]).into()
+
+        Flex::row_with_children(vec![
+            FlexElement::new(TextTable::new(vec!["A", "B", "C"])),
+            FlexElement::new(TextTable::new(vec!["D", "E", "F"])),
+        ])
+        .into()
     }
 
     fn destroy(&mut self) {

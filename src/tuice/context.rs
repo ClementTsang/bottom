@@ -17,7 +17,11 @@ impl<'a> DrawContext<'_> {
     }
 
     pub(crate) fn rect(&self) -> Rect {
-        self.current_node.rect
+        let mut rect = self.current_node.rect;
+        rect.x += self.current_offset.0;
+        rect.y += self.current_offset.1;
+
+        rect
     }
 
     pub(crate) fn children(&self) -> impl Iterator<Item = DrawContext<'_>> {

@@ -1,60 +1,194 @@
+use itertools::izip;
 use tui::{backend::Backend, layout::Rect, Frame};
+
+pub mod flex_element;
+pub use flex_element::FlexElement;
 
 use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
 
-pub struct FlexElement<'a, Message> {
-    /// Represents a ratio with other [`FlexElement`]s on how far to expand.
-    pub flex: u16,
-    element: Element<'a, Message>,
+#[derive(Clone, Copy, Debug)]
+pub enum Axis {
+    /// Represents the x-axis.
+    Horizontal,
+
+    /// Represents the y-axis.
+    Vertical,
 }
 
-impl<'a, Message> FlexElement<'a, Message> {
-    pub fn new<I: Into<Element<'a, Message>>>(element: I) -> Self {
+pub struct Flex<'a, Message> {
+    children: Vec<FlexElement<'a, Message>>,
+    alignment: Axis,
+}
+
+impl<'a, Message> Flex<'a, Message> {
+    pub fn new(alignment: Axis) -> Self {
         Self {
-            flex: 1,
-            element: element.into(),
+            children: vec![],
+            alignment,
         }
     }
 
-    pub fn with_flex<I: Into<Element<'a, Message>>>(element: I, flex: u16) -> Self {
+    /// Creates a new [`Flex`] with a horizontal alignment.
+    pub fn row() -> Self {
         Self {
-            flex,
-            element: element.into(),
+            children: vec![],
+            alignment: Axis::Horizontal,
         }
     }
 
-    pub fn with_no_flex<I: Into<Element<'a, Message>>>(element: I) -> Self {
+    /// Creates a new [`Flex`] with a horizontal alignment with the given children.
+    pub fn row_with_children<C>(children: Vec<C>) -> Self
+    where
+        C: Into<FlexElement<'a, Message>>,
+    {
         Self {
-            flex: 0,
-            element: element.into(),
+            children: children.into_iter().map(Into::into).collect(),
+            alignment: Axis::Horizontal,
         }
     }
 
-    pub fn flex(mut self, flex: u16) -> Self {
-        self.flex = flex;
+    /// Creates a new [`Flex`] with a vertical alignment.
+    pub fn column() -> Self {
+        Self {
+            children: vec![],
+            alignment: Axis::Vertical,
+        }
+    }
+
+    /// Creates a new [`Flex`] with a vertical alignment with the given children.
+    pub fn column_with_children<C>(children: Vec<C>) -> Self
+    where
+        C: Into<FlexElement<'a, Message>>,
+    {
+        Self {
+            children: children.into_iter().map(Into::into).collect(),
+            alignment: Axis::Vertical,
+        }
+    }
+
+    pub fn with_child<E>(mut self, child: E) -> Self
+    where
+        E: Into<Element<'a, Message>>,
+    {
+        self.children.push(FlexElement::with_no_flex(child.into()));
         self
     }
 
-    pub(crate) fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
+    pub fn with_flex_child<E>(mut self, child: E, flex: u16) -> Self
     where
-        B: Backend,
+        E: Into<Element<'a, Message>>,
     {
-        self.element.draw(context, frame)
-    }
-
-    pub(crate) fn on_event(
-        &mut self, area: Rect, event: Event, messages: &mut Vec<Message>,
-    ) -> Status {
-        self.element.on_event(area, event, messages)
-    }
-
-    pub(crate) fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
-        self.element.layout(bounds, node)
+        self.children
+            .push(FlexElement::with_flex(child.into(), flex));
+        self
     }
 }
 
-impl<'a, Message> From<Element<'a, Message>> for FlexElement<'a, Message> {
-    fn from(element: Element<'a, Message>) -> Self {
-        Self { flex: 0, element }
+impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
+    fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
+    where
+        B: Backend,
+    {
+        self.children
+            .iter_mut()
+            .zip(context.children())
+            .for_each(|(child, child_node)| {
+                child.draw(child_node, frame);
+            });
+    }
+
+    fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
+        // for child in self.children.iter_mut() {
+        //     if let Status::Captured = child.on_event() {
+        //         return Status::Captured;
+        //     }
+        // }
+
+        Status::Ignored
+    }
+
+    fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
+        let mut remaining_bounds = bounds;
+        let mut children = vec![LayoutNode::default(); self.children.len()];
+        let mut flexible_children_indexes = vec![];
+        let mut offsets = vec![];
+        let mut current_x = 0;
+        let mut current_y = 0;
+        let mut sizes = Vec::with_capacity(self.children.len());
+        let mut current_size = Size::default();
+        let mut total_flex = 0;
+
+        // Our general approach is to first handle inflexible children first,
+        // then distribute all remaining space to flexible children.
+        self.children
+            .iter()
+            .zip(children.iter_mut())
+            .enumerate()
+            .for_each(|(index, (child, child_node))| {
+                if child.flex == 0 && remaining_bounds.has_space() {
+                    let size = child.child_layout(remaining_bounds, child_node);
+                    current_size += size;
+                    remaining_bounds.shrink_size(size);
+                    offsets.push((current_x, current_y));
+
+                    match self.alignment {
+                        Axis::Horizontal => {
+                            current_x += size.width;
+                        }
+                        Axis::Vertical => {
+                            current_y += size.height;
+                        }
+                    }
+
+                    sizes.push(size);
+                } else {
+                    total_flex += child.flex;
+                    flexible_children_indexes.push(index);
+                    sizes.push(Size::default());
+                }
+            });
+
+        flexible_children_indexes.into_iter().for_each(|index| {
+            // The index accesses are assumed to be safe by above definitions.
+            // This means that we can use the unsafe operations below.
+            //
+            // NB: If you **EVER** make changes in this function, ensure these assumptions
+            // still hold!
+            let child = unsafe { self.children.get_unchecked(index) };
+            let child_node = unsafe { children.get_unchecked_mut(index) };
+            let size = unsafe { sizes.get_unchecked_mut(index) };
+
+            let new_size =
+                child.ratio_layout(remaining_bounds, total_flex, child_node, self.alignment);
+            current_size += new_size;
+            offsets.push((current_x, current_y));
+            current_x += new_size.width;
+
+            *size = new_size;
+        });
+
+        // If there is still remaining space after, distribute the rest if
+        // appropriate (e.x. current_size is too small for the bounds).
+        if current_size.width < bounds.min_width {
+            // For now, we'll cheat and just set it to be equal.
+            current_size.width = bounds.min_width;
+        }
+        if current_size.height < bounds.min_height {
+            // For now, we'll cheat and just set it to be equal.
+            current_size.height = bounds.min_height;
+        }
+
+        // Now that we're done determining sizes, convert all children into the appropriate
+        // layout nodes.  Remember - parents determine children, and so, we determine
+        // children here!
+        izip!(sizes, offsets, children.iter_mut()).for_each(
+            |(size, offset, child): (Size, (u16, u16), &mut LayoutNode)| {
+                let rect = Rect::new(offset.0, offset.1, size.width, size.height);
+                child.rect = rect;
+            },
+        );
+        node.children = children;
+
+        current_size
     }
 }
