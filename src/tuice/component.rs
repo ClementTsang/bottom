@@ -4,6 +4,9 @@ pub use base::*;
 pub mod widget;
 pub use widget::*;
 
+pub mod properties;
+pub use properties::*;
+
 use enum_dispatch::enum_dispatch;
 use tui::{layout::Rect, Frame};
 

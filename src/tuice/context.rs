@@ -24,6 +24,10 @@ impl<'a> DrawContext<'_> {
         rect
     }
 
+    pub(crate) fn should_draw(&self) -> bool {
+        self.current_node.rect.area() != 0
+    }
+
     pub(crate) fn children(&self) -> impl Iterator<Item = DrawContext<'_>> {
         let new_offset = (
             self.current_offset.0 + self.current_node.rect.x,

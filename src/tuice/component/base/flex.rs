@@ -92,7 +92,9 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
             .iter_mut()
             .zip(context.children())
             .for_each(|(child, child_node)| {
-                child.draw(child_node, frame);
+                if child_node.should_draw() {
+                    child.draw(child_node, frame);
+                }
             });
     }
 
@@ -123,10 +125,16 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
             .zip(children.iter_mut())
             .enumerate()
             .for_each(|(index, (child, child_node))| {
-                if child.flex == 0 && remaining_bounds.has_space() {
-                    let size = child.child_layout(remaining_bounds, child_node);
-                    current_size += size;
-                    remaining_bounds.shrink_size(size);
+                if child.flex == 0 {
+                    let size = if remaining_bounds.has_space() {
+                        let size = child.child_layout(remaining_bounds, child_node);
+                        current_size += size;
+                        remaining_bounds.shrink_size(size);
+
+                        size
+                    } else {
+                        Size::default()
+                    };
 
                     sizes.push(size);
                 } else {

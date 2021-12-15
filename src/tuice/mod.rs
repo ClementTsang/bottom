@@ -1,3 +1,13 @@
+//! tuice is a wrapper around tui-rs that expands upon state management and
+//! event handling.
+//!
+//! tuice is inspired by a **ton** of other libraries and frameworks, like:
+//! - Iced
+//! - [crochet](https://github.com/raphlinus/crochet)
+//! - Flutter
+//! - React
+//! - Yew
+
 mod tui_rs;
 
 pub mod component;
@@ -20,3 +30,12 @@ pub use element::*;
 
 pub mod context;
 pub use context::*;
+
+pub mod screen;
+pub use screen::*;
+
+pub mod key;
+pub use key::*;
+
+pub mod state;
+pub use state::*;
