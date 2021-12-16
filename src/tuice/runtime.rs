@@ -4,7 +4,7 @@ use tui::{backend::Backend, layout::Rect, Terminal};
 
 use crate::tuice::Status;
 
-use super::{build_layout_tree, Application, Element, Event, TmpComponent};
+use super::{build_layout_tree, Application, Element, Event};
 
 #[derive(Clone, Copy, Debug)]
 pub enum RuntimeEvent<Message> {
@@ -17,7 +17,7 @@ pub(crate) fn launch<A, B>(
     mut application: A, receiver: Receiver<RuntimeEvent<A::Message>>, terminal: &mut Terminal<B>,
 ) -> anyhow::Result<()>
 where
-    A: Application + 'static,
+    A: Application<B> + 'static,
     B: Backend,
 {
     let mut user_interface = application.view();
@@ -67,7 +67,9 @@ where
     Ok(())
 }
 
-fn draw<M, B>(user_interface: &mut Element<'_, M>, terminal: &mut Terminal<B>) -> anyhow::Result<()>
+fn draw<M, B>(
+    user_interface: &mut Element<'_, M, B>, terminal: &mut Terminal<B>,
+) -> anyhow::Result<()>
 where
     B: Backend,
 {

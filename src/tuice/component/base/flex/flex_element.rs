@@ -1,31 +1,31 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status};
 
 use super::Axis;
 
-pub struct FlexElement<'a, Message> {
+pub struct FlexElement<'a, Message, B: Backend> {
     /// Represents a ratio with other [`FlexElement`]s on how far to expand.
     pub flex: u16,
-    element: Element<'a, Message>,
+    element: Element<'a, Message, B>,
 }
 
-impl<'a, Message> FlexElement<'a, Message> {
-    pub fn new<I: Into<Element<'a, Message>>>(element: I) -> Self {
+impl<'a, Message, B: Backend> FlexElement<'a, Message, B> {
+    pub fn new<I: Into<Element<'a, Message, B>>>(element: I) -> Self {
         Self {
             flex: 1,
             element: element.into(),
         }
     }
 
-    pub fn with_flex<I: Into<Element<'a, Message>>>(element: I, flex: u16) -> Self {
+    pub fn with_flex<I: Into<Element<'a, Message, B>>>(element: I, flex: u16) -> Self {
         Self {
             flex,
             element: element.into(),
         }
     }
 
-    pub fn with_no_flex<I: Into<Element<'a, Message>>>(element: I) -> Self {
+    pub fn with_no_flex<I: Into<Element<'a, Message, B>>>(element: I) -> Self {
         Self {
             flex: 0,
             element: element.into(),
@@ -37,10 +37,7 @@ impl<'a, Message> FlexElement<'a, Message> {
         self
     }
 
-    pub(crate) fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
-    where
-        B: Backend,
-    {
+    pub(crate) fn draw(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>) {
         self.element.draw(context, frame)
     }
 
@@ -81,8 +78,8 @@ impl<'a, Message> FlexElement<'a, Message> {
     }
 }
 
-impl<'a, Message> From<Element<'a, Message>> for FlexElement<'a, Message> {
-    fn from(element: Element<'a, Message>) -> Self {
+impl<'a, Message, B: Backend> From<Element<'a, Message, B>> for FlexElement<'a, Message, B> {
+    fn from(element: Element<'a, Message, B>) -> Self {
         Self { flex: 0, element }
     }
 }

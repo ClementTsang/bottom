@@ -3,7 +3,7 @@ use tui::{backend::Backend, layout::Rect, Frame};
 pub mod flex_element;
 pub use flex_element::FlexElement;
 
-use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuice::{Bounds, Component, DrawContext, Element, Event, LayoutNode, Size, Status};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Axis {
@@ -14,12 +14,12 @@ pub enum Axis {
     Vertical,
 }
 
-pub struct Flex<'a, Message> {
-    children: Vec<FlexElement<'a, Message>>,
+pub struct Flex<'a, Message, B: Backend> {
+    children: Vec<FlexElement<'a, Message, B>>,
     alignment: Axis,
 }
 
-impl<'a, Message> Flex<'a, Message> {
+impl<'a, Message, B: Backend> Flex<'a, Message, B> {
     pub fn new(alignment: Axis) -> Self {
         Self {
             children: vec![],
@@ -38,7 +38,7 @@ impl<'a, Message> Flex<'a, Message> {
     /// Creates a new [`Flex`] with a horizontal alignment with the given children.
     pub fn row_with_children<C>(children: Vec<C>) -> Self
     where
-        C: Into<FlexElement<'a, Message>>,
+        C: Into<FlexElement<'a, Message, B>>,
     {
         Self {
             children: children.into_iter().map(Into::into).collect(),
@@ -57,7 +57,7 @@ impl<'a, Message> Flex<'a, Message> {
     /// Creates a new [`Flex`] with a vertical alignment with the given children.
     pub fn column_with_children<C>(children: Vec<C>) -> Self
     where
-        C: Into<FlexElement<'a, Message>>,
+        C: Into<FlexElement<'a, Message, B>>,
     {
         Self {
             children: children.into_iter().map(Into::into).collect(),
@@ -67,7 +67,7 @@ impl<'a, Message> Flex<'a, Message> {
 
     pub fn with_child<E>(mut self, child: E) -> Self
     where
-        E: Into<Element<'a, Message>>,
+        E: Into<Element<'a, Message, B>>,
     {
         self.children.push(FlexElement::with_no_flex(child.into()));
         self
@@ -75,7 +75,7 @@ impl<'a, Message> Flex<'a, Message> {
 
     pub fn with_flex_child<E>(mut self, child: E, flex: u16) -> Self
     where
-        E: Into<Element<'a, Message>>,
+        E: Into<Element<'a, Message, B>>,
     {
         self.children
             .push(FlexElement::with_flex(child.into(), flex));
@@ -83,11 +83,8 @@ impl<'a, Message> Flex<'a, Message> {
     }
 }
 
-impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
-    fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
-    where
-        B: Backend,
-    {
+impl<'a, Message, B: Backend> Component<Message, B> for Flex<'a, Message, B> {
+    fn draw(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>) {
         self.children
             .iter_mut()
             .zip(context.children())
@@ -192,5 +189,15 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
         node.children = children;
 
         current_size
+    }
+}
+
+impl<'a, Message, B: Backend> From<Flex<'a, Message, B>> for Element<'a, Message, B>
+where
+    Message: 'a,
+    B: 'a,
+{
+    fn from(flex: Flex<'a, Message, B>) -> Self {
+        Element::new(flex)
     }
 }
