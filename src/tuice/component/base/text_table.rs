@@ -14,12 +14,13 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuice::{DrawContext, Event, Status, TmpComponent},
+    tuice::{Component, DrawContext, Element, Event, Properties, Status},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
 use self::table_scroll_state::ScrollState as TextTableState;
 
+/// Styles for a [`TextTable`].
 #[derive(Clone, Debug, Default)]
 pub struct StyleSheet {
     text: Style,
@@ -27,7 +28,11 @@ pub struct StyleSheet {
     table_header: Style,
 }
 
-pub enum TextTableMsg {}
+/// Properties for a [`TextTable`].
+#[derive(PartialEq, Clone, Debug)]
+pub struct TextTableProps {}
+
+impl Properties for TextTableProps {}
 
 /// A sortable, scrollable table for text data.
 pub struct TextTable<'a, Message> {
@@ -165,11 +170,8 @@ impl<'a, Message> TextTable<'a, Message> {
     }
 }
 
-impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
-    fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
-    where
-        B: Backend,
-    {
+impl<'a, Message, B: Backend> Component<Message, B> for TextTable<'a, Message> {
+    fn draw(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>) {
         let rect = context.rect();
 
         self.table_gap = if !self.show_gap
@@ -269,6 +271,16 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
                 }
             }
         }
+    }
+}
+
+impl<'a, Message, B: Backend> From<TextTable<'a, Message>> for Element<'a, Message, B>
+where
+    Message: 'a,
+    B: 'a,
+{
+    fn from(text_table: TextTable<'a, Message>) -> Self {
+        Element::new(text_table)
     }
 }
 

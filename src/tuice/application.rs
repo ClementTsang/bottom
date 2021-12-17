@@ -1,6 +1,6 @@
 use std::{fmt::Debug, sync::mpsc::Receiver};
 
-use tui::Terminal;
+use tui::{backend::Backend, Terminal};
 
 use super::{
     runtime::{self, RuntimeEvent},
@@ -8,10 +8,13 @@ use super::{
 };
 
 /// An alias to the [`tui::backend::CrosstermBackend`] writing to [`std::io::Stdout`].
-pub type CrosstermBackend = tui::backend::CrosstermBackend<std::io::Stdout>;
+pub(crate) type CrosstermBackend = tui::backend::CrosstermBackend<std::io::Stdout>;
 
 #[allow(unused_variables)]
-pub trait Application: Sized {
+pub trait Application<B = CrosstermBackend>: Sized
+where
+    B: Backend,
+{
     type Message: Debug;
 
     /// Determines how to handle a given message.
@@ -21,7 +24,7 @@ pub trait Application: Sized {
     /// always returning false.
     fn is_terminated(&self) -> bool;
 
-    fn view(&mut self) -> Element<'static, Self::Message>;
+    fn view(&mut self) -> Element<'static, Self::Message, B>;
 
     /// To run upon stopping the application.
     fn destroy(&mut self) {}
@@ -39,8 +42,8 @@ pub fn launch_with_application<A, B>(
     application: A, receiver: Receiver<RuntimeEvent<A::Message>>, terminal: &mut Terminal<B>,
 ) -> anyhow::Result<()>
 where
-    A: Application + 'static,
-    B: tui::backend::Backend,
+    A: Application<B> + 'static,
+    B: Backend,
 {
     runtime::launch(application, receiver, terminal)
 }

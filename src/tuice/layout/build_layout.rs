@@ -1,8 +1,10 @@
-use tui::layout::Rect;
+use tui::{backend::Backend, layout::Rect};
 
-use crate::tuice::{Bounds, Element, LayoutNode, TmpComponent};
+use crate::tuice::{Bounds, Element, LayoutNode};
 
-pub fn build_layout_tree<Message>(rect: Rect, root: &Element<'_, Message>) -> LayoutNode {
+pub fn build_layout_tree<Message, B: Backend>(
+    rect: Rect, root: &Element<'_, Message, B>,
+) -> LayoutNode {
     let mut root_layout_node = LayoutNode::from_rect(rect);
     let bounds = Bounds {
         min_width: 0,
