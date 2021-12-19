@@ -118,7 +118,7 @@ fn main() -> Result<()> {
     terminal.hide_cursor()?;
 
     // Set panic hook
-    panic::set_hook(Box::new(|info| panic_hook(info)));
+    panic::set_hook(Box::new(panic_hook));
 
     // Set termination hook
     let is_terminated = Arc::new(AtomicBool::new(false));
