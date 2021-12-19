@@ -510,6 +510,10 @@ impl ProcWidgetState {
             columns.toggle(&ProcessSorting::Mem);
             columns.toggle(&ProcessSorting::MemPercent);
         }
+        if is_using_command {
+            columns.toggle(&ProcessSorting::ProcessName);
+            columns.toggle(&ProcessSorting::Command);
+        }
 
         ProcWidgetState {
             process_search_state,
