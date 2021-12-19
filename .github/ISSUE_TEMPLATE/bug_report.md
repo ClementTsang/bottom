@@ -32,11 +32,11 @@ Please mention how you installed `bottom`. If you manually compiled it, please a
 
 ## How can we reproduce this?
 
-Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as possible, and include config files or flags if relevant. If maintainers cannot reproduce the bug, it will be very hard to fix it.
+Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as possible. Include config files or flags if relevant. If maintainers cannot reproduce the bug, it will be very hard to fix it.
 
 ## What is the actual behaviour?
 
-What is the _actual_ result of the given steps? Be detailed. Please include screenshots if the issue is a visual one.
+What is the _actual_ result of the given steps? Be detailed. Please include screenshots if relevant and possible.
 
 ## What is the expected behaviour?
 
