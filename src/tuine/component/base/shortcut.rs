@@ -1,6 +1,6 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{DrawContext, Event, Status, TmpComponent};
+use crate::tuine::{DrawContext, Event, Status, TmpComponent};
 
 /// A [`Component`] to handle keyboard shortcuts and assign actions to them.
 ///

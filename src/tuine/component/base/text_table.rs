@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuice::{DrawContext, Event, Status, TmpComponent},
+    tuine::{DrawContext, Event, Status, TmpComponent},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
@@ -220,7 +220,7 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
     }
 
     fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
-        use crate::tuice::MouseBoundIntersect;
+        use crate::tuine::MouseBoundIntersect;
         use crossterm::event::{MouseButton, MouseEventKind};
 
         match event {

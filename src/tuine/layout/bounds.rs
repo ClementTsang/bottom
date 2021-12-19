@@ -1,4 +1,4 @@
-use crate::tuice::Size;
+use crate::tuine::Size;
 
 /// [`Bounds`] represent minimal and maximal widths/height constraints while laying things out.
 ///

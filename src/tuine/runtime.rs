@@ -2,7 +2,7 @@ use std::sync::mpsc::Receiver;
 
 use tui::{backend::Backend, layout::Rect, Terminal};
 
-use crate::tuice::Status;
+use crate::tuine::Status;
 
 use super::{build_layout_tree, Application, Element, Event, TmpComponent};
 

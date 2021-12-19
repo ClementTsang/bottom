@@ -29,7 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    tuice::{Application, Element, Flex},
+    tuine::{Application, Element, Flex},
     units::data_units::DataUnit,
     Pid,
 };
@@ -235,8 +235,8 @@ impl Application for AppState {
     }
 
     fn view(&mut self) -> Element<'static, Self::Message> {
-        use crate::tuice::FlexElement;
-        use crate::tuice::TextTable;
+        use crate::tuine::FlexElement;
+        use crate::tuine::TextTable;
 
         Flex::column()
             .with_flex_child(
@@ -261,9 +261,9 @@ impl Application for AppState {
     }
 
     fn global_event_handler(
-        &mut self, event: crate::tuice::Event, _messages: &mut Vec<Self::Message>,
+        &mut self, event: crate::tuine::Event, _messages: &mut Vec<Self::Message>,
     ) {
-        use crate::tuice::Event;
+        use crate::tuine::Event;
         match event {
             Event::Keyboard(_) => {}
             Event::Mouse(_) => {}

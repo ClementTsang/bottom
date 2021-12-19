@@ -1,6 +1,6 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuine::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
 
 /// A [`Container`] just contains a child, as well as being able to be sized.
 ///

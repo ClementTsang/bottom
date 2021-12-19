@@ -1,7 +1,7 @@
-//! tuice is a wrapper around tui-rs that expands upon state management and
+//! tuine is a wrapper around tui-rs that expands upon state management and
 //! event handling.
 //!
-//! tuice is inspired by a **ton** of other libraries and frameworks, like:
+//! tuine is inspired by a **ton** of other libraries and frameworks, like:
 //! - Iced
 //! - [crochet](https://github.com/raphlinus/crochet)
 //! - Flutter

@@ -1,6 +1,6 @@
 use tui::layout::Rect;
 
-use crate::tuice::{Bounds, Element, LayoutNode, TmpComponent};
+use crate::tuine::{Bounds, Element, LayoutNode, TmpComponent};
 
 pub fn build_layout_tree<Message>(rect: Rect, root: &Element<'_, Message>) -> LayoutNode {
     let mut root_layout_node = LayoutNode::from_rect(rect);

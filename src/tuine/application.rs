@@ -34,7 +34,7 @@ pub trait Application: Sized {
     fn global_event_handler(&mut self, event: Event, messages: &mut Vec<Self::Message>) {}
 }
 
-/// Launches some application with tuice. Note this will take over the calling thread.
+/// Launches some application with tuine. Note this will take over the calling thread.
 pub fn launch_with_application<A, B>(
     application: A, receiver: Receiver<RuntimeEvent<A::Message>>, terminal: &mut Terminal<B>,
 ) -> anyhow::Result<()>

@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{app::AppMessages, options::*, tuice::RuntimeEvent, *};
+use bottom::{app::AppMessages, options::*, tuine::RuntimeEvent, *};
 
 use std::{
     boxed::Box,
@@ -102,7 +102,7 @@ fn main() -> Result<()> {
     // TODO: [Threads, Panic] Make this close all the child threads too!
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
-    tuice::launch_with_application(app, receiver, &mut terminal)?; // FIXME: Move terminal construction INSIDE
+    tuine::launch_with_application(app, receiver, &mut terminal)?; // FIXME: Move terminal construction INSIDE
 
     // I think doing it in this order is safe...
     *thread_termination_lock.lock().unwrap() = true;

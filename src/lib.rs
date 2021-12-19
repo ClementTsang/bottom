@@ -29,7 +29,7 @@ use crossterm::{
 use app::{data_harvester, AppMessages, UsedWidgets};
 use constants::*;
 use options::*;
-use tuice::{Event, RuntimeEvent};
+use tuine::{Event, RuntimeEvent};
 use utils::error;
 
 pub mod app;
@@ -43,7 +43,7 @@ pub mod clap;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;
-pub mod tuice;
+pub mod tuine;
 pub(crate) mod units;
 
 // FIXME: Use newtype pattern for PID

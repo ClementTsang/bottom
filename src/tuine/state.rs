@@ -3,7 +3,7 @@
 
 use std::any::Any;
 
-/// A trait that any sort of [`Component`](crate::tuice::Component) state should implement.
+/// A trait that any sort of [`Component`](crate::tuine::Component) state should implement.
 pub trait State {
     fn as_any(&self) -> &dyn Any;
 

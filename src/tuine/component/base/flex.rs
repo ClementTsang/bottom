@@ -3,7 +3,7 @@ use tui::{backend::Backend, layout::Rect, Frame};
 pub mod flex_element;
 pub use flex_element::FlexElement;
 
-use crate::tuice::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuine::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Axis {
@@ -99,11 +99,7 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
     }
 
     fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
-        // for child in self.children.iter_mut() {
-        //     if let Status::Captured = child.on_event() {
-        //         return Status::Captured;
-        //     }
-        // }
+        // FIXME: On event for flex
 
         Status::Ignored
     }

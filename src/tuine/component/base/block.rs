@@ -1,10 +1,10 @@
 use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::tuice::{DrawContext, Event, Status, TmpComponent};
+use crate::tuine::{DrawContext, Event, Status, TmpComponent};
 
-pub struct Carousel {}
+pub struct Block {}
 
-impl<Message> TmpComponent<Message> for Carousel {
+impl<Message> TmpComponent<Message> for Block {
     fn draw<B>(&mut self, _context: DrawContext<'_>, _frame: &mut Frame<'_, B>)
     where
         B: Backend,
