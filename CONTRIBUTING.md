@@ -24,13 +24,13 @@ If you want to directly contribute documentation changes or code, follow this! T
 4. Wait for the tests to pass. These consist of clippy lints, rustfmt checks, and basic tests. **If you are a first time contributor, skip to the next step for now, as GitHub Actions requires approval to run.**
 5. Ask a maintainer to review your pull request. If changes are suggested or any comments are made, they should probably be addressed. Once it looks good, it'll be merged!
 
-For more details, see [here](https://clementtsang.github.io/bottom/nightly/contribution/issues-and-pull-requests/).
+For more details, see [here](https://bottom.pages.dev/nightly/contribution/issues-and-pull-requests/).
 
 ### Documentation
 
-For contributing to documentation, see [here](https://clementtsang.github.io/bottom/nightly/contribution/documentation/).
+For contributing to documentation, see [here](https://bottom.pages.dev/nightly/contribution/documentation/).
 
 ### Packaging
 
-If you want to become a package maintainer, look [here](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+If you want to become a package maintainer, look [here](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
 for instructions on how to build bottom and add installation instructions to the README.

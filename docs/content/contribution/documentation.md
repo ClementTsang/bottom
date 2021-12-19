@@ -9,7 +9,7 @@
 
 There are a few areas where documentation changes are often needed:
 
-- The [extended documentation](https://clementtsang.github.io/bottom/nightly/) (AKA here)
+- The [extended documentation](https://bottom.pages.dev/nightly/) (AKA here)
 - The [`README.md`](https://github.com/ClementTsang/bottom/blob/master/README.md)
 - The help menu inside of the application (located [here](https://github.com/ClementTsang/bottom/blob/master/src/constants.rs))
 - The [`CHANGELOG.md`](https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md)
