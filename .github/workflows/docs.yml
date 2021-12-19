@@ -43,4 +43,4 @@ jobs:
 
       - name: Deploy to CF Pages
         run: |
-          curl -X POST ${CFP_HOOK}
+          curl -X POST ${{ secrets.CFP_HOOK }}
