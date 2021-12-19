@@ -52,6 +52,10 @@ jobs:
           cd docs
           mike deploy --push --update-aliases ${RELEASE_VERSION} stable
 
+      - name: Deploy to CF Pages
+        run: |
+          curl -X POST ${CFP_HOOK}
+
   packaging:
     runs-on: ubuntu-latest
     steps:
