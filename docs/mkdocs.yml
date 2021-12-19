@@ -1,7 +1,7 @@
 # Site information
 site_name: bottom
 site_author: Clement Tsang
-site_url: https://bottom.pages.dev/
+site_url: https://bottom.pages.dev
 site_description: >-
   Yet another cross-platform graphical process/system monitor, inspired by gtop, gotop, and htop.
 docs_dir: "content/"
