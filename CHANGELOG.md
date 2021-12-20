@@ -9,12 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.5] - 2021-12-19
 
-## Internal Changes
-
-- [#632](https://github.com/ClementTsang/bottom/pull/632): Migrate documentation hosting to Cloudflare Pages.
-
 ## Bug Fixes
 
+- [#600](https://github.com/ClementTsang/bottom/pull/600): Address RUSTSEC-2020-0071
 - [#627](https://github.com/ClementTsang/bottom/pull/627): Fixes `process_command` breaking process widget sorting.
 
 ## Internal Changes
