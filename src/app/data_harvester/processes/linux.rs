@@ -42,31 +42,26 @@ fn cpu_usage_calculation(
     use std::io::prelude::*;
     use std::io::BufReader;
 
-    // From SO answer: https://stackoverflow.com/a/23376195
+    /// Converts a `Option<&str>` value to an f64. If it fails to parse or is `None`, then it will return `0_f64`.
+    fn str_to_f64(val: Option<&str>) -> f64 {
+        val.and_then(|v| v.parse::<f64>().ok()).unwrap_or(0_f64)
+    }
 
+    // From SO answer: https://stackoverflow.com/a/23376195
     let mut reader = BufReader::new(std::fs::File::open("/proc/stat")?);
     let mut first_line = String::new();
     reader.read_line(&mut first_line)?;
 
-    let val = first_line.split_whitespace().collect::<Vec<&str>>();
-
-    // SC in case that the parsing will fail due to length:
-    if val.len() <= 10 {
-        return Err(error::BottomError::InvalidIo(format!(
-            "CPU parsing will fail due to too short of a return value; saw {} values, expected 10 values.",
-            val.len()
-        )));
-    }
-
-    let user: f64 = val[1].parse::<_>().unwrap_or(0_f64);
-    let nice: f64 = val[2].parse::<_>().unwrap_or(0_f64);
-    let system: f64 = val[3].parse::<_>().unwrap_or(0_f64);
-    let idle: f64 = val[4].parse::<_>().unwrap_or(0_f64);
-    let iowait: f64 = val[5].parse::<_>().unwrap_or(0_f64);
-    let irq: f64 = val[6].parse::<_>().unwrap_or(0_f64);
-    let softirq: f64 = val[7].parse::<_>().unwrap_or(0_f64);
-    let steal: f64 = val[8].parse::<_>().unwrap_or(0_f64);
-    let guest: f64 = val[9].parse::<_>().unwrap_or(0_f64);
+    let mut val = first_line.split_whitespace();
+    let user = str_to_f64(val.next());
+    let nice: f64 = str_to_f64(val.next());
+    let system: f64 = str_to_f64(val.next());
+    let idle: f64 = str_to_f64(val.next());
+    let iowait: f64 = str_to_f64(val.next());
+    let irq: f64 = str_to_f64(val.next());
+    let softirq: f64 = str_to_f64(val.next());
+    let steal: f64 = str_to_f64(val.next());
+    let guest: f64 = str_to_f64(val.next());
 
     let idle = idle + iowait;
     let non_idle = user + nice + system + irq + softirq + steal + guest;
