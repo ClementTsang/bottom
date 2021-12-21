@@ -36,23 +36,13 @@ impl PrevProcDetails {
     }
 }
 
-fn cpu_usage_calculation(
-    prev_idle: &mut f64, prev_non_idle: &mut f64,
-) -> error::Result<(f64, f64)> {
-    use std::io::prelude::*;
-    use std::io::BufReader;
-
+fn calculate_idle_values(line: String) -> (f64, f64) {
     /// Converts a `Option<&str>` value to an f64. If it fails to parse or is `None`, then it will return `0_f64`.
     fn str_to_f64(val: Option<&str>) -> f64 {
         val.and_then(|v| v.parse::<f64>().ok()).unwrap_or(0_f64)
     }
 
-    // From SO answer: https://stackoverflow.com/a/23376195
-    let mut reader = BufReader::new(std::fs::File::open("/proc/stat")?);
-    let mut first_line = String::new();
-    reader.read_line(&mut first_line)?;
-
-    let mut val = first_line.split_whitespace();
+    let mut val = line.split_whitespace();
     let user = str_to_f64(val.next());
     let nice: f64 = str_to_f64(val.next());
     let system: f64 = str_to_f64(val.next());
@@ -65,6 +55,22 @@ fn cpu_usage_calculation(
 
     let idle = idle + iowait;
     let non_idle = user + nice + system + irq + softirq + steal + guest;
+
+    (idle, non_idle)
+}
+
+fn cpu_usage_calculation(
+    prev_idle: &mut f64, prev_non_idle: &mut f64,
+) -> error::Result<(f64, f64)> {
+    use std::io::prelude::*;
+    use std::io::BufReader;
+
+    // From SO answer: https://stackoverflow.com/a/23376195
+    let mut reader = BufReader::new(std::fs::File::open("/proc/stat")?);
+    let mut first_line = String::new();
+    reader.read_line(&mut first_line)?;
+
+    let (idle, non_idle) = calculate_idle_values(first_line);
 
     let total = idle + non_idle;
     let prev_total = *prev_idle + *prev_non_idle;
@@ -287,5 +293,44 @@ pub fn get_process_data(
         Err(BottomError::GenericError(
             "Could not calculate CPU usage.".to_string(),
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_proc_cpu_parse() {
+        assert_eq!(
+            (100_f64, 200_f64),
+            calculate_idle_values("100 0 100 100".to_string()),
+            "Failed to parse /proc/stat CPU with 4 values"
+        );
+        assert_eq!(
+            (120_f64, 200_f64),
+            calculate_idle_values("100 0 100 100 20".to_string()),
+            "Failed to parse /proc/stat CPU with 5 values"
+        );
+        assert_eq!(
+            (120_f64, 230_f64),
+            calculate_idle_values("100 0 100 100 20 30".to_string()),
+            "Failed to parse /proc/stat CPU with 6 values"
+        );
+        assert_eq!(
+            (120_f64, 270_f64),
+            calculate_idle_values("100 0 100 100 20 30 40".to_string()),
+            "Failed to parse /proc/stat CPU with 7 values"
+        );
+        assert_eq!(
+            (120_f64, 320_f64),
+            calculate_idle_values("100 0 100 100 20 30 40 50".to_string()),
+            "Failed to parse /proc/stat CPU with 8 values"
+        );
+        assert_eq!(
+            (120_f64, 420_f64),
+            calculate_idle_values("100 0 100 100 20 30 40 50 100".to_string()),
+            "Failed to parse /proc/stat CPU with 9 values"
+        );
     }
 }
