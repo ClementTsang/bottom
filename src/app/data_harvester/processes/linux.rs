@@ -51,10 +51,11 @@ fn calculate_idle_values(line: String) -> (f64, f64) {
     let irq: f64 = str_to_f64(val.next());
     let softirq: f64 = str_to_f64(val.next());
     let steal: f64 = str_to_f64(val.next());
-    let guest: f64 = str_to_f64(val.next());
+
+    // Note we do not get guest/guest_nice, as they are calculated as part of user/nice respectively
 
     let idle = idle + iowait;
-    let non_idle = user + nice + system + irq + softirq + steal + guest;
+    let non_idle = user + nice + system + irq + softirq + steal;
 
     (idle, non_idle)
 }
@@ -305,32 +306,37 @@ mod tests {
         assert_eq!(
             (100_f64, 200_f64),
             calculate_idle_values("100 0 100 100".to_string()),
-            "Failed to parse /proc/stat CPU with 4 values"
+            "Failed to properly calculate idle/non-idle for /proc/stat CPU with 4 values"
         );
         assert_eq!(
             (120_f64, 200_f64),
             calculate_idle_values("100 0 100 100 20".to_string()),
-            "Failed to parse /proc/stat CPU with 5 values"
+            "Failed to properly calculate idle/non-idle for /proc/stat CPU with 5 values"
         );
         assert_eq!(
             (120_f64, 230_f64),
             calculate_idle_values("100 0 100 100 20 30".to_string()),
-            "Failed to parse /proc/stat CPU with 6 values"
+            "Failed to properly calculate idle/non-idle for /proc/stat CPU with 6 values"
         );
         assert_eq!(
             (120_f64, 270_f64),
             calculate_idle_values("100 0 100 100 20 30 40".to_string()),
-            "Failed to parse /proc/stat CPU with 7 values"
+            "Failed to properly calculate idle/non-idle for /proc/stat CPU with 7 values"
         );
         assert_eq!(
             (120_f64, 320_f64),
             calculate_idle_values("100 0 100 100 20 30 40 50".to_string()),
-            "Failed to parse /proc/stat CPU with 8 values"
+            "Failed to properly calculate idle/non-idle for /proc/stat CPU with 8 values"
         );
         assert_eq!(
-            (120_f64, 420_f64),
+            (120_f64, 320_f64),
             calculate_idle_values("100 0 100 100 20 30 40 50 100".to_string()),
-            "Failed to parse /proc/stat CPU with 9 values"
+            "Failed to properly calculate idle/non-idle for /proc/stat CPU with 9 values"
+        );
+        assert_eq!(
+            (120_f64, 320_f64),
+            calculate_idle_values("100 0 100 100 20 30 40 50 100 200".to_string()),
+            "Failed to properly calculate idle/non-idle for /proc/stat CPU with 10 values"
         );
     }
 }
