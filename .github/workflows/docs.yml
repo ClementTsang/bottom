@@ -40,7 +40,6 @@ jobs:
         run: |
           cd docs
           mike deploy nightly --push
-
-      - name: Deploy to CF Pages
-        run: |
-          curl -X POST ${{ secrets.CFP_HOOK }}
+      # - name: Deploy to CF Pages
+      #   run: |
+      #     curl -X POST ${{ secrets.CFP_HOOK }}
