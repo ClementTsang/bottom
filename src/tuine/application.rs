@@ -4,7 +4,7 @@ use tui::Terminal;
 
 use super::{
     runtime::{self, RuntimeEvent},
-    Element, Event,
+    ComponentContext, Element, Event,
 };
 
 /// An alias to the [`tui::backend::CrosstermBackend`] writing to [`std::io::Stdout`].

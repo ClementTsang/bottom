@@ -16,7 +16,7 @@ impl Default for ScrollDirection {
 }
 
 /// We save the previous window index for future reference, but we must invalidate if the area changes.
-#[derive(Default)]
+#[derive(PartialEq, Default)]
 struct WindowIndex {
     index: usize,
     cached_area: Rect,
@@ -37,6 +37,16 @@ pub struct ScrollState {
 
     /// tui-rs' internal table state; used to keep track of the *visually* selected index.
     tui_state: TableState,
+}
+
+impl PartialEq for ScrollState {
+    fn eq(&self, other: &Self) -> bool {
+        self.current_index == other.current_index
+            && self.window_index == other.window_index
+            && self.scroll_direction == other.scroll_direction
+            && self.num_items == other.num_items
+            && (self.tui_state.selected() == other.tui_state.selected())
+    }
 }
 
 impl Default for ScrollState {

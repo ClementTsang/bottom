@@ -1,5 +1,5 @@
 //! State code is heavily inspired by crochet's work - see
-//! [here](https://github.com/raphlinus/crochet/blob/master/src/state.rs) for the original.
+//! [here](https://github.com/raphlinus/crochet/blob/master/src/state.rs) for the original work.
 
 use std::any::Any;
 

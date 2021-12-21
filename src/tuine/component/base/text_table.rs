@@ -1,7 +1,7 @@
 pub mod table_column;
 mod table_scroll_state;
 
-use std::{borrow::Cow, cmp::min};
+use std::{borrow::Cow, cmp::min, panic::Location};
 
 use tui::{
     backend::Backend,
@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuine::{DrawContext, Event, Status, TmpComponent},
+    tuine::{ComponentContext, DrawContext, Event, Status, TmpComponent},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
@@ -26,8 +26,6 @@ pub struct StyleSheet {
     selected_text: Style,
     table_header: Style,
 }
-
-pub enum TextTableMsg {}
 
 /// A sortable, scrollable table for text data.
 pub struct TextTable<'a, Message> {
@@ -45,9 +43,12 @@ pub struct TextTable<'a, Message> {
 }
 
 impl<'a, Message> TextTable<'a, Message> {
+    #[track_caller]
     pub fn new<S: Into<Cow<'static, str>>>(columns: Vec<S>) -> Self {
+        let state = TextTableState::default();
+
         Self {
-            state: TextTableState::default(),
+            state,
             column_widths: vec![0; columns.len()],
             columns: columns
                 .into_iter()

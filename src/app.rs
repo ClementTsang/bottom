@@ -29,7 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    tuine::{Application, Element, Flex},
+    tuine::{Application, ComponentContext, Element, Flex},
     units::data_units::DataUnit,
     Pid,
 };

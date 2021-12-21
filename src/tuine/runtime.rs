@@ -4,7 +4,7 @@ use tui::{backend::Backend, layout::Rect, Terminal};
 
 use crate::tuine::Status;
 
-use super::{build_layout_tree, Application, Element, Event, TmpComponent};
+use super::{build_layout_tree, Application, ComponentContext, Element, Event, TmpComponent};
 
 #[derive(Clone, Copy, Debug)]
 pub enum RuntimeEvent<Message> {

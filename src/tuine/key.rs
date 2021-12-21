@@ -8,6 +8,12 @@ use std::panic::Location;
 #[derive(Clone, Copy, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Caller(&'static Location<'static>);
 
+impl From<&'static Location<'static>> for Caller {
+    fn from(location: &'static Location<'static>) -> Self {
+        Caller(location)
+    }
+}
+
 /// A unique key built around using the [`Location`] given by
 /// `#[track_caller]` and a sequence index.
 #[derive(Clone, Copy, Hash, Debug, PartialEq, Eq, PartialOrd, Ord)]
