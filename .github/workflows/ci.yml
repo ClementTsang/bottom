@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v2
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+      - uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           profile: minimal
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v2
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
-      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+      - uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           profile: minimal
@@ -205,7 +205,7 @@ jobs:
 
       - name: Install toolchain
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: ${{ matrix.triple.rust }}
@@ -267,7 +267,7 @@ jobs:
 
       - name: Install toolchain
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: ${{ matrix.triple.rust }}
@@ -329,7 +329,7 @@ jobs:
 
       - name: Install toolchain
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: ${{ matrix.triple.rust }}

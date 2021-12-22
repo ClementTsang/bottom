@@ -140,7 +140,7 @@ jobs:
           fetch-depth: 1
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
@@ -248,7 +248,7 @@ jobs:
           args: install -y wixtoolset
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
@@ -315,7 +315,7 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
