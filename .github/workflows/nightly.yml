@@ -136,7 +136,7 @@ jobs:
           fetch-depth: 1
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
@@ -148,7 +148,7 @@ jobs:
           key: ${{ matrix.triple.target }}
 
       - name: Build
-        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # 1.0.1
+        uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --verbose --target=${{ matrix.triple.target }} --features "battery"
@@ -242,7 +242,7 @@ jobs:
           args: install -y wixtoolset
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
@@ -302,7 +302,7 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
