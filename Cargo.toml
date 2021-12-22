@@ -50,7 +50,7 @@ once_cell = "1.5.2"
 regex = "1.5.4"
 serde = { version = "1.0.125", features = ["derive"] }
 # Sysinfo is still used in Linux for the ProcessStatus
-sysinfo = "0.18.2"
+sysinfo = "0.22.3"
 thiserror = "1.0.24"
 time = { version = "0.3.3", features = ["formatting", "local-offset", "macros"] }
 toml = "0.5.8"
