@@ -19,6 +19,8 @@ theme:
     - navigation.top
     - navigation.expand
     - navigation.instant
+    - navigation.sections
+    - toc.integrate
   palette:
     # Light mode
     - media: "(prefers-color-scheme: light)"
@@ -32,6 +34,7 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+  custom_dir: "content/overrides"
 extra_css:
   - stylesheets/extra.css
 
@@ -103,6 +106,8 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
   - mdx_truly_sane_lists # See https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
+  - pymdownx.tabbed:
+      alternate_style: true
 
 extra:
   # Versioning
@@ -117,7 +122,9 @@ extra:
 # Navigation
 nav:
   - "Home": index.md
-  - "Support": support.md
+  - "Support":
+      - "Official Support": support/official.md
+      - "Unofficial Support": support/unofficial.md
   - "Usage":
       - "General Usage": usage/general-usage.md
       - "Widgets":
