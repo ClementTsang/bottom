@@ -53,6 +53,7 @@ fn calculate_idle_values(line: String) -> (f64, f64) {
     let steal: f64 = str_to_f64(val.next());
 
     // Note we do not get guest/guest_nice, as they are calculated as part of user/nice respectively
+    // See https://github.com/htop-dev/htop/blob/main/linux/LinuxProcessList.c
 
     let idle = idle + iowait;
     let non_idle = user + nice + system + irq + softirq + steal;

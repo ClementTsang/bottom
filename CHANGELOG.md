@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#637](https://github.com/ClementTsang/bottom/pull/637): Fix process CPU calculation if /proc/stat CPU line has less values than expected
 
+## Changes
+
+- [#637](https://github.com/ClementTsang/bottom/pull/637): Remove duplicate guest time in process CPU calculation
+
 ## [0.6.5] - 2021-12-19
 
 ## Bug Fixes
