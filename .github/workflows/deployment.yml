@@ -140,19 +140,19 @@ jobs:
           fetch-depth: 1
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: ${{ matrix.triple.target }}
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
         with:
           key: ${{ matrix.triple.target }}
 
       - name: Build
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/cargo@ae10961054e4aa8b4aa7dffede299aaf087aa33b # 1.0.1
         with:
           command: build
           args: --release --verbose --target=${{ matrix.triple.target }} --features "battery"
@@ -243,19 +243,19 @@ jobs:
         run: Install-WindowsFeature Net-Framework-Core
 
       - name: Install wixtoolset (Windows x86-64 MSVC)
-        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        uses: crazy-max/ghaction-chocolatey@87d06bbbd2cfb1835f1820042d356aef4875fb5f # 1.6.0
         with:
           args: install -y wixtoolset
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: x86_64-pc-windows-msvc
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
         with:
           key: x86_64-pc-windows-msvc-msi
 
@@ -315,14 +315,14 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f # 1.0.6
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: x86_64-unknown-linux-gnu
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
         with:
           key: x86_64-unknown-linux-gnu-deb
 
@@ -429,7 +429,7 @@ jobs:
           ls ./release
 
       - name: Upload all saved release files
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@17cd0d34deddf848fc0e7d9be5202c148c270a0a # 0.1.14
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
