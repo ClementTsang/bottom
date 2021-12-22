@@ -13,6 +13,6 @@ jobs:
       - uses: actions-rs/install@master
         with:
           crate: cargo-audit
-      - uses: actions-rs/audit-check@v1
+      - uses: actions-rs/audit-check@35b7b53b1e25b55642157ac01b4adceb5b9ebef3 # 1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

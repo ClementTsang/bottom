@@ -136,14 +136,14 @@ jobs:
           fetch-depth: 1
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: ${{ matrix.triple.target }}
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
         with:
           key: ${{ matrix.triple.target }}
 
@@ -237,19 +237,19 @@ jobs:
         run: Install-WindowsFeature Net-Framework-Core
 
       - name: Install wixtoolset
-        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        uses: crazy-max/ghaction-chocolatey@87d06bbbd2cfb1835f1820042d356aef4875fb5f # 1.6.0
         with:
           args: install -y wixtoolset
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: x86_64-pc-windows-msvc
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
         with:
           key: x86_64-pc-windows-msvc-msi
 
@@ -302,14 +302,14 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: x86_64-unknown-linux-gnu
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
         with:
           key: x86_64-unknown-linux-gnu-deb
 
@@ -349,7 +349,7 @@ jobs:
           ls ./release
 
       - name: Delete tag and release
-        uses: dev-drprasad/delete-tag-and-release@v0.1.3
+        uses: dev-drprasad/delete-tag-and-release@085c6969f18bad0de1b9f3fe6692a3cd01f64fe5 # 0.2.0
         if: github.event.inputs.isMock != 'mock'
         with:
           delete_release: true
@@ -362,7 +362,7 @@ jobs:
         if: github.event.inputs.isMock != 'mock'
 
       - name: Upload all saved release files if not mock
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@17cd0d34deddf848fc0e7d9be5202c148c270a0a # 0.1.14
         if: github.event.inputs.isMock != 'mock'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
