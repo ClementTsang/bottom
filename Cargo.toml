@@ -52,7 +52,7 @@ serde = { version = "1.0.125", features = ["derive"] }
 # Sysinfo is still used in Linux for the ProcessStatus
 sysinfo = "0.18.2"
 thiserror = "1.0.24"
-time = { version = "0.3.3", features = ["formatting", "local-offset", "macros"] }
+time = { version = "0.3.5", features = ["formatting", "macros"] }
 toml = "0.5.8"
 tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
 typed-builder = "0.9.0"

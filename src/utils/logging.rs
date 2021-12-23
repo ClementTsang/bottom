@@ -4,6 +4,8 @@ pub fn init_logger(
 ) -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
+            // Note we aren't using local time since it only works on single-threaded processes.
+            // If that ever does get patched in again, enable the "local-offset" feature.
             let offset = time::OffsetDateTime::now_utc();
 
             out.finish(format_args!(
