@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuine::{ComponentContext, DrawContext, Event, Status, TmpComponent},
+    tuine::{DrawContext, Event, Status, TmpComponent, ViewContext},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
@@ -29,6 +29,7 @@ pub struct StyleSheet {
 
 /// A sortable, scrollable table for text data.
 pub struct TextTable<'a, Message> {
+    test_state: &'a mut TextTableState,
     state: TextTableState,
     column_widths: Vec<u16>,
     columns: Vec<TextColumn>,
@@ -44,11 +45,12 @@ pub struct TextTable<'a, Message> {
 
 impl<'a, Message> TextTable<'a, Message> {
     #[track_caller]
-    pub fn new<S: Into<Cow<'static, str>>>(columns: Vec<S>) -> Self {
-        let state = TextTableState::default();
+    pub fn new<S: Into<Cow<'static, str>>>(ctx: &mut ViewContext<'_>, columns: Vec<S>) -> Self {
+        let test_state = ctx.state::<TextTableState>(Location::caller());
 
         Self {
-            state,
+            test_state,
+            state: TextTableState::default(),
             column_widths: vec![0; columns.len()],
             columns: columns
                 .into_iter()

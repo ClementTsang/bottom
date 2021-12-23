@@ -1,4 +1,4 @@
-use std::panic::Location;
+use std::{panic::Location, rc::Rc};
 
 use rustc_hash::FxHashMap;
 use tui::layout::Rect;
@@ -6,26 +6,41 @@ use tui::layout::Rect;
 use super::{Key, LayoutNode, State};
 
 #[derive(Default)]
-pub struct ComponentContext {
-    key_counter: usize,
-    state_map: FxHashMap<Key, Box<dyn State>>,
-    stale_map: FxHashMap<Key, bool>,
+pub struct StateMap(FxHashMap<Key, (Rc<Box<dyn State>>, bool)>);
+
+impl StateMap {
+    pub fn state<S: State + Default + 'static>(&mut self, key: Key) -> Rc<Box<dyn State>> {
+        let state = self
+            .0
+            .entry(key)
+            .or_insert_with(|| (Rc::new(Box::new(S::default())), true));
+
+        state.1 = true;
+
+        state.0.clone()
+    }
 }
 
-impl ComponentContext {
-    pub fn access_or_new<S: State + Default + 'static>(
-        &mut self, location: &'static Location<'static>,
-    ) -> &mut Box<dyn State> {
-        let key = Key::new(location, self.key_counter);
-        self.key_counter += 1;
+pub struct ViewContext<'a> {
+    key_counter: usize,
+    state_map: &'a mut StateMap,
+}
 
-        *(self.stale_map.entry(key).or_insert(true)) = true;
-        self.state_map
-            .entry(key)
-            .or_insert_with(|| Box::new(S::default()))
+impl<'a> ViewContext<'a> {
+    pub fn new(state_map: &'a mut StateMap) -> Self {
+        Self {
+            key_counter: 0,
+            state_map,
+        }
     }
 
-    pub fn cycle(&mut self) {}
+    pub fn state<S: State + Default + 'static>(
+        &mut self, location: &'static Location<'static>,
+    ) -> Rc<Box<dyn State>> {
+        let key = Key::new(location, self.key_counter);
+        self.key_counter += 1;
+        self.state_map.state::<S>(key)
+    }
 }
 
 pub struct DrawContext<'a> {

@@ -4,7 +4,7 @@ use tui::Terminal;
 
 use super::{
     runtime::{self, RuntimeEvent},
-    ComponentContext, Element, Event,
+    Element, Event, ViewContext,
 };
 
 /// An alias to the [`tui::backend::CrosstermBackend`] writing to [`std::io::Stdout`].
@@ -21,7 +21,7 @@ pub trait Application: Sized {
     /// always returning false.
     fn is_terminated(&self) -> bool;
 
-    fn view(&mut self) -> Element<'static, Self::Message>;
+    fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<'static, Self::Message>;
 
     /// To run upon stopping the application.
     fn destroy(&mut self) {}

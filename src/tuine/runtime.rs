@@ -1,16 +1,24 @@
 use std::sync::mpsc::Receiver;
 
+use rustc_hash::FxHashMap;
 use tui::{backend::Backend, layout::Rect, Terminal};
 
 use crate::tuine::Status;
 
-use super::{build_layout_tree, Application, ComponentContext, Element, Event, TmpComponent};
+use super::{
+    build_layout_tree, Application, Element, Event, Key, State, StateMap, TmpComponent, ViewContext,
+};
 
 #[derive(Clone, Copy, Debug)]
 pub enum RuntimeEvent<Message> {
     UserInterface(Event),
     Resize { width: u16, height: u16 },
     Custom(Message),
+}
+
+#[derive(Default)]
+struct AppData {
+    state_map: StateMap,
 }
 
 pub(crate) fn launch<A, B>(
@@ -20,8 +28,13 @@ where
     A: Application + 'static,
     B: Backend,
 {
-    let mut user_interface = application.view();
-    draw(&mut user_interface, terminal)?;
+    let mut app_data = AppData::default();
+    let mut user_interface = {
+        let mut ctx = ViewContext::new(&mut app_data.state_map);
+        let mut ui = application.view(&mut ctx);
+        draw(&mut ui, terminal)?;
+        ui
+    };
 
     while !application.is_terminated() {
         if let Ok(event) = receiver.recv() {
@@ -42,7 +55,8 @@ where
                         application.update(msg);
                     }
 
-                    user_interface = application.view();
+                    let mut ctx = ViewContext::new(&mut app_data.state_map);
+                    user_interface = application.view(&mut ctx);
                     draw(&mut user_interface, terminal)?;
                 }
                 RuntimeEvent::Custom(message) => {
@@ -52,7 +66,8 @@ where
                     width: _,
                     height: _,
                 } => {
-                    user_interface = application.view();
+                    let mut ctx = ViewContext::new(&mut app_data.state_map);
+                    user_interface = application.view(&mut ctx);
                     // FIXME: Also nuke any cache and the like...
                     draw(&mut user_interface, terminal)?;
                 }

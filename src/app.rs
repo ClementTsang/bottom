@@ -29,7 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    tuine::{Application, ComponentContext, Element, Flex},
+    tuine::{Application, Element, Flex, ViewContext},
     units::data_units::DataUnit,
     Pid,
 };
@@ -234,22 +234,22 @@ impl Application for AppState {
         self.terminator.load(SeqCst)
     }
 
-    fn view(&mut self) -> Element<'static, Self::Message> {
+    fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<'static, Self::Message> {
         use crate::tuine::FlexElement;
         use crate::tuine::TextTable;
 
         Flex::column()
             .with_flex_child(
                 Flex::row_with_children(vec![
-                    FlexElement::new(TextTable::new(vec!["A", "B", "C"])),
-                    FlexElement::new(TextTable::new(vec!["D", "E", "F"])),
+                    FlexElement::new(TextTable::new(ctx, vec!["A", "B", "C"])),
+                    FlexElement::new(TextTable::new(ctx, vec!["D", "E", "F"])),
                 ]),
                 1,
             )
             .with_flex_child(
                 Flex::row_with_children(vec![
-                    FlexElement::new(TextTable::new(vec!["G", "H", "I", "J"])),
-                    FlexElement::new(TextTable::new(vec!["K", "L", "M", "N"])),
+                    FlexElement::new(TextTable::new(ctx, vec!["G", "H", "I", "J"])),
+                    FlexElement::new(TextTable::new(ctx, vec!["K", "L", "M", "N"])),
                 ]),
                 2,
             )
