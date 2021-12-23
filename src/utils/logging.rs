@@ -2,9 +2,11 @@
 pub fn init_logger(
     min_level: log::LevelFilter, debug_file_name: &std::ffi::OsStr,
 ) -> Result<(), fern::InitError> {
+    use time::OffsetDateTime;
+
     fern::Dispatch::new()
         .format(|out, message, record| {
-            let offset = time::OffsetDateTime::now_utc();
+            let offset = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
 
             out.finish(format_args!(
                 "{}[{}][{}] {}",
