@@ -2,11 +2,11 @@
 pub fn init_logger(
     min_level: log::LevelFilter, debug_file_name: &std::ffi::OsStr,
 ) -> Result<(), fern::InitError> {
-    use time::OffsetDateTime;
-
     fern::Dispatch::new()
         .format(|out, message, record| {
-            let offset = OffsetDateTime::now_utc(); // We aren't using local (or the local-offset feature) since it only works on single-threaded processes.
+            // Note we aren't using local time since it only works on single-threaded processes.
+            // If that ever does get patched in again, enable the "local-offset" feature.
+            let offset = time::OffsetDateTime::now_utc();
 
             out.finish(format_args!(
                 "{}[{}][{}] {}",
