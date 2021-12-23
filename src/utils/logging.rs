@@ -6,7 +6,7 @@ pub fn init_logger(
 
     fern::Dispatch::new()
         .format(|out, message, record| {
-            let offset = OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+            let offset = OffsetDateTime::now_utc(); // We aren't using local (or the local-offset feature) since it only works on single-threaded processes.
 
             out.finish(format_args!(
                 "{}[{}][{}] {}",
