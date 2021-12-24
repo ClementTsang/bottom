@@ -95,18 +95,25 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
         self.children
             .iter_mut()
             .zip(draw_ctx.children())
-            .for_each(|(child, child_node)| {
-                if child_node.should_draw() {
-                    child.draw(state_ctx, child_node, frame);
+            .for_each(|(child, child_draw_ctx)| {
+                if child_draw_ctx.should_draw() {
+                    child.draw(state_ctx, child_draw_ctx, frame);
                 }
             });
     }
 
     fn on_event(
-        &mut self, _state_ctx: &mut StateContext<'_>, _draw_ctx: DrawContext<'_>, event: Event,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
         messages: &mut Vec<Message>,
     ) -> Status {
-        // FIXME: On event for flex
+        for (child, child_draw_ctx) in self.children.iter_mut().zip(draw_ctx.children()) {
+            match child.on_event(state_ctx, child_draw_ctx, event, messages) {
+                Status::Captured => {
+                    return Status::Captured;
+                }
+                Status::Ignored => {}
+            }
+        }
 
         Status::Ignored
     }

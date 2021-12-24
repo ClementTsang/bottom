@@ -30,7 +30,6 @@ pub struct StyleSheet {
 /// A sortable, scrollable table for text data.
 pub struct TextTable<'a, Message> {
     key: Key,
-    state: TextTableState,
     column_widths: Vec<u16>,
     columns: Vec<TextColumn>,
     show_gap: bool,
@@ -48,7 +47,6 @@ impl<'a, Message> TextTable<'a, Message> {
     pub fn new<S: Into<Cow<'static, str>>>(ctx: &mut ViewContext<'_>, columns: Vec<S>) -> Self {
         Self {
             key: ctx.register_component(Location::caller()),
-            state: TextTableState::default(),
             column_widths: vec![0; columns.len()],
             columns: columns
                 .into_iter()
@@ -251,22 +249,22 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
                                 todo!()
                             } else if y > self.table_gap {
                                 let visual_index = usize::from(y - self.table_gap);
-                                self.state.set_visual_index(visual_index)
+                                state.set_visual_index(visual_index)
                             } else {
                                 Status::Ignored
                             }
                         }
                         MouseEventKind::ScrollDown => {
-                            let status = self.state.move_down(1);
+                            let status = state.move_down(1);
                             if let Some(on_select) = &self.on_select {
-                                messages.push(on_select(self.state.current_index()));
+                                messages.push(on_select(state.current_index()));
                             }
                             status
                         }
                         MouseEventKind::ScrollUp => {
-                            let status = self.state.move_up(1);
+                            let status = state.move_up(1);
                             if let Some(on_select) = &self.on_select {
-                                messages.push(on_select(self.state.current_index()));
+                                messages.push(on_select(state.current_index()));
                             }
                             status
                         }

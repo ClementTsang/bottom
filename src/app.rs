@@ -132,7 +132,7 @@ pub enum AppMessages {
     KillProcess { to_kill: Vec<Pid> },
     ToggleFreeze,
     Clean,
-    Stop,
+    Quit,
 }
 
 pub struct AppState {
@@ -203,10 +203,6 @@ impl AppState {
             // TODO: Redraw
         }
     }
-
-    fn quit(&mut self) {
-        self.terminator.store(true, SeqCst);
-    }
 }
 
 impl Application for AppState {
@@ -228,7 +224,7 @@ impl Application for AppState {
                 self.data_collection
                     .clean_data(constants::STALE_MAX_MILLISECONDS);
             }
-            AppMessages::Stop => {
+            AppMessages::Quit => {
                 self.terminator.store(true, SeqCst);
             }
         }
@@ -265,7 +261,7 @@ impl Application for AppState {
     }
 
     fn global_event_handler(
-        &mut self, event: crate::tuine::Event, _messages: &mut Vec<Self::Message>,
+        &mut self, event: crate::tuine::Event, messages: &mut Vec<Self::Message>,
     ) {
         use crate::tuine::Event;
         use crossterm::event::{KeyCode, KeyModifiers};
@@ -275,20 +271,20 @@ impl Application for AppState {
                 if event.modifiers.is_empty() {
                     match event.code {
                         KeyCode::Char('q') | KeyCode::Char('Q') => {
-                            self.quit();
+                            messages.push(AppMessages::Quit);
                         }
                         _ => {}
                     }
                 } else if let KeyModifiers::CONTROL = event.modifiers {
                     match event.code {
                         KeyCode::Char('c') | KeyCode::Char('C') => {
-                            self.quit();
+                            messages.push(AppMessages::Quit);
                         }
                         _ => {}
                     }
                 }
             }
-            Event::Mouse(event) => {}
+            Event::Mouse(_event) => {}
         }
     }
 }
