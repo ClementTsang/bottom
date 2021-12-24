@@ -15,7 +15,7 @@ use super::{Bounds, DrawContext, Event, LayoutNode, Size, StateContext, Status};
 pub trait TmpComponent<Message> {
     /// Draws the component.
     fn draw<Backend>(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, Backend>,
     ) where
         Backend: tui::backend::Backend;
@@ -24,7 +24,7 @@ pub trait TmpComponent<Message> {
     ///
     /// Defaults to just ignoring the event.
     fn on_event(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>, event: Event,
         messages: &mut Vec<Message>,
     ) -> Status {
         Status::Ignored

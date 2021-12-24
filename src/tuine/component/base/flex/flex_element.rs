@@ -40,7 +40,7 @@ impl<'a, Message> FlexElement<'a, Message> {
     }
 
     pub(crate) fn draw<B>(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,
     ) where
         B: Backend,
@@ -49,7 +49,7 @@ impl<'a, Message> FlexElement<'a, Message> {
     }
 
     pub(crate) fn on_event(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>, event: Event,
         messages: &mut Vec<Message>,
     ) -> Status {
         self.element.on_event(state_ctx, draw_ctx, event, messages)

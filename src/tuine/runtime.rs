@@ -84,7 +84,7 @@ fn on_event<A>(
     let mut state_ctx = StateContext::new(&mut app_data.state_map);
     let draw_ctx = DrawContext::root(&layout);
 
-    match user_interface.on_event(&mut state_ctx, draw_ctx, event, &mut messages) {
+    match user_interface.on_event(&mut state_ctx, &draw_ctx, event, &mut messages) {
         Status::Captured => {
             // TODO: What to do on capture?
         }
@@ -124,7 +124,7 @@ where
         let mut state_ctx = StateContext::new(&mut app_data.state_map);
         let draw_ctx = DrawContext::root(&layout);
 
-        user_interface.draw(&mut state_ctx, draw_ctx, frame);
+        user_interface.draw(&mut state_ctx, &draw_ctx, frame);
     })?;
 
     Ok(())

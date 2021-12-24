@@ -166,7 +166,7 @@ impl<'a, Message> TextTable<'a, Message> {
 
 impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
     fn draw<B>(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,
     ) where
         B: Backend,
@@ -220,7 +220,7 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
     }
 
     fn on_event(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>, event: Event,
         messages: &mut Vec<Message>,
     ) -> Status {
         use crate::tuine::MouseBoundIntersect;

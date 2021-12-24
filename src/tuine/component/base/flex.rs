@@ -87,7 +87,7 @@ impl<'a, Message> Flex<'a, Message> {
 
 impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
     fn draw<B>(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,
     ) where
         B: Backend,
@@ -97,17 +97,17 @@ impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
             .zip(draw_ctx.children())
             .for_each(|(child, child_draw_ctx)| {
                 if child_draw_ctx.should_draw() {
-                    child.draw(state_ctx, child_draw_ctx, frame);
+                    child.draw(state_ctx, &child_draw_ctx, frame);
                 }
             });
     }
 
     fn on_event(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>, event: Event,
         messages: &mut Vec<Message>,
     ) -> Status {
         for (child, child_draw_ctx) in self.children.iter_mut().zip(draw_ctx.children()) {
-            match child.on_event(state_ctx, child_draw_ctx, event, messages) {
+            match child.on_event(state_ctx, &child_draw_ctx, event, messages) {
                 Status::Captured => {
                     return Status::Captured;
                 }

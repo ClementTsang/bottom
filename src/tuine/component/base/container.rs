@@ -1,4 +1,4 @@
-use tui::{backend::Backend, Frame};
+use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::tuine::{
     Bounds, DrawContext, Element, Event, LayoutNode, Size, StateContext, Status, TmpComponent,
@@ -15,16 +15,22 @@ pub struct Container<'a, Message> {
 }
 
 impl<'a, Message> Container<'a, Message> {
-    pub fn with_child(child: Element<'a, Message>) -> Self {
+    pub fn with_child<C>(child: C) -> Self
+    where
+        C: Into<Element<'a, Message>>,
+    {
         Self {
             width: None,
             height: None,
-            child: Some(child.into()),
+            child: Some(Box::new(child.into())),
         }
     }
 
-    pub fn child(mut self, child: Option<Element<'a, Message>>) -> Self {
-        self.child = child.map(|c| c.into());
+    pub fn child<C>(mut self, child: Option<C>) -> Self
+    where
+        C: Into<Element<'a, Message>>,
+    {
+        self.child = child.map(|c| Box::new(c.into()));
         self
     }
 
@@ -41,25 +47,25 @@ impl<'a, Message> Container<'a, Message> {
 
 impl<'a, Message> TmpComponent<Message> for Container<'a, Message> {
     fn draw<B>(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,
     ) where
         B: Backend,
     {
         if let Some(child) = &mut self.child {
             if let Some(child_draw_ctx) = draw_ctx.children().next() {
-                child.draw(state_ctx, child_draw_ctx, frame)
+                child.draw(state_ctx, &child_draw_ctx, frame)
             }
         }
     }
 
     fn on_event(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>, event: Event,
         messages: &mut Vec<Message>,
     ) -> Status {
         if let Some(child) = &mut self.child {
             if let Some(child_draw_ctx) = draw_ctx.children().next() {
-                return child.on_event(state_ctx, child_draw_ctx, event, messages);
+                return child.on_event(state_ctx, &child_draw_ctx, event, messages);
             }
         }
 
@@ -94,6 +100,7 @@ impl<'a, Message> TmpComponent<Message> for Container<'a, Message> {
             };
 
             let child_size = child.layout(child_bounds, &mut child_node);
+            child_node.rect = Rect::new(0, 0, child_size.width, child_size.height);
             node.children = vec![child_node];
 
             // Note that this is implicitly bounded by our above calculations,

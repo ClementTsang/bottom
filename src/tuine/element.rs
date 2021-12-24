@@ -2,8 +2,8 @@ use enum_dispatch::enum_dispatch;
 use tui::Frame;
 
 use super::{
-    Block, Bounds, Carousel, Container, DrawContext, Event, Flex, LayoutNode, Shortcut, Size,
-    StateContext, Status, TextTable, TmpComponent,
+    Block, Bounds, Carousel, Container, DrawContext, Empty, Event, Flex, LayoutNode, Shortcut,
+    Size, StateContext, Status, TextTable, TmpComponent,
 };
 
 /// An [`Element`] is an instantiated [`Component`].
@@ -15,4 +15,5 @@ pub enum Element<'a, Message> {
     Flex(Flex<'a, Message>),
     Shortcut(Shortcut<'a, Message>),
     TextTable(TextTable<'a, Message>),
+    Empty,
 }
