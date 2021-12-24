@@ -13,6 +13,6 @@ pub enum Element<'a, Message> {
     Carousel,
     Container(Container<'a, Message>),
     Flex(Flex<'a, Message>),
-    Shortcut,
+    Shortcut(Shortcut<'a, Message>),
     TextTable(TextTable<'a, Message>),
 }
