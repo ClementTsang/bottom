@@ -256,7 +256,7 @@ impl Application for AppState {
             .into()
     }
 
-    fn destroy(&mut self) {
+    fn destructor(&mut self) {
         // TODO: Eventually move some thread logic into the app creation, and destroy here?
     }
 

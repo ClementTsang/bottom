@@ -24,7 +24,7 @@ pub trait Application: Sized {
     fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<'static, Self::Message>;
 
     /// To run upon stopping the application.
-    fn destroy(&mut self) {}
+    fn destructor(&mut self) {}
 
     /// An optional event handler, intended for use with global shortcuts or events.
     /// This will be run *after* trying to send the events into the user interface, and

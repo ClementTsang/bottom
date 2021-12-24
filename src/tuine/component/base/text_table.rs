@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuine::{DrawContext, Event, Status, TmpComponent, ViewContext},
+    tuine::{DrawContext, Event, Key, StateContext, Status, TmpComponent, ViewContext},
 };
 
 pub use self::table_column::{TextColumn, TextColumnConstraint};
@@ -29,7 +29,7 @@ pub struct StyleSheet {
 
 /// A sortable, scrollable table for text data.
 pub struct TextTable<'a, Message> {
-    test_state: &'a mut TextTableState,
+    key: Key,
     state: TextTableState,
     column_widths: Vec<u16>,
     columns: Vec<TextColumn>,
@@ -46,10 +46,8 @@ pub struct TextTable<'a, Message> {
 impl<'a, Message> TextTable<'a, Message> {
     #[track_caller]
     pub fn new<S: Into<Cow<'static, str>>>(ctx: &mut ViewContext<'_>, columns: Vec<S>) -> Self {
-        let test_state = ctx.state::<TextTableState>(Location::caller());
-
         Self {
-            test_state,
+            key: ctx.register_component(Location::caller()),
             state: TextTableState::default(),
             column_widths: vec![0; columns.len()],
             columns: columns
@@ -169,11 +167,14 @@ impl<'a, Message> TextTable<'a, Message> {
 }
 
 impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
-    fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
-    where
+    fn draw<B>(
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        frame: &mut Frame<'_, B>,
+    ) where
         B: Backend,
     {
-        let rect = context.rect();
+        let rect = draw_ctx.rect();
+        let state = state_ctx.mut_state::<TextTableState>(self.key);
 
         self.table_gap = if !self.show_gap
             || (self.rows.len() + 2 > rect.height.into() && rect.height < TABLE_GAP_HEIGHT_LIMIT)
@@ -198,10 +199,8 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
         // as well as truncating some entries based on available width.
         let data_slice = {
             // Note: `get_list_start` already ensures `start` is within the bounds of the number of items, so no need to check!
-            let start = self
-                .state
-                .display_start_index(rect, scrollable_height as usize);
-            let end = min(self.state.num_items(), start + scrollable_height as usize);
+            let start = state.display_start_index(rect, scrollable_height as usize);
+            let end = min(state.num_items(), start + scrollable_height as usize);
 
             self.rows[start..end].to_vec()
         };
@@ -219,12 +218,18 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
             table = table.highlight_style(self.style_sheet.selected_text);
         }
 
-        frame.render_stateful_widget(table.widths(&widths), rect, self.state.tui_state());
+        frame.render_stateful_widget(table.widths(&widths), rect, state.tui_state());
     }
 
-    fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
+    fn on_event(
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        messages: &mut Vec<Message>,
+    ) -> Status {
         use crate::tuine::MouseBoundIntersect;
         use crossterm::event::{MouseButton, MouseEventKind};
+
+        let rect = draw_ctx.rect();
+        let state = state_ctx.mut_state::<TextTableState>(self.key);
 
         match event {
             Event::Keyboard(key_event) => {
@@ -237,10 +242,10 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
                 }
             }
             Event::Mouse(mouse_event) => {
-                if mouse_event.does_mouse_intersect_bounds(area) {
+                if mouse_event.does_mouse_intersect_bounds(rect) {
                     match mouse_event.kind {
                         MouseEventKind::Down(MouseButton::Left) => {
-                            let y = mouse_event.row - area.top();
+                            let y = mouse_event.row - rect.top();
 
                             if self.sortable && y == 0 {
                                 todo!()

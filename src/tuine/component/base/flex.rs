@@ -3,7 +3,9 @@ use tui::{backend::Backend, layout::Rect, Frame};
 pub mod flex_element;
 pub use flex_element::FlexElement;
 
-use crate::tuine::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuine::{
+    Bounds, DrawContext, Element, Event, LayoutNode, Size, StateContext, Status, TmpComponent,
+};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Axis {
@@ -84,21 +86,26 @@ impl<'a, Message> Flex<'a, Message> {
 }
 
 impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
-    fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
-    where
+    fn draw<B>(
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        frame: &mut Frame<'_, B>,
+    ) where
         B: Backend,
     {
         self.children
             .iter_mut()
-            .zip(context.children())
+            .zip(draw_ctx.children())
             .for_each(|(child, child_node)| {
                 if child_node.should_draw() {
-                    child.draw(child_node, frame);
+                    child.draw(state_ctx, child_node, frame);
                 }
             });
     }
 
-    fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
+    fn on_event(
+        &mut self, _state_ctx: &mut StateContext<'_>, _draw_ctx: DrawContext<'_>, event: Event,
+        messages: &mut Vec<Message>,
+    ) -> Status {
         // FIXME: On event for flex
 
         Status::Ignored

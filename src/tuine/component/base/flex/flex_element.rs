@@ -1,6 +1,8 @@
-use tui::{backend::Backend, layout::Rect, Frame};
+use tui::{backend::Backend, Frame};
 
-use crate::tuine::{Bounds, DrawContext, Element, Event, LayoutNode, Size, Status, TmpComponent};
+use crate::tuine::{
+    Bounds, DrawContext, Element, Event, LayoutNode, Size, StateContext, Status, TmpComponent,
+};
 
 use super::Axis;
 
@@ -37,17 +39,20 @@ impl<'a, Message> FlexElement<'a, Message> {
         self
     }
 
-    pub(crate) fn draw<B>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, B>)
-    where
+    pub(crate) fn draw<B>(
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        frame: &mut Frame<'_, B>,
+    ) where
         B: Backend,
     {
-        self.element.draw(context, frame)
+        self.element.draw(state_ctx, draw_ctx, frame)
     }
 
     pub(crate) fn on_event(
-        &mut self, area: Rect, event: Event, messages: &mut Vec<Message>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        messages: &mut Vec<Message>,
     ) -> Status {
-        self.element.on_event(area, event, messages)
+        self.element.on_event(state_ctx, draw_ctx, event, messages)
     }
 
     /// Assumes the flex is 0. Just calls layout on its child.

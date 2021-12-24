@@ -5,23 +5,28 @@ pub mod widget;
 pub use widget::*;
 
 use enum_dispatch::enum_dispatch;
-use tui::{layout::Rect, Frame};
+use tui::Frame;
 
-use super::{Bounds, DrawContext, Event, LayoutNode, Size, Status};
+use super::{Bounds, DrawContext, Event, LayoutNode, Size, StateContext, Status};
 
 /// A component displays information and can be interacted with.
 #[allow(unused_variables)]
 #[enum_dispatch]
 pub trait TmpComponent<Message> {
     /// Draws the component.
-    fn draw<Backend>(&mut self, context: DrawContext<'_>, frame: &mut Frame<'_, Backend>)
-    where
+    fn draw<Backend>(
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        frame: &mut Frame<'_, Backend>,
+    ) where
         Backend: tui::backend::Backend;
 
     /// How a component should react to an [`Event`].
     ///
     /// Defaults to just ignoring the event.
-    fn on_event(&mut self, area: Rect, event: Event, messages: &mut Vec<Message>) -> Status {
+    fn on_event(
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        messages: &mut Vec<Message>,
+    ) -> Status {
         Status::Ignored
     }
 
