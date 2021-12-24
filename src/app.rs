@@ -203,6 +203,10 @@ impl AppState {
             // TODO: Redraw
         }
     }
+
+    fn quit(&mut self) {
+        self.terminator.store(true, SeqCst);
+    }
 }
 
 impl Application for AppState {
@@ -264,9 +268,27 @@ impl Application for AppState {
         &mut self, event: crate::tuine::Event, _messages: &mut Vec<Self::Message>,
     ) {
         use crate::tuine::Event;
+        use crossterm::event::{KeyCode, KeyModifiers};
+
         match event {
-            Event::Keyboard(_) => {}
-            Event::Mouse(_) => {}
+            Event::Keyboard(event) => {
+                if event.modifiers.is_empty() {
+                    match event.code {
+                        KeyCode::Char('q') | KeyCode::Char('Q') => {
+                            self.quit();
+                        }
+                        _ => {}
+                    }
+                } else if let KeyModifiers::CONTROL = event.modifiers {
+                    match event.code {
+                        KeyCode::Char('c') | KeyCode::Char('C') => {
+                            self.quit();
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Event::Mouse(event) => {}
         }
     }
 }

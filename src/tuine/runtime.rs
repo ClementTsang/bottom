@@ -73,6 +73,7 @@ where
     Ok(())
 }
 
+/// Handles a [`Event`].
 fn on_event<A>(
     application: &mut A, user_interface: &mut Element<'_, A::Message>, app_data: &mut AppData,
     layout: &mut LayoutNode, event: Event,
@@ -98,6 +99,7 @@ fn on_event<A>(
     }
 }
 
+/// Creates a new [`Element`] representing the root of the user interface.
 fn new_user_interface<A>(
     application: &mut A, app_data: &mut AppData,
 ) -> Element<'static, A::Message>
@@ -108,6 +110,7 @@ where
     application.view(&mut ctx)
 }
 
+/// Updates the layout, and draws the given user interface.
 fn draw<M, B>(
     user_interface: &mut Element<'_, M>, terminal: &mut Terminal<B>, app_data: &mut AppData,
     layout: &mut LayoutNode,
