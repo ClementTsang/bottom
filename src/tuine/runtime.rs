@@ -28,7 +28,7 @@ where
     A: Application + 'static,
     B: Backend,
 {
-    let mut app_data = AppData::default();
+    let mut app_data = AppData::default(); // FIXME: This needs to be cleared periodically, DO!
     let mut layout: LayoutNode = LayoutNode::default();
 
     let mut user_interface = {

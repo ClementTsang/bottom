@@ -41,19 +41,29 @@ impl<'a, Message> Container<'a, Message> {
 
 impl<'a, Message> TmpComponent<Message> for Container<'a, Message> {
     fn draw<B>(
-        &mut self, _state_ctx: &mut StateContext<'_>, _draw_ctx: DrawContext<'_>,
-        _frame: &mut Frame<'_, B>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>,
+        frame: &mut Frame<'_, B>,
     ) where
         B: Backend,
     {
-        todo!()
+        if let Some(child) = &mut self.child {
+            if let Some(child_draw_ctx) = draw_ctx.children().next() {
+                child.draw(state_ctx, child_draw_ctx, frame)
+            }
+        }
     }
 
     fn on_event(
-        &mut self, _state_ctx: &mut StateContext<'_>, _draw_ctx: DrawContext<'_>, _event: Event,
-        _messages: &mut Vec<Message>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: DrawContext<'_>, event: Event,
+        messages: &mut Vec<Message>,
     ) -> Status {
-        todo!()
+        if let Some(child) = &mut self.child {
+            if let Some(child_draw_ctx) = draw_ctx.children().next() {
+                return child.on_event(state_ctx, child_draw_ctx, event, messages);
+            }
+        }
+
+        Status::Ignored
     }
 
     fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
@@ -84,6 +94,7 @@ impl<'a, Message> TmpComponent<Message> for Container<'a, Message> {
             };
 
             let child_size = child.layout(child_bounds, &mut child_node);
+            node.children = vec![child_node];
 
             // Note that this is implicitly bounded by our above calculations,
             // no need to recheck if it's valid!
