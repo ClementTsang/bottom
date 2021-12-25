@@ -131,6 +131,7 @@ pub enum AppMessages {
     OpenHelp,
     KillProcess { to_kill: Vec<Pid> },
     ToggleFreeze,
+    Reset,
     Clean,
     Quit,
 }
@@ -227,6 +228,9 @@ impl Application for AppState {
             AppMessages::Quit => {
                 self.terminator.store(true, SeqCst);
             }
+            AppMessages::Reset => {
+                // FIXME: Reset
+            }
         }
     }
 
@@ -280,6 +284,9 @@ impl Application for AppState {
                     match event.code {
                         KeyCode::Char('c') | KeyCode::Char('C') => {
                             messages.push(AppMessages::Quit);
+                        }
+                        KeyCode::Char('r') | KeyCode::Char('R') => {
+                            messages.push(AppMessages::Reset);
                         }
                         _ => {}
                     }
