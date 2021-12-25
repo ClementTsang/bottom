@@ -246,7 +246,7 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
                             let y = mouse_event.row - rect.top();
 
                             if self.sortable && y == 0 {
-                                todo!()
+                                todo!() // Sort by the clicked column!
                             } else if y > self.table_gap {
                                 let visual_index = usize::from(y - self.table_gap);
                                 state.set_visual_index(visual_index)

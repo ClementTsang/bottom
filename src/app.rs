@@ -29,7 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    tuine::{Application, Element, Flex, Shortcut, ViewContext},
+    tuine::{Application, Element, Flex, ViewContext},
     units::data_units::DataUnit,
     Pid,
 };
@@ -236,15 +236,13 @@ impl Application for AppState {
 
     fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<'static, Self::Message> {
         use crate::tuine::FlexElement;
+        use crate::tuine::TempTable;
         use crate::tuine::TextTable;
 
         Flex::column()
             .with_flex_child(
                 Flex::row_with_children(vec![
-                    FlexElement::new(Shortcut::with_child(TextTable::new(
-                        ctx,
-                        vec!["A", "B", "C"],
-                    ))),
+                    FlexElement::new(TempTable::new(ctx)),
                     FlexElement::new(TextTable::new(ctx, vec!["D", "E", "F"])),
                 ]),
                 1,

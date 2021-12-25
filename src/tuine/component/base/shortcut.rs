@@ -2,20 +2,23 @@ use rustc_hash::FxHashMap;
 use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::tuine::{
-    Bounds, DrawContext, Element, Event, LayoutNode, Size, StateContext, Status, TmpComponent,
+    Bounds, DrawContext, Event, LayoutNode, Size, StateContext, Status, TmpComponent,
 };
 
 /// A [`Component`] to handle keyboard shortcuts and assign actions to them.
 ///
 /// Inspired by [Flutter's approach](https://docs.flutter.dev/development/ui/advanced/actions_and_shortcuts).
 #[derive(Default)]
-pub struct Shortcut<'a, Message> {
-    child: Option<Box<Element<'a, Message>>>,
+pub struct Shortcut<Message, Child>
+where
+    Child: TmpComponent<Message>,
+{
+    child: Option<Child>,
     shortcuts: FxHashMap<
         Event,
         Box<
             dyn Fn(
-                &mut Element<'a, Message>,
+                &mut Child,
                 &mut StateContext<'_>,
                 &DrawContext<'_>,
                 Event,
@@ -25,22 +28,19 @@ pub struct Shortcut<'a, Message> {
     >,
 }
 
-impl<'a, Message> Shortcut<'a, Message> {
-    pub fn with_child<C>(child: C) -> Self
-    where
-        C: Into<Element<'a, Message>>,
-    {
+impl<Message, Child> Shortcut<Message, Child>
+where
+    Child: TmpComponent<Message>,
+{
+    pub fn with_child(child: Child) -> Self {
         Self {
-            child: Some(Box::new(child.into())),
+            child: Some(child),
             shortcuts: Default::default(),
         }
     }
 
-    pub fn child<C>(mut self, child: Option<C>) -> Self
-    where
-        C: Into<Element<'a, Message>>,
-    {
-        self.child = child.map(|c| Box::new(c.into()));
+    pub fn child(mut self, child: Option<Child>) -> Self {
+        self.child = child;
         self
     }
 
@@ -48,7 +48,7 @@ impl<'a, Message> Shortcut<'a, Message> {
         mut self, event: Event,
         f: Box<
             dyn Fn(
-                &mut Element<'a, Message>,
+                &mut Child,
                 &mut StateContext<'_>,
                 &DrawContext<'_>,
                 Event,
@@ -66,7 +66,10 @@ impl<'a, Message> Shortcut<'a, Message> {
     }
 }
 
-impl<'a, Message> TmpComponent<Message> for Shortcut<'a, Message> {
+impl<'a, Message, Child> TmpComponent<Message> for Shortcut<Message, Child>
+where
+    Child: TmpComponent<Message>,
+{
     fn draw<B>(
         &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,
