@@ -2,7 +2,7 @@ use tui::{style::Style, widgets::Row};
 
 use super::DataCell;
 
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct DataRow {
     cells: Vec<DataCell>,
     style: Option<Style>,
@@ -19,6 +19,10 @@ impl DataRow {
     pub fn cell<D: Into<DataCell>>(mut self, cell: D) -> Self {
         self.cells.push(cell.into());
         self
+    }
+
+    pub fn cells(&self) -> &[DataCell] {
+        &self.cells
     }
 
     pub fn style(mut self, style: Option<Style>) -> Self {

@@ -22,7 +22,7 @@ impl DataCellValue for usize {}
 impl DataCellValue for Cow<'static, str> {}
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[enum_dispatch(DataCellValue)]
 pub enum DataCell {
     f64(FloatOrd<f64>),

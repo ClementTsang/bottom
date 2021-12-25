@@ -35,7 +35,7 @@ pub struct StyleSheet {
 
 enum SortStatus {
     Unsortable,
-    Sortable { column: usize },
+    Sortable { column: usize, reverse: bool },
 }
 
 /// A sortable, scrollable table for text data.
@@ -47,7 +47,7 @@ pub struct TextTable<Message> {
     show_selected_entry: bool,
     rows: Vec<DataRow>,
     style_sheet: StyleSheet,
-    sortable: SortStatus,
+    sortable: SortStatus, // FIXME: Should this be stored in state?
     table_gap: u16,
     on_select: Option<Box<dyn Fn(usize) -> Message>>,
     on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
@@ -84,6 +84,14 @@ impl<Message> TextTable<Message> {
         self
     }
 
+    /// Adds a new row.
+    pub fn row(mut self, row: DataRow) -> Self {
+        self.rows.push(row);
+        self.try_sort_data();
+
+        self
+    }
+
     /// Whether to try to show a gap between the table headers and data.
     /// Note that if there isn't enough room, the gap will still be hidden.
     ///
@@ -106,22 +114,37 @@ impl<Message> TextTable<Message> {
     /// Defaults to unsortable if not set.
     pub fn sortable(mut self, sortable: bool) -> Self {
         self.sortable = if sortable {
-            SortStatus::Sortable { column: 0 }
+            SortStatus::Sortable {
+                column: 0,
+                reverse: false,
+            }
         } else {
             SortStatus::Unsortable
         };
-
         self.try_sort_data();
-
         self
     }
 
     /// Calling this enables sorting, and sets the sort column to `column`.
     pub fn sort_column(mut self, column: usize) -> Self {
-        self.sortable = SortStatus::Sortable { column };
-
+        self.sortable = match self.sortable {
+            SortStatus::Unsortable => SortStatus::Sortable {
+                column,
+                reverse: false,
+            },
+            SortStatus::Sortable { column: _, reverse } => SortStatus::Sortable { column, reverse },
+        };
         self.try_sort_data();
+        self
+    }
 
+    /// Calling this enables sorting, and sets the reverse status to `reverse`.
+    pub fn sort_reverse(mut self, reverse: bool) -> Self {
+        self.sortable = match self.sortable {
+            SortStatus::Unsortable => SortStatus::Sortable { column: 0, reverse },
+            SortStatus::Sortable { column, reverse: _ } => SortStatus::Sortable { column, reverse },
+        };
+        self.try_sort_data();
         self
     }
 
@@ -152,8 +175,8 @@ impl<Message> TextTable<Message> {
     fn try_sort_data(&mut self) {
         use std::cmp::Ordering;
 
-        if let SortStatus::Sortable { column } = self.sortable {
-            // TODO: We can avoid some annoying checks vy using const generics - this is waiting on
+        if let SortStatus::Sortable { column, reverse } = self.sortable {
+            // TODO: We can avoid some annoying checks by using const generics - this is waiting on
             // the const_generics_defaults feature, landing in 1.59, however!
 
             self.rows
@@ -163,6 +186,10 @@ impl<Message> TextTable<Message> {
                     (None, Some(_b)) => Ordering::Less,
                     (None, None) => Ordering::Equal,
                 });
+
+            if reverse {
+                self.rows.reverse();
+            }
         }
     }
 
@@ -303,8 +330,8 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
                             let y = mouse_event.row - rect.top();
 
                             if y == 0 {
-                                if let SortStatus::Sortable { column } = self.sortable {
-                                    todo!() // Sort by the clicked column!
+                                if let SortStatus::Sortable { column, reverse } = self.sortable {
+                                    todo!() // Sort by the clicked column!  If already using column, reverse!
                                             // self.sort_data();
                                 } else {
                                     Status::Ignored
@@ -341,4 +368,179 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use crate::tuine::{StateMap, ViewContext};
+
+    use super::{DataRow, TextTable};
+
+    type Message = ();
+
+    fn ctx<'a>(map: &'a mut StateMap) -> ViewContext<'a> {
+        ViewContext::new(map)
+    }
+
+    #[test]
+    fn sorting() {
+        let rows = vec![
+            DataRow::default().cell("A").cell(2),
+            DataRow::default().cell("B").cell(3),
+            DataRow::default().cell("C").cell(1),
+        ];
+        let row_length = rows.len();
+        let index = 1;
+
+        let mut map = StateMap::default();
+        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
+            .sort_column(index)
+            .rows(rows);
+
+        assert_eq!(
+            table.rows.len(),
+            row_length,
+            "The number of cells should be equal to the vector passed in."
+        );
+        let mut prev = &table.rows[0].cells()[index];
+        for row in &table.rows[1..] {
+            let curr = &row.cells()[index];
+            assert!(
+                prev <= curr,
+                "The previous value should be less or equal to the current one."
+            );
+            prev = curr;
+        }
+    }
+
+    #[test]
+    fn resorting() {
+        let rows = vec![
+            DataRow::default().cell("A").cell(2),
+            DataRow::default().cell("B").cell(3),
+            DataRow::default().cell("C").cell(1),
+        ];
+        let row_length = rows.len();
+        let index = 1;
+        let new_index = 0;
+
+        let mut map = StateMap::default();
+        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
+            .sort_column(index)
+            .rows(rows)
+            .sort_column(new_index);
+
+        assert_eq!(
+            table.rows.len(),
+            row_length,
+            "The number of cells should be equal to the vector passed in."
+        );
+        let mut prev = &table.rows[0].cells()[new_index];
+        for row in &table.rows[1..] {
+            let curr = &row.cells()[new_index];
+            assert!(
+                prev <= curr,
+                "The previous value should be less or equal to the current one."
+            );
+            prev = curr;
+        }
+    }
+
+    #[test]
+    fn reverse_sorting() {
+        let rows = vec![
+            DataRow::default().cell("A").cell(2),
+            DataRow::default().cell("B").cell(3),
+            DataRow::default().cell("C").cell(1),
+        ];
+        let row_length = rows.len();
+        let index = 1;
+
+        let mut map = StateMap::default();
+        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
+            .sort_column(index)
+            .sort_reverse(true)
+            .rows(rows);
+
+        assert_eq!(
+            table.rows.len(),
+            row_length,
+            "The number of cells should be equal to the vector passed in."
+        );
+        let mut prev = &table.rows[0].cells()[index];
+        for row in &table.rows[1..] {
+            let curr = &row.cells()[index];
+            assert!(
+                prev >= curr,
+                "The previous value should be bigger or equal to the current one."
+            );
+            prev = curr;
+        }
+    }
+
+    #[test]
+    fn adding_row() {
+        let rows = vec![
+            DataRow::default().cell("A").cell(2),
+            DataRow::default().cell("B").cell(3),
+            DataRow::default().cell("C").cell(1),
+        ];
+        let row_length = rows.len();
+        let index = 1;
+
+        let mut map = StateMap::default();
+        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
+            .rows(rows)
+            .sort_column(index)
+            .row(DataRow::default().cell("X").cell(0));
+
+        assert_eq!(
+            table.rows.len(),
+            row_length + 1,
+            "The number of cells should be equal to the vector passed in."
+        );
+        let mut prev = &table.rows[0].cells()[index];
+        for row in &table.rows[1..] {
+            let curr = &row.cells()[index];
+            assert!(
+                prev <= curr,
+                "The previous value should be less or equal to the current one."
+            );
+            prev = curr;
+        }
+    }
+
+    #[test]
+    fn no_sort() {
+        let original_rows = vec![
+            DataRow::default().cell("A").cell(2),
+            DataRow::default().cell("B").cell(3),
+            DataRow::default().cell("C").cell(1),
+            DataRow::default().cell("X").cell(0),
+        ];
+        let rows = original_rows[0..3].to_vec();
+        let row_length = original_rows.len();
+
+        let mut map = StateMap::default();
+        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
+            .rows(rows)
+            .row(original_rows[3].clone());
+
+        assert_eq!(
+            table.rows.len(),
+            row_length,
+            "The number of cells should be equal to the vector passed in."
+        );
+
+        table
+            .rows
+            .into_iter()
+            .zip(original_rows)
+            .for_each(|(a_row, b_row)| {
+                a_row
+                    .cells()
+                    .into_iter()
+                    .zip(b_row.cells())
+                    .for_each(|(a, b)| {
+                        assert_eq!(a, b, "Each DataCell should be equal.");
+                    });
+            });
+    }
+}
