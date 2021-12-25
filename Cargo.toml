@@ -42,9 +42,8 @@ dirs = "3.0.2"
 enum_dispatch = "0.3.7"
 float-ord = "0.3.2"
 futures = "0.3.14"
-futures-timer = "3.0.2"
-indexmap = "1.6.2"
-indextree = "4.3.1"
+futures-timer = "3.0.2" # TODO: Remove?
+indextree = "4.3.1" # TODO: Remove?
 itertools = "0.10.0"
 once_cell = "1.5.2"
 regex = "1.5.4"
@@ -52,7 +51,7 @@ rustc-hash = "1.1.0"
 serde = { version = "1.0.125", features = ["derive"] }
 # Sysinfo is still used in Linux for the ProcessStatus
 sysinfo = "0.18.2"
-thiserror = "1.0.24"
+thiserror = "1.0.24" # TODO: Remove?
 textwrap = "0.14.2"
 time = { version = "0.3.3", features = ["formatting", "local-offset", "macros"] }
 toml = "0.5.8"
@@ -69,7 +68,7 @@ battery = { version = "0.7.8", optional = true }
 libc = "0.2.86"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
+heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] } # TODO: Remove?
 procfs = { version = "0.11.0", default-features = false }
 smol = "1.2.5"
 
