@@ -9,7 +9,7 @@ extern crate log;
 use std::{
     boxed::Box,
     fs,
-    io::{stdout, Write},
+    io::{stdout, Stdout, Write},
     panic::PanicInfo,
     path::PathBuf,
     sync::Arc,
@@ -20,15 +20,19 @@ use std::{
 };
 
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, MouseEventKind},
+    event::{poll, read, DisableMouseCapture, EnableMouseCapture, MouseEventKind},
     execute,
     style::Print,
-    terminal::{disable_raw_mode, LeaveAlternateScreen},
+    terminal::{
+        disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
 };
 
 use app::{data_harvester, AppMessages, UsedWidgets};
 use constants::*;
 use options::*;
+use tui::{backend::CrosstermBackend, terminal::Terminal};
 use tuine::{Event, RuntimeEvent};
 use utils::error;
 
@@ -116,18 +120,28 @@ pub fn create_or_get_config(config_path: &Option<PathBuf>) -> error::Result<Conf
     }
 }
 
-pub fn cleanup_terminal(
-    terminal: &mut tui::terminal::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-) -> error::Result<()> {
-    disable_raw_mode()?;
+pub fn init_terminal() -> anyhow::Result<Terminal<CrosstermBackend<Stdout>>> {
+    let mut stdout_val = stdout();
+    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
+    enable_raw_mode()?;
+
+    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
+    terminal.clear()?;
+    terminal.hide_cursor()?;
+
+    Ok(terminal)
+}
+
+pub fn cleanup_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) {
+    terminal.clear().unwrap();
+    disable_raw_mode().unwrap();
     execute!(
         terminal.backend_mut(),
         DisableMouseCapture,
         LeaveAlternateScreen
-    )?;
-    terminal.show_cursor()?;
-
-    Ok(())
+    )
+    .unwrap();
+    terminal.show_cursor().unwrap();
 }
 
 /// Based on https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs
@@ -146,7 +160,13 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
 
     disable_raw_mode().unwrap();
-    execute!(stdout, DisableMouseCapture, LeaveAlternateScreen).unwrap();
+    execute!(
+        stdout,
+        Clear(ClearType::All),
+        DisableMouseCapture,
+        LeaveAlternateScreen
+    )
+    .unwrap();
 
     // Print stack trace.  Must be done after!
     execute!(

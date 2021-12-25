@@ -1,12 +1,14 @@
-//! tuine is a wrapper around tui-rs that expands upon state management and
+//! tuine is a wrapper around tui-rs that expands on it with state management and
 //! event handling.
 //!
 //! tuine is inspired by a **ton** of other libraries and frameworks, like:
-//! - Iced
-//! - [crochet](https://github.com/raphlinus/crochet)
-//! - Flutter
-//! - React
-//! - Yew
+//!
+//! - [Crochet](https://github.com/raphlinus/crochet)
+//! - [Druid](https://github.com/linebender/druid)
+//! - [Flutter](https://flutter.dev/)
+//! - [Iced](https://github.com/iced-rs/iced)
+//! - [React](https://reactjs.org/)
+//! - [Yew](https://yew.rs/)
 
 mod tui_rs;
 

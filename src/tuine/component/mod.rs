@@ -20,7 +20,7 @@ pub trait TmpComponent<Message> {
     ) where
         Backend: tui::backend::Backend;
 
-    /// How a component should react to an [`Event`].
+    /// How a component should react to an [`Event`](super::Event).
     ///
     /// Defaults to just ignoring the event.
     fn on_event(

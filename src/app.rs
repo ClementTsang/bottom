@@ -200,7 +200,7 @@ impl AppState {
     fn set_current_screen(&mut self, screen_type: CurrentScreen) {
         if self.current_screen == screen_type {
             self.current_screen = screen_type;
-            // TODO: Redraw
+            // FIXME: Redraw with new screen, save old screen state if main
         }
     }
 }

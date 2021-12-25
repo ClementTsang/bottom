@@ -1,5 +1,14 @@
 pub mod table_column;
+pub use self::table_column::{TextColumn, TextColumnConstraint};
+
 mod table_scroll_state;
+use self::table_scroll_state::ScrollState as TextTableState;
+
+pub mod data_row;
+pub use data_row::DataRow;
+
+pub mod data_cell;
+pub use data_cell::DataCell;
 
 use std::{borrow::Cow, cmp::min, panic::Location};
 
@@ -16,9 +25,6 @@ use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
     tuine::{DrawContext, Event, Key, StateContext, Status, TmpComponent, ViewContext},
 };
-
-pub use self::table_column::{TextColumn, TextColumnConstraint};
-use self::table_scroll_state::ScrollState as TextTableState;
 
 #[derive(Clone, Debug, Default)]
 pub struct StyleSheet {
@@ -67,7 +73,6 @@ impl<'a, Message> TextTable<'a, Message> {
     ///
     /// Defaults to displaying no data if not set.
     pub fn rows(mut self, rows: Vec<Row<'a>>) -> Self {
-        self.rows = rows;
         self
     }
 

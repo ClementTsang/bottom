@@ -8,7 +8,6 @@ use bottom::{app::AppMessages, options::*, tuine::RuntimeEvent, *};
 
 use std::{
     boxed::Box,
-    io::stdout,
     panic,
     sync::{mpsc, Arc, Condvar, Mutex},
     thread,
@@ -16,12 +15,6 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use crossterm::{
-    event::EnableMouseCapture,
-    execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
-};
-use tui::{backend::CrosstermBackend, Terminal};
 
 fn main() -> Result<()> {
     let matches = clap::get_matches();
@@ -90,13 +83,7 @@ fn main() -> Result<()> {
     );
 
     // Set up up tui and crossterm
-    let mut stdout_val = stdout();
-    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
-    enable_raw_mode()?;
-
-    let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
-    terminal.clear()?;
-    terminal.hide_cursor()?;
+    let mut terminal = init_terminal()?;
 
     // Set panic hook
     // TODO: [Threads, Panic] Make this close all the child threads too!
@@ -109,7 +96,7 @@ fn main() -> Result<()> {
     thread_termination_cvar.notify_all();
 
     let _ = input_thread.join();
-    cleanup_terminal(&mut terminal)?;
+    cleanup_terminal(&mut terminal);
 
     Ok(())
 }
