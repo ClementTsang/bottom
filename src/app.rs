@@ -238,7 +238,7 @@ impl Application for AppState {
         self.terminator.load(SeqCst)
     }
 
-    fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<'static, Self::Message> {
+    fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<Self::Message> {
         use crate::tuine::FlexElement;
         use crate::tuine::TempTable;
         use crate::tuine::TextTable;

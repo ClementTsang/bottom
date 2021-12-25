@@ -34,13 +34,13 @@ pub struct StyleSheet {
 }
 
 /// A sortable, scrollable table for text data.
-pub struct TextTable<'a, Message> {
+pub struct TextTable<Message> {
     key: Key,
     column_widths: Vec<u16>,
     columns: Vec<TextColumn>,
     show_gap: bool,
     show_selected_entry: bool,
-    rows: Vec<Row<'a>>,
+    rows: Vec<DataRow>,
     style_sheet: StyleSheet,
     sortable: bool,
     table_gap: u16,
@@ -48,7 +48,7 @@ pub struct TextTable<'a, Message> {
     on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
 }
 
-impl<'a, Message> TextTable<'a, Message> {
+impl<Message> TextTable<Message> {
     #[track_caller]
     pub fn new<S: Into<Cow<'static, str>>>(ctx: &mut ViewContext<'_>, columns: Vec<S>) -> Self {
         Self {
@@ -72,7 +72,13 @@ impl<'a, Message> TextTable<'a, Message> {
     /// Sets the row to display in the table.
     ///
     /// Defaults to displaying no data if not set.
-    pub fn rows(mut self, rows: Vec<Row<'a>>) -> Self {
+    pub fn rows(mut self, rows: Vec<DataRow>) -> Self {
+        self.rows = rows;
+
+        if self.sortable {
+            self.sort_data();
+        }
+
         self
     }
 
@@ -98,6 +104,11 @@ impl<'a, Message> TextTable<'a, Message> {
     /// Defaults to `false` if not set.
     pub fn sortable(mut self, sortable: bool) -> Self {
         self.sortable = sortable;
+
+        if self.sortable {
+            self.sort_data();
+        }
+
         self
     }
 
@@ -118,6 +129,10 @@ impl<'a, Message> TextTable<'a, Message> {
     ) -> Self {
         self.on_selected_click = on_selected_click;
         self
+    }
+
+    fn sort_data(&mut self) {
+        self.rows.sort_by(|a, b| todo!());
     }
 
     fn update_column_widths(&mut self, bounds: Rect) {
@@ -169,7 +184,7 @@ impl<'a, Message> TextTable<'a, Message> {
     }
 }
 
-impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
+impl<Message> TmpComponent<Message> for TextTable<Message> {
     fn draw<B>(
         &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,
@@ -205,7 +220,10 @@ impl<'a, Message> TmpComponent<Message> for TextTable<'a, Message> {
             let start = state.display_start_index(rect, scrollable_height as usize);
             let end = min(state.num_items(), start + scrollable_height as usize);
 
-            self.rows[start..end].to_vec()
+            self.rows.drain(start..end).into_iter().map(|row| {
+                let r: Row<'_> = row.into();
+                r
+            })
         };
 
         // Now build up our headers...

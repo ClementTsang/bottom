@@ -19,6 +19,7 @@ impl Numeric for u8 {}
 impl Numeric for usize {}
 
 #[allow(non_camel_case_types)]
+#[derive(Clone, Copy)]
 #[enum_dispatch(Numeric)]
 pub enum Number {
     f64,
@@ -54,6 +55,7 @@ impl Display for Number {
     }
 }
 
+#[derive(Clone)]
 pub enum DataCell {
     NumberCell(Number),
     String(Cow<'static, str>),

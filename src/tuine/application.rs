@@ -21,7 +21,7 @@ pub trait Application: Sized {
     /// always returning false.
     fn is_terminated(&self) -> bool;
 
-    fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<'static, Self::Message>;
+    fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<Self::Message>;
 
     /// To run upon stopping the application.
     fn destructor(&mut self) {}

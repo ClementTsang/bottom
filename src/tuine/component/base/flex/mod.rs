@@ -16,12 +16,12 @@ pub enum Axis {
     Vertical,
 }
 
-pub struct Flex<'a, Message> {
-    children: Vec<FlexElement<'a, Message>>,
+pub struct Flex<Message> {
+    children: Vec<FlexElement<Message>>,
     alignment: Axis,
 }
 
-impl<'a, Message> Flex<'a, Message> {
+impl<Message> Flex<Message> {
     pub fn new(alignment: Axis) -> Self {
         Self {
             children: vec![],
@@ -40,7 +40,7 @@ impl<'a, Message> Flex<'a, Message> {
     /// Creates a new [`Flex`] with a horizontal alignment with the given children.
     pub fn row_with_children<C>(children: Vec<C>) -> Self
     where
-        C: Into<FlexElement<'a, Message>>,
+        C: Into<FlexElement<Message>>,
     {
         Self {
             children: children.into_iter().map(Into::into).collect(),
@@ -59,7 +59,7 @@ impl<'a, Message> Flex<'a, Message> {
     /// Creates a new [`Flex`] with a vertical alignment with the given children.
     pub fn column_with_children<C>(children: Vec<C>) -> Self
     where
-        C: Into<FlexElement<'a, Message>>,
+        C: Into<FlexElement<Message>>,
     {
         Self {
             children: children.into_iter().map(Into::into).collect(),
@@ -69,7 +69,7 @@ impl<'a, Message> Flex<'a, Message> {
 
     pub fn with_child<E>(mut self, child: E) -> Self
     where
-        E: Into<Element<'a, Message>>,
+        E: Into<Element<Message>>,
     {
         self.children.push(FlexElement::with_no_flex(child.into()));
         self
@@ -77,7 +77,7 @@ impl<'a, Message> Flex<'a, Message> {
 
     pub fn with_flex_child<E>(mut self, child: E, flex: u16) -> Self
     where
-        E: Into<Element<'a, Message>>,
+        E: Into<Element<Message>>,
     {
         self.children
             .push(FlexElement::with_flex(child.into(), flex));
@@ -85,7 +85,7 @@ impl<'a, Message> Flex<'a, Message> {
     }
 }
 
-impl<'a, Message> TmpComponent<Message> for Flex<'a, Message> {
+impl<Message> TmpComponent<Message> for Flex<Message> {
     fn draw<B>(
         &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,

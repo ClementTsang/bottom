@@ -8,16 +8,16 @@ use super::{
 
 /// An [`Element`] is an instantiated [`Component`].
 #[enum_dispatch(TmpComponent<Message>)]
-pub enum Element<'a, Message, C = Empty>
+pub enum Element<Message, C = Empty>
 where
     C: TmpComponent<Message>,
 {
     Block,
     Carousel,
-    Container(Container<'a, Message>),
-    Flex(Flex<'a, Message>),
+    Container(Container<Message>),
+    Flex(Flex<Message>),
     Shortcut(Shortcut<Message, C>),
-    TextTable(TextTable<'a, Message>),
+    TextTable(TextTable<Message>),
     Empty,
-    TempTable(TempTable<'a, Message>),
+    TempTable(TempTable<Message>),
 }

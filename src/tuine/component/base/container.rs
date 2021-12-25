@@ -8,16 +8,16 @@ use crate::tuine::{
 ///
 /// Inspired by Flutter's [Container class](https://api.flutter.dev/flutter/widgets/Container-class.html).
 #[derive(Default)]
-pub struct Container<'a, Message> {
+pub struct Container<Message> {
     width: Option<u16>,
     height: Option<u16>,
-    child: Option<Box<Element<'a, Message>>>,
+    child: Option<Box<Element<Message>>>,
 }
 
-impl<'a, Message> Container<'a, Message> {
+impl<Message> Container<Message> {
     pub fn with_child<C>(child: C) -> Self
     where
-        C: Into<Element<'a, Message>>,
+        C: Into<Element<Message>>,
     {
         Self {
             width: None,
@@ -28,7 +28,7 @@ impl<'a, Message> Container<'a, Message> {
 
     pub fn child<C>(mut self, child: Option<C>) -> Self
     where
-        C: Into<Element<'a, Message>>,
+        C: Into<Element<Message>>,
     {
         self.child = child.map(|c| Box::new(c.into()));
         self
@@ -45,7 +45,7 @@ impl<'a, Message> Container<'a, Message> {
     }
 }
 
-impl<'a, Message> TmpComponent<Message> for Container<'a, Message> {
+impl<Message> TmpComponent<Message> for Container<Message> {
     fn draw<B>(
         &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
         frame: &mut Frame<'_, B>,

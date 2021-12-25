@@ -6,28 +6,28 @@ use crate::tuine::{
 
 use super::Axis;
 
-pub struct FlexElement<'a, Message> {
+pub struct FlexElement<Message> {
     /// Represents a ratio with other [`FlexElement`]s on how far to expand.
     pub flex: u16,
-    element: Element<'a, Message>,
+    element: Element<Message>,
 }
 
-impl<'a, Message> FlexElement<'a, Message> {
-    pub fn new<I: Into<Element<'a, Message>>>(element: I) -> Self {
+impl<Message> FlexElement<Message> {
+    pub fn new<I: Into<Element<Message>>>(element: I) -> Self {
         Self {
             flex: 1,
             element: element.into(),
         }
     }
 
-    pub fn with_flex<I: Into<Element<'a, Message>>>(element: I, flex: u16) -> Self {
+    pub fn with_flex<I: Into<Element<Message>>>(element: I, flex: u16) -> Self {
         Self {
             flex,
             element: element.into(),
         }
     }
 
-    pub fn with_no_flex<I: Into<Element<'a, Message>>>(element: I) -> Self {
+    pub fn with_no_flex<I: Into<Element<Message>>>(element: I) -> Self {
         Self {
             flex: 0,
             element: element.into(),
@@ -86,8 +86,8 @@ impl<'a, Message> FlexElement<'a, Message> {
     }
 }
 
-impl<'a, Message> From<Element<'a, Message>> for FlexElement<'a, Message> {
-    fn from(element: Element<'a, Message>) -> Self {
+impl<Message> From<Element<Message>> for FlexElement<Message> {
+    fn from(element: Element<Message>) -> Self {
         Self { flex: 0, element }
     }
 }
