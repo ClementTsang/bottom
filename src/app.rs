@@ -29,7 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    tuine::{Application, Element, Flex, ViewContext},
+    tuine::{Application, Element, Flex, Status, ViewContext},
     units::data_units::DataUnit,
     Pid,
 };
@@ -267,7 +267,7 @@ impl Application for AppState {
 
     fn global_event_handler(
         &mut self, event: crate::tuine::Event, messages: &mut Vec<Self::Message>,
-    ) {
+    ) -> Status {
         use crate::tuine::Event;
         use crossterm::event::{KeyCode, KeyModifiers};
 
@@ -277,22 +277,27 @@ impl Application for AppState {
                     match event.code {
                         KeyCode::Char('q') | KeyCode::Char('Q') => {
                             messages.push(AppMessages::Quit);
+                            Status::Captured
                         }
-                        _ => {}
+                        _ => Status::Ignored,
                     }
                 } else if let KeyModifiers::CONTROL = event.modifiers {
                     match event.code {
                         KeyCode::Char('c') | KeyCode::Char('C') => {
                             messages.push(AppMessages::Quit);
+                            Status::Captured
                         }
                         KeyCode::Char('r') | KeyCode::Char('R') => {
                             messages.push(AppMessages::Reset);
+                            Status::Captured
                         }
-                        _ => {}
+                        _ => Status::Ignored,
                     }
+                } else {
+                    Status::Ignored
                 }
             }
-            Event::Mouse(_event) => {}
+            Event::Mouse(_event) => Status::Ignored,
         }
     }
 }

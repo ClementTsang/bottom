@@ -4,7 +4,7 @@ use tui::Terminal;
 
 use super::{
     runtime::{self, RuntimeEvent},
-    Element, Event, ViewContext,
+    Element, Event, Status, ViewContext,
 };
 
 /// An alias to the [`tui::backend::CrosstermBackend`] writing to [`std::io::Stdout`].
@@ -31,7 +31,9 @@ pub trait Application: Sized {
     /// *only* if it is not handled at all by it.
     ///
     /// Defaults to not doing anything.
-    fn global_event_handler(&mut self, event: Event, messages: &mut Vec<Self::Message>) {}
+    fn global_event_handler(&mut self, event: Event, messages: &mut Vec<Self::Message>) -> Status {
+        Status::Ignored
+    }
 }
 
 /// Launches some application with tuine. Note this will take over the calling thread.

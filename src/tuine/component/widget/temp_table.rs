@@ -1,4 +1,4 @@
-use crate::tuine::{Shortcut, TextTable, TmpComponent, ViewContext};
+use crate::tuine::{text_table::DataRow, Shortcut, TextTable, TmpComponent, ViewContext};
 
 /// A [`TempTable`] is a text table that is meant to display temperature data.
 pub struct TempTable<Message> {
@@ -9,7 +9,15 @@ impl<Message> TempTable<Message> {
     #[track_caller]
     pub fn new(ctx: &mut ViewContext<'_>) -> Self {
         Self {
-            inner: Shortcut::with_child(TextTable::new(ctx, vec!["Sensor", "Temp"])),
+            inner: Shortcut::with_child(
+                TextTable::new(ctx, vec!["Sensor", "Temp"])
+                    .rows(vec![
+                        DataRow::default().cell("A").cell(2),
+                        DataRow::default().cell("B").cell(3),
+                        DataRow::default().cell("C").cell(1),
+                    ])
+                    .sort_column(1),
+            ),
         }
     }
 }

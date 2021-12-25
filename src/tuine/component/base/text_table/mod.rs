@@ -33,6 +33,11 @@ pub struct StyleSheet {
     table_header: Style,
 }
 
+enum SortStatus {
+    Unsortable,
+    Sortable { column: usize },
+}
+
 /// A sortable, scrollable table for text data.
 pub struct TextTable<Message> {
     key: Key,
@@ -42,7 +47,7 @@ pub struct TextTable<Message> {
     show_selected_entry: bool,
     rows: Vec<DataRow>,
     style_sheet: StyleSheet,
-    sortable: bool,
+    sortable: SortStatus,
     table_gap: u16,
     on_select: Option<Box<dyn Fn(usize) -> Message>>,
     on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
@@ -62,7 +67,7 @@ impl<Message> TextTable<Message> {
             show_selected_entry: true,
             rows: Vec::default(),
             style_sheet: StyleSheet::default(),
-            sortable: false,
+            sortable: SortStatus::Unsortable,
             table_gap: 0,
             on_select: None,
             on_selected_click: None,
@@ -74,10 +79,7 @@ impl<Message> TextTable<Message> {
     /// Defaults to displaying no data if not set.
     pub fn rows(mut self, rows: Vec<DataRow>) -> Self {
         self.rows = rows;
-
-        if self.sortable {
-            self.sort_data();
-        }
+        self.try_sort_data();
 
         self
     }
@@ -101,15 +103,31 @@ impl<Message> TextTable<Message> {
 
     /// Whether the table should display as sortable.
     ///
-    /// Defaults to `false` if not set.
+    /// Defaults to unsortable if not set.
     pub fn sortable(mut self, sortable: bool) -> Self {
-        self.sortable = sortable;
+        self.sortable = if sortable {
+            SortStatus::Sortable { column: 0 }
+        } else {
+            SortStatus::Unsortable
+        };
 
-        if self.sortable {
-            self.sort_data();
-        }
+        self.try_sort_data();
 
         self
+    }
+
+    /// Calling this enables sorting, and sets the sort column to `column`.
+    pub fn sort_column(mut self, column: usize) -> Self {
+        self.sortable = SortStatus::Sortable { column };
+
+        self.try_sort_data();
+
+        self
+    }
+
+    /// Returns whether the table is currently sortable.
+    pub fn is_sortable(&self) -> bool {
+        matches!(self.sortable, SortStatus::Sortable { .. })
     }
 
     /// What to do when selecting an entry. Expects a boxed function that takes in
@@ -131,8 +149,21 @@ impl<Message> TextTable<Message> {
         self
     }
 
-    fn sort_data(&mut self) {
-        self.rows.sort_by(|a, b| todo!());
+    fn try_sort_data(&mut self) {
+        use std::cmp::Ordering;
+
+        if let SortStatus::Sortable { column } = self.sortable {
+            // TODO: We can avoid some annoying checks vy using const generics - this is waiting on
+            // the const_generics_defaults feature, landing in 1.59, however!
+
+            self.rows
+                .sort_by(|a, b| match (a.get(column), b.get(column)) {
+                    (Some(a), Some(b)) => a.cmp(b),
+                    (Some(_a), None) => Ordering::Greater,
+                    (None, Some(_b)) => Ordering::Less,
+                    (None, None) => Ordering::Equal,
+                });
+        }
     }
 
     fn update_column_widths(&mut self, bounds: Rect) {
@@ -193,6 +224,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
     {
         let rect = draw_ctx.rect();
         let state = state_ctx.mut_state::<TextTableState>(self.key);
+        state.set_num_items(self.rows.len()); // FIXME: Not a fan of this system like this - should be easier to do.
 
         self.table_gap = if !self.show_gap
             || (self.rows.len() + 2 > rect.height.into() && rect.height < TABLE_GAP_HEIGHT_LIMIT)
@@ -220,6 +252,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
             let start = state.display_start_index(rect, scrollable_height as usize);
             let end = min(state.num_items(), start + scrollable_height as usize);
 
+            debug!("Start: {}, end: {}", start, end);
             self.rows.drain(start..end).into_iter().map(|row| {
                 let r: Row<'_> = row.into();
                 r
@@ -251,6 +284,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
 
         let rect = draw_ctx.rect();
         let state = state_ctx.mut_state::<TextTableState>(self.key);
+        state.set_num_items(self.rows.len());
 
         match event {
             Event::Keyboard(key_event) => {
@@ -268,8 +302,13 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
                         MouseEventKind::Down(MouseButton::Left) => {
                             let y = mouse_event.row - rect.top();
 
-                            if self.sortable && y == 0 {
-                                todo!() // Sort by the clicked column!
+                            if y == 0 {
+                                if let SortStatus::Sortable { column } = self.sortable {
+                                    todo!() // Sort by the clicked column!
+                                            // self.sort_data();
+                                } else {
+                                    Status::Ignored
+                                }
                             } else if y > self.table_gap {
                                 let visual_index = usize::from(y - self.table_gap);
                                 state.set_visual_index(visual_index)

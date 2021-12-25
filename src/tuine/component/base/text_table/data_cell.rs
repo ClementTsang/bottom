@@ -1,73 +1,61 @@
 use std::{borrow::Cow, fmt::Display};
 
 use enum_dispatch::enum_dispatch;
+use float_ord::FloatOrd;
 use tui::widgets::Cell;
 
 #[enum_dispatch]
-pub trait Numeric {}
-impl Numeric for f64 {}
-impl Numeric for f32 {}
-impl Numeric for i64 {}
-impl Numeric for i32 {}
-impl Numeric for i16 {}
-impl Numeric for i8 {}
-impl Numeric for isize {}
-impl Numeric for u64 {}
-impl Numeric for u32 {}
-impl Numeric for u16 {}
-impl Numeric for u8 {}
-impl Numeric for usize {}
+pub trait DataCellValue {}
+
+impl DataCellValue for FloatOrd<f64> {}
+impl DataCellValue for FloatOrd<f32> {}
+impl DataCellValue for i64 {}
+impl DataCellValue for i32 {}
+impl DataCellValue for i16 {}
+impl DataCellValue for i8 {}
+impl DataCellValue for isize {}
+impl DataCellValue for u64 {}
+impl DataCellValue for u32 {}
+impl DataCellValue for u16 {}
+impl DataCellValue for u8 {}
+impl DataCellValue for usize {}
+impl DataCellValue for Cow<'static, str> {}
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy)]
-#[enum_dispatch(Numeric)]
-pub enum Number {
-    f64,
-    f32,
-    i64,
-    i32,
-    i16,
-    i8,
-    isize,
-    u64,
-    u32,
-    u16,
-    u8,
-    usize,
-}
-
-impl Display for Number {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            Number::f64(val) => write!(f, "{}", val),
-            Number::f32(val) => write!(f, "{}", val),
-            Number::i64(val) => write!(f, "{}", val),
-            Number::i32(val) => write!(f, "{}", val),
-            Number::i16(val) => write!(f, "{}", val),
-            Number::i8(val) => write!(f, "{}", val),
-            Number::isize(val) => write!(f, "{}", val),
-            Number::u64(val) => write!(f, "{}", val),
-            Number::u32(val) => write!(f, "{}", val),
-            Number::u16(val) => write!(f, "{}", val),
-            Number::u8(val) => write!(f, "{}", val),
-            Number::usize(val) => write!(f, "{}", val),
-        }
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[enum_dispatch(DataCellValue)]
 pub enum DataCell {
-    NumberCell(Number),
-    String(Cow<'static, str>),
+    f64(FloatOrd<f64>),
+    f32(FloatOrd<f32>),
+    i64(i64),
+    i32(i32),
+    i16(i16),
+    i8(i8),
+    isize(isize),
+    u64(u64),
+    u32(u32),
+    u16(u16),
+    u8(u8),
+    usize(usize),
+    Cow(Cow<'static, str>),
 }
-
-impl DataCell {}
 
 impl Display for DataCell {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DataCell::NumberCell(n) => n.fmt(f),
-            DataCell::String(d) => d.fmt(f),
+            DataCell::f64(val) => val.0.fmt(f),
+            DataCell::f32(val) => val.0.fmt(f),
+            DataCell::i64(val) => val.fmt(f),
+            DataCell::i32(val) => val.fmt(f),
+            DataCell::i16(val) => val.fmt(f),
+            DataCell::i8(val) => val.fmt(f),
+            DataCell::isize(val) => val.fmt(f),
+            DataCell::u64(val) => val.fmt(f),
+            DataCell::u32(val) => val.fmt(f),
+            DataCell::u16(val) => val.fmt(f),
+            DataCell::u8(val) => val.fmt(f),
+            DataCell::usize(val) => val.fmt(f),
+            DataCell::Cow(val) => val.fmt(f),
         }
     }
 }
@@ -78,20 +66,26 @@ impl From<DataCell> for Cell<'_> {
     }
 }
 
-impl From<Number> for DataCell {
-    fn from(num: Number) -> Self {
-        DataCell::NumberCell(num)
+impl From<f64> for DataCell {
+    fn from(num: f64) -> Self {
+        DataCell::f64(FloatOrd(num))
+    }
+}
+
+impl From<f32> for DataCell {
+    fn from(num: f32) -> Self {
+        DataCell::f32(FloatOrd(num))
     }
 }
 
 impl From<String> for DataCell {
     fn from(s: String) -> Self {
-        DataCell::String(s.into())
+        DataCell::Cow(Cow::from(s))
     }
 }
 
 impl From<&'static str> for DataCell {
     fn from(s: &'static str) -> Self {
-        DataCell::String(s.into())
+        DataCell::Cow(Cow::from(s))
     }
 }
