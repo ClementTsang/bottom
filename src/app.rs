@@ -240,21 +240,22 @@ impl Application for AppState {
 
     fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<Self::Message> {
         use crate::tuine::FlexElement;
+        use crate::tuine::StatefulTemplate;
         use crate::tuine::TempTable;
-        use crate::tuine::TextTable;
+        use crate::tuine::TextTableBuilder;
 
         Flex::column()
             .with_flex_child(
                 Flex::row_with_children(vec![
                     FlexElement::new(TempTable::new(ctx)),
-                    FlexElement::new(TextTable::new(ctx, vec!["D", "E", "F"])),
+                    FlexElement::new(TextTableBuilder::new(vec!["D", "E", "F"]).build(ctx)),
                 ]),
                 1,
             )
             .with_flex_child(
                 Flex::row_with_children(vec![
-                    FlexElement::new(TextTable::new(ctx, vec!["G", "H", "I", "J"])),
-                    FlexElement::new(TextTable::new(ctx, vec!["K", "L", "M", "N"])),
+                    FlexElement::new(TextTableBuilder::new(vec!["G", "H", "I", "J"]).build(ctx)),
+                    FlexElement::new(TextTableBuilder::new(vec!["K", "L", "M", "N"]).build(ctx)),
                 ]),
                 2,
             )

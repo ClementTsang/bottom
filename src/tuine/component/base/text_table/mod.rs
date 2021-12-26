@@ -2,7 +2,7 @@ pub mod table_column;
 pub use self::table_column::{TextColumn, TextColumnConstraint};
 
 mod table_scroll_state;
-use self::table_scroll_state::ScrollState as TextTableState;
+use self::table_scroll_state::ScrollState;
 
 pub mod data_row;
 pub use data_row::DataRow;
@@ -10,7 +10,13 @@ pub use data_row::DataRow;
 pub mod data_cell;
 pub use data_cell::DataCell;
 
-use std::{borrow::Cow, cmp::min, panic::Location};
+pub mod builder;
+pub use builder::TextTableBuilder;
+
+pub mod sort_type;
+pub use sort_type::SortType;
+
+use std::cmp::min;
 
 use tui::{
     backend::Backend,
@@ -23,7 +29,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuine::{DrawContext, Event, Key, StateContext, Status, TmpComponent, ViewContext},
+    tuine::{DrawContext, Event, Key, StateContext, Status, TmpComponent},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -33,9 +39,10 @@ pub struct StyleSheet {
     table_header: Style,
 }
 
-enum SortStatus {
-    Unsortable,
-    Sortable { column: usize, reverse: bool },
+#[derive(PartialEq, Default)]
+pub struct TextTableState {
+    scroll: ScrollState,
+    sort: SortType,
 }
 
 /// A sortable, scrollable table for text data.
@@ -47,152 +54,12 @@ pub struct TextTable<Message> {
     show_selected_entry: bool,
     rows: Vec<DataRow>,
     style_sheet: StyleSheet,
-    sortable: SortStatus, // FIXME: Should this be stored in state?
     table_gap: u16,
     on_select: Option<Box<dyn Fn(usize) -> Message>>,
     on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
 }
 
 impl<Message> TextTable<Message> {
-    #[track_caller]
-    pub fn new<S: Into<Cow<'static, str>>>(ctx: &mut ViewContext<'_>, columns: Vec<S>) -> Self {
-        Self {
-            key: ctx.register_component(Location::caller()),
-            column_widths: vec![0; columns.len()],
-            columns: columns
-                .into_iter()
-                .map(|name| TextColumn::new(name))
-                .collect(),
-            show_gap: true,
-            show_selected_entry: true,
-            rows: Vec::default(),
-            style_sheet: StyleSheet::default(),
-            sortable: SortStatus::Unsortable,
-            table_gap: 0,
-            on_select: None,
-            on_selected_click: None,
-        }
-    }
-
-    /// Sets the row to display in the table.
-    ///
-    /// Defaults to displaying no data if not set.
-    pub fn rows(mut self, rows: Vec<DataRow>) -> Self {
-        self.rows = rows;
-        self.try_sort_data();
-
-        self
-    }
-
-    /// Adds a new row.
-    pub fn row(mut self, row: DataRow) -> Self {
-        self.rows.push(row);
-        self.try_sort_data();
-
-        self
-    }
-
-    /// Whether to try to show a gap between the table headers and data.
-    /// Note that if there isn't enough room, the gap will still be hidden.
-    ///
-    /// Defaults to `true` if not set.
-    pub fn show_gap(mut self, show_gap: bool) -> Self {
-        self.show_gap = show_gap;
-        self
-    }
-
-    /// Whether to highlight the selected entry.
-    ///
-    /// Defaults to `true` if not set.
-    pub fn show_selected_entry(mut self, show_selected_entry: bool) -> Self {
-        self.show_selected_entry = show_selected_entry;
-        self
-    }
-
-    /// Whether the table should display as sortable.
-    ///
-    /// Defaults to unsortable if not set.
-    pub fn sortable(mut self, sortable: bool) -> Self {
-        self.sortable = if sortable {
-            SortStatus::Sortable {
-                column: 0,
-                reverse: false,
-            }
-        } else {
-            SortStatus::Unsortable
-        };
-        self.try_sort_data();
-        self
-    }
-
-    /// Calling this enables sorting, and sets the sort column to `column`.
-    pub fn sort_column(mut self, column: usize) -> Self {
-        self.sortable = match self.sortable {
-            SortStatus::Unsortable => SortStatus::Sortable {
-                column,
-                reverse: false,
-            },
-            SortStatus::Sortable { column: _, reverse } => SortStatus::Sortable { column, reverse },
-        };
-        self.try_sort_data();
-        self
-    }
-
-    /// Calling this enables sorting, and sets the reverse status to `reverse`.
-    pub fn sort_reverse(mut self, reverse: bool) -> Self {
-        self.sortable = match self.sortable {
-            SortStatus::Unsortable => SortStatus::Sortable { column: 0, reverse },
-            SortStatus::Sortable { column, reverse: _ } => SortStatus::Sortable { column, reverse },
-        };
-        self.try_sort_data();
-        self
-    }
-
-    /// Returns whether the table is currently sortable.
-    pub fn is_sortable(&self) -> bool {
-        matches!(self.sortable, SortStatus::Sortable { .. })
-    }
-
-    /// What to do when selecting an entry. Expects a boxed function that takes in
-    /// the currently selected index and returns a [`Message`].
-    ///
-    /// Defaults to `None` if not set.
-    pub fn on_select(mut self, on_select: Option<Box<dyn Fn(usize) -> Message>>) -> Self {
-        self.on_select = on_select;
-        self
-    }
-
-    /// What to do when clicking on an entry that is already selected.
-    ///
-    /// Defaults to `None` if not set.
-    pub fn on_selected_click(
-        mut self, on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
-    ) -> Self {
-        self.on_selected_click = on_selected_click;
-        self
-    }
-
-    fn try_sort_data(&mut self) {
-        use std::cmp::Ordering;
-
-        if let SortStatus::Sortable { column, reverse } = self.sortable {
-            // TODO: We can avoid some annoying checks by using const generics - this is waiting on
-            // the const_generics_defaults feature, landing in 1.59, however!
-
-            self.rows
-                .sort_by(|a, b| match (a.get(column), b.get(column)) {
-                    (Some(a), Some(b)) => a.cmp(b),
-                    (Some(_a), None) => Ordering::Greater,
-                    (None, Some(_b)) => Ordering::Less,
-                    (None, None) => Ordering::Equal,
-                });
-
-            if reverse {
-                self.rows.reverse();
-            }
-        }
-    }
-
     fn update_column_widths(&mut self, bounds: Rect) {
         let total_width = bounds.width;
         let mut width_remaining = bounds.width;
@@ -251,7 +118,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
     {
         let rect = draw_ctx.rect();
         let state = state_ctx.mut_state::<TextTableState>(self.key);
-        state.set_num_items(self.rows.len()); // FIXME: Not a fan of this system like this - should be easier to do.
+        state.scroll.set_num_items(self.rows.len()); // FIXME: Not a fan of this system like this - should be easier to do.
 
         self.table_gap = if !self.show_gap
             || (self.rows.len() + 2 > rect.height.into() && rect.height < TABLE_GAP_HEIGHT_LIMIT)
@@ -276,8 +143,10 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
         // as well as truncating some entries based on available width.
         let data_slice = {
             // Note: `get_list_start` already ensures `start` is within the bounds of the number of items, so no need to check!
-            let start = state.display_start_index(rect, scrollable_height as usize);
-            let end = min(state.num_items(), start + scrollable_height as usize);
+            let start = state
+                .scroll
+                .display_start_index(rect, scrollable_height as usize);
+            let end = min(state.scroll.num_items(), start + scrollable_height as usize);
 
             debug!("Start: {}, end: {}", start, end);
             self.rows.drain(start..end).into_iter().map(|row| {
@@ -299,7 +168,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
             table = table.highlight_style(self.style_sheet.selected_text);
         }
 
-        frame.render_stateful_widget(table.widths(&widths), rect, state.tui_state());
+        frame.render_stateful_widget(table.widths(&widths), rect, state.scroll.tui_state());
     }
 
     fn on_event(
@@ -311,7 +180,6 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
 
         let rect = draw_ctx.rect();
         let state = state_ctx.mut_state::<TextTableState>(self.key);
-        state.set_num_items(self.rows.len());
 
         match event {
             Event::Keyboard(key_event) => {
@@ -330,30 +198,37 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
                             let y = mouse_event.row - rect.top();
 
                             if y == 0 {
-                                if let SortStatus::Sortable { column, reverse } = self.sortable {
-                                    todo!() // Sort by the clicked column!  If already using column, reverse!
-                                            // self.sort_data();
-                                } else {
-                                    Status::Ignored
+                                match state.sort {
+                                    SortType::Unsortable => Status::Ignored,
+                                    SortType::Ascending(column) => {
+                                        // Sort by the clicked column!  If already using column, reverse!
+                                        // self.sort_data();
+                                        todo!()
+                                    }
+                                    SortType::Descending(column) => {
+                                        // Sort by the clicked column!  If already using column, reverse!
+                                        // self.sort_data();
+                                        todo!()
+                                    }
                                 }
                             } else if y > self.table_gap {
                                 let visual_index = usize::from(y - self.table_gap);
-                                state.set_visual_index(visual_index)
+                                state.scroll.set_visual_index(visual_index)
                             } else {
                                 Status::Ignored
                             }
                         }
                         MouseEventKind::ScrollDown => {
-                            let status = state.move_down(1);
+                            let status = state.scroll.move_down(1);
                             if let Some(on_select) = &self.on_select {
-                                messages.push(on_select(state.current_index()));
+                                messages.push(on_select(state.scroll.current_index()));
                             }
                             status
                         }
                         MouseEventKind::ScrollUp => {
-                            let status = state.move_up(1);
+                            let status = state.scroll.move_up(1);
                             if let Some(on_select) = &self.on_select {
-                                messages.push(on_select(state.current_index()));
+                                messages.push(on_select(state.scroll.current_index()));
                             }
                             status
                         }
@@ -369,7 +244,10 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
 
 #[cfg(test)]
 mod tests {
-    use crate::tuine::{StateMap, ViewContext};
+    use crate::tuine::{
+        text_table::{SortType, TextTableBuilder},
+        StateMap, StatefulTemplate, ViewContext,
+    };
 
     use super::{DataRow, TextTable};
 
@@ -390,9 +268,10 @@ mod tests {
         let index = 1;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
-            .sort_column(index)
-            .rows(rows);
+        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
+            .default_sort(SortType::Ascending(index))
+            .rows(rows)
+            .build(&mut ctx(&mut map));
 
         assert_eq!(
             table.rows.len(),
@@ -422,10 +301,11 @@ mod tests {
         let new_index = 0;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
-            .sort_column(index)
+        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
+            .default_sort(SortType::Ascending(index))
             .rows(rows)
-            .sort_column(new_index);
+            .default_sort(SortType::Ascending(new_index))
+            .build(&mut ctx(&mut map));
 
         assert_eq!(
             table.rows.len(),
@@ -454,10 +334,10 @@ mod tests {
         let index = 1;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
-            .sort_column(index)
-            .sort_reverse(true)
-            .rows(rows);
+        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
+            .default_sort(SortType::Descending(index))
+            .rows(rows)
+            .build(&mut ctx(&mut map));
 
         assert_eq!(
             table.rows.len(),
@@ -486,10 +366,11 @@ mod tests {
         let index = 1;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
+        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
             .rows(rows)
-            .sort_column(index)
-            .row(DataRow::default().cell("X").cell(0));
+            .default_sort(SortType::Ascending(index))
+            .row(DataRow::default().cell("X").cell(0))
+            .build(&mut ctx(&mut map));
 
         assert_eq!(
             table.rows.len(),
@@ -519,9 +400,10 @@ mod tests {
         let row_length = original_rows.len();
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTable::new(&mut ctx(&mut map), vec!["Sensor", "Temp"])
+        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
             .rows(rows)
-            .row(original_rows[3].clone());
+            .row(original_rows[3].clone())
+            .build(&mut ctx(&mut map));
 
         assert_eq!(
             table.rows.len(),

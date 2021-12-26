@@ -27,4 +27,48 @@ impl<'a> ViewContext<'a> {
     pub fn mut_state<S: State + Default + 'static>(&mut self, key: Key) -> &mut S {
         self.state_context.mut_state(key)
     }
+
+    pub fn register_and_state<C: Into<Caller>, S: State + Default + 'static>(
+        &mut self, caller: C,
+    ) -> (Key, &S) {
+        self.key_counter += 1;
+        let key = Key::new(caller.into(), self.key_counter);
+
+        (key, self.state(key))
+    }
+
+    pub fn register_and_mut_state<C: Into<Caller>, S: State + Default + 'static>(
+        &mut self, caller: C,
+    ) -> (Key, &mut S) {
+        self.key_counter += 1;
+        let key = Key::new(caller.into(), self.key_counter);
+
+        (key, self.mut_state(key))
+    }
+
+    pub fn register_and_state_with_default<
+        C: Into<Caller>,
+        S: State + 'static,
+        F: FnOnce() -> S,
+    >(
+        &mut self, caller: C, default: F,
+    ) -> (Key, &S) {
+        self.key_counter += 1;
+        let key = Key::new(caller.into(), self.key_counter);
+
+        (key, self.state_context.state_with_default(key, default))
+    }
+
+    pub fn register_and_mut_state_with_default<
+        C: Into<Caller>,
+        S: State + 'static,
+        F: FnOnce() -> S,
+    >(
+        &mut self, caller: C, default: F,
+    ) -> (Key, &mut S) {
+        self.key_counter += 1;
+        let key = Key::new(caller.into(), self.key_counter);
+
+        (key, self.state_context.mut_state_with_default(key, default))
+    }
 }

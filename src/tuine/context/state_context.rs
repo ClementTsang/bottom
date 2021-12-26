@@ -16,4 +16,16 @@ impl<'a> StateContext<'a> {
     pub fn mut_state<S: State + Default + 'static>(&mut self, key: Key) -> &mut S {
         self.state_map.mut_state::<S>(key)
     }
+
+    pub fn state_with_default<S: State + 'static, F: FnOnce() -> S>(
+        &mut self, key: Key, default: F,
+    ) -> &S {
+        self.state_map.state_with_default::<S, F>(key, default)
+    }
+
+    pub fn mut_state_with_default<S: State + 'static, F: FnOnce() -> S>(
+        &mut self, key: Key, default: F,
+    ) -> &mut S {
+        self.state_map.mut_state_with_default::<S, F>(key, default)
+    }
 }

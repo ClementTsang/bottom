@@ -4,6 +4,9 @@ pub use base::*;
 pub mod widget;
 pub use widget::*;
 
+pub mod stateful;
+pub use stateful::*;
+
 use enum_dispatch::enum_dispatch;
 use tui::Frame;
 
