@@ -10,13 +10,13 @@ pub use data_row::DataRow;
 pub mod data_cell;
 pub use data_cell::DataCell;
 
-pub mod builder;
-pub use builder::TextTableBuilder;
-
 pub mod sort_type;
 pub use sort_type::SortType;
 
-use std::cmp::min;
+pub mod props;
+pub use props::TextTableProps;
+
+use std::{cmp::min, panic::Location};
 
 use tui::{
     backend::Backend,
@@ -29,7 +29,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     constants::TABLE_GAP_HEIGHT_LIMIT,
-    tuine::{DrawContext, Event, Key, StateContext, Status, TmpComponent},
+    tuine::{DrawContext, Event, Key, StateContext, StatefulComponent, Status, TmpComponent},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -57,6 +57,40 @@ pub struct TextTable<Message> {
     table_gap: u16,
     on_select: Option<Box<dyn Fn(usize) -> Message>>,
     on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
+}
+
+impl<Message> StatefulComponent<Message> for TextTable<Message> {
+    type Properties = TextTableProps<Message>;
+
+    type ComponentState = TextTableState;
+
+    #[track_caller]
+    fn build(ctx: &mut crate::tuine::ViewContext<'_>, mut props: Self::Properties) -> Self {
+        let sort = props.sort;
+        let (key, state) = ctx.register_and_mut_state_with_default::<_, Self::ComponentState, _>(
+            Location::caller(),
+            || TextTableState {
+                scroll: Default::default(),
+                sort,
+            },
+        );
+
+        state.scroll.set_num_items(props.rows.len());
+        props.try_sort_data(state.sort);
+
+        TextTable {
+            key,
+            column_widths: props.column_widths,
+            columns: props.columns,
+            show_gap: props.show_gap,
+            show_selected_entry: props.show_selected_entry,
+            rows: props.rows,
+            style_sheet: props.style_sheet,
+            table_gap: props.table_gap,
+            on_select: props.on_select,
+            on_selected_click: props.on_selected_click,
+        }
+    }
 }
 
 impl<Message> TextTable<Message> {
@@ -245,8 +279,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
 #[cfg(test)]
 mod tests {
     use crate::tuine::{
-        text_table::{SortType, TextTableBuilder},
-        StateMap, StatefulTemplate, ViewContext,
+        text_table::SortType, StateMap, StatefulComponent, TextTableProps, ViewContext,
     };
 
     use super::{DataRow, TextTable};
@@ -268,10 +301,13 @@ mod tests {
         let index = 1;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
-            .default_sort(SortType::Ascending(index))
-            .rows(rows)
-            .build(&mut ctx(&mut map));
+        let ctx = &mut ctx(&mut map);
+        let table: TextTable<Message> = TextTable::build(
+            ctx,
+            TextTableProps::new(vec!["Sensor", "Temp"])
+                .default_sort(SortType::Ascending(index))
+                .rows(rows),
+        );
 
         assert_eq!(
             table.rows.len(),
@@ -301,11 +337,14 @@ mod tests {
         let new_index = 0;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
-            .default_sort(SortType::Ascending(index))
-            .rows(rows)
-            .default_sort(SortType::Ascending(new_index))
-            .build(&mut ctx(&mut map));
+        let ctx = &mut ctx(&mut map);
+        let table: TextTable<Message> = TextTable::build(
+            ctx,
+            TextTableProps::new(vec!["Sensor", "Temp"])
+                .default_sort(SortType::Ascending(index))
+                .rows(rows)
+                .default_sort(SortType::Ascending(new_index)),
+        );
 
         assert_eq!(
             table.rows.len(),
@@ -334,10 +373,13 @@ mod tests {
         let index = 1;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
-            .default_sort(SortType::Descending(index))
-            .rows(rows)
-            .build(&mut ctx(&mut map));
+        let ctx = &mut ctx(&mut map);
+        let table: TextTable<Message> = TextTable::build(
+            ctx,
+            TextTableProps::new(vec!["Sensor", "Temp"])
+                .default_sort(SortType::Descending(index))
+                .rows(rows),
+        );
 
         assert_eq!(
             table.rows.len(),
@@ -366,11 +408,14 @@ mod tests {
         let index = 1;
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
-            .rows(rows)
-            .default_sort(SortType::Ascending(index))
-            .row(DataRow::default().cell("X").cell(0))
-            .build(&mut ctx(&mut map));
+        let ctx = &mut ctx(&mut map);
+        let table: TextTable<Message> = TextTable::build(
+            ctx,
+            TextTableProps::new(vec!["Sensor", "Temp"])
+                .rows(rows)
+                .default_sort(SortType::Ascending(index))
+                .row(DataRow::default().cell("X").cell(0)),
+        );
 
         assert_eq!(
             table.rows.len(),
@@ -400,10 +445,13 @@ mod tests {
         let row_length = original_rows.len();
 
         let mut map = StateMap::default();
-        let table: TextTable<Message> = TextTableBuilder::new(vec!["Sensor", "Temp"])
-            .rows(rows)
-            .row(original_rows[3].clone())
-            .build(&mut ctx(&mut map));
+        let ctx = &mut ctx(&mut map);
+        let table: TextTable<Message> = TextTable::build(
+            ctx,
+            TextTableProps::new(vec!["Sensor", "Temp"])
+                .rows(rows)
+                .row(original_rows[3].clone()),
+        );
 
         assert_eq!(
             table.rows.len(),

@@ -1,5 +1,5 @@
 pub mod text_table;
-pub use text_table::{TextColumn, TextColumnConstraint, TextTable, TextTableBuilder};
+pub use text_table::*;
 
 pub mod shortcut;
 pub use shortcut::Shortcut;

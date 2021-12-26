@@ -1,23 +1,23 @@
-use std::{borrow::Cow, panic::Location};
+use std::borrow::Cow;
 
-use crate::tuine::{StatefulTemplate, ViewContext};
+use crate::tuine::{DataRow, SortType, TextColumn};
 
-use super::{DataRow, SortType, StyleSheet, TextColumn, TextTable, TextTableState};
+use super::StyleSheet;
 
-pub struct TextTableBuilder<Message> {
-    column_widths: Vec<u16>,
-    columns: Vec<TextColumn>,
-    show_gap: bool,
-    show_selected_entry: bool,
-    rows: Vec<DataRow>,
-    style_sheet: StyleSheet,
-    sort: SortType,
-    table_gap: u16,
-    on_select: Option<Box<dyn Fn(usize) -> Message>>,
-    on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
+pub struct TextTableProps<Message> {
+    pub(crate) column_widths: Vec<u16>,
+    pub(crate) columns: Vec<TextColumn>,
+    pub(crate) show_gap: bool,
+    pub(crate) show_selected_entry: bool,
+    pub(crate) rows: Vec<DataRow>,
+    pub(crate) style_sheet: StyleSheet,
+    pub(crate) sort: SortType,
+    pub(crate) table_gap: u16,
+    pub(crate) on_select: Option<Box<dyn Fn(usize) -> Message>>,
+    pub(crate) on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
 }
 
-impl<Message> TextTableBuilder<Message> {
+impl<Message> TextTableProps<Message> {
     pub fn new<S: Into<Cow<'static, str>>>(columns: Vec<S>) -> Self {
         Self {
             column_widths: vec![0; columns.len()],
@@ -94,7 +94,7 @@ impl<Message> TextTableBuilder<Message> {
         self
     }
 
-    fn try_sort_data(&mut self, sort_type: SortType) {
+    pub(crate) fn try_sort_data(&mut self, sort_type: SortType) {
         use std::cmp::Ordering;
 
         // TODO: We can avoid some annoying checks by using const generics - this is waiting on
@@ -118,39 +118,6 @@ impl<Message> TextTableBuilder<Message> {
                 self.rows.reverse();
             }
             SortType::Unsortable => {}
-        }
-    }
-}
-
-impl<Message> StatefulTemplate<Message> for TextTableBuilder<Message> {
-    type Component = TextTable<Message>;
-    type ComponentState = TextTableState;
-
-    #[track_caller]
-    fn build(mut self, ctx: &mut ViewContext<'_>) -> Self::Component {
-        let sort = self.sort;
-        let (key, state) = ctx.register_and_mut_state_with_default::<_, Self::ComponentState, _>(
-            Location::caller(),
-            || TextTableState {
-                scroll: Default::default(),
-                sort,
-            },
-        );
-
-        state.scroll.set_num_items(self.rows.len());
-        self.try_sort_data(state.sort);
-
-        TextTable {
-            key,
-            column_widths: self.column_widths,
-            columns: self.columns,
-            show_gap: self.show_gap,
-            show_selected_entry: self.show_selected_entry,
-            rows: self.rows,
-            style_sheet: self.style_sheet,
-            table_gap: self.table_gap,
-            on_select: self.on_select,
-            on_selected_click: self.on_selected_click,
         }
     }
 }
