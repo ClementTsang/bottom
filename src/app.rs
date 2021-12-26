@@ -262,7 +262,9 @@ impl Application for AppState {
                     )),
                     FlexElement::new(TextTable::build(
                         ctx,
-                        TextTableProps::new(vec!["L", "EM", "NO", "PQ"]),
+                        TextTableProps::new(vec!["L", "EM", "NO", "PQ"])
+                            .rows(vec![vec![1, 2, 3, 4], vec![4, 3, 2, 1]])
+                            .default_sort(crate::tuine::SortType::Descending(0)),
                     )),
                 ]),
                 2,

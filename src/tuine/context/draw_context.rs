@@ -16,7 +16,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    pub(crate) fn rect(&self) -> Rect {
+    pub(crate) fn global_rect(&self) -> Rect {
         let mut rect = self.current_node.rect;
         rect.x += self.current_offset.0;
         rect.y += self.current_offset.1;

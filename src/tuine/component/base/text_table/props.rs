@@ -39,8 +39,8 @@ impl<Message> TextTableProps<Message> {
     /// Sets the row to display in the table.
     ///
     /// Defaults to displaying no data if not set.
-    pub fn rows(mut self, rows: Vec<DataRow>) -> Self {
-        self.rows = rows;
+    pub fn rows<R: Into<DataRow>>(mut self, rows: Vec<R>) -> Self {
+        self.rows = rows.into_iter().map(Into::into).collect();
         self
     }
 

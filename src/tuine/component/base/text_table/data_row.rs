@@ -35,6 +35,15 @@ impl DataRow {
     }
 }
 
+impl<D: Into<DataCell>> From<Vec<D>> for DataRow {
+    fn from(vec: Vec<D>) -> Self {
+        Self {
+            cells: vec.into_iter().map(Into::into).collect(),
+            style: None,
+        }
+    }
+}
+
 impl From<DataRow> for Row<'_> {
     fn from(row: DataRow) -> Self {
         if let Some(style) = row.style {

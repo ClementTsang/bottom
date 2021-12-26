@@ -59,40 +59,6 @@ pub struct TextTable<Message> {
     on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
 }
 
-impl<Message> StatefulComponent<Message> for TextTable<Message> {
-    type Properties = TextTableProps<Message>;
-
-    type ComponentState = TextTableState;
-
-    #[track_caller]
-    fn build(ctx: &mut crate::tuine::ViewContext<'_>, mut props: Self::Properties) -> Self {
-        let sort = props.sort;
-        let (key, state) = ctx.register_and_mut_state_with_default::<_, Self::ComponentState, _>(
-            Location::caller(),
-            || TextTableState {
-                scroll: Default::default(),
-                sort,
-            },
-        );
-
-        state.scroll.set_num_items(props.rows.len());
-        props.try_sort_data(state.sort);
-
-        TextTable {
-            key,
-            column_widths: props.column_widths,
-            columns: props.columns,
-            show_gap: props.show_gap,
-            show_selected_entry: props.show_selected_entry,
-            rows: props.rows,
-            style_sheet: props.style_sheet,
-            table_gap: props.table_gap,
-            on_select: props.on_select,
-            on_selected_click: props.on_selected_click,
-        }
-    }
-}
-
 impl<Message> TextTable<Message> {
     fn update_column_widths(&mut self, bounds: Rect) {
         let total_width = bounds.width;
@@ -143,6 +109,40 @@ impl<Message> TextTable<Message> {
     }
 }
 
+impl<Message> StatefulComponent<Message> for TextTable<Message> {
+    type Properties = TextTableProps<Message>;
+
+    type ComponentState = TextTableState;
+
+    #[track_caller]
+    fn build(ctx: &mut crate::tuine::ViewContext<'_>, mut props: Self::Properties) -> Self {
+        let sort = props.sort;
+        let (key, state) = ctx.register_and_mut_state_with_default::<_, Self::ComponentState, _>(
+            Location::caller(),
+            || TextTableState {
+                scroll: Default::default(),
+                sort,
+            },
+        );
+
+        state.scroll.set_num_items(props.rows.len());
+        props.try_sort_data(state.sort);
+
+        TextTable {
+            key,
+            column_widths: props.column_widths,
+            columns: props.columns,
+            show_gap: props.show_gap,
+            show_selected_entry: props.show_selected_entry,
+            rows: props.rows,
+            style_sheet: props.style_sheet,
+            table_gap: props.table_gap,
+            on_select: props.on_select,
+            on_selected_click: props.on_selected_click,
+        }
+    }
+}
+
 impl<Message> TmpComponent<Message> for TextTable<Message> {
     fn draw<B>(
         &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
@@ -150,7 +150,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
     ) where
         B: Backend,
     {
-        let rect = draw_ctx.rect();
+        let rect = draw_ctx.global_rect();
         let state = state_ctx.mut_state::<TextTableState>(self.key);
         state.scroll.set_num_items(self.rows.len()); // FIXME: Not a fan of this system like this - should be easier to do.
 
@@ -182,7 +182,6 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
                 .display_start_index(rect, scrollable_height as usize);
             let end = min(state.scroll.num_items(), start + scrollable_height as usize);
 
-            debug!("Start: {}, end: {}", start, end);
             self.rows.drain(start..end).into_iter().map(|row| {
                 let r: Row<'_> = row.into();
                 r
@@ -212,7 +211,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
         use crate::tuine::MouseBoundIntersect;
         use crossterm::event::{MouseButton, MouseEventKind};
 
-        let rect = draw_ctx.rect();
+        let rect = draw_ctx.global_rect();
         let state = state_ctx.mut_state::<TextTableState>(self.key);
 
         match event {
@@ -230,24 +229,69 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
                     match mouse_event.kind {
                         MouseEventKind::Down(MouseButton::Left) => {
                             let y = mouse_event.row - rect.top();
-
                             if y == 0 {
+                                let x = mouse_event.column - rect.left();
                                 match state.sort {
                                     SortType::Unsortable => Status::Ignored,
-                                    SortType::Ascending(column) => {
-                                        // Sort by the clicked column!  If already using column, reverse!
-                                        // self.sort_data();
-                                        todo!()
-                                    }
-                                    SortType::Descending(column) => {
-                                        // Sort by the clicked column!  If already using column, reverse!
-                                        // self.sort_data();
-                                        todo!()
+                                    SortType::Ascending(column) | SortType::Descending(column) => {
+                                        let mut cursor = 0;
+                                        for (selected_column, width) in
+                                            self.column_widths.iter().enumerate()
+                                        {
+                                            let end = cursor + width;
+
+                                            if x >= cursor && x <= end {
+                                                match state.sort {
+                                                    SortType::Ascending(_) => {
+                                                        if selected_column == column {
+                                                            // FIXME: This should handle default sorting orders...
+                                                            state.sort = SortType::Descending(
+                                                                selected_column,
+                                                            );
+                                                        } else {
+                                                            state.sort = SortType::Ascending(
+                                                                selected_column,
+                                                            );
+                                                        }
+                                                    }
+                                                    SortType::Descending(_) => {
+                                                        if selected_column == column {
+                                                            // FIXME: This should handle default sorting orders...
+                                                            state.sort = SortType::Ascending(
+                                                                selected_column,
+                                                            );
+                                                        } else {
+                                                            state.sort = SortType::Descending(
+                                                                selected_column,
+                                                            );
+                                                        }
+                                                    }
+                                                    SortType::Unsortable => unreachable!(), // Should be impossible by above check.
+                                                }
+
+                                                return Status::Captured;
+                                            } else {
+                                                cursor += width;
+                                            }
+                                        }
+                                        Status::Ignored
                                     }
                                 }
                             } else if y > self.table_gap {
                                 let visual_index = usize::from(y - self.table_gap);
-                                state.scroll.set_visual_index(visual_index)
+                                match state.scroll.set_visual_index(visual_index) {
+                                    Status::Captured => Status::Captured,
+                                    Status::Ignored => {
+                                        if let Some(on_selected_click) = &self.on_selected_click {
+                                            messages.push(on_selected_click(
+                                                state.scroll.current_index(),
+                                            ));
+                                            Status::Captured
+                                        } else {
+                                            Status::Ignored
+                                        }
+                                    }
+                                }
                             } else {
                                 Status::Ignored
                             }
