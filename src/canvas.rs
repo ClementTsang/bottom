@@ -695,6 +695,13 @@ impl Painter {
             }
         })?;
 
+        if let Some(updated_current_widget) = app_state
+            .widget_map
+            .get(&app_state.current_widget.widget_id)
+        {
+            app_state.current_widget = updated_current_widget.clone();
+        }
+
         app_state.is_force_redraw = false;
         app_state.is_determining_widget_boundary = false;
 
