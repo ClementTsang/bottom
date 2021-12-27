@@ -318,7 +318,6 @@ jobs:
         with:
           command: build
           args: --release --verbose --features "battery"
-          use-cross: ${{ matrix.triple.cross }}
 
       - name: Move autocomplete to working directory
         shell: bash
