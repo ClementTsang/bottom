@@ -246,7 +246,7 @@ impl Application for AppState {
         Flex::column()
             .with_flex_child(
                 Flex::row_with_children(vec![
-                    FlexElement::new(TempTable::new(ctx)),
+                    FlexElement::new(TempTable::build(ctx)),
                     FlexElement::new(TextTable::build(
                         ctx,
                         TextTableProps::new(vec!["D", "E", "F"]),

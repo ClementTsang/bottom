@@ -1,5 +1,5 @@
 pub mod text_table;
-pub use text_table::*;
+pub use text_table::{DataCell, DataRow, SortType, TextColumn, TextTable, TextTableProps};
 
 pub mod shortcut;
 pub use shortcut::Shortcut;

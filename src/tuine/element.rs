@@ -12,7 +12,7 @@ pub enum Element<Message, C = Empty>
 where
     C: TmpComponent<Message>,
 {
-    Block,
+    Block(Block<Message, C>),
     Carousel,
     Container(Container<Message>),
     Flex(Flex<Message>),

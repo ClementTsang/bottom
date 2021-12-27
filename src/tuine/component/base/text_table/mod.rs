@@ -32,6 +32,7 @@ use crate::{
     tuine::{DrawContext, Event, Key, StateContext, StatefulComponent, Status, TmpComponent},
 };
 
+/// A set of styles for a [`TextTable`].
 #[derive(Clone, Debug, Default)]
 pub struct StyleSheet {
     text: Style,
@@ -114,7 +115,6 @@ impl<Message> StatefulComponent<Message> for TextTable<Message> {
 
     type ComponentState = TextTableState;
 
-    #[track_caller]
     fn build(ctx: &mut crate::tuine::ViewContext<'_>, mut props: Self::Properties) -> Self {
         let sort = props.sort;
         let (key, state) = ctx.register_and_mut_state_with_default::<_, Self::ComponentState, _>(
@@ -126,6 +126,7 @@ impl<Message> StatefulComponent<Message> for TextTable<Message> {
         );
 
         state.scroll.set_num_items(props.rows.len());
+        state.sort.prune_length(props.columns.len());
         props.try_sort_data(state.sort);
 
         TextTable {

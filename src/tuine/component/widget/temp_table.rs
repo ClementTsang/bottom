@@ -1,18 +1,18 @@
 use crate::tuine::{
     text_table::{DataRow, SortType, TextTableProps},
-    Shortcut, StatefulComponent, TextTable, TmpComponent, ViewContext,
+    Block, Shortcut, StatefulComponent, TextTable, TmpComponent, ViewContext,
 };
 
 /// A [`TempTable`] is a text table that is meant to display temperature data.
 pub struct TempTable<Message> {
-    inner: Shortcut<Message, TextTable<Message>>,
+    inner: Block<Message, Shortcut<Message, TextTable<Message>>>,
 }
 
 impl<Message> TempTable<Message> {
     #[track_caller]
-    pub fn new(ctx: &mut ViewContext<'_>) -> Self {
+    pub fn build(ctx: &mut ViewContext<'_>) -> Self {
         Self {
-            inner: Shortcut::with_child(TextTable::build(
+            inner: Block::with_child(Shortcut::with_child(TextTable::build(
                 ctx,
                 TextTableProps::new(vec!["Sensor", "Temp"])
                     .rows(vec![
@@ -21,7 +21,7 @@ impl<Message> TempTable<Message> {
                         DataRow::default().cell("C").cell(1),
                     ])
                     .default_sort(SortType::Ascending(1)),
-            )),
+            ))),
         }
     }
 }
