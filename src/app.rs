@@ -1153,7 +1153,6 @@ impl App {
                     0
                 };
                 let height = brc_y - tlc_y - 2 * border_offset - header_gap_offset;
-                debug!("Height: {}", height);
                 self.change_position_count(height as i64);
             }
         }
