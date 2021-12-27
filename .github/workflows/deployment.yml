@@ -326,10 +326,23 @@ jobs:
         with:
           key: x86_64-unknown-linux-gnu-deb
 
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --verbose --features "battery"
+          use-cross: ${{ matrix.triple.cross }}
+
+      - name: Move autocomplete to working directory
+        shell: bash
+        run: |
+          mkdir completion
+          cp -r ./target/release/build/bottom-*/out/. completion
+
       - name: Build Debian release (Linux x86-64 GNU)
         run: |
           cargo install cargo-deb --version 1.29.0 --locked
-          cargo deb
+          cargo deb --no-build
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
       - name: Create release directory for artifact, move file
