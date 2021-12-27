@@ -231,7 +231,7 @@ pub const HELP_CONTENTS_TEXT: [&str; 8] = [
 
 // TODO [Help]: Search in help?
 // TODO [Help]: Move to using tables for easier formatting?
-pub const GENERAL_HELP_TEXT: [&str; 30] = [
+pub const GENERAL_HELP_TEXT: [&str; 31] = [
     "1 - General",
     "q, Ctrl-c        Quit",
     "Esc              Close dialog windows, search, widgets, or exit expanded mode",
@@ -260,6 +260,7 @@ pub const GENERAL_HELP_TEXT: [&str; 30] = [
     "+                Zoom in on chart (decrease time range)",
     "-                Zoom out on chart (increase time range)",
     "=                Reset zoom",
+    "PgUp, PgDown     Scroll up/down a table by a page",
     "Mouse scroll     Scroll through the tables or zoom in/out of charts by scrolling up/down",
     "Mouse click      Selects the clicked widget, table entry, dialog option, or tab",
 ];

@@ -125,6 +125,8 @@ pub fn handle_key_event_or_break(
             KeyCode::F(5) => app.toggle_tree_mode(),
             KeyCode::F(6) => app.toggle_sort(),
             KeyCode::F(9) => app.start_killing_process(),
+            KeyCode::PageDown => app.on_page_down(),
+            KeyCode::PageUp => app.on_page_up(),
             _ => {}
         }
     } else {
