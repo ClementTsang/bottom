@@ -55,6 +55,7 @@ Note that key bindings are generally case-sensitive.
 | ++right++ <br/> ++l++ <br/> ++alt+l++                        | Move right within a widget                                   |
 | ++g+g++ , ++home++                                           | Jump to the first entry                                      |
 | ++G++ , ++end++                                              | Jump to the last entry                                       |
+| ++page-up++ , ++page-down++                                  | Scroll up/down a table by a page                             |
 
 ## Mouse bindings
 

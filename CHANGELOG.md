@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.7]/[0.7.0] - Unreleased
 
+## Feature
+
+- [#646](https://github.com/ClementTsang/bottom/pull/646): Add `PgUp`/`PgDown` keybind support to scroll up and down a page in a table.
+
 ## [0.6.6] - 2021-12-22
 
 ## Bug Fixes
