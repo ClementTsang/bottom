@@ -338,9 +338,9 @@ jobs:
           mkdir completion
           cp -r ./target/release/build/bottom-*/out/. completion
 
-      - name: Build Debian release (Linux x86-64 GNU)
+      - name: Build Debian release
         run: |
-          cargo install cargo-deb --version 1.29.0 --locked
+          cargo install cargo-deb --version 1.34.0 --locked
           cargo deb --no-build
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
