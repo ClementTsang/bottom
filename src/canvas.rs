@@ -678,10 +678,8 @@ impl Painter {
                     self.widget_layout
                         .rows
                         .iter()
-                        .map(|row| &row.children)
-                        .flatten()
-                        .map(|col| &col.children)
-                        .flatten()
+                        .flat_map(|row| &row.children)
+                        .flat_map(|col| &col.children)
                         .zip(self.derived_widget_draw_locs.iter().flatten().flatten())
                         .for_each(|(widgets, widget_draw_locs)| {
                             self.draw_widgets_with_constraints(

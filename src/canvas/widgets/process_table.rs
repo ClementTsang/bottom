@@ -254,7 +254,7 @@ impl ProcessTableWidget for Painter {
                     if temp_title_base.len() > draw_loc.width as usize {
                         (
                             " Processes ".to_string(),
-                            format!("{}{}", " Processes ".to_string(), ESCAPE_ENDING),
+                            format!("{}{}", " Processes ", ESCAPE_ENDING),
                         )
                     } else {
                         (title_base, temp_title_base)
