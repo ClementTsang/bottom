@@ -178,7 +178,7 @@ impl TempTableWidget for Painter {
                     if temp_title_base.len() > draw_loc.width as usize {
                         (
                             " Temperatures ".to_string(),
-                            format!("{}{}", " Temperatures ".to_string(), ESCAPE_ENDING),
+                            format!("{}{}", " Temperatures ", ESCAPE_ENDING),
                         )
                     } else {
                         (title_base, temp_title_base)

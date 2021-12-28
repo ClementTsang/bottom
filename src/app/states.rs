@@ -438,8 +438,8 @@ impl ProcColumn {
                 if mapping.enabled {
                     Some(format!(
                         "{}{}{}",
-                        column_type.to_string(),
-                        command_str.as_str(),
+                        column_type,
+                        command_str,
                         if proc_sorting_type == column_type {
                             if sort_reverse {
                                 DOWN_ARROW

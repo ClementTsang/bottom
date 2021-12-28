@@ -37,11 +37,11 @@ pub struct Config {
 
 impl Config {
     pub fn get_config_as_bytes(&self) -> anyhow::Result<Vec<u8>> {
-        let mut config_string: Vec<Cow<'_, str>> = Vec::default();
-
-        // Top level
-        config_string.push(CONFIG_TOP_HEAD.into());
-        config_string.push(toml::to_string_pretty(self)?.into());
+        let config_string: Vec<Cow<'_, str>> = vec![
+            // Top level
+            CONFIG_TOP_HEAD.into(),
+            toml::to_string_pretty(self)?.into(),
+        ];
 
         Ok(config_string.concat().as_bytes().to_vec())
     }

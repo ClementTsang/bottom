@@ -189,7 +189,7 @@ impl DiskTableWidget for Painter {
                     if temp_title_base.len() > draw_loc.width as usize {
                         (
                             " Disk ".to_string(),
-                            format!("{}{}", " Disk ".to_string(), ESCAPE_ENDING),
+                            format!("{}{}", " Disk ", ESCAPE_ENDING),
                         )
                     } else {
                         (title_base, temp_title_base)
