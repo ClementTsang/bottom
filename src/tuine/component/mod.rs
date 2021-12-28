@@ -7,6 +7,9 @@ pub use widget::*;
 pub mod stateful;
 pub use stateful::*;
 
+pub mod banner;
+pub use banner::*;
+
 // pub mod stateless;
 // pub use stateless::*;
 

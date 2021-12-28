@@ -151,11 +151,6 @@ pub struct AppState {
     pub app_config_fields: AppConfigFields,
 
     // --- NEW STUFF ---
-    pub selected_widget: NodeId,
-    pub widget_lookup_map: FxHashMap<NodeId, BottomWidget>,
-    pub layout_tree: Arena<LayoutNode>,
-    pub layout_tree_root: NodeId,
-
     frozen_state: FrozenState,
     current_screen: CurrentScreen,
     painter: Painter,
@@ -180,10 +175,6 @@ impl AppState {
             app_config_fields,
             filters,
             used_widgets,
-            selected_widget,
-            widget_lookup_map,
-            layout_tree,
-            layout_tree_root,
             painter,
 
             // Use defaults.
@@ -226,8 +217,14 @@ impl Application for AppState {
                 self.set_current_screen(CurrentScreen::Help);
                 true
             }
-            AppMessages::ConfirmKillProcess { to_kill } => true,
-            AppMessages::KillProcess { to_kill, signal } => true,
+            AppMessages::ConfirmKillProcess { to_kill } => {
+                // FIXME: Handle confirmation
+                true
+            }
+            AppMessages::KillProcess { to_kill, signal } => {
+                // FIXME: Handle process termination
+                true
+            }
             AppMessages::ToggleFreeze => {
                 self.frozen_state.toggle(&self.data_collection);
                 true
@@ -302,27 +299,26 @@ impl Application for AppState {
     }
 
     fn global_event_handler(
-        &mut self, event: crate::tuine::Event, messages: &mut Vec<Self::Message>,
+        &mut self, event: crate::tuine::Event, messages: &mut Vec<AppMessages>,
     ) -> Status {
         use crate::tuine::Event;
         use crossterm::event::{KeyCode, KeyModifiers};
+
+        fn on_quit(messages: &mut Vec<AppMessages>) -> Status {
+            messages.push(AppMessages::Quit);
+            Status::Captured
+        }
 
         match event {
             Event::Keyboard(event) => {
                 if event.modifiers.is_empty() {
                     match event.code {
-                        KeyCode::Char('q') | KeyCode::Char('Q') => {
-                            messages.push(AppMessages::Quit);
-                            Status::Captured
-                        }
+                        KeyCode::Char('q') | KeyCode::Char('Q') => on_quit(messages),
                         _ => Status::Ignored,
                     }
                 } else if let KeyModifiers::CONTROL = event.modifiers {
                     match event.code {
-                        KeyCode::Char('c') | KeyCode::Char('C') => {
-                            messages.push(AppMessages::Quit);
-                            Status::Captured
-                        }
+                        KeyCode::Char('c') | KeyCode::Char('C') => on_quit(messages),
                         KeyCode::Char('r') | KeyCode::Char('R') => {
                             messages.push(AppMessages::Reset);
                             Status::Captured
