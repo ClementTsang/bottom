@@ -29,6 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
+    data_conversion::ConvertedData,
     tuine::{Application, Element, Flex, Status, ViewContext},
     units::data_units::DataUnit,
     Pid,
@@ -129,7 +130,13 @@ impl Default for CurrentScreen {
 pub enum AppMessages {
     Update(Box<data_harvester::Data>),
     OpenHelp,
-    KillProcess { to_kill: Vec<Pid> },
+    ConfirmKillProcess {
+        to_kill: Vec<Pid>,
+    },
+    KillProcess {
+        to_kill: Vec<Pid>,
+        signal: Option<i32>,
+    },
     ToggleFreeze,
     Reset,
     Clean,
@@ -209,27 +216,34 @@ impl AppState {
 impl Application for AppState {
     type Message = AppMessages;
 
-    fn update(&mut self, message: Self::Message) {
+    fn update(&mut self, message: Self::Message) -> bool {
         match message {
             AppMessages::Update(new_data) => {
                 self.data_collection.eat_data(new_data);
+                true
             }
             AppMessages::OpenHelp => {
                 self.set_current_screen(CurrentScreen::Help);
+                true
             }
-            AppMessages::KillProcess { to_kill } => {}
+            AppMessages::ConfirmKillProcess { to_kill } => true,
+            AppMessages::KillProcess { to_kill, signal } => true,
             AppMessages::ToggleFreeze => {
                 self.frozen_state.toggle(&self.data_collection);
+                true
             }
             AppMessages::Clean => {
                 self.data_collection
                     .clean_data(constants::STALE_MAX_MILLISECONDS);
+                false
             }
             AppMessages::Quit => {
                 self.terminator.store(true, SeqCst);
+                false
             }
             AppMessages::Reset => {
                 // FIXME: Reset
+                true
             }
         }
     }
@@ -243,10 +257,21 @@ impl Application for AppState {
         use crate::tuine::StatefulComponent;
         use crate::tuine::{TempTable, TextTable, TextTableProps};
 
+        let data = match &self.frozen_state {
+            FrozenState::NotFrozen => &self.data_collection,
+            FrozenState::Frozen(frozen_data_collection) => &frozen_data_collection,
+        };
+
+        let mut converted_data = ConvertedData::default();
+
         Flex::column()
             .with_flex_child(
                 Flex::row_with_children(vec![
-                    FlexElement::new(TempTable::build(ctx)),
+                    FlexElement::new(TempTable::build(
+                        ctx,
+                        &self.painter,
+                        converted_data.temp_table(data, self.app_config_fields.temperature_type),
+                    )),
                     FlexElement::new(TextTable::build(
                         ctx,
                         TextTableProps::new(vec!["D", "E", "F"]),

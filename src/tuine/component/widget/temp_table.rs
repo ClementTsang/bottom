@@ -1,35 +1,41 @@
-use crate::tuine::{
-    text_table::{DataRow, SortType, TextTableProps},
-    Block, Shortcut, StatefulComponent, TextTable, TmpComponent, ViewContext,
+use crate::{
+    canvas::Painter,
+    tuine::{
+        Bounds, DataRow, DrawContext, LayoutNode, SimpleTable, Size, StateContext, Status,
+        TmpComponent, ViewContext,
+    },
 };
 
-/// A [`TempTable`] is a text table that is meant to display temperature data.
+use super::simple_table;
+
+/// A [`TempTable`] is a table displaying temperature data.
+///
+/// It wraps a [`SimpleTable`], with set columns and manages extracting data and styling.
 pub struct TempTable<Message> {
-    inner: Block<Message, Shortcut<Message, TextTable<Message>>>,
+    inner: SimpleTable<Message>,
 }
 
 impl<Message> TempTable<Message> {
-    #[track_caller]
-    pub fn build(ctx: &mut ViewContext<'_>) -> Self {
+    pub fn build<R: Into<DataRow>>(
+        ctx: &mut ViewContext<'_>, painter: &Painter, data: Vec<R>,
+    ) -> Self {
+        let style = simple_table::StyleSheet {
+            text: painter.colours.text_style,
+            selected_text: painter.colours.currently_selected_text_style,
+            table_header: painter.colours.table_header_style,
+            border: painter.colours.border_style,
+        };
+
         Self {
-            inner: Block::with_child(Shortcut::with_child(TextTable::build(
-                ctx,
-                TextTableProps::new(vec!["Sensor", "Temp"])
-                    .rows(vec![
-                        DataRow::default().cell("A").cell(2),
-                        DataRow::default().cell("B").cell(3),
-                        DataRow::default().cell("C").cell(1),
-                    ])
-                    .default_sort(SortType::Ascending(1)),
-            ))),
+            inner: SimpleTable::build(ctx, style, vec!["Sensor", "Temp"], data),
         }
     }
 }
 
 impl<Message> TmpComponent<Message> for TempTable<Message> {
     fn draw<Backend>(
-        &mut self, state_ctx: &mut crate::tuine::StateContext<'_>,
-        draw_ctx: &crate::tuine::DrawContext<'_>, frame: &mut tui::Frame<'_, Backend>,
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
+        frame: &mut tui::Frame<'_, Backend>,
     ) where
         Backend: tui::backend::Backend,
     {
@@ -37,16 +43,13 @@ impl<Message> TmpComponent<Message> for TempTable<Message> {
     }
 
     fn on_event(
-        &mut self, state_ctx: &mut crate::tuine::StateContext<'_>,
-        draw_ctx: &crate::tuine::DrawContext<'_>, event: crate::tuine::Event,
-        messages: &mut Vec<Message>,
-    ) -> crate::tuine::Status {
+        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
+        event: crate::tuine::Event, messages: &mut Vec<Message>,
+    ) -> Status {
         self.inner.on_event(state_ctx, draw_ctx, event, messages)
     }
 
-    fn layout(
-        &self, bounds: crate::tuine::Bounds, node: &mut crate::tuine::LayoutNode,
-    ) -> crate::tuine::Size {
+    fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
         self.inner.layout(bounds, node)
     }
 }

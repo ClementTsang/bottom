@@ -94,6 +94,12 @@ impl<Message> TextTableProps<Message> {
         self
     }
 
+    /// Sets the style for the entry.
+    pub fn style(mut self, style: StyleSheet) -> Self {
+        self.style_sheet = style;
+        self
+    }
+
     pub(crate) fn try_sort_data(&mut self, sort_type: SortType) {
         use std::cmp::Ordering;
 

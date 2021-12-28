@@ -14,8 +14,8 @@ pub type CrosstermBackend = tui::backend::CrosstermBackend<std::io::Stdout>;
 pub trait Application: Sized {
     type Message: Debug;
 
-    /// Determines how to handle a given message.
-    fn update(&mut self, message: Self::Message);
+    /// Determines how to handle a given message, and returns `true` if this update should trigger a redraw.
+    fn update(&mut self, message: Self::Message) -> bool;
 
     /// Returns whether to stop the application. Defaults to
     /// always returning false.

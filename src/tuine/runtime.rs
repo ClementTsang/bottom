@@ -41,27 +41,22 @@ where
         if let Ok(event) = receiver.recv() {
             match event {
                 RuntimeEvent::UserInterface(event) => {
-                    match on_event(
+                    if on_event(
                         &mut application,
                         &mut user_interface,
                         &mut app_data,
                         &mut layout,
                         event,
                     ) {
-                        Status::Captured => {
-                            // Hmm... is this really needed? Or is it fine to redraw once then do the termination check?
-                            if application.is_terminated() {
-                                break;
-                            }
-
-                            user_interface = new_user_interface(&mut application, &mut app_data);
-                            draw(&mut user_interface, terminal, &mut app_data, &mut layout)?;
-                        }
-                        Status::Ignored => {}
+                        user_interface = new_user_interface(&mut application, &mut app_data);
+                        draw(&mut user_interface, terminal, &mut app_data, &mut layout)?;
                     }
                 }
                 RuntimeEvent::Custom(message) => {
-                    application.update(message);
+                    if application.update(message) {
+                        user_interface = new_user_interface(&mut application, &mut app_data);
+                        draw(&mut user_interface, terminal, &mut app_data, &mut layout)?;
+                    }
                 }
                 RuntimeEvent::Resize {
                     width: _,
@@ -86,7 +81,7 @@ where
 fn on_event<A>(
     application: &mut A, user_interface: &mut Element<A::Message>, app_data: &mut AppData,
     layout: &mut LayoutNode, event: Event,
-) -> Status
+) -> bool
 where
     A: Application + 'static,
 {
@@ -103,12 +98,18 @@ where
             Status::Ignored => application.global_event_handler(event, &mut messages),
         };
 
+    let mut should_redraw = match event_handled {
+        Status::Captured => true,
+        Status::Ignored => false,
+    };
+
     for msg in messages {
         debug!("Message: {:?}", msg); // FIXME: Remove this debug line!
-        application.update(msg);
+        let msg_result = application.update(msg);
+        should_redraw = should_redraw || msg_result;
     }
 
-    event_handled
+    should_redraw
 }
 
 /// Creates a new [`Element`] representing the root of the user interface.

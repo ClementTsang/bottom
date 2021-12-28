@@ -175,6 +175,7 @@ impl Default for DataCollection {
     }
 }
 
+// TODO: Just rip this out, store only stringified data...?
 impl DataCollection {
     pub fn reset(&mut self) {
         self.timed_data_vec = Default::default();

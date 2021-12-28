@@ -9,8 +9,7 @@ use crate::tuine::{
 /// A set of styles for a [`Block`].
 #[derive(Clone, Debug, Default)]
 pub struct StyleSheet {
-    text: Style,
-    border: Style,
+    pub border: Style,
 }
 
 /// A [`Block`] is a widget that draws a border around a child [`Component`], as well as optional
@@ -44,6 +43,11 @@ where
 
     pub fn child(mut self, child: Option<Child>) -> Self {
         self.child = child;
+        self
+    }
+
+    pub fn style(mut self, style: StyleSheet) -> Self {
+        self.style_sheet = style;
         self
     }
 

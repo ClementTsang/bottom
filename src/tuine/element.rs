@@ -3,7 +3,7 @@ use tui::Frame;
 
 use super::{
     Block, Bounds, Carousel, Container, DrawContext, Empty, Event, Flex, LayoutNode, Shortcut,
-    Size, StateContext, Status, TempTable, TextTable, TmpComponent,
+    SimpleTable, Size, StateContext, Status, TempTable, TextTable, TmpComponent,
 };
 
 /// An [`Element`] is an instantiated [`Component`].
@@ -19,5 +19,6 @@ where
     Shortcut(Shortcut<Message, C>),
     TextTable(TextTable<Message>),
     Empty,
+    SimpleTable(SimpleTable<Message>),
     TempTable(TempTable<Message>),
 }
