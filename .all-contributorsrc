@@ -217,6 +217,15 @@
         "ideas",
         "doc"
       ]
+    },
+    {
+      "login": "mati865",
+      "name": "Mateusz Mikuła",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1174646?v=4",
+      "profile": "https://github.com/mati865",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
