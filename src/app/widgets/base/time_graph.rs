@@ -20,7 +20,7 @@ use crate::{
             custom_legend_chart::{Axis, Dataset},
             TimeChart,
         },
-        AppConfigFields, Component,
+        AppConfig, Component,
     },
     canvas::Painter,
     constants::{
@@ -139,7 +139,7 @@ impl TimeGraph {
     }
 
     /// Creates a new [`TimeGraph`] given an [`AppConfigFields`].
-    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+    pub fn from_config(app_config_fields: &AppConfig) -> Self {
         Self::new(
             app_config_fields.default_time_value,
             if app_config_fields.hide_time {

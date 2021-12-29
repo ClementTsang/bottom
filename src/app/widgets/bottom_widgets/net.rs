@@ -10,7 +10,7 @@ use tui::{
 use crate::{
     app::{
         data_farmer::DataCollection, event::ComponentEventResult, text_table::SimpleColumn,
-        time_graph::TimeGraphData, widgets::tui_stuff::BlockBuilder, AppConfigFields, AxisScaling,
+        time_graph::TimeGraphData, widgets::tui_stuff::BlockBuilder, AppConfig, AxisScaling,
         Component, TextTable, TimeGraph, Widget,
     },
     canvas::Painter,
@@ -387,7 +387,7 @@ pub struct NetGraph {
 
 impl NetGraph {
     /// Creates a new [`NetGraph`] given a [`AppConfigFields`].
-    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+    pub fn from_config(app_config_fields: &AppConfig) -> Self {
         let graph = TimeGraph::from_config(app_config_fields);
 
         Self {
@@ -590,7 +590,7 @@ pub struct OldNetGraph {
 
 impl OldNetGraph {
     /// Creates a new [`OldNetGraph`] from a [`AppConfigFields`].
-    pub fn from_config(config: &AppConfigFields) -> Self {
+    pub fn from_config(config: &AppConfig) -> Self {
         Self {
             net_graph: NetGraph::from_config(config).hide_legend(),
             table: TextTable::new(vec![

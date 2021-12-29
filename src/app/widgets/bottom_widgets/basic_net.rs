@@ -7,7 +7,7 @@ use tui::{
 };
 
 use crate::{
-    app::{AppConfigFields, AxisScaling, Component, DataCollection, Widget},
+    app::{AppConfig, AxisScaling, Component, DataCollection, Widget},
     canvas::Painter,
     constants::SIDE_BORDERS,
     data_conversion::convert_network_data_points,
@@ -31,7 +31,7 @@ pub struct BasicNet {
 
 impl BasicNet {
     /// Creates a new [`BasicNet`] given a [`AppConfigFields`].
-    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+    pub fn from_config(app_config_fields: &AppConfig) -> Self {
         Self {
             bounds: Default::default(),
             width: Default::default(),

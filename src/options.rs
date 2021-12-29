@@ -20,7 +20,7 @@ use anyhow::{Context, Result};
 pub struct Config {
     pub flags: Option<ConfigFlags>,
     pub colors: Option<ConfigColours>,
-    pub row: Option<Vec<Row>>,
+    pub row: Option<Vec<LayoutRow>>,
     pub disk_filter: Option<IgnoreList>,
     pub mount_filter: Option<IgnoreList>,
     pub temp_filter: Option<IgnoreList>,
@@ -191,7 +191,7 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
     let network_scale_type = get_network_scale_type(matches, config);
     let network_use_binary_prefix = get_network_use_binary_prefix(matches, config);
 
-    let app_config_fields = AppConfigFields {
+    let app_config_fields = AppConfig {
         update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
             .context("Update 'rate' in your config file.")?,
         temperature_type: get_temperature(matches, config)
@@ -218,27 +218,30 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
         network_use_binary_prefix,
     };
 
-    let layout_tree_output = if let Some(row) = &config.row {
-        create_layout_tree(row, process_defaults, &app_config_fields)?
+    let rows: Vec<LayoutRow>;
+    let row_ref = if let Some(row) = &config.row {
+        row
     } else if get_use_basic_mode(matches, config) {
         if get_use_battery(matches, config) {
-            let rows = toml::from_str::<Config>(DEFAULT_BASIC_BATTERY_LAYOUT)?
+            rows = toml::from_str::<Config>(DEFAULT_BASIC_BATTERY_LAYOUT)?
                 .row
                 .unwrap();
-            create_layout_tree(&rows, process_defaults, &app_config_fields)?
+            &rows
         } else {
-            let rows = toml::from_str::<Config>(DEFAULT_BASIC_LAYOUT)?.row.unwrap();
-            create_layout_tree(&rows, process_defaults, &app_config_fields)?
+            rows = toml::from_str::<Config>(DEFAULT_BASIC_LAYOUT)?.row.unwrap();
+            &rows
         }
     } else if get_use_battery(matches, config) {
-        let rows = toml::from_str::<Config>(DEFAULT_BATTERY_LAYOUT)?
+        rows = toml::from_str::<Config>(DEFAULT_BATTERY_LAYOUT)?
             .row
             .unwrap();
-        create_layout_tree(&rows, process_defaults, &app_config_fields)?
+        &rows
     } else {
-        let rows = toml::from_str::<Config>(DEFAULT_LAYOUT)?.row.unwrap();
-        create_layout_tree(&rows, process_defaults, &app_config_fields)?
+        rows = toml::from_str::<Config>(DEFAULT_LAYOUT)?.row.unwrap();
+        &rows
     };
+
+    let layout_tree_output = create_layout_tree(row_ref, process_defaults, &app_config_fields)?;
 
     let disk_filter =
         get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;

@@ -30,14 +30,12 @@ use crate::{
     canvas::Painter,
     constants,
     data_conversion::ConvertedData,
-    tuine::{Application, Element, Flex, Status, ViewContext},
+    tuine::{Application, Element, Status, ViewContext},
     units::data_units::DataUnit,
     Pid,
 };
 
 use anyhow::Result;
-use indextree::{Arena, NodeId};
-use rustc_hash::FxHashMap;
 
 // FIXME: Move this!
 #[derive(Debug, Clone)]
@@ -86,10 +84,10 @@ impl UsedWidgets {
     }
 }
 
-/// AppConfigFields is meant to cover basic fields that would normally be set
+/// [`AppConfig`] is meant to cover basic fields that would normally be set
 /// by config files or launch options.
 #[derive(Debug)]
-pub struct AppConfigFields {
+pub struct AppConfig {
     pub update_rate_in_milliseconds: u64,
     pub temperature_type: temperature::TemperatureType,
     pub use_dot: bool,
@@ -145,34 +143,32 @@ pub enum AppMessages {
 
 pub struct AppState {
     pub data_collection: DataCollection,
-
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
-    pub app_config_fields: AppConfigFields,
+    pub app_config: AppConfig,
 
-    // --- NEW STUFF ---
     frozen_state: FrozenState,
     current_screen: CurrentScreen,
-    painter: Painter,
+    pub painter: Painter,
     terminator: Arc<AtomicBool>,
 }
 
 impl AppState {
     /// Creates a new [`AppState`].
     pub fn new(
-        app_config_fields: AppConfigFields, filters: DataFilters,
-        layout_tree_output: LayoutCreationOutput, painter: Painter,
+        app_config: AppConfig, filters: DataFilters, layout_tree_output: LayoutCreationOutput,
+        painter: Painter,
     ) -> Result<Self> {
         let LayoutCreationOutput {
-            layout_tree,
-            root: layout_tree_root,
+            layout_tree: _,
+            root: _,
             widget_lookup_map,
-            selected: selected_widget,
+            selected: _,
             used_widgets,
         } = layout_tree_output;
 
         Ok(Self {
-            app_config_fields,
+            app_config,
             filters,
             used_widgets,
             painter,
@@ -250,48 +246,7 @@ impl Application for AppState {
     }
 
     fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<Self::Message> {
-        use crate::tuine::FlexElement;
-        use crate::tuine::StatefulComponent;
-        use crate::tuine::{TempTable, TextTable, TextTableProps};
-
-        let data = match &self.frozen_state {
-            FrozenState::NotFrozen => &self.data_collection,
-            FrozenState::Frozen(frozen_data_collection) => &frozen_data_collection,
-        };
-
-        let mut converted_data = ConvertedData::default();
-
-        Flex::column()
-            .with_flex_child(
-                Flex::row_with_children(vec![
-                    FlexElement::new(TempTable::build(
-                        ctx,
-                        &self.painter,
-                        converted_data.temp_table(data, self.app_config_fields.temperature_type),
-                    )),
-                    FlexElement::new(TextTable::build(
-                        ctx,
-                        TextTableProps::new(vec!["D", "E", "F"]),
-                    )),
-                ]),
-                1,
-            )
-            .with_flex_child(
-                Flex::row_with_children(vec![
-                    FlexElement::new(TextTable::build(
-                        ctx,
-                        TextTableProps::new(vec!["G", "H", "I", "J"]),
-                    )),
-                    FlexElement::new(TextTable::build(
-                        ctx,
-                        TextTableProps::new(vec!["L", "EM", "NO", "PQ"])
-                            .rows(vec![vec![1, 2, 3, 4], vec![4, 3, 2, 1]])
-                            .default_sort(crate::tuine::SortType::Descending(0)),
-                    )),
-                ]),
-                2,
-            )
-            .into()
+        todo!()
     }
 
     fn destructor(&mut self) {

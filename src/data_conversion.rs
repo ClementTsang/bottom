@@ -8,19 +8,24 @@ use crate::{app::AxisScaling, units::data_units::DataUnit};
 use std::borrow::Cow;
 
 /// Stores converted data, and caches results.
-#[derive(Default)]
-pub struct ConvertedData {
+pub struct ConvertedData<'a> {
+    data: &'a DataCollection,
     temp_table: Option<Vec<Vec<Cow<'static, str>>>>,
 }
 
-impl ConvertedData {
-    pub fn temp_table(
-        &mut self, data: &DataCollection, temp_type: TemperatureType,
-    ) -> Vec<Vec<Cow<'static, str>>> {
+impl<'a> ConvertedData<'a> {
+    pub fn new(data: &'a DataCollection) -> Self {
+        Self {
+            data,
+            temp_table: None,
+        }
+    }
+
+    pub fn temp_table(&mut self, temp_type: TemperatureType) -> Vec<Vec<Cow<'static, str>>> {
         match &self.temp_table {
             Some(temp_table) => temp_table.clone(),
             None => {
-                let temp_table = if data.temp_harvest.is_empty() {
+                let temp_table = if self.data.temp_harvest.is_empty() {
                     vec![vec!["No Sensors Found".into(), "".into()]]
                 } else {
                     let unit = match temp_type {
@@ -29,7 +34,8 @@ impl ConvertedData {
                         data_harvester::temperature::TemperatureType::Fahrenheit => "°F",
                     };
 
-                    data.temp_harvest
+                    self.data
+                        .temp_harvest
                         .iter()
                         .map(|temp_harvest| {
                             let val = temp_harvest.temperature.ceil().to_string();

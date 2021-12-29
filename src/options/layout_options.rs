@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 /// of children.
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename = "row")]
-pub struct Row {
-    pub child: Option<Vec<RowChildren>>,
+pub struct LayoutRow {
+    pub child: Option<Vec<LayoutRowChild>>,
     pub ratio: Option<u32>,
 }
 
@@ -16,14 +16,14 @@ pub struct Row {
 /// recursion between Row and Col.
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(untagged)]
-pub enum RowChildren {
+pub enum LayoutRowChild {
     Widget(FinalWidget),
     /// The first one in the list is the "default" selected widget.
     Carousel {
         carousel_children: Vec<String>,
         default: Option<bool>,
     },
-    Col {
+    LayoutCol {
         ratio: Option<u32>,
         child: Vec<FinalWidget>,
     },

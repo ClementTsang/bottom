@@ -60,7 +60,7 @@ pub type Pid = libc::pid_t;
 #[derive(Debug)]
 pub enum ThreadControlEvent {
     Reset,
-    UpdateConfig(Box<app::AppConfigFields>),
+    UpdateConfig(Box<app::AppConfig>),
     UpdateUsedWidgets(Box<UsedWidgets>),
     UpdateUpdateTime(u64),
 }
@@ -247,7 +247,7 @@ pub fn create_collection_thread(
     sender: std::sync::mpsc::Sender<RuntimeEvent<AppMessages>>,
     control_receiver: std::sync::mpsc::Receiver<ThreadControlEvent>,
     termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
-    app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
+    app_config_fields: &app::AppConfig, filters: app::DataFilters,
     used_widget_set: UsedWidgets,
 ) -> std::thread::JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type.clone();

@@ -13,7 +13,7 @@ use crate::{
         text_table::SimpleColumn,
         time_graph::TimeGraphData,
         widgets::tui_stuff::BlockBuilder,
-        AppConfigFields, Component, DataCollection, TextTable, TimeGraph, Widget,
+        AppConfig, Component, DataCollection, TextTable, TimeGraph, Widget,
     },
     canvas::Painter,
     data_conversion::{convert_cpu_data_points, ConvertedCpuData},
@@ -51,7 +51,7 @@ pub struct CpuGraph {
 
 impl CpuGraph {
     /// Creates a new [`CpuGraph`] from a config.
-    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+    pub fn from_config(app_config_fields: &AppConfig) -> Self {
         let graph = TimeGraph::from_config(app_config_fields);
         let legend = TextTable::new(vec![
             SimpleColumn::new_flex("CPU".into(), 0.5),

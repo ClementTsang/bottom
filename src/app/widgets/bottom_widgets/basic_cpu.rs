@@ -8,7 +8,7 @@ use tui::{
 };
 
 use crate::{
-    app::{widgets::tui_stuff::PipeGauge, AppConfigFields, Component, DataCollection, Widget},
+    app::{widgets::tui_stuff::PipeGauge, AppConfig, Component, DataCollection, Widget},
     canvas::Painter,
     constants::SIDE_BORDERS,
     options::layout_options::LayoutRule,
@@ -26,7 +26,7 @@ pub struct BasicCpu {
 
 impl BasicCpu {
     /// Creates a new [`BasicCpu`] given a [`AppConfigFields`].
-    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+    pub fn from_config(app_config_fields: &AppConfig) -> Self {
         Self {
             bounds: Default::default(),
             display_data: Default::default(),

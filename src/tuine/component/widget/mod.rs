@@ -1,3 +1,6 @@
+use anyhow::{anyhow, Result};
+use enum_dispatch::enum_dispatch;
+
 pub mod simple_table;
 pub use simple_table::*;
 
@@ -30,3 +33,12 @@ pub use mem_simple::*;
 
 pub mod net_simple;
 pub use net_simple::*;
+
+use crate::{app::AppConfig, canvas::Painter, data_conversion::ConvertedData, tuine::ViewContext};
+
+pub trait AppWidget {
+    fn build(
+        ctx: &mut ViewContext<'_>, painter: &Painter, config: &AppConfig,
+        data: &mut ConvertedData<'_>,
+    ) -> Self;
+}

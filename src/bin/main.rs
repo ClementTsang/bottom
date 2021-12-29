@@ -77,7 +77,7 @@ fn main() -> Result<()> {
         collection_thread_ctrl_receiver,
         thread_termination_lock.clone(),
         thread_termination_cvar.clone(),
-        &app.app_config_fields,
+        &app.app_config,
         app.filters.clone(),
         app.used_widgets.clone(),
     );

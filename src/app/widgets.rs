@@ -156,7 +156,7 @@ pub enum SelectableType {
 /// The "main" widgets that are used by bottom to display information!
 #[allow(clippy::large_enum_variant)]
 #[enum_dispatch(Component, Widget)]
-pub enum BottomWidget {
+pub enum OldBottomWidget {
     MemGraph,
     TempTable,
     DiskTable,
@@ -172,7 +172,7 @@ pub enum BottomWidget {
     Empty,
 }
 
-impl Debug for BottomWidget {
+impl Debug for OldBottomWidget {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::MemGraph(_) => write!(f, "MemGraph"),

@@ -1,29 +1,8 @@
 use std::str::FromStr;
 
-use indextree::{Arena, NodeId};
-use rustc_hash::FxHashMap;
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Layout, Rect},
-    text::Span,
-    widgets::Paragraph,
-    Frame, Terminal,
-};
-
 use canvas_colours::*;
 
-use crate::{
-    app::{
-        self,
-        layout_manager::{generate_layout, ColLayout, LayoutNode, RowLayout},
-        widgets::{Component, Widget},
-        BottomWidget,
-    },
-    constants::*,
-    options::Config,
-    utils::error,
-    utils::error::BottomError,
-};
+use crate::{constants::*, options::Config, utils::error, utils::error::BottomError};
 
 mod canvas_colours;
 

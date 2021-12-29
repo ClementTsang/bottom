@@ -5,7 +5,7 @@ use crate::{
     app::{
         data_farmer::DataCollection, data_harvester::temperature::TemperatureType,
         event::ComponentEventResult, sort_text_table::SimpleSortableColumn,
-        text_table::TextTableData, AppConfigFields, Component, TextTable, Widget,
+        text_table::TextTableData, AppConfig, Component, TextTable, Widget,
     },
     canvas::Painter,
     data_conversion::convert_temp_row,
@@ -26,7 +26,7 @@ pub struct TempTable {
 
 impl TempTable {
     /// Creates a [`TempTable`] from a config.
-    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+    pub fn from_config(app_config_fields: &AppConfig) -> Self {
         let table = TextTable::new(vec![
             SimpleSortableColumn::new_flex("Sensor".into(), None, false, 0.8),
             SimpleSortableColumn::new_hard("Temp".into(), None, false, Some(5)),

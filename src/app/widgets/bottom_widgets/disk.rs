@@ -4,7 +4,7 @@ use tui::{backend::Backend, layout::Rect, widgets::Borders, Frame};
 use crate::{
     app::{
         data_farmer::DataCollection, event::ComponentEventResult,
-        sort_text_table::SimpleSortableColumn, text_table::TextTableData, AppConfigFields,
+        sort_text_table::SimpleSortableColumn, text_table::TextTableData, AppConfig,
         Component, TextTable, Widget,
     },
     canvas::Painter,
@@ -27,7 +27,7 @@ pub struct DiskTable {
 
 impl DiskTable {
     /// Creates a [`DiskTable`] from a config.
-    pub fn from_config(app_config_fields: &AppConfigFields) -> Self {
+    pub fn from_config(app_config_fields: &AppConfig) -> Self {
         let table = TextTable::new(vec![
             SimpleSortableColumn::new_flex("Disk".into(), None, false, 0.2),
             SimpleSortableColumn::new_flex("Mount".into(), None, false, 0.2),

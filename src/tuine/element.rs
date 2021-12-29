@@ -1,10 +1,7 @@
 use enum_dispatch::enum_dispatch;
 use tui::Frame;
 
-use super::{
-    Block, Bounds, Carousel, Container, DrawContext, Empty, Event, Flex, LayoutNode, Shortcut,
-    SimpleTable, Size, StateContext, Status, TempTable, TextTable, TmpComponent,
-};
+use super::*;
 
 /// An [`Element`] is an instantiated [`Component`].
 #[enum_dispatch(TmpComponent<Message>)]
@@ -19,6 +16,15 @@ where
     Shortcut(Shortcut<Message, C>),
     TextTable(TextTable<Message>),
     Empty,
+    BatteryTable(BatteryTable),
+    CpuGraph(CpuGraph),
+    CpuSimple(CpuSimple),
+    DiskTable(DiskTable),
+    MemGraph(MemGraph),
+    MemSimple(MemSimple),
+    NetGraph(NetGraph),
+    NetSimple(NetSimple),
+    ProcessTable(ProcessTable),
     SimpleTable(SimpleTable<Message>),
     TempTable(TempTable<Message>),
 }

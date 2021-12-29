@@ -5,19 +5,20 @@ use crate::{
     },
     error::{BottomError, Result},
     options::{
-        layout_options::{LayoutRule, Row, RowChildren},
+        layout_options::{LayoutRow, LayoutRowChild, LayoutRule},
         ProcessDefaults,
     },
+    tuine::{Element, Flex},
 };
 use indextree::{Arena, NodeId};
 use rustc_hash::FxHashMap;
-use std::cmp::min;
+use std::str::FromStr;
 use tui::layout::Rect;
 
 use crate::app::widgets::Widget;
 
 use super::{
-    event::SelectionAction, AppConfigFields, BottomWidget, CpuGraph, TimeGraph, UsedWidgets,
+    event::SelectionAction, AppConfig, AppState, CpuGraph, OldBottomWidget, TimeGraph, UsedWidgets,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -46,7 +47,7 @@ impl Default for BottomWidgetType {
     }
 }
 
-impl std::str::FromStr for BottomWidgetType {
+impl FromStr for BottomWidgetType {
     type Err = BottomError;
 
     fn from_str(s: &str) -> Result<Self> {
@@ -169,22 +170,6 @@ pub enum LayoutNode {
     Widget(WidgetLayout),
 }
 
-impl LayoutNode {
-    fn set_bound(&mut self, bound: Rect) {
-        match self {
-            LayoutNode::Row(row) => {
-                row.bound = bound;
-            }
-            LayoutNode::Col(col) => {
-                col.bound = bound;
-            }
-            LayoutNode::Widget(widget) => {
-                widget.bound = bound;
-            }
-        }
-    }
-}
-
 /// Relative movement direction from the currently selected widget.
 pub enum MovementDirection {
     Left,
@@ -193,11 +178,40 @@ pub enum MovementDirection {
     Down,
 }
 
+pub fn initialize_widget_layout<Message>(
+    layout_rows: &[LayoutRow], app: &AppState,
+) -> anyhow::Result<Element<Message>> {
+    let mut root = Flex::column();
+
+    for layout_row in layout_rows {
+        let mut row = Flex::row();
+        if let Some(children) = &layout_row.child {
+            for child in children {
+                match child {
+                    LayoutRowChild::Widget(widget) => {}
+                    LayoutRowChild::Carousel {
+                        carousel_children,
+                        default,
+                    } => {}
+                    LayoutRowChild::LayoutCol {
+                        ratio,
+                        child: children,
+                    } => for child in children {},
+                }
+            }
+        }
+
+        root = root.with_child(row);
+    }
+
+    Ok(root.into())
+}
+
 /// A wrapper struct to simplify the output of [`create_layout_tree`].
 pub struct LayoutCreationOutput {
     pub layout_tree: Arena<LayoutNode>,
     pub root: NodeId,
-    pub widget_lookup_map: FxHashMap<NodeId, BottomWidget>,
+    pub widget_lookup_map: FxHashMap<NodeId, OldBottomWidget>,
     pub selected: NodeId,
     pub used_widgets: UsedWidgets,
 }
@@ -207,11 +221,11 @@ pub struct LayoutCreationOutput {
 /// selected [`NodeId`].
 // FIXME: [AFTER REFACTOR] This is currently jury-rigged "glue" just to work with the existing config system! We are NOT keeping it like this, it's too awful to keep like this!
 pub fn create_layout_tree(
-    rows: &[Row], process_defaults: ProcessDefaults, app_config_fields: &AppConfigFields,
+    rows: &[LayoutRow], process_defaults: ProcessDefaults, app_config_fields: &AppConfig,
 ) -> Result<LayoutCreationOutput> {
     fn add_widget_to_map(
-        widget_lookup_map: &mut FxHashMap<NodeId, BottomWidget>, widget_type: BottomWidgetType,
-        widget_id: NodeId, process_defaults: &ProcessDefaults, app_config_fields: &AppConfigFields,
+        widget_lookup_map: &mut FxHashMap<NodeId, OldBottomWidget>, widget_type: BottomWidgetType,
+        widget_id: NodeId, process_defaults: &ProcessDefaults, app_config_fields: &AppConfig,
         width: LayoutRule, height: LayoutRule,
     ) -> Result<()> {
         match widget_type {
@@ -341,7 +355,7 @@ pub fn create_layout_tree(
         if let Some(children) = &row.child {
             for child in children {
                 match child {
-                    RowChildren::Widget(widget) => {
+                    LayoutRowChild::Widget(widget) => {
                         let widget_id = arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
                         row_id.append(widget_id, &mut arena);
 
@@ -366,7 +380,7 @@ pub fn create_layout_tree(
                             LayoutRule::default(),
                         )?;
                     }
-                    RowChildren::Carousel {
+                    LayoutRowChild::Carousel {
                         carousel_children,
                         default,
                     } => {
@@ -422,7 +436,7 @@ pub fn create_layout_tree(
                             );
                         }
                     }
-                    RowChildren::Col {
+                    LayoutRowChild::LayoutCol {
                         ratio,
                         child: col_child,
                     } => {
@@ -518,7 +532,7 @@ pub enum MoveWidgetResult {
 
 /// A more restricted movement, only within a single widget.
 pub fn move_expanded_widget_selection(
-    widget_lookup_map: &mut FxHashMap<NodeId, BottomWidget>, current_widget_id: NodeId,
+    widget_lookup_map: &mut FxHashMap<NodeId, OldBottomWidget>, current_widget_id: NodeId,
     direction: MovementDirection,
 ) -> MoveWidgetResult {
     if let Some(current_widget) = widget_lookup_map.get_mut(&current_widget_id) {
@@ -542,8 +556,9 @@ pub fn move_expanded_widget_selection(
 /// - Only [`LayoutNode::Widget`]s are leaves.
 /// - Only [`LayoutNode::Row`]s or [`LayoutNode::Col`]s are non-leaves.
 pub fn move_widget_selection(
-    layout_tree: &mut Arena<LayoutNode>, widget_lookup_map: &mut FxHashMap<NodeId, BottomWidget>,
-    current_widget_id: NodeId, direction: MovementDirection,
+    layout_tree: &mut Arena<LayoutNode>,
+    widget_lookup_map: &mut FxHashMap<NodeId, OldBottomWidget>, current_widget_id: NodeId,
+    direction: MovementDirection,
 ) -> MoveWidgetResult {
     // We first give our currently-selected widget a chance to react to the movement - it may handle it internally!
     let handled = {
@@ -815,318 +830,4 @@ pub fn move_widget_selection(
             }
         }
     }
-}
-
-/// Generates the bounds for each node in the `arena, taking into account per-leaf desires,
-/// and finally storing the calculated bounds in the given `arena`.
-///
-/// Stored bounds are given in *relative* coordinates - they are relative to their parents.
-/// That is, you may have a child widget "start" at (0, 0), but its parent is actually at x = 5,s
-/// so the absolute coordinate of the child widget is actually (5, 0).
-///
-/// The algorithm is mostly based on the algorithm used by Flutter, adapted to work for
-/// our use case. For more information, check out both:
-///
-/// - [How the constraint system works in Flutter](https://flutter.dev/docs/development/ui/layout/constraints)
-/// - [How Flutter does sublinear layout](https://flutter.dev/docs/resources/inside-flutter#sublinear-layout)
-pub fn generate_layout(
-    root: NodeId, arena: &mut Arena<LayoutNode>, area: Rect,
-    lookup_map: &FxHashMap<NodeId, BottomWidget>,
-) {
-    // TODO: [Optimization, Layout] Add some caching/dirty mechanisms to reduce calls.
-
-    /// A [`Size`] is a set of widths and heights that a node in our layout wants to be.
-    #[derive(Default, Clone, Copy, Debug)]
-    struct Size {
-        width: u16,
-        height: u16,
-    }
-
-    /// A [`LayoutConstraint`] is just a set of maximal widths/heights.
-    #[derive(Clone, Copy, Debug)]
-    struct LayoutConstraints {
-        max_width: u16,
-        max_height: u16,
-    }
-
-    impl LayoutConstraints {
-        fn new(max_width: u16, max_height: u16) -> Self {
-            Self {
-                max_width,
-                max_height,
-            }
-        }
-
-        /// Shrinks the width of itself given another width.
-        fn shrink_width(&mut self, width: u16) {
-            self.max_width = self.max_width.saturating_sub(width);
-        }
-
-        /// Shrinks the height of itself given another height.
-        fn shrink_height(&mut self, height: u16) {
-            self.max_height = self.max_height.saturating_sub(height);
-        }
-
-        /// Returns a new [`LayoutConstraints`] with a new width given a ratio.
-        fn ratio_width(&self, numerator: u32, denominator: u32) -> Self {
-            Self {
-                max_width: (self.max_width as u32 * numerator / denominator) as u16,
-                max_height: self.max_height,
-            }
-        }
-
-        /// Returns a new [`LayoutConstraints`] with a new height given a ratio.
-        fn ratio_height(&self, numerator: u32, denominator: u32) -> Self {
-            Self {
-                max_width: self.max_width,
-                max_height: (self.max_height as u32 * numerator / denominator) as u16,
-            }
-        }
-    }
-
-    /// The internal recursive call to build a layout. Builds off of `arena` and stores bounds inside it.
-    fn layout(
-        node: NodeId, arena: &mut Arena<LayoutNode>, lookup_map: &FxHashMap<NodeId, BottomWidget>,
-        mut constraints: LayoutConstraints,
-    ) -> Size {
-        if let Some(layout_node) = arena.get(node).map(|n| n.get()) {
-            match layout_node {
-                LayoutNode::Row(row) => {
-                    let children = node.children(arena).collect::<Vec<_>>();
-                    let mut row_bounds = vec![Size::default(); children.len()];
-
-                    if let LayoutRule::Length { length } = row.parent_rule {
-                        constraints.max_height = length;
-                    }
-
-                    let (flexible_indices, inflexible_indices): (Vec<_>, Vec<_>) = children
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(itx, node)| {
-                            if let Some(layout_node) = arena.get(*node).map(|n| n.get()) {
-                                match layout_node {
-                                    LayoutNode::Row(RowLayout { parent_rule, .. })
-                                    | LayoutNode::Col(ColLayout { parent_rule, .. }) => {
-                                        match parent_rule {
-                                            LayoutRule::Expand { ratio } => {
-                                                Some((itx, true, *ratio))
-                                            }
-                                            LayoutRule::Child => Some((itx, false, 0)),
-                                            LayoutRule::Length { .. } => Some((itx, false, 0)),
-                                        }
-                                    }
-                                    LayoutNode::Widget(_) => {
-                                        if let Some(widget) = lookup_map.get(node) {
-                                            match widget.width() {
-                                                LayoutRule::Expand { ratio } => {
-                                                    Some((itx, true, ratio))
-                                                }
-                                                LayoutRule::Child => Some((itx, false, 0)),
-                                                LayoutRule::Length { .. } => Some((itx, false, 0)),
-                                            }
-                                        } else {
-                                            None
-                                        }
-                                    }
-                                }
-                            } else {
-                                None
-                            }
-                        })
-                        .partition(|(_itx, is_flex, _ratio)| *is_flex);
-
-                    // First handle non-flexible children.
-                    for (index, _, _) in inflexible_indices {
-                        // The unchecked get is safe, since the index is obtained by iterating through the children
-                        // vector in the first place.
-                        let child = unsafe { children.get_unchecked(index) };
-                        let desired_size = layout(*child, arena, lookup_map, constraints);
-
-                        constraints.shrink_width(desired_size.width);
-
-                        // This won't panic, since the two vectors are the same length.
-                        row_bounds[index] = desired_size;
-                    }
-
-                    // Handle flexible children now.
-                    let denominator: u32 = flexible_indices.iter().map(|(_, _, ratio)| ratio).sum();
-                    let original_constraints = constraints;
-                    let mut split_constraints = flexible_indices
-                        .iter()
-                        .map(|(_, _, numerator)| {
-                            let constraint =
-                                original_constraints.ratio_width(*numerator, denominator);
-                            constraints.shrink_width(constraint.max_width);
-
-                            constraint
-                        })
-                        .collect::<Vec<_>>();
-                    (0..constraints.max_width)
-                        .zip(&mut split_constraints)
-                        .for_each(|(_, split_constraint)| {
-                            split_constraint.max_width += 1;
-                        });
-
-                    for ((index, _, _), constraint) in
-                        flexible_indices.into_iter().zip(split_constraints)
-                    {
-                        // The unchecked get is safe, since the index is obtained by iterating through the children
-                        // vector in the first place.
-                        let child = unsafe { children.get_unchecked(index) };
-                        let desired_size = layout(*child, arena, lookup_map, constraint);
-
-                        // This won't panic, since the two vectors are the same length.
-                        row_bounds[index] = desired_size;
-                    }
-
-                    // Now let's turn each Size into a relative Rect!
-                    let mut current_x = 0;
-                    row_bounds.iter().zip(children).for_each(|(size, child)| {
-                        let bound = Rect::new(current_x, 0, size.width, size.height);
-                        current_x += size.width;
-                        if let Some(node) = arena.get_mut(child) {
-                            node.get_mut().set_bound(bound);
-                        }
-                    });
-
-                    Size {
-                        height: row_bounds.iter().map(|size| size.height).max().unwrap_or(0),
-                        width: row_bounds.into_iter().map(|size| size.width).sum(),
-                    }
-                }
-                LayoutNode::Col(col) => {
-                    let children = node.children(arena).collect::<Vec<_>>();
-                    let mut col_bounds = vec![Size::default(); children.len()];
-
-                    if let LayoutRule::Length { length } = col.parent_rule {
-                        constraints.max_width = length;
-                    }
-
-                    let (flexible_indices, inflexible_indices): (Vec<_>, Vec<_>) = children
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(itx, node)| {
-                            if let Some(layout_node) = arena.get(*node).map(|n| n.get()) {
-                                match layout_node {
-                                    LayoutNode::Row(RowLayout { parent_rule, .. })
-                                    | LayoutNode::Col(ColLayout { parent_rule, .. }) => {
-                                        match parent_rule {
-                                            LayoutRule::Expand { ratio } => {
-                                                Some((itx, true, *ratio))
-                                            }
-                                            LayoutRule::Child => Some((itx, false, 0)),
-                                            LayoutRule::Length { .. } => Some((itx, false, 0)),
-                                        }
-                                    }
-                                    LayoutNode::Widget(_) => {
-                                        if let Some(widget) = lookup_map.get(node) {
-                                            match widget.height() {
-                                                LayoutRule::Expand { ratio } => {
-                                                    Some((itx, true, ratio))
-                                                }
-                                                LayoutRule::Child => Some((itx, false, 0)),
-                                                LayoutRule::Length { length: _ } => {
-                                                    Some((itx, false, 0))
-                                                }
-                                            }
-                                        } else {
-                                            None
-                                        }
-                                    }
-                                }
-                            } else {
-                                None
-                            }
-                        })
-                        .partition(|(_itx, is_flex, _ratio)| *is_flex);
-
-                    for (index, _, _) in inflexible_indices {
-                        // The unchecked get is safe, since the index is obtained by iterating through the children
-                        // vector in the first place.
-                        let child = unsafe { children.get_unchecked(index) };
-                        let desired_size = layout(*child, arena, lookup_map, constraints);
-
-                        constraints.shrink_height(desired_size.height);
-
-                        // This won't panic, since the two vectors are the same length.
-                        col_bounds[index] = desired_size;
-                    }
-
-                    let denominator: u32 = flexible_indices.iter().map(|(_, _, ratio)| ratio).sum();
-                    let original_constraints = constraints;
-                    let mut split_constraints = flexible_indices
-                        .iter()
-                        .map(|(_, _, numerator)| {
-                            let new_constraint =
-                                original_constraints.ratio_height(*numerator, denominator);
-                            constraints.shrink_height(new_constraint.max_height);
-
-                            new_constraint
-                        })
-                        .collect::<Vec<_>>();
-                    (0..constraints.max_height)
-                        .zip(&mut split_constraints)
-                        .for_each(|(_, split_constraint)| {
-                            split_constraint.max_height += 1;
-                        });
-
-                    for ((index, _, _), constraint) in
-                        flexible_indices.into_iter().zip(split_constraints)
-                    {
-                        // The unchecked get is safe, since the index is obtained by iterating through the children
-                        // vector in the first place.
-                        let child = unsafe { children.get_unchecked(index) };
-                        let desired_size = layout(*child, arena, lookup_map, constraint);
-
-                        // This won't panic, since the two vectors are the same length.
-                        col_bounds[index] = desired_size;
-                    }
-
-                    // Now let's turn each Size into a relative Rect!
-                    let mut current_y = 0;
-                    col_bounds.iter().zip(children).for_each(|(size, child)| {
-                        let bound = Rect::new(0, current_y, size.width, size.height);
-                        current_y += size.height;
-                        if let Some(node) = arena.get_mut(child) {
-                            node.get_mut().set_bound(bound);
-                        }
-                    });
-
-                    Size {
-                        width: col_bounds.iter().map(|size| size.width).max().unwrap_or(0),
-                        height: col_bounds.into_iter().map(|size| size.height).sum(),
-                    }
-                }
-                LayoutNode::Widget(_) => {
-                    if let Some(widget) = lookup_map.get(&node) {
-                        let width = match widget.width() {
-                            LayoutRule::Expand { ratio: _ } => constraints.max_width,
-                            LayoutRule::Length { length } => min(length, constraints.max_width),
-                            LayoutRule::Child => constraints.max_width,
-                        };
-
-                        let height = match widget.height() {
-                            LayoutRule::Expand { ratio: _ } => constraints.max_height,
-                            LayoutRule::Length { length } => min(length, constraints.max_height),
-                            LayoutRule::Child => constraints.max_height,
-                        };
-
-                        Size { width, height }
-                    } else {
-                        Size::default()
-                    }
-                }
-            }
-        } else {
-            Size::default()
-        }
-    }
-
-    // And this is all you need to call, the layout function will do it all~
-    layout(
-        root,
-        arena,
-        lookup_map,
-        LayoutConstraints::new(area.width, area.height),
-    );
 }

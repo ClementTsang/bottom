@@ -1,12 +1,14 @@
 use crate::{
+    app::AppConfig,
     canvas::Painter,
+    data_conversion::ConvertedData,
     tuine::{
         Bounds, DataRow, DrawContext, LayoutNode, SimpleTable, Size, StateContext, Status,
         TmpComponent, ViewContext,
     },
 };
 
-use super::simple_table;
+use super::{simple_table, AppWidget};
 
 /// A [`TempTable`] is a table displaying temperature data.
 ///
@@ -15,9 +17,12 @@ pub struct TempTable<Message> {
     inner: SimpleTable<Message>,
 }
 
-impl<Message> TempTable<Message> {
-    pub fn build<R: Into<DataRow>>(
-        ctx: &mut ViewContext<'_>, painter: &Painter, data: Vec<R>,
+impl<Message> TempTable<Message> {}
+
+impl<Message> AppWidget for TempTable<Message> {
+    fn build(
+        ctx: &mut ViewContext<'_>, painter: &Painter, config: &AppConfig,
+        data: &mut ConvertedData<'_>,
     ) -> Self {
         let style = simple_table::StyleSheet {
             text: painter.colours.text_style,
@@ -25,9 +30,10 @@ impl<Message> TempTable<Message> {
             table_header: painter.colours.table_header_style,
             border: painter.colours.border_style,
         };
+        let rows = data.temp_table(config.temperature_type);
 
         Self {
-            inner: SimpleTable::build(ctx, style, vec!["Sensor", "Temp"], data),
+            inner: SimpleTable::build(ctx, style, vec!["Sensor", "Temp"], rows),
         }
     }
 }

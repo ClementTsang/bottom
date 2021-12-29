@@ -22,7 +22,7 @@ use crate::{
         query::*,
         text_table::{DesiredColumnWidth, TextTableRow},
         widgets::tui_stuff::BlockBuilder,
-        AppConfigFields, DataCollection, ProcessData,
+        AppConfig, DataCollection, ProcessData,
     },
     canvas::Painter,
     data_conversion::{get_string_with_bytes, get_string_with_bytes_per_second},
@@ -278,7 +278,7 @@ pub struct ProcessManager {
 
 impl ProcessManager {
     /// Creates a new [`ProcessManager`].
-    pub fn new(process_defaults: &ProcessDefaults, config: &AppConfigFields) -> Self {
+    pub fn new(process_defaults: &ProcessDefaults, config: &AppConfig) -> Self {
         let process_table_columns = vec![
             ProcessSortColumn::new(ProcessSortType::Pid),
             ProcessSortColumn::new(ProcessSortType::Name),
