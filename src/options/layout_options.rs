@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename = "row")]
 pub struct LayoutRow {
     pub child: Option<Vec<LayoutRowChild>>,
-    pub ratio: Option<u32>,
+    pub ratio: Option<u16>,
 }
 
 /// Represents a child of a Row - either a Col (column) or a FinalWidget.
@@ -24,7 +24,7 @@ pub enum LayoutRowChild {
         default: Option<bool>,
     },
     LayoutCol {
-        ratio: Option<u32>,
+        ratio: Option<u16>,
         child: Vec<FinalWidget>,
     },
 }
@@ -43,16 +43,15 @@ pub struct FinalWidget {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum LayoutRule {
-    /// Let the child decide how big to make the current node.
-    Child,
+    /// Expand to whatever space is left; the `ratio` determines how much
+    /// space to take if there is more than one [`LayoutRule::Expand`] component.
+    Expand { ratio: u16 },
 
-    /// Expand to whatever space is left; the `ratio` determines how
-    /// much space to take if there are more than one
-    /// [`LayoutRule::Expand`] component.
-    Expand { ratio: u32 },
-
-    /// Take up exactly `length` space if possible.
-    Length { length: u16 },
+    /// Take up an exact amount of space, if possible.
+    Length {
+        width: Option<u16>,
+        height: Option<u16>,
+    },
 }
 
 impl Default for LayoutRule {

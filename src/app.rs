@@ -29,6 +29,7 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
+    data_conversion::ConvertedData,
     tuine::{Application, Element, Status, ViewContext},
     units::data_units::DataUnit,
     Pid,
@@ -150,14 +151,14 @@ pub struct AppState {
     frozen_state: FrozenState,
     current_screen: CurrentScreen,
     pub painter: Painter,
-    layout: WidgetLayoutNode,
+    main_layout: WidgetLayoutRoot,
     terminator: Arc<AtomicBool>,
 }
 
 impl AppState {
     /// Creates a new [`AppState`].
     pub fn new(
-        app_config: AppConfig, filters: DataFilters, layout: WidgetLayoutNode,
+        app_config: AppConfig, filters: DataFilters, main_layout: WidgetLayoutRoot,
         used_widgets: UsedWidgets, painter: Painter,
     ) -> Result<Self> {
         Ok(Self {
@@ -170,7 +171,7 @@ impl AppState {
             data_collection: Default::default(),
             frozen_state: Default::default(),
             current_screen: Default::default(),
-            layout,
+            main_layout,
             terminator: Self::register_terminator()?,
         })
     }
@@ -247,10 +248,20 @@ impl Application for AppState {
             CurrentScreen::Main => {
                 // The main screen.
 
-                todo!()
+                let data_source = match &self.frozen_state {
+                    FrozenState::NotFrozen => &self.data_collection,
+                    FrozenState::Frozen(frozen_data) => frozen_data,
+                };
+                let mut data = ConvertedData::new(data_source);
+
+                let layout = &self.main_layout;
+                layout.build(ctx, self, &mut data)
             }
             CurrentScreen::Expanded => {
                 // Displayed when a user "expands" a widget
+
+                // FIXME: Handle frozen
+
                 todo!()
             }
             CurrentScreen::Help => {

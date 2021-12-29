@@ -4,7 +4,7 @@ use std::ops::{Add, AddAssign};
 ///
 /// A [`Size`] is sent from a child component back up to its parents after
 /// first being given a [`Bounds`](super::Bounds) from the parent.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Size {
     /// The width that the component has determined.
     pub width: u16,

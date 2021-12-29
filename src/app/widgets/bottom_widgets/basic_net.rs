@@ -129,6 +129,6 @@ impl Widget for BasicNet {
     }
 
     fn height(&self) -> LayoutRule {
-        LayoutRule::Length { length: 2 }
+        todo!()
     }
 }

@@ -4,7 +4,7 @@ use crate::tuine::Size;
 ///
 /// These are sent from a parent component to a child to determine the [`Size`](super::Size)
 /// of a child, which is passed back up to the parent.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Bounds {
     /// The minimal width available.
     pub min_width: u16,
@@ -34,8 +34,8 @@ impl Bounds {
 
     /// Returns whether there is any space left in this bound for laying out things.
     pub fn has_space(&self) -> bool {
-        self.min_width > self.max_width
-            || self.min_height > self.max_height
+        self.min_width >= self.max_width
+            || self.min_height >= self.max_height
             || self.max_width == 0
             || self.max_height == 0
     }

@@ -156,7 +156,7 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
 
         flexible_children_indexes.into_iter().for_each(|index| {
             // The index accesses are assumed to be safe by above definitions.
-            // This means that we can use the unsafe operations below.
+            // This means that we can use the unsafe operations below to avoid bounds checks.
             //
             // NB: If you **EVER** make changes in this function, ensure these assumptions
             // still hold!

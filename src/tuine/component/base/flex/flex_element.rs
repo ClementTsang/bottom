@@ -13,6 +13,7 @@ pub struct FlexElement<Message> {
 }
 
 impl<Message> FlexElement<Message> {
+    /// Creates a new [`FlexElement`] with a flex of 1.
     pub fn new<I: Into<Element<Message>>>(element: I) -> Self {
         Self {
             flex: 1,

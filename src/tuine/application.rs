@@ -21,6 +21,7 @@ pub trait Application: Sized {
     /// always returning false.
     fn is_terminated(&self) -> bool;
 
+    /// Creates the user interface.
     fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<Self::Message>;
 
     /// To run upon stopping the application.

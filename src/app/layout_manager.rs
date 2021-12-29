@@ -1,8 +1,11 @@
 use crate::{
     app::SelectableType,
+    data_conversion::ConvertedData,
     error::{BottomError, Result},
     options::layout_options::{FinalWidget, LayoutRow, LayoutRowChild, LayoutRule},
+    tuine::*,
 };
+use anyhow::anyhow;
 use indextree::{Arena, NodeId};
 use rustc_hash::FxHashMap;
 use std::str::FromStr;
@@ -10,26 +13,21 @@ use tui::layout::Rect;
 
 use crate::app::widgets::Widget;
 
-use super::{event::SelectionAction, OldBottomWidget, UsedWidgets};
+use super::{event::SelectionAction, AppState, OldBottomWidget, UsedWidgets};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum BottomWidgetType {
     Empty,
     Cpu,
-    CpuLegend,
     Mem,
     Net,
     Proc,
-    ProcSearch,
-    ProcSort,
     Temp,
     Disk,
     BasicCpu,
     BasicMem,
     BasicNet,
-    BasicTables,
     Battery,
-    Carousel,
 }
 
 impl FromStr for BottomWidgetType {
@@ -143,15 +141,37 @@ pub enum MovementDirection {
     Down,
 }
 
+/// The root of the widget layout intermediate representation. A wrapper around a `Vec` of [`WidgetLayoutNode`];
+/// it ALWAYS represents a column.
+#[derive(Debug, Clone)]
+pub struct WidgetLayoutRoot {
+    pub children: Vec<WidgetLayoutNode>,
+}
+
+impl WidgetLayoutRoot {
+    pub fn build<Message>(
+        &self, ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+    ) -> Element<Message> {
+        Flex::column_with_children(
+            self.children
+                .iter()
+                .map(|child| child.build(ctx, app_state, data))
+                .collect(),
+        )
+        .into()
+    }
+}
+
 /// An intermediate representation of the widget layout.
+#[derive(Debug, Clone)]
 pub enum WidgetLayoutNode {
     Row {
         children: Vec<WidgetLayoutNode>,
-        parent_rule: LayoutRule,
+        parent_ratio: u16,
     },
     Col {
         children: Vec<WidgetLayoutNode>,
-        parent_rule: LayoutRule,
+        parent_ratio: u16,
     },
     Carousel {
         children: Vec<BottomWidgetType>,
@@ -160,15 +180,126 @@ pub enum WidgetLayoutNode {
     Widget {
         widget_type: BottomWidgetType,
         selected: bool,
-        width_rule: LayoutRule,
-        height_rule: LayoutRule,
+        rule: LayoutRule,
     },
+}
+
+impl WidgetLayoutNode {
+    fn new_row<Message>(
+        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        children: &[WidgetLayoutNode], parent_ratio: u16,
+    ) -> FlexElement<Message> {
+        FlexElement::with_flex(
+            Flex::row_with_children(
+                children
+                    .iter()
+                    .map(|child| child.build(ctx, app_state, data))
+                    .collect(),
+            ),
+            parent_ratio,
+        )
+    }
+
+    fn new_col<Message>(
+        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        children: &[WidgetLayoutNode], parent_ratio: u16,
+    ) -> FlexElement<Message> {
+        FlexElement::with_flex(
+            Flex::column_with_children(
+                children
+                    .iter()
+                    .map(|child| child.build(ctx, app_state, data))
+                    .collect(),
+            ),
+            parent_ratio,
+        )
+    }
+
+    fn new_carousel<Message>(
+        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        children: &[BottomWidgetType], selected: bool,
+    ) -> FlexElement<Message> {
+        // FIXME: Carousel!
+        FlexElement::new(Flex::row_with_children(
+            children
+                .iter()
+                .map(|child| {
+                    FlexElement::with_no_flex(Self::make_element(
+                        ctx, app_state, data, child, false,
+                    ))
+                })
+                .collect(),
+        ))
+    }
+
+    fn make_element<Message>(
+        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        widget_type: &BottomWidgetType, selected: bool,
+    ) -> Element<Message> {
+        let painter = &app_state.painter;
+        let config = &app_state.app_config;
+
+        match widget_type {
+            BottomWidgetType::Empty => Empty::default().into(),
+            BottomWidgetType::Cpu => CpuGraph::build(ctx, painter, config, data).into(),
+            BottomWidgetType::Mem => MemGraph::build(ctx, painter, config, data).into(),
+            BottomWidgetType::Net => NetGraph::build(ctx, painter, config, data).into(),
+            BottomWidgetType::Proc => ProcessTable::build(ctx, painter, config, data).into(),
+            BottomWidgetType::Temp => TempTable::build(ctx, painter, config, data).into(),
+            BottomWidgetType::Disk => DiskTable::build(ctx, painter, config, data).into(),
+            BottomWidgetType::BasicCpu => CpuSimple::build(ctx, painter, config, data).into(),
+            BottomWidgetType::BasicMem => MemSimple::build(ctx, painter, config, data).into(),
+            BottomWidgetType::BasicNet => NetSimple::build(ctx, painter, config, data).into(),
+            BottomWidgetType::Battery => BatteryTable::build(ctx, painter, config, data).into(),
+        }
+    }
+
+    fn wrap_element<Message>(element: Element<Message>, rule: &LayoutRule) -> FlexElement<Message> {
+        match rule {
+            LayoutRule::Expand { ratio } => FlexElement::with_flex(element, *ratio),
+            LayoutRule::Length { width, height } => {
+                if width.is_some() || height.is_some() {
+                    FlexElement::with_no_flex(
+                        Container::with_child(element).width(*width).height(*height),
+                    )
+                } else {
+                    FlexElement::with_flex(element, 1)
+                }
+            }
+        }
+    }
+
+    pub fn build<Message>(
+        &self, ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+    ) -> FlexElement<Message> {
+        match self {
+            WidgetLayoutNode::Row {
+                children,
+                parent_ratio,
+            } => Self::new_row(ctx, app_state, data, children, *parent_ratio),
+            WidgetLayoutNode::Col {
+                children,
+                parent_ratio,
+            } => Self::new_col(ctx, app_state, data, children, *parent_ratio),
+            WidgetLayoutNode::Carousel { children, selected } => {
+                Self::new_carousel(ctx, app_state, data, children, *selected)
+            }
+            WidgetLayoutNode::Widget {
+                widget_type,
+                selected,
+                rule,
+            } => WidgetLayoutNode::wrap_element(
+                Self::make_element(ctx, app_state, data, widget_type, *selected),
+                rule,
+            ),
+        }
+    }
 }
 
 /// Parses the layout in the config into an intermediate representation.
 pub fn parse_widget_layout(
     layout_rows: &[LayoutRow],
-) -> anyhow::Result<(WidgetLayoutNode, UsedWidgets)> {
+) -> anyhow::Result<(WidgetLayoutRoot, UsedWidgets)> {
     let mut root_children = Vec::with_capacity(layout_rows.len());
     let mut used_widgets = UsedWidgets::default();
 
@@ -191,8 +322,7 @@ pub fn parse_widget_layout(
                         row_children.push(WidgetLayoutNode::Widget {
                             widget_type,
                             selected: default.unwrap_or(false),
-                            width_rule: rule.unwrap_or_default(),
-                            height_rule: LayoutRule::default(),
+                            rule: rule.unwrap_or_default(),
                         });
                     }
                     LayoutRowChild::Carousel {
@@ -229,17 +359,13 @@ pub fn parse_widget_layout(
                             col_children.push(WidgetLayoutNode::Widget {
                                 widget_type,
                                 selected: default.unwrap_or(false),
-                                width_rule: LayoutRule::default(),
-                                height_rule: rule.unwrap_or_default(),
+                                rule: rule.unwrap_or_default(),
                             });
                         }
 
                         row_children.push(WidgetLayoutNode::Col {
                             children: col_children,
-                            parent_rule: match ratio {
-                                Some(ratio) => LayoutRule::Expand { ratio: *ratio },
-                                None => LayoutRule::Child,
-                            },
+                            parent_ratio: ratio.unwrap_or(1),
                         });
                     }
                 }
@@ -247,44 +373,19 @@ pub fn parse_widget_layout(
 
             let row = WidgetLayoutNode::Row {
                 children: row_children,
-                parent_rule: match layout_row.ratio {
-                    Some(ratio) => LayoutRule::Expand { ratio },
-                    None => LayoutRule::Child,
-                },
+                parent_ratio: layout_row.ratio.unwrap_or(1),
             };
             root_children.push(row);
         }
     }
 
-    let root = WidgetLayoutNode::Col {
-        children: root_children,
-        parent_rule: LayoutRule::Expand { ratio: 1 },
-    };
-
-    Ok((root, used_widgets))
-}
-
-/// We may have situations where we also have to make sure the correct layout indices are selected.
-/// For example, when we select a widget by clicking, we want to update the layout so that it's as if a user
-/// manually moved to it via keybinds.
-///
-/// We can do this by just going through the ancestors, starting from the widget itself.
-pub fn correct_layout_last_selections(arena: &mut Arena<LayoutNode>, selected: NodeId) {
-    let mut selected_ancestors = selected.ancestors(arena).collect::<Vec<_>>();
-    let prev_node = selected_ancestors.pop();
-    if let Some(mut prev_node) = prev_node {
-        for node in selected_ancestors {
-            if let Some(layout_node) = arena.get_mut(node).map(|n| n.get_mut()) {
-                match layout_node {
-                    LayoutNode::Row(RowLayout { last_selected, .. })
-                    | LayoutNode::Col(ColLayout { last_selected, .. }) => {
-                        *last_selected = Some(prev_node);
-                    }
-                    LayoutNode::Widget(_) => {}
-                }
-            }
-            prev_node = node;
-        }
+    if root_children.is_empty() {
+        Err(anyhow!("The layout cannot be empty!"))
+    } else {
+        let root = WidgetLayoutRoot {
+            children: root_children,
+        };
+        Ok((root, used_widgets))
     }
 }
 

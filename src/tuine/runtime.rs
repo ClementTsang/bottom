@@ -28,11 +28,11 @@ where
     A: Application + 'static,
     B: Backend,
 {
-    let mut app_data = AppData::default(); // FIXME: This needs to be cleared periodically, DO!
+    let mut app_data = AppData::default(); // FIXME: This needs to be cleared periodically!
     let mut layout: LayoutNode = LayoutNode::default();
 
     let mut user_interface = {
-        let mut ui = new_user_interface(&mut application, &mut app_data);
+        let mut ui = create_user_interface(&mut application, &mut app_data);
         draw(&mut ui, terminal, &mut app_data, &mut layout)?;
         ui
     };
@@ -48,13 +48,17 @@ where
                         &mut layout,
                         event,
                     ) {
-                        user_interface = new_user_interface(&mut application, &mut app_data);
+                        if application.is_terminated() {
+                            break;
+                        }
+
+                        user_interface = create_user_interface(&mut application, &mut app_data);
                         draw(&mut user_interface, terminal, &mut app_data, &mut layout)?;
                     }
                 }
                 RuntimeEvent::Custom(message) => {
                     if application.update(message) {
-                        user_interface = new_user_interface(&mut application, &mut app_data);
+                        user_interface = create_user_interface(&mut application, &mut app_data);
                         draw(&mut user_interface, terminal, &mut app_data, &mut layout)?;
                     }
                 }
@@ -62,7 +66,7 @@ where
                     width: _,
                     height: _,
                 } => {
-                    user_interface = new_user_interface(&mut application, &mut app_data);
+                    user_interface = create_user_interface(&mut application, &mut app_data);
                     // FIXME: Also nuke any cache and the like...
                     draw(&mut user_interface, terminal, &mut app_data, &mut layout)?;
                 }
@@ -91,10 +95,7 @@ where
 
     let event_handled =
         match user_interface.on_event(&mut state_ctx, &draw_ctx, event, &mut messages) {
-            Status::Captured => {
-                // TODO: What to do on capture?
-                Status::Captured
-            }
+            Status::Captured => Status::Captured,
             Status::Ignored => application.global_event_handler(event, &mut messages),
         };
 
@@ -113,7 +114,7 @@ where
 }
 
 /// Creates a new [`Element`] representing the root of the user interface.
-fn new_user_interface<A>(application: &mut A, app_data: &mut AppData) -> Element<A::Message>
+fn create_user_interface<A>(application: &mut A, app_data: &mut AppData) -> Element<A::Message>
 where
     A: Application + 'static,
 {
