@@ -1,14 +1,7 @@
 use crate::{
-    app::{
-        BasicCpu, BasicMem, BasicNet, BatteryTable, Carousel, DiskTable, Empty, MemGraph, NetGraph,
-        OldNetGraph, ProcessManager, SelectableType, TempTable,
-    },
+    app::SelectableType,
     error::{BottomError, Result},
-    options::{
-        layout_options::{LayoutRow, LayoutRowChild, LayoutRule},
-        ProcessDefaults,
-    },
-    tuine::{Element, Flex},
+    options::layout_options::{FinalWidget, LayoutRow, LayoutRowChild, LayoutRule},
 };
 use indextree::{Arena, NodeId};
 use rustc_hash::FxHashMap;
@@ -17,9 +10,7 @@ use tui::layout::Rect;
 
 use crate::app::widgets::Widget;
 
-use super::{
-    event::SelectionAction, AppConfig, AppState, CpuGraph, OldBottomWidget, TimeGraph, UsedWidgets,
-};
+use super::{event::SelectionAction, OldBottomWidget, UsedWidgets};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum BottomWidgetType {
@@ -39,12 +30,6 @@ pub enum BottomWidgetType {
     BasicTables,
     Battery,
     Carousel,
-}
-
-impl Default for BottomWidgetType {
-    fn default() -> Self {
-        BottomWidgetType::Empty
-    }
 }
 
 impl FromStr for BottomWidgetType {
@@ -122,32 +107,12 @@ pub struct RowLayout {
     pub bound: Rect,
 }
 
-impl RowLayout {
-    fn new(parent_rule: LayoutRule) -> Self {
-        Self {
-            last_selected: None,
-            parent_rule,
-            bound: Rect::default(),
-        }
-    }
-}
-
 /// Represents a column in the layout tree.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ColLayout {
     last_selected: Option<NodeId>,
     pub parent_rule: LayoutRule,
     pub bound: Rect,
-}
-
-impl ColLayout {
-    fn new(parent_rule: LayoutRule) -> Self {
-        Self {
-            last_selected: None,
-            parent_rule,
-            bound: Rect::default(),
-        }
-    }
 }
 
 /// Represents a widget in the layout tree.
@@ -178,327 +143,125 @@ pub enum MovementDirection {
     Down,
 }
 
-pub fn initialize_widget_layout<Message>(
-    layout_rows: &[LayoutRow], app: &AppState,
-) -> anyhow::Result<Element<Message>> {
-    let mut root = Flex::column();
-
-    for layout_row in layout_rows {
-        let mut row = Flex::row();
-        if let Some(children) = &layout_row.child {
-            for child in children {
-                match child {
-                    LayoutRowChild::Widget(widget) => {}
-                    LayoutRowChild::Carousel {
-                        carousel_children,
-                        default,
-                    } => {}
-                    LayoutRowChild::LayoutCol {
-                        ratio,
-                        child: children,
-                    } => for child in children {},
-                }
-            }
-        }
-
-        root = root.with_child(row);
-    }
-
-    Ok(root.into())
+/// An intermediate representation of the widget layout.
+pub enum WidgetLayoutNode {
+    Row {
+        children: Vec<WidgetLayoutNode>,
+        parent_rule: LayoutRule,
+    },
+    Col {
+        children: Vec<WidgetLayoutNode>,
+        parent_rule: LayoutRule,
+    },
+    Carousel {
+        children: Vec<BottomWidgetType>,
+        selected: bool,
+    },
+    Widget {
+        widget_type: BottomWidgetType,
+        selected: bool,
+        width_rule: LayoutRule,
+        height_rule: LayoutRule,
+    },
 }
 
-/// A wrapper struct to simplify the output of [`create_layout_tree`].
-pub struct LayoutCreationOutput {
-    pub layout_tree: Arena<LayoutNode>,
-    pub root: NodeId,
-    pub widget_lookup_map: FxHashMap<NodeId, OldBottomWidget>,
-    pub selected: NodeId,
-    pub used_widgets: UsedWidgets,
-}
-
-/// Creates a new [`Arena<LayoutNode>`] from the given config and returns it, along with the [`NodeId`] representing
-/// the root of the newly created [`Arena`], a mapping from [`NodeId`]s to [`BottomWidget`]s, and optionally, a default
-/// selected [`NodeId`].
-// FIXME: [AFTER REFACTOR] This is currently jury-rigged "glue" just to work with the existing config system! We are NOT keeping it like this, it's too awful to keep like this!
-pub fn create_layout_tree(
-    rows: &[LayoutRow], process_defaults: ProcessDefaults, app_config_fields: &AppConfig,
-) -> Result<LayoutCreationOutput> {
-    fn add_widget_to_map(
-        widget_lookup_map: &mut FxHashMap<NodeId, OldBottomWidget>, widget_type: BottomWidgetType,
-        widget_id: NodeId, process_defaults: &ProcessDefaults, app_config_fields: &AppConfig,
-        width: LayoutRule, height: LayoutRule,
-    ) -> Result<()> {
-        match widget_type {
-            BottomWidgetType::Cpu => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    CpuGraph::from_config(app_config_fields)
-                        .width(width)
-                        .height(height)
-                        .into(),
-                );
-            }
-            BottomWidgetType::Mem => {
-                let graph = TimeGraph::from_config(app_config_fields);
-                widget_lookup_map.insert(
-                    widget_id,
-                    MemGraph::new(graph).width(width).height(height).into(),
-                );
-            }
-            BottomWidgetType::Net => {
-                if app_config_fields.use_old_network_legend {
-                    widget_lookup_map.insert(
-                        widget_id,
-                        OldNetGraph::from_config(app_config_fields)
-                            .width(width)
-                            .height(height)
-                            .into(),
-                    );
-                } else {
-                    widget_lookup_map.insert(
-                        widget_id,
-                        NetGraph::from_config(app_config_fields)
-                            .width(width)
-                            .height(height)
-                            .into(),
-                    );
-                }
-            }
-            BottomWidgetType::Proc => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    ProcessManager::new(process_defaults, app_config_fields)
-                        .width(width)
-                        .height(height)
-                        .basic_mode(app_config_fields.use_basic_mode)
-                        .show_scroll_index(app_config_fields.show_table_scroll_position)
-                        .into(),
-                );
-            }
-            BottomWidgetType::Temp => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    TempTable::from_config(app_config_fields)
-                        .set_temp_type(app_config_fields.temperature_type.clone())
-                        .width(width)
-                        .height(height)
-                        .basic_mode(app_config_fields.use_basic_mode)
-                        .show_scroll_index(app_config_fields.show_table_scroll_position)
-                        .into(),
-                );
-            }
-            BottomWidgetType::Disk => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    DiskTable::from_config(app_config_fields)
-                        .width(width)
-                        .height(height)
-                        .basic_mode(app_config_fields.use_basic_mode)
-                        .show_scroll_index(app_config_fields.show_table_scroll_position)
-                        .into(),
-                );
-            }
-            BottomWidgetType::Battery => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    BatteryTable::default()
-                        .width(width)
-                        .height(height)
-                        .basic_mode(app_config_fields.use_basic_mode)
-                        .into(),
-                );
-            }
-            BottomWidgetType::BasicCpu => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    BasicCpu::from_config(app_config_fields).width(width).into(),
-                );
-            }
-            BottomWidgetType::BasicMem => {
-                widget_lookup_map.insert(widget_id, BasicMem::default().width(width).into());
-            }
-            BottomWidgetType::BasicNet => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    BasicNet::from_config(app_config_fields).width(width).into(),
-                );
-            }
-            BottomWidgetType::Empty => {
-                widget_lookup_map.insert(
-                    widget_id,
-                    Empty::default().width(width).height(height).into(),
-                );
-            }
-            _ => {}
-        }
-
-        Ok(())
-    }
-
-    let mut arena = Arena::new();
-    let root_id = arena.new_node(LayoutNode::Col(ColLayout::new(LayoutRule::Expand {
-        ratio: 1,
-    })));
-    let mut widget_lookup_map = FxHashMap::default();
-    let mut first_selected = None;
-    let mut first_widget_seen = None; // Backup selected widget
+/// Parses the layout in the config into an intermediate representation.
+pub fn parse_widget_layout(
+    layout_rows: &[LayoutRow],
+) -> anyhow::Result<(WidgetLayoutNode, UsedWidgets)> {
+    let mut root_children = Vec::with_capacity(layout_rows.len());
     let mut used_widgets = UsedWidgets::default();
 
-    for row in rows {
-        let row_id = arena.new_node(LayoutNode::Row(RowLayout::new(
-            row.ratio
-                .map(|ratio| LayoutRule::Expand { ratio })
-                .unwrap_or(LayoutRule::Child),
-        )));
-        root_id.append(row_id, &mut arena);
+    for layout_row in layout_rows {
+        if let Some(children) = &layout_row.child {
+            let mut row_children = Vec::with_capacity(children.len());
 
-        if let Some(children) = &row.child {
             for child in children {
                 match child {
                     LayoutRowChild::Widget(widget) => {
-                        let widget_id = arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
-                        row_id.append(widget_id, &mut arena);
+                        let FinalWidget {
+                            rule,
+                            widget_type,
+                            default,
+                        } = widget;
 
-                        if let Some(true) = widget.default {
-                            first_selected = Some(widget_id);
-                        }
-
-                        if first_widget_seen.is_none() {
-                            first_widget_seen = Some(widget_id);
-                        }
-
-                        let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
+                        let widget_type = widget_type.parse::<BottomWidgetType>()?;
                         used_widgets.add(&widget_type);
 
-                        add_widget_to_map(
-                            &mut widget_lookup_map,
+                        row_children.push(WidgetLayoutNode::Widget {
                             widget_type,
-                            widget_id,
-                            &process_defaults,
-                            app_config_fields,
-                            widget.rule.unwrap_or_default(),
-                            LayoutRule::default(),
-                        )?;
+                            selected: default.unwrap_or(false),
+                            width_rule: rule.unwrap_or_default(),
+                            height_rule: LayoutRule::default(),
+                        });
                     }
                     LayoutRowChild::Carousel {
                         carousel_children,
                         default,
                     } => {
-                        if !carousel_children.is_empty() {
-                            let mut child_ids = Vec::with_capacity(carousel_children.len());
-                            let carousel_widget_id =
-                                arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
-                            row_id.append(carousel_widget_id, &mut arena);
+                        let mut car_children = Vec::with_capacity(carousel_children.len());
+                        for widget_type in carousel_children {
+                            let widget_type = widget_type.parse::<BottomWidgetType>()?;
+                            used_widgets.add(&widget_type);
 
-                            if let Some(true) = default {
-                                first_selected = Some(carousel_widget_id);
-                            }
-
-                            if first_widget_seen.is_none() {
-                                first_widget_seen = Some(carousel_widget_id);
-                            }
-
-                            // Handle the rest of the children.
-                            for child in carousel_children {
-                                let widget_id =
-                                    arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
-                                carousel_widget_id.append(widget_id, &mut arena);
-
-                                let widget_type = child.parse::<BottomWidgetType>()?;
-                                used_widgets.add(&widget_type);
-
-                                add_widget_to_map(
-                                    &mut widget_lookup_map,
-                                    widget_type,
-                                    widget_id,
-                                    &process_defaults,
-                                    app_config_fields,
-                                    LayoutRule::default(),
-                                    LayoutRule::default(),
-                                )?;
-
-                                child_ids.push(widget_id);
-                            }
-
-                            widget_lookup_map.insert(
-                                carousel_widget_id,
-                                Carousel::new(
-                                    child_ids
-                                        .into_iter()
-                                        .filter_map(|child_id| {
-                                            widget_lookup_map
-                                                .get(&child_id)
-                                                .map(|w| (child_id, w.get_pretty_name().into()))
-                                        })
-                                        .collect(),
-                                )
-                                .into(),
-                            );
+                            car_children.push(widget_type);
                         }
+
+                        row_children.push(WidgetLayoutNode::Carousel {
+                            children: car_children,
+                            selected: default.unwrap_or(false),
+                        });
                     }
                     LayoutRowChild::LayoutCol {
                         ratio,
-                        child: col_child,
+                        child: children,
                     } => {
-                        let col_id = arena.new_node(LayoutNode::Col(ColLayout::new(
-                            ratio
-                                .map(|ratio| LayoutRule::Expand { ratio })
-                                .unwrap_or(LayoutRule::Child),
-                        )));
-                        row_id.append(col_id, &mut arena);
-
-                        for widget in col_child {
-                            let widget_id =
-                                arena.new_node(LayoutNode::Widget(WidgetLayout::default()));
-                            col_id.append(widget_id, &mut arena);
-
-                            if let Some(true) = widget.default {
-                                first_selected = Some(widget_id);
-                            }
-
-                            if first_widget_seen.is_none() {
-                                first_widget_seen = Some(widget_id);
-                            }
-
-                            let widget_type = widget.widget_type.parse::<BottomWidgetType>()?;
+                        let mut col_children = Vec::with_capacity(children.len());
+                        for widget in children {
+                            let FinalWidget {
+                                rule,
+                                widget_type,
+                                default,
+                            } = widget;
+                            let widget_type = widget_type.parse::<BottomWidgetType>()?;
                             used_widgets.add(&widget_type);
 
-                            add_widget_to_map(
-                                &mut widget_lookup_map,
+                            col_children.push(WidgetLayoutNode::Widget {
                                 widget_type,
-                                widget_id,
-                                &process_defaults,
-                                app_config_fields,
-                                LayoutRule::default(),
-                                widget.rule.unwrap_or_default(),
-                            )?;
+                                selected: default.unwrap_or(false),
+                                width_rule: LayoutRule::default(),
+                                height_rule: rule.unwrap_or_default(),
+                            });
                         }
+
+                        row_children.push(WidgetLayoutNode::Col {
+                            children: col_children,
+                            parent_rule: match ratio {
+                                Some(ratio) => LayoutRule::Expand { ratio: *ratio },
+                                None => LayoutRule::Child,
+                            },
+                        });
                     }
                 }
             }
+
+            let row = WidgetLayoutNode::Row {
+                children: row_children,
+                parent_rule: match layout_row.ratio {
+                    Some(ratio) => LayoutRule::Expand { ratio },
+                    None => LayoutRule::Child,
+                },
+            };
+            root_children.push(row);
         }
     }
 
-    let selected: NodeId;
-    if let Some(first_selected) = first_selected {
-        selected = first_selected;
-    } else if let Some(first_widget_seen) = first_widget_seen {
-        selected = first_widget_seen;
-    } else {
-        return Err(BottomError::ConfigError(
-            "A layout cannot contain zero widgets!".to_string(),
-        ));
-    }
+    let root = WidgetLayoutNode::Col {
+        children: root_children,
+        parent_rule: LayoutRule::Expand { ratio: 1 },
+    };
 
-    correct_layout_last_selections(&mut arena, selected);
-
-    Ok(LayoutCreationOutput {
-        layout_tree: arena,
-        root: root_id,
-        widget_lookup_map,
-        selected,
-        used_widgets,
-    })
+    Ok((root, used_widgets))
 }
 
 /// We may have situations where we also have to make sure the correct layout indices are selected.

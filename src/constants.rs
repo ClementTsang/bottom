@@ -225,7 +225,7 @@ pub const HELP_CONTENTS_TEXT: [&str; 8] = [
 ];
 
 pub const GENERAL_HELP_TITLE: &str = "General";
-pub const GENERAL_HELP_TEXT: [[&str; 2]; 21] = [
+pub const GENERAL_HELP_TEXT: [[&str; 2]; 23] = [
     ["q, Ctrl-c", "Quit"],
     [
         "Esc",
@@ -251,6 +251,8 @@ pub const GENERAL_HELP_TEXT: [[&str; 2]; 21] = [
     ["+", "Zoom in on chart (decrease time range)"],
     ["-", "Zoom out on chart (increase time range)"],
     ["=", "Reset zoom"],
+    ["Page Up", "Move up one page in a table"],
+    ["Page Down", "Move down one page in a table"],
     [
         "Mouse scroll",
         "Scroll through the tables or zoom in/out of charts by scrolling up/down",

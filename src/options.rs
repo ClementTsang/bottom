@@ -241,7 +241,7 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
         &rows
     };
 
-    let layout_tree_output = create_layout_tree(row_ref, process_defaults, &app_config_fields)?;
+    let (layout, used_widgets) = parse_widget_layout(row_ref)?;
 
     let disk_filter =
         get_ignore_list(&config.disk_filter).context("Update 'disk_filter' in your config file")?;
@@ -259,7 +259,13 @@ pub fn build_app(matches: &clap::ArgMatches<'static>, config: &mut Config) -> Re
     };
 
     let painter = Painter::init(&config, get_color_scheme(&matches, &config)?)?;
-    AppState::new(app_config_fields, data_filter, layout_tree_output, painter)
+    AppState::new(
+        app_config_fields,
+        data_filter,
+        layout,
+        used_widgets,
+        painter,
+    )
 }
 
 fn get_update_rate_in_milliseconds(

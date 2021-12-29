@@ -1,10 +1,9 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tui::style::Style;
 
 use crate::tuine::{
     self, block,
     text_table::{self, DataRow, SortType, TextTableProps},
-    Block, Event, Shortcut, StatefulComponent, Status, TextTable, TmpComponent, ViewContext,
+    Block, Shortcut, StatefulComponent, TextTable, TmpComponent, ViewContext,
 };
 
 /// A set of styles for a [`SimpleTable`].

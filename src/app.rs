@@ -29,7 +29,6 @@ use frozen_state::FrozenState;
 use crate::{
     canvas::Painter,
     constants,
-    data_conversion::ConvertedData,
     tuine::{Application, Element, Status, ViewContext},
     units::data_units::DataUnit,
     Pid,
@@ -135,6 +134,7 @@ pub enum AppMessages {
         to_kill: Vec<Pid>,
         signal: Option<i32>,
     },
+    Expand,
     ToggleFreeze,
     Reset,
     Clean,
@@ -150,23 +150,16 @@ pub struct AppState {
     frozen_state: FrozenState,
     current_screen: CurrentScreen,
     pub painter: Painter,
+    layout: WidgetLayoutNode,
     terminator: Arc<AtomicBool>,
 }
 
 impl AppState {
     /// Creates a new [`AppState`].
     pub fn new(
-        app_config: AppConfig, filters: DataFilters, layout_tree_output: LayoutCreationOutput,
-        painter: Painter,
+        app_config: AppConfig, filters: DataFilters, layout: WidgetLayoutNode,
+        used_widgets: UsedWidgets, painter: Painter,
     ) -> Result<Self> {
-        let LayoutCreationOutput {
-            layout_tree: _,
-            root: _,
-            widget_lookup_map,
-            selected: _,
-            used_widgets,
-        } = layout_tree_output;
-
         Ok(Self {
             app_config,
             filters,
@@ -177,7 +170,7 @@ impl AppState {
             data_collection: Default::default(),
             frozen_state: Default::default(),
             current_screen: Default::default(),
-
+            layout,
             terminator: Self::register_terminator()?,
         })
     }
@@ -221,6 +214,10 @@ impl Application for AppState {
                 // FIXME: Handle process termination
                 true
             }
+            AppMessages::Expand => {
+                // FIXME: Expand current widget
+                true
+            }
             AppMessages::ToggleFreeze => {
                 self.frozen_state.toggle(&self.data_collection);
                 true
@@ -246,7 +243,27 @@ impl Application for AppState {
     }
 
     fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<Self::Message> {
-        todo!()
+        match self.current_screen {
+            CurrentScreen::Main => {
+                // The main screen.
+
+                todo!()
+            }
+            CurrentScreen::Expanded => {
+                // Displayed when a user "expands" a widget
+                todo!()
+            }
+            CurrentScreen::Help => {
+                // The help dialog.
+
+                todo!()
+            }
+            CurrentScreen::Delete => {
+                // The delete dialog.
+
+                todo!()
+            }
+        }
     }
 
     fn destructor(&mut self) {

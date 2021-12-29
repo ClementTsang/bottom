@@ -3,8 +3,8 @@ use crate::{
     canvas::Painter,
     data_conversion::ConvertedData,
     tuine::{
-        Bounds, DataRow, DrawContext, LayoutNode, SimpleTable, Size, StateContext, Status,
-        TmpComponent, ViewContext,
+        Bounds, DrawContext, LayoutNode, SimpleTable, Size, StateContext, Status, TmpComponent,
+        ViewContext,
     },
 };
 

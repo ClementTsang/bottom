@@ -119,7 +119,6 @@ pub struct SimpleSortableColumn {
     original_name: Cow<'static, str>,
     pub shortcut: Option<(KeyEvent, String)>,
     pub default_descending: bool,
-    x_bounds: Option<(u16, u16)>,
 
     pub internal: SimpleColumn,
 
@@ -138,7 +137,6 @@ impl SimpleSortableColumn {
             original_name,
             shortcut,
             default_descending,
-            x_bounds: None,
             internal: SimpleColumn::new(full_name, desired_width),
             sorting_status: SortStatus::NotSorting,
         }
