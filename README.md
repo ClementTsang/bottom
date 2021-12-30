@@ -180,6 +180,9 @@ Since validation of the package takes time, it may take a while to become availa
 
 ```bash
 winget install bottom
+
+# Alternatively
+winget install Clement.bottom
 ```
 
 You can also manually do the same thing by going to the [latest release](https://github.com/ClementTsang/bottom/releases/latest)
