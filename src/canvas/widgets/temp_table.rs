@@ -215,7 +215,7 @@ impl TempTableWidget for Painter {
                     .border_style(border_style)
             } else if is_on_widget {
                 Block::default()
-                    .borders(*SIDE_BORDERS)
+                    .borders(SIDE_BORDERS)
                     .border_style(self.colours.highlighted_border_style)
             } else {
                 Block::default().borders(Borders::NONE)
