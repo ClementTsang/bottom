@@ -24,8 +24,6 @@ pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
 // Side borders
 pub const SIDE_BORDERS: tui::widgets::Borders = tui::widgets::Borders::from_bits_truncate(20);
-pub const TOP_LEFT_RIGHT: tui::widgets::Borders = tui::widgets::Borders::from_bits_truncate(22);
-pub const BOTTOM_LEFT_RIGHT: tui::widgets::Borders = tui::widgets::Borders::from_bits_truncate(28);
 pub static DEFAULT_TEXT_STYLE: Lazy<tui::style::Style> =
     Lazy::new(|| tui::style::Style::default().fg(tui::style::Color::Gray));
 pub static DEFAULT_HEADER_STYLE: Lazy<tui::style::Style> =
