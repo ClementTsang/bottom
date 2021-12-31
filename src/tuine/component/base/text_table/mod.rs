@@ -53,10 +53,10 @@ pub struct TextTable<Message> {
     key: Key,
     column_widths: Vec<u16>,
     columns: Vec<TextColumn>,
-    show_gap: bool,
     show_selected_entry: bool,
     rows: Vec<DataRow>,
     style_sheet: StyleSheet,
+    show_gap: bool,
     table_gap: u16,
     on_select: Option<Box<dyn Fn(usize) -> Message>>,
     on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
@@ -111,7 +111,7 @@ impl<Message> TextTable<Message> {
         self.column_widths = column_widths;
     }
 
-    fn update_sort_column(&mut self, state: &mut TextTableState, x: u16) -> Status {
+    fn update_sort_column(&self, state: &mut TextTableState, x: u16) -> Status {
         match state.sort {
             SortType::Unsortable => Status::Ignored,
             SortType::Ascending(column) | SortType::Descending(column) => {
@@ -148,19 +148,17 @@ impl<Message> TextTable<Message> {
         }
     }
 
-    pub fn on_page_up(&mut self, state: &mut TextTableState, rect: Rect) -> Status {
+    pub fn on_page_up(&self, state: &mut TextTableState, rect: Rect) -> Status {
         let height = rect.height.saturating_sub(self.table_gap + 1);
         state.scroll.move_up(height.into())
     }
 
-    pub fn on_page_down(&mut self, state: &mut TextTableState, rect: Rect) -> Status {
+    pub fn on_page_down(&self, state: &mut TextTableState, rect: Rect) -> Status {
         let height = rect.height.saturating_sub(self.table_gap + 1);
         state.scroll.move_down(height.into())
     }
 
-    pub fn scroll_down(
-        &mut self, state: &mut TextTableState, messages: &mut Vec<Message>,
-    ) -> Status {
+    pub fn scroll_down(&self, state: &mut TextTableState, messages: &mut Vec<Message>) -> Status {
         let status = state.scroll.move_down(1);
         if let Some(on_select) = &self.on_select {
             messages.push(on_select(state.scroll.current_index()));
@@ -168,12 +166,38 @@ impl<Message> TextTable<Message> {
         status
     }
 
-    pub fn scroll_up(&mut self, state: &mut TextTableState, messages: &mut Vec<Message>) -> Status {
+    pub fn scroll_up(&self, state: &mut TextTableState, messages: &mut Vec<Message>) -> Status {
         let status = state.scroll.move_up(1);
         if let Some(on_select) = &self.on_select {
             messages.push(on_select(state.scroll.current_index()));
         }
         status
+    }
+
+    pub fn on_left_mouse_down(
+        &self, state: &mut TextTableState, rect: Rect, messages: &mut Vec<Message>, column: u16,
+        row: u16,
+    ) -> Status {
+        let y = row.saturating_sub(rect.top());
+        if y == 0 {
+            let x = column - rect.left();
+            self.update_sort_column(state, x)
+        } else if y > self.table_gap {
+            let visual_index = usize::from(y.saturating_sub(self.table_gap + 1));
+            match state.scroll.set_visual_index(visual_index) {
+                Status::Captured => Status::Captured,
+                Status::Ignored => {
+                    if let Some(on_selected_click) = &self.on_selected_click {
+                        messages.push(on_selected_click(state.scroll.current_index()));
+                        Status::Captured
+                    } else {
+                        Status::Ignored
+                    }
+                }
+            }
+        } else {
+            Status::Ignored
+        }
     }
 }
 
@@ -200,11 +224,11 @@ impl<Message> StatefulComponent<Message> for TextTable<Message> {
             key,
             column_widths: props.column_widths,
             columns: props.columns,
-            show_gap: props.show_gap,
             show_selected_entry: props.show_selected_entry,
             rows: props.rows,
             style_sheet: props.style_sheet,
-            table_gap: props.table_gap,
+            show_gap: props.show_gap,
+            table_gap: if props.show_gap { 1 } else { 0 },
             on_select: props.on_select,
             on_selected_click: props.on_selected_click,
         }
@@ -321,30 +345,13 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
             Event::Mouse(mouse_event) => {
                 if mouse_event.does_mouse_intersect_bounds(rect) {
                     match mouse_event.kind {
-                        MouseEventKind::Down(MouseButton::Left) => {
-                            let y = mouse_event.row - rect.top();
-                            if y == 0 {
-                                let x = mouse_event.column - rect.left();
-                                self.update_sort_column(state, x)
-                            } else if y > self.table_gap {
-                                let visual_index = usize::from(y - self.table_gap);
-                                match state.scroll.set_visual_index(visual_index) {
-                                    Status::Captured => Status::Captured,
-                                    Status::Ignored => {
-                                        if let Some(on_selected_click) = &self.on_selected_click {
-                                            messages.push(on_selected_click(
-                                                state.scroll.current_index(),
-                                            ));
-                                            Status::Captured
-                                        } else {
-                                            Status::Ignored
-                                        }
-                                    }
-                                }
-                            } else {
-                                Status::Ignored
-                            }
-                        }
+                        MouseEventKind::Down(MouseButton::Left) => self.on_left_mouse_down(
+                            state,
+                            rect,
+                            messages,
+                            mouse_event.column,
+                            mouse_event.row,
+                        ),
                         MouseEventKind::ScrollDown => self.scroll_down(state, messages),
                         MouseEventKind::ScrollUp => self.scroll_up(state, messages),
                         _ => Status::Ignored,

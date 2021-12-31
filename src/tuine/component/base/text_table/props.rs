@@ -12,7 +12,6 @@ pub struct TextTableProps<Message> {
     pub(crate) rows: Vec<DataRow>,
     pub(crate) style_sheet: StyleSheet,
     pub(crate) sort: SortType,
-    pub(crate) table_gap: u16,
     pub(crate) on_select: Option<Box<dyn Fn(usize) -> Message>>,
     pub(crate) on_selected_click: Option<Box<dyn Fn(usize) -> Message>>,
 }
@@ -30,7 +29,6 @@ impl<Message> TextTableProps<Message> {
             rows: Vec::default(),
             style_sheet: StyleSheet::default(),
             sort: SortType::Unsortable,
-            table_gap: 0,
             on_select: None,
             on_selected_click: None,
         }
