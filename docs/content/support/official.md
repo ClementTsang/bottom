@@ -13,13 +13,21 @@ bottom from the repo/source, then please try that as well.
 
 ## Known problems
 
+### Linux
+
+- If you're using Linux via WSL or WSL2:
+  - You may have issues with getting memory data.
+  - Temperature sensors may not be correctly reported.
+  - WSL2 will not match Windows' own Task Manager in terms of data.
+
 ### Windows
 
 - The temperature widget seems to require elevated access in some cases to get data.
 - The battery widget seems to have issues with dual battery systems, like some Thinkpads.
-- If you run on WSL/WSL2, you may have issues with getting memory data.
-- WSL and WSL2 (as far as I know) cannot correctly report temperature sensors.
-- WSL2 will not match Windows' own Task Manager in terms of data.
+- If you are using WSL or WSL2:
+  - You may have issues with getting memory data.
+  - Temperature sensors may not be correctly reported.
+  - WSL2 will not match Windows' own Task Manager in terms of data.
 
 ### macOS
 
