@@ -23,12 +23,7 @@ pub const TABLE_GAP_HEIGHT_LIMIT: u16 = 7;
 pub const TIME_LABEL_HEIGHT_LIMIT: u16 = 7;
 
 // Side borders
-pub static SIDE_BORDERS: Lazy<tui::widgets::Borders> =
-    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(20));
-pub static TOP_LEFT_RIGHT: Lazy<tui::widgets::Borders> =
-    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(22));
-pub static BOTTOM_LEFT_RIGHT: Lazy<tui::widgets::Borders> =
-    Lazy::new(|| tui::widgets::Borders::from_bits_truncate(28));
+pub const SIDE_BORDERS: tui::widgets::Borders = tui::widgets::Borders::from_bits_truncate(20);
 pub static DEFAULT_TEXT_STYLE: Lazy<tui::style::Style> =
     Lazy::new(|| tui::style::Style::default().fg(tui::style::Color::Gray));
 pub static DEFAULT_HEADER_STYLE: Lazy<tui::style::Style> =
@@ -359,18 +354,16 @@ pub const BASIC_MEM_HELP_TEXT: [&str; 2] = [
     "%                Toggle between values and percentages for memory usage",
 ];
 
-pub static HELP_TEXT: Lazy<Vec<Vec<&'static str>>> = Lazy::new(|| {
-    vec![
-        HELP_CONTENTS_TEXT.to_vec(),
-        GENERAL_HELP_TEXT.to_vec(),
-        CPU_HELP_TEXT.to_vec(),
-        PROCESS_HELP_TEXT.to_vec(),
-        SEARCH_HELP_TEXT.to_vec(),
-        SORT_HELP_TEXT.to_vec(),
-        BATTERY_HELP_TEXT.to_vec(),
-        BASIC_MEM_HELP_TEXT.to_vec(),
-    ]
-});
+pub const HELP_TEXT: &[&[&str]] = &[
+    &HELP_CONTENTS_TEXT,
+    &GENERAL_HELP_TEXT,
+    &CPU_HELP_TEXT,
+    &PROCESS_HELP_TEXT,
+    &SEARCH_HELP_TEXT,
+    &SORT_HELP_TEXT,
+    &BATTERY_HELP_TEXT,
+    &BASIC_MEM_HELP_TEXT,
+];
 
 // Default layouts
 pub const DEFAULT_LAYOUT: &str = r##"
@@ -546,7 +539,7 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 # [[row.child.child]] represents a widget.
 #
 # All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
-# All layout components have a ratio value - if this is not set, then it defaults to 1. 
+# All layout components have a ratio value - if this is not set, then it defaults to 1.
 # The default widget layout:
 #[[row]]
 #  ratio=30
@@ -631,7 +624,7 @@ pub const CONFIG_LAYOUT_HEAD: &str = r##"
 # [[row.child.child]] represents a widget.
 #
 # All widgets must have the valid type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
-# All layout components have a ratio value - if this is not set, then it defaults to 1. 
+# All layout components have a ratio value - if this is not set, then it defaults to 1.
 "##;
 
 pub const CONFIG_FILTER_HEAD: &str = r##"

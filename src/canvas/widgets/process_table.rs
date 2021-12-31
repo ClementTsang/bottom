@@ -18,86 +18,74 @@ use tui::{
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
-use once_cell::sync::Lazy;
+const PROCESS_HEADERS_HARD_WIDTH_NO_GROUP: &[Option<u16>] = &[
+    Some(7),
+    None,
+    Some(8),
+    Some(8),
+    Some(8),
+    Some(8),
+    Some(7),
+    Some(8),
+    #[cfg(target_family = "unix")]
+    None,
+    None,
+];
+const PROCESS_HEADERS_HARD_WIDTH_GROUPED: &[Option<u16>] = &[
+    Some(7),
+    None,
+    Some(8),
+    Some(8),
+    Some(8),
+    Some(8),
+    Some(7),
+    Some(8),
+];
 
-static PROCESS_HEADERS_HARD_WIDTH_NO_GROUP: Lazy<Vec<Option<u16>>> = Lazy::new(|| {
-    vec![
-        Some(7),
-        None,
-        Some(8),
-        Some(8),
-        Some(8),
-        Some(8),
-        Some(7),
-        Some(8),
-        #[cfg(target_family = "unix")]
-        None,
-        None,
-    ]
-});
-static PROCESS_HEADERS_HARD_WIDTH_GROUPED: Lazy<Vec<Option<u16>>> = Lazy::new(|| {
-    vec![
-        Some(7),
-        None,
-        Some(8),
-        Some(8),
-        Some(8),
-        Some(8),
-        Some(7),
-        Some(8),
-    ]
-});
+const PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND: &[Option<f64>] =
+    &[None, Some(0.7), None, None, None, None, None, None];
+const PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE: &[Option<f64>] =
+    &[None, Some(0.3), None, None, None, None, None, None];
 
-static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND: Lazy<Vec<Option<f64>>> =
-    Lazy::new(|| vec![None, Some(0.7), None, None, None, None, None, None]);
-static PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE: Lazy<Vec<Option<f64>>> =
-    Lazy::new(|| vec![None, Some(0.3), None, None, None, None, None, None]);
-
-static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND: Lazy<Vec<Option<f64>>> = Lazy::new(|| {
-    vec![
-        None,
-        Some(0.7),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        #[cfg(target_family = "unix")]
-        Some(0.05),
-        Some(0.2),
-    ]
-});
-static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE: Lazy<Vec<Option<f64>>> = Lazy::new(|| {
-    vec![
-        None,
-        Some(0.5),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        #[cfg(target_family = "unix")]
-        Some(0.05),
-        Some(0.2),
-    ]
-});
-static PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE: Lazy<Vec<Option<f64>>> = Lazy::new(|| {
-    vec![
-        None,
-        Some(0.3),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        #[cfg(target_family = "unix")]
-        Some(0.05),
-        Some(0.2),
-    ]
-});
+const PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND: &[Option<f64>] = &[
+    None,
+    Some(0.7),
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    #[cfg(target_family = "unix")]
+    Some(0.05),
+    Some(0.2),
+];
+const PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE: &[Option<f64>] = &[
+    None,
+    Some(0.5),
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    #[cfg(target_family = "unix")]
+    Some(0.05),
+    Some(0.2),
+];
+const PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE: &[Option<f64>] = &[
+    None,
+    Some(0.3),
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    #[cfg(target_family = "unix")]
+    Some(0.05),
+    Some(0.2),
+];
 
 pub trait ProcessTableWidget {
     /// Draws and handles all process-related drawing.  Use this.
@@ -291,7 +279,7 @@ impl ProcessTableWidget for Painter {
                     .border_style(border_style)
             } else if is_on_widget {
                 Block::default()
-                    .borders(*SIDE_BORDERS)
+                    .borders(SIDE_BORDERS)
                     .border_style(self.colours.highlighted_border_style)
             } else {
                 Block::default().borders(Borders::NONE)
@@ -352,9 +340,9 @@ impl ProcessTableWidget for Painter {
                 // Calculate widths
                 // FIXME: See if we can move this into the recalculate block?  I want to move column widths into the column widths
                 let hard_widths = if proc_widget_state.is_grouped {
-                    &*PROCESS_HEADERS_HARD_WIDTH_GROUPED
+                    PROCESS_HEADERS_HARD_WIDTH_GROUPED
                 } else {
-                    &*PROCESS_HEADERS_HARD_WIDTH_NO_GROUP
+                    PROCESS_HEADERS_HARD_WIDTH_NO_GROUP
                 };
 
                 if recalculate_column_widths {
@@ -404,16 +392,16 @@ impl ProcessTableWidget for Painter {
                         // Note grouped trees are not a thing.
 
                         if proc_widget_state.is_using_command {
-                            &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND
+                            PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND
                         } else {
-                            &*PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE
+                            PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE
                         }
                     } else if proc_widget_state.is_using_command {
-                        &*PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND
+                        PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND
                     } else if proc_widget_state.is_tree_mode {
-                        &*PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE
+                        PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE
                     } else {
-                        &*PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE
+                        PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE
                     };
 
                     proc_widget_state.table_width_state.calculated_column_widths =
@@ -752,7 +740,7 @@ impl ProcessTableWidget for Painter {
                     .border_style(current_border_style)
             } else if is_on_widget {
                 Block::default()
-                    .borders(*SIDE_BORDERS)
+                    .borders(SIDE_BORDERS)
                     .border_style(current_border_style)
             } else {
                 Block::default().borders(Borders::NONE)
@@ -863,7 +851,7 @@ impl ProcessTableWidget for Painter {
                     .border_style(current_border_style)
             } else if is_on_widget {
                 Block::default()
-                    .borders(*SIDE_BORDERS)
+                    .borders(SIDE_BORDERS)
                     .border_style(current_border_style)
             } else {
                 Block::default().borders(Borders::NONE)

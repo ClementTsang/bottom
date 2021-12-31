@@ -38,7 +38,7 @@ impl NetworkBasicWidget for Painter {
         if app_state.current_widget.widget_id == widget_id {
             f.render_widget(
                 Block::default()
-                    .borders(*SIDE_BORDERS)
+                    .borders(SIDE_BORDERS)
                     .border_style(self.colours.highlighted_border_style),
                 draw_loc,
             );
