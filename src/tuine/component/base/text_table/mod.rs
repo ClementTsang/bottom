@@ -71,30 +71,35 @@ impl<Message> TextTable<Message> {
             .columns
             .iter()
             .map(|column| {
+                let desired = column.name.graphemes(true).count() as u16; // FIXME: Should this be +1 if sorting is enabled?
                 let width = match column.width_constraint {
-                    TextColumnConstraint::Fill => {
-                        let desired = column.name.graphemes(true).count().saturating_add(1) as u16;
-                        min(desired, width_remaining)
-                    }
+                    TextColumnConstraint::Fill => min(desired, width_remaining),
                     TextColumnConstraint::Length(length) => min(length, width_remaining),
                     TextColumnConstraint::Percentage(percentage) => {
                         let length = total_width * percentage / 100;
                         min(length, width_remaining)
                     }
-                    TextColumnConstraint::MaxLength(length) => {
-                        let desired = column.name.graphemes(true).count().saturating_add(1) as u16;
-                        min(min(length, desired), width_remaining)
-                    }
+                    TextColumnConstraint::MaxLength(length) => min(length, width_remaining),
                     TextColumnConstraint::MaxPercentage(percentage) => {
-                        let desired = column.name.graphemes(true).count().saturating_add(1) as u16;
                         let length = total_width * percentage / 100;
-                        min(min(desired, length), width_remaining)
+                        min(length, width_remaining)
                     }
                 };
-                width_remaining -= width;
-                width
+
+                if desired > width {
+                    0
+                } else {
+                    // +1 for the spacing
+                    width_remaining -= width + 1;
+                    width
+                }
             })
             .collect();
+
+        // Prune from the end
+        while let Some(0) = column_widths.last() {
+            column_widths.pop();
+        }
 
         if !column_widths.is_empty() {
             let amount_per_slot = width_remaining / column_widths.len() as u16;

@@ -11,6 +11,7 @@ use std::borrow::Cow;
 pub struct ConvertedData<'a> {
     data: &'a DataCollection,
     temp_table: Option<Vec<Vec<Cow<'static, str>>>>,
+    disk_table: Option<Vec<Vec<Cow<'static, str>>>>,
 }
 
 impl<'a> ConvertedData<'a> {
@@ -18,6 +19,7 @@ impl<'a> ConvertedData<'a> {
         Self {
             data,
             temp_table: None,
+            disk_table: None,
         }
     }
 
@@ -49,6 +51,64 @@ impl<'a> ConvertedData<'a> {
 
                 self.temp_table = Some(temp_table.clone());
                 temp_table
+            }
+        }
+    }
+
+    pub fn disk_table(&mut self) -> Vec<Vec<Cow<'static, str>>> {
+        match &self.disk_table {
+            Some(disk_table) => disk_table.clone(),
+            None => {
+                if self.data.disk_harvest.is_empty() {
+                    vec![vec!["No Disks Found".into(), "".into()]]
+                } else {
+                    self.data
+                        .disk_harvest
+                        .iter()
+                        .zip(&self.data.io_labels)
+                        .map(|(disk, (io_read, io_write))| {
+                            let free_space_fmt = if let Some(free_space) = disk.free_space {
+                                let converted_free_space = get_decimal_bytes(free_space);
+                                Cow::Owned(format!(
+                                    "{:.*}{}",
+                                    0, converted_free_space.0, converted_free_space.1
+                                ))
+                            } else {
+                                "N/A".into()
+                            };
+                            let total_space_fmt = if let Some(total_space) = disk.total_space {
+                                let converted_total_space = get_decimal_bytes(total_space);
+                                Cow::Owned(format!(
+                                    "{:.*}{}",
+                                    0, converted_total_space.0, converted_total_space.1
+                                ))
+                            } else {
+                                "N/A".into()
+                            };
+
+                            let usage_fmt = if let (Some(used_space), Some(total_space)) =
+                                (disk.used_space, disk.total_space)
+                            {
+                                Cow::Owned(format!(
+                                    "{:.0}%",
+                                    used_space as f64 / total_space as f64 * 100_f64
+                                ))
+                            } else {
+                                "N/A".into()
+                            };
+
+                            vec![
+                                disk.name.clone().into(),
+                                disk.mount_point.clone().into(),
+                                usage_fmt,
+                                free_space_fmt,
+                                total_space_fmt,
+                                io_read.clone().into(),
+                                io_write.clone().into(),
+                            ]
+                        })
+                        .collect::<Vec<_>>()
+                }
             }
         }
     }

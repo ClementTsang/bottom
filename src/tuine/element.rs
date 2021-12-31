@@ -19,7 +19,7 @@ where
     BatteryTable(BatteryTable),
     CpuGraph(CpuGraph),
     CpuSimple(CpuSimple),
-    DiskTable(DiskTable),
+    DiskTable(DiskTable<Message>),
     MemGraph(MemGraph),
     MemSimple(MemSimple),
     NetGraph(NetGraph),
