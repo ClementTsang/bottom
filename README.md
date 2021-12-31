@@ -69,7 +69,7 @@ bottom _officially_ supports the following operating systems and corresponding a
 These platforms are tested to work for the most part and issues on these platforms will be fixed if possible.
 Furthermore, binaries are expected to be built and tested using the most recent version of stable Rust.
 
-For more details on known problems and unsupported platforms, feel free to check out [the documentation page on support](https://clementtsang.github.io/bottom/nightly/support).
+For more details on known problems and unsupported platforms, feel free to check out [the documentation page on support](https://clementtsang.github.io/bottom/nightly/support/official/).
 
 ## Installation
 
