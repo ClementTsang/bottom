@@ -475,7 +475,7 @@ pub const DEFAULT_BASIC_LAYOUT: &str = r##"
   ratio = 0
   [[row.child]]
     [[row.child.child]]
-      length = 1
+      height = 1
       type = "empty"
 [[row]]
   ratio = 0
@@ -496,7 +496,7 @@ pub const DEFAULT_BASIC_BATTERY_LAYOUT: &str = r##"
 [[row]]
   [[row.child]]
     [[row.child.child]]
-      length = 1
+      height = 1
       type = "empty"
 [[row]]
   [[row.child]]

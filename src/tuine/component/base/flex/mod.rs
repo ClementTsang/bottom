@@ -204,7 +204,6 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
         // children here!
         let mut current_x_offset = 0;
         let mut current_y_offset = 0;
-
         sizes
             .iter()
             .zip(children.iter_mut())
