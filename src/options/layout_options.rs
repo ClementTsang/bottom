@@ -33,18 +33,19 @@ pub enum LayoutRowChild {
 #[derive(Clone, Deserialize, Debug, Serialize)]
 pub struct FinalWidget {
     #[serde(flatten)]
-    pub rule: Option<LayoutRule>,
+    pub rule: Option<WidgetLayoutRule>,
     #[serde(rename = "type")]
     pub widget_type: String,
     pub default: Option<bool>,
 }
 
-/// A "rule" denoting how this component is to be laid out.
+/// A "rule" denoting how a widget is to be laid out.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum LayoutRule {
-    /// Expand to whatever space is left; the `ratio` determines how much
-    /// space to take if there is more than one [`LayoutRule::Expand`] component.
+pub enum WidgetLayoutRule {
+    /// Expand to whatever space is left. The `ratio` field determines
+    /// how much space to allocate if there are other [`WidgetLayoutRule::Expand`]
+    /// items.
     Expand { ratio: u16 },
 
     /// Take up an exact amount of space, if possible.
@@ -54,8 +55,8 @@ pub enum LayoutRule {
     },
 }
 
-impl Default for LayoutRule {
+impl Default for WidgetLayoutRule {
     fn default() -> Self {
-        LayoutRule::Expand { ratio: 1 }
+        WidgetLayoutRule::Expand { ratio: 1 }
     }
 }

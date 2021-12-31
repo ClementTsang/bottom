@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use tui::{backend::Backend, layout::Rect, Frame};
 
 pub mod flex_element;
@@ -119,11 +121,14 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
     }
 
     fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> Size {
-        let mut remaining_bounds = bounds;
+        let mut remaining_bounds = Bounds {
+            min_width: 0,
+            min_height: 0,
+            max_width: bounds.max_width,
+            max_height: bounds.max_height,
+        };
         let mut children = vec![LayoutNode::default(); self.children.len()];
         let mut flexible_children_indexes = vec![];
-        let mut current_x_offset = 0;
-        let mut current_y_offset = 0;
         let mut sizes = Vec::with_capacity(self.children.len());
         let mut current_size = Size::default();
         let mut total_flex = 0;
@@ -139,7 +144,10 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
                     let size = if remaining_bounds.has_space() {
                         let size = child.child_layout(remaining_bounds, child_node);
                         current_size += size;
-                        remaining_bounds.shrink_size(size);
+                        match &self.alignment {
+                            Axis::Horizontal => remaining_bounds.shrink_width_size(size),
+                            Axis::Vertical => remaining_bounds.shrink_height_size(size),
+                        }
 
                         size
                     } else {
@@ -160,13 +168,23 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
             //
             // NB: If you **EVER** make changes in this function, ensure these assumptions
             // still hold!
+            // FIXME: [Remove Unsafe] Can potentially just use zips... and maybe partition to combine above and here
             let child = unsafe { self.children.get_unchecked(index) };
             let child_node = unsafe { children.get_unchecked_mut(index) };
             let size = unsafe { sizes.get_unchecked_mut(index) };
 
             let new_size =
                 child.ratio_layout(remaining_bounds, total_flex, child_node, self.alignment);
-            current_size += new_size;
+            match &self.alignment {
+                Axis::Horizontal => {
+                    current_size.width += new_size.width;
+                    current_size.height = max(current_size.height, new_size.height);
+                }
+                Axis::Vertical => {
+                    current_size.width = max(current_size.width, new_size.width);
+                    current_size.height += new_size.height;
+                }
+            }
             *size = new_size;
         });
 
@@ -184,6 +202,9 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
         // Now that we're done determining sizes, convert all children into the appropriate
         // layout nodes.  Remember - parents determine children, and so, we determine
         // children here!
+        let mut current_x_offset = 0;
+        let mut current_y_offset = 0;
+
         sizes
             .iter()
             .zip(children.iter_mut())
@@ -200,7 +221,6 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
                 }
             });
         node.children = children;
-
         current_size
     }
 }

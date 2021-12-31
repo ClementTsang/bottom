@@ -17,7 +17,7 @@ use crate::{
     canvas::Painter,
     constants::TABLE_GAP_HEIGHT_LIMIT,
     data_conversion::{convert_battery_harvest, ConvertedBatteryData},
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 /// A table displaying battery information on a per-battery basis.
@@ -25,8 +25,8 @@ pub struct BatteryTable {
     bounds: Rect,
     selected_index: usize,
     battery_data: Vec<ConvertedBatteryData>,
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
     block_border: Borders,
     tab_bounds: Vec<Rect>,
 }
@@ -37,8 +37,8 @@ impl Default for BatteryTable {
             bounds: Default::default(),
             selected_index: 0,
             battery_data: Default::default(),
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
             block_border: Borders::ALL,
             tab_bounds: Default::default(),
         }
@@ -47,13 +47,13 @@ impl Default for BatteryTable {
 
 impl BatteryTable {
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -147,11 +147,11 @@ impl Widget for BatteryTable {
         }
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 

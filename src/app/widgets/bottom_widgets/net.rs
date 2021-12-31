@@ -15,7 +15,7 @@ use crate::{
     },
     canvas::Painter,
     data_conversion::convert_network_data_points,
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
     units::data_units::DataUnit,
     utils::gen_util::*,
 };
@@ -381,8 +381,8 @@ pub struct NetGraph {
     hide_legend: bool,
 
     bounds: Rect,
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
 }
 
 impl NetGraph {
@@ -404,8 +404,8 @@ impl NetGraph {
             use_binary_prefix: app_config_fields.network_use_binary_prefix,
             hide_legend: false,
             bounds: Rect::default(),
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
         }
     }
 
@@ -416,13 +416,13 @@ impl NetGraph {
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -569,11 +569,11 @@ impl Widget for NetGraph {
         }
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 }
@@ -584,8 +584,8 @@ pub struct OldNetGraph {
     net_graph: NetGraph,
     table: TextTable,
     bounds: Rect,
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
 }
 
 impl OldNetGraph {
@@ -602,19 +602,19 @@ impl OldNetGraph {
             .try_show_gap(config.table_gap)
             .unselectable(),
             bounds: Rect::default(),
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
         }
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -709,11 +709,11 @@ impl Widget for OldNetGraph {
         }
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 }

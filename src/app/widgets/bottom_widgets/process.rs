@@ -26,7 +26,7 @@ use crate::{
     },
     canvas::Painter,
     data_conversion::{get_string_with_bytes, get_string_with_bytes_per_second},
-    options::{layout_options::LayoutRule, ProcessDefaults},
+    options::{layout_options::WidgetLayoutRule, ProcessDefaults},
     utils::error::BottomError,
     Pid,
 };
@@ -271,8 +271,8 @@ pub struct ProcessManager {
     display_data: TextTableData,
     process_filter: Option<Result<Query, BottomError>>,
     block_border: Borders,
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
     show_scroll_index: bool,
 }
 
@@ -311,8 +311,8 @@ impl ProcessManager {
             display_data: Default::default(),
             process_filter: None,
             block_border: Borders::ALL,
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
             show_scroll_index: false,
         };
 
@@ -330,13 +330,13 @@ impl ProcessManager {
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -1362,11 +1362,11 @@ impl Widget for ProcessManager {
         };
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 

@@ -17,7 +17,7 @@ use crate::{
         Component, Widget,
     },
     canvas::Painter,
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 /// A container that "holds" multiple [`BottomWidget`]s through their [`NodeId`]s.
@@ -26,8 +26,8 @@ pub struct Carousel {
     index: usize,
     children: Vec<(NodeId, Cow<'static, str>)>,
     bounds: Rect,
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
     left_button_bounds: Rect,
     right_button_bounds: Rect,
 }
@@ -47,13 +47,13 @@ impl Carousel {
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -191,11 +191,11 @@ impl Widget for Carousel {
         "Carousel"
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 

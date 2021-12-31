@@ -62,28 +62,34 @@ impl<Message> FlexElement<Message> {
     }
 
     /// Assumes the flex is NOT 0. Will call layout on its children, but will ignore
-    /// its sizing.
+    /// its sizing on the given axis.
     ///
     /// **Note it does NOT check for div by zero!** Please check this yourself.
     pub(crate) fn ratio_layout(
         &self, bounds: Bounds, total_flex: u16, node: &mut LayoutNode, parent_alignment: Axis,
     ) -> Size {
-        let (width, height) = match parent_alignment {
-            Axis::Horizontal => (bounds.max_width * self.flex / total_flex, bounds.max_height),
-            Axis::Vertical => (bounds.max_width, bounds.max_height * self.flex / total_flex),
+        let (min_width, min_height, max_width, max_height) = match parent_alignment {
+            Axis::Horizontal => {
+                let w = bounds.max_width * self.flex / total_flex;
+                (w, 0, w, bounds.max_height)
+            }
+            Axis::Vertical => {
+                let h = bounds.max_height * self.flex / total_flex;
+                (0, h, bounds.max_width, h)
+            }
         };
 
-        self.element.layout(
+        let ratio_res = self.element.layout(
             Bounds {
-                min_width: width,
-                min_height: height,
-                max_width: width,
-                max_height: height,
+                min_width,
+                min_height,
+                max_width,
+                max_height,
             },
             node,
         );
 
-        Size { width, height }
+        ratio_res
     }
 }
 

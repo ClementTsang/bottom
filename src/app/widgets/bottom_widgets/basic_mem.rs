@@ -14,13 +14,13 @@ use crate::{
     canvas::Painter,
     constants::SIDE_BORDERS,
     data_conversion::{convert_mem_data_points, convert_mem_labels, convert_swap_data_points},
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 #[derive(Debug)]
 pub struct BasicMem {
     bounds: Rect,
-    width: LayoutRule,
+    width: WidgetLayoutRule,
     mem_data: (f64, String, String),
     swap_data: Option<(f64, String, String)>,
     use_percent: bool,
@@ -40,7 +40,7 @@ impl Default for BasicMem {
 
 impl BasicMem {
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
@@ -155,11 +155,11 @@ impl Widget for BasicMem {
         };
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         todo!()
     }
 }

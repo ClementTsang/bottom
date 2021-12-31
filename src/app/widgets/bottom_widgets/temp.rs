@@ -9,7 +9,7 @@ use crate::{
     },
     canvas::Painter,
     data_conversion::convert_temp_row,
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 /// A table displaying temperature data.
@@ -18,8 +18,8 @@ pub struct TempTable {
     bounds: Rect,
     display_data: TextTableData,
     temp_type: TemperatureType,
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
     block_border: Borders,
     show_scroll_index: bool,
 }
@@ -39,8 +39,8 @@ impl TempTable {
             bounds: Rect::default(),
             display_data: Default::default(),
             temp_type: TemperatureType::default(),
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
             block_border: Borders::ALL,
             show_scroll_index: false,
         }
@@ -53,13 +53,13 @@ impl TempTable {
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -128,11 +128,11 @@ impl Widget for TempTable {
         self.display_data = convert_temp_row(data_collection, &self.temp_type);
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 }

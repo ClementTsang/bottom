@@ -26,17 +26,21 @@ impl Bounds {
         self.max_height = self.max_height.saturating_sub(height);
     }
 
-    /// Shrinks by a given [`Size`].
-    pub fn shrink_size(&mut self, size: Size) {
+    /// Shrinks the width by a given [`Size`].
+    pub fn shrink_width_size(&mut self, size: Size) {
         self.max_width = self.max_width.saturating_sub(size.width);
+    }
+
+    /// Shrinks the height by a given [`Size`].
+    pub fn shrink_height_size(&mut self, size: Size) {
         self.max_height = self.max_height.saturating_sub(size.height);
     }
 
     /// Returns whether there is any space left in this bound for laying out things.
     pub fn has_space(&self) -> bool {
-        self.min_width >= self.max_width
-            || self.min_height >= self.max_height
+        !(self.min_width > self.max_width
+            || self.min_height > self.max_height
             || self.max_width == 0
-            || self.max_height == 0
+            || self.max_height == 0)
     }
 }

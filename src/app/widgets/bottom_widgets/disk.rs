@@ -9,7 +9,7 @@ use crate::{
     },
     canvas::Painter,
     data_conversion::convert_disk_row,
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 /// A table displaying disk data.
@@ -19,8 +19,8 @@ pub struct DiskTable {
 
     display_data: TextTableData,
 
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
     block_border: Borders,
     show_scroll_index: bool,
 }
@@ -43,21 +43,21 @@ impl DiskTable {
             table,
             bounds: Rect::default(),
             display_data: Default::default(),
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
             block_border: Borders::ALL,
             show_scroll_index: false,
         }
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -126,11 +126,11 @@ impl Widget for DiskTable {
         self.display_data = convert_disk_row(data_collection);
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 }

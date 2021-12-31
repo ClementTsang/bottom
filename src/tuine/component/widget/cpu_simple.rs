@@ -1,6 +1,8 @@
+use std::cmp::{max, min};
+
 use tui::{text::Text, widgets::Paragraph, Frame};
 
-use crate::tuine::{DrawContext, StateContext, TmpComponent};
+use crate::tuine::{Bounds, DrawContext, LayoutNode, Size, StateContext, TmpComponent};
 
 /// A [`CpuSimple`] is a widget displaying simple CPU stats.
 pub struct CpuSimple {}
@@ -26,5 +28,12 @@ impl<Message> TmpComponent<Message> for CpuSimple {
             Paragraph::new(Text::raw("CPU Simple")).block(tui::widgets::Block::default()),
             rect,
         );
+    }
+
+    fn layout(&self, bounds: Bounds, _node: &mut LayoutNode) -> Size {
+        Size {
+            width: bounds.max_width,
+            height: max(bounds.min_height, min(4, bounds.max_height)), // FIXME: Temp value - this is not correct; should be based on data.
+        }
     }
 }

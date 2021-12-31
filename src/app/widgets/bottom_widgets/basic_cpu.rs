@@ -11,7 +11,7 @@ use crate::{
     app::{widgets::tui_stuff::PipeGauge, AppConfig, Component, DataCollection, Widget},
     canvas::Painter,
     constants::SIDE_BORDERS,
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 const REQUIRED_COLUMNS: usize = 4;
@@ -20,7 +20,7 @@ const REQUIRED_COLUMNS: usize = 4;
 pub struct BasicCpu {
     bounds: Rect,
     display_data: Vec<(f64, String, String)>,
-    width: LayoutRule,
+    width: WidgetLayoutRule,
     showing_avg: bool,
 }
 
@@ -36,7 +36,7 @@ impl BasicCpu {
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
@@ -184,11 +184,11 @@ impl Widget for BasicCpu {
             .collect::<Vec<_>>();
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         let display_data_len = self.display_data.len();
         let length = max(
             1,

@@ -73,6 +73,28 @@ where
         }
         inner
     }
+
+    fn outer_size(&self, original: Size) -> Size {
+        let mut outer = original;
+
+        if self.borders.intersects(Borders::LEFT) {
+            outer.width = outer.width.saturating_add(1);
+        }
+        if self.borders.intersects(Borders::TOP)
+            || self.left_text.is_some()
+            || self.right_text.is_some()
+        {
+            outer.height = outer.height.saturating_add(1);
+        }
+        if self.borders.intersects(Borders::RIGHT) {
+            outer.width = outer.width.saturating_add(1);
+        }
+        if self.borders.intersects(Borders::BOTTOM) {
+            outer.height = outer.height.saturating_add(1);
+        }
+
+        outer
+    }
 }
 
 impl<Message, Child> TmpComponent<Message> for Block<Message, Child>
@@ -136,7 +158,7 @@ where
             );
             node.children = vec![child_node];
 
-            child_size
+            self.outer_size(child_size)
         } else {
             Size {
                 width: 0,

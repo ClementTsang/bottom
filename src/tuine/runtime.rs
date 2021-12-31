@@ -105,7 +105,7 @@ where
     };
 
     for msg in messages {
-        debug!("Message: {:?}", msg); // FIXME: Remove this debug line!
+        // debug!("Message: {:?}", msg);
         let msg_result = application.update(msg);
         should_redraw = should_redraw || msg_result;
     }

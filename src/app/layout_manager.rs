@@ -2,7 +2,7 @@ use crate::{
     app::SelectableType,
     data_conversion::ConvertedData,
     error::{BottomError, Result},
-    options::layout_options::{FinalWidget, LayoutRow, LayoutRowChild, LayoutRule},
+    options::layout_options::{FinalWidget, LayoutRow, LayoutRowChild, WidgetLayoutRule},
     tuine::*,
 };
 use anyhow::anyhow;
@@ -101,7 +101,7 @@ Supported widget names:
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RowLayout {
     last_selected: Option<NodeId>,
-    pub parent_rule: LayoutRule,
+    pub parent_rule: WidgetLayoutRule,
     pub bound: Rect,
 }
 
@@ -109,7 +109,7 @@ pub struct RowLayout {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ColLayout {
     last_selected: Option<NodeId>,
-    pub parent_rule: LayoutRule,
+    pub parent_rule: WidgetLayoutRule,
     pub bound: Rect,
 }
 
@@ -180,7 +180,7 @@ pub enum WidgetLayoutNode {
     Widget {
         widget_type: BottomWidgetType,
         selected: bool,
-        rule: LayoutRule,
+        rule: WidgetLayoutRule,
     },
 }
 
@@ -254,10 +254,10 @@ impl WidgetLayoutNode {
         }
     }
 
-    fn wrap_element<Message>(element: Element<Message>, rule: &LayoutRule) -> FlexElement<Message> {
+    fn wrap_element<Message>(element: Element<Message>, rule: &WidgetLayoutRule) -> FlexElement<Message> {
         match rule {
-            LayoutRule::Expand { ratio } => FlexElement::with_flex(element, *ratio),
-            LayoutRule::Length { width, height } => {
+            WidgetLayoutRule::Expand { ratio } => FlexElement::with_flex(element, *ratio),
+            WidgetLayoutRule::Length { width, height } => {
                 if width.is_some() || height.is_some() {
                     FlexElement::with_no_flex(
                         Container::with_child(element).width(*width).height(*height),

@@ -11,14 +11,14 @@ use crate::{
     canvas::Painter,
     constants::SIDE_BORDERS,
     data_conversion::convert_network_data_points,
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
     units::data_units::DataUnit,
 };
 
 #[derive(Debug)]
 pub struct BasicNet {
     bounds: Rect,
-    width: LayoutRule,
+    width: WidgetLayoutRule,
 
     rx_display: String,
     tx_display: String,
@@ -45,7 +45,7 @@ impl BasicNet {
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
@@ -124,11 +124,11 @@ impl Widget for BasicNet {
         }
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         todo!()
     }
 }

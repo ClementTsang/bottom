@@ -7,7 +7,7 @@ use tui::{backend::Backend, layout::Rect, Frame};
 use crate::{
     app::event::{ComponentEventResult, SelectionAction},
     canvas::Painter,
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 mod tui_stuff;
@@ -133,10 +133,10 @@ pub trait Widget {
     fn update_data(&mut self, data_collection: &DataCollection) {}
 
     /// Returns the desired width from the [`Widget`].
-    fn width(&self) -> LayoutRule;
+    fn width(&self) -> WidgetLayoutRule;
 
     /// Returns the desired height from the [`Widget`].
-    fn height(&self) -> LayoutRule;
+    fn height(&self) -> WidgetLayoutRule;
 
     /// Returns whether this [`Widget`] can be selected. The default implementation returns [`SelectableType::Selectable`].
     fn selectable_type(&self) -> SelectableType {

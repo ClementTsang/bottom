@@ -17,7 +17,7 @@ use crate::{
     },
     canvas::Painter,
     data_conversion::{convert_cpu_data_points, ConvertedCpuData},
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 /// Which part of the [`CpuGraph`] is currently selected.
@@ -45,8 +45,8 @@ pub struct CpuGraph {
     display_data: Vec<ConvertedCpuData>,
     load_avg_data: [f32; 3],
 
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
 }
 
 impl CpuGraph {
@@ -75,19 +75,19 @@ impl CpuGraph {
             selected: CpuGraphSelection::Graph,
             display_data: Default::default(),
             load_avg_data: [0.0; 3],
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
         }
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -281,11 +281,11 @@ impl Widget for CpuGraph {
         self.load_avg_data = data_collection.load_avg_harvest;
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 

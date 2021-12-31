@@ -462,19 +462,23 @@ pub const DEFAULT_BATTERY_LAYOUT: &str = r##"
 
 pub const DEFAULT_BASIC_LAYOUT: &str = r##"
 [[row]]
+  ratio = 0
   [[row.child]]
   type = "bcpu"
 [[row]]
+  ratio = 0
   [[row.child]]
     type = "bmem"
   [[row.child]]
     type = "bnet"
 [[row]]
+  ratio = 0
   [[row.child]]
     [[row.child.child]]
       length = 1
       type = "empty"
 [[row]]
+  ratio = 0
   [[row.child]]
     default = true
     carousel_children = ["proc", "temp", "disk"]

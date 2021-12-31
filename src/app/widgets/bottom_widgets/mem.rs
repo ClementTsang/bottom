@@ -7,7 +7,7 @@ use crate::{
     app::{event::ComponentEventResult, time_graph::TimeGraphData, DataCollection},
     app::{Component, TimeGraph, Widget},
     data_conversion::{convert_mem_data_points, convert_mem_labels, convert_swap_data_points},
-    options::layout_options::LayoutRule,
+    options::layout_options::WidgetLayoutRule,
 };
 
 /// A widget that deals with displaying memory usage on a [`TimeGraph`].  Basically just a wrapper
@@ -19,8 +19,8 @@ pub struct MemGraph {
     mem_data: Vec<(f64, f64)>,
     swap_data: Vec<(f64, f64)>,
     bounds: Rect,
-    width: LayoutRule,
-    height: LayoutRule,
+    width: WidgetLayoutRule,
+    height: WidgetLayoutRule,
 }
 
 impl MemGraph {
@@ -33,19 +33,19 @@ impl MemGraph {
             mem_data: Default::default(),
             swap_data: Default::default(),
             bounds: Rect::default(),
-            width: LayoutRule::default(),
-            height: LayoutRule::default(),
+            width: WidgetLayoutRule::default(),
+            height: WidgetLayoutRule::default(),
         }
     }
 
     /// Sets the width.
-    pub fn width(mut self, width: LayoutRule) -> Self {
+    pub fn width(mut self, width: WidgetLayoutRule) -> Self {
         self.width = width;
         self
     }
 
     /// Sets the height.
-    pub fn height(mut self, height: LayoutRule) -> Self {
+    pub fn height(mut self, height: WidgetLayoutRule) -> Self {
         self.height = height;
         self
     }
@@ -126,11 +126,11 @@ impl Widget for MemGraph {
         self.swap_labels = swap_labels;
     }
 
-    fn width(&self) -> LayoutRule {
+    fn width(&self) -> WidgetLayoutRule {
         self.width
     }
 
-    fn height(&self) -> LayoutRule {
+    fn height(&self) -> WidgetLayoutRule {
         self.height
     }
 }
