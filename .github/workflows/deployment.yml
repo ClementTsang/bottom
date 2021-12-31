@@ -344,6 +344,9 @@ jobs:
           cargo deb --no-build
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
 
+      - name: Test Debian release
+        run: sudo dpkg -i ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+
       - name: Create release directory for artifact, move file
         shell: bash
         run: |
