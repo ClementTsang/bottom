@@ -33,7 +33,7 @@ impl<Message> AppWidget for TempTable<Message> {
         let rows = data.temp_table(config.temperature_type);
 
         Self {
-            inner: SimpleTable::build(ctx, style, vec!["Sensor", "Temp"], rows),
+            inner: SimpleTable::build(ctx, style, vec!["Sensor", "Temp"], rows, 0),
         }
     }
 }

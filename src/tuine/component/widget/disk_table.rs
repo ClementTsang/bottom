@@ -38,6 +38,7 @@ impl<Message> AppWidget for DiskTable<Message> {
                 style,
                 vec!["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"],
                 rows,
+                0,
             ),
         }
     }

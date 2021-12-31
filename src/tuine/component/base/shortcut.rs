@@ -5,6 +5,24 @@ use crate::tuine::{
     Bounds, DrawContext, Event, LayoutNode, Size, StateContext, Status, TmpComponent,
 };
 
+enum MultiShortcutStep<Message, Child>
+where
+    Child: TmpComponent<Message>,
+{
+    NextStep(Event),
+    Action(
+        Box<
+            dyn Fn(
+                &mut Child,
+                &mut StateContext<'_>,
+                &DrawContext<'_>,
+                Event,
+                &mut Vec<Message>,
+            ) -> Status,
+        >,
+    ),
+}
+
 /// A [`Component`] to handle keyboard shortcuts and assign actions to them.
 ///
 /// Inspired by [Flutter's approach](https://docs.flutter.dev/development/ui/advanced/actions_and_shortcuts).
@@ -26,6 +44,8 @@ where
             ) -> Status,
         >,
     >,
+    multi_shortcuts: FxHashMap<Event, MultiShortcutStep<Message, Child>>,
+    enabled_multi_shortcuts: FxHashMap<Event, MultiShortcutStep<Message, Child>>,
 }
 
 impl<Message, Child> Shortcut<Message, Child>
@@ -36,6 +56,8 @@ where
         Self {
             child: Some(child),
             shortcuts: Default::default(),
+            multi_shortcuts: Default::default(),
+            enabled_multi_shortcuts: Default::default(),
         }
     }
 

@@ -27,12 +27,13 @@ impl<Message> SimpleTable<Message> {
     #[track_caller]
     pub fn build<C: Into<std::borrow::Cow<'static, str>>, R: Into<DataRow>>(
         ctx: &mut ViewContext<'_>, style: StyleSheet, columns: Vec<C>, data: Vec<R>,
+        sort_index: usize,
     ) -> Self {
         let shortcut = Shortcut::with_child(TextTable::build(
             ctx,
             TextTableProps::new(columns)
                 .rows(data)
-                .default_sort(SortType::Ascending(1))
+                .default_sort(SortType::Ascending(sort_index))
                 .style(text_table::StyleSheet {
                     text: style.text,
                     selected_text: style.selected_text,
