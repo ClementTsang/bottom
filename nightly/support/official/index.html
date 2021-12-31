@@ -439,6 +439,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#linux" class="md-nav__link">
+    Linux
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#windows" class="md-nav__link">
     Windows
   </a>
@@ -967,13 +974,25 @@
 <p>Furthermore, binaries are expected to be built and tested using the most recent version of stable Rust - if you are manually building
 bottom from the repo/source, then please try that as well.</p>
 <h2 id="known-problems"><a class="toclink" href="#known-problems">Known problems</a></h2>
+<h3 id="linux"><a class="toclink" href="#linux">Linux</a></h3>
+<ul>
+<li>If you're using Linux via WSL or WSL2:<ul>
+<li>You may have issues with getting memory data.</li>
+<li>Temperature sensors may not be correctly reported.</li>
+<li>WSL2 will not match Windows' own Task Manager in terms of data.</li>
+</ul>
+</li>
+</ul>
 <h3 id="windows"><a class="toclink" href="#windows">Windows</a></h3>
 <ul>
 <li>The temperature widget seems to require elevated access in some cases to get data.</li>
 <li>The battery widget seems to have issues with dual battery systems, like some Thinkpads.</li>
-<li>If you run on WSL/WSL2, you may have issues with getting memory data.</li>
-<li>WSL and WSL2 (as far as I know) cannot correctly report temperature sensors.</li>
+<li>If you are using WSL or WSL2:<ul>
+<li>You may have issues with getting memory data.</li>
+<li>Temperature sensors may not be correctly reported.</li>
 <li>WSL2 will not match Windows' own Task Manager in terms of data.</li>
+</ul>
+</li>
 </ul>
 <h3 id="macos"><a class="toclink" href="#macos">macOS</a></h3>
 <ul>
