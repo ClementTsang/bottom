@@ -14,21 +14,21 @@ pub struct FlexElement<Message> {
 
 impl<Message> FlexElement<Message> {
     /// Creates a new [`FlexElement`] with a flex of 1.
-    pub fn new<I: Into<Element<Message>>>(element: I) -> Self {
+    pub fn new<E: Into<Element<Message>>>(element: E) -> Self {
         Self {
             flex: 1,
             element: element.into(),
         }
     }
 
-    pub fn with_flex<I: Into<Element<Message>>>(element: I, flex: u16) -> Self {
+    pub fn with_flex<E: Into<Element<Message>>>(element: E, flex: u16) -> Self {
         Self {
             flex,
             element: element.into(),
         }
     }
 
-    pub fn with_no_flex<I: Into<Element<Message>>>(element: I) -> Self {
+    pub fn with_no_flex<E: Into<Element<Message>>>(element: E) -> Self {
         Self {
             flex: 0,
             element: element.into(),

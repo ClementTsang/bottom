@@ -224,9 +224,7 @@ impl WidgetLayoutNode {
             children
                 .iter()
                 .map(|child| {
-                    FlexElement::with_no_flex(Self::make_element(
-                        ctx, app_state, data, child, false,
-                    ))
+                    FlexElement::new(Self::make_element(ctx, app_state, data, child, false))
                 })
                 .collect(),
         ))
@@ -254,7 +252,9 @@ impl WidgetLayoutNode {
         }
     }
 
-    fn wrap_element<Message>(element: Element<Message>, rule: &WidgetLayoutRule) -> FlexElement<Message> {
+    fn wrap_element<Message>(
+        element: Element<Message>, rule: &WidgetLayoutRule,
+    ) -> FlexElement<Message> {
         match rule {
             WidgetLayoutRule::Expand { ratio } => FlexElement::with_flex(element, *ratio),
             WidgetLayoutRule::Length { width, height } => {
