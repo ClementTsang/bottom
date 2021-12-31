@@ -192,6 +192,14 @@ impl AppState {
             // FIXME: Redraw with new screen, save old screen state if main
         }
     }
+
+    fn toggle_freeze(&mut self) -> Status {
+        self.frozen_state = match self.frozen_state {
+            FrozenState::NotFrozen => FrozenState::Frozen(Box::new(self.data_collection.clone())),
+            FrozenState::Frozen(_) => FrozenState::NotFrozen,
+        };
+        Status::Captured
+    }
 }
 
 impl Application for AppState {
@@ -296,6 +304,7 @@ impl Application for AppState {
             Event::Keyboard(event) => {
                 if event.modifiers.is_empty() {
                     match event.code {
+                        KeyCode::Char('f') | KeyCode::Char('F') => self.toggle_freeze(),
                         KeyCode::Char('q') | KeyCode::Char('Q') => on_quit(messages),
                         _ => Status::Ignored,
                     }

@@ -38,7 +38,7 @@ fn main() -> Result<()> {
 
     // Set up input handling
     let (sender, receiver) = mpsc::channel();
-    let input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
+    let _input_thread = create_input_thread(sender.clone());
 
     // Cleaning loop
     // TODO: [Refactor, Optimization (Potentially, maybe not)] Probably worth spinning this off into an async thread or something...
@@ -95,7 +95,6 @@ fn main() -> Result<()> {
     *thread_termination_lock.lock().unwrap() = true;
     thread_termination_cvar.notify_all();
 
-    let _ = input_thread.join();
     cleanup_terminal(&mut terminal);
 
     Ok(())

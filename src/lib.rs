@@ -183,7 +183,6 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 
 pub fn create_input_thread(
     sender: std::sync::mpsc::Sender<RuntimeEvent<AppMessages>>,
-    termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> std::thread::JoinHandle<()> {
     thread::spawn(move || {
         // TODO: [Optimization, Input] Maybe experiment with removing these timers. Look into using buffers instead?
@@ -191,50 +190,37 @@ pub fn create_input_thread(
         let mut keyboard_timer = Instant::now();
 
         loop {
-            if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
-                // We don't block.
-                if *is_terminated {
-                    drop(is_terminated);
-                    break;
-                }
-            }
-
-            if let Ok(poll) = poll(Duration::from_millis(20)) {
-                if poll {
-                    if let Ok(event) = read() {
-                        match event {
-                            crossterm::event::Event::Key(event) => {
-                                if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                    if sender
-                                        .send(RuntimeEvent::UserInterface(Event::Keyboard(event)))
-                                        .is_err()
-                                    {
-                                        break;
-                                    }
-                                    keyboard_timer = Instant::now();
-                                }
+            if let Ok(event) = read() {
+                match event {
+                    crossterm::event::Event::Key(event) => {
+                        if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+                            if sender
+                                .send(RuntimeEvent::UserInterface(Event::Keyboard(event)))
+                                .is_err()
+                            {
+                                break;
                             }
-                            crossterm::event::Event::Mouse(event) => match &event.kind {
-                                MouseEventKind::Drag(_) => {}
-                                MouseEventKind::Moved => {}
-                                _ => {
-                                    if Instant::now().duration_since(mouse_timer).as_millis() >= 20
-                                    {
-                                        if sender
-                                            .send(RuntimeEvent::UserInterface(Event::Mouse(event)))
-                                            .is_err()
-                                        {
-                                            break;
-                                        }
-                                        mouse_timer = Instant::now();
-                                    }
-                                }
-                            },
-                            crossterm::event::Event::Resize(width, height) => {
-                                if sender.send(RuntimeEvent::Resize { width, height }).is_err() {
+                            keyboard_timer = Instant::now();
+                        }
+                    }
+                    crossterm::event::Event::Mouse(event) => match &event.kind {
+                        MouseEventKind::Drag(_) => {}
+                        MouseEventKind::Moved => {}
+                        _ => {
+                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+                                if sender
+                                    .send(RuntimeEvent::UserInterface(Event::Mouse(event)))
+                                    .is_err()
+                                {
                                     break;
                                 }
+                                mouse_timer = Instant::now();
                             }
+                        }
+                    },
+                    crossterm::event::Event::Resize(width, height) => {
+                        if sender.send(RuntimeEvent::Resize { width, height }).is_err() {
+                            break;
                         }
                     }
                 }
