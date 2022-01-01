@@ -24,6 +24,3 @@ pub use padding::*;
 
 pub mod time_graph;
 pub use time_graph::TimeGraph;
-
-pub mod selectable_block;
-pub use selectable_block::SelectableBlock;
