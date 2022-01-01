@@ -44,13 +44,13 @@ pub struct StyleSheet {
 
 #[derive(PartialEq, Default)]
 pub struct TextTableState {
-    scroll: ScrollState,
+    pub scroll: ScrollState,
     sort: SortType,
 }
 
 /// A sortable, scrollable table for text data.
 pub struct TextTable<Message> {
-    key: Key,
+    pub key: Key,
     column_widths: Vec<u16>,
     columns: Vec<TextColumn>,
     show_selected_entry: bool,

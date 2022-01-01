@@ -20,7 +20,7 @@ use std::{
 };
 
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, EnableMouseCapture, MouseEventKind},
+    event::{read, DisableMouseCapture, EnableMouseCapture, MouseEventKind},
     execute,
     style::Print,
     terminal::{

@@ -91,7 +91,6 @@ fn main() -> Result<()> {
 
     tuine::launch_with_application(app, receiver, &mut terminal)?; // FIXME: Move terminal construction INSIDE
 
-    // I think doing it in this order is safe...
     *thread_termination_lock.lock().unwrap() = true;
     thread_termination_cvar.notify_all();
 

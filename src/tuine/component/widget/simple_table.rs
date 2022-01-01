@@ -1,9 +1,11 @@
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tui::style::Style;
 
 use crate::tuine::{
     self, block,
-    text_table::{self, DataRow, SortType, TextTableProps},
-    Block, Shortcut, StatefulComponent, TextTable, TmpComponent, ViewContext,
+    shortcut::ShortcutProps,
+    text_table::{self, DataRow, SortType, TextTableProps, TextTableState},
+    Block, Event, Shortcut, StatefulComponent, Status, TextTable, TmpComponent, ViewContext,
 };
 
 /// A set of styles for a [`SimpleTable`].
@@ -29,7 +31,7 @@ impl<Message> SimpleTable<Message> {
         ctx: &mut ViewContext<'_>, style: StyleSheet, columns: Vec<C>, data: Vec<R>,
         sort_index: usize,
     ) -> Self {
-        let shortcut = Shortcut::with_child(TextTable::build(
+        let text_table = TextTable::build(
             ctx,
             TextTableProps::new(columns)
                 .rows(data)
@@ -39,7 +41,38 @@ impl<Message> SimpleTable<Message> {
                     selected_text: style.selected_text,
                     table_header: style.table_header,
                 }),
-        ));
+        );
+        let shortcut = Shortcut::build(
+            ctx,
+            ShortcutProps::with_child(text_table)
+                .shortcut(
+                    Event::Keyboard(KeyEvent::new(KeyCode::Char('G'), KeyModifiers::empty())),
+                    Box::new(|t, s, _d, _e, _m| {
+                        let state = s.mut_state::<TextTableState>(t.key);
+                        state.scroll.jump_to_last();
+                        Status::Captured
+                    }),
+                )
+                .shortcut(
+                    Event::Keyboard(KeyEvent::new(KeyCode::Char('G'), KeyModifiers::SHIFT)),
+                    Box::new(|t, s, _d, _e, _m| {
+                        let state = s.mut_state::<TextTableState>(t.key);
+                        state.scroll.jump_to_last();
+                        Status::Captured
+                    }),
+                )
+                .multi_shortcut(
+                    vec![
+                        Event::Keyboard(KeyEvent::new(KeyCode::Char('g'), KeyModifiers::empty())),
+                        Event::Keyboard(KeyEvent::new(KeyCode::Char('g'), KeyModifiers::empty())),
+                    ],
+                    Box::new(|t, s, _d, _e, _m| {
+                        let state = s.mut_state::<TextTableState>(t.key);
+                        state.scroll.jump_to_first();
+                        Status::Captured
+                    }),
+                ),
+        );
 
         Self {
             inner: Block::with_child(shortcut).style(block::StyleSheet {
