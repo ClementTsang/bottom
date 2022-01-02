@@ -6,6 +6,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://clementtsang.github.io/bottom/0.6.6 (stable)/support/</loc>
+         <lastmod>2022-01-02</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://clementtsang.github.io/bottom/0.6.6 (stable)/troubleshooting/</loc>
          <lastmod>2022-01-02</lastmod>
          <changefreq>daily</changefreq>
@@ -57,16 +62,6 @@
     </url>
     <url>
          <loc>https://clementtsang.github.io/bottom/0.6.6 (stable)/contribution/packaging-and-distribution/</loc>
-         <lastmod>2022-01-02</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://clementtsang.github.io/bottom/0.6.6 (stable)/support/official/</loc>
-         <lastmod>2022-01-02</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://clementtsang.github.io/bottom/0.6.6 (stable)/support/unofficial/</loc>
          <lastmod>2022-01-02</lastmod>
          <changefreq>daily</changefreq>
     </url>
