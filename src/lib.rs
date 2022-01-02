@@ -12,9 +12,9 @@ use std::{
     io::{stdout, Stdout, Write},
     panic::PanicInfo,
     path::PathBuf,
-    sync::Arc,
     sync::Condvar,
     sync::Mutex,
+    sync::{mpsc, Arc},
     thread,
     time::{Duration, Instant},
 };
@@ -182,7 +182,7 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 }
 
 pub fn create_input_thread(
-    sender: std::sync::mpsc::Sender<RuntimeEvent<AppMessages>>,
+    sender: mpsc::Sender<RuntimeEvent<AppMessages>>,
 ) -> std::thread::JoinHandle<()> {
     thread::spawn(move || {
         // TODO: [Optimization, Input] Maybe experiment with removing these timers. Look into using buffers instead?
@@ -230,10 +230,10 @@ pub fn create_input_thread(
 }
 
 pub fn create_collection_thread(
-    sender: std::sync::mpsc::Sender<RuntimeEvent<AppMessages>>,
-    control_receiver: std::sync::mpsc::Receiver<ThreadControlEvent>,
-    termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
-    app_config_fields: &app::AppConfig, filters: app::DataFilters, used_widget_set: UsedWidgets,
+    sender: mpsc::Sender<RuntimeEvent<AppMessages>>,
+    control_receiver: mpsc::Receiver<ThreadControlEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
+    termination_ctrl_cvar: Arc<Condvar>, app_config_fields: &app::AppConfig,
+    filters: app::DataFilters, used_widget_set: UsedWidgets,
 ) -> std::thread::JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type.clone();
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
