@@ -5,7 +5,7 @@ use crate::tuine::{
     self, block,
     shortcut::ShortcutProps,
     text_table::{self, DataRow, SortType, TextTableProps, TextTableState},
-    Block, Event, Shortcut, StatefulComponent, Status, TextTable, TmpComponent, ViewContext,
+    Block, BuildContext, Event, Shortcut, StatefulComponent, Status, TextTable, TmpComponent,
 };
 
 /// A set of styles for a [`SimpleTable`].
@@ -28,7 +28,7 @@ pub struct SimpleTable<Message> {
 impl<Message> SimpleTable<Message> {
     #[track_caller]
     pub fn build<C: Into<std::borrow::Cow<'static, str>>, R: Into<DataRow>>(
-        ctx: &mut ViewContext<'_>, style: StyleSheet, columns: Vec<C>, data: Vec<R>,
+        ctx: &mut BuildContext<'_>, style: StyleSheet, columns: Vec<C>, data: Vec<R>,
         sort_index: usize,
     ) -> Self {
         let text_table = TextTable::build(

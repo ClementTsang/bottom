@@ -211,7 +211,7 @@ impl<Message> StatefulComponent<Message> for TextTable<Message> {
 
     type ComponentState = TextTableState;
 
-    fn build(ctx: &mut crate::tuine::ViewContext<'_>, mut props: Self::Properties) -> Self {
+    fn build(ctx: &mut crate::tuine::BuildContext<'_>, mut props: Self::Properties) -> Self {
         let sort = props.sort;
         let (key, state) = ctx.register_and_mut_state_with_default::<_, Self::ComponentState, _>(
             Location::caller(),
@@ -372,15 +372,15 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
 #[cfg(test)]
 mod tests {
     use crate::tuine::{
-        text_table::SortType, StateMap, StatefulComponent, TextTableProps, ViewContext,
+        text_table::SortType, StateMap, StatefulComponent, TextTableProps, BuildContext,
     };
 
     use super::{DataRow, TextTable};
 
     type Message = ();
 
-    fn ctx<'a>(map: &'a mut StateMap) -> ViewContext<'a> {
-        ViewContext::new(map)
+    fn ctx<'a>(map: &'a mut StateMap) -> BuildContext<'a> {
+        BuildContext::new(map)
     }
 
     #[test]

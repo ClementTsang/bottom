@@ -1,4 +1,4 @@
-use crate::tuine::{State, StateContext, ViewContext};
+use crate::tuine::{State, StateContext, BuildContext};
 
 use super::TmpComponent;
 
@@ -11,5 +11,5 @@ pub trait StatefulComponent<Message>: TmpComponent<Message> {
     type ComponentState: State;
 
     #[track_caller]
-    fn build(ctx: &mut ViewContext<'_>, props: Self::Properties) -> Self;
+    fn build(ctx: &mut BuildContext<'_>, props: Self::Properties) -> Self;
 }

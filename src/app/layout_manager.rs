@@ -150,7 +150,7 @@ pub struct WidgetLayoutRoot {
 
 impl WidgetLayoutRoot {
     pub fn build<Message>(
-        &self, ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        &self, ctx: &mut BuildContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
     ) -> Element<Message> {
         Flex::column_with_children(
             self.children
@@ -186,7 +186,7 @@ pub enum WidgetLayoutNode {
 
 impl WidgetLayoutNode {
     fn new_row<Message>(
-        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        ctx: &mut BuildContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
         children: &[WidgetLayoutNode], parent_ratio: u16,
     ) -> FlexElement<Message> {
         FlexElement::with_flex(
@@ -201,7 +201,7 @@ impl WidgetLayoutNode {
     }
 
     fn new_col<Message>(
-        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        ctx: &mut BuildContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
         children: &[WidgetLayoutNode], parent_ratio: u16,
     ) -> FlexElement<Message> {
         FlexElement::with_flex(
@@ -216,7 +216,7 @@ impl WidgetLayoutNode {
     }
 
     fn new_carousel<Message>(
-        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        ctx: &mut BuildContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
         children: &[BottomWidgetType], selected: bool,
     ) -> FlexElement<Message> {
         // FIXME: Carousel!
@@ -231,7 +231,7 @@ impl WidgetLayoutNode {
     }
 
     fn make_element<Message>(
-        ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        ctx: &mut BuildContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
         widget_type: &BottomWidgetType, selected: bool,
     ) -> Element<Message> {
         let painter = &app_state.painter;
@@ -270,7 +270,7 @@ impl WidgetLayoutNode {
     }
 
     pub fn build<Message>(
-        &self, ctx: &mut ViewContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
+        &self, ctx: &mut BuildContext<'_>, app_state: &AppState, data: &mut ConvertedData<'_>,
     ) -> FlexElement<Message> {
         match self {
             WidgetLayoutNode::Row {

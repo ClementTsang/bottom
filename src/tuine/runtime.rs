@@ -6,7 +6,7 @@ use crate::tuine::Status;
 
 use super::{
     build_layout_tree, Application, DrawContext, Element, Event, LayoutNode, StateContext,
-    StateMap, TmpComponent, ViewContext,
+    StateMap, TmpComponent, BuildContext,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -118,7 +118,7 @@ fn create_user_interface<A>(application: &mut A, app_data: &mut AppData) -> Elem
 where
     A: Application + 'static,
 {
-    let mut ctx = ViewContext::new(&mut app_data.state_map);
+    let mut ctx = BuildContext::new(&mut app_data.state_map);
     application.view(&mut ctx)
 }
 

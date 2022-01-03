@@ -31,11 +31,11 @@ pub use mem_simple::*;
 pub mod net_simple;
 pub use net_simple::*;
 
-use crate::{app::AppConfig, canvas::Painter, data_conversion::ConvertedData, tuine::ViewContext};
+use crate::{app::AppConfig, canvas::Painter, data_conversion::ConvertedData, tuine::BuildContext};
 
 pub trait AppWidget {
     fn build(
-        ctx: &mut ViewContext<'_>, painter: &Painter, config: &AppConfig,
+        ctx: &mut BuildContext<'_>, painter: &Painter, config: &AppConfig,
         data: &mut ConvertedData<'_>,
     ) -> Self;
 }

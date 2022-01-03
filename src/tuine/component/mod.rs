@@ -22,15 +22,6 @@ use super::{Bounds, DrawContext, Element, Event, LayoutNode, Size, StateContext,
 #[allow(unused_variables)]
 #[enum_dispatch]
 pub trait TmpComponent<Message> {
-    /// Builds as component into an [`Element`](super::Element).
-    #[track_caller]
-    fn build(self, ctx: ()) -> Element<Message>
-    where
-        Self: Sized,
-    {
-        todo!()
-    }
-
     /// Draws the component.
     fn draw<Backend>(
         &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,

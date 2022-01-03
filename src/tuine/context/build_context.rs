@@ -2,12 +2,12 @@ use crate::tuine::{Caller, Key, State, StateMap};
 
 use super::StateContext;
 
-pub struct ViewContext<'a> {
+pub struct BuildContext<'a> {
     key_counter: usize,
     state_context: StateContext<'a>,
 }
 
-impl<'a> ViewContext<'a> {
+impl<'a> BuildContext<'a> {
     pub fn new(state_map: &'a mut StateMap) -> Self {
         Self {
             key_counter: 0,

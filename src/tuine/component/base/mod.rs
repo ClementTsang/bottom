@@ -24,3 +24,6 @@ pub use padding::*;
 
 pub mod time_graph;
 pub use time_graph::TimeGraph;
+
+pub mod focus;
+pub use focus::*;

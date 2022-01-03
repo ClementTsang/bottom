@@ -145,7 +145,7 @@ where
 
     type ComponentState = ShortcutState;
 
-    fn build(ctx: &mut crate::tuine::ViewContext<'_>, props: Self::Properties) -> Self {
+    fn build(ctx: &mut crate::tuine::BuildContext<'_>, props: Self::Properties) -> Self {
         let (key, state) =
             ctx.register_and_mut_state::<_, Self::ComponentState>(Location::caller());
         let mut forest: FxHashMap<Vec<Event>, bool> = FxHashMap::default();

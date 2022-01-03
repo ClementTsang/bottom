@@ -4,7 +4,7 @@ use crate::{
     data_conversion::ConvertedData,
     tuine::{
         Bounds, DrawContext, LayoutNode, SimpleTable, Size, StateContext, Status, TmpComponent,
-        ViewContext,
+        BuildContext,
     },
 };
 
@@ -21,7 +21,7 @@ impl<Message> DiskTable<Message> {}
 
 impl<Message> AppWidget for DiskTable<Message> {
     fn build(
-        ctx: &mut ViewContext<'_>, painter: &Painter, config: &AppConfig,
+        ctx: &mut BuildContext<'_>, painter: &Painter, config: &AppConfig,
         data: &mut ConvertedData<'_>,
     ) -> Self {
         let style = simple_table::StyleSheet {

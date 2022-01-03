@@ -30,7 +30,7 @@ use crate::{
     canvas::Painter,
     constants,
     data_conversion::ConvertedData,
-    tuine::{Application, Element, Status, ViewContext},
+    tuine::{Application, Element, Status, BuildContext},
     units::data_units::DataUnit,
     Pid,
 };
@@ -251,7 +251,7 @@ impl Application for AppState {
         self.terminator.load(SeqCst)
     }
 
-    fn view<'b>(&mut self, ctx: &mut ViewContext<'_>) -> Element<Self::Message> {
+    fn view<'b>(&mut self, ctx: &mut BuildContext<'_>) -> Element<Self::Message> {
         match self.current_screen {
             CurrentScreen::Main => {
                 // The main screen.

@@ -8,7 +8,7 @@ pub struct CpuGraph {}
 
 impl super::AppWidget for CpuGraph {
     fn build(
-        ctx: &mut crate::tuine::ViewContext<'_>, painter: &crate::canvas::Painter,
+        ctx: &mut crate::tuine::BuildContext<'_>, painter: &crate::canvas::Painter,
         config: &crate::app::AppConfig, data: &mut crate::data_conversion::ConvertedData<'_>,
     ) -> Self {
         Self {}
