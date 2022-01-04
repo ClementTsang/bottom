@@ -20,7 +20,7 @@ pub struct DiskTable<Message> {
 impl<Message> DiskTable<Message> {}
 
 impl<Message> AppWidget for DiskTable<Message> {
-    fn build(
+    fn build_widget(
         ctx: &mut BuildContext<'_>, painter: &Painter, config: &AppConfig,
         data: &mut ConvertedData<'_>,
     ) -> Self {

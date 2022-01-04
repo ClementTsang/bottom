@@ -20,7 +20,7 @@ pub struct TempTable<Message> {
 impl<Message> TempTable<Message> {}
 
 impl<Message> AppWidget for TempTable<Message> {
-    fn build(
+    fn build_widget(
         ctx: &mut BuildContext<'_>, painter: &Painter, config: &AppConfig,
         data: &mut ConvertedData<'_>,
     ) -> Self {

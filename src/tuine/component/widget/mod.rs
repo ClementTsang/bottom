@@ -34,7 +34,7 @@ pub use net_simple::*;
 use crate::{app::AppConfig, canvas::Painter, data_conversion::ConvertedData, tuine::BuildContext};
 
 pub trait AppWidget {
-    fn build(
+    fn build_widget(
         ctx: &mut BuildContext<'_>, painter: &Painter, config: &AppConfig,
         data: &mut ConvertedData<'_>,
     ) -> Self;

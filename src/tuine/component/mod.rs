@@ -16,7 +16,7 @@ pub use banner::*;
 use enum_dispatch::enum_dispatch;
 use tui::Frame;
 
-use super::{Bounds, DrawContext, Element, Event, LayoutNode, Size, StateContext, Status};
+use super::{Bounds, DrawContext, Event, LayoutNode, Size, StateContext, Status};
 
 /// A component displays information and can be interacted with.
 #[allow(unused_variables)]

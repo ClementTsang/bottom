@@ -8,7 +8,7 @@ use crate::tuine::{Bounds, DrawContext, LayoutNode, Size, StateContext, TmpCompo
 pub struct CpuSimple {}
 
 impl super::AppWidget for CpuSimple {
-    fn build(
+    fn build_widget(
         ctx: &mut crate::tuine::BuildContext<'_>, painter: &crate::canvas::Painter,
         config: &crate::app::AppConfig, data: &mut crate::data_conversion::ConvertedData<'_>,
     ) -> Self {

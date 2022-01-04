@@ -6,7 +6,7 @@ use crate::tuine::{DrawContext, StateContext, TmpComponent};
 pub struct MemGraph {}
 
 impl super::AppWidget for MemGraph {
-    fn build(
+    fn build_widget(
         ctx: &mut crate::tuine::BuildContext<'_>, painter: &crate::canvas::Painter,
         config: &crate::app::AppConfig, data: &mut crate::data_conversion::ConvertedData<'_>,
     ) -> Self {

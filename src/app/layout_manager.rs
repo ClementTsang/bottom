@@ -239,16 +239,16 @@ impl WidgetLayoutNode {
 
         match widget_type {
             BottomWidgetType::Empty => Empty::default().into(),
-            BottomWidgetType::Cpu => CpuGraph::build(ctx, painter, config, data).into(),
-            BottomWidgetType::Mem => MemGraph::build(ctx, painter, config, data).into(),
-            BottomWidgetType::Net => NetGraph::build(ctx, painter, config, data).into(),
-            BottomWidgetType::Proc => ProcessTable::build(ctx, painter, config, data).into(),
-            BottomWidgetType::Temp => TempTable::build(ctx, painter, config, data).into(),
-            BottomWidgetType::Disk => DiskTable::build(ctx, painter, config, data).into(),
-            BottomWidgetType::BasicCpu => CpuSimple::build(ctx, painter, config, data).into(),
-            BottomWidgetType::BasicMem => MemSimple::build(ctx, painter, config, data).into(),
-            BottomWidgetType::BasicNet => NetSimple::build(ctx, painter, config, data).into(),
-            BottomWidgetType::Battery => BatteryTable::build(ctx, painter, config, data).into(),
+            BottomWidgetType::Cpu => CpuGraph::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::Mem => MemGraph::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::Net => NetGraph::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::Proc => ProcessTable::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::Temp => TempTable::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::Disk => DiskTable::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::BasicCpu => CpuSimple::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::BasicMem => MemSimple::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::BasicNet => NetSimple::build_widget(ctx, painter, config, data).into(),
+            BottomWidgetType::Battery => BatteryTable::build_widget(ctx, painter, config, data).into(),
         }
     }
 
