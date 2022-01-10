@@ -13,14 +13,12 @@
 
 </div>
 
-<figure>
-    <img src="assets/demo.gif" alt="Quick demo recording showing off searching, expanding, and process killing."/>
-    <center>
-    <figcaption>
-      Demo GIF using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--color gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
-    </figcaption>
-    </center>
-</figure>
+<img src="assets/demo.gif" alt="Quick demo recording showing off bottom's searching, expanding, and process killing."/>
+<div align="center">
+  <p>
+    Demo GIF using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--color gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
+  </p>
+</div>
 
 ## Features
 
