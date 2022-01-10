@@ -1,4 +1,9 @@
-# bottom (btm)
+<div align="center">
+  <h1>bottom (btm)</h1>
+
+  <p>
+  A cross-platform graphical process/system monitor with a customizable interface and a multitude of features.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop/>htop</a>.
+  </p>
 
 [<img src="https://img.shields.io/github/workflow/status/ClementTsang/bottom/ci/master?style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amaster)
 [<img src="https://img.shields.io/codecov/c/github/ClementTsang/bottom?color=%23d9634d&logo=codecov&style=flat-square&token=IDD43CO0FP" alt="Codecov">](https://app.codecov.io/gh/ClementTsang/bottom)
@@ -6,7 +11,7 @@
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://clementtsang.github.io/bottom/nightly)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://clementtsang.github.io/bottom/stable)
 
-A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by [gtop](https://github.com/aksakalli/gtop), [gotop](https://github.com/xxxserxxx/gotop), and [htop](https://github.com/htop-dev/htop/).
+</div>
 
 <figure>
     <img src="assets/demo.gif" alt="Quick demo recording showing off searching, expanding, and process killing."/>
