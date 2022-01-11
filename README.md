@@ -78,13 +78,15 @@ For more details on known problems and unsupported platforms, feel free to check
 
 ### Cargo
 
+Installation via cargo is done by installing the `bottom` crate:
+
 ```bash
 # If required, update Rust on the stable channel
 rustup update stable
 
 cargo install bottom
 
-# OR, --locked may be required due to how cargo install works
+# Alternatively, --locked may be required due to how cargo install works
 cargo install bottom --locked
 ```
 
