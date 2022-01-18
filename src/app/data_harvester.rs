@@ -144,7 +144,7 @@ impl DataCollector {
         #[cfg(not(target_os = "linux"))]
         {
             self.sys.refresh_memory();
-            self.mem_total_kb = self.sys.get_total_memory();
+            self.mem_total_kb = self.sys.total_memory();
 
             // TODO: Would be good to get this and network list running on a timer instead...?
             // Refresh components list once...

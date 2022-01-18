@@ -22,20 +22,18 @@ pub async fn get_temperature_data(
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
-    let sensor_data = sys.get_components();
+    let sensor_data = sys.components();
     for component in sensor_data {
-        let name = component.get_label().to_string();
+        let name = component.label().to_string();
 
         if is_temp_filtered(filter, &name) {
             temperature_vec.push(TempHarvest {
                 name,
                 temperature: match temp_type {
-                    TemperatureType::Celsius => component.get_temperature(),
-                    TemperatureType::Kelvin => {
-                        convert_celsius_to_kelvin(component.get_temperature())
-                    }
+                    TemperatureType::Celsius => component.temperature(),
+                    TemperatureType::Kelvin => convert_celsius_to_kelvin(component.temperature()),
                     TemperatureType::Fahrenheit => {
-                        convert_celsius_to_fahrenheit(component.get_temperature())
+                        convert_celsius_to_fahrenheit(component.temperature())
                     }
                 },
             });
