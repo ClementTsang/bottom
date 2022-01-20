@@ -3,7 +3,7 @@ site_name: bottom
 site_author: Clement Tsang
 site_url: https://clementtsang.github.io/bottom
 site_description: >-
-  Yet another customizable cross-platform graphical process/system monitor, inspired by gtop, gotop, and htop.
+  A customizable cross-platform graphical process/system monitor. Supports Linux, macOS, and Windows.
 docs_dir: "content/"
 
 # Project information
