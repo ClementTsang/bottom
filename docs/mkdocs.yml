@@ -3,7 +3,7 @@ site_name: bottom
 site_author: Clement Tsang
 site_url: https://clementtsang.github.io/bottom
 site_description: >-
-  A customizable cross-platform graphical process/system monitor. Supports Linux, macOS, and Windows.
+  A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
 docs_dir: "content/"
 
 # Project information

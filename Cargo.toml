@@ -7,7 +7,7 @@ repository = "https://github.com/ClementTsang/bottom"
 keywords = ["cross-platform", "monitoring", "cli", "top", "tui"]
 license = "MIT"
 categories = ["command-line-utilities", "visualization"]
-description = "A customizable cross-platform graphical process and system monitor. Supports Linux, macOS, and Windows."
+description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
 documentation = "https://clementtsang.github.io/bottom/stable"
 readme = "README.md"
 default-run = "btm"
@@ -105,7 +105,7 @@ assets = [
     ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
 extended-description = """\
-A customizable cross-platform graphical process/system monitor. Supports Linux, macOS, and Windows.
+A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
 
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml.
 If one is not specified it will fall back to defaults.  If a config file does not

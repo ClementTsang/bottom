@@ -2,7 +2,7 @@
   <h1>bottom (btm)</h1>
 
   <p>
-  A customizable cross-platform graphical process and system monitor.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop/>htop</a>.
+  A customizable cross-platform graphical process/system monitor for the terminal.<br />Supports Linux, macOS, and Windows. Inspired by <a href=https://github.com/aksakalli/gtop>gtop</a>, <a href=https://github.com/xxxserxxx/gotop>gotop</a>, and <a href=https://github.com/htop-dev/htop/>htop</a>.
   </p>
 
 [<img src="https://img.shields.io/github/workflow/status/ClementTsang/bottom/ci/master?style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amaster)
