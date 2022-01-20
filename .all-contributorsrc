@@ -226,6 +226,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "GuillaumeGomez",
+      "name": "Guillaume Gomez",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3050060?v=4",
+      "profile": "https://blog.guillaume-gomez.fr",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
