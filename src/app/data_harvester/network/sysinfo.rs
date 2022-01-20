@@ -17,7 +17,7 @@ pub async fn get_network_data(
     let mut total_rx: u64 = 0;
     let mut total_tx: u64 = 0;
 
-    let networks = sys.get_networks();
+    let networks = sys.networks();
     for (name, network) in networks {
         let to_keep = if let Some(filter) = filter {
             let mut ret = filter.is_list_ignored;
@@ -33,8 +33,8 @@ pub async fn get_network_data(
         };
 
         if to_keep {
-            total_rx += network.get_total_received() * 8;
-            total_tx += network.get_total_transmitted() * 8;
+            total_rx += network.total_received() * 8;
+            total_tx += network.total_transmitted() * 8;
         }
     }
 

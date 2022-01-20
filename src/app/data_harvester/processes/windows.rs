@@ -1,15 +1,15 @@
 //! Process data collection for Windows.  Uses sysinfo.
 
 use super::ProcessHarvest;
-use sysinfo::{ProcessExt, ProcessorExt, System, SystemExt};
+use sysinfo::{PidExt, ProcessExt, ProcessorExt, System, SystemExt};
 
 pub fn get_process_data(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
-    let process_hashmap = sys.get_processes();
-    let cpu_usage = sys.get_global_processor_info().get_cpu_usage() as f64 / 100.0;
-    let num_processors = sys.get_processors().len() as f64;
+    let process_hashmap = sys.processes();
+    let cpu_usage = sys.global_processor_info().cpu_usage() as f64 / 100.0;
+    let num_processors = sys.processors().len() as f64;
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
@@ -56,8 +56,8 @@ pub fn get_process_data(
 
         let disk_usage = process_val.disk_usage();
         process_vector.push(ProcessHarvest {
-            pid: process_val.pid(),
-            parent_pid: process_val.parent(),
+            pid: process_val.pid().as_u32() as _,
+            parent_pid: process_val.parent().map(|p| p.as_u32() as _),
             name,
             command,
             mem_usage_percent: if mem_total_kb > 0 {
