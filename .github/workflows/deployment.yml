@@ -1,4 +1,4 @@
-# How we deploy a release.  Covers binary builds.  Also manages packaging for winget and choco.
+# How we deploy a release.  Covers binary builds. Also manages packaging for choco.
 #
 # Based on https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml
 
@@ -266,18 +266,11 @@ jobs:
           cargo wix init
           cargo wix
 
-      - name: Build winget
-        run: |
-          python "./deployment/packager.py" ${{ env.RELEASE_VERSION }} "./deployment/windows/winget/winget.yaml.template" "Clement.bottom.yaml" "SHA256" "./bottom_x86_64_installer.msi"
-          $Code = powershell ./deployment/windows/winget/get_product_code.ps1 ./bottom_x86_64_installer.msi
-          python "./deployment/windows/winget/product_code.py" Clement.bottom.yaml $Code
-
       - name: Create release directory for artifact, move files
         shell: bash
         run: |
           mkdir release
           mv bottom_x86_64_installer.msi release/
-          mv Clement.bottom.yaml release/
 
       - name: Save release as artifact
         uses: actions/upload-artifact@v2
