@@ -104,8 +104,7 @@ assets = [
     ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
 extended-description = """\
-A cross-platform graphical process/system monitor with a customizable interface and a multitude of
-features. Supports Linux, macOS, and Windows.
+A customizable cross-platform graphical process/system monitor. Supports Linux, macOS, and Windows.
 
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml.
 If one is not specified it will fall back to defaults.  If a config file does not
