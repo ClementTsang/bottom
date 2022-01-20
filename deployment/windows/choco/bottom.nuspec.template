@@ -33,9 +33,9 @@ This is a nuspec. It mostly adheres to https://docs.nuget.org/create/Nuspec-Refe
     <docsUrl>https://github.com/ClementTsang/bottom/blob/master/README.md</docsUrl>
     <bugTrackerUrl>https://github.com/ClementTsang/bottom/issues</bugTrackerUrl>
     <tags>cli cross-platform terminal top tui monitoring bottom btm</tags>
-    <summary>A cross-platform graphical process/system monitor with a customizable interface and a multitude of features.</summary>
+    <summary>A customizable cross-platform graphical process/system monitor for the terminal.</summary>
     <description>
-    A cross-platform graphical process/system monitor with a customizable interface and a multitude of features. Supports Linux, macOS, and Windows. Inspired by both [gtop](https://github.com/aksakalli/gtop) and [gotop](https://github.com/cjbassi/gotop).
+    A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows. Inspired by [gtop](https://github.com/aksakalli/gtop), [gotop](https://github.com/xxxserxxx/gotop) and [htop](https://github.com/htop-dev/htop).
 
     **Usage**
     To use, run `btm` in a terminal.
