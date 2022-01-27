@@ -89,25 +89,15 @@ pub fn get_column_widths(
             }
         }
 
-        let mut filtered_column_widths: Vec<u16> = vec![];
-        let mut still_seeing_zeros = true;
-        column_widths.iter().rev().for_each(|width| {
-            if still_seeing_zeros {
-                if *width != 0 {
-                    still_seeing_zeros = false;
-                    filtered_column_widths.push(*width);
-                }
-            } else {
-                filtered_column_widths.push(*width);
-            }
-        });
-        filtered_column_widths.reverse();
+        while let Some(0) = column_widths.last() {
+            column_widths.pop();
+        }
 
-        if !filtered_column_widths.is_empty() {
+        if !column_widths.is_empty() {
             // Redistribute remaining.
-            let amount_per_slot = total_width_left / filtered_column_widths.len() as u16;
+            let amount_per_slot = total_width_left / column_widths.len() as u16;
             total_width_left %= column_widths.len() as u16;
-            for (index, width) in filtered_column_widths.iter_mut().enumerate() {
+            for (index, width) in column_widths.iter_mut().enumerate() {
                 if (index as u16) < total_width_left {
                     *width += amount_per_slot + 1;
                 } else {
@@ -116,17 +106,11 @@ pub fn get_column_widths(
             }
         }
 
-        filtered_column_widths
+        column_widths
     } else {
         vec![]
     }
 }
-
-/// FIXME: [command move] This is a greedy method of determining column widths.  This is reserved for columns where we are okay with
-/// shoving information as far right as required.
-// pub fn greedy_get_column_widths() -> Vec<u16> {
-//     vec![]
-// }
 
 pub fn get_search_start_position(
     num_columns: usize, cursor_direction: &app::CursorDirection, cursor_bar: &mut usize,
