@@ -19,7 +19,7 @@ path = "src/bin/main.rs"
 doc = false
 
 [lib]
-test = false
+test = true
 doctest = false
 doc = false
 
