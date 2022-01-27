@@ -35,86 +35,91 @@ pub fn get_column_widths(
         "soft width max length != soft width desired length!"
     );
 
-    let initial_width = total_width - 2;
-    let mut total_width_left = initial_width;
-    let mut column_widths: Vec<u16> = vec![0; hard_widths.len()];
-    let range: Vec<usize> = if left_to_right {
-        (0..hard_widths.len()).collect()
-    } else {
-        (0..hard_widths.len()).rev().collect()
-    };
+    if total_width > 2 {
+        let initial_width = total_width - 2;
+        let mut total_width_left = initial_width;
+        let mut column_widths: Vec<u16> = vec![0; hard_widths.len()];
+        let range: Vec<usize> = if left_to_right {
+            (0..hard_widths.len()).collect()
+        } else {
+            (0..hard_widths.len()).rev().collect()
+        };
 
-    for itx in &range {
-        if let Some(Some(hard_width)) = hard_widths.get(*itx) {
-            // Hard width...
-            let space_taken = min(*hard_width, total_width_left);
-
-            // TODO [COLUMN MOVEMENT]: Remove this
-            if *hard_width > space_taken {
-                break;
-            }
-
-            column_widths[*itx] = space_taken;
-            total_width_left -= space_taken;
-            total_width_left = total_width_left.saturating_sub(1);
-        } else if let (
-            Some(Some(soft_width_max)),
-            Some(Some(soft_width_min)),
-            Some(Some(soft_width_desired)),
-        ) = (
-            soft_widths_max.get(*itx),
-            soft_widths_min.get(*itx),
-            soft_widths_desired.get(*itx),
-        ) {
-            // Soft width...
-            let soft_limit = max(
-                if soft_width_max.is_sign_negative() {
-                    *soft_width_desired
-                } else {
-                    (*soft_width_max * initial_width as f64).ceil() as u16
-                },
-                *soft_width_min,
-            );
-            let space_taken = min(min(soft_limit, *soft_width_desired), total_width_left);
-
-            // TODO [COLUMN MOVEMENT]: Remove this
-            if *soft_width_min > space_taken {
-                break;
-            }
-
-            column_widths[*itx] = space_taken;
-            total_width_left -= space_taken;
-            total_width_left = total_width_left.saturating_sub(1);
-        }
-    }
-
-    // Redistribute remaining.
-    while total_width_left > 0 {
         for itx in &range {
-            if column_widths[*itx] > 0 {
-                column_widths[*itx] += 1;
-                total_width_left -= 1;
-                if total_width_left == 0 {
+            if let Some(Some(hard_width)) = hard_widths.get(*itx) {
+                // Hard width...
+                let space_taken = min(*hard_width, total_width_left);
+
+                // TODO [COLUMN MOVEMENT]: Remove this
+                if *hard_width > space_taken {
                     break;
+                }
+
+                column_widths[*itx] = space_taken;
+                total_width_left -= space_taken;
+                total_width_left = total_width_left.saturating_sub(1);
+            } else if let (
+                Some(Some(soft_width_max)),
+                Some(Some(soft_width_min)),
+                Some(Some(soft_width_desired)),
+            ) = (
+                soft_widths_max.get(*itx),
+                soft_widths_min.get(*itx),
+                soft_widths_desired.get(*itx),
+            ) {
+                // Soft width...
+                let soft_limit = max(
+                    if soft_width_max.is_sign_negative() {
+                        *soft_width_desired
+                    } else {
+                        (*soft_width_max * initial_width as f64).ceil() as u16
+                    },
+                    *soft_width_min,
+                );
+                let space_taken = min(min(soft_limit, *soft_width_desired), total_width_left);
+
+                // TODO [COLUMN MOVEMENT]: Remove this
+                if *soft_width_min > space_taken {
+                    break;
+                }
+
+                column_widths[*itx] = space_taken;
+                total_width_left -= space_taken;
+                total_width_left = total_width_left.saturating_sub(1);
+            }
+        }
+
+        let mut filtered_column_widths: Vec<u16> = vec![];
+        let mut still_seeing_zeros = true;
+        column_widths.iter().rev().for_each(|width| {
+            if still_seeing_zeros {
+                if *width != 0 {
+                    still_seeing_zeros = false;
+                    filtered_column_widths.push(*width);
+                }
+            } else {
+                filtered_column_widths.push(*width);
+            }
+        });
+        filtered_column_widths.reverse();
+
+        if !filtered_column_widths.is_empty() {
+            // Redistribute remaining.
+            let amount_per_slot = total_width_left / filtered_column_widths.len() as u16;
+            total_width_left %= column_widths.len() as u16;
+            for (index, width) in filtered_column_widths.iter_mut().enumerate() {
+                if (index as u16) < total_width_left {
+                    *width += amount_per_slot + 1;
+                } else {
+                    *width += amount_per_slot;
                 }
             }
         }
-    }
 
-    let mut filtered_column_widths: Vec<u16> = vec![];
-    let mut still_seeing_zeros = true;
-    column_widths.iter().rev().for_each(|width| {
-        if still_seeing_zeros {
-            if *width != 0 {
-                still_seeing_zeros = false;
-                filtered_column_widths.push(*width);
-            }
-        } else {
-            filtered_column_widths.push(*width);
-        }
-    });
-    filtered_column_widths.reverse();
-    filtered_column_widths
+        filtered_column_widths
+    } else {
+        vec![]
+    }
 }
 
 /// FIXME: [command move] This is a greedy method of determining column widths.  This is reserved for columns where we are okay with

@@ -282,9 +282,6 @@ impl Painter {
         self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
     }
 
-    // FIXME: [CONFIG] write this, should call painter init and any changed colour functions...
-    pub fn update_painter_colours(&mut self) {}
-
     fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {
         f.render_widget(
             Paragraph::new(Span::styled(
