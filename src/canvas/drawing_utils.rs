@@ -205,3 +205,56 @@ pub fn interpolate_points(point_one: &(f64, f64), point_two: &(f64, f64), time: 
 
     (point_one.1 + (time - point_one.0) * slope).max(0.0)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_zero_width() {
+        assert_eq!(
+            get_column_widths(
+                0,
+                &[Some(1), None, None],
+                &[None, Some(1), Some(2)],
+                &[None, Some(0.125), Some(0.5)],
+                &[None, Some(10), Some(10)],
+                true
+            ),
+            vec![],
+            "vector should be empty"
+        );
+    }
+
+    #[test]
+    fn test_two_width() {
+        assert_eq!(
+            get_column_widths(
+                2,
+                &[Some(1), None, None],
+                &[None, Some(1), Some(2)],
+                &[None, Some(0.125), Some(0.5)],
+                &[None, Some(10), Some(10)],
+                true
+            ),
+            vec![],
+            "vector should be empty"
+        );
+    }
+
+    #[test]
+    fn test_non_zero_width() {
+        assert_eq!(
+            get_column_widths(
+                16,
+                &[Some(1), None, None],
+                &[None, Some(1), Some(2)],
+                &[None, Some(0.125), Some(0.5)],
+                &[None, Some(10), Some(10)],
+                true
+            ),
+            vec![2, 2, 7],
+            "vector should not be empty"
+        );
+    }
+}
