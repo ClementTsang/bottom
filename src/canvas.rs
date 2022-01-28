@@ -282,9 +282,6 @@ impl Painter {
         self.styled_help_text = styled_help_spans.into_iter().map(Spans::from).collect();
     }
 
-    // FIXME: [CONFIG] write this, should call painter init and any changed colour functions...
-    pub fn update_painter_colours(&mut self) {}
-
     fn draw_frozen_indicator<B: Backend>(&self, f: &mut Frame<'_, B>, draw_loc: Rect) {
         f.render_widget(
             Paragraph::new(Span::styled(
@@ -559,44 +556,62 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
                     .split(vertical_chunks[1]);
-                self.draw_basic_cpu(f, app_state, vertical_chunks[0], 1);
-                self.draw_basic_memory(f, app_state, middle_chunks[0], 2);
-                self.draw_basic_network(f, app_state, middle_chunks[1], 3);
+
+                if vertical_chunks[0].width >= 2 {
+                    self.draw_basic_cpu(f, app_state, vertical_chunks[0], 1);
+                }
+                if middle_chunks[0].width >= 2 {
+                    self.draw_basic_memory(f, app_state, middle_chunks[0], 2);
+                }
+                if middle_chunks[1].width >= 2 {
+                    self.draw_basic_network(f, app_state, middle_chunks[1], 3);
+                }
 
                 let mut later_widget_id: Option<u64> = None;
                 if let Some(basic_table_widget_state) = &app_state.basic_table_widget_state {
                     let widget_id = basic_table_widget_state.currently_displayed_widget_id;
                     later_widget_id = Some(widget_id);
-                    match basic_table_widget_state.currently_displayed_widget_type {
-                        Disk => {
-                            self.draw_disk_table(f, app_state, vertical_chunks[3], false, widget_id)
-                        }
-                        Proc | ProcSort => {
-                            let wid = widget_id
-                                - match basic_table_widget_state.currently_displayed_widget_type {
-                                    ProcSearch => 1,
-                                    ProcSort => 2,
-                                    _ => 0,
-                                };
-                            self.draw_process_features(
+                    if vertical_chunks[3].width >= 2 {
+                        match basic_table_widget_state.currently_displayed_widget_type {
+                            Disk => self.draw_disk_table(
                                 f,
                                 app_state,
                                 vertical_chunks[3],
                                 false,
-                                wid,
-                            );
+                                widget_id,
+                            ),
+                            Proc | ProcSort => {
+                                let wid = widget_id
+                                    - match basic_table_widget_state.currently_displayed_widget_type
+                                    {
+                                        ProcSearch => 1,
+                                        ProcSort => 2,
+                                        _ => 0,
+                                    };
+                                self.draw_process_features(
+                                    f,
+                                    app_state,
+                                    vertical_chunks[3],
+                                    false,
+                                    wid,
+                                );
+                            }
+                            Temp => self.draw_temp_table(
+                                f,
+                                app_state,
+                                vertical_chunks[3],
+                                false,
+                                widget_id,
+                            ),
+                            Battery => self.draw_battery_display(
+                                f,
+                                app_state,
+                                vertical_chunks[3],
+                                false,
+                                widget_id,
+                            ),
+                            _ => {}
                         }
-                        Temp => {
-                            self.draw_temp_table(f, app_state, vertical_chunks[3], false, widget_id)
-                        }
-                        Battery => self.draw_battery_display(
-                            f,
-                            app_state,
-                            vertical_chunks[3],
-                            false,
-                            widget_id,
-                        ),
-                        _ => {}
                     }
                 }
 
@@ -712,32 +727,34 @@ impl Painter {
     ) {
         use BottomWidgetType::*;
         for (widget, widget_draw_loc) in widgets.children.iter().zip(widget_draw_locs) {
-            match &widget.widget_type {
-                Empty => {}
-                Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
-                Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
-                Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
-                Temp => {
-                    self.draw_temp_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
+            if widget_draw_loc.width >= 2 && widget_draw_loc.height >= 2 {
+                match &widget.widget_type {
+                    Empty => {}
+                    Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
+                    Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
+                    Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
+                    Temp => {
+                        self.draw_temp_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
+                    }
+                    Disk => {
+                        self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
+                    }
+                    Proc => self.draw_process_features(
+                        f,
+                        app_state,
+                        *widget_draw_loc,
+                        true,
+                        widget.widget_id,
+                    ),
+                    Battery => self.draw_battery_display(
+                        f,
+                        app_state,
+                        *widget_draw_loc,
+                        true,
+                        widget.widget_id,
+                    ),
+                    _ => {}
                 }
-                Disk => {
-                    self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
-                }
-                Proc => self.draw_process_features(
-                    f,
-                    app_state,
-                    *widget_draw_loc,
-                    true,
-                    widget.widget_id,
-                ),
-                Battery => self.draw_battery_display(
-                    f,
-                    app_state,
-                    *widget_draw_loc,
-                    true,
-                    widget.widget_id,
-                ),
-                _ => {}
             }
         }
     }
