@@ -5,11 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.7]/[0.7.0] - Unreleased
+## [0.6.8] / [0.7.0] - Unreleased
 
-## Feature
+## [0.6.7] - 2022-01-31
+
+## Bug Fixes
+
+- [#655](https://github.com/ClementTsang/bottom/pull/665): Fix bug where the program would stall in an infinite loop if the width of the terminal was too small.
+
+## Features
 
 - [#646](https://github.com/ClementTsang/bottom/pull/646): Add `PgUp`/`PgDown` keybind support to scroll up and down a page in a table.
+
+## Internal Changes
+
+- [#658](https://github.com/ClementTsang/bottom/pull/658): Update sysinfo.
 
 ## [0.6.6] - 2021-12-22
 
