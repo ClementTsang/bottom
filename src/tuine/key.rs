@@ -30,3 +30,19 @@ impl Key {
         }
     }
 }
+
+#[derive(Default, Clone, Copy, Debug)]
+pub struct KeyCreator {
+    index: usize,
+}
+
+impl KeyCreator {
+    pub fn new_key(&mut self, caller: impl Into<Caller>) -> Key {
+        self.index += 1;
+        Key::new(caller, self.index)
+    }
+
+    pub fn reset(&mut self) {
+        self.index = 0;
+    }
+}

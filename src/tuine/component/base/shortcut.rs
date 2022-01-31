@@ -8,8 +8,8 @@ use rustc_hash::FxHashMap;
 use tui::{backend::Backend, layout::Rect, Frame};
 
 use crate::tuine::{
-    Bounds, DrawContext, Event, Key, LayoutNode, Size, StateContext, StatefulComponent, Status,
-    TmpComponent,
+    Bounds, BuildContext, DrawContext, Event, Key, LayoutNode, Size, StateContext,
+    StatefulComponent, Status, TmpComponent,
 };
 
 const MAX_TIMEOUT: Duration = Duration::from_millis(400);
@@ -145,7 +145,7 @@ where
 
     type ComponentState = ShortcutState;
 
-    fn build(ctx: &mut crate::tuine::BuildContext<'_>, props: Self::Properties) -> Self {
+    fn build(ctx: &mut BuildContext<'_>, props: Self::Properties) -> Self {
         let (key, state) =
             ctx.register_and_mut_state::<_, Self::ComponentState>(Location::caller());
         let mut forest: FxHashMap<Vec<Event>, bool> = FxHashMap::default();

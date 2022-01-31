@@ -191,13 +191,15 @@ impl<Message> TmpComponent<Message> for Flex<Message> {
         // If there is still remaining space after, distribute the rest if
         // appropriate (e.x. current_size is too small for the bounds).
         if current_size.width < bounds.min_width {
-            // For now, we'll cheat and just set it to be equal.
+            // FIXME: For now, we'll cheat and just set it to be equal.
             current_size.width = bounds.min_width;
         }
         if current_size.height < bounds.min_height {
-            // For now, we'll cheat and just set it to be equal.
+            // FIXME: For now, we'll cheat and just set it to be equal.
             current_size.height = bounds.min_height;
         }
+
+        // FIXME: Remove area 0 children
 
         // Now that we're done determining sizes, convert all children into the appropriate
         // layout nodes.  Remember - parents determine children, and so, we determine

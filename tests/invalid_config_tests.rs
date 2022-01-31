@@ -25,7 +25,7 @@ fn test_empty_layout() {
         .arg("./tests/invalid_configs/empty_layout.toml")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("Configuration file error")); // FIXME: [Urgent] Use a const for the error pattern
+        .stderr(predicate::str::contains("cannot be empty")); // FIXME: [Urgent] Use a const for the error pattern
 }
 
 #[test]

@@ -18,7 +18,6 @@ path = "src/bin/main.rs"
 doc = false
 
 [lib]
-test = false
 doctest = false
 doc = false
 
@@ -43,6 +42,7 @@ enum_dispatch = "0.3.7"
 float-ord = "0.3.2"
 futures = "0.3.14"
 futures-timer = "3.0.2" # TODO: Remove?
+gapbuffer = "0.1.1"
 indextree = "4.3.1" # TODO: Remove?
 itertools = "0.10.0"
 once_cell = "1.5.2"

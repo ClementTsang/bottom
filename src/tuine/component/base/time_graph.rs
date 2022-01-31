@@ -27,28 +27,3 @@ pub struct TimeGraph {
 }
 
 impl TimeGraph {}
-
-impl<Message> TmpComponent<Message> for TimeGraph {
-    fn draw<Backend>(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>,
-        frame: &mut Frame<'_, Backend>,
-    ) where
-        Backend: tui::backend::Backend,
-    {
-        todo!()
-    }
-
-    fn on_event(
-        &mut self, state_ctx: &mut StateContext<'_>, draw_ctx: &DrawContext<'_>, event: Event,
-        messages: &mut Vec<Message>,
-    ) -> Status {
-        Status::Ignored
-    }
-
-    fn layout(&self, bounds: Bounds, node: &mut LayoutNode) -> crate::tuine::Size {
-        crate::tuine::Size {
-            width: bounds.max_width,
-            height: bounds.max_height,
-        }
-    }
-}

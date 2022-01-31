@@ -90,7 +90,7 @@ impl<Message> TextTable<Message> {
                     0
                 } else {
                     // +1 for the spacing
-                    width_remaining -= width + 1;
+                    width_remaining = width_remaining.saturating_sub(width + 1);
                     width
                 }
             })
@@ -372,7 +372,7 @@ impl<Message> TmpComponent<Message> for TextTable<Message> {
 #[cfg(test)]
 mod tests {
     use crate::tuine::{
-        text_table::SortType, StateMap, StatefulComponent, TextTableProps, BuildContext,
+        text_table::SortType, BuildContext, StateMap, StatefulComponent, TextTableProps,
     };
 
     use super::{DataRow, TextTable};
