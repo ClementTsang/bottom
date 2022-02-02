@@ -211,6 +211,7 @@ impl DataCollector {
         #[cfg(not(target_os = "linux"))]
         {
             if self.widgets_to_harvest.use_proc {
+                self.sys.refresh_cpu();
                 self.sys.refresh_processes();
             }
             if self.widgets_to_harvest.use_temp {
