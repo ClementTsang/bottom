@@ -6,15 +6,20 @@ labels: "packaging"
 assignees: ""
 ---
 
-## Details
+## Describe the issue
 
-What is the issue? Please be clear and concise.
+What is the packaging-related issue? Please be clear and concise.
 
-Some notes:
+Please note:
 
-- If the issue is specifically about an existing package/distribution, consider contacting the package maintainer
+- If the issue is specifically about an existing package/distribution, please consider contacting the package maintainer
   instead in the appropriate location.
+  
+  The maintainers of this repo manage the distributions of bottom on:
+  - crates.io
+  - Chocolatey
+  - Releases on GitHub
 
 - If this issue is about supporting a new package manager/installation method,
-  please do consider maintaining it yourself and sending in a PR, and I'll be glad accept it!
+  please consider maintaining it yourself and sending in a PR, and I'll be glad to accept it!
   See [the documentation](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/) for more information.
