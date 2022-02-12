@@ -49,6 +49,11 @@ pub async fn get_temperature_data(
         }
     }
 
+    #[cfg(feature = "nvidia")]
+    {
+        super::nvidia::add_nvidia_data(&mut temperature_vec, temp_type, filter)?;
+    }
+
     temp_vec_sort(&mut temperature_vec);
     Ok(Some(temperature_vec))
 }
