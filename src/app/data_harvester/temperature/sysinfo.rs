@@ -1,6 +1,9 @@
 //! Gets temperature data via sysinfo.
 
-use super::{is_temp_filtered, temp_vec_sort, TempHarvest, TemperatureType};
+use super::{
+    convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, temp_vec_sort,
+    TempHarvest, TemperatureType,
+};
 use crate::app::Filter;
 
 pub async fn get_temperature_data(
@@ -10,14 +13,6 @@ pub async fn get_temperature_data(
 
     if !actually_get {
         return Ok(None);
-    }
-
-    fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
-        celsius + 273.15
-    }
-
-    fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
-        (celsius * (9.0 / 5.0)) + 32.0
     }
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
@@ -38,6 +33,11 @@ pub async fn get_temperature_data(
                 },
             });
         }
+    }
+
+    #[cfg(feature = "nvidia")]
+    {
+        super::nvidia::add_nvidia_data(&mut temperature_vec, temp_type, filter)?;
     }
 
     temp_vec_sort(&mut temperature_vec);

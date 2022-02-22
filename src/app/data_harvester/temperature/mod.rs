@@ -13,6 +13,9 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(feature = "nvidia")]
+pub mod nvidia;
+
 use std::cmp::Ordering;
 
 use crate::app::Filter;
@@ -33,6 +36,18 @@ pub enum TemperatureType {
 impl Default for TemperatureType {
     fn default() -> Self {
         TemperatureType::Celsius
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(any(feature = "nvidia", target_os = "macos", target_os = "windows"))] {
+        fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+            celsius + 273.15
+        }
+
+        fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+            (celsius * (9.0 / 5.0)) + 32.0
+        }
     }
 }
 
