@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.9] / [0.7.0] - Unreleased
 
+## Features
+
+- [#676](https://github.com/ClementTsang/bottom/pull/676): Adds support for NVIDIA GPU temperature sensors.
+
 ## [0.6.8] - 2022-02-01
 
 ## Bug Fixes
