@@ -52,8 +52,7 @@ itertools = "0.10.0"
 once_cell = "1.5.2"
 regex = "1.5.4"
 serde = { version = "1.0.125", features = ["derive"] }
-# Sysinfo is still used in Linux for the ProcessStatus
-sysinfo = "0.23.0"
+sysinfo = "0.23.4"
 thiserror = "1.0.24"
 time = { version = "0.3.5", features = ["formatting", "macros"] }
 toml = "0.5.8"
@@ -62,7 +61,6 @@ typed-builder = "0.9.0"
 unicode-segmentation = "1.7.1"
 unicode-width = "0.1"
 
-# For debugging only... disable on release builds with for now?  TODO: Redo this.
 fern = { version = "0.6.0", optional = true }
 log = { version = "0.4.14", optional = true }
 battery = { version = "0.7.8", optional = true }
