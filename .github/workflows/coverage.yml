@@ -20,7 +20,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
-          paths: '["tests/**", "src/**", ".github/workflows/codecov.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
+          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
           do_not_skip: '["workflow_dispatch"]'
 
   coverage:
