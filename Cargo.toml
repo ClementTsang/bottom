@@ -30,6 +30,7 @@ lto = true
 # lto = false
 opt-level = 3
 codegen-units = 1
+strip = "symbols"
 
 [features]
 default = ["fern", "log", "battery", "gpu"]
