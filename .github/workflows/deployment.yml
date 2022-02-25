@@ -59,7 +59,6 @@ jobs:
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-gnu",
               cross: false,
-              strip: true,
             }
           - {
               os: "ubuntu-18.04",
@@ -67,31 +66,26 @@ jobs:
               cross: false,
               container: quay.io/pypa/manylinux2014_x86_64,
               suffix: "2-17",
-              strip: true,
             }
           - {
               os: "ubuntu-18.04",
               target: "i686-unknown-linux-gnu",
               cross: true,
-              strip: true,
             }
           - {
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-musl",
               cross: false,
-              strip: true,
             }
           - {
               os: "ubuntu-18.04",
               target: "i686-unknown-linux-musl",
               cross: true,
-              strip: true,
             }
           - {
               os: "macOS-latest",
               target: "x86_64-apple-darwin",
               cross: false,
-              strip: true,
             }
           - {
               os: "windows-2019",
@@ -163,13 +157,6 @@ jobs:
         run: |
           mkdir completion
           cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/. completion
-
-      - name: Strip release binary (macOS or Linux x86-64/i686)
-        if: matrix.triple.strip == true
-        run: |
-          strip target/${{ matrix.triple.target }}/release/btm
-
-      # TODO: Strip ARM
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
