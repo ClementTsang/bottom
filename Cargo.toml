@@ -40,7 +40,7 @@ anyhow = "1.0.40"
 backtrace = "0.3.59"
 crossterm = "0.18.2"
 ctrlc = { version = "3.1.9", features = ["termination"] }
-clap = "2.33"
+clap = { version = "3.1.6", features = ["default", "cargo"] }
 cfg-if = "1.0"
 dirs = "4.0.0"
 futures = "0.3.14"
@@ -85,13 +85,23 @@ assert_cmd = "2.0"
 predicates = "2.1"
 
 [build-dependencies]
-clap = "2.33"
+clap = { version = "3.1.6", features = ["default", "cargo"] }
+clap_complete = "3.1.1"
+
 
 [package.metadata.deb]
 section = "utility"
 assets = [
-    ["target/release/btm", "usr/bin/", "755"],
-    ["LICENSE", "usr/share/doc/btm/", "644"],
+    [
+        "target/release/btm",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "LICENSE",
+        "usr/share/doc/btm/",
+        "644",
+    ],
     [
         "completion/btm.bash",
         "usr/share/bash-completion/completions/btm",
@@ -102,7 +112,11 @@ assets = [
         "usr/share/fish/vendor_completions.d/btm.fish",
         "644",
     ],
-    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
+    [
+        "completion/_btm",
+        "usr/share/zsh/vendor-completions/",
+        "644",
+    ],
 ]
 extended-description = """\
 A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
