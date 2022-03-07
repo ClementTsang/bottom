@@ -467,7 +467,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
 }
 
 fn sort_process_data(
-    to_sort_vec: &mut Vec<ConvertedProcessData>, proc_widget_state: &app::ProcWidgetState,
+    to_sort_vec: &mut [ConvertedProcessData], proc_widget_state: &app::ProcWidgetState,
 ) {
     to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
 

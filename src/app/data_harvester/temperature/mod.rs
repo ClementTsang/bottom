@@ -70,7 +70,7 @@ fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
     }
 }
 
-fn temp_vec_sort(temperature_vec: &mut Vec<TempHarvest>) {
+fn temp_vec_sort(temperature_vec: &mut [TempHarvest]) {
     // By default, sort temperature, then by alphabetically!
     // TODO: [TEMPS] Allow users to control this.
 

@@ -882,7 +882,7 @@ pub fn tree_process_data(
     }
 
     fn sort_vec(
-        to_sort_vec: &mut Vec<(Pid, &ConvertedProcessData)>, sort_type: &ProcessSorting,
+        to_sort_vec: &mut [(Pid, &ConvertedProcessData)], sort_type: &ProcessSorting,
         is_sort_descending: bool,
     ) {
         // Sort by PID first (descending)
