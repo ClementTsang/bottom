@@ -199,9 +199,9 @@ pub fn build_app() -> Command<'static> {
 
     let use_old_network_legend = Arg::new("use_old_network_legend")
         .long("use_old_network_legend")
-        .help("DEPRECATED - uses the older network legend.")
+        .help("DEPRECATED - uses a separate network legend.")
         .long_help(
-            "DEPRECATED - uses the older (pre-0.4) network widget legend. This display is not \
+            "DEPRECATED - uses an older (pre-0.4), separate network widget legend. This display is not \
             tested anymore and could be broken.",
         );
 
@@ -352,6 +352,10 @@ use CPU (3) as the default instead.
         .about(crate_description!())
         .override_usage(USAGE)
         .help_template(TEMPLATE)
+        .mut_arg("help", |a| {
+            a.help("Prints help information. Use --help for more info.")
+        })
+        .mut_arg("version", |a| a.help("Prints version information."))
         .arg(kelvin)
         .arg(fahrenheit)
         .arg(celsius)
