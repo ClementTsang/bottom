@@ -1,5 +1,6 @@
-use clap::Shell;
+use clap_complete::{generate_to, shells::Shell};
 use std::{env, fs, process};
+
 include!("src/clap.rs");
 
 fn main() {
@@ -24,8 +25,9 @@ fn main() {
 
     // Generate completions
     let mut app = build_app();
-    app.gen_completions("btm", Shell::Bash, &out_dir);
-    app.gen_completions("btm", Shell::Zsh, &out_dir);
-    app.gen_completions("btm", Shell::Fish, &out_dir);
-    app.gen_completions("btm", Shell::PowerShell, &out_dir);
+    generate_to(Shell::Bash, &mut app, "btm", &out_dir).unwrap();
+    generate_to(Shell::Zsh, &mut app, "btm", &out_dir).unwrap();
+    generate_to(Shell::Fish, &mut app, "btm", &out_dir).unwrap();
+    generate_to(Shell::PowerShell, &mut app, "btm", &out_dir).unwrap();
+    generate_to(Shell::Elvish, &mut app, "btm", &out_dir).unwrap();
 }
