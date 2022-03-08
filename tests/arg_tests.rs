@@ -130,9 +130,7 @@ fn test_conflicting_temps() {
         .arg("-f")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "cannot be used with one or more of the other specified arguments",
-        ));
+        .stderr(predicate::str::contains("cannot be used with"));
 }
 
 #[test]
