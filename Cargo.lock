@@ -230,7 +230,6 @@ dependencies = [
  "cargo-husky",
  "cfg-if",
  "clap",
- "clap_complete",
  "crossterm",
  "ctrlc",
  "dirs",
@@ -323,15 +322,6 @@ dependencies = [
  "termcolor",
  "terminal_size",
  "textwrap",
-]
-
-[[package]]
-name = "clap_complete"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df6f3613c0a3cddfd78b41b10203eb322cb29b600cbdf808a7d3db95691b8e25"
-dependencies = [
- "clap",
 ]
 
 [[package]]
