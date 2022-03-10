@@ -82,11 +82,7 @@ jobs:
               target: "i686-unknown-linux-musl",
               cross: true,
             }
-          - {
-              os: "macOS-latest",
-              target: "x86_64-apple-darwin",
-              cross: false,
-            }
+          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
@@ -152,11 +148,15 @@ jobs:
           args: --release --verbose --target=${{ matrix.triple.target }} --features "battery"
           use-cross: ${{ matrix.triple.cross }}
 
-      - name: Move autocomplete to working directory
+      - name: Build autocompletion
         shell: bash
         run: |
-          mkdir completion
-          cp -r ./target/${{ matrix.triple.target }}/release/build/bottom-*/out/. completion
+          cargo run --manifest-path ./xtask/Cargo.toml -- completion completion
+
+      - name: Build manpage
+        shell: bash
+        run: |
+          cargo run --manifest-path ./xtask/Cargo.toml -- manpage manpage
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
@@ -187,6 +187,13 @@ jobs:
         run: |
           tar -C ./completion -czvf completion.tar.gz .
           mv completion.tar.gz release/
+
+      - name: Compress manpage files (Linux x86-64 GNU)
+        if: matrix.triple.target == 'x86_64-unknown-linux-gnu' && matrix.triple.container == ''
+        shell: bash
+        run: |
+          tar -C ./manpage -czvf manpage.tar.gz .
+          mv manpage.tar.gz release/
 
       - name: Save release as artifact
         uses: actions/upload-artifact@v2
