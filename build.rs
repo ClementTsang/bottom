@@ -40,6 +40,7 @@ fn main() -> Result<()> {
         generate_to(Shell::Elvish, &mut app, "btm", &completion_out_dir)?;
 
         // Generate manpage
+        let app = app.name("btm");
         let man = clap_mangen::Man::new(app);
         let mut buffer: Vec<u8> = Default::default();
         man.render(&mut buffer)?;
