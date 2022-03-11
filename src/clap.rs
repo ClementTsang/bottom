@@ -225,6 +225,7 @@ pub fn build_app() -> Command<'static> {
             If it doesn't exist, one is created.",
         );
 
+    // TODO: Fix this, its broken in the manpage
     let color = Arg::new("color")
         .long("color")
         .takes_value(true)
@@ -274,6 +275,7 @@ Defaults to \"default\".
         .help("Default time value for graphs in ms.")
         .long_help("Default time value for graphs in milliseconds. The minimum time is 30s (30000), and the default is 60s (60000).");
 
+    // TODO: Fix this, its broken in the manpage
     let default_widget_count = Arg::new("default_widget_count")
         .long("default_widget_count")
         .takes_value(true)
