@@ -11,6 +11,7 @@ description = "A customizable cross-platform graphical process/system monitor fo
 documentation = "https://clementtsang.github.io/bottom/stable"
 readme = "README.md"
 default-run = "btm"
+build = "build.rs"
 
 [[bin]]
 name = "btm"
@@ -83,6 +84,10 @@ winapi = "0.3.9"
 assert_cmd = "2.0"
 predicates = "2.1"
 
+[build-dependencies]
+clap = { version = "3.1.6", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "3.1.1"
+clap_mangen = "0.1.2"
 
 [package.metadata.deb]
 section = "utility"

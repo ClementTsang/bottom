@@ -348,7 +348,7 @@ use CPU (3) as the default instead.
             "Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rather than a decimal prefix (i.e. kilobits, megabits). Defaults to decimal prefixes.",
         );
 
-    let app = Command::new("btm")
+    let app = Command::new(crate_name!())
         .version(crate_version!())
         .author(crate_authors!())
         .about(crate_description!())

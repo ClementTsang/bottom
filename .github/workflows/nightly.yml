@@ -144,15 +144,10 @@ jobs:
           args: --release --verbose --target=${{ matrix.triple.target }} --features "battery"
           use-cross: ${{ matrix.triple.cross }}
 
-      - name: Build autocompletion
+      - name: Build autocompletion and manpage
         shell: bash
         run: |
-          cargo run --manifest-path ./xtask/Cargo.toml -- completion completion
-
-      - name: Build manpage
-        shell: bash
-        run: |
-          cargo run --manifest-path ./xtask/Cargo.toml -- manpage manpage
+          GENERATE=true cargo build
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
