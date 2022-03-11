@@ -309,11 +309,11 @@ jobs:
           command: build
           args: --release --verbose --features "battery"
 
-      - name: Move autocomplete to working directory
+      - name: Build autocompletion and manpage
         shell: bash
         run: |
-          mkdir completion
-          cp -r ./target/release/build/bottom-*/out/. completion
+          GENERATE=true cargo build
+          gzip ./manpage/btm.1
 
       - name: Build Debian release
         run: |
