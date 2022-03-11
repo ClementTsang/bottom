@@ -98,6 +98,11 @@ assets = [
         "644",
     ],
     [
+        "manpage/btm.1.gz",
+        "usr/share/man/man1/btm.1.gz",
+        "644",
+    ],
+    [
         "completion/btm.bash",
         "usr/share/bash-completion/completions/btm",
         "644",
