@@ -162,7 +162,7 @@ pub fn build_app() -> Command<'static> {
 
     let hide_table_gap = Arg::new("hide_table_gap")
         .long("hide_table_gap")
-        .help("Hides the spacing between table headers and entries.")
+        .help("Hides spacing between table headers and entries.")
         .long_help("Hides the spacing between table headers and entries.");
 
     let hide_time = Arg::new("hide_time")
@@ -189,8 +189,8 @@ pub fn build_app() -> Command<'static> {
 
     let disable_advanced_kill = Arg::new("disable_advanced_kill")
         .long("disable_advanced_kill")
-        .help("Hides advanced options to stop a process on Unix-like systems.")
-        .long_help("Hides advanced options to stop a process on Unix-like systems. The only option shown is -15.");
+        .help("Hides advanced process killing.")
+        .long_help("Hides advanced options to stop a process on Unix-like systems. The only option shown is 15 (TERM).");
 
     let show_table_scroll_position = Arg::new("show_table_scroll_position")
         .long("show_table_scroll_position")
@@ -239,7 +239,7 @@ pub fn build_app() -> Command<'static> {
             "nord-light",
         ])
         .hide_possible_values(true)
-        .help("Use a color scheme, use --help for supported values.")
+        .help("Use a color scheme, use --help for info.")
         .long_help(
             "\
 Use a pre-defined color scheme. Currently supported values are:
@@ -306,7 +306,7 @@ use CPU (3) as the default instead.
         .long("default_widget_type")
         .takes_value(true)
         .value_name("WIDGET TYPE")
-        .help("Sets the default widget type, use --help for more info.")
+        .help("Sets the default widget type, use --help for info.")
         .long_help(DEFAULT_WIDGET_TYPE_STR);
 
     let rate = Arg::new("rate")
@@ -328,7 +328,7 @@ use CPU (3) as the default instead.
     let tree = Arg::new("tree")
         .short('T')
         .long("tree")
-        .help("Defaults to showing the process widget in tree mode.")
+        .help("Defaults the process widget be in tree mode.")
         .long_help("Defaults to showing the process widget in tree mode.");
 
     let network_use_bytes = Arg::new("network_use_bytes")
@@ -355,7 +355,7 @@ use CPU (3) as the default instead.
         .override_usage(USAGE)
         .help_template(TEMPLATE)
         .mut_arg("help", |a| {
-            a.help("Prints help information. Use --help for more info.")
+            a.help("Prints help information. Use --help for info.")
         })
         .mut_arg("version", |a| a.help("Prints version information."))
         .arg(kelvin)
