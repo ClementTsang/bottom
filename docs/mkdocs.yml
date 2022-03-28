@@ -141,7 +141,7 @@ nav:
           - "Layout": configuration/config-file/layout.md
           - "Data Filtering": configuration/config-file/data-filtering.md
   - "Contribution":
-      - "Issues and Pull Requests": contribution/issues-and-pull-requests.md
+      - "Issues, Pull Requests, and Discussions": contribution/issues-and-pull-requests.md
       - "Documentation": contribution/documentation.md
       - "Development": contribution/development.md
       - "Packaging and Distribution": contribution/packaging-and-distribution.md
