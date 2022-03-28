@@ -28,4 +28,4 @@ There are a few areas where documentation changes are often needed:
 
      You may also want [Mike](https://github.com/jimporter/mike), but it isn't really needed.
 
-3. Once you have your documentation changes done, submit it as a pull request. For more information regarding that, refer to [Issues and Pull Requests](http://127.0.0.1:8000/contribution/issues-and-pull-requests/).
+3. Once you have your documentation changes done, submit it as a pull request. For more information regarding that, refer to [Issues, Pull Requests, and Discussions](../issues-and-pull-requests/).
