@@ -438,7 +438,7 @@ impl NetworkGraphWidget for Painter {
                 Axis::default().bounds([time_start, 0.0])
             } else if let Some(time) = network_widget_state.autohide_timer {
                 if std::time::Instant::now().duration_since(time).as_millis()
-                    < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
+                    < AUTOHIDE_TIMEOUT_MILLISECONDS.into()
                 {
                     Axis::default()
                         .bounds([time_start, 0.0])
@@ -761,7 +761,7 @@ impl NetworkGraphWidget for Painter {
                 .widths(
                     &(intrinsic_widths
                         .iter()
-                        .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+                        .map(|calculated_width| Constraint::Length(*calculated_width))
                         .collect::<Vec<_>>()),
                 ),
             draw_loc,

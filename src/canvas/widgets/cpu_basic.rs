@@ -70,7 +70,7 @@ impl CpuBasicWidget for Painter {
                 const COMBINED_SPACING: usize =
                     CPU_NAME_SPACE + BAR_BOUND_SPACE + PERCENTAGE_SPACE + MARGIN_SPACE;
                 const REDUCED_SPACING: usize = CPU_NAME_SPACE + PERCENTAGE_SPACE + MARGIN_SPACE;
-                let chunk_width = chunks[0].width as usize;
+                let chunk_width: usize = chunks[0].width.into();
 
                 // Inspired by htop.
                 // We do +4 as if it's too few bars in the bar length, it's kinda pointless.

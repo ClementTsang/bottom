@@ -50,7 +50,7 @@ impl MemGraphWidget for Painter {
                 Axis::default().bounds([time_start, 0.0])
             } else if let Some(time) = mem_widget_state.autohide_timer {
                 if std::time::Instant::now().duration_since(time).as_millis()
-                    < AUTOHIDE_TIMEOUT_MILLISECONDS as u128
+                    < AUTOHIDE_TIMEOUT_MILLISECONDS.into()
                 {
                     Axis::default()
                         .bounds([time_start, 0.0])
