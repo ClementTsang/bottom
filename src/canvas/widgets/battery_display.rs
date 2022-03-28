@@ -165,7 +165,7 @@ impl BatteryDisplayWidget for Painter {
                     margined_draw_loc,
                 );
             } else {
-                let mut contents = vec![Spans::default(); table_gap as usize];
+                let mut contents = vec![Spans::default(); table_gap.into()];
 
                 contents.push(Spans::from(Span::styled(
                     "No data found for this battery",

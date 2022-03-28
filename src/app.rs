@@ -1,7 +1,6 @@
 use std::{
     cmp::{max, min},
     collections::HashMap,
-    // io::Write,
     path::PathBuf,
     time::Instant,
 };
@@ -1383,7 +1382,7 @@ impl App {
             if current_key_press_inst
                 .duration_since(self.last_key_press)
                 .as_millis()
-                > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS as u128
+                > constants::MAX_KEY_TIMEOUT_IN_MILLISECONDS.into()
             {
                 self.reset_multi_tap_keys();
             }
@@ -1450,10 +1449,10 @@ impl App {
                 '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                     let potential_index = caught_char.to_digit(10);
                     if let Some(potential_index) = potential_index {
-                        if (potential_index as usize) < self.help_dialog_state.index_shortcuts.len()
-                        {
+                        let potential_index = potential_index as usize;
+                        if (potential_index) < self.help_dialog_state.index_shortcuts.len() {
                             self.help_scroll_to_or_max(
-                                self.help_dialog_state.index_shortcuts[potential_index as usize],
+                                self.help_dialog_state.index_shortcuts[potential_index],
                             );
                         }
                     }

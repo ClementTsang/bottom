@@ -128,17 +128,19 @@ impl DiskTableWidget for Painter {
                                     if *desired_col_width > *calculated_col_width
                                         && *calculated_col_width > 0
                                     {
+                                        let calculated_col_width: usize =
+                                            (*calculated_col_width).into();
+
                                         let graphemes =
                                             UnicodeSegmentation::graphemes(entry.as_str(), true)
                                                 .collect::<Vec<&str>>();
 
-                                        if graphemes.len() > *calculated_col_width as usize
-                                            && *calculated_col_width > 1
+                                        if graphemes.len() > calculated_col_width
+                                            && calculated_col_width > 1
                                         {
                                             // Truncate with ellipsis
-                                            let first_n = graphemes
-                                                [..(*calculated_col_width as usize - 1)]
-                                                .concat();
+                                            let first_n =
+                                                graphemes[..(calculated_col_width - 1)].concat();
                                             return Text::raw(format!("{}…", first_n));
                                         }
                                     }
@@ -171,7 +173,7 @@ impl DiskTableWidget for Painter {
                     app_state.canvas_data.disk_data.len()
                 );
 
-                if title_string.len() <= draw_loc.width as usize {
+                if title_string.len() <= draw_loc.width.into() {
                     title_string
                 } else {
                     " Disk ".to_string()
@@ -186,7 +188,7 @@ impl DiskTableWidget for Painter {
                 let (chosen_title_base, expanded_title_base) = {
                     let temp_title_base = format!("{}{}", title_base, ESCAPE_ENDING);
 
-                    if temp_title_base.len() > draw_loc.width as usize {
+                    if temp_title_base.len() > draw_loc.width.into() {
                         (
                             " Disk ".to_string(),
                             format!("{}{}", " Disk ", ESCAPE_ENDING),
@@ -254,7 +256,7 @@ impl DiskTableWidget for Painter {
                             .table_width_state
                             .calculated_column_widths
                             .iter()
-                            .map(|calculated_width| Constraint::Length(*calculated_width as u16))
+                            .map(|calculated_width| Constraint::Length(*calculated_width))
                             .collect::<Vec<_>>()),
                     ),
                 margined_draw_loc,

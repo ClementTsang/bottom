@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    convert::TryInto,
     path::PathBuf,
     str::FromStr,
     time::Instant,
@@ -592,28 +593,28 @@ fn get_update_rate_in_milliseconds(
     matches: &clap::ArgMatches, config: &Config,
 ) -> error::Result<u64> {
     let update_rate_in_milliseconds = if let Some(update_rate) = matches.value_of("rate") {
-        update_rate.parse::<u128>()?
+        update_rate.parse::<u64>().map_err(|_| {
+            BottomError::ConfigError(
+                "could not parse as a valid 64-bit unsigned integer".to_string(),
+            )
+        })?
     } else if let Some(flags) = &config.flags {
         if let Some(rate) = flags.rate {
-            rate as u128
+            rate
         } else {
-            DEFAULT_REFRESH_RATE_IN_MILLISECONDS as u128
+            DEFAULT_REFRESH_RATE_IN_MILLISECONDS
         }
     } else {
-        DEFAULT_REFRESH_RATE_IN_MILLISECONDS as u128
+        DEFAULT_REFRESH_RATE_IN_MILLISECONDS
     };
 
     if update_rate_in_milliseconds < 250 {
         return Err(BottomError::ConfigError(
             "set your update rate to be at least 250 milliseconds.".to_string(),
         ));
-    } else if update_rate_in_milliseconds as u128 > std::u64::MAX as u128 {
-        return Err(BottomError::ConfigError(
-            "set your update rate to be at most unsigned INT_MAX.".to_string(),
-        ));
     }
 
-    Ok(update_rate_in_milliseconds as u64)
+    Ok(update_rate_in_milliseconds)
 }
 
 fn get_temperature(
@@ -704,56 +705,64 @@ fn get_use_basic_mode(matches: &clap::ArgMatches, config: &Config) -> bool {
 
 fn get_default_time_value(matches: &clap::ArgMatches, config: &Config) -> error::Result<u64> {
     let default_time = if let Some(default_time_value) = matches.value_of("default_time_value") {
-        default_time_value.parse::<u128>()?
+        default_time_value.parse::<u64>().map_err(|_| {
+            BottomError::ConfigError(
+                "could not parse as a valid 64-bit unsigned integer".to_string(),
+            )
+        })?
     } else if let Some(flags) = &config.flags {
         if let Some(default_time_value) = flags.default_time_value {
-            default_time_value as u128
+            default_time_value
         } else {
-            DEFAULT_TIME_MILLISECONDS as u128
+            DEFAULT_TIME_MILLISECONDS
         }
     } else {
-        DEFAULT_TIME_MILLISECONDS as u128
+        DEFAULT_TIME_MILLISECONDS
     };
 
     if default_time < 30000 {
         return Err(BottomError::ConfigError(
             "set your default value to be at least 30000 milliseconds.".to_string(),
         ));
-    } else if default_time as u128 > STALE_MAX_MILLISECONDS as u128 {
+    } else if default_time > STALE_MAX_MILLISECONDS {
         return Err(BottomError::ConfigError(format!(
             "set your default value to be at most {} milliseconds.",
             STALE_MAX_MILLISECONDS
         )));
     }
 
-    Ok(default_time as u64)
+    Ok(default_time)
 }
 
 fn get_time_interval(matches: &clap::ArgMatches, config: &Config) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = matches.value_of("time_delta") {
-        time_interval.parse::<u128>()?
+        time_interval.parse::<u64>().map_err(|_| {
+            BottomError::ConfigError(
+                "could not parse as a valid 64-bit unsigned integer".to_string(),
+            )
+        })?
     } else if let Some(flags) = &config.flags {
         if let Some(time_interval) = flags.time_delta {
-            time_interval as u128
+            time_interval
         } else {
-            TIME_CHANGE_MILLISECONDS as u128
+            TIME_CHANGE_MILLISECONDS
         }
     } else {
-        TIME_CHANGE_MILLISECONDS as u128
+        TIME_CHANGE_MILLISECONDS
     };
 
     if time_interval < 1000 {
         return Err(BottomError::ConfigError(
             "set your time delta to be at least 1000 milliseconds.".to_string(),
         ));
-    } else if time_interval > STALE_MAX_MILLISECONDS as u128 {
+    } else if time_interval > STALE_MAX_MILLISECONDS {
         return Err(BottomError::ConfigError(format!(
             "set your time delta to be at most {} milliseconds.",
             STALE_MAX_MILLISECONDS
         )));
     }
 
-    Ok(time_interval as u64)
+    Ok(time_interval)
 }
 
 pub fn get_app_grouping(matches: &clap::ArgMatches, config: &Config) -> bool {
@@ -853,20 +862,17 @@ fn get_default_widget_and_count(
     } else if let Some(flags) = &config.flags {
         flags
             .default_widget_count
-            .map(|widget_count| widget_count as u128)
+            .map(|widget_count| widget_count.into())
     } else {
         None
     };
 
     match (widget_type, widget_count) {
         (Some(widget_type), Some(widget_count)) => {
-            if widget_count > std::u64::MAX as u128 {
-                Err(BottomError::ConfigError(
-                    "set your widget count to be at most unsigned INT_MAX.".to_string(),
-                ))
-            } else {
-                Ok((Some(widget_type), widget_count as u64))
-            }
+            let widget_count = widget_count.try_into().map_err(|_| BottomError::ConfigError(
+                "set your widget count to be at most unsigned INT_MAX.".to_string()
+            ))?;
+            Ok((Some(widget_type), widget_count))
         }
         (Some(widget_type), None) => Ok((Some(widget_type), 1)),
         (None, Some(_widget_count)) =>  Err(BottomError::ConfigError(

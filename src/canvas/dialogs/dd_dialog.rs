@@ -270,7 +270,7 @@ impl KillDialog for Painter {
 
                 let layout = Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints(vec![Constraint::Min(1); button_rect.height as usize])
+                    .constraints(vec![Constraint::Min(1); button_rect.height.into()])
                     .split(button_rect);
 
                 let prev_offset: usize = app_state.delete_dialog_state.scroll_pos;
@@ -278,15 +278,15 @@ impl KillDialog for Painter {
                     0
                 } else if selected < prev_offset + 1 {
                     selected - 1
-                } else if selected > prev_offset + (layout.len() as usize) - 1 {
-                    selected - (layout.len() as usize) + 1
+                } else if selected > prev_offset + layout.len() - 1 {
+                    selected - layout.len() + 1
                 } else {
                     prev_offset
                 };
                 let scroll_offset: usize = app_state.delete_dialog_state.scroll_pos;
 
-                let mut buttons = signal_text[scroll_offset + 1
-                    ..min((layout.len() as usize) + scroll_offset, signal_text.len())]
+                let mut buttons = signal_text
+                    [scroll_offset + 1..min((layout.len()) + scroll_offset, signal_text.len())]
                     .iter()
                     .map(|text| Span::raw(*text))
                     .collect::<Vec<Span<'_>>>();

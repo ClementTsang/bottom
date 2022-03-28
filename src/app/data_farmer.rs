@@ -121,7 +121,7 @@ impl DataCollection {
                 current_time
                     .duration_since(*instant)
                     .as_millis()
-                    .cmp(&(max_time_millis as u128))
+                    .cmp(&(max_time_millis.into()))
                     .reverse()
             }) {
             Ok(index) => index,

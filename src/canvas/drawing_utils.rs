@@ -98,7 +98,7 @@ pub fn get_column_widths(
             let amount_per_slot = total_width_left / column_widths.len() as u16;
             total_width_left %= column_widths.len() as u16;
             for (index, width) in column_widths.iter_mut().enumerate() {
-                if (index as u16) < total_width_left {
+                if index < total_width_left.into() {
                     *width += amount_per_slot + 1;
                 } else {
                     *width += amount_per_slot;
