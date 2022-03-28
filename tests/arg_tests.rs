@@ -33,9 +33,7 @@ fn test_large_default_time() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "set your default value to be at most",
-        ));
+        .stderr(predicate::str::contains("could not parse"));
 }
 
 #[test]
@@ -61,9 +59,7 @@ fn test_large_delta_time() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "set your time delta to be at most",
-        ));
+        .stderr(predicate::str::contains("could not parse"));
 }
 
 #[test]
@@ -89,9 +85,7 @@ fn test_large_rate() {
         .arg("18446744073709551616")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "set your update rate to be at most unsigned INT_MAX.",
-        ));
+        .stderr(predicate::str::contains("could not parse"));
 }
 
 #[test]
@@ -118,7 +112,7 @@ fn test_invalid_rate() {
         .arg("100-1000")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("invalid digit"));
+        .stderr(predicate::str::contains("could not parse"));
 }
 
 #[test]

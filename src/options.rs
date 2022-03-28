@@ -595,7 +595,7 @@ fn get_update_rate_in_milliseconds(
     let update_rate_in_milliseconds = if let Some(update_rate) = matches.value_of("rate") {
         update_rate.parse::<u64>().map_err(|_| {
             BottomError::ConfigError(
-                "set your update rate to be at most unsigned INT_MAX.".to_string(),
+                "could not parse as a valid 64-bit unsigned integer".to_string(),
             )
         })?
     } else if let Some(flags) = &config.flags {
@@ -705,7 +705,11 @@ fn get_use_basic_mode(matches: &clap::ArgMatches, config: &Config) -> bool {
 
 fn get_default_time_value(matches: &clap::ArgMatches, config: &Config) -> error::Result<u64> {
     let default_time = if let Some(default_time_value) = matches.value_of("default_time_value") {
-        default_time_value.parse::<u64>()?
+        default_time_value.parse::<u64>().map_err(|_| {
+            BottomError::ConfigError(
+                "could not parse as a valid 64-bit unsigned integer".to_string(),
+            )
+        })?
     } else if let Some(flags) = &config.flags {
         if let Some(default_time_value) = flags.default_time_value {
             default_time_value
@@ -732,7 +736,11 @@ fn get_default_time_value(matches: &clap::ArgMatches, config: &Config) -> error:
 
 fn get_time_interval(matches: &clap::ArgMatches, config: &Config) -> error::Result<u64> {
     let time_interval = if let Some(time_interval) = matches.value_of("time_delta") {
-        time_interval.parse::<u64>()?
+        time_interval.parse::<u64>().map_err(|_| {
+            BottomError::ConfigError(
+                "could not parse as a valid 64-bit unsigned integer".to_string(),
+            )
+        })?
     } else if let Some(flags) = &config.flags {
         if let Some(time_interval) = flags.time_delta {
             time_interval
