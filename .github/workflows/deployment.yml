@@ -145,7 +145,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --verbose --target=${{ matrix.triple.target }} --features "battery"
+          args: --release --verbose --locked --target=${{ matrix.triple.target }} --features "battery"
           use-cross: ${{ matrix.triple.cross }}
 
       - name: Build autocompletion and manpage
@@ -313,7 +313,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --verbose --features "battery"
+          args: --release --locked --verbose --features "battery"
 
       - name: Build autocompletion and manpage
         shell: bash

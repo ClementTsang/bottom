@@ -84,10 +84,10 @@ Installation via cargo is done by installing the `bottom` crate:
 # If required, update Rust on the stable channel
 rustup update stable
 
-cargo install bottom
-
-# Alternatively, --locked may be required due to how cargo install works
 cargo install bottom --locked
+
+# Alternatively, --locked may be omitted if you wish to not used locked dependencies:
+cargo install bottom
 ```
 
 ### Arch Linux
