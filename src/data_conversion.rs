@@ -238,6 +238,24 @@ pub fn convert_cpu_data_points(
             break;
         }
     }
+
+    // order cpus in descending values excluding All & AVG
+    // better solution if Point is an array instead of tuple
+    // for sorting the graph (i.e the entire timeline)
+    // I need to sort the cpu values as they come in (the above block)
+    existing_cpu_data.sort_by(|a, b| {
+        let default_values = vec!["All".to_string(), "AVG".to_string()];
+        if default_values.contains(&a.cpu_name) || default_values.contains(&b.cpu_name) || a.cpu_data.is_empty() || b.cpu_data.is_empty() {
+            std::cmp::Ordering::Equal
+        } else if a.cpu_data[a.cpu_data.len() - 1].1 < b.cpu_data[b.cpu_data.len() - 1].1 {
+            std::cmp::Ordering::Greater
+        } else if a.cpu_data[a.cpu_data.len() - 1].1 == b.cpu_data[b.cpu_data.len() - 1].1 {
+            std::cmp::Ordering::Equal
+        } else {
+            std::cmp::Ordering::Less
+        }
+    });
+
 }
 
 pub fn convert_mem_data_points(
