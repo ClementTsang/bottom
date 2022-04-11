@@ -50,6 +50,7 @@ pub struct AppConfigFields {
     pub left_legend: bool,
     pub show_average_cpu: bool,
     pub use_current_cpu_total: bool,
+    pub cpu_sort: bool,
     pub use_basic_mode: bool,
     pub default_time_value: u64,
     pub time_interval: u64,

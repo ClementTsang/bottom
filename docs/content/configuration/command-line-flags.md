@@ -16,6 +16,7 @@ The following flags can be provided to bottom in the command line to change the 
 | `--color <COLOR SCHEME>`              | Use a color scheme, use --help for supported values.           |
 | `-C, --config <CONFIG PATH>`          | Sets the location of the config file.                          |
 | `-u, --current_usage`                 | Sets process CPU% to be based on current CPU%.                 |
+| `-s, --cpu_sort`                      | Orders CPUs by value.                                          |
 | `-t, --default_time_value <MS>`       | Default time value for graphs in ms.                           |
 | `--default_widget_count <INT>`        | Sets the n'th selected widget type as the default.             |
 | `--default_widget_type <WIDGET TYPE>` | Sets the default widget type, use --help for more info.        |
