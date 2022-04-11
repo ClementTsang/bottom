@@ -251,6 +251,7 @@ pub fn convert_cpu_data_points(
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
             if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
                 if itx > 0 { // skip sorting avg
+                    cpu_data.legend_value = format!("{:.0}%", sorted_cpu_data[itx-1].round());
                     cpu_data.cpu_data.push((-time_from_start, sorted_cpu_data[itx-1]));
                 } else {
                     cpu_data.cpu_data.push((-time_from_start, *cpu));
