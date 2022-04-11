@@ -228,9 +228,33 @@ pub fn convert_cpu_data_points(
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 
+        let mut sorted_cpu_data = Vec::new();
+        for (itx, cpu) in data.cpu_data.iter().enumerate() {
+            if let Some(_cpu_data) = existing_cpu_data.get_mut(itx + 1) {
+                if itx > 0 { // skip sorting avg
+                    sorted_cpu_data.push(*cpu);
+                }
+            }
+        }
+
+        // order cpu data in descending values
+        sorted_cpu_data.sort_by(|a, b| {
+            if a < b {
+                std::cmp::Ordering::Greater
+            } else if a == b {
+                std::cmp::Ordering::Equal
+            } else {
+                std::cmp::Ordering::Less
+            }
+        });
+
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
             if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                cpu_data.cpu_data.push((-time_from_start, *cpu));
+                if itx > 0 { // skip sorting avg
+                    cpu_data.cpu_data.push((-time_from_start, sorted_cpu_data[itx-1]));
+                } else {
+                    cpu_data.cpu_data.push((-time_from_start, *cpu));
+                }
             }
         }
 
@@ -238,24 +262,6 @@ pub fn convert_cpu_data_points(
             break;
         }
     }
-
-    // order cpus in descending values excluding All & AVG
-    // better solution if Point is an array instead of tuple
-    // for sorting the graph (i.e the entire timeline)
-    // I need to sort the cpu values as they come in (the above block)
-    existing_cpu_data.sort_by(|a, b| {
-        let default_values = vec!["All".to_string(), "AVG".to_string()];
-        if default_values.contains(&a.cpu_name) || default_values.contains(&b.cpu_name) || a.cpu_data.is_empty() || b.cpu_data.is_empty() {
-            std::cmp::Ordering::Equal
-        } else if a.cpu_data[a.cpu_data.len() - 1].1 < b.cpu_data[b.cpu_data.len() - 1].1 {
-            std::cmp::Ordering::Greater
-        } else if a.cpu_data[a.cpu_data.len() - 1].1 == b.cpu_data[b.cpu_data.len() - 1].1 {
-            std::cmp::Ordering::Equal
-        } else {
-            std::cmp::Ordering::Less
-        }
-    });
-
 }
 
 pub fn convert_mem_data_points(
