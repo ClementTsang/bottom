@@ -699,7 +699,7 @@ fn get_cpu_sort(matches: &clap::ArgMatches, config: &Config) -> bool {
     if matches.is_present("cpu_sort") {
         return true;
     } else if let Some(flags) = &config.flags {
-        if let Some(cpu_sort) = flags.cpu_sort{
+        if let Some(cpu_sort) = flags.cpu_sort {
             return cpu_sort;
         }
     }

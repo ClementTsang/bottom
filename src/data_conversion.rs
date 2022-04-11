@@ -162,7 +162,7 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 
 pub fn convert_cpu_data_points(
     current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
-    is_frozen: bool, cpu_sort: bool
+    is_frozen: bool, cpu_sort: bool,
 ) {
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
@@ -232,7 +232,8 @@ pub fn convert_cpu_data_points(
             let mut sorted_cpu_data = Vec::new();
             for (itx, cpu) in data.cpu_data.iter().enumerate() {
                 if let Some(_cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                    if itx > 0 { // skip sorting avg
+                    if itx > 0 {
+                        // skip sorting avg
                         sorted_cpu_data.push(*cpu);
                     }
                 }
@@ -251,9 +252,12 @@ pub fn convert_cpu_data_points(
 
             for (itx, cpu) in data.cpu_data.iter().enumerate() {
                 if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                    if itx > 0 { // skip sorting avg
-                        cpu_data.legend_value = format!("{:.0}%", sorted_cpu_data[itx-1].round());
-                        cpu_data.cpu_data.push((-time_from_start, sorted_cpu_data[itx-1]));
+                    if itx > 0 {
+                        // skip sorting avg
+                        cpu_data.legend_value = format!("{:.0}%", sorted_cpu_data[itx - 1].round());
+                        cpu_data
+                            .cpu_data
+                            .push((-time_from_start, sorted_cpu_data[itx - 1]));
                     } else {
                         cpu_data.cpu_data.push((-time_from_start, *cpu));
                     }
