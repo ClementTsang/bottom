@@ -21,6 +21,8 @@ theme:
     - navigation.instant
     - navigation.sections
     - toc.integrate
+    - search.suggest
+    - search.highlight
   palette:
     # Light mode
     - media: "(prefers-color-scheme: light)"
@@ -108,6 +110,10 @@ markdown_extensions:
   - mdx_truly_sane_lists # See https://github.com/mkdocs/mkdocs/issues/545#issuecomment-522196661
   - pymdownx.tabbed:
       alternate_style: true
+
+plugins:
+  - tags
+  - search
 
 extra:
   # Versioning
