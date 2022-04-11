@@ -228,8 +228,8 @@ pub fn convert_cpu_data_points(
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 
+        let mut sorted_cpu_data = Vec::new();
         if cpu_sort {
-            let mut sorted_cpu_data = Vec::new();
             for (itx, cpu) in data.cpu_data.iter().enumerate() {
                 if let Some(_cpu_data) = existing_cpu_data.get_mut(itx + 1) {
                     if itx > 0 {
@@ -249,25 +249,17 @@ pub fn convert_cpu_data_points(
                     std::cmp::Ordering::Less
                 }
             });
+        }
 
-            for (itx, cpu) in data.cpu_data.iter().enumerate() {
-                if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                    if itx > 0 {
-                        // skip sorting avg
-                        cpu_data.legend_value = format!("{:.0}%", sorted_cpu_data[itx - 1].round());
-                        cpu_data
-                            .cpu_data
-                            .push((-time_from_start, sorted_cpu_data[itx - 1]));
-                    } else {
-                        cpu_data.cpu_data.push((-time_from_start, *cpu));
-                    }
+        for (itx, cpu) in data.cpu_data.iter().enumerate() {
+            if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
+                let mut cpu_value = *cpu;
+                if cpu_sort && itx > 0 {
+                    // skip sorting avg
+                    cpu_value = sorted_cpu_data[itx - 1];
                 }
-            }
-        } else {
-            for (itx, cpu) in data.cpu_data.iter().enumerate() {
-                if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                    cpu_data.cpu_data.push((-time_from_start, *cpu));
-                }
+                cpu_data.legend_value = format!("{:.0}%", cpu_value.round());
+                cpu_data.cpu_data.push((-time_from_start, cpu_value));
             }
         }
 
