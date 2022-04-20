@@ -10,7 +10,7 @@ use tui::{
     widgets::{Block, Borders, Paragraph, Wrap},
 };
 
-const HELP_BASE: &str = " Help ── Esc to close ";
+const HELP_BASE: &str = " Help \u{1F815}\u{1F817} ── Esc to close ";
 
 pub trait HelpDialog {
     fn draw_help_dialog<B: Backend>(
@@ -24,7 +24,7 @@ impl HelpDialog for Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         let help_title = Spans::from(vec![
-            Span::styled(" Help ", self.colours.widget_title_style),
+            Span::styled(" Help \u{1F815}\u{1F817} ", self.colours.widget_title_style),
             Span::styled(
                 format!(
                     "─{}─ Esc to close ",
