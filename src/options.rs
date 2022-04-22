@@ -69,7 +69,7 @@ pub struct ConfigFlags {
     pub current_usage: Option<bool>,
 
     #[builder(default, setter(strip_option))]
-    pub cpu_sort: Option<bool>,
+    pub sort_cpu_hist: Option<bool>,
 
     #[builder(default, setter(strip_option))]
     pub group_processes: Option<bool>,
@@ -420,7 +420,7 @@ pub fn build_app(
         use_dot: get_use_dot(matches, config),
         left_legend: get_use_left_legend(matches, config),
         use_current_cpu_total: get_use_current_cpu_total(matches, config),
-        cpu_sort: get_cpu_sort(matches, config),
+        sort_cpu_hist: get_sort_cpu_hist(matches, config),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(matches, config)
@@ -695,12 +695,12 @@ fn get_use_current_cpu_total(matches: &clap::ArgMatches, config: &Config) -> boo
     false
 }
 
-fn get_cpu_sort(matches: &clap::ArgMatches, config: &Config) -> bool {
-    if matches.is_present("cpu_sort") {
+fn get_sort_cpu_hist(matches: &clap::ArgMatches, config: &Config) -> bool {
+    if matches.is_present("sort_cpu_hist") {
         return true;
     } else if let Some(flags) = &config.flags {
-        if let Some(cpu_sort) = flags.cpu_sort {
-            return cpu_sort;
+        if let Some(sort_cpu_hist) = flags.sort_cpu_hist {
+            return sort_cpu_hist;
         }
     }
 

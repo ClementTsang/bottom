@@ -162,7 +162,7 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 
 pub fn convert_cpu_data_points(
     current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
-    is_frozen: bool, cpu_sort: bool,
+    is_frozen: bool, sort_cpu_hist: bool,
 ) {
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
@@ -229,7 +229,7 @@ pub fn convert_cpu_data_points(
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 
         let mut sorted_cpu_data = Vec::new();
-        if cpu_sort {
+        if sort_cpu_hist {
             for (itx, cpu) in data.cpu_data.iter().enumerate() {
                 if let Some(_cpu_data) = existing_cpu_data.get_mut(itx + 1) {
                     if itx > 0 {
@@ -254,7 +254,7 @@ pub fn convert_cpu_data_points(
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
             if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
                 let mut cpu_value = *cpu;
-                if cpu_sort && itx > 0 {
+                if sort_cpu_hist && itx > 0 {
                     // skip sorting avg
                     cpu_value = sorted_cpu_data[itx - 1];
                 }

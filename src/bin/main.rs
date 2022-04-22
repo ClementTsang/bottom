@@ -207,7 +207,7 @@ fn main() -> Result<()> {
                                 &app.data_collection,
                                 &mut app.canvas_data.cpu_data,
                                 false,
-                                app.app_config_fields.cpu_sort,
+                                app.app_config_fields.sort_cpu_hist,
                             );
                             app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }

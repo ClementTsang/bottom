@@ -135,11 +135,10 @@ pub fn build_app() -> Command<'static> {
         .help("Sets process CPU% to be based on current CPU%.")
         .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
 
-    let cpu_sort = Arg::new("cpu_sort")
-        .short('s')
-        .long("cpu_sort")
-        .help("Orders CPUs by value.")
-        .long_help("Orders CPUs in descending order by value.");
+    let sort_cpu_hist = Arg::new("sort_cpu_hist")
+        .long("sort_cpu_hist")
+        .help("Rank CPU usage across history.")
+        .long_help("Rank CPU usage for each timestep across history.");
 
     // TODO: [DEBUG] Add a proper debugging solution.
 
@@ -395,7 +394,7 @@ use CPU (3) as the default instead.
         .arg(network_use_log)
         .arg(network_use_binary_prefix)
         .arg(current_usage)
-        .arg(cpu_sort)
+        .arg(sort_cpu_hist)
         .arg(use_old_network_legend)
         .arg(whole_word);
 
