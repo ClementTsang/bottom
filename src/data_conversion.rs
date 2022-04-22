@@ -191,7 +191,11 @@ pub fn convert_cpu_data_points(
                     .map(|(itx, cpu_usage)| ConvertedCpuData {
                         cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
                             if let Some(cpu_count) = cpu_harvest.cpu_count {
-                                format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
+                                let cpu_prefix = match sort_cpu_hist {
+                                    false => &cpu_harvest.cpu_prefix,
+                                    true => "Rank",
+                                };
+                                format!("{}{}", cpu_prefix, cpu_count)
                             } else {
                                 cpu_harvest.cpu_prefix.to_string()
                             }

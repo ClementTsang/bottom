@@ -22,11 +22,19 @@ use tui::{
 };
 
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
+const RANK_LEGEND_HEADER: [&str; 2] = ["Rank", "Use%"];
 const AVG_POSITION: usize = 1;
 const ALL_POSITION: usize = 0;
 
 static CPU_LEGEND_HEADER_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
     CPU_LEGEND_HEADER
+        .iter()
+        .map(|entry| entry.len() as u16)
+        .collect::<Vec<_>>()
+});
+
+static RANK_LEGEND_HEADER_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
+    RANK_LEGEND_HEADER
         .iter()
         .map(|entry| entry.len() as u16)
         .collect::<Vec<_>>()
@@ -420,13 +428,19 @@ impl CpuGraphWidget for Painter {
                 .saturating_sub(start_position);
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
 
+            let sort_cpu_hist = app_state.app_config_fields.sort_cpu_hist;
+            let legend_header_lens = match sort_cpu_hist {
+                false => &CPU_LEGEND_HEADER_LENS,
+                true => &RANK_LEGEND_HEADER_LENS,
+            };
+
             // Calculate widths
             if recalculate_column_widths {
                 cpu_widget_state.table_width_state.desired_column_widths = vec![6, 4];
                 cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
                     draw_loc.width,
                     &[None, None],
-                    &(CPU_LEGEND_HEADER_LENS
+                    &(legend_header_lens
                         .iter()
                         .map(|width| Some(*width))
                         .collect::<Vec<_>>()),
@@ -506,6 +520,11 @@ impl CpuGraphWidget for Painter {
                 self.colours.border_style
             };
 
+            let legend_header = match sort_cpu_hist {
+                false => &CPU_LEGEND_HEADER,
+                true => &RANK_LEGEND_HEADER,
+            };
+
             // Draw
             f.render_stateful_widget(
                 Table::new(cpu_rows)
@@ -515,7 +534,7 @@ impl CpuGraphWidget for Painter {
                             .border_style(border_and_title_style),
                     )
                     .header(
-                        Row::new(CPU_LEGEND_HEADER.to_vec())
+                        Row::new(legend_header.to_vec())
                             .style(self.colours.table_header_style)
                             .bottom_margin(table_gap),
                     )
