@@ -162,7 +162,7 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 
 pub fn convert_cpu_data_points(
     current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
-    is_frozen: bool,
+    is_frozen: bool, sort_cpu: bool,
 ) {
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
@@ -240,22 +240,24 @@ pub fn convert_cpu_data_points(
     }
 
     // order cpus in descending values excluding All & AVG
-    existing_cpu_data.sort_by(|a, b| {
-        let default_values = vec!["All".to_string(), "AVG".to_string()];
-        if default_values.contains(&a.cpu_name)
-            || default_values.contains(&b.cpu_name)
-            || a.cpu_data.is_empty()
-            || b.cpu_data.is_empty()
-        {
-            std::cmp::Ordering::Equal
-        } else if a.cpu_data[a.cpu_data.len() - 1].1 < b.cpu_data[b.cpu_data.len() - 1].1 {
-            std::cmp::Ordering::Greater
-        } else if a.cpu_data[a.cpu_data.len() - 1].1 == b.cpu_data[b.cpu_data.len() - 1].1 {
-            std::cmp::Ordering::Equal
-        } else {
-            std::cmp::Ordering::Less
-        }
-    });
+    if sort_cpu {
+        existing_cpu_data.sort_by(|a, b| {
+            let default_values = vec!["All".to_string(), "AVG".to_string()];
+            if default_values.contains(&a.cpu_name)
+                || default_values.contains(&b.cpu_name)
+                || a.cpu_data.is_empty()
+                || b.cpu_data.is_empty()
+            {
+                std::cmp::Ordering::Equal
+            } else if a.cpu_data[a.cpu_data.len() - 1].1 < b.cpu_data[b.cpu_data.len() - 1].1 {
+                std::cmp::Ordering::Greater
+            } else if a.cpu_data[a.cpu_data.len() - 1].1 == b.cpu_data[b.cpu_data.len() - 1].1 {
+                std::cmp::Ordering::Equal
+            } else {
+                std::cmp::Ordering::Less
+            }
+        });
+    }
 }
 
 pub fn convert_mem_data_points(
