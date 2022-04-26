@@ -13,15 +13,8 @@ use tui::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-pub trait BatteryDisplayWidget {
-    fn draw_battery_display<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
-    );
-}
-
-impl BatteryDisplayWidget for Painter {
-    fn draw_battery_display<B: Backend>(
+impl Painter {
+    pub fn draw_battery_display<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {

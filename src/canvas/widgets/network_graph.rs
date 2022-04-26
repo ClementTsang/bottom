@@ -32,23 +32,8 @@ static NETWORK_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
         .collect::<Vec<_>>()
 });
 
-pub trait NetworkGraphWidget {
-    fn draw_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-
-    fn draw_network_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-        hide_legend: bool,
-    );
-
-    fn draw_network_labels<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-}
-
-impl NetworkGraphWidget for Painter {
-    fn draw_network<B: Backend>(
+impl Painter {
+    pub fn draw_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if app_state.app_config_fields.use_old_network_legend {
@@ -79,7 +64,7 @@ impl NetworkGraphWidget for Painter {
         }
     }
 
-    fn draw_network_graph<B: Backend>(
+    pub fn draw_network_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
         hide_legend: bool,
     ) {

@@ -16,20 +16,8 @@ use crate::{
 const DD_BASE: &str = " Confirm Kill Process ── Esc to close ";
 const DD_ERROR_BASE: &str = " Error ── Esc to close ";
 
-pub trait KillDialog {
-    fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>>;
-
-    fn draw_dd_confirm_buttons<B: Backend>(
-        &self, f: &mut Frame<'_, B>, button_draw_loc: &Rect, app_state: &mut App,
-    );
-
-    fn draw_dd_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
-    ) -> bool;
-}
-
-impl KillDialog for Painter {
-    fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>> {
+impl Painter {
+    pub fn get_dd_spans(&self, app_state: &App) -> Option<Text<'_>> {
         if let Some(dd_err) = &app_state.dd_err {
             return Some(Text::from(vec![
                 Spans::default(),
@@ -317,7 +305,7 @@ impl KillDialog for Painter {
         }
     }
 
-    fn draw_dd_dialog<B: Backend>(
+    pub fn draw_dd_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, dd_text: Option<Text<'_>>, app_state: &mut App, draw_loc: Rect,
     ) -> bool {
         if let Some(dd_text) = dd_text {

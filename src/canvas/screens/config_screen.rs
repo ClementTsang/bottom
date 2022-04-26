@@ -12,14 +12,8 @@ use tui::{
     widgets::{Block, Borders, Paragraph},
 };
 
-pub trait ConfigScreen {
-    fn draw_config_screen<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
-    );
-}
-
-impl ConfigScreen for Painter {
-    fn draw_config_screen<B: Backend>(
+impl Painter {
+    pub fn draw_config_screen<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         let config_block = Block::default()

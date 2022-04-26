@@ -9,12 +9,7 @@ use tui::{
     Frame, Terminal,
 };
 
-// use ordered_float::OrderedFloat;
-
 use canvas_colours::*;
-use dialogs::*;
-use screens::*;
-use widgets::*;
 
 use crate::{
     app::{

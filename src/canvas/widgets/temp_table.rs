@@ -27,15 +27,8 @@ static TEMP_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
         .collect::<Vec<_>>()
 });
 
-pub trait TempTableWidget {
-    fn draw_temp_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
-    );
-}
-
-impl TempTableWidget for Painter {
-    fn draw_temp_table<B: Backend>(
+impl Painter {
+    pub fn draw_temp_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut app::App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {

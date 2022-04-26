@@ -13,14 +13,8 @@ use tui::{
     widgets::{Block, Paragraph},
 };
 
-pub trait MemBasicWidget {
-    fn draw_basic_memory<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-}
-
-impl MemBasicWidget for Painter {
-    fn draw_basic_memory<B: Backend>(
+impl Painter {
+    pub fn draw_basic_memory<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;

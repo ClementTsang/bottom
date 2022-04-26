@@ -32,20 +32,8 @@ static CPU_LEGEND_HEADER_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
         .collect::<Vec<_>>()
 });
 
-pub trait CpuGraphWidget {
-    fn draw_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-    fn draw_cpu_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-    fn draw_cpu_legend<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-}
-
-impl CpuGraphWidget for Painter {
-    fn draw_cpu<B: Backend>(
+impl Painter {
+    pub fn draw_cpu<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if draw_loc.width as f64 * 0.15 <= 6.0 {

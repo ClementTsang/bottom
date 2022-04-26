@@ -15,14 +15,8 @@ use tui::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-pub trait MemGraphWidget {
-    fn draw_memory_graph<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-}
-
-impl MemGraphWidget for Painter {
-    fn draw_memory_graph<B: Backend>(
+impl Painter {
+    pub fn draw_memory_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if let Some(mem_widget_state) = app_state.mem_state.widget_states.get_mut(&widget_id) {
