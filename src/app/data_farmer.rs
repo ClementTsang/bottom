@@ -249,7 +249,7 @@ impl DataCollection {
         for (itx, device) in disks.iter().enumerate() {
             if let Some(trim) = device.name.split('/').last() {
                 let io_device = if cfg!(target_os = "macos") {
-                    // Must trim one level further!
+                    // Must trim one level further for macOS!
                     static DISK_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"disk\d+").unwrap());
                     if let Some(disk_trim) = DISK_REGEX.find(trim) {
                         io.get(disk_trim.as_str())
