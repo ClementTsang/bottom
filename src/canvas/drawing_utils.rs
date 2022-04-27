@@ -1,5 +1,10 @@
+use tui::layout::Rect;
+
 use crate::app;
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    time::Instant,
+};
 
 /// Return a (hard)-width vector for column widths.
 ///
@@ -186,8 +191,7 @@ pub fn get_start_position(
     }
 }
 
-/// Calculate how many bars are to be
-/// drawn within basic mode's components.
+/// Calculate how many bars are to be drawn within basic mode's components.
 pub fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) -> usize {
     std::cmp::min(
         (num_bars_available as f64 * use_percentage / 100.0).round() as usize,
@@ -195,20 +199,213 @@ pub fn calculate_basic_use_bars(use_percentage: f64, num_bars_available: usize) 
     )
 }
 
-/// Interpolates between two points.  Mainly used to help fill in tui-rs blanks in certain situations.
-/// It is expected point_one is "further left" compared to point_two.
-/// A point is two floats, in (x, y) form.  x is time, y is value.
-pub fn interpolate_points(point_one: &(f64, f64), point_two: &(f64, f64), time: f64) -> f64 {
-    let delta_x = point_two.0 - point_one.0;
-    let delta_y = point_two.1 - point_one.1;
-    let slope = delta_y / delta_x;
+/// Determine whether a graph x-label should be hidden.
+pub fn should_hide_x_label(
+    always_hide_time: bool, autohide_time: bool, timer: &mut Option<Instant>, draw_loc: Rect,
+) -> bool {
+    use crate::constants::*;
 
-    (point_one.1 + (time - point_one.0) * slope).max(0.0)
+    if always_hide_time || (autohide_time && timer.is_none()) {
+        true
+    } else if let Some(time) = timer {
+        if Instant::now().duration_since(*time).as_millis() < AUTOHIDE_TIMEOUT_MILLISECONDS.into() {
+            false
+        } else {
+            *timer = None;
+            true
+        }
+    } else {
+        draw_loc.height < TIME_LABEL_HEIGHT_LIMIT
+    }
 }
 
 #[cfg(test)]
 mod test {
+
     use super::*;
+
+    #[test]
+    fn test_get_start_position() {
+        use crate::app::ScrollDirection;
+
+        // Scrolling down from start
+        {
+            let mut bar = 0;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Down, &mut bar, 0, false),
+                0
+            );
+            assert_eq!(bar, 0);
+        }
+
+        // Simple scrolling down
+        {
+            let mut bar = 0;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Down, &mut bar, 1, false),
+                0
+            );
+            assert_eq!(bar, 0);
+        }
+
+        // Scrolling down from the middle high up
+        {
+            let mut bar = 0;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Down, &mut bar, 5, false),
+                0
+            );
+            assert_eq!(bar, 0);
+        }
+
+        // Scrolling down into boundary
+        {
+            let mut bar = 0;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Down, &mut bar, 11, false),
+                1
+            );
+            assert_eq!(bar, 1);
+        }
+
+        // Scrolling down from the with non-zero bar
+        {
+            let mut bar = 5;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Down, &mut bar, 15, false),
+                5
+            );
+            assert_eq!(bar, 5);
+        }
+
+        // Force redraw scrolling down (e.g. resize)
+        {
+            let mut bar = 5;
+            assert_eq!(
+                get_start_position(15, &ScrollDirection::Down, &mut bar, 15, true),
+                0
+            );
+            assert_eq!(bar, 0);
+        }
+
+        // Test jumping down
+        {
+            let mut bar = 1;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Down, &mut bar, 20, true),
+                10
+            );
+            assert_eq!(bar, 10);
+        }
+
+        // Scrolling up from bottom
+        {
+            let mut bar = 10;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Up, &mut bar, 20, false),
+                10
+            );
+            assert_eq!(bar, 10);
+        }
+
+        // Simple scrolling up
+        {
+            let mut bar = 10;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Up, &mut bar, 19, false),
+                10
+            );
+            assert_eq!(bar, 10);
+        }
+
+        // Scrolling up from the middle
+        {
+            let mut bar = 10;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Up, &mut bar, 10, false),
+                10
+            );
+            assert_eq!(bar, 10);
+        }
+
+        // Scrolling up into boundary
+        {
+            let mut bar = 10;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Up, &mut bar, 9, false),
+                9
+            );
+            assert_eq!(bar, 9);
+        }
+
+        // Force redraw scrolling up (e.g. resize)
+        {
+            let mut bar = 5;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Up, &mut bar, 15, true),
+                5
+            );
+            assert_eq!(bar, 5);
+        }
+
+        // Test jumping up
+        {
+            let mut bar = 10;
+            assert_eq!(
+                get_start_position(10, &ScrollDirection::Up, &mut bar, 0, false),
+                0
+            );
+            assert_eq!(bar, 0);
+        }
+    }
+
+    #[test]
+    fn test_calculate_basic_use_bars() {
+        // Testing various breakpoints and edge cases.
+        assert_eq!(calculate_basic_use_bars(0.0, 15), 0);
+        assert_eq!(calculate_basic_use_bars(1.0, 15), 0);
+        assert_eq!(calculate_basic_use_bars(5.0, 15), 1);
+        assert_eq!(calculate_basic_use_bars(10.0, 15), 2);
+        assert_eq!(calculate_basic_use_bars(40.0, 15), 6);
+        assert_eq!(calculate_basic_use_bars(45.0, 15), 7);
+        assert_eq!(calculate_basic_use_bars(50.0, 15), 8);
+        assert_eq!(calculate_basic_use_bars(100.0, 15), 15);
+        assert_eq!(calculate_basic_use_bars(150.0, 15), 15);
+    }
+
+    #[test]
+    fn test_should_hide_x_label() {
+        use crate::constants::*;
+        use std::time::{Duration, Instant};
+        use tui::layout::Rect;
+
+        let rect = Rect::new(0, 0, 10, 10);
+        let small_rect = Rect::new(0, 0, 10, 6);
+
+        let mut under_timer = Some(Instant::now());
+        let mut over_timer =
+            Instant::now().checked_sub(Duration::from_millis(AUTOHIDE_TIMEOUT_MILLISECONDS + 100));
+
+        assert!(should_hide_x_label(true, false, &mut None, rect));
+        assert!(should_hide_x_label(false, true, &mut None, rect));
+        assert!(should_hide_x_label(false, false, &mut None, small_rect));
+
+        assert!(!should_hide_x_label(
+            false,
+            true,
+            &mut under_timer,
+            small_rect
+        ));
+        assert!(under_timer.is_some());
+
+        assert!(should_hide_x_label(
+            false,
+            true,
+            &mut over_timer,
+            small_rect
+        ));
+        assert!(over_timer.is_none());
+    }
 
     #[test]
     fn test_zero_width() {
@@ -222,7 +419,6 @@ mod test {
                 true
             ),
             vec![],
-            "vector should be empty"
         );
     }
 
@@ -238,7 +434,6 @@ mod test {
                 true
             ),
             vec![],
-            "vector should be empty"
         );
     }
 
@@ -254,7 +449,6 @@ mod test {
                 true
             ),
             vec![2, 2, 7],
-            "vector should not be empty"
         );
     }
 }

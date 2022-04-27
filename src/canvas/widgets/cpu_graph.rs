@@ -1,36 +1,32 @@
-use once_cell::sync::Lazy;
-use unicode_segmentation::UnicodeSegmentation;
+use std::borrow::Cow;
 
 use crate::{
     app::{layout_manager::WidgetDirection, App},
     canvas::{
-        drawing_utils::{get_column_widths, get_start_position, interpolate_points},
+        components::{GraphData, TimeGraph},
+        drawing_utils::{get_column_widths, get_start_position, should_hide_x_label},
         Painter,
     },
     constants::*,
     data_conversion::ConvertedCpuData,
 };
 
+use concat_string::concat_string;
+
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
-    symbols::Marker,
     terminal::Frame,
-    text::Span,
-    text::{Spans, Text},
-    widgets::{Axis, Block, Borders, Chart, Dataset, Row, Table},
+    text::Text,
+    widgets::{Block, Borders, Row, Table},
 };
 
 const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 const AVG_POSITION: usize = 1;
 const ALL_POSITION: usize = 0;
 
-static CPU_LEGEND_HEADER_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
-    CPU_LEGEND_HEADER
-        .iter()
-        .map(|entry| entry.len() as u16)
-        .collect::<Vec<_>>()
-});
+static CPU_LEGEND_HEADER_LENS: [usize; 2] =
+    [CPU_LEGEND_HEADER[0].len(), CPU_LEGEND_HEADER[1].len()];
 
 impl Painter {
     pub fn draw_cpu<B: Backend>(
@@ -122,250 +118,93 @@ impl Painter {
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
+        const Y_BOUNDS: [f64; 2] = [0.0, 100.5];
+        const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
+
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
-            let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
-
-            let display_time_labels = vec![
-                Span::styled(
-                    format!("{}s", cpu_widget_state.current_display_time / 1000),
-                    self.colours.graph_style,
-                ),
-                Span::styled("0s".to_string(), self.colours.graph_style),
-            ];
-
-            let y_axis_labels = vec![
-                Span::styled("  0%", self.colours.graph_style),
-                Span::styled("100%", self.colours.graph_style),
-            ];
-
-            let time_start = -(cpu_widget_state.current_display_time as f64);
-
-            let x_axis = if app_state.app_config_fields.hide_time
-                || (app_state.app_config_fields.autohide_time
-                    && cpu_widget_state.autohide_timer.is_none())
-            {
-                Axis::default().bounds([time_start, 0.0])
-            } else if let Some(time) = cpu_widget_state.autohide_timer {
-                if std::time::Instant::now().duration_since(time).as_millis()
-                    < AUTOHIDE_TIMEOUT_MILLISECONDS.into()
-                {
-                    Axis::default()
-                        .bounds([time_start, 0.0])
-                        .style(self.colours.graph_style)
-                        .labels(display_time_labels)
-                } else {
-                    cpu_widget_state.autohide_timer = None;
-                    Axis::default().bounds([time_start, 0.0])
-                }
-            } else if draw_loc.height < TIME_LABEL_HEIGHT_LIMIT {
-                Axis::default().bounds([time_start, 0.0])
-            } else {
-                Axis::default()
-                    .bounds([time_start, 0.0])
-                    .style(self.colours.graph_style)
-                    .labels(display_time_labels)
-            };
-
-            let y_axis = Axis::default()
-                .style(self.colours.graph_style)
-                .bounds([0.0, 100.5])
-                .labels(y_axis_labels);
-
-            let use_dot = app_state.app_config_fields.use_dot;
+            let cpu_data = &app_state.canvas_data.cpu_data;
+            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
+            let x_bounds = [0, cpu_widget_state.current_display_time];
+            let hide_x_labels = should_hide_x_label(
+                app_state.app_config_fields.hide_time,
+                app_state.app_config_fields.autohide_time,
+                &mut cpu_widget_state.autohide_timer,
+                draw_loc,
+            );
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-            let current_scroll_position = cpu_widget_state.scroll_state.current_scroll_position;
-
-            let interpolated_cpu_points = cpu_data
-                .iter_mut()
-                .enumerate()
-                .map(|(itx, cpu)| {
-                    let to_show = if current_scroll_position == ALL_POSITION {
-                        true
-                    } else {
-                        itx == current_scroll_position
-                    };
-
-                    if to_show {
-                        if let Some(end_pos) = cpu
-                            .cpu_data
-                            .iter()
-                            .position(|(time, _data)| *time >= time_start)
-                        {
-                            if end_pos > 1 {
-                                let start_pos = end_pos - 1;
-                                let outside_point = cpu.cpu_data.get(start_pos);
-                                let inside_point = cpu.cpu_data.get(end_pos);
-
-                                if let (Some(outside_point), Some(inside_point)) =
-                                    (outside_point, inside_point)
-                                {
-                                    let old = *outside_point;
-
-                                    let new_point = (
-                                        time_start,
-                                        interpolate_points(outside_point, inside_point, time_start),
-                                    );
-
-                                    if let Some(to_replace) = cpu.cpu_data.get_mut(start_pos) {
-                                        *to_replace = new_point;
-                                        Some((start_pos, old))
-                                    } else {
-                                        None // Failed to get mutable reference.
-                                    }
-                                } else {
-                                    None // Point somehow doesn't exist in our data
-                                }
-                            } else {
-                                None // Point is already "leftmost", no need to interpolate.
-                            }
-                        } else {
-                            None // There is no point.
-                        }
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
-
-            let dataset_vector: Vec<Dataset<'_>> = if current_scroll_position == ALL_POSITION {
-                cpu_data
-                    .iter()
-                    .enumerate()
-                    .rev()
-                    .map(|(itx, cpu)| {
-                        Dataset::default()
-                            .marker(if use_dot {
-                                Marker::Dot
-                            } else {
-                                Marker::Braille
-                            })
-                            .style(if show_avg_cpu && itx == AVG_POSITION {
+            let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
+            let points = {
+                let current_scroll_position = cpu_widget_state.scroll_state.current_scroll_position;
+                if current_scroll_position == ALL_POSITION {
+                    // This case ensures the other cases cannot have the position be equal to 0.
+                    cpu_data
+                        .iter()
+                        .enumerate()
+                        .rev()
+                        .map(|(itx, cpu)| {
+                            let style = if show_avg_cpu && itx == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else if itx == ALL_POSITION {
                                 self.colours.all_colour_style
                             } else {
-                                self.colours.cpu_colour_styles[(itx - 1 // Because of the all position
-                                        - (if show_avg_cpu {
-                                            AVG_POSITION
-                                        } else {
-                                            0
-                                        }))
+                                let offset_position = itx - 1; // Because of the all position
+                                self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
                                     % self.colours.cpu_colour_styles.len()]
-                            })
-                            .data(&cpu.cpu_data[..])
-                            .graph_type(tui::widgets::GraphType::Line)
-                    })
-                    .collect()
-            } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
-                vec![Dataset::default()
-                    .marker(if use_dot {
-                        Marker::Dot
-                    } else {
-                        Marker::Braille
-                    })
-                    .style(if show_avg_cpu && current_scroll_position == AVG_POSITION {
+                            };
+
+                            GraphData {
+                                points: &cpu.cpu_data[..],
+                                style,
+                                name: None,
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
+                    let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                         self.colours.avg_colour_style
                     } else {
-                        self.colours.cpu_colour_styles[(cpu_widget_state
-                            .scroll_state
-                            .current_scroll_position
-                            - 1 // Because of the all position
-                            - (if show_avg_cpu {
-                                AVG_POSITION
-                            } else {
-                                0
-                            }))
+                        let offset_position = current_scroll_position - 1; // Because of the all position
+                        self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
                             % self.colours.cpu_colour_styles.len()]
-                    })
-                    .data(&cpu.cpu_data[..])
-                    .graph_type(tui::widgets::GraphType::Line)]
-            } else {
-                vec![]
+                    };
+
+                    vec![GraphData {
+                        points: &cpu.cpu_data[..],
+                        style,
+                        name: None,
+                    }]
+                } else {
+                    vec![]
+                }
             };
 
-            let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let border_style = if is_on_widget {
-                self.colours.highlighted_border_style
-            } else {
-                self.colours.border_style
-            };
-
+            // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
             let title = if cfg!(target_family = "unix") {
                 let load_avg = app_state.canvas_data.load_avg_data;
                 let load_avg_str = format!(
                     "─ {:.2} {:.2} {:.2} ",
                     load_avg[0], load_avg[1], load_avg[2]
                 );
-                let load_avg_str_size =
-                    UnicodeSegmentation::graphemes(load_avg_str.as_str(), true).count();
 
-                if app_state.is_expanded {
-                    const TITLE_BASE: &str = " CPU ── Esc to go back ";
-
-                    Spans::from(vec![
-                        Span::styled(" CPU ", self.colours.widget_title_style),
-                        Span::styled(load_avg_str, self.colours.widget_title_style),
-                        Span::styled(
-                            format!(
-                                "─{}─ Esc to go back ",
-                                "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                                    load_avg_str_size
-                                        + UnicodeSegmentation::graphemes(TITLE_BASE, true).count()
-                                        + 2
-                                ))
-                            ),
-                            border_style,
-                        ),
-                    ])
-                } else {
-                    Spans::from(vec![
-                        Span::styled(" CPU ", self.colours.widget_title_style),
-                        Span::styled(load_avg_str, self.colours.widget_title_style),
-                    ])
-                }
-            } else if app_state.is_expanded {
-                const TITLE_BASE: &str = " CPU ── Esc to go back ";
-
-                Spans::from(vec![
-                    Span::styled(" CPU ", self.colours.widget_title_style),
-                    Span::styled(
-                        format!(
-                            "─{}─ Esc to go back ",
-                            "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                                UnicodeSegmentation::graphemes(TITLE_BASE, true).count() + 2
-                            ))
-                        ),
-                        border_style,
-                    ),
-                ])
+                concat_string!(" CPU ", load_avg_str).into()
             } else {
-                Spans::from(vec![Span::styled(" CPU ", self.colours.widget_title_style)])
+                " CPU ".into()
             };
 
-            f.render_widget(
-                Chart::new(dataset_vector)
-                    .block(
-                        Block::default()
-                            .title(title)
-                            .borders(Borders::ALL)
-                            .border_style(border_style),
-                    )
-                    .x_axis(x_axis)
-                    .y_axis(y_axis),
-                draw_loc,
-            );
-
-            // Reset interpolated points
-            cpu_data
-                .iter_mut()
-                .zip(interpolated_cpu_points)
-                .for_each(|(cpu, interpolation)| {
-                    if let Some((index, old_value)) = interpolation {
-                        if let Some(to_replace) = cpu.cpu_data.get_mut(index) {
-                            *to_replace = old_value;
-                        }
-                    }
-                });
+            TimeGraph {
+                use_dot: app_state.app_config_fields.use_dot,
+                x_bounds,
+                hide_x_labels,
+                y_bounds: Y_BOUNDS,
+                y_labels: &Y_LABELS,
+                graph_style: self.colours.graph_style,
+                border_style,
+                title,
+                is_expanded: app_state.is_expanded,
+                title_style: self.colours.widget_title_style,
+                legend_constraints: None,
+            }
+            .draw_time_graph(f, draw_loc, &points);
         }
     }
 
@@ -416,7 +255,7 @@ impl Painter {
                     &[None, None],
                     &(CPU_LEGEND_HEADER_LENS
                         .iter()
-                        .map(|width| Some(*width))
+                        .map(|width| Some(*width as u16))
                         .collect::<Vec<_>>()),
                     &[Some(0.5), Some(0.5)],
                     &(cpu_widget_state
