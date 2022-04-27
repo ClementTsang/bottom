@@ -36,37 +36,37 @@ gpu = ["nvidia"]
 nvidia = ["nvml-wrapper"]
 
 [dependencies]
-anyhow = "1.0.40"
-backtrace = "0.3.59"
+anyhow = "1.0.57"
+backtrace = "0.3.65"
 crossterm = "0.18.2"
 ctrlc = { version = "3.1.9", features = ["termination"] }
-clap = { version = "3.1.6", features = ["default", "cargo", "wrap_help"] }
-cfg-if = "1.0"
+clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
+cfg-if = "1.0.0"
 dirs = "4.0.0"
-futures = "0.3.14"
+futures = "0.3.21"
 futures-timer = "3.0.2"
 fxhash = "0.2.1"
-indexmap = "1.6.2"
-itertools = "0.10.0"
+indexmap = "1.8.1"
+itertools = "0.10.3"
 once_cell = "1.5.2"
 regex = "1.5.5"
-serde = { version = "1.0.125", features = ["derive"] }
-sysinfo = "0.23.4"
-thiserror = "1.0.24"
-time = { version = "0.3.5", features = ["formatting", "macros"] }
-toml = "0.5.8"
+serde = { version = "1.0.136", features = ["derive"] }
+sysinfo = "0.23.10"
+thiserror = "1.0.30"
+time = { version = "0.3.9", features = ["formatting", "macros"] }
+toml = "0.5.9"
 tui = { version = "0.14.0", features = ["crossterm"], default-features = false }
-typed-builder = "0.9.0"
-unicode-segmentation = "1.7.1"
-unicode-width = "0.1"
+typed-builder = "0.10.0"
+unicode-segmentation = "1.9.0"
+unicode-width = "0.1.9"
 
-fern = { version = "0.6.0", optional = true }
-log = { version = "0.4.14", optional = true }
+fern = { version = "0.6.1", optional = true }
+log = { version = "0.4.16", optional = true }
 battery = { version = "0.7.8", optional = true }
 nvml-wrapper = { version = "0.7.0", optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.86"
+libc = "0.2.124"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "net", "sensors"] }
@@ -81,32 +81,20 @@ heim = { version = "0.1.0-rc.1", features = ["cpu", "disk", "memory"] }
 winapi = "0.3.9"
 
 [dev-dependencies]
-assert_cmd = "2.0"
-predicates = "2.1"
+assert_cmd = "2.0.4"
+predicates = "2.1.1"
 
 [build-dependencies]
-clap = { version = "3.1.6", features = ["default", "cargo", "wrap_help"] }
-clap_complete = "3.1.1"
-clap_mangen = "0.1.2"
+clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
+clap_complete = "3.1.2"
+clap_mangen = "0.1.6"
 
 [package.metadata.deb]
 section = "utility"
 assets = [
-    [
-        "target/release/btm",
-        "usr/bin/",
-        "755",
-    ],
-    [
-        "LICENSE",
-        "usr/share/doc/btm/",
-        "644",
-    ],
-    [
-        "manpage/btm.1.gz",
-        "usr/share/man/man1/btm.1.gz",
-        "644",
-    ],
+    ["target/release/btm", "usr/bin/", "755"],
+    ["LICENSE", "usr/share/doc/btm/", "644"],
+    ["manpage/btm.1.gz", "usr/share/man/man1/btm.1.gz", "644"],
     [
         "completion/btm.bash",
         "usr/share/bash-completion/completions/btm",
@@ -117,11 +105,7 @@ assets = [
         "usr/share/fish/vendor_completions.d/btm.fish",
         "644",
     ],
-    [
-        "completion/_btm",
-        "usr/share/zsh/vendor-completions/",
-        "644",
-    ],
+    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
 extended-description = """\
 A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
