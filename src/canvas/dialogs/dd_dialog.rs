@@ -376,14 +376,11 @@ impl KillDialog for Painter {
             // Now draw buttons if needed...
             let split_draw_loc = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints(
-                    if app_state.dd_err.is_some() {
-                        vec![Constraint::Percentage(100)]
-                    } else {
-                        vec![Constraint::Min(3), Constraint::Length(btn_height)]
-                    }
-                    .as_ref(),
-                )
+                .constraints(if app_state.dd_err.is_some() {
+                    vec![Constraint::Percentage(100)]
+                } else {
+                    vec![Constraint::Min(3), Constraint::Length(btn_height)]
+                })
                 .split(draw_loc);
 
             // This being true implies that dd_err is none.

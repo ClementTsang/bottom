@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.9] / [0.7.0] - Unreleased
 
+## Bug Fixes
+
+- [#711](https://github.com/ClementTsang/bottom/pull/711): Fix building in Rust beta 1.61 due to `as_ref()` calls
+  causing type inference issues.
+
+## Changes
+
+- [#690](https://github.com/ClementTsang/bottom/pull/690): Adds some colour to `-h`/`--help` as part of updating to clap 3.0.
+
 ## Features
 
 - [#676](https://github.com/ClementTsang/bottom/pull/676): Adds support for NVIDIA GPU temperature sensors.

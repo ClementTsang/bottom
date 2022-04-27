@@ -627,7 +627,7 @@ impl Painter {
                 if self.derived_widget_draw_locs.is_empty() || app_state.is_force_redraw {
                     let draw_locs = Layout::default()
                         .margin(0)
-                        .constraints(self.row_constraints.as_ref())
+                        .constraints(self.row_constraints.as_slice())
                         .direction(Direction::Vertical)
                         .split(terminal_size);
 
@@ -648,7 +648,7 @@ impl Painter {
                         )| {
                             izip!(
                                 Layout::default()
-                                    .constraints(col_constraint.as_ref())
+                                    .constraints(col_constraint.as_slice())
                                     .direction(Direction::Horizontal)
                                     .split(draw_loc)
                                     .into_iter(),
@@ -659,7 +659,7 @@ impl Painter {
                             .map(|(split_loc, constraint, col_constraint_vec, col_rows)| {
                                 izip!(
                                     Layout::default()
-                                        .constraints(constraint.as_ref())
+                                        .constraints(constraint.as_slice())
                                         .direction(Direction::Vertical)
                                         .split(split_loc)
                                         .into_iter(),
@@ -669,7 +669,7 @@ impl Painter {
                                 .map(|(draw_loc, col_row_constraint_vec, widgets)| {
                                     // Note that col_row_constraint_vec CONTAINS the widget constraints
                                     let widget_draw_locs = Layout::default()
-                                        .constraints(col_row_constraint_vec.as_ref())
+                                        .constraints(col_row_constraint_vec.as_slice())
                                         .direction(Direction::Horizontal)
                                         .split(draw_loc);
 
