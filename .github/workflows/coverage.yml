@@ -19,8 +19,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@38c3738dcac87b41e2b7038775457756c793566e # https://github.com/fkirc/skip-duplicate-actions/commit/38c3738dcac87b41e2b7038775457756c793566e
         with:
           concurrent_skipping: "same_content_newer"
-          skip_after_successful_duplicate: "true"
-          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
+          skip_after_successful_duplicate: "false"
           do_not_skip: '["workflow_dispatch"]'
 
   coverage:
