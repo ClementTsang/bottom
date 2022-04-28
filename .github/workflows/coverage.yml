@@ -19,8 +19,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@38c3738dcac87b41e2b7038775457756c793566e # https://github.com/fkirc/skip-duplicate-actions/commit/38c3738dcac87b41e2b7038775457756c793566e
         with:
           concurrent_skipping: "same_content_newer"
-          skip_after_successful_duplicate: "true"
-          paths: '["tests/**", "src/**", ".github/workflows/coverage.yml", ".cargo/**", "Cargo.toml", "Cargo.lock", "build.rs"]'
+          skip_after_successful_duplicate: "false"
           do_not_skip: '["workflow_dispatch"]'
 
   coverage:
@@ -41,15 +40,17 @@ jobs:
         with:
           key: ${{ matrix.triple.target }}
 
-      - name: Install tarpaulin
+      - name: Install cargo-llvm-cov
         run: |
-          cargo install cargo-tarpaulin
+          rustup component add llvm-tools-preview
+          cargo install cargo-llvm-cov --version 0.3.0
 
       - name: Generate code coverage
         run: |
-          cargo tarpaulin --verbose --all-features --workspace --run-types AllTargets --timeout 120 --out Xml
+          cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@f32b3a3741e1053eb607407145bc9619351dc93b # 2.1.0
         with:
+          files: lcov.info
           fail_ci_if_error: true
