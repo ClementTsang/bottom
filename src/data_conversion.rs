@@ -162,7 +162,7 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
 
 pub fn convert_cpu_data_points(
     current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
-    is_frozen: bool,
+    is_frozen: bool, sort_cpu_hist: bool,
 ) {
     let current_time = if is_frozen {
         if let Some(frozen_instant) = current_data.frozen_instant {
@@ -191,7 +191,11 @@ pub fn convert_cpu_data_points(
                     .map(|(itx, cpu_usage)| ConvertedCpuData {
                         cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
                             if let Some(cpu_count) = cpu_harvest.cpu_count {
-                                format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
+                                let cpu_prefix = match sort_cpu_hist {
+                                    false => &cpu_harvest.cpu_prefix,
+                                    true => "Rank",
+                                };
+                                format!("{}{}", cpu_prefix, cpu_count)
                             } else {
                                 cpu_harvest.cpu_prefix.to_string()
                             }
@@ -228,9 +232,38 @@ pub fn convert_cpu_data_points(
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
 
+        let mut sorted_cpu_data = Vec::new();
+        if sort_cpu_hist {
+            for (itx, cpu) in data.cpu_data.iter().enumerate() {
+                if let Some(_cpu_data) = existing_cpu_data.get_mut(itx + 1) {
+                    if itx > 0 {
+                        // skip sorting avg
+                        sorted_cpu_data.push(*cpu);
+                    }
+                }
+            }
+
+            // order cpu data in descending values
+            sorted_cpu_data.sort_by(|a, b| {
+                if a < b {
+                    std::cmp::Ordering::Greater
+                } else if a == b {
+                    std::cmp::Ordering::Equal
+                } else {
+                    std::cmp::Ordering::Less
+                }
+            });
+        }
+
         for (itx, cpu) in data.cpu_data.iter().enumerate() {
             if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                cpu_data.cpu_data.push((-time_from_start, *cpu));
+                let mut cpu_value = *cpu;
+                if sort_cpu_hist && itx > 0 {
+                    // skip sorting avg
+                    cpu_value = sorted_cpu_data[itx - 1];
+                }
+                cpu_data.legend_value = format!("{:.0}%", cpu_value.round());
+                cpu_data.cpu_data.push((-time_from_start, cpu_value));
             }
         }
 

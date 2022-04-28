@@ -443,6 +443,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #left_legend = false
 # Whether to set CPU% on a process to be based on the total CPU or just current usage.
 #current_usage = false
+# Whether to rank CPU usage across history.
+#sort_cpu_hist = false
 # Whether to group processes with the same name together by default.
 #group_processes = false
 # Whether to make process searching case sensitive by default.
