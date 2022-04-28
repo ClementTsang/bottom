@@ -30,6 +30,8 @@ Please mention which version of bottom you're running (`btm -V`, nightly, etc.)!
 
 Please mention how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
 
+**Note: if you installed from cargo, ensure you installed the right crate (https://crates.io/crates/bottom).**
+
 ## How can we reproduce this?
 
 Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as possible. Include config files or flags if relevant. If maintainers cannot reproduce the bug, it will be very hard to fix it.
