@@ -367,10 +367,10 @@ pub fn build_app(
                             );
                         }
                         Disk => {
-                            disk_state_map.insert(widget.widget_id, DiskWidgetState::init());
+                            disk_state_map.insert(widget.widget_id, DiskWidgetState::default());
                         }
                         Temp => {
-                            temp_state_map.insert(widget.widget_id, TempWidgetState::init());
+                            temp_state_map.insert(widget.widget_id, TempWidgetState::default());
                         }
                         Battery => {
                             battery_state_map

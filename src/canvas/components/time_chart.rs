@@ -622,19 +622,19 @@ mod test {
     }
 
     #[test]
+    fn time_chart_empty_dataset() {
+        let data = [];
+        let dataset = Dataset::default().data(&data);
+
+        assert_eq!(get_start(&dataset, -100.0), (0, None));
+        assert_eq!(get_start(&dataset, -3.0), (0, None));
+
+        assert_eq!(get_end(&dataset, 0.0), (0, None));
+        assert_eq!(get_end(&dataset, 100.0), (0, None));
+    }
+
+    #[test]
     fn time_chart_test_data_trimming() {
-        // Quick test on a completely empty dataset...
-        {
-            let data = [];
-            let dataset = Dataset::default().data(&data);
-
-            assert_eq!(get_start(&dataset, -100.0), (0, None));
-            assert_eq!(get_start(&dataset, -3.0), (0, None));
-
-            assert_eq!(get_end(&dataset, 0.0), (0, None));
-            assert_eq!(get_end(&dataset, 100.0), (0, None));
-        }
-
         let data = [
             (-3.0, 8.0),
             (-2.5, 15.0),

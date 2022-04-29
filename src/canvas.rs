@@ -18,7 +18,7 @@ use crate::{
         App,
     },
     constants::*,
-    data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
+    data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData, TableData},
     options::Config,
     utils::error,
     utils::error::BottomError,
@@ -41,8 +41,8 @@ pub struct DisplayableData {
     pub total_tx_display: String,
     pub network_data_rx: Vec<Point>,
     pub network_data_tx: Vec<Point>,
-    pub disk_data: Vec<Vec<String>>,
-    pub temp_sensor_data: Vec<Vec<String>>,
+    pub disk_data: TableData,
+    pub temp_sensor_data: TableData,
     pub single_process_data: HashMap<Pid, ConvertedProcessData>, // Contains single process data, key is PID
     pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>, // What's actually displayed, key is the widget ID.
     pub stringified_process_data_map: HashMap<u64, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled, key is the widget ID

@@ -23,6 +23,12 @@ pub struct ConvertedBatteryData {
     pub health: String,
 }
 
+#[derive(Default)]
+pub struct TableData {
+    pub data: Vec<Vec<String>>,
+    pub row_widths: Vec<usize>,
+}
+
 #[derive(Default, Debug)]
 pub struct ConvertedNetworkData {
     pub rx: Vec<Point>,
@@ -83,15 +89,16 @@ pub struct ConvertedCpuData {
     pub legend_value: String,
 }
 
-pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
+pub fn convert_temp_row(app: &App) -> TableData {
     let current_data = &app.data_collection;
     let temp_type = &app.app_config_fields.temperature_type;
+    let mut row_widths = vec![0; 2];
 
     let mut sensor_vector: Vec<Vec<String>> = current_data
         .temp_harvest
         .iter()
         .map(|temp_harvest| {
-            vec![
+            let row = vec![
                 temp_harvest.name.clone(),
                 (temp_harvest.temperature.ceil() as u64).to_string()
                     + match temp_type {
@@ -99,7 +106,13 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
                         data_harvester::temperature::TemperatureType::Kelvin => "K",
                         data_harvester::temperature::TemperatureType::Fahrenheit => "°F",
                     },
-            ]
+            ];
+
+            row_widths.iter_mut().zip(&row).for_each(|(curr, r)| {
+                *curr = std::cmp::max(*curr, r.len());
+            });
+
+            row
         })
         .collect();
 
@@ -107,11 +120,15 @@ pub fn convert_temp_row(app: &App) -> Vec<Vec<String>> {
         sensor_vector.push(vec!["No Sensors Found".to_string(), "".to_string()]);
     }
 
-    sensor_vector
+    TableData {
+        data: sensor_vector,
+        row_widths,
+    }
 }
 
-pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<String>> {
+pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> TableData {
     let mut disk_vector: Vec<Vec<String>> = Vec::new();
+    let mut row_widths = vec![0; 8];
 
     current_data
         .disk_harvest
@@ -142,7 +159,7 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
                 "N/A".to_string()
             };
 
-            disk_vector.push(vec![
+            let row = vec![
                 disk.name.to_string(),
                 disk.mount_point.to_string(),
                 usage_fmt,
@@ -150,14 +167,21 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> Vec<Vec<S
                 total_space_fmt,
                 io_read.to_string(),
                 io_write.to_string(),
-            ]);
+            ];
+            row_widths.iter_mut().zip(&row).for_each(|(curr, r)| {
+                *curr = std::cmp::max(*curr, r.len());
+            });
+            disk_vector.push(row);
         });
 
     if disk_vector.is_empty() {
         disk_vector.push(vec!["No Disks Found".to_string(), "".to_string()]);
     }
 
-    disk_vector
+    TableData {
+        data: disk_vector,
+        row_widths,
+    }
 }
 
 pub fn convert_cpu_data_points(

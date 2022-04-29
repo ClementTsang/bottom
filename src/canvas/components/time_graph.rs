@@ -25,7 +25,6 @@ pub struct GraphData<'a> {
     pub name: Option<Cow<'a, str>>,
 }
 
-#[derive(Default)]
 pub struct TimeGraph<'a> {
     /// Whether to use a dot marker over the default braille markers.
     pub use_dot: bool,

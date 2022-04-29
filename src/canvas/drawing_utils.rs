@@ -1,6 +1,6 @@
 use tui::layout::Rect;
 
-use crate::app;
+use crate::app::{self};
 use std::{
     cmp::{max, min},
     time::Instant,
@@ -326,6 +326,12 @@ mod test {
             small_rect
         ));
         assert!(over_timer.is_none());
+    }
+
+    #[test]
+    fn test_width_calculation() {
+        // TODO: Implement width calculation test; can reuse old ones as basis
+        todo!()
     }
 
     #[test]

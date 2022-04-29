@@ -1,4 +1,4 @@
-use std::{collections::HashMap, convert::TryInto, time::Instant};
+use std::{borrow::Cow, collections::HashMap, convert::TryInto, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 
@@ -31,16 +31,173 @@ pub enum CursorDirection {
     Right,
 }
 
-/// AppScrollWidgetState deals with fields for a scrollable app's current state.
+/// Meant for canvas operations involving table column widths.
 #[derive(Default)]
-pub struct AppScrollWidgetState {
+pub struct CanvasTableWidthState {
+    pub desired_column_widths: Vec<u16>,
+    pub calculated_column_widths: Vec<u16>,
+}
+
+/// A bound on the width of a column.
+#[derive(Clone, Copy, Debug)]
+pub enum WidthBounds {
+    /// A width of this type is either as long as `min`, but can otherwise shrink and grow up to a point.
+    Soft {
+        /// The minimum amount before giving up and hiding.
+        min_width: u16,
+
+        /// The desired, calculated width. Take this if possible as the base starting width.
+        desired: u16,
+
+        /// The max width, as a percentage of the total width available. If [`None`],
+        /// then it can grow as desired.
+        max_percentage: Option<f32>,
+    },
+
+    /// A width of this type is either as long as specified, or does not appear at all.
+    Hard(u16),
+}
+
+impl WidthBounds {
+    pub const fn soft_from_str(name: &'static str, max_percentage: Option<f32>) -> WidthBounds {
+        WidthBounds::Soft {
+            min_width: name.len() as u16,
+            desired: name.len() as u16,
+            max_percentage,
+        }
+    }
+}
+
+pub struct TableComponentColumn {
+    /// The name of the column. Displayed if possible as the header.
+    pub name: Cow<'static, str>,
+
+    /// An optional alternative column name. Displayed if `name` doesn't fit.
+    pub alt: Option<Cow<'static, str>>,
+
+    /// A restriction on this column's width, if desired.
+    pub width_bounds: WidthBounds,
+}
+
+impl TableComponentColumn {
+    pub fn new<I>(name: I, alt: Option<I>, width_bounds: WidthBounds) -> Self
+    where
+        I: Into<Cow<'static, str>>,
+    {
+        Self {
+            name: name.into(),
+            alt: alt.map(Into::into),
+            width_bounds,
+        }
+    }
+}
+
+/// [`TableComponentState`] deals with fields for a scrollable's current state.
+#[derive(Default)]
+pub struct TableComponentState {
     pub current_scroll_position: usize,
     pub scroll_bar: usize,
     pub scroll_direction: ScrollDirection,
     pub table_state: TableState,
+    pub columns: Vec<TableComponentColumn>,
+    pub calculated_widths: Vec<u16>,
 }
 
-impl AppScrollWidgetState {
+impl TableComponentState {
+    pub fn new(columns: Vec<TableComponentColumn>) -> Self {
+        Self {
+            current_scroll_position: 0,
+            scroll_bar: 0,
+            scroll_direction: ScrollDirection::Down,
+            table_state: Default::default(),
+            columns,
+            calculated_widths: Vec::default(),
+        }
+    }
+
+    /// Calculates widths for the columns for this table.
+    ///
+    /// * `total_width` is the, well, total width available.  **NOTE:** This function automatically
+    /// takes away 2 from the width as part of the left/right
+    /// bounds.
+    /// * `left_to_right` is a boolean whether to go from left to right if true, or right to left if
+    ///   false.
+    ///
+    /// **NOTE:** Trailing 0's may break tui-rs, remember to filter them out later!
+    pub fn calculate_column_widths(&mut self, total_width: u16, left_to_right: bool) {
+        use itertools::Either;
+        use std::cmp::{max, min};
+
+        if total_width > 2 {
+            let initial_width = total_width - 2;
+            let mut total_width_left = initial_width;
+
+            let column_widths = &mut self.calculated_widths;
+            *column_widths = vec![0; self.columns.len()];
+
+            let columns = if left_to_right {
+                Either::Left(self.columns.iter().enumerate())
+            } else {
+                Either::Right(self.columns.iter().enumerate().rev())
+            };
+
+            for (itx, column) in columns {
+                match &column.width_bounds {
+                    WidthBounds::Soft {
+                        min_width,
+                        desired,
+                        max_percentage,
+                    } => {
+                        let soft_limit = max(
+                            if let Some(max_percentage) = max_percentage {
+                                // Rust doesn't have an `into()` or `try_into()` for floats to integers???
+                                ((*max_percentage * f32::from(initial_width)).ceil()) as u16
+                            } else {
+                                *desired
+                            },
+                            *min_width,
+                        );
+                        let space_taken = min(min(soft_limit, *desired), total_width_left);
+
+                        if *min_width > space_taken {
+                            break;
+                        } else {
+                            total_width_left = total_width_left.saturating_sub(space_taken + 1);
+                            column_widths[itx] = space_taken;
+                        }
+                    }
+                    WidthBounds::Hard(width) => {
+                        let space_taken = min(*width, total_width_left);
+
+                        if *width > space_taken {
+                            break;
+                        } else {
+                            total_width_left = total_width_left.saturating_sub(space_taken + 1);
+                            column_widths[itx] = space_taken;
+                        }
+                    }
+                }
+            }
+
+            while let Some(0) = column_widths.last() {
+                column_widths.pop();
+            }
+
+            if !column_widths.is_empty() {
+                // Redistribute remaining.
+                let amount_per_slot = total_width_left / column_widths.len() as u16;
+                total_width_left %= column_widths.len() as u16;
+                for (index, width) in column_widths.iter_mut().enumerate() {
+                    if index < total_width_left.into() {
+                        *width += amount_per_slot + 1;
+                    } else {
+                        *width += amount_per_slot;
+                    }
+                }
+            }
+        }
+    }
+
     /// Updates the position if possible, and if there is a valid change, returns the new position.
     pub fn update_position(&mut self, change: i64, num_entries: usize) -> Option<usize> {
         if change == 0 {
@@ -157,13 +314,6 @@ impl AppSearchState {
     pub fn is_invalid_or_blank_search(&self) -> bool {
         self.is_blank_search || self.is_invalid_search
     }
-}
-
-/// Meant for canvas operations involving table column widths.
-#[derive(Default)]
-pub struct CanvasTableWidthState {
-    pub desired_column_widths: Vec<u16>,
-    pub calculated_column_widths: Vec<u16>,
 }
 
 /// ProcessSearchState only deals with process' search's current settings and state.
@@ -426,7 +576,8 @@ impl ProcColumn {
 
     /// NOTE: ALWAYS call this when opening the sorted window.
     pub fn set_to_sorted_index_from_type(&mut self, proc_sorting_type: &ProcessSorting) {
-        // TODO [Custom Columns]: If we add custom columns, this may be needed!  Since column indices will change, this runs the risk of OOB.  So, when you change columns, CALL THIS AND ADAPT!
+        // TODO [Custom Columns]: If we add custom columns, this may be needed!
+        // Since column indices will change, this runs the risk of OOB. So, if you change columns, CALL THIS AND ADAPT!
         let mut true_index = 0;
         for column in &self.ordered_columns {
             if *column == *proc_sorting_type {
@@ -489,7 +640,7 @@ impl ProcColumn {
 pub struct ProcWidgetState {
     pub process_search_state: ProcessSearchState,
     pub is_grouped: bool,
-    pub scroll_state: AppScrollWidgetState,
+    pub scroll_state: TableComponentState,
     pub process_sorting_type: processes::ProcessSorting,
     pub is_process_sort_descending: bool,
     pub is_using_command: bool,
@@ -546,7 +697,7 @@ impl ProcWidgetState {
         ProcWidgetState {
             process_search_state,
             is_grouped,
-            scroll_state: AppScrollWidgetState::default(),
+            scroll_state: TableComponentState::default(),
             process_sorting_type,
             is_process_sort_descending,
             is_using_command,
@@ -774,7 +925,7 @@ pub struct CpuWidgetState {
     pub current_display_time: u64,
     pub is_legend_hidden: bool,
     pub autohide_timer: Option<Instant>,
-    pub scroll_state: AppScrollWidgetState,
+    pub scroll_state: TableComponentState,
     pub is_multi_graph_mode: bool,
     pub table_width_state: CanvasTableWidthState,
 }
@@ -785,7 +936,7 @@ impl CpuWidgetState {
             current_display_time,
             is_legend_hidden: false,
             autohide_timer,
-            scroll_state: AppScrollWidgetState::default(),
+            scroll_state: TableComponentState::default(),
             is_multi_graph_mode: false,
             table_width_state: CanvasTableWidthState::default(),
         }
@@ -850,15 +1001,25 @@ impl MemState {
 }
 
 pub struct TempWidgetState {
-    pub scroll_state: AppScrollWidgetState,
-    pub table_width_state: CanvasTableWidthState,
+    pub table_state: TableComponentState,
 }
 
-impl TempWidgetState {
-    pub fn init() -> Self {
+impl Default for TempWidgetState {
+    fn default() -> Self {
+        const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
+        const WIDTHS: [WidthBounds; TEMP_HEADERS.len()] = [
+            WidthBounds::soft_from_str(TEMP_HEADERS[0], Some(0.8)),
+            WidthBounds::soft_from_str(TEMP_HEADERS[1], None),
+        ];
+
         TempWidgetState {
-            scroll_state: AppScrollWidgetState::default(),
-            table_width_state: CanvasTableWidthState::default(),
+            table_state: TableComponentState::new(
+                TEMP_HEADERS
+                    .iter()
+                    .zip(WIDTHS)
+                    .map(|(header, width)| TableComponentColumn::new(*header, None, width))
+                    .collect(),
+            ),
         }
     }
 }
@@ -882,15 +1043,30 @@ impl TempState {
 }
 
 pub struct DiskWidgetState {
-    pub scroll_state: AppScrollWidgetState,
-    pub table_width_state: CanvasTableWidthState,
+    pub table_state: TableComponentState,
 }
 
-impl DiskWidgetState {
-    pub fn init() -> Self {
+impl Default for DiskWidgetState {
+    fn default() -> Self {
+        const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
+        const WIDTHS: [WidthBounds; DISK_HEADERS.len()] = [
+            WidthBounds::soft_from_str(DISK_HEADERS[0], Some(0.2)),
+            WidthBounds::soft_from_str(DISK_HEADERS[1], Some(0.2)),
+            WidthBounds::Hard(4),
+            WidthBounds::Hard(6),
+            WidthBounds::Hard(6),
+            WidthBounds::Hard(7),
+            WidthBounds::Hard(7),
+        ];
+
         DiskWidgetState {
-            scroll_state: AppScrollWidgetState::default(),
-            table_width_state: CanvasTableWidthState::default(),
+            table_state: TableComponentState::new(
+                DISK_HEADERS
+                    .iter()
+                    .zip(WIDTHS)
+                    .map(|(header, width)| TableComponentColumn::new(*header, None, width))
+                    .collect(),
+            ),
         }
     }
 }
@@ -978,18 +1154,20 @@ mod test {
     #[test]
     fn test_scroll_update_position() {
         fn check_scroll_update(
-            scroll: &mut AppScrollWidgetState, change: i64, max: usize, ret: Option<usize>,
+            scroll: &mut TableComponentState, change: i64, max: usize, ret: Option<usize>,
             new_position: usize,
         ) {
             assert_eq!(scroll.update_position(change, max), ret);
             assert_eq!(scroll.current_scroll_position, new_position);
         }
 
-        let mut scroll = AppScrollWidgetState {
+        let mut scroll = TableComponentState {
             current_scroll_position: 5,
             scroll_bar: 0,
             scroll_direction: ScrollDirection::Down,
             table_state: Default::default(),
+            columns: vec![],
+            calculated_widths: vec![],
         };
         let s = &mut scroll;
 
