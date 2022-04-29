@@ -1,6 +1,7 @@
 use std::{
     cmp::{max, min},
     collections::HashMap,
+    convert::TryInto,
     path::PathBuf,
     time::Instant,
 };
@@ -2370,7 +2371,7 @@ impl App {
                 }
                 BottomWidgetType::ProcSort => self.change_process_sort_position(amount),
                 BottomWidgetType::Temp => self.change_temp_position(amount),
-                BottomWidgetType::Disk => self.increment_disk_position(amount),
+                BottomWidgetType::Disk => self.change_disk_position(amount),
                 BottomWidgetType::CpuLegend => self.change_cpu_legend_position(amount),
                 _ => {}
             }
@@ -2384,20 +2385,20 @@ impl App {
         {
             let current_posn = proc_widget_state.columns.current_scroll_position;
             let num_columns = proc_widget_state.columns.get_enabled_columns_len();
+            let prop: core::result::Result<usize, _> =
+                (current_posn as i64 + num_to_change_by).try_into();
 
-            if current_posn as i64 + num_to_change_by < 0 {
-                proc_widget_state.columns.current_scroll_position = 0;
-            } else if current_posn as i64 + num_to_change_by >= num_columns as i64 {
-                proc_widget_state.columns.current_scroll_position = num_columns.saturating_sub(1);
-            } else {
-                proc_widget_state.columns.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as usize;
-            }
+            if let Ok(prop) = prop {
+                if prop < num_columns {
+                    proc_widget_state.columns.current_scroll_position =
+                        (current_posn as i64 + num_to_change_by) as usize;
+                }
 
-            if num_to_change_by < 0 {
-                proc_widget_state.columns.scroll_direction = ScrollDirection::Up;
-            } else {
-                proc_widget_state.columns.scroll_direction = ScrollDirection::Down;
+                if num_to_change_by < 0 {
+                    proc_widget_state.columns.scroll_direction = ScrollDirection::Up;
+                } else {
+                    proc_widget_state.columns.scroll_direction = ScrollDirection::Down;
+                }
             }
         }
     }
@@ -2408,23 +2409,9 @@ impl App {
             .widget_states
             .get_mut(&(self.current_widget.widget_id - 1))
         {
-            let current_posn = cpu_widget_state.scroll_state.current_scroll_position;
-
-            let cap = self.canvas_data.cpu_data.len();
-            if current_posn as i64 + num_to_change_by < 0 {
-                cpu_widget_state.scroll_state.current_scroll_position = 0;
-            } else if current_posn as i64 + num_to_change_by >= cap as i64 {
-                cpu_widget_state.scroll_state.current_scroll_position = cap.saturating_sub(1);
-            } else {
-                cpu_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as usize;
-            }
-
-            if num_to_change_by < 0 {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
-            } else {
-                cpu_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
-            }
+            cpu_widget_state
+                .scroll_state
+                .update_position(num_to_change_by, self.canvas_data.cpu_data.len());
         }
     }
 
@@ -2434,35 +2421,20 @@ impl App {
             .proc_state
             .get_mut_widget_state(self.current_widget.widget_id)
         {
-            let current_posn = proc_widget_state.scroll_state.current_scroll_position;
             if let Some(finalized_process_data) = self
                 .canvas_data
                 .finalized_process_data_map
                 .get(&self.current_widget.widget_id)
             {
-                if current_posn as i64 + num_to_change_by < 0 {
-                    proc_widget_state.scroll_state.current_scroll_position = 0;
-                } else if current_posn as i64 + num_to_change_by
-                    >= finalized_process_data.len() as i64
-                {
-                    proc_widget_state.scroll_state.current_scroll_position =
-                        finalized_process_data.len().saturating_sub(1);
-                } else {
-                    proc_widget_state.scroll_state.current_scroll_position =
-                        (current_posn as i64 + num_to_change_by) as usize;
-                }
-            }
-
-            if num_to_change_by < 0 {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
+                proc_widget_state
+                    .scroll_state
+                    .update_position(num_to_change_by, finalized_process_data.len())
             } else {
-                proc_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
+                None
             }
-
-            return Some(proc_widget_state.scroll_state.current_scroll_position);
+        } else {
+            None
         }
-
-        None
     }
 
     fn change_temp_position(&mut self, num_to_change_by: i64) {
@@ -2471,48 +2443,21 @@ impl App {
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            let current_posn = temp_widget_state.scroll_state.current_scroll_position;
-
-            if current_posn as i64 + num_to_change_by < 0 {
-                temp_widget_state.scroll_state.current_scroll_position = 0;
-            } else if current_posn as i64 + num_to_change_by
-                >= self.canvas_data.temp_sensor_data.len() as i64
-            {
-                temp_widget_state.scroll_state.current_scroll_position =
-                    self.canvas_data.temp_sensor_data.len().saturating_sub(1);
-            } else {
-                temp_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as usize;
-            }
-
-            if num_to_change_by < 0 {
-                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
-            } else {
-                temp_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
-            }
+            temp_widget_state
+                .scroll_state
+                .update_position(num_to_change_by, self.canvas_data.temp_sensor_data.len());
         }
     }
 
-    fn increment_disk_position(&mut self, num_to_change_by: i64) {
+    fn change_disk_position(&mut self, num_to_change_by: i64) {
         if let Some(disk_widget_state) = self
             .disk_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            let current_posn = disk_widget_state.scroll_state.current_scroll_position;
-
-            if current_posn as i64 + num_to_change_by >= 0
-                && current_posn as i64 + num_to_change_by < self.canvas_data.disk_data.len() as i64
-            {
-                disk_widget_state.scroll_state.current_scroll_position =
-                    (current_posn as i64 + num_to_change_by) as usize;
-            }
-
-            if num_to_change_by < 0 {
-                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Up;
-            } else {
-                disk_widget_state.scroll_state.scroll_direction = ScrollDirection::Down;
-            }
+            disk_widget_state
+                .scroll_state
+                .update_position(num_to_change_by, self.canvas_data.disk_data.len());
         }
     }
 
@@ -3076,7 +3021,7 @@ impl App {
                                         if let Some(visual_index) =
                                             disk_widget_state.scroll_state.table_state.selected()
                                         {
-                                            self.increment_disk_position(
+                                            self.change_disk_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
                                             );
                                         }
