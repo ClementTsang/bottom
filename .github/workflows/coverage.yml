@@ -9,6 +9,9 @@ on:
     branches:
       - master
 
+env:
+  CARGO_INCREMENTAL: 0
+
 jobs:
   pre_job:
     runs-on: ubuntu-latest
