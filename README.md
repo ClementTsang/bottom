@@ -20,6 +20,32 @@
   </p>
 </div>
 
+## Table of contents <!-- omit in toc -->
+
+- [Features](#features)
+- [Support](#support)
+- [Installation](#installation)
+  - [Cargo](#cargo)
+  - [Arch Linux](#arch-linux)
+  - [Debian/Ubuntu](#debianubuntu)
+  - [Fedora/CentOS](#fedoracentos)
+  - [Gentoo](#gentoo)
+  - [Nix](#nix)
+  - [Solus](#solus)
+  - [Homebrew](#homebrew)
+  - [MacPorts](#macports)
+  - [Scoop](#scoop)
+  - [Chocolatey](#chocolatey)
+  - [winget](#winget)
+  - [Manual installation](#manual-installation)
+  - [Binaries](#binaries)
+    - [Auto-completion](#auto-completion)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Contribution](#contribution)
+  - [Contributors](#contributors)
+- [Thanks](#thanks)
+
 ## Features
 
 As (yet another) process/system visualization and management application, bottom supports the typical features:
@@ -195,7 +221,7 @@ and installing via the `.msi` file.
 
 You can uninstall via Control Panel, Options, or `winget --uninstall bottom`.
 
-### Manually
+### Manual installation
 
 There are a few ways to go about doing this manually. Note that you probably want
 to do so using the most recent version of stable Rust, which is how the binaries are built:
