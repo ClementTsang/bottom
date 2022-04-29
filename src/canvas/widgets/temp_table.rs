@@ -51,7 +51,7 @@ impl TempTableWidget for Painter {
                     (draw_loc.height + (1 - table_gap)).saturating_sub(self.table_height_offset),
                 ),
                 &temp_widget_state.scroll_state.scroll_direction,
-                &mut temp_widget_state.scroll_state.previous_scroll_position,
+                &mut temp_widget_state.scroll_state.scroll_bar,
                 temp_widget_state.scroll_state.current_scroll_position,
                 app_state.is_force_redraw,
             );

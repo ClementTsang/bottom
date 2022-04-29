@@ -401,7 +401,7 @@ impl CpuGraphWidget for Painter {
                     (draw_loc.height + (1 - table_gap)).saturating_sub(self.table_height_offset),
                 ),
                 &cpu_widget_state.scroll_state.scroll_direction,
-                &mut cpu_widget_state.scroll_state.previous_scroll_position,
+                &mut cpu_widget_state.scroll_state.scroll_bar,
                 cpu_widget_state.scroll_state.current_scroll_position,
                 app_state.is_force_redraw,
             );

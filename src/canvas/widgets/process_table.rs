@@ -301,7 +301,7 @@ impl ProcessTableWidget for Painter {
                             .saturating_sub(self.table_height_offset),
                     ),
                     &proc_widget_state.scroll_state.scroll_direction,
-                    &mut proc_widget_state.scroll_state.previous_scroll_position,
+                    &mut proc_widget_state.scroll_state.scroll_bar,
                     proc_widget_state.scroll_state.current_scroll_position,
                     app_state.is_force_redraw,
                 );

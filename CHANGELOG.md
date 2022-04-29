@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#711](https://github.com/ClementTsang/bottom/pull/711): Fix building in Rust beta 1.61 due to `as_ref()` calls
   causing type inference issues.
 
+  - [#717](https://github.com/ClementTsang/bottom/pull/717): Fix clicking on empty space in tables selecting the very last entry of a list in some cases.
+
 ## Changes
 
 - [#690](https://github.com/ClementTsang/bottom/pull/690): Adds some colour to `-h`/`--help` as part of updating to clap 3.0.

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, convert::TryInto, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 
@@ -35,9 +35,37 @@ pub enum CursorDirection {
 #[derive(Default)]
 pub struct AppScrollWidgetState {
     pub current_scroll_position: usize,
-    pub previous_scroll_position: usize,
+    pub scroll_bar: usize,
     pub scroll_direction: ScrollDirection,
     pub table_state: TableState,
+}
+
+impl AppScrollWidgetState {
+    /// Updates the position if possible, and if there is a valid change, returns the new position.
+    pub fn update_position(&mut self, change: i64, num_entries: usize) -> Option<usize> {
+        if change == 0 {
+            return None;
+        }
+
+        let csp: Result<i64, _> = self.current_scroll_position.try_into();
+        if let Ok(csp) = csp {
+            let proposed: Result<usize, _> = (csp + change).try_into();
+            if let Ok(proposed) = proposed {
+                if proposed < num_entries {
+                    self.current_scroll_position = proposed;
+                    if change < 0 {
+                        self.scroll_direction = ScrollDirection::Up;
+                    } else {
+                        self.scroll_direction = ScrollDirection::Down;
+                    }
+
+                    return Some(self.current_scroll_position);
+                }
+            }
+        }
+
+        None
+    }
 }
 
 #[derive(PartialEq)]
@@ -635,7 +663,7 @@ impl ProcWidgetState {
                 self.process_search_state.search_state.error_message = Some(err.to_string());
             }
         }
-        self.scroll_state.previous_scroll_position = 0;
+        self.scroll_state.scroll_bar = 0;
         self.scroll_state.current_scroll_position = 0;
     }
 
@@ -941,4 +969,63 @@ pub struct ConfigCategory {
 
 pub struct ConfigOption {
     pub set_function: Box<dyn Fn() -> anyhow::Result<()>>,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_scroll_update_position() {
+        let mut scroll = AppScrollWidgetState {
+            current_scroll_position: 5,
+            scroll_bar: 0,
+            scroll_direction: ScrollDirection::Down,
+            table_state: Default::default(),
+        };
+
+        // Update by 0. Should not change.
+        assert_eq!(scroll.update_position(0, 15), None);
+        assert_eq!(scroll.current_scroll_position, 5);
+
+        // Update by 5. Should increment to index 10.
+        assert_eq!(scroll.update_position(5, 15), Some(10));
+        assert_eq!(scroll.current_scroll_position, 10);
+
+        // Update by 5. Should not change.
+        assert_eq!(scroll.update_position(5, 15), None);
+        assert_eq!(scroll.current_scroll_position, 10);
+
+        // Update by 4. Should increment to index 14 (supposed max).
+        assert_eq!(scroll.update_position(4, 15), Some(14));
+        assert_eq!(scroll.current_scroll_position, 14);
+
+        // Update by 1. Should do nothing.
+        assert_eq!(scroll.update_position(1, 15), None);
+        assert_eq!(scroll.current_scroll_position, 14);
+
+        // Update by -15. Should do nothing.
+        assert_eq!(scroll.update_position(-15, 15), None);
+        assert_eq!(scroll.current_scroll_position, 14);
+
+        // Update by -14. Should land on position 0.
+        assert_eq!(scroll.update_position(-14, 15), Some(0));
+        assert_eq!(scroll.current_scroll_position, 0);
+
+        // Update by -1. Should do nothing.
+        assert_eq!(scroll.update_position(-1, 15), None);
+        assert_eq!(scroll.current_scroll_position, 0);
+
+        // Update by 0. Should do nothing.
+        assert_eq!(scroll.update_position(0, 15), None);
+        assert_eq!(scroll.current_scroll_position, 0);
+
+        // Update by 15. Should do nothing.
+        assert_eq!(scroll.update_position(15, 15), None);
+        assert_eq!(scroll.current_scroll_position, 0);
+
+        // Update by 15 but with a larger bound. Should increment to 15.
+        assert_eq!(scroll.update_position(15, 16), Some(15));
+        assert_eq!(scroll.current_scroll_position, 15);
+    }
 }
