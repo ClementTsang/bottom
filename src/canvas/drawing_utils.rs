@@ -226,137 +226,58 @@ mod test {
 
     #[test]
     fn test_get_start_position() {
-        use crate::app::ScrollDirection;
+        use crate::app::ScrollDirection::{self, Down, Up};
+
+        fn test(
+            bar: usize, num: usize, direction: ScrollDirection, selected: usize, force: bool,
+            expected_posn: usize, expected_bar: usize,
+        ) {
+            let mut bar = bar;
+            assert_eq!(
+                get_start_position(num, &direction, &mut bar, selected, force),
+                expected_posn
+            );
+            assert_eq!(bar, expected_bar);
+        }
 
         // Scrolling down from start
-        {
-            let mut bar = 0;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Down, &mut bar, 0, false),
-                0
-            );
-            assert_eq!(bar, 0);
-        }
+        test(0, 10, Down, 0, false, 0, 0);
 
         // Simple scrolling down
-        {
-            let mut bar = 0;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Down, &mut bar, 1, false),
-                0
-            );
-            assert_eq!(bar, 0);
-        }
+        test(0, 10, Down, 1, false, 0, 0);
 
         // Scrolling down from the middle high up
-        {
-            let mut bar = 0;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Down, &mut bar, 5, false),
-                0
-            );
-            assert_eq!(bar, 0);
-        }
+        test(0, 10, Down, 5, false, 0, 0);
 
         // Scrolling down into boundary
-        {
-            let mut bar = 0;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Down, &mut bar, 11, false),
-                1
-            );
-            assert_eq!(bar, 1);
-        }
+        test(0, 10, Down, 11, false, 1, 1);
 
         // Scrolling down from the with non-zero bar
-        {
-            let mut bar = 5;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Down, &mut bar, 15, false),
-                5
-            );
-            assert_eq!(bar, 5);
-        }
+        test(5, 10, Down, 15, false, 5, 5);
 
         // Force redraw scrolling down (e.g. resize)
-        {
-            let mut bar = 5;
-            assert_eq!(
-                get_start_position(15, &ScrollDirection::Down, &mut bar, 15, true),
-                0
-            );
-            assert_eq!(bar, 0);
-        }
+        test(5, 15, Down, 15, true, 0, 0);
 
         // Test jumping down
-        {
-            let mut bar = 1;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Down, &mut bar, 20, true),
-                10
-            );
-            assert_eq!(bar, 10);
-        }
+        test(1, 10, Down, 20, true, 10, 10);
 
         // Scrolling up from bottom
-        {
-            let mut bar = 10;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Up, &mut bar, 20, false),
-                10
-            );
-            assert_eq!(bar, 10);
-        }
+        test(10, 10, Up, 20, false, 10, 10);
 
         // Simple scrolling up
-        {
-            let mut bar = 10;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Up, &mut bar, 19, false),
-                10
-            );
-            assert_eq!(bar, 10);
-        }
+        test(10, 10, Up, 19, false, 10, 10);
 
         // Scrolling up from the middle
-        {
-            let mut bar = 10;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Up, &mut bar, 10, false),
-                10
-            );
-            assert_eq!(bar, 10);
-        }
+        test(10, 10, Up, 10, false, 10, 10);
 
         // Scrolling up into boundary
-        {
-            let mut bar = 10;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Up, &mut bar, 9, false),
-                9
-            );
-            assert_eq!(bar, 9);
-        }
+        test(10, 10, Up, 9, false, 9, 9);
 
         // Force redraw scrolling up (e.g. resize)
-        {
-            let mut bar = 5;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Up, &mut bar, 15, true),
-                5
-            );
-            assert_eq!(bar, 5);
-        }
+        test(5, 10, Up, 15, true, 5, 5);
 
         // Test jumping up
-        {
-            let mut bar = 10;
-            assert_eq!(
-                get_start_position(10, &ScrollDirection::Up, &mut bar, 0, false),
-                0
-            );
-            assert_eq!(bar, 0);
-        }
+        test(10, 10, Up, 0, false, 0, 0);
     }
 
     #[test]

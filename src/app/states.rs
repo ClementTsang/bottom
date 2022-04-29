@@ -977,55 +977,53 @@ mod test {
 
     #[test]
     fn test_scroll_update_position() {
+        fn check_scroll_update(
+            scroll: &mut AppScrollWidgetState, change: i64, max: usize, ret: Option<usize>,
+            new_position: usize,
+        ) {
+            assert_eq!(scroll.update_position(change, max), ret);
+            assert_eq!(scroll.current_scroll_position, new_position);
+        }
+
         let mut scroll = AppScrollWidgetState {
             current_scroll_position: 5,
             scroll_bar: 0,
             scroll_direction: ScrollDirection::Down,
             table_state: Default::default(),
         };
+        let s = &mut scroll;
 
         // Update by 0. Should not change.
-        assert_eq!(scroll.update_position(0, 15), None);
-        assert_eq!(scroll.current_scroll_position, 5);
+        check_scroll_update(s, 0, 15, None, 5);
 
         // Update by 5. Should increment to index 10.
-        assert_eq!(scroll.update_position(5, 15), Some(10));
-        assert_eq!(scroll.current_scroll_position, 10);
+        check_scroll_update(s, 5, 15, Some(10), 10);
 
         // Update by 5. Should not change.
-        assert_eq!(scroll.update_position(5, 15), None);
-        assert_eq!(scroll.current_scroll_position, 10);
+        check_scroll_update(s, 5, 15, None, 10);
 
         // Update by 4. Should increment to index 14 (supposed max).
-        assert_eq!(scroll.update_position(4, 15), Some(14));
-        assert_eq!(scroll.current_scroll_position, 14);
+        check_scroll_update(s, 4, 15, Some(14), 14);
 
         // Update by 1. Should do nothing.
-        assert_eq!(scroll.update_position(1, 15), None);
-        assert_eq!(scroll.current_scroll_position, 14);
+        check_scroll_update(s, 1, 15, None, 14);
 
         // Update by -15. Should do nothing.
-        assert_eq!(scroll.update_position(-15, 15), None);
-        assert_eq!(scroll.current_scroll_position, 14);
+        check_scroll_update(s, -15, 15, None, 14);
 
         // Update by -14. Should land on position 0.
-        assert_eq!(scroll.update_position(-14, 15), Some(0));
-        assert_eq!(scroll.current_scroll_position, 0);
+        check_scroll_update(s, -14, 15, Some(0), 0);
 
         // Update by -1. Should do nothing.
-        assert_eq!(scroll.update_position(-1, 15), None);
-        assert_eq!(scroll.current_scroll_position, 0);
+        check_scroll_update(s, -15, 15, None, 0);
 
         // Update by 0. Should do nothing.
-        assert_eq!(scroll.update_position(0, 15), None);
-        assert_eq!(scroll.current_scroll_position, 0);
+        check_scroll_update(s, 0, 15, None, 0);
 
         // Update by 15. Should do nothing.
-        assert_eq!(scroll.update_position(15, 15), None);
-        assert_eq!(scroll.current_scroll_position, 0);
+        check_scroll_update(s, 15, 15, None, 0);
 
         // Update by 15 but with a larger bound. Should increment to 15.
-        assert_eq!(scroll.update_position(15, 16), Some(15));
-        assert_eq!(scroll.current_scroll_position, 15);
+        check_scroll_update(s, 15, 16, Some(15), 15);
     }
 }
