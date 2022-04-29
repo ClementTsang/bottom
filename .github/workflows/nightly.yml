@@ -13,6 +13,10 @@ on:
         default: "mock"
         required: false
 
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
+
 jobs:
   initialize-job:
     name: initialize-job
