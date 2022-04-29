@@ -15,14 +15,8 @@ use tui::{
     widgets::{Block, Paragraph},
 };
 
-pub trait CpuBasicWidget {
-    fn draw_basic_cpu<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-}
-
-impl CpuBasicWidget for Painter {
-    fn draw_basic_cpu<B: Backend>(
+impl Painter {
+    pub fn draw_basic_cpu<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         // Skip the first element, it's the "all" element

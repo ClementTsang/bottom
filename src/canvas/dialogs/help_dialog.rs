@@ -12,15 +12,9 @@ use tui::{
 
 const HELP_BASE: &str = " Help ── Esc to close ";
 
-pub trait HelpDialog {
-    fn draw_help_dialog<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
-    );
-}
-
 // TODO: [REFACTOR] Make generic dialog boxes to build off of instead?
-impl HelpDialog for Painter {
-    fn draw_help_dialog<B: Backend>(
+impl Painter {
+    pub fn draw_help_dialog<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect,
     ) {
         let help_title = Spans::from(vec![

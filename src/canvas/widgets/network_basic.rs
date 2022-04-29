@@ -8,14 +8,8 @@ use tui::{
     widgets::{Block, Paragraph},
 };
 
-pub trait NetworkBasicWidget {
-    fn draw_basic_network<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-}
-
-impl NetworkBasicWidget for Painter {
-    fn draw_basic_network<B: Backend>(
+impl Painter {
+    pub fn draw_basic_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let divided_loc = Layout::default()

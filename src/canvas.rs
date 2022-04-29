@@ -9,12 +9,7 @@ use tui::{
     Frame, Terminal,
 };
 
-// use ordered_float::OrderedFloat;
-
 use canvas_colours::*;
-use dialogs::*;
-use screens::*;
-use widgets::*;
 
 use crate::{
     app::{
@@ -30,14 +25,13 @@ use crate::{
     Pid,
 };
 
+pub use self::components::Point;
+
 mod canvas_colours;
+mod components;
 mod dialogs;
 mod drawing_utils;
-mod screens;
 mod widgets;
-
-/// Point is of time, data
-type Point = (f64, f64);
 
 #[derive(Default)]
 pub struct DisplayableData {
@@ -205,6 +199,16 @@ impl Painter {
         painter.complete_painter_init();
 
         Ok(painter)
+    }
+
+    /// Determines the border style.
+    pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> tui::style::Style {
+        let is_on_widget = widget_id == selected_widget_id;
+        if is_on_widget {
+            self.colours.highlighted_border_style
+        } else {
+            self.colours.border_style
+        }
     }
 
     fn generate_config_colours(&mut self, config: &Config) -> anyhow::Result<()> {
@@ -513,13 +517,6 @@ impl Painter {
                     ),
                     _ => {}
                 }
-            } else if app_state.is_config_open {
-                let rect = Layout::default()
-                    .margin(0)
-                    .constraints([Constraint::Percentage(100)])
-                    .split(f.size())[0];
-
-                self.draw_config_screen(f, app_state, rect)
             } else if app_state.app_config_fields.use_basic_mode {
                 // Basic mode.  This basically removes all graphs but otherwise
                 // the same info.

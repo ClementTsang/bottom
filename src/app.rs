@@ -128,9 +128,6 @@ pub struct App {
     pub basic_mode_use_percent: bool,
 
     #[builder(default = false, setter(skip))]
-    pub is_config_open: bool,
-
-    #[builder(default = false, setter(skip))]
     pub did_config_fail_to_save: bool,
 
     #[cfg(target_family = "unix")]
@@ -218,8 +215,6 @@ impl App {
             }
 
             self.is_force_redraw = true;
-        } else if self.is_config_open {
-            self.close_config_screen();
         } else {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
@@ -297,7 +292,7 @@ impl App {
     }
 
     fn ignore_normal_keybinds(&self) -> bool {
-        self.is_config_open || self.is_in_dialog()
+        self.is_in_dialog()
     }
 
     pub fn on_tab(&mut self) {
@@ -910,8 +905,7 @@ impl App {
     }
 
     pub fn on_up_key(&mut self) {
-        if self.is_config_open {
-        } else if !self.is_in_dialog() {
+        if !self.is_in_dialog() {
             self.decrement_position_count();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_up();
@@ -932,8 +926,7 @@ impl App {
     }
 
     pub fn on_down_key(&mut self) {
-        if self.is_config_open {
-        } else if !self.is_in_dialog() {
+        if !self.is_in_dialog() {
             self.increment_position_count();
         } else if self.help_dialog_state.is_showing_help {
             self.help_scroll_down();
@@ -954,8 +947,7 @@ impl App {
     }
 
     pub fn on_left_key(&mut self) {
-        if self.is_config_open {
-        } else if !self.is_in_dialog() {
+        if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
@@ -1026,8 +1018,7 @@ impl App {
     }
 
     pub fn on_right_key(&mut self) {
-        if self.is_config_open {
-        } else if !self.is_in_dialog() {
+        if !self.is_in_dialog() {
             match self.current_widget.widget_type {
                 BottomWidgetType::ProcSearch => {
                     let is_in_search_widget = self.is_in_search_widget();
@@ -1191,7 +1182,6 @@ impl App {
                     }
                 }
             }
-        } else if self.is_config_open {
         }
     }
 
@@ -1238,7 +1228,6 @@ impl App {
                     }
                 }
             }
-        } else if self.is_config_open {
         }
     }
 
@@ -1490,7 +1479,6 @@ impl App {
                 'G' => self.skip_to_last(),
                 _ => {}
             }
-        } else if self.is_config_open {
         }
     }
 
@@ -1672,16 +1660,6 @@ impl App {
     }
 
     pub fn on_space(&mut self) {}
-
-    pub fn open_config_screen(&mut self) {
-        self.is_config_open = true;
-        self.is_force_redraw = true;
-    }
-
-    pub fn close_config_screen(&mut self) {
-        self.is_config_open = false;
-        self.is_force_redraw = true;
-    }
 
     /// TODO: Disabled.
     /// Call this whenever the config value is updated!
@@ -2264,7 +2242,6 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
-        } else if self.is_config_open {
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = 0;
         } else if self.delete_dialog_state.is_showing_dd {
@@ -2343,7 +2320,6 @@ impl App {
                 _ => {}
             }
             self.reset_multi_tap_keys();
-        } else if self.is_config_open {
         } else if self.help_dialog_state.is_showing_help {
             self.help_dialog_state.scroll_state.current_scroll_index = self
                 .help_dialog_state

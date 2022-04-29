@@ -12,14 +12,8 @@ use tui::{
     widgets::{Block, Paragraph},
 };
 
-pub trait BasicTableArrows {
-    fn draw_basic_table_arrows<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
-    );
-}
-
-impl BasicTableArrows for Painter {
-    fn draw_basic_table_arrows<B: Backend>(
+impl Painter {
+    pub fn draw_basic_table_arrows<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if let Some(current_table) = app_state.widget_map.get(&widget_id) {

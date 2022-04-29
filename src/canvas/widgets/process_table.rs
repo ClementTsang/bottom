@@ -87,46 +87,10 @@ const PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE: &[Option<f64>] = &[
     Some(0.2),
 ];
 
-pub trait ProcessTableWidget {
+impl Painter {
     /// Draws and handles all process-related drawing.  Use this.
     /// - `widget_id` here represents the widget ID of the process widget itself!
-    fn draw_process_features<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
-    );
-
-    /// Draws the process sort box.
-    /// - `widget_id` represents the widget ID of the process widget itself.
-    ///
-    /// This should not be directly called.
-    fn draw_processes_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
-    );
-
-    /// Draws the process search field.
-    /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
-    /// state that is stored.
-    ///
-    /// This should not be directly called.
-    fn draw_search_field<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
-    );
-
-    /// Draws the process sort box.
-    /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
-    /// state that is stored.
-    ///
-    /// This should not be directly called.
-    fn draw_process_sort<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
-    );
-}
-
-impl ProcessTableWidget for Painter {
-    fn draw_process_features<B: Backend>(
+    pub fn draw_process_features<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
@@ -172,6 +136,10 @@ impl ProcessTableWidget for Painter {
         }
     }
 
+    /// Draws the process sort box.
+    /// - `widget_id` represents the widget ID of the process widget itself.
+    ///
+    /// This should not be directly called.
     fn draw_processes_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
@@ -554,6 +522,11 @@ impl ProcessTableWidget for Painter {
         }
     }
 
+    /// Draws the process search field.
+    /// - `widget_id` represents the widget ID of the search box itself --- NOT the process widget
+    /// state that is stored.
+    ///
+    /// This should not be directly called.
     fn draw_search_field<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
@@ -773,6 +746,11 @@ impl ProcessTableWidget for Painter {
         }
     }
 
+    /// Draws the process sort box.
+    /// - `widget_id` represents the widget ID of the sort box itself --- NOT the process widget
+    /// state that is stored.
+    ///
+    /// This should not be directly called.
     fn draw_process_sort<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
