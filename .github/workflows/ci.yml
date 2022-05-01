@@ -3,6 +3,10 @@
 # CI pipeline based on:
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
+#
+# CI pipeline should do:
+# 1. cargo fmt
+# 2. cargo build
 
 name: ci
 
@@ -47,7 +51,7 @@ jobs:
           override: true
           components: rustfmt
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - run: cargo fmt --all -- --check
@@ -82,7 +86,7 @@ jobs:
           override: true
           components: clippy
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - run: cargo clippy --all-targets --workspace -- -D warnings
@@ -236,7 +240,7 @@ jobs:
           override: true
           target: ${{ matrix.triple.target }}
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
@@ -298,7 +302,7 @@ jobs:
           override: true
           target: ${{ matrix.triple.target }}
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
@@ -360,7 +364,7 @@ jobs:
           override: true
           target: ${{ matrix.triple.target }}
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
