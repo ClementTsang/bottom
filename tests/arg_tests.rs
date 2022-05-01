@@ -168,3 +168,16 @@ fn test_missing_default_widget_type() {
             "The following required arguments were not provided",
         ));
 }
+
+#[test]
+fn test_battery_flag() {
+    if !cfg!(feature = "battery") {
+        Command::new(get_binary_location())
+            .arg("--battery")
+            .assert()
+            .failure()
+            .stderr(predicate::str::contains(
+                "'--battery' which wasn't expected",
+            ));
+    }
+}
