@@ -54,9 +54,6 @@ jobs:
           override: true
           components: rustfmt
 
-      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-
       - run: cargo fmt --all -- --check
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
