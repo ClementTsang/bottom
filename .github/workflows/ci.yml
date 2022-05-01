@@ -24,42 +24,8 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
 
 jobs:
-  rustfmt:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - macOS-latest
-          - windows-2019
-    steps:
-      - name: Check if this action should be skipped
-        id: skip_check
-        uses: fkirc/skip-duplicate-actions@38c3738dcac87b41e2b7038775457756c793566e # https://github.com/fkirc/skip-duplicate-actions/commit/38c3738dcac87b41e2b7038775457756c793566e
-        with:
-          concurrent_skipping: "same_content_newer"
-          skip_after_successful_duplicate: "true"
-          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
-          do_not_skip: '["workflow_dispatch", "push"]'
-
-      - uses: actions/checkout@v2
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-
-      - uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt
-
-      - run: cargo fmt --all -- --check
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-
-  # Runs tests + clippy on the main supported platforms.
+  # Runs rustfmt + tests + clippy on the main supported platforms.
   supported:
-    needs: [rustfmt]
     runs-on: ${{ matrix.triple.os }}
     strategy:
       fail-fast: false
@@ -107,11 +73,15 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          components: clippy
+          components: rustfmt, clippy
 
       - name: Enable Rust cache
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+
+      - name: Check cargo fmt
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        run: cargo fmt --all -- --check
 
       - name: Build tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
@@ -131,7 +101,6 @@ jobs:
 
   # Run cargo check on all other platforms
   other_check:
-    needs: [rustfmt]
     runs-on: ${{ matrix.triple.os }}
     continue-on-error: true
     strategy:
