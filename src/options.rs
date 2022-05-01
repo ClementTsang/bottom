@@ -916,11 +916,13 @@ fn get_hide_table_gap(matches: &clap::ArgMatches, config: &Config) -> bool {
 }
 
 fn get_use_battery(matches: &clap::ArgMatches, config: &Config) -> bool {
-    if matches.is_present("battery") {
-        return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(battery) = flags.battery {
-            return battery;
+    if cfg!(feature = "battery") {
+        if matches.is_present("battery") {
+            return true;
+        } else if let Some(flags) = &config.flags {
+            if let Some(battery) = flags.battery {
+                return battery;
+            }
         }
     }
     false

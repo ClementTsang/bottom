@@ -141,7 +141,7 @@ jobs:
           override: true
           target: ${{ matrix.triple.target }}
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         with:
           key: ${{ matrix.triple.target }}
 
@@ -249,7 +249,7 @@ jobs:
           override: true
           target: x86_64-pc-windows-msvc
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         with:
           key: x86_64-pc-windows-msvc-msi
 
@@ -309,7 +309,7 @@ jobs:
           override: true
           target: x86_64-unknown-linux-gnu
 
-      - uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641 # 1.3.0
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         with:
           key: x86_64-unknown-linux-gnu-deb
 
