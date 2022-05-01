@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, cmp::min};
 
 use concat_string::concat_string;
 use tui::{
@@ -29,8 +29,8 @@ pub struct TextTable<'a> {
     /// The border style.
     pub border_style: Style,
 
-    /// The highlighted entry style.
-    pub highlighted_style: Style,
+    /// The highlighted text style.
+    pub highlighted_text_style: Style,
 
     /// The graph title.
     pub title: Cow<'a, str>,
@@ -105,19 +105,24 @@ impl<'a> TextTable<'a> {
         } else {
             self.table_gap
         };
-        let start_position = get_start_position(
-            usize::from(
-                (draw_loc.height + (1 - table_gap)).saturating_sub(self.table_height_offset),
-            ),
-            &state.scroll_direction,
-            &mut state.scroll_bar,
-            state.current_scroll_position,
-            self.is_force_redraw,
-        );
-        state.table_state.select(Some(
-            state.current_scroll_position.saturating_sub(start_position),
-        ));
-        let sliced_vec = &table_data.data[start_position..];
+
+        let sliced_vec = {
+            let num_rows = usize::from(
+                (draw_loc.height + 1 - table_gap).saturating_sub(self.table_height_offset),
+            );
+            let start = get_start_position(
+                num_rows,
+                &state.scroll_direction,
+                &mut state.scroll_bar,
+                state.current_scroll_position,
+                self.is_force_redraw,
+            );
+            let end = min(table_data.data.len(), start + num_rows + 1);
+            state
+                .table_state
+                .select(Some(state.current_scroll_position.saturating_sub(start)));
+            &table_data.data[start..end]
+        };
 
         // Calculate widths
         if self.recalculate_column_widths {
@@ -187,7 +192,7 @@ impl<'a> TextTable<'a> {
             Table::new(disk_rows)
                 .block(disk_block)
                 .header(header)
-                .highlight_style(self.highlighted_style)
+                .highlight_style(self.highlighted_text_style)
                 .style(self.text_style)
                 .widths(
                     &(widths

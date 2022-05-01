@@ -14,7 +14,7 @@ impl Painter {
         if let Some(temp_widget_state) = app_state.temp_state.widget_states.get_mut(&widget_id) {
             let is_on_widget = app_state.current_widget.widget_id == widget_id;
 
-            let (border_style, highlighted_style) = if is_on_widget {
+            let (border_style, highlighted_text_style) = if is_on_widget {
                 (
                     self.colours.highlighted_border_style,
                     self.colours.currently_selected_text_style,
@@ -29,7 +29,7 @@ impl Painter {
                 recalculate_column_widths,
                 header_style: self.colours.table_header_style,
                 border_style,
-                highlighted_style,
+                highlighted_text_style,
                 title: " Temperatures ".into(),
                 is_expanded: app_state.is_expanded,
                 is_on_widget,
