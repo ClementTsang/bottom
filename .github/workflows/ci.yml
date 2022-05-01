@@ -84,7 +84,7 @@ jobs:
         features: [
             "--all-features",
             # "--features battery",
-            # "--features gpu", # Think it's fine to skip this specific test.
+            # "--features gpu",
             "--no-default-features",
           ]
     steps:
@@ -127,7 +127,7 @@ jobs:
 
       - name: Run clippy
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        run: cargo clippy ${{ matrix.features }} --workspace -- -D warnings
+        run: cargo clippy ${{ matrix.features }} --all-targets --workspace -- -D warnings
 
   # Run cargo check on all other platforms
   other_check:
@@ -262,5 +262,5 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-targets --verbose --target=${{ matrix.triple.target }} --features "battery" --locked
+          args: --all-targets --verbose --target=${{ matrix.triple.target }} --locked
           use-cross: ${{ matrix.triple.cross }}
