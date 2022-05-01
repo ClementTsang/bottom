@@ -32,6 +32,7 @@ strip = "symbols"
 
 [features]
 default = ["fern", "log", "battery", "gpu"]
+deploy = ["battery", "gpu"]
 gpu = ["nvidia"]
 nvidia = ["nvml-wrapper"]
 
