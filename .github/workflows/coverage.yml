@@ -23,7 +23,7 @@ jobs:
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "false"
-          do_not_skip: '["workflow_dispatch"]'
+          do_not_skip: '["workflow_dispatch", "push"]'
 
   coverage:
     needs: pre_job
@@ -37,7 +37,6 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          components: rustfmt
 
       - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         with:
