@@ -392,7 +392,7 @@ use CPU (3) as the default instead.
         .arg(use_old_network_legend)
         .arg(whole_word);
 
-    let app = if cfg!(feature = "battery") {
+    if cfg!(feature = "battery") {
         let battery = Arg::new("battery")
             .long("battery")
             .help("Shows the battery widget.")
@@ -402,7 +402,5 @@ use CPU (3) as the default instead.
         app.arg(battery)
     } else {
         app
-    };
-
-    app
+    }
 }
