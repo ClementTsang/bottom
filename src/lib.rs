@@ -314,26 +314,21 @@ pub fn handle_force_redraws(app: &mut App) {
     }
 
     if app.cpu_state.force_update.is_some() {
-        convert_cpu_data_points(
-            &app.data_collection,
-            &mut app.canvas_data.cpu_data,
-            app.is_frozen,
-        );
+        convert_cpu_data_points(&app.data_collection, &mut app.canvas_data.cpu_data);
         app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
         app.cpu_state.force_update = None;
     }
 
     // FIXME: [OPT] Prefer reassignment over new vectors?
     if app.mem_state.force_update.is_some() {
-        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection, app.is_frozen);
-        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection, app.is_frozen);
+        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection);
+        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection);
         app.mem_state.force_update = None;
     }
 
     if app.net_state.force_update.is_some() {
         let (rx, tx) = get_rx_tx_data_points(
             &app.data_collection,
-            app.is_frozen,
             &app.app_config_fields.network_scale_type,
             &app.app_config_fields.network_unit_type,
             app.app_config_fields.network_use_binary_prefix,

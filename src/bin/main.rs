@@ -158,7 +158,6 @@ fn main() -> Result<()> {
                         if app.used_widgets.use_net {
                             let network_data = convert_network_data_points(
                                 &app.data_collection,
-                                false,
                                 app.app_config_fields.use_basic_mode
                                     || app.app_config_fields.use_old_network_legend,
                                 &app.app_config_fields.network_scale_type,
@@ -190,9 +189,9 @@ fn main() -> Result<()> {
                         // Memory
                         if app.used_widgets.use_mem {
                             app.canvas_data.mem_data =
-                                convert_mem_data_points(&app.data_collection, false);
+                                convert_mem_data_points(&app.data_collection);
                             app.canvas_data.swap_data =
-                                convert_swap_data_points(&app.data_collection, false);
+                                convert_swap_data_points(&app.data_collection);
                             let (memory_labels, swap_labels) =
                                 convert_mem_labels(&app.data_collection);
 
@@ -206,7 +205,6 @@ fn main() -> Result<()> {
                             convert_cpu_data_points(
                                 &app.data_collection,
                                 &mut app.canvas_data.cpu_data,
-                                false,
                             );
                             app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }

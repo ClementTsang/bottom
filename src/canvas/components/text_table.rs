@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::{
     app::{self, TableComponentState},
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
-    data_conversion::TableData,
+    data_conversion::{CellContent, TableData},
 };
 
 pub struct TextTable<'a> {
@@ -204,14 +204,24 @@ impl<'a> TextTable<'a> {
 }
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
-fn truncate_text(text: &str, width: usize) -> Text<'_> {
-    let graphemes = UnicodeSegmentation::graphemes(text, true).collect::<Vec<&str>>();
+fn truncate_text(content: &CellContent, width: usize) -> Text<'_> {
+    let (text, opt) = match content {
+        CellContent::Simple(s) => (s, None),
+        CellContent::HasShort { short, long } => (long, Some(short)),
+    };
+
+    let graphemes = UnicodeSegmentation::graphemes(text.as_ref(), true).collect::<Vec<&str>>();
     if graphemes.len() > width && width > 0 {
-        // Truncate with ellipsis
-        let first_n = graphemes[..(width - 1)].concat();
-        return Text::raw(concat_string!(first_n, "…"));
+        if let Some(s) = opt {
+            // If an alternative exists, use that.
+            Text::raw(s.as_ref())
+        } else {
+            // Truncate with ellipsis
+            let first_n = graphemes[..(width - 1)].concat();
+            Text::raw(concat_string!(first_n, "…"))
+        }
     } else {
-        Text::raw(text)
+        Text::raw(text.as_ref())
     }
 }
 

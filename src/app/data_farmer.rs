@@ -108,8 +108,12 @@ impl DataCollection {
         }
     }
 
-    pub fn set_frozen_time(&mut self) {
+    pub fn freeze(&mut self) {
         self.frozen_instant = Some(self.current_instant);
+    }
+
+    pub fn thaw(&mut self) {
+        self.frozen_instant = None;
     }
 
     pub fn clean_data(&mut self, max_time_millis: u64) {

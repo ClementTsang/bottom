@@ -147,8 +147,8 @@ pub struct App {
     pub current_widget: BottomWidget,
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
-    pub config: Config,
-    pub config_path: Option<PathBuf>,
+    pub config: Config,               //  TODO: Is this even used...?
+    pub config_path: Option<PathBuf>, //  TODO: Is this even used...?
 }
 
 #[cfg(target_os = "windows")]
@@ -1528,7 +1528,9 @@ impl App {
             'f' => {
                 self.is_frozen = !self.is_frozen;
                 if self.is_frozen {
-                    self.data_collection.set_frozen_time();
+                    self.data_collection.freeze();
+                } else {
+                    self.data_collection.thaw();
                 }
             }
             'C' => {
