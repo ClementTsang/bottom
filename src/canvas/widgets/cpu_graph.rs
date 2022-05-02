@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App},
+    app::{layout_manager::WidgetDirection, App, CpuWidgetState},
     canvas::{
         components::{GraphData, TimeGraph},
         drawing_utils::{get_column_widths, get_start_position, should_hide_x_label},
@@ -115,6 +115,56 @@ impl Painter {
         }
     }
 
+    fn generate_points<'a>(
+        &self, cpu_widget_state: &CpuWidgetState, cpu_data: &'a [ConvertedCpuData],
+        show_avg_cpu: bool,
+    ) -> Vec<GraphData<'a>> {
+        let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
+
+        let current_scroll_position = cpu_widget_state.scroll_state.current_scroll_position;
+        if current_scroll_position == ALL_POSITION {
+            // This case ensures the other cases cannot have the position be equal to 0.
+            cpu_data
+                .iter()
+                .enumerate()
+                .rev()
+                .map(|(itx, cpu)| {
+                    let style = if show_avg_cpu && itx == AVG_POSITION {
+                        self.colours.avg_colour_style
+                    } else if itx == ALL_POSITION {
+                        self.colours.all_colour_style
+                    } else {
+                        let offset_position = itx - 1; // Because of the all position
+                        self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
+                            % self.colours.cpu_colour_styles.len()]
+                    };
+
+                    GraphData {
+                        points: &cpu.cpu_data[..],
+                        style,
+                        name: None,
+                    }
+                })
+                .collect::<Vec<_>>()
+        } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
+            let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
+                self.colours.avg_colour_style
+            } else {
+                let offset_position = current_scroll_position - 1; // Because of the all position
+                self.colours.cpu_colour_styles
+                    [(offset_position - show_avg_offset) % self.colours.cpu_colour_styles.len()]
+            };
+
+            vec![GraphData {
+                points: &cpu.cpu_data[..],
+                style,
+                name: None,
+            }]
+        } else {
+            vec![]
+        }
+    }
+
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
@@ -131,52 +181,12 @@ impl Painter {
                 &mut cpu_widget_state.autohide_timer,
                 draw_loc,
             );
-            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-            let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
-            let points = {
-                let current_scroll_position = cpu_widget_state.scroll_state.current_scroll_position;
-                if current_scroll_position == ALL_POSITION {
-                    // This case ensures the other cases cannot have the position be equal to 0.
-                    cpu_data
-                        .iter()
-                        .enumerate()
-                        .rev()
-                        .map(|(itx, cpu)| {
-                            let style = if show_avg_cpu && itx == AVG_POSITION {
-                                self.colours.avg_colour_style
-                            } else if itx == ALL_POSITION {
-                                self.colours.all_colour_style
-                            } else {
-                                let offset_position = itx - 1; // Because of the all position
-                                self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                                    % self.colours.cpu_colour_styles.len()]
-                            };
 
-                            GraphData {
-                                points: &cpu.cpu_data[..],
-                                style,
-                                name: None,
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
-                    let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
-                        self.colours.avg_colour_style
-                    } else {
-                        let offset_position = current_scroll_position - 1; // Because of the all position
-                        self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                            % self.colours.cpu_colour_styles.len()]
-                    };
-
-                    vec![GraphData {
-                        points: &cpu.cpu_data[..],
-                        style,
-                        name: None,
-                    }]
-                } else {
-                    vec![]
-                }
-            };
+            let points = self.generate_points(
+                &cpu_widget_state,
+                cpu_data,
+                app_state.app_config_fields.show_average_cpu,
+            );
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
             let title = if cfg!(target_family = "unix") {

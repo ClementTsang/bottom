@@ -19,7 +19,6 @@ use crate::{
 
 pub struct TextTable<'a> {
     pub table_gap: u16,
-    pub table_height_offset: u16,
     pub is_force_redraw: bool,
     pub recalculate_column_widths: bool,
 
@@ -100,71 +99,23 @@ impl<'a> TextTable<'a> {
         &self, f: &mut Frame<'_, B>, draw_loc: Rect, state: &mut TableComponentState,
         table_data: &TableData,
     ) -> Rect {
-        let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
-            0
-        } else {
-            self.table_gap
-        };
-
-        let sliced_vec = {
-            let num_rows = usize::from(
-                (draw_loc.height + 1 - table_gap).saturating_sub(self.table_height_offset),
-            );
-            let start = get_start_position(
-                num_rows,
-                &state.scroll_direction,
-                &mut state.scroll_bar,
-                state.current_scroll_position,
-                self.is_force_redraw,
-            );
-            let end = min(table_data.data.len(), start + num_rows + 1);
-            state
-                .table_state
-                .select(Some(state.current_scroll_position.saturating_sub(start)));
-            &table_data.data[start..end]
-        };
-
-        // Calculate widths
-        if self.recalculate_column_widths {
-            state
-                .columns
-                .iter_mut()
-                .zip(&table_data.row_widths)
-                .for_each(|(column, data_width)| match &mut column.width_bounds {
-                    app::WidthBounds::Soft {
-                        min_width: _,
-                        desired,
-                        max_percentage: _,
-                    } => {
-                        *desired = std::cmp::max(column.name.len(), *data_width) as u16;
-                    }
-                    app::WidthBounds::Hard(_width) => {}
-                });
-
-            state.calculate_column_widths(draw_loc.width, self.left_to_right);
-        }
-
-        let columns = &state.columns;
-        let widths = &state.calculated_widths;
-        // TODO: Maybe truncate this too?
-        let header = Row::new(columns.iter().map(|c| Text::raw(c.name.as_ref())))
-            .style(self.header_style)
-            .bottom_margin(table_gap);
-        let disk_rows = sliced_vec.iter().map(|row| {
-            Row::new(
-                row.iter()
-                    .zip(widths)
-                    .map(|(cell, width)| truncate_text(cell, (*width).into())),
-            )
-        });
-
-        let title = self.generate_title(
-            draw_loc,
-            state.current_scroll_position.saturating_add(1),
-            table_data.data.len(),
-        );
+        let margined_draw_loc = Layout::default()
+            .constraints([Constraint::Percentage(100)])
+            .horizontal_margin(if self.is_on_widget || self.draw_border {
+                0
+            } else {
+                1
+            })
+            .direction(Direction::Horizontal)
+            .split(draw_loc)[0];
 
         let disk_block = if self.draw_border {
+            let title = self.generate_title(
+                draw_loc,
+                state.current_scroll_position.saturating_add(1),
+                table_data.data.len(),
+            );
+
             Block::default()
                 .title(title)
                 .borders(Borders::ALL)
@@ -177,34 +128,99 @@ impl<'a> TextTable<'a> {
             Block::default().borders(Borders::NONE)
         };
 
-        let margined_draw_loc = Layout::default()
-            .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(if self.is_on_widget || self.draw_border {
+        let (inner_width, inner_height) = {
+            let inner = disk_block.inner(margined_draw_loc);
+            (inner.width, inner.height)
+        };
+
+        if inner_width == 0 || inner_height == 0 {
+            f.render_widget(disk_block, margined_draw_loc);
+            margined_draw_loc
+        } else {
+            let show_header = inner_height > 1;
+            let header_height = if show_header { 1 } else { 0 };
+            let table_gap = if !show_header || draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {
-                1
-            })
-            .direction(Direction::Horizontal)
-            .split(draw_loc)[0];
+                self.table_gap
+            };
 
-        // Draw!
-        f.render_stateful_widget(
-            Table::new(disk_rows)
-                .block(disk_block)
-                .header(header)
-                .highlight_style(self.highlighted_text_style)
-                .style(self.text_style)
-                .widths(
+            let sliced_vec = {
+                let num_rows = usize::from(inner_height.saturating_sub(table_gap + header_height));
+                let start = get_start_position(
+                    num_rows,
+                    &state.scroll_direction,
+                    &mut state.scroll_bar,
+                    state.current_scroll_position,
+                    self.is_force_redraw,
+                );
+                let end = min(table_data.data.len(), start + num_rows + 1);
+                state
+                    .table_state
+                    .select(Some(state.current_scroll_position.saturating_sub(start)));
+                &table_data.data[start..end]
+            };
+
+            // Calculate widths
+            if self.recalculate_column_widths {
+                state
+                    .columns
+                    .iter_mut()
+                    .zip(&table_data.row_widths)
+                    .for_each(|(column, data_width)| match &mut column.width_bounds {
+                        app::WidthBounds::Soft {
+                            min_width: _,
+                            desired,
+                            max_percentage: _,
+                        } => {
+                            *desired = std::cmp::max(column.name.len(), *data_width) as u16;
+                        }
+                        app::WidthBounds::Hard(_width) => {}
+                    });
+
+                state.calculate_column_widths(inner_width, self.left_to_right);
+            }
+
+            let columns = &state.columns;
+            let widths = &state.calculated_widths;
+            // TODO: Maybe truncate this too?
+            let header = Row::new(columns.iter().map(|c| Text::raw(c.name.as_ref())))
+                .style(self.header_style)
+                .bottom_margin(table_gap);
+            let disk_rows = sliced_vec.iter().map(|row| {
+                Row::new(
+                    row.iter()
+                        .zip(widths)
+                        .map(|(cell, width)| truncate_text(cell, (*width).into())),
+                )
+            });
+
+            let widget = {
+                let mut table = Table::new(disk_rows)
+                    .block(disk_block)
+                    .highlight_style(self.highlighted_text_style)
+                    .style(self.text_style);
+
+                if show_header {
+                    table = table.header(header);
+                }
+
+                table
+            };
+
+            f.render_stateful_widget(
+                widget.widths(
                     &(widths
                         .iter()
                         .map(|w| Constraint::Length(*w))
                         .collect::<Vec<_>>()),
                 ),
-            margined_draw_loc,
-            &mut state.table_state,
-        );
+                margined_draw_loc,
+                &mut state.table_state,
+            );
 
-        margined_draw_loc
+            margined_draw_loc
+        }
     }
 }
 

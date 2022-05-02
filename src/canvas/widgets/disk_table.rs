@@ -24,7 +24,6 @@ impl Painter {
             };
             let margined_draw_loc = TextTable {
                 table_gap: app_state.app_config_fields.table_gap,
-                table_height_offset: self.table_height_offset,
                 is_force_redraw: app_state.is_force_redraw,
                 recalculate_column_widths,
                 header_style: self.colours.table_header_style,

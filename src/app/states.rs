@@ -117,9 +117,7 @@ impl TableComponentState {
 
     /// Calculates widths for the columns for this table.
     ///
-    /// * `total_width` is the, well, total width available.  **NOTE:** This function automatically
-    /// takes away 2 from the width as part of the left/right
-    /// bounds.
+    /// * `total_width` is the, well, total width available.
     /// * `left_to_right` is a boolean whether to go from left to right if true, or right to left if
     ///   false.
     ///
@@ -128,71 +126,68 @@ impl TableComponentState {
         use itertools::Either;
         use std::cmp::{max, min};
 
-        if total_width > 2 {
-            let initial_width = total_width - 2;
-            let mut total_width_left = initial_width;
+        let mut total_width_left = total_width;
 
-            let column_widths = &mut self.calculated_widths;
-            *column_widths = vec![0; self.columns.len()];
+        let column_widths = &mut self.calculated_widths;
+        *column_widths = vec![0; self.columns.len()];
 
-            let columns = if left_to_right {
-                Either::Left(self.columns.iter().enumerate())
-            } else {
-                Either::Right(self.columns.iter().enumerate().rev())
-            };
+        let columns = if left_to_right {
+            Either::Left(self.columns.iter().enumerate())
+        } else {
+            Either::Right(self.columns.iter().enumerate().rev())
+        };
 
-            for (itx, column) in columns {
-                match &column.width_bounds {
-                    WidthBounds::Soft {
-                        min_width,
-                        desired,
-                        max_percentage,
-                    } => {
-                        let soft_limit = max(
-                            if let Some(max_percentage) = max_percentage {
-                                // Rust doesn't have an `into()` or `try_into()` for floats to integers???
-                                ((*max_percentage * f32::from(initial_width)).ceil()) as u16
-                            } else {
-                                *desired
-                            },
-                            *min_width,
-                        );
-                        let space_taken = min(min(soft_limit, *desired), total_width_left);
-
-                        if *min_width > space_taken {
-                            break;
+        for (itx, column) in columns {
+            match &column.width_bounds {
+                WidthBounds::Soft {
+                    min_width,
+                    desired,
+                    max_percentage,
+                } => {
+                    let soft_limit = max(
+                        if let Some(max_percentage) = max_percentage {
+                            // Rust doesn't have an `into()` or `try_into()` for floats to integers???
+                            ((*max_percentage * f32::from(total_width)).ceil()) as u16
                         } else {
-                            total_width_left = total_width_left.saturating_sub(space_taken + 1);
-                            column_widths[itx] = space_taken;
-                        }
+                            *desired
+                        },
+                        *min_width,
+                    );
+                    let space_taken = min(min(soft_limit, *desired), total_width_left);
+
+                    if *min_width > space_taken {
+                        break;
+                    } else {
+                        total_width_left = total_width_left.saturating_sub(space_taken + 1);
+                        column_widths[itx] = space_taken;
                     }
-                    WidthBounds::Hard(width) => {
-                        let space_taken = min(*width, total_width_left);
+                }
+                WidthBounds::Hard(width) => {
+                    let space_taken = min(*width, total_width_left);
 
-                        if *width > space_taken {
-                            break;
-                        } else {
-                            total_width_left = total_width_left.saturating_sub(space_taken + 1);
-                            column_widths[itx] = space_taken;
-                        }
+                    if *width > space_taken {
+                        break;
+                    } else {
+                        total_width_left = total_width_left.saturating_sub(space_taken + 1);
+                        column_widths[itx] = space_taken;
                     }
                 }
             }
+        }
 
-            while let Some(0) = column_widths.last() {
-                column_widths.pop();
-            }
+        while let Some(0) = column_widths.last() {
+            column_widths.pop();
+        }
 
-            if !column_widths.is_empty() {
-                // Redistribute remaining.
-                let amount_per_slot = total_width_left / column_widths.len() as u16;
-                total_width_left %= column_widths.len() as u16;
-                for (index, width) in column_widths.iter_mut().enumerate() {
-                    if index < total_width_left.into() {
-                        *width += amount_per_slot + 1;
-                    } else {
-                        *width += amount_per_slot;
-                    }
+        if !column_widths.is_empty() {
+            // Redistribute remaining.
+            let amount_per_slot = total_width_left / column_widths.len() as u16;
+            total_width_left %= column_widths.len() as u16;
+            for (index, width) in column_widths.iter_mut().enumerate() {
+                if index < total_width_left.into() {
+                    *width += amount_per_slot + 1;
+                } else {
+                    *width += amount_per_slot;
                 }
             }
         }
