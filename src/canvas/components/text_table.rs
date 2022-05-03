@@ -151,7 +151,7 @@ impl<'a> TextTable<'a> {
                     state.current_scroll_position,
                     self.is_force_redraw,
                 );
-                let end = min(table_data.data.len(), start + num_rows + 1);
+                let end = min(table_data.data.len(), start + num_rows);
                 state
                     .table_state
                     .select(Some(state.current_scroll_position.saturating_sub(start)));
@@ -277,7 +277,7 @@ pub fn get_start_position(
             } else if currently_selected_position >= num_rows {
                 // Else if the current position past the last element visible in the list, omit
                 // until we can see that element
-                *scroll_position_bar = currently_selected_position - num_rows;
+                *scroll_position_bar = currently_selected_position - num_rows + 1;
                 *scroll_position_bar
             } else {
                 // Else, if it is not past the last element visible, do not omit anything
@@ -289,7 +289,7 @@ pub fn get_start_position(
                 // If it's past the first element, then show from that element downwards
                 *scroll_position_bar = currently_selected_position;
             } else if currently_selected_position >= *scroll_position_bar + num_rows {
-                *scroll_position_bar = currently_selected_position - num_rows;
+                *scroll_position_bar = currently_selected_position - num_rows + 1;
             }
             // Else, don't change what our start position is from whatever it is set to!
             *scroll_position_bar

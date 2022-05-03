@@ -1111,12 +1111,8 @@ impl App {
                 &self.current_widget.bottom_right_corner,
             ) {
                 let border_offset = if self.is_drawing_border() { 1 } else { 0 };
-                let header_gap_offset = 1 + if self.is_drawing_gap(&self.current_widget) {
-                    self.app_config_fields.table_gap
-                } else {
-                    0
-                };
-                let height = brc_y - tlc_y - 2 * border_offset - header_gap_offset;
+                let header_offset = self.header_offset(&self.current_widget);
+                let height = brc_y - tlc_y - 2 * border_offset - header_offset;
                 self.change_position_count(-(height as i64));
             }
         }
@@ -1138,12 +1134,8 @@ impl App {
                 &self.current_widget.bottom_right_corner,
             ) {
                 let border_offset = if self.is_drawing_border() { 1 } else { 0 };
-                let header_gap_offset = 1 + if self.is_drawing_gap(&self.current_widget) {
-                    self.app_config_fields.table_gap
-                } else {
-                    0
-                };
-                let height = brc_y - tlc_y - 2 * border_offset - header_gap_offset;
+                let header_offset = self.header_offset(&self.current_widget);
+                let height = brc_y - tlc_y - 2 * border_offset - header_offset;
                 self.change_position_count(height as i64);
             }
         }
@@ -2908,13 +2900,8 @@ impl App {
                     | BottomWidgetType::Disk => {
                         // Get our index...
                         let clicked_entry = y - *tlc_y;
-                        // + 1 so we start at 0.
-                        let header_gap_offset = 1 + if self.is_drawing_gap(&self.current_widget) {
-                            self.app_config_fields.table_gap
-                        } else {
-                            0
-                        };
-                        let offset = border_offset + header_gap_offset;
+                        let header_offset = self.header_offset(&self.current_widget);
+                        let offset = border_offset + header_offset;
                         if clicked_entry >= offset {
                             let offset_clicked_entry = clicked_entry - offset;
                             match &self.current_widget.widget_type {
@@ -3083,13 +3070,23 @@ impl App {
         self.is_expanded || !self.app_config_fields.use_basic_mode
     }
 
-    fn is_drawing_gap(&self, widget: &BottomWidget) -> bool {
+    fn header_offset(&self, widget: &BottomWidget) -> u16 {
         if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) =
             (widget.top_left_corner, widget.bottom_right_corner)
         {
-            brc_y - tlc_y >= constants::TABLE_GAP_HEIGHT_LIMIT
+            let height_diff = brc_y - tlc_y;
+            if height_diff >= constants::TABLE_GAP_HEIGHT_LIMIT {
+                1 + self.app_config_fields.table_gap
+            } else {
+                let min_height_for_header = if self.is_drawing_border() { 3 } else { 1 };
+                if height_diff > min_height_for_header {
+                    1
+                } else {
+                    0
+                }
+            }
         } else {
-            self.app_config_fields.table_gap == 0
+            1 + self.app_config_fields.table_gap
         }
     }
 }

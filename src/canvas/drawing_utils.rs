@@ -162,6 +162,8 @@ pub fn get_start_position(
         *scroll_position_bar = 0;
     }
 
+    // FIXME: Note that num_rows is WRONG here! It assumes the number of rows - 1... oops.
+
     match scroll_direction {
         app::ScrollDirection::Down => {
             if currently_selected_position < *scroll_position_bar + num_rows {
