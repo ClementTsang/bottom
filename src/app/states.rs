@@ -7,6 +7,7 @@ use tui::widgets::TableState;
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
+    data_conversion::CellContent,
     data_harvester::processes::{self, ProcessSorting},
 };
 use ProcessSorting::*;
@@ -70,10 +71,7 @@ impl WidthBounds {
 
 pub struct TableComponentColumn {
     /// The name of the column. Displayed if possible as the header.
-    pub name: Cow<'static, str>,
-
-    /// An optional alternative column name. Displayed if `name` doesn't fit.
-    pub alt: Option<Cow<'static, str>>,
+    pub name: CellContent,
 
     /// A restriction on this column's width, if desired.
     pub width_bounds: WidthBounds,
@@ -85,8 +83,14 @@ impl TableComponentColumn {
         I: Into<Cow<'static, str>>,
     {
         Self {
-            name: name.into(),
-            alt: alt.map(Into::into),
+            name: if let Some(alt) = alt {
+                CellContent::HasAlt {
+                    alt: alt.into(),
+                    main: name.into(),
+                }
+            } else {
+                CellContent::Simple(name.into())
+            },
             width_bounds,
         }
     }

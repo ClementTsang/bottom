@@ -25,25 +25,36 @@ pub struct ConvertedBatteryData {
 
 pub enum CellContent {
     Simple(Cow<'static, str>),
-    HasShort {
-        short: Cow<'static, str>,
-        long: Cow<'static, str>,
+    HasAlt {
+        alt: Cow<'static, str>,
+        main: Cow<'static, str>,
     },
 }
 
 impl CellContent {
+    /// Returns the length of the [`CellContent`]. Note that for a [`CellContent::HasAlt`], it will return
+    /// the length of the "main" field.
     pub fn len(&self) -> usize {
         match self {
             CellContent::Simple(s) => s.len(),
-            CellContent::HasShort { short: _, long } => long.len(),
+            CellContent::HasAlt { alt: _, main: long } => long.len(),
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
 #[derive(Default)]
 pub struct TableData {
-    pub data: Vec<Vec<CellContent>>,
+    pub data: Vec<TableRow>,
     pub row_widths: Vec<usize>,
+}
+
+pub enum TableRow {
+    Raw(Vec<CellContent>),
+    Styled(Vec<CellContent>, tui::style::Style),
 }
 
 #[derive(Default, Debug)]
@@ -111,7 +122,7 @@ pub fn convert_temp_row(app: &App) -> TableData {
     let temp_type = &app.app_config_fields.temperature_type;
     let mut row_widths = vec![0; 2];
 
-    let mut sensor_vector: Vec<Vec<CellContent>> = current_data
+    let mut sensor_vector: Vec<TableRow> = current_data
         .temp_harvest
         .iter()
         .map(|temp_harvest| {
@@ -134,15 +145,15 @@ pub fn convert_temp_row(app: &App) -> TableData {
                 *curr = std::cmp::max(*curr, r.len());
             });
 
-            row
+            TableRow::Raw(row)
         })
         .collect();
 
     if sensor_vector.is_empty() {
-        sensor_vector.push(vec![
+        sensor_vector.push(TableRow::Raw(vec![
             CellContent::Simple("No Sensors Found".into()),
             CellContent::Simple("".into()),
-        ]);
+        ]));
     }
 
     TableData {
@@ -152,7 +163,7 @@ pub fn convert_temp_row(app: &App) -> TableData {
 }
 
 pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> TableData {
-    let mut disk_vector: Vec<Vec<CellContent>> = Vec::new();
+    let mut disk_vector: Vec<TableRow> = Vec::new();
     let mut row_widths = vec![0; 8];
 
     current_data
@@ -197,14 +208,14 @@ pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> TableData
             row_widths.iter_mut().zip(&row).for_each(|(curr, r)| {
                 *curr = std::cmp::max(*curr, r.len());
             });
-            disk_vector.push(row);
+            disk_vector.push(TableRow::Raw(row));
         });
 
     if disk_vector.is_empty() {
-        disk_vector.push(vec![
+        disk_vector.push(TableRow::Raw(vec![
             CellContent::Simple("No Disks Found".into()),
             CellContent::Simple("".into()),
-        ]);
+        ]));
     }
 
     TableData {

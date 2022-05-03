@@ -183,7 +183,7 @@ impl Painter {
             );
 
             let points = self.generate_points(
-                &cpu_widget_state,
+                cpu_widget_state,
                 cpu_data,
                 app_state.app_config_fields.show_average_cpu,
             );
@@ -224,7 +224,7 @@ impl Painter {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))
         {
-            cpu_widget_state.is_legend_hidden = false;
+            cpu_widget_state.is_legend_hidden = false; // TODO: This line (and the one above, see caller) is pretty dumb.
             let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
             let cpu_table_state = &mut cpu_widget_state.scroll_state.table_state;
             let is_on_widget = widget_id == app_state.current_widget.widget_id;

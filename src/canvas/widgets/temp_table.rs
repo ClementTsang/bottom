@@ -22,7 +22,7 @@ impl Painter {
             } else {
                 (self.colours.border_style, self.colours.text_style)
             };
-            let margined_draw_loc = TextTable {
+            TextTable {
                 table_gap: app_state.app_config_fields.table_gap,
                 is_force_redraw: app_state.is_force_redraw,
                 recalculate_column_widths,
@@ -47,13 +47,10 @@ impl Painter {
 
             if app_state.should_get_widget_bounds() {
                 // Update draw loc in widget map
-                // Note there is no difference between this and using draw_loc, but I'm too lazy to fix it.
                 if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                    widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
-                    widget.bottom_right_corner = Some((
-                        margined_draw_loc.x + margined_draw_loc.width,
-                        margined_draw_loc.y + margined_draw_loc.height,
-                    ));
+                    widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                    widget.bottom_right_corner =
+                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
                 }
             }
         }

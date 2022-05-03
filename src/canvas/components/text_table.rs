@@ -14,7 +14,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::{
     app::{self, TableComponentState},
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
-    data_conversion::{CellContent, TableData},
+    data_conversion::{CellContent, TableData, TableRow},
 };
 
 pub struct TextTable<'a> {
@@ -98,14 +98,12 @@ impl<'a> TextTable<'a> {
     pub fn draw_text_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, draw_loc: Rect, state: &mut TableComponentState,
         table_data: &TableData,
-    ) -> Rect {
+    ) {
+        // TODO: This is a *really* ugly hack to get basic mode to hide the border when not selected, without shifting everything.
+        let is_not_basic = self.is_on_widget || self.draw_border;
         let margined_draw_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(if self.is_on_widget || self.draw_border {
-                0
-            } else {
-                1
-            })
+            .horizontal_margin(if is_not_basic { 0 } else { 1 })
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 
@@ -135,7 +133,6 @@ impl<'a> TextTable<'a> {
 
         if inner_width == 0 || inner_height == 0 {
             f.render_widget(disk_block, margined_draw_loc);
-            margined_draw_loc
         } else {
             let show_header = inner_height > 1;
             let header_height = if show_header { 1 } else { 0 };
@@ -183,15 +180,24 @@ impl<'a> TextTable<'a> {
 
             let columns = &state.columns;
             let widths = &state.calculated_widths;
-            // TODO: Maybe truncate this too?
-            let header = Row::new(columns.iter().map(|c| Text::raw(c.name.as_ref())))
-                .style(self.header_style)
-                .bottom_margin(table_gap);
+            let header = Row::new(
+                columns
+                    .iter()
+                    .zip(widths)
+                    .map(|(c, width)| truncate_text(&c.name, (*width).into(), None)),
+            )
+            .style(self.header_style)
+            .bottom_margin(table_gap);
             let disk_rows = sliced_vec.iter().map(|row| {
+                let (row, style) = match row {
+                    TableRow::Raw(row) => (row, None),
+                    TableRow::Styled(row, style) => (row, Some(*style)),
+                };
+
                 Row::new(
                     row.iter()
                         .zip(widths)
-                        .map(|(cell, width)| truncate_text(cell, (*width).into())),
+                        .map(|(cell, width)| truncate_text(cell, (*width).into(), style)),
                 )
             });
 
@@ -218,21 +224,22 @@ impl<'a> TextTable<'a> {
                 margined_draw_loc,
                 &mut state.table_state,
             );
-
-            margined_draw_loc
         }
     }
 }
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
-fn truncate_text(content: &CellContent, width: usize) -> Text<'_> {
+fn truncate_text(content: &CellContent, width: usize, row_style: Option<Style>) -> Text<'_> {
     let (text, opt) = match content {
         CellContent::Simple(s) => (s, None),
-        CellContent::HasShort { short, long } => (long, Some(short)),
+        CellContent::HasAlt {
+            alt: short,
+            main: long,
+        } => (long, Some(short)),
     };
 
     let graphemes = UnicodeSegmentation::graphemes(text.as_ref(), true).collect::<Vec<&str>>();
-    if graphemes.len() > width && width > 0 {
+    let mut text = if graphemes.len() > width && width > 0 {
         if let Some(s) = opt {
             // If an alternative exists, use that.
             Text::raw(s.as_ref())
@@ -243,7 +250,13 @@ fn truncate_text(content: &CellContent, width: usize) -> Text<'_> {
         }
     } else {
         Text::raw(text.as_ref())
+    };
+
+    if let Some(row_style) = row_style {
+        text.patch_style(row_style);
     }
+
+    text
 }
 
 /// Gets the starting position of a table.
