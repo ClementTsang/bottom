@@ -19,8 +19,7 @@ What is the packaging-related issue? Please be clear and concise.
   - Chocolatey
   - Binary releases on GitHub
 
-  **As such, outside of these releases, if there are issues with packaging/repo/distribution, consider fist checking with**
-  **whoever is handling those release channels, as maintainers here are unlikely able to provide much assistance.**
+  **Outside of these releases, if there are issues with packaging/repo/distribution, consider first contacting whoever is handling those release channels where appropriate, as maintainers here may not be able to provide much assistance.**
 
 - If this issue is about supporting a new package manager/installation method, please consider maintaining it yourself
   and sending in a PR/issue with a link to it, and I'll be happy to add it to the list in the README. See
