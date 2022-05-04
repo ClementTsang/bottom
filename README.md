@@ -28,6 +28,7 @@
   - [Cargo](#cargo)
   - [Arch Linux](#arch-linux)
   - [Debian/Ubuntu](#debianubuntu)
+  - [Snap](#snap)
   - [Fedora/CentOS](#fedoracentos)
   - [Gentoo](#gentoo)
   - [Nix](#nix)
@@ -133,6 +134,20 @@ curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0
 sudo dpkg -i bottom_0.6.8_amd64.deb
 ```
 
+### Snap
+
+bottom is available as a [snap](https://snapcraft.io/install/bottom/ubuntu):
+
+```bash
+sudo snap install bottom
+
+# To allow the program to run as intended
+sudo snap connect bottom:mount-observe
+sudo snap connect bottom:hardware-observe
+sudo snap connect bottom:system-observe
+sudo snap connect bottom:process-control
+```
+
 ### Fedora/CentOS
 
 Available in [COPR](https://copr.fedorainfracloud.org/coprs/atim/bottom/):
@@ -169,7 +184,7 @@ nix-env -i bottom
 
 ### Solus
 
-```
+```bash
 sudo eopkg it bottom
 ```
 
