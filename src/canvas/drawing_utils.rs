@@ -333,7 +333,6 @@ mod test {
     #[test]
     fn test_width_calculation() {
         // TODO: Implement width calculation test; can reuse old ones as basis
-        todo!()
     }
 
     #[test]

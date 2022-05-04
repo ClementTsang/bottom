@@ -1,14 +1,10 @@
-use once_cell::sync::Lazy;
-use std::cmp::max;
-
 use crate::{
     app::{App, AxisScaling},
     canvas::{
         components::{GraphData, TimeGraph},
-        drawing_utils::{get_column_widths, should_hide_x_label},
+        drawing_utils::should_hide_x_label,
         Painter, Point,
     },
-    constants::*,
     units::data_units::DataUnit,
     utils::gen_util::*,
 };
@@ -21,26 +17,18 @@ use tui::{
     widgets::{Block, Borders, Row, Table},
 };
 
-const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
-
-static NETWORK_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
-    NETWORK_HEADERS
-        .iter()
-        .map(|entry| entry.len() as u16)
-        .collect::<Vec<_>>()
-});
-
 impl Painter {
     pub fn draw_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if app_state.app_config_fields.use_old_network_legend {
+            const LEGEND_HEIGHT: u16 = 4;
             let network_chunk = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(0)
                 .constraints([
-                    Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
-                    Constraint::Length(5),
+                    Constraint::Length(draw_loc.height.saturating_sub(LEGEND_HEIGHT)),
+                    Constraint::Length(LEGEND_HEIGHT),
                 ])
                 .split(draw_loc);
 
@@ -174,11 +162,7 @@ impl Painter {
     fn draw_network_labels<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
-            0
-        } else {
-            app_state.app_config_fields.table_gap
-        };
+        const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
         let rx_display = &app_state.canvas_data.rx_display;
         let tx_display = &app_state.canvas_data.tx_display;
@@ -186,40 +170,17 @@ impl Painter {
         let total_tx_display = &app_state.canvas_data.total_tx_display;
 
         // Gross but I need it to work...
-        let total_network = vec![vec![
-            Text::raw(rx_display),
-            Text::raw(tx_display),
-            Text::raw(total_rx_display),
-            Text::raw(total_tx_display),
-        ]];
-        let mapped_network = total_network
-            .into_iter()
-            .map(|val| Row::new(val).style(self.colours.text_style));
-
-        // Calculate widths
-        let intrinsic_widths = get_column_widths(
-            draw_loc.width,
-            &[None, None, None, None],
-            &(NETWORK_HEADERS_LENS
-                .iter()
-                .map(|s| Some(*s))
-                .collect::<Vec<_>>()),
-            &[Some(0.25); 4],
-            &(NETWORK_HEADERS_LENS
-                .iter()
-                .map(|s| Some(*s))
-                .collect::<Vec<_>>()),
-            true,
-        );
+        let total_network = vec![Row::new(vec![
+            Text::styled(rx_display, self.colours.rx_style),
+            Text::styled(tx_display, self.colours.tx_style),
+            Text::styled(total_rx_display, self.colours.total_rx_style),
+            Text::styled(total_tx_display, self.colours.total_tx_style),
+        ])];
 
         // Draw
         f.render_widget(
-            Table::new(mapped_network)
-                .header(
-                    Row::new(NETWORK_HEADERS.to_vec())
-                        .style(self.colours.table_header_style)
-                        .bottom_margin(table_gap),
-                )
+            Table::new(total_network)
+                .header(Row::new(NETWORK_HEADERS.to_vec()).style(self.colours.table_header_style))
                 .block(Block::default().borders(Borders::ALL).border_style(
                     if app_state.current_widget.widget_id == widget_id {
                         self.colours.highlighted_border_style
@@ -229,9 +190,9 @@ impl Painter {
                 ))
                 .style(self.colours.text_style)
                 .widths(
-                    &(intrinsic_widths
-                        .iter()
-                        .map(|calculated_width| Constraint::Length(*calculated_width))
+                    &((std::iter::repeat(draw_loc.width.saturating_sub(2) / 4))
+                        .take(4)
+                        .map(Constraint::Length)
                         .collect::<Vec<_>>()),
                 ),
             draw_loc,
