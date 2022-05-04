@@ -221,8 +221,7 @@ choco install bottom --version=0.6.8
 
 ### winget
 
-You can find the packages [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/Clement/bottom).
-Since validation of the package takes time, it may take a while to become available after a release.
+You can find the packages [here](https://github.com/microsoft/winget-pkgs/tree/master/manifests/Clement/bottom):
 
 ```bash
 winget install bottom
