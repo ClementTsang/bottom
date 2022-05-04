@@ -17,6 +17,11 @@ use crate::{
     data_conversion::{CellContent, TableData, TableRow},
 };
 
+pub struct TextTableTitle<'a> {
+    pub title: Cow<'a, str>,
+    pub is_expanded: bool,
+}
+
 pub struct TextTable<'a> {
     pub table_gap: u16,
     pub is_force_redraw: bool,
@@ -31,11 +36,8 @@ pub struct TextTable<'a> {
     /// The highlighted text style.
     pub highlighted_text_style: Style,
 
-    /// The graph title.
-    pub title: Cow<'a, str>,
-
-    /// Whether this graph is expanded.
-    pub is_expanded: bool,
+    /// The graph title and whether it is expanded (if there is one).
+    pub title: Option<TextTableTitle<'a>>,
 
     /// Whether this widget is selected.
     pub is_on_widget: bool,
@@ -58,42 +60,46 @@ pub struct TextTable<'a> {
 
 impl<'a> TextTable<'a> {
     /// Generates a title for the [`TextTable`] widget, given the available space.
-    fn generate_title(&self, draw_loc: Rect, pos: usize, total: usize) -> Spans<'_> {
-        let title = if self.show_table_scroll_position {
-            let title_string = concat_string!(
-                self.title,
-                "(",
-                pos.to_string(),
-                " of ",
-                total.to_string(),
-                ") "
-            );
+    fn generate_title(&self, draw_loc: Rect, pos: usize, total: usize) -> Option<Spans<'_>> {
+        self.title
+            .as_ref()
+            .map(|TextTableTitle { title, is_expanded }| {
+                let title = if self.show_table_scroll_position {
+                    let title_string = concat_string!(
+                        title,
+                        "(",
+                        pos.to_string(),
+                        " of ",
+                        total.to_string(),
+                        ") "
+                    );
 
-            if title_string.len() + 2 <= draw_loc.width.into() {
-                title_string
-            } else {
-                self.title.to_string()
-            }
-        } else {
-            self.title.to_string()
-        };
+                    if title_string.len() + 2 <= draw_loc.width.into() {
+                        title_string
+                    } else {
+                        title.to_string()
+                    }
+                } else {
+                    title.to_string()
+                };
 
-        if self.is_expanded {
-            let title_base = concat_string!(title, "── Esc to go back ");
-            let esc = concat_string!(
-                "─",
-                "─".repeat(usize::from(draw_loc.width).saturating_sub(
-                    UnicodeSegmentation::graphemes(title_base.as_str(), true).count() + 2
-                )),
-                "─ Esc to go back "
-            );
-            Spans::from(vec![
-                Span::styled(title, self.title_style),
-                Span::styled(esc, self.border_style),
-            ])
-        } else {
-            Spans::from(Span::styled(title, self.title_style))
-        }
+                if *is_expanded {
+                    let title_base = concat_string!(title, "── Esc to go back ");
+                    let esc = concat_string!(
+                        "─",
+                        "─".repeat(usize::from(draw_loc.width).saturating_sub(
+                            UnicodeSegmentation::graphemes(title_base.as_str(), true).count() + 2
+                        )),
+                        "─ Esc to go back "
+                    );
+                    Spans::from(vec![
+                        Span::styled(title, self.title_style),
+                        Span::styled(esc, self.border_style),
+                    ])
+                } else {
+                    Spans::from(Span::styled(title, self.title_style))
+                }
+            })
     }
     pub fn draw_text_table<B: Backend>(
         &self, f: &mut Frame<'_, B>, draw_loc: Rect, state: &mut TableComponentState,
@@ -108,16 +114,19 @@ impl<'a> TextTable<'a> {
             .split(draw_loc)[0];
 
         let disk_block = if self.draw_border {
-            let title = self.generate_title(
+            let block = Block::default()
+                .borders(Borders::ALL)
+                .border_style(self.border_style);
+
+            if let Some(title) = self.generate_title(
                 draw_loc,
                 state.current_scroll_position.saturating_add(1),
                 table_data.data.len(),
-            );
-
-            Block::default()
-                .title(title)
-                .borders(Borders::ALL)
-                .border_style(self.border_style)
+            ) {
+                block.title(title)
+            } else {
+                block
+            }
         } else if self.is_on_widget {
             Block::default()
                 .borders(SIDE_BORDERS)
@@ -179,30 +188,32 @@ impl<'a> TextTable<'a> {
             }
 
             let columns = &state.columns;
-            let widths = &state.calculated_widths;
-            let header = Row::new(
-                columns
-                    .iter()
-                    .zip(widths)
-                    .map(|(c, width)| truncate_text(&c.name, (*width).into(), None)),
-            )
+            let header = Row::new(columns.iter().filter_map(|c| {
+                if c.calculated_width == 0 {
+                    None
+                } else {
+                    Some(truncate_text(&c.name, c.calculated_width.into(), None))
+                }
+            }))
             .style(self.header_style)
             .bottom_margin(table_gap);
-            let disk_rows = sliced_vec.iter().map(|row| {
+            let table_rows = sliced_vec.iter().map(|row| {
                 let (row, style) = match row {
                     TableRow::Raw(row) => (row, None),
                     TableRow::Styled(row, style) => (row, Some(*style)),
                 };
 
-                Row::new(
-                    row.iter()
-                        .zip(widths)
-                        .map(|(cell, width)| truncate_text(cell, (*width).into(), style)),
-                )
+                Row::new(row.iter().zip(columns).filter_map(|(cell, c)| {
+                    if c.calculated_width == 0 {
+                        None
+                    } else {
+                        Some(truncate_text(cell, c.calculated_width.into(), style))
+                    }
+                }))
             });
 
             let widget = {
-                let mut table = Table::new(disk_rows)
+                let mut table = Table::new(table_rows)
                     .block(disk_block)
                     .highlight_style(self.highlighted_text_style)
                     .style(self.text_style);
@@ -216,9 +227,15 @@ impl<'a> TextTable<'a> {
 
             f.render_stateful_widget(
                 widget.widths(
-                    &(widths
+                    &(columns
                         .iter()
-                        .map(|w| Constraint::Length(*w))
+                        .filter_map(|c| {
+                            if c.calculated_width == 0 {
+                                None
+                            } else {
+                                Some(Constraint::Length(c.calculated_width))
+                            }
+                        })
                         .collect::<Vec<_>>()),
                 ),
                 margined_draw_loc,

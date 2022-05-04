@@ -61,8 +61,19 @@ pub enum WidthBounds {
 
 impl WidthBounds {
     pub const fn soft_from_str(name: &'static str, max_percentage: Option<f32>) -> WidthBounds {
+        let len = name.len() as u16;
         WidthBounds::Soft {
-            min_width: name.len() as u16,
+            min_width: len,
+            desired: len,
+            max_percentage,
+        }
+    }
+
+    pub const fn soft_from_str_with_alt(
+        name: &'static str, alt: &'static str, max_percentage: Option<f32>,
+    ) -> WidthBounds {
+        WidthBounds::Soft {
+            min_width: alt.len() as u16,
             desired: name.len() as u16,
             max_percentage,
         }
@@ -75,6 +86,9 @@ pub struct TableComponentColumn {
 
     /// A restriction on this column's width, if desired.
     pub width_bounds: WidthBounds,
+
+    /// The calculated width of the column.
+    pub calculated_width: u16,
 }
 
 impl TableComponentColumn {
@@ -92,7 +106,12 @@ impl TableComponentColumn {
                 CellContent::Simple(name.into())
             },
             width_bounds,
+            calculated_width: 0,
         }
+    }
+
+    pub fn should_skip(&self) -> bool {
+        self.calculated_width == 0
     }
 }
 
@@ -104,7 +123,6 @@ pub struct TableComponentState {
     pub scroll_direction: ScrollDirection,
     pub table_state: TableState,
     pub columns: Vec<TableComponentColumn>,
-    pub calculated_widths: Vec<u16>,
 }
 
 impl TableComponentState {
@@ -115,7 +133,6 @@ impl TableComponentState {
             scroll_direction: ScrollDirection::Down,
             table_state: Default::default(),
             columns,
-            calculated_widths: Vec::default(),
         }
     }
 
@@ -132,16 +149,18 @@ impl TableComponentState {
 
         let mut total_width_left = total_width;
 
-        let column_widths = &mut self.calculated_widths;
-        *column_widths = vec![0; self.columns.len()];
+        for column in self.columns.iter_mut() {
+            column.calculated_width = 0;
+        }
 
         let columns = if left_to_right {
-            Either::Left(self.columns.iter().enumerate())
+            Either::Left(self.columns.iter_mut())
         } else {
-            Either::Right(self.columns.iter().enumerate().rev())
+            Either::Right(self.columns.iter_mut().rev())
         };
 
-        for (itx, column) in columns {
+        let mut num_columns = 0;
+        for column in columns {
             match &column.width_bounds {
                 WidthBounds::Soft {
                     min_width,
@@ -161,9 +180,10 @@ impl TableComponentState {
 
                     if *min_width > space_taken {
                         break;
-                    } else {
+                    } else if space_taken > 0 {
                         total_width_left = total_width_left.saturating_sub(space_taken + 1);
-                        column_widths[itx] = space_taken;
+                        column.calculated_width = space_taken;
+                        num_columns += 1;
                     }
                 }
                 WidthBounds::Hard(width) => {
@@ -171,27 +191,34 @@ impl TableComponentState {
 
                     if *width > space_taken {
                         break;
-                    } else {
+                    } else if space_taken > 0 {
                         total_width_left = total_width_left.saturating_sub(space_taken + 1);
-                        column_widths[itx] = space_taken;
+                        column.calculated_width = space_taken;
+                        num_columns += 1;
                     }
                 }
             }
         }
 
-        while let Some(0) = column_widths.last() {
-            column_widths.pop();
-        }
-
-        if !column_widths.is_empty() {
+        if num_columns > 0 {
             // Redistribute remaining.
-            let amount_per_slot = total_width_left / column_widths.len() as u16;
-            total_width_left %= column_widths.len() as u16;
-            for (index, width) in column_widths.iter_mut().enumerate() {
-                if index < total_width_left.into() {
-                    *width += amount_per_slot + 1;
-                } else {
-                    *width += amount_per_slot;
+            let mut num_dist = num_columns;
+            let amount_per_slot = total_width_left / num_dist;
+            total_width_left %= num_dist;
+            for column in self.columns.iter_mut() {
+                if num_dist == 0 {
+                    break;
+                }
+
+                if column.calculated_width > 0 {
+                    if total_width_left > 0 {
+                        column.calculated_width += amount_per_slot + 1;
+                        total_width_left -= 1;
+                    } else {
+                        column.calculated_width += amount_per_slot;
+                    }
+
+                    num_dist -= 1;
                 }
             }
         }
@@ -871,29 +898,13 @@ impl ProcState {
 pub struct NetWidgetState {
     pub current_display_time: u64,
     pub autohide_timer: Option<Instant>,
-    // pub draw_max_range_cache: f64,
-    // pub draw_labels_cache: Vec<String>,
-    // pub draw_time_start_cache: f64,
-    // TODO: Re-enable these when we move net details state-side!
-    // pub unit_type: DataUnitTypes,
-    // pub scale_type: AxisScaling,
 }
 
 impl NetWidgetState {
-    pub fn init(
-        current_display_time: u64,
-        autohide_timer: Option<Instant>,
-        // unit_type: DataUnitTypes,
-        // scale_type: AxisScaling,
-    ) -> Self {
+    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
         NetWidgetState {
             current_display_time,
             autohide_timer,
-            // draw_max_range_cache: 0.0,
-            // draw_labels_cache: vec![],
-            // draw_time_start_cache: 0.0,
-            // unit_type,
-            // scale_type,
         }
     }
 }
@@ -924,20 +935,33 @@ pub struct CpuWidgetState {
     pub current_display_time: u64,
     pub is_legend_hidden: bool,
     pub autohide_timer: Option<Instant>,
-    pub scroll_state: TableComponentState,
+    pub table_state: TableComponentState,
     pub is_multi_graph_mode: bool,
-    pub table_width_state: CanvasTableWidthState,
 }
 
 impl CpuWidgetState {
     pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
+        const CPU_LEGEND_HEADER: [(Cow<'static, str>, Option<Cow<'static, str>>); 2] =
+            [(Cow::Borrowed("CPU"), None), (Cow::Borrowed("Use%"), None)];
+        const WIDTHS: [WidthBounds; CPU_LEGEND_HEADER.len()] = [
+            WidthBounds::soft_from_str("CPU", Some(0.5)),
+            WidthBounds::soft_from_str("Use%", Some(0.5)),
+        ];
+
+        let table_state = TableComponentState::new(
+            CPU_LEGEND_HEADER
+                .iter()
+                .zip(WIDTHS)
+                .map(|(c, width)| TableComponentColumn::new(c.0.clone(), c.1.clone(), width))
+                .collect(),
+        );
+
         CpuWidgetState {
             current_display_time,
             is_legend_hidden: false,
             autohide_timer,
-            scroll_state: TableComponentState::default(),
+            table_state,
             is_multi_graph_mode: false,
-            table_width_state: CanvasTableWidthState::default(),
         }
     }
 }
@@ -1166,7 +1190,6 @@ mod test {
             scroll_direction: ScrollDirection::Down,
             table_state: Default::default(),
             columns: vec![],
-            calculated_widths: vec![],
         };
         let s = &mut scroll;
 

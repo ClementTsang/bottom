@@ -2,7 +2,10 @@ use tui::{backend::Backend, layout::Rect, terminal::Frame};
 
 use crate::{
     app,
-    canvas::{components::TextTable, Painter},
+    canvas::{
+        components::{TextTable, TextTableTitle},
+        Painter,
+    },
 };
 
 impl Painter {
@@ -13,7 +16,6 @@ impl Painter {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(disk_widget_state) = app_state.disk_state.widget_states.get_mut(&widget_id) {
             let is_on_widget = app_state.current_widget.widget_id == widget_id;
-
             let (border_style, highlighted_text_style) = if is_on_widget {
                 (
                     self.colours.highlighted_border_style,
@@ -29,8 +31,10 @@ impl Painter {
                 header_style: self.colours.table_header_style,
                 border_style,
                 highlighted_text_style,
-                title: " Disks ".into(),
-                is_expanded: app_state.is_expanded,
+                title: Some(TextTableTitle {
+                    title: " Disks ".into(),
+                    is_expanded: app_state.is_expanded,
+                }),
                 is_on_widget,
                 draw_border,
                 show_table_scroll_position: app_state.app_config_fields.show_table_scroll_position,

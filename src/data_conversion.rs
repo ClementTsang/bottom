@@ -238,7 +238,7 @@ pub fn convert_cpu_data_points(
         if data.cpu_data.len() + 1 != existing_cpu_data.len() {
             *existing_cpu_data = vec![ConvertedCpuData {
                 cpu_name: "All".to_string(),
-                short_cpu_name: "All".to_string(),
+                short_cpu_name: "".to_string(),
                 cpu_data: vec![],
                 legend_value: String::new(),
             }];

@@ -2,7 +2,10 @@ use tui::{backend::Backend, layout::Rect, terminal::Frame};
 
 use crate::{
     app,
-    canvas::{components::TextTable, Painter},
+    canvas::{
+        components::{TextTable, TextTableTitle},
+        Painter,
+    },
 };
 
 impl Painter {
@@ -29,8 +32,10 @@ impl Painter {
                 header_style: self.colours.table_header_style,
                 border_style,
                 highlighted_text_style,
-                title: " Temperatures ".into(),
-                is_expanded: app_state.is_expanded,
+                title: Some(TextTableTitle {
+                    title: " Temperatures ".into(),
+                    is_expanded: app_state.is_expanded,
+                }),
                 is_on_widget,
                 draw_border,
                 show_table_scroll_position: app_state.app_config_fields.show_table_scroll_position,
