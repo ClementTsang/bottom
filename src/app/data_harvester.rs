@@ -9,7 +9,7 @@ use fxhash::FxHashMap;
 use sysinfo::{System, SystemExt};
 
 #[cfg(feature = "battery")]
-use battery::{Battery, Manager};
+use starship_battery::{Battery, Manager};
 
 use crate::app::layout_manager::UsedWidgets;
 

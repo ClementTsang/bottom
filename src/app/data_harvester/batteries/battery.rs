@@ -7,9 +7,9 @@
 //! - FreeBSD
 //! - DragonFlyBSD
 //!
-//! For more information, see https://github.com/svartalf/rust-battery
+//! For more information, see https://github.com/starship/rust-battery
 
-use battery::{
+use starship_battery::{
     units::{power::watt, ratio::percent, time::second},
     Battery, Manager,
 };
