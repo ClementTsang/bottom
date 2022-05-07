@@ -900,6 +900,47 @@
     The graph points look broken/strange
   </a>
   
+    <nav class="md-nav" aria-label="The graph points look broken/strange">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installing-fonts-for-windows-command-promptpowershell" class="md-nav__link">
+    Installing fonts for Windows Command Prompt/PowerShell
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-cant-i-see-all-my-temperature-sensors-on-windows" class="md-nav__link">
+    Why can't I see all my temperature sensors on Windows?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads" class="md-nav__link">
+    Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-cant-i-see-all-my-temperature-sensors-on-wsl" class="md-nav__link">
+    Why can't I see all my temperature sensors on WSL?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-does-wsl2-not-match-task-manager" class="md-nav__link">
+    Why does WSL2 not match Task Manager?
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -987,15 +1028,55 @@
     <figcaption>Braille fonts rendering as a block of dots</figcaption>
 </figure>
 
-<p>In either case, you may need to install a specific font and configure your terminal to use it. For example, installing <a href="https://yudit.org/download/fonts/UBraille/">UBraille</a>
-and ensuring your terminal uses it should work.</p>
-<p>Another alternative is to use the <code>--dot_marker</code> option to render graph charts using dots instead of the braille characters, which generally seems better supported out of the box,
+<p>One alternative is to use the <code>--dot_marker</code> option to render graph charts using dots instead of the braille characters, which generally seems better supported out of the box,
 at the expense of looking less intricate:</p>
 <figure>
     <img src="../assets/screenshots/troubleshooting/dots.webp" alt="Example of running bottom with the dot marker flag"/>
     <figcaption>Example using <code>btm --dot_marker</code></figcaption>
 </figure>
 
+<p>Another (better) alternative is to install a font that supports braille fonts, and configure your terminal to use it. For example, installing
+something like <a href="https://yudit.org/download/fonts/UBraille/">UBraille</a> or <a href="https://github.com/be5invis/Iosevka">Iosevka</a>
+and ensuring your terminal uses it should work.</p>
+<h3 id="installing-fonts-for-windows-command-promptpowershell"><a class="toclink" href="#installing-fonts-for-windows-command-promptpowershell">Installing fonts for Windows Command Prompt/PowerShell</a></h3>
+<p><strong>Note: I would advise backing up your registry beforehand if you aren't sure what you are doing!</strong></p>
+<p>Let's say you're installing <a href="https://github.com/be5invis/Iosevka">Iosevka</a>. The steps you can take are:</p>
+<ol>
+<li>Install the font itself.</li>
+<li>Open the registry editor, which you can do either by <code>Win+R</code> and opening <code>regedit</code>, or just opening it from the Start Menu.</li>
+<li>
+<p>In the registry editor, go to</p>
+<div class="highlight"><pre><span></span><code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
+</code></pre></div>
+</li>
+<li>
+<p>Here, add a new <code>String value</code>, and set the <code>Name</code> to a bunch of 0's (e.g. <code>000</code> - make sure the name isn't already used), then set the <code>Data</code> to the font name (e.g. <code>Iosevka</code>).</p>
+<p><figure>
+  <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+  <figcaption>The last entry is the new entry for Iosevka</code></figcaption>
+  </figure></p>
+</li>
+<li>
+<p>Then, open the Command Prompt/PowerShell, and right click on the top bar, and open <code>Properties</code>:</p>
+<p><figure>
+  <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+  </figure></p>
+</li>
+<li>
+<p>From here, go to <code>Font</code>, and set the font to your new font (e.g. <code>Iosevka</code>):</p>
+<p><figure>
+  <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
+  </figure></p>
+</li>
+</ol>
+<h2 id="why-cant-i-see-all-my-temperature-sensors-on-windows"><a class="toclink" href="#why-cant-i-see-all-my-temperature-sensors-on-windows">Why can't I see all my temperature sensors on Windows?</a></h2>
+<p>This is a known issue, and some sensors may require admin privileges to get sensor data.</p>
+<h2 id="why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads"><a class="toclink" href="#why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads">Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)</a></h2>
+<p>This seems to be some issue with how batteries are being detected on Windows.</p>
+<h2 id="why-cant-i-see-all-my-temperature-sensors-on-wsl"><a class="toclink" href="#why-cant-i-see-all-my-temperature-sensors-on-wsl">Why can't I see all my temperature sensors on WSL?</a></h2>
+<p>Due to how WSL works, hosts may not expose their temperature sensors and therefore, temperature sensors might be missing.</p>
+<h2 id="why-does-wsl2-not-match-task-manager"><a class="toclink" href="#why-does-wsl2-not-match-task-manager">Why does WSL2 not match Task Manager?</a></h2>
+<p>Due to how WSL2 works, the two might not match up in terms of reported data.</p>
 <h2 id="why-cant-i-see-all-my-processesprocess-usage-on-macos"><a class="toclink" href="#why-cant-i-see-all-my-processesprocess-usage-on-macos">Why can't I see all my processes/process usage on macOS?</a></h2>
 <p>You may have to run the program with elevated privileges - for example:</p>
 <div class="highlight"><pre><span></span><code>sudo btm
