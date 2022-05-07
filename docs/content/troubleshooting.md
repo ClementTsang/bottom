@@ -18,16 +18,66 @@ Another example is when braille is rendered as a block of dots, with the non-col
     <figcaption>Braille fonts rendering as a block of dots</figcaption>
 </figure>
 
-In either case, you may need to install a specific font and configure your terminal to use it. For example, installing [UBraille](https://yudit.org/download/fonts/UBraille/)
-and ensuring your terminal uses it should work.
-
-Another alternative is to use the `--dot_marker` option to render graph charts using dots instead of the braille characters, which generally seems better supported out of the box,
+One alternative is to use the `--dot_marker` option to render graph charts using dots instead of the braille characters, which generally seems better supported out of the box,
 at the expense of looking less intricate:
 
 <figure>
     <img src="../assets/screenshots/troubleshooting/dots.webp" alt="Example of running bottom with the dot marker flag"/>
     <figcaption>Example using <code>btm --dot_marker</code></figcaption>
 </figure>
+
+Another (better) alternative is to install a font that supports braille fonts, and configure your terminal to use it. For example, installing
+something like [UBraille](https://yudit.org/download/fonts/UBraille/) or [Iosevka](https://github.com/be5invis/Iosevka)
+and ensuring your terminal uses it should work.
+
+### Installing fonts for Windows Command Prompt/PowerShell
+
+**Note: I would advise backing up your registry beforehand if you aren't sure what you are doing!**
+
+Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The steps you can take are:
+
+1. Install the font itself.
+2. Open the registry editor, which you can do either by `Win+R` and opening `regedit`, or just opening it from the Start Menu.
+3. In the registry editor, go to
+
+   ```
+   HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
+   ```
+
+4. Here, add a new `String value`, and set the `Name` to a bunch of 0's (e.g. `000` - make sure the name isn't already used), then set the `Data` to the font name (e.g. `Iosevka`).
+
+    <figure>
+    <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+    <figcaption>The last entry is the new entry for Iosevka</code></figcaption>
+    </figure>
+
+5. Then, open the Command Prompt/PowerShell, and right click on the top bar, and open `Properties`:
+
+    <figure>
+    <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+    </figure>
+
+6. From here, go to `Font`, and set the font to your new font (e.g. `Iosevka`):
+
+    <figure>
+    <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
+    </figure>
+
+## Why can't I see all my temperature sensors on Windows?
+
+This is a known issue, and some sensors may require admin privileges to get sensor data.
+
+## Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)
+
+This seems to be some issue with how batteries are being detected on Windows.
+
+## Why can't I see all my temperature sensors on WSL?
+
+Due to how WSL works, hosts may not expose their temperature sensors and therefore, temperature sensors might be missing.
+
+## Why does WSL2 not match Task Manager?
+
+Due to how WSL2 works, the two might not match up in terms of reported data.
 
 ## Why can't I see all my processes/process usage on macOS?
 

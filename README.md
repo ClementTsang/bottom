@@ -43,6 +43,7 @@
     - [Auto-completion](#auto-completion)
 - [Usage](#usage)
 - [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
 - [Contribution](#contribution)
   - [Contributors](#contributors)
 - [Thanks](#thanks)
@@ -290,6 +291,11 @@ bottom accepts a number of command-line arguments to change the behaviour of the
 generate a configuration file on the first launch, which one can change as appropriate.
 
 More details on configuration can be found [in the documentation](https://clementtsang.github.io/bottom/nightly/configuration/config-file/default-config/).
+
+## Troubleshooting
+
+If some things aren't working, give the [Troubleshooting page](https://clementtsang.github.io/bottom/nightly/troubleshooting) a look. If things still aren't
+working, then consider asking a [question](https://github.com/ClementTsang/bottom/discussions) or filing a [bug report](https://github.com/ClementTsang/bottom/issues/new/choose).
 
 ## Contribution
 

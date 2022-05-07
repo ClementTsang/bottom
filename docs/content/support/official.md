@@ -22,7 +22,7 @@ bottom from the repo/source, then please try that as well.
 
 ### Windows
 
-- The temperature widget seems to require elevated access in some cases to get data.
+- The temperature widget seems to require admin privileges in some cases to get data.
 - The battery widget seems to have issues with dual battery systems, like some Thinkpads.
 - If you are using WSL or WSL2:
   - You may have issues with getting memory data.
