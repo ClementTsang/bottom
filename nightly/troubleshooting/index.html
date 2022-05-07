@@ -944,8 +944,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#why-cant-i-see-all-my-processesprocess-usage-on-macos" class="md-nav__link">
-    Why can't I see all my processes/process usage on macOS?
+  <a href="#why-cant-i-see-all-my-processesprocess-data-on-macos" class="md-nav__link">
+    Why can't I see all my processes/process data on macOS?
   </a>
   
 </li>
@@ -1051,38 +1051,46 @@ and ensuring your terminal uses it should work.</p>
 </li>
 <li>
 <p>Here, add a new <code>String value</code>, and set the <code>Name</code> to a bunch of 0's (e.g. <code>000</code> - make sure the name isn't already used), then set the <code>Data</code> to the font name (e.g. <code>Iosevka</code>).</p>
-<p><figure>
-  <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
-  <figcaption>The last entry is the new entry for Iosevka</code></figcaption>
-  </figure></p>
-</li>
-<li>
-<p>Then, open the Command Prompt/PowerShell, and right click on the top bar, and open <code>Properties</code>:</p>
-<p><figure>
-  <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
-  </figure></p>
-</li>
-<li>
-<p>From here, go to <code>Font</code>, and set the font to your new font (e.g. <code>Iosevka</code>):</p>
-<p><figure>
-  <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
-  </figure></p>
 </li>
 </ol>
+<figure>
+    <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+    <figcaption>The last entry is the new entry for Iosevka</code></figcaption>
+</figure>
+
+<ol>
+<li>Then, open the Command Prompt/PowerShell, and right click on the top bar, and open <code>Properties</code>:</li>
+</ol>
+<figure>
+    <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+</figure>
+
+<ol>
+<li>From here, go to <code>Font</code>, and set the font to your new font (e.g. <code>Iosevka</code>):</li>
+</ol>
+<figure>
+    <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
+</figure>
+
 <h2 id="why-cant-i-see-all-my-temperature-sensors-on-windows"><a class="toclink" href="#why-cant-i-see-all-my-temperature-sensors-on-windows">Why can't I see all my temperature sensors on Windows?</a></h2>
-<p>This is a known issue, and some sensors may require admin privileges to get sensor data.</p>
+<p>This is a <a href="../support/official/#windows">known limitation</a>, some sensors may require admin privileges to get sensor data.</p>
 <h2 id="why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads"><a class="toclink" href="#why-dont-i-see-dual-batteries-on-windows-reported-separately-eg-thinkpads">Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)</a></h2>
-<p>This seems to be some issue with how batteries are being detected on Windows.</p>
+<p>This is a <a href="../support/official/#windows">known limitation</a> which seems to be with how batteries are being detected on Windows.</p>
 <h2 id="why-cant-i-see-all-my-temperature-sensors-on-wsl"><a class="toclink" href="#why-cant-i-see-all-my-temperature-sensors-on-wsl">Why can't I see all my temperature sensors on WSL?</a></h2>
-<p>Due to how WSL works, hosts may not expose their temperature sensors and therefore, temperature sensors might be missing.</p>
+<p>This is a <a href="../support/official/#windows">known limitation</a> with WSL. Due to how it works, hosts may not expose their
+temperature sensors and therefore, temperature sensors might be missing.</p>
 <h2 id="why-does-wsl2-not-match-task-manager"><a class="toclink" href="#why-does-wsl2-not-match-task-manager">Why does WSL2 not match Task Manager?</a></h2>
-<p>Due to how WSL2 works, the two might not match up in terms of reported data.</p>
-<h2 id="why-cant-i-see-all-my-processesprocess-usage-on-macos"><a class="toclink" href="#why-cant-i-see-all-my-processesprocess-usage-on-macos">Why can't I see all my processes/process usage on macOS?</a></h2>
-<p>You may have to run the program with elevated privileges - for example:</p>
+<p>This is a <a href="../support/official/#windows">known limitation</a> with WSL2. Due to how WSL2 works, the two might not match
+up in terms of reported data.</p>
+<h2 id="why-cant-i-see-all-my-processesprocess-data-on-macos"><a class="toclink" href="#why-cant-i-see-all-my-processesprocess-data-on-macos">Why can't I see all my processes/process data on macOS?</a></h2>
+<p>This is a <a href="../support/official/#macos">known limitation</a>, and you may have to run the program with elevated
+privileges to work around it - for example:</p>
 <div class="highlight"><pre><span></span><code>sudo btm
 </code></pre></div>
-<p><em>Please note that you should be certain that you trust any software you grant root privileges.</em></p>
-<p>There are measures taken to try to maximize the amount of information obtained without elevated privileges, but there may still be some limitations.</p>
+<p><strong>Please note that you should be certain that you trust any software you grant root privileges.</strong></p>
+<p>There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
+one can modify the instructions found on the <a href="https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo">htop wiki</a>
+on how to run htop without sudo for bottom. However <strong>please</strong> understand the potential security risks before doing so!</p>
 <h2 id="my-configuration-file-isnt-working"><a class="toclink" href="#my-configuration-file-isnt-working">My configuration file isn't working</a></h2>
 <p>If your configuration files aren't working, here are a few things to try:</p>
 <h3 id="check-the-formatting"><a class="toclink" href="#check-the-formatting">Check the formatting</a></h3>
@@ -1124,7 +1132,13 @@ The config files also follow the <a href="https://toml.io/en/">TOML</a> format.<
 <div class="highlight"><pre><span></span><code>btm -C path_to_config
 </code></pre></div>
 <h2 id="my-installation-through-snap-has-some-widgets-that-are-blankshow-no-data"><a class="toclink" href="#my-installation-through-snap-has-some-widgets-that-are-blankshow-no-data">My installation through snap has some widgets that are blank/show no data</a></h2>
-<p>Make sure bottom is given the correct permissions. <a href="https://snapcraft.io/docs/interface-management">Snapcraft</a> explains how to do so.</p>
+<p>Make sure bottom is given the correct permissions in order to collect data. <a href="https://snapcraft.io/docs/interface-management">Snapcraft</a>
+explains how to do so, but the TL;DR is:</p>
+<div class="highlight"><pre><span></span><code>sudo snap connect bottom:mount-observe
+sudo snap connect bottom:hardware-observe
+sudo snap connect bottom:system-observe
+sudo snap connect bottom:process-control
+</code></pre></div>
 
               
             </article>
