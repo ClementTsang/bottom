@@ -1,16 +1,17 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
+use crate::app::widgets::{ProcWidget, ProcWidgetMode};
+use crate::app::CellContent;
 use crate::canvas::Point;
 use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 use crate::{
-    app::{data_farmer, data_harvester, App, ProcWidgetState},
+    app::{data_farmer, data_harvester, App},
     utils::{self, gen_util::*},
 };
 use concat_string::concat_string;
 use data_harvester::processes::ProcessSorting;
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
-use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Default, Debug)]
@@ -21,29 +22,6 @@ pub struct ConvertedBatteryData {
     pub duration_until_full: Option<String>,
     pub duration_until_empty: Option<String>,
     pub health: String,
-}
-
-pub enum CellContent {
-    Simple(Cow<'static, str>),
-    HasAlt {
-        alt: Cow<'static, str>,
-        main: Cow<'static, str>,
-    },
-}
-
-impl CellContent {
-    /// Returns the length of the [`CellContent`]. Note that for a [`CellContent::HasAlt`], it will return
-    /// the length of the "main" field.
-    pub fn len(&self) -> usize {
-        match self {
-            CellContent::Simple(s) => s.len(),
-            CellContent::HasAlt { alt: _, main: long } => long.len(),
-        }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
 }
 
 #[derive(Default)]
@@ -1247,12 +1225,13 @@ pub fn tree_process_data(
 
 // FIXME: [OPT] This is an easy target for optimization, too many to_strings!
 pub fn stringify_process_data(
-    proc_widget_state: &ProcWidgetState, finalized_process_data: &[ConvertedProcessData],
+    proc_widget_state: &ProcWidget, finalized_process_data: &[ConvertedProcessData],
 ) -> Vec<(Vec<(String, Option<String>)>, bool)> {
-    let is_proc_widget_grouped = proc_widget_state.is_grouped;
+    let is_proc_widget_grouped = matches!(proc_widget_state.mode, ProcWidgetMode::Grouped);
     let is_using_command = proc_widget_state.is_using_command;
-    let is_tree = proc_widget_state.is_tree_mode;
-    let mem_enabled = proc_widget_state.columns.is_enabled(&ProcessSorting::Mem);
+    let is_tree = matches!(proc_widget_state.mode, ProcWidgetMode::Tree);
+    // FIXME: [Proc] Handle this, it shouldn't always be true lol.
+    let mem_enabled = true;
 
     finalized_process_data
         .iter()

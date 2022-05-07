@@ -1,4 +1,7 @@
-use std::{borrow::Cow, cmp::min};
+use std::{
+    borrow::Cow,
+    cmp::{max, min},
+};
 
 use concat_string::concat_string;
 use tui::{
@@ -12,9 +15,12 @@ use tui::{
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{self, TableComponentState},
+    app::{
+        self, CellContent, SortState, TableComponentColumn, TableComponentHeader,
+        TableComponentState,
+    },
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
-    data_conversion::{CellContent, TableData, TableRow},
+    data_conversion::{TableData, TableRow},
 };
 
 pub struct TextTableTitle<'a> {
@@ -101,8 +107,8 @@ impl<'a> TextTable<'a> {
                 }
             })
     }
-    pub fn draw_text_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, draw_loc: Rect, state: &mut TableComponentState,
+    pub fn draw_text_table<B: Backend, H: TableComponentHeader>(
+        &self, f: &mut Frame<'_, B>, draw_loc: Rect, state: &mut TableComponentState<H>,
         table_data: &TableData,
     ) {
         // TODO: This is a *really* ugly hack to get basic mode to hide the border when not selected, without shifting everything.
@@ -179,7 +185,7 @@ impl<'a> TextTable<'a> {
                             desired,
                             max_percentage: _,
                         } => {
-                            *desired = std::cmp::max(column.name.len(), *data_width) as u16;
+                            *desired = max(column.header.header_text().len(), *data_width) as u16;
                         }
                         app::WidthBounds::Hard(_width) => {}
                     });
@@ -188,15 +194,9 @@ impl<'a> TextTable<'a> {
             }
 
             let columns = &state.columns;
-            let header = Row::new(columns.iter().filter_map(|c| {
-                if c.calculated_width == 0 {
-                    None
-                } else {
-                    Some(truncate_text(&c.name, c.calculated_width.into(), None))
-                }
-            }))
-            .style(self.header_style)
-            .bottom_margin(table_gap);
+            let header = build_header(columns, &state.sort_state)
+                .style(self.header_style)
+                .bottom_margin(table_gap);
             let table_rows = sliced_vec.iter().map(|row| {
                 let (row, style) = match row {
                     TableRow::Raw(row) => (row, None),
@@ -245,9 +245,60 @@ impl<'a> TextTable<'a> {
     }
 }
 
+/// Constructs the table header.
+fn build_header<'a, H: TableComponentHeader>(
+    columns: &'a [TableComponentColumn<H>], sort_state: &SortState,
+) -> Row<'a> {
+    use itertools::Either;
+
+    const UP_ARROW: &str = "▲";
+    const DOWN_ARROW: &str = "▼";
+
+    let iter = match sort_state {
+        SortState::Unsortable => Either::Left(columns.iter().filter_map(|c| {
+            if c.calculated_width == 0 {
+                None
+            } else {
+                Some(truncate_text(
+                    c.header.header_text(),
+                    c.calculated_width.into(),
+                    None,
+                ))
+            }
+        })),
+        SortState::Sortable { index, order } => {
+            let arrow = match order {
+                app::SortOrder::Ascending => UP_ARROW,
+                app::SortOrder::Descending => DOWN_ARROW,
+            };
+
+            Either::Right(columns.iter().enumerate().filter_map(move |(itx, c)| {
+                if c.calculated_width == 0 {
+                    None
+                } else if itx == *index {
+                    Some(truncate_suffixed_text(
+                        c.header.header_text(),
+                        arrow,
+                        c.calculated_width.into(),
+                        None,
+                    ))
+                } else {
+                    Some(truncate_text(
+                        c.header.header_text(),
+                        c.calculated_width.into(),
+                        None,
+                    ))
+                }
+            }))
+        }
+    };
+
+    Row::new(iter)
+}
+
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
-fn truncate_text(content: &CellContent, width: usize, row_style: Option<Style>) -> Text<'_> {
-    let (text, opt) = match content {
+fn truncate_text<'a>(content: &'a CellContent, width: usize, row_style: Option<Style>) -> Text<'a> {
+    let (main_text, alt_text) = match content {
         CellContent::Simple(s) => (s, None),
         CellContent::HasAlt {
             alt: short,
@@ -255,18 +306,57 @@ fn truncate_text(content: &CellContent, width: usize, row_style: Option<Style>) 
         } => (long, Some(short)),
     };
 
-    let graphemes = UnicodeSegmentation::graphemes(text.as_ref(), true).collect::<Vec<&str>>();
-    let mut text = if graphemes.len() > width && width > 0 {
-        if let Some(s) = opt {
-            // If an alternative exists, use that.
-            Text::raw(s.as_ref())
+    let mut text = {
+        let graphemes: Vec<&str> =
+            UnicodeSegmentation::graphemes(main_text.as_ref(), true).collect();
+        if graphemes.len() > width && width > 0 {
+            if let Some(s) = alt_text {
+                // If an alternative exists, use that.
+                Text::raw(s.as_ref())
+            } else {
+                // Truncate with ellipsis
+                let first_n = graphemes[..(width - 1)].concat();
+                Text::raw(concat_string!(first_n, "…"))
+            }
         } else {
-            // Truncate with ellipsis
-            let first_n = graphemes[..(width - 1)].concat();
-            Text::raw(concat_string!(first_n, "…"))
+            Text::raw(main_text.as_ref())
         }
-    } else {
-        Text::raw(text.as_ref())
+    };
+
+    if let Some(row_style) = row_style {
+        text.patch_style(row_style);
+    }
+
+    text
+}
+
+fn truncate_suffixed_text<'a>(
+    content: &'a CellContent, suffix: &str, width: usize, row_style: Option<Style>,
+) -> Text<'a> {
+    let (main_text, alt_text) = match content {
+        CellContent::Simple(s) => (s, None),
+        CellContent::HasAlt {
+            alt: short,
+            main: long,
+        } => (long, Some(short)),
+    };
+
+    let mut text = {
+        let suffixed = concat_string!(main_text, suffix);
+        let graphemes: Vec<&str> =
+            UnicodeSegmentation::graphemes(suffixed.as_str(), true).collect();
+        if graphemes.len() > width && width > 1 {
+            if let Some(alt) = alt_text {
+                // If an alternative exists, use that + arrow.
+                Text::raw(concat_string!(alt, suffix))
+            } else {
+                // Truncate with ellipsis + arrow.
+                let first_n = graphemes[..(width - 2)].concat();
+                Text::raw(concat_string!(first_n, "…", suffix))
+            }
+        } else {
+            Text::raw(suffixed)
+        }
     };
 
     if let Some(row_style) = row_style {
@@ -315,4 +405,64 @@ pub fn get_start_position(
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_get_start_position() {
+        use crate::app::ScrollDirection::{self, Down, Up};
+
+        #[track_caller]
+
+        fn test_get(
+            bar: usize, num: usize, direction: ScrollDirection, selected: usize, force: bool,
+            expected_posn: usize, expected_bar: usize,
+        ) {
+            let mut bar = bar;
+            assert_eq!(
+                get_start_position(num, &direction, &mut bar, selected, force),
+                expected_posn
+            );
+            assert_eq!(bar, expected_bar);
+        }
+
+        // Scrolling down from start
+        test_get(0, 10, Down, 0, false, 0, 0);
+
+        // Simple scrolling down
+        test_get(0, 10, Down, 1, false, 0, 0);
+
+        // Scrolling down from the middle high up
+        test_get(0, 10, Down, 5, false, 0, 0);
+
+        // Scrolling down into boundary
+        test_get(0, 10, Down, 11, false, 1, 1);
+
+        // Scrolling down from the with non-zero bar
+        test_get(5, 10, Down, 15, false, 5, 5);
+
+        // Force redraw scrolling down (e.g. resize)
+        test_get(5, 15, Down, 15, true, 0, 0);
+
+        // Test jumping down
+        test_get(1, 10, Down, 20, true, 10, 10);
+
+        // Scrolling up from bottom
+        test_get(10, 10, Up, 20, false, 10, 10);
+
+        // Simple scrolling up
+        test_get(10, 10, Up, 19, false, 10, 10);
+
+        // Scrolling up from the middle
+        test_get(10, 10, Up, 10, false, 10, 10);
+
+        // Scrolling up into boundary
+        test_get(10, 10, Up, 9, false, 9, 9);
+
+        // Force redraw scrolling up (e.g. resize)
+        test_get(5, 10, Up, 15, true, 5, 5);
+
+        // Test jumping up
+        test_get(10, 10, Up, 0, false, 0, 0);
+    }
+}

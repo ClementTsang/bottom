@@ -29,6 +29,7 @@ use crossterm::{
 use app::{
     data_harvester::{self, processes::ProcessSorting},
     layout_manager::{UsedWidgets, WidgetDirection},
+    widgets::{ProcWidget, ProcWidgetMode},
     App,
 };
 use constants::*;
@@ -305,13 +306,8 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 pub fn handle_force_redraws(app: &mut App) {
     // Currently we use an Option... because we might want to future-proof this
     // if we eventually get widget-specific redrawing!
-    if app.proc_state.force_update_all {
-        update_all_process_lists(app);
-        app.proc_state.force_update_all = false;
-    } else if let Some(widget_id) = app.proc_state.force_update {
-        update_final_process_list(app, widget_id);
-        app.proc_state.force_update = None;
-    }
+
+    // FIXME: [PROC] handle updating processes if force redraw!
 
     if app.cpu_state.force_update.is_some() {
         convert_cpu_data_points(&app.data_collection, &mut app.canvas_data.cpu_data);
@@ -365,16 +361,15 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
         .map(|process_state| {
             (
                 process_state
-                    .process_search_state
+                    .search_state
                     .search_state
                     .is_invalid_or_blank_search(),
                 process_state.is_using_command,
-                process_state.is_grouped,
-                process_state.is_tree_mode,
+                process_state.mode,
             )
         });
 
-    if let Some((is_invalid_or_blank, is_using_command, is_grouped, is_tree)) = process_states {
+    if let Some((is_invalid_or_blank, is_using_command, mode)) = process_states {
         if !app.is_frozen {
             convert_process_data(
                 &app.data_collection,
@@ -384,8 +379,9 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
             );
         }
         let process_filter = app.get_process_filter(widget_id);
-        let filtered_process_data: Vec<ConvertedProcessData> = if is_tree {
-            app.canvas_data
+        let filtered_process_data: Vec<ConvertedProcessData> = match mode {
+            ProcWidgetMode::Tree => app
+                .canvas_data
                 .single_process_data
                 .iter()
                 .map(|(_pid, process)| {
@@ -398,9 +394,9 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                     }
                     process_clone
                 })
-                .collect::<Vec<_>>()
-        } else {
-            app.canvas_data
+                .collect::<Vec<_>>(),
+            ProcWidgetMode::Grouped | ProcWidgetMode::Normal => app
+                .canvas_data
                 .single_process_data
                 .iter()
                 .filter_map(|(_pid, process)| {
@@ -419,35 +415,35 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
                     }
                 })
                 .cloned()
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>(),
         };
 
         if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-            let mut finalized_process_data = if is_tree {
-                tree_process_data(
+            let mut finalized_process_data = match proc_widget_state.mode {
+                ProcWidgetMode::Tree => tree_process_data(
                     &filtered_process_data,
                     is_using_command,
                     &proc_widget_state.process_sorting_type,
                     proc_widget_state.is_process_sort_descending,
-                )
-            } else if is_grouped {
-                group_process_data(&filtered_process_data, is_using_command)
-            } else {
-                filtered_process_data
+                ),
+                ProcWidgetMode::Grouped => {
+                    let mut data = group_process_data(&filtered_process_data, is_using_command);
+                    sort_process_data(&mut data, proc_widget_state);
+                    data
+                }
+                ProcWidgetMode::Normal => {
+                    let mut data = filtered_process_data;
+                    sort_process_data(&mut data, proc_widget_state);
+                    data
+                }
             };
 
-            // Note tree mode is sorted well before this, as it's special.
-            if !is_tree {
-                sort_process_data(&mut finalized_process_data, proc_widget_state);
-            }
-
-            if proc_widget_state.scroll_state.current_scroll_position
-                >= finalized_process_data.len()
+            if proc_widget_state.table_state.current_scroll_position >= finalized_process_data.len()
             {
-                proc_widget_state.scroll_state.current_scroll_position =
+                proc_widget_state.table_state.current_scroll_position =
                     finalized_process_data.len().saturating_sub(1);
-                proc_widget_state.scroll_state.scroll_bar = 0;
-                proc_widget_state.scroll_state.scroll_direction = app::ScrollDirection::Down;
+                proc_widget_state.table_state.scroll_bar = 0;
+                proc_widget_state.table_state.scroll_direction = app::ScrollDirection::Down;
             }
 
             app.canvas_data.stringified_process_data_map.insert(
@@ -461,9 +457,7 @@ fn update_final_process_list(app: &mut App, widget_id: u64) {
     }
 }
 
-fn sort_process_data(
-    to_sort_vec: &mut [ConvertedProcessData], proc_widget_state: &app::ProcWidgetState,
-) {
+fn sort_process_data(to_sort_vec: &mut [ConvertedProcessData], proc_widget_state: &ProcWidget) {
     to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
 
     match &proc_widget_state.process_sorting_type {
@@ -510,7 +504,7 @@ fn sort_process_data(
             }
         }
         ProcessSorting::Pid => {
-            if !proc_widget_state.is_grouped {
+            if !matches!(proc_widget_state.mode, ProcWidgetMode::Grouped) {
                 to_sort_vec.sort_by(|a, b| {
                     utils::gen_util::get_ordering(
                         a.pid,
@@ -573,7 +567,7 @@ fn sort_process_data(
             (None, None) => std::cmp::Ordering::Less,
         }),
         ProcessSorting::Count => {
-            if proc_widget_state.is_grouped {
+            if matches!(proc_widget_state.mode, ProcWidgetMode::Grouped) {
                 to_sort_vec.sort_by(|a, b| {
                     utils::gen_util::get_ordering(
                         a.group_pids.len(),

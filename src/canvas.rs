@@ -341,8 +341,9 @@ impl Painter {
 
                 // Reset column headers for sorting in process widget...
                 for proc_widget in app_state.proc_state.widget_states.values_mut() {
-                    proc_widget.columns.column_header_y_loc = None;
-                    proc_widget.columns.column_header_x_locs = None;
+                    // FIXME: [Proc] Handle this?
+                    // proc_widget.columns.column_header_y_loc = None;
+                    // proc_widget.columns.column_header_x_locs = None;
                 }
             }
 
@@ -506,7 +507,7 @@ impl Painter {
                                 _ => 0,
                             };
 
-                        self.draw_process_features(f, app_state, rect[0], true, widget_id);
+                        self.draw_process_widget(f, app_state, rect[0], true, widget_id);
                     }
                     Battery => self.draw_battery_display(
                         f,
@@ -585,7 +586,7 @@ impl Painter {
                                         ProcSort => 2,
                                         _ => 0,
                                     };
-                                self.draw_process_features(
+                                self.draw_process_widget(
                                     f,
                                     app_state,
                                     vertical_chunks[3],
@@ -736,7 +737,7 @@ impl Painter {
                     Disk => {
                         self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
                     }
-                    Proc => self.draw_process_features(
+                    Proc => self.draw_process_widget(
                         f,
                         app_state,
                         *widget_draw_loc,

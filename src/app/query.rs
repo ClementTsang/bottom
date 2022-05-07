@@ -1,4 +1,3 @@
-use super::ProcWidgetState;
 use crate::{
     data_conversion::ConvertedProcessData,
     utils::error::{
@@ -8,6 +7,8 @@ use crate::{
 };
 use std::fmt::Debug;
 use std::{borrow::Cow, collections::VecDeque};
+
+use super::widgets::ProcWidget;
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
 const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];
@@ -39,7 +40,7 @@ pub trait ProcessQuery {
     fn parse_query(&self) -> Result<Query>;
 }
 
-impl ProcessQuery for ProcWidgetState {
+impl ProcessQuery for ProcWidget {
     fn parse_query(&self) -> Result<Query> {
         fn process_string_to_filter(query: &mut VecDeque<String>) -> Result<Query> {
             let lhs = process_or(query)?;
@@ -437,9 +438,9 @@ impl ProcessQuery for ProcWidgetState {
 
         let mut process_filter = process_string_to_filter(&mut split_query)?;
         process_filter.process_regexes(
-            self.process_search_state.is_searching_whole_word,
-            self.process_search_state.is_ignoring_case,
-            self.process_search_state.is_searching_with_regex,
+            self.search_state.is_searching_whole_word,
+            self.search_state.is_ignoring_case,
+            self.search_state.is_searching_with_regex,
         )?;
 
         Ok(process_filter)

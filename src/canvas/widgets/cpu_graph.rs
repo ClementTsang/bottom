@@ -1,13 +1,13 @@
 use std::{borrow::Cow, iter};
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App, CpuWidgetState},
+    app::{layout_manager::WidgetDirection, App, CellContent, CpuWidgetState},
     canvas::{
         components::{GraphData, TextTable, TimeGraph},
         drawing_utils::should_hide_x_label,
         Painter,
     },
-    data_conversion::{CellContent, ConvertedCpuData, TableData, TableRow},
+    data_conversion::{ConvertedCpuData, TableData, TableRow},
 };
 
 use concat_string::concat_string;
