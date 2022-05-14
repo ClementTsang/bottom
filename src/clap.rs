@@ -135,6 +135,11 @@ pub fn build_app() -> Command<'static> {
         .help("Sets process CPU% to be based on current CPU%.")
         .long_help("Sets process CPU% usage to be based on the current system CPU% usage rather than total CPU usage.");
 
+    let sort_cpu = Arg::new("sort_cpu")
+        .long("sort_cpu")
+        .help("Orders CPUs based on current CPU%.")
+        .long_help("Sorts CPUs according to the current CPU usage.");
+
     // TODO: [DEBUG] Add a proper debugging solution.
 
     let disable_click = Arg::new("disable_click")
@@ -389,6 +394,7 @@ use CPU (3) as the default instead.
         .arg(network_use_log)
         .arg(network_use_binary_prefix)
         .arg(current_usage)
+        .arg(sort_cpu)
         .arg(use_old_network_legend)
         .arg(whole_word);
 
