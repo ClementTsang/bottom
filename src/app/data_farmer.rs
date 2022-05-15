@@ -1,20 +1,22 @@
+//! In charge of cleaning, processing, and managing data.  I couldn't think of
+//! a better name for the file.  Since I called data collection "harvesting",
+//! then this is the farmer I guess.
+//!
+//! Essentially the main goal is to shift the initial calculation and distribution
+//! of joiner points and data to one central location that will only do it
+//! *once* upon receiving the data --- as opposed to doing it on canvas draw,
+//! which will be a costly process.
+//!
+//! This will also handle the *cleaning* of stale data.  That should be done
+//! in some manner (timer on another thread, some loop) that will occasionally
+//! call the purging function.  Failure to do so *will* result in a growing
+//! memory usage and higher CPU usage - you will be trying to process more and
+//! more points as this is used!
+
+use once_cell::sync::Lazy;
+
 use fxhash::FxHashMap;
 use itertools::Itertools;
-/// In charge of cleaning, processing, and managing data.  I couldn't think of
-/// a better name for the file.  Since I called data collection "harvesting",
-/// then this is the farmer I guess.
-///
-/// Essentially the main goal is to shift the initial calculation and distribution
-/// of joiner points and data to one central location that will only do it
-/// *once* upon receiving the data --- as opposed to doing it on canvas draw,
-/// which will be a costly process.
-///
-/// This will also handle the *cleaning* of stale data.  That should be done
-/// in some manner (timer on another thread, some loop) that will occasionally
-/// call the purging function.  Failure to do so *will* result in a growing
-/// memory usage and higher CPU usage - you will be trying to process more and
-/// more points as this is used!
-use once_cell::sync::Lazy;
 
 use std::{time::Instant, vec::Vec};
 

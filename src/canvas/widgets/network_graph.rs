@@ -256,7 +256,7 @@ fn get_max_entry(
         (None, Some(filtered_tx)) => {
             match filtered_tx
                 .iter()
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {
@@ -277,7 +277,7 @@ fn get_max_entry(
         (Some(filtered_rx), None) => {
             match filtered_rx
                 .iter()
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {
@@ -299,7 +299,7 @@ fn get_max_entry(
             match filtered_rx
                 .iter()
                 .chain(filtered_tx)
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {

@@ -112,49 +112,25 @@ pub fn partial_ordering_rev<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
     a.partial_cmp(&b).unwrap_or(Ordering::Equal).reverse()
 }
 
-/// Gotta get partial ordering?  No problem, here's something to deal with it~
-pub fn get_ordering<T: std::cmp::PartialOrd>(
-    a_val: T, b_val: T, reverse_order: bool,
-) -> std::cmp::Ordering {
-    // FIXME: Maybe we can just delete this entirely and change references to use partial_ordering...
-    match a_val.partial_cmp(&b_val) {
-        Some(x) => match x {
-            Ordering::Greater => {
-                if reverse_order {
-                    std::cmp::Ordering::Less
-                } else {
-                    std::cmp::Ordering::Greater
-                }
-            }
-            Ordering::Less => {
-                if reverse_order {
-                    std::cmp::Ordering::Greater
-                } else {
-                    std::cmp::Ordering::Less
-                }
-            }
-            Ordering::Equal => Ordering::Equal,
-        },
-        None => Ordering::Equal,
-    }
-}
-
 #[cfg(test)]
 mod test {
-    // use super::*;
+    use super::*;
 
     #[test]
     fn test_sort_partial_fn() {
-        // FIXME: Do this
-    }
+        let mut x = vec![9, 5, 20, 15, 10, 5];
+        let mut y = vec![1.0, 15.0, -1.0, -100.0, -100.1, 16.15, -100.0];
 
-    #[test]
-    fn test_partial_ordering() {
-        // FIXME: Do this
-    }
+        x.sort_by(|a, b| sort_partial_fn(false)(a, b));
+        assert_eq!(x, vec![5, 5, 9, 10, 15, 20]);
 
-    #[test]
-    fn test_reverse_partial_ordering() {
-        // FIXME: Do this
+        x.sort_by(|a, b| sort_partial_fn(true)(a, b));
+        assert_eq!(x, vec![20, 15, 10, 9, 5, 5]);
+
+        y.sort_by(|a, b| sort_partial_fn(false)(a, b));
+        assert_eq!(y, vec![-100.1, -100.0, -100.0, -1.0, 1.0, 15.0, 16.15]);
+
+        y.sort_by(|a, b| sort_partial_fn(true)(a, b));
+        assert_eq!(y, vec![16.15, 15.0, 1.0, -1.0, -100.0, -100.0, -100.1]);
     }
 }

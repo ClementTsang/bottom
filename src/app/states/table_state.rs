@@ -189,7 +189,7 @@ impl<H: TableComponentHeader> TableComponentColumn<H> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SortOrder {
     Ascending,
     Descending,
@@ -259,7 +259,7 @@ impl SortableState {
             .iter()
             .map(|width| {
                 let range_start = start;
-                let range_end = start + width + 1;
+                let range_end = start + width + 1; // +1 for the gap b/w cols.
                 start = range_end;
                 range_start..range_end
             })
@@ -626,7 +626,57 @@ mod test {
     }
 
     #[test]
-    fn test_row_width_boundary_creation() {
-        // FIXME: [TEST] finish this
+    fn test_visual_index_selection() {
+        let mut state = SortableState::new(
+            0,
+            SortOrder::Ascending,
+            vec![SortOrder::Ascending, SortOrder::Descending],
+        );
+
+        const X_OFFSET: u16 = 10;
+        const Y_OFFSET: u16 = 15;
+        state.update_visual_index(Rect::new(X_OFFSET, Y_OFFSET, 20, 15), &[4, 14]);
+
+        #[track_caller]
+        fn test_selection(
+            state: &mut SortableState, from_x_offset: u16, from_y_offset: u16,
+            result: (Option<usize>, SortOrder),
+        ) {
+            assert_eq!(
+                state.try_select_location(X_OFFSET + from_x_offset, Y_OFFSET + from_y_offset),
+                result.0
+            );
+            assert_eq!(state.order, result.1);
+        }
+
+        use SortOrder::*;
+
+        // Clicking on these don't do anything, so don't show any change.
+        test_selection(&mut state, 5, 1, (None, Ascending));
+        test_selection(&mut state, 21, 0, (None, Ascending));
+
+        // Clicking on the first column should toggle it as it is already selected.
+        test_selection(&mut state, 3, 0, (Some(0), Descending));
+
+        // Clicking on the first column should toggle it again as it is already selected.
+        test_selection(&mut state, 4, 0, (Some(0), Ascending));
+
+        // Clicking on second column should select and switch to the descending ordering as that is its default.
+        test_selection(&mut state, 5, 0, (Some(1), Descending));
+
+        // Clicking on second column should toggle it.
+        test_selection(&mut state, 19, 0, (Some(1), Ascending));
+
+        // Overshoot, should not do anything.
+        test_selection(&mut state, 20, 0, (None, Ascending));
+
+        // Further overshoot, should not do anything.
+        test_selection(&mut state, 25, 0, (None, Ascending));
+
+        // Go back to first column, should be ascending to match default for index 0.
+        test_selection(&mut state, 3, 0, (Some(0), Ascending));
+
+        // Click on first column should then go to descending as it is already selected and ascending.
+        test_selection(&mut state, 3, 0, (Some(0), Descending));
     }
 }
