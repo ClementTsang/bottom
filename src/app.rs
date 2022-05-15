@@ -11,7 +11,7 @@ use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 use typed_builder::*;
 
 use data_farmer::*;
-use data_harvester::{processes, temperature};
+use data_harvester::temperature;
 use layout_manager::*;
 pub use states::*;
 
@@ -132,7 +132,7 @@ pub struct App {
 
     #[cfg(target_family = "unix")]
     #[builder(default, setter(skip))]
-    pub user_table: processes::UserTable,
+    pub user_table: data_harvester::processes::UserTable,
 
     pub cpu_state: CpuState,
     pub mem_state: MemState,

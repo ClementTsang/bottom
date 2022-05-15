@@ -68,9 +68,9 @@ pub struct Painter {
     height: u16,
     width: u16,
     styled_help_text: Vec<Spans<'static>>,
-    is_mac_os: bool, // FIXME: This feels out of place...
+    is_mac_os: bool, // TODO: This feels out of place...
 
-    // FIXME: Redo this entire thing.
+    // TODO: Redo this entire thing.
     row_constraints: Vec<Constraint>,
     col_constraints: Vec<Vec<Constraint>>,
     col_row_constraints: Vec<Vec<Vec<Constraint>>>,

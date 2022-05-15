@@ -23,8 +23,6 @@ cfg_if::cfg_if! {
     }
 }
 
-use std::borrow::Cow;
-
 use crate::Pid;
 
 #[derive(Debug, Clone, Default)]
@@ -71,7 +69,7 @@ pub struct ProcessHarvest {
 
     /// This is the process' user. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
-    pub user: Cow<'static, str>,
+    pub user: std::borrow::Cow<'static, str>,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,

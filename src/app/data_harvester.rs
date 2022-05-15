@@ -280,11 +280,23 @@ impl DataCollector {
                 }
                 #[cfg(not(target_os = "linux"))]
                 {
-                    processes::get_process_data(
-                        &self.sys,
-                        self.use_current_cpu_total,
-                        self.mem_total_kb,
-                    )
+                    #[cfg(target_family = "unix")]
+                    {
+                        processes::get_process_data(
+                            &self.sys,
+                            self.use_current_cpu_total,
+                            self.mem_total_kb,
+                            &mut self.user_table,
+                        )
+                    }
+                    #[cfg(not(target_family = "unix"))]
+                    {
+                        processes::get_process_data(
+                            &self.sys,
+                            self.use_current_cpu_total,
+                            self.mem_total_kb,
+                        )
+                    }
                 }
             } {
                 self.data.list_of_processes = Some(process_list);

@@ -55,6 +55,7 @@ pub fn get_process_data(
         };
 
         let disk_usage = process_val.disk_usage();
+        let process_state = (process_val.status().to_string(), 'R');
         process_vector.push(ProcessHarvest {
             pid: process_val.pid().as_u32() as _,
             parent_pid: process_val.parent().map(|p| p.as_u32() as _),
@@ -71,8 +72,7 @@ pub fn get_process_data(
             write_bytes_per_sec: disk_usage.written_bytes,
             total_read_bytes: disk_usage.total_read_bytes,
             total_write_bytes: disk_usage.total_written_bytes,
-            process_state: process_val.status().to_string(),
-            process_state_char: 'R',
+            process_state,
         });
     }
 

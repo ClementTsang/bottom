@@ -116,6 +116,7 @@ pub fn partial_ordering_rev<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
 pub fn get_ordering<T: std::cmp::PartialOrd>(
     a_val: T, b_val: T, reverse_order: bool,
 ) -> std::cmp::Ordering {
+    // FIXME: Maybe we can just delete this entirely and change references to use partial_ordering...
     match a_val.partial_cmp(&b_val) {
         Some(x) => match x {
             Ordering::Greater => {
@@ -135,5 +136,25 @@ pub fn get_ordering<T: std::cmp::PartialOrd>(
             Ordering::Equal => Ordering::Equal,
         },
         None => Ordering::Equal,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    // use super::*;
+
+    #[test]
+    fn test_sort_partial_fn() {
+        // FIXME: Do this
+    }
+
+    #[test]
+    fn test_partial_ordering() {
+        // FIXME: Do this
+    }
+
+    #[test]
+    fn test_reverse_partial_ordering() {
+        // FIXME: Do this
     }
 }

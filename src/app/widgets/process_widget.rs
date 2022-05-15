@@ -235,11 +235,14 @@ impl ProcWidgetColumn {
                 }
             }
             ProcWidgetColumn::User => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                if sort_descending {
-                    data.sort_by_cached_key(|p| Reverse(p.user.to_lowercase()));
-                } else {
-                    data.sort_by_cached_key(|p| p.user.to_lowercase());
+                #[cfg(target_family = "unix")]
+                {
+                    data.sort_by_cached_key(|p| p.name.to_lowercase());
+                    if sort_descending {
+                        data.sort_by_cached_key(|p| Reverse(p.user.to_lowercase()));
+                    } else {
+                        data.sort_by_cached_key(|p| p.user.to_lowercase());
+                    }
                 }
             }
         }
@@ -785,7 +788,16 @@ impl ProcWidget {
                             main: process.process_state.0.clone().into(),
                             alt: process.process_state.1.to_string().into(),
                         },
-                        ProcWidgetColumn::User => process.user.clone().into(),
+                        ProcWidgetColumn::User => {
+                            #[cfg(target_family = "unix")]
+                            {
+                                process.user.clone().into()
+                            }
+                            #[cfg(not(target_family = "unix"))]
+                            {
+                                "".into()
+                            }
+                        }
                     };
 
                     if let Some(curr) = col_widths.get_mut(itx) {
