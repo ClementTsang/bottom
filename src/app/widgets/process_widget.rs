@@ -166,6 +166,7 @@ impl ProcWidgetColumn {
                             })
                         }
                     } else {
+                        #[allow(clippy::collapsible-else-if)]
                         if sort_descending {
                             data.sort_by_cached_key(|p| {
                                 Reverse(name_pid_map.get(&p.name).map(|v| v.len()).unwrap_or(0))
@@ -501,7 +502,7 @@ impl ProcWidget {
                     {
                         let shown_children = children_pids
                             .iter()
-                            .filter(|pid| visited_pids.get(*pid).map(|b| *b).unwrap_or(false))
+                            .filter(|pid| visited_pids.get(*pid).copied().unwrap_or(false))
                             .collect_vec();
                         let is_shown = is_process_matching || !shown_children.is_empty();
                         visited_pids.insert(process.pid, is_shown);
@@ -545,7 +546,7 @@ impl ProcWidget {
             .filter_map(|child| process_harvest.get(child))
             .collect_vec();
 
-        self.try_sort(&mut stack, &data_collection);
+        self.try_sort(&mut stack, data_collection);
 
         let mut length_stack = vec![stack.len()];
 
@@ -687,8 +688,8 @@ impl ProcWidget {
             filtered_iter.collect::<Vec<_>>()
         };
 
-        self.try_sort(&mut filtered_data, &data_collection);
-        self.harvest_to_table_data(&filtered_data, &data_collection)
+        self.try_sort(&mut filtered_data, data_collection);
+        self.harvest_to_table_data(&filtered_data, data_collection)
     }
 
     fn try_sort(&self, filtered_data: &mut [&ProcessHarvest], data_collection: &DataCollection) {

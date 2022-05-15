@@ -324,7 +324,7 @@ fn build_header<'a, H: TableComponentHeader>(
 }
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
-fn truncate_text<'a>(content: &'a CellContent, width: usize, row_style: Option<Style>) -> Text<'a> {
+fn truncate_text(content: &CellContent, width: usize, row_style: Option<Style>) -> Text<'_> {
     let (main_text, alt_text) = match content {
         CellContent::Simple(s) => (s, None),
         CellContent::HasAlt {

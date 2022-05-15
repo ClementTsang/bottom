@@ -411,19 +411,3 @@ pub struct ParagraphScrollState {
     pub current_scroll_index: u16,
     pub max_scroll_index: u16,
 }
-
-#[derive(Default)]
-pub struct ConfigState {
-    pub current_category_index: usize,
-    pub category_list: Vec<ConfigCategory>,
-}
-
-#[derive(Default)]
-pub struct ConfigCategory {
-    pub category_name: &'static str,
-    pub options_list: Vec<ConfigOption>,
-}
-
-pub struct ConfigOption {
-    pub set_function: Box<dyn Fn() -> anyhow::Result<()>>,
-}

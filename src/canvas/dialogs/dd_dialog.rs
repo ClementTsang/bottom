@@ -9,7 +9,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, KillSignal, widgets::ProcWidgetMode},
+    app::{widgets::ProcWidgetMode, App, KillSignal},
     canvas::Painter,
 };
 

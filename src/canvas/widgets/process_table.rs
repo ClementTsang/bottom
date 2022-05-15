@@ -97,11 +97,8 @@ impl Painter {
             // TODO: [Refactor] This is an ugly hack to add the disabled style...
             // this could be solved by storing style locally to the widget.
             for row in &mut proc_widget_state.table_data.data {
-                match row {
-                    TableRow::Styled(_, style) => {
-                        *style = style.patch(self.colours.disabled_text_style);
-                    }
-                    _ => {}
+                if let TableRow::Styled(_, style) = row {
+                    *style = style.patch(self.colours.disabled_text_style);
                 }
             }
 
