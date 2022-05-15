@@ -81,6 +81,7 @@ impl Painter {
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+            // TODO: [PROC] this might be too aggressive...
             let recalculate_column_widths =
                 should_get_widget_bounds || proc_widget_state.force_update;
 
@@ -191,8 +192,8 @@ impl Painter {
 
             let start_position: usize = get_search_start_position(
                 num_columns - num_chars_for_text - 5,
-                &proc_widget_state.search_state.search_state.cursor_direction,
-                &mut proc_widget_state.search_state.search_state.cursor_bar,
+                &proc_widget_state.proc_search.search_state.cursor_direction,
+                &mut proc_widget_state.proc_search.search_state.cursor_bar,
                 current_cursor_position,
                 app_state.is_force_redraw,
             );
@@ -227,19 +228,19 @@ impl Painter {
             })];
 
             // Text options shamelessly stolen from VS Code.
-            let case_style = if !proc_widget_state.search_state.is_ignoring_case {
+            let case_style = if !proc_widget_state.proc_search.is_ignoring_case {
                 self.colours.currently_selected_text_style
             } else {
                 self.colours.text_style
             };
 
-            let whole_word_style = if proc_widget_state.search_state.is_searching_whole_word {
+            let whole_word_style = if proc_widget_state.proc_search.is_searching_whole_word {
                 self.colours.currently_selected_text_style
             } else {
                 self.colours.text_style
             };
 
-            let regex_style = if proc_widget_state.search_state.is_searching_with_regex {
+            let regex_style = if proc_widget_state.proc_search.is_searching_with_regex {
                 self.colours.currently_selected_text_style
             } else {
                 self.colours.text_style
@@ -265,7 +266,7 @@ impl Painter {
             ]);
 
             search_text.push(Spans::from(Span::styled(
-                if let Some(err) = &proc_widget_state.search_state.search_state.error_message {
+                if let Some(err) = &proc_widget_state.proc_search.search_state.error_message {
                     err.as_str()
                 } else {
                     ""
@@ -274,17 +275,14 @@ impl Painter {
             )));
             search_text.push(option_text);
 
-            let current_border_style = if proc_widget_state
-                .search_state
-                .search_state
-                .is_invalid_search
-            {
-                self.colours.invalid_query_style
-            } else if is_on_widget {
-                self.colours.highlighted_border_style
-            } else {
-                self.colours.border_style
-            };
+            let current_border_style =
+                if proc_widget_state.proc_search.search_state.is_invalid_search {
+                    self.colours.invalid_query_style
+                } else if is_on_widget {
+                    self.colours.highlighted_border_style
+                } else {
+                    self.colours.border_style
+                };
 
             let title = Span::styled(
                 if draw_border {

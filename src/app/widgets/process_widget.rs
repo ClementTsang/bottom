@@ -306,7 +306,7 @@ impl TableComponentHeader for ProcWidgetColumn {
 pub struct ProcWidget {
     pub mode: ProcWidgetMode,
 
-    pub search_state: ProcessSearchState,
+    pub proc_search: ProcessSearchState,
     pub table_state: TableComponentState<ProcWidgetColumn>,
     pub sort_table_state: TableComponentState,
 
@@ -391,7 +391,7 @@ impl ProcWidget {
         };
 
         ProcWidget {
-            search_state: process_search_state,
+            proc_search: process_search_state,
             table_state,
             sort_table_state,
             is_sort_open: false,
@@ -419,10 +419,10 @@ impl ProcWidget {
     /// call it before this function.
     pub fn update_displayed_process_data(&mut self, data_collection: &DataCollection) {
         // Now update everything else.
-        let search_query = if self.search_state.search_state.is_invalid_or_blank_search() {
+        let search_query = if self.proc_search.search_state.is_invalid_or_blank_search() {
             &None
         } else {
-            &self.search_state.search_state.query
+            &self.proc_search.search_state.query
         };
         let table_data = match &self.mode {
             ProcWidgetMode::Tree { collapsed_pids } => {
@@ -863,7 +863,7 @@ impl ProcWidget {
     }
 
     /// Marks the selected column as hidden, and automatically resets the selected column if currently selected.
-    pub fn hide_column(&mut self, index: usize) {
+    fn hide_column(&mut self, index: usize) {
         if let Some(col) = self.table_state.columns.get_mut(index) {
             col.is_hidden = true;
 
@@ -877,7 +877,7 @@ impl ProcWidget {
     }
 
     /// Marks the selected column as shown.
-    pub fn show_column(&mut self, index: usize) {
+    fn show_column(&mut self, index: usize) {
         if let Some(col) = self.table_state.columns.get_mut(index) {
             col.is_hidden = false;
         }
@@ -964,48 +964,48 @@ impl ProcWidget {
     }
 
     pub fn get_search_cursor_position(&self) -> usize {
-        self.search_state.search_state.grapheme_cursor.cur_cursor()
+        self.proc_search.search_state.grapheme_cursor.cur_cursor()
     }
 
     pub fn get_char_cursor_position(&self) -> usize {
-        self.search_state.search_state.char_cursor_position
+        self.proc_search.search_state.char_cursor_position
     }
 
     pub fn is_search_enabled(&self) -> bool {
-        self.search_state.search_state.is_enabled
+        self.proc_search.search_state.is_enabled
     }
 
     pub fn get_current_search_query(&self) -> &String {
-        &self.search_state.search_state.current_search_query
+        &self.proc_search.search_state.current_search_query
     }
 
     pub fn update_query(&mut self) {
         if self
-            .search_state
+            .proc_search
             .search_state
             .current_search_query
             .is_empty()
         {
-            self.search_state.search_state.is_blank_search = true;
-            self.search_state.search_state.is_invalid_search = false;
-            self.search_state.search_state.error_message = None;
+            self.proc_search.search_state.is_blank_search = true;
+            self.proc_search.search_state.is_invalid_search = false;
+            self.proc_search.search_state.error_message = None;
         } else {
             match parse_query(
-                &self.search_state.search_state.current_search_query,
-                self.search_state.is_searching_whole_word,
-                self.search_state.is_ignoring_case,
-                self.search_state.is_searching_with_regex,
+                &self.proc_search.search_state.current_search_query,
+                self.proc_search.is_searching_whole_word,
+                self.proc_search.is_ignoring_case,
+                self.proc_search.is_searching_with_regex,
             ) {
                 Ok(parsed_query) => {
-                    self.search_state.search_state.query = Some(parsed_query);
-                    self.search_state.search_state.is_blank_search = false;
-                    self.search_state.search_state.is_invalid_search = false;
-                    self.search_state.search_state.error_message = None;
+                    self.proc_search.search_state.query = Some(parsed_query);
+                    self.proc_search.search_state.is_blank_search = false;
+                    self.proc_search.search_state.is_invalid_search = false;
+                    self.proc_search.search_state.error_message = None;
                 }
                 Err(err) => {
-                    self.search_state.search_state.is_blank_search = false;
-                    self.search_state.search_state.is_invalid_search = true;
-                    self.search_state.search_state.error_message = Some(err.to_string());
+                    self.proc_search.search_state.is_blank_search = false;
+                    self.proc_search.search_state.is_invalid_search = true;
+                    self.proc_search.search_state.error_message = Some(err.to_string());
                 }
             }
         }
@@ -1014,31 +1014,32 @@ impl ProcWidget {
     }
 
     pub fn clear_search(&mut self) {
-        self.search_state.search_state.reset();
+        self.proc_search.search_state.reset();
     }
 
     pub fn search_walk_forward(&mut self, start_position: usize) {
-        self.search_state
+        self.proc_search
             .search_state
             .grapheme_cursor
             .next_boundary(
-                &self.search_state.search_state.current_search_query[start_position..],
+                &self.proc_search.search_state.current_search_query[start_position..],
                 start_position,
             )
             .unwrap();
     }
 
     pub fn search_walk_back(&mut self, start_position: usize) {
-        self.search_state
+        self.proc_search
             .search_state
             .grapheme_cursor
             .prev_boundary(
-                &self.search_state.search_state.current_search_query[..start_position],
+                &self.proc_search.search_state.current_search_query[..start_position],
                 0,
             )
             .unwrap();
     }
 
+    /// Returns the number of columns *visible*.
     pub fn num_shown_columns(&self) -> usize {
         self.table_state
             .columns
@@ -1047,6 +1048,8 @@ impl ProcWidget {
             .count()
     }
 
+    /// Returns the number of columns *enabled*. Note this differs from *visible* - a column may be enabled but not
+    /// visible (e.g. off screen).
     pub fn num_enabled_columns(&self) -> usize {
         self.table_state
             .columns
@@ -1055,6 +1058,7 @@ impl ProcWidget {
             .count()
     }
 
+    /// Sets the [`ProcWidget`]'s current sort index to whatever was in the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
         if let SortState::Sortable(st) = &mut self.table_state.sort_state {
             st.update_sort_index(self.sort_table_state.current_scroll_position);

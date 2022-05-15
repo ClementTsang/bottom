@@ -474,7 +474,7 @@ pub fn build_app(
                 let mapping = HashMap::new();
                 for widget in search_case_enabled_widgets {
                     if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.search_state.is_ignoring_case = !widget.enabled;
+                        proc_widget.proc_search.is_ignoring_case = !widget.enabled;
                     }
                 }
                 flags.search_case_enabled_widgets_map = Some(mapping);
@@ -488,7 +488,7 @@ pub fn build_app(
                 let mapping = HashMap::new();
                 for widget in search_whole_word_enabled_widgets {
                     if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.search_state.is_searching_whole_word = widget.enabled;
+                        proc_widget.proc_search.is_searching_whole_word = widget.enabled;
                     }
                 }
                 flags.search_whole_word_enabled_widgets_map = Some(mapping);
@@ -500,7 +500,7 @@ pub fn build_app(
                 let mapping = HashMap::new();
                 for widget in search_regex_enabled_widgets {
                     if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.search_state.is_searching_with_regex = widget.enabled;
+                        proc_widget.proc_search.is_searching_with_regex = widget.enabled;
                     }
                 }
                 flags.search_regex_enabled_widgets_map = Some(mapping);

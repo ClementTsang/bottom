@@ -440,7 +440,6 @@ mod test {
         use crate::app::ScrollDirection::{self, Down, Up};
 
         #[track_caller]
-
         fn test_get(
             bar: usize, rows: usize, direction: ScrollDirection, selected: usize, force: bool,
             expected_posn: usize, expected_bar: usize,

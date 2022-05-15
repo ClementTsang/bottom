@@ -92,6 +92,7 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
     }
 }
 
+#[inline]
 pub fn sort_partial_fn<T: std::cmp::PartialOrd>(is_reverse: bool) -> fn(T, T) -> Ordering {
     if is_reverse {
         partial_ordering_rev
@@ -101,15 +102,19 @@ pub fn sort_partial_fn<T: std::cmp::PartialOrd>(is_reverse: bool) -> fn(T, T) ->
 }
 
 /// Returns an [`Ordering`] between two [`PartialOrd`]s.
+#[inline]
 pub fn partial_ordering<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
     // TODO: Switch to `total_cmp` on 1.62
     a.partial_cmp(&b).unwrap_or(Ordering::Equal)
 }
 
 /// Returns a reversed [`Ordering`] between two [`PartialOrd`]s.
+///
+/// This is simply a wrapper function around [`partial_ordering`] that reverses
+/// the result.
+#[inline]
 pub fn partial_ordering_rev<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
-    // TODO: Switch to `total_cmp` on 1.62
-    a.partial_cmp(&b).unwrap_or(Ordering::Equal).reverse()
+    partial_ordering(a, b).reverse()
 }
 
 #[cfg(test)]
