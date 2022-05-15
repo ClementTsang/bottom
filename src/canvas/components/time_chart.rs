@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    cmp::{max, Ordering},
-};
+use std::{borrow::Cow, cmp::max};
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Rect},
@@ -14,6 +11,8 @@ use tui::{
     },
 };
 use unicode_width::UnicodeWidthStr;
+
+use crate::utils::gen_util::partial_ordering;
 
 /// An X or Y axis for the chart widget
 #[derive(Debug, Clone)]
@@ -556,16 +555,11 @@ impl<'a> Widget for TimeChart<'a> {
     }
 }
 
-fn bin_cmp(a: &f64, b: &f64) -> Ordering {
-    // TODO: Switch to `total_cmp` on 1.62
-    a.partial_cmp(b).unwrap_or(Ordering::Equal)
-}
-
 /// Returns the start index and potential interpolation index given the start time and the dataset.
 fn get_start(dataset: &Dataset<'_>, start_bound: f64) -> (usize, Option<usize>) {
     match dataset
         .data
-        .binary_search_by(|(x, _y)| bin_cmp(x, &start_bound))
+        .binary_search_by(|(x, _y)| partial_ordering(x, &start_bound))
     {
         Ok(index) => (index, None),
         Err(index) => (index, index.checked_sub(1)),
@@ -576,7 +570,7 @@ fn get_start(dataset: &Dataset<'_>, start_bound: f64) -> (usize, Option<usize>) 
 fn get_end(dataset: &Dataset<'_>, end_bound: f64) -> (usize, Option<usize>) {
     match dataset
         .data
-        .binary_search_by(|(x, _y)| bin_cmp(x, &end_bound))
+        .binary_search_by(|(x, _y)| partial_ordering(x, &end_bound))
     {
         // In the success case, this means we found an index. Add one since we want to include this index and we
         // expect to use the returned index as part of a (m..n) range.

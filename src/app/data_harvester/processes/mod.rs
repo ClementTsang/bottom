@@ -23,55 +23,9 @@ cfg_if::cfg_if! {
     }
 }
 
+use std::borrow::Cow;
+
 use crate::Pid;
-
-// TODO: Add value so we know if it's sorted ascending or descending by default?
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum ProcessSorting {
-    CpuPercent,
-    Mem,
-    MemPercent,
-    Pid,
-    ProcessName,
-    Command,
-    ReadPerSecond,
-    WritePerSecond,
-    TotalRead,
-    TotalWrite,
-    State,
-    User,
-    Count,
-}
-
-impl std::fmt::Display for ProcessSorting {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match &self {
-                ProcessSorting::CpuPercent => "CPU%",
-                ProcessSorting::MemPercent => "Mem%",
-                ProcessSorting::Mem => "Mem",
-                ProcessSorting::ReadPerSecond => "R/s",
-                ProcessSorting::WritePerSecond => "W/s",
-                ProcessSorting::TotalRead => "T.Read",
-                ProcessSorting::TotalWrite => "T.Write",
-                ProcessSorting::State => "State",
-                ProcessSorting::ProcessName => "Name",
-                ProcessSorting::Command => "Command",
-                ProcessSorting::Pid => "PID",
-                ProcessSorting::Count => "Count",
-                ProcessSorting::User => "User",
-            }
-        )
-    }
-}
-
-impl Default for ProcessSorting {
-    fn default() -> Self {
-        ProcessSorting::CpuPercent
-    }
-}
 
 #[derive(Debug, Clone, Default)]
 pub struct ProcessHarvest {
@@ -109,14 +63,28 @@ pub struct ProcessHarvest {
     pub total_write_bytes: u64,
 
     /// The current state of the process (e.g. zombie, asleep)
-    pub process_state: String,
+    pub process_state: (String, char),
 
-    /// The process state represented by a character. TODO: Merge with above as a single struct.
-    pub process_state_char: char,
-
-    /// This is the *effective* user ID of the process.
+    /// This is the *effective* user ID of the process. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
-    pub uid: Option<libc::uid_t>,
+    pub uid: libc::uid_t,
+
+    /// This is the process' user. This is only used on Unix platforms.
+    #[cfg(target_family = "unix")]
+    pub user: Cow<'static, str>,
+    // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,
+}
+
+impl ProcessHarvest {
+    pub(crate) fn add(&mut self, rhs: &ProcessHarvest) {
+        self.cpu_usage_percent += rhs.cpu_usage_percent;
+        self.mem_usage_bytes += rhs.mem_usage_bytes;
+        self.mem_usage_percent += rhs.mem_usage_percent;
+        self.read_bytes_per_sec += rhs.read_bytes_per_sec;
+        self.write_bytes_per_sec += rhs.write_bytes_per_sec;
+        self.total_read_bytes += rhs.total_read_bytes;
+        self.total_write_bytes += rhs.total_write_bytes;
+    }
 }

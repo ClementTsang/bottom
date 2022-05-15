@@ -175,7 +175,7 @@ impl Painter {
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
 
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
-            let cpu_data = &app_state.canvas_data.cpu_data;
+            let cpu_data = &app_state.converted_data.cpu_data;
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, cpu_widget_state.current_display_time];
             let hide_x_labels = should_hide_x_label(
@@ -193,7 +193,7 @@ impl Painter {
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
             let title = if cfg!(target_family = "unix") {
-                let load_avg = app_state.canvas_data.load_avg_data;
+                let load_avg = app_state.converted_data.load_avg_data;
                 let load_avg_str = format!(
                     "─ {:.2} {:.2} {:.2} ",
                     load_avg[0], load_avg[1], load_avg[2]
@@ -232,7 +232,7 @@ impl Painter {
 
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
             let cpu_data = {
-                let row_widths = vec![1, 3]; // TODO: Should change this to take const generics (usize) and an array.
+                let col_widths = vec![1, 3]; // TODO: Should change this to take const generics (usize) and an array.
                 let colour_iter = if show_avg_cpu {
                     Either::Left(
                         iter::once(&self.colours.all_colour_style)
@@ -247,7 +247,7 @@ impl Painter {
                 };
 
                 let data = {
-                    let iter = app_state.canvas_data.cpu_data.iter().zip(colour_iter);
+                    let iter = app_state.converted_data.cpu_data.iter().zip(colour_iter);
                     const CPU_WIDTH_CHECK: u16 = 10; // This is hard-coded, it's terrible.
                     if draw_loc.width < CPU_WIDTH_CHECK {
                         Either::Left(iter.map(|(cpu, style)| {
@@ -276,7 +276,7 @@ impl Painter {
                 }
                 .collect();
 
-                TableData { data, row_widths }
+                TableData { data, col_widths }
             };
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
@@ -301,7 +301,13 @@ impl Painter {
                 text_style: self.colours.text_style,
                 left_to_right: false,
             }
-            .draw_text_table(f, draw_loc, &mut cpu_widget_state.table_state, &cpu_data);
+            .draw_text_table(
+                f,
+                draw_loc,
+                &mut cpu_widget_state.table_state,
+                &cpu_data,
+                None,
+            );
         }
     }
 }

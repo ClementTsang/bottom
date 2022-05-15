@@ -16,8 +16,8 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{
-        self, CellContent, SortState, TableComponentColumn, TableComponentHeader,
-        TableComponentState,
+        self, layout_manager::BottomWidget, CellContent, SortState, TableComponentColumn,
+        TableComponentHeader, TableComponentState, WidthBounds,
     },
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
     data_conversion::{TableData, TableRow},
@@ -30,7 +30,7 @@ pub struct TextTableTitle<'a> {
 
 pub struct TextTable<'a> {
     pub table_gap: u16,
-    pub is_force_redraw: bool,
+    pub is_force_redraw: bool, // TODO: Is this force redraw thing needed? Or is there a better way?
     pub recalculate_column_widths: bool,
 
     /// The header style.
@@ -107,9 +107,10 @@ impl<'a> TextTable<'a> {
                 }
             })
     }
+
     pub fn draw_text_table<B: Backend, H: TableComponentHeader>(
         &self, f: &mut Frame<'_, B>, draw_loc: Rect, state: &mut TableComponentState<H>,
-        table_data: &TableData,
+        table_data: &TableData, btm_widget: Option<&mut BottomWidget>,
     ) {
         // TODO: This is a *really* ugly hack to get basic mode to hide the border when not selected, without shifting everything.
         let is_not_basic = self.is_on_widget || self.draw_border;
@@ -119,7 +120,7 @@ impl<'a> TextTable<'a> {
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 
-        let disk_block = if self.draw_border {
+        let block = if self.draw_border {
             let block = Block::default()
                 .borders(Borders::ALL)
                 .border_style(self.border_style);
@@ -141,13 +142,11 @@ impl<'a> TextTable<'a> {
             Block::default().borders(Borders::NONE)
         };
 
-        let (inner_width, inner_height) = {
-            let inner = disk_block.inner(margined_draw_loc);
-            (inner.width, inner.height)
-        };
+        let inner_rect = block.inner(margined_draw_loc);
+        let (inner_width, inner_height) = { (inner_rect.width, inner_rect.height) };
 
         if inner_width == 0 || inner_height == 0 {
-            f.render_widget(disk_block, margined_draw_loc);
+            f.render_widget(block, margined_draw_loc);
         } else {
             let show_header = inner_height > 1;
             let header_height = if show_header { 1 } else { 0 };
@@ -178,19 +177,44 @@ impl<'a> TextTable<'a> {
                 state
                     .columns
                     .iter_mut()
-                    .zip(&table_data.row_widths)
+                    .zip(&table_data.col_widths)
                     .for_each(|(column, data_width)| match &mut column.width_bounds {
-                        app::WidthBounds::Soft {
+                        WidthBounds::Soft {
                             min_width: _,
                             desired,
                             max_percentage: _,
                         } => {
                             *desired = max(column.header.header_text().len(), *data_width) as u16;
                         }
-                        app::WidthBounds::Hard(_width) => {}
+                        WidthBounds::CellWidth => {}
+                        WidthBounds::Hard(_width) => {}
                     });
 
                 state.calculate_column_widths(inner_width, self.left_to_right);
+
+                if let SortState::Sortable(st) = &mut state.sort_state {
+                    st.update_visual_index(
+                        inner_rect,
+                        &state
+                            .columns
+                            .iter()
+                            .filter_map(|c| {
+                                if c.calculated_width == 0 {
+                                    None
+                                } else {
+                                    Some(c.calculated_width)
+                                }
+                            })
+                            .collect::<Vec<_>>(),
+                    );
+                }
+
+                // Update draw loc in widget map
+                if let Some(btm_widget) = btm_widget {
+                    btm_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                    btm_widget.bottom_right_corner =
+                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
+                }
             }
 
             let columns = &state.columns;
@@ -214,7 +238,7 @@ impl<'a> TextTable<'a> {
 
             let widget = {
                 let mut table = Table::new(table_rows)
-                    .block(disk_block)
+                    .block(block)
                     .highlight_style(self.highlighted_text_style)
                     .style(self.text_style);
 
@@ -266,7 +290,10 @@ fn build_header<'a, H: TableComponentHeader>(
                 ))
             }
         })),
-        SortState::Sortable { index, order } => {
+        SortState::Sortable(s) => {
+            let order = &s.order;
+            let index = s.current_index;
+
             let arrow = match order {
                 app::SortOrder::Ascending => UP_ARROW,
                 app::SortOrder::Descending => DOWN_ARROW,
@@ -275,7 +302,7 @@ fn build_header<'a, H: TableComponentHeader>(
             Either::Right(columns.iter().enumerate().filter_map(move |(itx, c)| {
                 if c.calculated_width == 0 {
                     None
-                } else if itx == *index {
+                } else if itx == index {
                     Some(truncate_suffixed_text(
                         c.header.header_text(),
                         arrow,
@@ -415,15 +442,16 @@ mod test {
         #[track_caller]
 
         fn test_get(
-            bar: usize, num: usize, direction: ScrollDirection, selected: usize, force: bool,
+            bar: usize, rows: usize, direction: ScrollDirection, selected: usize, force: bool,
             expected_posn: usize, expected_bar: usize,
         ) {
             let mut bar = bar;
             assert_eq!(
-                get_start_position(num, &direction, &mut bar, selected, force),
-                expected_posn
+                get_start_position(rows, &direction, &mut bar, selected, force),
+                expected_posn,
+                "returned start position should match"
             );
-            assert_eq!(bar, expected_bar);
+            assert_eq!(bar, expected_bar, "bar positions should match");
         }
 
         // Scrolling down from start
@@ -433,25 +461,26 @@ mod test {
         test_get(0, 10, Down, 1, false, 0, 0);
 
         // Scrolling down from the middle high up
-        test_get(0, 10, Down, 5, false, 0, 0);
+        test_get(0, 10, Down, 4, false, 0, 0);
 
         // Scrolling down into boundary
-        test_get(0, 10, Down, 11, false, 1, 1);
+        test_get(0, 10, Down, 10, false, 1, 1);
+        test_get(0, 10, Down, 11, false, 2, 2);
 
         // Scrolling down from the with non-zero bar
-        test_get(5, 10, Down, 15, false, 5, 5);
+        test_get(5, 10, Down, 14, false, 5, 5);
 
         // Force redraw scrolling down (e.g. resize)
-        test_get(5, 15, Down, 15, true, 0, 0);
+        test_get(5, 15, Down, 14, true, 0, 0);
 
         // Test jumping down
-        test_get(1, 10, Down, 20, true, 10, 10);
+        test_get(1, 10, Down, 19, true, 10, 10);
 
         // Scrolling up from bottom
-        test_get(10, 10, Up, 20, false, 10, 10);
+        test_get(10, 10, Up, 19, false, 10, 10);
 
         // Simple scrolling up
-        test_get(10, 10, Up, 19, false, 10, 10);
+        test_get(10, 10, Up, 18, false, 10, 10);
 
         // Scrolling up from the middle
         test_get(10, 10, Up, 10, false, 10, 10);
@@ -460,7 +489,7 @@ mod test {
         test_get(10, 10, Up, 9, false, 9, 9);
 
         // Force redraw scrolling up (e.g. resize)
-        test_get(5, 10, Up, 15, true, 5, 5);
+        test_get(5, 10, Up, 14, true, 5, 5);
 
         // Test jumping up
         test_get(10, 10, Up, 0, false, 0, 0);

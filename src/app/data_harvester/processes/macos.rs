@@ -104,7 +104,7 @@ pub fn get_process_data(
             total_write_bytes: disk_usage.total_written_bytes,
             process_state: process_val.status().to_string(),
             process_state_char: convert_process_status_to_char(process_val.status()),
-            uid: Some(process_val.uid),
+            uid: process_val.uid,
         });
     }
 

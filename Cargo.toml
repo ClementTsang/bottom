@@ -25,10 +25,10 @@ doc = false
 
 [profile.release]
 debug = 0
+strip = "symbols"
 lto = true
 opt-level = 3
 codegen-units = 1
-strip = "symbols"
 
 [features]
 default = ["fern", "log", "battery", "gpu"]

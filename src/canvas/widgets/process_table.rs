@@ -6,6 +6,7 @@ use crate::{
         Painter,
     },
     constants::*,
+    data_conversion::{TableData, TableRow},
 };
 
 use tui::{
@@ -19,74 +20,7 @@ use tui::{
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
-const PROCESS_HEADERS_HARD_WIDTH_NO_GROUP: &[Option<u16>] = &[
-    Some(7),
-    None,
-    Some(8),
-    Some(8),
-    Some(8),
-    Some(8),
-    Some(7),
-    Some(8),
-    #[cfg(target_family = "unix")]
-    None,
-    None,
-];
-const PROCESS_HEADERS_HARD_WIDTH_GROUPED: &[Option<u16>] = &[
-    Some(7),
-    None,
-    Some(8),
-    Some(8),
-    Some(8),
-    Some(8),
-    Some(7),
-    Some(8),
-];
-
-const PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_COMMAND: &[Option<f64>] =
-    &[None, Some(0.7), None, None, None, None, None, None];
-const PROCESS_HEADERS_SOFT_WIDTH_MAX_GROUPED_ELSE: &[Option<f64>] =
-    &[None, Some(0.3), None, None, None, None, None, None];
-
-const PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_COMMAND: &[Option<f64>] = &[
-    None,
-    Some(0.7),
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    #[cfg(target_family = "unix")]
-    Some(0.05),
-    Some(0.2),
-];
-const PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_TREE: &[Option<f64>] = &[
-    None,
-    Some(0.5),
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    #[cfg(target_family = "unix")]
-    Some(0.05),
-    Some(0.2),
-];
-const PROCESS_HEADERS_SOFT_WIDTH_MAX_NO_GROUP_ELSE: &[Option<f64>] = &[
-    None,
-    Some(0.3),
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    #[cfg(target_family = "unix")]
-    Some(0.05),
-    Some(0.2),
-];
+const SORT_MENU_WIDTH: u16 = 7;
 
 impl Painter {
     /// Draws and handles all process-related drawing.  Use this.
@@ -95,13 +29,12 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
-        if let Some(process_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
+        if let Some(proc_widget_state) = app_state.proc_state.widget_states.get(&widget_id) {
             let search_height = if draw_border { 5 } else { 3 };
-            let is_sort_open = process_widget_state.is_sort_open;
-            const SORT_MENU_WIDTH: u16 = 8;
+            let is_sort_open = proc_widget_state.is_sort_open;
 
             let mut proc_draw_loc = draw_loc;
-            if process_widget_state.is_search_enabled() {
+            if proc_widget_state.is_search_enabled() {
                 let processes_chunk = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints([Constraint::Min(0), Constraint::Length(search_height)])
@@ -129,6 +62,13 @@ impl Painter {
 
             self.draw_processes_table(f, app_state, proc_draw_loc, draw_border, widget_id);
         }
+
+        if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
+            // Reset redraw marker.
+            if proc_widget_state.force_update {
+                proc_widget_state.force_update = false;
+            }
+        }
     }
 
     /// Draws the process sort box.
@@ -142,13 +82,7 @@ impl Painter {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
             let recalculate_column_widths =
-                should_get_widget_bounds || proc_widget_state.requires_redraw;
-
-            // Reset redraw marker.
-            // TODO: this should ideally be handled generically in the future.
-            if proc_widget_state.requires_redraw {
-                proc_widget_state.requires_redraw = false;
-            }
+                should_get_widget_bounds || proc_widget_state.force_update;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let (border_style, highlighted_text_style) = if is_on_widget {
@@ -159,6 +93,17 @@ impl Painter {
             } else {
                 (self.colours.border_style, self.colours.text_style)
             };
+
+            // TODO: [Refactor] This is an ugly hack to add the disabled style...
+            // this could be solved by storing style locally to the widget.
+            for row in &mut proc_widget_state.table_data.data {
+                match row {
+                    TableRow::Styled(_, style) => {
+                        *style = style.patch(self.colours.disabled_text_style);
+                    }
+                    _ => {}
+                }
+            }
 
             TextTable {
                 table_gap: app_state.app_config_fields.table_gap,
@@ -176,55 +121,15 @@ impl Painter {
                 show_table_scroll_position: app_state.app_config_fields.show_table_scroll_position,
                 title_style: self.colours.widget_title_style,
                 text_style: self.colours.text_style,
-                left_to_right: false,
+                left_to_right: true,
             }
-            .draw_text_table(f, draw_loc, &mut proc_widget_state.table_state, todo!());
-
-            // FIXME: [Proc] Handle this, and the above TODO
-            // // Check if we need to update columnar bounds...
-            // if recalculate_column_widths
-            //     || proc_widget_state.columns.column_header_x_locs.is_none()
-            //     || proc_widget_state.columns.column_header_y_loc.is_none()
-            // {
-            //     // y location is just the y location of the widget + border size (1 normally, 0 in basic)
-            //     proc_widget_state.columns.column_header_y_loc =
-            //         Some(draw_loc.y + if draw_border { 1 } else { 0 });
-
-            //     // x location is determined using the x locations of the widget; just offset from the left bound
-            //     // as appropriate, and use the right bound as limiter.
-
-            //     let mut current_x_left = draw_loc.x + 1;
-            //     let max_x_right = draw_loc.x + draw_loc.width - 1;
-
-            //     let mut x_locs = vec![];
-
-            //     for width in proc_widget_state
-            //         .table_width_state
-            //         .calculated_column_widths
-            //         .iter()
-            //     {
-            //         let right_bound = current_x_left + width;
-
-            //         if right_bound < max_x_right {
-            //             x_locs.push((current_x_left, right_bound));
-            //             current_x_left = right_bound + 1;
-            //         } else {
-            //             x_locs.push((current_x_left, max_x_right));
-            //             break;
-            //         }
-            //     }
-
-            //     proc_widget_state.columns.column_header_x_locs = Some(x_locs);
-            // }
-
-            if app_state.should_get_widget_bounds() {
-                // Update draw loc in widget map
-                if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                    widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                    widget.bottom_right_corner =
-                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-                }
-            }
+            .draw_text_table(
+                f,
+                draw_loc,
+                &mut proc_widget_state.table_state,
+                &proc_widget_state.table_data,
+                app_state.widget_map.get_mut(&widget_id),
+            );
         }
     }
 
@@ -343,8 +248,8 @@ impl Painter {
                 self.colours.text_style
             };
 
-            // FIXME: [MOUSE] Mouse support for these in search
-            // FIXME: [MOVEMENT] Movement support for these in search
+            // TODO: [MOUSE] Mouse support for these in search
+            // TODO: [MOVEMENT] Movement support for these in search
             let option_text = Spans::from(vec![
                 Span::styled(
                     format!("Case({})", if self.is_mac_os { "F1" } else { "Alt+C" }),
@@ -445,124 +350,66 @@ impl Painter {
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
         widget_id: u64,
     ) {
-        // FIXME: [Proc] Redo drawing sort table!
-        // let is_on_widget = widget_id == app_state.current_widget.widget_id;
+        let should_get_widget_bounds = app_state.should_get_widget_bounds();
+        if let Some(proc_widget_state) =
+            app_state.proc_state.widget_states.get_mut(&(widget_id - 2))
+        {
+            let recalculate_column_widths =
+                should_get_widget_bounds || proc_widget_state.force_update;
 
-        // if let Some(proc_widget_state) =
-        //     app_state.proc_state.widget_states.get_mut(&(widget_id - 2))
-        // {
-        //     let current_scroll_position = proc_widget_state.columns.current_scroll_position;
-        //     let sort_string = proc_widget_state
-        //         .columns
-        //         .ordered_columns
-        //         .iter()
-        //         .filter(|column_type| {
-        //             proc_widget_state
-        //                 .columns
-        //                 .column_mapping
-        //                 .get(column_type)
-        //                 .unwrap()
-        //                 .enabled
-        //         })
-        //         .map(|column_type| column_type.to_string())
-        //         .collect::<Vec<_>>();
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let (border_style, highlighted_text_style) = if is_on_widget {
+                (
+                    self.colours.highlighted_border_style,
+                    self.colours.currently_selected_text_style,
+                )
+            } else {
+                (self.colours.border_style, self.colours.text_style)
+            };
 
-        //     let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
-        //         0
-        //     } else {
-        //         app_state.app_config_fields.table_gap
-        //     };
-        //     let position = get_start_position(
-        //         usize::from(
-        //             (draw_loc.height + (1 - table_gap)).saturating_sub(self.table_height_offset),
-        //         ),
-        //         &proc_widget_state.columns.scroll_direction,
-        //         &mut proc_widget_state.columns.previous_scroll_position,
-        //         current_scroll_position,
-        //         app_state.is_force_redraw,
-        //     );
+            // TODO: [PROC] Perhaps move this generation elsewhere... or leave it as is but look at partial rendering?
+            let table_data = {
+                let data = proc_widget_state
+                    .table_state
+                    .columns
+                    .iter()
+                    .filter_map(|col| {
+                        if col.is_hidden {
+                            None
+                        } else {
+                            Some(TableRow::Raw(vec![col.header.text().clone()]))
+                        }
+                    })
+                    .collect();
 
-        //     // Sanity check
-        //     let start_position = if position >= sort_string.len() {
-        //         sort_string.len().saturating_sub(1)
-        //     } else {
-        //         position
-        //     };
+                TableData {
+                    data,
+                    col_widths: vec![usize::from(SORT_MENU_WIDTH)],
+                }
+            };
 
-        //     let sliced_vec = &sort_string[start_position..];
-
-        //     let sort_options = sliced_vec
-        //         .iter()
-        //         .map(|column| Row::new(vec![column.as_str()]));
-
-        //     let column_state = &mut proc_widget_state.columns.column_state;
-        //     column_state.select(Some(
-        //         proc_widget_state
-        //             .columns
-        //             .current_scroll_position
-        //             .saturating_sub(start_position),
-        //     ));
-        //     let current_border_style = if proc_widget_state
-        //         .search_state
-        //         .search_state
-        //         .is_invalid_search
-        //     {
-        //         self.colours.invalid_query_style
-        //     } else if is_on_widget {
-        //         self.colours.highlighted_border_style
-        //     } else {
-        //         self.colours.border_style
-        //     };
-
-        //     let process_sort_block = if draw_border {
-        //         Block::default()
-        //             .borders(Borders::ALL)
-        //             .border_style(current_border_style)
-        //     } else if is_on_widget {
-        //         Block::default()
-        //             .borders(SIDE_BORDERS)
-        //             .border_style(current_border_style)
-        //     } else {
-        //         Block::default().borders(Borders::NONE)
-        //     };
-
-        //     let highlight_style = if is_on_widget {
-        //         self.colours.currently_selected_text_style
-        //     } else {
-        //         self.colours.text_style
-        //     };
-
-        //     let margined_draw_loc = Layout::default()
-        //         .constraints([Constraint::Percentage(100)])
-        //         .horizontal_margin(if is_on_widget || draw_border { 0 } else { 1 })
-        //         .direction(Direction::Horizontal)
-        //         .split(draw_loc)[0];
-
-        //     f.render_stateful_widget(
-        //         Table::new(sort_options)
-        //             .header(
-        //                 Row::new(vec!["Sort By"])
-        //                     .style(self.colours.table_header_style)
-        //                     .bottom_margin(table_gap),
-        //             )
-        //             .block(process_sort_block)
-        //             .highlight_style(highlight_style)
-        //             .style(self.colours.text_style)
-        //             .widths(&[Constraint::Percentage(100)]),
-        //         margined_draw_loc,
-        //         column_state,
-        //     );
-
-        //     if app_state.should_get_widget_bounds() {
-        //         // Update draw loc in widget map
-        //         if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-        //             widget.top_left_corner = Some((margined_draw_loc.x, margined_draw_loc.y));
-        //             widget.bottom_right_corner = Some((
-        //                 margined_draw_loc.x + margined_draw_loc.width,
-        //                 margined_draw_loc.y + margined_draw_loc.height,
-        //             ));
-        //         }
-        //     }
-        // }
+            TextTable {
+                table_gap: app_state.app_config_fields.table_gap,
+                is_force_redraw: app_state.is_force_redraw,
+                recalculate_column_widths,
+                header_style: self.colours.table_header_style,
+                border_style,
+                highlighted_text_style,
+                title: None,
+                is_on_widget,
+                draw_border,
+                show_table_scroll_position: app_state.app_config_fields.show_table_scroll_position,
+                title_style: self.colours.widget_title_style,
+                text_style: self.colours.text_style,
+                left_to_right: true,
+            }
+            .draw_text_table(
+                f,
+                draw_loc,
+                &mut proc_widget_state.sort_table_state,
+                &table_data,
+                app_state.widget_map.get_mut(&widget_id),
+            );
+        }
     }
 }

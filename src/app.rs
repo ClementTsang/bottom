@@ -16,7 +16,8 @@ use layout_manager::*;
 pub use states::*;
 
 use crate::{
-    canvas, constants,
+    constants,
+    data_conversion::ConvertedData,
     options::Config,
     options::ConfigFlags,
     options::WidgetIdEnabled,
@@ -24,6 +25,8 @@ use crate::{
     utils::error::{BottomError, Result},
     Pid,
 };
+
+use self::widgets::{ProcWidget, ProcWidgetMode};
 
 pub mod data_farmer;
 pub mod data_harvester;
@@ -104,7 +107,7 @@ pub struct App {
     last_key_press: Instant,
 
     #[builder(default, setter(skip))]
-    pub canvas_data: canvas::DisplayableData,
+    pub converted_data: ConvertedData,
 
     #[builder(default, setter(skip))]
     pub data_collection: DataCollection,
@@ -302,55 +305,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        todo!()
-                        // FIXME: [Proc] Fix this.
-                        // // Do NOT allow when in tree mode!
-                        // if !proc_widget_state.is_tree_mode {
-                        //     // Toggles process widget grouping state
-                        //     proc_widget_state.is_grouped = !(proc_widget_state.is_grouped);
-
-                        //     // Forcefully switch off column if we were on it...
-                        //     if (proc_widget_state.is_grouped
-                        //         && (proc_widget_state.process_sorting_type
-                        //             == processes::ProcessSorting::Pid
-                        //             || proc_widget_state.process_sorting_type
-                        //                 == processes::ProcessSorting::User
-                        //             || proc_widget_state.process_sorting_type
-                        //                 == processes::ProcessSorting::State))
-                        //         || (!proc_widget_state.is_grouped
-                        //             && proc_widget_state.process_sorting_type
-                        //                 == processes::ProcessSorting::Count)
-                        //     {
-                        //         proc_widget_state.process_sorting_type =
-                        //             processes::ProcessSorting::CpuPercent; // Go back to default, negate PID for group
-                        //         proc_widget_state.is_process_sort_descending = true;
-                        //     }
-
-                        //     proc_widget_state.columns.set_to_sorted_index_from_type(
-                        //         &proc_widget_state.process_sorting_type,
-                        //     );
-
-                        //     proc_widget_state.columns.try_set(
-                        //         &processes::ProcessSorting::State,
-                        //         !(proc_widget_state.is_grouped),
-                        //     );
-
-                        //     #[cfg(target_family = "unix")]
-                        //     proc_widget_state.columns.try_set(
-                        //         &processes::ProcessSorting::User,
-                        //         !(proc_widget_state.is_grouped),
-                        //     );
-
-                        //     proc_widget_state
-                        //         .columns
-                        //         .toggle(&processes::ProcessSorting::Count);
-                        //     proc_widget_state
-                        //         .columns
-                        //         .toggle(&processes::ProcessSorting::Pid);
-
-                        //     proc_widget_state.requires_redraw = true;
-                        //     self.proc_state.force_update = Some(self.current_widget.widget_id);
-                        // }
+                        proc_widget_state.toggle_tab();
                     }
                 }
                 _ => {}
@@ -388,11 +343,17 @@ impl App {
                 _ => 0,
             };
 
-        if let Some(proc_widget_state) = self.proc_state.get_mut_widget_state(widget_id) {
-            proc_widget_state.is_sort_open = !proc_widget_state.is_sort_open;
+        if let Some(pws) = self.proc_state.get_mut_widget_state(widget_id) {
+            pws.is_sort_open = !pws.is_sort_open;
+            pws.force_update = true;
 
             // If the sort is now open, move left. Otherwise, if the proc sort was selected, force move right.
-            if proc_widget_state.is_sort_open {
+            if pws.is_sort_open {
+                if let SortState::Sortable(st) = &pws.table_state.sort_state {
+                    pws.sort_table_state.current_scroll_position = st
+                        .current_index
+                        .clamp(0, pws.num_enabled_columns().saturating_sub(1));
+                }
                 self.move_widget_selection(&WidgetDirection::Left);
             } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
                 self.move_widget_selection(&WidgetDirection::Right);
@@ -411,10 +372,12 @@ impl App {
                     };
 
                 if let Some(proc_widget_state) = self.proc_state.get_mut_widget_state(widget_id) {
-                    proc_widget_state.is_process_sort_descending =
-                        !proc_widget_state.is_process_sort_descending;
-
-                    proc_widget_state.force_update = true;
+                    if let SortState::Sortable(state) =
+                        &mut proc_widget_state.table_state.sort_state
+                    {
+                        state.toggle_order();
+                        proc_widget_state.force_update = true;
+                    }
                 }
             }
             _ => {}
@@ -432,9 +395,7 @@ impl App {
                     .widget_states
                     .get_mut(&self.current_widget.widget_id)
                 {
-                    // FIXME: [Proc]Handle this!
-                    todo!();
-
+                    proc_widget_state.toggle_mem_percentage();
                     proc_widget_state.force_update = true;
                 }
             }
@@ -605,37 +566,19 @@ impl App {
             .widget_states
             .get_mut(&(self.current_widget.widget_id))
         {
-            // proc_widget_state.is_tree_mode = !proc_widget_state.is_tree_mode;
-
-            // // FIXME: For consistency, either disable tree mode if grouped, or allow grouped mode if in tree mode.
-            // if proc_widget_state.is_tree_mode {
-            //     // Disable grouping if so!
-            //     proc_widget_state.is_grouped = false;
-
-            //     proc_widget_state
-            //         .columns
-            //         .try_enable(&processes::ProcessSorting::State);
-
-            //     #[cfg(target_family = "unix")]
-            //     proc_widget_state
-            //         .columns
-            //         .try_enable(&processes::ProcessSorting::User);
-
-            //     proc_widget_state
-            //         .columns
-            //         .try_disable(&processes::ProcessSorting::Count);
-
-            //     proc_widget_state
-            //         .columns
-            //         .try_enable(&processes::ProcessSorting::Pid);
-
-            //     // We enabled... set PID sort type to ascending.
-            //     proc_widget_state.process_sorting_type = processes::ProcessSorting::Pid;
-            //     proc_widget_state.is_process_sort_descending = false;
-            // }
-
-            // self.proc_state.force_update = Some(self.current_widget.widget_id);
-            // proc_widget_state.requires_redraw = true;
+            match proc_widget_state.mode {
+                ProcWidgetMode::Tree { .. } => {
+                    proc_widget_state.mode = ProcWidgetMode::Normal;
+                    proc_widget_state.force_update = true;
+                }
+                ProcWidgetMode::Normal => {
+                    proc_widget_state.mode = ProcWidgetMode::Tree {
+                        collapsed_pids: Default::default(),
+                    };
+                    proc_widget_state.force_update = true;
+                }
+                ProcWidgetMode::Grouped => {}
+            }
         }
     }
 
@@ -672,8 +615,8 @@ impl App {
                     .widget_states
                     .get_mut(&(self.current_widget.widget_id - 2))
                 {
-                    // TODO: [Proc] Handle this
-                    proc_widget_state.force_update = true;
+                    proc_widget_state.use_sort_table_value();
+                    self.move_widget_selection(&WidgetDirection::Right);
                 }
             }
         }
@@ -891,7 +834,7 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if !self.canvas_data.battery_data.is_empty() {
+                    if !self.converted_data.battery_data.is_empty() {
                         if let Some(battery_widget_state) = self
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
@@ -961,8 +904,8 @@ impl App {
                     }
                 }
                 BottomWidgetType::Battery => {
-                    if !self.canvas_data.battery_data.is_empty() {
-                        let battery_count = self.canvas_data.battery_data.len();
+                    if !self.converted_data.battery_data.is_empty() {
+                        let battery_count = self.converted_data.battery_data.len();
                         if let Some(battery_widget_state) = self
                             .battery_state
                             .get_mut_widget_state(self.current_widget.widget_id)
@@ -1207,40 +1150,36 @@ impl App {
     pub fn start_killing_process(&mut self) {
         self.reset_multi_tap_keys();
 
-        if let Some(proc_widget_state) = self
+        if let Some(pws) = self
             .proc_state
             .widget_states
             .get(&self.current_widget.widget_id)
         {
-            if let Some(corresponding_filtered_process_list) = self
-                .canvas_data
-                .finalized_process_data_map
-                .get(&self.current_widget.widget_id)
+            if let Some(table_row) = pws
+                .table_data
+                .data
+                .get(pws.table_state.current_scroll_position)
             {
-                if proc_widget_state.table_state.current_scroll_position
-                    < corresponding_filtered_process_list.len()
-                {
-                    todo!()
-                    // FIXME: [Proc] Handle this
-                    // let current_process: (String, Vec<Pid>);
-                    // if self.is_grouped(self.current_widget.widget_id) {
-                    //     if let Some(process) = &corresponding_filtered_process_list
-                    //         .get(proc_widget_state.table_state.current_scroll_position)
-                    //     {
-                    //         current_process = (process.name.to_string(), process.group_pids.clone())
-                    //     } else {
-                    //         return;
-                    //     }
-                    // } else {
-                    //     let process = corresponding_filtered_process_list
-                    //         [proc_widget_state.table_state.current_scroll_position]
-                    //         .clone();
-                    //     current_process = (process.name.clone(), vec![process.pid])
-                    // };
+                if let Some(col_value) = table_row.row().get(ProcWidget::PROC_NAME_OR_CMD) {
+                    let val = col_value.main_text().to_string();
+                    if pws.is_using_command() {
+                        if let Some(pids) = self.data_collection.process_data.cmd_pid_map.get(&val)
+                        {
+                            let current_process = (val, pids.clone());
 
-                    // self.to_delete_process_list = Some(current_process);
-                    // self.delete_dialog_state.is_showing_dd = true;
-                    // self.is_determining_widget_boundary = true;
+                            self.to_delete_process_list = Some(current_process);
+                            self.delete_dialog_state.is_showing_dd = true;
+                            self.is_determining_widget_boundary = true;
+                        }
+                    } else if let Some(pids) =
+                        self.data_collection.process_data.name_pid_map.get(&val)
+                    {
+                        let current_process = (val, pids.clone());
+
+                        self.to_delete_process_list = Some(current_process);
+                        self.delete_dialog_state.is_showing_dd = true;
+                        self.is_determining_widget_boundary = true;
+                    }
                 }
             }
         }
@@ -1421,8 +1360,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        // FIXME: [Proc] Handle this, this should toggle the CPU sorter.
-                        proc_widget_state.force_update = true;
+                        proc_widget_state.select_column(ProcWidget::CPU);
                     }
                 }
             }
@@ -1432,8 +1370,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        // FIXME: [Proc] Handle this, this should toggle mem
-                        proc_widget_state.force_update = true;
+                        proc_widget_state.select_column(ProcWidget::MEM);
                     }
                 }
             }
@@ -1443,16 +1380,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        todo!()
-                        // FIXME: [Proc], this should handle pid
-                        // // Skip if grouped
-                        // if !proc_widget_state.is_grouped {
-                        //     proc_widget_state
-                        //         .columns
-                        //         .set_to_sorted_index_from_type(&processes::ProcessSorting::Pid);
-                        //     proc_widget_state.update_sorting_with_columns();
-                        //     self.proc_state.force_update = Some(self.current_widget.widget_id);
-                        // }
+                        proc_widget_state.select_column(ProcWidget::PID_OR_COUNT);
                     }
                 }
             }
@@ -1462,26 +1390,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        // FIXME: [Proc] Handle this, this should toggle proc name/command
-                        // proc_widget_state.is_using_command = !proc_widget_state.is_using_command;
-                        // proc_widget_state
-                        //     .toggle_command_and_name(proc_widget_state.is_using_command);
-
-                        // match &proc_widget_state.process_sorting_type {
-                        //     processes::ProcessSorting::Command
-                        //     | processes::ProcessSorting::ProcessName => {
-                        //         if proc_widget_state.is_using_command {
-                        //             proc_widget_state.process_sorting_type =
-                        //                 processes::ProcessSorting::Command;
-                        //         } else {
-                        //             proc_widget_state.process_sorting_type =
-                        //                 processes::ProcessSorting::ProcessName;
-                        //         }
-                        //     }
-                        //     _ => {}
-                        // }
-                        proc_widget_state.requires_redraw = true;
-                        proc_widget_state.force_update = true;
+                        proc_widget_state.toggle_command();
                     }
                 }
             }
@@ -1491,16 +1400,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        // FIXME: [Proc] Handle this, this should toggle name/column selection
-                        // proc_widget_state.columns.set_to_sorted_index_from_type(
-                        //     &(if proc_widget_state.is_using_command {
-                        //         processes::ProcessSorting::Command
-                        //     } else {
-                        //         processes::ProcessSorting::ProcessName
-                        //     }),
-                        // );
-                        // proc_widget_state.update_sorting_with_columns();
-                        proc_widget_state.force_update = true;
+                        proc_widget_state.select_column(ProcWidget::PROC_NAME_OR_CMD);
                     }
                 }
             }
@@ -2103,18 +2003,9 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if let Some(finalized_process_data) = self
-                            .canvas_data
-                            .finalized_process_data_map
-                            .get(&self.current_widget.widget_id)
-                        {
-                            if !self.canvas_data.finalized_process_data_map.is_empty() {
-                                proc_widget_state.table_state.current_scroll_position =
-                                    finalized_process_data.len() - 1;
-                                proc_widget_state.table_state.scroll_direction =
-                                    ScrollDirection::Down;
-                            }
-                        }
+                        proc_widget_state.table_state.current_scroll_position =
+                            proc_widget_state.table_data.data.len().saturating_sub(1);
+                        proc_widget_state.table_state.scroll_direction = ScrollDirection::Down;
                     }
                 }
                 BottomWidgetType::ProcSort => {
@@ -2132,9 +2023,9 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if !self.canvas_data.temp_sensor_data.data.is_empty() {
+                        if !self.converted_data.temp_sensor_data.data.is_empty() {
                             temp_widget_state.table_state.current_scroll_position =
-                                self.canvas_data.temp_sensor_data.data.len() - 1;
+                                self.converted_data.temp_sensor_data.data.len() - 1;
                             temp_widget_state.table_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
@@ -2144,9 +2035,9 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if !self.canvas_data.disk_data.data.is_empty() {
+                        if !self.converted_data.disk_data.data.is_empty() {
                             disk_widget_state.table_state.current_scroll_position =
-                                self.canvas_data.disk_data.data.len() - 1;
+                                self.converted_data.disk_data.data.len() - 1;
                             disk_widget_state.table_state.scroll_direction = ScrollDirection::Down;
                         }
                     }
@@ -2156,7 +2047,7 @@ impl App {
                         .cpu_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        let cap = self.canvas_data.cpu_data.len();
+                        let cap = self.converted_data.cpu_data.len();
                         if cap > 0 {
                             cpu_widget_state.table_state.current_scroll_position = cap - 1;
                             cpu_widget_state.table_state.scroll_direction = ScrollDirection::Down;
@@ -2220,7 +2111,7 @@ impl App {
         {
             cpu_widget_state
                 .table_state
-                .update_position(num_to_change_by, self.canvas_data.cpu_data.len());
+                .update_position(num_to_change_by, self.converted_data.cpu_data.len());
         }
     }
 
@@ -2230,17 +2121,9 @@ impl App {
             .proc_state
             .get_mut_widget_state(self.current_widget.widget_id)
         {
-            if let Some(finalized_process_data) = self
-                .canvas_data
-                .finalized_process_data_map
-                .get(&self.current_widget.widget_id)
-            {
-                proc_widget_state
-                    .table_state
-                    .update_position(num_to_change_by, finalized_process_data.len())
-            } else {
-                None
-            }
+            proc_widget_state
+                .table_state
+                .update_position(num_to_change_by, proc_widget_state.table_data.data.len())
         } else {
             None
         }
@@ -2254,7 +2137,7 @@ impl App {
         {
             temp_widget_state.table_state.update_position(
                 num_to_change_by,
-                self.canvas_data.temp_sensor_data.data.len(),
+                self.converted_data.temp_sensor_data.data.len(),
             );
         }
     }
@@ -2267,7 +2150,7 @@ impl App {
         {
             disk_widget_state
                 .table_state
-                .update_position(num_to_change_by, self.canvas_data.disk_data.data.len());
+                .update_position(num_to_change_by, self.converted_data.disk_data.data.len());
         }
     }
 
@@ -2347,31 +2230,12 @@ impl App {
     }
 
     fn toggle_collapsing_process_branch(&mut self) {
-        if let Some(proc_widget_state) = self
+        if let Some(pws) = self
             .proc_state
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            let current_posn = proc_widget_state.table_state.current_scroll_position;
-
-            if let Some(displayed_process_list) = self
-                .canvas_data
-                .finalized_process_data_map
-                .get(&self.current_widget.widget_id)
-            {
-                if let Some(corresponding_process) = displayed_process_list.get(current_posn) {
-                    let corresponding_pid = corresponding_process.pid;
-
-                    if let Some(process_data) = self
-                        .canvas_data
-                        .single_process_data
-                        .get_mut(&corresponding_pid)
-                    {
-                        process_data.is_collapsed_entry = !process_data.is_collapsed_entry;
-                        proc_widget_state.force_update = true;
-                    }
-                }
-            }
+            pws.toggle_tree_branch();
         }
     }
 
@@ -2756,29 +2620,31 @@ impl App {
                                             // the same entry as the already selected one - if it is,
                                             // then we minimize.
 
+                                            let is_tree_mode = matches!(
+                                                proc_widget_state.mode,
+                                                ProcWidgetMode::Tree { .. }
+                                            );
+
                                             let previous_scroll_position = proc_widget_state
                                                 .table_state
                                                 .current_scroll_position;
 
-                                            // FIXME: [Proc] Handle this, tree mode code?
-                                            // let is_tree_mode = proc_widget_state.is_tree_mode;
+                                            let new_position = self.change_process_position(
+                                                offset_clicked_entry as i64 - visual_index as i64,
+                                            );
 
-                                            // let new_position = self.change_process_position(
-                                            //     offset_clicked_entry as i64 - visual_index as i64,
-                                            // );
-
-                                            // if is_tree_mode {
-                                            //     if let Some(new_position) = new_position {
-                                            //         if previous_scroll_position == new_position {
-                                            //             self.toggle_collapsing_process_branch();
-                                            //         }
-                                            //     }
-                                            // }
+                                            if is_tree_mode {
+                                                if let Some(new_position) = new_position {
+                                                    if previous_scroll_position == new_position {
+                                                        self.toggle_collapsing_process_branch();
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
                                 BottomWidgetType::ProcSort => {
-                                    // TODO: This should sort if you double click!
+                                    // TODO: [Feature] This could sort if you double click!
                                     if let Some(proc_widget_state) = self
                                         .proc_state
                                         .get_widget_state(self.current_widget.widget_id - 2)
@@ -2842,48 +2708,19 @@ impl App {
                             // We might have clicked on a header!  Check if we only exceeded the table + border offset, and
                             // it's implied we exceeded the gap offset.
                             if clicked_entry == border_offset {
-                                #[allow(clippy::single_match)]
-                                match &self.current_widget.widget_type {
-                                    BottomWidgetType::Proc => {
-                                        if let Some(proc_widget_state) = self
-                                            .proc_state
-                                            .get_mut_widget_state(self.current_widget.widget_id)
+                                if let BottomWidgetType::Proc = &self.current_widget.widget_type {
+                                    if let Some(proc_widget_state) = self
+                                        .proc_state
+                                        .get_mut_widget_state(self.current_widget.widget_id)
+                                    {
+                                        if let SortState::Sortable(st) =
+                                            &mut proc_widget_state.table_state.sort_state
                                         {
-                                            // Let's now check if it's a column header.
-
-                                            // FIXME: [Proc] Handle column header sorting!
-
-                                            // if let (Some(y_loc), Some(x_locs)) = (
-                                            //     &proc_widget_state.columns.column_header_y_loc,
-                                            //     &proc_widget_state.columns.column_header_x_locs,
-                                            // ) {
-                                            //     // debug!("x, y: {}, {}", x, y);
-                                            //     // debug!("y_loc: {}", y_loc);
-                                            //     // debug!("x_locs: {:?}", x_locs);
-
-                                            //     if y == *y_loc {
-                                            //         for (itx, (x_left, x_right)) in
-                                            //             x_locs.iter().enumerate()
-                                            //         {
-                                            //             if x >= *x_left && x <= *x_right {
-                                            //                 // Found our column!
-                                            //                 proc_widget_state
-                                            //                 .columns
-                                            //                 .set_to_sorted_index_from_visual_index(
-                                            //                     itx,
-                                            //                 );
-                                            //                 proc_widget_state
-                                            //                     .update_sorting_with_columns();
-                                            //                 self.proc_state.force_update =
-                                            //                     Some(self.current_widget.widget_id);
-                                            //                 break;
-                                            //             }
-                                            //         }
-                                            //     }
-                                            // }
+                                            if st.try_select_location(x, y).is_some() {
+                                                proc_widget_state.force_update = true;
+                                            }
                                         }
                                     }
-                                    _ => {}
                                 }
                             }
                         }

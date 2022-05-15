@@ -27,9 +27,8 @@ use crossterm::{
 };
 
 use app::{
-    data_harvester::{self, processes::ProcessSorting},
+    data_harvester,
     layout_manager::{UsedWidgets, WidgetDirection},
-    widgets::{ProcWidget, ProcWidgetMode},
     App,
 };
 use constants::*;
@@ -304,21 +303,23 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 }
 
 pub fn handle_force_redraws(app: &mut App) {
-    // Currently we use an Option... because we might want to future-proof this
-    // if we eventually get widget-specific redrawing!
-
-    // FIXME: [PROC] handle updating processes if force redraw!
+    for proc in app.proc_state.widget_states.values_mut() {
+        if proc.force_update {
+            // NB: Currently, the "force update" gets fixed in the draw.
+            proc.update_displayed_process_data(&app.data_collection);
+        }
+    }
 
     if app.cpu_state.force_update.is_some() {
-        convert_cpu_data_points(&app.data_collection, &mut app.canvas_data.cpu_data);
-        app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
+        convert_cpu_data_points(&app.data_collection, &mut app.converted_data.cpu_data);
+        app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
         app.cpu_state.force_update = None;
     }
 
     // FIXME: [OPT] Prefer reassignment over new vectors?
     if app.mem_state.force_update.is_some() {
-        app.canvas_data.mem_data = convert_mem_data_points(&app.data_collection);
-        app.canvas_data.swap_data = convert_swap_data_points(&app.data_collection);
+        app.converted_data.mem_data = convert_mem_data_points(&app.data_collection);
+        app.converted_data.swap_data = convert_swap_data_points(&app.data_collection);
         app.mem_state.force_update = None;
     }
 
@@ -329,254 +330,9 @@ pub fn handle_force_redraws(app: &mut App) {
             &app.app_config_fields.network_unit_type,
             app.app_config_fields.network_use_binary_prefix,
         );
-        app.canvas_data.network_data_rx = rx;
-        app.canvas_data.network_data_tx = tx;
+        app.converted_data.network_data_rx = rx;
+        app.converted_data.network_data_tx = tx;
         app.net_state.force_update = None;
-    }
-}
-
-#[allow(clippy::needless_collect)]
-pub fn update_all_process_lists(app: &mut App) {
-    // According to clippy, I can avoid a collect... but if I follow it,
-    // I end up conflicting with the borrow checker since app is used within the closure... hm.
-    if !app.is_frozen {
-        let widget_ids = app
-            .proc_state
-            .widget_states
-            .keys()
-            .cloned()
-            .collect::<Vec<_>>();
-
-        widget_ids.into_iter().for_each(|widget_id| {
-            update_final_process_list(app, widget_id);
-        });
-    }
-}
-
-fn update_final_process_list(app: &mut App, widget_id: u64) {
-    let process_states = app
-        .proc_state
-        .widget_states
-        .get(&widget_id)
-        .map(|process_state| {
-            (
-                process_state
-                    .search_state
-                    .search_state
-                    .is_invalid_or_blank_search(),
-                process_state.is_using_command,
-                process_state.mode,
-            )
-        });
-
-    if let Some((is_invalid_or_blank, is_using_command, mode)) = process_states {
-        if !app.is_frozen {
-            convert_process_data(
-                &app.data_collection,
-                &mut app.canvas_data.single_process_data,
-                #[cfg(target_family = "unix")]
-                &mut app.user_table,
-            );
-        }
-        let process_filter = app.get_process_filter(widget_id);
-        let filtered_process_data: Vec<ConvertedProcessData> = match mode {
-            ProcWidgetMode::Tree => app
-                .canvas_data
-                .single_process_data
-                .iter()
-                .map(|(_pid, process)| {
-                    let mut process_clone = process.clone();
-                    if !is_invalid_or_blank {
-                        if let Some(process_filter) = process_filter {
-                            process_clone.is_disabled_entry =
-                                !process_filter.check(&process_clone, is_using_command);
-                        }
-                    }
-                    process_clone
-                })
-                .collect::<Vec<_>>(),
-            ProcWidgetMode::Grouped | ProcWidgetMode::Normal => app
-                .canvas_data
-                .single_process_data
-                .iter()
-                .filter_map(|(_pid, process)| {
-                    if !is_invalid_or_blank {
-                        if let Some(process_filter) = process_filter {
-                            if process_filter.check(process, is_using_command) {
-                                Some(process)
-                            } else {
-                                None
-                            }
-                        } else {
-                            Some(process)
-                        }
-                    } else {
-                        Some(process)
-                    }
-                })
-                .cloned()
-                .collect::<Vec<_>>(),
-        };
-
-        if let Some(proc_widget_state) = app.proc_state.get_mut_widget_state(widget_id) {
-            let mut finalized_process_data = match proc_widget_state.mode {
-                ProcWidgetMode::Tree => tree_process_data(
-                    &filtered_process_data,
-                    is_using_command,
-                    &proc_widget_state.process_sorting_type,
-                    proc_widget_state.is_process_sort_descending,
-                ),
-                ProcWidgetMode::Grouped => {
-                    let mut data = group_process_data(&filtered_process_data, is_using_command);
-                    sort_process_data(&mut data, proc_widget_state);
-                    data
-                }
-                ProcWidgetMode::Normal => {
-                    let mut data = filtered_process_data;
-                    sort_process_data(&mut data, proc_widget_state);
-                    data
-                }
-            };
-
-            if proc_widget_state.table_state.current_scroll_position >= finalized_process_data.len()
-            {
-                proc_widget_state.table_state.current_scroll_position =
-                    finalized_process_data.len().saturating_sub(1);
-                proc_widget_state.table_state.scroll_bar = 0;
-                proc_widget_state.table_state.scroll_direction = app::ScrollDirection::Down;
-            }
-
-            app.canvas_data.stringified_process_data_map.insert(
-                widget_id,
-                stringify_process_data(proc_widget_state, &finalized_process_data),
-            );
-            app.canvas_data
-                .finalized_process_data_map
-                .insert(widget_id, finalized_process_data);
-        }
-    }
-}
-
-fn sort_process_data(to_sort_vec: &mut [ConvertedProcessData], proc_widget_state: &ProcWidget) {
-    to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
-
-    match &proc_widget_state.process_sorting_type {
-        ProcessSorting::CpuPercent => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.cpu_percent_usage,
-                    b.cpu_percent_usage,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::Mem => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.mem_usage_bytes,
-                    b.mem_usage_bytes,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::MemPercent => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.mem_percent_usage,
-                    b.mem_percent_usage,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::ProcessName => {
-            // Don't repeat if false... it sorts by name by default anyways.
-            if proc_widget_state.is_process_sort_descending {
-                to_sort_vec.sort_by_cached_key(|c| c.name.to_lowercase());
-                if proc_widget_state.is_process_sort_descending {
-                    to_sort_vec.reverse();
-                }
-            }
-        }
-        ProcessSorting::Command => {
-            to_sort_vec.sort_by_cached_key(|c| c.command.to_lowercase());
-            if proc_widget_state.is_process_sort_descending {
-                to_sort_vec.reverse();
-            }
-        }
-        ProcessSorting::Pid => {
-            if !matches!(proc_widget_state.mode, ProcWidgetMode::Grouped) {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        a.pid,
-                        b.pid,
-                        proc_widget_state.is_process_sort_descending,
-                    )
-                });
-            }
-        }
-        ProcessSorting::ReadPerSecond => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.rps_f64,
-                    b.rps_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::WritePerSecond => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.wps_f64,
-                    b.wps_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::TotalRead => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.tr_f64,
-                    b.tr_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::TotalWrite => {
-            to_sort_vec.sort_by(|a, b| {
-                utils::gen_util::get_ordering(
-                    a.tw_f64,
-                    b.tw_f64,
-                    proc_widget_state.is_process_sort_descending,
-                )
-            });
-        }
-        ProcessSorting::State => {
-            to_sort_vec.sort_by_cached_key(|c| c.process_state.to_lowercase());
-            if proc_widget_state.is_process_sort_descending {
-                to_sort_vec.reverse();
-            }
-        }
-        ProcessSorting::User => to_sort_vec.sort_by(|a, b| match (&a.user, &b.user) {
-            (Some(user_a), Some(user_b)) => utils::gen_util::get_ordering(
-                user_a.to_lowercase(),
-                user_b.to_lowercase(),
-                proc_widget_state.is_process_sort_descending,
-            ),
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            (None, None) => std::cmp::Ordering::Less,
-        }),
-        ProcessSorting::Count => {
-            if matches!(proc_widget_state.mode, ProcWidgetMode::Grouped) {
-                to_sort_vec.sort_by(|a, b| {
-                    utils::gen_util::get_ordering(
-                        a.group_pids.len(),
-                        b.group_pids.len(),
-                        proc_widget_state.is_process_sort_descending,
-                    )
-                });
-            }
-        }
     }
 }
 
@@ -640,7 +396,7 @@ pub fn create_collection_thread(
     thread::spawn(move || {
         let mut data_state = data_harvester::DataCollector::new(filters);
 
-        data_state.set_collected_data(used_widget_set);
+        data_state.set_data_collection(used_widget_set);
         data_state.set_temperature_type(temp_type);
         data_state.set_use_current_cpu_total(use_current_cpu_total);
         data_state.set_show_average_cpu(show_average_cpu);
@@ -671,7 +427,7 @@ pub fn create_collection_thread(
                         data_state.set_show_average_cpu(app_config_fields.show_average_cpu);
                     }
                     ThreadControlEvent::UpdateUsedWidgets(used_widget_set) => {
-                        data_state.set_collected_data(*used_widget_set);
+                        data_state.set_data_collection(*used_widget_set);
                     }
                     ThreadControlEvent::UpdateUpdateTime(new_time) => {
                         update_time = new_time;

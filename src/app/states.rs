@@ -5,7 +5,6 @@ use unicode_segmentation::GraphemeCursor;
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
     constants,
-    data_harvester::processes::ProcessSorting,
 };
 
 pub mod table_state;
@@ -205,7 +204,9 @@ impl CpuWidgetState {
             CPU_LEGEND_HEADER
                 .iter()
                 .zip(WIDTHS)
-                .map(|(c, width)| TableComponentColumn::new(CellContent::new(*c, None), width))
+                .map(|(c, width)| {
+                    TableComponentColumn::new_custom(CellContent::new(*c, None), width)
+                })
                 .collect(),
         );
 
@@ -294,7 +295,7 @@ impl Default for TempWidgetState {
                     .iter()
                     .zip(WIDTHS)
                     .map(|(header, width)| {
-                        TableComponentColumn::new(CellContent::new(*header, None), width)
+                        TableComponentColumn::new_custom(CellContent::new(*header, None), width)
                     })
                     .collect(),
             ),
@@ -343,7 +344,7 @@ impl Default for DiskWidgetState {
                     .iter()
                     .zip(WIDTHS)
                     .map(|(header, width)| {
-                        TableComponentColumn::new(CellContent::new(*header, None), width)
+                        TableComponentColumn::new_custom(CellContent::new(*header, None), width)
                     })
                     .collect(),
             ),

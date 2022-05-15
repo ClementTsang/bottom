@@ -348,19 +348,16 @@ pub fn build_app(
                         Net => {
                             net_state_map.insert(
                                 widget.widget_id,
-                                NetWidgetState::init(
-                                    default_time_value,
-                                    autohide_timer,
-                                    // network_unit_type.clone(),
-                                    // network_scale_type.clone(),
-                                ),
+                                NetWidgetState::init(default_time_value, autohide_timer),
                             );
                         }
                         Proc => {
                             let mode = if is_grouped {
                                 ProcWidgetMode::Grouped
                             } else if is_default_tree {
-                                ProcWidgetMode::Tree
+                                ProcWidgetMode::Tree {
+                                    collapsed_pids: Default::default(),
+                                }
                             } else {
                                 ProcWidgetMode::Normal
                             };

@@ -1,6 +1,7 @@
-use std::{borrow::Cow, convert::TryInto};
+use std::{borrow::Cow, convert::TryInto, ops::Range};
 
-use tui::widgets::TableState;
+use itertools::Itertools;
+use tui::{layout::Rect, widgets::TableState};
 
 use super::ScrollDirection;
 
@@ -22,6 +23,9 @@ pub enum WidthBounds {
 
     /// A width of this type is either as long as specified, or does not appear at all.
     Hard(u16),
+
+    /// Always uses the width of the [`CellContent`].
+    CellWidth,
 }
 
 impl WidthBounds {
@@ -46,7 +50,7 @@ impl WidthBounds {
 }
 
 /// A [`CellContent`] contains text information for display in a table.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum CellContent {
     Simple(Cow<'static, str>),
     HasAlt {
@@ -84,6 +88,13 @@ impl CellContent {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    pub fn main_text(&self) -> &Cow<'static, str> {
+        match self {
+            CellContent::Simple(main) => main,
+            CellContent::HasAlt { alt: _, main } => main,
+        }
+    }
 }
 
 pub trait TableComponentHeader {
@@ -95,9 +106,20 @@ impl TableComponentHeader for CellContent {
         self
     }
 }
+impl From<Cow<'static, str>> for CellContent {
+    fn from(c: Cow<'static, str>) -> Self {
+        CellContent::Simple(c)
+    }
+}
 
 impl From<&'static str> for CellContent {
     fn from(s: &'static str) -> Self {
+        CellContent::Simple(s.into())
+    }
+}
+
+impl From<String> for CellContent {
+    fn from(s: String) -> Self {
         CellContent::Simple(s.into())
     }
 }
@@ -117,7 +139,7 @@ pub struct TableComponentColumn<H: TableComponentHeader> {
 }
 
 impl<H: TableComponentHeader> TableComponentColumn<H> {
-    pub fn new(header: H, width_bounds: WidthBounds) -> Self {
+    pub fn new_custom(header: H, width_bounds: WidthBounds) -> Self {
         Self {
             header,
             width_bounds,
@@ -126,8 +148,16 @@ impl<H: TableComponentHeader> TableComponentColumn<H> {
         }
     }
 
-    pub fn default_hard(header: H) -> Self {
-        let width = header.header_text().len() as u16;
+    pub fn new(header: H) -> Self {
+        Self {
+            header,
+            width_bounds: WidthBounds::CellWidth,
+            calculated_width: 0,
+            is_hidden: false,
+        }
+    }
+
+    pub fn new_hard(header: H, width: u16) -> Self {
         Self {
             header,
             width_bounds: WidthBounds::Hard(width),
@@ -136,7 +166,7 @@ impl<H: TableComponentHeader> TableComponentColumn<H> {
         }
     }
 
-    pub fn default_soft(header: H, max_percentage: Option<f32>) -> Self {
+    pub fn new_soft(header: H, max_percentage: Option<f32>) -> Self {
         let min_width = header.header_text().len() as u16;
         Self {
             header,
@@ -159,20 +189,142 @@ impl<H: TableComponentHeader> TableComponentColumn<H> {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum SortOrder {
     Ascending,
     Descending,
 }
 
-/// Represents the current table's sorting state.
-pub enum SortState {
-    Unsortable,
-    Sortable { index: usize, order: SortOrder },
+impl SortOrder {
+    pub fn is_descending(&self) -> bool {
+        matches!(self, SortOrder::Descending)
+    }
 }
 
-impl Default for SortState {
-    fn default() -> Self {
-        SortState::Unsortable
+/// Represents the current table's sorting state.
+#[derive(Debug)]
+pub enum SortState {
+    Unsortable,
+    Sortable(SortableState),
+}
+
+#[derive(Debug)]
+pub struct SortableState {
+    /// The "x locations" of the headers.
+    visual_mappings: Vec<Range<u16>>,
+
+    /// The "y location" of the header row. Since all headers share the same y-location we just set it once here.
+    y_loc: u16,
+
+    /// This is a bit of a lazy hack to handle this for now - ideally the entire [`SortableState`]
+    /// is instead handled by a separate table struct that also can access the columns and their default sort orderings.
+    default_sort_orderings: Vec<SortOrder>,
+
+    /// The currently selected sort index.
+    pub current_index: usize,
+
+    /// The current sorting order.
+    pub order: SortOrder,
+}
+
+impl SortableState {
+    /// Creates a new [`SortableState`].
+    pub fn new(
+        default_index: usize, default_order: SortOrder, default_sort_orderings: Vec<SortOrder>,
+    ) -> Self {
+        Self {
+            visual_mappings: Default::default(),
+            y_loc: 0,
+            default_sort_orderings,
+            current_index: default_index,
+            order: default_order,
+        }
+    }
+
+    /// Toggles the current sort order.
+    pub fn toggle_order(&mut self) {
+        self.order = match self.order {
+            SortOrder::Ascending => SortOrder::Descending,
+            SortOrder::Descending => SortOrder::Ascending,
+        }
+    }
+
+    /// Updates the visual index.
+    ///
+    /// This function will create a *sorted* range list - in debug mode,
+    /// the program will assert this, but it will not do so in release mode!
+    pub fn update_visual_index(&mut self, draw_loc: Rect, row_widths: &[u16]) {
+        let mut start = draw_loc.x;
+        let visual_index = row_widths
+            .iter()
+            .map(|width| {
+                let range_start = start;
+                let range_end = start + width + 1;
+                start = range_end;
+                range_start..range_end
+            })
+            .collect_vec();
+
+        debug_assert!(visual_index.iter().all(|a| { a.start <= a.end }));
+
+        debug_assert!(visual_index
+            .iter()
+            .tuple_windows()
+            .all(|(a, b)| { b.start >= a.end }));
+
+        self.visual_mappings = visual_index;
+        self.y_loc = draw_loc.y;
+    }
+
+    /// Given some `x` and `y`, if possible, select the corresponding column or toggle the column if already selected,
+    /// and otherwise do nothing.
+    ///
+    /// If there was some update, the corresponding column type will be returned. If nothing happens, [`None`] is
+    /// returned.
+    pub fn try_select_location(&mut self, x: u16, y: u16) -> Option<usize> {
+        if self.y_loc == y {
+            if let Some(index) = self.get_range(x) {
+                self.update_sort_index(index);
+                Some(self.current_index)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Updates the sort index, and sets the sort order as appropriate.
+    ///
+    /// If the index is different from the previous one, it will move to the new index and set the sort order
+    /// to the prescribed default sort order.
+    ///
+    /// If the index is the same as the previous one, it will simply toggle the current sort order.
+    pub fn update_sort_index(&mut self, index: usize) {
+        if self.current_index == index {
+            self.toggle_order();
+        } else {
+            self.current_index = index;
+            self.order = self.default_sort_orderings[index];
+        }
+    }
+
+    /// Given a `needle` coordinate, select the corresponding index and value.
+    fn get_range(&self, needle: u16) -> Option<usize> {
+        match self
+            .visual_mappings
+            .binary_search_by_key(&needle, |range| range.start)
+        {
+            Ok(index) => Some(index),
+            Err(index) => index.checked_sub(1),
+        }
+        .and_then(|index| {
+            if needle < self.visual_mappings[index].end {
+                Some(index)
+            } else {
+                None
+            }
+        })
     }
 }
 
@@ -194,8 +346,13 @@ impl<H: TableComponentHeader> TableComponentState<H> {
             scroll_direction: ScrollDirection::Down,
             table_state: Default::default(),
             columns,
-            sort_state: Default::default(),
+            sort_state: SortState::Unsortable,
         }
+    }
+
+    pub fn sort_state(mut self, sort_state: SortState) -> Self {
+        self.sort_state = sort_state;
+        self
     }
 
     /// Calculates widths for the columns for this table.
@@ -211,10 +368,6 @@ impl<H: TableComponentHeader> TableComponentState<H> {
 
         let mut total_width_left = total_width;
 
-        for column in self.columns.iter_mut() {
-            column.calculated_width = 0;
-        }
-
         let columns = if left_to_right {
             Either::Left(self.columns.iter_mut())
         } else {
@@ -223,11 +376,15 @@ impl<H: TableComponentHeader> TableComponentState<H> {
 
         let arrow_offset = match self.sort_state {
             SortState::Unsortable => 0,
-            SortState::Sortable { index: _, order: _ } => 1,
+            SortState::Sortable { .. } => 1,
         };
+
         let mut num_columns = 0;
+        let mut skip_iter = false;
         for column in columns {
-            if column.is_hidden {
+            column.calculated_width = 0;
+
+            if column.is_hidden || skip_iter {
                 continue;
             }
 
@@ -237,35 +394,53 @@ impl<H: TableComponentHeader> TableComponentState<H> {
                     desired,
                     max_percentage,
                 } => {
-                    let offset_min = *min_width + arrow_offset;
-                    let soft_limit = max(
-                        if let Some(max_percentage) = max_percentage {
-                            // Rust doesn't have an `into()` or `try_into()` for floats to integers???
-                            ((*max_percentage * f32::from(total_width)).ceil()) as u16
-                        } else {
-                            *desired
-                        },
-                        offset_min,
-                    );
-                    let space_taken = min(min(soft_limit, *desired), total_width_left);
+                    let min_width = *min_width + arrow_offset;
+                    if min_width > total_width_left {
+                        skip_iter = true;
+                        continue;
+                    }
 
-                    if offset_min > space_taken {
-                        break;
+                    let space_taken = min(
+                        max(
+                            if let Some(max_percentage) = max_percentage {
+                                // TODO: Rust doesn't have an `into()` or `try_into()` for floats to integers.
+                                ((*max_percentage * f32::from(total_width)).ceil()) as u16
+                            } else {
+                                *desired
+                            },
+                            min_width,
+                        ),
+                        total_width_left,
+                    );
+
+                    if min_width == 0 {
+                        skip_iter = true;
                     } else if space_taken > 0 {
                         total_width_left = total_width_left.saturating_sub(space_taken + 1);
                         column.calculated_width = space_taken;
                         num_columns += 1;
                     }
                 }
+                WidthBounds::CellWidth => {
+                    let width = column.header.header_text().len() as u16;
+                    let min_width = width + arrow_offset;
+
+                    if min_width > total_width_left || min_width == 0 {
+                        skip_iter = true;
+                    } else if min_width > 0 {
+                        total_width_left = total_width_left.saturating_sub(min_width + 1);
+                        column.calculated_width = min_width;
+                        num_columns += 1;
+                    }
+                }
                 WidthBounds::Hard(width) => {
                     let min_width = *width + arrow_offset;
-                    let space_taken = min(min_width, total_width_left);
 
-                    if min_width > space_taken {
-                        break;
-                    } else if space_taken > 0 {
-                        total_width_left = total_width_left.saturating_sub(space_taken + 1);
-                        column.calculated_width = space_taken;
+                    if min_width > total_width_left || min_width == 0 {
+                        skip_iter = true;
+                    } else if min_width > 0 {
+                        total_width_left = total_width_left.saturating_sub(min_width + 1);
+                        column.calculated_width = min_width;
                         num_columns += 1;
                     }
                 }
@@ -344,7 +519,7 @@ mod test {
             scroll_direction: ScrollDirection::Down,
             table_state: Default::default(),
             columns: vec![],
-            sort_state: Default::default(),
+            sort_state: SortState::Unsortable,
         };
         let s = &mut scroll;
 
@@ -402,8 +577,8 @@ mod test {
         }
 
         let mut state = TableComponentState::new(vec![
-            TableComponentColumn::default_hard(CellContent::from("a")),
-            TableComponentColumn::new(
+            TableComponentColumn::new(CellContent::from("a")),
+            TableComponentColumn::new_custom(
                 "a".into(),
                 WidthBounds::Soft {
                     min_width: 1,
@@ -411,7 +586,7 @@ mod test {
                     max_percentage: Some(0.125),
                 },
             ),
-            TableComponentColumn::new(
+            TableComponentColumn::new_custom(
                 "a".into(),
                 WidthBounds::Soft {
                     min_width: 2,
@@ -432,12 +607,9 @@ mod test {
         test_calculation(&mut state, 8, vec![1, 1, 4]);
         test_calculation(&mut state, 14, vec![2, 2, 7]);
         test_calculation(&mut state, 20, vec![2, 4, 11]);
-        test_calculation(&mut state, 100, vec![27, 35, 35]);
+        test_calculation(&mut state, 100, vec![12, 24, 61]);
 
-        state.sort_state = SortState::Sortable {
-            index: 1,
-            order: SortOrder::Ascending,
-        };
+        state.sort_state = SortState::Sortable(SortableState::new(1, SortOrder::Ascending, vec![]));
 
         test_calculation(&mut state, 0, vec![]);
         test_calculation(&mut state, 1, vec![]);
@@ -450,6 +622,9 @@ mod test {
         test_calculation(&mut state, 8, vec![3, 3]);
         test_calculation(&mut state, 14, vec![2, 2, 7]);
         test_calculation(&mut state, 20, vec![3, 4, 10]);
-        test_calculation(&mut state, 100, vec![27, 35, 35]);
+        test_calculation(&mut state, 100, vec![13, 24, 60]);
     }
+
+    #[test]
+    fn test_row_width_boundary_creation() {}
 }

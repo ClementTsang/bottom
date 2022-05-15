@@ -92,9 +92,27 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
     }
 }
 
+pub fn sort_partial_fn<T: std::cmp::PartialOrd>(is_reverse: bool) -> fn(T, T) -> Ordering {
+    if is_reverse {
+        partial_ordering_rev
+    } else {
+        partial_ordering
+    }
+}
+
+/// Returns an [`Ordering`] between two [`PartialOrd`]s.
+pub fn partial_ordering<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
+    // TODO: Switch to `total_cmp` on 1.62
+    a.partial_cmp(&b).unwrap_or(Ordering::Equal)
+}
+
+/// Returns a reversed [`Ordering`] between two [`PartialOrd`]s.
+pub fn partial_ordering_rev<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
+    // TODO: Switch to `total_cmp` on 1.62
+    a.partial_cmp(&b).unwrap_or(Ordering::Equal).reverse()
+}
+
 /// Gotta get partial ordering?  No problem, here's something to deal with it~
-///
-/// Note that https://github.com/reem/rust-ordered-float exists, maybe move to it one day?  IDK.
 pub fn get_ordering<T: std::cmp::PartialOrd>(
     a_val: T, b_val: T, reverse_order: bool,
 ) -> std::cmp::Ordering {
