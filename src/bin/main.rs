@@ -54,13 +54,8 @@ fn main() -> Result<()> {
     )?;
 
     // Create painter and set colours.
-    let mut painter = canvas::Painter::init(
-        widget_layout,
-        app.app_config_fields.table_gap,
-        app.app_config_fields.use_basic_mode,
-        &config,
-        get_color_scheme(&matches, &config)?,
-    )?;
+    let mut painter =
+        canvas::Painter::init(widget_layout, &config, get_color_scheme(&matches, &config)?)?;
 
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]
@@ -135,11 +130,11 @@ fn main() -> Result<()> {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
                     }
-                    handle_force_redraws(&mut app);
+                    update_data(&mut app);
                 }
                 BottomEvent::MouseInput(event) => {
                     handle_mouse_event(event, &mut app);
-                    handle_force_redraws(&mut app);
+                    update_data(&mut app);
                 }
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(data);
@@ -164,39 +159,39 @@ fn main() -> Result<()> {
                                 &app.app_config_fields.network_unit_type,
                                 app.app_config_fields.network_use_binary_prefix,
                             );
-                            app.canvas_data.network_data_rx = network_data.rx;
-                            app.canvas_data.network_data_tx = network_data.tx;
-                            app.canvas_data.rx_display = network_data.rx_display;
-                            app.canvas_data.tx_display = network_data.tx_display;
+                            app.converted_data.network_data_rx = network_data.rx;
+                            app.converted_data.network_data_tx = network_data.tx;
+                            app.converted_data.rx_display = network_data.rx_display;
+                            app.converted_data.tx_display = network_data.tx_display;
                             if let Some(total_rx_display) = network_data.total_rx_display {
-                                app.canvas_data.total_rx_display = total_rx_display;
+                                app.converted_data.total_rx_display = total_rx_display;
                             }
                             if let Some(total_tx_display) = network_data.total_tx_display {
-                                app.canvas_data.total_tx_display = total_tx_display;
+                                app.converted_data.total_tx_display = total_tx_display;
                             }
                         }
 
                         // Disk
                         if app.used_widgets.use_disk {
-                            app.canvas_data.disk_data = convert_disk_row(&app.data_collection);
+                            app.converted_data.disk_data = convert_disk_row(&app.data_collection);
                         }
 
                         // Temperatures
                         if app.used_widgets.use_temp {
-                            app.canvas_data.temp_sensor_data = convert_temp_row(&app);
+                            app.converted_data.temp_sensor_data = convert_temp_row(&app);
                         }
 
                         // Memory
                         if app.used_widgets.use_mem {
-                            app.canvas_data.mem_data =
+                            app.converted_data.mem_data =
                                 convert_mem_data_points(&app.data_collection);
-                            app.canvas_data.swap_data =
+                            app.converted_data.swap_data =
                                 convert_swap_data_points(&app.data_collection);
                             let (memory_labels, swap_labels) =
                                 convert_mem_labels(&app.data_collection);
 
-                            app.canvas_data.mem_labels = memory_labels;
-                            app.canvas_data.swap_labels = swap_labels;
+                            app.converted_data.mem_labels = memory_labels;
+                            app.converted_data.swap_labels = swap_labels;
                         }
 
                         if app.used_widgets.use_cpu {
@@ -204,24 +199,28 @@ fn main() -> Result<()> {
 
                             convert_cpu_data_points(
                                 &app.data_collection,
-                                &mut app.canvas_data.cpu_data,
+                                &mut app.converted_data.cpu_data,
                             );
-                            app.canvas_data.load_avg_data = app.data_collection.load_avg_harvest;
+                            app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }
 
                         // Processes
                         if app.used_widgets.use_proc {
-                            update_all_process_lists(&mut app);
+                            for proc in app.proc_state.widget_states.values_mut() {
+                                proc.force_data_update();
+                            }
                         }
 
                         // Battery
                         #[cfg(feature = "battery")]
                         {
                             if app.used_widgets.use_battery {
-                                app.canvas_data.battery_data =
+                                app.converted_data.battery_data =
                                     convert_battery_harvest(&app.data_collection);
                             }
                         }
+
+                        update_data(&mut app);
                     }
                 }
                 BottomEvent::Clean => {

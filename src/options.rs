@@ -10,7 +10,11 @@ use std::{
 };
 
 use crate::{
-    app::{layout_manager::*, *},
+    app::{
+        layout_manager::*,
+        widgets::{ProcWidget, ProcWidgetMode},
+        *,
+    },
     canvas::ColourScheme,
     constants::*,
     units::data_units::DataUnit,
@@ -265,7 +269,7 @@ pub fn build_app(
     let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
     let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
     let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
-    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
+    let mut proc_state_map: HashMap<u64, ProcWidget> = HashMap::new();
     let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
     let mut disk_state_map: HashMap<u64, DiskWidgetState> = HashMap::new();
     let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
@@ -344,24 +348,28 @@ pub fn build_app(
                         Net => {
                             net_state_map.insert(
                                 widget.widget_id,
-                                NetWidgetState::init(
-                                    default_time_value,
-                                    autohide_timer,
-                                    // network_unit_type.clone(),
-                                    // network_scale_type.clone(),
-                                ),
+                                NetWidgetState::init(default_time_value, autohide_timer),
                             );
                         }
                         Proc => {
+                            let mode = if is_grouped {
+                                ProcWidgetMode::Grouped
+                            } else if is_default_tree {
+                                ProcWidgetMode::Tree {
+                                    collapsed_pids: Default::default(),
+                                }
+                            } else {
+                                ProcWidgetMode::Normal
+                            };
+
                             proc_state_map.insert(
                                 widget.widget_id,
-                                ProcWidgetState::init(
+                                ProcWidget::init(
+                                    mode,
                                     is_case_sensitive,
                                     is_match_whole_word,
                                     is_use_regex,
-                                    is_grouped,
                                     show_memory_as_values,
-                                    is_default_tree,
                                     is_default_command,
                                 ),
                             );
@@ -466,7 +474,7 @@ pub fn build_app(
                 let mapping = HashMap::new();
                 for widget in search_case_enabled_widgets {
                     if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.process_search_state.is_ignoring_case = !widget.enabled;
+                        proc_widget.proc_search.is_ignoring_case = !widget.enabled;
                     }
                 }
                 flags.search_case_enabled_widgets_map = Some(mapping);
@@ -480,7 +488,7 @@ pub fn build_app(
                 let mapping = HashMap::new();
                 for widget in search_whole_word_enabled_widgets {
                     if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.process_search_state.is_searching_whole_word = widget.enabled;
+                        proc_widget.proc_search.is_searching_whole_word = widget.enabled;
                     }
                 }
                 flags.search_whole_word_enabled_widgets_map = Some(mapping);
@@ -492,7 +500,7 @@ pub fn build_app(
                 let mapping = HashMap::new();
                 for widget in search_regex_enabled_widgets {
                     if let Some(proc_widget) = proc_state_map.get_mut(&widget.id) {
-                        proc_widget.process_search_state.is_searching_with_regex = widget.enabled;
+                        proc_widget.proc_search.is_searching_with_regex = widget.enabled;
                     }
                 }
                 flags.search_regex_enabled_widgets_map = Some(mapping);

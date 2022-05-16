@@ -69,7 +69,7 @@ impl Painter {
             };
 
             let battery_names = app_state
-                .canvas_data
+                .converted_data
                 .battery_data
                 .iter()
                 .map(|battery| &battery.battery_name)
@@ -106,7 +106,7 @@ impl Painter {
                 .split(draw_loc)[0];
 
             if let Some(battery_details) = app_state
-                .canvas_data
+                .converted_data
                 .battery_data
                 .get(battery_widget_state.currently_selected_battery_index)
             {

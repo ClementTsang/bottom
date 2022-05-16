@@ -148,7 +148,7 @@ pub fn build_app() -> Command<'static> {
         .help("Uses a dot marker for graphs.")
         .long_help("Uses a dot marker for graphs as opposed to the default braille marker.");
 
-    let group = Arg::new("group") // FIXME: Rename this to something like "group_process", would be "breaking" though.
+    let group = Arg::new("group") // TODO: Rename this to something like "group_process", would be "breaking" though.
         .short('g')
         .long("group")
         .help("Groups processes with the same name by default.")

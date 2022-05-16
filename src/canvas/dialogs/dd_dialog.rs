@@ -9,7 +9,7 @@ use tui::{
 };
 
 use crate::{
-    app::{App, KillSignal},
+    app::{widgets::ProcWidgetMode, App, KillSignal},
     canvas::Painter,
 };
 
@@ -29,7 +29,13 @@ impl Painter {
             if let Some(first_pid) = to_kill_processes.1.first() {
                 return Some(Text::from(vec![
                     Spans::from(""),
-                    if app_state.is_grouped(app_state.current_widget.widget_id) {
+                    if app_state
+                        .proc_state
+                        .widget_states
+                        .get(&app_state.current_widget.widget_id)
+                        .map(|p| matches!(p.mode, ProcWidgetMode::Grouped))
+                        .unwrap_or(false)
+                    {
                         if to_kill_processes.1.len() != 1 {
                             Spans::from(format!(
                                 "Kill {} processes with the name \"{}\"?  Press ENTER to confirm.",

@@ -3,7 +3,7 @@
 use super::NetworkHarvest;
 use std::time::Instant;
 
-// FIXME: Eventually make it so that this thing also takes individual usage into account, so we can allow for showing per-interface!
+// TODO: Eventually make it so that this thing also takes individual usage into account, so we can show per-interface!
 pub async fn get_network_data(
     prev_net_access_time: Instant, prev_net_rx: &mut u64, prev_net_tx: &mut u64,
     curr_time: Instant, actually_get: bool, filter: &Option<crate::app::Filter>,

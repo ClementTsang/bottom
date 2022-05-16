@@ -55,8 +55,8 @@ impl Painter {
         hide_legend: bool,
     ) {
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
-            let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
-            let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
+            let network_data_rx: &[(f64, f64)] = &app_state.converted_data.network_data_rx;
+            let network_data_tx: &[(f64, f64)] = &app_state.converted_data.network_data_tx;
             let time_start = -(network_widget_state.current_display_time as f64);
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, network_widget_state.current_display_time];
@@ -103,18 +103,18 @@ impl Painter {
                     GraphData {
                         points: network_data_rx,
                         style: self.colours.rx_style,
-                        name: Some(format!("RX: {:7}", app_state.canvas_data.rx_display).into()),
+                        name: Some(format!("RX: {:7}", app_state.converted_data.rx_display).into()),
                     },
                     GraphData {
                         points: network_data_tx,
                         style: self.colours.tx_style,
-                        name: Some(format!("TX: {:7}", app_state.canvas_data.tx_display).into()),
+                        name: Some(format!("TX: {:7}", app_state.converted_data.tx_display).into()),
                     },
                     GraphData {
                         points: &[],
                         style: self.colours.total_rx_style,
                         name: Some(
-                            format!("Total RX: {:7}", app_state.canvas_data.total_rx_display)
+                            format!("Total RX: {:7}", app_state.converted_data.total_rx_display)
                                 .into(),
                         ),
                     },
@@ -122,7 +122,7 @@ impl Painter {
                         points: &[],
                         style: self.colours.total_tx_style,
                         name: Some(
-                            format!("Total TX: {:7}", app_state.canvas_data.total_tx_display)
+                            format!("Total TX: {:7}", app_state.converted_data.total_tx_display)
                                 .into(),
                         ),
                     },
@@ -132,12 +132,12 @@ impl Painter {
                     GraphData {
                         points: network_data_rx,
                         style: self.colours.rx_style,
-                        name: Some((&app_state.canvas_data.rx_display).into()),
+                        name: Some((&app_state.converted_data.rx_display).into()),
                     },
                     GraphData {
                         points: network_data_tx,
                         style: self.colours.tx_style,
-                        name: Some((&app_state.canvas_data.tx_display).into()),
+                        name: Some((&app_state.converted_data.tx_display).into()),
                     },
                 ]
             };
@@ -164,10 +164,10 @@ impl Painter {
     ) {
         const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
-        let rx_display = &app_state.canvas_data.rx_display;
-        let tx_display = &app_state.canvas_data.tx_display;
-        let total_rx_display = &app_state.canvas_data.total_rx_display;
-        let total_tx_display = &app_state.canvas_data.total_tx_display;
+        let rx_display = &app_state.converted_data.rx_display;
+        let tx_display = &app_state.converted_data.tx_display;
+        let total_rx_display = &app_state.converted_data.total_rx_display;
+        let total_tx_display = &app_state.converted_data.total_tx_display;
 
         // Gross but I need it to work...
         let total_network = vec![Row::new(vec![
@@ -256,7 +256,7 @@ fn get_max_entry(
         (None, Some(filtered_tx)) => {
             match filtered_tx
                 .iter()
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {
@@ -277,7 +277,7 @@ fn get_max_entry(
         (Some(filtered_rx), None) => {
             match filtered_rx
                 .iter()
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {
@@ -299,7 +299,7 @@ fn get_max_entry(
             match filtered_rx
                 .iter()
                 .chain(filtered_tx)
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {
