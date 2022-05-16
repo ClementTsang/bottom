@@ -184,7 +184,10 @@ impl<'a> TextTable<'a> {
                             desired,
                             max_percentage: _,
                         } => {
-                            *desired = max(column.header.header_text().len(), *data_width) as u16;
+                            *desired = max(
+                                *desired,
+                                max(column.header.header_text().len(), *data_width) as u16,
+                            );
                         }
                         WidthBounds::CellWidth => {}
                         WidthBounds::Hard(_width) => {}
@@ -193,20 +196,19 @@ impl<'a> TextTable<'a> {
                 state.calculate_column_widths(inner_width, self.left_to_right);
 
                 if let SortState::Sortable(st) = &mut state.sort_state {
-                    st.update_visual_index(
-                        inner_rect,
-                        &state
-                            .columns
-                            .iter()
-                            .filter_map(|c| {
-                                if c.calculated_width == 0 {
-                                    None
-                                } else {
-                                    Some(c.calculated_width)
-                                }
-                            })
-                            .collect::<Vec<_>>(),
-                    );
+                    let row_widths = state
+                        .columns
+                        .iter()
+                        .filter_map(|c| {
+                            if c.calculated_width == 0 {
+                                None
+                            } else {
+                                Some(c.calculated_width)
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    st.update_visual_index(inner_rect, &row_widths);
                 }
 
                 // Update draw loc in widget map
@@ -236,35 +238,39 @@ impl<'a> TextTable<'a> {
                 }))
             });
 
-            let widget = {
-                let mut table = Table::new(table_rows)
-                    .block(block)
-                    .highlight_style(self.highlighted_text_style)
-                    .style(self.text_style);
+            if !table_data.data.is_empty() {
+                let widget = {
+                    let mut table = Table::new(table_rows)
+                        .block(block)
+                        .highlight_style(self.highlighted_text_style)
+                        .style(self.text_style);
 
-                if show_header {
-                    table = table.header(header);
-                }
+                    if show_header {
+                        table = table.header(header);
+                    }
 
-                table
-            };
+                    table
+                };
 
-            f.render_stateful_widget(
-                widget.widths(
-                    &(columns
-                        .iter()
-                        .filter_map(|c| {
-                            if c.calculated_width == 0 {
-                                None
-                            } else {
-                                Some(Constraint::Length(c.calculated_width))
-                            }
-                        })
-                        .collect::<Vec<_>>()),
-                ),
-                margined_draw_loc,
-                &mut state.table_state,
-            );
+                f.render_stateful_widget(
+                    widget.widths(
+                        &(columns
+                            .iter()
+                            .filter_map(|c| {
+                                if c.calculated_width == 0 {
+                                    None
+                                } else {
+                                    Some(Constraint::Length(c.calculated_width))
+                                }
+                            })
+                            .collect::<Vec<_>>()),
+                    ),
+                    margined_draw_loc,
+                    &mut state.table_state,
+                );
+            } else {
+                f.render_widget(block, margined_draw_loc);
+            }
         }
     }
 }

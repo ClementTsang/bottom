@@ -311,7 +311,8 @@ pub struct ProcWidget {
     pub sort_table_state: TableComponentState,
 
     pub is_sort_open: bool,
-    pub force_update: bool,
+    pub force_rerender: bool,
+    pub force_update_data: bool,
 
     pub table_data: TableData,
 }
@@ -396,7 +397,8 @@ impl ProcWidget {
             sort_table_state,
             is_sort_open: false,
             mode,
-            force_update: false,
+            force_rerender: true,
+            force_update_data: false,
             table_data: TableData::default(),
         }
     }
@@ -418,7 +420,6 @@ impl ProcWidget {
     /// This function *only* updates the displayed process data. If there is a need to update the actual *stored* data,
     /// call it before this function.
     pub fn update_displayed_process_data(&mut self, data_collection: &DataCollection) {
-        // Now update everything else.
         let search_query = if self.proc_search.search_state.is_invalid_or_blank_search() {
             &None
         } else {
@@ -821,14 +822,7 @@ impl ProcWidget {
         let cmd_pid_map = &data_collection.process_data.cmd_pid_map;
         let name_pid_map = &data_collection.process_data.name_pid_map;
 
-        let mut col_widths = vec![
-            0;
-            self.table_state
-                .columns
-                .iter()
-                .filter(|c| c.is_skipped())
-                .count()
-        ];
+        let mut col_widths = vec![0; self.table_state.columns.len()];
 
         let data = process_data
             .iter()
@@ -858,8 +852,21 @@ impl ProcWidget {
         if let Some(ProcWidgetColumn::Memory { show_percentage }) = self.get_mut_proc_col(Self::MEM)
         {
             *show_percentage = !*show_percentage;
-            self.force_update = true;
+            self.force_data_update();
         }
+    }
+
+    /// Forces an update of the data stored.
+    #[inline]
+    pub fn force_data_update(&mut self) {
+        self.force_update_data = true;
+    }
+
+    /// Forces an entire rerender and update of the data stored.
+    #[inline]
+    pub fn force_rerender_and_update(&mut self) {
+        self.force_rerender = true;
+        self.force_update_data = true;
     }
 
     /// Marks the selected column as hidden, and automatically resets the selected column if currently selected.
@@ -887,7 +894,7 @@ impl ProcWidget {
     pub fn select_column(&mut self, new_sort_index: usize) {
         if let SortState::Sortable(state) = &mut self.table_state.sort_state {
             state.update_sort_index(new_sort_index);
-            self.force_update = true;
+            self.force_data_update();
         }
     }
 
@@ -902,7 +909,7 @@ impl ProcWidget {
                     if !collapsed_pids.remove(&pid) {
                         collapsed_pids.insert(pid);
                     }
-                    self.force_update = true;
+                    self.force_data_update();
                 }
             }
         }
@@ -924,7 +931,7 @@ impl ProcWidget {
                     }
                 }
 
-                self.force_update = true;
+                self.force_rerender_and_update();
             }
         }
     }
@@ -958,7 +965,7 @@ impl ProcWidget {
                     self.show_column(Self::STATE);
                     self.mode = ProcWidgetMode::Normal;
                 }
-                self.force_update = true;
+                self.force_rerender_and_update();
             }
         }
     }
@@ -1011,10 +1018,13 @@ impl ProcWidget {
         }
         self.table_state.scroll_bar = 0;
         self.table_state.current_scroll_position = 0;
+
+        self.force_data_update();
     }
 
     pub fn clear_search(&mut self) {
         self.proc_search.search_state.reset();
+        self.force_data_update();
     }
 
     pub fn search_walk_forward(&mut self, start_position: usize) {
@@ -1064,7 +1074,7 @@ impl ProcWidget {
             st.update_sort_index(self.sort_table_state.current_scroll_position);
 
             self.is_sort_open = false;
-            self.force_update = true;
+            self.force_rerender_and_update();
         }
     }
 }

@@ -302,11 +302,11 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     .unwrap();
 }
 
-pub fn handle_force_redraws(app: &mut App) {
+pub fn update_data(app: &mut App) {
     for proc in app.proc_state.widget_states.values_mut() {
-        if proc.force_update {
-            // NB: Currently, the "force update" gets fixed in the draw.
+        if proc.force_update_data {
             proc.update_displayed_process_data(&app.data_collection);
+            proc.force_update_data = false;
         }
     }
 

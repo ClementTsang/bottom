@@ -143,14 +143,14 @@ impl<'a> TimeGraph<'a> {
                 .collect()
         };
 
+        let block = Block::default()
+            .title(self.generate_title(draw_loc))
+            .borders(Borders::ALL)
+            .border_style(self.border_style);
+
         f.render_widget(
             TimeChart::new(data)
-                .block(
-                    Block::default()
-                        .title(self.generate_title(draw_loc))
-                        .borders(Borders::ALL)
-                        .border_style(self.border_style),
-                )
+                .block(block)
                 .x_axis(x_axis)
                 .y_axis(y_axis)
                 .hidden_legend_constraints(

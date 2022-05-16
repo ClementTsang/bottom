@@ -400,20 +400,18 @@ impl<H: TableComponentHeader> TableComponentState<H> {
                         continue;
                     }
 
-                    let space_taken = min(
-                        max(
-                            if let Some(max_percentage) = max_percentage {
-                                // TODO: Rust doesn't have an `into()` or `try_into()` for floats to integers.
-                                ((*max_percentage * f32::from(total_width)).ceil()) as u16
-                            } else {
-                                *desired
-                            },
-                            min_width,
-                        ),
-                        total_width_left,
+                    let soft_limit = max(
+                        if let Some(max_percentage) = max_percentage {
+                            // TODO: Rust doesn't have an `into()` or `try_into()` for floats to integers.
+                            ((*max_percentage * f32::from(total_width)).ceil()) as u16
+                        } else {
+                            *desired
+                        },
+                        min_width,
                     );
+                    let space_taken = min(min(soft_limit, *desired), total_width_left);
 
-                    if min_width == 0 {
+                    if min_width > space_taken || min_width == 0 {
                         skip_iter = true;
                     } else if space_taken > 0 {
                         total_width_left = total_width_left.saturating_sub(space_taken + 1);
@@ -452,6 +450,7 @@ impl<H: TableComponentHeader> TableComponentState<H> {
             let mut num_dist = num_columns;
             let amount_per_slot = total_width_left / num_dist;
             total_width_left %= num_dist;
+
             for column in self.columns.iter_mut() {
                 if num_dist == 0 {
                     break;
@@ -607,7 +606,7 @@ mod test {
         test_calculation(&mut state, 8, vec![1, 1, 4]);
         test_calculation(&mut state, 14, vec![2, 2, 7]);
         test_calculation(&mut state, 20, vec![2, 4, 11]);
-        test_calculation(&mut state, 100, vec![12, 24, 61]);
+        test_calculation(&mut state, 100, vec![27, 35, 35]);
 
         state.sort_state = SortState::Sortable(SortableState::new(1, SortOrder::Ascending, vec![]));
 
@@ -622,7 +621,7 @@ mod test {
         test_calculation(&mut state, 8, vec![3, 3]);
         test_calculation(&mut state, 14, vec![2, 2, 7]);
         test_calculation(&mut state, 20, vec![3, 4, 10]);
-        test_calculation(&mut state, 100, vec![13, 24, 60]);
+        test_calculation(&mut state, 100, vec![27, 35, 35]);
     }
 
     #[test]

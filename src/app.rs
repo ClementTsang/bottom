@@ -217,26 +217,25 @@ impl App {
         } else {
             match self.current_widget.widget_type {
                 BottomWidgetType::Proc => {
-                    if let Some(current_proc_state) = self
+                    if let Some(pws) = self
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if current_proc_state.is_search_enabled() || current_proc_state.is_sort_open
-                        {
-                            current_proc_state.proc_search.search_state.is_enabled = false;
-                            current_proc_state.is_sort_open = false;
+                        if pws.is_search_enabled() || pws.is_sort_open {
+                            pws.proc_search.search_state.is_enabled = false;
+                            pws.is_sort_open = false;
                             self.is_force_redraw = true;
                             return;
                         }
                     }
                 }
                 BottomWidgetType::ProcSearch => {
-                    if let Some(current_proc_state) = self
+                    if let Some(pws) = self
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 1)
                     {
-                        if current_proc_state.is_search_enabled() {
-                            current_proc_state.proc_search.search_state.is_enabled = false;
+                        if pws.is_search_enabled() {
+                            pws.proc_search.search_state.is_enabled = false;
                             self.move_widget_selection(&WidgetDirection::Up);
                             self.is_force_redraw = true;
                             return;
@@ -244,12 +243,12 @@ impl App {
                     }
                 }
                 BottomWidgetType::ProcSort => {
-                    if let Some(current_proc_state) = self
+                    if let Some(pws) = self
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        if current_proc_state.is_sort_open {
-                            current_proc_state.is_sort_open = false;
+                        if pws.is_sort_open {
+                            pws.is_sort_open = false;
                             self.move_widget_selection(&WidgetDirection::Right);
                             self.is_force_redraw = true;
                             return;
@@ -345,11 +344,12 @@ impl App {
 
         if let Some(pws) = self.proc_state.get_mut_widget_state(widget_id) {
             pws.is_sort_open = !pws.is_sort_open;
-            pws.force_update = true;
+            pws.force_rerender = true;
 
             // If the sort is now open, move left. Otherwise, if the proc sort was selected, force move right.
             if pws.is_sort_open {
                 if let SortState::Sortable(st) = &pws.table_state.sort_state {
+                    pws.sort_table_state.scroll_bar = 0;
                     pws.sort_table_state.current_scroll_position = st
                         .current_index
                         .clamp(0, pws.num_enabled_columns().saturating_sub(1));
@@ -358,6 +358,7 @@ impl App {
             } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
                 self.move_widget_selection(&WidgetDirection::Right);
             }
+            self.is_force_redraw = true;
         }
     }
 
@@ -376,7 +377,7 @@ impl App {
                         &mut proc_widget_state.table_state.sort_state
                     {
                         state.toggle_order();
-                        proc_widget_state.force_update = true;
+                        proc_widget_state.force_data_update();
                     }
                 }
             }
@@ -396,7 +397,7 @@ impl App {
                     .get_mut(&self.current_widget.widget_id)
                 {
                     proc_widget_state.toggle_mem_percentage();
-                    proc_widget_state.force_update = true;
+                    proc_widget_state.force_data_update();
                 }
             }
             _ => {}
@@ -414,7 +415,6 @@ impl App {
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.proc_search.search_toggle_ignore_case();
                 proc_widget_state.update_query();
-                proc_widget_state.force_update = true;
 
                 // Remember, it's the opposite (ignoring case is case "in"sensitive)
                 is_case_sensitive = Some(!proc_widget_state.proc_search.is_ignoring_case);
@@ -465,7 +465,6 @@ impl App {
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.proc_search.search_toggle_whole_word();
                 proc_widget_state.update_query();
-                proc_widget_state.force_update = true;
 
                 is_searching_whole_word =
                     Some(proc_widget_state.proc_search.is_searching_whole_word);
@@ -520,7 +519,6 @@ impl App {
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.proc_search.search_toggle_regex();
                 proc_widget_state.update_query();
-                proc_widget_state.force_update = true;
 
                 is_searching_with_regex =
                     Some(proc_widget_state.proc_search.is_searching_with_regex);
@@ -569,13 +567,13 @@ impl App {
             match proc_widget_state.mode {
                 ProcWidgetMode::Tree { .. } => {
                     proc_widget_state.mode = ProcWidgetMode::Normal;
-                    proc_widget_state.force_update = true;
+                    proc_widget_state.force_rerender_and_update();
                 }
                 ProcWidgetMode::Normal => {
                     proc_widget_state.mode = ProcWidgetMode::Tree {
                         collapsed_pids: Default::default(),
                     };
-                    proc_widget_state.force_update = true;
+                    proc_widget_state.force_rerender_and_update();
                 }
                 ProcWidgetMode::Grouped => {}
             }
@@ -617,6 +615,7 @@ impl App {
                 {
                     proc_widget_state.use_sort_table_value();
                     self.move_widget_selection(&WidgetDirection::Right);
+                    self.is_force_redraw = true;
                 }
             }
         }
@@ -662,7 +661,6 @@ impl App {
                             );
 
                         proc_widget_state.update_query();
-                        proc_widget_state.force_update = true;
                     }
                 } else {
                     self.start_killing_process()
@@ -714,7 +712,6 @@ impl App {
                         CursorDirection::Left;
 
                     proc_widget_state.update_query();
-                    proc_widget_state.force_update = true;
                 }
             }
         }
@@ -1077,7 +1074,6 @@ impl App {
                 .get_mut(&(self.current_widget.widget_id - 1))
             {
                 proc_widget_state.clear_search();
-                proc_widget_state.force_update = true;
             }
         }
     }
@@ -1141,7 +1137,6 @@ impl App {
                 proc_widget_state.proc_search.search_state.cursor_direction = CursorDirection::Left;
 
                 proc_widget_state.update_query();
-                proc_widget_state.force_update = true;
             }
         }
     }
@@ -1245,7 +1240,6 @@ impl App {
                             UnicodeWidthChar::width(caught_char).unwrap_or(0);
 
                         proc_widget_state.update_query();
-                        proc_widget_state.force_update = true;
                         proc_widget_state.proc_search.search_state.cursor_direction =
                             CursorDirection::Right;
 
@@ -2555,7 +2549,6 @@ impl App {
                 if (x >= tlc_x && y >= tlc_y) && (x < brc_x && y < brc_y) {
                     if let Some(new_widget) = self.widget_map.get(new_widget_id) {
                         self.current_widget = new_widget.clone();
-
                         match &self.current_widget.widget_type {
                             BottomWidgetType::Temp
                             | BottomWidgetType::Proc
@@ -2716,7 +2709,7 @@ impl App {
                                             &mut proc_widget_state.table_state.sort_state
                                         {
                                             if st.try_select_location(x, y).is_some() {
-                                                proc_widget_state.force_update = true;
+                                                proc_widget_state.force_data_update();
                                             }
                                         }
                                     }

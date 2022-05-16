@@ -130,11 +130,11 @@ fn main() -> Result<()> {
                     if handle_key_event_or_break(event, &mut app, &collection_thread_ctrl_sender) {
                         break;
                     }
-                    handle_force_redraws(&mut app);
+                    update_data(&mut app);
                 }
                 BottomEvent::MouseInput(event) => {
                     handle_mouse_event(event, &mut app);
-                    handle_force_redraws(&mut app);
+                    update_data(&mut app);
                 }
                 BottomEvent::Update(data) => {
                     app.data_collection.eat_data(data);
@@ -207,7 +207,7 @@ fn main() -> Result<()> {
                         // Processes
                         if app.used_widgets.use_proc {
                             for proc in app.proc_state.widget_states.values_mut() {
-                                proc.force_update = true;
+                                proc.force_data_update();
                             }
                         }
 
@@ -220,7 +220,7 @@ fn main() -> Result<()> {
                             }
                         }
 
-                        handle_force_redraws(&mut app);
+                        update_data(&mut app);
                     }
                 }
                 BottomEvent::Clean => {

@@ -65,14 +65,14 @@ impl Painter {
 
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
             // Reset redraw marker.
-            if proc_widget_state.force_update {
-                proc_widget_state.force_update = false;
+            if proc_widget_state.force_rerender {
+                proc_widget_state.force_rerender = false;
             }
         }
     }
 
     /// Draws the process sort box.
-    /// - `widget_id` represents the widget ID of the process widget itself.
+    /// - `widget_id` represents the widget ID of the process widget itself.an
     ///
     /// This should not be directly called.
     fn draw_processes_table<B: Backend>(
@@ -81,9 +81,8 @@ impl Painter {
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(proc_widget_state) = app_state.proc_state.widget_states.get_mut(&widget_id) {
-            // TODO: [PROC] this might be too aggressive...
             let recalculate_column_widths =
-                should_get_widget_bounds || proc_widget_state.force_update;
+                should_get_widget_bounds || proc_widget_state.force_rerender;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let (border_style, highlighted_text_style) = if is_on_widget {
@@ -350,7 +349,7 @@ impl Painter {
             app_state.proc_state.widget_states.get_mut(&(widget_id - 2))
         {
             let recalculate_column_widths =
-                should_get_widget_bounds || proc_widget_state.force_update;
+                should_get_widget_bounds || proc_widget_state.force_rerender;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
             let (border_style, highlighted_text_style) = if is_on_widget {
