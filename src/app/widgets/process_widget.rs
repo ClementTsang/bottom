@@ -326,8 +326,12 @@ impl ProcWidget {
     pub const WPS: usize = 5;
     pub const T_READ: usize = 6;
     pub const T_WRITE: usize = 7;
+    #[cfg(target_family = "unix")]
     pub const USER: usize = 8;
+    #[cfg(target_family = "unix")]
     pub const STATE: usize = 9;
+    #[cfg(not(target_family = "unix"))]
+    pub const STATE: usize = 8;
 
     pub fn init(
         mode: ProcWidgetMode, is_case_sensitive: bool, is_match_whole_word: bool,
@@ -375,6 +379,7 @@ impl ProcWidget {
                 TableComponentColumn::new_hard(ProcWidgetColumn::WritePerSecond, 8),
                 TableComponentColumn::new_hard(ProcWidgetColumn::TotalRead, 8),
                 TableComponentColumn::new_hard(ProcWidgetColumn::TotalWrite, 8),
+                #[cfg(target_family = "unix")]
                 TableComponentColumn::new_soft(ProcWidgetColumn::User, Some(0.05)),
                 TableComponentColumn::new_hard(ProcWidgetColumn::State, 7),
             ];
@@ -952,6 +957,7 @@ impl ProcWidget {
                 *is_count = !*is_count;
 
                 if *is_count {
+                    #[cfg(target_family = "unix")]
                     self.hide_column(Self::USER);
                     self.hide_column(Self::STATE);
                     self.mode = ProcWidgetMode::Grouped;
@@ -961,6 +967,7 @@ impl ProcWidget {
                         .current_scroll_position
                         .clamp(0, self.num_enabled_columns().saturating_sub(1));
                 } else {
+                    #[cfg(target_family = "unix")]
                     self.show_column(Self::USER);
                     self.show_column(Self::STATE);
                     self.mode = ProcWidgetMode::Normal;
@@ -1129,10 +1136,13 @@ mod test {
                 columns[ProcWidget::T_WRITE].header,
                 ProcWidgetColumn::TotalWrite
             ));
-            assert!(matches!(
-                columns[ProcWidget::USER].header,
-                ProcWidgetColumn::User
-            ));
+            #[cfg(target_family = "unix")]
+            {
+                assert!(matches!(
+                    columns[ProcWidget::USER].header,
+                    ProcWidgetColumn::User
+                ));
+            }
             assert!(matches!(
                 columns[ProcWidget::STATE].header,
                 ProcWidgetColumn::State
