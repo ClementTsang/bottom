@@ -1,5 +1,5 @@
 use itertools::izip;
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use tui::{
     backend::Backend,
@@ -18,11 +18,9 @@ use crate::{
         App,
     },
     constants::*,
-    data_conversion::{ConvertedBatteryData, ConvertedCpuData, ConvertedProcessData},
     options::Config,
     utils::error,
     utils::error::BottomError,
-    Pid,
 };
 
 pub use self::components::Point;
@@ -32,30 +30,6 @@ mod components;
 mod dialogs;
 mod drawing_utils;
 mod widgets;
-
-#[derive(Default)]
-pub struct DisplayableData {
-    pub rx_display: String,
-    pub tx_display: String,
-    pub total_rx_display: String,
-    pub total_tx_display: String,
-    pub network_data_rx: Vec<Point>,
-    pub network_data_tx: Vec<Point>,
-    pub disk_data: Vec<Vec<String>>,
-    pub temp_sensor_data: Vec<Vec<String>>,
-    pub single_process_data: HashMap<Pid, ConvertedProcessData>, // Contains single process data, key is PID
-    pub finalized_process_data_map: HashMap<u64, Vec<ConvertedProcessData>>, // What's actually displayed, key is the widget ID.
-    pub stringified_process_data_map: HashMap<u64, Vec<(Vec<(String, Option<String>)>, bool)>>, // Represents the row and whether it is disabled, key is the widget ID
-
-    pub mem_labels: Option<(String, String)>,
-    pub swap_labels: Option<(String, String)>,
-
-    pub mem_data: Vec<Point>, // TODO: Switch this and all data points over to a better data structure...
-    pub swap_data: Vec<Point>,
-    pub load_avg_data: [f32; 3],
-    pub cpu_data: Vec<ConvertedCpuData>,
-    pub battery_data: Vec<ConvertedBatteryData>,
-}
 
 #[derive(Debug)]
 pub enum ColourScheme {
@@ -94,20 +68,20 @@ pub struct Painter {
     height: u16,
     width: u16,
     styled_help_text: Vec<Spans<'static>>,
-    is_mac_os: bool, // FIXME: This feels out of place...
+    is_mac_os: bool, // TODO: This feels out of place...
+
+    // TODO: Redo this entire thing.
     row_constraints: Vec<Constraint>,
     col_constraints: Vec<Vec<Constraint>>,
     col_row_constraints: Vec<Vec<Vec<Constraint>>>,
     layout_constraints: Vec<Vec<Vec<Vec<Constraint>>>>,
     derived_widget_draw_locs: Vec<Vec<Vec<Vec<Rect>>>>,
     widget_layout: BottomLayout,
-    table_height_offset: u16,
 }
 
 impl Painter {
     pub fn init(
-        widget_layout: BottomLayout, table_gap: u16, is_basic_mode: bool, config: &Config,
-        colour_scheme: ColourScheme,
+        widget_layout: BottomLayout, config: &Config, colour_scheme: ColourScheme,
     ) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
@@ -188,7 +162,6 @@ impl Painter {
             layout_constraints,
             widget_layout,
             derived_widget_draw_locs: Vec::default(),
-            table_height_offset: if is_basic_mode { 2 } else { 4 } + table_gap,
         };
 
         if let ColourScheme::Custom = colour_scheme {
@@ -337,12 +310,6 @@ impl Painter {
                 // Reset battery dialog...
                 for battery_widget in app_state.battery_state.widget_states.values_mut() {
                     battery_widget.tab_click_locs = None;
-                }
-
-                // Reset column headers for sorting in process widget...
-                for proc_widget in app_state.proc_state.widget_states.values_mut() {
-                    proc_widget.columns.column_header_y_loc = None;
-                    proc_widget.columns.column_header_x_locs = None;
                 }
             }
 
@@ -506,7 +473,7 @@ impl Painter {
                                 _ => 0,
                             };
 
-                        self.draw_process_features(f, app_state, rect[0], true, widget_id);
+                        self.draw_process_widget(f, app_state, rect[0], true, widget_id);
                     }
                     Battery => self.draw_battery_display(
                         f,
@@ -524,7 +491,7 @@ impl Painter {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
-                let actual_cpu_data_len = app_state.canvas_data.cpu_data.len().saturating_sub(1);
+                let actual_cpu_data_len = app_state.converted_data.cpu_data.len().saturating_sub(1);
 
                 // This fixes #397, apparently if the height is 1, it can't render the CPU bars...
                 let cpu_height = {
@@ -585,7 +552,7 @@ impl Painter {
                                         ProcSort => 2,
                                         _ => 0,
                                     };
-                                self.draw_process_features(
+                                self.draw_process_widget(
                                     f,
                                     app_state,
                                     vertical_chunks[3],
@@ -736,7 +703,7 @@ impl Painter {
                     Disk => {
                         self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
                     }
-                    Proc => self.draw_process_features(
+                    Proc => self.draw_process_widget(
                         f,
                         app_state,
                         *widget_draw_loc,

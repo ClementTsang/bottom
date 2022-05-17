@@ -104,6 +104,9 @@ pub struct DataCollector {
     #[cfg(feature = "battery")]
     battery_list: Option<Vec<Battery>>,
     filters: DataFilters,
+
+    #[cfg(target_family = "unix")]
+    user_table: self::processes::UserTable,
 }
 
 impl DataCollector {
@@ -133,6 +136,8 @@ impl DataCollector {
             #[cfg(feature = "battery")]
             battery_list: None,
             filters,
+            #[cfg(target_family = "unix")]
+            user_table: Default::default(),
         }
     }
 
@@ -191,7 +196,7 @@ impl DataCollector {
         };
     }
 
-    pub fn set_collected_data(&mut self, used_widgets: UsedWidgets) {
+    pub fn set_data_collection(&mut self, used_widgets: UsedWidgets) {
         self.widgets_to_harvest = used_widgets;
     }
 
@@ -270,15 +275,28 @@ impl DataCollector {
                             .duration_since(self.last_collection_time)
                             .as_secs(),
                         self.mem_total_kb,
+                        &mut self.user_table,
                     )
                 }
                 #[cfg(not(target_os = "linux"))]
                 {
-                    processes::get_process_data(
-                        &self.sys,
-                        self.use_current_cpu_total,
-                        self.mem_total_kb,
-                    )
+                    #[cfg(target_family = "unix")]
+                    {
+                        processes::get_process_data(
+                            &self.sys,
+                            self.use_current_cpu_total,
+                            self.mem_total_kb,
+                            &mut self.user_table,
+                        )
+                    }
+                    #[cfg(not(target_family = "unix"))]
+                    {
+                        processes::get_process_data(
+                            &self.sys,
+                            self.use_current_cpu_total,
+                            self.mem_total_kb,
+                        )
+                    }
                 }
             } {
                 self.data.list_of_processes = Some(process_list);

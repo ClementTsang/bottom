@@ -25,7 +25,6 @@ pub struct GraphData<'a> {
     pub name: Option<Cow<'a, str>>,
 }
 
-#[derive(Default)]
 pub struct TimeGraph<'a> {
     /// Whether to use a dot marker over the default braille markers.
     pub use_dot: bool,
@@ -144,14 +143,14 @@ impl<'a> TimeGraph<'a> {
                 .collect()
         };
 
+        let block = Block::default()
+            .title(self.generate_title(draw_loc))
+            .borders(Borders::ALL)
+            .border_style(self.border_style);
+
         f.render_widget(
             TimeChart::new(data)
-                .block(
-                    Block::default()
-                        .title(self.generate_title(draw_loc))
-                        .borders(Borders::ALL)
-                        .border_style(self.border_style),
-                )
+                .block(block)
                 .x_axis(x_axis)
                 .y_axis(y_axis)
                 .hidden_legend_constraints(

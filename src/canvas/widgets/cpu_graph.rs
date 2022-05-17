@@ -1,38 +1,34 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, iter};
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App},
+    app::{layout_manager::WidgetDirection, App, CellContent, CpuWidgetState},
     canvas::{
-        components::{GraphData, TimeGraph},
-        drawing_utils::{get_column_widths, get_start_position, should_hide_x_label},
+        components::{GraphData, TextTable, TimeGraph},
+        drawing_utils::should_hide_x_label,
         Painter,
     },
-    constants::*,
-    data_conversion::ConvertedCpuData,
+    data_conversion::{ConvertedCpuData, TableData, TableRow},
 };
 
 use concat_string::concat_string;
 
+use itertools::Either;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::Text,
-    widgets::{Block, Borders, Row, Table},
 };
 
-const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
 const AVG_POSITION: usize = 1;
 const ALL_POSITION: usize = 0;
-
-static CPU_LEGEND_HEADER_LENS: [usize; 2] =
-    [CPU_LEGEND_HEADER[0].len(), CPU_LEGEND_HEADER[1].len()];
 
 impl Painter {
     pub fn draw_cpu<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        if draw_loc.width as f64 * 0.15 <= 6.0 {
+        let legend_width = (draw_loc.width as f64 * 0.15) as u16;
+
+        if legend_width < 6 {
             // Skip drawing legend
             if app_state.current_widget.widget_id == (widget_id + 1) {
                 if app_state.app_config_fields.left_legend {
@@ -55,18 +51,25 @@ impl Painter {
                 }
             }
         } else {
+            let graph_width = draw_loc.width - legend_width;
             let (graph_index, legend_index, constraints) =
                 if app_state.app_config_fields.left_legend {
                     (
                         1,
                         0,
-                        [Constraint::Percentage(15), Constraint::Percentage(85)],
+                        [
+                            Constraint::Length(legend_width),
+                            Constraint::Length(graph_width),
+                        ],
                     )
                 } else {
                     (
                         0,
                         1,
-                        [Constraint::Percentage(85), Constraint::Percentage(15)],
+                        [
+                            Constraint::Length(graph_width),
+                            Constraint::Length(legend_width),
+                        ],
                     )
                 };
 
@@ -115,6 +118,56 @@ impl Painter {
         }
     }
 
+    fn generate_points<'a>(
+        &self, cpu_widget_state: &CpuWidgetState, cpu_data: &'a [ConvertedCpuData],
+        show_avg_cpu: bool,
+    ) -> Vec<GraphData<'a>> {
+        let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
+
+        let current_scroll_position = cpu_widget_state.table_state.current_scroll_position;
+        if current_scroll_position == ALL_POSITION {
+            // This case ensures the other cases cannot have the position be equal to 0.
+            cpu_data
+                .iter()
+                .enumerate()
+                .rev()
+                .map(|(itx, cpu)| {
+                    let style = if show_avg_cpu && itx == AVG_POSITION {
+                        self.colours.avg_colour_style
+                    } else if itx == ALL_POSITION {
+                        self.colours.all_colour_style
+                    } else {
+                        let offset_position = itx - 1; // Because of the all position
+                        self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
+                            % self.colours.cpu_colour_styles.len()]
+                    };
+
+                    GraphData {
+                        points: &cpu.cpu_data[..],
+                        style,
+                        name: None,
+                    }
+                })
+                .collect::<Vec<_>>()
+        } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
+            let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
+                self.colours.avg_colour_style
+            } else {
+                let offset_position = current_scroll_position - 1; // Because of the all position
+                self.colours.cpu_colour_styles
+                    [(offset_position - show_avg_offset) % self.colours.cpu_colour_styles.len()]
+            };
+
+            vec![GraphData {
+                points: &cpu.cpu_data[..],
+                style,
+                name: None,
+            }]
+        } else {
+            vec![]
+        }
+    }
+
     fn draw_cpu_graph<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
@@ -122,7 +175,7 @@ impl Painter {
         const Y_LABELS: [Cow<'static, str>; 2] = [Cow::Borrowed("  0%"), Cow::Borrowed("100%")];
 
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&widget_id) {
-            let cpu_data = &app_state.canvas_data.cpu_data;
+            let cpu_data = &app_state.converted_data.cpu_data;
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, cpu_widget_state.current_display_time];
             let hide_x_labels = should_hide_x_label(
@@ -131,56 +184,16 @@ impl Painter {
                 &mut cpu_widget_state.autohide_timer,
                 draw_loc,
             );
-            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-            let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
-            let points = {
-                let current_scroll_position = cpu_widget_state.scroll_state.current_scroll_position;
-                if current_scroll_position == ALL_POSITION {
-                    // This case ensures the other cases cannot have the position be equal to 0.
-                    cpu_data
-                        .iter()
-                        .enumerate()
-                        .rev()
-                        .map(|(itx, cpu)| {
-                            let style = if show_avg_cpu && itx == AVG_POSITION {
-                                self.colours.avg_colour_style
-                            } else if itx == ALL_POSITION {
-                                self.colours.all_colour_style
-                            } else {
-                                let offset_position = itx - 1; // Because of the all position
-                                self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                                    % self.colours.cpu_colour_styles.len()]
-                            };
 
-                            GraphData {
-                                points: &cpu.cpu_data[..],
-                                style,
-                                name: None,
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
-                    let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
-                        self.colours.avg_colour_style
-                    } else {
-                        let offset_position = current_scroll_position - 1; // Because of the all position
-                        self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                            % self.colours.cpu_colour_styles.len()]
-                    };
-
-                    vec![GraphData {
-                        points: &cpu.cpu_data[..],
-                        style,
-                        name: None,
-                    }]
-                } else {
-                    vec![]
-                }
-            };
+            let points = self.generate_points(
+                cpu_widget_state,
+                cpu_data,
+                app_state.app_config_fields.show_average_cpu,
+            );
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
             let title = if cfg!(target_family = "unix") {
-                let load_avg = app_state.canvas_data.load_avg_data;
+                let load_avg = app_state.converted_data.load_avg_data;
                 let load_avg_str = format!(
                     "─ {:.2} {:.2} {:.2} ",
                     load_avg[0], load_avg[1], load_avg[2]
@@ -214,148 +227,86 @@ impl Painter {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))
         {
+            // TODO: This line (and the one above, see caller) is pretty dumb but I guess needed.
             cpu_widget_state.is_legend_hidden = false;
-            let cpu_data: &mut [ConvertedCpuData] = &mut app_state.canvas_data.cpu_data;
-            let cpu_table_state = &mut cpu_widget_state.scroll_state.table_state;
-            let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
-                0
-            } else {
-                app_state.app_config_fields.table_gap
-            };
-            let start_position = get_start_position(
-                usize::from(
-                    (draw_loc.height + (1 - table_gap)).saturating_sub(self.table_height_offset),
-                ),
-                &cpu_widget_state.scroll_state.scroll_direction,
-                &mut cpu_widget_state.scroll_state.scroll_bar,
-                cpu_widget_state.scroll_state.current_scroll_position,
-                app_state.is_force_redraw,
-            );
-            cpu_table_state.select(Some(
-                cpu_widget_state
-                    .scroll_state
-                    .current_scroll_position
-                    .saturating_sub(start_position),
-            ));
 
-            let sliced_cpu_data = &cpu_data[start_position..];
-
-            let offset_scroll_index = cpu_widget_state
-                .scroll_state
-                .current_scroll_position
-                .saturating_sub(start_position);
             let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-
-            // Calculate widths
-            if recalculate_column_widths {
-                cpu_widget_state.table_width_state.desired_column_widths = vec![6, 4];
-                cpu_widget_state.table_width_state.calculated_column_widths = get_column_widths(
-                    draw_loc.width,
-                    &[None, None],
-                    &(CPU_LEGEND_HEADER_LENS
-                        .iter()
-                        .map(|width| Some(*width as u16))
-                        .collect::<Vec<_>>()),
-                    &[Some(0.5), Some(0.5)],
-                    &(cpu_widget_state
-                        .table_width_state
-                        .desired_column_widths
-                        .iter()
-                        .map(|width| Some(*width))
-                        .collect::<Vec<_>>()),
-                    false,
-                );
-            }
-
-            let dcw = &cpu_widget_state.table_width_state.desired_column_widths;
-            let ccw = &cpu_widget_state.table_width_state.calculated_column_widths;
-            let cpu_rows = sliced_cpu_data.iter().enumerate().map(|(itx, cpu)| {
-                let mut truncated_name =
-                    if let (Some(desired_column_width), Some(calculated_column_width)) =
-                        (dcw.get(0), ccw.get(0))
-                    {
-                        if *desired_column_width > *calculated_column_width {
-                            Text::raw(&cpu.short_cpu_name)
-                        } else {
-                            Text::raw(&cpu.cpu_name)
-                        }
-                    } else {
-                        Text::raw(&cpu.cpu_name)
-                    };
-
-                let is_first_column_hidden = if let Some(calculated_column_width) = ccw.get(0) {
-                    *calculated_column_width == 0
+            let cpu_data = {
+                let col_widths = vec![1, 3]; // TODO: Should change this to take const generics (usize) and an array.
+                let colour_iter = if show_avg_cpu {
+                    Either::Left(
+                        iter::once(&self.colours.all_colour_style)
+                            .chain(iter::once(&self.colours.avg_colour_style))
+                            .chain(self.colours.cpu_colour_styles.iter().cycle()),
+                    )
                 } else {
-                    false
+                    Either::Right(
+                        iter::once(&self.colours.all_colour_style)
+                            .chain(self.colours.cpu_colour_styles.iter().cycle()),
+                    )
                 };
 
-                let truncated_legend = if is_first_column_hidden && cpu.legend_value.is_empty() {
-                    // For the case where we only have room for one column, display "All" in the normally blank area.
-                    Text::raw("All")
-                } else {
-                    Text::raw(&cpu.legend_value)
-                };
-
-                if !is_first_column_hidden
-                    && itx == offset_scroll_index
-                    && itx + start_position == ALL_POSITION
-                {
-                    truncated_name.patch_style(self.colours.currently_selected_text_style);
-                    Row::new(vec![truncated_name, truncated_legend])
-                } else {
-                    let cpu_string_row = vec![truncated_name, truncated_legend];
-
-                    Row::new(cpu_string_row).style(if itx == offset_scroll_index {
-                        self.colours.currently_selected_text_style
-                    } else if itx + start_position == ALL_POSITION {
-                        self.colours.all_colour_style
-                    } else if show_avg_cpu {
-                        if itx + start_position == AVG_POSITION {
-                            self.colours.avg_colour_style
-                        } else {
-                            self.colours.cpu_colour_styles[(itx + start_position
-                                - AVG_POSITION
-                                - 1)
-                                % self.colours.cpu_colour_styles.len()]
-                        }
+                let data = {
+                    let iter = app_state.converted_data.cpu_data.iter().zip(colour_iter);
+                    const CPU_WIDTH_CHECK: u16 = 10; // This is hard-coded, it's terrible.
+                    if draw_loc.width < CPU_WIDTH_CHECK {
+                        Either::Left(iter.map(|(cpu, style)| {
+                            let row = vec![
+                                CellContent::Simple("".into()),
+                                CellContent::Simple(if cpu.legend_value.is_empty() {
+                                    cpu.cpu_name.clone().into()
+                                } else {
+                                    cpu.legend_value.clone().into()
+                                }),
+                            ];
+                            TableRow::Styled(row, *style)
+                        }))
                     } else {
-                        self.colours.cpu_colour_styles[(itx + start_position - ALL_POSITION - 1)
-                            % self.colours.cpu_colour_styles.len()]
-                    })
+                        Either::Right(iter.map(|(cpu, style)| {
+                            let row = vec![
+                                CellContent::HasAlt {
+                                    alt: cpu.short_cpu_name.clone().into(),
+                                    main: cpu.cpu_name.clone().into(),
+                                },
+                                CellContent::Simple(cpu.legend_value.clone().into()),
+                            ];
+                            TableRow::Styled(row, *style)
+                        }))
+                    }
                 }
-            });
+                .collect();
 
-            // Note we don't set highlight_style, as it should always be shown for this widget.
-            let border_and_title_style = if is_on_widget {
+                TableData { data, col_widths }
+            };
+
+            let is_on_widget = widget_id == app_state.current_widget.widget_id;
+            let border_style = if is_on_widget {
                 self.colours.highlighted_border_style
             } else {
                 self.colours.border_style
             };
 
-            // Draw
-            f.render_stateful_widget(
-                Table::new(cpu_rows)
-                    .block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .border_style(border_and_title_style),
-                    )
-                    .header(
-                        Row::new(CPU_LEGEND_HEADER.to_vec())
-                            .style(self.colours.table_header_style)
-                            .bottom_margin(table_gap),
-                    )
-                    .widths(
-                        &(cpu_widget_state
-                            .table_width_state
-                            .calculated_column_widths
-                            .iter()
-                            .map(|calculated_width| Constraint::Length(*calculated_width as u16))
-                            .collect::<Vec<_>>()),
-                    ),
+            TextTable {
+                table_gap: app_state.app_config_fields.table_gap,
+                is_force_redraw: app_state.is_force_redraw,
+                recalculate_column_widths,
+                header_style: self.colours.table_header_style,
+                border_style,
+                highlighted_text_style: self.colours.currently_selected_text_style, // We always highlight the selected CPU entry... not sure if I like this though.
+                title: None,
+                is_on_widget,
+                draw_border: true,
+                show_table_scroll_position: app_state.app_config_fields.show_table_scroll_position,
+                title_style: self.colours.widget_title_style,
+                text_style: self.colours.text_style,
+                left_to_right: false,
+            }
+            .draw_text_table(
+                f,
                 draw_loc,
-                cpu_table_state,
+                &mut cpu_widget_state.table_state,
+                &cpu_data,
+                None,
             );
         }
     }

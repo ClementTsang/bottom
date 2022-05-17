@@ -1,14 +1,10 @@
-use once_cell::sync::Lazy;
-use std::cmp::max;
-
 use crate::{
     app::{App, AxisScaling},
     canvas::{
         components::{GraphData, TimeGraph},
-        drawing_utils::{get_column_widths, should_hide_x_label},
+        drawing_utils::should_hide_x_label,
         Painter, Point,
     },
-    constants::*,
     units::data_units::DataUnit,
     utils::gen_util::*,
 };
@@ -21,26 +17,18 @@ use tui::{
     widgets::{Block, Borders, Row, Table},
 };
 
-const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
-
-static NETWORK_HEADERS_LENS: Lazy<Vec<u16>> = Lazy::new(|| {
-    NETWORK_HEADERS
-        .iter()
-        .map(|entry| entry.len() as u16)
-        .collect::<Vec<_>>()
-});
-
 impl Painter {
     pub fn draw_network<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         if app_state.app_config_fields.use_old_network_legend {
+            const LEGEND_HEIGHT: u16 = 4;
             let network_chunk = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(0)
                 .constraints([
-                    Constraint::Length(max(draw_loc.height as i64 - 5, 0) as u16),
-                    Constraint::Length(5),
+                    Constraint::Length(draw_loc.height.saturating_sub(LEGEND_HEIGHT)),
+                    Constraint::Length(LEGEND_HEIGHT),
                 ])
                 .split(draw_loc);
 
@@ -67,8 +55,8 @@ impl Painter {
         hide_legend: bool,
     ) {
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
-            let network_data_rx: &[(f64, f64)] = &app_state.canvas_data.network_data_rx;
-            let network_data_tx: &[(f64, f64)] = &app_state.canvas_data.network_data_tx;
+            let network_data_rx: &[(f64, f64)] = &app_state.converted_data.network_data_rx;
+            let network_data_tx: &[(f64, f64)] = &app_state.converted_data.network_data_tx;
             let time_start = -(network_widget_state.current_display_time as f64);
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, network_widget_state.current_display_time];
@@ -115,18 +103,18 @@ impl Painter {
                     GraphData {
                         points: network_data_rx,
                         style: self.colours.rx_style,
-                        name: Some(format!("RX: {:7}", app_state.canvas_data.rx_display).into()),
+                        name: Some(format!("RX: {:7}", app_state.converted_data.rx_display).into()),
                     },
                     GraphData {
                         points: network_data_tx,
                         style: self.colours.tx_style,
-                        name: Some(format!("TX: {:7}", app_state.canvas_data.tx_display).into()),
+                        name: Some(format!("TX: {:7}", app_state.converted_data.tx_display).into()),
                     },
                     GraphData {
                         points: &[],
                         style: self.colours.total_rx_style,
                         name: Some(
-                            format!("Total RX: {:7}", app_state.canvas_data.total_rx_display)
+                            format!("Total RX: {:7}", app_state.converted_data.total_rx_display)
                                 .into(),
                         ),
                     },
@@ -134,7 +122,7 @@ impl Painter {
                         points: &[],
                         style: self.colours.total_tx_style,
                         name: Some(
-                            format!("Total TX: {:7}", app_state.canvas_data.total_tx_display)
+                            format!("Total TX: {:7}", app_state.converted_data.total_tx_display)
                                 .into(),
                         ),
                     },
@@ -144,12 +132,12 @@ impl Painter {
                     GraphData {
                         points: network_data_rx,
                         style: self.colours.rx_style,
-                        name: Some((&app_state.canvas_data.rx_display).into()),
+                        name: Some((&app_state.converted_data.rx_display).into()),
                     },
                     GraphData {
                         points: network_data_tx,
                         style: self.colours.tx_style,
-                        name: Some((&app_state.canvas_data.tx_display).into()),
+                        name: Some((&app_state.converted_data.tx_display).into()),
                     },
                 ]
             };
@@ -174,52 +162,25 @@ impl Painter {
     fn draw_network_labels<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
-            0
-        } else {
-            app_state.app_config_fields.table_gap
-        };
+        const NETWORK_HEADERS: [&str; 4] = ["RX", "TX", "Total RX", "Total TX"];
 
-        let rx_display = &app_state.canvas_data.rx_display;
-        let tx_display = &app_state.canvas_data.tx_display;
-        let total_rx_display = &app_state.canvas_data.total_rx_display;
-        let total_tx_display = &app_state.canvas_data.total_tx_display;
+        let rx_display = &app_state.converted_data.rx_display;
+        let tx_display = &app_state.converted_data.tx_display;
+        let total_rx_display = &app_state.converted_data.total_rx_display;
+        let total_tx_display = &app_state.converted_data.total_tx_display;
 
         // Gross but I need it to work...
-        let total_network = vec![vec![
-            Text::raw(rx_display),
-            Text::raw(tx_display),
-            Text::raw(total_rx_display),
-            Text::raw(total_tx_display),
-        ]];
-        let mapped_network = total_network
-            .into_iter()
-            .map(|val| Row::new(val).style(self.colours.text_style));
-
-        // Calculate widths
-        let intrinsic_widths = get_column_widths(
-            draw_loc.width,
-            &[None, None, None, None],
-            &(NETWORK_HEADERS_LENS
-                .iter()
-                .map(|s| Some(*s))
-                .collect::<Vec<_>>()),
-            &[Some(0.25); 4],
-            &(NETWORK_HEADERS_LENS
-                .iter()
-                .map(|s| Some(*s))
-                .collect::<Vec<_>>()),
-            true,
-        );
+        let total_network = vec![Row::new(vec![
+            Text::styled(rx_display, self.colours.rx_style),
+            Text::styled(tx_display, self.colours.tx_style),
+            Text::styled(total_rx_display, self.colours.total_rx_style),
+            Text::styled(total_tx_display, self.colours.total_tx_style),
+        ])];
 
         // Draw
         f.render_widget(
-            Table::new(mapped_network)
-                .header(
-                    Row::new(NETWORK_HEADERS.to_vec())
-                        .style(self.colours.table_header_style)
-                        .bottom_margin(table_gap),
-                )
+            Table::new(total_network)
+                .header(Row::new(NETWORK_HEADERS.to_vec()).style(self.colours.table_header_style))
                 .block(Block::default().borders(Borders::ALL).border_style(
                     if app_state.current_widget.widget_id == widget_id {
                         self.colours.highlighted_border_style
@@ -229,9 +190,9 @@ impl Painter {
                 ))
                 .style(self.colours.text_style)
                 .widths(
-                    &(intrinsic_widths
-                        .iter()
-                        .map(|calculated_width| Constraint::Length(*calculated_width))
+                    &((std::iter::repeat(draw_loc.width.saturating_sub(2) / 4))
+                        .take(4)
+                        .map(Constraint::Length)
                         .collect::<Vec<_>>()),
                 ),
             draw_loc,
@@ -295,7 +256,7 @@ fn get_max_entry(
         (None, Some(filtered_tx)) => {
             match filtered_tx
                 .iter()
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {
@@ -316,7 +277,7 @@ fn get_max_entry(
         (Some(filtered_rx), None) => {
             match filtered_rx
                 .iter()
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {
@@ -338,7 +299,7 @@ fn get_max_entry(
             match filtered_rx
                 .iter()
                 .chain(filtered_tx)
-                .max_by(|(_, data_a), (_, data_b)| get_ordering(data_a, data_b, false))
+                .max_by(|(_, data_a), (_, data_b)| partial_ordering(data_a, data_b))
             {
                 Some((best_time, max_val)) => {
                     if *max_val == 0.0 {

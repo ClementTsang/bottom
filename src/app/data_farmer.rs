@@ -1,18 +1,22 @@
-/// In charge of cleaning, processing, and managing data.  I couldn't think of
-/// a better name for the file.  Since I called data collection "harvesting",
-/// then this is the farmer I guess.
-///
-/// Essentially the main goal is to shift the initial calculation and distribution
-/// of joiner points and data to one central location that will only do it
-/// *once* upon receiving the data --- as opposed to doing it on canvas draw,
-/// which will be a costly process.
-///
-/// This will also handle the *cleaning* of stale data.  That should be done
-/// in some manner (timer on another thread, some loop) that will occasionally
-/// call the purging function.  Failure to do so *will* result in a growing
-/// memory usage and higher CPU usage - you will be trying to process more and
-/// more points as this is used!
+//! In charge of cleaning, processing, and managing data.  I couldn't think of
+//! a better name for the file.  Since I called data collection "harvesting",
+//! then this is the farmer I guess.
+//!
+//! Essentially the main goal is to shift the initial calculation and distribution
+//! of joiner points and data to one central location that will only do it
+//! *once* upon receiving the data --- as opposed to doing it on canvas draw,
+//! which will be a costly process.
+//!
+//! This will also handle the *cleaning* of stale data.  That should be done
+//! in some manner (timer on another thread, some loop) that will occasionally
+//! call the purging function.  Failure to do so *will* result in a growing
+//! memory usage and higher CPU usage - you will be trying to process more and
+//! more points as this is used!
+
 use once_cell::sync::Lazy;
+
+use fxhash::FxHashMap;
+use itertools::Itertools;
 
 use std::{time::Instant, vec::Vec};
 
@@ -20,8 +24,9 @@ use std::{time::Instant, vec::Vec};
 use crate::data_harvester::batteries;
 
 use crate::{
-    data_harvester::{cpu, disks, memory, network, processes, temperature, Data},
+    data_harvester::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
     utils::gen_util::{get_decimal_bytes, GIGA_LIMIT},
+    Pid,
 };
 use regex::Regex;
 
@@ -36,6 +41,97 @@ pub struct TimedData {
     pub load_avg_data: [f32; 3],
     pub mem_data: Option<Value>,
     pub swap_data: Option<Value>,
+}
+
+pub type StringPidMap = FxHashMap<String, Vec<Pid>>;
+
+#[derive(Clone, Debug, Default)]
+pub struct ProcessData {
+    /// A PID to process data map.
+    pub process_harvest: FxHashMap<Pid, ProcessHarvest>,
+
+    /// A mapping from a process name to any PID with that name.
+    pub name_pid_map: StringPidMap,
+
+    /// A mapping from a process command to any PID with that name.
+    pub cmd_pid_map: StringPidMap,
+
+    /// A mapping between a process PID to any children process PIDs.
+    pub process_parent_mapping: FxHashMap<Pid, Vec<Pid>>,
+
+    /// PIDs corresponding to processes that have no parents.
+    pub orphan_pids: Vec<Pid>,
+}
+
+impl ProcessData {
+    fn ingest(&mut self, list_of_processes: Vec<ProcessHarvest>) {
+        // TODO: [Optimization] Probably more efficient to all of this in the data collection step, but it's fine for now.
+        self.name_pid_map.clear();
+        self.cmd_pid_map.clear();
+        self.process_parent_mapping.clear();
+
+        // Reverse as otherwise the pid mappings are in the wrong order.
+        list_of_processes.iter().rev().for_each(|process_harvest| {
+            if let Some(entry) = self.name_pid_map.get_mut(&process_harvest.name) {
+                entry.push(process_harvest.pid);
+            } else {
+                self.name_pid_map
+                    .insert(process_harvest.name.to_string(), vec![process_harvest.pid]);
+            }
+
+            if let Some(entry) = self.cmd_pid_map.get_mut(&process_harvest.command) {
+                entry.push(process_harvest.pid);
+            } else {
+                self.cmd_pid_map.insert(
+                    process_harvest.command.to_string(),
+                    vec![process_harvest.pid],
+                );
+            }
+
+            if let Some(parent_pid) = process_harvest.parent_pid {
+                if let Some(entry) = self.process_parent_mapping.get_mut(&parent_pid) {
+                    entry.push(process_harvest.pid);
+                } else {
+                    self.process_parent_mapping
+                        .insert(parent_pid, vec![process_harvest.pid]);
+                }
+            }
+        });
+
+        self.name_pid_map.shrink_to_fit();
+        self.cmd_pid_map.shrink_to_fit();
+        self.process_parent_mapping.shrink_to_fit();
+
+        let process_pid_map = list_of_processes
+            .into_iter()
+            .map(|process| (process.pid, process))
+            .collect();
+        self.process_harvest = process_pid_map;
+
+        // This also needs a quick sort + reverse to be in the correct order.
+        self.orphan_pids = {
+            let mut res: Vec<Pid> = self
+                .process_harvest
+                .iter()
+                .filter_map(|(pid, process_harvest)| {
+                    if let Some(parent_pid) = process_harvest.parent_pid {
+                        if self.process_harvest.contains_key(&parent_pid) {
+                            None
+                        } else {
+                            Some(*pid)
+                        }
+                    } else {
+                        Some(*pid)
+                    }
+                })
+                .sorted()
+                .collect();
+
+            res.reverse();
+
+            res
+        }
+    }
 }
 
 /// AppCollection represents the pooled data stored within the main app
@@ -57,7 +153,7 @@ pub struct DataCollection {
     pub swap_harvest: memory::MemHarvest,
     pub cpu_harvest: cpu::CpuHarvest,
     pub load_avg_harvest: cpu::LoadAvgHarvest,
-    pub process_harvest: Vec<processes::ProcessHarvest>,
+    pub process_data: ProcessData,
     pub disk_harvest: Vec<disks::DiskHarvest>,
     pub io_harvest: disks::IoHarvest,
     pub io_labels_and_prev: Vec<((u64, u64), (u64, u64))>,
@@ -78,7 +174,7 @@ impl Default for DataCollection {
             swap_harvest: memory::MemHarvest::default(),
             cpu_harvest: cpu::CpuHarvest::default(),
             load_avg_harvest: cpu::LoadAvgHarvest::default(),
-            process_harvest: Vec::default(),
+            process_data: Default::default(),
             disk_harvest: Vec::default(),
             io_harvest: disks::IoHarvest::default(),
             io_labels_and_prev: Vec::default(),
@@ -97,7 +193,7 @@ impl DataCollection {
         self.memory_harvest = memory::MemHarvest::default();
         self.swap_harvest = memory::MemHarvest::default();
         self.cpu_harvest = cpu::CpuHarvest::default();
-        self.process_harvest = Vec::default();
+        self.process_data = Default::default();
         self.disk_harvest = Vec::default();
         self.io_harvest = disks::IoHarvest::default();
         self.io_labels_and_prev = Vec::default();
@@ -108,8 +204,12 @@ impl DataCollection {
         }
     }
 
-    pub fn set_frozen_time(&mut self) {
+    pub fn freeze(&mut self) {
         self.frozen_instant = Some(self.current_instant);
+    }
+
+    pub fn thaw(&mut self) {
+        self.frozen_instant = None;
     }
 
     pub fn clean_data(&mut self, max_time_millis: u64) {
@@ -319,8 +419,8 @@ impl DataCollection {
         self.io_harvest = io;
     }
 
-    fn eat_proc(&mut self, list_of_processes: Vec<processes::ProcessHarvest>) {
-        self.process_harvest = list_of_processes;
+    fn eat_proc(&mut self, list_of_processes: Vec<ProcessHarvest>) {
+        self.process_data.ingest(list_of_processes);
     }
 
     #[cfg(feature = "battery")]

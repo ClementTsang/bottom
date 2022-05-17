@@ -17,8 +17,8 @@ impl Painter {
     pub fn draw_basic_memory<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let mem_data: &[(f64, f64)] = &app_state.canvas_data.mem_data;
-        let swap_data: &[(f64, f64)] = &app_state.canvas_data.swap_data;
+        let mem_data: &[(f64, f64)] = &app_state.converted_data.mem_data;
+        let swap_data: &[(f64, f64)] = &app_state.converted_data.swap_data;
 
         let margined_loc = Layout::default()
             .constraints([Constraint::Percentage(100)])
@@ -48,14 +48,14 @@ impl Painter {
         const EMPTY_MEMORY_FRAC_STRING: &str = "0.0B/0.0B";
 
         let trimmed_memory_frac =
-            if let Some((_label_percent, label_frac)) = &app_state.canvas_data.mem_labels {
+            if let Some((_label_percent, label_frac)) = &app_state.converted_data.mem_labels {
                 label_frac.trim()
             } else {
                 EMPTY_MEMORY_FRAC_STRING
             };
 
         let trimmed_swap_frac =
-            if let Some((_label_percent, label_frac)) = &app_state.canvas_data.swap_labels {
+            if let Some((_label_percent, label_frac)) = &app_state.converted_data.swap_labels {
                 label_frac.trim()
             } else {
                 EMPTY_MEMORY_FRAC_STRING

@@ -3,6 +3,8 @@
 use super::ProcessHarvest;
 use sysinfo::{PidExt, ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
 
+use crate::data_harvester::processes::UserTable;
+
 fn get_macos_process_cpu_usage(
     pids: &[i32],
 ) -> std::io::Result<std::collections::HashMap<i32, f64>> {
@@ -35,7 +37,7 @@ fn get_macos_process_cpu_usage(
 }
 
 pub fn get_process_data(
-    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,
+    sys: &System, use_current_cpu_total: bool, mem_total_kb: u64, user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
@@ -86,6 +88,11 @@ pub fn get_process_data(
         };
 
         let disk_usage = process_val.disk_usage();
+        let process_state = {
+            let ps = process_val.status();
+            (ps.to_string(), convert_process_status_to_char(ps))
+        };
+        let uid = process_val.uid;
         process_vector.push(ProcessHarvest {
             pid: process_val.pid().as_u32() as _,
             parent_pid: process_val.parent().map(|p| p.as_u32() as _),
@@ -102,16 +109,19 @@ pub fn get_process_data(
             write_bytes_per_sec: disk_usage.written_bytes,
             total_read_bytes: disk_usage.total_read_bytes,
             total_write_bytes: disk_usage.total_written_bytes,
-            process_state: process_val.status().to_string(),
-            process_state_char: convert_process_status_to_char(process_val.status()),
-            uid: Some(process_val.uid),
+            process_state,
+            uid,
+            user: user_table
+                .get_uid_to_username_mapping(uid)
+                .map(Into::into)
+                .unwrap_or_else(|_| "N/A".into()),
         });
     }
 
     let unknown_state = ProcessStatus::Unknown(0).to_string();
     let cpu_usage_unknown_pids: Vec<i32> = process_vector
         .iter()
-        .filter(|process| process.process_state == unknown_state)
+        .filter(|process| process.process_state.0 == unknown_state)
         .map(|process| process.pid)
         .collect();
     let cpu_usages = get_macos_process_cpu_usage(&cpu_usage_unknown_pids)?;
