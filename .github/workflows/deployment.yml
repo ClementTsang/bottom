@@ -438,7 +438,7 @@ jobs:
       - name: Print out all release files
         run: |
           echo "Generated $(ls ./release | wc -l) files:"
-          ls ./release
+          du -h -d 0 ./release/*
 
       - name: Upload all saved release files
         uses: softprops/action-gh-release@17cd0d34deddf848fc0e7d9be5202c148c270a0a # 0.1.14

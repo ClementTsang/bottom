@@ -365,7 +365,7 @@ jobs:
       - name: Print out all release files
         run: |
           echo "Generated $(ls ./release | wc -l) files:"
-          ls ./release
+          du -h -d 0 ./release/*
 
       - name: Delete tag and release
         uses: dev-drprasad/delete-tag-and-release@085c6969f18bad0de1b9f3fe6692a3cd01f64fe5 # 0.2.0
