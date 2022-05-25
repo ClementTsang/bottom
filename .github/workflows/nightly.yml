@@ -358,9 +358,17 @@ jobs:
           gzip ./manpage/btm.1
 
       - name: Build Debian release
+        uses: actions-rs/cargo@v1
+        with:
+          command: deb
+          args: --no-build --no-strip
+          use-cross: ${{ matrix.triple.cross }}
+        env:
+          RUST_BACKTRACE: 1
+          BTM_GENERATE_COMPLETIONS: true
+
+      - name: Copy Debian release
         run: |
-          cargo install cargo-deb --version 1.37.0 --locked
-          cargo deb --no-build --no-strip
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
 
       - name: Test Debian release
