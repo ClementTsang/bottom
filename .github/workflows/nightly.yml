@@ -345,11 +345,19 @@ jobs:
           command: build
           args: --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
           use-cross: ${{ matrix.triple.cross }}
+        env:
+          RUST_BACKTRACE: full
+          GENERATE: true
+
+      - name: Move target build file to expected location
+        shell: bash
+        run: |
+          mkdir -p target/release/
+          cp target/${{ matrix.triple.target }}/release/btm target/release/btm
 
       - name: Build autocompletion and manpage
         shell: bash
         run: |
-          GENERATE=true cargo build
           gzip ./manpage/btm.1
 
       - name: Build Debian release
@@ -359,7 +367,7 @@ jobs:
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
 
       - name: Test Debian release
-        run: sudo dpkg -i ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
+        run: sudo dpkg -I ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
 
       - name: Create release directory for artifact, move file
         shell: bash
