@@ -291,9 +291,9 @@ jobs:
             }
           - {
               os: "ubuntu-latest",
-              target: "armv7-unknown-linux-gnueabihf",
+              target: "arm-unknown-linux-gnueabihf",
               cross: true,
-              name: "armv7",
+              name: "arm",
             }
           - {
               os: "ubuntu-latest",
@@ -360,7 +360,7 @@ jobs:
       - name: Build Debian release
         run: |
           cargo install cargo-deb --version 1.37.0 --locked
-          cargo deb --no-build --no-strip --target=${{ matrix.triple.target }}
+          cargo deb --no-build --no-strip
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
 
       - name: Test Debian release

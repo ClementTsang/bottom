@@ -297,9 +297,9 @@ jobs:
             }
           - {
               os: "ubuntu-latest",
-              target: "armv7-unknown-linux-gnueabihf",
+              target: "arm-unknown-linux-gnueabihf",
               cross: true,
-              name: "armv7",
+              name: "arm",
             }
           - {
               os: "ubuntu-latest",
