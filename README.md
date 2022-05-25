@@ -131,8 +131,9 @@ sudo pacman -Syu bottom
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
+# For x86-64
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0.6.8_amd64.deb
-sudo dpkg -i bottom_0.6.8_amd64.deb # For x86-64
+sudo dpkg -i bottom_0.6.8_amd64.deb
 ```
 
 For ARM (aarch64 and armv7), for now, releases are currently only provided on [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly).

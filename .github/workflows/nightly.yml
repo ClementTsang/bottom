@@ -50,6 +50,7 @@ jobs:
     container: ${{ matrix.triple.container }}
     env:
       RUST_BACKTRACE: 1
+      GENERATE: true
     strategy:
       fail-fast: false
       matrix:
@@ -157,11 +158,6 @@ jobs:
           command: build
           args: --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
           use-cross: ${{ matrix.triple.cross }}
-
-      - name: Build autocompletion and manpage
-        shell: bash
-        run: |
-          GENERATE=true cargo build
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
@@ -305,6 +301,7 @@ jobs:
             }
     env:
       RUST_BACKTRACE: 1
+      GENERATE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -333,11 +330,10 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          target: x86_64-unknown-linux-gnu
 
       - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         with:
-          key: x86_64-unknown-linux-gnu-deb
+          key: ${{ matrix.triple.target }}-deb
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -345,9 +341,6 @@ jobs:
           command: build
           args: --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
           use-cross: ${{ matrix.triple.cross }}
-        env:
-          RUST_BACKTRACE: full
-          GENERATE: true
 
       - name: Move target build file to expected location
         shell: bash
@@ -367,7 +360,7 @@ jobs:
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
 
       - name: Test Debian release
-        run: sudo dpkg -I ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
+        run: dpkg -I ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
 
       - name: Create release directory for artifact, move file
         shell: bash
