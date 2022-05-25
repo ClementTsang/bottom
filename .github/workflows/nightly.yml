@@ -286,20 +286,7 @@ jobs:
           - {
               os: "ubuntu-18.04",
               target: "x86_64-unknown-linux-gnu",
-              cross: false,
               name: "amd64",
-            }
-          - {
-              os: "ubuntu-latest",
-              target: "arm-unknown-linux-gnueabihf",
-              cross: true,
-              name: "arm",
-            }
-          - {
-              os: "ubuntu-latest",
-              target: "aarch64-unknown-linux-gnu",
-              cross: true,
-              name: "aarch64",
             }
     env:
       RUST_BACKTRACE: 1
@@ -341,7 +328,6 @@ jobs:
         with:
           command: build
           args: --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
-          use-cross: ${{ matrix.triple.cross }}
         env:
           RUST_BACKTRACE: 1
           BTM_GENERATE_COMPLETIONS: true
@@ -371,6 +357,92 @@ jobs:
         run: |
           mkdir release
           mv bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb release/
+
+      - name: Save Debian file as artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: release
+          path: release
+
+  build-deb-arm:
+    name: build-deb-arm
+    needs: [initialize-job]
+    runs-on: ${{ matrix.triple.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        triple:
+          - {
+              os: "ubuntu-18.04",
+              target: "arm-unknown-linux-gnueabihf",
+              arch: "armv7",
+              distro: "ubuntu18.04",
+              name: "arm",
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "aarch64-unknown-linux-gnu",
+              arch: "aarch64",
+              distro: "ubuntu18.04",
+              name: "aarch64",
+            }
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Get release version
+        uses: actions/download-artifact@v2
+        with:
+          name: release-version
+          path: release-version
+
+      - name: Set release version
+        shell: bash
+        run: |
+          release_version="$(cat ./release-version/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+
+      - name: Validate release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
+
+      - uses: uraimo/run-on-arch-action@v2
+        with:
+          arch: ${{ matrix.triple.arch }}
+          distro: ${{ matrix.triple.distro }}
+          setup: |
+            mkdir -p release
+          dockerRunArgs: |
+            --volume "release:/release"
+          shell: /bin/bash
+          install: |
+            apt-get update -q -y
+            apt-get install -q -y build-essential
+            apt-get install -q -y curl
+
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            source $HOME/.cargo/env
+            rustup install stable --profile minimal
+            cargo install cargo-deb --version 1.37.0 --locked
+          env: |
+            RUST_BACKTRACE: 1
+            BTM_GENERATE_COMPLETIONS: true
+          run: |
+            cargo build --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
+            mkdir -p target/release/
+            cp target/${{ matrix.triple.target }}/release/btm target/release/btm
+            gzip ./manpage/btm.1
+
+            cargo deb --no-build --no-strip --target=${{ matrix.triple.target }}
+            cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
+
+            dpkg -I ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
+            mv bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb release/
 
       - name: Save Debian file as artifacts
         uses: actions/upload-artifact@v2
