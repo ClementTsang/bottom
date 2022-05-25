@@ -279,7 +279,6 @@ jobs:
     name: build-deb
     needs: [initialize-job]
     runs-on: ${{ matrix.triple.os }}
-    container: ${{ matrix.triple.container }}
     strategy:
       fail-fast: false
       matrix:
@@ -287,19 +286,20 @@ jobs:
           - {
               os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
+              cross: false,
               name: "amd64",
             }
           - {
               os: "ubuntu-latest",
-              target: "armv7-unknown-linux-gnueabihf",
-              name: "armv7",
-              container: "arm32v7/ubuntu",
+              target: "arm-unknown-linux-gnueabihf",
+              cross: true,
+              name: "arm",
             }
           - {
               os: "ubuntu-latest",
               target: "aarch64-unknown-linux-gnu",
+              cross: true,
               name: "aarch64",
-              container: "arm64v8/ubuntu",
             }
     env:
       RUST_BACKTRACE: 1
@@ -341,6 +341,7 @@ jobs:
         with:
           command: build
           args: --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
+          use-cross: ${{ matrix.triple.cross }}
         env:
           RUST_BACKTRACE: 1
           BTM_GENERATE_COMPLETIONS: true
@@ -356,18 +357,10 @@ jobs:
         run: |
           gzip ./manpage/btm.1
 
-      - name: Build Debian release
-        uses: actions-rs/cargo@v1
-        with:
-          command: deb
-          args: --no-build --no-strip
-          use-cross: ${{ matrix.triple.cross }}
-        env:
-          RUST_BACKTRACE: 1
-          BTM_GENERATE_COMPLETIONS: true
-
       - name: Copy Debian release
         run: |
+          cargo install cargo-deb --version 1.37.0 --locked
+          cargo deb --no-build --no-strip
           cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_${{ matrix.triple.name }}.deb
 
       - name: Test Debian release
