@@ -50,7 +50,6 @@ jobs:
     container: ${{ matrix.triple.container }}
     env:
       RUST_BACKTRACE: 1
-      GENERATE: true
     strategy:
       fail-fast: false
       matrix:
@@ -158,6 +157,9 @@ jobs:
           command: build
           args: --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
           use-cross: ${{ matrix.triple.cross }}
+        env:
+          RUST_BACKTRACE: 1
+          GENERATE: true
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
@@ -301,7 +303,6 @@ jobs:
             }
     env:
       RUST_BACKTRACE: 1
-      GENERATE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -341,6 +342,9 @@ jobs:
           command: build
           args: --release --locked --verbose --target=${{ matrix.triple.target }} --features deploy
           use-cross: ${{ matrix.triple.cross }}
+        env:
+          RUST_BACKTRACE: 1
+          GENERATE: true
 
       - name: Move target build file to expected location
         shell: bash
