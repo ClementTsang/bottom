@@ -126,14 +126,16 @@ There is an official package that can be installed with `pacman`:
 sudo pacman -Syu bottom
 ```
 
-### Debian/Ubuntu (x86-64)
+### Debian/Ubuntu
 
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0.6.8_amd64.deb
-sudo dpkg -i bottom_0.6.8_amd64.deb
+sudo dpkg -i bottom_0.6.8_amd64.deb # For x86-64
 ```
+
+For ARM (aarch64 and armv7), for now, releases are currently only provided on [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly).
 
 ### Snap
 
