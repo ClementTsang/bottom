@@ -1,5 +1,0 @@
-#!/bin/sh
-
-mkdir -p stage
-cp ../../cargo_deb.sh ./stage/
-docker build -t clementtsang/cross:arm-unknown-linux-gnueabihf .
