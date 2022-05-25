@@ -3,6 +3,7 @@
 # CI pipeline based on:
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
+# - https://www.reillywood.com/blog/rust-faster-ci/
 #
 # CI pipeline should do:
 # - cargo fmt on supported platforms
@@ -38,7 +39,7 @@ jobs:
             }
           - {
               os: "ubuntu-latest",
-              target: "armv7-unknown-linux-gnueabihf",
+              target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
           - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
@@ -74,6 +75,7 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
+          target: ${{ matrix.triple.target }}
 
       - name: Enable Rust cache
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
@@ -85,19 +87,33 @@ jobs:
 
       - name: Build tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        run: cargo test --no-run --locked ${{ matrix.features }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-run --locked ${{ matrix.features }}
+          use-cross: ${{ matrix.triple.cross }}
         env:
           RUST_BACKTRACE: full
 
       - name: Run tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        run: cargo test --no-fail-fast ${{ matrix.features }} -- --nocapture --quiet
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-fail-fast ${{ matrix.features }} -- --nocapture --quiet
+          use-cross: ${{ matrix.triple.cross }}
         env:
           RUST_BACKTRACE: full
 
       - name: Run clippy
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        run: cargo clippy ${{ matrix.features }} --all-targets --workspace -- -D warnings
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: ${{ matrix.features }} --all-targets --workspace -- -D warnings
+          use-cross: ${{ matrix.triple.cross }}
+        env:
+          RUST_BACKTRACE: full
 
   # Run cargo check on all other platforms
   other_check:

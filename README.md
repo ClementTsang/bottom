@@ -27,7 +27,7 @@
 - [Installation](#installation)
   - [Cargo](#cargo)
   - [Arch Linux](#arch-linux)
-  - [Debian/Ubuntu](#debianubuntu)
+  - [Debian/Ubuntu (x86-64)](#debianubuntu-x86-64)
   - [Snap](#snap)
   - [Fedora/CentOS](#fedoracentos)
   - [Gentoo](#gentoo)
