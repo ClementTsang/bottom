@@ -126,7 +126,7 @@ There is an official package that can be installed with `pacman`:
 sudo pacman -Syu bottom
 ```
 
-### Debian/Ubuntu
+### Debian/Ubuntu (x86-64)
 
 A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
 
