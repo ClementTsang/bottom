@@ -1,2 +1,2 @@
 [build.env]
-passthrough = ["RUST_BACKTRACE", "GENERATE"]
+passthrough = ["RUST_BACKTRACE", "BTM_GENERATE_COMPLETIONS"]

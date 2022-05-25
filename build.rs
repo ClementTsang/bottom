@@ -23,7 +23,7 @@ fn create_dir(dir: &Path) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    if env::var_os("GENERATE").is_some() {
+    if env::var_os("BTM_GENERATE_COMPLETIONS").is_some() {
         // OUT_DIR is where extra build files are written to for Cargo.
         let completion_out_dir = PathBuf::from("completion");
         let manpage_out_dir = PathBuf::from("manpage");
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
 
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=./src/clap.rs");
-    println!("cargo:rerun-if-env-changed=GENERATE");
+    println!("cargo:rerun-if-env-changed=BTM_GENERATE_COMPLETIONS");
 
     Ok(())
 }

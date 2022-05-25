@@ -163,7 +163,7 @@ jobs:
           use-cross: ${{ matrix.triple.cross }}
         env:
           RUST_BACKTRACE: 1
-          GENERATE: true
+          BTM_GENERATE_COMPLETIONS: true
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
@@ -350,7 +350,7 @@ jobs:
           use-cross: ${{ matrix.triple.cross }}
         env:
           RUST_BACKTRACE: 1
-          GENERATE: true
+          BTM_GENERATE_COMPLETIONS: true
 
       - name: Move target build file to expected location
         shell: bash
