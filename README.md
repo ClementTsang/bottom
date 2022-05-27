@@ -27,7 +27,7 @@
 - [Installation](#installation)
   - [Cargo](#cargo)
   - [Arch Linux](#arch-linux)
-  - [Debian/Ubuntu (x86-64)](#debianubuntu-x86-64)
+  - [Debian/Ubuntu](#debianubuntu)
   - [Snap](#snap)
   - [Fedora/CentOS](#fedoracentos)
   - [Gentoo](#gentoo)
@@ -126,14 +126,20 @@ There is an official package that can be installed with `pacman`:
 sudo pacman -Syu bottom
 ```
 
-### Debian/Ubuntu (x86-64)
+### Debian/Ubuntu
 
-A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest):
+<!-- FIXME: Update this when bumping version, as the format has changed. -->
+
+A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest) (currently only for x86-64):
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0.6.8_amd64.deb
 sudo dpkg -i bottom_0.6.8_amd64.deb
 ```
+
+For ARM (aarch64 and armv7), for now, releases are currently only provided on
+[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly), but will be provided alongside the
+x86-64 builds in future releases.
 
 ### Snap
 

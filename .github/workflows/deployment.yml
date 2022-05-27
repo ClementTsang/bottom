@@ -54,6 +54,7 @@ jobs:
     container: ${{ matrix.triple.container }}
     env:
       RUST_BACKTRACE: 1
+      BTM_GENERATE: true
     strategy:
       fail-fast: false
       matrix:
@@ -161,11 +162,6 @@ jobs:
           command: build
           args: --release --verbose --locked --target=${{ matrix.triple.target }} --features deploy
           use-cross: ${{ matrix.triple.cross }}
-
-      - name: Build autocompletion and manpage
-        shell: bash
-        run: |
-          GENERATE=true cargo build
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
@@ -289,6 +285,7 @@ jobs:
     runs-on: "ubuntu-18.04"
     env:
       RUST_BACKTRACE: 1
+      BTM_GENERATE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -329,10 +326,9 @@ jobs:
           command: build
           args: --release --locked --verbose --features deploy
 
-      - name: Build autocompletion and manpage
+      - name: Zip manpage
         shell: bash
         run: |
-          GENERATE=true cargo build
           gzip ./manpage/btm.1
 
       - name: Build Debian release
