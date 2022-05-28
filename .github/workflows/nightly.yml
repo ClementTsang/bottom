@@ -328,8 +328,6 @@ jobs:
           target: ${{ matrix.tuple.target }}
 
       - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
-        with:
-          key: ${{ matrix.tuple.target }}-deb
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -348,16 +346,14 @@ jobs:
         run: |
           cargo install cargo-deb --version 1.38.0 --locked
           cargo deb --no-build --target ${{ matrix.tuple.target }}
+          cp ./target/${{ matrix.tuple.target }}/debian/bottom_*.deb ./bottom_${{ matrix.tuple.target }}.deb
 
       - name: Build Debian release (ARM)
         if: matrix.tuple.cross == true
         run: |
           docker pull ${{ matrix.tuple.container }}
-          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.tuple.container }} "--no-build --target ${{ matrix.tuple.target }}" "/volume"
-
-      - name: Move Debian release file
-        run: |
-          cp ./target/${{ matrix.tuple.target }}/debian/bottom_*.deb ./bottom_${{ matrix.tuple.target }}.deb
+          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.tuple.container }} "--variant ${{ matrix.tuple.dpkg }} --target ${{ matrix.tuple.target }} --no-build" "/volume"
+          cp ./target/${{ matrix.tuple.target }}/debian/bottom-*.deb ./bottom_${{ matrix.tuple.target }}.deb
 
       - name: Test Debian release
         run: |
