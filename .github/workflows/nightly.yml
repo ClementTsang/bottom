@@ -337,7 +337,6 @@ jobs:
           use-cross: ${{ matrix.tuple.cross }}
 
       - name: Zip manpage
-        shell: bash
         run: |
           gzip ./manpage/btm.1
 
@@ -359,6 +358,11 @@ jobs:
         run: |
           dpkg -I ./bottom_${{ matrix.tuple.target }}.deb
           dpkg -I ./bottom_${{ matrix.tuple.target }}.deb | grep ${{ matrix.tuple.dpkg }} && echo "Found correct architecture"
+
+      - name: Delete generated Debian folder
+        run: |
+          sudo chown $USER ./target/${{ matrix.tuple.target }}/debian/ 2>/dev/null || true
+          rm -r ./target/${{ matrix.tuple.target }}/debian/
 
       - name: Create release directory for artifact, move file
         shell: bash
