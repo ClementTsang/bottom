@@ -115,9 +115,15 @@ extended-description = """\
 A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
 
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml.
-If one is not specified it will fall back to defaults.  If a config file does not
+If one is not specified it will fall back to defaults. If a config file does not
 exist at the specified or default location, a blank one will be created for the user.
 """
+
+[package.metadata.deb.variants.arm64]
+depends = "libc6:arm64 (>= 2.28)"
+
+[package.metadata.deb.variants.armhf]
+depends = "libc6:armhf (>= 2.28)"
 
 [package.metadata.wix]
 output = "bottom_x86_64_installer.msi"

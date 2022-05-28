@@ -54,6 +54,7 @@ jobs:
     container: ${{ matrix.triple.container }}
     env:
       RUST_BACKTRACE: 1
+      BTM_GENERATE: true
     strategy:
       fail-fast: false
       matrix:
@@ -161,11 +162,6 @@ jobs:
           command: build
           args: --release --verbose --locked --target=${{ matrix.triple.target }} --features deploy
           use-cross: ${{ matrix.triple.cross }}
-
-      - name: Build autocompletion and manpage
-        shell: bash
-        run: |
-          GENERATE=true cargo build
 
       - name: Bundle release and completion (Windows)
         if: matrix.triple.os == 'windows-2019'
@@ -287,8 +283,26 @@ jobs:
     name: build-deb
     needs: [initialize-release-job]
     runs-on: "ubuntu-18.04"
+    strategy:
+      fail-fast: false
+      matrix:
+        tuple:
+          - { target: "x86_64-unknown-linux-gnu", cross: false, dpkg: amd64 }
+          - {
+              target: "aarch64-unknown-linux-gnu",
+              cross: true,
+              dpkg: arm64,
+              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
+            }
+          - {
+              target: "armv7-unknown-linux-gnueabihf",
+              cross: true,
+              dpkg: armhf,
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+            }
     env:
       RUST_BACKTRACE: 1
+      BTM_GENERATE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -317,38 +331,46 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          target: x86_64-unknown-linux-gnu
+          target: ${{ matrix.tuple.target }}
 
       - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
-        with:
-          key: x86_64-unknown-linux-gnu-deb
 
       - name: Build
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --locked --verbose --features deploy
+          args: --release --locked --verbose --features deploy --target ${{ matrix.tuple.target }}
+          use-cross: ${{ matrix.tuple.cross }}
 
-      - name: Build autocompletion and manpage
+      - name: Zip manpage
         shell: bash
         run: |
-          GENERATE=true cargo build
           gzip ./manpage/btm.1
 
-      - name: Build Debian release
+      - name: Build Debian release (x86-64)
+        if: matrix.tuple.cross == false
         run: |
-          cargo install cargo-deb --version 1.37.0 --locked
-          cargo deb --no-build
-          cp ./target/debian/bottom_*.deb ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+          cargo install cargo-deb --version 1.38.0 --locked
+          cargo deb --no-build --target ${{ matrix.tuple.target }}
+          cp ./target/${{ matrix.tuple.target }}/debian/bottom_*.deb ./bottom_${{ matrix.tuple.target }}.deb
+
+      - name: Build Debian release (ARM)
+        if: matrix.tuple.cross == true
+        run: |
+          docker pull ${{ matrix.tuple.container }}
+          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.tuple.container }} "--variant ${{ matrix.tuple.dpkg }} --target ${{ matrix.tuple.target }} --no-build" "/volume"
+          cp ./target/${{ matrix.tuple.target }}/debian/bottom-*.deb ./bottom_${{ matrix.tuple.target }}.deb
 
       - name: Test Debian release
-        run: sudo dpkg -i ./bottom_${{ env.RELEASE_VERSION }}_amd64.deb
+        run: |
+          dpkg -I ./bottom_${{ matrix.tuple.target }}.deb
+          dpkg -I ./bottom_${{ matrix.tuple.target }}.deb | grep ${{ matrix.tuple.dpkg }} && echo "Found correct architecture"
 
       - name: Create release directory for artifact, move file
         shell: bash
         run: |
           mkdir release
-          mv bottom_${{ env.RELEASE_VERSION }}_amd64.deb release/
+          mv bottom_${{ matrix.tuple.target }}.deb release/
 
       - name: Save release as artifact
         uses: actions/upload-artifact@v2
