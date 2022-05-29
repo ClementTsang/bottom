@@ -137,9 +137,7 @@ curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0
 sudo dpkg -i bottom_0.6.8_amd64.deb
 ```
 
-For ARM (aarch64 and armv7), for now, releases are currently only provided on
-[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly), but will be provided alongside the
-x86-64 builds in future releases.
+For ARM (aarch64 and armv7), `.deb` builds are currently available for the 0.6.8 release and [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly).
 
 ### Snap
 
