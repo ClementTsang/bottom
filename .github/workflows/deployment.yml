@@ -53,7 +53,7 @@ jobs:
 
   generate-choco:
     needs: [build-release]
-    name: "Generate chocolatey files"
+    name: "Generate Chocolatey files"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -61,10 +61,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v2
-
       - name: Get release version
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: release-version
           path: release-version
@@ -80,7 +78,7 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: release
           path: release
