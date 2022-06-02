@@ -112,12 +112,19 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install toolchain
+      - name: Set up Rust toolchain
+        if: matrix.info.container == ''
+        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        with:
+          toolchain: stable
+          target: ${{ matrix.info.target }}
+
+      - name: Set up Rust toolchain (non-GitHub container)
+        if: matrix.info.container != ''
         uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
           profile: minimal
           toolchain: stable
-          override: true
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
@@ -197,12 +204,10 @@ jobs:
         with:
           args: install -y wixtoolset
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
         with:
-          profile: minimal
           toolchain: stable
-          override: true
           target: x86_64-pc-windows-msvc
 
       - name: Enable Rust cache
@@ -259,15 +264,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
         with:
-          profile: minimal
           toolchain: stable
-          override: true
           target: ${{ matrix.info.target }}
 
-      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
 
       - name: Build
         uses: actions-rs/cargo@v1
