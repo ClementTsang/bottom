@@ -106,7 +106,7 @@ jobs:
     needs: [generate-choco, build-release]
     steps:
       - name: Get release version
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: release-version
           path: release-version
@@ -122,7 +122,7 @@ jobs:
           echo "Release version: ${{ env.RELEASE_VERSION }}"
 
       - name: Get release artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: release
           path: release
