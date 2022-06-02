@@ -224,7 +224,8 @@ jobs:
           paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - name: Setup Rust toolchain
@@ -234,7 +235,8 @@ jobs:
           toolchain: stable
           target: ${{ matrix.triple.target }}
 
-      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
