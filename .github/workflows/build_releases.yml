@@ -1,0 +1,321 @@
+# Builds the following releases:
+# - Binary releases
+# - Debian releases (.deb)
+# - MSI installer
+
+name: "Build Releases"
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  build-binaries:
+    name: "Build binaries"
+    runs-on: ${{ matrix.info.os }}
+    container: ${{ matrix.info.container }}
+    env:
+      RUST_BACKTRACE: 1
+      BTM_GENERATE: true
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          # ======= Supported targets =======
+          # Linux (x64, x86, aarch64)
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+              container: quay.io/pypa/manylinux2014_x86_64,
+              suffix: "2-17",
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "i686-unknown-linux-gnu",
+              cross: true,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "x86_64-unknown-linux-musl",
+              cross: false,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "i686-unknown-linux-musl",
+              cross: true,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "aarch64-unknown-linux-gnu",
+              cross: true,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "aarch64-unknown-linux-musl",
+              cross: true,
+            }
+
+          # macOS (x64)
+          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+
+          # Windows (x64, x86)
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+            }
+          - { os: "windows-2019", target: "i686-pc-windows-msvc", cross: false }
+          - {
+              os: "windows-2019",
+              target: "x86_64-pc-windows-gnu",
+              cross: false,
+            }
+
+          # ======= Unsupported targets =======
+          # armv7
+          - {
+              os: "ubuntu-18.04",
+              target: "armv7-unknown-linux-gnueabihf",
+              cross: true,
+            }
+          - {
+              os: "ubuntu-18.04",
+              target: "armv7-unknown-linux-musleabihf",
+              cross: true,
+            }
+
+          # PowerPC 64 LE
+          - {
+              os: "ubuntu-18.04",
+              target: "powerpc64le-unknown-linux-gnu",
+              cross: true,
+            }
+
+          # Risc-V 64gc
+          - {
+              os: "ubuntu-18.04",
+              target: "riscv64gc-unknown-linux-gnu",
+              cross: true,
+            }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: ${{ matrix.info.target }}
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        with:
+          key: ${{ matrix.info.target }}
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
+          use-cross: ${{ matrix.info.cross }}
+
+      - name: Bundle release and completion (Windows)
+        if: matrix.info.os == 'windows-2019'
+        shell: bash
+        run: |
+          cp target/${{ matrix.info.target }}/release/btm.exe btm.exe
+          7z a bottom_${{ matrix.info.target }}.zip "btm.exe"
+          7z a bottom_${{ matrix.info.target }}.zip "completion"
+          echo "ASSET=bottom_${{ matrix.info.target }}.zip" >> $GITHUB_ENV
+
+      - name: Bundle release and completion (Linux and macOS)
+        if: matrix.info.os != 'windows-2019'
+        shell: bash
+        run: |
+          cp target/${{ matrix.info.target }}/release/btm ./btm
+          tar -czvf bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz btm completion
+          echo "ASSET=bottom_${{ matrix.info.target }}${{ matrix.info.suffix }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv ${{ env.ASSET }} release/
+
+      - name: Compress completion files (Linux x86-64 GNU)
+        if: matrix.info.target == 'x86_64-unknown-linux-gnu' && matrix.info.container == ''
+        shell: bash
+        run: |
+          tar -C ./completion -czvf completion.tar.gz .
+          mv completion.tar.gz release/
+
+      - name: Compress manpage files (Linux x86-64 GNU)
+        if: matrix.info.target == 'x86_64-unknown-linux-gnu' && matrix.info.container == ''
+        shell: bash
+        run: |
+          gzip ./manpage/btm.1
+          tar -C ./manpage -czvf manpage.tar.gz .
+          mv manpage.tar.gz release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 3
+          name: release
+          path: release
+
+  build-msi:
+    name: "Build MSI installer"
+    runs-on: "windows-2019"
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Install Net-Framework-Core
+        shell: powershell
+        run: Install-WindowsFeature Net-Framework-Core
+
+      - name: Install wixtoolset
+        uses: crazy-max/ghaction-chocolatey@87d06bbbd2cfb1835f1820042d356aef4875fb5f # 1.6.0
+        with:
+          args: install -y wixtoolset
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: x86_64-pc-windows-msvc
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        with:
+          key: x86_64-pc-windows-msvc-msi
+
+      - name: Build MSI file
+        shell: powershell
+        run: |
+          cargo install cargo-wix --version 0.3.1 --locked
+          cargo wix init
+          cargo wix
+
+      - name: Create release directory for artifact, move files
+        shell: bash
+        run: |
+          mkdir release
+          mv bottom_x86_64_installer.msi release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 3
+          name: release
+          path: release
+
+  build-deb:
+    name: "Build Debian installers"
+    runs-on: "ubuntu-18.04"
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - { target: "x86_64-unknown-linux-gnu", cross: false, dpkg: amd64 }
+          - {
+              target: "aarch64-unknown-linux-gnu",
+              cross: true,
+              dpkg: arm64,
+              container: "ghcr.io/clementtsang/cargo-deb-aarch64-unknown-linux-gnu",
+            }
+          - {
+              target: "armv7-unknown-linux-gnueabihf",
+              cross: true,
+              dpkg: armhf,
+              container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
+            }
+    env:
+      RUST_BACKTRACE: 1
+      BTM_GENERATE: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: ${{ matrix.info.target }}
+
+      - uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
+          use-cross: ${{ matrix.info.cross }}
+
+      - name: Zip manpage
+        run: |
+          gzip ./manpage/btm.1
+
+      - name: Build Debian release (x86-64)
+        if: matrix.info.cross == false
+        run: |
+          cargo install cargo-deb --version 1.38.0 --locked
+          cargo deb --no-build --target ${{ matrix.info.target }}
+          cp ./target/${{ matrix.info.target }}/debian/bottom_*.deb ./bottom_${{ matrix.info.target }}.deb
+
+      - name: Build Debian release (ARM)
+        if: matrix.info.cross == true
+        run: |
+          docker pull ${{ matrix.info.container }}
+          docker run -t --rm --mount type=bind,source="$(pwd)",target=/volume ${{ matrix.info.container }} "--variant ${{ matrix.info.dpkg }} --target ${{ matrix.info.target }} --no-build" "/volume"
+          cp ./target/${{ matrix.info.target }}/debian/bottom-*.deb ./bottom_${{ matrix.info.target }}.deb
+
+      - name: Test Debian release
+        run: |
+          dpkg -I ./bottom_${{ matrix.info.target }}.deb
+          dpkg -I ./bottom_${{ matrix.info.target }}.deb | grep ${{ matrix.info.dpkg }} && echo "Found correct architecture"
+
+      - name: Delete generated Debian folder
+        run: |
+          sudo chown $USER ./target/${{ matrix.info.target }}/debian/ 2>/dev/null || true
+          rm -r ./target/${{ matrix.info.target }}/debian/
+
+      - name: Create release directory for artifact, move file
+        shell: bash
+        run: |
+          mkdir release
+          mv bottom_${{ matrix.info.target }}.deb release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 3
+          name: release
+          path: release
