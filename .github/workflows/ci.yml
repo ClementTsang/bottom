@@ -64,7 +64,7 @@ jobs:
           paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - name: Setup Rust toolchain
@@ -225,7 +225,7 @@ jobs:
           paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
 
       - name: Install toolchain

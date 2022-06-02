@@ -108,7 +108,7 @@ jobs:
             }
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
@@ -184,12 +184,9 @@ jobs:
       RUST_BACKTRACE: 1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
 
       - name: Install Net-Framework-Core
         shell: powershell
@@ -258,7 +255,7 @@ jobs:
       BTM_GENERATE: true
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 

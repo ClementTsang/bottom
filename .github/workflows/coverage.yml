@@ -31,7 +31,7 @@ jobs:
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
         with:
