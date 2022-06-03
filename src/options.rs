@@ -12,7 +12,7 @@ use std::{
 use crate::{
     app::{
         layout_manager::*,
-        widgets::{ProcWidget, ProcWidgetMode},
+        widgets::{ProcWidget, ProcWidgetMode, TempWidgetState, DiskWidgetState},
         *,
     },
     canvas::ColourScheme,
