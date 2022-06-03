@@ -2,11 +2,8 @@ use std::borrow::Cow;
 
 use crate::{
     app::App,
-    canvas::{
-        components::{GraphData, TimeGraph},
-        drawing_utils::should_hide_x_label,
-        Painter,
-    },
+    canvas::{drawing_utils::should_hide_x_label, Painter},
+    components::time_graph::{GraphData, TimeGraph},
 };
 
 use tui::{

@@ -44,6 +44,7 @@ pub mod utils {
 }
 pub mod canvas;
 pub mod clap;
+pub mod components;
 pub mod constants;
 pub mod data_conversion;
 pub mod options;

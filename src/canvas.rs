@@ -23,10 +23,7 @@ use crate::{
     utils::error::BottomError,
 };
 
-pub use self::components::Point;
-
 mod canvas_colours;
-mod components;
 mod dialogs;
 mod drawing_utils;
 mod widgets;

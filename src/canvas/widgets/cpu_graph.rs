@@ -1,11 +1,11 @@
 use std::{borrow::Cow, iter};
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App, CellContent, CpuWidgetState},
-    canvas::{
-        components::{GraphData, TextTable, TimeGraph},
-        drawing_utils::should_hide_x_label,
-        Painter,
+    app::{layout_manager::WidgetDirection, App, CpuWidgetState},
+    canvas::{drawing_utils::should_hide_x_label, Painter},
+    components::{
+        text_table::{CellContent, TextTable},
+        time_graph::{GraphData, TimeGraph},
     },
     data_conversion::{ConvertedCpuData, TableData, TableRow},
 };

@@ -4,11 +4,9 @@ use unicode_segmentation::GraphemeCursor;
 
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
+    components::text_table::{CellContent, TableComponentColumn, TableComponentState, WidthBounds},
     constants,
 };
-
-pub mod table_state;
-pub use table_state::*;
 
 use super::widgets::{DiskWidgetState, ProcWidget, TempWidgetState};
 

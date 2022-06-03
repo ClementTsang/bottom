@@ -1,4 +1,6 @@
-use crate::app::{TableComponentState, WidthBounds, CellContent, TableComponentColumn};
+use crate::components::text_table::{
+    CellContent, TableComponentColumn, TableComponentState, WidthBounds,
+};
 
 pub struct DiskWidgetState {
     pub table_state: TableComponentState,
