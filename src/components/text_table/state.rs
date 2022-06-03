@@ -3,7 +3,7 @@ use std::{borrow::Cow, convert::TryInto, ops::Range};
 use itertools::Itertools;
 use tui::{layout::Rect, widgets::TableState};
 
-use super::ScrollDirection;
+use crate::app::ScrollDirection;
 
 /// A bound on the width of a column.
 #[derive(Clone, Copy, Debug)]

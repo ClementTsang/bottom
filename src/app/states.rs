@@ -4,13 +4,11 @@ use unicode_segmentation::GraphemeCursor;
 
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
+    components::text_table::{CellContent, TableComponentColumn, TableComponentState, WidthBounds},
     constants,
 };
 
-pub mod table_state;
-pub use table_state::*;
-
-use super::widgets::ProcWidget;
+use super::widgets::{DiskWidgetState, ProcWidget, TempWidgetState};
 
 #[derive(Debug)]
 pub enum ScrollDirection {
@@ -277,32 +275,6 @@ impl MemState {
     }
 }
 
-pub struct TempWidgetState {
-    pub table_state: TableComponentState,
-}
-
-impl Default for TempWidgetState {
-    fn default() -> Self {
-        const TEMP_HEADERS: [&str; 2] = ["Sensor", "Temp"];
-        const WIDTHS: [WidthBounds; TEMP_HEADERS.len()] = [
-            WidthBounds::soft_from_str(TEMP_HEADERS[0], Some(0.8)),
-            WidthBounds::soft_from_str(TEMP_HEADERS[1], None),
-        ];
-
-        TempWidgetState {
-            table_state: TableComponentState::new(
-                TEMP_HEADERS
-                    .iter()
-                    .zip(WIDTHS)
-                    .map(|(header, width)| {
-                        TableComponentColumn::new_custom(CellContent::new(*header, None), width)
-                    })
-                    .collect(),
-            ),
-        }
-    }
-}
-
 pub struct TempState {
     pub widget_states: HashMap<u64, TempWidgetState>,
 }
@@ -318,37 +290,6 @@ impl TempState {
 
     pub fn get_widget_state(&self, widget_id: u64) -> Option<&TempWidgetState> {
         self.widget_states.get(&widget_id)
-    }
-}
-
-pub struct DiskWidgetState {
-    pub table_state: TableComponentState,
-}
-
-impl Default for DiskWidgetState {
-    fn default() -> Self {
-        const DISK_HEADERS: [&str; 7] = ["Disk", "Mount", "Used", "Free", "Total", "R/s", "W/s"];
-        const WIDTHS: [WidthBounds; DISK_HEADERS.len()] = [
-            WidthBounds::soft_from_str(DISK_HEADERS[0], Some(0.2)),
-            WidthBounds::soft_from_str(DISK_HEADERS[1], Some(0.2)),
-            WidthBounds::Hard(4),
-            WidthBounds::Hard(6),
-            WidthBounds::Hard(6),
-            WidthBounds::Hard(7),
-            WidthBounds::Hard(7),
-        ];
-
-        DiskWidgetState {
-            table_state: TableComponentState::new(
-                DISK_HEADERS
-                    .iter()
-                    .zip(WIDTHS)
-                    .map(|(header, width)| {
-                        TableComponentColumn::new_custom(CellContent::new(*header, None), width)
-                    })
-                    .collect(),
-            ),
-        }
     }
 }
 

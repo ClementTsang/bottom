@@ -3,8 +3,11 @@ use crate::{
         data_farmer::{DataCollection, ProcessData, StringPidMap},
         data_harvester::processes::ProcessHarvest,
         query::*,
-        AppSearchState, CellContent, ScrollDirection, SortOrder, SortState, SortableState,
-        TableComponentColumn, TableComponentHeader, TableComponentState, WidthBounds,
+        AppSearchState, ScrollDirection, SortState,
+    },
+    components::text_table::{
+        CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentHeader,
+        TableComponentState, WidthBounds,
     },
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, TableData, TableRow},
     utils::gen_util::sort_partial_fn,

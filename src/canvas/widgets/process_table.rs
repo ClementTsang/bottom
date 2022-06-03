@@ -1,10 +1,7 @@
 use crate::{
     app::App,
-    canvas::{
-        components::{TextTable, TextTableTitle},
-        drawing_utils::get_search_start_position,
-        Painter,
-    },
+    canvas::{drawing_utils::get_search_start_position, Painter},
+    components::text_table::{TextTable, TextTableTitle},
     constants::*,
     data_conversion::{TableData, TableRow},
 };

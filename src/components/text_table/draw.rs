@@ -15,12 +15,15 @@ use tui::{
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
-    app::{
-        self, layout_manager::BottomWidget, CellContent, SortState, TableComponentColumn,
-        TableComponentHeader, TableComponentState, WidthBounds,
-    },
+    app::{self, layout_manager::BottomWidget},
+    components::text_table::SortOrder,
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
     data_conversion::{TableData, TableRow},
+};
+
+use super::{
+    CellContent, SortState, TableComponentColumn, TableComponentHeader, TableComponentState,
+    WidthBounds,
 };
 
 pub struct TextTableTitle<'a> {
@@ -301,8 +304,8 @@ fn build_header<'a, H: TableComponentHeader>(
             let index = s.current_index;
 
             let arrow = match order {
-                app::SortOrder::Ascending => UP_ARROW,
-                app::SortOrder::Descending => DOWN_ARROW,
+                SortOrder::Ascending => UP_ARROW,
+                SortOrder::Descending => DOWN_ARROW,
             };
 
             Either::Right(columns.iter().enumerate().filter_map(move |(itx, c)| {

@@ -16,6 +16,7 @@ use layout_manager::*;
 pub use states::*;
 
 use crate::{
+    components::text_table::SortState,
     constants,
     data_conversion::ConvertedData,
     options::Config,

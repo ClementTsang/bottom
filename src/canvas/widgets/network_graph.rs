@@ -1,10 +1,7 @@
 use crate::{
     app::{App, AxisScaling},
-    canvas::{
-        components::{GraphData, TimeGraph},
-        drawing_utils::should_hide_x_label,
-        Painter, Point,
-    },
+    canvas::{drawing_utils::should_hide_x_label, Painter},
+    components::time_graph::{GraphData, Point, TimeGraph},
     units::data_units::DataUnit,
     utils::gen_util::*,
 };

@@ -13,7 +13,7 @@ use tui::{
 use concat_string::concat_string;
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::{Axis, Dataset, TimeChart};
+use super::tui_widget::time_chart::{Axis, Dataset, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
 
 /// A single graph point.
 pub type Point = (f64, f64);
@@ -156,7 +156,7 @@ impl<'a> TimeGraph<'a> {
                 .legend_style(self.graph_style)
                 .hidden_legend_constraints(
                     self.legend_constraints
-                        .unwrap_or(super::DEFAULT_LEGEND_CONSTRAINTS),
+                        .unwrap_or(DEFAULT_LEGEND_CONSTRAINTS),
                 ),
             draw_loc,
         )
@@ -194,7 +194,7 @@ mod test {
         text::{Span, Spans},
     };
 
-    use crate::canvas::components::Axis;
+    use crate::components::tui_widget::time_chart::Axis;
 
     use super::TimeGraph;
 
@@ -251,17 +251,17 @@ mod test {
 
     #[test]
     fn time_graph_gen_title() {
-        let mut tg = create_time_graph();
+        let mut time_graph = create_time_graph();
         let draw_loc = Rect::new(0, 0, 32, 100);
 
-        let title = tg.generate_title(draw_loc);
+        let title = time_graph.generate_title(draw_loc);
         assert_eq!(
             title,
             Spans::from(Span::styled(" Network ", Style::default().fg(Color::Cyan)))
         );
 
-        tg.is_expanded = true;
-        let title = tg.generate_title(draw_loc);
+        time_graph.is_expanded = true;
+        let title = time_graph.generate_title(draw_loc);
         assert_eq!(
             title,
             Spans::from(vec![

@@ -1,8 +1,8 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
-use crate::app::CellContent;
-use crate::canvas::Point;
+use crate::components::text_table::CellContent;
+use crate::components::time_graph::Point;
 use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 use crate::{
     app::{data_farmer, data_harvester, App},

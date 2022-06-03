@@ -2,10 +2,8 @@ use tui::{backend::Backend, layout::Rect, terminal::Frame};
 
 use crate::{
     app,
-    canvas::{
-        components::{TextTable, TextTableTitle},
-        Painter,
-    },
+    canvas::Painter,
+    components::text_table::{TextTable, TextTableTitle},
 };
 
 impl Painter {
