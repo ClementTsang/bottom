@@ -8,6 +8,8 @@ assignees: ""
 
 Before you report, please take a look at [Troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting) to see if there's already an answer to your problem. Also check out [existing issues](https://github.com/ClementTsang/bottom/issues) and [known problems](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems) to see if your problem is already reported/known/fixed.
 
+If you just have a question, or want to troubleshoot something that you don't think is a bug, feel free to [open a discussion](https://github.com/ClementTsang/bottom/discussions/new).
+
 Also, **please fill in all fields if possible** - if the issue is too hard to reproduce or vague, it may not be fixed!
 
 ## Describe the bug

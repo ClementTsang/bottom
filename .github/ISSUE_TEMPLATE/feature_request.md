@@ -13,3 +13,4 @@ Try to be clear and concise - more details are usually helpful, but don't ramble
 
 Also try to see if this feature already exists first [in the documentation](https://clementtsang.github.io/bottom/nightly/),
 or if there's already an issue opened that covers this specific feature.
+

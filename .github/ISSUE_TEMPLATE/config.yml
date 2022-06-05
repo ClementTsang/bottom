@@ -1,6 +1,6 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Ask a question
+  - name: Open a discussion
     about: |
-      For discussions or questions about bottom.
+      Got a question about using bottom? Need help troubleshooting something? Or maybe just talk about something related to bottom? Feel free to open a discussion!
     url: https://github.com/ClementTsang/bottom/discussions/new
