@@ -1,11 +1,17 @@
-use std::cmp::{max, min};
+pub mod draw_info;
+pub use draw_info::{DrawInfo, SelectionState};
+
+use std::{
+    borrow::Cow,
+    cmp::{max, min},
+};
 
 use concat_string::concat_string;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
-    text::{Span, Spans},
-    widgets::{Block, Borders, Table},
+    text::{Span, Spans, Text},
+    widgets::{Block, Borders, Row, Table},
     Frame,
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -15,17 +21,16 @@ use crate::{
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
 };
 
-use super::{
-    draw_info::{DrawInfo, SelectionState},
-    ColumnWidthBounds, DataTable, Headers, MaxColWidth, ScrollDirection, Start, ToDataRow,
-};
+use super::{ColumnWidthBounds, DataColumn, DataTable, MaxColWidth, ScrollDirection, ToDataRow};
 
 // For now, the implementation lives here as just a basic impl. Ideally, I change this to a trait impl
 // on some Draw trait in the future.
-impl<RowType: ToDataRow> DataTable<RowType, Start> {
+impl<RowType: ToDataRow> DataTable<RowType> {
     /// Generates a title for the [`TextTable`] widget, given the available space.
-    fn generate_title(&self, draw_info: &DrawInfo, pos: usize, total: usize) -> Option<Spans<'_>> {
-        self.title.as_ref().map(|title| {
+    fn generate_title<'a>(
+        &self, draw_info: &'a DrawInfo, pos: usize, total: usize,
+    ) -> Option<Spans<'a>> {
+        self.props.title.as_ref().map(|title| {
             let draw_loc = draw_info.loc;
             let (title_style, border_style) = if draw_info.is_on_widget() {
                 (
@@ -36,7 +41,7 @@ impl<RowType: ToDataRow> DataTable<RowType, Start> {
                 (self.styling.text_style, self.styling.border_style)
             };
 
-            let title = if self.show_table_scroll_position {
+            let title = if self.props.show_table_scroll_position {
                 let title_string =
                     concat_string!(title, "(", pos.to_string(), " of ", total.to_string(), ") ");
 
@@ -68,18 +73,7 @@ impl<RowType: ToDataRow> DataTable<RowType, Start> {
         })
     }
 
-    pub fn init<B: Backend>(
-        &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, data: &[RowType],
-        widget: Option<&mut BottomWidget>,
-    ) {
-        let draw_horizontal = !self.is_basic || draw_info.is_on_widget();
-        let draw_loc = draw_info.loc;
-        let margined_draw_loc = Layout::default()
-            .constraints([Constraint::Percentage(100)])
-            .horizontal_margin(if draw_horizontal { 0 } else { 1 })
-            .direction(Direction::Horizontal)
-            .split(draw_loc)[0];
-
+    fn block<'a>(&self, draw_info: &'a DrawInfo, data_len: usize) -> Block<'a> {
         let border_style = match draw_info.selection_state {
             SelectionState::NotSelected => self.styling.border_style,
             SelectionState::Selected | SelectionState::Expanded => {
@@ -87,15 +81,15 @@ impl<RowType: ToDataRow> DataTable<RowType, Start> {
             }
         };
 
-        let block = if !self.is_basic {
+        if !self.props.is_basic {
             let block = Block::default()
                 .borders(Borders::ALL)
                 .border_style(border_style);
 
             if let Some(title) = self.generate_title(
                 draw_info,
-                self.current_scroll_position.saturating_add(1),
-                data.len(),
+                self.state.current_scroll_position.saturating_add(1),
+                data_len,
             ) {
                 block.title(title)
             } else {
@@ -108,10 +102,27 @@ impl<RowType: ToDataRow> DataTable<RowType, Start> {
                 .border_style(border_style)
         } else {
             Block::default().borders(Borders::NONE)
-        };
+        }
+    }
 
-        let inner_rect = block.inner(margined_draw_loc);
-        let (inner_width, inner_height) = (inner_rect.width, inner_rect.height);
+    pub fn init<B: Backend>(
+        &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, data: &[RowType],
+        widget: Option<&mut BottomWidget>,
+    ) {
+        let draw_horizontal = !self.props.is_basic || draw_info.is_on_widget();
+        let draw_loc = draw_info.loc;
+        let margined_draw_loc = Layout::default()
+            .constraints([Constraint::Percentage(100)])
+            .horizontal_margin(if draw_horizontal { 0 } else { 1 })
+            .direction(Direction::Horizontal)
+            .split(draw_loc)[0];
+
+        let block = self.block(draw_info, data.len());
+
+        let (inner_width, inner_height) = {
+            let inner_rect = block.inner(margined_draw_loc);
+            (inner_rect.width, inner_rect.height)
+        };
 
         if inner_width == 0 || inner_height == 0 {
             f.render_widget(block, margined_draw_loc);
@@ -121,25 +132,24 @@ impl<RowType: ToDataRow> DataTable<RowType, Start> {
             let table_gap = if !show_header || draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {
-                self.table_gap
+                self.props.table_gap
             };
+
             let rows = {
                 let num_rows = usize::from(inner_height.saturating_sub(table_gap + header_height));
                 let start = get_start_position(
                     num_rows,
-                    &self.scroll_direction,
-                    &mut self.draw_cache.display_row_start_index,
-                    self.current_scroll_position,
+                    &self.state.scroll_direction,
+                    &mut self.state.display_row_start_index,
+                    self.state.current_scroll_position,
                     draw_info.force_redraw,
                 );
                 let end = min(data.len(), start + num_rows);
-                self.table_state
-                    .select(Some(self.current_scroll_position.saturating_sub(start)));
+                self.state.table_state.select(Some(
+                    self.state.current_scroll_position.saturating_sub(start),
+                ));
 
-                data[start..end]
-                    .iter()
-                    .map(|row| row.to_data_row())
-                    .collect::<Vec<_>>()
+                data[start..end].iter().map(|row| row.to_data_row())
             };
 
             // Calculate widths
@@ -161,7 +171,7 @@ impl<RowType: ToDataRow> DataTable<RowType, Start> {
                         ColumnWidthBounds::Hard(_width) => {}
                     });
 
-                self.calculate_column_widths(inner_width, self.left_to_right);
+                self.calculate_column_widths(inner_width, self.props.left_to_right);
 
                 // Update draw loc in widget map
                 if let Some(widget) = widget {
@@ -171,50 +181,47 @@ impl<RowType: ToDataRow> DataTable<RowType, Start> {
                 }
             }
 
-            // let columns = &self.columns;
-            // let headers = build_header(columns)
-            //     .style(self.styling.header_style)
-            //     .bottom_margin(table_gap);
+            let columns = &self.columns;
+            let headers = build_header(columns)
+                .style(self.styling.header_style)
+                .bottom_margin(table_gap);
 
-            // if !data.is_empty() {
-            //     let widget = {
-            //         let mut table = Table::new(rows)
-            //             .block(block)
-            //             .highlight_style(self.styling.highlighted_text_style)
-            //             .style(self.styling.text_style);
+            if !data.is_empty() {
+                let widget = {
+                    let mut table = Table::new(rows)
+                        .block(block)
+                        .highlight_style(self.styling.highlighted_text_style)
+                        .style(self.styling.text_style);
 
-            //         if show_header {
-            //             table = table.header(headers);
-            //         }
+                    if show_header {
+                        table = table.header(headers);
+                    }
 
-            //         table
-            //     };
+                    table
+                };
 
-            //     f.render_stateful_widget(
-            //         widget.widths(
-            //             &(columns
-            //                 .iter()
-            //                 .filter_map(|c| {
-            //                     if c.calculated_width == 0 {
-            //                         None
-            //                     } else {
-            //                         Some(Constraint::Length(c.calculated_width))
-            //                     }
-            //                 })
-            //                 .collect::<Vec<_>>()),
-            //         ),
-            //         margined_draw_loc,
-            //         &mut self.table_state,
-            //     );
-            // } else {
-            //     f.render_widget(block, margined_draw_loc);
-            // }
+                let table_state = &mut self.state.table_state;
+                f.render_stateful_widget(
+                    widget.widths(
+                        &(columns
+                            .iter()
+                            .filter_map(|c| {
+                                if c.calculated_width == 0 {
+                                    None
+                                } else {
+                                    Some(Constraint::Length(c.calculated_width))
+                                }
+                            })
+                            .collect::<Vec<_>>()),
+                    ),
+                    margined_draw_loc,
+                    table_state,
+                );
+            } else {
+                f.render_widget(block, margined_draw_loc);
+            }
         }
     }
-}
-
-impl<RowType: ToDataRow> DataTable<RowType, Headers> {
-    fn draw() {}
 }
 
 /// Gets the starting position of a table.
@@ -252,5 +259,28 @@ pub fn get_start_position(
             // Else, don't change what our start position is from whatever it is set to!
             *scroll_position_bar
         }
+    }
+}
+
+/// Constructs the table header.
+fn build_header<'a>(columns: &'a [DataColumn]) -> Row<'a> {
+    Row::new(columns.iter().filter_map(|c| {
+        if c.calculated_width == 0 {
+            None
+        } else {
+            Some(truncate_text(&c.header, c.calculated_width.into()))
+        }
+    }))
+}
+
+/// Truncates text if it is too long, and adds an ellipsis at the end if needed.
+fn truncate_text<'a>(content: &'a Cow<'static, str>, width: usize) -> Text<'a> {
+    let graphemes: Vec<&str> = UnicodeSegmentation::graphemes(content.as_ref(), true).collect();
+    if graphemes.len() > width && width > 0 {
+        // Truncate with ellipsis
+        let first_n = graphemes[..(width - 1)].concat();
+        Text::raw(concat_string!(first_n, "…"))
+    } else {
+        Text::raw(content.as_ref())
     }
 }

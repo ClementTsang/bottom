@@ -1,4 +1,4 @@
-use crate::components::data_table::{DataTable, ToDataRow};
+use crate::components::data_table::ToDataRow;
 
 use super::{sortable_column::SortColumn, sorts_row::SortsRow};
 
@@ -14,7 +14,7 @@ where
     ColumnType: SortsRow<Row>,
 {
     /// The backing table itself.
-    pub table: DataTable<Row>,
+    // pub table: DataTable<Row>,
 
     /// The current column index we are sorting with.
     current_sort_index: usize,

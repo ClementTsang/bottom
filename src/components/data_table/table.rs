@@ -1,74 +1,46 @@
-use std::{borrow::Cow, convert::TryInto, marker::PhantomData};
+use std::{convert::TryInto, marker::PhantomData};
 
-use tui::widgets::TableState;
+pub mod data_row;
+pub use data_row::*;
 
-use crate::components::data_table::ColumnWidthBounds;
+pub mod data_column;
+pub use data_column::*;
 
-use super::{DataColumn, ScrollDirection, Styling, ToDataRow};
+pub mod styling;
+pub use styling::*;
 
-pub struct Start;
-pub struct Headers;
+pub mod props;
+pub use props::DataTableProps;
 
-pub trait DrawState {}
-impl DrawState for Start {}
-impl DrawState for Headers {}
-
-pub struct DrawCache {
-    /// The index from where to start displaying the rows.
-    pub display_row_start_index: usize,
-    // /// The draw loc when cached.
-    // pub cached_draw_loc: Rect,
-
-    // /// The scroll index when cached.
-    // pub cached_scroll_index: usize,
-
-    // /// A cached title string.
-    // pub cached_title: Option<Spans<'a>>,
-}
+pub mod state;
+pub use state::{DataTableState, ScrollDirection};
 
 /// A [`DataTable`] is a component that displays data in a tabular form.
 ///
 /// Note that the data is not guaranteed to be sorted, or managed in any way. If a
 /// sortable variant is needed, use a [`SortableDataTable`](crate::components::data_table::SortableDataTable)
 /// instead.
-pub struct DataTable<RowType: ToDataRow, D: DrawState = Start> {
+pub struct DataTable<RowType: ToDataRow> {
     /// The columns of the [`DataTable`].
     pub columns: Vec<DataColumn>,
 
     /// Styling for the [`DataTable`].
     pub styling: Styling,
 
-    /// The current scroll position.
-    pub current_scroll_position: usize,
+    /// Internal state of the [`DataTable`].
+    pub state: DataTableState,
 
-    /// The direction of the last attempted scroll.
-    pub scroll_direction: ScrollDirection,
+    /// Internal properties of a [`DataTable`].
+    pub props: DataTableProps,
 
-    /// tui-rs' internal table state.
-    pub table_state: TableState,
-
-    /// Cached data, used for drawing.
-    pub draw_cache: DrawCache,
-
-    /// The size of the gap between the header and rows.
-    pub table_gap: u16,
-
-    /// Whether this table determines column widths from left to right.
-    pub left_to_right: bool,
-
-    /// Whether this table is a basic table.
-    pub is_basic: bool,
-
-    /// An optional title for the table.
-    pub title: Option<Cow<'static, str>>,
-
-    /// Whether to show the table scroll position.
-    pub show_table_scroll_position: bool,
-
-    _pd: PhantomData<(RowType, D)>,
+    _pd: PhantomData<RowType>,
 }
 
-impl<RowType: ToDataRow, D: DrawState> DataTable<RowType, D> {
+impl<RowType: ToDataRow> DataTable<RowType> {
+    pub fn new() -> Self {
+        todo!()
+    }
+
     /// Calculates widths for the columns of this table, given the current width when called.
     ///
     /// * `total_width` is the, well, total width available.
@@ -186,19 +158,19 @@ impl<RowType: ToDataRow, D: DrawState> DataTable<RowType, D> {
             return None;
         }
 
-        let csp: Result<i64, _> = self.current_scroll_position.try_into();
+        let csp: Result<i64, _> = self.state.current_scroll_position.try_into();
         if let Ok(csp) = csp {
             let proposed: Result<usize, _> = (csp + change).try_into();
             if let Ok(proposed) = proposed {
                 if proposed < num_entries {
-                    self.current_scroll_position = proposed;
+                    self.state.current_scroll_position = proposed;
                     if change < 0 {
-                        self.scroll_direction = ScrollDirection::Up;
+                        self.state.scroll_direction = ScrollDirection::Up;
                     } else {
-                        self.scroll_direction = ScrollDirection::Down;
+                        self.state.scroll_direction = ScrollDirection::Down;
                     }
 
-                    return Some(self.current_scroll_position);
+                    return Some(self.state.current_scroll_position);
                 }
             }
         }
