@@ -445,14 +445,12 @@ impl Painter {
                         f,
                         app_state,
                         rect[0],
-                        true,
                         app_state.current_widget.widget_id,
                     ),
                     Temp => self.draw_temp_table(
                         f,
                         app_state,
                         rect[0],
-                        true,
                         app_state.current_widget.widget_id,
                     ),
                     Net => self.draw_network_graph(
@@ -548,13 +546,9 @@ impl Painter {
                     later_widget_id = Some(widget_id);
                     if vertical_chunks[3].width >= 2 {
                         match basic_table_widget_state.currently_displayed_widget_type {
-                            Disk => self.draw_disk_table(
-                                f,
-                                app_state,
-                                vertical_chunks[3],
-                                false,
-                                widget_id,
-                            ),
+                            Disk => {
+                                self.draw_disk_table(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             Proc | ProcSort => {
                                 let wid = widget_id
                                     - match basic_table_widget_state.currently_displayed_widget_type
@@ -571,13 +565,9 @@ impl Painter {
                                     wid,
                                 );
                             }
-                            Temp => self.draw_temp_table(
-                                f,
-                                app_state,
-                                vertical_chunks[3],
-                                false,
-                                widget_id,
-                            ),
+                            Temp => {
+                                self.draw_temp_table(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             Battery => self.draw_battery_display(
                                 f,
                                 app_state,
@@ -708,12 +698,8 @@ impl Painter {
                     Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
                     Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
                     Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Temp => {
-                        self.draw_temp_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
-                    }
-                    Disk => {
-                        self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
-                    }
+                    Temp => self.draw_temp_table(f, app_state, *widget_draw_loc, widget.widget_id),
+                    Disk => self.draw_disk_table(f, app_state, *widget_draw_loc, widget.widget_id),
                     Proc => self.draw_process_widget(
                         f,
                         app_state,

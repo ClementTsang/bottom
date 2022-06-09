@@ -225,6 +225,7 @@ dependencies = [
  "heim",
  "indexmap",
  "itertools",
+ "kstring",
  "libc",
  "log",
  "mach2",
@@ -905,6 +906,15 @@ name = "itoa"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
+
+[[package]]
+name = "kstring"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec3066350882a1cd6d950d055997f379ac37fd39f81cd4d8ed186032eb3c5747"
+dependencies = [
+ "static_assertions",
+]
 
 [[package]]
 name = "lazy_static"

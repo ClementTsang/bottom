@@ -1,5 +1,6 @@
 use tui::style::Style;
 
+#[derive(Default)]
 pub struct Styling {
     pub header_style: Style,
     pub border_style: Style,

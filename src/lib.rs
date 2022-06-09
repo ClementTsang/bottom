@@ -329,6 +329,17 @@ pub fn update_data(app: &mut App) {
         }
     }
 
+    // FIXME: I should really test that this works, it was broken for a long time.
+    for disk in app.disk_state.widget_states.values_mut() {
+        disk.table
+            .update_num_entries(app.converted_data.disk_data.len());
+    }
+
+    for temp in app.temp_state.widget_states.values_mut() {
+        temp.table
+            .update_num_entries(app.converted_data.temp_data.len());
+    }
+
     if app.cpu_state.force_update.is_some() {
         convert_cpu_data_points(&app.data_collection, &mut app.converted_data.cpu_data);
         app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;

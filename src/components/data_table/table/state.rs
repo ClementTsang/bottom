@@ -28,3 +28,14 @@ pub struct DataTableState {
     /// tui-rs' internal table state.
     pub table_state: TableState,
 }
+
+impl Default for DataTableState {
+    fn default() -> Self {
+        Self {
+            display_row_start_index: 0,
+            current_scroll_position: 0,
+            scroll_direction: ScrollDirection::Down,
+            table_state: TableState::default(),
+        }
+    }
+}

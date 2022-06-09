@@ -1,4 +1,8 @@
-use std::cmp::Ordering;
+use std::{borrow::Cow, cmp::Ordering};
+
+use concat_string::concat_string;
+use tui::text::Text;
+use unicode_segmentation::UnicodeSegmentation;
 
 pub const KILO_LIMIT: u64 = 1000;
 pub const MEGA_LIMIT: u64 = 1_000_000;
@@ -89,6 +93,18 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
         b if b < GIGA_LIMIT => (quantity as f64 / 1_000_000.0, format!("M{}", unit)),
         b if b < TERA_LIMIT => (quantity as f64 / 1_000_000_000.0, format!("G{}", unit)),
         _ => (quantity as f64 / 1_000_000_000_000.0, format!("T{}", unit)),
+    }
+}
+
+/// Truncates text if it is too long, and adds an ellipsis at the end if needed.
+pub fn truncate_text<'a>(content: Cow<'static, str>, width: usize) -> Text<'a> {
+    let graphemes: Vec<&str> = UnicodeSegmentation::graphemes(content.as_ref(), true).collect();
+    if graphemes.len() > width && width > 0 {
+        // Truncate with ellipsis
+        let first_n = graphemes[..(width - 1)].concat();
+        Text::raw(concat_string!(first_n, "…"))
+    } else {
+        Text::raw(content)
     }
 }
 

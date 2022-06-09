@@ -1997,8 +1997,7 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        temp_widget_state.table_state.current_scroll_position = 0;
-                        temp_widget_state.table_state.scroll_direction = ScrollDirection::Up;
+                        temp_widget_state.table.set_scroll_first();
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -2006,8 +2005,7 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        disk_widget_state.table_state.current_scroll_position = 0;
-                        disk_widget_state.table_state.scroll_direction = ScrollDirection::Up;
+                        disk_widget_state.table.set_scroll_first();
                     }
                 }
                 BottomWidgetType::CpuLegend => {
@@ -2058,11 +2056,9 @@ impl App {
                         .temp_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if !self.converted_data.temp_sensor_data.data.is_empty() {
-                            temp_widget_state.table_state.current_scroll_position =
-                                self.converted_data.temp_sensor_data.data.len() - 1;
-                            temp_widget_state.table_state.scroll_direction = ScrollDirection::Down;
-                        }
+                        temp_widget_state
+                            .table
+                            .set_scroll_last(self.converted_data.disk_data.len());
                     }
                 }
                 BottomWidgetType::Disk => {
@@ -2070,10 +2066,10 @@ impl App {
                         .disk_state
                         .get_mut_widget_state(self.current_widget.widget_id)
                     {
-                        if !self.converted_data.disk_data.data.is_empty() {
-                            disk_widget_state.table_state.current_scroll_position =
-                                self.converted_data.disk_data.data.len() - 1;
-                            disk_widget_state.table_state.scroll_direction = ScrollDirection::Down;
+                        if !self.converted_data.disk_data.is_empty() {
+                            disk_widget_state
+                                .table
+                                .set_scroll_last(self.converted_data.disk_data.len());
                         }
                     }
                 }
@@ -2167,10 +2163,9 @@ impl App {
             .widget_states
             .get_mut(&self.current_widget.widget_id)
         {
-            temp_widget_state.table_state.update_position(
-                num_to_change_by,
-                self.converted_data.temp_sensor_data.data.len(),
-            );
+            temp_widget_state
+                .table
+                .update_scroll_position(num_to_change_by, self.converted_data.temp_data.len());
         }
     }
 
@@ -2181,8 +2176,8 @@ impl App {
             .get_mut(&self.current_widget.widget_id)
         {
             disk_widget_state
-                .table_state
-                .update_position(num_to_change_by, self.converted_data.disk_data.data.len());
+                .table
+                .update_scroll_position(num_to_change_by, self.converted_data.disk_data.len());
         }
     }
 
@@ -2711,7 +2706,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            temp_widget_state.table_state.table_state.selected()
+                                            temp_widget_state.table.state.table_state.selected()
                                         {
                                             self.change_temp_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,
@@ -2725,7 +2720,7 @@ impl App {
                                         .get_widget_state(self.current_widget.widget_id)
                                     {
                                         if let Some(visual_index) =
-                                            disk_widget_state.table_state.table_state.selected()
+                                            disk_widget_state.table.state.table_state.selected()
                                         {
                                             self.change_disk_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,

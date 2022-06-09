@@ -19,8 +19,8 @@ pub enum ColumnWidthBounds {
     /// A width of this type is either as long as specified, or does not appear at all.
     Hard(u16),
 
-    /// Always uses the width of the [`CellContent`].
-    CellWidth,
+    /// Always uses the width of the header.
+    HeaderWidth,
 }
 
 impl ColumnWidthBounds {
@@ -34,9 +34,10 @@ impl ColumnWidthBounds {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct DataColumn {
-    /// The header string value of the column.
-    pub header: Cow<'static, str>,
+    /// The header value of the column.
+    pub header: Cow<'static, str>, // FIXME: May want to make this customizable
 
     /// A restriction on this column's width.
     pub width_bounds: ColumnWidthBounds,
@@ -46,4 +47,33 @@ pub struct DataColumn {
 
     /// Marks that this column is currently "hidden", and should *always* be skipped.
     pub is_hidden: bool,
+}
+
+impl DataColumn {
+    pub const fn hard(name: &'static str, width: u16) -> Self {
+        Self {
+            header: Cow::Borrowed(name),
+            width_bounds: ColumnWidthBounds::Hard(width),
+            calculated_width: 0,
+            is_hidden: false,
+        }
+    }
+
+    pub const fn soft(name: &'static str, max_percentage: Option<f32>) -> Self {
+        Self {
+            header: Cow::Borrowed(name),
+            width_bounds: ColumnWidthBounds::soft(name, max_percentage),
+            calculated_width: 0,
+            is_hidden: false,
+        }
+    }
+
+    pub const fn header(name: &'static str) -> Self {
+        Self {
+            header: Cow::Borrowed(name),
+            width_bounds: ColumnWidthBounds::HeaderWidth,
+            calculated_width: 0,
+            is_hidden: false,
+        }
+    }
 }

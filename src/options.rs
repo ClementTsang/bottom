@@ -295,6 +295,37 @@ pub fn build_app(
     let network_scale_type = get_network_scale_type(matches, config);
     let network_use_binary_prefix = get_network_use_binary_prefix(matches, config);
 
+    let app_config_fields = AppConfigFields {
+        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
+            .context("Update 'rate' in your config file.")?,
+        temperature_type: get_temperature(matches, config)
+            .context("Update 'temperature_type' in your config file.")?,
+        show_average_cpu: get_show_average_cpu(matches, config),
+        use_dot: get_use_dot(matches, config),
+        left_legend: get_use_left_legend(matches, config),
+        use_current_cpu_total: get_use_current_cpu_total(matches, config),
+        use_basic_mode,
+        default_time_value,
+        time_interval: get_time_interval(matches, config)
+            .context("Update 'time_delta' in your config file.")?,
+        hide_time: get_hide_time(matches, config),
+        autohide_time,
+        use_old_network_legend: get_use_old_network_legend(matches, config),
+        table_gap: if get_hide_table_gap(matches, config) {
+            0
+        } else {
+            1
+        },
+        disable_click: get_disable_click(matches, config),
+        // no_write: get_no_write(matches, config),
+        no_write: false,
+        show_table_scroll_position: get_show_table_scroll_position(matches, config),
+        is_advanced_kill,
+        network_scale_type,
+        network_unit_type,
+        network_use_binary_prefix,
+    };
+
     for row in &widget_layout.rows {
         for col in &row.children {
             for col_row in &col.children {
@@ -376,10 +407,12 @@ pub fn build_app(
                             );
                         }
                         Disk => {
-                            disk_state_map.insert(widget.widget_id, DiskWidgetState::default());
+                            disk_state_map
+                                .insert(widget.widget_id, DiskWidgetState::new(&app_config_fields));
                         }
                         Temp => {
-                            temp_state_map.insert(widget.widget_id, TempWidgetState::default());
+                            temp_state_map
+                                .insert(widget.widget_id, TempWidgetState::new(&app_config_fields));
                         }
                         Battery => {
                             battery_state_map
@@ -415,37 +448,6 @@ pub fn build_app(
         })
     } else {
         None
-    };
-
-    let app_config_fields = AppConfigFields {
-        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
-            .context("Update 'rate' in your config file.")?,
-        temperature_type: get_temperature(matches, config)
-            .context("Update 'temperature_type' in your config file.")?,
-        show_average_cpu: get_show_average_cpu(matches, config),
-        use_dot: get_use_dot(matches, config),
-        left_legend: get_use_left_legend(matches, config),
-        use_current_cpu_total: get_use_current_cpu_total(matches, config),
-        use_basic_mode,
-        default_time_value,
-        time_interval: get_time_interval(matches, config)
-            .context("Update 'time_delta' in your config file.")?,
-        hide_time: get_hide_time(matches, config),
-        autohide_time,
-        use_old_network_legend: get_use_old_network_legend(matches, config),
-        table_gap: if get_hide_table_gap(matches, config) {
-            0
-        } else {
-            1
-        },
-        disable_click: get_disable_click(matches, config),
-        // no_write: get_no_write(matches, config),
-        no_write: false,
-        show_table_scroll_position: get_show_table_scroll_position(matches, config),
-        is_advanced_kill,
-        network_scale_type,
-        network_unit_type,
-        network_use_binary_prefix,
     };
 
     let used_widgets = UsedWidgets {

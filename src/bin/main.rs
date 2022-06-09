@@ -177,12 +177,15 @@ fn main() -> Result<()> {
 
                         // Disk
                         if app.used_widgets.use_disk {
-                            app.converted_data.disk_data = convert_disk_row(&app.data_collection);
+                            app.converted_data.ingest_disk(&app.data_collection);
                         }
 
                         // Temperatures
                         if app.used_widgets.use_temp {
-                            app.converted_data.temp_sensor_data = convert_temp_row(&app);
+                            app.converted_data.ingest_temp(
+                                &app.data_collection,
+                                app.app_config_fields.temperature_type,
+                            )
                         }
 
                         // Memory

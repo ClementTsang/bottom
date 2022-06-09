@@ -1,16 +1,16 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
+use crate::app::data_farmer::DataCollection;
+use crate::app::data_harvester::temperature::TemperatureType;
+use crate::app::widgets::{DiskWidgetData, TempWidgetData};
 use crate::components::text_table::CellContent;
 use crate::components::time_graph::Point;
+use crate::{app::data_farmer, utils::gen_util::*};
 use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
-use crate::{
-    app::{data_farmer, data_harvester, App},
-    utils::gen_util::*,
-};
 
-use concat_string::concat_string;
 use fxhash::FxHashMap;
+use kstring::KString;
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
@@ -78,8 +78,8 @@ pub struct ConvertedData {
     pub total_tx_display: String,
     pub network_data_rx: Vec<Point>,
     pub network_data_tx: Vec<Point>,
-    pub disk_data: TableData,
-    pub temp_sensor_data: TableData,
+    pub disk_data: Vec<DiskWidgetData>,
+    pub temp_data: Vec<TempWidgetData>,
 
     /// A mapping from a process name to any PID with that name.
     pub process_name_pid_map: FxHashMap<String, Vec<Pid>>,
@@ -99,110 +99,41 @@ pub struct ConvertedData {
     pub battery_data: Vec<ConvertedBatteryData>,
 }
 
-pub fn convert_temp_row(app: &App) -> TableData {
-    let current_data = &app.data_collection;
-    let temp_type = &app.app_config_fields.temperature_type;
-    let mut col_widths = vec![0; 2];
+impl ConvertedData {
+    // TODO: Can probably heavily reduce this step to avoid clones.
+    pub fn ingest_disk(&mut self, data: &DataCollection) {
+        self.disk_data.clear();
 
-    let mut sensor_vector: Vec<TableRow> = current_data
-        .temp_harvest
-        .iter()
-        .map(|temp_harvest| {
-            let row = vec![
-                CellContent::Simple(temp_harvest.name.clone().into()),
-                CellContent::Simple(
-                    concat_string!(
-                        (temp_harvest.temperature.ceil() as u64).to_string(),
-                        match temp_type {
-                            data_harvester::temperature::TemperatureType::Celsius => "°C",
-                            data_harvester::temperature::TemperatureType::Kelvin => "K",
-                            data_harvester::temperature::TemperatureType::Fahrenheit => "°F",
-                        }
-                    )
-                    .into(),
-                ),
-            ];
-
-            col_widths.iter_mut().zip(&row).for_each(|(curr, r)| {
-                *curr = std::cmp::max(*curr, r.len());
+        data.disk_harvest
+            .iter()
+            .zip(&data.io_labels)
+            .for_each(|(disk, (io_read, io_write))| {
+                self.disk_data.push(DiskWidgetData {
+                    name: KString::from_ref(&disk.name),
+                    mount_point: KString::from_ref(&disk.mount_point),
+                    free_bytes: disk.free_space,
+                    used_bytes: disk.used_space,
+                    total_bytes: disk.total_space,
+                    io_read: io_read.into(),
+                    io_write: io_write.into(),
+                });
             });
 
-            TableRow::Raw(row)
-        })
-        .collect();
-
-    if sensor_vector.is_empty() {
-        sensor_vector.push(TableRow::Raw(vec![
-            CellContent::Simple("No Sensors Found".into()),
-            CellContent::Simple("".into()),
-        ]));
+        self.disk_data.shrink_to_fit();
     }
 
-    TableData {
-        data: sensor_vector,
-        col_widths,
-    }
-}
+    pub fn ingest_temp(&mut self, data: &DataCollection, temperature_type: TemperatureType) {
+        self.temp_data.clear();
 
-pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> TableData {
-    let mut disk_vector: Vec<TableRow> = Vec::new();
-    let mut col_widths = vec![0; 8];
-
-    current_data
-        .disk_harvest
-        .iter()
-        .zip(&current_data.io_labels)
-        .for_each(|(disk, (io_read, io_write))| {
-            let free_space_fmt = if let Some(free_space) = disk.free_space {
-                let converted_free_space = get_decimal_bytes(free_space);
-                format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
-            } else {
-                "N/A".into()
-            };
-            let total_space_fmt = if let Some(total_space) = disk.total_space {
-                let converted_total_space = get_decimal_bytes(total_space);
-                format!(
-                    "{:.*}{}",
-                    0, converted_total_space.0, converted_total_space.1
-                )
-                .into()
-            } else {
-                "N/A".into()
-            };
-
-            let usage_fmt = if let (Some(used_space), Some(total_space)) =
-                (disk.used_space, disk.total_space)
-            {
-                format!("{:.0}%", used_space as f64 / total_space as f64 * 100_f64).into()
-            } else {
-                "N/A".into()
-            };
-
-            let row = vec![
-                CellContent::Simple(disk.name.clone().into()),
-                CellContent::Simple(disk.mount_point.clone().into()),
-                CellContent::Simple(usage_fmt),
-                CellContent::Simple(free_space_fmt),
-                CellContent::Simple(total_space_fmt),
-                CellContent::Simple(io_read.clone().into()),
-                CellContent::Simple(io_write.clone().into()),
-            ];
-            col_widths.iter_mut().zip(&row).for_each(|(curr, r)| {
-                *curr = std::cmp::max(*curr, r.len());
+        data.temp_harvest.iter().for_each(|temp_harvest| {
+            self.temp_data.push(TempWidgetData {
+                sensor: KString::from_ref(&temp_harvest.name),
+                temperature_value: temp_harvest.temperature.ceil() as u64,
+                temperature_type,
             });
-            disk_vector.push(TableRow::Raw(row));
         });
 
-    if disk_vector.is_empty() {
-        disk_vector.push(TableRow::Raw(vec![
-            CellContent::Simple("No Disks Found".into()),
-            CellContent::Simple("".into()),
-        ]));
-    }
-
-    TableData {
-        data: disk_vector,
-        col_widths,
+        self.temp_data.shrink_to_fit();
     }
 }
 

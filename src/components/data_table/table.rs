@@ -1,4 +1,8 @@
-use std::{convert::TryInto, marker::PhantomData};
+use std::{
+    cmp::{max, min},
+    convert::TryInto,
+    marker::PhantomData,
+};
 
 pub mod data_row;
 pub use data_row::*;
@@ -24,8 +28,9 @@ pub struct DataTable<RowType: ToDataRow> {
     /// The columns of the [`DataTable`].
     pub columns: Vec<DataColumn>,
 
+    // TODO: Move this back.
     /// Styling for the [`DataTable`].
-    pub styling: Styling,
+    // pub styling: Styling,
 
     /// Internal state of the [`DataTable`].
     pub state: DataTableState,
@@ -37,8 +42,15 @@ pub struct DataTable<RowType: ToDataRow> {
 }
 
 impl<RowType: ToDataRow> DataTable<RowType> {
-    pub fn new() -> Self {
-        todo!()
+    pub fn new(columns: Vec<DataColumn>, props: DataTableProps) -> Self {
+        let state = DataTableState::default();
+
+        Self {
+            columns,
+            state,
+            props,
+            _pd: PhantomData,
+        }
     }
 
     /// Calculates widths for the columns of this table, given the current width when called.
@@ -50,7 +62,6 @@ impl<RowType: ToDataRow> DataTable<RowType> {
     /// **NOTE:** Trailing 0's may break tui-rs, remember to filter them out later!
     pub fn calculate_column_widths(&mut self, total_width: u16, left_to_right: bool) {
         use itertools::Either;
-        use std::cmp::{max, min};
 
         let mut total_width_left = total_width;
 
@@ -100,7 +111,7 @@ impl<RowType: ToDataRow> DataTable<RowType> {
                         num_columns += 1;
                     }
                 }
-                ColumnWidthBounds::CellWidth => {
+                ColumnWidthBounds::HeaderWidth => {
                     let width = column.header.len() as u16;
                     let min_width = width;
 
@@ -149,6 +160,26 @@ impl<RowType: ToDataRow> DataTable<RowType> {
                 }
             }
         }
+    }
+
+    /// Sets the scroll position to the first value.
+    pub fn set_scroll_first(&mut self) {
+        self.state.current_scroll_position = 0;
+        self.state.scroll_direction = ScrollDirection::Up;
+    }
+
+    /// Sets the scroll position to the last value.
+    pub fn set_scroll_last(&mut self, num_entries: usize) {
+        self.state.current_scroll_position = num_entries.saturating_sub(1);
+        self.state.scroll_direction = ScrollDirection::Down;
+    }
+
+    /// Updates the scroll position to be valid for the number of entries.
+    pub fn update_num_entries(&mut self, num_entries: usize) {
+        self.state.current_scroll_position = min(
+            self.state.current_scroll_position,
+            num_entries.saturating_sub(1),
+        );
     }
 
     /// Updates the scroll position if possible by a positive/negative offset. If there is a

@@ -1,5 +1,7 @@
 use tui::layout::Rect;
 
+use crate::components::data_table::Styling;
+
 pub enum SelectionState {
     NotSelected,
     Selected,
@@ -8,6 +10,7 @@ pub enum SelectionState {
 
 /// A [`DrawInfo`] is information required on each draw call.
 pub struct DrawInfo {
+    pub styling: Styling,
     pub loc: Rect,
     pub force_redraw: bool,
     pub recalculate_column_widths: bool,
