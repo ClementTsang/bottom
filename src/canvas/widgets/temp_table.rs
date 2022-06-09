@@ -3,7 +3,7 @@ use tui::{backend::Backend, layout::Rect, terminal::Frame};
 use crate::{
     app,
     canvas::Painter,
-    components::data_table::{DrawInfo, SelectionState, Styling},
+    components::data_table::{DrawInfo, SelectionState, TableStyling},
 };
 
 impl Painter {
@@ -15,13 +15,14 @@ impl Painter {
             let is_on_widget = app_state.current_widget.widget_id == widget_id;
 
             // FIXME: This should be moved elsewhere.
-            let styling = Styling {
+            let styling = TableStyling {
                 header_style: self.colours.table_header_style,
                 border_style: self.colours.border_style,
                 highlighted_border_style: self.colours.highlighted_border_style,
                 text_style: self.colours.text_style,
                 highlighted_text_style: self.colours.currently_selected_text_style,
                 title_style: self.colours.widget_title_style,
+                row_styles: vec![],
             };
             let draw_info = DrawInfo {
                 styling,

@@ -4,7 +4,13 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
+use bottom::{
+    canvas::{self, canvas_colours::CanvasColours},
+    constants::*,
+    data_conversion::*,
+    options::*,
+    *,
+};
 
 use std::{
     boxed::Box,
@@ -47,6 +53,12 @@ fn main() -> Result<()> {
         get_widget_layout(&matches, &config)
             .context("Found an issue while trying to build the widget layout.")?;
 
+    // FIXME: Should move this into build app or config
+    let colours = {
+        let colour_scheme = get_color_scheme(&matches, &config)?;
+        CanvasColours::new(colour_scheme, &config)?
+    };
+
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(
         &matches,
@@ -55,11 +67,11 @@ fn main() -> Result<()> {
         default_widget_id,
         &default_widget_type_option,
         config_path,
+        &colours,
     )?;
 
     // Create painter and set colours.
-    let mut painter =
-        canvas::Painter::init(widget_layout, &config, get_color_scheme(&matches, &config)?)?;
+    let mut painter = canvas::Painter::init(widget_layout, colours)?;
 
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]
@@ -211,13 +223,10 @@ fn main() -> Result<()> {
                             }
                         }
 
+                        // CPU
                         if app.used_widgets.use_cpu {
-                            // CPU
-
-                            convert_cpu_data_points(
-                                &app.data_collection,
-                                &mut app.converted_data.cpu_data,
-                            );
+                            app.converted_data
+                                .convert_cpu_data_points(&app.data_collection);
                             app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }
 

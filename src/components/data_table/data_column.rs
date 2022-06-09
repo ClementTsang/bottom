@@ -1,58 +1,87 @@
 use std::{
+    borrow::Cow,
     cmp::{max, min},
-    convert::TryInto,
-    marker::PhantomData,
 };
 
-pub mod data_row;
-pub use data_row::*;
+/// A bound on the width of a column.
+#[derive(Clone, Copy, Debug)]
+pub enum ColumnWidthBounds {
+    /// A width of this type is either as long as `min`, but can otherwise shrink and grow up to a point.
+    Soft {
+        /// The minimum amount before giving up and hiding.
+        min_width: u16,
 
-pub mod data_column;
-pub use data_column::*;
+        /// The desired, calculated width. Take this if possible as the base starting width.
+        desired: u16,
 
-pub mod styling;
-pub use styling::*;
+        /// The max width, as a percentage of the total width available. If [`None`],
+        /// then it can grow as desired.
+        max_percentage: Option<f32>,
+    },
 
-pub mod props;
-pub use props::DataTableProps;
+    /// A width of this type is either as long as specified, or does not appear at all.
+    Hard(u16),
 
-pub mod state;
-pub use state::{DataTableState, ScrollDirection};
-
-/// A [`DataTable`] is a component that displays data in a tabular form.
-///
-/// Note that the data is not guaranteed to be sorted, or managed in any way. If a
-/// sortable variant is needed, use a [`SortableDataTable`](crate::components::data_table::SortableDataTable)
-/// instead.
-pub struct DataTable<RowType: ToDataRow> {
-    /// The columns of the [`DataTable`].
-    pub columns: Vec<DataColumn>,
-
-    // TODO: Move this back.
-    /// Styling for the [`DataTable`].
-    // pub styling: Styling,
-
-    /// Internal state of the [`DataTable`].
-    pub state: DataTableState,
-
-    /// Internal properties of a [`DataTable`].
-    pub props: DataTableProps,
-
-    _pd: PhantomData<RowType>,
+    /// Always uses the width of the header.
+    HeaderWidth,
 }
 
-impl<RowType: ToDataRow> DataTable<RowType> {
-    pub fn new(columns: Vec<DataColumn>, props: DataTableProps) -> Self {
-        let state = DataTableState::default();
+impl ColumnWidthBounds {
+    pub const fn soft(name: &'static str, max_percentage: Option<f32>) -> ColumnWidthBounds {
+        let len = name.len() as u16;
+        ColumnWidthBounds::Soft {
+            min_width: len,
+            desired: len,
+            max_percentage,
+        }
+    }
+}
 
+#[derive(Clone, Debug)]
+pub struct DataTableColumn {
+    /// The header value of the column.
+    pub header: Cow<'static, str>, // FIXME: May want to make this customizable
+
+    /// A restriction on this column's width.
+    pub width_bounds: ColumnWidthBounds,
+
+    /// The calculated width of the column.
+    pub calculated_width: u16,
+
+    /// Marks that this column is currently "hidden", and should *always* be skipped.
+    pub is_hidden: bool,
+}
+
+impl DataTableColumn {
+    pub const fn hard(name: &'static str, width: u16) -> Self {
         Self {
-            columns,
-            state,
-            props,
-            _pd: PhantomData,
+            header: Cow::Borrowed(name),
+            width_bounds: ColumnWidthBounds::Hard(width),
+            calculated_width: 0,
+            is_hidden: false,
         }
     }
 
+    pub const fn soft(name: &'static str, max_percentage: Option<f32>) -> Self {
+        Self {
+            header: Cow::Borrowed(name),
+            width_bounds: ColumnWidthBounds::soft(name, max_percentage),
+            calculated_width: 0,
+            is_hidden: false,
+        }
+    }
+
+    pub const fn header(name: &'static str) -> Self {
+        Self {
+            header: Cow::Borrowed(name),
+            width_bounds: ColumnWidthBounds::HeaderWidth,
+            calculated_width: 0,
+            is_hidden: false,
+        }
+    }
+}
+
+pub trait CalculateColumnWidth {
     /// Calculates widths for the columns of this table, given the current width when called.
     ///
     /// * `total_width` is the, well, total width available.
@@ -60,15 +89,19 @@ impl<RowType: ToDataRow> DataTable<RowType> {
     ///   false.
     ///
     /// **NOTE:** Trailing 0's may break tui-rs, remember to filter them out later!
-    pub fn calculate_column_widths(&mut self, total_width: u16, left_to_right: bool) {
+    fn calculate_column_widths(&mut self, total_width: u16, left_to_right: bool);
+}
+
+impl CalculateColumnWidth for [DataTableColumn] {
+    fn calculate_column_widths(&mut self, total_width: u16, left_to_right: bool) {
         use itertools::Either;
 
         let mut total_width_left = total_width;
 
         let columns = if left_to_right {
-            Either::Left(self.columns.iter_mut())
+            Either::Left(self.iter_mut())
         } else {
-            Either::Right(self.columns.iter_mut().rev())
+            Either::Right(self.iter_mut().rev())
         };
 
         let mut num_columns = 0;
@@ -143,7 +176,7 @@ impl<RowType: ToDataRow> DataTable<RowType> {
             let amount_per_slot = total_width_left / num_dist;
             total_width_left %= num_dist;
 
-            for column in self.columns.iter_mut() {
+            for column in self.iter_mut() {
                 if num_dist == 0 {
                     break;
                 }
@@ -161,54 +194,4 @@ impl<RowType: ToDataRow> DataTable<RowType> {
             }
         }
     }
-
-    /// Sets the scroll position to the first value.
-    pub fn set_scroll_first(&mut self) {
-        self.state.current_scroll_position = 0;
-        self.state.scroll_direction = ScrollDirection::Up;
-    }
-
-    /// Sets the scroll position to the last value.
-    pub fn set_scroll_last(&mut self, num_entries: usize) {
-        self.state.current_scroll_position = num_entries.saturating_sub(1);
-        self.state.scroll_direction = ScrollDirection::Down;
-    }
-
-    /// Updates the scroll position to be valid for the number of entries.
-    pub fn update_num_entries(&mut self, num_entries: usize) {
-        self.state.current_scroll_position = min(
-            self.state.current_scroll_position,
-            num_entries.saturating_sub(1),
-        );
-    }
-
-    /// Updates the scroll position if possible by a positive/negative offset. If there is a
-    /// valid change, this function will also return the new position wrapped in an [`Option`].
-    pub fn update_scroll_position(&mut self, change: i64, num_entries: usize) -> Option<usize> {
-        if change == 0 {
-            return None;
-        }
-
-        let csp: Result<i64, _> = self.state.current_scroll_position.try_into();
-        if let Ok(csp) = csp {
-            let proposed: Result<usize, _> = (csp + change).try_into();
-            if let Ok(proposed) = proposed {
-                if proposed < num_entries {
-                    self.state.current_scroll_position = proposed;
-                    if change < 0 {
-                        self.state.scroll_direction = ScrollDirection::Up;
-                    } else {
-                        self.state.scroll_direction = ScrollDirection::Down;
-                    }
-
-                    return Some(self.state.current_scroll_position);
-                }
-            }
-        }
-
-        None
-    }
 }
-
-#[cfg(test)]
-mod test {}

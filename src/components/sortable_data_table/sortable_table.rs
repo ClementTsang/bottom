@@ -1,6 +1,4 @@
-use crate::components::data_table::ToDataRow;
-
-use super::{sortable_column::SortColumn, sorts_row::SortsRow};
+use super::sortable_column::SortColumn;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SortOrder {
@@ -8,14 +6,10 @@ pub enum SortOrder {
     Descending,
 }
 
-pub struct SortableDataTable<Row, ColumnType>
-where
-    Row: ToDataRow,
-    ColumnType: SortsRow<Row>,
+pub struct SortableDataTableState<Row, ColumnType>
+// where
+//     ColumnType: SortsRow<Row>,
 {
-    /// The backing table itself.
-    // pub table: DataTable<Row>,
-
     /// The current column index we are sorting with.
     current_sort_index: usize,
 

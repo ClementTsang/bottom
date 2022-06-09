@@ -2,11 +2,12 @@
 //! can actually handle.
 
 use crate::app::data_farmer::DataCollection;
+use crate::app::data_harvester::cpu::CpuDataType;
 use crate::app::data_harvester::temperature::TemperatureType;
 use crate::app::widgets::{DiskWidgetData, TempWidgetData};
-use crate::components::text_table::CellContent;
+use crate::components::old_text_table::CellContent;
 use crate::components::time_graph::Point;
-use crate::{app::data_farmer, utils::gen_util::*};
+use crate::utils::gen_util::*;
 use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 
 use fxhash::FxHashMap;
@@ -60,14 +61,15 @@ pub struct ConvertedNetworkData {
     // mean_tx: f64,
 }
 
-#[derive(Clone, Default, Debug)]
-pub struct ConvertedCpuData {
-    pub cpu_name: String,
-    pub short_cpu_name: String,
-    /// Tuple is time, value
-    pub cpu_data: Vec<Point>,
-    /// Represents the value displayed on the legend.
-    pub legend_value: String,
+#[derive(Clone, Debug)]
+pub enum CpuWidgetData {
+    All,
+    Entry {
+        data_type: CpuDataType,
+        /// A point here represents time (x) and value (y).
+        data: Vec<Point>,
+        last_entry: f64,
+    },
 }
 
 #[derive(Default)]
@@ -95,7 +97,7 @@ pub struct ConvertedData {
     pub swap_data: Vec<Point>,
     pub arc_data: Vec<Point>,
     pub load_avg_data: [f32; 3],
-    pub cpu_data: Vec<ConvertedCpuData>,
+    pub cpu_data: Vec<CpuWidgetData>,
     pub battery_data: Vec<ConvertedBatteryData>,
 }
 
@@ -135,84 +137,81 @@ impl ConvertedData {
 
         self.temp_data.shrink_to_fit();
     }
-}
 
-pub fn convert_cpu_data_points(
-    current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
-) {
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
-
-    // Initialize cpu_data_vector if the lengths don't match...
-    if let Some((_time, data)) = &current_data.timed_data_vec.last() {
-        if data.cpu_data.len() + 1 != existing_cpu_data.len() {
-            *existing_cpu_data = vec![ConvertedCpuData {
-                cpu_name: "All".to_string(),
-                short_cpu_name: "".to_string(),
-                cpu_data: vec![],
-                legend_value: String::new(),
-            }];
-
-            existing_cpu_data.extend(
-                data.cpu_data
-                    .iter()
-                    .enumerate()
-                    .map(|(itx, cpu_usage)| ConvertedCpuData {
-                        cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
-                            if let Some(cpu_count) = cpu_harvest.cpu_count {
-                                format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
-                            } else {
-                                cpu_harvest.cpu_prefix.to_string()
-                            }
-                        } else {
-                            String::default()
-                        },
-                        short_cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
-                        {
-                            if let Some(cpu_count) = cpu_harvest.cpu_count {
-                                cpu_count.to_string()
-                            } else {
-                                cpu_harvest.cpu_prefix.to_string()
-                            }
-                        } else {
-                            String::default()
-                        },
-                        legend_value: format!("{:.0}%", cpu_usage.round()),
-                        cpu_data: vec![],
-                    })
-                    .collect::<Vec<ConvertedCpuData>>(),
-            );
+    pub fn convert_cpu_data_points(&mut self, current_data: &DataCollection) {
+        let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
+            frozen_instant
         } else {
-            existing_cpu_data
-                .iter_mut()
-                .skip(1)
-                .zip(&data.cpu_data)
-                .for_each(|(cpu, cpu_usage)| {
-                    cpu.cpu_data = vec![];
-                    cpu.legend_value = format!("{:.0}%", cpu_usage.round());
-                });
-        }
-    }
+            current_data.current_instant
+        };
 
-    for (time, data) in &current_data.timed_data_vec {
-        let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-
-        for (itx, cpu) in data.cpu_data.iter().enumerate() {
-            if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                cpu_data.cpu_data.push((-time_from_start, *cpu));
+        // (Re-)initialize the vector if the lengths don't match...
+        if let Some((_time, data)) = &current_data.timed_data_vec.last() {
+            if data.cpu_data.len() + 1 != self.cpu_data.len() {
+                self.cpu_data = Vec::with_capacity(data.cpu_data.len() + 1);
+                self.cpu_data.push(CpuWidgetData::All);
+                self.cpu_data.extend(
+                    data.cpu_data
+                        .iter()
+                        .zip(&current_data.cpu_harvest)
+                        .map(|(cpu_usage, data)| CpuWidgetData::Entry {
+                            data_type: data.data_type,
+                            data: vec![],
+                            last_entry: *cpu_usage,
+                        })
+                        .collect::<Vec<CpuWidgetData>>(),
+                );
+            } else {
+                self.cpu_data
+                    .iter_mut()
+                    .skip(1)
+                    .zip(&data.cpu_data)
+                    .for_each(|(cpu, cpu_usage)| match cpu {
+                        CpuWidgetData::All => unreachable!(),
+                        CpuWidgetData::Entry {
+                            data_type: _,
+                            data,
+                            last_entry,
+                        } => {
+                            // A bit faster to just update all the times, so we just clear the vector.
+                            data.clear();
+                            *last_entry = *cpu_usage;
+                        }
+                    });
             }
         }
 
-        if *time == current_time {
-            break;
+        // TODO: Can probably avoid data deduplication - store the shift + data + original once.
+        // Now push all the data.
+        for (itx, cpu) in &mut self.cpu_data.iter_mut().skip(1).enumerate() {
+            match cpu {
+                CpuWidgetData::All => unreachable!(),
+                CpuWidgetData::Entry {
+                    data_type: _,
+                    data,
+                    last_entry: _,
+                } => {
+                    for (time, timed_data) in &current_data.timed_data_vec {
+                        let time_start: f64 =
+                            (current_time.duration_since(*time).as_millis() as f64).floor();
+
+                        if let Some(val) = timed_data.cpu_data.get(itx) {
+                            data.push((-time_start, *val));
+                        }
+
+                        if *time == current_time {
+                            break;
+                        }
+                    }
+
+                    data.shrink_to_fit();
+                }
+            }
         }
     }
 }
 
-pub fn convert_mem_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
+pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
         frozen_instant
@@ -234,7 +233,7 @@ pub fn convert_mem_data_points(current_data: &data_farmer::DataCollection) -> Ve
     result
 }
 
-pub fn convert_swap_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
+pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
         frozen_instant
@@ -257,7 +256,7 @@ pub fn convert_swap_data_points(current_data: &data_farmer::DataCollection) -> V
 }
 
 pub fn convert_mem_labels(
-    current_data: &data_farmer::DataCollection,
+    current_data: &DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
@@ -327,8 +326,8 @@ pub fn convert_mem_labels(
 }
 
 pub fn get_rx_tx_data_points(
-    current_data: &data_farmer::DataCollection, network_scale_type: &AxisScaling,
-    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
+    current_data: &DataCollection, network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
+    network_use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
@@ -378,9 +377,8 @@ pub fn get_rx_tx_data_points(
 }
 
 pub fn convert_network_data_points(
-    current_data: &data_farmer::DataCollection, need_four_points: bool,
-    network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
-    network_use_binary_prefix: bool,
+    current_data: &DataCollection, need_four_points: bool, network_scale_type: &AxisScaling,
+    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
     let (rx, tx) = get_rx_tx_data_points(
         current_data,
@@ -539,9 +537,7 @@ pub fn dec_bytes_per_second_string(value: u64) -> String {
 }
 
 #[cfg(feature = "battery")]
-pub fn convert_battery_harvest(
-    current_data: &data_farmer::DataCollection,
-) -> Vec<ConvertedBatteryData> {
+pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBatteryData> {
     current_data
         .battery_harvest
         .iter()
@@ -588,7 +584,9 @@ pub fn convert_battery_harvest(
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_labels(current_data: &data_farmer::DataCollection) -> Option<(String, String)> {
+pub fn convert_arc_labels(
+    current_data: &crate::app::data_farmer::DataCollection,
+) -> Option<(String, String)> {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
         if mem_total_kib < 1024 {
@@ -632,7 +630,9 @@ pub fn convert_arc_labels(current_data: &data_farmer::DataCollection) -> Option<
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
+pub fn convert_arc_data_points(
+    current_data: &crate::app::data_farmer::DataCollection,
+) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
     let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
         frozen_instant

@@ -1,14 +1,8 @@
 use std::{marker::PhantomData, ops::Range};
 
-use crate::components::data_table::ToDataRow;
+use super::Shortcut;
 
-use super::{sorts_row::SortsRow, Shortcut};
-
-pub struct SortColumn<Row, ColumnType>
-where
-    Row: ToDataRow,
-    ColumnType: SortsRow<Row>,
-{
+pub struct SortColumn<Row, ColumnType> {
     /// The "x locations" of the column.
     pub range: Range<u16>,
 

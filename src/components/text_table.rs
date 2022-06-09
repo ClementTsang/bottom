@@ -1,5 +1,5 @@
-pub mod draw;
-pub use draw::*;
+pub trait TextTable {
+    fn generate_title() {}
 
-pub mod state;
-pub use state::*;
+    fn calculate_column_widths() {}
+}

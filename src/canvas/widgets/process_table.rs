@@ -1,7 +1,7 @@
 use crate::{
     app::App,
     canvas::{drawing_utils::get_search_start_position, Painter},
-    components::text_table::{TextTable, TextTableTitle},
+    components::old_text_table::{TextTable, TextTableTitle},
     constants::*,
     data_conversion::{TableData, TableRow},
 };
@@ -117,7 +117,7 @@ impl Painter {
                 text_style: self.colours.text_style,
                 left_to_right: true,
             }
-            .draw_text_table(
+            .draw_old_text_table(
                 f,
                 draw_loc,
                 &mut proc_widget_state.table_state,
@@ -394,7 +394,7 @@ impl Painter {
                 text_style: self.colours.text_style,
                 left_to_right: true,
             }
-            .draw_text_table(
+            .draw_old_text_table(
                 f,
                 draw_loc,
                 &mut proc_widget_state.sort_table_state,

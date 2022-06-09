@@ -16,7 +16,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{self, layout_manager::BottomWidget},
-    components::text_table::SortOrder,
+    components::old_text_table::SortOrder,
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
     data_conversion::{TableData, TableRow},
 };
@@ -111,7 +111,7 @@ impl<'a> TextTable<'a> {
             })
     }
 
-    pub fn draw_text_table<B: Backend, H: TableComponentHeader>(
+    pub fn draw_old_text_table<B: Backend, H: TableComponentHeader>(
         &self, f: &mut Frame<'_, B>, draw_loc: Rect, state: &mut TableComponentState<H>,
         table_data: &TableData, btm_widget: Option<&mut BottomWidget>,
     ) {

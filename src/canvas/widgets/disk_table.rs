@@ -1,9 +1,9 @@
 use tui::{backend::Backend, layout::Rect, terminal::Frame};
 
 use crate::{
-    app,
+    app::{self},
     canvas::Painter,
-    components::data_table::{DrawInfo, SelectionState, Styling},
+    components::data_table::{DrawInfo, SelectionState, TableStyling},
 };
 
 impl Painter {
@@ -13,14 +13,16 @@ impl Painter {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(disk_widget_state) = app_state.disk_state.widget_states.get_mut(&widget_id) {
             let is_on_widget = app_state.current_widget.widget_id == widget_id;
+
             // FIXME: This should be moved elsewhere.
-            let styling = Styling {
+            let styling = TableStyling {
                 header_style: self.colours.table_header_style,
                 border_style: self.colours.border_style,
                 highlighted_border_style: self.colours.highlighted_border_style,
                 text_style: self.colours.text_style,
                 highlighted_text_style: self.colours.currently_selected_text_style,
                 title_style: self.colours.widget_title_style,
+                row_styles: vec![],
             };
             let draw_info = DrawInfo {
                 styling,

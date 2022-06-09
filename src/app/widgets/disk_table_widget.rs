@@ -5,7 +5,7 @@ use tui::widgets::Row;
 
 use crate::{
     app::AppConfigFields,
-    components::data_table::{DataColumn, DataTable, DataTableProps, ToDataRow},
+    components::data_table::{DataTable, DataTableColumn, DataTableInner, DataTableProps},
     utils::gen_util::{get_decimal_bytes, truncate_text},
 };
 
@@ -51,41 +51,43 @@ impl DiskWidgetData {
     }
 }
 
-impl ToDataRow for DiskWidgetData {
-    fn to_data_row<'a>(&'a self, columns: &[DataColumn]) -> Row<'a> {
+pub struct DiskWidgetInner;
+
+impl DataTableInner<DiskWidgetData> for DiskWidgetInner {
+    fn to_data_row<'a>(&self, data: &'a DiskWidgetData, columns: &[DataTableColumn]) -> Row<'a> {
         Row::new(vec![
             truncate_text(
-                self.name.clone().into_cow_str(),
+                data.name.clone().into_cow_str(),
                 columns[0].calculated_width.into(),
             ),
             truncate_text(
-                self.mount_point.clone().into_cow_str(),
+                data.mount_point.clone().into_cow_str(),
                 columns[1].calculated_width.into(),
             ),
             truncate_text(
-                self.free_space().into_cow_str(),
+                data.free_space().into_cow_str(),
                 columns[2].calculated_width.into(),
             ),
             truncate_text(
-                self.total_space().into_cow_str(),
+                data.total_space().into_cow_str(),
                 columns[3].calculated_width.into(),
             ),
             truncate_text(
-                self.usage().into_cow_str(),
+                data.usage().into_cow_str(),
                 columns[4].calculated_width.into(),
             ),
             truncate_text(
-                self.io_read.clone().into_cow_str(),
+                data.io_read.clone().into_cow_str(),
                 columns[5].calculated_width.into(),
             ),
             truncate_text(
-                self.io_write.clone().into_cow_str(),
+                data.io_write.clone().into_cow_str(),
                 columns[6].calculated_width.into(),
             ),
         ])
     }
 
-    fn column_widths(data: &[Self]) -> Vec<u16>
+    fn column_widths(&self, data: &[DiskWidgetData]) -> Vec<u16>
     where
         Self: Sized,
     {
@@ -100,20 +102,20 @@ impl ToDataRow for DiskWidgetData {
     }
 }
 
-pub struct DiskWidgetState {
-    pub table: DataTable<DiskWidgetData>,
+pub struct DiskTableWidget {
+    pub table: DataTable<DiskWidgetData, DiskWidgetInner>,
 }
 
-impl DiskWidgetState {
+impl DiskTableWidget {
     pub fn new(config: &AppConfigFields) -> Self {
-        const COLUMNS: [DataColumn; 7] = [
-            DataColumn::soft("Disk", Some(0.2)),
-            DataColumn::soft("Mount", Some(0.2)),
-            DataColumn::hard("Used", 4),
-            DataColumn::hard("Free", 6),
-            DataColumn::hard("Total", 6),
-            DataColumn::hard("R/s", 7),
-            DataColumn::hard("W/s", 7),
+        const COLUMNS: [DataTableColumn; 7] = [
+            DataTableColumn::soft("Disk", Some(0.2)),
+            DataTableColumn::soft("Mount", Some(0.2)),
+            DataTableColumn::hard("Used", 4),
+            DataTableColumn::hard("Free", 6),
+            DataTableColumn::hard("Total", 6),
+            DataTableColumn::hard("R/s", 7),
+            DataTableColumn::hard("W/s", 7),
         ];
 
         let props = DataTableProps {
@@ -122,10 +124,11 @@ impl DiskWidgetState {
             left_to_right: true,
             is_basic: config.use_basic_mode,
             show_table_scroll_position: config.show_table_scroll_position,
+            show_current_entry_when_unfocused: false,
         };
 
         Self {
-            table: DataTable::new(COLUMNS.to_vec(), props),
+            table: DataTable::new(COLUMNS, props, DiskWidgetInner {}),
         }
     }
 }

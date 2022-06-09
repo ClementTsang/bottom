@@ -70,9 +70,12 @@ impl<'a> TimeGraph<'a> {
         if self.hide_x_labels {
             Axis::default().bounds(adjusted_x_bounds)
         } else {
+            let xb_one = (self.x_bounds[1] / 1000).to_string();
+            let xb_zero = (self.x_bounds[0] / 1000).to_string();
+
             let x_labels = vec![
-                Span::raw(concat_string!((self.x_bounds[1] / 1000).to_string(), "s")),
-                Span::raw(concat_string!((self.x_bounds[0] / 1000).to_string(), "s")),
+                Span::raw(concat_string!(xb_one, "s")),
+                Span::raw(concat_string!(xb_zero, "s")),
             ];
 
             Axis::default()

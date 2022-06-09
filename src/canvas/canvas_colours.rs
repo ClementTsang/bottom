@@ -1,7 +1,13 @@
-use crate::{options::ConfigColours, utils::error};
+use crate::{
+    constants::*,
+    options::{Config, ConfigColours},
+    utils::error,
+};
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
+
+use super::ColourScheme;
 mod colour_utils;
 
 pub struct CanvasColours {
@@ -78,6 +84,36 @@ impl Default for CanvasColours {
 }
 
 impl CanvasColours {
+    pub fn new(colour_scheme: ColourScheme, config: &Config) -> anyhow::Result<Self> {
+        let mut canvas_colours = Self::default();
+
+        match colour_scheme {
+            ColourScheme::Default => {}
+            ColourScheme::DefaultLight => {
+                canvas_colours.set_colours_from_palette(&*DEFAULT_LIGHT_MODE_COLOUR_PALETTE)?;
+            }
+            ColourScheme::Gruvbox => {
+                canvas_colours.set_colours_from_palette(&*GRUVBOX_COLOUR_PALETTE)?;
+            }
+            ColourScheme::GruvboxLight => {
+                canvas_colours.set_colours_from_palette(&*GRUVBOX_LIGHT_COLOUR_PALETTE)?;
+            }
+            ColourScheme::Nord => {
+                canvas_colours.set_colours_from_palette(&*NORD_COLOUR_PALETTE)?;
+            }
+            ColourScheme::NordLight => {
+                canvas_colours.set_colours_from_palette(&*NORD_LIGHT_COLOUR_PALETTE)?;
+            }
+            ColourScheme::Custom => {
+                if let Some(colors) = &config.colors {
+                    canvas_colours.set_colours_from_palette(colors)?;
+                }
+            }
+        }
+
+        Ok(canvas_colours)
+    }
+
     pub fn set_colours_from_palette(&mut self, colours: &ConfigColours) -> anyhow::Result<()> {
         if let Some(border_color) = &colours.border_color {
             self.set_border_colour(border_color)

@@ -1,18 +1,17 @@
-use std::{borrow::Cow, iter};
+use std::borrow::Cow;
 
 use crate::{
-    app::{layout_manager::WidgetDirection, App, CpuWidgetState},
+    app::{layout_manager::WidgetDirection, widgets::CpuWidgetState, App},
     canvas::{drawing_utils::should_hide_x_label, Painter},
     components::{
-        text_table::{CellContent, TextTable},
+        data_table::{DrawInfo, SelectionState, TableStyling},
         time_graph::{GraphData, TimeGraph},
     },
-    data_conversion::{ConvertedCpuData, TableData, TableRow},
+    data_conversion::CpuWidgetData,
 };
 
 use concat_string::concat_string;
 
-use itertools::Either;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -119,37 +118,43 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &CpuWidgetState, cpu_data: &'a [ConvertedCpuData],
-        show_avg_cpu: bool,
+        &self, cpu_widget_state: &CpuWidgetState, cpu_data: &'a [CpuWidgetData], show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
 
-        let current_scroll_position = cpu_widget_state.table_state.current_scroll_position;
+        let current_scroll_position = cpu_widget_state.table.state.current_scroll_position;
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
             cpu_data
                 .iter()
                 .enumerate()
                 .rev()
-                .map(|(itx, cpu)| {
-                    let style = if show_avg_cpu && itx == AVG_POSITION {
-                        self.colours.avg_colour_style
-                    } else if itx == ALL_POSITION {
-                        self.colours.all_colour_style
-                    } else {
-                        let offset_position = itx - 1; // Because of the all position
-                        self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
-                            % self.colours.cpu_colour_styles.len()]
-                    };
+                .filter_map(|(itx, cpu)| {
+                    match cpu {
+                        CpuWidgetData::All => None,
+                        CpuWidgetData::Entry { data, .. } => {
+                            let style = if show_avg_cpu && itx == AVG_POSITION {
+                                self.colours.avg_colour_style
+                            } else if itx == ALL_POSITION {
+                                self.colours.all_colour_style
+                            } else {
+                                let offset_position = itx - 1; // Because of the all position
+                                self.colours.cpu_colour_styles[(offset_position - show_avg_offset)
+                                    % self.colours.cpu_colour_styles.len()]
+                            };
 
-                    GraphData {
-                        points: &cpu.cpu_data[..],
-                        style,
-                        name: None,
+                            Some(GraphData {
+                                points: &data[..],
+                                style,
+                                name: None,
+                            })
+                        }
                     }
                 })
                 .collect::<Vec<_>>()
-        } else if let Some(cpu) = cpu_data.get(current_scroll_position) {
+        } else if let Some(CpuWidgetData::Entry { data, .. }) =
+            cpu_data.get(current_scroll_position)
+        {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.colours.avg_colour_style
             } else {
@@ -159,7 +164,7 @@ impl Painter {
             };
 
             vec![GraphData {
-                points: &cpu.cpu_data[..],
+                points: &data[..],
                 style,
                 name: None,
             }]
@@ -230,83 +235,37 @@ impl Painter {
             // TODO: This line (and the one above, see caller) is pretty dumb but I guess needed.
             cpu_widget_state.is_legend_hidden = false;
 
-            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-            let cpu_data = {
-                let col_widths = vec![1, 3]; // TODO: Should change this to take const generics (usize) and an array.
-                let colour_iter = if show_avg_cpu {
-                    Either::Left(
-                        iter::once(&self.colours.all_colour_style)
-                            .chain(iter::once(&self.colours.avg_colour_style))
-                            .chain(self.colours.cpu_colour_styles.iter().cycle()),
-                    )
-                } else {
-                    Either::Right(
-                        iter::once(&self.colours.all_colour_style)
-                            .chain(self.colours.cpu_colour_styles.iter().cycle()),
-                    )
-                };
-
-                let data = {
-                    let iter = app_state.converted_data.cpu_data.iter().zip(colour_iter);
-                    const CPU_WIDTH_CHECK: u16 = 10; // This is hard-coded, it's terrible.
-                    if draw_loc.width < CPU_WIDTH_CHECK {
-                        Either::Left(iter.map(|(cpu, style)| {
-                            let row = vec![
-                                CellContent::Simple("".into()),
-                                CellContent::Simple(if cpu.legend_value.is_empty() {
-                                    cpu.cpu_name.clone().into()
-                                } else {
-                                    cpu.legend_value.clone().into()
-                                }),
-                            ];
-                            TableRow::Styled(row, *style)
-                        }))
-                    } else {
-                        Either::Right(iter.map(|(cpu, style)| {
-                            let row = vec![
-                                CellContent::HasAlt {
-                                    alt: cpu.short_cpu_name.clone().into(),
-                                    main: cpu.cpu_name.clone().into(),
-                                },
-                                CellContent::Simple(cpu.legend_value.clone().into()),
-                            ];
-                            TableRow::Styled(row, *style)
-                        }))
-                    }
-                }
-                .collect();
-
-                TableData { data, col_widths }
-            };
-
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let border_style = if is_on_widget {
-                self.colours.highlighted_border_style
-            } else {
-                self.colours.border_style
+
+            // FIXME: This should be moved elsewhere.
+            let styling = TableStyling {
+                header_style: self.colours.table_header_style,
+                border_style: self.colours.border_style,
+                highlighted_border_style: self.colours.highlighted_border_style,
+                text_style: self.colours.text_style,
+                highlighted_text_style: self.colours.currently_selected_text_style,
+                title_style: self.colours.widget_title_style,
+                row_styles: vec![],
+            };
+            let draw_info = DrawInfo {
+                styling,
+                loc: draw_loc,
+                force_redraw: app_state.is_force_redraw,
+                recalculate_column_widths,
+                selection_state: if app_state.is_expanded {
+                    SelectionState::Expanded
+                } else if is_on_widget {
+                    SelectionState::Selected
+                } else {
+                    SelectionState::NotSelected
+                },
             };
 
-            TextTable {
-                table_gap: app_state.app_config_fields.table_gap,
-                is_force_redraw: app_state.is_force_redraw,
-                recalculate_column_widths,
-                header_style: self.colours.table_header_style,
-                border_style,
-                highlighted_text_style: self.colours.currently_selected_text_style, // We always highlight the selected CPU entry... not sure if I like this though.
-                title: None,
-                is_on_widget,
-                draw_border: true,
-                show_table_scroll_position: app_state.app_config_fields.show_table_scroll_position,
-                title_style: self.colours.widget_title_style,
-                text_style: self.colours.text_style,
-                left_to_right: false,
-            }
-            .draw_text_table(
+            cpu_widget_state.table.draw(
                 f,
-                draw_loc,
-                &mut cpu_widget_state.table_state,
-                &cpu_data,
-                None,
+                &draw_info,
+                &app_state.converted_data.cpu_data,
+                app_state.widget_map.get_mut(&widget_id),
             );
         }
     }

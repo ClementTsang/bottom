@@ -5,7 +5,7 @@ use crate::{
         query::*,
         AppSearchState, ScrollDirection, SortState,
     },
-    components::text_table::{
+    components::old_text_table::{
         CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentHeader,
         TableComponentState, WidthBounds,
     },

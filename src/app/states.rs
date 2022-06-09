@@ -4,11 +4,10 @@ use unicode_segmentation::GraphemeCursor;
 
 use crate::{
     app::{layout_manager::BottomWidgetType, query::*},
-    components::text_table::{CellContent, TableComponentColumn, TableComponentState, WidthBounds},
     constants,
 };
 
-use super::widgets::{DiskWidgetState, ProcWidget, TempWidgetState};
+use super::widgets::{CpuWidgetState, DiskTableWidget, ProcWidget, TempWidgetState};
 
 #[derive(Debug)]
 pub enum ScrollDirection {
@@ -184,42 +183,6 @@ impl NetState {
     }
 }
 
-pub struct CpuWidgetState {
-    pub current_display_time: u64,
-    pub is_legend_hidden: bool,
-    pub autohide_timer: Option<Instant>,
-    pub table_state: TableComponentState,
-    pub is_multi_graph_mode: bool,
-}
-
-impl CpuWidgetState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
-        const CPU_LEGEND_HEADER: [&str; 2] = ["CPU", "Use%"];
-        const WIDTHS: [WidthBounds; CPU_LEGEND_HEADER.len()] = [
-            WidthBounds::soft_from_str("CPU", Some(0.5)),
-            WidthBounds::soft_from_str("Use%", Some(0.5)),
-        ];
-
-        let table_state = TableComponentState::new(
-            CPU_LEGEND_HEADER
-                .iter()
-                .zip(WIDTHS)
-                .map(|(c, width)| {
-                    TableComponentColumn::new_custom(CellContent::new(*c, None), width)
-                })
-                .collect(),
-        );
-
-        CpuWidgetState {
-            current_display_time,
-            is_legend_hidden: false,
-            autohide_timer,
-            table_state,
-            is_multi_graph_mode: false,
-        }
-    }
-}
-
 pub struct CpuState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, CpuWidgetState>,
@@ -296,19 +259,19 @@ impl TempState {
 }
 
 pub struct DiskState {
-    pub widget_states: HashMap<u64, DiskWidgetState>,
+    pub widget_states: HashMap<u64, DiskTableWidget>,
 }
 
 impl DiskState {
-    pub fn init(widget_states: HashMap<u64, DiskWidgetState>) -> Self {
+    pub fn init(widget_states: HashMap<u64, DiskTableWidget>) -> Self {
         DiskState { widget_states }
     }
 
-    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut DiskWidgetState> {
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut DiskTableWidget> {
         self.widget_states.get_mut(&widget_id)
     }
 
-    pub fn get_widget_state(&self, widget_id: u64) -> Option<&DiskWidgetState> {
+    pub fn get_widget_state(&self, widget_id: u64) -> Option<&DiskTableWidget> {
         self.widget_states.get(&widget_id)
     }
 }

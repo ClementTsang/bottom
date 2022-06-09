@@ -329,7 +329,7 @@ pub fn update_data(app: &mut App) {
         }
     }
 
-    // FIXME: I should really test that this works, it was broken for a long time.
+    // FIXME: I should really test that this works with different adds/removes, it was broken for a long time.
     for disk in app.disk_state.widget_states.values_mut() {
         disk.table
             .update_num_entries(app.converted_data.disk_data.len());
@@ -340,8 +340,10 @@ pub fn update_data(app: &mut App) {
             .update_num_entries(app.converted_data.temp_data.len());
     }
 
+    // FIXME: Make this less terrible.
     if app.cpu_state.force_update.is_some() {
-        convert_cpu_data_points(&app.data_collection, &mut app.converted_data.cpu_data);
+        app.converted_data
+            .convert_cpu_data_points(&app.data_collection);
         app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
         app.cpu_state.force_update = None;
     }
@@ -422,7 +424,7 @@ pub fn create_collection_thread(
     app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
     used_widget_set: UsedWidgets,
 ) -> std::thread::JoinHandle<()> {
-    let temp_type = app_config_fields.temperature_type.clone();
+    let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_rate_in_milliseconds = app_config_fields.update_rate_in_milliseconds;
@@ -455,7 +457,7 @@ pub fn create_collection_thread(
                         data_state.data.cleanup();
                     }
                     ThreadControlEvent::UpdateConfig(app_config_fields) => {
-                        data_state.set_temperature_type(app_config_fields.temperature_type.clone());
+                        data_state.set_temperature_type(app_config_fields.temperature_type);
                         data_state
                             .set_use_current_cpu_total(app_config_fields.use_current_cpu_total);
                         data_state.set_show_average_cpu(app_config_fields.show_average_cpu);
