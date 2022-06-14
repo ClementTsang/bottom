@@ -59,7 +59,7 @@ impl FromStr for ColourScheme {
     }
 }
 
-/// Handles the canvas' state.  TODO: [OPT] implement this.
+/// Handles the canvas' state.
 pub struct Painter {
     pub colours: CanvasColours,
     height: u16,

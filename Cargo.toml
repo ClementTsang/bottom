@@ -20,8 +20,8 @@ doc = false
 
 [lib]
 test = true
-doctest = false
-doc = false
+doctest = true
+doc = true
 
 [profile.release]
 debug = 0

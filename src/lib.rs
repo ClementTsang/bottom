@@ -1,3 +1,10 @@
+//! A customizable cross-platform graphical process/system monitor for the terminal.
+//! Supports Linux, macOS, and Windows. Inspired by gtop, gotop, and htop.
+//!
+//! **Note:** The following documentation is primarily intended for people to refer to for development purposes rather
+//! than the actual usage of the application. If you are instead looking for documentation regarding the *usage* of
+//! bottom, refer to [here](https://clementtsang.github.io/bottom/stable/).
+
 #![warn(rust_2018_idioms)]
 #[allow(unused_imports)]
 #[cfg(feature = "log")]
@@ -273,7 +280,8 @@ pub fn cleanup_terminal(
     Ok(())
 }
 
-/// Based on https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs
+/// A panic hook to properly restore the terminal in the case of a panic.
+/// Based on [spotify-tui's implementation](https://github.com/Rigellute/spotify-tui/blob/master/src/main.rs).
 pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let mut stdout = stdout();
 

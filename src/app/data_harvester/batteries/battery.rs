@@ -7,7 +7,7 @@
 //! - FreeBSD
 //! - DragonFlyBSD
 //!
-//! For more information, see https://github.com/starship/rust-battery
+//! For more information, refer to the [starship_battery](https://github.com/starship/rust-battery) repo/docs.
 
 use starship_battery::{
     units::{power::watt, ratio::percent, time::second},
