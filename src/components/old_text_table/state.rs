@@ -201,6 +201,12 @@ impl SortOrder {
     }
 }
 
+impl Default for SortOrder {
+    fn default() -> Self {
+        Self::Ascending
+    }
+}
+
 /// Represents the current table's sorting state.
 #[derive(Debug)]
 pub enum SortState {

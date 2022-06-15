@@ -1,13 +1,16 @@
 use std::borrow::Cow;
 
 use crate::{
-    app::{layout_manager::WidgetDirection, widgets::CpuWidgetState, App},
+    app::{
+        data_harvester::cpu::CpuDataType, layout_manager::WidgetDirection, widgets::CpuWidgetState,
+        App,
+    },
     canvas::{drawing_utils::should_hide_x_label, Painter},
     components::{
-        data_table::{DrawInfo, SelectionState, TableStyling},
+        data_table::{DrawInfo, SelectionState},
         time_graph::{GraphData, TimeGraph},
     },
-    data_conversion::CpuWidgetData,
+    data_conversion::{CpuWidgetData, CpuWidgetDataType},
 };
 
 use concat_string::concat_string;
@@ -130,9 +133,9 @@ impl Painter {
                 .enumerate()
                 .rev()
                 .filter_map(|(itx, cpu)| {
-                    match cpu {
-                        CpuWidgetData::All => None,
-                        CpuWidgetData::Entry { data, .. } => {
+                    match &cpu.data {
+                        CpuWidgetDataType::All => None,
+                        CpuWidgetDataType::Entry { data, .. } => {
                             let style = if show_avg_cpu && itx == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else if itx == ALL_POSITION {
@@ -152,8 +155,8 @@ impl Painter {
                     }
                 })
                 .collect::<Vec<_>>()
-        } else if let Some(CpuWidgetData::Entry { data, .. }) =
-            cpu_data.get(current_scroll_position)
+        } else if let Some(CpuWidgetDataType::Entry { data, .. }) =
+            cpu_data.get(current_scroll_position).map(|c| &c.data)
         {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.colours.avg_colour_style
@@ -232,34 +235,34 @@ impl Painter {
         let recalculate_column_widths = app_state.should_get_widget_bounds();
         if let Some(cpu_widget_state) = app_state.cpu_state.widget_states.get_mut(&(widget_id - 1))
         {
-            // TODO: This line (and the one above, see caller) is pretty dumb but I guess needed.
+            // TODO: This line (and the one above, see caller) is pretty dumb but I guess needed for now. Refactor if possible!
             cpu_widget_state.is_legend_hidden = false;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
 
-            // FIXME: This should be moved elsewhere.
-            let styling = TableStyling {
-                header_style: self.colours.table_header_style,
-                border_style: self.colours.border_style,
-                highlighted_border_style: self.colours.highlighted_border_style,
-                text_style: self.colours.text_style,
-                highlighted_text_style: self.colours.currently_selected_text_style,
-                title_style: self.colours.widget_title_style,
-                row_styles: vec![],
-            };
             let draw_info = DrawInfo {
-                styling,
                 loc: draw_loc,
                 force_redraw: app_state.is_force_redraw,
                 recalculate_column_widths,
-                selection_state: if app_state.is_expanded {
-                    SelectionState::Expanded
-                } else if is_on_widget {
-                    SelectionState::Selected
-                } else {
-                    SelectionState::NotSelected
-                },
+                selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
+
+            for cpu in &mut app_state.converted_data.cpu_data {
+                cpu.style = match &cpu.data {
+                    CpuWidgetDataType::All => cpu_widget_state.styling.all,
+                    CpuWidgetDataType::Entry {
+                        data_type,
+                        data: _,
+                        last_entry: _,
+                    } => match data_type {
+                        CpuDataType::Avg => cpu_widget_state.styling.avg,
+                        CpuDataType::Cpu(index) => {
+                            cpu_widget_state.styling.entries
+                                [index % cpu_widget_state.styling.entries.len()]
+                        }
+                    },
+                }
+            }
 
             cpu_widget_state.table.draw(
                 f,

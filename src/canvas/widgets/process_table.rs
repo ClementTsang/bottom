@@ -120,7 +120,7 @@ impl Painter {
             .draw_old_text_table(
                 f,
                 draw_loc,
-                &mut proc_widget_state.table_state,
+                &mut proc_widget_state.table,
                 &proc_widget_state.table_data,
                 app_state.widget_map.get_mut(&widget_id),
             );
@@ -361,7 +361,7 @@ impl Painter {
             // TODO: [PROC] Perhaps move this generation elsewhere... or leave it as is but look at partial rendering?
             let table_data = {
                 let data = proc_widget_state
-                    .table_state
+                    .table
                     .columns
                     .iter()
                     .filter_map(|col| {

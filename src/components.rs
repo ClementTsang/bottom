@@ -7,5 +7,3 @@ pub mod old_text_table;
 pub mod data_table;
 
 pub mod text_table;
-
-pub mod sortable_data_table;

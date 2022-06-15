@@ -12,6 +12,7 @@ use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
 
 use fxhash::FxHashMap;
 use kstring::KString;
+use tui::style::Style;
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
@@ -62,7 +63,7 @@ pub struct ConvertedNetworkData {
 }
 
 #[derive(Clone, Debug)]
-pub enum CpuWidgetData {
+pub enum CpuWidgetDataType {
     All,
     Entry {
         data_type: CpuDataType,
@@ -70,6 +71,20 @@ pub enum CpuWidgetData {
         data: Vec<Point>,
         last_entry: f64,
     },
+}
+
+pub struct CpuWidgetData {
+    pub data: CpuWidgetDataType,
+    pub style: Style,
+}
+
+impl CpuWidgetData {
+    pub fn new(data: CpuWidgetDataType) -> Self {
+        Self {
+            data,
+            style: Style::default(),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -103,7 +118,7 @@ pub struct ConvertedData {
 
 impl ConvertedData {
     // TODO: Can probably heavily reduce this step to avoid clones.
-    pub fn ingest_disk(&mut self, data: &DataCollection) {
+    pub fn ingest_disk_data(&mut self, data: &DataCollection) {
         self.disk_data.clear();
 
         data.disk_harvest
@@ -124,7 +139,7 @@ impl ConvertedData {
         self.disk_data.shrink_to_fit();
     }
 
-    pub fn ingest_temp(&mut self, data: &DataCollection, temperature_type: TemperatureType) {
+    pub fn ingest_temp_data(&mut self, data: &DataCollection, temperature_type: TemperatureType) {
         self.temp_data.clear();
 
         data.temp_harvest.iter().for_each(|temp_harvest| {
@@ -138,7 +153,7 @@ impl ConvertedData {
         self.temp_data.shrink_to_fit();
     }
 
-    pub fn convert_cpu_data_points(&mut self, current_data: &DataCollection) {
+    pub fn ingest_cpu_data(&mut self, current_data: &DataCollection) {
         let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
             frozen_instant
         } else {
@@ -149,15 +164,18 @@ impl ConvertedData {
         if let Some((_time, data)) = &current_data.timed_data_vec.last() {
             if data.cpu_data.len() + 1 != self.cpu_data.len() {
                 self.cpu_data = Vec::with_capacity(data.cpu_data.len() + 1);
-                self.cpu_data.push(CpuWidgetData::All);
+                self.cpu_data
+                    .push(CpuWidgetData::new(CpuWidgetDataType::All));
                 self.cpu_data.extend(
                     data.cpu_data
                         .iter()
                         .zip(&current_data.cpu_harvest)
-                        .map(|(cpu_usage, data)| CpuWidgetData::Entry {
-                            data_type: data.data_type,
-                            data: vec![],
-                            last_entry: *cpu_usage,
+                        .map(|(cpu_usage, data)| {
+                            CpuWidgetData::new(CpuWidgetDataType::Entry {
+                                data_type: data.data_type,
+                                data: vec![],
+                                last_entry: *cpu_usage,
+                            })
                         })
                         .collect::<Vec<CpuWidgetData>>(),
                 );
@@ -166,9 +184,9 @@ impl ConvertedData {
                     .iter_mut()
                     .skip(1)
                     .zip(&data.cpu_data)
-                    .for_each(|(cpu, cpu_usage)| match cpu {
-                        CpuWidgetData::All => unreachable!(),
-                        CpuWidgetData::Entry {
+                    .for_each(|(cpu, cpu_usage)| match &mut cpu.data {
+                        CpuWidgetDataType::All => unreachable!(),
+                        CpuWidgetDataType::Entry {
                             data_type: _,
                             data,
                             last_entry,
@@ -181,12 +199,12 @@ impl ConvertedData {
             }
         }
 
-        // TODO: Can probably avoid data deduplication - store the shift + data + original once.
+        // TODO: [Opt] Can probably avoid data deduplication - store the shift + data + original once.
         // Now push all the data.
         for (itx, cpu) in &mut self.cpu_data.iter_mut().skip(1).enumerate() {
-            match cpu {
-                CpuWidgetData::All => unreachable!(),
-                CpuWidgetData::Entry {
+            match &mut cpu.data {
+                CpuWidgetDataType::All => unreachable!(),
+                CpuWidgetDataType::Entry {
                     data_type: _,
                     data,
                     last_entry: _,

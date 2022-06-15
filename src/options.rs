@@ -372,7 +372,7 @@ pub fn build_app(
                                     &app_config_fields,
                                     default_time_value,
                                     autohide_timer,
-                                    colours
+                                    colours,
                                 ),
                             );
                         }
@@ -412,12 +412,16 @@ pub fn build_app(
                             );
                         }
                         Disk => {
-                            disk_state_map
-                                .insert(widget.widget_id, DiskTableWidget::new(&app_config_fields));
+                            disk_state_map.insert(
+                                widget.widget_id,
+                                DiskTableWidget::new(&app_config_fields, colours),
+                            );
                         }
                         Temp => {
-                            temp_state_map
-                                .insert(widget.widget_id, TempWidgetState::new(&app_config_fields));
+                            temp_state_map.insert(
+                                widget.widget_id,
+                                TempWidgetState::new(&app_config_fields, colours),
+                            );
                         }
                         Battery => {
                             battery_state_map

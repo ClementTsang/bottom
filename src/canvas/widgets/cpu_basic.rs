@@ -4,7 +4,7 @@ use crate::{
     app::App,
     canvas::{drawing_utils::*, Painter},
     constants::*,
-    data_conversion::CpuWidgetData,
+    data_conversion::{CpuWidgetData, CpuWidgetDataType},
 };
 
 use tui::{
@@ -73,9 +73,9 @@ impl Painter {
                     cpu_data
                         .iter()
                         .enumerate()
-                        .filter_map(|(index, cpu)| match cpu {
-                            CpuWidgetData::All => None,
-                            CpuWidgetData::Entry {
+                        .filter_map(|(index, cpu)| match &cpu.data {
+                            CpuWidgetDataType::All => None,
+                            CpuWidgetDataType::Entry {
                                 data_type: _,
                                 data: _,
                                 last_entry,
@@ -103,9 +103,9 @@ impl Painter {
                     cpu_data
                         .iter()
                         .enumerate()
-                        .filter_map(|(index, cpu)| match cpu {
-                            CpuWidgetData::All => None,
-                            CpuWidgetData::Entry {
+                        .filter_map(|(index, cpu)| match &cpu.data {
+                            CpuWidgetDataType::All => None,
+                            CpuWidgetDataType::Entry {
                                 data_type: _,
                                 data: _,
                                 last_entry,
@@ -127,9 +127,9 @@ impl Painter {
                 } else {
                     cpu_data
                         .iter()
-                        .filter_map(|cpu| match cpu {
-                            CpuWidgetData::All => None,
-                            CpuWidgetData::Entry {
+                        .filter_map(|cpu| match &cpu.data {
+                            CpuWidgetDataType::All => None,
+                            CpuWidgetDataType::Entry {
                                 data_type: _,
                                 data: _,
                                 last_entry,

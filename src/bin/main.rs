@@ -189,12 +189,12 @@ fn main() -> Result<()> {
 
                         // Disk
                         if app.used_widgets.use_disk {
-                            app.converted_data.ingest_disk(&app.data_collection);
+                            app.converted_data.ingest_disk_data(&app.data_collection);
                         }
 
                         // Temperatures
                         if app.used_widgets.use_temp {
-                            app.converted_data.ingest_temp(
+                            app.converted_data.ingest_temp_data(
                                 &app.data_collection,
                                 app.app_config_fields.temperature_type,
                             )
@@ -225,8 +225,7 @@ fn main() -> Result<()> {
 
                         // CPU
                         if app.used_widgets.use_cpu {
-                            app.converted_data
-                                .convert_cpu_data_points(&app.data_collection);
+                            app.converted_data.ingest_cpu_data(&app.data_collection);
                             app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }
 

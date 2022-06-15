@@ -16,7 +16,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use super::tui_widget::time_chart::{Axis, Dataset, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
 
 /// A single graph point.
-pub type Point = (f64, f64);
+pub type Point = (f64, f64); // FIXME: Move this to tui time chart?
 
 /// Represents the data required by the [`TimeGraph`].
 pub struct GraphData<'a> {

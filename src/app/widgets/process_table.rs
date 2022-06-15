@@ -6,23 +6,23 @@ use crate::{
         AppSearchState, ScrollDirection, SortState,
     },
     components::old_text_table::{
-        CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentHeader,
-        TableComponentState, WidthBounds,
+        CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentState,
+        WidthBounds,
     },
-    data_conversion::{
-        binary_byte_string, dec_bytes_per_second_string, dec_bytes_per_string, TableData, TableRow,
-    },
-    utils::gen_util::sort_partial_fn,
+    data_conversion::{binary_byte_string, dec_bytes_per_second_string, TableData, TableRow},
     Pid,
 };
 
 use concat_string::concat_string;
 use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
-use std::{
-    borrow::Cow,
-    cmp::{max, Reverse},
-};
+use std::cmp::max;
+
+pub mod proc_widget_column;
+pub use proc_widget_column::*;
+
+pub mod proc_widget_data;
+pub use proc_widget_data::*;
 
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
@@ -64,255 +64,12 @@ pub enum ProcWidgetMode {
     Normal,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum ProcWidgetColumn {
-    CpuPercent,
-    Memory { show_percentage: bool },
-    PidOrCount { is_count: bool },
-    ProcNameOrCommand { is_command: bool },
-    ReadPerSecond,
-    WritePerSecond,
-    TotalRead,
-    TotalWrite,
-    State,
-    User,
-}
-
-impl ProcWidgetColumn {
-    const CPU_PERCENT: CellContent = CellContent::Simple(Cow::Borrowed("CPU%"));
-    const MEM_PERCENT: CellContent = CellContent::Simple(Cow::Borrowed("Mem%"));
-    const MEM: CellContent = CellContent::Simple(Cow::Borrowed("Mem"));
-    const READS_PER_SECOND: CellContent = CellContent::Simple(Cow::Borrowed("R/s"));
-    const WRITES_PER_SECOND: CellContent = CellContent::Simple(Cow::Borrowed("W/s"));
-    const TOTAL_READ: CellContent = CellContent::Simple(Cow::Borrowed("T.Read"));
-    const TOTAL_WRITE: CellContent = CellContent::Simple(Cow::Borrowed("T.Write"));
-    const STATE: CellContent = CellContent::Simple(Cow::Borrowed("State"));
-    const PROCESS_NAME: CellContent = CellContent::Simple(Cow::Borrowed("Name"));
-    const COMMAND: CellContent = CellContent::Simple(Cow::Borrowed("Command"));
-    const PID: CellContent = CellContent::Simple(Cow::Borrowed("PID"));
-    const COUNT: CellContent = CellContent::Simple(Cow::Borrowed("Count"));
-    const USER: CellContent = CellContent::Simple(Cow::Borrowed("User"));
-
-    const SHORTCUT_CPU_PERCENT: CellContent = CellContent::Simple(Cow::Borrowed("CPU%(c)"));
-    const SHORTCUT_MEM_PERCENT: CellContent = CellContent::Simple(Cow::Borrowed("Mem%(m)"));
-    const SHORTCUT_MEM: CellContent = CellContent::Simple(Cow::Borrowed("Mem(m)"));
-    const SHORTCUT_PROCESS_NAME: CellContent = CellContent::Simple(Cow::Borrowed("Name(n)"));
-    const SHORTCUT_COMMAND: CellContent = CellContent::Simple(Cow::Borrowed("Command(n)"));
-    const SHORTCUT_PID: CellContent = CellContent::Simple(Cow::Borrowed("PID(p)"));
-
-    pub fn text(&self) -> &CellContent {
-        match self {
-            ProcWidgetColumn::CpuPercent => &Self::CPU_PERCENT,
-            ProcWidgetColumn::Memory { show_percentage } => {
-                if *show_percentage {
-                    &Self::MEM_PERCENT
-                } else {
-                    &Self::MEM
-                }
-            }
-            ProcWidgetColumn::PidOrCount { is_count } => {
-                if *is_count {
-                    &Self::COUNT
-                } else {
-                    &Self::PID
-                }
-            }
-            ProcWidgetColumn::ProcNameOrCommand { is_command } => {
-                if *is_command {
-                    &Self::COMMAND
-                } else {
-                    &Self::PROCESS_NAME
-                }
-            }
-            ProcWidgetColumn::ReadPerSecond => &Self::READS_PER_SECOND,
-            ProcWidgetColumn::WritePerSecond => &Self::WRITES_PER_SECOND,
-            ProcWidgetColumn::TotalRead => &Self::TOTAL_READ,
-            ProcWidgetColumn::TotalWrite => &Self::TOTAL_WRITE,
-            ProcWidgetColumn::State => &Self::STATE,
-            ProcWidgetColumn::User => &Self::USER,
-        }
-    }
-
-    /// Sorts the given data in-place.
-    pub fn sort(
-        &self, sort_descending: bool, data: &mut [&ProcessHarvest], is_using_command: bool,
-        cmd_pid_map: &StringPidMap, name_pid_map: &StringPidMap,
-    ) {
-        match self {
-            ProcWidgetColumn::CpuPercent => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                data.sort_by(|a, b| {
-                    sort_partial_fn(sort_descending)(a.cpu_usage_percent, b.cpu_usage_percent)
-                });
-            }
-            ProcWidgetColumn::Memory { show_percentage } => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                if *show_percentage {
-                    data.sort_by(|a, b| {
-                        sort_partial_fn(sort_descending)(a.mem_usage_percent, b.mem_usage_percent)
-                    });
-                } else {
-                    data.sort_by(|a, b| {
-                        sort_partial_fn(sort_descending)(a.mem_usage_bytes, b.mem_usage_bytes)
-                    });
-                }
-            }
-            ProcWidgetColumn::PidOrCount { is_count } => {
-                data.sort_by_cached_key(|c| c.name.to_lowercase());
-                if *is_count {
-                    if is_using_command {
-                        if sort_descending {
-                            data.sort_by_cached_key(|p| {
-                                Reverse(cmd_pid_map.get(&p.command).map(|v| v.len()).unwrap_or(0))
-                            })
-                        } else {
-                            data.sort_by_cached_key(|p| {
-                                cmd_pid_map.get(&p.command).map(|v| v.len()).unwrap_or(0)
-                            })
-                        }
-                    } else {
-                        #[allow(clippy::collapsible-else-if)]
-                        if sort_descending {
-                            data.sort_by_cached_key(|p| {
-                                Reverse(name_pid_map.get(&p.name).map(|v| v.len()).unwrap_or(0))
-                            })
-                        } else {
-                            data.sort_by_cached_key(|p| {
-                                name_pid_map.get(&p.name).map(|v| v.len()).unwrap_or(0)
-                            })
-                        }
-                    }
-                } else {
-                    data.sort_by(|a, b| sort_partial_fn(sort_descending)(a.pid, b.pid));
-                }
-            }
-            ProcWidgetColumn::ProcNameOrCommand { is_command } => {
-                if *is_command {
-                    if sort_descending {
-                        data.sort_by_cached_key(|p| Reverse(p.command.to_lowercase()));
-                    } else {
-                        data.sort_by_cached_key(|p| p.command.to_lowercase());
-                    }
-                } else if sort_descending {
-                    data.sort_by_cached_key(|p| Reverse(p.name.to_lowercase()));
-                } else {
-                    data.sort_by_cached_key(|p| p.name.to_lowercase());
-                }
-            }
-            ProcWidgetColumn::ReadPerSecond => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                if sort_descending {
-                    data.sort_by_key(|a| Reverse(a.read_bytes_per_sec));
-                } else {
-                    data.sort_by_key(|a| a.read_bytes_per_sec);
-                }
-            }
-            ProcWidgetColumn::WritePerSecond => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                if sort_descending {
-                    data.sort_by_key(|a| Reverse(a.write_bytes_per_sec));
-                } else {
-                    data.sort_by_key(|a| a.write_bytes_per_sec);
-                }
-            }
-            ProcWidgetColumn::TotalRead => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                if sort_descending {
-                    data.sort_by_key(|a| Reverse(a.total_read_bytes));
-                } else {
-                    data.sort_by_key(|a| a.total_read_bytes);
-                }
-            }
-            ProcWidgetColumn::TotalWrite => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                if sort_descending {
-                    data.sort_by_key(|a| Reverse(a.total_write_bytes));
-                } else {
-                    data.sort_by_key(|a| a.total_write_bytes);
-                }
-            }
-            ProcWidgetColumn::State => {
-                data.sort_by_cached_key(|p| p.name.to_lowercase());
-                if sort_descending {
-                    data.sort_by_cached_key(|p| Reverse(p.process_state.0.to_lowercase()));
-                } else {
-                    data.sort_by_cached_key(|p| p.process_state.0.to_lowercase());
-                }
-            }
-            ProcWidgetColumn::User => {
-                #[cfg(target_family = "unix")]
-                {
-                    data.sort_by_cached_key(|p| p.name.to_lowercase());
-                    if sort_descending {
-                        data.sort_by_cached_key(|p| Reverse(p.user.to_lowercase()));
-                    } else {
-                        data.sort_by_cached_key(|p| p.user.to_lowercase());
-                    }
-                }
-            }
-        }
-    }
-
-    /// Basically, anything "alphabetical" should sort in ascending order by default. This also includes something like
-    /// PID, as one would probably want PID to sort by default starting from 0 or 1.
-    fn default_sort_order(&self) -> SortOrder {
-        match self {
-            ProcWidgetColumn::PidOrCount { is_count: true }
-            | ProcWidgetColumn::CpuPercent
-            | ProcWidgetColumn::ReadPerSecond
-            | ProcWidgetColumn::WritePerSecond
-            | ProcWidgetColumn::TotalRead
-            | ProcWidgetColumn::TotalWrite
-            | ProcWidgetColumn::Memory { .. } => SortOrder::Descending,
-
-            ProcWidgetColumn::PidOrCount { is_count: false }
-            | ProcWidgetColumn::ProcNameOrCommand { .. }
-            | ProcWidgetColumn::State
-            | ProcWidgetColumn::User => SortOrder::Ascending,
-        }
-    }
-}
-
-impl TableComponentHeader for ProcWidgetColumn {
-    fn header_text(&self) -> &CellContent {
-        match self {
-            ProcWidgetColumn::CpuPercent => &Self::SHORTCUT_CPU_PERCENT,
-            ProcWidgetColumn::Memory { show_percentage } => {
-                if *show_percentage {
-                    &Self::SHORTCUT_MEM_PERCENT
-                } else {
-                    &Self::SHORTCUT_MEM
-                }
-            }
-            ProcWidgetColumn::PidOrCount { is_count } => {
-                if *is_count {
-                    &Self::COUNT
-                } else {
-                    &Self::SHORTCUT_PID
-                }
-            }
-            ProcWidgetColumn::ProcNameOrCommand { is_command } => {
-                if *is_command {
-                    &Self::SHORTCUT_COMMAND
-                } else {
-                    &Self::SHORTCUT_PROCESS_NAME
-                }
-            }
-            ProcWidgetColumn::ReadPerSecond => &Self::READS_PER_SECOND,
-            ProcWidgetColumn::WritePerSecond => &Self::WRITES_PER_SECOND,
-            ProcWidgetColumn::TotalRead => &Self::TOTAL_READ,
-            ProcWidgetColumn::TotalWrite => &Self::TOTAL_WRITE,
-            ProcWidgetColumn::State => &Self::STATE,
-            ProcWidgetColumn::User => &Self::USER,
-        }
-    }
-}
-
 pub struct ProcWidget {
     pub mode: ProcWidgetMode,
 
     pub proc_search: ProcessSearchState,
-    pub table_state: TableComponentState<ProcWidgetColumn>,
+    // pub table: DataTable<ProcWidgetData, ProcWidgetColumn, Sortable>,
+    pub table: TableComponentState<ProcWidgetColumn>,
     pub sort_table_state: TableComponentState,
 
     pub is_sort_open: bool,
@@ -403,7 +160,7 @@ impl ProcWidget {
 
         ProcWidget {
             proc_search: process_search_state,
-            table_state,
+            table: table_state,
             sort_table_state,
             is_sort_open: false,
             mode,
@@ -415,7 +172,7 @@ impl ProcWidget {
 
     pub fn is_using_command(&self) -> bool {
         if let Some(ProcWidgetColumn::ProcNameOrCommand { is_command }) = self
-            .table_state
+            .table
             .columns
             .get(ProcWidget::PROC_NAME_OR_CMD)
             .map(|col| &col.header)
@@ -445,10 +202,10 @@ impl ProcWidget {
         };
 
         // Now also update the scroll position if needed (that is, the old scroll position was too big for the new list).
-        if self.table_state.current_scroll_position >= table_data.data.len() {
-            self.table_state.current_scroll_position = table_data.data.len().saturating_sub(1);
-            self.table_state.scroll_bar = 0;
-            self.table_state.scroll_direction = ScrollDirection::Down;
+        if self.table.current_scroll_position >= table_data.data.len() {
+            self.table.current_scroll_position = table_data.data.len().saturating_sub(1);
+            self.table.scroll_bar = 0;
+            self.table.scroll_direction = ScrollDirection::Down;
         }
 
         // Finally, move this data to the widget itself.
@@ -473,14 +230,7 @@ impl ProcWidget {
             ..
         } = &data_collection.process_data;
 
-        let mut col_widths = vec![
-            0;
-            self.table_state
-                .columns
-                .iter()
-                .filter(|c| c.is_skipped())
-                .count()
-        ];
+        let mut col_widths = vec![0; self.table.columns.iter().filter(|c| c.is_skipped()).count()];
 
         let matching_pids = data_collection
             .process_data
@@ -710,11 +460,11 @@ impl ProcWidget {
         let cmd_pid_map = &data_collection.process_data.cmd_pid_map;
         let name_pid_map = &data_collection.process_data.name_pid_map;
 
-        if let SortState::Sortable(state) = &self.table_state.sort_state {
+        if let SortState::Sortable(state) = &self.table.sort_state {
             let index = state.current_index;
             let order = &state.order;
 
-            if let Some(column) = self.table_state.columns.get(index) {
+            if let Some(column) = self.table.columns.get(index) {
                 column.header.sort(
                     order.is_descending(),
                     filtered_data,
@@ -732,92 +482,84 @@ impl ProcWidget {
     ) -> TableRow {
         let mut contents = Vec::with_capacity(self.num_shown_columns());
 
-        contents.extend(
-            self.table_state
-                .columns
-                .iter()
-                .enumerate()
-                .map(|(itx, column)| {
-                    let col_text = match column.header {
-                        ProcWidgetColumn::CpuPercent => {
-                            format!("{:.1}%", process.cpu_usage_percent).into()
+        contents.extend(self.table.columns.iter().enumerate().map(|(itx, column)| {
+            let col_text = match column.header {
+                ProcWidgetColumn::CpuPercent => format!("{:.1}%", process.cpu_usage_percent).into(),
+                ProcWidgetColumn::Memory { show_percentage } => {
+                    if show_percentage {
+                        format!("{:.1}%", process.mem_usage_percent).into()
+                    } else {
+                        binary_byte_string(process.mem_usage_bytes).into()
+                    }
+                }
+                ProcWidgetColumn::PidOrCount { is_count } => {
+                    if is_count {
+                        if self.is_using_command() {
+                            cmd_pid_map
+                                .get(&process.command)
+                                .map(|v| v.len())
+                                .unwrap_or(0)
+                                .to_string()
+                                .into()
+                        } else {
+                            name_pid_map
+                                .get(&process.name)
+                                .map(|v| v.len())
+                                .unwrap_or(0)
+                                .to_string()
+                                .into()
                         }
-                        ProcWidgetColumn::Memory { show_percentage } => {
-                            if show_percentage {
-                                format!("{:.1}%", process.mem_usage_percent).into()
-                            } else {
-                                binary_byte_string(process.mem_usage_bytes).into()
-                            }
-                        }
-                        ProcWidgetColumn::PidOrCount { is_count } => {
-                            if is_count {
-                                if self.is_using_command() {
-                                    cmd_pid_map
-                                        .get(&process.command)
-                                        .map(|v| v.len())
-                                        .unwrap_or(0)
-                                        .to_string()
-                                        .into()
-                                } else {
-                                    name_pid_map
-                                        .get(&process.name)
-                                        .map(|v| v.len())
-                                        .unwrap_or(0)
-                                        .to_string()
-                                        .into()
-                                }
-                            } else {
-                                process.pid.to_string().into()
-                            }
-                        }
-                        ProcWidgetColumn::ProcNameOrCommand { is_command } => {
-                            let val = if is_command {
-                                process.command.clone()
-                            } else {
-                                process.name.clone()
-                            };
-
-                            if let Some(prefix) = &proc_prefix {
-                                concat_string!(prefix, val).into()
-                            } else {
-                                val.into()
-                            }
-                        }
-                        ProcWidgetColumn::ReadPerSecond => {
-                            dec_bytes_per_second_string(process.read_bytes_per_sec).into()
-                        }
-                        ProcWidgetColumn::WritePerSecond => {
-                            dec_bytes_per_second_string(process.write_bytes_per_sec).into()
-                        }
-                        ProcWidgetColumn::TotalRead => {
-                            dec_bytes_per_string(process.total_read_bytes).into()
-                        }
-                        ProcWidgetColumn::TotalWrite => {
-                            dec_bytes_per_string(process.total_write_bytes).into()
-                        }
-                        ProcWidgetColumn::State => CellContent::HasAlt {
-                            main: process.process_state.0.clone().into(),
-                            alt: process.process_state.1.to_string().into(),
-                        },
-                        ProcWidgetColumn::User => {
-                            #[cfg(target_family = "unix")]
-                            {
-                                process.user.clone().into()
-                            }
-                            #[cfg(not(target_family = "unix"))]
-                            {
-                                "".into()
-                            }
-                        }
+                    } else {
+                        process.pid.to_string().into()
+                    }
+                }
+                ProcWidgetColumn::ProcNameOrCommand { is_command } => {
+                    let val = if is_command {
+                        process.command.clone()
+                    } else {
+                        process.name.clone()
                     };
 
-                    if let Some(curr) = col_widths.get_mut(itx) {
-                        *curr = max(*curr, col_text.len());
+                    if let Some(prefix) = &proc_prefix {
+                        concat_string!(prefix, val).into()
+                    } else {
+                        val.into()
                     }
+                }
+                ProcWidgetColumn::ReadPerSecond => {
+                    dec_bytes_per_second_string(process.read_bytes_per_sec).into()
+                }
+                ProcWidgetColumn::WritePerSecond => {
+                    dec_bytes_per_second_string(process.write_bytes_per_sec).into()
+                }
+                ProcWidgetColumn::TotalRead => {
+                    dec_bytes_per_second_string(process.total_read_bytes).into()
+                }
+                ProcWidgetColumn::TotalWrite => {
+                    dec_bytes_per_second_string(process.total_write_bytes).into()
+                }
+                ProcWidgetColumn::State => CellContent::HasAlt {
+                    main: process.process_state.0.clone().into(),
+                    alt: process.process_state.1.to_string().into(),
+                },
+                ProcWidgetColumn::User => {
+                    #[cfg(target_family = "unix")]
+                    {
+                        process.user.clone().into()
+                    }
+                    #[cfg(not(target_family = "unix"))]
+                    {
+                        "".into()
+                    }
+                }
+            };
 
-                    col_text
-                }),
-        );
+            if let Some(curr) = col_widths.get_mut(itx) {
+                *curr = max(*curr, col_text.len());
+            }
+
+            col_text
+        }));
 
         if is_disabled {
             TableRow::Styled(contents, tui::style::Style::default())
@@ -832,7 +574,7 @@ impl ProcWidget {
         let cmd_pid_map = &data_collection.process_data.cmd_pid_map;
         let name_pid_map = &data_collection.process_data.name_pid_map;
 
-        let mut col_widths = vec![0; self.table_state.columns.len()];
+        let mut col_widths = vec![0; self.table.columns.len()];
 
         let data = process_data
             .iter()
@@ -852,10 +594,7 @@ impl ProcWidget {
     }
 
     fn get_mut_proc_col(&mut self, index: usize) -> Option<&mut ProcWidgetColumn> {
-        self.table_state
-            .columns
-            .get_mut(index)
-            .map(|col| &mut col.header)
+        self.table.columns.get_mut(index).map(|col| &mut col.header)
     }
 
     pub fn toggle_mem_percentage(&mut self) {
@@ -881,10 +620,10 @@ impl ProcWidget {
 
     /// Marks the selected column as hidden, and automatically resets the selected column if currently selected.
     fn hide_column(&mut self, index: usize) {
-        if let Some(col) = self.table_state.columns.get_mut(index) {
+        if let Some(col) = self.table.columns.get_mut(index) {
             col.is_hidden = true;
 
-            if let SortState::Sortable(state) = &mut self.table_state.sort_state {
+            if let SortState::Sortable(state) = &mut self.table.sort_state {
                 if state.current_index == index {
                     state.current_index = Self::CPU;
                     state.order = SortOrder::Descending;
@@ -895,14 +634,14 @@ impl ProcWidget {
 
     /// Marks the selected column as shown.
     fn show_column(&mut self, index: usize) {
-        if let Some(col) = self.table_state.columns.get_mut(index) {
+        if let Some(col) = self.table.columns.get_mut(index) {
             col.is_hidden = false;
         }
     }
 
     /// Select a column. If the column is already selected, then just toggle the sort order.
     pub fn select_column(&mut self, new_sort_index: usize) {
-        if let SortState::Sortable(state) = &mut self.table_state.sort_state {
+        if let SortState::Sortable(state) = &mut self.table.sort_state {
             state.update_sort_index(new_sort_index);
             self.force_data_update();
         }
@@ -910,7 +649,7 @@ impl ProcWidget {
 
     pub fn toggle_tree_branch(&mut self) {
         if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
-            let current_posn = self.table_state.current_scroll_position;
+            let current_posn = self.table.current_scroll_position;
             if let Some(current_row) = self.table_data.data.get(current_posn) {
                 if let Ok(pid) = current_row.row()[ProcWidget::PID_OR_COUNT]
                     .main_text()
@@ -926,7 +665,7 @@ impl ProcWidget {
     }
 
     pub fn toggle_command(&mut self) {
-        if let Some(col) = self.table_state.columns.get_mut(Self::PROC_NAME_OR_CMD) {
+        if let Some(col) = self.table.columns.get_mut(Self::PROC_NAME_OR_CMD) {
             if let ProcWidgetColumn::ProcNameOrCommand { is_command } = &mut col.header {
                 *is_command = !*is_command;
 
@@ -1028,8 +767,8 @@ impl ProcWidget {
                 }
             }
         }
-        self.table_state.scroll_bar = 0;
-        self.table_state.current_scroll_position = 0;
+        self.table.scroll_bar = 0;
+        self.table.current_scroll_position = 0;
 
         self.force_data_update();
     }
@@ -1063,7 +802,7 @@ impl ProcWidget {
 
     /// Returns the number of columns *visible*.
     pub fn num_shown_columns(&self) -> usize {
-        self.table_state
+        self.table
             .columns
             .iter()
             .filter(|c| !c.is_skipped())
@@ -1073,16 +812,12 @@ impl ProcWidget {
     /// Returns the number of columns *enabled*. Note this differs from *visible* - a column may be enabled but not
     /// visible (e.g. off screen).
     pub fn num_enabled_columns(&self) -> usize {
-        self.table_state
-            .columns
-            .iter()
-            .filter(|c| !c.is_hidden)
-            .count()
+        self.table.columns.iter().filter(|c| !c.is_hidden).count()
     }
 
     /// Sets the [`ProcWidget`]'s current sort index to whatever was in the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
-        if let SortState::Sortable(st) = &mut self.table_state.sort_state {
+        if let SortState::Sortable(st) = &mut self.table.sort_state {
             st.update_sort_index(self.sort_table_state.current_scroll_position);
 
             self.is_sort_open = false;
@@ -1107,7 +842,7 @@ mod test {
             let show_percentage = !mem_as_val;
 
             let proc = ProcWidget::init(mode, false, false, false, mem_as_val, is_command);
-            let columns = &proc.table_state.columns;
+            let columns = &proc.table.columns;
 
             assert_eq!(
                 columns[ProcWidget::PID_OR_COUNT].header,

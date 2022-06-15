@@ -5,7 +5,8 @@ use tui::widgets::Row;
 
 use crate::{
     app::AppConfigFields,
-    components::data_table::{DataTable, DataTableColumn, DataTableInner, DataTableProps},
+    canvas::canvas_colours::CanvasColours,
+    components::data_table::{Column, DataTable, DataTableProps, DataTableStyling, ToDataRow},
     utils::gen_util::{get_decimal_bytes, truncate_text},
 };
 
@@ -51,43 +52,20 @@ impl DiskWidgetData {
     }
 }
 
-pub struct DiskWidgetInner;
-
-impl DataTableInner<DiskWidgetData> for DiskWidgetInner {
-    fn to_data_row<'a>(&self, data: &'a DiskWidgetData, columns: &[DataTableColumn]) -> Row<'a> {
+impl ToDataRow for DiskWidgetData {
+    fn to_data_row<'a>(&self, widths: &[u16]) -> Row<'a> {
         Row::new(vec![
-            truncate_text(
-                data.name.clone().into_cow_str(),
-                columns[0].calculated_width.into(),
-            ),
-            truncate_text(
-                data.mount_point.clone().into_cow_str(),
-                columns[1].calculated_width.into(),
-            ),
-            truncate_text(
-                data.free_space().into_cow_str(),
-                columns[2].calculated_width.into(),
-            ),
-            truncate_text(
-                data.total_space().into_cow_str(),
-                columns[3].calculated_width.into(),
-            ),
-            truncate_text(
-                data.usage().into_cow_str(),
-                columns[4].calculated_width.into(),
-            ),
-            truncate_text(
-                data.io_read.clone().into_cow_str(),
-                columns[5].calculated_width.into(),
-            ),
-            truncate_text(
-                data.io_write.clone().into_cow_str(),
-                columns[6].calculated_width.into(),
-            ),
+            truncate_text(self.name.clone().into_cow_str(), widths[0].into()),
+            truncate_text(self.mount_point.clone().into_cow_str(), widths[1].into()),
+            truncate_text(self.free_space().into_cow_str(), widths[2].into()),
+            truncate_text(self.total_space().into_cow_str(), widths[3].into()),
+            truncate_text(self.usage().into_cow_str(), widths[4].into()),
+            truncate_text(self.io_read.clone().into_cow_str(), widths[5].into()),
+            truncate_text(self.io_write.clone().into_cow_str(), widths[6].into()),
         ])
     }
 
-    fn column_widths(&self, data: &[DiskWidgetData]) -> Vec<u16>
+    fn column_widths(data: &[DiskWidgetData]) -> Vec<u16>
     where
         Self: Sized,
     {
@@ -103,19 +81,19 @@ impl DataTableInner<DiskWidgetData> for DiskWidgetInner {
 }
 
 pub struct DiskTableWidget {
-    pub table: DataTable<DiskWidgetData, DiskWidgetInner>,
+    pub table: DataTable<DiskWidgetData>,
 }
 
 impl DiskTableWidget {
-    pub fn new(config: &AppConfigFields) -> Self {
-        const COLUMNS: [DataTableColumn; 7] = [
-            DataTableColumn::soft("Disk", Some(0.2)),
-            DataTableColumn::soft("Mount", Some(0.2)),
-            DataTableColumn::hard("Used", 4),
-            DataTableColumn::hard("Free", 6),
-            DataTableColumn::hard("Total", 6),
-            DataTableColumn::hard("R/s", 7),
-            DataTableColumn::hard("W/s", 7),
+    pub fn new(config: &AppConfigFields, colours: &CanvasColours) -> Self {
+        const COLUMNS: [Column<&str>; 7] = [
+            Column::soft("Disk", Some(0.2)),
+            Column::soft("Mount", Some(0.2)),
+            Column::hard("Used", 4),
+            Column::hard("Free", 6),
+            Column::hard("Total", 6),
+            Column::hard("R/s", 7),
+            Column::hard("W/s", 7),
         ];
 
         let props = DataTableProps {
@@ -127,8 +105,17 @@ impl DiskTableWidget {
             show_current_entry_when_unfocused: false,
         };
 
+        let styling = DataTableStyling {
+            header_style: colours.table_header_style,
+            border_style: colours.border_style,
+            highlighted_border_style: colours.highlighted_border_style,
+            text_style: colours.text_style,
+            highlighted_text_style: colours.currently_selected_text_style,
+            title_style: colours.widget_title_style,
+        };
+
         Self {
-            table: DataTable::new(COLUMNS, props, DiskWidgetInner {}),
+            table: DataTable::new(COLUMNS, props, styling),
         }
     }
 }

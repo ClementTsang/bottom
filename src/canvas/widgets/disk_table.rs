@@ -3,7 +3,7 @@ use tui::{backend::Backend, layout::Rect, terminal::Frame};
 use crate::{
     app::{self},
     canvas::Painter,
-    components::data_table::{DrawInfo, SelectionState, TableStyling},
+    components::data_table::{DrawInfo, SelectionState},
 };
 
 impl Painter {
@@ -14,28 +14,11 @@ impl Painter {
         if let Some(disk_widget_state) = app_state.disk_state.widget_states.get_mut(&widget_id) {
             let is_on_widget = app_state.current_widget.widget_id == widget_id;
 
-            // FIXME: This should be moved elsewhere.
-            let styling = TableStyling {
-                header_style: self.colours.table_header_style,
-                border_style: self.colours.border_style,
-                highlighted_border_style: self.colours.highlighted_border_style,
-                text_style: self.colours.text_style,
-                highlighted_text_style: self.colours.currently_selected_text_style,
-                title_style: self.colours.widget_title_style,
-                row_styles: vec![],
-            };
             let draw_info = DrawInfo {
-                styling,
                 loc: draw_loc,
                 force_redraw: app_state.is_force_redraw,
                 recalculate_column_widths,
-                selection_state: if app_state.is_expanded {
-                    SelectionState::Expanded
-                } else if is_on_widget {
-                    SelectionState::Selected
-                } else {
-                    SelectionState::NotSelected
-                },
+                selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
             disk_widget_state.table.draw(
