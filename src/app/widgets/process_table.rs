@@ -3,11 +3,15 @@ use crate::{
         data_farmer::{DataCollection, ProcessData, StringPidMap},
         data_harvester::processes::ProcessHarvest,
         query::*,
-        AppSearchState, ScrollDirection, SortState,
+        AppConfigFields, AppSearchState, ScrollDirection, SortState,
     },
-    components::old_text_table::{
-        CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentState,
-        WidthBounds,
+    canvas::canvas_colours::CanvasColours,
+    components::{
+        data_table::{Column, DataTable, DataTableProps, DataTableStyling},
+        old_text_table::{
+            CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentState,
+            WidthBounds,
+        },
     },
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, TableData, TableRow},
     Pid,
@@ -70,7 +74,7 @@ pub struct ProcWidget {
     pub proc_search: ProcessSearchState,
     // pub table: DataTable<ProcWidgetData, ProcWidgetColumn, Sortable>,
     pub table: TableComponentState<ProcWidgetColumn>,
-    pub sort_table_state: TableComponentState,
+    pub sort_table: DataTable,
 
     pub is_sort_open: bool,
     pub force_rerender: bool,
@@ -95,9 +99,10 @@ impl ProcWidget {
     #[cfg(not(target_family = "unix"))]
     pub const STATE: usize = 8;
 
-    pub fn init(
-        mode: ProcWidgetMode, is_case_sensitive: bool, is_match_whole_word: bool,
-        is_use_regex: bool, show_memory_as_values: bool, is_command: bool,
+    pub fn new(
+        config: &AppConfigFields, mode: ProcWidgetMode, is_case_sensitive: bool,
+        is_match_whole_word: bool, is_use_regex: bool, show_memory_as_values: bool,
+        is_command: bool, colours: &CanvasColours,
     ) -> Self {
         let mut process_search_state = ProcessSearchState::default();
 
@@ -114,13 +119,31 @@ impl ProcWidget {
 
         let is_count = matches!(mode, ProcWidgetMode::Grouped);
 
-        let mut sort_table_state = TableComponentState::new(vec![TableComponentColumn::new_hard(
-            CellContent::Simple("Sort By".into()),
-            7,
-        )]);
-        sort_table_state.columns[0].calculated_width = 7;
+        let sort_table = {
+            const COLUMNS: [Column<&str>; 1] = [Column::hard("Sort By", 7)];
 
-        let table_state = {
+            let props = DataTableProps {
+                title: None,
+                table_gap: config.table_gap,
+                left_to_right: true,
+                is_basic: false,
+                show_table_scroll_position: false,
+                show_current_entry_when_unfocused: false,
+            };
+
+            let styling = DataTableStyling {
+                header_style: colours.table_header_style,
+                border_style: colours.border_style,
+                highlighted_border_style: colours.highlighted_border_style,
+                text_style: colours.text_style,
+                highlighted_text_style: colours.currently_selected_text_style,
+                title_style: colours.widget_title_style,
+            };
+
+            DataTable::new(COLUMNS, props, styling)
+        };
+
+        let table = {
             let (default_index, default_order) = if matches!(mode, ProcWidgetMode::Tree { .. }) {
                 (Self::PID_OR_COUNT, SortOrder::Ascending)
             } else {
@@ -160,8 +183,8 @@ impl ProcWidget {
 
         ProcWidget {
             proc_search: process_search_state,
-            table: table_state,
-            sort_table_state,
+            table,
+            sort_table,
             is_sort_open: false,
             mode,
             force_rerender: true,
@@ -671,7 +694,7 @@ impl ProcWidget {
 
                 if let WidthBounds::Soft { max_percentage, .. } = &mut col.width_bounds {
                     if *is_command {
-                        *max_percentage = Some(0.7);
+                        *max_percentage = Some(0.5);
                     } else {
                         *max_percentage = match self.mode {
                             ProcWidgetMode::Tree { .. } => Some(0.5),
@@ -705,11 +728,8 @@ impl ProcWidget {
                     self.hide_column(Self::USER);
                     self.hide_column(Self::STATE);
                     self.mode = ProcWidgetMode::Grouped;
-
-                    self.sort_table_state.current_scroll_position = self
-                        .sort_table_state
-                        .current_scroll_position
-                        .clamp(0, self.num_enabled_columns().saturating_sub(1));
+                    self.sort_table
+                        .update_num_entries(self.num_enabled_columns());
                 } else {
                     #[cfg(target_family = "unix")]
                     self.show_column(Self::USER);
@@ -818,7 +838,7 @@ impl ProcWidget {
     /// Sets the [`ProcWidget`]'s current sort index to whatever was in the sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
         if let SortState::Sortable(st) = &mut self.table.sort_state {
-            st.update_sort_index(self.sort_table_state.current_scroll_position);
+            st.update_sort_index(self.sort_table.current_index());
 
             self.is_sort_open = false;
             self.force_rerender_and_update();
@@ -841,7 +861,16 @@ mod test {
             let is_command = is_cmd;
             let show_percentage = !mem_as_val;
 
-            let proc = ProcWidget::init(mode, false, false, false, mem_as_val, is_command);
+            let proc = ProcWidget::new(
+                &AppConfigFields::default(),
+                mode,
+                false,
+                false,
+                false,
+                mem_as_val,
+                is_command,
+                &CanvasColours::default(),
+            );
             let columns = &proc.table.columns;
 
             assert_eq!(

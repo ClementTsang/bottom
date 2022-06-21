@@ -45,9 +45,15 @@ pub enum AxisScaling {
     Linear,
 }
 
+impl Default for AxisScaling {
+    fn default() -> Self {
+        AxisScaling::Log
+    }
+}
+
 /// AppConfigFields is meant to cover basic fields that would normally be set
 /// by config files or launch options.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AppConfigFields {
     pub update_rate_in_milliseconds: u64,
     pub temperature_type: temperature::TemperatureType,
@@ -341,10 +347,8 @@ impl App {
             // If the sort is now open, move left. Otherwise, if the proc sort was selected, force move right.
             if pws.is_sort_open {
                 if let SortState::Sortable(st) = &pws.table.sort_state {
-                    pws.sort_table_state.scroll_bar = 0;
-                    pws.sort_table_state.current_scroll_position = st
-                        .current_index
-                        .clamp(0, pws.num_enabled_columns().saturating_sub(1));
+                    pws.sort_table
+                        .set_position(st.current_index, pws.num_enabled_columns());
                 }
                 self.move_widget_selection(&WidgetDirection::Left);
             } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
@@ -1970,8 +1974,7 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table_state.current_scroll_position = 0;
-                        proc_widget_state.sort_table_state.scroll_direction = ScrollDirection::Up;
+                        proc_widget_state.sort_table.set_first();
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -2027,9 +2030,9 @@ impl App {
                         .proc_state
                         .get_mut_widget_state(self.current_widget.widget_id - 2)
                     {
-                        proc_widget_state.sort_table_state.current_scroll_position =
-                            proc_widget_state.num_enabled_columns() - 1;
-                        proc_widget_state.sort_table_state.scroll_direction = ScrollDirection::Down;
+                        proc_widget_state
+                            .sort_table
+                            .set_last(proc_widget_state.num_enabled_columns());
                     }
                 }
                 BottomWidgetType::Temp => {
@@ -2105,8 +2108,8 @@ impl App {
         {
             let num_entries = proc_widget_state.num_enabled_columns();
             proc_widget_state
-                .sort_table_state
-                .update_position(num_to_change_by, num_entries);
+                .sort_table
+                .increment_position(num_to_change_by, num_entries);
         }
     }
 
@@ -2653,10 +2656,8 @@ impl App {
                                         .proc_state
                                         .get_widget_state(self.current_widget.widget_id - 2)
                                     {
-                                        if let Some(visual_index) = proc_widget_state
-                                            .sort_table_state
-                                            .table_state
-                                            .selected()
+                                        if let Some(visual_index) =
+                                            proc_widget_state.sort_table.tui_selected()
                                         {
                                             self.change_process_sort_position(
                                                 offset_clicked_entry as i64 - visual_index as i64,

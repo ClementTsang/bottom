@@ -88,7 +88,7 @@ impl<DataType: ToDataRow, T: ColumnDisplay, S: SortType> DataTable<DataType, T, 
         &self, draw_info: &'a DrawInfo, total_items: usize,
     ) -> Option<Spans<'a>> {
         self.props.title.as_ref().map(|title| {
-            let current_index = self.state.current_scroll_position.saturating_add(1);
+            let current_index = self.state.current_index.saturating_add(1);
             let draw_loc = draw_info.loc;
             let title_style = self.styling.title_style;
             let border_style = if draw_info.is_on_widget() {
@@ -193,9 +193,9 @@ impl<DataType: ToDataRow, T: ColumnDisplay, S: SortType> DataTable<DataType, T, 
                         .get_start_position(num_rows, draw_info.force_redraw);
                     let start = self.state.display_start_index;
                     let end = min(data.len(), start + num_rows);
-                    self.state.table_state.select(Some(
-                        self.state.current_scroll_position.saturating_sub(start),
-                    ));
+                    self.state
+                        .table_state
+                        .select(Some(self.state.current_index.saturating_sub(start)));
 
                     data[start..end]
                         .iter()

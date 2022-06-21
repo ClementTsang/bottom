@@ -401,13 +401,15 @@ pub fn build_app(
 
                             proc_state_map.insert(
                                 widget.widget_id,
-                                ProcWidget::init(
+                                ProcWidget::new(
+                                    &app_config_fields,
                                     mode,
                                     is_case_sensitive,
                                     is_match_whole_word,
                                     is_use_regex,
                                     show_memory_as_values,
                                     is_default_command,
+                                    colours,
                                 ),
                             );
                         }

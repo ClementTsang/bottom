@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{borrow::Cow, marker::PhantomData};
 
 use itertools::Itertools;
 use tui::widgets::Row;
@@ -121,14 +121,14 @@ impl<T: ColumnDisplay> SortColumnState<T> {
 }
 
 impl<T: ColumnDisplay> ColumnDisplay for SortColumnState<T> {
-    fn text(&self) -> String {
+    fn text(&self) -> Cow<'static, str> {
         self.inner.text()
     }
 
-    fn header(&self) -> String {
+    fn header(&self) -> Cow<'static, str> {
         let header = self.inner.header();
         let shortcut = self.shortcut.map(|c| c.to_string()).unwrap_or_default();
-        concat_string::concat_string!(header, shortcut)
+        concat_string::concat_string!(header, shortcut).into()
     }
 }
 

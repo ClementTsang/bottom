@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    borrow::Cow,
+    cmp::{max, min},
+};
 
 use anyhow::{bail, Result};
 
@@ -21,19 +24,25 @@ pub enum ColumnWidthBounds {
 
 pub trait ColumnDisplay {
     /// The "text" version of the column.
-    fn text(&self) -> String;
+    fn text(&self) -> Cow<'static, str>;
 
     /// The actually displayed "header".
     ///
     /// The default implementation just uses [`ColumnDisplay::text`].
-    fn header(&self) -> String {
+    fn header(&self) -> Cow<'static, str> {
         self.text()
     }
 }
 
-impl ColumnDisplay for &str {
-    fn text(&self) -> String {
-        self.to_string()
+impl ColumnDisplay for &'static str {
+    fn text(&self) -> Cow<'static, str> {
+        Cow::Borrowed(self)
+    }
+}
+
+impl ColumnDisplay for String {
+    fn text(&self) -> Cow<'static, str> {
+        Cow::Owned(self.clone())
     }
 }
 
@@ -150,11 +159,11 @@ impl<T: ColumnDisplay> Column<T> {
         }
     }
 
-    pub fn inner_text(&self) -> String {
+    pub fn inner_text(&self) -> Cow<'static, str> {
         self.inner().text()
     }
 
-    pub fn inner_header(&self) -> String {
+    pub fn inner_header(&self) -> Cow<'static, str> {
         self.inner().header()
     }
 }

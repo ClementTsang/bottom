@@ -1,7 +1,10 @@
 use crate::{
     app::App,
     canvas::{drawing_utils::get_search_start_position, Painter},
-    components::old_text_table::{TextTable, TextTableTitle},
+    components::{
+        data_table::{DrawInfo, SelectionState},
+        old_text_table::{TextTable, TextTableTitle},
+    },
     constants::*,
     data_conversion::{TableData, TableRow},
 };
@@ -54,7 +57,7 @@ impl Painter {
                     .split(proc_draw_loc);
                 proc_draw_loc = processes_chunk[1];
 
-                self.draw_sort_table(f, app_state, processes_chunk[0], draw_border, widget_id + 2);
+                self.draw_sort_table(f, app_state, processes_chunk[0], widget_id + 2);
             }
 
             self.draw_processes_table(f, app_state, proc_draw_loc, draw_border, widget_id);
@@ -338,8 +341,7 @@ impl Painter {
     ///
     /// This should not be directly called.
     fn draw_sort_table<B: Backend>(
-        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, draw_border: bool,
-        widget_id: u64,
+        &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
         let should_get_widget_bounds = app_state.should_get_widget_bounds();
         if let Some(proc_widget_state) =
@@ -349,56 +351,32 @@ impl Painter {
                 should_get_widget_bounds || proc_widget_state.force_rerender;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
-            let (border_style, highlighted_text_style) = if is_on_widget {
-                (
-                    self.colours.highlighted_border_style,
-                    self.colours.currently_selected_text_style,
-                )
-            } else {
-                (self.colours.border_style, self.colours.text_style)
-            };
 
             // TODO: [PROC] Perhaps move this generation elsewhere... or leave it as is but look at partial rendering?
-            let table_data = {
-                let data = proc_widget_state
-                    .table
-                    .columns
-                    .iter()
-                    .filter_map(|col| {
-                        if col.is_hidden {
-                            None
-                        } else {
-                            Some(TableRow::Raw(vec![col.header.text().clone()]))
-                        }
-                    })
-                    .collect();
+            let data = proc_widget_state
+                .table
+                .columns
+                .iter()
+                .filter_map(|col| {
+                    if col.is_hidden {
+                        None
+                    } else {
+                        Some(col.header.text().main_text().clone())
+                    }
+                })
+                .collect::<Vec<_>>();
 
-                TableData {
-                    data,
-                    col_widths: vec![usize::from(SORT_MENU_WIDTH)],
-                }
+            let draw_info = DrawInfo {
+                loc: draw_loc,
+                force_redraw: app_state.is_force_redraw,
+                recalculate_column_widths,
+                selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
-            TextTable {
-                table_gap: app_state.app_config_fields.table_gap,
-                is_force_redraw: app_state.is_force_redraw,
-                recalculate_column_widths,
-                header_style: self.colours.table_header_style,
-                border_style,
-                highlighted_text_style,
-                title: None,
-                is_on_widget,
-                draw_border,
-                show_table_scroll_position: app_state.app_config_fields.show_table_scroll_position,
-                title_style: self.colours.widget_title_style,
-                text_style: self.colours.text_style,
-                left_to_right: true,
-            }
-            .draw_old_text_table(
+            proc_widget_state.sort_table.draw(
                 f,
-                draw_loc,
-                &mut proc_widget_state.sort_table_state,
-                &table_data,
+                &draw_info,
+                &data,
                 app_state.widget_map.get_mut(&widget_id),
             );
         }

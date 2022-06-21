@@ -21,7 +21,7 @@ pub struct DataTableState {
     pub display_start_index: usize,
 
     /// The current scroll position.
-    pub current_scroll_position: usize,
+    pub current_index: usize,
 
     /// The direction of the last attempted scroll.
     pub scroll_direction: ScrollDirection,
@@ -40,7 +40,7 @@ impl Default for DataTableState {
     fn default() -> Self {
         Self {
             display_start_index: 0,
-            current_scroll_position: 0,
+            current_index: 0,
             scroll_direction: ScrollDirection::Down,
             calculated_widths: vec![],
             table_state: TableState::default(),
@@ -53,7 +53,7 @@ impl DataTableState {
     /// Gets the starting position of a table.
     pub fn get_start_position(&mut self, num_rows: usize, is_force_redraw: bool) {
         let mut start_index = self.display_start_index;
-        let current_scroll_position = self.current_scroll_position;
+        let current_scroll_position = self.current_index;
         let scroll_direction = self.scroll_direction;
 
         if is_force_redraw {

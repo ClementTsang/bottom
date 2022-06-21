@@ -1,10 +1,15 @@
 use crate::{
     app::{data_farmer::StringPidMap, data_harvester::processes::ProcessHarvest},
-    components::old_text_table::{CellContent, SortOrder, TableComponentHeader},
+    components::{
+        data_table::{ColumnDisplay, SortsRow},
+        old_text_table::{CellContent, SortOrder, TableComponentHeader},
+    },
     utils::gen_util::sort_partial_fn,
 };
 
 use std::{borrow::Cow, cmp::Reverse};
+
+use super::ProcWidgetData;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ProcWidgetColumn {
@@ -18,6 +23,18 @@ pub enum ProcWidgetColumn {
     TotalWrite,
     State,
     User,
+}
+
+impl ColumnDisplay for ProcWidgetColumn {
+    fn text(&self) -> Cow<'static, str> {
+        todo!()
+    }
+}
+
+impl SortsRow<ProcWidgetData> for ProcWidgetColumn {
+    fn sort_data(&self, data: &mut [ProcWidgetData], ascending: bool) {
+        todo!()
+    }
 }
 
 impl ProcWidgetColumn {

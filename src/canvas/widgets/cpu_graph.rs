@@ -125,7 +125,7 @@ impl Painter {
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
 
-        let current_scroll_position = cpu_widget_state.table.state.current_scroll_position;
+        let current_scroll_position = cpu_widget_state.table.state.current_index;
         if current_scroll_position == ALL_POSITION {
             // This case ensures the other cases cannot have the position be equal to 0.
             cpu_data
