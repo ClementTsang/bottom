@@ -33,7 +33,7 @@ use regex::Regex;
 pub type TimeOffset = f64;
 pub type Value = f64;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TimedData {
     pub rx_data: Value,
     pub tx_data: Value,
@@ -45,18 +45,10 @@ pub struct TimedData {
     pub arc_data: Option<Value>,
 }
 
-pub type StringPidMap = FxHashMap<String, Vec<Pid>>;
-
 #[derive(Clone, Debug, Default)]
 pub struct ProcessData {
     /// A PID to process data map.
     pub process_harvest: FxHashMap<Pid, ProcessHarvest>,
-
-    /// A mapping from a process name to any PID with that name.
-    pub name_pid_map: StringPidMap,
-
-    /// A mapping from a process command to any PID with that name.
-    pub cmd_pid_map: StringPidMap,
 
     /// A mapping between a process PID to any children process PIDs.
     pub process_parent_mapping: FxHashMap<Pid, Vec<Pid>>,
@@ -68,28 +60,10 @@ pub struct ProcessData {
 impl ProcessData {
     fn ingest(&mut self, list_of_processes: Vec<ProcessHarvest>) {
         // TODO: [Optimization] Probably more efficient to all of this in the data collection step, but it's fine for now.
-        self.name_pid_map.clear();
-        self.cmd_pid_map.clear();
         self.process_parent_mapping.clear();
 
         // Reverse as otherwise the pid mappings are in the wrong order.
         list_of_processes.iter().rev().for_each(|process_harvest| {
-            if let Some(entry) = self.name_pid_map.get_mut(&process_harvest.name) {
-                entry.push(process_harvest.pid);
-            } else {
-                self.name_pid_map
-                    .insert(process_harvest.name.to_string(), vec![process_harvest.pid]);
-            }
-
-            if let Some(entry) = self.cmd_pid_map.get_mut(&process_harvest.command) {
-                entry.push(process_harvest.pid);
-            } else {
-                self.cmd_pid_map.insert(
-                    process_harvest.command.to_string(),
-                    vec![process_harvest.pid],
-                );
-            }
-
             if let Some(parent_pid) = process_harvest.parent_pid {
                 if let Some(entry) = self.process_parent_mapping.get_mut(&parent_pid) {
                     entry.push(process_harvest.pid);
@@ -100,8 +74,6 @@ impl ProcessData {
             }
         });
 
-        self.name_pid_map.shrink_to_fit();
-        self.cmd_pid_map.shrink_to_fit();
         self.process_parent_mapping.shrink_to_fit();
 
         let process_pid_map = list_of_processes
@@ -137,14 +109,14 @@ impl ProcessData {
 /// collected, and what is needed to convert into a displayable form.
 ///
 /// If the app is *frozen* - that is, we do not want to *display* any changing
-/// data, keep updating this, don't convert to canvas displayable data!
+/// data, keep updating this. As of 2021-09-08, we just clone the current collection
+/// when it freezes to have a snapshot floating around.
 ///
 /// Note that with this method, the *app* thread is responsible for cleaning -
 /// not the data collector.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DataCollection {
     pub current_instant: Instant,
-    pub frozen_instant: Option<Instant>,
     pub timed_data_vec: Vec<(Instant, TimedData)>,
     pub network_harvest: network::NetworkHarvest,
     pub memory_harvest: memory::MemHarvest,
@@ -167,7 +139,6 @@ impl Default for DataCollection {
     fn default() -> Self {
         DataCollection {
             current_instant: Instant::now(),
-            frozen_instant: None,
             timed_data_vec: Vec::default(),
             network_harvest: network::NetworkHarvest::default(),
             memory_harvest: memory::MemHarvest::default(),
@@ -208,14 +179,6 @@ impl DataCollection {
         {
             self.arc_harvest = memory::MemHarvest::default();
         }
-    }
-
-    pub fn freeze(&mut self) {
-        self.frozen_instant = Some(self.current_instant);
-    }
-
-    pub fn thaw(&mut self) {
-        self.frozen_instant = None;
     }
 
     pub fn clean_data(&mut self, max_time_millis: u64) {

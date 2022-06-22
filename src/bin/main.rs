@@ -162,7 +162,7 @@ fn main() -> Result<()> {
                         app.is_force_redraw = true;
                     }
 
-                    if !app.is_frozen {
+                    if !app.frozen_state.is_frozen() {
                         // Convert all data into tui-compliant components
 
                         // Network

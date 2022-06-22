@@ -1,4 +1,7 @@
-use std::{cmp::min, iter::once};
+use std::{
+    cmp::{max, min},
+    iter::once,
+};
 
 use concat_string::concat_string;
 use tui::{
@@ -15,7 +18,10 @@ use crate::{
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
 };
 
-use super::{ColumnDisplay, DataTable, DrawDataColumn, SortType, ToDataRow};
+use super::{
+    CalculateColumnWidths, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataToCell,
+    SortType,
+};
 
 pub enum SelectionState {
     NotSelected,
@@ -54,7 +60,13 @@ impl DrawInfo {
     }
 }
 
-impl<DataType: ToDataRow, T: ColumnDisplay, S: SortType> DataTable<DataType, T, S> {
+impl<DataType, H, S, C> DataTable<DataType, H, S, C>
+where
+    DataType: DataToCell<H>,
+    H: ColumnHeader,
+    S: SortType,
+    C: DataTableColumn<H>,
+{
     fn block<'a>(&self, draw_info: &'a DrawInfo, data_len: usize) -> Block<'a> {
         let border_style = match draw_info.selection_state {
             SelectionState::NotSelected => self.styling.border_style,
@@ -128,11 +140,11 @@ impl<DataType: ToDataRow, T: ColumnDisplay, S: SortType> DataTable<DataType, T, 
     }
 
     pub fn draw<B: Backend>(
-        &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, data: &[DataType],
+        &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, data: Vec<DataType>,
         widget: Option<&mut BottomWidget>,
     ) {
-        // Ensure the data is valid with the state.
-        self.update_num_entries(data.len());
+        self.data = data;
+        self.update_num_entries();
 
         let draw_horizontal = !self.props.is_basic || draw_info.is_on_widget();
         let draw_loc = draw_info.loc;
@@ -142,7 +154,7 @@ impl<DataType: ToDataRow, T: ColumnDisplay, S: SortType> DataTable<DataType, T, 
             .direction(Direction::Horizontal)
             .split(draw_loc)[0];
 
-        let block = self.block(draw_info, data.len());
+        let block = self.block(draw_info, self.data.len());
 
         let (inner_width, inner_height) = {
             let inner_rect = block.inner(margined_draw_loc);
@@ -155,13 +167,20 @@ impl<DataType: ToDataRow, T: ColumnDisplay, S: SortType> DataTable<DataType, T, 
         } else {
             // Calculate widths
             if draw_info.recalculate_column_widths {
-                let col_widths = DataType::column_widths(data);
+                let col_widths = DataType::column_widths(&self.data, &self.columns);
 
                 self.columns
                     .iter_mut()
                     .zip(&col_widths)
-                    .for_each(|(column, width)| {
-                        column.adjust_inner_width(*width);
+                    .for_each(|(column, &width)| {
+                        let header_len = column.header_len() as u16;
+                        if let ColumnWidthBounds::Soft {
+                            desired,
+                            max_percentage: _,
+                        } = &mut column.bounds_mut()
+                        {
+                            *desired = max(header_len, width);
+                        }
                     });
 
                 self.state.calculated_widths = self
@@ -185,21 +204,28 @@ impl<DataType: ToDataRow, T: ColumnDisplay, S: SortType> DataTable<DataType, T, 
             };
 
             let columns = &self.columns;
-            if !data.is_empty() {
+            if !self.data.is_empty() {
                 let rows = {
                     let num_rows =
                         usize::from(inner_height.saturating_sub(table_gap + header_height));
                     self.state
                         .get_start_position(num_rows, draw_info.force_redraw);
                     let start = self.state.display_start_index;
-                    let end = min(data.len(), start + num_rows);
+                    let end = min(self.data.len(), start + num_rows);
                     self.state
                         .table_state
                         .select(Some(self.state.current_index.saturating_sub(start)));
 
-                    data[start..end]
-                        .iter()
-                        .map(|row| DataType::to_data_row(row, &self.state.calculated_widths))
+                    self.data[start..end].iter().map(|data_row| {
+                        data_row.style_row(Row::new(
+                            columns
+                                .iter()
+                                .zip(&self.state.calculated_widths)
+                                .filter_map(|(column, &width)| {
+                                    data_row.to_cell(column.inner(), width)
+                                }),
+                        ))
+                    })
                 };
 
                 let headers = self

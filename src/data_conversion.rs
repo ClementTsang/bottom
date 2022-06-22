@@ -3,14 +3,14 @@
 
 use crate::app::data_farmer::DataCollection;
 use crate::app::data_harvester::cpu::CpuDataType;
-use crate::app::data_harvester::temperature::TemperatureType;
-use crate::app::widgets::{DiskWidgetData, TempWidgetData};
-use crate::components::old_text_table::CellContent;
+use crate::app::{
+    data_harvester::temperature::TemperatureType,
+    widgets::{DiskWidgetData, TempWidgetData},
+};
 use crate::components::time_graph::Point;
 use crate::utils::gen_util::*;
-use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
+use crate::{app::AxisScaling, units::data_units::DataUnit};
 
-use fxhash::FxHashMap;
 use kstring::KString;
 use tui::style::Style;
 
@@ -22,27 +22,6 @@ pub struct ConvertedBatteryData {
     pub duration_until_full: Option<String>,
     pub duration_until_empty: Option<String>,
     pub health: String,
-}
-
-#[derive(Default, Debug)]
-pub struct TableData {
-    pub data: Vec<TableRow>,
-    pub col_widths: Vec<usize>,
-}
-
-#[derive(Debug)]
-pub enum TableRow {
-    Raw(Vec<CellContent>),
-    Styled(Vec<CellContent>, tui::style::Style),
-}
-
-impl TableRow {
-    pub fn row(&self) -> &[CellContent] {
-        match self {
-            TableRow::Raw(data) => data,
-            TableRow::Styled(data, _) => data,
-        }
-    }
 }
 
 #[derive(Default, Debug)]
@@ -73,6 +52,7 @@ pub enum CpuWidgetDataType {
     },
 }
 
+#[derive(Clone)]
 pub struct CpuWidgetData {
     pub data: CpuWidgetDataType,
     pub style: Style,
@@ -97,12 +77,6 @@ pub struct ConvertedData {
     pub network_data_tx: Vec<Point>,
     pub disk_data: Vec<DiskWidgetData>,
     pub temp_data: Vec<TempWidgetData>,
-
-    /// A mapping from a process name to any PID with that name.
-    pub process_name_pid_map: FxHashMap<String, Vec<Pid>>,
-
-    /// A mapping from a process command to any PID with that name.
-    pub process_cmd_pid_map: FxHashMap<String, Vec<Pid>>,
 
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
@@ -154,11 +128,7 @@ impl ConvertedData {
     }
 
     pub fn ingest_cpu_data(&mut self, current_data: &DataCollection) {
-        let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-            frozen_instant
-        } else {
-            current_data.current_instant
-        };
+        let current_time = current_data.current_instant;
 
         // (Re-)initialize the vector if the lengths don't match...
         if let Some((_time, data)) = &current_data.timed_data_vec.last() {
@@ -231,11 +201,7 @@ impl ConvertedData {
 
 pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(mem_data) = data.mem_data {
@@ -253,11 +219,7 @@ pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
 
 pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(swap_data) = data.swap_data {
@@ -350,11 +312,7 @@ pub fn get_rx_tx_data_points(
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
 
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
@@ -554,6 +512,17 @@ pub fn dec_bytes_per_second_string(value: u64) -> String {
     }
 }
 
+/// Returns a string given a value that is converted to the closest SI-variant.
+/// If the value is greater than a giga-X, then it will return a decimal place.
+pub fn dec_bytes_string(value: u64) -> String {
+    let converted_values = get_decimal_bytes(value);
+    if value >= GIGA_LIMIT {
+        format!("{:.*}{}", 1, converted_values.0, converted_values.1)
+    } else {
+        format!("{:.*}{}", 0, converted_values.0, converted_values.1)
+    }
+}
+
 #[cfg(feature = "battery")]
 pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBatteryData> {
     current_data
@@ -652,11 +621,7 @@ pub fn convert_arc_data_points(
     current_data: &crate::app::data_farmer::DataCollection,
 ) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(arc_data) = data.arc_data {

@@ -29,13 +29,6 @@ pub enum CursorDirection {
     Right,
 }
 
-/// Meant for canvas operations involving table column widths.
-#[derive(Default)]
-pub struct CanvasTableWidthState {
-    pub desired_column_widths: Vec<u16>,
-    pub calculated_column_widths: Vec<u16>,
-}
-
 #[derive(PartialEq, Eq)]
 pub enum KillSignal {
     Cancel,

@@ -3,8 +3,6 @@ use std::{
     cmp::{max, min},
 };
 
-use anyhow::{bail, Result};
-
 /// A bound on the width of a column.
 #[derive(Clone, Copy, Debug)]
 pub enum ColumnWidthBounds {
@@ -20,166 +18,147 @@ pub enum ColumnWidthBounds {
 
     /// A width of this type is either as long as specified, or does not appear at all.
     Hard(u16),
+
+    /// A width of this type always resizes to the column header's text width.
+    FollowHeader,
 }
 
-pub trait ColumnDisplay {
-    /// The "text" version of the column.
+pub trait ColumnHeader {
+    /// The "text" version of the column header.
     fn text(&self) -> Cow<'static, str>;
 
-    /// The actually displayed "header".
-    ///
-    /// The default implementation just uses [`ColumnDisplay::text`].
+    /// The version displayed when drawing the table. Defaults to [`ColumnHeader::text`].
+    #[inline(always)]
     fn header(&self) -> Cow<'static, str> {
         self.text()
     }
 }
 
-impl ColumnDisplay for &'static str {
+impl ColumnHeader for &'static str {
     fn text(&self) -> Cow<'static, str> {
         Cow::Borrowed(self)
     }
 }
 
-impl ColumnDisplay for String {
+impl ColumnHeader for String {
     fn text(&self) -> Cow<'static, str> {
         Cow::Owned(self.clone())
     }
 }
 
+pub trait DataTableColumn<H: ColumnHeader> {
+    fn inner(&self) -> &H;
+
+    fn inner_mut(&mut self) -> &mut H;
+
+    fn bounds(&self) -> ColumnWidthBounds;
+
+    fn bounds_mut(&mut self) -> &mut ColumnWidthBounds;
+
+    fn is_hidden(&self) -> bool;
+
+    fn set_is_hidden(&mut self, is_hidden: bool);
+
+    /// The actually displayed "header".
+    fn header(&self) -> Cow<'static, str>;
+
+    /// The header length, along with any required additional lengths for things like arrows.
+    /// Defaults to getting the length of [`DataTableColumn::header`].
+    fn header_len(&self) -> usize {
+        self.header().len()
+    }
+}
+
 #[derive(Clone, Debug)]
-pub struct ColumnInfo<T: ColumnDisplay> {
+pub struct Column<H> {
     /// The inner column header.
-    inner: T,
+    inner: H,
 
     /// A restriction on this column's width.
     bounds: ColumnWidthBounds,
+
+    /// Marks that this column is currently "hidden", and should *always* be skipped.
+    is_hidden: bool,
 }
 
-impl<T: ColumnDisplay> ColumnInfo<T> {
-    pub const fn hard(inner: T, width: u16) -> Self {
+impl<H: ColumnHeader> DataTableColumn<H> for Column<H> {
+    #[inline]
+    fn inner(&self) -> &H {
+        &self.inner
+    }
+
+    #[inline]
+    fn inner_mut(&mut self) -> &mut H {
+        &mut self.inner
+    }
+
+    #[inline]
+    fn bounds(&self) -> ColumnWidthBounds {
+        self.bounds
+    }
+
+    #[inline]
+    fn bounds_mut(&mut self) -> &mut ColumnWidthBounds {
+        &mut self.bounds
+    }
+
+    #[inline]
+    fn is_hidden(&self) -> bool {
+        self.is_hidden
+    }
+
+    #[inline]
+    fn set_is_hidden(&mut self, is_hidden: bool) {
+        self.is_hidden = is_hidden;
+    }
+
+    fn header(&self) -> Cow<'static, str> {
+        self.inner.text()
+    }
+}
+
+impl<H: ColumnHeader> Column<H> {
+    pub const fn new(inner: H) -> Self {
         Self {
             inner,
-            bounds: ColumnWidthBounds::Hard(width),
+            bounds: ColumnWidthBounds::FollowHeader,
+            is_hidden: false,
         }
     }
 
-    pub const fn soft(inner: T, max_percentage: Option<f32>) -> Self {
+    pub const fn hard(inner: H, width: u16) -> Self {
+        Self {
+            inner,
+            bounds: ColumnWidthBounds::Hard(width),
+            is_hidden: false,
+        }
+    }
+
+    pub const fn soft(inner: H, max_percentage: Option<f32>) -> Self {
         Self {
             inner,
             bounds: ColumnWidthBounds::Soft {
                 desired: 0,
                 max_percentage,
             },
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct SwitcherCol<T: ColumnDisplay> {
-    cols: Vec<ColumnInfo<T>>,
-    selected: usize,
-}
-
-impl<T: ColumnDisplay> SwitcherCol<T> {
-    pub fn set_index(&mut self, new_index: usize) -> Result<()> {
-        if new_index < self.cols.len() {
-            self.selected = new_index;
-            Ok(())
-        } else {
-            bail!("index not in range")
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum ColumnType<T: ColumnDisplay> {
-    Single(ColumnInfo<T>),
-    Switcher(SwitcherCol<T>),
-}
-
-impl<T: ColumnDisplay> ColumnType<T> {
-    pub fn new(col: ColumnInfo<T>) -> Self {
-        Self::Single(col)
-    }
-
-    pub fn new_switcher(cols: Vec<ColumnInfo<T>>, index: usize) -> Self {
-        let selected = index.clamp(0, cols.len().saturating_sub(1));
-        Self::Switcher(SwitcherCol { cols, selected })
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Column<T: ColumnDisplay> {
-    col: ColumnType<T>,
-
-    /// Marks that this column is currently "hidden", and should *always* be skipped.
-    pub is_hidden: bool,
-}
-
-impl<T: ColumnDisplay> Column<T> {
-    pub const fn hard(inner: T, width: u16) -> Self {
-        Self {
-            col: ColumnType::Single(ColumnInfo::hard(inner, width)),
             is_hidden: false,
         }
     }
-
-    pub const fn soft(inner: T, max_percentage: Option<f32>) -> Self {
-        Self {
-            col: ColumnType::Single(ColumnInfo::soft(inner, max_percentage)),
-            is_hidden: false,
-        }
-    }
-
-    pub fn bounds(&self) -> &ColumnWidthBounds {
-        match &self.col {
-            ColumnType::Single(col) => &col.bounds,
-            ColumnType::Switcher(SwitcherCol { cols, selected }) => &cols[*selected].bounds,
-        }
-    }
-
-    pub fn adjust_inner_width(&mut self, width: u16) {
-        let col = match &mut self.col {
-            ColumnType::Single(col) => col,
-            ColumnType::Switcher(SwitcherCol { cols, selected }) => &mut cols[*selected],
-        };
-
-        match &mut col.bounds {
-            ColumnWidthBounds::Soft { desired, .. } => {
-                *desired = max(col.inner.header().len() as u16, width);
-            }
-            ColumnWidthBounds::Hard(_) => {}
-        }
-    }
-
-    pub fn inner(&self) -> &T {
-        match &self.col {
-            ColumnType::Single(col) => &col.inner,
-            ColumnType::Switcher(SwitcherCol { cols, selected }) => &cols[*selected].inner,
-        }
-    }
-
-    pub fn inner_text(&self) -> Cow<'static, str> {
-        self.inner().text()
-    }
-
-    pub fn inner_header(&self) -> Cow<'static, str> {
-        self.inner().header()
-    }
 }
 
-pub trait DrawDataColumn {
+pub trait CalculateColumnWidths<H> {
     /// Calculates widths for the columns of this table, given the current width when called.
     ///
-    /// * `total_width` is the, well, total width available.
-    /// * `left_to_right` is a boolean whether to go from left to right if true, or right to left if
-    ///   false.
-    ///
-    /// **NOTE:** Trailing 0's may break tui-rs, remember to filter them out later!
+    /// * `total_width` is the total width on the canvas that the columns can try and work with.
+    /// * `left_to_right` is whether to size from left-to-right (`true`) or right-to-left (`false`).
     fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<u16>;
 }
 
-impl<T: ColumnDisplay> DrawDataColumn for [Column<T>] {
+impl<H, C> CalculateColumnWidths<H> for [C]
+where
+    H: ColumnHeader,
+    C: DataTableColumn<H>,
+{
     fn calculate_column_widths(&self, total_width: u16, left_to_right: bool) -> Vec<u16> {
         use itertools::Either;
 
@@ -193,16 +172,16 @@ impl<T: ColumnDisplay> DrawDataColumn for [Column<T>] {
 
         let mut num_columns = 0;
         for (column, calculated_width) in columns {
-            if column.is_hidden {
+            if column.is_hidden() {
                 continue;
             }
 
-            match column.bounds() {
+            match &column.bounds() {
                 ColumnWidthBounds::Soft {
                     desired,
                     max_percentage,
                 } => {
-                    let min_width = column.inner_header().len() as u16;
+                    let min_width = column.header_len() as u16;
                     if min_width > total_width_left {
                         break;
                     }
@@ -228,7 +207,16 @@ impl<T: ColumnDisplay> DrawDataColumn for [Column<T>] {
                 }
                 ColumnWidthBounds::Hard(width) => {
                     let min_width = *width;
-
+                    if min_width > total_width_left || min_width == 0 {
+                        break;
+                    } else if min_width > 0 {
+                        total_width_left = total_width_left.saturating_sub(min_width + 1);
+                        *calculated_width = min_width;
+                        num_columns += 1;
+                    }
+                }
+                ColumnWidthBounds::FollowHeader => {
+                    let min_width = column.header_len() as u16;
                     if min_width > total_width_left || min_width == 0 {
                         break;
                     } else if min_width > 0 {

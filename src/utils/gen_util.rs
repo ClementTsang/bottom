@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cmp::Ordering};
+use std::cmp::Ordering;
 
 use concat_string::concat_string;
 use tui::text::Text;
@@ -97,21 +97,23 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 }
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
-pub fn truncate_text<'a>(content: Cow<'static, str>, width: usize) -> Text<'a> {
-    let graphemes: Vec<&str> = UnicodeSegmentation::graphemes(content.as_ref(), true).collect();
+pub fn truncate_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
+    let width = width.into();
+
+    let graphemes: Vec<&str> = UnicodeSegmentation::graphemes(content, true).collect();
     if graphemes.len() > width && width > 0 {
         // Truncate with ellipsis
         let first_n = graphemes[..(width - 1)].concat();
         Text::raw(concat_string!(first_n, "…"))
     } else {
-        Text::raw(content)
+        Text::raw(content.to_string())
     }
 }
 
 #[inline]
-pub fn sort_partial_fn<T: std::cmp::PartialOrd>(is_reverse: bool) -> fn(T, T) -> Ordering {
-    if is_reverse {
-        partial_ordering_rev
+pub fn sort_partial_fn<T: std::cmp::PartialOrd>(is_descending: bool) -> fn(T, T) -> Ordering {
+    if is_descending {
+        partial_ordering_desc
     } else {
         partial_ordering
     }
@@ -129,7 +131,7 @@ pub fn partial_ordering<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
 /// This is simply a wrapper function around [`partial_ordering`] that reverses
 /// the result.
 #[inline]
-pub fn partial_ordering_rev<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
+pub fn partial_ordering_desc<T: std::cmp::PartialOrd>(a: T, b: T) -> Ordering {
     partial_ordering(a, b).reverse()
 }
 

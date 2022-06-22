@@ -1,32 +1,31 @@
+use std::{borrow::Cow, collections::hash_map::Entry};
+
 use crate::{
     app::{
-        data_farmer::{DataCollection, ProcessData, StringPidMap},
+        data_farmer::{DataCollection, ProcessData},
         data_harvester::processes::ProcessHarvest,
         query::*,
-        AppConfigFields, AppSearchState, ScrollDirection, SortState,
+        AppConfigFields, AppSearchState,
     },
     canvas::canvas_colours::CanvasColours,
-    components::{
-        data_table::{Column, DataTable, DataTableProps, DataTableStyling},
-        old_text_table::{
-            CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentState,
-            WidthBounds,
-        },
+    components::data_table::{
+        Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
+        DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder,
     },
-    data_conversion::{binary_byte_string, dec_bytes_per_second_string, TableData, TableRow},
     Pid,
 };
 
-use concat_string::concat_string;
 use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
-use std::cmp::max;
 
 pub mod proc_widget_column;
 pub use proc_widget_column::*;
 
 pub mod proc_widget_data;
 pub use proc_widget_data::*;
+
+mod sort_table;
+use sort_table::SortTableColumn;
 
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
@@ -68,19 +67,31 @@ pub enum ProcWidgetMode {
     Normal,
 }
 
+type ProcessTable = SortDataTable<ProcWidgetData, ProcColumn>;
+type SortTable = DataTable<Cow<'static, str>, SortTableColumn>;
+type StringPidMap = FxHashMap<String, Vec<Pid>>;
+
 pub struct ProcWidget {
     pub mode: ProcWidgetMode,
 
+    /// The state of the search box.
     pub proc_search: ProcessSearchState,
-    // pub table: DataTable<ProcWidgetData, ProcWidgetColumn, Sortable>,
-    pub table: TableComponentState<ProcWidgetColumn>,
-    pub sort_table: DataTable,
+
+    /// The state of the main table.
+    pub table: ProcessTable,
+
+    /// The stored process data for this specific table.
+    pub table_data: Vec<ProcWidgetData>,
+
+    /// The state of the togglable table that controls sorting.
+    pub sort_table: SortTable,
+
+    /// A name-to-pid mapping.
+    pub id_pid_map: StringPidMap,
 
     pub is_sort_open: bool,
     pub force_rerender: bool,
     pub force_update_data: bool,
-
-    pub table_data: TableData,
 }
 
 impl ProcWidget {
@@ -99,163 +110,191 @@ impl ProcWidget {
     #[cfg(not(target_family = "unix"))]
     pub const STATE: usize = 8;
 
+    fn new_sort_table(config: &AppConfigFields, colours: &CanvasColours) -> SortTable {
+        const COLUMNS: [Column<SortTableColumn>; 1] = [Column::hard(SortTableColumn, 7)];
+
+        let props = DataTableProps {
+            title: None,
+            table_gap: config.table_gap,
+            left_to_right: true,
+            is_basic: false,
+            show_table_scroll_position: false,
+            show_current_entry_when_unfocused: false,
+        };
+
+        let styling = DataTableStyling::from_colours(colours);
+
+        DataTable::new(COLUMNS, props, styling)
+    }
+
+    fn new_process_table(
+        config: &AppConfigFields, colours: &CanvasColours, mode: &ProcWidgetMode, is_count: bool,
+        is_command: bool, show_memory_as_values: bool,
+    ) -> ProcessTable {
+        let (default_index, default_order) = if matches!(mode, ProcWidgetMode::Tree { .. }) {
+            (Self::PID_OR_COUNT, SortOrder::Ascending)
+        } else {
+            (Self::CPU, SortOrder::Descending)
+        };
+
+        let columns = {
+            use ProcColumn::*;
+
+            let pid_or_count = SortColumn::new(if is_count { Count } else { Pid });
+            let name_or_cmd = SortColumn::soft(if is_command { Command } else { Name }, Some(0.3));
+            let cpu = SortColumn::new(CpuPercent).default_descending();
+            let mem = SortColumn::new(if show_memory_as_values {
+                MemoryVal
+            } else {
+                MemoryPercent
+            })
+            .default_descending();
+            let rps = SortColumn::hard(ReadPerSecond, 8).default_descending();
+            let wps = SortColumn::hard(WritePerSecond, 8).default_descending();
+            let tr = SortColumn::hard(TotalRead, 8).default_descending();
+            let tw = SortColumn::hard(TotalWrite, 8).default_descending();
+            let state = SortColumn::hard(State, 7);
+
+            vec![
+                pid_or_count,
+                name_or_cmd,
+                cpu,
+                mem,
+                rps,
+                wps,
+                tr,
+                tw,
+                #[cfg(target_family = "unix")]
+                SortColumn::soft(User, Some(0.05)),
+                state,
+            ]
+        };
+
+        let inner_props = DataTableProps {
+            title: Some(" Processes ".into()),
+            table_gap: config.table_gap,
+            left_to_right: true,
+            is_basic: config.use_basic_mode,
+            show_table_scroll_position: config.show_table_scroll_position,
+            show_current_entry_when_unfocused: false,
+        };
+        let props = SortDataTableProps {
+            inner: inner_props,
+            sort_index: default_index,
+            order: default_order,
+        };
+
+        let styling = DataTableStyling::from_colours(colours);
+
+        DataTable::new_sortable(columns, props, styling)
+    }
+
     pub fn new(
         config: &AppConfigFields, mode: ProcWidgetMode, is_case_sensitive: bool,
         is_match_whole_word: bool, is_use_regex: bool, show_memory_as_values: bool,
         is_command: bool, colours: &CanvasColours,
     ) -> Self {
-        let mut process_search_state = ProcessSearchState::default();
+        let process_search_state = {
+            let mut pss = ProcessSearchState::default();
 
-        if is_case_sensitive {
-            // By default it's off
-            process_search_state.search_toggle_ignore_case();
-        }
-        if is_match_whole_word {
-            process_search_state.search_toggle_whole_word();
-        }
-        if is_use_regex {
-            process_search_state.search_toggle_regex();
-        }
+            if is_case_sensitive {
+                // By default it's off
+                pss.search_toggle_ignore_case();
+            }
+            if is_match_whole_word {
+                pss.search_toggle_whole_word();
+            }
+            if is_use_regex {
+                pss.search_toggle_regex();
+            }
+
+            pss
+        };
 
         let is_count = matches!(mode, ProcWidgetMode::Grouped);
+        let sort_table = Self::new_sort_table(config, colours);
+        let table = Self::new_process_table(
+            config,
+            colours,
+            &mode,
+            is_count,
+            is_command,
+            show_memory_as_values,
+        );
 
-        let sort_table = {
-            const COLUMNS: [Column<&str>; 1] = [Column::hard("Sort By", 7)];
-
-            let props = DataTableProps {
-                title: None,
-                table_gap: config.table_gap,
-                left_to_right: true,
-                is_basic: false,
-                show_table_scroll_position: false,
-                show_current_entry_when_unfocused: false,
-            };
-
-            let styling = DataTableStyling {
-                header_style: colours.table_header_style,
-                border_style: colours.border_style,
-                highlighted_border_style: colours.highlighted_border_style,
-                text_style: colours.text_style,
-                highlighted_text_style: colours.currently_selected_text_style,
-                title_style: colours.widget_title_style,
-            };
-
-            DataTable::new(COLUMNS, props, styling)
-        };
-
-        let table = {
-            let (default_index, default_order) = if matches!(mode, ProcWidgetMode::Tree { .. }) {
-                (Self::PID_OR_COUNT, SortOrder::Ascending)
-            } else {
-                (Self::CPU, SortOrder::Descending)
-            };
-
-            let columns = vec![
-                TableComponentColumn::new(ProcWidgetColumn::PidOrCount { is_count }),
-                TableComponentColumn::new_soft(
-                    ProcWidgetColumn::ProcNameOrCommand { is_command },
-                    Some(0.3),
-                ),
-                TableComponentColumn::new(ProcWidgetColumn::CpuPercent),
-                TableComponentColumn::new(ProcWidgetColumn::Memory {
-                    show_percentage: !show_memory_as_values,
-                }),
-                TableComponentColumn::new_hard(ProcWidgetColumn::ReadPerSecond, 8),
-                TableComponentColumn::new_hard(ProcWidgetColumn::WritePerSecond, 8),
-                TableComponentColumn::new_hard(ProcWidgetColumn::TotalRead, 8),
-                TableComponentColumn::new_hard(ProcWidgetColumn::TotalWrite, 8),
-                #[cfg(target_family = "unix")]
-                TableComponentColumn::new_soft(ProcWidgetColumn::User, Some(0.05)),
-                TableComponentColumn::new_hard(ProcWidgetColumn::State, 7),
-            ];
-
-            let default_sort_orderings = columns
-                .iter()
-                .map(|column| column.header.default_sort_order())
-                .collect();
-
-            TableComponentState::new(columns).sort_state(SortState::Sortable(SortableState::new(
-                default_index,
-                default_order,
-                default_sort_orderings,
-            )))
-        };
+        let id_pid_map = FxHashMap::default();
 
         ProcWidget {
             proc_search: process_search_state,
             table,
+            table_data: vec![],
             sort_table,
+            id_pid_map,
             is_sort_open: false,
             mode,
             force_rerender: true,
             force_update_data: false,
-            table_data: TableData::default(),
         }
     }
 
     pub fn is_using_command(&self) -> bool {
-        if let Some(ProcWidgetColumn::ProcNameOrCommand { is_command }) = self
-            .table
+        self.table
             .columns
             .get(ProcWidget::PROC_NAME_OR_CMD)
-            .map(|col| &col.header)
-        {
-            *is_command
+            .map(|col| matches!(col.inner(), ProcColumn::Command))
+            .unwrap_or(false)
+    }
+
+    pub fn is_mem_percent(&self) -> bool {
+        self.table
+            .columns
+            .get(ProcWidget::MEM)
+            .map(|col| matches!(col.inner(), ProcColumn::MemoryPercent))
+            .unwrap_or(false)
+    }
+
+    fn get_query(&self) -> &Option<Query> {
+        if self.proc_search.search_state.is_invalid_or_blank_search() {
+            &None
         } else {
-            // Technically impossible.
-            false
+            &self.proc_search.search_state.query
         }
     }
 
     /// This function *only* updates the displayed process data. If there is a need to update the actual *stored* data,
     /// call it before this function.
     pub fn update_displayed_process_data(&mut self, data_collection: &DataCollection) {
-        let search_query = if self.proc_search.search_state.is_invalid_or_blank_search() {
-            &None
-        } else {
-            &self.proc_search.search_state.query
-        };
-        let table_data = match &self.mode {
-            ProcWidgetMode::Tree { collapsed_pids } => {
-                self.get_tree_table_data(collapsed_pids, data_collection, search_query)
-            }
+        // FIXME: Handle this.
+        self.table_data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
-                self.get_normal_table_data(data_collection, search_query)
+                self.get_normal_data(&data_collection.process_data.process_harvest)
+            }
+            ProcWidgetMode::Tree { collapsed_pids } => {
+                self.get_tree_data(collapsed_pids, data_collection)
             }
         };
-
-        // Now also update the scroll position if needed (that is, the old scroll position was too big for the new list).
-        if self.table.current_scroll_position >= table_data.data.len() {
-            self.table.current_scroll_position = table_data.data.len().saturating_sub(1);
-            self.table.scroll_bar = 0;
-            self.table.scroll_direction = ScrollDirection::Down;
-        }
-
-        // Finally, move this data to the widget itself.
-        self.table_data = table_data;
     }
 
-    fn get_tree_table_data(
+    fn get_tree_data(
         &self, collapsed_pids: &FxHashSet<Pid>, data_collection: &DataCollection,
-        search_query: &Option<Query>,
-    ) -> TableData {
-        const BRANCH_ENDING: char = '└';
+    ) -> Vec<ProcWidgetData> {
+        const BRANCH_END: char = '└';
         const BRANCH_VERTICAL: char = '│';
         const BRANCH_SPLIT: char = '├';
         const BRANCH_HORIZONTAL: char = '─';
 
+        let search_query = self.get_query();
+        let is_using_command = self.is_using_command();
+        let is_mem_percent = self.is_mem_percent();
+
         let ProcessData {
             process_harvest,
-            cmd_pid_map,
-            name_pid_map,
             process_parent_mapping,
             orphan_pids,
             ..
         } = &data_collection.process_data;
 
-        let mut col_widths = vec![0; self.table.columns.iter().filter(|c| c.is_skipped()).count()];
-
-        let matching_pids = data_collection
+        let kept_pids = data_collection
             .process_data
             .process_harvest
             .iter()
@@ -264,7 +303,7 @@ impl ProcWidget {
                     *pid,
                     search_query
                         .as_ref()
-                        .map(|q| q.check(process, self.is_using_command()))
+                        .map(|q| q.check(process, is_using_command))
                         .unwrap_or(true),
                 )
             })
@@ -273,14 +312,15 @@ impl ProcWidget {
         let filtered_tree = {
             let mut filtered_tree = FxHashMap::default();
 
+            // We do a simple BFS traversal to build our filtered parent-to-tree mappings.
+            let mut visited_pids = FxHashMap::default();
             let mut stack = orphan_pids
                 .iter()
                 .filter_map(|process| process_harvest.get(process))
                 .collect_vec();
-            let mut visited_pids = FxHashMap::default();
 
             while let Some(process) = stack.last() {
-                let is_process_matching = *matching_pids.get(&process.pid).unwrap_or(&false);
+                let is_process_matching = *kept_pids.get(&process.pid).unwrap_or(&false);
 
                 if let Some(children_pids) = process_parent_mapping.get(&process.pid) {
                     if children_pids
@@ -325,22 +365,29 @@ impl ProcWidget {
             filtered_tree
         };
 
-        let mut resulting_strings = vec![];
+        let mut data = vec![];
         let mut prefixes = vec![];
         let mut stack = orphan_pids
             .iter()
-            .filter(|pid| filtered_tree.contains_key(*pid))
-            .filter_map(|child| process_harvest.get(child))
+            .filter_map(|pid| {
+                if filtered_tree.contains_key(pid) {
+                    process_harvest.get(pid).map(|process| {
+                        ProcWidgetData::from_data(process, is_using_command, is_mem_percent)
+                    })
+                } else {
+                    None
+                }
+            })
             .collect_vec();
 
-        self.try_sort(&mut stack, data_collection);
+        self.try_sort(&mut stack);
 
         let mut length_stack = vec![stack.len()];
 
         while let (Some(process), Some(siblings_left)) = (stack.pop(), length_stack.last_mut()) {
             *siblings_left -= 1;
 
-            let is_disabled = !*matching_pids.get(&process.pid).unwrap_or(&false);
+            let disabled = !*kept_pids.get(&process.pid).unwrap_or(&false);
             let is_last = *siblings_left == 0;
 
             if collapsed_pids.contains(&process.pid) {
@@ -349,14 +396,22 @@ impl ProcWidget {
                 if let Some(children_pids) = filtered_tree.get(&process.pid) {
                     let mut sum_queue = children_pids
                         .iter()
-                        .filter_map(|child| process_harvest.get(child))
+                        .filter_map(|child| {
+                            process_harvest.get(child).map(|p| {
+                                ProcWidgetData::from_data(p, is_using_command, is_mem_percent)
+                            })
+                        })
                         .collect_vec();
 
                     while let Some(process) = sum_queue.pop() {
-                        summed_process.add(process);
+                        summed_process.add(&process);
 
                         if let Some(pids) = filtered_tree.get(&process.pid) {
-                            sum_queue.extend(pids.iter().filter_map(|c| process_harvest.get(c)));
+                            sum_queue.extend(pids.iter().filter_map(|child| {
+                                process_harvest.get(child).map(|p| {
+                                    ProcWidgetData::from_data(p, is_using_command, is_mem_percent)
+                                })
+                            }));
                         }
                     }
                 }
@@ -367,20 +422,12 @@ impl ProcWidget {
                     format!(
                         "{}{}{} + ",
                         prefixes.join(""),
-                        if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
+                        if is_last { BRANCH_END } else { BRANCH_SPLIT },
                         BRANCH_HORIZONTAL
                     )
                 };
 
-                let process_text = self.process_to_text(
-                    &summed_process,
-                    &mut col_widths,
-                    cmd_pid_map,
-                    name_pid_map,
-                    Some(prefix),
-                    is_disabled,
-                );
-                resulting_strings.push(process_text);
+                data.push(summed_process.prefix(Some(prefix)).disabled(disabled));
             } else {
                 let prefix = if prefixes.is_empty() {
                     String::default()
@@ -388,21 +435,14 @@ impl ProcWidget {
                     format!(
                         "{}{}{} ",
                         prefixes.join(""),
-                        if is_last { BRANCH_ENDING } else { BRANCH_SPLIT },
+                        if is_last { BRANCH_END } else { BRANCH_SPLIT },
                         BRANCH_HORIZONTAL
                     )
                 };
-                let process_text = self.process_to_text(
-                    process,
-                    &mut col_widths,
-                    cmd_pid_map,
-                    name_pid_map,
-                    Some(prefix),
-                    is_disabled,
-                );
-                resulting_strings.push(process_text);
+                let pid = process.pid;
+                data.push(process.prefix(Some(prefix)).disabled(disabled));
 
-                if let Some(children_pids) = filtered_tree.get(&process.pid) {
+                if let Some(children_pids) = filtered_tree.get(&pid) {
                     if prefixes.is_empty() {
                         prefixes.push(String::default());
                     } else {
@@ -415,9 +455,13 @@ impl ProcWidget {
 
                     let mut children = children_pids
                         .iter()
-                        .filter_map(|child_pid| process_harvest.get(child_pid))
+                        .filter_map(|child_pid| {
+                            process_harvest.get(child_pid).map(|p| {
+                                ProcWidgetData::from_data(p, is_using_command, is_mem_percent)
+                            })
+                        })
                         .collect_vec();
-                    self.try_sort(&mut children, data_collection);
+                    self.try_rev_sort(&mut children);
                     length_stack.push(children.len());
                     stack.extend(children);
                 }
@@ -433,197 +477,113 @@ impl ProcWidget {
             }
         }
 
-        TableData {
-            data: resulting_strings,
-            col_widths,
-        }
+        data
     }
 
-    fn get_normal_table_data(
-        &self, data_collection: &DataCollection, search_query: &Option<Query>,
-    ) -> TableData {
-        let mut id_pid_map: FxHashMap<String, ProcessHarvest>;
-        let filtered_iter = data_collection
-            .process_data
-            .process_harvest
-            .values()
-            .filter(|p| {
-                search_query
-                    .as_ref()
-                    .map(|q| q.check(p, self.is_using_command()))
-                    .unwrap_or(true)
-            });
+    fn get_normal_data(
+        &mut self, process_harvest: &FxHashMap<Pid, ProcessHarvest>,
+    ) -> Vec<ProcWidgetData> {
+        let search_query = self.get_query();
+        let is_using_command = self.is_using_command();
+        let is_mem_percent = self.is_mem_percent();
 
-        let mut filtered_data = if let ProcWidgetMode::Grouped = self.mode {
-            id_pid_map = FxHashMap::default();
-            filtered_iter.for_each(|process| {
-                let id = if self.is_using_command() {
+        let filtered_iter = process_harvest.values().filter(|process| {
+            search_query
+                .as_ref()
+                .map(|query| query.check(process, is_using_command))
+                .unwrap_or(true)
+        });
+
+        let mut id_pid_map: FxHashMap<String, Vec<Pid>> = FxHashMap::default();
+        let mut filtered_data: Vec<ProcWidgetData> = if let ProcWidgetMode::Grouped = self.mode {
+            let mut id_process_mapping: FxHashMap<String, ProcessHarvest> = FxHashMap::default();
+            for process in filtered_iter {
+                let id = if is_using_command {
                     &process.command
                 } else {
                     &process.name
                 };
+                let pid = process.pid;
 
-                if let Some(grouped_process_harvest) = id_pid_map.get_mut(id) {
+                match id_pid_map.entry(id.clone()) {
+                    Entry::Occupied(mut occupied) => {
+                        occupied.get_mut().push(pid);
+                    }
+                    Entry::Vacant(vacant) => {
+                        vacant.insert(vec![pid]);
+                    }
+                }
+
+                if let Some(grouped_process_harvest) = id_process_mapping.get_mut(id) {
                     grouped_process_harvest.add(process);
                 } else {
-                    id_pid_map.insert(id.clone(), process.clone());
+                    id_process_mapping.insert(id.clone(), process.clone());
                 }
-            });
-
-            id_pid_map.values().collect::<Vec<_>>()
-        } else {
-            filtered_iter.collect::<Vec<_>>()
-        };
-
-        self.try_sort(&mut filtered_data, data_collection);
-        self.harvest_to_table_data(&filtered_data, data_collection)
-    }
-
-    fn try_sort(&self, filtered_data: &mut [&ProcessHarvest], data_collection: &DataCollection) {
-        let cmd_pid_map = &data_collection.process_data.cmd_pid_map;
-        let name_pid_map = &data_collection.process_data.name_pid_map;
-
-        if let SortState::Sortable(state) = &self.table.sort_state {
-            let index = state.current_index;
-            let order = &state.order;
-
-            if let Some(column) = self.table.columns.get(index) {
-                column.header.sort(
-                    order.is_descending(),
-                    filtered_data,
-                    self.is_using_command(),
-                    cmd_pid_map,
-                    name_pid_map,
-                );
             }
-        }
-    }
 
-    fn process_to_text(
-        &self, process: &ProcessHarvest, col_widths: &mut [usize], cmd_pid_map: &StringPidMap,
-        name_pid_map: &StringPidMap, proc_prefix: Option<String>, is_disabled: bool,
-    ) -> TableRow {
-        let mut contents = Vec::with_capacity(self.num_shown_columns());
-
-        contents.extend(self.table.columns.iter().enumerate().map(|(itx, column)| {
-            let col_text = match column.header {
-                ProcWidgetColumn::CpuPercent => format!("{:.1}%", process.cpu_usage_percent).into(),
-                ProcWidgetColumn::Memory { show_percentage } => {
-                    if show_percentage {
-                        format!("{:.1}%", process.mem_usage_percent).into()
+            id_process_mapping
+                .values()
+                .map(|process| {
+                    let id = if is_using_command {
+                        &process.command
                     } else {
-                        binary_byte_string(process.mem_usage_bytes).into()
-                    }
-                }
-                ProcWidgetColumn::PidOrCount { is_count } => {
-                    if is_count {
-                        if self.is_using_command() {
-                            cmd_pid_map
-                                .get(&process.command)
-                                .map(|v| v.len())
-                                .unwrap_or(0)
-                                .to_string()
-                                .into()
-                        } else {
-                            name_pid_map
-                                .get(&process.name)
-                                .map(|v| v.len())
-                                .unwrap_or(0)
-                                .to_string()
-                                .into()
-                        }
-                    } else {
-                        process.pid.to_string().into()
-                    }
-                }
-                ProcWidgetColumn::ProcNameOrCommand { is_command } => {
-                    let val = if is_command {
-                        process.command.clone()
-                    } else {
-                        process.name.clone()
+                        &process.name
                     };
 
-                    if let Some(prefix) = &proc_prefix {
-                        concat_string!(prefix, val).into()
-                    } else {
-                        val.into()
-                    }
-                }
-                ProcWidgetColumn::ReadPerSecond => {
-                    dec_bytes_per_second_string(process.read_bytes_per_sec).into()
-                }
-                ProcWidgetColumn::WritePerSecond => {
-                    dec_bytes_per_second_string(process.write_bytes_per_sec).into()
-                }
-                ProcWidgetColumn::TotalRead => {
-                    dec_bytes_per_second_string(process.total_read_bytes).into()
-                }
-                ProcWidgetColumn::TotalWrite => {
-                    dec_bytes_per_second_string(process.total_write_bytes).into()
-                }
-                ProcWidgetColumn::State => CellContent::HasAlt {
-                    main: process.process_state.0.clone().into(),
-                    alt: process.process_state.1.to_string().into(),
-                },
-                ProcWidgetColumn::User => {
-                    #[cfg(target_family = "unix")]
-                    {
-                        process.user.clone().into()
-                    }
-                    #[cfg(not(target_family = "unix"))]
-                    {
-                        "".into()
-                    }
-                }
-            };
+                    let num_similar = id_pid_map.get(id).map(|val| val.len()).unwrap_or(1) as u64;
 
-            if let Some(curr) = col_widths.get_mut(itx) {
-                *curr = max(*curr, col_text.len());
-            }
-
-            col_text
-        }));
-
-        if is_disabled {
-            TableRow::Styled(contents, tui::style::Style::default())
+                    ProcWidgetData::from_data(process, is_using_command, is_mem_percent)
+                        .num_similar(num_similar)
+                })
+                .collect()
         } else {
-            TableRow::Raw(contents)
+            filtered_iter
+                .map(|process| ProcWidgetData::from_data(process, is_using_command, is_mem_percent))
+                .collect()
+        };
+
+        self.id_pid_map = id_pid_map;
+        self.try_sort(&mut filtered_data);
+        filtered_data
+    }
+
+    #[inline(always)]
+    fn try_sort(&self, filtered_data: &mut [ProcWidgetData]) {
+        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
+            column.sort_by(filtered_data, self.table.order());
         }
     }
 
-    fn harvest_to_table_data(
-        &self, process_data: &[&ProcessHarvest], data_collection: &DataCollection,
-    ) -> TableData {
-        let cmd_pid_map = &data_collection.process_data.cmd_pid_map;
-        let name_pid_map = &data_collection.process_data.name_pid_map;
-
-        let mut col_widths = vec![0; self.table.columns.len()];
-
-        let data = process_data
-            .iter()
-            .map(|process| {
-                self.process_to_text(
-                    process,
-                    &mut col_widths,
-                    cmd_pid_map,
-                    name_pid_map,
-                    None,
-                    false,
-                )
-            })
-            .collect();
-
-        TableData { data, col_widths }
+    #[inline(always)]
+    fn try_rev_sort(&self, filtered_data: &mut [ProcWidgetData]) {
+        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
+            column.sort_by(
+                filtered_data,
+                match self.table.order() {
+                    SortOrder::Ascending => SortOrder::Descending,
+                    SortOrder::Descending => SortOrder::Ascending,
+                },
+            );
+        }
     }
 
-    fn get_mut_proc_col(&mut self, index: usize) -> Option<&mut ProcWidgetColumn> {
-        self.table.columns.get_mut(index).map(|col| &mut col.header)
+    #[inline(always)]
+    fn get_mut_proc_col(&mut self, index: usize) -> Option<&mut ProcColumn> {
+        self.table.columns.get_mut(index).map(|col| col.inner_mut())
     }
 
     pub fn toggle_mem_percentage(&mut self) {
-        if let Some(ProcWidgetColumn::Memory { show_percentage }) = self.get_mut_proc_col(Self::MEM)
-        {
-            *show_percentage = !*show_percentage;
+        if let Some(mem) = self.get_mut_proc_col(Self::MEM) {
+            match mem {
+                ProcColumn::MemoryVal => {
+                    *mem = ProcColumn::MemoryPercent;
+                }
+                ProcColumn::MemoryPercent => {
+                    *mem = ProcColumn::MemoryVal;
+                }
+                _ => unreachable!(),
+            }
+
             self.force_data_update();
         }
     }
@@ -641,16 +601,15 @@ impl ProcWidget {
         self.force_update_data = true;
     }
 
-    /// Marks the selected column as hidden, and automatically resets the selected column if currently selected.
+    /// Marks the selected column as hidden, and automatically resets the selected column to CPU
+    /// and descending if that column was selected.
     fn hide_column(&mut self, index: usize) {
         if let Some(col) = self.table.columns.get_mut(index) {
             col.is_hidden = true;
 
-            if let SortState::Sortable(state) = &mut self.table.sort_state {
-                if state.current_index == index {
-                    state.current_index = Self::CPU;
-                    state.order = SortOrder::Descending;
-                }
+            if self.table.sort_index() == index {
+                self.table.set_sort_index(Self::CPU);
+                self.table.set_order(SortOrder::Descending);
             }
         }
     }
@@ -664,47 +623,45 @@ impl ProcWidget {
 
     /// Select a column. If the column is already selected, then just toggle the sort order.
     pub fn select_column(&mut self, new_sort_index: usize) {
-        if let SortState::Sortable(state) = &mut self.table.sort_state {
-            state.update_sort_index(new_sort_index);
-            self.force_data_update();
-        }
+        self.table.set_sort_index(new_sort_index);
+        self.force_data_update();
     }
 
-    pub fn toggle_tree_branch(&mut self) {
+    pub fn toggle_current_tree_branch_entry(&mut self) {
         if let ProcWidgetMode::Tree { collapsed_pids } = &mut self.mode {
-            let current_posn = self.table.current_scroll_position;
-            if let Some(current_row) = self.table_data.data.get(current_posn) {
-                if let Ok(pid) = current_row.row()[ProcWidget::PID_OR_COUNT]
-                    .main_text()
-                    .parse::<Pid>()
-                {
-                    if !collapsed_pids.remove(&pid) {
-                        collapsed_pids.insert(pid);
-                    }
-                    self.force_data_update();
+            if let Some(process) = self.table.current_item() {
+                let pid = process.pid;
+
+                if !collapsed_pids.remove(&pid) {
+                    collapsed_pids.insert(pid);
                 }
+                self.force_data_update();
             }
         }
     }
 
     pub fn toggle_command(&mut self) {
         if let Some(col) = self.table.columns.get_mut(Self::PROC_NAME_OR_CMD) {
-            if let ProcWidgetColumn::ProcNameOrCommand { is_command } = &mut col.header {
-                *is_command = !*is_command;
-
-                if let WidthBounds::Soft { max_percentage, .. } = &mut col.width_bounds {
-                    if *is_command {
+            let inner = col.inner_mut();
+            match inner {
+                ProcColumn::Name => {
+                    *inner = ProcColumn::Command;
+                    if let ColumnWidthBounds::Soft { max_percentage, .. } = col.bounds_mut() {
                         *max_percentage = Some(0.5);
-                    } else {
+                    }
+                }
+                ProcColumn::Command => {
+                    *inner = ProcColumn::Name;
+                    if let ColumnWidthBounds::Soft { max_percentage, .. } = col.bounds_mut() {
                         *max_percentage = match self.mode {
                             ProcWidgetMode::Tree { .. } => Some(0.5),
                             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => Some(0.3),
                         };
                     }
                 }
-
-                self.force_rerender_and_update();
+                _ => unreachable!(),
             }
+            self.force_rerender_and_update();
         }
     }
 
@@ -716,29 +673,43 @@ impl ProcWidget {
     ///
     /// Otherwise, if count is disabled, then the User and State columns should be re-enabled, and the mode switched
     /// to [`ProcWidgetMode::Normal`].
-    pub fn toggle_tab(&mut self) {
+    pub fn on_tab(&mut self) {
         if !matches!(self.mode, ProcWidgetMode::Tree { .. }) {
-            if let Some(ProcWidgetColumn::PidOrCount { is_count }) =
-                self.get_mut_proc_col(Self::PID_OR_COUNT)
-            {
-                *is_count = !*is_count;
+            if let Some(sort_col) = self.table.columns.get_mut(Self::PID_OR_COUNT) {
+                let col = sort_col.inner_mut();
+                match col {
+                    ProcColumn::Pid => {
+                        *col = ProcColumn::Count;
+                        sort_col.default_order = SortOrder::Descending;
 
-                if *is_count {
-                    #[cfg(target_family = "unix")]
-                    self.hide_column(Self::USER);
-                    self.hide_column(Self::STATE);
-                    self.mode = ProcWidgetMode::Grouped;
-                    self.sort_table
-                        .update_num_entries(self.num_enabled_columns());
-                } else {
-                    #[cfg(target_family = "unix")]
-                    self.show_column(Self::USER);
-                    self.show_column(Self::STATE);
-                    self.mode = ProcWidgetMode::Normal;
+                        #[cfg(target_family = "unix")]
+                        self.hide_column(Self::USER);
+                        self.hide_column(Self::STATE);
+                        self.mode = ProcWidgetMode::Grouped;
+                    }
+                    ProcColumn::Count => {
+                        *col = ProcColumn::Pid;
+                        sort_col.default_order = SortOrder::Ascending;
+
+                        #[cfg(target_family = "unix")]
+                        self.show_column(Self::USER);
+                        self.show_column(Self::STATE);
+                        self.mode = ProcWidgetMode::Normal;
+                    }
+                    _ => unreachable!(),
                 }
+
                 self.force_rerender_and_update();
             }
         }
+    }
+
+    pub fn column_text(&self) -> Vec<Cow<'static, str>> {
+        self.table
+            .columns
+            .iter()
+            .map(|c| c.inner().text())
+            .collect::<Vec<_>>()
     }
 
     pub fn get_search_cursor_position(&self) -> usize {
@@ -787,8 +758,8 @@ impl ProcWidget {
                 }
             }
         }
-        self.table.scroll_bar = 0;
-        self.table.current_scroll_position = 0;
+        self.table.state.display_start_index = 0;
+        self.table.state.current_index = 0;
 
         self.force_data_update();
     }
@@ -820,29 +791,19 @@ impl ProcWidget {
             .unwrap();
     }
 
-    /// Returns the number of columns *visible*.
-    pub fn num_shown_columns(&self) -> usize {
-        self.table
-            .columns
-            .iter()
-            .filter(|c| !c.is_skipped())
-            .count()
-    }
-
     /// Returns the number of columns *enabled*. Note this differs from *visible* - a column may be enabled but not
     /// visible (e.g. off screen).
     pub fn num_enabled_columns(&self) -> usize {
         self.table.columns.iter().filter(|c| !c.is_hidden).count()
     }
 
-    /// Sets the [`ProcWidget`]'s current sort index to whatever was in the sort table.
+    /// Sets the [`ProcWidget`]'s current sort index to whatever was in the sort table if possible, then closes the
+    /// sort table.
     pub(crate) fn use_sort_table_value(&mut self) {
-        if let SortState::Sortable(st) = &mut self.table.sort_state {
-            st.update_sort_index(self.sort_table.current_index());
+        self.table.set_sort_index(self.sort_table.current_index());
 
-            self.is_sort_open = false;
-            self.force_rerender_and_update();
-        }
+        self.is_sort_open = false;
+        self.force_rerender_and_update();
     }
 }
 
@@ -851,8 +812,11 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_sort() {}
+    fn test_sort() {
+        // FIXME: Add test
+    }
 
+    // TODO: Might remove this test, or make it more variable.
     #[test]
     fn assert_correct_columns() {
         #[track_caller]
@@ -874,47 +838,59 @@ mod test {
             let columns = &proc.table.columns;
 
             assert_eq!(
-                columns[ProcWidget::PID_OR_COUNT].header,
-                ProcWidgetColumn::PidOrCount { is_count }
+                *columns[ProcWidget::PID_OR_COUNT].inner(),
+                if is_count {
+                    ProcColumn::Count
+                } else {
+                    ProcColumn::Pid
+                }
             );
             assert_eq!(
-                columns[ProcWidget::PROC_NAME_OR_CMD].header,
-                ProcWidgetColumn::ProcNameOrCommand { is_command }
+                *columns[ProcWidget::PROC_NAME_OR_CMD].inner(),
+                if is_command {
+                    ProcColumn::Command
+                } else {
+                    ProcColumn::Name
+                }
             );
             assert!(matches!(
-                columns[ProcWidget::CPU].header,
-                ProcWidgetColumn::CpuPercent
+                *columns[ProcWidget::CPU].inner(),
+                ProcColumn::CpuPercent
             ));
             assert_eq!(
-                columns[ProcWidget::MEM].header,
-                ProcWidgetColumn::Memory { show_percentage }
+                *columns[ProcWidget::MEM].inner(),
+                if show_percentage {
+                    ProcColumn::MemoryPercent
+                } else {
+                    ProcColumn::MemoryVal
+                }
             );
             assert!(matches!(
-                columns[ProcWidget::RPS].header,
-                ProcWidgetColumn::ReadPerSecond
+                *columns[ProcWidget::RPS].inner(),
+                ProcColumn::ReadPerSecond
             ));
             assert!(matches!(
-                columns[ProcWidget::WPS].header,
-                ProcWidgetColumn::WritePerSecond
+                *columns[ProcWidget::WPS].inner(),
+                ProcColumn::WritePerSecond
             ));
             assert!(matches!(
-                columns[ProcWidget::T_READ].header,
-                ProcWidgetColumn::TotalRead
+                *columns[ProcWidget::T_READ].inner(),
+                ProcColumn::TotalRead
             ));
             assert!(matches!(
-                columns[ProcWidget::T_WRITE].header,
-                ProcWidgetColumn::TotalWrite
+                *columns[ProcWidget::T_WRITE].inner(),
+                ProcColumn::TotalWrite
             ));
             #[cfg(target_family = "unix")]
             {
                 assert!(matches!(
-                    columns[ProcWidget::USER].header,
-                    ProcWidgetColumn::User
+                    columns[ProcWidget::USER].inner(),
+                    ProcColumn::User
                 ));
             }
             assert!(matches!(
-                columns[ProcWidget::STATE].header,
-                ProcWidgetColumn::State
+                *columns[ProcWidget::STATE].inner(),
+                ProcColumn::State
             ));
         }
 

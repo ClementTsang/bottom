@@ -1,13 +1,16 @@
-use std::time::Instant;
+use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
 
-use tui::{style::Style, widgets::Row};
+use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{
     app::{data_harvester::cpu::CpuDataType, AppConfigFields},
     canvas::canvas_colours::CanvasColours,
-    components::data_table::{Column, DataTable, DataTableProps, DataTableStyling, ToDataRow},
+    components::data_table::{
+        Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
+        DataToCell,
+    },
     data_conversion::{CpuWidgetData, CpuWidgetDataType},
     utils::gen_util::truncate_text,
 };
@@ -35,44 +38,79 @@ impl CpuWidgetStyling {
     }
 }
 
-impl ToDataRow for CpuWidgetData {
-    fn to_data_row<'a>(&self, widths: &[u16]) -> Row<'a> {
-        // FIXME: Adjust based on column widths
+pub enum CpuWidgetColumn {
+    CPU,
+    Use,
+}
+
+impl ColumnHeader for CpuWidgetColumn {
+    fn text(&self) -> Cow<'static, str> {
+        match self {
+            CpuWidgetColumn::CPU => "CPU".into(),
+            CpuWidgetColumn::Use => "Use%".into(),
+        }
+    }
+}
+
+impl DataToCell<CpuWidgetColumn> for CpuWidgetData {
+    fn to_cell<'a>(&'a self, column: &CpuWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
+        const CPU_HIDE_BREAKPOINT: u16 = 5;
+
+        // This is a bit of a hack, but apparently we can avoid having to do any fancy checks
+        // of showing the "All" on a specific column if the other is hidden by just always
+        // showing it on the CPU (first) column - if there isn't room for it, it will just collapse
+        // down.
+        //
+        // This is the same for the use percentages - we just *always* show them, and *always* hide the CPU column if
+        // it is too small.
         match &self.data {
-            CpuWidgetDataType::All => Row::new(vec![truncate_text("All".into(), widths[0].into())]),
+            CpuWidgetDataType::All => match column {
+                CpuWidgetColumn::CPU => Some(truncate_text("All", calculated_width)),
+                CpuWidgetColumn::Use => None,
+            },
             CpuWidgetDataType::Entry {
                 data_type,
                 data: _,
                 last_entry,
-            } => {
-                let entry_text = match data_type {
-                    CpuDataType::Avg => truncate_text("AVG".into(), widths[0].into()),
-                    CpuDataType::Cpu(index) => {
-                        let index_str = index.to_string();
-                        let width = widths[0].into();
-                        let text = if width < 5 {
-                            truncate_text(index_str.into(), width)
-                        } else {
-                            truncate_text(concat_string!("CPU", index_str).into(), width)
-                        };
+            } => match column {
+                CpuWidgetColumn::CPU => {
+                    if calculated_width == 0 {
+                        None
+                    } else {
+                        match data_type {
+                            CpuDataType::Avg => Some(truncate_text("AVG", calculated_width)),
+                            CpuDataType::Cpu(index) => {
+                                let index_str = index.to_string();
+                                let text = if calculated_width < CPU_HIDE_BREAKPOINT {
+                                    truncate_text(&index_str, calculated_width)
+                                } else {
+                                    truncate_text(
+                                        &concat_string!("CPU", index_str),
+                                        calculated_width,
+                                    )
+                                };
 
-                        text
+                                Some(text)
+                            }
+                        }
                     }
-                };
-
-                Row::new(vec![
-                    entry_text,
-                    truncate_text(
-                        format!("{:.0}%", last_entry.round()).into(),
-                        widths[1].into(),
-                    ),
-                ])
-            }
-            .style(self.style),
+                }
+                CpuWidgetColumn::Use => Some(truncate_text(
+                    &format!("{:.0}%", last_entry.round()),
+                    calculated_width,
+                )),
+            },
         }
     }
 
-    fn column_widths(_data: &[CpuWidgetData]) -> Vec<u16>
+    #[inline(always)]
+    fn style_row<'a>(&self, row: Row<'a>) -> Row<'a> {
+        row.style(self.style)
+    }
+
+    fn column_widths<C: DataTableColumn<CpuWidgetColumn>>(
+        _data: &[Self], _columns: &[C],
+    ) -> Vec<u16>
     where
         Self: Sized,
     {
@@ -85,7 +123,7 @@ pub struct CpuWidgetState {
     pub is_legend_hidden: bool,
     pub show_avg: bool,
     pub autohide_timer: Option<Instant>,
-    pub table: DataTable<CpuWidgetData>,
+    pub table: DataTable<CpuWidgetData, CpuWidgetColumn>,
     pub styling: CpuWidgetStyling,
 }
 
@@ -94,9 +132,9 @@ impl CpuWidgetState {
         config: &AppConfigFields, current_display_time: u64, autohide_timer: Option<Instant>,
         colours: &CanvasColours,
     ) -> Self {
-        const COLUMNS: [Column<&str>; 2] = [
-            Column::soft("CPU", Some(0.5)),
-            Column::soft("Use%", Some(0.5)),
+        const COLUMNS: [Column<CpuWidgetColumn>; 2] = [
+            Column::soft(CpuWidgetColumn::CPU, Some(0.5)),
+            Column::soft(CpuWidgetColumn::Use, Some(0.5)),
         ];
 
         let props = DataTableProps {
@@ -108,14 +146,7 @@ impl CpuWidgetState {
             show_current_entry_when_unfocused: true,
         };
 
-        let styling = DataTableStyling {
-            header_style: colours.table_header_style,
-            border_style: colours.border_style,
-            highlighted_border_style: colours.highlighted_border_style,
-            text_style: colours.text_style,
-            highlighted_text_style: colours.currently_selected_text_style,
-            title_style: colours.widget_title_style,
-        };
+        let styling = DataTableStyling::from_colours(colours);
 
         CpuWidgetState {
             current_display_time,

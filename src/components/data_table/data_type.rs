@@ -1,28 +1,24 @@
-use std::borrow::Cow;
+use tui::{text::Text, widgets::Row};
 
-use tui::widgets::Row;
+use super::{ColumnHeader, DataTableColumn};
 
-use crate::utils::gen_util::truncate_text;
+pub trait DataToCell<H>
+where
+    H: ColumnHeader,
+{
+    /// Given data, a column, and its corresponding width, return what should be displayed in the [`DataTable`](super::DataTable).
+    fn to_cell<'a>(&'a self, column: &H, calculated_width: u16) -> Option<Text<'a>>;
 
-pub trait ToDataRow {
-    /// Builds a [`Row`] given data.
-    fn to_data_row<'a>(&self, widths: &[u16]) -> Row<'a>;
+    /// Apply styling to the generated [`Row`] of cells.
+    ///
+    /// The default implementation just returns the `row` that is passed in.
+    #[inline(always)]
+    fn style_row<'a>(&self, row: Row<'a>) -> Row<'a> {
+        row
+    }
 
     /// Returns the desired column widths in light of having seen data.
-    fn column_widths(data: &[Self]) -> Vec<u16>
+    fn column_widths<C: DataTableColumn<H>>(data: &[Self], columns: &[C]) -> Vec<u16>
     where
         Self: Sized;
-}
-
-impl ToDataRow for Cow<'static, str> {
-    fn to_data_row<'a>(&self, widths: &[u16]) -> Row<'a> {
-        Row::new(vec![truncate_text(self.clone(), widths[0].into())])
-    }
-
-    fn column_widths(_data: &[Self]) -> Vec<u16>
-    where
-        Self: Sized,
-    {
-        vec![]
-    }
 }
