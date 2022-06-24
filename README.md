@@ -6,7 +6,6 @@
   </p>
 
 [<img src="https://img.shields.io/github/workflow/status/ClementTsang/bottom/ci/master?style=flat-square&logo=github" alt="CI status">](https://github.com/ClementTsang/bottom/actions?query=branch%3Amaster)
-[<img src="https://img.shields.io/codecov/c/github/ClementTsang/bottom?color=%23d9634d&logo=codecov&style=flat-square&token=IDD43CO0FP" alt="Codecov">](https://app.codecov.io/gh/ClementTsang/bottom)
 [<img src="https://img.shields.io/crates/v/bottom.svg?style=flat-square" alt="crates.io link">](https://crates.io/crates/bottom)
 [<img src="https://img.shields.io/badge/docs-stable-66c2a5?style=flat-square&labelColor=555555&logoColor=white" alt="Stable documentation">](https://clementtsang.github.io/bottom/stable)
 [<img src="https://img.shields.io/badge/docs-nightly-88c0d0?style=flat-square&labelColor=555555&logoColor=white" alt="Nightly documentation">](https://clementtsang.github.io/bottom/nightly)
