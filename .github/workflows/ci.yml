@@ -94,17 +94,17 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-run --locked ${{ matrix.features }}
+          args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }} 
           use-cross: ${{ matrix.info.cross }}
         env:
           RUST_BACKTRACE: full
 
       - name: Run tests
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ steps.skip_check.outputs.should_skip != 'true' }} 
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-fail-fast ${{ matrix.features }} -- --nocapture --quiet
+          args: --no-fail-fast ${{ matrix.features }} -- --nocapture --quiet --target=${{ matrix.info.target }} 
           use-cross: ${{ matrix.info.cross }}
         env:
           RUST_BACKTRACE: full
@@ -114,7 +114,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: ${{ matrix.features }} --all-targets --workspace -- -D warnings
+          args: ${{ matrix.features }} --all-targets --workspace -- -D warnings --target=${{ matrix.info.target }} 
           use-cross: ${{ matrix.info.cross }}
         env:
           RUST_BACKTRACE: full
