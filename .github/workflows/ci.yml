@@ -27,11 +27,11 @@ env:
 jobs:
   # Runs rustfmt + tests + clippy on the main supported platforms.
   supported:
-    runs-on: ${{ matrix.triple.os }}
+    runs-on: ${{ matrix.info.os }}
     strategy:
       fail-fast: false
       matrix:
-        triple:
+        info:
           - {
               os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
@@ -74,7 +74,7 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-          target: ${{ matrix.triple.target }}
+          target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
@@ -84,13 +84,18 @@ jobs:
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         run: cargo fmt --all -- --check
 
+      - name: Install cross if needed
+        if: matrix.info.cross == true
+        run: |
+          cargo install cross --locked --version=0.2.1
+
       - name: Build tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --no-run --locked ${{ matrix.features }}
-          use-cross: ${{ matrix.triple.cross }}
+          use-cross: ${{ matrix.info.cross }}
         env:
           RUST_BACKTRACE: full
 
@@ -100,7 +105,7 @@ jobs:
         with:
           command: test
           args: --no-fail-fast ${{ matrix.features }} -- --nocapture --quiet
-          use-cross: ${{ matrix.triple.cross }}
+          use-cross: ${{ matrix.info.cross }}
         env:
           RUST_BACKTRACE: full
 
@@ -110,18 +115,18 @@ jobs:
         with:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace -- -D warnings
-          use-cross: ${{ matrix.triple.cross }}
+          use-cross: ${{ matrix.info.cross }}
         env:
           RUST_BACKTRACE: full
 
   # Run cargo check on all other platforms
   other_check:
-    runs-on: ${{ matrix.triple.os }}
+    runs-on: ${{ matrix.info.os }}
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        triple:
+        info:
           # x86 or x64
           - {
               os: "ubuntu-latest",
@@ -232,19 +237,24 @@ jobs:
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
         with:
-          toolchain: ${{ matrix.triple.rust }}
-          target: ${{ matrix.triple.target }}
+          toolchain: ${{ matrix.info.rust }}
+          target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
-          key: ${{ matrix.triple.target }}
+          key: ${{ matrix.info.target }}
+
+      - name: Install cross if needed
+        if: matrix.info.cross == true
+        run: |
+          cargo install cross --locked --version=0.2.1
 
       - name: Check
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all-targets --verbose --target=${{ matrix.triple.target }} --locked
-          use-cross: ${{ matrix.triple.cross }}
+          args: --all-targets --verbose --target=${{ matrix.info.target }} --locked
+          use-cross: ${{ matrix.info.cross }}
