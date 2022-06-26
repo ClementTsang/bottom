@@ -41,8 +41,6 @@ jobs:
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
-        with:
-          key: ${{ matrix.triple.target }}
 
       - name: Install cargo-llvm-cov
         run: |
