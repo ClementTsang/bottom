@@ -84,6 +84,11 @@ jobs:
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         run: cargo fmt --all -- --check
 
+      - name: Install cross if needed
+        if: matrix.info.cross == true
+        run: |
+          cargo install cross --locked --version=0.2.1
+
       - name: Build tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         uses: actions-rs/cargo@v1
@@ -240,6 +245,11 @@ jobs:
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.triple.target }}
+
+      - name: Install cross if needed
+        if: matrix.info.cross == true
+        run: |
+          cargo install cross --locked --version=0.2.1
 
       - name: Check
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
