@@ -278,6 +278,11 @@ jobs:
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
 
+      - name: Install cross if needed
+        if: matrix.info.cross == true
+        run: |
+          cargo install cross --locked --version=0.2.1
+
       - name: Build
         uses: actions-rs/cargo@v1
         with:
