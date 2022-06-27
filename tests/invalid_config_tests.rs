@@ -1,16 +1,14 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
+
+mod util;
+use util::*;
 
 // These tests are for testing some config file-specific options.
 
-fn get_binary_location() -> String {
-    env!("CARGO_BIN_EXE_btm").to_string()
-}
-
 #[test]
 fn test_toml_mismatch_type() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/toml_mismatch_type.toml")
         .assert()
@@ -20,7 +18,7 @@ fn test_toml_mismatch_type() {
 
 #[test]
 fn test_empty_layout() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/empty_layout.toml")
         .assert()
@@ -30,7 +28,7 @@ fn test_empty_layout() {
 
 #[test]
 fn test_invalid_layout_widget_type() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_layout_widget_type.toml")
         .assert()
@@ -42,7 +40,7 @@ fn test_invalid_layout_widget_type() {
 /// However, I feel like it's worth checking anyways - not like it takes long.
 #[test]
 fn test_duplicate_temp_type() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/duplicate_temp_type.toml")
         .assert()
@@ -53,7 +51,7 @@ fn test_duplicate_temp_type() {
 /// Checks for if a hex is valid
 #[test]
 fn test_invalid_colour_hex() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_colour_hex.toml")
         .assert()
@@ -64,7 +62,7 @@ fn test_invalid_colour_hex() {
 /// Checks for if a hex is too long
 #[test]
 fn test_invalid_colour_hex_2() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_colour_hex_2.toml")
         .assert()
@@ -76,7 +74,7 @@ fn test_invalid_colour_hex_2() {
 /// boundary errors!
 #[test]
 fn test_invalid_colour_hex_3() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_colour_hex_3.toml")
         .assert()
@@ -86,7 +84,7 @@ fn test_invalid_colour_hex_3() {
 
 #[test]
 fn test_invalid_colour_name() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_colour_name.toml")
         .assert()
@@ -96,7 +94,7 @@ fn test_invalid_colour_name() {
 
 #[test]
 fn test_invalid_colour_rgb() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_colour_rgb.toml")
         .assert()
@@ -106,7 +104,7 @@ fn test_invalid_colour_rgb() {
 
 #[test]
 fn test_invalid_colour_rgb_2() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_colour_rgb_2.toml")
         .assert()
@@ -116,7 +114,7 @@ fn test_invalid_colour_rgb_2() {
 
 #[test]
 fn test_invalid_colour_string() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_colour_string.toml")
         .assert()
@@ -126,7 +124,7 @@ fn test_invalid_colour_string() {
 
 #[test]
 fn test_lone_default_widget_count() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/lone_default_widget_count.toml")
         .assert()
@@ -136,7 +134,7 @@ fn test_lone_default_widget_count() {
 
 #[test]
 fn test_invalid_default_widget_count() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/invalid_configs/invalid_default_widget_count.toml")
         .assert()
