@@ -1,18 +1,13 @@
+//! These tests are mostly here just to ensure that invalid results will be caught when passing arguments.
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
 
-// These tests are mostly here just to ensure that invalid results will be caught when passing arguments...
-
-//======================RATES======================//
-
-fn get_binary_location() -> String {
-    env!("CARGO_BIN_EXE_btm").to_string()
-}
+mod util;
+use util::*;
 
 #[test]
 fn test_small_rate() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-r")
@@ -26,7 +21,7 @@ fn test_small_rate() {
 
 #[test]
 fn test_large_default_time() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-t")
@@ -38,7 +33,7 @@ fn test_large_default_time() {
 
 #[test]
 fn test_small_default_time() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-t")
@@ -52,7 +47,7 @@ fn test_small_default_time() {
 
 #[test]
 fn test_large_delta_time() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-d")
@@ -64,7 +59,7 @@ fn test_large_delta_time() {
 
 #[test]
 fn test_small_delta_time() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-d")
@@ -78,7 +73,7 @@ fn test_small_delta_time() {
 
 #[test]
 fn test_large_rate() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-r")
@@ -91,7 +86,7 @@ fn test_large_rate() {
 #[test]
 fn test_negative_rate() {
     // This test should auto fail due to how clap works
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-r")
@@ -105,7 +100,7 @@ fn test_negative_rate() {
 
 #[test]
 fn test_invalid_rate() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-r")
@@ -117,7 +112,7 @@ fn test_invalid_rate() {
 
 #[test]
 fn test_conflicting_temps() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("-c")
@@ -129,7 +124,7 @@ fn test_conflicting_temps() {
 
 #[test]
 fn test_invalid_default_widget_1() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("--default_widget_type")
@@ -141,7 +136,7 @@ fn test_invalid_default_widget_1() {
 
 #[test]
 fn test_invalid_default_widget_2() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("--default_widget_type")
@@ -157,7 +152,7 @@ fn test_invalid_default_widget_2() {
 
 #[test]
 fn test_missing_default_widget_type() {
-    Command::new(get_binary_location())
+    btm_command()
         .arg("-C")
         .arg("./tests/empty_config.toml")
         .arg("--default_widget_count")
@@ -172,7 +167,7 @@ fn test_missing_default_widget_type() {
 #[test]
 fn test_battery_flag() {
     if !cfg!(feature = "battery") {
-        Command::new(get_binary_location())
+        btm_command()
             .arg("--battery")
             .assert()
             .failure()
