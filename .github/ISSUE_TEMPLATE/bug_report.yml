@@ -23,7 +23,7 @@ body:
       description: >
         Give a high level description of the issue, the expected behaviour, and the observed behaviour.
         If possible, provide screenshots.
-      placeholder: >
+      placeholder: |
         Example:
         bottom is failing to output information for a mounted encrypted partition on basic mode. It should
         be able to report this information, but I'm not seeing the entry at all.
@@ -100,7 +100,7 @@ body:
         possible. Include config files or flags if relevant. If possible, provide screenshots.
 
         Remember - if maintainers cannot reproduce the issue, it will be very hard to fix!
-      placeholder: >
+      placeholder: |
         Example:
           1. Mount a LUKS encrypted partition.
           2. Run `btm --basic`
