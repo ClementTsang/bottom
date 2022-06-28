@@ -1,0 +1,116 @@
+name: Bug report
+description: Found something wrong or broken? If it hasn't already been filed/solved, report it!
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Checklist
+      options:
+        - label: >
+            I've looked through:
+              - [Troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting)
+              - [Known problems](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems)
+              - [Existing issues](https://github.com/ClementTsang/bottom/issues)
+            for similar issues.
+          required: true
+
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Describe the issue
+      description: >
+        Give a high level description of the issue, the expected behaviour, and the observed behaviour.
+        If possible, provide screenshots.
+      placeholder: >
+        Example:
+        bottom is failing to output information for a mounted encrypted partition on basic mode. It should
+        be able to report this information, but I'm not seeing the entry at all.
+
+  - type: dropdown
+    id: operating_system
+    attributes:
+      label: What operating system are you using?
+      description: >
+        Please select the operating system(s) that are experiencing the described issue.
+      multiple: true
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - "Other (please specify in description)"
+
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: What architecture are you using?
+      description: >
+        Please select the architecture(s) that are experiencing the described issue.
+        Note that systems that [are not officially supported](https://github.com/ClementTsang/bottom#support)
+        may not be resolved.
+      multiple: true
+      options:
+        - x86_64 / AMD64
+        - arm64
+        - arm32
+        - x86
+        - Other (please specify in description)
+
+  - type: textarea
+    id: terminal
+    attributes:
+      label: What terminal(s) are you running `bottom` on?
+      description: >
+        Please provide what terminal(s) you are running `bottom` on (e.g. Konsole, kitty)
+        that are experiencing the issue, as well as their version and any relevant settings.
+      placeholder: kitty 0.25.2
+
+  - type: input
+    id: version
+    validations:
+      required: true
+    attributes:
+      label: What version of `bottom` are you running?
+      description: >
+        Please provide which version of `bottom` you're running, which you can find with `btm -V`. If you are using
+        a nightly/non-release version, please also specify that here.
+      placeholder: btm 0.6.8
+
+  - type: input
+    id: install
+    validations:
+      required: true
+    attributes:
+      label: How did you install `bottom`?
+      description: >
+        Please mention how you installed `bottom`. If you manually compiled it, please also mention your _Rust version_.
+
+        **Note: if you installed from `bottom` from cargo, please ensure that you installed the right crate (https://crates.io/crates/bottom).**
+      placeholder: Installed bottom through the Arch official repos.
+
+  - type: textarea
+    id: reproduce
+    validations:
+      required: true
+    attributes:
+      label: How can we reproduce this?
+      description: >
+        Provide detailed steps on _how_ to reproduce your problem, to the best of your ability. Be as detailed as
+        possible. Include config files or flags if relevant. If possible, provide screenshots.
+
+        Remember - if maintainers cannot reproduce the issue, it will be very hard to fix!
+      placeholder: >
+        Example:
+          1. Mount a LUKS encrypted partition.
+          2. Run `btm --basic`
+          3. Observe there is no partition shown.
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Provide any additional information you think may be relevant or helpful.
+      placeholder: It works fine if I just run it normally (`btm`).

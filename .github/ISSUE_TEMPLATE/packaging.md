@@ -14,7 +14,7 @@ What is the packaging-related issue? Please be clear and concise.
 
 - If the issue is specifically about an existing package/distribution, please be aware that the maintainers of this project only
   manage the distributions of bottom on:
-  
+
   - crates.io
   - Chocolatey
   - Binary releases on GitHub
