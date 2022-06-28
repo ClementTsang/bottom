@@ -9,11 +9,9 @@ body:
       label: Checklist
       options:
         - label: >
-            I've looked through:
-              - [Troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting)
-              - [Known problems](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems)
-              - [Existing issues](https://github.com/ClementTsang/bottom/issues)
-            for similar issues.
+            I've looked through [troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting),
+            [known problems](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems), and 
+            [existing issues](https://github.com/ClementTsang/bottom/issues) for similar issues.
           required: true
 
   - type: textarea
@@ -113,4 +111,4 @@ body:
     attributes:
       label: Additional information
       description: Provide any additional information you think may be relevant or helpful.
-      placeholder: It works fine if I just run it normally (`btm`).
+      placeholder: It works fine if I just run it normally without the `--basic` flag.
