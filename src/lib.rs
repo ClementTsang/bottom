@@ -282,6 +282,7 @@ pub fn check_if_terminal() {
         eprintln!(
             "Warning: bottom is not being output to a terminal. Things might not work properly."
         );
+        eprintln!("If you're stuck, press 'q' or 'Ctrl-c' to quit the program.");
         stderr().flush().unwrap();
         thread::sleep(Duration::from_secs(1));
     }
