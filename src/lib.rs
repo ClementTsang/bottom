@@ -16,7 +16,7 @@ extern crate log;
 use std::{
     boxed::Box,
     fs,
-    io::{stdout, Write},
+    io::{stderr, stdout, Write},
     panic::PanicInfo,
     path::PathBuf,
     sync::Arc,
@@ -271,13 +271,20 @@ pub fn cleanup_terminal(
     )?;
     terminal.show_cursor()?;
 
-    // if is_debug {
-    //     let mut tmp_dir = std::env::temp_dir();
-    //     tmp_dir.push("bottom_debug.log");
-    //     println!("Your debug file is located at {:?}", tmp_dir.as_os_str());
-    // }
-
     Ok(())
+}
+
+/// Check and report to the user if the current environment is not a terminal.
+pub fn check_if_terminal() {
+    use crossterm::tty::IsTty;
+
+    if !stdout().is_tty() {
+        eprintln!(
+            "Warning: bottom is not being output to a terminal. Things might not work properly."
+        );
+        stderr().flush().unwrap();
+        thread::sleep(Duration::from_secs(1));
+    }
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
