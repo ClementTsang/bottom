@@ -16,7 +16,7 @@ extern crate log;
 use std::{
     boxed::Box,
     fs,
-    io::{stdout, Write},
+    io::{stderr, stdout, Write},
     panic::PanicInfo,
     path::PathBuf,
     sync::Arc,
@@ -278,11 +278,12 @@ pub fn cleanup_terminal(
 pub fn check_if_terminal() {
     use crossterm::tty::IsTty;
 
-    let out = stdout();
-    if !out.is_tty() {
-        println!(
+    if !stdout().is_tty() {
+        eprintln!(
             "Warning: bottom is not being output to a terminal. Things might not work properly."
         );
+        stderr().flush().unwrap();
+        thread::sleep(Duration::from_secs(1));
     }
 }
 
