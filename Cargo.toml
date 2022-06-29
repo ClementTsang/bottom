@@ -12,6 +12,16 @@ documentation = "https://clementtsang.github.io/bottom/stable"
 readme = "README.md"
 default-run = "btm"
 build = "build.rs"
+exclude = [
+    ".all-contributorsrc",
+    ".github/",
+    ".markdownlint.json",
+    "assets/",
+    "codecov.yml",
+    "deployment/",
+    "docs/",
+    "sample_configs/"
+]
 
 [[bin]]
 name = "btm"
