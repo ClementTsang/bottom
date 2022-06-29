@@ -57,6 +57,11 @@ fn main() -> Result<()> {
     let mut painter =
         canvas::Painter::init(widget_layout, &config, get_color_scheme(&matches, &config)?)?;
 
+    // Check if the current environment is in a terminal.
+    if !check_if_terminal_and_wait() {
+        return Ok(());
+    }
+
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]
     let thread_termination_lock = Arc::new(Mutex::new(false));
@@ -109,6 +114,7 @@ fn main() -> Result<()> {
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
+
     terminal.clear()?;
     terminal.hide_cursor()?;
 

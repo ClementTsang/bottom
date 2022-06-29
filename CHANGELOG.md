@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#711](https://github.com/ClementTsang/bottom/pull/711): Fix building in Rust beta 1.61 due to `as_ref()` calls
   causing type inference issues.
 
-  - [#717](https://github.com/ClementTsang/bottom/pull/717): Fix clicking on empty space in tables selecting the very last entry of a list in some cases.
+- [#717](https://github.com/ClementTsang/bottom/pull/717): Fix clicking on empty space in tables selecting the very last entry of a list in some cases.
 
 ## Changes
 
@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Features
 
 - [#676](https://github.com/ClementTsang/bottom/pull/676): Adds support for NVIDIA GPU temperature sensors.
+
+- [](): Adds a check for whether bottom is being run in a terminal.
 
 ## [0.6.8] - 2022-02-01
 

@@ -271,13 +271,32 @@ pub fn cleanup_terminal(
     )?;
     terminal.show_cursor()?;
 
-    // if is_debug {
-    //     let mut tmp_dir = std::env::temp_dir();
-    //     tmp_dir.push("bottom_debug.log");
-    //     println!("Your debug file is located at {:?}", tmp_dir.as_os_str());
-    // }
-
     Ok(())
+}
+
+/// Check and report to the user if the current environment is not a terminal. If it isn't a terminal, wait
+/// for user input and return `false` if the caller should bail. Otherwise, return `true`.
+pub fn check_if_terminal_and_wait() -> bool {
+    use crossterm::tty::IsTty;
+
+    let out = stdout();
+    if !out.is_tty() {
+        println!(
+            "Warning: bottom is not being output to a terminal. Things might not work properly."
+        );
+        println!("Press Ctrl-c or input q to exit, or any other key to continue.");
+
+        match read().unwrap() {
+            Event::Key(event) => match event.modifiers {
+                KeyModifiers::NONE => !matches!(event.code, KeyCode::Char('q')),
+                KeyModifiers::CONTROL => !matches!(event.code, KeyCode::Char('c')),
+                _ => true,
+            },
+            _ => true,
+        }
+    } else {
+        true
+    }
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
