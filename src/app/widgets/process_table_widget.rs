@@ -9,7 +9,9 @@ use crate::{
         CellContent, SortOrder, SortableState, TableComponentColumn, TableComponentHeader,
         TableComponentState, WidthBounds,
     },
-    data_conversion::{binary_byte_string, dec_bytes_per_second_string, TableData, TableRow},
+    data_conversion::{
+        binary_byte_string, dec_bytes_per_second_string, dec_bytes_per_string, TableData, TableRow,
+    },
     utils::gen_util::sort_partial_fn,
     Pid,
 };
@@ -788,10 +790,10 @@ impl ProcWidget {
                             dec_bytes_per_second_string(process.write_bytes_per_sec).into()
                         }
                         ProcWidgetColumn::TotalRead => {
-                            dec_bytes_per_second_string(process.total_read_bytes).into()
+                            dec_bytes_per_string(process.total_read_bytes).into()
                         }
                         ProcWidgetColumn::TotalWrite => {
-                            dec_bytes_per_second_string(process.total_write_bytes).into()
+                            dec_bytes_per_string(process.total_write_bytes).into()
                         }
                         ProcWidgetColumn::State => CellContent::HasAlt {
                             main: process.process_state.0.clone().into(),
