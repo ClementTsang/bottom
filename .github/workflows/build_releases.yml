@@ -135,7 +135,7 @@ jobs:
       - name: Install cross if needed
         if: matrix.info.cross == true
         run: |
-          cargo install cross --locked --version=0.2.1
+          cargo install cross --locked --version=0.2.4
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -281,7 +281,7 @@ jobs:
       - name: Install cross if needed
         if: matrix.info.cross == true
         run: |
-          cargo install cross --locked --version=0.2.1
+          cargo install cross --locked --version=0.2.4
 
       - name: Build
         uses: actions-rs/cargo@v1
