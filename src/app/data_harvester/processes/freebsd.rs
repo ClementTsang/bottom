@@ -1,39 +1,53 @@
 //! Process data collection for FreeBSD.  Uses sysinfo.
 
+use serde::{Deserialize, Deserializer};
+use std::io;
+
 use super::ProcessHarvest;
 use sysinfo::{PidExt, ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
 
 use crate::data_harvester::processes::UserTable;
 
-fn get_freebsd_process_cpu_usage(
-    pids: &[i32],
-) -> std::io::Result<std::collections::HashMap<i32, f64>> {
-    use itertools::Itertools;
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+struct PsXo {
+    #[serde(default)]
+    process_information: ProcessInformation,
+}
+
+#[derive(Deserialize, Debug, Default)]
+#[serde(rename_all = "kebab-case")]
+struct ProcessInformation {
+    process: Vec<ProcessRow>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+struct ProcessRow {
+    #[serde(deserialize_with = "pid")]
+    pid: i32,
+    #[serde(deserialize_with = "percent_cpu")]
+    percent_cpu: f64,
+}
+
+fn get_freebsd_process_cpu_usage(pids: &[i32]) -> io::Result<std::collections::HashMap<i32, f64>> {
+    if pids.is_empty() {
+        return Ok(std::collections::HashMap::new());
+    }
+
     let output = std::process::Command::new("ps")
-        .args(&["-o", "pid,pcpu=", "-p"])
-        .arg(
-            // Has to look like this since otherwise, it you hit a `unstable_name_collisions` warning.
-            Itertools::intersperse(pids.iter().map(i32::to_string), ",".to_string())
-                .collect::<String>(),
-        )
+        .args(&["--libxo", "json", "-o", "pid,pcpu", "-p"])
+        .args(pids.iter().map(i32::to_string))
         .output()?;
-    let mut result = std::collections::HashMap::new();
-    String::from_utf8_lossy(&output.stdout)
-        .split_whitespace()
-        .chunks(2)
-        .into_iter()
-        .for_each(|chunk| {
-            let chunk: Vec<&str> = chunk.collect();
-            if chunk.len() != 2 {
-                panic!("Unexpected `ps` output");
-            }
-            let pid = chunk[0].parse();
-            let usage = chunk[1].parse();
-            if let (Ok(pid), Ok(usage)) = (pid, usage) {
-                result.insert(pid, usage);
-            }
-        });
-    Ok(result)
+    serde_json::from_slice(&output.stdout)
+        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
+        .map(|xo: PsXo| {
+            xo.process_information
+                .process
+                .into_iter()
+                .map(|row| (row.pid, row.percent_cpu))
+                .collect()
+        })
 }
 
 pub fn get_process_data(
@@ -146,4 +160,20 @@ fn convert_process_status_to_char(status: ProcessStatus) -> char {
         ProcessStatus::Zombie => 'Z',
         _ => '?',
     }
+}
+
+fn pid<'de, D>(deserializer: D) -> Result<i32, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    s.parse().map_err(serde::de::Error::custom)
+}
+
+fn percent_cpu<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    s.parse().map_err(serde::de::Error::custom)
 }
