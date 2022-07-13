@@ -1,5 +1,7 @@
 //! Data collection for memory via heim.
 
+use sysinfo::{System, SystemExt};
+
 #[derive(Debug, Clone, Default)]
 pub struct MemHarvest {
     pub mem_total_in_kib: u64,
@@ -113,6 +115,12 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
                 mem_total_in_kib - memory.available().get::<kibibyte>(),
             )
         }
+        #[cfg(target_os = "freebsd")]
+        {
+            let mut s = System::new();
+            s.refresh_memory();
+            (s.total_memory(), s.used_memory())
+        }
     };
 
     Ok(Some(MemHarvest {
@@ -127,7 +135,10 @@ pub async fn get_ram_data() -> crate::utils::error::Result<Option<MemHarvest>> {
 }
 
 pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> {
+    #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]
     let memory = heim::memory::swap().await?;
+    #[cfg(target_os = "freebsd")]
+    let mut memory = System::new();
 
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "linux")]
@@ -146,6 +157,11 @@ pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> 
                 memory.total().get::<kibibyte>(),
                 memory.used().get::<kibibyte>(),
             )
+        }
+        #[cfg(target_os = "freebsd")]
+        {
+            memory.refresh_memory();
+            (memory.total_swap(), memory.used_swap())
         }
     };
 

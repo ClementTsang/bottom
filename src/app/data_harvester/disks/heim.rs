@@ -10,23 +10,6 @@ cfg_if::cfg_if! {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct DiskHarvest {
-    pub name: String,
-    pub mount_point: String,
-    pub free_space: Option<u64>,
-    pub used_space: Option<u64>,
-    pub total_space: Option<u64>,
-}
-
-#[derive(Clone, Debug)]
-pub struct IoData {
-    pub read_bytes: u64,
-    pub write_bytes: u64,
-}
-
-pub type IoHarvest = std::collections::HashMap<String, Option<IoData>>;
-
 pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IoHarvest>> {
     if !actually_get {
         return Ok(None);

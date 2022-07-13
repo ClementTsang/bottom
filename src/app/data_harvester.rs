@@ -304,7 +304,7 @@ impl DataCollector {
         }
 
         let network_data_fut = {
-            #[cfg(target_os = "windows")]
+            #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             {
                 network::get_network_data(
                     &self.sys,
@@ -316,7 +316,7 @@ impl DataCollector {
                     &self.filters.net_filter,
                 )
             }
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(not(any(target_os = "windows", target_os = "freebsd")))]
             {
                 network::get_network_data(
                     self.last_collection_time,

@@ -13,6 +13,9 @@ cfg_if::cfg_if! {
     } else if #[cfg(target_os = "windows")] {
         pub mod windows;
         pub use self::windows::*;
+    } else if #[cfg(target_os = "freebsd")] {
+        pub mod freebsd;
+        pub use self::freebsd::*;
     }
 }
 
