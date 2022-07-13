@@ -1,39 +1,84 @@
-use super::{DiskHarvest, IoData, IoHarvest};
+use serde::Deserialize;
+use std::io;
+
+use super::{DiskHarvest, IoHarvest};
 use crate::app::Filter;
-use sysinfo::{DiskExt, SystemExt};
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+struct DfXo {
+    #[serde(default)]
+    storage_system_information: StorageSystemInformation,
+}
+
+#[derive(Deserialize, Debug, Default)]
+#[serde(rename_all = "kebab-case")]
+struct StorageSystemInformation {
+    filesystem: Vec<FileSystem>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+struct FileSystem {
+    name: String,
+    total_blocks: u64,
+    used_blocks: u64,
+    available_blocks: u64,
+    mounted_on: String,
+}
 
 pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IoHarvest>> {
     if !actually_get {
         return Ok(None);
     }
 
-    // sysinfo doesn't make this info available
-    Ok(None)
+    let io_harvest = get_disk_info().map(|df| {
+        df.storage_system_information
+            .filesystem
+            .into_iter()
+            .map(|disk| (disk.name, None))
+            .collect()
+    })?;
+    Ok(Some(io_harvest))
 }
 
 pub async fn get_disk_usage(
-    sys: &sysinfo::System, actually_get: bool, disk_filter: &Option<Filter>,
-    mount_filter: &Option<Filter>,
+    actually_get: bool, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     if !actually_get {
         return Ok(None);
     }
 
-    let mut vec_disks: Vec<DiskHarvest> = Vec::new();
-    for disk in sys.disks() {
-        // Name is expected to be device name
-        let name = disk.name().to_string_lossy().into();
-        let mount_point = disk.mount_point().display().to_string();
+    let mut vec_disks: Vec<DiskHarvest> = get_disk_info().map(|df: DfXo| {
+        df.storage_system_information
+            .filesystem
+            .into_iter()
+            .map(|disk| DiskHarvest {
+                free_space: Some(disk.available_blocks * 1024),
+                used_space: Some(disk.used_blocks * 1024),
+                total_space: Some(disk.total_blocks * 1024),
+                mount_point: disk.mounted_on,
+                name: disk.name,
+            })
+            .collect()
+    })?;
+    //.expect("FIXME");
 
-        // TODO implement filters
-        vec_disks.push(DiskHarvest {
-            free_space: Some(disk.available_space()),
-            used_space: Some(disk.total_space().saturating_sub(disk.available_space())),
-            total_space: Some(disk.total_space()),
-            mount_point,
-            name,
-        });
-    }
+    // let mut vec_disks: Vec<DiskHarvest> = Vec::new();
+    // for disk in sys.disks() {
+    //     // Name is expected to be device name
+    //     let name = disk.name().to_string_lossy().into();
+    //     let mount_point = disk.mount_point().display().to_string();
+
+    //     // TODO implement filters
+    //     vec_disks.push(DiskHarvest {
+    //         free_space: Some(disk.available_space()),
+    //         used_space: Some(disk.total_space().saturating_sub(disk.available_space())),
+    //         total_space: Some(disk.total_space()),
+    //         mount_point,
+    //         name,
+    //     });
+    // }
 
     // let partitions_stream = heim::disk::partitions_physical().await?;
     // futures::pin_mut!(partitions_stream);
@@ -119,4 +164,11 @@ pub async fn get_disk_usage(
     vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
 
     Ok(Some(vec_disks))
+}
+
+fn get_disk_info() -> io::Result<DfXo> {
+    let output = std::process::Command::new("df")
+        .args(&["--libxo", "json", "-k"])
+        .output()?;
+    serde_json::from_slice(&output.stdout).map_err(|err| io::Error::new(io::ErrorKind::Other, err))
 }
