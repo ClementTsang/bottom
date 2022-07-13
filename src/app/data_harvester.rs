@@ -165,6 +165,11 @@ impl DataCollector {
             if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_cpu {
                 self.sys.refresh_cpu();
             }
+
+            // Refresh disk list once...
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
+                self.sys.refresh_disks_list();
+            }
         }
 
         #[cfg(feature = "battery")]
@@ -231,6 +236,10 @@ impl DataCollector {
 
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
                 self.sys.refresh_networks();
+            }
+
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
+                self.sys.refresh_disks();
             }
         }
 
@@ -351,11 +360,26 @@ impl DataCollector {
             }
         };
         let mem_data_fut = memory::get_mem_data(self.widgets_to_harvest.use_mem);
-        let disk_data_fut = disks::get_disk_usage(
-            self.widgets_to_harvest.use_disk,
-            &self.filters.disk_filter,
-            &self.filters.mount_filter,
-        );
+        let disk_data_fut = {
+            #[cfg(not(target_os = "freebsd"))]
+            {
+                disks::get_disk_usage(
+                    self.widgets_to_harvest.use_disk,
+                    &self.filters.disk_filter,
+                    &self.filters.mount_filter,
+                )
+            }
+
+            #[cfg(target_os = "freebsd")]
+            {
+                disks::get_disk_usage(
+                    &self.sys,
+                    self.widgets_to_harvest.use_disk,
+                    &self.filters.disk_filter,
+                    &self.filters.mount_filter,
+                )
+            }
+        };
         let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
         let temp_data_fut = {
             #[cfg(not(target_os = "linux"))]

@@ -1,46 +1,40 @@
 use super::{DiskHarvest, IoData, IoHarvest};
 use crate::app::Filter;
+use sysinfo::{DiskExt, SystemExt};
 
 pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IoHarvest>> {
     if !actually_get {
         return Ok(None);
     }
 
-    // use futures::StreamExt;
-
-    let mut io_hash: std::collections::HashMap<String, Option<IoData>> =
-        std::collections::HashMap::new();
-
-    // let counter_stream = heim::disk::io_counters().await?;
-    // futures::pin_mut!(counter_stream);
-
-    // while let Some(io) = counter_stream.next().await {
-    //     if let Ok(io) = io {
-    //         let mount_point = io.device_name().to_str().unwrap_or("Name Unavailable");
-
-    //         io_hash.insert(
-    //             mount_point.to_string(),
-    //             Some(IoData {
-    //                 read_bytes: io.read_bytes().get::<heim::units::information::byte>(),
-    //                 write_bytes: io.write_bytes().get::<heim::units::information::byte>(),
-    //             }),
-    //         );
-    //     }
-    // }
-
-    Ok(Some(io_hash))
+    // sysinfo doesn't make this info available
+    Ok(None)
 }
 
 pub async fn get_disk_usage(
-    actually_get: bool, disk_filter: &Option<Filter>, mount_filter: &Option<Filter>,
+    sys: &sysinfo::System, actually_get: bool, disk_filter: &Option<Filter>,
+    mount_filter: &Option<Filter>,
 ) -> crate::utils::error::Result<Option<Vec<DiskHarvest>>> {
     if !actually_get {
         return Ok(None);
     }
 
-    // use futures::StreamExt;
-
     let mut vec_disks: Vec<DiskHarvest> = Vec::new();
+    for disk in sys.disks() {
+        // Name is expected to be device name
+        let name = disk.name().to_string_lossy().into();
+        let mount_point = disk.mount_point().display().to_string();
+
+        // TODO implement filters
+        vec_disks.push(DiskHarvest {
+            free_space: Some(disk.available_space()),
+            used_space: Some(disk.total_space().saturating_sub(disk.available_space())),
+            total_space: Some(disk.total_space()),
+            mount_point,
+            name,
+        });
+    }
+
     // let partitions_stream = heim::disk::partitions_physical().await?;
     // futures::pin_mut!(partitions_stream);
 
@@ -122,7 +116,7 @@ pub async fn get_disk_usage(
     //     }
     // }
 
-    // vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
+    vec_disks.sort_by(|a, b| a.name.cmp(&b.name));
 
     Ok(Some(vec_disks))
 }
