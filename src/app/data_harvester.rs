@@ -161,6 +161,10 @@ impl DataCollector {
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
                 self.sys.refresh_networks_list();
             }
+
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_cpu {
+                self.sys.refresh_cpu();
+            }
         }
 
         #[cfg(feature = "battery")]
@@ -215,8 +219,10 @@ impl DataCollector {
     pub async fn update_data(&mut self) {
         #[cfg(not(target_os = "linux"))]
         {
-            if self.widgets_to_harvest.use_proc {
+            if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
                 self.sys.refresh_cpu();
+            }
+            if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
             if self.widgets_to_harvest.use_temp {
@@ -232,14 +238,30 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            if let Ok(cpu_data) = cpu::get_cpu_data_list(
-                self.show_average_cpu,
-                &mut self.previous_cpu_times,
-                &mut self.previous_average_cpu_time,
-            )
-            .await
+            #[cfg(not(target_os = "freebsd"))]
             {
-                self.data.cpu = Some(cpu_data);
+                if let Ok(cpu_data) = cpu::get_cpu_data_list(
+                    self.show_average_cpu,
+                    &mut self.previous_cpu_times,
+                    &mut self.previous_average_cpu_time,
+                )
+                .await
+                {
+                    self.data.cpu = Some(cpu_data);
+                }
+            }
+            #[cfg(target_os = "freebsd")]
+            {
+                if let Ok(cpu_data) = cpu::get_cpu_data_list(
+                    &self.sys,
+                    self.show_average_cpu,
+                    &mut self.previous_cpu_times,
+                    &mut self.previous_average_cpu_time,
+                )
+                .await
+                {
+                    self.data.cpu = Some(cpu_data);
+                }
             }
 
             #[cfg(target_family = "unix")]
