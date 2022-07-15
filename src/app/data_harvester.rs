@@ -428,3 +428,16 @@ impl DataCollector {
         self.last_collection_time = current_instant;
     }
 }
+
+#[cfg(target_os = "freebsd")]
+fn deserialize_xo<T>(key: &str, data: &[u8]) -> Result<T, std::io::Error>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let mut value: serde_json::Value = serde_json::from_slice(data)?;
+    value
+        .as_object_mut()
+        .and_then(|map| map.remove(key))
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "key not found"))
+        .and_then(|val| serde_json::from_value(val).map_err(|err| err.into()))
+}

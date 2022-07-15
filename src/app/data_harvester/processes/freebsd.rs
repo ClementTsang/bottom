@@ -6,14 +6,8 @@ use std::io;
 use super::ProcessHarvest;
 use sysinfo::System;
 
+use crate::data_harvester::deserialize_xo;
 use crate::data_harvester::processes::UserTable;
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "kebab-case")]
-struct PsXo {
-    #[serde(default)]
-    process_information: ProcessInformation,
-}
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -51,15 +45,13 @@ fn get_freebsd_process_cpu_usage(pids: &[i32]) -> io::Result<std::collections::H
         .args(&["--libxo", "json", "-o", "pid,pcpu", "-p"])
         .args(pids.iter().map(i32::to_string))
         .output()?;
-    serde_json::from_slice(&output.stdout)
-        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))
-        .map(|xo: PsXo| {
-            xo.process_information
-                .process
-                .into_iter()
-                .map(|row| (row.pid, row.percent_cpu))
-                .collect()
-        })
+    deserialize_xo("process-information", &output.stdout).map(|process_info: ProcessInformation| {
+        process_info
+            .process
+            .into_iter()
+            .map(|row| (row.pid, row.percent_cpu))
+            .collect()
+    })
 }
 
 fn pid<'de, D>(deserializer: D) -> Result<i32, D::Error>

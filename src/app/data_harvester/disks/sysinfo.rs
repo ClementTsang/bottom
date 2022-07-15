@@ -3,13 +3,7 @@ use std::io;
 
 use super::{DiskHarvest, IoHarvest};
 use crate::app::Filter;
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "kebab-case")]
-struct DfXo {
-    #[serde(default)]
-    storage_system_information: StorageSystemInformation,
-}
+use crate::data_harvester::deserialize_xo;
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -32,8 +26,8 @@ pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Opt
         return Ok(None);
     }
 
-    let io_harvest = get_disk_info().map(|df| {
-        df.storage_system_information
+    let io_harvest = get_disk_info().map(|storage_system_information| {
+        storage_system_information
             .filesystem
             .into_iter()
             .map(|disk| (disk.name, None))
@@ -49,8 +43,8 @@ pub async fn get_disk_usage(
         return Ok(None);
     }
 
-    let mut vec_disks: Vec<DiskHarvest> = get_disk_info().map(|df: DfXo| {
-        df.storage_system_information
+    let mut vec_disks: Vec<DiskHarvest> = get_disk_info().map(|storage_system_information| {
+        storage_system_information
             .filesystem
             .into_iter()
             .map(|disk| DiskHarvest {
@@ -166,9 +160,9 @@ pub async fn get_disk_usage(
     Ok(Some(vec_disks))
 }
 
-fn get_disk_info() -> io::Result<DfXo> {
+fn get_disk_info() -> io::Result<StorageSystemInformation> {
     let output = std::process::Command::new("df")
         .args(&["--libxo", "json", "-k"])
         .output()?;
-    serde_json::from_slice(&output.stdout).map_err(|err| io::Error::new(io::ErrorKind::Other, err))
+    deserialize_xo("storage-system-information", &output.stdout)
 }
