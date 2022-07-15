@@ -9,12 +9,14 @@ cfg_if::cfg_if! {
         pub use self::linux::*;
     } else if #[cfg(target_os = "macos")] {
         pub mod macos;
+        mod macos_freebsd;
         pub use self::macos::*;
     } else if #[cfg(target_os = "windows")] {
         pub mod windows;
         pub use self::windows::*;
     } else if #[cfg(target_os = "freebsd")] {
         pub mod freebsd;
+        mod macos_freebsd;
         pub use self::freebsd::*;
     }
 }
