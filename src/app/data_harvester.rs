@@ -440,6 +440,7 @@ impl DataCollector {
 }
 
 #[cfg(target_os = "freebsd")]
+/// Deserialize [libxo](https://www.freebsd.org/cgi/man.cgi?query=libxo&apropos=0&sektion=0&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html) JSON data
 fn deserialize_xo<T>(key: &str, data: &[u8]) -> Result<T, std::io::Error>
 where
     T: serde::de::DeserializeOwned,

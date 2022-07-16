@@ -1,3 +1,5 @@
+//! Shared process data harvesting code from macOS and FreeBSD via sysinfo.
+
 use std::collections::HashMap;
 use std::io;
 

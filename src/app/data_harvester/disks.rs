@@ -1,6 +1,7 @@
 //! Data collection for disks (IO, usage, space, etc.).
 //!
-//! For Linux, macOS, and Windows, this is handled by heim.
+//! For Linux, macOS, and Windows, this is handled by heim. For FreeBSD there is a custom
+//! implementation.
 
 cfg_if::cfg_if! {
     if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {

@@ -1,8 +1,8 @@
 //! Data collection for CPU usage and load average.
 //!
-//! For CPU usage, Linux, macOS, and Windows are handled by Heim.
+//! For CPU usage, Linux, macOS, and Windows are handled by Heim, FreeBSD by sysinfo.
 //!
-//! For load average, macOS and Linux are supported through Heim.
+//! For load average, macOS and Linux are supported through Heim, FreeBSD by sysinfo.
 
 cfg_if::cfg_if! {
     if #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))] {

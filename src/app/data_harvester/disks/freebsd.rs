@@ -1,3 +1,5 @@
+//! Disk stats for FreeBSD.
+
 use serde::Deserialize;
 use std::io;
 

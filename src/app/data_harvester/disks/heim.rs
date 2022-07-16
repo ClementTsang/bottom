@@ -1,3 +1,6 @@
+//! Disk stats through heim.
+//! Supports macOS, Linux, and Windows.
+
 use crate::app::Filter;
 use crate::data_harvester::disks::{DiskHarvest, IoData, IoHarvest};
 
