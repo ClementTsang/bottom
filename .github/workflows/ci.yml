@@ -86,7 +86,7 @@ jobs:
 
       - name: Build tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.1
+        uses: ClementTsang/cargo-action@v0.0.2
         with:
           command: test
           args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
@@ -97,7 +97,7 @@ jobs:
 
       - name: Run tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.1
+        uses: ClementTsang/cargo-action@v0.0.2
         with:
           command: test
           args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
@@ -108,7 +108,7 @@ jobs:
 
       - name: Run clippy
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.1
+        uses: ClementTsang/cargo-action@v0.0.2
         with:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
@@ -246,7 +246,7 @@ jobs:
 
       - name: Check
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.1
+        uses: ClementTsang/cargo-action@v0.0.2
         with:
           command: check
           args: --all-targets --verbose --target=${{ matrix.info.target }} --locked

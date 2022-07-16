@@ -133,7 +133,7 @@ jobs:
           key: ${{ matrix.info.target }}
 
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.1
+        uses: ClementTsang/cargo-action@v0.0.2
         with:
           command: build
           args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
@@ -275,7 +275,7 @@ jobs:
         uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
 
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.1
+        uses: ClementTsang/cargo-action@v0.0.2
         with:
           command: build
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
