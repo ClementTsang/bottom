@@ -7,8 +7,8 @@ cfg_if::cfg_if! {
         pub mod heim;
         pub use self::heim::*;
     } else if #[cfg(target_os = "freebsd")] {
-        pub mod sysinfo;
-        pub use self::sysinfo::*;
+        pub mod freebsd;
+        pub use self::freebsd::*;
     }
 }
 
