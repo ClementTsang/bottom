@@ -132,17 +132,13 @@ jobs:
         with:
           key: ${{ matrix.info.target }}
 
-      - name: Install cross if needed
-        if: matrix.info.cross == true
-        run: |
-          cargo install cross --locked --version=0.2.4
-
       - name: Build
-        uses: actions-rs/cargo@v1
+        uses: ClementTsang/cargo-action@v0.0.1
         with:
           command: build
           args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
           use-cross: ${{ matrix.info.cross }}
+          cross-version: 0.2.4
 
       - name: Bundle release and completion (Windows)
         if: matrix.info.os == 'windows-2019'
@@ -278,17 +274,13 @@ jobs:
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
 
-      - name: Install cross if needed
-        if: matrix.info.cross == true
-        run: |
-          cargo install cross --locked --version=0.2.4
-
       - name: Build
-        uses: actions-rs/cargo@v1
+        uses: ClementTsang/cargo-action@v0.0.1
         with:
           command: build
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross }}
+          cross-version: 0.2.4
 
       - name: Zip manpage
         run: |
