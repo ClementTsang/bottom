@@ -233,13 +233,14 @@ impl DataCollector {
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
-
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
                 self.sys.refresh_networks();
             }
-
             if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
                 self.sys.refresh_disks();
+            }
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_mem {
+                self.sys.refresh_memory();
             }
         }
 
@@ -359,7 +360,16 @@ impl DataCollector {
                 )
             }
         };
-        let mem_data_fut = memory::get_mem_data(self.widgets_to_harvest.use_mem);
+        let mem_data_fut = {
+            #[cfg(not(target_os = "freebsd"))]
+            {
+                memory::get_mem_data(self.widgets_to_harvest.use_mem)
+            }
+            #[cfg(target_os = "freebsd")]
+            {
+                memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
+            }
+        };
         let disk_data_fut = disks::get_disk_usage(
             self.widgets_to_harvest.use_disk,
             &self.filters.disk_filter,

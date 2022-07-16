@@ -18,6 +18,7 @@ cfg_if::cfg_if! {
     }
 }
 
+use crate::data_harvester::cpu::{CpuData, CpuHarvest, PastCpuTotal, PastCpuWork};
 use futures::StreamExt;
 use std::collections::VecDeque;
 

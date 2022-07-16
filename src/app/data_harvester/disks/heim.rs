@@ -1,4 +1,5 @@
 use crate::app::Filter;
+use crate::data_harvester::disks::{DiskHarvest, IoData, IoHarvest};
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
