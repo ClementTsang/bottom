@@ -23,6 +23,8 @@
 
 - [Features](#features)
 - [Support](#support)
+  - [Official](#official)
+  - [Unofficial](#unofficial)
 - [Installation](#installation)
   - [Cargo](#cargo)
   - [Arch Linux](#arch-linux)
@@ -90,6 +92,8 @@ You can find more details in [the documentation](https://clementtsang.github.io/
 
 ## Support
 
+### Official
+
 bottom _officially_ supports the following operating systems and corresponding architectures:
 
 - macOS (`x86_64`)
@@ -99,7 +103,21 @@ bottom _officially_ supports the following operating systems and corresponding a
 These platforms are tested to work for the most part and issues on these platforms will be fixed if possible.
 Furthermore, binaries are expected to be built and tested using the most recent version of stable Rust.
 
-For more details on known problems and unsupported platforms, feel free to check out [the documentation page on support](https://clementtsang.github.io/bottom/nightly/support/official/).
+For more details on supported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/official/).
+
+### Unofficial
+
+bottom may work on a number of platforms that aren't officially supported - these platforms may not be properly tested,
+or may receive more limited support, or missing features/problems that may not be fixed. Some of these may eventually
+be officially supported (e.g., FreeBSD, macOS ARM).
+
+A non-comprehensive list of some currently unofficially supported platforms that may compile/work include:
+
+- FreeBSD on `x86_64`
+- Linux on `armv6`, `armv7`, `powerpc64le`, `riscv64gc`
+- macOS on `aarch64`
+
+For more details on unsupported platforms and known problems, check out [the documentation](https://clementtsang.github.io/bottom/nightly/support/unofficial/).
 
 ## Installation
 

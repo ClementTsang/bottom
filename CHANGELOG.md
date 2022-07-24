@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#760](https://github.com/ClementTsang/bottom/pull/760): Adds a check for whether bottom is being run in a terminal.
 
+- [#766](https://github.com/ClementTsang/bottom/pull/766): Adds FreeBSD support.
+
 ## [0.6.8] - 2022-02-01
 
 ## Bug Fixes
