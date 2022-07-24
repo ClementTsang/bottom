@@ -18,18 +18,7 @@ cfg_if::cfg_if! {
     }
 }
 
-#[derive(Default, Debug, Clone)]
-pub struct CpuData {
-    pub cpu_prefix: String,
-    pub cpu_count: Option<usize>,
-    pub cpu_usage: f64,
-}
-
-pub type CpuHarvest = Vec<CpuData>;
-
-pub type PastCpuWork = f64;
-pub type PastCpuTotal = f64;
-
+use crate::data_harvester::cpu::{CpuData, CpuHarvest, PastCpuTotal, PastCpuWork};
 use futures::StreamExt;
 use std::collections::VecDeque;
 

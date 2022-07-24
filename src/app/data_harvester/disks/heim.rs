@@ -1,4 +1,8 @@
+//! Disk stats through heim.
+//! Supports macOS, Linux, and Windows.
+
 use crate::app::Filter;
+use crate::data_harvester::disks::{DiskHarvest, IoData, IoHarvest};
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
@@ -9,23 +13,6 @@ cfg_if::cfg_if! {
         pub use windows_macos::*;
     }
 }
-
-#[derive(Debug, Clone, Default)]
-pub struct DiskHarvest {
-    pub name: String,
-    pub mount_point: String,
-    pub free_space: Option<u64>,
-    pub used_space: Option<u64>,
-    pub total_space: Option<u64>,
-}
-
-#[derive(Clone, Debug)]
-pub struct IoData {
-    pub read_bytes: u64,
-    pub write_bytes: u64,
-}
-
-pub type IoHarvest = std::collections::HashMap<String, Option<IoData>>;
 
 pub async fn get_io_usage(actually_get: bool) -> crate::utils::error::Result<Option<IoHarvest>> {
     if !actually_get {

@@ -49,6 +49,7 @@ impl From<std::io::Error> for BottomError {
     }
 }
 
+#[cfg(not(target_os = "freebsd"))]
 impl From<heim::Error> for BottomError {
     fn from(err: heim::Error) -> Self {
         BottomError::InvalidHeim(err.to_string())

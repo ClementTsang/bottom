@@ -239,6 +239,45 @@ impl Painter {
                         "31: USR2",
                     ];
                 }
+                #[cfg(target_os = "freebsd")]
+                {
+                    signal_text = vec![
+                        "0: Cancel",
+                        "1: HUP",
+                        "2: INT",
+                        "3: QUIT",
+                        "4: ILL",
+                        "5: TRAP",
+                        "6: ABRT",
+                        "7: EMT",
+                        "8: FPE",
+                        "9: KILL",
+                        "10: BUS",
+                        "11: SEGV",
+                        "12: SYS",
+                        "13: PIPE",
+                        "14: ALRM",
+                        "15: TERM",
+                        "16: URG",
+                        "17: STOP",
+                        "18: TSTP",
+                        "19: CONT",
+                        "20: CHLD",
+                        "21: TTIN",
+                        "22: TTOU",
+                        "23: IO",
+                        "24: XCPU",
+                        "25: XFSZ",
+                        "26: VTALRM",
+                        "27: PROF",
+                        "28: WINCH",
+                        "29: INFO",
+                        "30: USR1",
+                        "31: USR2",
+                        "32: THR",
+                        "33: LIBRT",
+                    ];
+                }
 
                 let button_rect = Layout::default()
                     .direction(Direction::Horizontal)

@@ -161,6 +161,15 @@ impl DataCollector {
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
                 self.sys.refresh_networks_list();
             }
+
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_cpu {
+                self.sys.refresh_cpu();
+            }
+
+            // Refresh disk list once...
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
+                self.sys.refresh_disks_list();
+            }
         }
 
         #[cfg(feature = "battery")]
@@ -215,16 +224,23 @@ impl DataCollector {
     pub async fn update_data(&mut self) {
         #[cfg(not(target_os = "linux"))]
         {
-            if self.widgets_to_harvest.use_proc {
+            if self.widgets_to_harvest.use_proc || self.widgets_to_harvest.use_cpu {
                 self.sys.refresh_cpu();
+            }
+            if self.widgets_to_harvest.use_proc {
                 self.sys.refresh_processes();
             }
             if self.widgets_to_harvest.use_temp {
                 self.sys.refresh_components();
             }
-
             if cfg!(target_os = "windows") && self.widgets_to_harvest.use_net {
                 self.sys.refresh_networks();
+            }
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_disk {
+                self.sys.refresh_disks();
+            }
+            if cfg!(target_os = "freebsd") && self.widgets_to_harvest.use_mem {
+                self.sys.refresh_memory();
             }
         }
 
@@ -232,14 +248,30 @@ impl DataCollector {
 
         // CPU
         if self.widgets_to_harvest.use_cpu {
-            if let Ok(cpu_data) = cpu::get_cpu_data_list(
-                self.show_average_cpu,
-                &mut self.previous_cpu_times,
-                &mut self.previous_average_cpu_time,
-            )
-            .await
+            #[cfg(not(target_os = "freebsd"))]
             {
-                self.data.cpu = Some(cpu_data);
+                if let Ok(cpu_data) = cpu::get_cpu_data_list(
+                    self.show_average_cpu,
+                    &mut self.previous_cpu_times,
+                    &mut self.previous_average_cpu_time,
+                )
+                .await
+                {
+                    self.data.cpu = Some(cpu_data);
+                }
+            }
+            #[cfg(target_os = "freebsd")]
+            {
+                if let Ok(cpu_data) = cpu::get_cpu_data_list(
+                    &self.sys,
+                    self.show_average_cpu,
+                    &mut self.previous_cpu_times,
+                    &mut self.previous_average_cpu_time,
+                )
+                .await
+                {
+                    self.data.cpu = Some(cpu_data);
+                }
             }
 
             #[cfg(target_family = "unix")]
@@ -304,7 +336,7 @@ impl DataCollector {
         }
 
         let network_data_fut = {
-            #[cfg(target_os = "windows")]
+            #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             {
                 network::get_network_data(
                     &self.sys,
@@ -316,7 +348,7 @@ impl DataCollector {
                     &self.filters.net_filter,
                 )
             }
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(not(any(target_os = "windows", target_os = "freebsd")))]
             {
                 network::get_network_data(
                     self.last_collection_time,
@@ -328,7 +360,16 @@ impl DataCollector {
                 )
             }
         };
-        let mem_data_fut = memory::get_mem_data(self.widgets_to_harvest.use_mem);
+        let mem_data_fut = {
+            #[cfg(not(target_os = "freebsd"))]
+            {
+                memory::get_mem_data(self.widgets_to_harvest.use_mem)
+            }
+            #[cfg(target_os = "freebsd")]
+            {
+                memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
+            }
+        };
         let disk_data_fut = disks::get_disk_usage(
             self.widgets_to_harvest.use_disk,
             &self.filters.disk_filter,
@@ -396,4 +437,18 @@ impl DataCollector {
         self.data.last_collection_time = current_instant;
         self.last_collection_time = current_instant;
     }
+}
+
+#[cfg(target_os = "freebsd")]
+/// Deserialize [libxo](https://www.freebsd.org/cgi/man.cgi?query=libxo&apropos=0&sektion=0&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html) JSON data
+fn deserialize_xo<T>(key: &str, data: &[u8]) -> Result<T, std::io::Error>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let mut value: serde_json::Value = serde_json::from_slice(data)?;
+    value
+        .as_object_mut()
+        .and_then(|map| map.remove(key))
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "key not found"))
+        .and_then(|val| serde_json::from_value(val).map_err(|err| err.into()))
 }

@@ -158,6 +158,9 @@ const MAX_SIGNAL: usize = 1;
 const MAX_SIGNAL: usize = 64;
 #[cfg(target_os = "macos")]
 const MAX_SIGNAL: usize = 31;
+// https://www.freebsd.org/cgi/man.cgi?query=signal&apropos=0&sektion=3&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html
+#[cfg(target_os = "freebsd")]
+const MAX_SIGNAL: usize = 33;
 
 impl App {
     pub fn reset(&mut self) {
