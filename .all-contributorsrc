@@ -244,6 +244,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "wezm",
+      "name": "Wesley Moore",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21787?v=4",
+      "profile": "https://www.wezm.net/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
