@@ -9,6 +9,7 @@ Unofficially supported platforms known to compile/work:
 - macOS on AArch64 (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml))
 - Linux on PowerPC 64 LE (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml))
 - Linux on an RISC-V (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/ci.yml), tested to run on an [Allwinner D1 Nezha](https://github.com/ClementTsang/bottom/issues/564))
+- FreeBSD
 
 ## Known problems
 

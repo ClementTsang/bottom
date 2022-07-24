@@ -16,13 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
-- [#690](https://github.com/ClementTsang/bottom/pull/690): Adds some colour to `-h`/`--help` as part of updating to clap 3.0.
+- [#690](https://github.com/ClementTsang/bottom/pull/690): Add some colour to `-h`/`--help` as part of updating to clap 3.0.
 
 ## Features
 
-- [#676](https://github.com/ClementTsang/bottom/pull/676): Adds support for NVIDIA GPU temperature sensors.
+- [#676](https://github.com/ClementTsang/bottom/pull/676): Add support for NVIDIA GPU temperature sensors.
 
-- [#760](https://github.com/ClementTsang/bottom/pull/760): Adds a check for whether bottom is being run in a terminal.
+- [#760](https://github.com/ClementTsang/bottom/pull/760): Add a check for whether bottom is being run in a terminal.
+
+- [#766](https://github.com/ClementTsang/bottom/pull/766): Add FreeBSD support.
 
 ## [0.6.8] - 2022-02-01
 
@@ -59,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Bug Fixes
 
 - [#600](https://github.com/ClementTsang/bottom/pull/600): Address RUSTSEC-2020-0071
-- [#627](https://github.com/ClementTsang/bottom/pull/627): Fixes `process_command` breaking process widget sorting.
+- [#627](https://github.com/ClementTsang/bottom/pull/627): Fix `process_command` breaking process widget sorting.
 
 ## Internal Changes
 
@@ -90,9 +92,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#536](https://github.com/ClementTsang/bottom/pull/536): Prevent tests from creating a config file.
 
-- [#542](https://github.com/ClementTsang/bottom/pull/542): Fixes missing config options in the default generated config file.
+- [#542](https://github.com/ClementTsang/bottom/pull/542): Fix missing config options in the default generated config file.
 
-- [#545](https://github.com/ClementTsang/bottom/pull/545): Fixes inaccurate memory usage/totals in macOS and Linux, switch unit to binary prefix.
+- [#545](https://github.com/ClementTsang/bottom/pull/545): Fix inaccurate memory usage/totals in macOS and Linux, switch unit to binary prefix.
 
 ## [0.6.2] - 2021-06-26
 
@@ -102,9 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
-- [#504](https://github.com/ClementTsang/bottom/pull/504): Fixes two bugs causing the battery widget colours and mouse events to be broken.
+- [#504](https://github.com/ClementTsang/bottom/pull/504): Fix two bugs causing the battery widget colours and mouse events to be broken.
 
-- [#525](https://github.com/ClementTsang/bottom/pull/525): Fixes Windows process CPU usage not being divided by the number of cores.
+- [#525](https://github.com/ClementTsang/bottom/pull/525): Fix Windows process CPU usage not being divided by the number of cores.
 
 ## Internal Changes
 
@@ -120,31 +122,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Features
 
-- [#263](https://github.com/ClementTsang/bottom/pull/263): Added the option for fine-grained kill signals on Unix-like systems.
+- [#263](https://github.com/ClementTsang/bottom/pull/263): Add the option for fine-grained kill signals on Unix-like systems.
 
-- [#333](https://github.com/ClementTsang/bottom/pull/333): Added an "out of" indicator that can be enabled using `--show_table_scroll_position` (and its corresponding config option) to help keep track of scrolled position.
+- [#333](https://github.com/ClementTsang/bottom/pull/333): Add an "out of" indicator that can be enabled using `--show_table_scroll_position` (and its corresponding config option) to help keep track of scrolled position.
 
-- [#379](https://github.com/ClementTsang/bottom/pull/379): Added `--process_command` flag and corresponding config option to default to showing a process' command.
+- [#379](https://github.com/ClementTsang/bottom/pull/379): Add `--process_command` flag and corresponding config option to default to showing a process' command.
 
-- [#381](https://github.com/ClementTsang/bottom/pull/381): Added a filter in the config file for network interfaces.
+- [#381](https://github.com/ClementTsang/bottom/pull/381): Add a filter in the config file for network interfaces.
 
-- [#392](https://github.com/ClementTsang/bottom/pull/392): Added CPU load averages (1, 5, 15) for Unix-based systems.
+- [#392](https://github.com/ClementTsang/bottom/pull/392): Add CPU load averages (1, 5, 15) for Unix-based systems.
 
-- [#406](https://github.com/ClementTsang/bottom/pull/406): Added the Nord colour scheme, as well as a light variant.
+- [#406](https://github.com/ClementTsang/bottom/pull/406): Add the Nord colour scheme, as well as a light variant.
 
-- [#409](https://github.com/ClementTsang/bottom/pull/409): Added `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.
+- [#409](https://github.com/ClementTsang/bottom/pull/409): Add `Ctrl-w` and `Ctrl-h` shortcuts in search, to delete a word and delete a character respectively.
 
-- [#413](https://github.com/ClementTsang/bottom/pull/413): Added mouse support for sorting process columns.
+- [#413](https://github.com/ClementTsang/bottom/pull/413): Add mouse support for sorting process columns.
 
-- [#425](https://github.com/ClementTsang/bottom/pull/425): Added user into the process widget for Unix-based systems.
+- [#425](https://github.com/ClementTsang/bottom/pull/425): Add user into the process widget for Unix-based systems.
 
 - [#437](https://github.com/ClementTsang/bottom/pull/437): Redo dynamic network y-axis, add linear scaling, unit type, and prefix options.
 
-- [#445](https://github.com/ClementTsang/bottom/pull/445): Collapsing in tree mode sums usage to parent.
+- [#445](https://github.com/ClementTsang/bottom/pull/445): Add collapsing in tree mode sums usage to parent.
 
 ## Changes
 
-- [#372](https://github.com/ClementTsang/bottom/pull/372): Hides the SWAP graph and legend in normal mode if SWAP is 0.
+- [#372](https://github.com/ClementTsang/bottom/pull/372): Hide the SWAP graph and legend in normal mode if SWAP is 0.
 
 - [#390](https://github.com/ClementTsang/bottom/pull/390): macOS shouldn't need elevated privileges to see CPU usage on all processes now.
 
@@ -164,15 +166,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#451](https://github.com/ClementTsang/bottom/pull/451): Add decimal place to disk values larger than 1GB for total read/write in process widgets, and read/write per second in process widgets and disk widgets.
 
-- [#455](https://github.com/ClementTsang/bottom/pull/455): Added a mount point filter for the disk widget. Also tweaked how the filter system works - see the PR for details.
+- [#455](https://github.com/ClementTsang/bottom/pull/455): Add a mount point filter for the disk widget. Also tweaked how the filter system works - see the PR for details.
 
 ## Bug Fixes
 
-- [#416](https://github.com/ClementTsang/bottom/pull/416): Fixes grouped vs ungrouped modes in the processes widget having inconsistent spacing.
+- [#416](https://github.com/ClementTsang/bottom/pull/416): Fix grouped vs ungrouped modes in the processes widget having inconsistent spacing.
 
-- [#417](https://github.com/ClementTsang/bottom/pull/417): Fixes the sort menu and sort shortcuts not syncing up.
+- [#417](https://github.com/ClementTsang/bottom/pull/417): Fix the sort menu and sort shortcuts not syncing up.
 
-- [#423](https://github.com/ClementTsang/bottom/pull/423): Fixes disk encryption causing the disk widget to fail or not properly map I/O statistics.
+- [#423](https://github.com/ClementTsang/bottom/pull/423): Fix disk encryption causing the disk widget to fail or not properly map I/O statistics.
 
 - [#425](https://github.com/ClementTsang/bottom/pull/425): Fixed a bug allowing grouped mode in tree mode if already in grouped mode.
 
@@ -182,25 +184,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
-- [#373](https://github.com/ClementTsang/bottom/pull/373): Fixes incorrect colours being used the CPU widget in basic mode.
+- [#373](https://github.com/ClementTsang/bottom/pull/373): Fix incorrect colours being used the CPU widget in basic mode.
 
-- [#386](https://github.com/ClementTsang/bottom/pull/386): Fixes `hide_table_gap` not working in the battery widget.
+- [#386](https://github.com/ClementTsang/bottom/pull/386): Fix `hide_table_gap` not working in the battery widget.
 
-- [#389](https://github.com/ClementTsang/bottom/pull/389): Fixes the sorting arrow disappearing in proc widget under some cases.
+- [#389](https://github.com/ClementTsang/bottom/pull/389): Fix the sorting arrow disappearing in proc widget under some cases.
 
-- [#398](https://github.com/ClementTsang/bottom/pull/398): Fixes basic mode failing to report CPUs if there are less than 4 entries to report.
+- [#398](https://github.com/ClementTsang/bottom/pull/398): Fix basic mode failing to report CPUs if there are less than 4 entries to report.
 
 ## [0.5.6] - 2020-12-17
 
 ## Bug Fixes
 
-- [#361](https://github.com/ClementTsang/bottom/pull/361): Fixed temperature sensors not working on non-Linux platforms.
+- [#361](https://github.com/ClementTsang/bottom/pull/361): Fix temperature sensors not working on non-Linux platforms.
 
 ## [0.5.5] - 2020-12-14
 
 ## Bug Fixes
 
-- [#349](https://github.com/ClementTsang/bottom/pull/349): Fixed CPU graph colours not matching the legend in the "all" state.
+- [#349](https://github.com/ClementTsang/bottom/pull/349): Fix CPU graph colours not matching the legend in the "all" state.
 
 ## [0.5.4] - 2020-12-10
 
@@ -210,21 +212,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Bug Fixes
 
-- [#344](https://github.com/ClementTsang/bottom/pull/344): Fixes a performance regression causing high memory and CPU usage over time.
+- [#344](https://github.com/ClementTsang/bottom/pull/344): Fix a performance regression causing high memory and CPU usage over time.
 
-- [#345](https://github.com/ClementTsang/bottom/pull/345): Fixes process states not showing.
+- [#345](https://github.com/ClementTsang/bottom/pull/345): Fix process states not showing.
 
 ## [0.5.3] - 2020-11-26
 
 ## Bug Fixes
 
-- [#331](https://github.com/ClementTsang/bottom/pull/331): Fixes custom battery colour levels being inverted.
+- [#331](https://github.com/ClementTsang/bottom/pull/331): Fix custom battery colour levels being inverted.
 
 ## [0.5.2] - 2020-11-25
 
 ## Bug Fixes
 
-- [#327](https://github.com/ClementTsang/bottom/pull/327): Fixes `hide_avg_cpu` being inverted in config files.
+- [#327](https://github.com/ClementTsang/bottom/pull/327): Fix `hide_avg_cpu` being inverted in config files.
 
 ## [0.5.1] - 2020-11-22
 
@@ -250,13 +252,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#220](https://github.com/ClementTsang/bottom/pull/220): Add ability to hide specific temperature and disk entries via config.
 
-- [#223](https://github.com/ClementTsang/bottom/pull/223): Add tree mode for processes. [#312](https://github.com/ClementTsang/bottom/pull/312) also adds a `tree` flag to default to the tree mode.
+- [#223](https://github.com/ClementTsang/bottom/pull/223): Add tree mode for processes.
+
+  - [#312](https://github.com/ClementTsang/bottom/pull/312): Add a `tree` flag to default to the tree mode.
 
 - [#269](https://github.com/ClementTsang/bottom/pull/269): Add simple indicator for when data updating is frozen.
 
 - [#296](https://github.com/ClementTsang/bottom/pull/296): Built-in colour themes.
 
-- [#309](https://github.com/ClementTsang/bottom/pull/309): Adds a `mem_as_value` flag to default displaying process memory as value rather than percentage.
+- [#309](https://github.com/ClementTsang/bottom/pull/309): Add a `mem_as_value` flag to default displaying process memory as value rather than percentage.
 
 ### Changes
 
@@ -266,7 +270,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
-- [#211](https://github.com/ClementTsang/bottom/pull/211): Fixes a bug where you could move down in the process widget even if the process widget search was closed.
+- [#211](https://github.com/ClementTsang/bottom/pull/211): Fix a bug where you could move down in the process widget even if the process widget search was closed.
 
 - [#215](https://github.com/ClementTsang/bottom/pull/215): Add labels to Linux temperature values.
 
