@@ -366,6 +366,7 @@ Thanks to all contributors:
     <td align="center"><a href="https://blog.guillaume-gomez.fr"><img src="https://avatars.githubusercontent.com/u/3050060?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Guillaume Gomez</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=GuillaumeGomez" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/shurizzle"><img src="https://avatars.githubusercontent.com/u/203655?v=4?s=100" width="100px;" alt=""/><br /><sub><b>shura</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=shurizzle" title="Code">💻</a></td>
     <td align="center"><a href="https://www.wezm.net/"><img src="https://avatars.githubusercontent.com/u/21787?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Wesley Moore</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=wezm" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/xgdgsc"><img src="https://avatars.githubusercontent.com/u/1189869?v=4?s=100" width="100px;" alt=""/><br /><sub><b>xgdgsc</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=xgdgsc" title="Documentation">📖</a></td>
   </tr>
 </table>
 
