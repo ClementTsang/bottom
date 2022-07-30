@@ -478,18 +478,16 @@ impl<H: TableComponentHeader> TableComponentState<H> {
 
         let csp: Result<i64, _> = self.current_scroll_position.try_into();
         if let Ok(csp) = csp {
-            let proposed: Result<usize, _> = (csp + change).try_into();
+            let proposed: Result<usize, _> = (csp + change).max(0).try_into();
             if let Ok(proposed) = proposed {
-                if proposed < num_entries {
-                    self.current_scroll_position = proposed;
-                    if change < 0 {
-                        self.scroll_direction = ScrollDirection::Up;
-                    } else {
-                        self.scroll_direction = ScrollDirection::Down;
-                    }
-
-                    return Some(self.current_scroll_position);
+                self.current_scroll_position = proposed.min(num_entries - 1);
+                if change < 0 {
+                    self.scroll_direction = ScrollDirection::Up;
+                } else {
+                    self.scroll_direction = ScrollDirection::Down;
                 }
+
+                return Some(self.current_scroll_position);
             }
         }
 
