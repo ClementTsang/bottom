@@ -483,7 +483,7 @@ impl<H: TableComponentHeader> TableComponentState<H> {
         if let Ok(csp) = csp {
             let proposed: Result<usize, _> = (csp + change).max(0).try_into();
             if let Ok(proposed) = proposed {
-                self.current_scroll_position = proposed.min(num_entries - 1);
+                self.current_scroll_position = proposed.min(num_entries.saturating_sub(1));
                 if change < 0 {
                     self.scroll_direction = ScrollDirection::Up;
                 } else {
