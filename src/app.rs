@@ -996,6 +996,34 @@ impl App {
         }
     }
 
+    pub fn scroll_half_page_up(&mut self) {
+        if self.current_widget.widget_type.is_widget_table() {
+            if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
+                &self.current_widget.top_left_corner,
+                &self.current_widget.bottom_right_corner,
+            ) {
+                let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+                let header_offset = self.header_offset(&self.current_widget);
+                let height = brc_y - tlc_y - 2 * border_offset - header_offset;
+                self.change_position_count(-(height as i64) / 2);
+            }
+        }
+    }
+
+    pub fn scroll_half_page_down(&mut self) {
+        if self.current_widget.widget_type.is_widget_table() {
+            if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
+                &self.current_widget.top_left_corner,
+                &self.current_widget.bottom_right_corner,
+            ) {
+                let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+                let header_offset = self.header_offset(&self.current_widget);
+                let height = brc_y - tlc_y - 2 * border_offset - header_offset;
+                self.change_position_count(height as i64 / 2);
+            }
+        }
+    }
+
     pub fn skip_cursor_beginning(&mut self) {
         if !self.ignore_normal_keybinds() {
             if let BottomWidgetType::ProcSearch = self.current_widget.widget_type {
