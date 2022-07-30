@@ -473,7 +473,7 @@ impl<H: TableComponentHeader> TableComponentState<H> {
     /// Updates the position if possible, and if there is a valid change, returns the new position.
     pub fn update_position(&mut self, change: i64, num_entries: usize) -> Option<usize> {
         if change == 0
-            || (change > 0 && self.current_scroll_position == num_entries - 1)
+            || (change > 0 && self.current_scroll_position == num_entries.saturating_sub(1))
             || (change < 0 && self.current_scroll_position == 0)
         {
             return None;
