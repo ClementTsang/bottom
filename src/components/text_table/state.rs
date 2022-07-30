@@ -529,31 +529,25 @@ mod test {
         // Update by 5. Should increment to index 10.
         check_scroll_update(s, 5, 15, Some(10), 10);
 
-        // Update by 5. Should not change.
-        check_scroll_update(s, 5, 15, None, 10);
+        // Update by 5. Should clamp to max possible scroll index 14.
+        check_scroll_update(s, 5, 15, Some(14), 14);
 
-        // Update by 4. Should increment to index 14 (supposed max).
-        check_scroll_update(s, 4, 15, Some(14), 14);
-
-        // Update by 1. Should do nothing.
+        // Update by 1. Should do nothing (already at max index 14).
         check_scroll_update(s, 1, 15, None, 14);
 
-        // Update by -15. Should do nothing.
-        check_scroll_update(s, -15, 15, None, 14);
+        // Update by -15. Should clamp to index 0.
+        check_scroll_update(s, -15, 15, Some(0), 0);
 
-        // Update by -14. Should land on position 0.
-        check_scroll_update(s, -14, 15, Some(0), 0);
-
-        // Update by -1. Should do nothing.
+        // Update by -1. Should do nothing (already at min index 0).
         check_scroll_update(s, -15, 15, None, 0);
 
         // Update by 0. Should do nothing.
         check_scroll_update(s, 0, 15, None, 0);
 
-        // Update by 15. Should do nothing.
-        check_scroll_update(s, 15, 15, None, 0);
+        // Update by 15. Should clamp to 14.
+        check_scroll_update(s, 15, 15, Some(14), 14);
 
-        // Update by 15 but with a larger bound. Should increment to 15.
+        // Update by 15 but with a larger bound. Should clamp to 15.
         check_scroll_update(s, 15, 16, Some(15), 15);
     }
 
