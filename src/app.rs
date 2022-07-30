@@ -997,7 +997,12 @@ impl App {
     }
 
     pub fn scroll_half_page_up(&mut self) {
-        if self.current_widget.widget_type.is_widget_table() {
+        if self.help_dialog_state.is_showing_help {
+            let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
+
+            // TODO: half a page instead of a random number?
+            *current = current.saturating_sub(8);
+        } else if self.current_widget.widget_type.is_widget_table() {
             if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
                 &self.current_widget.top_left_corner,
                 &self.current_widget.bottom_right_corner,
@@ -1011,7 +1016,12 @@ impl App {
     }
 
     pub fn scroll_half_page_down(&mut self) {
-        if self.current_widget.widget_type.is_widget_table() {
+        if self.help_dialog_state.is_showing_help {
+            let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
+
+            // TODO: half a page instead of a random number?
+            *current = (*current + 8).min(self.help_dialog_state.scroll_state.max_scroll_index);
+        } else if self.current_widget.widget_type.is_widget_table() {
             if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
                 &self.current_widget.top_left_corner,
                 &self.current_widget.bottom_right_corner,
