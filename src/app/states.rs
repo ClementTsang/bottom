@@ -37,7 +37,7 @@ pub struct CanvasTableWidthState {
     pub calculated_column_widths: Vec<u16>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum KillSignal {
     Cancel,
     Kill(usize),
