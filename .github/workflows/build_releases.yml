@@ -106,6 +106,9 @@ jobs:
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
+
+          # macOS ARM
+          - { os: "macOS-latest", target: "aarch64-apple-darwin", cross: true }
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
