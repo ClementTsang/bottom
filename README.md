@@ -108,8 +108,8 @@ For more details on supported platforms and known problems, check out [the docum
 ### Unofficial
 
 bottom may work on a number of platforms that aren't officially supported - these platforms may not be properly tested,
-or may receive more limited support, or missing features/problems that may not be fixed. Some of these may eventually
-be officially supported (e.g., FreeBSD, macOS ARM).
+by maintainers prior to a stable release, or may receive more limited support, or missing features/problems that may
+not be fixed. Some of these may eventually be officially supported (e.g., FreeBSD, M1 macOS devices).
 
 A non-comprehensive list of some currently unofficially supported platforms that may compile/work include:
 
