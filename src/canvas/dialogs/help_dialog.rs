@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use unicode_width::UnicodeWidthStr;
 
 use crate::{app::App, canvas::Painter, constants};
@@ -30,12 +32,20 @@ impl Painter {
             ),
         ]);
 
+        let block = Block::default()
+            .title(help_title)
+            .style(self.colours.border_style)
+            .borders(Borders::ALL)
+            .border_style(self.colours.border_style);
+
         if app_state.should_get_widget_bounds() {
+            app_state.help_dialog_state.height = block.inner(draw_loc).height;
+
             // We must also recalculate how many lines are wrapping to properly get scrolling to work on
             // small terminal sizes... oh joy.
 
             let mut overflow_buffer = 0;
-            let paragraph_width = std::cmp::max(draw_loc.width.saturating_sub(2), 1);
+            let paragraph_width = max(draw_loc.width.saturating_sub(2), 1);
             let mut prev_section_len = 0;
 
             constants::HELP_TEXT
@@ -92,13 +102,7 @@ impl Painter {
 
         f.render_widget(
             Paragraph::new(self.styled_help_text.clone())
-                .block(
-                    Block::default()
-                        .title(help_title)
-                        .style(self.colours.border_style)
-                        .borders(Borders::ALL)
-                        .border_style(self.colours.border_style),
-                )
+                .block(block)
                 .style(self.colours.text_style)
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: true })

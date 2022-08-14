@@ -67,6 +67,7 @@ pub struct AppDeleteDialogState {
 
 pub struct AppHelpDialogState {
     pub is_showing_help: bool,
+    pub height: u16,
     pub scroll_state: ParagraphScrollState,
     pub index_shortcuts: Vec<u16>,
 }
@@ -75,6 +76,7 @@ impl Default for AppHelpDialogState {
     fn default() -> Self {
         AppHelpDialogState {
             is_showing_help: false,
+            height: 0,
             scroll_state: ParagraphScrollState::default(),
             index_shortcuts: vec![0; constants::HELP_TEXT.len()],
         }
