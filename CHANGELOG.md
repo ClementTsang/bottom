@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#766](https://github.com/ClementTsang/bottom/pull/766): Add FreeBSD support.
 
+- [#774](https://github.com/ClementTsang/bottom/pull/774): Add half page scrolling with `ctrl-u` and `ctrl-d`.
+
 ## [0.6.8] - 2022-02-01
 
 ## Bug Fixes
