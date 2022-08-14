@@ -12,7 +12,7 @@ Closes: #
 
 _If relevant, please state how this was tested. All changes **must** be tested to work:_
 
-_If this is a code change, please also indicate which platforms were tested. All platforms directly affected by the change **must** be tested:_
+_If this is a code change, please also indicate which platforms were tested:_
 
 - [ ] _Windows_
 - [ ] _macOS_
