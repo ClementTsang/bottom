@@ -56,6 +56,8 @@ Note that key bindings are generally case-sensitive.
 | ++g+g++ , ++home++                                           | Jump to the first entry                                      |
 | ++G++ , ++end++                                              | Jump to the last entry                                       |
 | ++page-up++ , ++page-down++                                  | Scroll up/down a table by a page                             |
+| ++ctrl+u++                                                   | Scroll up a table by half a page                             |
+| ++ctrl+d++                                                   | Scroll down a table by half a page                           |
 
 ## Mouse bindings
 
