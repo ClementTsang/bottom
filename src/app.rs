@@ -1017,15 +1017,10 @@ impl App {
 
     pub fn scroll_half_page_down(&mut self) {
         if self.help_dialog_state.is_showing_help {
-            let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
+            let current = self.help_dialog_state.scroll_state.current_scroll_index;
             let amount = self.help_dialog_state.height / 2;
 
-            *current = (*current + amount).min(
-                self.help_dialog_state
-                    .scroll_state
-                    .max_scroll_index
-                    .saturating_sub(1),
-            );
+            self.help_scroll_to_or_max(current + amount);
         } else if self.current_widget.widget_type.is_widget_table() {
             if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
                 &self.current_widget.top_left_corner,
@@ -2098,11 +2093,8 @@ impl App {
             }
             self.reset_multi_tap_keys();
         } else if self.help_dialog_state.is_showing_help {
-            self.help_dialog_state.scroll_state.current_scroll_index = self
-                .help_dialog_state
-                .scroll_state
-                .max_scroll_index
-                .saturating_sub(1);
+            self.help_dialog_state.scroll_state.current_scroll_index =
+                self.help_dialog_state.scroll_state.max_scroll_index;
         } else if self.delete_dialog_state.is_showing_dd {
             self.delete_dialog_state.selected_signal = KillSignal::Kill(MAX_SIGNAL);
         }
@@ -2201,7 +2193,7 @@ impl App {
     }
 
     fn help_scroll_down(&mut self) {
-        if self.help_dialog_state.scroll_state.current_scroll_index + 1
+        if self.help_dialog_state.scroll_state.current_scroll_index
             < self.help_dialog_state.scroll_state.max_scroll_index
         {
             self.help_dialog_state.scroll_state.current_scroll_index += 1;
@@ -2209,11 +2201,11 @@ impl App {
     }
 
     fn help_scroll_to_or_max(&mut self, new_position: u16) {
-        if new_position < self.help_dialog_state.scroll_state.max_scroll_index {
+        if new_position <= self.help_dialog_state.scroll_state.max_scroll_index {
             self.help_dialog_state.scroll_state.current_scroll_index = new_position;
         } else {
             self.help_dialog_state.scroll_state.current_scroll_index =
-                self.help_dialog_state.scroll_state.max_scroll_index - 1;
+                self.help_dialog_state.scroll_state.max_scroll_index;
         }
     }
 
