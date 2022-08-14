@@ -76,28 +76,19 @@ impl Painter {
                     overflow_buffer += buffer;
                 });
 
-            app_state.help_dialog_state.scroll_state.max_scroll_index =
-                (self.styled_help_text.len() as u16
-                    + (constants::HELP_TEXT.len() as u16 - 5)
-                    + overflow_buffer)
-                    .saturating_sub(draw_loc.height);
+            let max_scroll_index = &mut app_state.help_dialog_state.scroll_state.max_scroll_index;
+            *max_scroll_index = (self.styled_help_text.len() as u16
+                + (constants::HELP_TEXT.len() as u16 - 5)
+                + overflow_buffer)
+                .saturating_sub(draw_loc.height + 1);
 
             // Fix if over-scrolled
-            if app_state
+            let index = &mut app_state
                 .help_dialog_state
                 .scroll_state
-                .current_scroll_index
-                >= app_state.help_dialog_state.scroll_state.max_scroll_index
-            {
-                app_state
-                    .help_dialog_state
-                    .scroll_state
-                    .current_scroll_index = app_state
-                    .help_dialog_state
-                    .scroll_state
-                    .max_scroll_index
-                    .saturating_sub(1);
-            }
+                .current_scroll_index;
+
+            *index = max(*index, *max_scroll_index);
         }
 
         f.render_widget(
