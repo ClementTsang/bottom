@@ -472,9 +472,12 @@ impl<H: TableComponentHeader> TableComponentState<H> {
 
     /// Updates the position if possible, and if there is a valid change, returns the new position.
     pub fn update_position(&mut self, change: i64, num_entries: usize) -> Option<usize> {
+        let min_index = 0;
+        let max_index = num_entries.saturating_sub(1);
+
         if change == 0
-            || (change > 0 && self.current_scroll_position == num_entries.saturating_sub(1))
-            || (change < 0 && self.current_scroll_position == 0)
+            || (change > 0 && self.current_scroll_position == max_index)
+            || (change < 0 && self.current_scroll_position == min_index)
         {
             return None;
         }
@@ -482,7 +485,7 @@ impl<H: TableComponentHeader> TableComponentState<H> {
         let csp: Result<i64, _> = self.current_scroll_position.try_into();
         if let Ok(csp) = csp {
             self.current_scroll_position =
-                (csp + change).clamp(0, num_entries.saturating_sub(1) as i64) as usize;
+                (csp + change).clamp(min_index as i64, max_index as i64) as usize;
 
             if change < 0 {
                 self.scroll_direction = ScrollDirection::Up;
@@ -490,10 +493,10 @@ impl<H: TableComponentHeader> TableComponentState<H> {
                 self.scroll_direction = ScrollDirection::Down;
             }
 
-            return Some(self.current_scroll_position);
+            Some(self.current_scroll_position)
+        } else {
+            None
         }
-
-        None
     }
 }
 
