@@ -472,25 +472,25 @@ impl<H: TableComponentHeader> TableComponentState<H> {
 
     /// Updates the position if possible, and if there is a valid change, returns the new position.
     pub fn update_position(&mut self, change: i64, num_entries: usize) -> Option<usize> {
-        if change == 0 {
+        if change == 0
+            || (change > 0 && self.current_scroll_position == num_entries.saturating_sub(1))
+            || (change < 0 && self.current_scroll_position == 0)
+        {
             return None;
         }
 
         let csp: Result<i64, _> = self.current_scroll_position.try_into();
         if let Ok(csp) = csp {
-            let proposed: Result<usize, _> = (csp + change).try_into();
-            if let Ok(proposed) = proposed {
-                if proposed < num_entries {
-                    self.current_scroll_position = proposed;
-                    if change < 0 {
-                        self.scroll_direction = ScrollDirection::Up;
-                    } else {
-                        self.scroll_direction = ScrollDirection::Down;
-                    }
+            self.current_scroll_position =
+                (csp + change).clamp(0, num_entries.saturating_sub(1) as i64) as usize;
 
-                    return Some(self.current_scroll_position);
-                }
+            if change < 0 {
+                self.scroll_direction = ScrollDirection::Up;
+            } else {
+                self.scroll_direction = ScrollDirection::Down;
             }
+
+            return Some(self.current_scroll_position);
         }
 
         None
@@ -528,31 +528,25 @@ mod test {
         // Update by 5. Should increment to index 10.
         check_scroll_update(s, 5, 15, Some(10), 10);
 
-        // Update by 5. Should not change.
-        check_scroll_update(s, 5, 15, None, 10);
+        // Update by 5. Should clamp to max possible scroll index 14.
+        check_scroll_update(s, 5, 15, Some(14), 14);
 
-        // Update by 4. Should increment to index 14 (supposed max).
-        check_scroll_update(s, 4, 15, Some(14), 14);
-
-        // Update by 1. Should do nothing.
+        // Update by 1. Should do nothing (already at max index 14).
         check_scroll_update(s, 1, 15, None, 14);
 
-        // Update by -15. Should do nothing.
-        check_scroll_update(s, -15, 15, None, 14);
+        // Update by -15. Should clamp to index 0.
+        check_scroll_update(s, -15, 15, Some(0), 0);
 
-        // Update by -14. Should land on position 0.
-        check_scroll_update(s, -14, 15, Some(0), 0);
-
-        // Update by -1. Should do nothing.
+        // Update by -1. Should do nothing (already at min index 0).
         check_scroll_update(s, -15, 15, None, 0);
 
         // Update by 0. Should do nothing.
         check_scroll_update(s, 0, 15, None, 0);
 
-        // Update by 15. Should do nothing.
-        check_scroll_update(s, 15, 15, None, 0);
+        // Update by 15. Should clamp to 14.
+        check_scroll_update(s, 15, 15, Some(14), 14);
 
-        // Update by 15 but with a larger bound. Should increment to 15.
+        // Update by 15 but with a larger bound. Should clamp to 15.
         check_scroll_update(s, 15, 16, Some(15), 15);
     }
 
