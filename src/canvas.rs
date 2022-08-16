@@ -502,12 +502,24 @@ impl Painter {
                     }
                 };
 
+                let mut mem_rows = 2;
+                if cfg!(feature = "zfs")
+                    && (cfg!(target_os = "linux") || cfg!(target_os = "freebsd"))
+                {
+                    let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
+                    if let Some(arc) = arc_data.last() {
+                        if arc.1 != 0.0 {
+                            mem_rows += 1;
+                        }
+                    }
+                }
+
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .margin(0)
                     .constraints([
                         Constraint::Length(cpu_height),
-                        Constraint::Length(2),
+                        Constraint::Length(mem_rows),
                         Constraint::Length(2),
                         Constraint::Min(5),
                     ])

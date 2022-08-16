@@ -89,9 +89,11 @@ pub struct ConvertedData {
 
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
+    pub arc_labels: Option<(String, String)>,
 
     pub mem_data: Vec<Point>, // TODO: Switch this and all data points over to a better data structure...
     pub swap_data: Vec<Point>,
+    pub arc_data: Vec<Point>,
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<ConvertedCpuData>,
     pub battery_data: Vec<ConvertedBatteryData>,
@@ -654,6 +656,71 @@ pub fn convert_battery_harvest(
         .collect()
 }
 
+#[cfg(feature = "zfs")]
+pub fn convert_arc_labels(current_data: &data_farmer::DataCollection) -> Option<(String, String)> {
+    /// Returns the unit type and denominator for given total amount of memory in kibibytes.
+    fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
+        if mem_total_kib < 1024 {
+            // Stay with KiB
+            ("KiB", 1.0)
+        } else if mem_total_kib < MEBI_LIMIT {
+            // Use MiB
+            ("MiB", KIBI_LIMIT_F64)
+        } else if mem_total_kib < GIBI_LIMIT {
+            // Use GiB
+            ("GiB", MEBI_LIMIT_F64)
+        } else {
+            // Use TiB
+            ("TiB", GIBI_LIMIT_F64)
+        }
+    }
+
+    if current_data.arc_harvest.mem_total_in_kib > 0 {
+        Some((
+            format!(
+                "{:3.0}%",
+                current_data.arc_harvest.use_percent.unwrap_or(0.0)
+            ),
+            {
+                let (unit, denominator) = return_unit_and_denominator_for_mem_kib(
+                    current_data.arc_harvest.mem_total_in_kib,
+                );
+
+                format!(
+                    "   {:.1}{}/{:.1}{}",
+                    current_data.arc_harvest.mem_used_in_kib as f64 / denominator,
+                    unit,
+                    (current_data.arc_harvest.mem_total_in_kib as f64 / denominator),
+                    unit
+                )
+            },
+        ))
+    } else {
+        None
+    }
+}
+#[cfg(feature = "zfs")]
+pub fn convert_arc_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
+    let mut result: Vec<Point> = Vec::new();
+    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
+        frozen_instant
+    } else {
+        current_data.current_instant
+    };
+
+    for (time, data) in &current_data.timed_data_vec {
+        if let Some(arc_data) = data.arc_data {
+            let time_from_start: f64 =
+                (current_time.duration_since(*time).as_millis() as f64).floor();
+            result.push((-time_from_start, arc_data));
+            if *time == current_time {
+                break;
+            }
+        }
+    }
+
+    result
+}
 #[cfg(test)]
 mod test {
     use super::*;

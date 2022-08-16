@@ -7,13 +7,17 @@ pub async fn get_mem_data(
 ) -> (
     crate::utils::error::Result<Option<MemHarvest>>,
     crate::utils::error::Result<Option<MemHarvest>>,
+    crate::utils::error::Result<Option<MemHarvest>>,
 ) {
     use futures::join;
 
     if !actually_get {
-        (Ok(None), Ok(None))
+        (Ok(None), Ok(None), Ok(None))
+    } else if cfg!(feature = "zfs") && (cfg!(target_os = "linux") || cfg!(target_os = "freebsd")) {
+        join!(get_ram_data(), get_swap_data(), get_arc_data())
     } else {
-        join!(get_ram_data(), get_swap_data())
+        let futures = join!(get_ram_data(), get_swap_data());
+        (futures.0, futures.1, Ok(None)) // stub get_arc_data
     }
 }
 
@@ -155,6 +159,80 @@ pub async fn get_swap_data() -> crate::utils::error::Result<Option<MemHarvest>> 
         {
             memory.refresh_memory();
             (memory.total_swap(), memory.used_swap())
+        }
+    };
+
+    Ok(Some(MemHarvest {
+        mem_total_in_kib,
+        mem_used_in_kib,
+        use_percent: if mem_total_in_kib == 0 {
+            None
+        } else {
+            Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
+        },
+    }))
+}
+
+pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
+    let (mem_total_in_kib, mem_used_in_kib) = {
+        #[cfg(target_os = "linux")]
+        {
+            let mut mem_arc = 0;
+            let mut mem_total = 0;
+            use smol::fs::read_to_string;
+            let arcinfo = read_to_string("/proc/spl/kstat/zfs/arcstats").await?;
+            for line in arcinfo.lines() {
+                if let Some((label, value)) = line.split_once(' ') {
+                    let to_write = match label {
+                        "size" => &mut mem_arc,
+                        "memory_all_bytes" => &mut mem_total,
+                        _ => {
+                            continue;
+                        }
+                    };
+                    let mut zfs_keys_read: u8 = 0;
+                    const ZFS_KEYS_NEEDED: u8 = 2;
+                    if let Some((_type, number)) = value.trim_start().rsplit_once(' ') {
+                        // Parse the value, remember it's in bytes!
+                        if let Ok(number) = number.parse::<u64>() {
+                            *to_write = number;
+                            // We only need a few keys, so we can bail early.
+                            zfs_keys_read += 1;
+                            if zfs_keys_read == ZFS_KEYS_NEEDED {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            (mem_total / 1024, mem_arc / 1024)
+        }
+
+        #[cfg(target_os = "freebsd")]
+        {
+            use sysctl::Sysctl;
+            if let (Ok(mem_arc_value), Ok(mem_sys_value)) = (
+                sysctl::Ctl::new("kstat.zfs.misc.arcstats.size"),
+                sysctl::Ctl::new("hw.physmem"),
+            ) {
+                if let (Ok(sysctl::CtlValue::U64(arc)), Ok(sysctl::CtlValue::Ulong(mem))) =
+                    (mem_arc_value.value(), mem_sys_value.value())
+                {
+                    (mem / 1024, arc / 1024)
+                } else {
+                    (0, 0)
+                }
+            } else {
+                (0, 0)
+            }
+        }
+        #[cfg(target_os = "macos")]
+        {
+            (0, 0)
+        }
+        #[cfg(target_os = "windows")]
+        {
+            (0, 0)
         }
     };
 

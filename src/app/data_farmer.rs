@@ -41,6 +41,8 @@ pub struct TimedData {
     pub load_avg_data: [f32; 3],
     pub mem_data: Option<Value>,
     pub swap_data: Option<Value>,
+    #[cfg(feature = "zfs")]
+    pub arc_data: Option<Value>,
 }
 
 pub type StringPidMap = FxHashMap<String, Vec<Pid>>;
@@ -161,6 +163,8 @@ pub struct DataCollection {
     pub temp_harvest: Vec<temperature::TempHarvest>,
     #[cfg(feature = "battery")]
     pub battery_harvest: Vec<batteries::BatteryHarvest>,
+    #[cfg(feature = "zfs")]
+    pub arc_harvest: memory::MemHarvest,
 }
 
 impl Default for DataCollection {
@@ -182,6 +186,8 @@ impl Default for DataCollection {
             temp_harvest: Vec::default(),
             #[cfg(feature = "battery")]
             battery_harvest: Vec::default(),
+            #[cfg(feature = "zfs")]
+            arc_harvest: memory::MemHarvest::default(),
         }
     }
 }
@@ -201,6 +207,10 @@ impl DataCollection {
         #[cfg(feature = "battery")]
         {
             self.battery_harvest = Vec::default();
+        }
+        #[cfg(feature = "zfs")]
+        {
+            self.arc_harvest = memory::MemHarvest::default();
         }
     }
 
@@ -247,6 +257,12 @@ impl DataCollection {
             self.eat_memory_and_swap(memory, swap, &mut new_entry);
         }
 
+        #[cfg(feature = "zfs")]
+        {
+            if let Some(arc) = harvested_data.arc {
+                self.eat_arc(arc, &mut new_entry);
+            }
+        }
         // CPU
         if let Some(cpu) = harvested_data.cpu {
             self.eat_cpu(cpu, &mut new_entry);
@@ -426,5 +442,12 @@ impl DataCollection {
     #[cfg(feature = "battery")]
     fn eat_battery(&mut self, list_of_batteries: Vec<batteries::BatteryHarvest>) {
         self.battery_harvest = list_of_batteries;
+    }
+
+    #[cfg(feature = "zfs")]
+    fn eat_arc(&mut self, arc: memory::MemHarvest, new_entry: &mut TimedData) {
+        // Arc
+        new_entry.arc_data = arc.use_percent;
+        self.arc_harvest = arc;
     }
 }
