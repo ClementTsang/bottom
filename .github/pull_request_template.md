@@ -27,3 +27,4 @@ _If relevant, ensure the following have been met:_
 - [ ] _Documentation has been added/updated if needed (`README.md`, help menu, etc.)_
 - [ ] _The pull request passes the provided CI pipeline_
 - [ ] _There are no merge conflicts_
+- [ ] _If relevant, new tests were added (don't worry too much about coverage)_
