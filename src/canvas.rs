@@ -504,7 +504,7 @@ impl Painter {
 
                 let mut mem_rows = 0;
 
-                #[cfg(all(feature = "zfs", any(target_os = "linux", target_os = "freebsd")))]
+                #[cfg(feature = "zfs")]
                 {
                     let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
                     if let Some(arc) = arc_data.last() {

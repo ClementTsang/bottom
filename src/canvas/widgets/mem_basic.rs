@@ -106,7 +106,6 @@ impl Painter {
             Spans::from(Span::styled(mem_label, self.colours.ram_style)),
             Spans::from(Span::styled(swap_label, self.colours.swap_style)),
             #[cfg(feature = "zfs")]
-            #[cfg(any(target_os = "linux", target_os = "freebsd"))]
             {
                 let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
                 let arc_use_percentage = if let Some(arc) = arc_data.last() {

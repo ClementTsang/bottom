@@ -30,7 +30,7 @@ impl Painter {
             );
             let points = {
                 let mut size = 0;
-                #[cfg(all(feature = "zfs", any(target_os = "linux", target_os = "freebsd")))]
+                #[cfg(feature = "zfs")]
                 {
                     let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
                     if let Some(arc) = arc_data.last() {
@@ -60,7 +60,6 @@ impl Painter {
                     });
                 }
                 #[cfg(feature = "zfs")]
-                #[cfg(any(target_os = "freebsd", target_os = "linux"))]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {
                     let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
                     if let Some(arc) = arc_data.last() {
