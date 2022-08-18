@@ -699,6 +699,7 @@ pub fn convert_arc_labels(current_data: &data_farmer::DataCollection) -> Option<
         None
     }
 }
+
 #[cfg(feature = "zfs")]
 pub fn convert_arc_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
@@ -721,6 +722,7 @@ pub fn convert_arc_data_points(current_data: &data_farmer::DataCollection) -> Ve
 
     result
 }
+
 #[cfg(test)]
 mod test {
     use super::*;

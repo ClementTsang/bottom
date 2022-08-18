@@ -13,11 +13,8 @@ pub async fn get_mem_data(
 
     if !actually_get {
         (Ok(None), Ok(None), Ok(None))
-    } else if cfg!(feature = "zfs") && (cfg!(target_os = "linux") || cfg!(target_os = "freebsd")) {
-        join!(get_ram_data(), get_swap_data(), get_arc_data())
     } else {
-        let futures = join!(get_ram_data(), get_swap_data());
-        (futures.0, futures.1, Ok(None)) // stub get_arc_data
+        join!(get_ram_data(), get_swap_data(), get_arc_data())
     }
 }
 

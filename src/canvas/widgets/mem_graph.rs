@@ -29,17 +29,18 @@ impl Painter {
                 draw_loc,
             );
             let points = {
-                let mut size = 2;
-                if cfg!(feature = "zfs")
-                    && (cfg!(target_os = "linux") || cfg!(target_os = "freebsd"))
+                let mut size = 0;
+                #[cfg(all(feature = "zfs", any(target_os = "linux", target_os = "freebsd")))]
                 {
                     let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
                     if let Some(arc) = arc_data.last() {
                         if arc.1 != 0.0 {
-                            size += 1;
+                            size += 1; // add capacity for ARC
                         }
                     }
                 }
+
+                size += 2; // add capacity for RAM and SWP
 
                 let mut points = Vec::with_capacity(size);
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.mem_labels {

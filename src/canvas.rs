@@ -502,17 +502,19 @@ impl Painter {
                     }
                 };
 
-                let mut mem_rows = 2;
-                if cfg!(feature = "zfs")
-                    && (cfg!(target_os = "linux") || cfg!(target_os = "freebsd"))
+                let mut mem_rows = 0;
+
+                #[cfg(all(feature = "zfs", any(target_os = "linux", target_os = "freebsd")))]
                 {
                     let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
                     if let Some(arc) = arc_data.last() {
                         if arc.1 != 0.0 {
-                            mem_rows += 1;
+                            mem_rows += 1; // add row for arc
                         }
                     }
                 }
+
+                mem_rows += 2; // add rows for SWAP and MEM
 
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
