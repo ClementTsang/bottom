@@ -48,6 +48,10 @@ pub async fn get_swap_data(sys: &System) -> crate::utils::error::Result<Option<M
 }
 
 pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
+    #[cfg(not(feature = "zfs"))]
+    let (mem_total_in_kib, mem_used_in_kib) = (0, 0);
+
+    #[cfg(feature = "zfs")]
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "freebsd")]
         {
