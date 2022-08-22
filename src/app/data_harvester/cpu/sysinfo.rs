@@ -10,7 +10,7 @@ use crate::app::data_harvester::cpu::LoadAvgHarvest;
 
 pub async fn get_cpu_data_list(
     sys: &sysinfo::System, show_average_cpu: bool,
-    _previous_cpu_times: &mut Vec<(PastCpuWork, PastCpuTotal)>,
+    _previous_cpu_times: &mut [(PastCpuWork, PastCpuTotal)],
     _previous_average_cpu_time: &mut Option<(PastCpuWork, PastCpuTotal)>,
 ) -> crate::error::Result<CpuHarvest> {
     let mut cpu_deque: VecDeque<_> = sys

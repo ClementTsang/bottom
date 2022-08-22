@@ -105,6 +105,41 @@ impl Painter {
         let mem_text = vec![
             Spans::from(Span::styled(mem_label, self.colours.ram_style)),
             Spans::from(Span::styled(swap_label, self.colours.swap_style)),
+            #[cfg(feature = "zfs")]
+            {
+                let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
+                let arc_use_percentage = if let Some(arc) = arc_data.last() {
+                    arc.1
+                } else {
+                    0.0
+                };
+                let trimmed_arc_frac = if let Some((_label_percent, label_frac)) =
+                    &app_state.converted_data.arc_labels
+                {
+                    label_frac.trim()
+                } else {
+                    EMPTY_MEMORY_FRAC_STRING
+                };
+                let arc_bar_length = usize::from(draw_loc.width.saturating_sub(7))
+                    .saturating_sub(trimmed_arc_frac.len());
+                let num_bars_arc = calculate_basic_use_bars(arc_use_percentage, arc_bar_length);
+                let arc_label = if app_state.basic_mode_use_percent {
+                    format!(
+                        "ARC[{}{}{:3.0}%]",
+                        "|".repeat(num_bars_arc),
+                        " ".repeat(arc_bar_length - num_bars_arc + trimmed_arc_frac.len() - 4),
+                        arc_use_percentage.round()
+                    )
+                } else {
+                    format!(
+                        "ARC[{}{}{}]",
+                        "|".repeat(num_bars_arc),
+                        " ".repeat(arc_bar_length - num_bars_arc),
+                        trimmed_arc_frac
+                    )
+                };
+                Spans::from(Span::styled(arc_label, self.colours.arc_style))
+            },
         ];
 
         f.render_widget(

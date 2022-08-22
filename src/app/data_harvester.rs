@@ -40,6 +40,8 @@ pub struct Data {
     pub io: Option<disks::IoHarvest>,
     #[cfg(feature = "battery")]
     pub list_of_batteries: Option<Vec<batteries::BatteryHarvest>>,
+    #[cfg(feature = "zfs")]
+    pub arc: Option<memory::MemHarvest>,
 }
 
 impl Default for Data {
@@ -57,6 +59,8 @@ impl Default for Data {
             network: None,
             #[cfg(feature = "battery")]
             list_of_batteries: None,
+            #[cfg(feature = "zfs")]
+            arc: None,
         }
     }
 }
@@ -74,6 +78,10 @@ impl Data {
 
         if let Some(network) = &mut self.network {
             network.first_run_cleanup();
+        }
+        #[cfg(feature = "zfs")]
+        {
+            self.arc = None;
         }
     }
 }
@@ -419,6 +427,11 @@ impl DataCollector {
 
         if let Ok(swap) = mem_res.1 {
             self.data.swap = swap;
+        }
+
+        #[cfg(feature = "zfs")]
+        if let Ok(arc) = mem_res.2 {
+            self.data.arc = arc;
         }
 
         if let Ok(disks) = disk_res {

@@ -191,11 +191,21 @@ fn main() -> Result<()> {
                                 convert_mem_data_points(&app.data_collection);
                             app.converted_data.swap_data =
                                 convert_swap_data_points(&app.data_collection);
+                            #[cfg(feature = "zfs")]
+                            {
+                                app.converted_data.arc_data =
+                                    convert_arc_data_points(&app.data_collection);
+                            }
                             let (memory_labels, swap_labels) =
                                 convert_mem_labels(&app.data_collection);
 
                             app.converted_data.mem_labels = memory_labels;
                             app.converted_data.swap_labels = swap_labels;
+                            #[cfg(feature = "zfs")]
+                            {
+                                let arc_labels = convert_arc_labels(&app.data_collection);
+                                app.converted_data.arc_labels = arc_labels;
+                            }
                         }
 
                         if app.used_widgets.use_cpu {

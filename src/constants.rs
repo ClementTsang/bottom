@@ -40,6 +40,7 @@ pub static DEFAULT_LIGHT_MODE_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(||
     disabled_text_color: Some("gray".to_string()),
     ram_color: Some("blue".to_string()),
     swap_color: Some("red".to_string()),
+    arc_color: Some("LightBlue".to_string()),
     rx_color: Some("blue".to_string()),
     tx_color: Some("red".to_string()),
     rx_total_color: Some("LightBlue".to_string()),
@@ -84,6 +85,7 @@ pub static GRUVBOX_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColo
     ]),
     ram_color: Some("#8ec07c".to_string()),
     swap_color: Some("#fabd2f".to_string()),
+    arc_color: Some("#689d6a".to_string()),
     rx_color: Some("#8ec07c".to_string()),
     tx_color: Some("#fabd2f".to_string()),
     rx_total_color: Some("#689d6a".to_string()),
@@ -129,6 +131,7 @@ pub static GRUVBOX_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| Conf
     ]),
     ram_color: Some("#427b58".to_string()),
     swap_color: Some("#cc241d".to_string()),
+    arc_color: Some("#689d6a".to_string()),
     rx_color: Some("#427b58".to_string()),
     tx_color: Some("#cc241d".to_string()),
     rx_total_color: Some("#689d6a".to_string()),
@@ -162,6 +165,7 @@ pub static NORD_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigColours
     ]),
     ram_color: Some("#88c0d0".to_string()),
     swap_color: Some("#d08770".to_string()),
+    arc_color: Some("#5e81ac".to_string()),
     rx_color: Some("#88c0d0".to_string()),
     tx_color: Some("#d08770".to_string()),
     rx_total_color: Some("#5e81ac".to_string()),
@@ -195,6 +199,7 @@ pub static NORD_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigC
     ]),
     ram_color: Some("#81a1c1".to_string()),
     swap_color: Some("#d08770".to_string()),
+    arc_color: Some("#5e81ac".to_string()),
     rx_color: Some("#81a1c1".to_string()),
     tx_color: Some("#d08770".to_string()),
     rx_total_color: Some("#5e81ac".to_string()),
@@ -513,6 +518,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #ram_color="LightMagenta"
 # Represents the colour SWAP will use in the memory legend and graph.
 #swap_color="LightYellow"
+# Represents the colour ARC will use in the memory legend and graph.
+#arc_color="LightCyan"
 # Represents the colour rx will use in the network legend and graph.
 #rx_color="LightCyan"
 # Represents the colour tx will use in the network legend and graph.

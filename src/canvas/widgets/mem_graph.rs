@@ -29,7 +29,20 @@ impl Painter {
                 draw_loc,
             );
             let points = {
-                let mut points = Vec::with_capacity(2);
+                let mut size = 0;
+                #[cfg(feature = "zfs")]
+                {
+                    let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
+                    if let Some(arc) = arc_data.last() {
+                        if arc.1 != 0.0 {
+                            size += 1; // add capacity for ARC
+                        }
+                    }
+                }
+
+                size += 2; // add capacity for RAM and SWP
+
+                let mut points = Vec::with_capacity(size);
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.mem_labels {
                     let mem_label = format!("RAM:{}{}", label_percent, label_frac);
                     points.push(GraphData {
@@ -45,6 +58,20 @@ impl Painter {
                         style: self.colours.swap_style,
                         name: Some(swap_label.into()),
                     });
+                }
+                #[cfg(feature = "zfs")]
+                if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {
+                    let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
+                    if let Some(arc) = arc_data.last() {
+                        if arc.1 != 0.0 {
+                            let arc_label = format!("ARC:{}{}", label_percent, label_frac);
+                            points.push(GraphData {
+                                points: &app_state.converted_data.arc_data,
+                                style: self.colours.arc_style,
+                                name: Some(arc_label.into()),
+                            });
+                        }
+                    }
                 }
 
                 points
