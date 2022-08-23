@@ -1,0 +1,47 @@
+name: Packaging
+description: For issues, questions, or requests regarding packaging or distribution.
+title: "[Packaging]: "
+labels: ["packaging"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        If this is an issue about supporting a new package/installation method for a platform you use, please
+        consider maintaining it yourself/with others and submitting a PR or issue with a link to it - they'll be
+        very much appreciated and likely added very quickly. [This documentation](https://clementtsang.github.io/bottom/nightly/contribution/packaging-and-distribution/)
+        may be helpful.
+
+
+        Furthermore, outside of:
+
+          * [crates.io](https://crates.io/crates/bottom)
+          * [Chocolatey](https://community.chocolatey.org/packages/bottom)
+          * [Binary releases on GitHub](https://github.com/ClementTsang/bottom/releases)
+
+
+        I do *not* maintain *any* other distribution channel, and preferably, you should contact the package
+        maintainers where appropriate first for help regarding those distribution channels.
+
+
+        Please understand that I likely can't help you much if it's an issue about a specific distribution channel,
+        other than maybe pointing you to the package maintainer who added support in the first place, and the issue may
+        be closed if nothing can really be done on my side.
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Checklist
+      options:
+        - label: I have read the above text.
+          required: true
+
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Describe the issue
+      description: >
+        What is the packaging-related issue? Please be clear and concise.
+      placeholder: |
+        Example: Would it be possible to add shell completion generation as a separate build artifact?
