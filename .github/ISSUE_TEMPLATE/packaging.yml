@@ -19,8 +19,9 @@ body:
           * [Binary releases on GitHub](https://github.com/ClementTsang/bottom/releases)
 
 
-        I do *not* maintain *any* other distribution channel, and preferably, you should contact the package
-        maintainers where appropriate first for help regarding those distribution channels.
+        I do not maintain any other distribution channel. Preferably, you should contact the package
+        maintainers first where appropriate for help for distribution-related issues (e.g. package
+        has issues installing, is outdated, etc.)
 
 
         Please understand that I likely can't help you much if it's an issue about a specific distribution channel,
