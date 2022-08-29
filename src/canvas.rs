@@ -522,6 +522,10 @@ impl Painter {
                     }
                 }
 
+                if mem_rows == 1 {
+                    mem_rows += 1; // need at least 2 rows for RX and TX
+                }
+
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .margin(0)
