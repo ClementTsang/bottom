@@ -8,13 +8,19 @@ pub async fn get_mem_data(
     crate::utils::error::Result<Option<MemHarvest>>,
     crate::utils::error::Result<Option<MemHarvest>>,
     crate::utils::error::Result<Option<MemHarvest>>,
+    crate::utils::error::Result<Option<Vec<(String, MemHarvest)>>>,
 ) {
     use futures::join;
 
     if !actually_get {
-        (Ok(None), Ok(None), Ok(None))
+        (Ok(None), Ok(None), Ok(None), Ok(None))
     } else {
-        join!(get_ram_data(), get_swap_data(), get_arc_data())
+        join!(
+            get_ram_data(),
+            get_swap_data(),
+            get_arc_data(),
+            get_gpu_data()
+        )
     }
 }
 
@@ -180,6 +186,8 @@ pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
         {
             let mut mem_arc = 0;
             let mut mem_total = 0;
+            let mut zfs_keys_read: u8 = 0;
+            const ZFS_KEYS_NEEDED: u8 = 2;
             use smol::fs::read_to_string;
             let arcinfo = read_to_string("/proc/spl/kstat/zfs/arcstats").await?;
             for line in arcinfo.lines() {
@@ -191,8 +199,7 @@ pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
                             continue;
                         }
                     };
-                    let mut zfs_keys_read: u8 = 0;
-                    const ZFS_KEYS_NEEDED: u8 = 2;
+
                     if let Some((_type, number)) = value.trim_start().rsplit_once(' ') {
                         // Parse the value, remember it's in bytes!
                         if let Ok(number) = number.parse::<u64>() {
@@ -246,4 +253,50 @@ pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
         },
     }))
+}
+
+pub async fn get_gpu_data() -> crate::utils::error::Result<Option<Vec<(String, MemHarvest)>>> {
+    #[cfg(not(feature = "nvidia"))]
+    {
+        Ok(None)
+    }
+
+    #[cfg(feature = "nvidia")]
+    {
+        use crate::data_harvester::nvidia::NVML_DATA;
+        if let Ok(nvml) = &*NVML_DATA {
+            if let Ok(ngpu) = nvml.device_count() {
+                let mut results = Vec::with_capacity(ngpu as usize);
+                for i in 0..ngpu {
+                    if let Ok(device) = nvml.device_by_index(i) {
+                        if let (Ok(name), Ok(mem)) = (device.name(), device.memory_info()) {
+                            // add device memory in bytes
+                            let mem_total_in_kib = mem.total / 1024;
+                            let mem_used_in_kib = mem.used / 1024;
+                            results.push((
+                                name,
+                                MemHarvest {
+                                    mem_total_in_kib,
+                                    mem_used_in_kib,
+                                    use_percent: if mem_total_in_kib == 0 {
+                                        None
+                                    } else {
+                                        Some(
+                                            mem_used_in_kib as f64 / mem_total_in_kib as f64
+                                                * 100.0,
+                                        )
+                                    },
+                                },
+                            ));
+                        }
+                    }
+                }
+                Ok(Some(results))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
 }

@@ -502,19 +502,25 @@ impl Painter {
                     }
                 };
 
-                let mut mem_rows = 0;
+                let mut mem_rows = 1;
+
+                if app_state.converted_data.swap_labels.is_some() {
+                    mem_rows += 1; // add row for swap
+                }
 
                 #[cfg(feature = "zfs")]
                 {
-                    let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
-                    if let Some(arc) = arc_data.last() {
-                        if arc.1 != 0.0 {
-                            mem_rows += 1; // add row for arc
-                        }
+                    if app_state.converted_data.arc_labels.is_some() {
+                        mem_rows += 1; // add row for arc
                     }
                 }
 
-                mem_rows += 2; // add rows for SWAP and MEM
+                #[cfg(feature = "gpu")]
+                {
+                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
+                        mem_rows += gpu_data.len() as u16; // add row(s) for gpu
+                    }
+                }
 
                 let vertical_chunks = Layout::default()
                     .direction(Direction::Vertical)

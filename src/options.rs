@@ -200,6 +200,7 @@ pub struct ConfigColours {
     pub ram_color: Option<String>,
     pub swap_color: Option<String>,
     pub arc_color: Option<String>,
+    pub gpu_core_colors: Option<Vec<String>>,
     pub rx_color: Option<String>,
     pub tx_color: Option<String>,
     pub rx_total_color: Option<String>, // These only affect basic mode.

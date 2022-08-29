@@ -17,6 +17,9 @@ use futures::join;
 
 use super::DataFilters;
 
+#[cfg(feature = "nvidia")]
+pub mod nvidia;
+
 #[cfg(feature = "battery")]
 pub mod batteries;
 pub mod cpu;
@@ -42,6 +45,8 @@ pub struct Data {
     pub list_of_batteries: Option<Vec<batteries::BatteryHarvest>>,
     #[cfg(feature = "zfs")]
     pub arc: Option<memory::MemHarvest>,
+    #[cfg(feature = "gpu")]
+    pub gpu: Option<Vec<(String, memory::MemHarvest)>>,
 }
 
 impl Default for Data {
@@ -61,6 +66,8 @@ impl Default for Data {
             list_of_batteries: None,
             #[cfg(feature = "zfs")]
             arc: None,
+            #[cfg(feature = "gpu")]
+            gpu: None,
         }
     }
 }
@@ -82,6 +89,10 @@ impl Data {
         #[cfg(feature = "zfs")]
         {
             self.arc = None;
+        }
+        #[cfg(feature = "gpu")]
+        {
+            self.gpu = None;
         }
     }
 }
@@ -432,6 +443,11 @@ impl DataCollector {
         #[cfg(feature = "zfs")]
         if let Ok(arc) = mem_res.2 {
             self.data.arc = arc;
+        }
+
+        #[cfg(feature = "gpu")]
+        if let Ok(gpu) = mem_res.3 {
+            self.data.gpu = gpu;
         }
 
         if let Ok(disks) = disk_res {
