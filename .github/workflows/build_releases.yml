@@ -20,6 +20,8 @@ jobs:
     env:
       RUST_BACKTRACE: 1
       BTM_GENERATE: true
+      COMPLETION_DIR: "target/tmp/bottom/completion/"
+      MANPAGE_DIR: "target/tmp/bottom/manpage/"
     strategy:
       fail-fast: false
       matrix:
@@ -170,6 +172,7 @@ jobs:
         if: matrix.info.target == 'x86_64-unknown-linux-gnu' && matrix.info.container == ''
         shell: bash
         run: |
+          mv "$COMPLETION_DIR" completion
           tar -C ./completion -czvf completion.tar.gz .
           mv completion.tar.gz release/
 
@@ -177,6 +180,7 @@ jobs:
         if: matrix.info.target == 'x86_64-unknown-linux-gnu' && matrix.info.container == ''
         shell: bash
         run: |
+          mv "$MANPAGE_DIR" manpage
           gzip ./manpage/btm.1
           tar -C ./manpage -czvf manpage.tar.gz .
           mv manpage.tar.gz release/
@@ -242,6 +246,9 @@ jobs:
   build-deb:
     name: "Build Debian installers"
     runs-on: "ubuntu-20.04"
+    env:
+      RUST_BACKTRACE: 1
+      BTM_GENERATE: true
     strategy:
       fail-fast: false
       matrix:
@@ -259,9 +266,6 @@ jobs:
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
-    env:
-      RUST_BACKTRACE: 1
-      BTM_GENERATE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
