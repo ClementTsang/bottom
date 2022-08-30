@@ -763,7 +763,7 @@ pub fn convert_gpu_data(
     };
 
     // convert points
-    let mut point_vec: Vec<Vec<Point>> = Vec::with_capacity(current_data.timed_data_vec.len());
+    let mut point_vec: Vec<Vec<Point>> = Vec::with_capacity(current_data.gpu_harvest.len());
     for (time, data) in &current_data.timed_data_vec {
         data.gpu_data.iter().enumerate().for_each(|(index, point)| {
             if let Some(data_point) = point {
@@ -772,9 +772,7 @@ pub fn convert_gpu_data(
                 if let Some(point_slot) = point_vec.get_mut(index) {
                     point_slot.push((-time_from_start, *data_point));
                 } else {
-                    let mut index_vec: Vec<Point> = Vec::with_capacity(data.gpu_data.len());
-                    index_vec.push((-time_from_start, *data_point));
-                    point_vec.push(index_vec);
+                    point_vec.push(vec![(-time_from_start, *data_point)]);
                 }
             }
         });
