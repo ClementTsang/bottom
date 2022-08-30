@@ -145,6 +145,12 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.4
 
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
+
       - name: Bundle release and completion (Windows)
         if: matrix.info.os == 'windows-2019'
         shell: bash
@@ -172,7 +178,6 @@ jobs:
         if: matrix.info.target == 'x86_64-unknown-linux-gnu' && matrix.info.container == ''
         shell: bash
         run: |
-          mv "$COMPLETION_DIR" completion
           tar -C ./completion -czvf completion.tar.gz .
           mv completion.tar.gz release/
 
@@ -180,7 +185,6 @@ jobs:
         if: matrix.info.target == 'x86_64-unknown-linux-gnu' && matrix.info.container == ''
         shell: bash
         run: |
-          mv "$MANPAGE_DIR" manpage
           gzip ./manpage/btm.1
           tar -C ./manpage -czvf manpage.tar.gz .
           mv manpage.tar.gz release/
@@ -292,6 +296,12 @@ jobs:
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.4
+
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
 
       - name: Zip manpage
         run: |
