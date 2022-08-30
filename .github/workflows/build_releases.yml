@@ -192,6 +192,10 @@ jobs:
           name: release
           path: release
 
+      - name: Delete automatically generated completion/manpage
+        run: |
+          rm -r ./target/tmp/bottom/
+
   build-msi:
     name: "Build MSI installer"
     runs-on: "windows-2019"
@@ -329,3 +333,7 @@ jobs:
           retention-days: 3
           name: release
           path: release
+
+      - name: Delete automatically generated completion/manpage
+        run: |
+          rm -r ./target/tmp/bottom/
