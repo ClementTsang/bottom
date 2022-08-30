@@ -886,6 +886,19 @@
     Building manually
   </a>
   
+    <nav class="md-nav" aria-label="Building manually">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manpage-and-completion-generation" class="md-nav__link">
+    Manpage and completion generation
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -960,10 +973,25 @@ process.</p>
 <p>You'll then want to build with:</p>
 <div class="highlight"><pre><span></span><code>cargo build --release --locked
 </code></pre></div>
-<p>Completion files are automatically generated during this process, and are located in the directory <code>target/release/build/bottom-&lt;gibberish&gt;/out</code>. Note there may be multiple folders that look like <code>target/release/build/bottom-&lt;gibberish&gt;</code>. To programmatically determine which is the right folder, you might want to use something like:</p>
-<div class="highlight"><pre><span></span><code><span class="k">$(</span>ls target/release/build/bottom-*/out/btm.bash <span class="p">|</span> head -n1 <span class="p">|</span> xargs dirname<span class="k">)</span>
+<h3 id="manpage-and-completion-generation"><a class="toclink" href="#manpage-and-completion-generation">Manpage and completion generation</a></h3>
+<p>bottom uses a <a href="https://github.com/ClementTsang/bottom/blob/master/build.rs"><code>build.rs</code></a> script to automatically generate
+a manpage and shell completions for the following shells:</p>
+<ul>
+<li>Bash</li>
+<li>Zsh</li>
+<li>Fish</li>
+<li>Powershell</li>
+<li>Elvish</li>
+</ul>
+<p>If you want to generate manpages and/or completion files, set the <code>BTM_GENERATION</code> env var to a non-empty value. For
+example, run something like this:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">BTM_GENERATE</span><span class="o">=</span><span class="nb">true</span> cargo build --release --locked
 </code></pre></div>
-<p>You may find the <a href="https://github.com/ClementTsang/bottom/blob/master/deployment/linux/arch/PKGBUILD.template">Arch package install script template</a> useful as a reference.</p>
+<p>This will automatically generate completion and manpage files in <code>target/tmp/bottom/</code>. If you wish to regenerate the
+files, modify/delete either these files or set <code>BTM_GENERATE</code> to some other non-empty value to retrigger the build
+script.</p>
+<p>For more information, you may want to look at either the <a href="https://github.com/ClementTsang/bottom/blob/master/build.rs"><code>build.rs</code></a>
+file or the <a href="https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml">binary build CI workflow</a>.</p>
 <h2 id="adding-an-installation-source"><a class="toclink" href="#adding-an-installation-source">Adding an installation source</a></h2>
 <p>Once you've finished your installation source, if you want to mention it in the main bottom repo, fork the repo and add the installation method and any details to
 the <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a> file under the <a href="https://github.com/ClementTsang/bottom#installation">Installation</a> section.
