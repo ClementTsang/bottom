@@ -24,13 +24,30 @@ You'll then want to build with:
 cargo build --release --locked
 ```
 
-Completion files are automatically generated during this process, and are located in the directory `target/release/build/bottom-<gibberish>/out`. Note there may be multiple folders that look like `target/release/build/bottom-<gibberish>`. To programmatically determine which is the right folder, you might want to use something like:
+### Manpage and completion generation
+
+bottom uses a [`build.rs`](https://github.com/ClementTsang/bottom/blob/master/build.rs) script to automatically generate
+a manpage and shell completions for the following shells:
+
+- Bash
+- Zsh
+- Fish
+- Powershell
+- Elvish
+
+If you want to generate manpages and/or completion files, set the `BTM_GENERATION` env var to a non-empty value. For
+example, run something like this:
 
 ```bash
-$(ls target/release/build/bottom-*/out/btm.bash | head -n1 | xargs dirname)
+BTM_GENERATE=true cargo build --release --locked
 ```
 
-You may find the [Arch package install script template](https://github.com/ClementTsang/bottom/blob/master/deployment/linux/arch/PKGBUILD.template) useful as a reference.
+This will automatically generate completion and manpage files in `target/tmp/bottom/`. If you wish to regenerate the
+files, modify/delete either these files or set `BTM_GENERATE` to some other non-empty value to retrigger the build
+script.
+
+For more information, you may want to look at either the [`build.rs`](https://github.com/ClementTsang/bottom/blob/master/build.rs)
+file or the [binary build CI workflow](https://github.com/ClementTsang/bottom/blob/master/.github/workflows/build_releases.yml).
 
 ## Adding an installation source
 
