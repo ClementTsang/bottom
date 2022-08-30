@@ -196,7 +196,9 @@ jobs:
           name: release
           path: release
 
-      - name: Delete automatically generated completion/manpage
+      # If I add more shared cleanup stuff in the future, I should move to a separate script, perhaps.
+      - name: Delete automatically generated completion/manpage to not cache
+        shell: bash
         run: |
           rm -r ./target/tmp/bottom/
 
@@ -344,6 +346,7 @@ jobs:
           name: release
           path: release
 
-      - name: Delete automatically generated completion/manpage
+      - name: Delete automatically generated completion/manpage to not cache
+        shell: bash
         run: |
           rm -r ./target/tmp/bottom/
