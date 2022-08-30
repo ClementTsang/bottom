@@ -26,8 +26,17 @@ cargo build --release --locked
 
 ### Manpage and completion generation
 
-If you want to generate manpages or completion files, set the `BTM_GENERATION` env var to a non-empty value. For
-example, something like this:
+bottom uses a [`build.rs`](https://github.com/ClementTsang/bottom/blob/master/build.rs) script to automatically generate
+a manpage and shell completions for the following shells:
+
+- Bash
+- Zsh
+- Fish
+- Powershell
+- Elvish
+
+If you want to generate manpages and/or completion files, set the `BTM_GENERATION` env var to a non-empty value. For
+example, run something like this:
 
 ```bash
 BTM_GENERATE=true cargo build --release --locked
