@@ -113,7 +113,7 @@ not be fixed. Some of these may eventually be officially supported (e.g., FreeBS
 
 A non-comprehensive list of some currently unofficially supported platforms that may compile/work include:
 
-- FreeBSD on `x86_64`
+- FreeBSD on `x86_64` (only on master branch/nightly build for now)
 - Linux on `armv6`, `armv7`, `powerpc64le`, `riscv64gc`
 - macOS on `aarch64`
 
