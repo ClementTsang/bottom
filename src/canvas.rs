@@ -333,9 +333,9 @@ impl Painter {
                         ]
                     } else {
                         [
-                            Constraint::Percentage(20),
-                            Constraint::Percentage(60),
-                            Constraint::Percentage(20),
+                            Constraint::Percentage(15),
+                            Constraint::Percentage(70),
+                            Constraint::Percentage(15),
                         ]
                     })
                     .split(vertical_dialog_chunk[1]);
