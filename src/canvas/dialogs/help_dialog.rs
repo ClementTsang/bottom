@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::cmp::{max, min};
 
 use unicode_width::UnicodeWidthStr;
 
@@ -88,7 +88,7 @@ impl Painter {
                 .scroll_state
                 .current_scroll_index;
 
-            *index = max(*index, *max_scroll_index);
+            *index = min(*index, *max_scroll_index);
         }
 
         f.render_widget(
