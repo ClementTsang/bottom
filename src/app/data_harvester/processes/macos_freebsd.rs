@@ -1,6 +1,7 @@
 //! Shared process data harvesting code from macOS and FreeBSD via sysinfo.
 
 use std::io;
+use std::time::Duration;
 
 use hashbrown::HashMap;
 use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
@@ -109,6 +110,7 @@ where
                         .ok()
                 })
                 .unwrap_or_else(|| "N/A".into()),
+            time: Duration::from_secs(process_val.run_time()),
         });
     }
 

@@ -24,7 +24,7 @@ mod test {
     #[test]
     fn process_column_settings() {
         let config = r#"
-            columns = ["CPU%", "PiD", "user", "MEM", "Tread", "T.Write", "Rps", "W/s"]
+            columns = ["CPU%", "PiD", "user", "MEM", "Tread", "T.Write", "Rps", "W/s", "tiMe", "USER", "state"]
         "#;
 
         let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
@@ -39,26 +39,23 @@ mod test {
                 ProcColumn::TotalWrite,
                 ProcColumn::ReadPerSecond,
                 ProcColumn::WritePerSecond,
+                ProcColumn::Time,
+                ProcColumn::User,
+                ProcColumn::State,
             ]),
         );
     }
 
     #[test]
     fn process_column_settings_2() {
-        let config = r#"
-            columns = ["MEM%"]
-        "#;
-
+        let config = r#"columns = ["MEM%"]"#;
         let generated: ProcessConfig = toml_edit::de::from_str(config).unwrap();
         assert_eq!(generated.columns, Some(vec![ProcColumn::MemoryPercent]));
     }
 
     #[test]
     fn process_column_settings_3() {
-        let config = r#"
-            columns = ["MEM%", "TWrite", "Cpuz", "read", "wps"]
-        "#;
-
+        let config = r#"columns = ["MEM%", "TWrite", "Cpuz", "read", "wps"]"#;
         toml_edit::de::from_str::<ProcessConfig>(config).expect_err("Should error out!");
     }
 

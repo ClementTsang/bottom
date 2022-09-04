@@ -568,6 +568,7 @@ pub enum PrefixType {
     Name,
     State,
     User,
+    Time,
     __Nonexhaustive,
 }
 
@@ -591,6 +592,7 @@ impl std::str::FromStr for PrefixType {
             "pid" => Ok(Pid),
             "state" => Ok(State),
             "user" => Ok(User),
+            "time" => Ok(Time), // FIXME: Support time searching!
             _ => Ok(Name),
         }
     }

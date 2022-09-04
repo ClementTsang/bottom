@@ -23,6 +23,7 @@ pub enum ProcColumn {
     TotalWrite,
     State,
     User,
+    Time,
 }
 
 impl<'de> Deserialize<'de> for ProcColumn {
@@ -45,6 +46,7 @@ impl<'de> Deserialize<'de> for ProcColumn {
             "twrite" | "t.write" => Ok(ProcColumn::TotalWrite),
             "state" => Ok(ProcColumn::State),
             "user" => Ok(ProcColumn::User),
+            "time" => Ok(ProcColumn::Time),
             _ => Err(D::Error::custom("doesn't match any column type")),
         }
     }
@@ -75,6 +77,7 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::TotalWrite => "T.Write",
             ProcColumn::State => "State",
             ProcColumn::User => "User",
+            ProcColumn::Time => "Time",
         }
         .into()
     }
@@ -94,6 +97,7 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::TotalWrite => "T.Write",
             ProcColumn::State => "State",
             ProcColumn::User => "User",
+            ProcColumn::Time => "Time",
         }
         .into()
     }
@@ -150,6 +154,9 @@ impl SortsRow for ProcColumn {
                 } else {
                     data.sort_by_cached_key(|pd| pd.user.to_lowercase());
                 }
+            }
+            ProcColumn::Time => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
             }
         }
     }
