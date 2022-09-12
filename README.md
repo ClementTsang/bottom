@@ -107,7 +107,7 @@ For more details on supported platforms and known problems, check out [the docum
 
 ### Unofficial
 
-bottom may work on a number of platforms that aren't officially supported - these platforms may not be properly tested,
+bottom may work on a number of platforms that aren't officially supported - these platforms may not be properly tested
 by maintainers prior to a stable release, or may receive more limited support, or missing features/problems that may
 not be fixed. Some of these may eventually be officially supported (e.g., FreeBSD, M1 macOS devices).
 
@@ -145,16 +145,14 @@ sudo pacman -Syu bottom
 
 ### Debian/Ubuntu
 
-<!-- FIXME: Update this when bumping version, as the format has changed. -->
-
-A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest) (currently only for x86-64):
+A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
+[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7
+(note stable ARM builds only started with 0.6.8). You could install this way doing something like:
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0.6.8_amd64.deb
 sudo dpkg -i bottom_0.6.8_amd64.deb
 ```
-
-For ARM (aarch64 and armv7), `.deb` builds are currently available for the 0.6.8 release and [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly).
 
 ### Snap
 
