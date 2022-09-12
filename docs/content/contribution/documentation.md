@@ -20,12 +20,33 @@ There are a few areas where documentation changes are often needed:
 
 2. Where you're adding documentation will probably affect what you need to do:
 
-   - For changes to [`README.md`](https://github.com/ClementTsang/bottom/blob/master/README.md) and [`CHANGELOG.md`](https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md), just follow the formatting provided and use any editor.
+   ### `README.md` or `CHANGELOG.md`
 
-   - For changes to the help menu, try to refer to the existing code within `src/constants.rs` on how the help menu is generated.
+   For changes to [`README.md`](https://github.com/ClementTsang/bottom/blob/master/README.md) and [`CHANGELOG.md`](https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md), just follow the formatting provided and use any editor.
 
-   - For changes to the extended documentation, you'll want [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), and `mdx_truly_sane_lists` installed to provide live reloading and preview for your changes. You can do so through `pip` or your system's package managers. While you don't _need_ these, it'll probably help in making and validating changes.
+   ### Help menu
 
-     You may also want [Mike](https://github.com/jimporter/mike), but it isn't really needed.
+   For changes to the help menu, try to refer to the existing code within `src/constants.rs` on how the help menu is generated.
+
+   ### Extended documentation
+
+   For changes to the extended documentation, you'll probably want [MkDocs](https://www.mkdocs.org/), [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), `mdx_truly_sane_lists`, and optionally [Mike](https://github.com/jimporter/mike) installed to provide live reloading and preview for your changes. They aren't needed but it'll help with validating your changes.
+
+   You can do so through `pip` or your system's package managers. If you use `pip`, you probably would want to do something like so through a venv:
+
+   ```bash
+   # Starting from the repo root:
+   cd docs/
+
+   # Create venv and activate
+   python -m venv venv
+   source venv/bin/activate
+
+   # Install requirements
+   pip install -r requirements.txt
+
+   # Run mkdocs
+   venv/bin/mkdocs serve
+   ```
 
 3. Once you have your documentation changes done, submit it as a pull request. For more information regarding that, refer to [Issues, Pull Requests, and Discussions](../issues-and-pull-requests/).

@@ -1,7 +1,5 @@
 # Issues, Pull Requests, and Discussions
 
-Contribution in any way is appreciated, whether it is reporting problems, fixing bugs, implementing features, improving the documentation, etc.
-
 ## Discussions
 
 Discussions are open [in the repo](https://github.com/ClementTsang/bottom/discussions). As for the difference between discussions and issues:

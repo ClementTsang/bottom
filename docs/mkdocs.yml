@@ -5,7 +5,6 @@ site_url: https://clementtsang.github.io/bottom
 site_description: >-
   A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
 docs_dir: "content/"
-
 # Project information
 repo_name: ClementTsang/bottom
 repo_url: https://github.com/ClementTsang/bottom
@@ -149,6 +148,11 @@ nav:
   - "Contribution":
       - "Issues, Pull Requests, and Discussions": contribution/issues-and-pull-requests.md
       - "Documentation": contribution/documentation.md
-      - "Development": contribution/development.md
       - "Packaging and Distribution": contribution/packaging-and-distribution.md
+      - "Development":
+          - "Development Environment": contribution/development/dev_env.md
+          - "Testing": contribution/development/testing.md
+          - "Logging": contribution/development/logging.md
+          - "Build Process": contribution/development/build_process.md
+          - "Deploy Process": contribution/development/deploy_process.md
   - "Troubleshooting": troubleshooting.md
