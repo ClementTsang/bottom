@@ -882,8 +882,50 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/" class="md-nav__link">
-        Development
+      <a href="../packaging-and-distribution/" class="md-nav__link">
+        Packaging and Distribution
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" data-md-toggle="__nav_5_4" type="checkbox" id="__nav_5_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_4">
+          Development
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Development" data-md-level="2">
+        <label class="md-nav__title" for="__nav_5_4">
+          <span class="md-nav__icon md-icon"></span>
+          Development
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/dev_env/" class="md-nav__link">
+        Development Environment
       </a>
     </li>
   
@@ -896,9 +938,58 @@
   
   
     <li class="md-nav__item">
-      <a href="../packaging-and-distribution/" class="md-nav__link">
-        Packaging and Distribution
+      <a href="../development/testing/" class="md-nav__link">
+        Testing
       </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/logging/" class="md-nav__link">
+        Logging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/build_process/" class="md-nav__link">
+        Build Process
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/deploy_process/" class="md-nav__link">
+        Deploy Process
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -967,18 +1058,26 @@
 </li>
 <li>
 <p>Where you're adding documentation will probably affect what you need to do:</p>
-<ul>
-<li>For changes to <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a> and <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a>, just follow the formatting provided and use any editor.</li>
-</ul>
-<ul>
-<li>For changes to the help menu, try to refer to the existing code within <code>src/constants.rs</code> on how the help menu is generated.</li>
-</ul>
-<ul>
-<li>
-<p>For changes to the extended documentation, you'll want <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>, and <code>mdx_truly_sane_lists</code> installed to provide live reloading and preview for your changes. You can do so through <code>pip</code> or your system's package managers. While you don't <em>need</em> these, it'll probably help in making and validating changes.</p>
-<p>You may also want <a href="https://github.com/jimporter/mike">Mike</a>, but it isn't really needed.</p>
-</li>
-</ul>
+<p>### <code>README.md</code> or <code>CHANGELOG.md</code></p>
+<p>For changes to <a href="https://github.com/ClementTsang/bottom/blob/master/README.md"><code>README.md</code></a> and <a href="https://github.com/ClementTsang/bottom/blob/master/CHANGELOG.md"><code>CHANGELOG.md</code></a>, just follow the formatting provided and use any editor.</p>
+<p>### Help menu</p>
+<p>For changes to the help menu, try to refer to the existing code within <code>src/constants.rs</code> on how the help menu is generated.</p>
+<p>### Extended documentation</p>
+<p>For changes to the extended documentation, you'll probably want <a href="https://www.mkdocs.org/">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a>, <code>mdx_truly_sane_lists</code>, and optionally <a href="https://github.com/jimporter/mike">Mike</a> installed to provide live reloading and preview for your changes. They aren't needed but it'll help with validating your changes.</p>
+<p>You can do so through <code>pip</code> or your system's package managers. If you use <code>pip</code>, you probably would want to do something like so through a venv:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Starting from the repo root:</span>
+<span class="nb">cd</span> docs/
+
+<span class="c1"># Create venv and activate</span>
+python -m venv venv
+<span class="nb">source</span> venv/bin/activate
+
+<span class="c1"># Install requirements</span>
+pip install -r requirements.txt
+
+<span class="c1"># Run mkdocs</span>
+venv/bin/mkdocs serve
+</code></pre></div>
 </li>
 <li>
 <p>Once you have your documentation changes done, submit it as a pull request. For more information regarding that, refer to <a href="../issues-and-pull-requests/">Issues, Pull Requests, and Discussions</a>.</p>
@@ -1023,13 +1122,13 @@
       
       
         
-        <a href="../development/" class="md-footer__link md-footer__link--next" aria-label="Next: Development" rel="next">
+        <a href="../packaging-and-distribution/" class="md-footer__link md-footer__link--next" aria-label="Next: Packaging and Distribution" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Development
+              Packaging and Distribution
             </div>
           </div>
           <div class="md-footer__button md-icon">
