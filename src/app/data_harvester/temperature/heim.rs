@@ -35,11 +35,12 @@ pub async fn get_temperature_data(
     // NOTE: Technically none of this is async, *but* sysfs is in memory,
     // so in theory none of this should block if we're slightly careful.
     // Of note is that reading the temperature sensors of a device that has
-    // `/sys/class/hwmon/hwmon*/device/d3cold_allowed` can potentially
-    // wake the device up, waiting to return data until it is.
+    // `/sys/class/hwmon/hwmon*/device/power_state` == `D3cold` will
+    // wake the device up, and will block until it initializes.
     //
-    // Reading the `d3cold_allowed`, `power_state`, or `tempY_label` properties
-    // will not wake the device, and thus not block.
+    // Reading the `hwmon*/device/power_state` or `hwmon*/temp*_label` properties
+    // will not wake the device, and thus not block,
+    // and meaning no sensors have to be hidden depending on `power_state`
     //
     // It would probably be more ideal to use a proper async runtime..
     for entry in path.read_dir()? {
