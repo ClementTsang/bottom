@@ -41,12 +41,16 @@ opt-level = 3
 codegen-units = 1
 
 [features]
-default = ["fern", "log", "battery", "gpu", "zfs"]
 battery = ["starship-battery"]
-deploy = ["battery", "gpu"]
 gpu = ["nvidia"]
 nvidia = ["nvml-wrapper"]
 zfs = ["sysctl"]
+
+# The features we use by default.
+default = ["fern", "log", "battery", "gpu", "zfs"]
+
+# The features we use on deploy. Logging is not included as that is primarily (for now) just for debugging locally.
+deploy = ["battery", "gpu", "zfs"]
 
 [dependencies]
 anyhow = "1.0.57"
@@ -56,7 +60,6 @@ clap = { version = "3.1.12", features = ["default", "cargo", "wrap_help"] }
 concat-string = "1.0.1"
 crossterm = "0.18.2"
 ctrlc = { version = "3.1.9", features = ["termination"] }
-# const_format = "0.2.23"
 dirs = "4.0.0"
 
 fern = { version = "0.6.1", optional = true }
@@ -113,11 +116,7 @@ section = "utility"
 assets = [
     ["target/release/btm", "usr/bin/", "755"],
     ["LICENSE", "usr/share/doc/btm/", "644"],
-    [
-        "manpage/btm.1.gz",
-        "usr/share/man/man1/btm.1.gz",
-        "644",
-    ],
+    ["manpage/btm.1.gz", "usr/share/man/man1/btm.1.gz", "644"],
     [
         "completion/btm.bash",
         "usr/share/bash-completion/completions/btm",
@@ -128,11 +127,7 @@ assets = [
         "usr/share/fish/vendor_completions.d/btm.fish",
         "644",
     ],
-    [
-        "completion/_btm",
-        "usr/share/zsh/vendor-completions/",
-        "644",
-    ],
+    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
 extended-description = """\
 A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
@@ -155,4 +150,3 @@ output = "bottom_x86_64_installer.msi"
 version = "1"
 default-features = false
 features = ["user-hooks"]
-
