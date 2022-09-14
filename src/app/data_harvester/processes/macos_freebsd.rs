@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::io;
 
 use super::ProcessHarvest;
-use sysinfo::{PidExt, ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
+use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
 
 use crate::data_harvester::processes::UserTable;
 
@@ -14,8 +14,8 @@ pub fn get_process_data(
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
-    let cpu_usage = sys.global_processor_info().cpu_usage() as f64 / 100.0;
-    let num_processors = sys.processors().len() as f64;
+    let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
+    let num_processors = sys.cpus().len() as f64;
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
@@ -65,7 +65,7 @@ pub fn get_process_data(
             let ps = process_val.status();
             (ps.to_string(), convert_process_status_to_char(ps))
         };
-        let uid = process_val.uid;
+        let uid = process_val.user_id().map(|u| **u);
         process_vector.push(ProcessHarvest {
             pid: process_val.pid().as_u32() as _,
             parent_pid: process_val.parent().map(|p| p.as_u32() as _),
@@ -84,10 +84,14 @@ pub fn get_process_data(
             total_write_bytes: disk_usage.total_written_bytes,
             process_state,
             uid,
-            user: user_table
-                .get_uid_to_username_mapping(uid)
-                .map(Into::into)
-                .unwrap_or_else(|_| "N/A".into()),
+            user: uid
+                .and_then(|uid| {
+                    user_table
+                        .get_uid_to_username_mapping(uid)
+                        .map(Into::into)
+                        .ok()
+                })
+                .unwrap_or_else(|| "N/A".into()),
         });
     }
 

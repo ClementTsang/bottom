@@ -3,7 +3,7 @@
 
 use std::collections::VecDeque;
 
-use sysinfo::{LoadAvg, ProcessorExt, System, SystemExt};
+use sysinfo::{LoadAvg, System, SystemExt};
 
 use super::{CpuData, CpuHarvest, PastCpuTotal, PastCpuWork};
 use crate::app::data_harvester::cpu::LoadAvgHarvest;
@@ -25,7 +25,7 @@ pub async fn get_cpu_data_list(
         .collect();
 
     if show_average_cpu {
-        let cpu = sys.global_processor_info();
+        let cpu = sys.global_cpu_info();
 
         cpu_deque.push_front(CpuData {
             cpu_prefix: "AVG".to_string(),
