@@ -57,12 +57,15 @@ pub async fn get_temperature_data(
 
         // Whether the temperature should *actually* be read during enumeration
         // Set to false if the device is in ACPI D3cold
-        let mut should_read_temp = true;
-        // Documented at https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state
-        let power_state = path.join("device").join("power_state");
-        if power_state.exists() {
-            should_read_temp = fs::read_to_string(power_state)?.trim() == "D0";
-        }
+        let should_read_temp = {
+            // Documented at https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state
+            let power_state = path.join("device").join("power_state");
+            if power_state.exists() {
+                fs::read_to_string(power_state)?.trim() == "D0"
+            } else {
+                true
+            }
+        };
 
         // Enumerate the devices temperature sensors
         for entry in path.read_dir()? {
