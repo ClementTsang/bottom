@@ -48,14 +48,12 @@ pub async fn get_temperature_data(
         let path = file.path();
         // hwmon includes many sensors, we only want ones with at least one temperature sensor
         // Reading this file will wake the device, but we're only checking existence.
-        let has_temp = path.join("temp1_input").exists();
-        let hwmon_name = path.join("name");
-        let hwmon_name = Some(fs::read_to_string(&hwmon_name)?);
-
-        // Skip ones without temperature sensors early
-        if !has_temp {
+        if !path.join("temp1_input").exists() {
             continue;
         }
+
+        let hwmon_name = path.join("name");
+        let hwmon_name = Some(fs::read_to_string(&hwmon_name)?);
 
         // Whether the temperature should *actually* be read during enumeration
         // Set to false if the device is in ACPI D3cold
