@@ -59,9 +59,17 @@ pub async fn get_temperature_data(
         // Set to false if the device is in ACPI D3cold
         let should_read_temp = {
             // Documented at https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-devices-power_state
-            let power_state = path.join("device").join("power_state");
+            let device = path.join("device");
+            let power_state = device.join("power_state");
             if power_state.exists() {
-                fs::read_to_string(power_state)?.trim() == "D0"
+                let state = fs::read_to_string(power_state)?;
+                let state = state.trim();
+                // The zenpower3 kernel module (incorrectly?) reports "unknown"
+                // causing this check to fail and temperatures to appear as zero
+                // instead of having the file not exist..
+                // their self-hosted git instance has disabled sign up,
+                // so this bug cant be reported either.
+                state == "D0" || state == "unknown"
             } else {
                 true
             }
