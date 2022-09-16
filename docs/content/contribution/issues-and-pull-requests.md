@@ -27,5 +27,7 @@ The expected workflow for a pull request is:
 2. Make your changes.
 3. Make any documentation changes if necessary - if you add a new feature, it'll probably need documentation changes. See [here](./documentation.md) for tips on documentation.
 4. Commit and create a pull request to merge into the `master` branch. **Please follow the pull request template**.
-5. Wait for the tests to pass. These consist of clippy lints, rustfmt checks, and basic tests. **If you are a first time contributor, you may need to skip this step for now, as GitHub Actions requires approval to run.**
-6. Ask a maintainer to review your pull request. If changes are suggested or any comments are made, they should probably be addressed. Once it looks good, it'll be merged!
+5. Ask/wait for a maintainer to review your pull request.
+   - Check if tests pass. These consist of clippy lints, rustfmt checks, and basic tests.
+   - If changes are suggested or any comments are made, they should probably be addressed.
+6. Once it looks good, it'll be merged! Note that _generally_, PRs are squashed, though feel free to ask otherwise if that isn't preferable.
