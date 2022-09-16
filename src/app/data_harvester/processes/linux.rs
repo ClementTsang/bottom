@@ -219,7 +219,7 @@ fn read_proc(
             total_read_bytes,
             total_write_bytes,
             process_state,
-            uid,
+            uid: Some(uid),
             user: user_table
                 .get_uid_to_username_mapping(uid)
                 .map(Into::into)
