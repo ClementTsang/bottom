@@ -114,16 +114,20 @@ fn get_from_hwmon(
                 let drm = device.join("drm");
                 if drm.exists() {
                     // This should never actually be empty
-                    let mut gpu = String::new();
+                    let mut gpu = None;
                     for card in drm.read_dir()? {
                         let card = card?;
                         let name = card.file_name().to_str().unwrap_or_default().to_owned();
                         if name.starts_with("card") {
-                            gpu = name;
+                            if let Some(hwmon_name) = hwmon_name.as_ref() {
+                                gpu = Some(format!("{} ({})", name, hwmon_name.trim()));
+                            } else {
+                                gpu = Some(name)
+                            }
                             break;
                         }
                     }
-                    Some(gpu)
+                    gpu
                 } else {
                     // This little mess is to account for stuff like k10temp
                     // This is needed because the `device` symlink
