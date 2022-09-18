@@ -1,7 +1,10 @@
 //! Gets temperature data via heim.
 
 use super::{is_temp_filtered, temp_vec_sort, TempHarvest, TemperatureType};
-use crate::app::Filter;
+use crate::app::{
+    data_harvester::temperature::{convert_celsius_to_fahrenheit, convert_celsius_to_kelvin},
+    Filter,
+};
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon`
 ///
@@ -97,7 +100,6 @@ pub async fn get_temperature_data(
             };
 
             if is_temp_filtered(filter, &name) {
-                use heim::units::{thermodynamic_temperature, ThermodynamicTemperature};
                 let temp = if should_read_temp {
                     let temp = fs::read_to_string(temp)?;
                     let temp = temp.trim_end().parse::<f32>().map_err(|e| {
@@ -107,20 +109,13 @@ pub async fn get_temperature_data(
                 } else {
                     0.0
                 };
-                let temp = ThermodynamicTemperature::new::<thermodynamic_temperature::degree_celsius>(
-                    temp,
-                );
 
                 temperature_vec.push(TempHarvest {
                     name,
                     temperature: match temp_type {
-                        TemperatureType::Celsius => {
-                            temp.get::<thermodynamic_temperature::degree_celsius>()
-                        }
-                        TemperatureType::Kelvin => temp.get::<thermodynamic_temperature::kelvin>(),
-                        TemperatureType::Fahrenheit => {
-                            temp.get::<thermodynamic_temperature::degree_fahrenheit>()
-                        }
+                        TemperatureType::Celsius => temp,
+                        TemperatureType::Kelvin => convert_celsius_to_kelvin(temp),
+                        TemperatureType::Fahrenheit => convert_celsius_to_fahrenheit(temp),
                     },
                 });
             }
