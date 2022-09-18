@@ -139,10 +139,12 @@ fn get_from_hwmon(
                         .map(|f| f.to_str().unwrap_or_default().to_owned())
                         .unwrap();
                     if link.as_bytes()[0].is_ascii_alphabetic() {
-                        Some(link)
+                        if let Some(hwmon_name) = hwmon_name.as_ref() {
+                            Some(format!("{} ({})", link, hwmon_name.trim()))
+                        } else {
+                            Some(link)
+                        }
                     } else {
-                        // No idea why rust thinks this may have been moved
-                        // in a previous loop iteration and needs a clone
                         hwmon_name.clone()
                     }
                 }
