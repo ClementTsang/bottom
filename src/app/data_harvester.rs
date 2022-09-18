@@ -343,6 +343,29 @@ impl DataCollector {
             }
         }
 
+        if self.widgets_to_harvest.use_temp {
+            #[cfg(not(target_os = "linux"))]
+            {
+                if let Ok(data) = temperature::get_temperature_data(
+                    &self.sys,
+                    &self.temperature_type,
+                    &self.filters.temp_filter,
+                ) {
+                    self.data.temperature_sensors = data;
+                }
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                if let Ok(data) = temperature::get_temperature_data(
+                    &self.temperature_type,
+                    &self.filters.temp_filter,
+                ) {
+                    self.data.temperature_sensors = data;
+                }
+            }
+        }
+
         let network_data_fut = {
             #[cfg(any(target_os = "windows", target_os = "freebsd"))]
             {
@@ -384,33 +407,12 @@ impl DataCollector {
             &self.filters.mount_filter,
         );
         let disk_io_usage_fut = disks::get_io_usage(self.widgets_to_harvest.use_disk);
-        let temp_data_fut = {
-            #[cfg(not(target_os = "linux"))]
-            {
-                temperature::get_temperature_data(
-                    &self.sys,
-                    &self.temperature_type,
-                    self.widgets_to_harvest.use_temp,
-                    &self.filters.temp_filter,
-                )
-            }
 
-            #[cfg(target_os = "linux")]
-            {
-                temperature::get_temperature_data(
-                    &self.temperature_type,
-                    self.widgets_to_harvest.use_temp,
-                    &self.filters.temp_filter,
-                )
-            }
-        };
-
-        let (net_data, mem_res, disk_res, io_res, temp_res) = join!(
+        let (net_data, mem_res, disk_res, io_res) = join!(
             network_data_fut,
             mem_data_fut,
             disk_data_fut,
             disk_io_usage_fut,
-            temp_data_fut
         );
 
         if let Ok(net_data) = net_data {
@@ -440,10 +442,6 @@ impl DataCollector {
 
         if let Ok(io) = io_res {
             self.data.io = io;
-        }
-
-        if let Ok(temp) = temp_res {
-            self.data.temperature_sensors = temp;
         }
 
         // Update time
