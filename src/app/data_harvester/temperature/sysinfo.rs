@@ -5,15 +5,12 @@ use super::{
     TempHarvest, TemperatureType,
 };
 use crate::app::Filter;
+use anyhow::Result;
 
-pub async fn get_temperature_data(
-    sys: &sysinfo::System, temp_type: &TemperatureType, actually_get: bool, filter: &Option<Filter>,
-) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
+pub fn get_temperature_data(
+    sys: &sysinfo::System, temp_type: &TemperatureType, filter: &Option<Filter>,
+) -> Result<Option<Vec<TempHarvest>>> {
     use sysinfo::{ComponentExt, SystemExt};
-
-    if !actually_get {
-        return Ok(None);
-    }
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 

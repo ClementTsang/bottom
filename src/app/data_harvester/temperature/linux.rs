@@ -1,10 +1,11 @@
-//! Gets temperature data via heim.
+//! Gets temperature sensor data for Linux platforms.
 
 use super::{is_temp_filtered, temp_vec_sort, TempHarvest, TemperatureType};
 use crate::app::{
     data_harvester::temperature::{convert_celsius_to_fahrenheit, convert_celsius_to_kelvin},
     Filter,
 };
+use anyhow::{anyhow, Result};
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon`
 ///
@@ -21,14 +22,10 @@ use crate::app::{
 /// This has the notable issue that once this happens,
 /// the device will be *kept* on through the sensor reading,
 /// and not be able to re-enter ACPI D3cold.
-pub async fn get_temperature_data(
-    temp_type: &TemperatureType, actually_get: bool, filter: &Option<Filter>,
-) -> crate::utils::error::Result<Option<Vec<TempHarvest>>> {
+pub fn get_temperature_data(
+    temp_type: &TemperatureType, filter: &Option<Filter>,
+) -> Result<Option<Vec<TempHarvest>>> {
     use std::{fs, path::Path};
-
-    if !actually_get {
-        return Ok(None);
-    }
 
     let mut temperature_vec: Vec<TempHarvest> = Vec::new();
 
@@ -83,7 +80,9 @@ pub async fn get_temperature_data(
             let file = entry?;
             let name = file.file_name();
             // This should always be ASCII
-            let name = name.to_str().unwrap();
+            let name = name
+                .to_str()
+                .ok_or_else(|| anyhow!("temperature device filenames should be ASCII"))?;
             // We only want temperature sensors, skip others early
             if !(name.starts_with("temp") && name.ends_with("input")) {
                 continue;
