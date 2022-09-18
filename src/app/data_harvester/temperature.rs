@@ -39,16 +39,12 @@ impl Default for TemperatureType {
     }
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(any(feature = "nvidia", target_os = "macos", target_os = "windows"))] {
-        fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
-            celsius + 273.15
-        }
+fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+    celsius + 273.15
+}
 
-        fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
-            (celsius * (9.0 / 5.0)) + 32.0
-        }
-    }
+fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+    (celsius * (9.0 / 5.0)) + 32.0
 }
 
 fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {
