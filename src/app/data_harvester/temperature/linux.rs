@@ -160,7 +160,8 @@ fn get_from_thermal_zone(
                     .parse::<f32>()
                     .map_err(|e| {
                         crate::utils::error::BottomError::ConversionError(e.to_string())
-                    })?;
+                    })?
+                    / 1_000.0;
                 temperatures.push(TempHarvest {
                     name,
                     temperature: match temp_type {
