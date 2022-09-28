@@ -23,8 +23,8 @@ fn create_dir(dir: &Path) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    const COMPLETION_DIR: &str = "target/tmp/bottom/completion";
-    const MANPAGE_DIR: &str = "target/tmp/bottom/manpage";
+    const COMPLETION_DIR: &str = "./target/tmp/bottom/completion/";
+    const MANPAGE_DIR: &str = "./target/tmp/bottom/manpage/";
 
     match env::var_os("BTM_GENERATE") {
         Some(var) if !var.is_empty() => {
@@ -52,10 +52,6 @@ fn main() -> Result<()> {
         _ => {}
     }
 
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=./src/clap.rs");
-    println!("cargo:rerun-if-changed=.{}", COMPLETION_DIR);
-    println!("cargo:rerun-if-changed=.{}", MANPAGE_DIR);
     println!("cargo:rerun-if-env-changed=BTM_GENERATE");
 
     Ok(())
