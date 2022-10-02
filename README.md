@@ -34,6 +34,7 @@
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [Solus](#solus)
+  - [Void](#void)
   - [Homebrew](#homebrew)
   - [MacPorts](#macports)
   - [Scoop](#scoop)
@@ -206,6 +207,11 @@ nix-env -i bottom
 
 ```bash
 sudo eopkg it bottom
+```
+
+### Void
+```bash
+sudo xbps-install bottom
 ```
 
 ### Homebrew
