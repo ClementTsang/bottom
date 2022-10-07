@@ -20,7 +20,7 @@ pub async fn get_mem_data(
 }
 
 pub async fn get_ram_data(sys: &System) -> crate::utils::error::Result<Option<MemHarvest>> {
-    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory(), sys.used_memory());
+    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory() / 1024, sys.used_memory()) / 1024;
 
     Ok(Some(MemHarvest {
         mem_total_in_kib,
@@ -34,7 +34,7 @@ pub async fn get_ram_data(sys: &System) -> crate::utils::error::Result<Option<Me
 }
 
 pub async fn get_swap_data(sys: &System) -> crate::utils::error::Result<Option<MemHarvest>> {
-    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_swap(), sys.used_swap());
+    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_swap() / 1024, sys.used_swap() / 1024);
 
     Ok(Some(MemHarvest {
         mem_total_in_kib,
