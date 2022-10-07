@@ -66,7 +66,7 @@ pub fn get_process_data(
             } else {
                 0.0
             },
-            mem_usage_bytes: process_val.memory() * 1024,
+            mem_usage_bytes: process_val.memory(),
             cpu_usage_percent: process_cpu_usage,
             read_bytes_per_sec: disk_usage.read_bytes,
             write_bytes_per_sec: disk_usage.written_bytes,
