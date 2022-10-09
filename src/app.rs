@@ -103,6 +103,7 @@ pub struct App {
     #[builder(default, setter(skip))]
     second_char: Option<char>,
 
+    // FIXME: The way we do deletes is really gross.
     #[builder(default, setter(skip))]
     pub dd_err: Option<String>,
 
@@ -1181,8 +1182,13 @@ impl App {
         {
             if let Some(current) = pws.table.current_item() {
                 let id = current.id.to_string();
-                if let Some(pids) = pws.id_pid_map.get(&id) {
-                    let current_process = (id, pids.clone());
+                if let Some(pids) = pws
+                    .id_pid_map
+                    .get(&id)
+                    .cloned()
+                    .or_else(|| Some(vec![current.pid]))
+                {
+                    let current_process = (id, pids);
 
                     self.to_delete_process_list = Some(current_process);
                     self.delete_dialog_state.is_showing_dd = true;
