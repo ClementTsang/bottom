@@ -1,7 +1,6 @@
 use std::{
     cmp::{max, min},
     collections::HashMap,
-    path::PathBuf,
     time::Instant,
 };
 
@@ -18,9 +17,6 @@ pub use states::*;
 use crate::{
     constants,
     data_conversion::ConvertedData,
-    options::Config,
-    options::ConfigFlags,
-    options::WidgetIdEnabled,
     units::data_units::DataUnit,
     utils::error::{BottomError, Result},
     Pid,
@@ -157,8 +153,6 @@ pub struct App {
     pub current_widget: BottomWidget,
     pub used_widgets: UsedWidgets,
     pub filters: DataFilters,
-    pub config: Config,               //  TODO: Is this even used...?
-    pub config_path: Option<PathBuf>, //  TODO: Is this even used...?
 }
 
 #[cfg(target_os = "windows")]
@@ -399,7 +393,6 @@ impl App {
 
     pub fn toggle_ignore_case(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
-        let mut is_case_sensitive: Option<bool> = None;
         if let Some(proc_widget_state) = self
             .proc_state
             .widget_states
@@ -408,48 +401,12 @@ impl App {
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.proc_search.search_toggle_ignore_case();
                 proc_widget_state.update_query();
-
-                // Remember, it's the opposite (ignoring case is case "in"sensitive)
-                is_case_sensitive = Some(!proc_widget_state.proc_search.is_ignoring_case);
-            }
-        }
-
-        // Also toggle it in the config file if we actually changed it.
-        if let Some(is_ignoring_case) = is_case_sensitive {
-            if let Some(flags) = &mut self.config.flags {
-                if let Some(map) = &mut flags.search_case_enabled_widgets_map {
-                    // Just update the map.
-                    let mapping = map.entry(self.current_widget.widget_id - 1).or_default();
-                    *mapping = is_ignoring_case;
-
-                    flags.search_case_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(map));
-                } else {
-                    // Map doesn't exist yet... initialize ourselves.
-                    let mut map = HashMap::default();
-                    map.insert(self.current_widget.widget_id - 1, is_ignoring_case);
-                    flags.search_case_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(&map));
-                    flags.search_case_enabled_widgets_map = Some(map);
-                }
-            } else {
-                // Must initialize it ourselves...
-                let mut map = HashMap::default();
-                map.insert(self.current_widget.widget_id - 1, is_ignoring_case);
-
-                self.config.flags = Some(
-                    ConfigFlags::builder()
-                        .search_case_enabled_widgets(WidgetIdEnabled::create_from_hashmap(&map))
-                        .search_case_enabled_widgets_map(map)
-                        .build(),
-                );
             }
         }
     }
 
     pub fn toggle_search_whole_word(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
-        let mut is_searching_whole_word: Option<bool> = None;
         if let Some(proc_widget_state) = self
             .proc_state
             .widget_states
@@ -458,52 +415,12 @@ impl App {
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.proc_search.search_toggle_whole_word();
                 proc_widget_state.update_query();
-
-                is_searching_whole_word =
-                    Some(proc_widget_state.proc_search.is_searching_whole_word);
             }
-        }
-
-        // Also toggle it in the config file if we actually changed it.
-        if let Some(is_searching_whole_word) = is_searching_whole_word {
-            if let Some(flags) = &mut self.config.flags {
-                if let Some(map) = &mut flags.search_whole_word_enabled_widgets_map {
-                    // Just update the map.
-                    let mapping = map.entry(self.current_widget.widget_id - 1).or_default();
-                    *mapping = is_searching_whole_word;
-
-                    flags.search_whole_word_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(map));
-                } else {
-                    // Map doesn't exist yet... initialize ourselves.
-                    let mut map = HashMap::default();
-                    map.insert(self.current_widget.widget_id - 1, is_searching_whole_word);
-                    flags.search_whole_word_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(&map));
-                    flags.search_whole_word_enabled_widgets_map = Some(map);
-                }
-            } else {
-                // Must initialize it ourselves...
-                let mut map = HashMap::default();
-                map.insert(self.current_widget.widget_id - 1, is_searching_whole_word);
-
-                self.config.flags = Some(
-                    ConfigFlags::builder()
-                        .search_whole_word_enabled_widgets(WidgetIdEnabled::create_from_hashmap(
-                            &map,
-                        ))
-                        .search_whole_word_enabled_widgets_map(map)
-                        .build(),
-                );
-            }
-
-            // self.did_config_fail_to_save = self.update_config_file().is_err();
         }
     }
 
     pub fn toggle_search_regex(&mut self) {
         let is_in_search_widget = self.is_in_search_widget();
-        let mut is_searching_with_regex: Option<bool> = None;
         if let Some(proc_widget_state) = self
             .proc_state
             .widget_states
@@ -512,41 +429,6 @@ impl App {
             if is_in_search_widget && proc_widget_state.is_search_enabled() {
                 proc_widget_state.proc_search.search_toggle_regex();
                 proc_widget_state.update_query();
-
-                is_searching_with_regex =
-                    Some(proc_widget_state.proc_search.is_searching_with_regex);
-            }
-        }
-
-        // Also toggle it in the config file if we actually changed it.
-        if let Some(is_searching_whole_word) = is_searching_with_regex {
-            if let Some(flags) = &mut self.config.flags {
-                if let Some(map) = &mut flags.search_regex_enabled_widgets_map {
-                    // Just update the map.
-                    let mapping = map.entry(self.current_widget.widget_id - 1).or_default();
-                    *mapping = is_searching_whole_word;
-
-                    flags.search_regex_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(map));
-                } else {
-                    // Map doesn't exist yet... initialize ourselves.
-                    let mut map = HashMap::default();
-                    map.insert(self.current_widget.widget_id - 1, is_searching_whole_word);
-                    flags.search_regex_enabled_widgets =
-                        Some(WidgetIdEnabled::create_from_hashmap(&map));
-                    flags.search_regex_enabled_widgets_map = Some(map);
-                }
-            } else {
-                // Must initialize it ourselves...
-                let mut map = HashMap::default();
-                map.insert(self.current_widget.widget_id - 1, is_searching_whole_word);
-
-                self.config.flags = Some(
-                    ConfigFlags::builder()
-                        .search_regex_enabled_widgets(WidgetIdEnabled::create_from_hashmap(&map))
-                        .search_regex_enabled_widgets_map(map)
-                        .build(),
-                );
             }
         }
     }

@@ -4,7 +4,6 @@ use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
     convert::TryInto,
-    path::PathBuf,
     str::FromStr,
     time::Instant,
 };
@@ -252,7 +251,7 @@ pub struct IgnoreList {
 pub fn build_app(
     matches: &clap::ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    config_path: Option<PathBuf>, colours: &CanvasColours,
+    colours: &CanvasColours,
 ) -> Result<App> {
     use BottomWidgetType::*;
     let autohide_time = get_autohide_time(matches, config);
@@ -541,8 +540,6 @@ pub fn build_app(
             temp_filter,
             net_filter,
         })
-        .config(config.clone())
-        .config_path(config_path)
         .build())
 }
 
