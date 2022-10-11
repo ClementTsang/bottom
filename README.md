@@ -282,6 +282,10 @@ cargo install --path .
 
 # Option 3 - Clone and install directly from the repo all via Cargo
 cargo install --git https://github.com/ClementTsang/bottom
+
+# You can also want to pass in the target-cpu=native flag for
+# better CPU-specific optimizations. For example:
+RUSTFLAGS="-C target-cpu=native" cargo install --path .
 ```
 
 ### Binaries
