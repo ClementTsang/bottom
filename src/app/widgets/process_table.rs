@@ -264,7 +264,6 @@ impl ProcWidget {
     /// This function *only* updates the displayed process data. If there is a need to update the actual *stored* data,
     /// call it before this function.
     pub fn update_displayed_process_data(&mut self, data_collection: &DataCollection) {
-        // FIXME: Handle this.
         self.table_data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&data_collection.process_data.process_harvest)
@@ -357,6 +356,10 @@ impl ProcWidget {
                             });
                     }
                 } else {
+                    if is_process_matching {
+                        filtered_tree.insert(process.pid, vec![]);
+                    }
+
                     visited_pids.insert(process.pid, is_process_matching);
                     stack.pop();
                 }

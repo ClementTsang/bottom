@@ -347,7 +347,7 @@ pub fn update_data(app: &mut App) {
         app.converted_data.swap_data = convert_swap_data_points(data_source);
         #[cfg(feature = "zfs")]
         {
-            app.converted_data.arc_data = convert_arc_data_points(&data_source);
+            app.converted_data.arc_data = convert_arc_data_points(data_source);
         }
 
         app.mem_state.force_update = None;
