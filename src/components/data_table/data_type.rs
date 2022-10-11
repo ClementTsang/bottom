@@ -1,5 +1,7 @@
 use tui::{text::Text, widgets::Row};
 
+use crate::canvas::Painter;
+
 use super::{ColumnHeader, DataTableColumn};
 
 pub trait DataToCell<H>
@@ -13,7 +15,7 @@ where
     ///
     /// The default implementation just returns the `row` that is passed in.
     #[inline(always)]
-    fn style_row<'a>(&self, row: Row<'a>) -> Row<'a> {
+    fn style_row<'a>(&self, row: Row<'a>, _painter: &Painter) -> Row<'a> {
         row
     }
 

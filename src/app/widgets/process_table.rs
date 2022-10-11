@@ -708,6 +708,7 @@ impl ProcWidget {
         self.table
             .columns
             .iter()
+            .filter(|c| !c.is_hidden)
             .map(|c| c.inner().text())
             .collect::<Vec<_>>()
     }

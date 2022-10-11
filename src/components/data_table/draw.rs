@@ -15,6 +15,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::layout_manager::BottomWidget,
+    canvas::Painter,
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
 };
 
@@ -141,7 +142,7 @@ where
 
     pub fn draw<B: Backend>(
         &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, data: Vec<DataType>,
-        widget: Option<&mut BottomWidget>,
+        widget: Option<&mut BottomWidget>, painter: &Painter,
     ) {
         self.data = data;
         self.update_num_entries();
@@ -217,14 +218,16 @@ where
                         .select(Some(self.state.current_index.saturating_sub(start)));
 
                     self.data[start..end].iter().map(|data_row| {
-                        data_row.style_row(Row::new(
+                        let row = Row::new(
                             columns
                                 .iter()
                                 .zip(&self.state.calculated_widths)
                                 .filter_map(|(column, &width)| {
                                     data_row.to_cell(column.inner(), width)
                                 }),
-                        ))
+                        );
+
+                        data_row.style_row(row, painter)
                     })
                 };
 

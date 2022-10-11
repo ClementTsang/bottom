@@ -6,12 +6,12 @@ use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{
     app::{data_harvester::cpu::CpuDataType, AppConfigFields},
-    canvas::canvas_colours::CanvasColours,
+    canvas::{canvas_colours::CanvasColours, Painter},
     components::data_table::{
         Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
         DataToCell,
     },
-    data_conversion::{CpuWidgetData, CpuWidgetDataType},
+    data_conversion::CpuWidgetData,
     utils::gen_util::truncate_text,
 };
 
@@ -63,12 +63,12 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetData {
         //
         // This is the same for the use percentages - we just *always* show them, and *always* hide the CPU column if
         // it is too small.
-        match &self.data {
-            CpuWidgetDataType::All => match column {
+        match &self {
+            CpuWidgetData::All => match column {
                 CpuWidgetColumn::CPU => Some(truncate_text("All", calculated_width)),
                 CpuWidgetColumn::Use => None,
             },
-            CpuWidgetDataType::Entry {
+            CpuWidgetData::Entry {
                 data_type,
                 data: _,
                 last_entry,
@@ -104,8 +104,23 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetData {
     }
 
     #[inline(always)]
-    fn style_row<'a>(&self, row: Row<'a>) -> Row<'a> {
-        row.style(self.style)
+    fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
+        let style = match self {
+            CpuWidgetData::All => painter.colours.all_colour_style,
+            CpuWidgetData::Entry {
+                data_type,
+                data: _,
+                last_entry: _,
+            } => match data_type {
+                CpuDataType::Avg => painter.colours.avg_colour_style,
+                CpuDataType::Cpu(index) => {
+                    painter.colours.cpu_colour_styles
+                        [index % painter.colours.cpu_colour_styles.len()]
+                }
+            },
+        };
+
+        row.style(style)
     }
 
     fn column_widths<C: DataTableColumn<CpuWidgetColumn>>(

@@ -26,6 +26,7 @@ impl Painter {
                 &draw_info,
                 app_state.converted_data.temp_data.clone(),
                 app_state.widget_map.get_mut(&widget_id),
+                self,
             );
         }
     }

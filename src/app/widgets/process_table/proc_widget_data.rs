@@ -4,10 +4,11 @@ use std::{
 };
 
 use concat_string::concat_string;
-use tui::{style::Style, text::Text, widgets::Row};
+use tui::{text::Text, widgets::Row};
 
 use crate::{
     app::data_harvester::processes::ProcessHarvest,
+    canvas::Painter,
     components::data_table::{DataTableColumn, DataToCell},
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
     Pid,
@@ -245,9 +246,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     }
 
     #[inline(always)]
-    fn style_row<'a>(&self, row: Row<'a>) -> Row<'a> {
+    fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         if self.disabled {
-            row.style(Style::default())
+            row.style(painter.colours.disabled_text_style)
         } else {
             row
         }

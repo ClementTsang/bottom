@@ -40,6 +40,22 @@ pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     _pd: PhantomData<(DataType, S, Header)>,
 }
 
+impl<DataType: DataToCell<H>, H: ColumnHeader> DataTable<DataType, H, Unsortable, Column<H>> {
+    pub fn new<C: Into<Vec<Column<H>>>>(
+        columns: C, props: DataTableProps, styling: DataTableStyling,
+    ) -> Self {
+        Self {
+            columns: columns.into(),
+            state: DataTableState::default(),
+            props,
+            styling,
+            data: vec![],
+            sort_type: Unsortable,
+            _pd: PhantomData,
+        }
+    }
+}
+
 impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H>>
     DataTable<DataType, H, S, C>
 {

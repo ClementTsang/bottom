@@ -1,16 +1,13 @@
 use std::borrow::Cow;
 
 use crate::{
-    app::{
-        data_harvester::cpu::CpuDataType, layout_manager::WidgetDirection, widgets::CpuWidgetState,
-        App,
-    },
+    app::{layout_manager::WidgetDirection, widgets::CpuWidgetState, App},
     canvas::{drawing_utils::should_hide_x_label, Painter},
     components::{
         data_table::{DrawInfo, SelectionState},
         time_graph::{GraphData, TimeGraph},
     },
-    data_conversion::{CpuWidgetData, CpuWidgetDataType},
+    data_conversion::CpuWidgetData,
 };
 
 use concat_string::concat_string;
@@ -133,9 +130,9 @@ impl Painter {
                 .enumerate()
                 .rev()
                 .filter_map(|(itx, cpu)| {
-                    match &cpu.data {
-                        CpuWidgetDataType::All => None,
-                        CpuWidgetDataType::Entry { data, .. } => {
+                    match &cpu {
+                        CpuWidgetData::All => None,
+                        CpuWidgetData::Entry { data, .. } => {
                             let style = if show_avg_cpu && itx == AVG_POSITION {
                                 self.colours.avg_colour_style
                             } else if itx == ALL_POSITION {
@@ -155,8 +152,8 @@ impl Painter {
                     }
                 })
                 .collect::<Vec<_>>()
-        } else if let Some(CpuWidgetDataType::Entry { data, .. }) =
-            cpu_data.get(current_scroll_position).map(|c| &c.data)
+        } else if let Some(CpuWidgetData::Entry { data, .. }) =
+            cpu_data.get(current_scroll_position)
         {
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.colours.avg_colour_style
@@ -247,28 +244,12 @@ impl Painter {
                 selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
-            for cpu in &mut app_state.converted_data.cpu_data {
-                cpu.style = match &cpu.data {
-                    CpuWidgetDataType::All => cpu_widget_state.styling.all,
-                    CpuWidgetDataType::Entry {
-                        data_type,
-                        data: _,
-                        last_entry: _,
-                    } => match data_type {
-                        CpuDataType::Avg => cpu_widget_state.styling.avg,
-                        CpuDataType::Cpu(index) => {
-                            cpu_widget_state.styling.entries
-                                [index % cpu_widget_state.styling.entries.len()]
-                        }
-                    },
-                }
-            }
-
             cpu_widget_state.table.draw(
                 f,
                 &draw_info,
                 app_state.converted_data.cpu_data.clone(),
                 app_state.widget_map.get_mut(&widget_id),
+                self,
             );
         }
     }

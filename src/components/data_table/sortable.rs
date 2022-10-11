@@ -7,8 +7,8 @@ use tui::widgets::Row;
 use crate::utils::gen_util::truncate_text;
 
 use super::{
-    Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
-    DataTableState, DataTableStyling, DataToCell,
+    ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
+    DataTableStyling, DataToCell,
 };
 
 /// Denotes the sort order.
@@ -68,22 +68,6 @@ mod private {
 }
 
 impl SortType for Unsortable {}
-
-impl<DataType: DataToCell<H>, H: ColumnHeader> DataTable<DataType, H, Unsortable, Column<H>> {
-    pub fn new<C: Into<Vec<Column<H>>>>(
-        columns: C, props: DataTableProps, styling: DataTableStyling,
-    ) -> Self {
-        Self {
-            columns: columns.into(),
-            state: DataTableState::default(),
-            props,
-            styling,
-            data: vec![],
-            sort_type: Unsortable,
-            _pd: PhantomData,
-        }
-    }
-}
 
 impl SortType for Sortable {
     fn build_header<H, C>(&self, columns: &[C], widths: &[u16]) -> Row<'_>
