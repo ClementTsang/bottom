@@ -110,21 +110,17 @@ impl ProcessData {
             .collect();
         self.process_harvest = process_pid_map;
 
-        // This also needs a quick sort + reverse to be in the correct order.
+        // We collect all processes that either:
+        // - Do not have a parent PID (that is, they are orphan processes)
+        // - Have a parent PID but we don't have the parent (we promote them as orphans)
+        // Note this also needs a quick sort + reverse to be in the correct order.
         self.orphan_pids = {
             let mut res: Vec<Pid> = self
                 .process_harvest
                 .iter()
-                .filter_map(|(pid, process_harvest)| {
-                    if let Some(parent_pid) = process_harvest.parent_pid {
-                        if self.process_harvest.contains_key(&parent_pid) {
-                            None
-                        } else {
-                            Some(*pid)
-                        }
-                    } else {
-                        Some(*pid)
-                    }
+                .filter_map(|(pid, process_harvest)| match process_harvest.parent_pid {
+                    Some(parent_pid) if self.process_harvest.contains_key(&parent_pid) => None,
+                    _ => Some(*pid),
                 })
                 .sorted()
                 .collect();

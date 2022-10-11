@@ -6,12 +6,15 @@ use std::io;
 use super::ProcessHarvest;
 use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
 
-use crate::data_harvester::processes::UserTable;
+use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
-pub fn get_process_data(
+pub fn get_process_data<F>(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64, user_table: &mut UserTable,
-    get_process_cpu_usage: impl Fn(&[i32]) -> io::Result<HashMap<i32, f64>>,
-) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+    get_process_cpu_usage: F,
+) -> Result<Vec<ProcessHarvest>>
+where
+    F: Fn(&[Pid]) -> io::Result<HashMap<Pid, f64>>,
+{
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
     let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
@@ -66,9 +69,22 @@ pub fn get_process_data(
             (ps.to_string(), convert_process_status_to_char(ps))
         };
         let uid = process_val.user_id().map(|u| **u);
+        let pid = process_val.pid().as_u32() as Pid;
         process_vector.push(ProcessHarvest {
-            pid: process_val.pid().as_u32() as _,
-            parent_pid: process_val.parent().map(|p| p.as_u32() as _),
+            pid,
+            parent_pid: {
+                #[cfg(target_os = "macos")]
+                {
+                    process_val
+                        .parent()
+                        .map(|p| p.as_u32() as _)
+                        .or_else(|| super::fallback_macos_ppid(pid))
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    process_val.parent().map(|p| p.as_u32() as _)
+                }
+            },
             name,
             command,
             mem_usage_percent: if mem_total_kb > 0 {
@@ -96,7 +112,7 @@ pub fn get_process_data(
     }
 
     let unknown_state = ProcessStatus::Unknown(0).to_string();
-    let cpu_usage_unknown_pids: Vec<i32> = process_vector
+    let cpu_usage_unknown_pids: Vec<Pid> = process_vector
         .iter()
         .filter(|process| process.process_state.0 == unknown_state)
         .map(|process| process.pid)
