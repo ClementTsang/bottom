@@ -1,0 +1,31 @@
+task:
+  name: FreeBSD 13 Test
+  freebsd_instance:
+    image_family: freebsd-13-1
+  setup_script:
+    - pkg install -y curl
+    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - sh rustup.sh --default-toolchain stable -y
+    - . $HOME/.cargo/env
+  test_script:
+    - . $HOME/.cargo/env
+    - cargo fmt --all -- --check
+    - cargo test --no-run --locked
+    - cargo test --no-fail-fast -- --nocapture --quiet
+    - cargo clippy --all-targets --workspace -- -D warnings
+
+task:
+  name: macOS M1 Test
+  freebsd_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-base:latest
+  setup_script:
+    - pkg install -y curl
+    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - sh rustup.sh --default-toolchain stable -y
+    - . $HOME/.cargo/env
+  test_script:
+    - . $HOME/.cargo/env
+    - cargo fmt --all -- --check
+    - cargo test --no-run --locked
+    - cargo test --no-fail-fast -- --nocapture --quiet
+    - cargo clippy --all-targets --workspace -- -D warnings
