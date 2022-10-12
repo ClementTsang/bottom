@@ -253,6 +253,7 @@ where
                 sort_index: props.sort_index,
                 order: props.order,
             },
+            first_draw: true,
             data: vec![],
             _pd: PhantomData,
         }

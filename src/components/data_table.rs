@@ -37,6 +37,7 @@ pub struct DataTable<DataType, Header, S = Unsortable, C = Column<Header>> {
     pub styling: DataTableStyling,
     data: Vec<DataType>,
     sort_type: S,
+    first_draw: bool,
     _pd: PhantomData<(DataType, S, Header)>,
 }
 
@@ -51,6 +52,7 @@ impl<DataType: DataToCell<H>, H: ColumnHeader> DataTable<DataType, H, Unsortable
             styling,
             data: vec![],
             sort_type: Unsortable,
+            first_draw: true,
             _pd: PhantomData,
         }
     }

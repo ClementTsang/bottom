@@ -205,7 +205,9 @@ where
             };
 
             let columns = &self.columns;
-            if !self.data.is_empty() {
+            if !self.data.is_empty() || !self.first_draw {
+                self.first_draw = false; // TODO: Doing it this way is fine, but it could be done better (e.g. showing custom no results/entries message)
+
                 let rows = {
                     let num_rows =
                         usize::from(inner_height.saturating_sub(table_gap + header_height));
