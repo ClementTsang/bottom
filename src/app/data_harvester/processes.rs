@@ -70,7 +70,7 @@ pub struct ProcessHarvest {
 
     /// This is the *effective* user ID of the process. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]
-    pub uid: libc::uid_t,
+    pub uid: Option<libc::uid_t>,
 
     /// This is the process' user. This is only used on Unix platforms.
     #[cfg(target_family = "unix")]

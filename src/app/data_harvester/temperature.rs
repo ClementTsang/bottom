@@ -5,8 +5,8 @@
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
-        pub mod heim;
-        pub use self::heim::*;
+        pub mod linux;
+        pub use self::linux::*;
     } else if #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "windows"))] {
         pub mod sysinfo;
         pub use self::sysinfo::*;
@@ -26,7 +26,7 @@ pub struct TempHarvest {
     pub temperature: f32,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub enum TemperatureType {
     Celsius,
     Kelvin,
@@ -39,16 +39,12 @@ impl Default for TemperatureType {
     }
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(any(feature = "nvidia", target_os = "macos", target_os = "windows"))] {
-        fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
-            celsius + 273.15
-        }
+fn convert_celsius_to_kelvin(celsius: f32) -> f32 {
+    celsius + 273.15
+}
 
-        fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
-            (celsius * (9.0 / 5.0)) + 32.0
-        }
-    }
+fn convert_celsius_to_fahrenheit(celsius: f32) -> f32 {
+    (celsius * (9.0 / 5.0)) + 32.0
 }
 
 fn is_temp_filtered(filter: &Option<Filter>, text: &str) -> bool {

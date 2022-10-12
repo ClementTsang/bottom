@@ -131,7 +131,7 @@ pub fn handle_key_event_or_break(
             KeyCode::F(2) => app.toggle_search_whole_word(),
             KeyCode::F(3) => app.toggle_search_regex(),
             KeyCode::F(5) => app.toggle_tree_mode(),
-            KeyCode::F(6) => app.toggle_sort(),
+            KeyCode::F(6) => app.toggle_sort_menu(),
             KeyCode::F(9) => app.start_killing_process(),
             KeyCode::PageDown => app.on_page_down(),
             KeyCode::PageUp => app.on_page_up(),
@@ -322,37 +322,44 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 }
 
 pub fn update_data(app: &mut App) {
+    let data_source = match &app.frozen_state {
+        app::frozen_state::FrozenState::NotFrozen => &app.data_collection,
+        app::frozen_state::FrozenState::Frozen(data) => data,
+    };
+
     for proc in app.proc_state.widget_states.values_mut() {
         if proc.force_update_data {
-            proc.update_displayed_process_data(&app.data_collection);
+            proc.update_displayed_process_data(data_source);
             proc.force_update_data = false;
         }
     }
 
+    // FIXME: Make this CPU force update less terrible.
     if app.cpu_state.force_update.is_some() {
-        convert_cpu_data_points(&app.data_collection, &mut app.converted_data.cpu_data);
-        app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
+        app.converted_data.ingest_cpu_data(data_source);
+        app.converted_data.load_avg_data = data_source.load_avg_harvest;
         app.cpu_state.force_update = None;
     }
 
     // TODO: [OPT] Prefer reassignment over new vectors?
     if app.mem_state.force_update.is_some() {
-        app.converted_data.mem_data = convert_mem_data_points(&app.data_collection);
-        app.converted_data.swap_data = convert_swap_data_points(&app.data_collection);
+        app.converted_data.mem_data = convert_mem_data_points(data_source);
+        app.converted_data.swap_data = convert_swap_data_points(data_source);
         #[cfg(feature = "zfs")]
         {
-            app.converted_data.arc_data = convert_arc_data_points(&app.data_collection);
+            app.converted_data.arc_data = convert_arc_data_points(data_source);
         }
+
         #[cfg(feature = "gpu")]
         {
-            app.converted_data.gpu_data = convert_gpu_data(&app.data_collection);
+            app.converted_data.gpu_data = convert_gpu_data(data_source);
         }
         app.mem_state.force_update = None;
     }
 
     if app.net_state.force_update.is_some() {
         let (rx, tx) = get_rx_tx_data_points(
-            &app.data_collection,
+            data_source,
             &app.app_config_fields.network_scale_type,
             &app.app_config_fields.network_unit_type,
             app.app_config_fields.network_use_binary_prefix,
@@ -415,7 +422,7 @@ pub fn create_collection_thread(
     app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
     used_widget_set: UsedWidgets,
 ) -> std::thread::JoinHandle<()> {
-    let temp_type = app_config_fields.temperature_type.clone();
+    let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_rate_in_milliseconds = app_config_fields.update_rate_in_milliseconds;
@@ -448,7 +455,7 @@ pub fn create_collection_thread(
                         data_state.data.cleanup();
                     }
                     ThreadControlEvent::UpdateConfig(app_config_fields) => {
-                        data_state.set_temperature_type(app_config_fields.temperature_type.clone());
+                        data_state.set_temperature_type(app_config_fields.temperature_type);
                         data_state
                             .set_use_current_cpu_total(app_config_fields.use_current_cpu_total);
                         data_state.set_show_average_cpu(app_config_fields.show_average_cpu);

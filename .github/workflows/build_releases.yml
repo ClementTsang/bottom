@@ -11,15 +11,16 @@ on:
 
 env:
   CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+  BTM_GENERATE: true
+  COMPLETION_DIR: "target/tmp/bottom/completion/"
+  MANPAGE_DIR: "target/tmp/bottom/manpage/"
 
 jobs:
   build-binaries:
     name: "Build binaries"
     runs-on: ${{ matrix.info.os }}
     container: ${{ matrix.info.container }}
-    env:
-      RUST_BACKTRACE: 1
-      BTM_GENERATE: true
     strategy:
       fail-fast: false
       matrix:
@@ -143,6 +144,12 @@ jobs:
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.4
 
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
+
       - name: Bundle release and completion (Windows)
         if: matrix.info.os == 'windows-2019'
         shell: bash
@@ -188,11 +195,17 @@ jobs:
           name: release
           path: release
 
+      # If I add more shared cleanup stuff in the future, I should move to a separate script, perhaps.
+      - name: Delete automatically generated completion/manpage to not cache
+        shell: bash
+        run: |
+          rm -r ./target/tmp/bottom/
+
   build-msi:
     name: "Build MSI installer"
     runs-on: "windows-2019"
     env:
-      RUST_BACKTRACE: 1
+      BTM_GENERATE: ""
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -259,9 +272,6 @@ jobs:
               dpkg: armhf,
               container: "ghcr.io/clementtsang/cargo-deb-armv7-unknown-linux-gnueabihf",
             }
-    env:
-      RUST_BACKTRACE: 1
-      BTM_GENERATE: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -284,6 +294,12 @@ jobs:
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.4
+
+      - name: Move automatically generated completion/manpage
+        shell: bash
+        run: |
+          mv "$COMPLETION_DIR" completion
+          mv "$MANPAGE_DIR" manpage
 
       - name: Zip manpage
         run: |
@@ -325,3 +341,8 @@ jobs:
           retention-days: 3
           name: release
           path: release
+
+      - name: Delete automatically generated completion/manpage to not cache
+        shell: bash
+        run: |
+          rm -r ./target/tmp/bottom/

@@ -1,9 +1,10 @@
-//! Process data collection for macOS.  Uses sysinfo.
+//! Process data collection for macOS.  Uses sysinfo and custom bindings.
 
 use super::ProcessHarvest;
 use sysinfo::System;
 
-use crate::data_harvester::processes::UserTable;
+use crate::{data_harvester::processes::UserTable, Pid};
+mod sysctl_bindings;
 
 pub fn get_process_data(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64, user_table: &mut UserTable,
@@ -17,8 +18,14 @@ pub fn get_process_data(
     )
 }
 
+pub(crate) fn fallback_macos_ppid(pid: Pid) -> Option<Pid> {
+    sysctl_bindings::kinfo_process(pid)
+        .map(|kinfo| kinfo.kp_eproc.e_ppid)
+        .ok()
+}
+
 fn get_macos_process_cpu_usage(
-    pids: &[i32],
+    pids: &[Pid],
 ) -> std::io::Result<std::collections::HashMap<i32, f64>> {
     use itertools::Itertools;
     let output = std::process::Command::new("ps")

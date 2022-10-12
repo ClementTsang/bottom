@@ -116,7 +116,6 @@ fn get_linux_cpu_usage(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn read_proc(
     prev_proc: &PrevProcDetails, stat: &Stat, cpu_usage: f64, cpu_fraction: f64,
     use_current_cpu_total: bool, time_difference_in_secs: u64, mem_total_kb: u64,
@@ -219,7 +218,7 @@ fn read_proc(
             total_read_bytes,
             total_write_bytes,
             process_state,
-            uid,
+            uid: Some(uid),
             user: user_table
                 .get_uid_to_username_mapping(uid)
                 .map(Into::into)

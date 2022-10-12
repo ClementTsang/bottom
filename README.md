@@ -34,6 +34,7 @@
   - [Gentoo](#gentoo)
   - [Nix](#nix)
   - [Solus](#solus)
+  - [Void](#void)
   - [Homebrew](#homebrew)
   - [MacPorts](#macports)
   - [Scoop](#scoop)
@@ -107,13 +108,13 @@ For more details on supported platforms and known problems, check out [the docum
 
 ### Unofficial
 
-bottom may work on a number of platforms that aren't officially supported - these platforms may not be properly tested,
+bottom may work on a number of platforms that aren't officially supported - these platforms may not be properly tested
 by maintainers prior to a stable release, or may receive more limited support, or missing features/problems that may
 not be fixed. Some of these may eventually be officially supported (e.g., FreeBSD, M1 macOS devices).
 
 A non-comprehensive list of some currently unofficially supported platforms that may compile/work include:
 
-- FreeBSD on `x86_64`
+- FreeBSD on `x86_64` (only on master branch/nightly build for now)
 - Linux on `armv6`, `armv7`, `powerpc64le`, `riscv64gc`
 - macOS on `aarch64`
 
@@ -145,16 +146,14 @@ sudo pacman -Syu bottom
 
 ### Debian/Ubuntu
 
-<!-- FIXME: Update this when bumping version, as the format has changed. -->
-
-A `.deb` file is provided on each [release](https://github.com/ClementTsang/bottom/releases/latest) (currently only for x86-64):
+A `.deb` file is provided on each [stable release](https://github.com/ClementTsang/bottom/releases/latest) and
+[nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly) for x86, aarch64, and armv7
+(note stable ARM builds only started with 0.6.8). You could install this way doing something like:
 
 ```bash
 curl -LO https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_0.6.8_amd64.deb
 sudo dpkg -i bottom_0.6.8_amd64.deb
 ```
-
-For ARM (aarch64 and armv7), `.deb` builds are currently available for the 0.6.8 release and [nightly builds](https://github.com/ClementTsang/bottom/releases/tag/nightly).
 
 ### Snap
 
@@ -208,6 +207,11 @@ nix-env -i bottom
 
 ```bash
 sudo eopkg it bottom
+```
+
+### Void
+```bash
+sudo xbps-install bottom
 ```
 
 ### Homebrew
@@ -278,6 +282,10 @@ cargo install --path .
 
 # Option 3 - Clone and install directly from the repo all via Cargo
 cargo install --git https://github.com/ClementTsang/bottom
+
+# You can also want to pass in the target-cpu=native flag for
+# better CPU-specific optimizations. For example:
+RUSTFLAGS="-C target-cpu=native" cargo install --path .
 ```
 
 ### Binaries
@@ -332,46 +340,53 @@ Thanks to all contributors:
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
-  <tr>
-    <td align="center"><a href="http://shilangyu.github.io"><img src="https://avatars3.githubusercontent.com/u/29288116?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Marcin Wojnarowski</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=shilangyu" title="Code">💻</a> <a href="#platform-shilangyu" title="Packaging/porting to new platform">📦</a></td>
-    <td align="center"><a href="http://neosmart.net/"><img src="https://avatars3.githubusercontent.com/u/606923?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Mahmoud Al-Qudsi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mqudsi" title="Code">💻</a></td>
-    <td align="center"><a href="https://andys8.de"><img src="https://avatars0.githubusercontent.com/u/13085980?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Andy</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=andys8" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/HarHarLinks"><img src="https://avatars0.githubusercontent.com/u/2803622?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Kim Brose</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=HarHarLinks" title="Code">💻</a></td>
-    <td align="center"><a href="https://svenstaro.org"><img src="https://avatars0.githubusercontent.com/u/1664?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sven-Hendrik Haase</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=svenstaro" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://liberapay.com/Artem4/"><img src="https://avatars0.githubusercontent.com/u/5614476?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Artem Polishchuk</b></sub></a><br /><a href="#platform-tim77" title="Packaging/porting to new platform">📦</a> <a href="https://github.com/ClementTsang/bottom/commits?author=tim77" title="Documentation">📖</a></td>
-    <td align="center"><a href="http://ruby-journal.com/"><img src="https://avatars2.githubusercontent.com/u/135605?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Trung Lê</b></sub></a><br /><a href="#platform-runlevel5" title="Packaging/porting to new platform">📦</a> <a href="#infra-runlevel5" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://github.com/dm9pZCAq"><img src="https://avatars1.githubusercontent.com/u/46228973?v=4?s=100" width="100px;" alt=""/><br /><sub><b>dm9pZCAq</b></sub></a><br /><a href="#platform-dm9pZCAq" title="Packaging/porting to new platform">📦</a> <a href="https://github.com/ClementTsang/bottom/commits?author=dm9pZCAq" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://lukor.org"><img src="https://avatars2.githubusercontent.com/u/10536802?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Lukas Rysavy</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=LlinksRechts" title="Code">💻</a></td>
-    <td align="center"><a href="http://hamberg.no/erlend"><img src="https://avatars3.githubusercontent.com/u/16063?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Erlend Hamberg</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ehamberg" title="Code">💻</a></td>
-    <td align="center"><a href="https://onee3.org"><img src="https://avatars.githubusercontent.com/u/4507647?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Frederick Zhang</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Frederick888" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/pvanheus"><img src="https://avatars.githubusercontent.com/u/4154788?v=4?s=100" width="100px;" alt=""/><br /><sub><b>pvanheus</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=pvanheus" title="Code">💻</a></td>
-    <td align="center"><a href="https://zebulon.dev/"><img src="https://avatars.githubusercontent.com/u/14242997?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Zeb Piasecki</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=vlakreeh" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/georgybog"><img src="https://avatars.githubusercontent.com/u/60893791?v=4?s=100" width="100px;" alt=""/><br /><sub><b>georgybog</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=georgybog" title="Documentation">📖</a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://github.com/briandipalma"><img src="https://avatars.githubusercontent.com/u/1597820?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Brian Di Palma</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=briandipalma" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://dakyskye.github.io"><img src="https://avatars.githubusercontent.com/u/32128756?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Lasha Kanteladze</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=dakyskye" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/herbygillot"><img src="https://avatars.githubusercontent.com/u/618376?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Herby Gillot</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=herbygillot" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/yellowsquid"><img src="https://avatars.githubusercontent.com/u/46519298?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Greg Brown</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yellowsquid" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/TotalCaesar659"><img src="https://avatars.githubusercontent.com/u/14265316?v=4?s=100" width="100px;" alt=""/><br /><sub><b>TotalCaesar659</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=TotalCaesar659" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/grawlinson"><img src="https://avatars.githubusercontent.com/u/4408051?v=4?s=100" width="100px;" alt=""/><br /><sub><b>George Rawlinson</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=grawlinson" title="Documentation">📖</a> <a href="#platform-grawlinson" title="Packaging/porting to new platform">📦</a></td>
-    <td align="center"><a href="https://www.frogorbits.com/"><img src="https://avatars.githubusercontent.com/u/101246?v=4?s=100" width="100px;" alt=""/><br /><sub><b>adiabatic</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=adiabatic" title="Documentation">📖</a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://electronsweatshop.com"><img src="https://avatars.githubusercontent.com/u/354506?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Randy Barlow</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=bowlofeggs" title="Code">💻</a></td>
-    <td align="center"><a href="http://jackson.dev"><img src="https://avatars.githubusercontent.com/u/160646?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Patrick Jackson</b></sub></a><br /><a href="#ideas-patricksjackson" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/ClementTsang/bottom/commits?author=patricksjackson" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/mati865"><img src="https://avatars.githubusercontent.com/u/1174646?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Mateusz Mikuła</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mati865" title="Code">💻</a></td>
-    <td align="center"><a href="https://blog.guillaume-gomez.fr"><img src="https://avatars.githubusercontent.com/u/3050060?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Guillaume Gomez</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=GuillaumeGomez" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/shurizzle"><img src="https://avatars.githubusercontent.com/u/203655?v=4?s=100" width="100px;" alt=""/><br /><sub><b>shura</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=shurizzle" title="Code">💻</a></td>
-    <td align="center"><a href="https://www.wezm.net/"><img src="https://avatars.githubusercontent.com/u/21787?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Wesley Moore</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=wezm" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/xgdgsc"><img src="https://avatars.githubusercontent.com/u/1189869?v=4?s=100" width="100px;" alt=""/><br /><sub><b>xgdgsc</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=xgdgsc" title="Documentation">📖</a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://github.com/ViridiCanis"><img src="https://avatars.githubusercontent.com/u/49595344?v=4?s=100" width="100px;" alt=""/><br /><sub><b>ViridiCanis</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ViridiCanis" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/jamartin9"><img src="https://avatars.githubusercontent.com/u/7027701?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Justin Martin</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jamartin9" title="Code">💻</a></td>
-  </tr>
+  <tbody>
+    <tr>
+      <td align="center"><a href="http://shilangyu.github.io"><img src="https://avatars3.githubusercontent.com/u/29288116?v=4?s=100" width="100px;" alt="Marcin Wojnarowski"/><br /><sub><b>Marcin Wojnarowski</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=shilangyu" title="Code">💻</a> <a href="#platform-shilangyu" title="Packaging/porting to new platform">📦</a></td>
+      <td align="center"><a href="http://neosmart.net/"><img src="https://avatars3.githubusercontent.com/u/606923?v=4?s=100" width="100px;" alt="Mahmoud Al-Qudsi"/><br /><sub><b>Mahmoud Al-Qudsi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mqudsi" title="Code">💻</a></td>
+      <td align="center"><a href="https://andys8.de"><img src="https://avatars0.githubusercontent.com/u/13085980?v=4?s=100" width="100px;" alt="Andy"/><br /><sub><b>Andy</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=andys8" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/HarHarLinks"><img src="https://avatars0.githubusercontent.com/u/2803622?v=4?s=100" width="100px;" alt="Kim Brose"/><br /><sub><b>Kim Brose</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=HarHarLinks" title="Code">💻</a></td>
+      <td align="center"><a href="https://svenstaro.org"><img src="https://avatars0.githubusercontent.com/u/1664?v=4?s=100" width="100px;" alt="Sven-Hendrik Haase"/><br /><sub><b>Sven-Hendrik Haase</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=svenstaro" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://liberapay.com/Artem4/"><img src="https://avatars0.githubusercontent.com/u/5614476?v=4?s=100" width="100px;" alt="Artem Polishchuk"/><br /><sub><b>Artem Polishchuk</b></sub></a><br /><a href="#platform-tim77" title="Packaging/porting to new platform">📦</a> <a href="https://github.com/ClementTsang/bottom/commits?author=tim77" title="Documentation">📖</a></td>
+      <td align="center"><a href="http://ruby-journal.com/"><img src="https://avatars2.githubusercontent.com/u/135605?v=4?s=100" width="100px;" alt="Trung Lê"/><br /><sub><b>Trung Lê</b></sub></a><br /><a href="#platform-runlevel5" title="Packaging/porting to new platform">📦</a> <a href="#infra-runlevel5" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://github.com/dm9pZCAq"><img src="https://avatars1.githubusercontent.com/u/46228973?v=4?s=100" width="100px;" alt="dm9pZCAq"/><br /><sub><b>dm9pZCAq</b></sub></a><br /><a href="#platform-dm9pZCAq" title="Packaging/porting to new platform">📦</a> <a href="https://github.com/ClementTsang/bottom/commits?author=dm9pZCAq" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://lukor.org"><img src="https://avatars2.githubusercontent.com/u/10536802?v=4?s=100" width="100px;" alt="Lukas Rysavy"/><br /><sub><b>Lukas Rysavy</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=LlinksRechts" title="Code">💻</a></td>
+      <td align="center"><a href="http://hamberg.no/erlend"><img src="https://avatars3.githubusercontent.com/u/16063?v=4?s=100" width="100px;" alt="Erlend Hamberg"/><br /><sub><b>Erlend Hamberg</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ehamberg" title="Code">💻</a></td>
+      <td align="center"><a href="https://onee3.org"><img src="https://avatars.githubusercontent.com/u/4507647?v=4?s=100" width="100px;" alt="Frederick Zhang"/><br /><sub><b>Frederick Zhang</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=Frederick888" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/pvanheus"><img src="https://avatars.githubusercontent.com/u/4154788?v=4?s=100" width="100px;" alt="pvanheus"/><br /><sub><b>pvanheus</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=pvanheus" title="Code">💻</a></td>
+      <td align="center"><a href="https://zebulon.dev/"><img src="https://avatars.githubusercontent.com/u/14242997?v=4?s=100" width="100px;" alt="Zeb Piasecki"/><br /><sub><b>Zeb Piasecki</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=vlakreeh" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/georgybog"><img src="https://avatars.githubusercontent.com/u/60893791?v=4?s=100" width="100px;" alt="georgybog"/><br /><sub><b>georgybog</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=georgybog" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://github.com/briandipalma"><img src="https://avatars.githubusercontent.com/u/1597820?v=4?s=100" width="100px;" alt="Brian Di Palma"/><br /><sub><b>Brian Di Palma</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=briandipalma" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://dakyskye.github.io"><img src="https://avatars.githubusercontent.com/u/32128756?v=4?s=100" width="100px;" alt="Lasha Kanteladze"/><br /><sub><b>Lasha Kanteladze</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=dakyskye" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/herbygillot"><img src="https://avatars.githubusercontent.com/u/618376?v=4?s=100" width="100px;" alt="Herby Gillot"/><br /><sub><b>Herby Gillot</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=herbygillot" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/yellowsquid"><img src="https://avatars.githubusercontent.com/u/46519298?v=4?s=100" width="100px;" alt="Greg Brown"/><br /><sub><b>Greg Brown</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=yellowsquid" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/TotalCaesar659"><img src="https://avatars.githubusercontent.com/u/14265316?v=4?s=100" width="100px;" alt="TotalCaesar659"/><br /><sub><b>TotalCaesar659</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=TotalCaesar659" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/grawlinson"><img src="https://avatars.githubusercontent.com/u/4408051?v=4?s=100" width="100px;" alt="George Rawlinson"/><br /><sub><b>George Rawlinson</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=grawlinson" title="Documentation">📖</a> <a href="#platform-grawlinson" title="Packaging/porting to new platform">📦</a></td>
+      <td align="center"><a href="https://www.frogorbits.com/"><img src="https://avatars.githubusercontent.com/u/101246?v=4?s=100" width="100px;" alt="adiabatic"/><br /><sub><b>adiabatic</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=adiabatic" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://electronsweatshop.com"><img src="https://avatars.githubusercontent.com/u/354506?v=4?s=100" width="100px;" alt="Randy Barlow"/><br /><sub><b>Randy Barlow</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=bowlofeggs" title="Code">💻</a></td>
+      <td align="center"><a href="http://jackson.dev"><img src="https://avatars.githubusercontent.com/u/160646?v=4?s=100" width="100px;" alt="Patrick Jackson"/><br /><sub><b>Patrick Jackson</b></sub></a><br /><a href="#ideas-patricksjackson" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/ClementTsang/bottom/commits?author=patricksjackson" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://github.com/mati865"><img src="https://avatars.githubusercontent.com/u/1174646?v=4?s=100" width="100px;" alt="Mateusz Mikuła"/><br /><sub><b>Mateusz Mikuła</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mati865" title="Code">💻</a></td>
+      <td align="center"><a href="https://blog.guillaume-gomez.fr"><img src="https://avatars.githubusercontent.com/u/3050060?v=4?s=100" width="100px;" alt="Guillaume Gomez"/><br /><sub><b>Guillaume Gomez</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=GuillaumeGomez" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/shurizzle"><img src="https://avatars.githubusercontent.com/u/203655?v=4?s=100" width="100px;" alt="shura"/><br /><sub><b>shura</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=shurizzle" title="Code">💻</a></td>
+      <td align="center"><a href="https://www.wezm.net/"><img src="https://avatars.githubusercontent.com/u/21787?v=4?s=100" width="100px;" alt="Wesley Moore"/><br /><sub><b>Wesley Moore</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=wezm" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/xgdgsc"><img src="https://avatars.githubusercontent.com/u/1189869?v=4?s=100" width="100px;" alt="xgdgsc"/><br /><sub><b>xgdgsc</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=xgdgsc" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="https://github.com/ViridiCanis"><img src="https://avatars.githubusercontent.com/u/49595344?v=4?s=100" width="100px;" alt="ViridiCanis"/><br /><sub><b>ViridiCanis</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=ViridiCanis" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/jamartin9"><img src="https://avatars.githubusercontent.com/u/7027701?v=4?s=100" width="100px;" alt="Justin Martin"/><br /><sub><b>Justin Martin</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jamartin9" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/DianaNites"><img src="https://avatars.githubusercontent.com/u/5275194?v=4?s=100" width="100px;" alt="Diana"/><br /><sub><b>Diana</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=DianaNites" title="Code">💻</a></td>
+      <td align="center"><a href="https://hervyqa.id"><img src="https://avatars.githubusercontent.com/u/45872139?v=4?s=100" width="100px;" alt="Hervy Qurrotul Ainur Rozi"/><br /><sub><b>Hervy Qurrotul Ainur Rozi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=hervyqa" title="Documentation">📖</a></td>
+    </tr>
+  </tbody>
+  <tfoot>
+    
+  </tfoot>
 </table>
 
 <!-- markdownlint-restore -->

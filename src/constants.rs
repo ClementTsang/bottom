@@ -264,7 +264,7 @@ pub static NORD_LIGHT_COLOUR_PALETTE: Lazy<ConfigColours> = Lazy::new(|| ConfigC
 
 // Help text
 pub const HELP_CONTENTS_TEXT: [&str; 8] = [
-    "Press the corresponding numbers to jump to the section, or scroll:",
+    "Either scroll or press the number key to go to the corresponding help menu section:",
     "1 - General",
     "2 - CPU widget",
     "3 - Process widget",

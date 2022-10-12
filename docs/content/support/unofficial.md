@@ -13,4 +13,4 @@ Unofficially supported platforms known to compile/work:
 
 ## Known problems
 
-- ARM-based macOS devices currently doesn't support the temperature widget. This should hopefully be fixed soon.
+None at the moment.

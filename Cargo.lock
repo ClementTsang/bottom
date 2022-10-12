@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "bottom"
-version = "0.6.8"
+version = "0.6.9"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -225,8 +225,10 @@ dependencies = [
  "heim",
  "indexmap",
  "itertools",
+ "kstring",
  "libc",
  "log",
+ "mach2",
  "nvml-wrapper",
  "once_cell",
  "predicates",
@@ -775,7 +777,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "mach",
- "ntapi",
+ "ntapi 0.3.7",
  "smol",
  "winapi",
 ]
@@ -906,6 +908,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
 
 [[package]]
+name = "kstring"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec3066350882a1cd6d950d055997f379ac37fd39f81cd4d8ed186032eb3c5747"
+dependencies = [
+ "static_assertions",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -968,6 +979,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mach2"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d0d1830bcd151a6fc4aea1369af235b36c1528fe976b8ff678683c9995eade8"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1000,7 +1020,7 @@ dependencies = [
  "libc",
  "log",
  "miow",
- "ntapi",
+ "ntapi 0.3.7",
  "winapi",
 ]
 
@@ -1060,6 +1080,15 @@ name = "ntapi"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c28774a7fd2fbb4f0babd8237ce554b73af68021b5f695a3cebd6c59bac0980f"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
+name = "ntapi"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc51db7b362b205941f71232e56c625156eb9a929f8cf74a428fd5bc094a4afc"
 dependencies = [
  "winapi",
 ]
@@ -1536,14 +1565,14 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.23.10"
+version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4eea2ed6847da2e0c7289f72cb4f285f0bd704694ca067d32be811b2a45ea858"
+checksum = "7890fff842b8db56f2033ebee8f6efe1921475c3830c115995552914fb967580"
 dependencies = [
  "cfg-if",
  "core-foundation-sys 0.8.3",
  "libc",
- "ntapi",
+ "ntapi 0.4.0",
  "once_cell",
  "rayon",
  "winapi",

@@ -4,18 +4,21 @@ use std::collections::HashMap;
 use std::io;
 
 use super::ProcessHarvest;
-use sysinfo::{PidExt, ProcessExt, ProcessStatus, ProcessorExt, System, SystemExt};
+use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
 
-use crate::data_harvester::processes::UserTable;
+use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
-pub fn get_process_data(
+pub fn get_process_data<F>(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64, user_table: &mut UserTable,
-    get_process_cpu_usage: impl Fn(&[i32]) -> io::Result<HashMap<i32, f64>>,
-) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
+    get_process_cpu_usage: F,
+) -> Result<Vec<ProcessHarvest>>
+where
+    F: Fn(&[Pid]) -> io::Result<HashMap<Pid, f64>>,
+{
     let mut process_vector: Vec<ProcessHarvest> = Vec::new();
     let process_hashmap = sys.processes();
-    let cpu_usage = sys.global_processor_info().cpu_usage() as f64 / 100.0;
-    let num_processors = sys.processors().len() as f64;
+    let cpu_usage = sys.global_cpu_info().cpu_usage() as f64 / 100.0;
+    let num_processors = sys.cpus().len() as f64;
     for process_val in process_hashmap.values() {
         let name = if process_val.name().is_empty() {
             let process_cmd = process_val.cmd();
@@ -65,10 +68,23 @@ pub fn get_process_data(
             let ps = process_val.status();
             (ps.to_string(), convert_process_status_to_char(ps))
         };
-        let uid = process_val.uid;
+        let uid = process_val.user_id().map(|u| **u);
+        let pid = process_val.pid().as_u32() as Pid;
         process_vector.push(ProcessHarvest {
-            pid: process_val.pid().as_u32() as _,
-            parent_pid: process_val.parent().map(|p| p.as_u32() as _),
+            pid,
+            parent_pid: {
+                #[cfg(target_os = "macos")]
+                {
+                    process_val
+                        .parent()
+                        .map(|p| p.as_u32() as _)
+                        .or_else(|| super::fallback_macos_ppid(pid))
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    process_val.parent().map(|p| p.as_u32() as _)
+                }
+            },
             name,
             command,
             mem_usage_percent: if mem_total_kb > 0 {
@@ -76,7 +92,7 @@ pub fn get_process_data(
             } else {
                 0.0
             },
-            mem_usage_bytes: process_val.memory() * 1024,
+            mem_usage_bytes: process_val.memory(),
             cpu_usage_percent: process_cpu_usage,
             read_bytes_per_sec: disk_usage.read_bytes,
             write_bytes_per_sec: disk_usage.written_bytes,
@@ -84,15 +100,19 @@ pub fn get_process_data(
             total_write_bytes: disk_usage.total_written_bytes,
             process_state,
             uid,
-            user: user_table
-                .get_uid_to_username_mapping(uid)
-                .map(Into::into)
-                .unwrap_or_else(|_| "N/A".into()),
+            user: uid
+                .and_then(|uid| {
+                    user_table
+                        .get_uid_to_username_mapping(uid)
+                        .map(Into::into)
+                        .ok()
+                })
+                .unwrap_or_else(|| "N/A".into()),
         });
     }
 
     let unknown_state = ProcessStatus::Unknown(0).to_string();
-    let cpu_usage_unknown_pids: Vec<i32> = process_vector
+    let cpu_usage_unknown_pids: Vec<Pid> = process_vector
         .iter()
         .filter(|process| process.process_state.0 == unknown_state)
         .map(|process| process.pid)
