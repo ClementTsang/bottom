@@ -48,12 +48,7 @@ jobs:
               target: "x86_64-pc-windows-msvc",
               cross: false,
             }
-        features: [
-            "--all-features",
-            # "--features battery",
-            # "--features gpu",
-            "--no-default-features",
-          ]
+        features: ["--all-features", "--no-default-features"]
     steps:
       - name: Check if this action should be skipped
         id: skip_check
