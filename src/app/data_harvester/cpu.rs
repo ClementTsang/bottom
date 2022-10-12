@@ -16,10 +16,15 @@ cfg_if::cfg_if! {
 
 pub type LoadAvgHarvest = [f32; 3];
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
+pub enum CpuDataType {
+    Avg,
+    Cpu(usize),
+}
+
+#[derive(Debug, Clone)]
 pub struct CpuData {
-    pub cpu_prefix: String,
-    pub cpu_count: Option<usize>,
+    pub data_type: CpuDataType,
     pub cpu_usage: f64,
 }
 

@@ -18,12 +18,11 @@ use crate::{
         App,
     },
     constants::*,
-    options::Config,
     utils::error,
     utils::error::BottomError,
 };
 
-mod canvas_colours;
+pub mod canvas_colours;
 mod dialogs;
 mod drawing_utils;
 mod widgets;
@@ -77,9 +76,7 @@ pub struct Painter {
 }
 
 impl Painter {
-    pub fn init(
-        widget_layout: BottomLayout, config: &Config, colour_scheme: ColourScheme,
-    ) -> anyhow::Result<Self> {
+    pub fn init(widget_layout: BottomLayout, colours: CanvasColours) -> anyhow::Result<Self> {
         // Now for modularity; we have to also initialize the base layouts!
         // We want to do this ONCE and reuse; after this we can just construct
         // based on the console size.
@@ -148,7 +145,7 @@ impl Painter {
         });
 
         let mut painter = Painter {
-            colours: CanvasColours::default(),
+            colours,
             height: 0,
             width: 0,
             styled_help_text: Vec::default(),
@@ -161,11 +158,6 @@ impl Painter {
             derived_widget_draw_locs: Vec::default(),
         };
 
-        if let ColourScheme::Custom = colour_scheme {
-            painter.generate_config_colours(config)?;
-        } else {
-            painter.generate_colour_scheme(colour_scheme)?;
-        }
         painter.complete_painter_init();
 
         Ok(painter)
@@ -179,47 +171,6 @@ impl Painter {
         } else {
             self.colours.border_style
         }
-    }
-
-    fn generate_config_colours(&mut self, config: &Config) -> anyhow::Result<()> {
-        if let Some(colours) = &config.colors {
-            self.colours.set_colours_from_palette(colours)?;
-        }
-
-        Ok(())
-    }
-
-    fn generate_colour_scheme(&mut self, colour_scheme: ColourScheme) -> anyhow::Result<()> {
-        match colour_scheme {
-            ColourScheme::Default => {
-                // Don't have to do anything.
-            }
-            ColourScheme::DefaultLight => {
-                self.colours
-                    .set_colours_from_palette(&*DEFAULT_LIGHT_MODE_COLOUR_PALETTE)?;
-            }
-            ColourScheme::Gruvbox => {
-                self.colours
-                    .set_colours_from_palette(&*GRUVBOX_COLOUR_PALETTE)?;
-            }
-            ColourScheme::GruvboxLight => {
-                self.colours
-                    .set_colours_from_palette(&*GRUVBOX_LIGHT_COLOUR_PALETTE)?;
-            }
-            ColourScheme::Nord => {
-                self.colours
-                    .set_colours_from_palette(&*NORD_COLOUR_PALETTE)?;
-            }
-            ColourScheme::NordLight => {
-                self.colours
-                    .set_colours_from_palette(&*NORD_LIGHT_COLOUR_PALETTE)?;
-            }
-            ColourScheme::Custom => {
-                // This case should never occur, just do nothing.
-            }
-        }
-
-        Ok(())
     }
 
     /// Must be run once before drawing, but after setting colours.
@@ -275,7 +226,7 @@ impl Painter {
         use BottomWidgetType::*;
 
         terminal.draw(|f| {
-            let (terminal_size, frozen_draw_loc) = if app_state.is_frozen {
+            let (terminal_size, frozen_draw_loc) = if app_state.frozen_state.is_frozen() {
                 let split_loc = Layout::default()
                     .constraints([Constraint::Min(0), Constraint::Length(1)])
                     .split(f.size());
@@ -445,14 +396,12 @@ impl Painter {
                         f,
                         app_state,
                         rect[0],
-                        true,
                         app_state.current_widget.widget_id,
                     ),
                     Temp => self.draw_temp_table(
                         f,
                         app_state,
                         rect[0],
-                        true,
                         app_state.current_widget.widget_id,
                     ),
                     Net => self.draw_network_graph(
@@ -548,13 +497,9 @@ impl Painter {
                     later_widget_id = Some(widget_id);
                     if vertical_chunks[3].width >= 2 {
                         match basic_table_widget_state.currently_displayed_widget_type {
-                            Disk => self.draw_disk_table(
-                                f,
-                                app_state,
-                                vertical_chunks[3],
-                                false,
-                                widget_id,
-                            ),
+                            Disk => {
+                                self.draw_disk_table(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             Proc | ProcSort => {
                                 let wid = widget_id
                                     - match basic_table_widget_state.currently_displayed_widget_type
@@ -571,13 +516,9 @@ impl Painter {
                                     wid,
                                 );
                             }
-                            Temp => self.draw_temp_table(
-                                f,
-                                app_state,
-                                vertical_chunks[3],
-                                false,
-                                widget_id,
-                            ),
+                            Temp => {
+                                self.draw_temp_table(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             Battery => self.draw_battery_display(
                                 f,
                                 app_state,
@@ -708,12 +649,8 @@ impl Painter {
                     Cpu => self.draw_cpu(f, app_state, *widget_draw_loc, widget.widget_id),
                     Mem => self.draw_memory_graph(f, app_state, *widget_draw_loc, widget.widget_id),
                     Net => self.draw_network(f, app_state, *widget_draw_loc, widget.widget_id),
-                    Temp => {
-                        self.draw_temp_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
-                    }
-                    Disk => {
-                        self.draw_disk_table(f, app_state, *widget_draw_loc, true, widget.widget_id)
-                    }
+                    Temp => self.draw_temp_table(f, app_state, *widget_draw_loc, widget.widget_id),
+                    Disk => self.draw_disk_table(f, app_state, *widget_draw_loc, widget.widget_id),
                     Proc => self.draw_process_widget(
                         f,
                         app_state,

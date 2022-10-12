@@ -4,7 +4,13 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{canvas, constants::*, data_conversion::*, options::*, *};
+use bottom::{
+    canvas::{self, canvas_colours::CanvasColours},
+    constants::*,
+    data_conversion::*,
+    options::*,
+    *,
+};
 
 use std::{
     boxed::Box,
@@ -47,6 +53,12 @@ fn main() -> Result<()> {
         get_widget_layout(&matches, &config)
             .context("Found an issue while trying to build the widget layout.")?;
 
+    // FIXME: Should move this into build app or config
+    let colours = {
+        let colour_scheme = get_color_scheme(&matches, &config)?;
+        CanvasColours::new(colour_scheme, &config)?
+    };
+
     // Create "app" struct, which will control most of the program and store settings/state
     let mut app = build_app(
         &matches,
@@ -54,12 +66,11 @@ fn main() -> Result<()> {
         &widget_layout,
         default_widget_id,
         &default_widget_type_option,
-        config_path,
+        &colours,
     )?;
 
     // Create painter and set colours.
-    let mut painter =
-        canvas::Painter::init(widget_layout, &config, get_color_scheme(&matches, &config)?)?;
+    let mut painter = canvas::Painter::init(widget_layout, colours)?;
 
     // Create termination mutex and cvar
     #[allow(clippy::mutex_atomic)]
@@ -150,7 +161,7 @@ fn main() -> Result<()> {
                         app.is_force_redraw = true;
                     }
 
-                    if !app.is_frozen {
+                    if !app.frozen_state.is_frozen() {
                         // Convert all data into tui-compliant components
 
                         // Network
@@ -177,12 +188,15 @@ fn main() -> Result<()> {
 
                         // Disk
                         if app.used_widgets.use_disk {
-                            app.converted_data.disk_data = convert_disk_row(&app.data_collection);
+                            app.converted_data.ingest_disk_data(&app.data_collection);
                         }
 
                         // Temperatures
                         if app.used_widgets.use_temp {
-                            app.converted_data.temp_sensor_data = convert_temp_row(&app);
+                            app.converted_data.ingest_temp_data(
+                                &app.data_collection,
+                                app.app_config_fields.temperature_type,
+                            )
                         }
 
                         // Memory
@@ -208,13 +222,9 @@ fn main() -> Result<()> {
                             }
                         }
 
+                        // CPU
                         if app.used_widgets.use_cpu {
-                            // CPU
-
-                            convert_cpu_data_points(
-                                &app.data_collection,
-                                &mut app.converted_data.cpu_data,
-                            );
+                            app.converted_data.ingest_cpu_data(&app.data_collection);
                             app.converted_data.load_avg_data = app.data_collection.load_avg_harvest;
                         }
 

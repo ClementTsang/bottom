@@ -4,7 +4,6 @@ use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
     convert::TryInto,
-    path::PathBuf,
     str::FromStr,
     time::Instant,
 };
@@ -12,10 +11,10 @@ use std::{
 use crate::{
     app::{
         layout_manager::*,
-        widgets::{DiskWidgetState, ProcWidget, ProcWidgetMode, TempWidgetState},
+        widgets::{CpuWidgetState, DiskTableWidget, ProcWidget, ProcWidgetMode, TempWidgetState},
         *,
     },
-    canvas::ColourScheme,
+    canvas::{canvas_colours::CanvasColours, ColourScheme},
     constants::*,
     units::data_units::DataUnit,
     utils::error::{self, BottomError},
@@ -252,7 +251,7 @@ pub struct IgnoreList {
 pub fn build_app(
     matches: &clap::ArgMatches, config: &mut Config, widget_layout: &BottomLayout,
     default_widget_id: u64, default_widget_type_option: &Option<BottomWidgetType>,
-    config_path: Option<PathBuf>,
+    colours: &CanvasColours,
 ) -> Result<App> {
     use BottomWidgetType::*;
     let autohide_time = get_autohide_time(matches, config);
@@ -272,7 +271,7 @@ pub fn build_app(
     let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
     let mut proc_state_map: HashMap<u64, ProcWidget> = HashMap::new();
     let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
-    let mut disk_state_map: HashMap<u64, DiskWidgetState> = HashMap::new();
+    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::new();
     let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
 
     let autohide_timer = if autohide_time {
@@ -294,6 +293,37 @@ pub fn build_app(
     let network_unit_type = get_network_unit_type(matches, config);
     let network_scale_type = get_network_scale_type(matches, config);
     let network_use_binary_prefix = get_network_use_binary_prefix(matches, config);
+
+    let app_config_fields = AppConfigFields {
+        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
+            .context("Update 'rate' in your config file.")?,
+        temperature_type: get_temperature(matches, config)
+            .context("Update 'temperature_type' in your config file.")?,
+        show_average_cpu: get_show_average_cpu(matches, config),
+        use_dot: get_use_dot(matches, config),
+        left_legend: get_use_left_legend(matches, config),
+        use_current_cpu_total: get_use_current_cpu_total(matches, config),
+        use_basic_mode,
+        default_time_value,
+        time_interval: get_time_interval(matches, config)
+            .context("Update 'time_delta' in your config file.")?,
+        hide_time: get_hide_time(matches, config),
+        autohide_time,
+        use_old_network_legend: get_use_old_network_legend(matches, config),
+        table_gap: if get_hide_table_gap(matches, config) {
+            0
+        } else {
+            1
+        },
+        disable_click: get_disable_click(matches, config),
+        // no_write: get_no_write(matches, config),
+        no_write: false,
+        show_table_scroll_position: get_show_table_scroll_position(matches, config),
+        is_advanced_kill,
+        network_scale_type,
+        network_unit_type,
+        network_use_binary_prefix,
+    };
 
     for row in &widget_layout.rows {
         for col in &row.children {
@@ -337,7 +367,12 @@ pub fn build_app(
                         Cpu => {
                             cpu_state_map.insert(
                                 widget.widget_id,
-                                CpuWidgetState::init(default_time_value, autohide_timer),
+                                CpuWidgetState::new(
+                                    &app_config_fields,
+                                    default_time_value,
+                                    autohide_timer,
+                                    colours,
+                                ),
                             );
                         }
                         Mem => {
@@ -365,21 +400,29 @@ pub fn build_app(
 
                             proc_state_map.insert(
                                 widget.widget_id,
-                                ProcWidget::init(
+                                ProcWidget::new(
+                                    &app_config_fields,
                                     mode,
                                     is_case_sensitive,
                                     is_match_whole_word,
                                     is_use_regex,
                                     show_memory_as_values,
                                     is_default_command,
+                                    colours,
                                 ),
                             );
                         }
                         Disk => {
-                            disk_state_map.insert(widget.widget_id, DiskWidgetState::default());
+                            disk_state_map.insert(
+                                widget.widget_id,
+                                DiskTableWidget::new(&app_config_fields, colours),
+                            );
                         }
                         Temp => {
-                            temp_state_map.insert(widget.widget_id, TempWidgetState::default());
+                            temp_state_map.insert(
+                                widget.widget_id,
+                                TempWidgetState::new(&app_config_fields, colours),
+                            );
                         }
                         Battery => {
                             battery_state_map
@@ -415,37 +458,6 @@ pub fn build_app(
         })
     } else {
         None
-    };
-
-    let app_config_fields = AppConfigFields {
-        update_rate_in_milliseconds: get_update_rate_in_milliseconds(matches, config)
-            .context("Update 'rate' in your config file.")?,
-        temperature_type: get_temperature(matches, config)
-            .context("Update 'temperature_type' in your config file.")?,
-        show_average_cpu: get_show_average_cpu(matches, config),
-        use_dot: get_use_dot(matches, config),
-        left_legend: get_use_left_legend(matches, config),
-        use_current_cpu_total: get_use_current_cpu_total(matches, config),
-        use_basic_mode,
-        default_time_value,
-        time_interval: get_time_interval(matches, config)
-            .context("Update 'time_delta' in your config file.")?,
-        hide_time: get_hide_time(matches, config),
-        autohide_time,
-        use_old_network_legend: get_use_old_network_legend(matches, config),
-        table_gap: if get_hide_table_gap(matches, config) {
-            0
-        } else {
-            1
-        },
-        disable_click: get_disable_click(matches, config),
-        // no_write: get_no_write(matches, config),
-        no_write: false,
-        show_table_scroll_position: get_show_table_scroll_position(matches, config),
-        is_advanced_kill,
-        network_scale_type,
-        network_unit_type,
-        network_use_binary_prefix,
     };
 
     let used_widgets = UsedWidgets {
@@ -528,8 +540,6 @@ pub fn build_app(
             temp_filter,
             net_filter,
         })
-        .config(config.clone())
-        .config_path(config_path)
         .build())
 }
 

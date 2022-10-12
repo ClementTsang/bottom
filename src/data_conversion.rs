@@ -1,16 +1,17 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
-use crate::components::text_table::CellContent;
-use crate::components::time_graph::Point;
-use crate::{app::AxisScaling, units::data_units::DataUnit, Pid};
-use crate::{
-    app::{data_farmer, data_harvester, App},
-    utils::gen_util::*,
+use crate::app::data_farmer::DataCollection;
+use crate::app::data_harvester::cpu::CpuDataType;
+use crate::app::{
+    data_harvester::temperature::TemperatureType,
+    widgets::{DiskWidgetData, TempWidgetData},
 };
+use crate::components::time_graph::Point;
+use crate::utils::gen_util::*;
+use crate::{app::AxisScaling, units::data_units::DataUnit};
 
-use concat_string::concat_string;
-use fxhash::FxHashMap;
+use kstring::KString;
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {
@@ -20,27 +21,6 @@ pub struct ConvertedBatteryData {
     pub duration_until_full: Option<String>,
     pub duration_until_empty: Option<String>,
     pub health: String,
-}
-
-#[derive(Default, Debug)]
-pub struct TableData {
-    pub data: Vec<TableRow>,
-    pub col_widths: Vec<usize>,
-}
-
-#[derive(Debug)]
-pub enum TableRow {
-    Raw(Vec<CellContent>),
-    Styled(Vec<CellContent>, tui::style::Style),
-}
-
-impl TableRow {
-    pub fn row(&self) -> &[CellContent] {
-        match self {
-            TableRow::Raw(data) => data,
-            TableRow::Styled(data, _) => data,
-        }
-    }
 }
 
 #[derive(Default, Debug)]
@@ -60,14 +40,15 @@ pub struct ConvertedNetworkData {
     // mean_tx: f64,
 }
 
-#[derive(Clone, Default, Debug)]
-pub struct ConvertedCpuData {
-    pub cpu_name: String,
-    pub short_cpu_name: String,
-    /// Tuple is time, value
-    pub cpu_data: Vec<Point>,
-    /// Represents the value displayed on the legend.
-    pub legend_value: String,
+#[derive(Clone, Debug)]
+pub enum CpuWidgetData {
+    All,
+    Entry {
+        data_type: CpuDataType,
+        /// A point here represents time (x) and value (y).
+        data: Vec<Point>,
+        last_entry: f64,
+    },
 }
 
 #[derive(Default)]
@@ -78,14 +59,8 @@ pub struct ConvertedData {
     pub total_tx_display: String,
     pub network_data_rx: Vec<Point>,
     pub network_data_tx: Vec<Point>,
-    pub disk_data: TableData,
-    pub temp_sensor_data: TableData,
-
-    /// A mapping from a process name to any PID with that name.
-    pub process_name_pid_map: FxHashMap<String, Vec<Pid>>,
-
-    /// A mapping from a process command to any PID with that name.
-    pub process_cmd_pid_map: FxHashMap<String, Vec<Pid>>,
+    pub disk_data: Vec<DiskWidgetData>,
+    pub temp_data: Vec<TempWidgetData>,
 
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
@@ -95,199 +70,119 @@ pub struct ConvertedData {
     pub swap_data: Vec<Point>,
     pub arc_data: Vec<Point>,
     pub load_avg_data: [f32; 3],
-    pub cpu_data: Vec<ConvertedCpuData>,
+    pub cpu_data: Vec<CpuWidgetData>,
     pub battery_data: Vec<ConvertedBatteryData>,
 }
 
-pub fn convert_temp_row(app: &App) -> TableData {
-    let current_data = &app.data_collection;
-    let temp_type = &app.app_config_fields.temperature_type;
-    let mut col_widths = vec![0; 2];
+impl ConvertedData {
+    // TODO: Can probably heavily reduce this step to avoid clones.
+    pub fn ingest_disk_data(&mut self, data: &DataCollection) {
+        self.disk_data.clear();
 
-    let mut sensor_vector: Vec<TableRow> = current_data
-        .temp_harvest
-        .iter()
-        .map(|temp_harvest| {
-            let row = vec![
-                CellContent::Simple(temp_harvest.name.clone().into()),
-                CellContent::Simple(
-                    concat_string!(
-                        (temp_harvest.temperature.ceil() as u64).to_string(),
-                        match temp_type {
-                            data_harvester::temperature::TemperatureType::Celsius => "°C",
-                            data_harvester::temperature::TemperatureType::Kelvin => "K",
-                            data_harvester::temperature::TemperatureType::Fahrenheit => "°F",
-                        }
-                    )
-                    .into(),
-                ),
-            ];
-
-            col_widths.iter_mut().zip(&row).for_each(|(curr, r)| {
-                *curr = std::cmp::max(*curr, r.len());
+        data.disk_harvest
+            .iter()
+            .zip(&data.io_labels)
+            .for_each(|(disk, (io_read, io_write))| {
+                self.disk_data.push(DiskWidgetData {
+                    name: KString::from_ref(&disk.name),
+                    mount_point: KString::from_ref(&disk.mount_point),
+                    free_bytes: disk.free_space,
+                    used_bytes: disk.used_space,
+                    total_bytes: disk.total_space,
+                    io_read: io_read.into(),
+                    io_write: io_write.into(),
+                });
             });
 
-            TableRow::Raw(row)
-        })
-        .collect();
-
-    if sensor_vector.is_empty() {
-        sensor_vector.push(TableRow::Raw(vec![
-            CellContent::Simple("No Sensors Found".into()),
-            CellContent::Simple("".into()),
-        ]));
+        self.disk_data.shrink_to_fit();
     }
 
-    TableData {
-        data: sensor_vector,
-        col_widths,
-    }
-}
+    pub fn ingest_temp_data(&mut self, data: &DataCollection, temperature_type: TemperatureType) {
+        self.temp_data.clear();
 
-pub fn convert_disk_row(current_data: &data_farmer::DataCollection) -> TableData {
-    let mut disk_vector: Vec<TableRow> = Vec::new();
-    let mut col_widths = vec![0; 8];
-
-    current_data
-        .disk_harvest
-        .iter()
-        .zip(&current_data.io_labels)
-        .for_each(|(disk, (io_read, io_write))| {
-            let free_space_fmt = if let Some(free_space) = disk.free_space {
-                let converted_free_space = get_decimal_bytes(free_space);
-                format!("{:.*}{}", 0, converted_free_space.0, converted_free_space.1).into()
-            } else {
-                "N/A".into()
-            };
-            let total_space_fmt = if let Some(total_space) = disk.total_space {
-                let converted_total_space = get_decimal_bytes(total_space);
-                format!(
-                    "{:.*}{}",
-                    0, converted_total_space.0, converted_total_space.1
-                )
-                .into()
-            } else {
-                "N/A".into()
-            };
-
-            let usage_fmt = if let (Some(used_space), Some(total_space)) =
-                (disk.used_space, disk.total_space)
-            {
-                format!("{:.0}%", used_space as f64 / total_space as f64 * 100_f64).into()
-            } else {
-                "N/A".into()
-            };
-
-            let row = vec![
-                CellContent::Simple(disk.name.clone().into()),
-                CellContent::Simple(disk.mount_point.clone().into()),
-                CellContent::Simple(usage_fmt),
-                CellContent::Simple(free_space_fmt),
-                CellContent::Simple(total_space_fmt),
-                CellContent::Simple(io_read.clone().into()),
-                CellContent::Simple(io_write.clone().into()),
-            ];
-            col_widths.iter_mut().zip(&row).for_each(|(curr, r)| {
-                *curr = std::cmp::max(*curr, r.len());
+        data.temp_harvest.iter().for_each(|temp_harvest| {
+            self.temp_data.push(TempWidgetData {
+                sensor: KString::from_ref(&temp_harvest.name),
+                temperature_value: temp_harvest.temperature.ceil() as u64,
+                temperature_type,
             });
-            disk_vector.push(TableRow::Raw(row));
         });
 
-    if disk_vector.is_empty() {
-        disk_vector.push(TableRow::Raw(vec![
-            CellContent::Simple("No Disks Found".into()),
-            CellContent::Simple("".into()),
-        ]));
+        self.temp_data.shrink_to_fit();
     }
 
-    TableData {
-        data: disk_vector,
-        col_widths,
-    }
-}
+    pub fn ingest_cpu_data(&mut self, current_data: &DataCollection) {
+        let current_time = current_data.current_instant;
 
-pub fn convert_cpu_data_points(
-    current_data: &data_farmer::DataCollection, existing_cpu_data: &mut Vec<ConvertedCpuData>,
-) {
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
-
-    // Initialize cpu_data_vector if the lengths don't match...
-    if let Some((_time, data)) = &current_data.timed_data_vec.last() {
-        if data.cpu_data.len() + 1 != existing_cpu_data.len() {
-            *existing_cpu_data = vec![ConvertedCpuData {
-                cpu_name: "All".to_string(),
-                short_cpu_name: "".to_string(),
-                cpu_data: vec![],
-                legend_value: String::new(),
-            }];
-
-            existing_cpu_data.extend(
-                data.cpu_data
-                    .iter()
-                    .enumerate()
-                    .map(|(itx, cpu_usage)| ConvertedCpuData {
-                        cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx) {
-                            if let Some(cpu_count) = cpu_harvest.cpu_count {
-                                format!("{}{}", cpu_harvest.cpu_prefix, cpu_count)
-                            } else {
-                                cpu_harvest.cpu_prefix.to_string()
-                            }
-                        } else {
-                            String::default()
-                        },
-                        short_cpu_name: if let Some(cpu_harvest) = current_data.cpu_harvest.get(itx)
-                        {
-                            if let Some(cpu_count) = cpu_harvest.cpu_count {
-                                cpu_count.to_string()
-                            } else {
-                                cpu_harvest.cpu_prefix.to_string()
-                            }
-                        } else {
-                            String::default()
-                        },
-                        legend_value: format!("{:.0}%", cpu_usage.round()),
-                        cpu_data: vec![],
-                    })
-                    .collect::<Vec<ConvertedCpuData>>(),
-            );
-        } else {
-            existing_cpu_data
-                .iter_mut()
-                .skip(1)
-                .zip(&data.cpu_data)
-                .for_each(|(cpu, cpu_usage)| {
-                    cpu.cpu_data = vec![];
-                    cpu.legend_value = format!("{:.0}%", cpu_usage.round());
-                });
-        }
-    }
-
-    for (time, data) in &current_data.timed_data_vec {
-        let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
-
-        for (itx, cpu) in data.cpu_data.iter().enumerate() {
-            if let Some(cpu_data) = existing_cpu_data.get_mut(itx + 1) {
-                cpu_data.cpu_data.push((-time_from_start, *cpu));
+        // (Re-)initialize the vector if the lengths don't match...
+        if let Some((_time, data)) = &current_data.timed_data_vec.last() {
+            if data.cpu_data.len() + 1 != self.cpu_data.len() {
+                self.cpu_data = Vec::with_capacity(data.cpu_data.len() + 1);
+                self.cpu_data.push(CpuWidgetData::All);
+                self.cpu_data.extend(
+                    data.cpu_data
+                        .iter()
+                        .zip(&current_data.cpu_harvest)
+                        .map(|(cpu_usage, data)| CpuWidgetData::Entry {
+                            data_type: data.data_type,
+                            data: vec![],
+                            last_entry: *cpu_usage,
+                        })
+                        .collect::<Vec<CpuWidgetData>>(),
+                );
+            } else {
+                self.cpu_data
+                    .iter_mut()
+                    .skip(1)
+                    .zip(&data.cpu_data)
+                    .for_each(|(mut cpu, cpu_usage)| match &mut cpu {
+                        CpuWidgetData::All => unreachable!(),
+                        CpuWidgetData::Entry {
+                            data_type: _,
+                            data,
+                            last_entry,
+                        } => {
+                            // A bit faster to just update all the times, so we just clear the vector.
+                            data.clear();
+                            *last_entry = *cpu_usage;
+                        }
+                    });
             }
         }
 
-        if *time == current_time {
-            break;
+        // TODO: [Opt] Can probably avoid data deduplication - store the shift + data + original once.
+        // Now push all the data.
+        for (itx, mut cpu) in &mut self.cpu_data.iter_mut().skip(1).enumerate() {
+            match &mut cpu {
+                CpuWidgetData::All => unreachable!(),
+                CpuWidgetData::Entry {
+                    data_type: _,
+                    data,
+                    last_entry: _,
+                } => {
+                    for (time, timed_data) in &current_data.timed_data_vec {
+                        let time_start: f64 =
+                            (current_time.duration_since(*time).as_millis() as f64).floor();
+
+                        if let Some(val) = timed_data.cpu_data.get(itx) {
+                            data.push((-time_start, *val));
+                        }
+
+                        if *time == current_time {
+                            break;
+                        }
+                    }
+
+                    data.shrink_to_fit();
+                }
+            }
         }
     }
 }
 
-pub fn convert_mem_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
+pub fn convert_mem_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(mem_data) = data.mem_data {
@@ -303,13 +198,9 @@ pub fn convert_mem_data_points(current_data: &data_farmer::DataCollection) -> Ve
     result
 }
 
-pub fn convert_swap_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
+pub fn convert_swap_data_points(current_data: &DataCollection) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(swap_data) = data.swap_data {
@@ -326,7 +217,7 @@ pub fn convert_swap_data_points(current_data: &data_farmer::DataCollection) -> V
 }
 
 pub fn convert_mem_labels(
-    current_data: &data_farmer::DataCollection,
+    current_data: &DataCollection,
 ) -> (Option<(String, String)>, Option<(String, String)>) {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
@@ -396,17 +287,13 @@ pub fn convert_mem_labels(
 }
 
 pub fn get_rx_tx_data_points(
-    current_data: &data_farmer::DataCollection, network_scale_type: &AxisScaling,
-    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
+    current_data: &DataCollection, network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
+    network_use_binary_prefix: bool,
 ) -> (Vec<Point>, Vec<Point>) {
     let mut rx: Vec<Point> = Vec::new();
     let mut tx: Vec<Point> = Vec::new();
 
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         let time_from_start: f64 = (current_time.duration_since(*time).as_millis() as f64).floor();
@@ -447,9 +334,8 @@ pub fn get_rx_tx_data_points(
 }
 
 pub fn convert_network_data_points(
-    current_data: &data_farmer::DataCollection, need_four_points: bool,
-    network_scale_type: &AxisScaling, network_unit_type: &DataUnit,
-    network_use_binary_prefix: bool,
+    current_data: &DataCollection, need_four_points: bool, network_scale_type: &AxisScaling,
+    network_unit_type: &DataUnit, network_use_binary_prefix: bool,
 ) -> ConvertedNetworkData {
     let (rx, tx) = get_rx_tx_data_points(
         current_data,
@@ -607,10 +493,19 @@ pub fn dec_bytes_per_second_string(value: u64) -> String {
     }
 }
 
+/// Returns a string given a value that is converted to the closest SI-variant.
+/// If the value is greater than a giga-X, then it will return a decimal place.
+pub fn dec_bytes_string(value: u64) -> String {
+    let converted_values = get_decimal_bytes(value);
+    if value >= GIGA_LIMIT {
+        format!("{:.*}{}", 1, converted_values.0, converted_values.1)
+    } else {
+        format!("{:.*}{}", 0, converted_values.0, converted_values.1)
+    }
+}
+
 #[cfg(feature = "battery")]
-pub fn convert_battery_harvest(
-    current_data: &data_farmer::DataCollection,
-) -> Vec<ConvertedBatteryData> {
+pub fn convert_battery_harvest(current_data: &DataCollection) -> Vec<ConvertedBatteryData> {
     current_data
         .battery_harvest
         .iter()
@@ -657,7 +552,9 @@ pub fn convert_battery_harvest(
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_labels(current_data: &data_farmer::DataCollection) -> Option<(String, String)> {
+pub fn convert_arc_labels(
+    current_data: &crate::app::data_farmer::DataCollection,
+) -> Option<(String, String)> {
     /// Returns the unit type and denominator for given total amount of memory in kibibytes.
     fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
         if mem_total_kib < 1024 {
@@ -701,13 +598,11 @@ pub fn convert_arc_labels(current_data: &data_farmer::DataCollection) -> Option<
 }
 
 #[cfg(feature = "zfs")]
-pub fn convert_arc_data_points(current_data: &data_farmer::DataCollection) -> Vec<Point> {
+pub fn convert_arc_data_points(
+    current_data: &crate::app::data_farmer::DataCollection,
+) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::new();
-    let current_time = if let Some(frozen_instant) = current_data.frozen_instant {
-        frozen_instant
-    } else {
-        current_data.current_instant
-    };
+    let current_time = current_data.current_instant;
 
     for (time, data) in &current_data.timed_data_vec {
         if let Some(arc_data) = data.arc_data {
