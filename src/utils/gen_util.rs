@@ -99,8 +99,8 @@ pub fn get_decimal_prefix(quantity: u64, unit: &str) -> (f64, String) {
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.
 pub fn truncate_text<'a, U: Into<usize>>(content: &str, width: U) -> Text<'a> {
     let width = width.into();
-
     let graphemes: Vec<&str> = UnicodeSegmentation::graphemes(content, true).collect();
+
     if graphemes.len() > width && width > 0 {
         // Truncate with ellipsis
         let first_n = graphemes[..(width - 1)].concat();

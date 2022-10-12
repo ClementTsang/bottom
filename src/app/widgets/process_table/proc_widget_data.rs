@@ -11,6 +11,7 @@ use crate::{
     canvas::Painter,
     components::data_table::{DataTableColumn, DataToCell},
     data_conversion::{binary_byte_string, dec_bytes_per_second_string, dec_bytes_string},
+    utils::gen_util::truncate_text,
     Pid,
 };
 
@@ -212,9 +213,11 @@ impl ProcWidgetData {
 
 impl DataToCell<ProcColumn> for ProcWidgetData {
     fn to_cell<'a>(&'a self, column: &ProcColumn, calculated_width: u16) -> Option<Text<'a>> {
-        Some(
-            match column {
-                ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
+        Some(truncate_text(
+            &match column {
+                ProcColumn::CpuPercent => {
+                    format!("{:.1}%", self.cpu_usage_percent)
+                }
                 ProcColumn::MemoryVal | ProcColumn::MemoryPercent => self.mem_usage.to_string(),
                 ProcColumn::Pid => self.pid.to_string(),
                 ProcColumn::Count => self.num_similar.to_string(),
@@ -240,9 +243,9 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
                         "".to_string()
                     }
                 }
-            }
-            .into(),
-        )
+            },
+            calculated_width,
+        ))
     }
 
     #[inline(always)]
