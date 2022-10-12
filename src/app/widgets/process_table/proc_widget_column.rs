@@ -64,7 +64,9 @@ impl ColumnHeader for ProcColumn {
     }
 }
 
-impl SortsRow<ProcWidgetData> for ProcColumn {
+impl SortsRow for ProcColumn {
+    type DataType = ProcWidgetData;
+
     fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool) {
         match self {
             ProcColumn::CpuPercent => {

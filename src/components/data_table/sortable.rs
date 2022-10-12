@@ -100,13 +100,15 @@ impl SortType for Sortable {
     }
 }
 
-pub trait SortsRow<DataType> {
+pub trait SortsRow {
+    type DataType;
+
     /// Sorts data.
-    fn sort_data(&self, data: &mut [DataType], descending: bool);
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool);
 }
 
 #[derive(Debug, Clone)]
-pub struct SortColumn<DataType, T> {
+pub struct SortColumn<T> {
     /// The inner column header.
     inner: T,
 
@@ -118,13 +120,11 @@ pub struct SortColumn<DataType, T> {
 
     /// Marks that this column is currently "hidden", and should *always* be skipped.
     pub is_hidden: bool,
-
-    _pd: PhantomData<DataType>,
 }
 
-impl<DataType, T> DataTableColumn<T> for SortColumn<DataType, T>
+impl<D, T> DataTableColumn<T> for SortColumn<T>
 where
-    T: ColumnHeader + SortsRow<DataType>,
+    T: ColumnHeader + SortsRow<DataType = D>,
 {
     #[inline]
     fn inner(&self) -> &T {
@@ -165,9 +165,9 @@ where
     }
 }
 
-impl<DataType, T> SortColumn<DataType, T>
+impl<D, T> SortColumn<T>
 where
-    T: ColumnHeader + SortsRow<DataType>,
+    T: ColumnHeader + SortsRow<DataType = D>,
 {
     /// Creates a new [`SortColumn`] with a width that follows the header width, which has no shortcut and sorts by
     /// default in ascending order ([`SortOrder::Ascending`]).
@@ -177,7 +177,6 @@ where
             bounds: ColumnWidthBounds::FollowHeader,
             is_hidden: false,
             default_order: SortOrder::default(),
-            _pd: Default::default(),
         }
     }
 
@@ -189,7 +188,6 @@ where
             bounds: ColumnWidthBounds::Hard(width),
             is_hidden: false,
             default_order: SortOrder::default(),
-            _pd: Default::default(),
         }
     }
 
@@ -204,7 +202,6 @@ where
             },
             is_hidden: false,
             default_order: SortOrder::default(),
-            _pd: Default::default(),
         }
     }
 
@@ -221,7 +218,7 @@ where
     }
 
     /// Given a [`SortColumn`] and the sort order, sort a mutable slice of associated data.
-    pub fn sort_by(&self, data: &mut [DataType], order: SortOrder) {
+    pub fn sort_by(&self, data: &mut [D], order: SortOrder) {
         let descending = matches!(order, SortOrder::Descending);
         self.inner.sort_data(data, descending);
     }
@@ -234,14 +231,14 @@ pub struct SortDataTableProps {
 }
 
 /// A type alias for a sortable [`DataTable`].
-pub type SortDataTable<DataType, H> = DataTable<DataType, H, Sortable, SortColumn<DataType, H>>;
+pub type SortDataTable<DataType, H> = DataTable<DataType, H, Sortable, SortColumn<H>>;
 
-impl<DataType, H> SortDataTable<DataType, H>
+impl<D, H> SortDataTable<D, H>
 where
-    DataType: DataToCell<H>,
-    H: ColumnHeader + SortsRow<DataType>,
+    D: DataToCell<H>,
+    H: ColumnHeader + SortsRow<DataType = D>,
 {
-    pub fn new_sortable<C: Into<Vec<SortColumn<DataType, H>>>>(
+    pub fn new_sortable<C: Into<Vec<SortColumn<H>>>>(
         columns: C, props: SortDataTableProps, styling: DataTableStyling,
     ) -> Self {
         Self {
@@ -377,7 +374,9 @@ mod test {
         }
     }
 
-    impl SortsRow<TestType> for ColumnType {
+    impl SortsRow for ColumnType {
+        type DataType = TestType;
+
         fn sort_data(&self, data: &mut [TestType], descending: bool) {
             match self {
                 ColumnType::Index => data.sort_by_key(|t| t.index),
