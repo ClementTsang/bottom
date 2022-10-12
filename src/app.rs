@@ -344,7 +344,6 @@ impl App {
             // If the sort is now open, move left. Otherwise, if the proc sort was selected, force move right.
             if pws.is_sort_open {
                 pws.sort_table.set_position(pws.table.sort_index());
-
                 self.move_widget_selection(&WidgetDirection::Left);
             } else if let BottomWidgetType::ProcSort = self.current_widget.widget_type {
                 self.move_widget_selection(&WidgetDirection::Right);

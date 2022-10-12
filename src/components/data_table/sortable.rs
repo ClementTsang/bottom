@@ -336,3 +336,201 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[derive(Clone, PartialEq, Eq, Debug)]
+    struct TestType {
+        index: usize,
+        data: u64,
+    }
+
+    enum ColumnType {
+        Index,
+        Data,
+    }
+
+    impl DataToCell<ColumnType> for TestType {
+        fn to_cell<'a>(
+            &'a self, _column: &ColumnType, _calculated_width: u16,
+        ) -> Option<tui::text::Text<'a>> {
+            None
+        }
+
+        fn column_widths<C: DataTableColumn<ColumnType>>(_data: &[Self], _columns: &[C]) -> Vec<u16>
+        where
+            Self: Sized,
+        {
+            vec![]
+        }
+    }
+
+    impl ColumnHeader for ColumnType {
+        fn text(&self) -> Cow<'static, str> {
+            match self {
+                ColumnType::Index => "Index".into(),
+                ColumnType::Data => "Data".into(),
+            }
+        }
+    }
+
+    impl SortsRow<TestType> for ColumnType {
+        fn sort_data(&self, data: &mut [TestType], descending: bool) {
+            match self {
+                ColumnType::Index => data.sort_by_key(|t| t.index),
+                ColumnType::Data => data.sort_by_key(|t| t.data),
+            }
+
+            if descending {
+                data.reverse();
+            }
+        }
+    }
+
+    #[test]
+    fn test_sorting() {
+        let columns = [
+            SortColumn::new(ColumnType::Index),
+            SortColumn::new(ColumnType::Data),
+        ];
+        let props = {
+            let inner = DataTableProps {
+                title: Some("test".into()),
+                table_gap: 1,
+                left_to_right: false,
+                is_basic: false,
+                show_table_scroll_position: true,
+                show_current_entry_when_unfocused: false,
+            };
+
+            SortDataTableProps {
+                inner,
+                sort_index: 0,
+                order: SortOrder::Descending,
+            }
+        };
+
+        let styling = DataTableStyling::default();
+
+        let mut table = DataTable::new_sortable(columns, props, styling);
+        let mut data = vec![
+            TestType {
+                index: 4,
+                data: 100,
+            },
+            TestType {
+                index: 1,
+                data: 200,
+            },
+            TestType {
+                index: 0,
+                data: 300,
+            },
+            TestType {
+                index: 3,
+                data: 400,
+            },
+            TestType {
+                index: 2,
+                data: 500,
+            },
+        ];
+
+        table
+            .columns
+            .get(table.sort_type.sort_index)
+            .unwrap()
+            .sort_by(&mut data, SortOrder::Ascending);
+        assert_eq!(
+            data,
+            vec![
+                TestType {
+                    index: 0,
+                    data: 300,
+                },
+                TestType {
+                    index: 1,
+                    data: 200,
+                },
+                TestType {
+                    index: 2,
+                    data: 500,
+                },
+                TestType {
+                    index: 3,
+                    data: 400,
+                },
+                TestType {
+                    index: 4,
+                    data: 100,
+                },
+            ]
+        );
+
+        table
+            .columns
+            .get(table.sort_type.sort_index)
+            .unwrap()
+            .sort_by(&mut data, SortOrder::Descending);
+        assert_eq!(
+            data,
+            vec![
+                TestType {
+                    index: 4,
+                    data: 100,
+                },
+                TestType {
+                    index: 3,
+                    data: 400,
+                },
+                TestType {
+                    index: 2,
+                    data: 500,
+                },
+                TestType {
+                    index: 1,
+                    data: 200,
+                },
+                TestType {
+                    index: 0,
+                    data: 300,
+                },
+            ]
+        );
+
+        table.set_sort_index(1);
+        table
+            .columns
+            .get(table.sort_type.sort_index)
+            .unwrap()
+            .sort_by(&mut data, SortOrder::Ascending);
+        assert_eq!(
+            data,
+            vec![
+                TestType {
+                    index: 4,
+                    data: 100,
+                },
+                TestType {
+                    index: 1,
+                    data: 200,
+                },
+                TestType {
+                    index: 0,
+                    data: 300,
+                },
+                TestType {
+                    index: 3,
+                    data: 400,
+                },
+                TestType {
+                    index: 2,
+                    data: 500,
+                },
+            ]
+        );
+    }
+}

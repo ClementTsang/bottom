@@ -10,7 +10,7 @@ pub struct DataTableProps {
     /// Whether this table determines column widths from left to right.
     pub left_to_right: bool,
 
-    /// Whether this table is a basic table.
+    /// Whether this table is a basic table. This affects the borders.
     pub is_basic: bool,
 
     /// Whether to show the table scroll position.

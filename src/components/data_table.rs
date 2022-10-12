@@ -74,7 +74,8 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     }
 
     /// Updates the scroll position to be valid for the number of entries.
-    fn update_num_entries(&mut self) {
+    fn set_data(&mut self, data: Vec<DataType>) {
+        self.data = data;
         let max_pos = self.data.len().saturating_sub(1);
         if self.state.current_index > max_pos {
             self.state.current_index = max_pos;
@@ -117,8 +118,15 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     }
 
     /// Updates the scroll position to a selected index.
+    #[allow(clippy::comparison_chain)]
     pub fn set_position(&mut self, new_index: usize) {
-        self.state.current_index = new_index.clamp(0, self.data.len().saturating_sub(1));
+        let new_index = new_index.clamp(0, self.data.len().saturating_sub(1));
+        if self.state.current_index < new_index {
+            self.state.scroll_direction = ScrollDirection::Down;
+        } else if self.state.current_index > new_index {
+            self.state.scroll_direction = ScrollDirection::Up;
+        }
+        self.state.current_index = new_index;
     }
 
     /// Returns the current scroll index.
@@ -139,5 +147,96 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
 
 #[cfg(test)]
 mod test {
-    // FIXME: Do all testing!
+    use super::*;
+
+    #[derive(Clone, PartialEq, Eq, Debug)]
+    struct TestType {
+        index: usize,
+    }
+
+    impl DataToCell<&'static str> for TestType {
+        fn to_cell<'a>(
+            &'a self, _column: &&'static str, _calculated_width: u16,
+        ) -> Option<tui::text::Text<'a>> {
+            None
+        }
+
+        fn column_widths<C: DataTableColumn<&'static str>>(
+            _data: &[Self], _columns: &[C],
+        ) -> Vec<u16>
+        where
+            Self: Sized,
+        {
+            vec![]
+        }
+    }
+
+    #[test]
+    fn test_data_table_operations() {
+        let columns = [Column::hard("a", 10), Column::hard("b", 10)];
+        let props = DataTableProps {
+            title: Some("test".into()),
+            table_gap: 1,
+            left_to_right: false,
+            is_basic: false,
+            show_table_scroll_position: true,
+            show_current_entry_when_unfocused: false,
+        };
+        let styling = DataTableStyling::default();
+
+        let mut table = DataTable::new(columns, props, styling);
+        table.set_data((0..=4).map(|index| TestType { index }).collect::<Vec<_>>());
+
+        table.set_last();
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+
+        table.set_first();
+        assert_eq!(table.current_index(), 0);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+
+        table.set_position(4);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+
+        table.set_position(100);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+
+        table.increment_position(-1);
+        assert_eq!(table.current_index(), 3);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+        assert_eq!(table.current_item(), Some(&TestType { index: 3 }));
+
+        table.increment_position(-3);
+        assert_eq!(table.current_index(), 0);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+        assert_eq!(table.current_item(), Some(&TestType { index: 0 }));
+
+        table.increment_position(-3);
+        assert_eq!(table.current_index(), 0);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Up);
+        assert_eq!(table.current_item(), Some(&TestType { index: 0 }));
+
+        table.increment_position(1);
+        assert_eq!(table.current_index(), 1);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 1 }));
+
+        table.increment_position(3);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+
+        table.increment_position(10);
+        assert_eq!(table.current_index(), 4);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 4 }));
+
+        table.set_data((0..=2).map(|index| TestType { index }).collect::<Vec<_>>());
+        assert_eq!(table.current_index(), 2);
+        assert_eq!(table.state.scroll_direction, ScrollDirection::Down);
+        assert_eq!(table.current_item(), Some(&TestType { index: 2 }));
+    }
 }

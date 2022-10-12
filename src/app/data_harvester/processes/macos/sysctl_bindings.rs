@@ -60,16 +60,16 @@ pub(crate) struct extern_proc {
     /// Process identifier.
     pub p_pid: pid_t,
 
-    /// Save parent pid during ptrace. XXX
+    /// Save parent pid during ptrace.
     pub p_oppid: pid_t,
 
-    /// Sideways return value from fdopen. XXX
+    /// Sideways return value from fdopen.
     pub p_dupfd: i32,
 
     /// where user stack was allocated
     pub user_stack: caddr_t,
 
-    /// XXX Which thread is exiting?
+    /// Which thread is exiting?
     pub exit_thread: *mut c_void,
 
     /// allow to debug

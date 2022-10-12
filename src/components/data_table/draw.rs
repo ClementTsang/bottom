@@ -144,8 +144,7 @@ where
         &mut self, f: &mut Frame<'_, B>, draw_info: &DrawInfo, data: Vec<DataType>,
         widget: Option<&mut BottomWidget>, painter: &Painter,
     ) {
-        self.data = data;
-        self.update_num_entries();
+        self.set_data(data);
 
         let draw_horizontal = !self.props.is_basic || draw_info.is_on_widget();
         let draw_loc = draw_info.loc;

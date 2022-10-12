@@ -1,6 +1,6 @@
 use tui::{layout::Rect, widgets::TableState};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ScrollDirection {
     // UP means scrolling up --- this usually DECREMENTS
     Up,
