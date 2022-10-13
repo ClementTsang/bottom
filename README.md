@@ -382,11 +382,9 @@ Thanks to all contributors:
       <td align="center"><a href="https://github.com/jamartin9"><img src="https://avatars.githubusercontent.com/u/7027701?v=4?s=100" width="100px;" alt="Justin Martin"/><br /><sub><b>Justin Martin</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jamartin9" title="Code">💻</a></td>
       <td align="center"><a href="https://github.com/DianaNites"><img src="https://avatars.githubusercontent.com/u/5275194?v=4?s=100" width="100px;" alt="Diana"/><br /><sub><b>Diana</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=DianaNites" title="Code">💻</a></td>
       <td align="center"><a href="https://hervyqa.id"><img src="https://avatars.githubusercontent.com/u/45872139?v=4?s=100" width="100px;" alt="Hervy Qurrotul Ainur Rozi"/><br /><sub><b>Hervy Qurrotul Ainur Rozi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=hervyqa" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://mrivnak.github.io"><img src="https://avatars.githubusercontent.com/u/7389355?v=4?s=100" width="100px;" alt="Mike Rivnak"/><br /><sub><b>Mike Rivnak</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mrivnak" title="Documentation">📖</a></td>
     </tr>
   </tbody>
-  <tfoot>
-    
-  </tfoot>
 </table>
 
 <!-- markdownlint-restore -->
