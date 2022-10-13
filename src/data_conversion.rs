@@ -7,7 +7,7 @@ use crate::app::{
     data_harvester::temperature::TemperatureType,
     widgets::{DiskWidgetData, TempWidgetData},
 };
-use crate::components::time_graph::Point;
+use crate::components::tui_widget::time_chart::Point;
 use crate::utils::gen_util::*;
 use crate::{app::AxisScaling, units::data_units::DataUnit};
 

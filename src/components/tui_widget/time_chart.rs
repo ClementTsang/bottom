@@ -14,6 +14,9 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::utils::gen_util::partial_ordering;
 
+/// A single graph point.
+pub type Point = (f64, f64);
+
 /// An X or Y axis for the chart widget
 #[derive(Debug, Clone)]
 pub struct Axis<'a> {
@@ -70,7 +73,7 @@ pub struct Dataset<'a> {
     /// Name of the dataset (used in the legend if shown)
     name: Cow<'a, str>,
     /// A reference to the actual data
-    data: &'a [(f64, f64)],
+    data: &'a [Point],
     /// Symbol used for each points of this dataset
     marker: symbols::Marker,
     /// Determines graph type used for drawing points
@@ -101,7 +104,7 @@ impl<'a> Dataset<'a> {
         self
     }
 
-    pub fn data(mut self, data: &'a [(f64, f64)]) -> Dataset<'a> {
+    pub fn data(mut self, data: &'a [Point]) -> Dataset<'a> {
         self.data = data;
         self
     }
@@ -589,7 +592,7 @@ fn get_end(dataset: &Dataset<'_>, end_bound: f64) -> (usize, Option<usize>) {
 }
 
 /// Returns the y-axis value for a given `x`, given two points to draw a line between.
-fn interpolate_point(older_point: &(f64, f64), newer_point: &(f64, f64), x: f64) -> f64 {
+fn interpolate_point(older_point: &Point, newer_point: &Point, x: f64) -> f64 {
     let delta_x = newer_point.0 - older_point.0;
     let delta_y = newer_point.1 - older_point.1;
     let slope = delta_y / delta_x;

@@ -1,7 +1,10 @@
 use crate::{
     app::{App, AxisScaling},
     canvas::{drawing_utils::should_hide_x_label, Painter},
-    components::time_graph::{GraphData, Point, TimeGraph},
+    components::{
+        time_graph::{GraphData, TimeGraph},
+        tui_widget::time_chart::Point,
+    },
     units::data_units::DataUnit,
     utils::gen_util::*,
 };
@@ -52,8 +55,8 @@ impl Painter {
         hide_legend: bool,
     ) {
         if let Some(network_widget_state) = app_state.net_state.widget_states.get_mut(&widget_id) {
-            let network_data_rx: &[(f64, f64)] = &app_state.converted_data.network_data_rx;
-            let network_data_tx: &[(f64, f64)] = &app_state.converted_data.network_data_tx;
+            let network_data_rx = &app_state.converted_data.network_data_rx;
+            let network_data_tx = &app_state.converted_data.network_data_tx;
             let time_start = -(network_widget_state.current_display_time as f64);
             let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
             let x_bounds = [0, network_widget_state.current_display_time];
@@ -201,7 +204,7 @@ impl Painter {
 fn get_max_entry(
     rx: &[Point], tx: &[Point], time_start: f64, network_scale_type: &AxisScaling,
     network_use_binary_prefix: bool,
-) -> (f64, f64) {
+) -> Point {
     /// Determines a "fake" max value in circumstances where we couldn't find one from the data.
     fn calculate_missing_max(
         network_scale_type: &AxisScaling, network_use_binary_prefix: bool,
