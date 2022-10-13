@@ -455,7 +455,7 @@ impl Painter {
 
                 #[cfg(feature = "zfs")]
                 {
-                    let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
+                    let arc_data = &app_state.converted_data.arc_data;
                     if let Some(arc) = arc_data.last() {
                         if arc.1 != 0.0 {
                             mem_rows += 1; // add row for arc

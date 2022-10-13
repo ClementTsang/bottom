@@ -13,8 +13,8 @@ impl Painter {
     pub fn draw_basic_memory<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
-        let mem_data: &[(f64, f64)] = &app_state.converted_data.mem_data;
-        let swap_data: &[(f64, f64)] = &app_state.converted_data.swap_data;
+        let mem_data = &app_state.converted_data.mem_data;
+        let swap_data = &app_state.converted_data.swap_data;
 
         let margined_loc = Layout::default()
             .constraints({
@@ -90,7 +90,7 @@ impl Painter {
 
         #[cfg(feature = "zfs")]
         {
-            let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
+            let arc_data = &app_state.converted_data.arc_data;
             let arc_ratio = if let Some(arc) = arc_data.last() {
                 arc.1 / 100.0
             } else {
