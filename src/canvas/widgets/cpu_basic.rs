@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use crate::{
     app::{data_harvester::cpu::CpuDataType, App},
     canvas::Painter,
@@ -6,7 +8,6 @@ use crate::{
     data_conversion::CpuWidgetData,
 };
 
-use itertools::Itertools;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -53,7 +54,7 @@ impl Painter {
                     .direction(Direction::Horizontal)
                     .split(draw_loc);
 
-                let gauge_info = cpu_data.iter().map(|cpu| match cpu {
+                let mut gauge_info = cpu_data.iter().map(|cpu| match cpu {
                     CpuWidgetData::All => unreachable!(),
                     CpuWidgetData::Entry {
                         data_type,
@@ -88,31 +89,38 @@ impl Painter {
                         }
                     })
                     .unwrap_or_default();
-                let num_per_column = draw_loc.height as usize;
 
-                for (chunk, column) in gauge_info
-                    .into_iter()
-                    .chunks(num_per_column)
-                    .into_iter()
-                    .zip(columns)
-                {
-                    let rows = Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints(vec![Constraint::Length(1); remaining_height])
-                        .horizontal_margin(1)
-                        .split(column);
-
-                    for ((start_label, inner_label, ratio, style), row) in chunk.zip(rows) {
-                        f.render_widget(
-                            PipeGauge::default()
-                                .gauge_style(style)
-                                .label_style(style)
-                                .inner_label(inner_label)
-                                .start_label(start_label)
-                                .ratio(ratio)
-                                .hide_parts(hide_parts),
-                            row,
+                let num_entries = cpu_data.len();
+                let mut row_counter = num_entries;
+                for (itx, column) in columns.into_iter().enumerate() {
+                    if REQUIRED_COLUMNS > itx {
+                        let to_divide = REQUIRED_COLUMNS - itx;
+                        let num_taken = min(
+                            remaining_height,
+                            (row_counter / to_divide)
+                                + (if row_counter % to_divide == 0 { 0 } else { 1 }),
                         );
+                        row_counter -= num_taken;
+                        let chunk = (&mut gauge_info).take(num_taken);
+
+                        let rows = Layout::default()
+                            .direction(Direction::Vertical)
+                            .constraints(vec![Constraint::Length(1); remaining_height])
+                            .horizontal_margin(1)
+                            .split(column);
+
+                        for ((start_label, inner_label, ratio, style), row) in chunk.zip(rows) {
+                            f.render_widget(
+                                PipeGauge::default()
+                                    .gauge_style(style)
+                                    .label_style(style)
+                                    .inner_label(inner_label)
+                                    .start_label(start_label)
+                                    .ratio(ratio)
+                                    .hide_parts(hide_parts),
+                                row,
+                            );
+                        }
                     }
                 }
             }
