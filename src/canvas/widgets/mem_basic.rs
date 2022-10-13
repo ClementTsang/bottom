@@ -1,16 +1,12 @@
 use crate::{
-    app::App,
-    canvas::{drawing_utils::*, Painter},
-    constants::*,
+    app::App, canvas::Painter, components::tui_widget::pipe_gauge::PipeGauge, constants::*,
 };
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::Span,
-    text::Spans,
-    widgets::{Block, Paragraph},
+    widgets::Block,
 };
 
 impl Painter {
@@ -21,7 +17,18 @@ impl Painter {
         let swap_data: &[(f64, f64)] = &app_state.converted_data.swap_data;
 
         let margined_loc = Layout::default()
-            .constraints([Constraint::Percentage(100)])
+            .constraints({
+                #[cfg(feature = "zfs")]
+                {
+                    [Constraint::Length(1); 3]
+                }
+
+                #[cfg(not(feature = "zfs"))]
+                {
+                    [Constraint::Length(1); 2]
+                }
+            })
+            .direction(Direction::Vertical)
             .horizontal_margin(1)
             .split(draw_loc);
 
@@ -34,118 +41,78 @@ impl Painter {
             );
         }
 
-        let ram_use_percentage = if let Some(mem) = mem_data.last() {
-            mem.1
+        let ram_ratio = if let Some(mem) = mem_data.last() {
+            mem.1 / 100.0
         } else {
             0.0
         };
-        let swap_use_percentage = if let Some(swap) = swap_data.last() {
-            swap.1
+        let swap_ratio = if let Some(swap) = swap_data.last() {
+            swap.1 / 100.0
         } else {
             0.0
         };
 
         const EMPTY_MEMORY_FRAC_STRING: &str = "0.0B/0.0B";
 
-        let trimmed_memory_frac =
-            if let Some((_label_percent, label_frac)) = &app_state.converted_data.mem_labels {
+        let memory_fraction_label =
+            if let Some((_, label_frac)) = &app_state.converted_data.mem_labels {
                 label_frac.trim()
             } else {
                 EMPTY_MEMORY_FRAC_STRING
             };
 
-        let trimmed_swap_frac =
-            if let Some((_label_percent, label_frac)) = &app_state.converted_data.swap_labels {
+        let swap_fraction_label =
+            if let Some((_, label_frac)) = &app_state.converted_data.swap_labels {
                 label_frac.trim()
             } else {
                 EMPTY_MEMORY_FRAC_STRING
             };
 
-        // +7 due to 3 + 2 + 2 columns for the name & space + bar bounds + margin spacing
-        // Then + length of fraction
-        let ram_bar_length =
-            usize::from(draw_loc.width.saturating_sub(7)).saturating_sub(trimmed_memory_frac.len());
-        let swap_bar_length =
-            usize::from(draw_loc.width.saturating_sub(7)).saturating_sub(trimmed_swap_frac.len());
+        f.render_widget(
+            PipeGauge::default()
+                .ratio(ram_ratio)
+                .start_label("RAM")
+                .inner_label(memory_fraction_label)
+                .label_style(self.colours.ram_style)
+                .gauge_style(self.colours.ram_style),
+            margined_loc[0],
+        );
 
-        let num_bars_ram = calculate_basic_use_bars(ram_use_percentage, ram_bar_length);
-        let num_bars_swap = calculate_basic_use_bars(swap_use_percentage, swap_bar_length);
-        // TODO: Use different styling for the frac.
-        let mem_label = if app_state.basic_mode_use_percent {
-            format!(
-                "RAM[{}{}{:3.0}%]\n",
-                "|".repeat(num_bars_ram),
-                " ".repeat(ram_bar_length - num_bars_ram + trimmed_memory_frac.len() - 4),
-                ram_use_percentage.round()
-            )
-        } else {
-            format!(
-                "RAM[{}{}{}]\n",
-                "|".repeat(num_bars_ram),
-                " ".repeat(ram_bar_length - num_bars_ram),
-                trimmed_memory_frac
-            )
-        };
-        let swap_label = if app_state.basic_mode_use_percent {
-            format!(
-                "SWP[{}{}{:3.0}%]",
-                "|".repeat(num_bars_swap),
-                " ".repeat(swap_bar_length - num_bars_swap + trimmed_swap_frac.len() - 4),
-                swap_use_percentage.round()
-            )
-        } else {
-            format!(
-                "SWP[{}{}{}]",
-                "|".repeat(num_bars_swap),
-                " ".repeat(swap_bar_length - num_bars_swap),
-                trimmed_swap_frac
-            )
-        };
+        f.render_widget(
+            PipeGauge::default()
+                .ratio(swap_ratio)
+                .start_label("SWP")
+                .inner_label(swap_fraction_label)
+                .label_style(self.colours.swap_style)
+                .gauge_style(self.colours.swap_style),
+            margined_loc[1],
+        );
 
-        let mem_text = vec![
-            Spans::from(Span::styled(mem_label, self.colours.ram_style)),
-            Spans::from(Span::styled(swap_label, self.colours.swap_style)),
-            #[cfg(feature = "zfs")]
-            {
-                let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
-                let arc_use_percentage = if let Some(arc) = arc_data.last() {
-                    arc.1
-                } else {
-                    0.0
-                };
-                let trimmed_arc_frac = if let Some((_label_percent, label_frac)) =
-                    &app_state.converted_data.arc_labels
-                {
+        #[cfg(feature = "zfs")]
+        {
+            let arc_data: &[(f64, f64)] = &app_state.converted_data.arc_data;
+            let arc_ratio = if let Some(arc) = arc_data.last() {
+                arc.1 / 100.0
+            } else {
+                0.0
+            };
+            let arc_fraction_label =
+                if let Some((_, label_frac)) = &app_state.converted_data.arc_labels {
                     label_frac.trim()
                 } else {
                     EMPTY_MEMORY_FRAC_STRING
                 };
-                let arc_bar_length = usize::from(draw_loc.width.saturating_sub(7))
-                    .saturating_sub(trimmed_arc_frac.len());
-                let num_bars_arc = calculate_basic_use_bars(arc_use_percentage, arc_bar_length);
-                let arc_label = if app_state.basic_mode_use_percent {
-                    format!(
-                        "ARC[{}{}{:3.0}%]",
-                        "|".repeat(num_bars_arc),
-                        " ".repeat(arc_bar_length - num_bars_arc + trimmed_arc_frac.len() - 4),
-                        arc_use_percentage.round()
-                    )
-                } else {
-                    format!(
-                        "ARC[{}{}{}]",
-                        "|".repeat(num_bars_arc),
-                        " ".repeat(arc_bar_length - num_bars_arc),
-                        trimmed_arc_frac
-                    )
-                };
-                Spans::from(Span::styled(arc_label, self.colours.arc_style))
-            },
-        ];
 
-        f.render_widget(
-            Paragraph::new(mem_text).block(Block::default()),
-            margined_loc[0],
-        );
+            f.render_widget(
+                PipeGauge::default()
+                    .ratio(arc_ratio)
+                    .start_label("ARC")
+                    .inner_label(arc_fraction_label)
+                    .label_style(self.colours.arc_style)
+                    .gauge_style(self.colours.arc_style),
+                margined_loc[2],
+            );
+        }
 
         // Update draw loc in widget map
         if app_state.should_get_widget_bounds() {
