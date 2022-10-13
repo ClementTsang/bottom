@@ -180,21 +180,10 @@ sudo dnf install bottom
 
 ### Gentoo
 
-Available in [GURU](https://wiki.gentoo.org/wiki/Project:GURU) and [dm9pZCAq](https://github.com/gentoo-mirror/dm9pZCAq) overlays:
+Available in the official Gentoo repo:
 
 ```bash
-sudo eselect repository enable guru
-sudo emerge --sync guru
-echo "sys-process/bottom" | sudo tee /etc/portage/package.accept_keywords/10-guru
-sudo emerge sys-process/bottom::guru
-```
-
-or
-
-```bash
-sudo eselect repository enable dm9pZCAq
-sudo emerge --sync dm9pZCAq
-sudo emerge sys-process/bottom::dm9pZCAq
+sudo emerge --ask sys-process/bottom
 ```
 
 ### Nix
