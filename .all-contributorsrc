@@ -298,6 +298,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "mrivnak",
+      "name": "Mike Rivnak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7389355?v=4",
+      "profile": "https://mrivnak.github.io",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
@@ -305,5 +314,6 @@
   "projectOwner": "ClementTsang",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "skipCi": true
+  "skipCi": true,
+  "commitConvention": "angular"
 }
