@@ -155,9 +155,12 @@ impl Painter {
             .horizontal_margin(1)
             .split(draw_loc);
 
-        draw_widgets.iter().enumerate().for_each(|(index, widget)| {
-            f.render_widget(widget.to_owned(), margined_loc[index]);
-        });
+        draw_widgets
+            .into_iter()
+            .enumerate()
+            .for_each(|(index, widget)| {
+                f.render_widget(widget, margined_loc[index]);
+            });
 
         // Update draw loc in widget map
         if app_state.should_get_widget_bounds() {

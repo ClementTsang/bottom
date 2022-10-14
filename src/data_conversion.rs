@@ -677,7 +677,7 @@ pub fn convert_gpu_data(
     let results = current_data
         .gpu_harvest
         .iter()
-        .zip(point_vec.iter())
+        .zip(point_vec.into_iter())
         .map(|(gpu, points)| {
             let short_name = {
                 let last_words = gpu.0.split_whitespace().rev().take(2).collect::<Vec<_>>();
@@ -687,7 +687,7 @@ pub fn convert_gpu_data(
 
             ConvertedGpuData {
                 name: short_name,
-                points: points.to_owned(),
+                points,
                 mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
                 mem_total: {
                     let (unit, denominator) =
