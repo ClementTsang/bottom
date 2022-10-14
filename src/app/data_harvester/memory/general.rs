@@ -14,3 +14,13 @@ pub struct MemHarvest {
     pub mem_used_in_kib: u64,
     pub use_percent: Option<f64>,
 }
+
+#[derive(Debug)]
+pub struct MemCollect {
+    pub ram: crate::utils::error::Result<Option<MemHarvest>>,
+    pub swap: crate::utils::error::Result<Option<MemHarvest>>,
+    #[cfg(feature = "zfs")]
+    pub arc: crate::utils::error::Result<Option<MemHarvest>>,
+    #[cfg(feature = "gpu")]
+    pub gpus: crate::utils::error::Result<Option<Vec<(String, MemHarvest)>>>,
+}

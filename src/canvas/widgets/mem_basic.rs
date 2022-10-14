@@ -25,7 +25,7 @@ impl Painter {
             );
         }
 
-        let ram_ratio = if let Some(mem) = mem_data.last() {
+        let ram_percentage = if let Some(mem) = mem_data.last() {
             mem.1
         } else {
             0.0
@@ -36,7 +36,7 @@ impl Painter {
         let memory_fraction_label =
             if let Some((_, label_frac)) = &app_state.converted_data.mem_labels {
                 if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", ram_ratio.round())
+                    format!("{:3.0}%", ram_percentage.round())
                 } else {
                     label_frac.trim().to_string()
                 }
@@ -46,7 +46,7 @@ impl Painter {
 
         draw_widgets.push(
             PipeGauge::default()
-                .ratio(ram_ratio / 100.0)
+                .ratio(ram_percentage / 100.0)
                 .start_label("RAM")
                 .inner_label(memory_fraction_label)
                 .label_style(self.colours.ram_style)
@@ -55,7 +55,7 @@ impl Painter {
 
         let swap_data = &app_state.converted_data.swap_data;
 
-        let swap_ratio = if let Some(swap) = swap_data.last() {
+        let swap_percentage = if let Some(swap) = swap_data.last() {
             swap.1
         } else {
             0.0
@@ -63,13 +63,13 @@ impl Painter {
 
         if let Some((_, label_frac)) = &app_state.converted_data.swap_labels {
             let swap_fraction_label = if app_state.basic_mode_use_percent {
-                format!("{:3.0}%", swap_ratio.round())
+                format!("{:3.0}%", swap_percentage.round())
             } else {
                 label_frac.trim().to_string()
             };
             draw_widgets.push(
                 PipeGauge::default()
-                    .ratio(swap_ratio / 100.0)
+                    .ratio(swap_percentage / 100.0)
                     .start_label("SWP")
                     .inner_label(swap_fraction_label)
                     .label_style(self.colours.swap_style)
@@ -80,20 +80,20 @@ impl Painter {
         #[cfg(feature = "zfs")]
         {
             let arc_data = &app_state.converted_data.arc_data;
-            let arc_ratio = if let Some(arc) = arc_data.last() {
+            let arc_percentage = if let Some(arc) = arc_data.last() {
                 arc.1
             } else {
                 0.0
             };
             if let Some((_, label_frac)) = &app_state.converted_data.arc_labels {
                 let arc_fraction_label = if app_state.basic_mode_use_percent {
-                    format!("{:3.0}%", arc_ratio.round())
+                    format!("{:3.0}%", arc_percentage.round())
                 } else {
                     label_frac.trim().to_string()
                 };
                 draw_widgets.push(
                     PipeGauge::default()
-                        .ratio(arc_ratio / 100.0)
+                        .ratio(arc_percentage / 100.0)
                         .start_label("ARC")
                         .inner_label(arc_fraction_label)
                         .label_style(self.colours.arc_style)
@@ -109,14 +109,14 @@ impl Painter {
             if let Some(gpu_data) = &app_state.converted_data.gpu_data {
                 gpu_data.iter().for_each(|gpu_data_vec| {
                     let gpu_data = gpu_data_vec.points.as_slice();
-                    let gpu_ratio = if let Some(gpu) = gpu_data.last() {
+                    let gpu_percentage = if let Some(gpu) = gpu_data.last() {
                         gpu.1
                     } else {
                         0.0
                     };
                     let trimmed_gpu_frac = {
                         if app_state.basic_mode_use_percent {
-                            format!("{:3.0}%", gpu_ratio.round())
+                            format!("{:3.0}%", gpu_percentage.round())
                         } else {
                             gpu_data_vec.mem_total.trim().to_string()
                         }
@@ -135,7 +135,7 @@ impl Painter {
                     };
                     draw_widgets.push(
                         PipeGauge::default()
-                            .ratio(gpu_ratio / 100.0)
+                            .ratio(gpu_percentage / 100.0)
                             .start_label("GPU")
                             .inner_label(trimmed_gpu_frac)
                             .label_style(style)
@@ -145,12 +145,8 @@ impl Painter {
             }
         }
 
-        let constraint_layout: Vec<Constraint> = std::iter::repeat(Constraint::Length(1))
-            .take(draw_widgets.len())
-            .collect();
-
         let margined_loc = Layout::default()
-            .constraints(constraint_layout)
+            .constraints(vec![Constraint::Length(1); draw_widgets.len()])
             .direction(Direction::Vertical)
             .horizontal_margin(1)
             .split(draw_loc);

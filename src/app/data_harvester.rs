@@ -434,21 +434,21 @@ impl DataCollector {
             self.data.network = net_data;
         }
 
-        if let Ok(memory) = mem_res.0 {
+        if let Ok(memory) = mem_res.ram {
             self.data.memory = memory;
         }
 
-        if let Ok(swap) = mem_res.1 {
+        if let Ok(swap) = mem_res.swap {
             self.data.swap = swap;
         }
 
         #[cfg(feature = "zfs")]
-        if let Ok(arc) = mem_res.2 {
+        if let Ok(arc) = mem_res.arc {
             self.data.arc = arc;
         }
 
         #[cfg(feature = "gpu")]
-        if let Ok(gpu) = mem_res.3 {
+        if let Ok(gpu) = mem_res.gpus {
             self.data.gpu = gpu;
         }
 
