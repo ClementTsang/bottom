@@ -26,7 +26,7 @@ pub async fn get_mem_data(sys: &System, actually_get: bool) -> MemCollect {
 }
 
 pub async fn get_ram_data(sys: &System) -> crate::utils::error::Result<Option<MemHarvest>> {
-    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory() / 1024, sys.used_memory()) / 1024;
+    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory() / 1024, sys.used_memory() / 1024);
 
     Ok(Some(MemHarvest {
         mem_total_in_kib,
