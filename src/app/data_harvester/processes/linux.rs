@@ -2,6 +2,7 @@
 
 use std::collections::hash_map::Entry;
 
+use crate::components::tui_widget::time_chart::Point;
 use crate::utils::error::{self, BottomError};
 use crate::Pid;
 
@@ -36,7 +37,7 @@ impl PrevProcDetails {
     }
 }
 
-fn calculate_idle_values(line: String) -> (f64, f64) {
+fn calculate_idle_values(line: String) -> Point {
     /// Converts a `Option<&str>` value to an f64. If it fails to parse or is `None`, then it will return `0_f64`.
     fn str_to_f64(val: Option<&str>) -> f64 {
         val.and_then(|v| v.parse::<f64>().ok()).unwrap_or(0_f64)
@@ -61,9 +62,7 @@ fn calculate_idle_values(line: String) -> (f64, f64) {
     (idle, non_idle)
 }
 
-fn cpu_usage_calculation(
-    prev_idle: &mut f64, prev_non_idle: &mut f64,
-) -> error::Result<(f64, f64)> {
+fn cpu_usage_calculation(prev_idle: &mut f64, prev_non_idle: &mut f64) -> error::Result<Point> {
     use std::io::prelude::*;
     use std::io::BufReader;
 

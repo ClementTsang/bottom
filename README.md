@@ -180,21 +180,10 @@ sudo dnf install bottom
 
 ### Gentoo
 
-Available in [GURU](https://wiki.gentoo.org/wiki/Project:GURU) and [dm9pZCAq](https://github.com/gentoo-mirror/dm9pZCAq) overlays:
+Available in the official Gentoo repo:
 
 ```bash
-sudo eselect repository enable guru
-sudo emerge --sync guru
-echo "sys-process/bottom" | sudo tee /etc/portage/package.accept_keywords/10-guru
-sudo emerge sys-process/bottom::guru
-```
-
-or
-
-```bash
-sudo eselect repository enable dm9pZCAq
-sudo emerge --sync dm9pZCAq
-sudo emerge sys-process/bottom::dm9pZCAq
+sudo emerge --ask sys-process/bottom
 ```
 
 ### Nix
@@ -382,11 +371,9 @@ Thanks to all contributors:
       <td align="center"><a href="https://github.com/jamartin9"><img src="https://avatars.githubusercontent.com/u/7027701?v=4?s=100" width="100px;" alt="Justin Martin"/><br /><sub><b>Justin Martin</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=jamartin9" title="Code">💻</a></td>
       <td align="center"><a href="https://github.com/DianaNites"><img src="https://avatars.githubusercontent.com/u/5275194?v=4?s=100" width="100px;" alt="Diana"/><br /><sub><b>Diana</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=DianaNites" title="Code">💻</a></td>
       <td align="center"><a href="https://hervyqa.id"><img src="https://avatars.githubusercontent.com/u/45872139?v=4?s=100" width="100px;" alt="Hervy Qurrotul Ainur Rozi"/><br /><sub><b>Hervy Qurrotul Ainur Rozi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=hervyqa" title="Documentation">📖</a></td>
+      <td align="center"><a href="https://mrivnak.github.io"><img src="https://avatars.githubusercontent.com/u/7389355?v=4?s=100" width="100px;" alt="Mike Rivnak"/><br /><sub><b>Mike Rivnak</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=mrivnak" title="Documentation">📖</a></td>
     </tr>
   </tbody>
-  <tfoot>
-    
-  </tfoot>
 </table>
 
 <!-- markdownlint-restore -->

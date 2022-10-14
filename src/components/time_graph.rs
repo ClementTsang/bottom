@@ -13,10 +13,7 @@ use tui::{
 use concat_string::concat_string;
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::tui_widget::time_chart::{Axis, Dataset, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
-
-/// A single graph point.
-pub type Point = (f64, f64); // FIXME: Move this to tui time chart?
+use super::tui_widget::time_chart::{Axis, Dataset, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
 
 /// Represents the data required by the [`TimeGraph`].
 pub struct GraphData<'a> {

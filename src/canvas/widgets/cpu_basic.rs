@@ -1,8 +1,9 @@
 use std::cmp::min;
 
 use crate::{
-    app::App,
-    canvas::{drawing_utils::*, Painter},
+    app::{data_harvester::cpu::CpuDataType, App},
+    canvas::Painter,
+    components::tui_widget::pipe_gauge::{LabelLimit, PipeGauge},
     constants::*,
     data_conversion::CpuWidgetData,
 };
@@ -11,11 +12,11 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
-    text::{Span, Spans},
-    widgets::{Block, Paragraph},
+    widgets::Block,
 };
 
 impl Painter {
+    /// Inspired by htop.
     pub fn draw_basic_cpu<B: Backend>(
         &self, f: &mut Frame<'_, B>, app_state: &mut App, draw_loc: Rect, widget_id: u64,
     ) {
@@ -42,148 +43,84 @@ impl Painter {
                 );
             }
 
-            let num_cpus = cpu_data.len();
-            let show_avg_cpu = app_state.app_config_fields.show_average_cpu;
-
             if draw_loc.height > 0 {
                 let remaining_height = usize::from(draw_loc.height);
                 const REQUIRED_COLUMNS: usize = 4;
 
-                let chunk_vec =
+                let col_constraints =
                     vec![Constraint::Percentage((100 / REQUIRED_COLUMNS) as u16); REQUIRED_COLUMNS];
-                let chunks = Layout::default()
-                    .constraints(chunk_vec)
+                let columns = Layout::default()
+                    .constraints(col_constraints)
                     .direction(Direction::Horizontal)
                     .split(draw_loc);
 
-                const CPU_NAME_SPACE: usize = 3;
-                const BAR_BOUND_SPACE: usize = 2;
-                const PERCENTAGE_SPACE: usize = 4;
-                const MARGIN_SPACE: usize = 2;
+                let mut gauge_info = cpu_data.iter().map(|cpu| match cpu {
+                    CpuWidgetData::All => unreachable!(),
+                    CpuWidgetData::Entry {
+                        data_type,
+                        data: _,
+                        last_entry,
+                    } => {
+                        let (outer, style) = match data_type {
+                            CpuDataType::Avg => ("AVG".to_string(), self.colours.avg_colour_style),
+                            CpuDataType::Cpu(index) => (
+                                format!("{index:<3}",),
+                                self.colours.cpu_colour_styles
+                                    [index % self.colours.cpu_colour_styles.len()],
+                            ),
+                        };
+                        let inner = format!("{:>3.0}%", last_entry.round());
+                        let ratio = last_entry / 100.0;
 
-                const COMBINED_SPACING: usize =
-                    CPU_NAME_SPACE + BAR_BOUND_SPACE + PERCENTAGE_SPACE + MARGIN_SPACE;
-                const REDUCED_SPACING: usize = CPU_NAME_SPACE + PERCENTAGE_SPACE + MARGIN_SPACE;
-                let chunk_width: usize = chunks[0].width.into();
+                        (outer, inner, ratio, style)
+                    }
+                });
 
-                // Inspired by htop.
-                // We do +4 as if it's too few bars in the bar length, it's kinda pointless.
-                let cpu_bars = if chunk_width >= COMBINED_SPACING + 4 {
-                    let bar_length = chunk_width - COMBINED_SPACING;
-                    cpu_data
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(index, cpu)| match &cpu {
-                            CpuWidgetData::All => None,
-                            CpuWidgetData::Entry {
-                                data_type: _,
-                                data: _,
-                                last_entry,
-                            } => {
-                                let num_bars = calculate_basic_use_bars(*last_entry, bar_length);
-                                Some(format!(
-                                    "{:3}[{}{}{:3.0}%]",
-                                    if app_state.app_config_fields.show_average_cpu {
-                                        if index == 0 {
-                                            "AVG".to_string()
-                                        } else {
-                                            (index - 1).to_string()
-                                        }
-                                    } else {
-                                        index.to_string()
-                                    },
-                                    "|".repeat(num_bars),
-                                    " ".repeat(bar_length - num_bars),
-                                    last_entry.round(),
-                                ))
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                } else if chunk_width >= REDUCED_SPACING {
-                    cpu_data
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(index, cpu)| match &cpu {
-                            CpuWidgetData::All => None,
-                            CpuWidgetData::Entry {
-                                data_type: _,
-                                data: _,
-                                last_entry,
-                            } => Some(format!(
-                                "{:3} {:3.0}%",
-                                if app_state.app_config_fields.show_average_cpu {
-                                    if index == 0 {
-                                        "AVG".to_string()
-                                    } else {
-                                        (index - 1).to_string()
-                                    }
-                                } else {
-                                    index.to_string()
-                                },
-                                last_entry.round(),
-                            )),
-                        })
-                        .collect::<Vec<_>>()
-                } else {
-                    cpu_data
-                        .iter()
-                        .filter_map(|cpu| match &cpu {
-                            CpuWidgetData::All => None,
-                            CpuWidgetData::Entry {
-                                data_type: _,
-                                data: _,
-                                last_entry,
-                            } => Some(format!("{:3.0}%", last_entry.round())),
-                        })
-                        .collect::<Vec<_>>()
-                };
+                // Very ugly way to sync the gauge limit across all gauges.
+                let hide_parts = columns
+                    .get(0)
+                    .map(|col| {
+                        if col.width >= 12 {
+                            LabelLimit::None
+                        } else if col.width >= 10 {
+                            LabelLimit::Bars
+                        } else {
+                            LabelLimit::StartLabel
+                        }
+                    })
+                    .unwrap_or_default();
 
-                let mut row_counter = num_cpus;
-                let mut start_index = 0;
-                for (itx, chunk) in chunks.iter().enumerate() {
-                    // Explicitly check... don't want an accidental DBZ or underflow, this ensures
-                    // to_divide is > 0
+                let num_entries = cpu_data.len();
+                let mut row_counter = num_entries;
+                for (itx, column) in columns.into_iter().enumerate() {
                     if REQUIRED_COLUMNS > itx {
                         let to_divide = REQUIRED_COLUMNS - itx;
-                        let how_many_cpus = min(
+                        let num_taken = min(
                             remaining_height,
                             (row_counter / to_divide)
                                 + (if row_counter % to_divide == 0 { 0 } else { 1 }),
                         );
-                        row_counter -= how_many_cpus;
-                        let end_index = min(start_index + how_many_cpus, num_cpus);
+                        row_counter -= num_taken;
+                        let chunk = (&mut gauge_info).take(num_taken);
 
-                        let cpu_column = (start_index..end_index)
-                            .map(|itx| {
-                                Spans::from(Span {
-                                    content: (&cpu_bars[itx]).into(),
-                                    style: if show_avg_cpu {
-                                        if itx == 0 {
-                                            self.colours.avg_colour_style
-                                        } else {
-                                            self.colours.cpu_colour_styles
-                                                [(itx - 1) % self.colours.cpu_colour_styles.len()]
-                                        }
-                                    } else {
-                                        self.colours.cpu_colour_styles
-                                            [itx % self.colours.cpu_colour_styles.len()]
-                                    },
-                                })
-                            })
-                            .collect::<Vec<_>>();
-
-                        start_index += how_many_cpus;
-
-                        let margined_loc = Layout::default()
-                            .direction(Direction::Horizontal)
-                            .constraints([Constraint::Percentage(100)])
+                        let rows = Layout::default()
+                            .direction(Direction::Vertical)
+                            .constraints(vec![Constraint::Length(1); remaining_height])
                             .horizontal_margin(1)
-                            .split(*chunk)[0];
+                            .split(column);
 
-                        f.render_widget(
-                            Paragraph::new(cpu_column).block(Block::default()),
-                            margined_loc,
-                        );
+                        for ((start_label, inner_label, ratio, style), row) in chunk.zip(rows) {
+                            f.render_widget(
+                                PipeGauge::default()
+                                    .gauge_style(style)
+                                    .label_style(style)
+                                    .inner_label(inner_label)
+                                    .start_label(start_label)
+                                    .ratio(ratio)
+                                    .hide_parts(hide_parts),
+                                row,
+                            );
+                        }
                     }
                 }
             }

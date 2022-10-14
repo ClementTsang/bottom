@@ -18,7 +18,10 @@ cfg_if::cfg_if! {
     }
 }
 
-use crate::data_harvester::cpu::{CpuData, CpuDataType, CpuHarvest, PastCpuTotal, PastCpuWork};
+use crate::{
+    components::tui_widget::time_chart::Point,
+    data_harvester::cpu::{CpuData, CpuDataType, CpuHarvest, PastCpuTotal, PastCpuWork},
+};
 
 use futures::StreamExt;
 use std::collections::VecDeque;
@@ -28,8 +31,8 @@ pub async fn get_cpu_data_list(
     previous_average_cpu_time: &mut Option<(PastCpuWork, PastCpuTotal)>,
 ) -> crate::error::Result<CpuHarvest> {
     fn calculate_cpu_usage_percentage(
-        (previous_working_time, previous_total_time): (f64, f64),
-        (current_working_time, current_total_time): (f64, f64),
+        (previous_working_time, previous_total_time): Point,
+        (current_working_time, current_total_time): Point,
     ) -> f64 {
         ((if current_working_time > previous_working_time {
             current_working_time - previous_working_time

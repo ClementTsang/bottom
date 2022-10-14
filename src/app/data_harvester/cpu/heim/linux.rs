@@ -1,7 +1,9 @@
 //! Linux-specific functions regarding CPU usage.
 
+use crate::components::tui_widget::time_chart::Point;
 use heim::cpu::os::linux::CpuTimeExt;
-pub fn convert_cpu_times(cpu_time: &heim::cpu::CpuTime) -> (f64, f64) {
+
+pub fn convert_cpu_times(cpu_time: &heim::cpu::CpuTime) -> Point {
     let working_time: f64 = (cpu_time.user()
         + cpu_time.nice()
         + cpu_time.system()
