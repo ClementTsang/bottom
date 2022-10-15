@@ -104,9 +104,10 @@ impl Painter {
 
         #[cfg(feature = "gpu")]
         {
-            let gpu_styles = &self.colours.gpu_colour_styles;
-            let mut color_index = 0;
             if let Some(gpu_data) = &app_state.converted_data.gpu_data {
+                let gpu_styles = &self.colours.gpu_colour_styles;
+                let mut color_index = 0;
+
                 gpu_data.iter().for_each(|gpu_data_vec| {
                     let gpu_data = gpu_data_vec.points.as_slice();
                     let gpu_percentage = if let Some(gpu) = gpu_data.last() {

@@ -67,7 +67,7 @@ pub struct AppConfigFields {
     pub use_old_network_legend: bool,
     pub table_gap: u16,
     pub disable_click: bool,
-    pub no_write: bool,
+    pub enable_gpu_memory: bool,
     pub show_table_scroll_position: bool,
     pub is_advanced_kill: bool,
     // TODO: Remove these, move network details state-side.

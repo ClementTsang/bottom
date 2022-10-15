@@ -3,7 +3,7 @@
 use crate::data_harvester::memory::{MemCollect, MemHarvest};
 use sysinfo::{System, SystemExt};
 
-pub async fn get_mem_data(sys: &System, actually_get: bool) -> MemCollect {
+pub async fn get_mem_data(sys: &System, actually_get: bool, _get_gpu: bool) -> MemCollect {
     if !actually_get {
         MemCollect {
             ram: Ok(None),
@@ -20,7 +20,11 @@ pub async fn get_mem_data(sys: &System, actually_get: bool) -> MemCollect {
             #[cfg(feature = "zfs")]
             arc: get_arc_data().await,
             #[cfg(feature = "gpu")]
-            gpus: get_gpu_data().await,
+            gpus: if _get_gpu {
+                get_gpu_data().await
+            } else {
+                Ok(None)
+            },
         }
     }
 }

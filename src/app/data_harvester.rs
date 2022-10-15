@@ -405,11 +405,18 @@ impl DataCollector {
         let mem_data_fut = {
             #[cfg(not(target_os = "freebsd"))]
             {
-                memory::get_mem_data(self.widgets_to_harvest.use_mem)
+                memory::get_mem_data(
+                    self.widgets_to_harvest.use_mem,
+                    self.widgets_to_harvest.use_gpu,
+                )
             }
             #[cfg(target_os = "freebsd")]
             {
-                memory::get_mem_data(&self.sys, self.widgets_to_harvest.use_mem)
+                memory::get_mem_data(
+                    &self.sys,
+                    self.widgets_to_harvest.use_mem,
+                    self.widgets_to_harvest.use_gpu,
+                )
             }
         };
         let disk_data_fut = disks::get_disk_usage(
