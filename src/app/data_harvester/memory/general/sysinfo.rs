@@ -1,26 +1,32 @@
 //! Data collection for memory via sysinfo.
 
-use crate::data_harvester::memory::MemHarvest;
+use crate::data_harvester::memory::{MemCollect, MemHarvest};
 use sysinfo::{System, SystemExt};
 
-pub async fn get_mem_data(
-    sys: &System, actually_get: bool,
-) -> (
-    crate::utils::error::Result<Option<MemHarvest>>,
-    crate::utils::error::Result<Option<MemHarvest>>,
-    crate::utils::error::Result<Option<MemHarvest>>,
-) {
-    use futures::join;
-
+pub async fn get_mem_data(sys: &System, actually_get: bool) -> MemCollect {
     if !actually_get {
-        (Ok(None), Ok(None), Ok(None))
+        MemCollect {
+            ram: Ok(None),
+            swap: Ok(None),
+            #[cfg(feature = "zfs")]
+            arc: Ok(None),
+            #[cfg(feature = "gpu")]
+            gpus: Ok(None),
+        }
     } else {
-        join!(get_ram_data(sys), get_swap_data(sys), get_arc_data())
+        MemCollect {
+            ram: get_ram_data(sys).await,
+            swap: get_swap_data(sys).await,
+            #[cfg(feature = "zfs")]
+            arc: get_arc_data().await,
+            #[cfg(feature = "gpu")]
+            gpus: get_gpu_data().await,
+        }
     }
 }
 
 pub async fn get_ram_data(sys: &System) -> crate::utils::error::Result<Option<MemHarvest>> {
-    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory() / 1024, sys.used_memory()) / 1024;
+    let (mem_total_in_kib, mem_used_in_kib) = (sys.total_memory() / 1024, sys.used_memory() / 1024);
 
     Ok(Some(MemHarvest {
         mem_total_in_kib,
@@ -47,11 +53,8 @@ pub async fn get_swap_data(sys: &System) -> crate::utils::error::Result<Option<M
     }))
 }
 
+#[cfg(feature = "zfs")]
 pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
-    #[cfg(not(feature = "zfs"))]
-    let (mem_total_in_kib, mem_used_in_kib) = (0, 0);
-
-    #[cfg(feature = "zfs")]
     let (mem_total_in_kib, mem_used_in_kib) = {
         #[cfg(target_os = "freebsd")]
         {
@@ -81,4 +84,40 @@ pub async fn get_arc_data() -> crate::utils::error::Result<Option<MemHarvest>> {
             Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
         },
     }))
+}
+
+#[cfg(feature = "nvidia")]
+pub async fn get_gpu_data() -> crate::utils::error::Result<Option<Vec<(String, MemHarvest)>>> {
+    use crate::data_harvester::nvidia::NVML_DATA;
+    if let Ok(nvml) = &*NVML_DATA {
+        if let Ok(ngpu) = nvml.device_count() {
+            let mut results = Vec::with_capacity(ngpu as usize);
+            for i in 0..ngpu {
+                if let Ok(device) = nvml.device_by_index(i) {
+                    if let (Ok(name), Ok(mem)) = (device.name(), device.memory_info()) {
+                        // add device memory in bytes
+                        let mem_total_in_kib = mem.total / 1024;
+                        let mem_used_in_kib = mem.used / 1024;
+                        results.push((
+                            name,
+                            MemHarvest {
+                                mem_total_in_kib,
+                                mem_used_in_kib,
+                                use_percent: if mem_total_in_kib == 0 {
+                                    None
+                                } else {
+                                    Some(mem_used_in_kib as f64 / mem_total_in_kib as f64 * 100.0)
+                                },
+                            },
+                        ));
+                    }
+                }
+            }
+            Ok(Some(results))
+        } else {
+            Ok(None)
+        }
+    } else {
+        Ok(None)
+    }
 }

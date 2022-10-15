@@ -3,9 +3,9 @@
 
 use std::collections::VecDeque;
 
-use sysinfo::{LoadAvg, System, SystemExt};
+use sysinfo::{CpuExt, LoadAvg, System, SystemExt};
 
-use super::{CpuData, CpuHarvest, PastCpuTotal, PastCpuWork};
+use super::{CpuData, CpuDataType, CpuHarvest, PastCpuTotal, PastCpuWork};
 use crate::app::data_harvester::cpu::LoadAvgHarvest;
 
 pub async fn get_cpu_data_list(
@@ -14,12 +14,11 @@ pub async fn get_cpu_data_list(
     _previous_average_cpu_time: &mut Option<(PastCpuWork, PastCpuTotal)>,
 ) -> crate::error::Result<CpuHarvest> {
     let mut cpu_deque: VecDeque<_> = sys
-        .processors()
+        .cpus()
         .iter()
         .enumerate()
         .map(|(i, cpu)| CpuData {
-            cpu_prefix: "CPU".to_string(),
-            cpu_count: Some(i),
+            data_type: CpuDataType::Cpu(i),
             cpu_usage: cpu.cpu_usage() as f64,
         })
         .collect();
@@ -28,8 +27,7 @@ pub async fn get_cpu_data_list(
         let cpu = sys.global_cpu_info();
 
         cpu_deque.push_front(CpuData {
-            cpu_prefix: "AVG".to_string(),
-            cpu_count: None,
+            data_type: CpuDataType::Avg,
             cpu_usage: cpu.cpu_usage() as f64,
         })
     }

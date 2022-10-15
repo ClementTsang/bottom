@@ -43,6 +43,8 @@ pub struct TimedData {
     pub swap_data: Option<Value>,
     #[cfg(feature = "zfs")]
     pub arc_data: Option<Value>,
+    #[cfg(feature = "gpu")]
+    pub gpu_data: Vec<Option<Value>>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -133,6 +135,8 @@ pub struct DataCollection {
     pub battery_harvest: Vec<batteries::BatteryHarvest>,
     #[cfg(feature = "zfs")]
     pub arc_harvest: memory::MemHarvest,
+    #[cfg(feature = "gpu")]
+    pub gpu_harvest: Vec<(String, memory::MemHarvest)>,
 }
 
 impl Default for DataCollection {
@@ -155,6 +159,8 @@ impl Default for DataCollection {
             battery_harvest: Vec::default(),
             #[cfg(feature = "zfs")]
             arc_harvest: memory::MemHarvest::default(),
+            #[cfg(feature = "gpu")]
+            gpu_harvest: Vec::default(),
         }
     }
 }
@@ -178,6 +184,10 @@ impl DataCollection {
         #[cfg(feature = "zfs")]
         {
             self.arc_harvest = memory::MemHarvest::default();
+        }
+        #[cfg(feature = "gpu")]
+        {
+            self.gpu_harvest = Vec::default();
         }
     }
 
@@ -222,6 +232,14 @@ impl DataCollection {
                 self.eat_arc(arc, &mut new_entry);
             }
         }
+
+        #[cfg(feature = "gpu")]
+        {
+            if let Some(gpu) = harvested_data.gpu {
+                self.eat_gpu(gpu, &mut new_entry);
+            }
+        }
+
         // CPU
         if let Some(cpu) = harvested_data.cpu {
             self.eat_cpu(cpu, &mut new_entry);
@@ -405,8 +423,18 @@ impl DataCollection {
 
     #[cfg(feature = "zfs")]
     fn eat_arc(&mut self, arc: memory::MemHarvest, new_entry: &mut TimedData) {
-        // Arc
         new_entry.arc_data = arc.use_percent;
         self.arc_harvest = arc;
+    }
+
+    #[cfg(feature = "gpu")]
+    fn eat_gpu(&mut self, gpu: Vec<(String, memory::MemHarvest)>, new_entry: &mut TimedData) {
+        // Note this only pre-calculates the data points - the names will be
+        // within the local copy of gpu_harvest.  Since it's all sequential
+        // it probably doesn't matter anyways.
+        gpu.iter().for_each(|data| {
+            new_entry.gpu_data.push(data.1.use_percent);
+        });
+        self.gpu_harvest = gpu.to_vec();
     }
 }

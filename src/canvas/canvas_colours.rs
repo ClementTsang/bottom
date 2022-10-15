@@ -18,6 +18,7 @@ pub struct CanvasColours {
     pub ram_style: Style,
     pub swap_style: Style,
     pub arc_style: Style,
+    pub gpu_colour_styles: Vec<Style>,
     pub rx_style: Style,
     pub tx_style: Style,
     pub total_rx_style: Style,
@@ -51,6 +52,15 @@ impl Default for CanvasColours {
             ram_style: Style::default().fg(STANDARD_FIRST_COLOUR),
             swap_style: Style::default().fg(STANDARD_SECOND_COLOUR),
             arc_style: Style::default().fg(STANDARD_THIRD_COLOUR),
+            gpu_colour_styles: vec![
+                Style::default().fg(STANDARD_FOURTH_COLOUR),
+                Style::default().fg(Color::LightBlue),
+                Style::default().fg(Color::LightRed),
+                Style::default().fg(Color::Cyan),
+                Style::default().fg(Color::Green),
+                Style::default().fg(Color::Blue),
+                Style::default().fg(Color::Red),
+            ],
             rx_style: Style::default().fg(STANDARD_FIRST_COLOUR),
             tx_style: Style::default().fg(STANDARD_SECOND_COLOUR),
             total_rx_style: Style::default().fg(STANDARD_THIRD_COLOUR),
@@ -160,6 +170,11 @@ impl CanvasColours {
                 .context("Update 'arc_color' in your config file..")?;
         }
 
+        if let Some(gpu_core_colors) = &colours.gpu_core_colors {
+            self.set_gpu_colours(gpu_core_colors)
+                .context("Update 'gpu_core_colors' in your config file..")?;
+        }
+
         if let Some(rx_color) = &colours.rx_color {
             self.set_rx_colour(rx_color)
                 .context("Update 'rx_color' in your config file..")?;
@@ -265,6 +280,14 @@ impl CanvasColours {
 
     pub fn set_arc_colour(&mut self, colour: &str) -> error::Result<()> {
         self.arc_style = get_style_from_config(colour)?;
+        Ok(())
+    }
+
+    pub fn set_gpu_colours(&mut self, colours: &[String]) -> error::Result<()> {
+        self.gpu_colour_styles = colours
+            .iter()
+            .map(|colour| get_style_from_config(colour))
+            .collect::<error::Result<Vec<Style>>>()?;
         Ok(())
     }
 

@@ -350,6 +350,10 @@ pub fn update_data(app: &mut App) {
             app.converted_data.arc_data = convert_arc_data_points(data_source);
         }
 
+        #[cfg(feature = "gpu")]
+        {
+            app.converted_data.gpu_data = convert_gpu_data(data_source);
+        }
         app.mem_state.force_update = None;
     }
 

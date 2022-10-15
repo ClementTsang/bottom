@@ -64,14 +64,17 @@ pub struct ConvertedData {
 
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
+    #[cfg(feature = "zfs")]
     pub arc_labels: Option<(String, String)>,
-
     pub mem_data: Vec<Point>, // TODO: Switch this and all data points over to a better data structure...
     pub swap_data: Vec<Point>,
+    #[cfg(feature = "zfs")]
     pub arc_data: Vec<Point>,
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
     pub battery_data: Vec<ConvertedBatteryData>,
+    #[cfg(feature = "gpu")]
+    pub gpu_data: Option<Vec<ConvertedGpuData>>,
 }
 
 impl ConvertedData {
@@ -616,6 +619,97 @@ pub fn convert_arc_data_points(
     }
 
     result
+}
+
+#[cfg(feature = "gpu")]
+#[derive(Default, Debug)]
+pub struct ConvertedGpuData {
+    pub name: String,
+    pub mem_total: String,
+    pub mem_percent: String,
+    pub points: Vec<Point>,
+}
+
+#[cfg(feature = "gpu")]
+pub fn convert_gpu_data(
+    current_data: &crate::app::data_farmer::DataCollection,
+) -> Option<Vec<ConvertedGpuData>> {
+    /// Returns the unit type and denominator for given total amount of memory in kibibytes.
+    fn return_unit_and_denominator_for_mem_kib(mem_total_kib: u64) -> (&'static str, f64) {
+        if mem_total_kib < 1024 {
+            // Stay with KiB
+            ("KiB", 1.0)
+        } else if mem_total_kib < MEBI_LIMIT {
+            // Use MiB
+            ("MiB", KIBI_LIMIT_F64)
+        } else if mem_total_kib < GIBI_LIMIT {
+            // Use GiB
+            ("GiB", MEBI_LIMIT_F64)
+        } else {
+            // Use TiB
+            ("TiB", GIBI_LIMIT_F64)
+        }
+    }
+
+    let current_time = current_data.current_instant;
+
+    // convert points
+    let mut point_vec: Vec<Vec<Point>> = Vec::with_capacity(current_data.gpu_harvest.len());
+    for (time, data) in &current_data.timed_data_vec {
+        data.gpu_data.iter().enumerate().for_each(|(index, point)| {
+            if let Some(data_point) = point {
+                let time_from_start: f64 =
+                    (current_time.duration_since(*time).as_millis() as f64).floor();
+                if let Some(point_slot) = point_vec.get_mut(index) {
+                    point_slot.push((-time_from_start, *data_point));
+                } else {
+                    point_vec.push(vec![(-time_from_start, *data_point)]);
+                }
+            }
+        });
+
+        if *time == current_time {
+            break;
+        }
+    }
+
+    // convert labels
+    let results = current_data
+        .gpu_harvest
+        .iter()
+        .zip(point_vec.into_iter())
+        .map(|(gpu, points)| {
+            let short_name = {
+                let last_words = gpu.0.split_whitespace().rev().take(2).collect::<Vec<_>>();
+                let short_name = format!("{} {}", last_words[1], last_words[0]);
+                short_name
+            };
+
+            ConvertedGpuData {
+                name: short_name,
+                points,
+                mem_percent: format!("{:3.0}%", gpu.1.use_percent.unwrap_or(0.0)),
+                mem_total: {
+                    let (unit, denominator) =
+                        return_unit_and_denominator_for_mem_kib(gpu.1.mem_total_in_kib);
+
+                    format!(
+                        "   {:.1}{}/{:.1}{}",
+                        gpu.1.mem_used_in_kib as f64 / denominator,
+                        unit,
+                        (gpu.1.mem_total_in_kib as f64 / denominator),
+                        unit
+                    )
+                },
+            }
+        })
+        .collect::<Vec<ConvertedGpuData>>();
+
+    if !results.is_empty() {
+        Some(results)
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]

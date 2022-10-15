@@ -29,18 +29,22 @@ impl Painter {
                 draw_loc,
             );
             let points = {
-                let mut size = 0;
+                let mut size = 1;
+                if app_state.converted_data.swap_labels.is_some() {
+                    size += 1; // add capacity for SWAP
+                }
                 #[cfg(feature = "zfs")]
                 {
-                    let arc_data = &app_state.converted_data.arc_data;
-                    if let Some(arc) = arc_data.last() {
-                        if arc.1 != 0.0 {
-                            size += 1; // add capacity for ARC
-                        }
+                    if app_state.converted_data.arc_labels.is_some() {
+                        size += 1; // add capacity for ARC
                     }
                 }
-
-                size += 2; // add capacity for RAM and SWP
+                #[cfg(feature = "gpu")]
+                {
+                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
+                        size += gpu_data.len(); // add row(s) for gpu
+                    }
+                }
 
                 let mut points = Vec::with_capacity(size);
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.mem_labels {
@@ -61,16 +65,39 @@ impl Painter {
                 }
                 #[cfg(feature = "zfs")]
                 if let Some((label_percent, label_frac)) = &app_state.converted_data.arc_labels {
-                    let arc_data = &app_state.converted_data.arc_data;
-                    if let Some(arc) = arc_data.last() {
-                        if arc.1 != 0.0 {
-                            let arc_label = format!("ARC:{}{}", label_percent, label_frac);
+                    let arc_label = format!("ARC:{}{}", label_percent, label_frac);
+                    points.push(GraphData {
+                        points: &app_state.converted_data.arc_data,
+                        style: self.colours.arc_style,
+                        name: Some(arc_label.into()),
+                    });
+                }
+                #[cfg(feature = "gpu")]
+                {
+                    if let Some(gpu_data) = &app_state.converted_data.gpu_data {
+                        let mut color_index = 0;
+                        let gpu_styles = &self.colours.gpu_colour_styles;
+                        gpu_data.iter().for_each(|gpu| {
+                            let gpu_label =
+                                format!("{}:{}{}", gpu.name, gpu.mem_percent, gpu.mem_total);
+                            let style = {
+                                if gpu_styles.is_empty() {
+                                    tui::style::Style::default()
+                                } else if color_index >= gpu_styles.len() {
+                                    // cycle styles
+                                    color_index = 1;
+                                    gpu_styles[color_index - 1]
+                                } else {
+                                    color_index += 1;
+                                    gpu_styles[color_index - 1]
+                                }
+                            };
                             points.push(GraphData {
-                                points: &app_state.converted_data.arc_data,
-                                style: self.colours.arc_style,
-                                name: Some(arc_label.into()),
+                                points: gpu.points.as_slice(),
+                                style,
+                                name: Some(gpu_label.into()),
                             });
-                        }
+                        });
                     }
                 }
 
