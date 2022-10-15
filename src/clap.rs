@@ -348,7 +348,8 @@ use CPU (3) as the default instead.
             "Displays the network widget with binary prefixes (i.e. kibibits, mebibits) rather than a decimal prefix (i.e. kilobits, megabits). Defaults to decimal prefixes.",
         );
 
-    let app = Command::new(crate_name!())
+    #[allow(unused_mut)]
+    let mut app = Command::new(crate_name!())
         .version(crate_version!())
         .author(crate_authors!())
         .about(crate_description!())
@@ -392,19 +393,27 @@ use CPU (3) as the default instead.
         .arg(use_old_network_legend)
         .arg(whole_word);
 
-    if cfg!(feature = "battery") {
+    #[cfg(feature = "battery")]
+    {
         let battery = Arg::new("battery")
             .long("battery")
             .help("Shows the battery widget.")
             .long_help(
                 "Shows the battery widget in default or basic mode. No effect on custom layouts.",
             );
-        app.arg(battery)
-    } else {
-        app
+        app = app.arg(battery);
     }
-}
 
+    #[cfg(feature = "gpu")]
+    {
+        let enable_gpu_memory = Arg::new("enable_gpu_memory")
+            .long("enable_gpu_memory")
+            .help("Enable collecting and displaying GPU memory usage.");
+        app = app.arg(enable_gpu_memory);
+    }
+
+    app
+}
 #[cfg(test)]
 mod test {
     use super::*;
