@@ -404,3 +404,13 @@ use CPU (3) as the default instead.
         app
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn verify_cli() {
+        build_app().debug_assert();
+    }
+}
