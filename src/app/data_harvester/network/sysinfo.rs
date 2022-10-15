@@ -3,16 +3,11 @@
 use super::NetworkHarvest;
 use std::time::Instant;
 
-pub async fn get_network_data(
+pub fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,
-    prev_net_tx: &mut u64, curr_time: Instant, actually_get: bool,
-    filter: &Option<crate::app::Filter>,
-) -> crate::utils::error::Result<Option<NetworkHarvest>> {
+    prev_net_tx: &mut u64, current_time: Instant, filter: &Option<crate::app::Filter>,
+) -> crate::utils::error::Result<NetworkHarvest> {
     use sysinfo::{NetworkExt, SystemExt};
-
-    if !actually_get {
-        return Ok(None);
-    }
 
     let mut total_rx: u64 = 0;
     let mut total_tx: u64 = 0;
@@ -38,7 +33,9 @@ pub async fn get_network_data(
         }
     }
 
-    let elapsed_time = curr_time.duration_since(prev_net_access_time).as_secs_f64();
+    let elapsed_time = current_time
+        .duration_since(prev_net_access_time)
+        .as_secs_f64();
 
     let (rx, tx) = if elapsed_time == 0.0 {
         (0, 0)
@@ -51,10 +48,10 @@ pub async fn get_network_data(
 
     *prev_net_rx = total_rx;
     *prev_net_tx = total_tx;
-    Ok(Some(NetworkHarvest {
+    Ok(NetworkHarvest {
         rx,
         tx,
         total_rx,
         total_tx,
-    }))
+    })
 }
