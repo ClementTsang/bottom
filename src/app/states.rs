@@ -7,7 +7,10 @@ use crate::{
     constants,
 };
 
-use super::widgets::{CpuWidgetState, DiskTableWidget, ProcWidget, TempWidgetState};
+use super::widgets::{
+    BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
+    ProcWidget, TempWidgetState,
+};
 
 #[derive(Debug)]
 pub enum ScrollDirection {
@@ -140,20 +143,6 @@ impl ProcState {
     }
 }
 
-pub struct NetWidgetState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
-}
-
-impl NetWidgetState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
-        NetWidgetState {
-            current_display_time,
-            autohide_timer,
-        }
-    }
-}
-
 pub struct NetState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, NetWidgetState>,
@@ -198,19 +187,6 @@ impl CpuState {
     }
 }
 
-pub struct MemWidgetState {
-    pub current_display_time: u64,
-    pub autohide_timer: Option<Instant>,
-}
-
-impl MemWidgetState {
-    pub fn init(current_display_time: u64, autohide_timer: Option<Instant>) -> Self {
-        MemWidgetState {
-            current_display_time,
-            autohide_timer,
-        }
-    }
-}
 pub struct MemState {
     pub force_update: Option<u64>,
     pub widget_states: HashMap<u64, MemWidgetState>,
@@ -279,12 +255,6 @@ pub struct BasicTableWidgetState {
     pub left_brc: Option<(u16, u16)>,
     pub right_tlc: Option<(u16, u16)>,
     pub right_brc: Option<(u16, u16)>,
-}
-
-#[derive(Default)]
-pub struct BatteryWidgetState {
-    pub currently_selected_battery_index: usize,
-    pub tab_click_locs: Option<Vec<((u16, u16), (u16, u16))>>,
 }
 
 pub struct BatteryState {
