@@ -43,3 +43,4 @@ The following flags can be provided to bottom in the command line to change the 
 | `--use_old_network_legend`            | DEPRECATED - uses the older network legend.                    |
 | `-V, --version`                       | Prints version information.                                    |
 | `-W, --whole_word`                    | Enables whole-word matching by default.                        |
+| `--enable_gpu_memory`                 | Enable collecting and displaying GPU memory usage.             |

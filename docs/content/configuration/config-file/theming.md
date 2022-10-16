@@ -29,3 +29,5 @@ Supported named colours are one of the following strings: `Reset, Black, Red, Gr
 | High battery level colour       | The colour used for a high battery level (100% to 50%)  | `high_battery_color="green"`                            |
 | Medium battery level colour     | The colour used for a medium battery level (50% to 10%) | `medium_battery_color="yellow"`                         |
 | Low battery level colour        | The colour used for a low battery level (10% to 0%)     | `low_battery_color="red"`                               |
+| GPU colour per gpu              | Colour of each gpu. Read in order.                      | `gpu_core_colors=["#ffffff", "white", "255, 255, 255"]` |
+| ARC                             | The colour ARC will use                                 | `arc_color="#ffffff"`                                   |

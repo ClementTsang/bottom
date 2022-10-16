@@ -380,12 +380,7 @@ pub fn build_app(
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
         use_mem,
-        use_gpu: use_mem
-            && config
-                .flags
-                .as_ref()
-                .and_then(|f| f.enable_gpu_memory)
-                .unwrap_or(false),
+        use_gpu: use_mem && get_enable_gpu_memory(matches, config),
         use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
         use_proc: used_widget_set.get(&Proc).is_some(),
         use_disk: used_widget_set.get(&Disk).is_some(),

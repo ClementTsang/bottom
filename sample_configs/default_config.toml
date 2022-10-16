@@ -69,6 +69,8 @@
 #network_use_log = false
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
+# Shows GPU(s) memory
+#enable_gpu_memory = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
@@ -86,6 +88,10 @@
 #ram_color="LightMagenta"
 # Represents the colour SWAP will use in the memory legend and graph.
 #swap_color="LightYellow"
+# Represents the colour ARC will use in the memory legend and graph.
+#arc_color="LightCyan"
+# Represents the colour the GPU will use in the memory legend and graph.
+#gpu_core_colors=["LightGreen", "LightBlue", "LightRed", "Cyan", "Green", "Blue", "Red"]
 # Represents the colour rx will use in the network legend and graph.
 #rx_color="LightCyan"
 # Represents the colour tx will use in the network legend and graph.
@@ -113,7 +119,7 @@
 # [[row.child.child]] represents a widget.
 #
 # All widgets must have the type value set to one of ["cpu", "mem", "proc", "net", "temp", "disk", "empty"].
-# All layout components have a ratio value - if this is not set, then it defaults to 1. 
+# All layout components have a ratio value - if this is not set, then it defaults to 1.
 # The default widget layout:
 #[[row]]
 #  ratio=30

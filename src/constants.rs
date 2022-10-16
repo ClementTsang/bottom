@@ -546,6 +546,8 @@ pub const CONFIG_TEXT: &str = r##"# This is a default config file for bottom.  A
 #network_use_log = false
 # Hides advanced options to stop a process on Unix-like systems.
 #disable_advanced_kill = false
+# Shows GPU(s) memory
+#enable_gpu_memory = false
 
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
