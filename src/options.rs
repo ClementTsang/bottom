@@ -11,7 +11,10 @@ use std::{
 use crate::{
     app::{
         layout_manager::*,
-        widgets::{CpuWidgetState, DiskTableWidget, ProcWidget, ProcWidgetMode, TempWidgetState},
+        widgets::{
+            BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
+            ProcWidget, ProcWidgetMode, TempWidgetState,
+        },
         *,
     },
     canvas::{canvas_colours::CanvasColours, ColourScheme},
