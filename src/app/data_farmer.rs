@@ -61,7 +61,6 @@ pub struct ProcessData {
 
 impl ProcessData {
     fn ingest(&mut self, list_of_processes: Vec<ProcessHarvest>) {
-        // TODO: [Optimization] Probably more efficient to all of this in the data collection step, but it's fine for now.
         self.process_parent_mapping.clear();
 
         // Reverse as otherwise the pid mappings are in the wrong order.
@@ -212,8 +211,6 @@ impl DataCollection {
 
     pub fn eat_data(&mut self, harvested_data: Box<Data>) {
         let harvested_time = harvested_data.last_collection_time;
-        // trace!("Harvested time: {:?}", harvested_time);
-        // trace!("New current instant: {:?}", self.current_instant);
         let mut new_entry = TimedData::default();
 
         // Network
@@ -245,7 +242,7 @@ impl DataCollection {
             self.eat_cpu(cpu, &mut new_entry);
         }
 
-        // Load Average
+        // Load average
         if let Some(load_avg) = harvested_data.load_avg {
             self.eat_load_avg(load_avg, &mut new_entry);
         }

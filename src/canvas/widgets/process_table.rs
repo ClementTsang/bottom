@@ -91,7 +91,6 @@ impl Painter {
             proc_widget_state.table.draw(
                 f,
                 &draw_info,
-                proc_widget_state.table_data.clone(),
                 app_state.widget_map.get_mut(&widget_id),
                 self,
             );
@@ -324,12 +323,9 @@ impl Painter {
                 selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 
-            let data = pws.column_text();
-
             pws.sort_table.draw(
                 f,
                 &draw_info,
-                data,
                 app_state.widget_map.get_mut(&widget_id),
                 self,
             );

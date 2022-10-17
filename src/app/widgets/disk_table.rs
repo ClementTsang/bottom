@@ -144,4 +144,8 @@ impl DiskTableWidget {
             table: DataTable::new(COLUMNS, props, styling),
         }
     }
+
+    pub fn ingest_data(&mut self, data: &[DiskWidgetData]) {
+        self.table.set_data(data.to_vec());
+    }
 }

@@ -22,7 +22,7 @@ use std::{
     sync::Arc,
     sync::Condvar,
     sync::Mutex,
-    thread,
+    thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
 
@@ -35,6 +35,7 @@ use crossterm::{
 
 use app::{
     data_harvester,
+    frozen_state::FrozenState,
     layout_manager::{UsedWidgets, WidgetDirection},
     App,
 };
@@ -323,8 +324,8 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
 
 pub fn update_data(app: &mut App) {
     let data_source = match &app.frozen_state {
-        app::frozen_state::FrozenState::NotFrozen => &app.data_collection,
-        app::frozen_state::FrozenState::Frozen(data) => data,
+        FrozenState::NotFrozen => &app.data_collection,
+        FrozenState::Frozen(data) => data,
     };
 
     for proc in app.proc_state.widget_states.values_mut() {
@@ -338,7 +339,28 @@ pub fn update_data(app: &mut App) {
     if app.cpu_state.force_update.is_some() {
         app.converted_data.ingest_cpu_data(data_source);
         app.converted_data.load_avg_data = data_source.load_avg_harvest;
+
         app.cpu_state.force_update = None;
+    }
+
+    // FIXME: This is a bit of a temp hack to move data over.
+    {
+        let data = &app.converted_data.cpu_data;
+        for cpu in app.cpu_state.widget_states.values_mut() {
+            cpu.ingest_data(data)
+        }
+    }
+    {
+        let data = &app.converted_data.temp_data;
+        for temp in app.temp_state.widget_states.values_mut() {
+            temp.ingest_data(data);
+        }
+    }
+    {
+        let data = &app.converted_data.disk_data;
+        for disk in app.disk_state.widget_states.values_mut() {
+            disk.ingest_data(data);
+        }
     }
 
     // TODO: [OPT] Prefer reassignment over new vectors?
@@ -375,7 +397,7 @@ pub fn create_input_thread(
         BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
     >,
     termination_ctrl_lock: Arc<Mutex<bool>>,
-) -> std::thread::JoinHandle<()> {
+) -> JoinHandle<()> {
     thread::spawn(move || {
         let mut mouse_timer = Instant::now();
         let mut keyboard_timer = Instant::now();
@@ -421,7 +443,7 @@ pub fn create_collection_thread(
     termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
     app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
     used_widget_set: UsedWidgets,
-) -> std::thread::JoinHandle<()> {
+) -> JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
     let show_average_cpu = app_config_fields.show_average_cpu;
