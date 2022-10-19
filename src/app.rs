@@ -830,6 +830,10 @@ impl App {
                 0 => KillSignal::Cancel,
                 sig => KillSignal::Kill(sig),
             };
+        } else if self.help_dialog_state.is_showing_help {
+            let current = &mut self.help_dialog_state.scroll_state.current_scroll_index;
+            let amount = self.help_dialog_state.height;
+            *current = current.saturating_sub(amount);
         } else if self.current_widget.widget_type.is_widget_table() {
             if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
                 &self.current_widget.top_left_corner,
@@ -853,6 +857,11 @@ impl App {
                 new_signal += 2;
             }
             self.delete_dialog_state.selected_signal = KillSignal::Kill(new_signal);
+        } else if self.help_dialog_state.is_showing_help {
+            let current = self.help_dialog_state.scroll_state.current_scroll_index;
+            let amount = self.help_dialog_state.height;
+
+            self.help_scroll_to_or_max(current + amount);
         } else if self.current_widget.widget_type.is_widget_table() {
             if let (Some((_tlc_x, tlc_y)), Some((_brc_x, brc_y))) = (
                 &self.current_widget.top_left_corner,
