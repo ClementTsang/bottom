@@ -42,7 +42,7 @@ jobs:
               target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
-          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
@@ -160,7 +160,7 @@ jobs:
               rust: beta,
             }
           - {
-              os: "macOS-latest",
+              os: "macos-12",
               target: "x86_64-apple-darwin",
               cross: false,
               rust: beta,
@@ -206,7 +206,7 @@ jobs:
 
           # macOS ARM
           - {
-              os: "macOS-latest",
+              os: "macos-12",
               target: "aarch64-apple-darwin",
               cross: true,
               rust: stable,

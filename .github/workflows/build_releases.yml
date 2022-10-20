@@ -66,7 +66,7 @@ jobs:
             }
 
           # macOS (x64)
-          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
 
           # Windows (x64, x86)
           - {
@@ -109,7 +109,7 @@ jobs:
             }
 
           # macOS ARM
-          - { os: "macOS-latest", target: "aarch64-apple-darwin", cross: true }
+          - { os: "macos-12", target: "aarch64-apple-darwin", cross: true }
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
