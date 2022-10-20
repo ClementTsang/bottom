@@ -125,11 +125,11 @@ jobs:
 
       - name: Set up Rust toolchain (non-GitHub container)
         if: matrix.info.container != ''
-        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
-        with:
-          profile: minimal
-          toolchain: stable
-          target: ${{ matrix.info.target }}
+        shell: bash
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+          sh rustup.sh --default-toolchain stable -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
