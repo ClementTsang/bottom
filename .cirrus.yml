@@ -18,12 +18,12 @@ task:
     - rustc --version
   registry_cache:
     folder: $CARGO_HOME/registry
-    fingerprint_script: cat Cargo.lock
+    fingerprint_script: md5 Cargo.lock
   target_cache:
     folder: target
     fingerprint_script:
       - . $HOME/.cargo/env && rustc --version
-      - cat Cargo.lock
+      - md5 Cargo.lock
   test_script:
     - . $HOME/.cargo/env
     - cargo fmt --all -- --check
@@ -43,12 +43,12 @@ task:
     - rustc --version
   registry_cache:
     folder: $CARGO_HOME/registry
-    fingerprint_script: cat Cargo.lock
+    fingerprint_script: md5 Cargo.lock
   target_cache:
     folder: target
     fingerprint_script:
       - source $HOME/.cargo/env && rustc --version
-      - cat Cargo.lock
+      - md5 Cargo.lock
   test_script:
     - source $HOME/.cargo/env
     - cargo fmt --all -- --check
