@@ -19,13 +19,16 @@ task:
   registry_cache:
     folder: $HOME/.cargo/registry
     reupload_on_changes: true
-    fingerprint_script: md5 Cargo.lock
+    fingerprint_script:
+      - md5 Cargo.lock
+      - echo $CIRRUS_OS
   target_cache:
     folder: target
     reupload_on_changes: true
     fingerprint_script:
       - . $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
+      - echo $CIRRUS_OS
   test_all_feature_script:
     - . $HOME/.cargo/env
     - cargo fmt --all -- --check
@@ -56,13 +59,16 @@ task:
   registry_cache:
     folder: $HOME/.cargo/registry
     reupload_on_changes: true
-    fingerprint_script: md5 Cargo.lock
+    fingerprint_script:
+      - md5 Cargo.lock
+      - echo $CIRRUS_OS
   target_cache:
     folder: target
     reupload_on_changes: true
     fingerprint_script:
       - source $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
+      - echo $CIRRUS_OS
   test_all_feature_script:
     - . $HOME/.cargo/env
     - cargo fmt --all -- --check
