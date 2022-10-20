@@ -118,7 +118,7 @@ jobs:
 
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
           target: ${{ matrix.info.target }}
@@ -222,7 +222,7 @@ jobs:
           args: install -y wixtoolset
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
           target: x86_64-pc-windows-msvc
@@ -279,7 +279,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
           target: ${{ matrix.info.target }}

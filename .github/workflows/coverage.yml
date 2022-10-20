@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
 
