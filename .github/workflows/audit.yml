@@ -24,6 +24,6 @@ jobs:
         run: |
           cargo install cargo-audit --locked
 
-      - uses: actions-rs/audit-check@35b7b53b1e25b55642157ac01b4adceb5b9ebef3 # 1.2.0
+      - uses: rustsec/audit-check@bb800784d9c5b0afa352b75dae201bf2e438960a # https://github.com/rustsec/audit-check/commit/bb800784d9c5b0afa352b75dae201bf2e438960a
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
