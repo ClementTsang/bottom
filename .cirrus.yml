@@ -15,12 +15,22 @@ task:
     - curl https://sh.rustup.rs -sSf --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
     - . $HOME/.cargo/env
+    - rustc --version
+  registry_cache:
+    folder: $CARGO_HOME/registry
+    fingerprint_script: cat Cargo.lock
+  target_cache:
+    folder: target
+    fingerprint_script:
+      - . $HOME/.cargo/env && rustc --version
+      - cat Cargo.lock
   test_script:
     - . $HOME/.cargo/env
     - cargo fmt --all -- --check
     - cargo test --no-run --locked
     - cargo test --no-fail-fast -- --nocapture --quiet
     - cargo clippy --all-targets --workspace -- -D warnings
+  before_cache_script: rm -rf $CARGO_HOME/registry/index
 
 task:
   name: macOS M1 Test
@@ -29,10 +39,20 @@ task:
   setup_script:
     - curl https://sh.rustup.rs -sSf --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
-    - . $HOME/.cargo/env
+    - source $HOME/.cargo/env
+    - rustc --version
+  registry_cache:
+    folder: $CARGO_HOME/registry
+    fingerprint_script: cat Cargo.lock
+  target_cache:
+    folder: target
+    fingerprint_script:
+      - source $HOME/.cargo/env && rustc --version
+      - cat Cargo.lock
   test_script:
-    - . $HOME/.cargo/env
+    - source $HOME/.cargo/env
     - cargo fmt --all -- --check
     - cargo test --no-run --locked
     - cargo test --no-fail-fast -- --nocapture --quiet
     - cargo clippy --all-targets --workspace -- -D warnings
+  before_cache_script: rm -rf $CARGO_HOME/registry/index
