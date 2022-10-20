@@ -204,14 +204,6 @@ jobs:
               rust: stable,
             }
 
-          # macOS ARM
-          - {
-              os: "macos-12",
-              target: "aarch64-apple-darwin",
-              cross: true,
-              rust: stable,
-            }
-
     steps:
       - name: Check if this action should be skipped
         id: skip_check
