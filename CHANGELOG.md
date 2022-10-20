@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#784](https://github.com/ClementTsang/bottom/pull/784): Add ZFS ARC support.
 - [#794](https://github.com/ClementTsang/bottom/pull/794): Add GPU memory support for NVIDIA GPUs.
 - [#806](https://github.com/ClementTsang/bottom/pull/806): Update sysinfo to support M1 macOS temperature sensors.
+- [#841](https://github.com/ClementTsang/bottom/pull/841): Add page up/page down support for the help screen.
 
 ## [0.6.8] - 2022-02-01
 
