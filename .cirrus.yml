@@ -27,7 +27,6 @@ task:
   macos_instance:
     image: ghcr.io/cirruslabs/macos-monterey-base:latest
   setup_script:
-    - pkg install -y curl
     - curl https://sh.rustup.rs -sSf --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
     - . $HOME/.cargo/env
