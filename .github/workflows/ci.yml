@@ -42,7 +42,7 @@ jobs:
               target: "aarch64-unknown-linux-gnu",
               cross: true,
             }
-          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
           - {
               os: "windows-2019",
               target: "x86_64-pc-windows-msvc",
@@ -52,7 +52,7 @@ jobs:
     steps:
       - name: Check if this action should be skipped
         id: skip_check
-        uses: fkirc/skip-duplicate-actions@38c3738dcac87b41e2b7038775457756c793566e # https://github.com/fkirc/skip-duplicate-actions/commit/38c3738dcac87b41e2b7038775457756c793566e
+        uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
@@ -65,7 +65,7 @@ jobs:
 
       - name: Set up Rust toolchain
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
           components: rustfmt, clippy
@@ -73,7 +73,7 @@ jobs:
 
       - name: Enable Rust cache
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
 
       - name: Check cargo fmt
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
@@ -81,7 +81,7 @@ jobs:
 
       - name: Build tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.2
+        uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: test
           args: --no-run --locked ${{ matrix.features }} --target=${{ matrix.info.target }}
@@ -92,7 +92,7 @@ jobs:
 
       - name: Run tests
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.2
+        uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: test
           args: --no-fail-fast ${{ matrix.features }} --target=${{ matrix.info.target }} -- --nocapture --quiet
@@ -103,7 +103,7 @@ jobs:
 
       - name: Run clippy
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.2
+        uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: clippy
           args: ${{ matrix.features }} --all-targets --workspace --target=${{ matrix.info.target }} -- -D warnings
@@ -160,7 +160,7 @@ jobs:
               rust: beta,
             }
           - {
-              os: "macOS-latest",
+              os: "macos-12",
               target: "x86_64-apple-darwin",
               cross: false,
               rust: beta,
@@ -204,18 +204,10 @@ jobs:
               rust: stable,
             }
 
-          # macOS ARM
-          - {
-              os: "macOS-latest",
-              target: "aarch64-apple-darwin",
-              cross: true,
-              rust: stable,
-            }
-
     steps:
       - name: Check if this action should be skipped
         id: skip_check
-        uses: fkirc/skip-duplicate-actions@38c3738dcac87b41e2b7038775457756c793566e # https://github.com/fkirc/skip-duplicate-actions/commit/38c3738dcac87b41e2b7038775457756c793566e
+        uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
         with:
           concurrent_skipping: "same_content_newer"
           skip_after_successful_duplicate: "true"
@@ -228,20 +220,20 @@ jobs:
 
       - name: Set up Rust toolchain
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: ${{ matrix.info.rust }}
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.info.target }}
 
       - name: Check
         if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: ClementTsang/cargo-action@v0.0.2
+        uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: check
           args: --all-targets --verbose --target=${{ matrix.info.target }} --locked

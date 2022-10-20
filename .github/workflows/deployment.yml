@@ -41,7 +41,7 @@ jobs:
         run: echo "${{ env.VERSION }}" > release-version
 
       - name: Upload release-version as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release-version
@@ -94,7 +94,7 @@ jobs:
           mv choco.zip release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release

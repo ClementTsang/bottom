@@ -10,7 +10,7 @@ jobs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - id: skip_check
-        uses: fkirc/skip-duplicate-actions@38c3738dcac87b41e2b7038775457756c793566e # https://github.com/fkirc/skip-duplicate-actions/commit/38c3738dcac87b41e2b7038775457756c793566e
+        uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
         with:
           skip_after_successful_duplicate: "true"
           paths: '["docs/**", ".github/workflows/docs.yml"]'

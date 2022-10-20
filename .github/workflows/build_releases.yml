@@ -66,7 +66,7 @@ jobs:
             }
 
           # macOS (x64)
-          - { os: "macOS-latest", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-12", target: "x86_64-apple-darwin", cross: false }
 
           # Windows (x64, x86)
           - {
@@ -107,9 +107,6 @@ jobs:
               target: "riscv64gc-unknown-linux-gnu",
               cross: true,
             }
-
-          # macOS ARM
-          - { os: "macOS-latest", target: "aarch64-apple-darwin", cross: true }
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -118,26 +115,26 @@ jobs:
 
       - name: Set up Rust toolchain
         if: matrix.info.container == ''
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
           target: ${{ matrix.info.target }}
 
       - name: Set up Rust toolchain (non-GitHub container)
         if: matrix.info.container != ''
-        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746 # https://github.com/actions-rs/toolchain/commit/88dc2356392166efad76775c878094f4e83ff746
-        with:
-          profile: minimal
-          toolchain: stable
-          target: ${{ matrix.info.target }}
+        shell: bash
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
+          sh rustup.sh --default-toolchain stable -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
         with:
           key: ${{ matrix.info.target }}
 
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.2
+        uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: build
           args: --release --verbose --locked --target=${{ matrix.info.target }} --features deploy
@@ -189,7 +186,7 @@ jobs:
           mv manpage.tar.gz release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release
@@ -217,18 +214,18 @@ jobs:
         run: Install-WindowsFeature Net-Framework-Core
 
       - name: Install wixtoolset
-        uses: crazy-max/ghaction-chocolatey@87d06bbbd2cfb1835f1820042d356aef4875fb5f # 1.6.0
+        uses: crazy-max/ghaction-chocolatey@90deb87d9fbf0bb2f022b91e3bf11b4441cddda5 # 2.1.0
         with:
           args: install -y wixtoolset
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
           target: x86_64-pc-windows-msvc
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
         with:
           key: x86_64-pc-windows-msvc-msi
 
@@ -246,7 +243,7 @@ jobs:
           mv bottom_x86_64_installer.msi release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release
@@ -279,16 +276,16 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
 
       - name: Build
-        uses: ClementTsang/cargo-action@v0.0.2
+        uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: build
           args: --release --locked --verbose --features deploy --target ${{ matrix.info.target }}
@@ -336,7 +333,7 @@ jobs:
           mv bottom_${{ matrix.info.target }}.deb release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release

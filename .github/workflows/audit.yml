@@ -13,10 +13,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
 
       - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@88e7c2e1da2693cf72d58fce9416206818e61dea # https://github.com/dtolnay/rust-toolchain/commit/88e7c2e1da2693cf72d58fce9416206818e61dea
+        uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
 
@@ -24,6 +24,6 @@ jobs:
         run: |
           cargo install cargo-audit --locked
 
-      - uses: actions-rs/audit-check@35b7b53b1e25b55642157ac01b4adceb5b9ebef3 # 1.2.0
+      - uses: rustsec/audit-check@bb800784d9c5b0afa352b75dae201bf2e438960a # https://github.com/rustsec/audit-check/commit/bb800784d9c5b0afa352b75dae201bf2e438960a
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
