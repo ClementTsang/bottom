@@ -11,11 +11,6 @@ task:
   only_if: $CIRRUS_BRANCH == "master" || $CIRRUS_PR != ""
   freebsd_instance:
     image_family: freebsd-13-1
-  matrix:
-    - env:
-        FEATURES: "--all-features"
-    - env:
-        FEATURES: "--no-default-features"
   setup_script:
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
@@ -31,13 +26,18 @@ task:
     fingerprint_script:
       - . $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
-      - echo $FEATURES
-  test_script:
+  test_all_feature_script:
     - . $HOME/.cargo/env
     - cargo fmt --all -- --check
-    - cargo test --no-run --locked $FEATURES
-    - cargo test --no-fail-fast $FEATURES -- --nocapture --quiet 
-    - cargo clippy --all-targets --workspace $FEATURES -- -D warnings
+    - cargo test --no-run --locked --all-features
+    - cargo test --no-fail-fast --all-features -- --nocapture --quiet 
+    - cargo clippy --all-targets --workspace --all-features -- -D warnings
+  test_no_feature_script:
+    - . $HOME/.cargo/env
+    - cargo fmt --all -- --check
+    - cargo test --no-run --locked --no-default-features
+    - cargo test --no-fail-fast --no-default-features -- --nocapture --quiet 
+    - cargo clippy --all-targets --workspace --no-default-features -- -D warnings
   before_cache_script:
     - rm -rf $HOME/.cargo/registry/index
     - rm -f ./target/.rustc_info.json
@@ -48,11 +48,6 @@ task:
   only_if: $CIRRUS_BRANCH == "master" || $CIRRUS_PR != ""
   macos_instance:
     image: ghcr.io/cirruslabs/macos-monterey-base:latest
-  matrix:
-    - env:
-        FEATURES: "--all-features"
-    - env:
-        FEATURES: "--no-default-features"
   setup_script:
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
@@ -68,13 +63,18 @@ task:
     fingerprint_script:
       - source $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
-      - echo $FEATURES
-  test_script:
+  test_all_feature_script:
     - . $HOME/.cargo/env
     - cargo fmt --all -- --check
-    - cargo test --no-run --locked $FEATURES
-    - cargo test --no-fail-fast $FEATURES -- --nocapture --quiet 
-    - cargo clippy --all-targets --workspace $FEATURES -- -D warnings
+    - cargo test --no-run --locked --all-features
+    - cargo test --no-fail-fast --all-features -- --nocapture --quiet 
+    - cargo clippy --all-targets --workspace --all-features -- -D warnings
+  test_no_feature_script:
+    - . $HOME/.cargo/env
+    - cargo fmt --all -- --check
+    - cargo test --no-run --locked --no-default-features
+    - cargo test --no-fail-fast --no-default-features -- --nocapture --quiet 
+    - cargo clippy --all-targets --workspace --no-default-features -- -D warnings
   before_cache_script:
     - rm -rf $HOME/.cargo/registry/index
     - rm -f ./target/.rustc_info.json
