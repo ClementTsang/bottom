@@ -17,7 +17,7 @@ task:
     - env:
         FEATURES: "--no-default-features"
   setup_script:
-    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
     - . $HOME/.cargo/env
     - rustc --version
@@ -54,7 +54,7 @@ task:
     - env:
         FEATURES: "--no-default-features"
   setup_script:
-    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
     - source $HOME/.cargo/env
     - rustc --version
