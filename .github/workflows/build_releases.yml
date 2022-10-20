@@ -189,7 +189,7 @@ jobs:
           mv manpage.tar.gz release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release
@@ -246,7 +246,7 @@ jobs:
           mv bottom_x86_64_installer.msi release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release
@@ -336,7 +336,7 @@ jobs:
           mv bottom_${{ matrix.info.target }}.deb release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
         with:
           retention-days: 3
           name: release
