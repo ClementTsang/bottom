@@ -11,6 +11,10 @@ task:
   only_if: $CIRRUS_BRANCH == "master" || $CIRRUS_PR != ""
   freebsd_instance:
     image_family: freebsd-13-1
+  env:
+    matrix:
+      - FEATURES: "--all-features"
+      - FEATURES: "--no-default-features"
   setup_script:
     - curl https://sh.rustup.rs -sSf --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
@@ -27,9 +31,9 @@ task:
   test_script:
     - . $HOME/.cargo/env
     - cargo fmt --all -- --check
-    - cargo test --no-run --locked
-    - cargo test --no-fail-fast -- --nocapture --quiet
-    - cargo clippy --all-targets --workspace -- -D warnings
+    - cargo test --no-run --locked $FEATURES
+    - cargo test --no-fail-fast -- --nocapture --quiet $FEATURES
+    - cargo clippy --all-targets --workspace -- -D warnings $FEATURES
   before_cache_script:
     - rm -rf $HOME/.cargo/registry/index
     - rm -f ./target/.rustc_info.json
@@ -40,6 +44,10 @@ task:
   only_if: $CIRRUS_BRANCH == "master" || $CIRRUS_PR != ""
   macos_instance:
     image: ghcr.io/cirruslabs/macos-monterey-base:latest
+  env:
+    matrix:
+      - FEATURES: "--all-features"
+      - FEATURES: "--no-default-features"
   setup_script:
     - curl https://sh.rustup.rs -sSf --output rustup.sh
     - sh rustup.sh --default-toolchain stable -y
@@ -54,11 +62,11 @@ task:
       - source $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
   test_script:
-    - source $HOME/.cargo/env
+    - . $HOME/.cargo/env
     - cargo fmt --all -- --check
-    - cargo test --no-run --locked
-    - cargo test --no-fail-fast -- --nocapture --quiet
-    - cargo clippy --all-targets --workspace -- -D warnings
+    - cargo test --no-run --locked $FEATURES
+    - cargo test --no-fail-fast -- --nocapture --quiet $FEATURES
+    - cargo clippy --all-targets --workspace -- -D warnings $FEATURES
   before_cache_script:
     - rm -rf $HOME/.cargo/registry/index
     - rm -f ./target/.rustc_info.json
