@@ -18,7 +18,7 @@ task:
     - . $HOME/.cargo/env
     - rustc --version
   registry_cache:
-    folder: $CARGO_HOME/registry
+    folder: $HOME/.cargo/registry
     fingerprint_script: md5 Cargo.lock
   target_cache:
     folder: target
@@ -31,7 +31,10 @@ task:
     - cargo test --no-run --locked
     - cargo test --no-fail-fast -- --nocapture --quiet
     - cargo clippy --all-targets --workspace -- -D warnings
-  before_cache_script: rm -rf $CARGO_HOME/registry/index
+  before_cache_script:
+    - rm -rf $HOME/.cargo/registry/index
+    - rm -f ./target/.rustc_info.json
+    - find ./target/debug -maxdepth 1 -type f -delete
 
 task:
   name: "macOS M1 Test"
@@ -44,7 +47,7 @@ task:
     - source $HOME/.cargo/env
     - rustc --version
   registry_cache:
-    folder: $CARGO_HOME/registry
+    folder: $HOME/.cargo/registry
     fingerprint_script: md5 Cargo.lock
   target_cache:
     folder: target
@@ -57,4 +60,7 @@ task:
     - cargo test --no-run --locked
     - cargo test --no-fail-fast -- --nocapture --quiet
     - cargo clippy --all-targets --workspace -- -D warnings
-  before_cache_script: rm -rf $CARGO_HOME/registry/index
+  before_cache_script:
+    - rm -rf $HOME/.cargo/registry/index
+    - rm -f ./target/.rustc_info.json
+    - find ./target/debug -maxdepth 1 -type f -delete
