@@ -23,9 +23,11 @@ task:
     - rustc --version
   registry_cache:
     folder: $HOME/.cargo/registry
+    reupload_on_changes: true
     fingerprint_script: md5 Cargo.lock
   target_cache:
     folder: target
+    reupload_on_changes: true
     fingerprint_script:
       - . $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
@@ -58,9 +60,11 @@ task:
     - rustc --version
   registry_cache:
     folder: $HOME/.cargo/registry
+    reupload_on_changes: true
     fingerprint_script: md5 Cargo.lock
   target_cache:
     folder: target
+    reupload_on_changes: true
     fingerprint_script:
       - source $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
