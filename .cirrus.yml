@@ -13,6 +13,7 @@ cache_template: &CACHE_TEMPLATE
     fingerprint_script:
       - md5 Cargo.lock
       - echo $CIRRUS_OS
+      - echo $CIRRUS_TASK_NAME
   target_cache:
     folder: target
     reupload_on_changes: true
@@ -20,6 +21,7 @@ cache_template: &CACHE_TEMPLATE
       - . $HOME/.cargo/env && rustc --version
       - md5 Cargo.lock
       - echo $CIRRUS_OS
+      - echo $CIRRUS_TASK_NAME
 
 cleanup_template: &CLEANUP_TEMPLATE
   before_cache_script:
@@ -58,18 +60,31 @@ test_task:
   <<: *CLEANUP_TEMPLATE
 
 build_task:
-  only_if: $CIRRUS_RELEASE != ""
-  trigger_type: manual
+  only_if: $CIRRUS_RELEASE != "" || $CIRRUS_CRON == "nightly"
+  env:
+    BTM_GENERATE: true
+    COMPLETION_DIR: "target/tmp/bottom/completion/"
+    MANPAGE_DIR: "target/tmp/bottom/manpage/"
   matrix:
     - name: "FreeBSD 13 Build"
       freebsd_instance:
         image_family: freebsd-13-1
+      env:
+        TARGET: "x86_64-unknown-freebsd"
     - name: "macOS M1 Build"
       macos_instance:
         image: ghcr.io/cirruslabs/macos-monterey-base:latest
+      env:
+        TARGET: "aarch64-apple-darwin"
   <<: *SETUP_TEMPLATE
   <<: *CACHE_TEMPLATE
   build_script:
     - . $HOME/.cargo/env
     - cargo build --release --verbose --locked --features deploy
+    - mv ./target/release/btm ./
+    - mv "$COMPLETION_DIR" completion
+    - mv "$MANPAGE_DIR" manpage
+    - tar -czvf bottom_$TARGET.tar.gz btm completion
+  binaries_artifacts:
+    path: bottom_$TARGET.tar.gz
   <<: *CLEANUP_TEMPLATE
