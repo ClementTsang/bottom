@@ -52,7 +52,7 @@ jobs:
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@f32b3a3741e1053eb607407145bc9619351dc93b # 2.1.0
+        uses: codecov/codecov-action@d9f34f8cd5cb3b3eb79b3e4b5dae3a16df499a70 # 3.1.1
         with:
           files: lcov.info
           fail_ci_if_error: true
