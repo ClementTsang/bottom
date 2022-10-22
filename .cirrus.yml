@@ -27,7 +27,8 @@ cleanup_template: &CLEANUP_TEMPLATE
   before_cache_script:
     - rm -rf $HOME/.cargo/registry/index
     - rm -f ./target/.rustc_info.json
-    - find ./target/debug -maxdepth 1 -type f -delete # Delete stray files
+    - find ./target/debug -maxdepth 1 -type f -delete || true # Delete stray files if they exist
+    - find ./target/release -maxdepth 1 -type f -delete || true # Delete stray files
 
 env:
   CARGO_INCREMENTAL: 0
