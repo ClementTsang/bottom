@@ -1,8 +1,8 @@
 ---
 name: Feature request
 about: Got a good idea that hasn't already been suggested?  Mention it here!
-title: ""
-labels: "feature"
+title: "[Feature] "
+labels: ["feature"]
 assignees: ""
 ---
 

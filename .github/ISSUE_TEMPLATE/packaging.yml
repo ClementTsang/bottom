@@ -1,6 +1,6 @@
 name: Packaging
 description: For issues, questions, or requests regarding packaging or distribution.
-title: "[Packaging]: "
+title: "[Packaging] "
 labels: ["packaging"]
 body:
   - type: markdown
