@@ -5,7 +5,7 @@
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
 # - https://www.reillywood.com/blog/rust-faster-ci/
 #
-# CI workflow should do:
+# It should do the following:
 # - cargo fmt on supported platforms
 # - cargo test on supported platforms, cargo check on unsupported
 # - cargo clippy after (apparently faster) on supported platforms
