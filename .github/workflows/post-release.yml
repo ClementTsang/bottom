@@ -1,4 +1,5 @@
 # Actions to run after releasing a version, like generating documentation via mkdocs or notifying packaging repos.
+
 name: post-release
 
 on:

@@ -1,3 +1,5 @@
+# Workflow to deploy mkdocs documentation.
+
 name: docs
 on:
   workflow_dispatch:
