@@ -26,9 +26,8 @@ cache_template: &CACHE_TEMPLATE
 cleanup_template: &CLEANUP_TEMPLATE
   before_cache_script:
     - rm -rf $HOME/.cargo/registry/index
+    - rm -rf $HOME/.cargo/registry/src
     - rm -f ./target/.rustc_info.json
-    - find ./target/debug -maxdepth 1 -type f -delete || true # Delete stray files if they exist
-    - find ./target/release -maxdepth 1 -type f -delete || true # Delete stray files
 
 env:
   CARGO_INCREMENTAL: 0
@@ -61,18 +60,20 @@ test_task:
   <<: *CLEANUP_TEMPLATE
 
 build_task:
-  only_if: $CIRRUS_RELEASE != "" || $CIRRUS_CRON == "nightly"
+  only_if: $CIRRUS_RELEASE != "" || $CIRRUS_CRON == "nightly" || $CIRRUS_API_CREATED == true || $CIRRUS_BRANCH == "master"
   env:
     BTM_GENERATE: true
     COMPLETION_DIR: "target/tmp/bottom/completion/"
     MANPAGE_DIR: "target/tmp/bottom/manpage/"
   matrix:
     - name: "FreeBSD 13 Build"
+      alias: "freebsd_build"
       freebsd_instance:
         image_family: freebsd-13-1
       env:
         TARGET: "x86_64-unknown-freebsd"
     - name: "macOS M1 Build"
+      alias: "macos_build"
       macos_instance:
         image: ghcr.io/cirruslabs/macos-monterey-base:latest
       env:
