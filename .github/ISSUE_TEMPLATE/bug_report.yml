@@ -11,7 +11,8 @@ body:
         - label: >
             I've looked through [troubleshooting](https://clementtsang.github.io/bottom/nightly/troubleshooting),
             [known problems](https://clementtsang.github.io/bottom/nightly/support/official/#known-problems), and 
-            [existing open issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue) for similar issues.
+            [existing open issues](https://github.com/ClementTsang/bottom/issues?q=is%3Aopen+is%3Aissue) for similar
+            issues.
           required: true
 
   - type: textarea
