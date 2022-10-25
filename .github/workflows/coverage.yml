@@ -1,4 +1,4 @@
-# Code coverage generation via cargo-tarpaulin, and uploaded to codecov.
+# Code coverage generation via cargo-llvm-cov, and uploaded to codecov.
 
 name: codecov
 
@@ -56,3 +56,4 @@ jobs:
         with:
           files: lcov.info
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
