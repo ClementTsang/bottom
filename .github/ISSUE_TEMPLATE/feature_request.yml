@@ -27,7 +27,5 @@ body:
         If you have any ideas to implement this feature as well, feel free to write them down here too.
       placeholder: |
         Example:
-        It would be nice to support FreeBSD. I often use similar tools on my FreeBSD-based system, and it would
-        be useful to see this tool ported over.
-
-        Sysinfo has FreeBSD support, so this shouldn't be too hard to add.
+        It would be nice to support FreeBSD, as I and others often use similar tools on my FreeBSD-based system.
+        Sysinfo has FreeBSD support as a data source.
