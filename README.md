@@ -199,6 +199,7 @@ sudo eopkg it bottom
 ```
 
 ### Void
+
 ```bash
 sudo xbps-install bottom
 ```
@@ -283,7 +284,8 @@ You can also try to use the generated release binaries and manually install on y
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
 - [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
-  - FreeBSD and ARM macOS binaries are generated via Cirrus CI, and for now, can be found [here](https://cirrus-ci.com/github/ClementTsang/bottom).
+  - FreeBSD builds can be found [here](https://api.cirrus-ci.com/v1/artifact/github/ClementTsang/bottom/freebsd_build/binaries.zip)
+  - macOS ARM builds can be found [here](https://api.cirrus-ci.com/v1/artifact/github/ClementTsang/bottom/macos_build/binaries.zip)
 
 #### Auto-completion
 
