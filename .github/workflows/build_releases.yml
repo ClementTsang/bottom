@@ -264,10 +264,15 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Execute Cirrus CI build script
+      - name: Create release directory
         run: |
-          mkdir release
-          python "./deployment/cirrus/build.py" "${{ secrets.CIRRUS_TOKEN }}" master "release/" "${{ github.event.inputs.caller }}"
+          mkdir -p release
+
+      - name: Execute Cirrus CI build script
+        env:
+          CIRRUS_KEY: ${{ secrets.CIRRUS_TOKEN }}
+        run: |
+          python ./deployment/cirrus/build.py "${{ github.ref_name }}" "release/" "${{ inputs.caller }}"
 
       - name: Save release as artifact
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0

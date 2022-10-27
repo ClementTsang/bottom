@@ -1,5 +1,9 @@
 #!/bin/python3
 
+# A simple script to trigger Cirrus CI builds and get the release artifacts through Cirrus CI's GraphQL interface.
+# Expects the API key to be set in CIRRUS_KEY.
+
+import os
 import json
 import sys
 from textwrap import dedent
@@ -95,20 +99,14 @@ def try_download(build_id: str, dl_path: Path):
 
 def main():
     args = sys.argv
+    env = os.environ
 
-    if len(args) < 2:
-        print("cirrus script requires an argument for the API key")
-        exit(1)
-    elif len(args) < 3:
-        print("cirrus script requires an argument for which branch to build")
-        exit(1)
-
-    key = args[1]
-    branch = args[2]
-    dl_path = args[3] if len(args) >= 4 else ""
+    key = env["CIRRUS_KEY"]
+    branch = args[1]
+    dl_path = args[2] if len(args) >= 3 else ""
     dl_path = Path(dl_path)
-    build_type = args[4] if len(args) >= 5 else "build"
-    build_id = args[5] if len(args) >= 6 else None
+    build_type = args[3] if len(args) >= 4 else "build"
+    build_id = args[4] if len(args) >= 5 else None
 
     # Check if this build has already been completed before.
     if build_id is not None:
@@ -164,10 +162,10 @@ def main():
                         print("Build status: {}".format(status or "unknown"))
                         if status == "ABORTED":
                             print("Build aborted, bailing.")
-                            continue
+                            break
                         elif status.lower().startswith("fail"):
                             print("Build failed, bailing.")
-                            continue
+                            break
                         elif attempt + 1 < TRIES:
                             sleep(SLEEP_SEC)
                 else:

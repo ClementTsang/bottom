@@ -38,6 +38,7 @@ jobs:
     uses: ./.github/workflows/build_releases.yml
     with:
       caller: "nightly"
+    secrets: inherit
 
   upload-release:
     name: upload-release
