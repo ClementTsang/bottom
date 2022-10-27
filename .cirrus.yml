@@ -60,6 +60,7 @@ test_task:
   <<: *CLEANUP_TEMPLATE
 
 build_task:
+  auto_cancellation: false
   only_if: $CIRRUS_RELEASE != "" || $CIRRUS_CRON == "nightly" || $CIRRUS_API_CREATED == true
   env:
     BTM_GENERATE: true

@@ -5,6 +5,7 @@ import sys
 from textwrap import dedent
 from time import sleep, time
 from pathlib import Path
+from typing import Optional
 
 from urllib.request import Request, urlopen, urlretrieve
 
@@ -53,7 +54,7 @@ def make_query_request(key: str, branch: str, build_type: str):
     return request
 
 
-def check_build_status(key: str, id: str) -> bool:
+def check_build_status(key: str, id: str) -> Optional[str]:
     query = """
         query BuildStatus($id: ID!) {
             build(id: $id) {
@@ -74,20 +75,25 @@ def check_build_status(key: str, id: str) -> bool:
         response = json.load(response)
         if response.get("errors") is not None:
             print("There was an error in the returned response.")
-            return False
+            return None
 
         try:
             status = response["data"]["build"]["status"]
-            return status == "COMPLETED"
+            return status
         except KeyError:
             print("There was an issue with creating a build job.")
-            return False
+            return None
 
-    return False
+
+def try_download(build_id: str, dl_path: Path):
+    for (task, file) in TASKS:
+        url = DL_URL_TEMPLATE % (build_id, task, file)
+        out = dl_path / file
+        print("Downloading {} to {}".format(file, out))
+        urlretrieve(url, out)
 
 
 def main():
-    SLEEP_MINUTES = 4
     args = sys.argv
 
     if len(args) < 2:
@@ -102,45 +108,74 @@ def main():
     dl_path = args[3] if len(args) >= 4 else ""
     dl_path = Path(dl_path)
     build_type = args[4] if len(args) >= 5 else "build"
+    build_id = args[5] if len(args) >= 6 else None
 
-    with urlopen(make_query_request(key, branch, build_type)) as response:
-        response = json.load(response)
+    # Check if this build has already been completed before.
+    if build_id is not None:
+        print("Previous build ID was provided, checking if complete.")
+        status = check_build_status(key, build_id)
+        if status.startswith("COMPLETE"):
+            print("Starting download of previous build ID")
+            try_download(build_id, dl_path)
+    else:
+        # Try up to three times
+        MAX_ATTEMPTS = 3
+        success = False
 
-        if response.get("errors") is not None:
-            print("There was an error in the returned response.")
+        for i in range(MAX_ATTEMPTS):
+            if success:
+                break
+            print("Attempt {}:".format(i + 1))
+
+            with urlopen(make_query_request(key, branch, build_type)) as response:
+                response = json.load(response)
+
+                if response.get("errors") is not None:
+                    print("There was an error in the returned response.")
+                    continue
+
+                try:
+                    build_id = response["data"]["createBuild"]["build"]["id"]
+                    print("Created build job {}.".format(build_id))
+                except KeyError:
+                    print("There was an issue with creating a build job.")
+                    continue
+
+                # First, sleep 4 minutes, as it's unlikely it'll finish before then.
+                SLEEP_MINUTES = 4
+                print("Sleeping for {} minutes.".format(SLEEP_MINUTES))
+                sleep(60 * SLEEP_MINUTES)
+                print("Mandatory nap over. Starting to check for completion.")
+
+                MINUTES = 10
+                SLEEP_SEC = 30
+                TRIES = int(MINUTES * (60 / SLEEP_SEC))  # Works out to 20 tries.
+
+                for attempt in range(TRIES):
+                    print("Checking...")
+                    status = check_build_status(key, build_id)
+                    if status.startswith("COMPLETE"):
+                        print("Build complete. Downloading artifact files.")
+                        sleep(5)
+                        try_download(build_id, dl_path)
+                        success = True
+                        break
+                    else:
+                        print("Build status: {}".format(status or "unknown"))
+                        if status == "ABORTED":
+                            print("Build aborted, bailing.")
+                            continue
+                        elif status.lower().startswith("fail"):
+                            print("Build failed, bailing.")
+                            continue
+                        elif attempt + 1 < TRIES:
+                            sleep(SLEEP_SEC)
+                else:
+                    print("Build failed to complete after {} minutes, bailing.".format(MINUTES))
+                    continue
+
+        if not success:
             exit(2)
-
-        try:
-            build_id = response["data"]["createBuild"]["build"]["id"]
-            print("Created build job {}. Sleeping for {} minutes.".format(build_id, SLEEP_MINUTES))
-        except KeyError:
-            print("There was an issue with creating a build job.")
-            exit(3)
-
-        # First, sleep 4 minutes, it's unlikely it'll finish quickly enough.
-        sleep(60 * SLEEP_MINUTES)
-
-        # Try for up to 10 minutes, waiting 30 seconds each time.
-        # In other words, try 20 times with 30s sleep for completion.
-
-        TRIES = 20
-        SLEEP_SEC = 30
-
-        for attempt in range(TRIES):
-            if check_build_status(key, build_id):
-                print("Downloading artifact files.")
-                for (task, file) in TASKS:
-                    url = DL_URL_TEMPLATE % (build_id, task, file)
-                    out = dl_path / file
-                    print("Downloading {} to {}".format(file, out))
-                    urlretrieve(url, out)
-                exit(0)
-
-            if attempt + 1 < TRIES:
-                sleep(SLEEP_SEC)
-        else:
-            print("Build failed to complete after 10 minutes, bailing.")
-            exit(4)
 
 
 if __name__ == "__main__":
