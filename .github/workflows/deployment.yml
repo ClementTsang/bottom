@@ -50,6 +50,9 @@ jobs:
   build-release:
     needs: [initialize-release-job]
     uses: ./.github/workflows/build_releases.yml
+    with:
+      caller: "deployment"
+    secrets: inherit
 
   generate-choco:
     needs: [build-release]

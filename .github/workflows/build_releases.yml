@@ -8,6 +8,12 @@ name: "Build Releases"
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      caller:
+        description: "The calling workflow."
+        default: ""
+        required: false
+        type: string
 
 env:
   CARGO_INCREMENTAL: 0
@@ -241,6 +247,32 @@ jobs:
         run: |
           mkdir release
           mv bottom_x86_64_installer.msi release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+        with:
+          retention-days: 3
+          name: release
+          path: release
+
+  build-cirrus:
+    name: "Build using Cirrus CI"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Create release directory
+        run: |
+          mkdir -p release
+
+      - name: Execute Cirrus CI build script
+        env:
+          CIRRUS_KEY: ${{ secrets.CIRRUS_TOKEN }}
+        run: |
+          python ./deployment/cirrus/build.py "${{ github.ref_name }}" "release/" "${{ inputs.caller }}"
 
       - name: Save release as artifact
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
