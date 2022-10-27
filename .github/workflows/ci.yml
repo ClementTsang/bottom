@@ -33,7 +33,7 @@ jobs:
   pre_job:
     runs-on: ubuntu-latest
     outputs:
-      should_skip: ${{ needs.pre_job.outputs.should_skip }}
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - name: Check if this action should be skipped
         id: skip_check
