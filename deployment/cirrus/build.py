@@ -3,7 +3,7 @@
 # A simple script to trigger Cirrus CI builds and get the release artifacts through Cirrus CI's GraphQL
 # interface.
 #
-# Expects the Cirrus CI API key to be set in CIRRUS_KEY.
+# Expects the Cirrus CI API key to be set in the CIRRUS_KEY environment variable.
 
 import os
 import json
