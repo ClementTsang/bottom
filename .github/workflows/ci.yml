@@ -29,8 +29,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Check if things should be skipped.
+  pre_job:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ needs.pre_job.outputs.should_skip }}
+    steps:
+      - name: Check if this action should be skipped
+        id: skip_check
+        uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
+        with:
+          skip_after_successful_duplicate: "true"
+          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
+          do_not_skip: '["workflow_dispatch", "push"]'
+
   # Runs rustfmt + tests + clippy on the main supported platforms.
   supported:
+    needs: pre_job
     runs-on: ${{ matrix.info.os }}
     strategy:
       fail-fast: false
@@ -54,20 +69,12 @@ jobs:
             }
         features: ["--all-features", "--no-default-features"]
     steps:
-      - name: Check if this action should be skipped
-        id: skip_check
-        uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
-        with:
-          skip_after_successful_duplicate: "true"
-          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
-          do_not_skip: '["workflow_dispatch", "push"]'
-
       - name: Checkout repository
         uses: actions/checkout@v3
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
 
       - name: Set up Rust toolchain
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
@@ -75,15 +82,15 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
 
       - name: Check cargo fmt
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         run: cargo fmt --all -- --check
 
       - name: Build tests
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: test
@@ -94,7 +101,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run tests
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: test
@@ -105,7 +112,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run clippy
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: clippy
@@ -117,6 +124,7 @@ jobs:
 
   # Run cargo check on all other platforms
   other_check:
+    needs: pre_job
     runs-on: ${{ matrix.info.os }}
     continue-on-error: true
     strategy:
@@ -208,20 +216,12 @@ jobs:
             }
 
     steps:
-      - name: Check if this action should be skipped
-        id: skip_check
-        uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
-        with:
-          skip_after_successful_duplicate: "true"
-          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
-          do_not_skip: '["workflow_dispatch", "push"]'
-
       - name: Checkout repository
         uses: actions/checkout@v3
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
 
       - name: Set up Rust toolchain
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: ${{ matrix.info.rust }}
@@ -229,12 +229,12 @@ jobs:
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         with:
           key: ${{ matrix.info.target }}
 
       - name: Check
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: check
