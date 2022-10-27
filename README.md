@@ -284,8 +284,7 @@ You can also try to use the generated release binaries and manually install on y
 
 - [Latest stable release](https://github.com/ClementTsang/bottom/releases/latest), generated off of the release branch
 - [Latest nightly release](https://github.com/ClementTsang/bottom/releases/tag/nightly), generated daily off of the master branch at 00:00 UTC
-  - FreeBSD builds can be found [here](https://api.cirrus-ci.com/v1/artifact/github/ClementTsang/bottom/freebsd_build/binaries.zip)
-  - macOS ARM builds can be found [here](https://api.cirrus-ci.com/v1/artifact/github/ClementTsang/bottom/macos_build/binaries.zip)
+  - Note that for now, FreeBSD and ARM macOS builds are primarily only available on the nightly release.
 
 #### Auto-completion
 
