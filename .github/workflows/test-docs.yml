@@ -25,7 +25,7 @@ jobs:
   test-build-documentation:
     name: Test building docs
     needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip }} != 'true'
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

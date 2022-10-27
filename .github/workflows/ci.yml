@@ -47,7 +47,7 @@ jobs:
   supported:
     needs: pre_job
     runs-on: ${{ matrix.info.os }}
-    if: ${{ needs.pre_job.outputs.should_skip }} != 'true'
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -120,7 +120,7 @@ jobs:
   other_check:
     needs: pre_job
     runs-on: ${{ matrix.info.os }}
-    if: ${{ needs.pre_job.outputs.should_skip }} != 'true'
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     continue-on-error: true
     strategy:
       fail-fast: false
