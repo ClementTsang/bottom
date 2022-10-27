@@ -50,6 +50,8 @@ jobs:
   build-release:
     needs: [initialize-release-job]
     uses: ./.github/workflows/build_releases.yml
+    with:
+      caller: "deployment"
 
   generate-choco:
     needs: [build-release]

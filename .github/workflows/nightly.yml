@@ -36,6 +36,8 @@ jobs:
   build-release:
     needs: [initialize-job]
     uses: ./.github/workflows/build_releases.yml
+    with:
+      caller: "nightly"
 
   upload-release:
     name: upload-release

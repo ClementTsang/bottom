@@ -35,7 +35,7 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
 
 test_task:
-  only_if: $CIRRUS_CRON == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_PR != "")
+  only_if: $CIRRUS_CRON == "" && $CIRRUS_API_CREATED == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_PR != "")
   matrix:
     - name: "FreeBSD 13 Test"
       freebsd_instance:
@@ -60,7 +60,7 @@ test_task:
   <<: *CLEANUP_TEMPLATE
 
 build_task:
-  only_if: $CIRRUS_RELEASE != "" || $CIRRUS_CRON == "nightly" || $CIRRUS_API_CREATED == true || $CIRRUS_BRANCH == "master"
+  only_if: $CIRRUS_RELEASE != "" || $CIRRUS_CRON == "nightly" || $CIRRUS_API_CREATED == true
   env:
     BTM_GENERATE: true
     COMPLETION_DIR: "target/tmp/bottom/completion/"
