@@ -1,7 +1,10 @@
 # Builds the following releases:
 # - Binary releases
 # - Debian releases (.deb)
-# - MSI installer
+# - MSI installer for Windows (.msi)
+# - Cirrus CI binaries
+#   - FreeBSD (x86_64)
+#   - macOS (aarch64)
 
 name: "Build Releases"
 
