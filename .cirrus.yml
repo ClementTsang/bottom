@@ -2,6 +2,9 @@
 ---
 # Configuration for CirrusCI. This is primarily used for
 # FreeBSD and macOS M1 tests and builds.
+#
+# We set the YAML directive above to prevent some linting errors around the
+# templates.
 
 setup_template: &SETUP_TEMPLATE
   setup_script:

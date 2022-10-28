@@ -1,4 +1,4 @@
-# Code coverage generation via cargo-llvm-cov, and uploaded to codecov.
+# Code coverage generation via cargo-llvm-cov, which is then uploaded to codecov.
 
 name: codecov
 
