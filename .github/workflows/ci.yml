@@ -70,6 +70,7 @@ jobs:
         features: ["--all-features", "--no-default-features"]
     steps:
       - name: Checkout repository
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: actions/checkout@v3
 
       - name: Set up Rust toolchain
@@ -216,6 +217,7 @@ jobs:
 
     steps:
       - name: Checkout repository
+        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: actions/checkout@v3
 
       - name: Set up Rust toolchain
