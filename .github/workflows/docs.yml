@@ -25,9 +25,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4.3.0
         with:
-          python-version: 3.x
+          python-version: 3.9
 
       - name: Install Python dependencies
         run: pip install -r docs/requirements.txt
