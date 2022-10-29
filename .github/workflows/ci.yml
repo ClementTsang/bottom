@@ -40,7 +40,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f11521568414503656a5af807dc3018c012552c4 # v5.2.0
         with:
           skip_after_successful_duplicate: "true"
-          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
+          paths: '[".cargo/**", ".github/workflows/ci.yml", "sample_configs/**", "src/**", "tests/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml", "Cross.toml"]'
           do_not_skip: '["workflow_dispatch", "push"]'
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
