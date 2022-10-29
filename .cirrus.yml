@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
-# Configuration for CirrusCI. This is primarily used for
-# FreeBSD and macOS M1 tests and builds.
+# Configuration for CirrusCI. This is primarily used for testing and building FreeBSD and macOS M1, since other
+# CI platforms don't seem to support these platforms as of writing.
 #
 # We set the YAML directive above to prevent some linting errors around the
 # templates.
@@ -42,6 +42,7 @@ env:
 test_task:
   auto_cancellation: false
   only_if: $CIRRUS_BUILD_SOURCE != "api" && ($CIRRUS_BRANCH == "master" || $CIRRUS_PR != "")
+  skip: "!changesInclude('.cargo/**', '.cirrus.yml', 'sample_configs/**', 'src/**', 'tests/**', 'build.rs', 'Cargo.lock', 'Cargo.toml', 'clippy.toml', 'rustfmt.toml')"
   matrix:
     - name: "FreeBSD 13 Test"
       freebsd_instance:
