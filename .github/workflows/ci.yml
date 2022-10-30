@@ -47,6 +47,7 @@ jobs:
   supported:
     needs: pre_job
     runs-on: ${{ matrix.info.os }}
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -70,11 +71,9 @@ jobs:
         features: ["--all-features", "--no-default-features"]
     steps:
       - name: Checkout repository
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: actions/checkout@v3
 
       - name: Set up Rust toolchain
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: stable
@@ -82,15 +81,12 @@ jobs:
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
 
       - name: Check cargo fmt
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         run: cargo fmt --all -- --check
 
       - name: Build tests
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: test
@@ -101,7 +97,6 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run tests
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: test
@@ -112,7 +107,6 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run clippy
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: clippy
@@ -126,6 +120,7 @@ jobs:
   other_check:
     needs: pre_job
     runs-on: ${{ matrix.info.os }}
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -217,27 +212,32 @@ jobs:
 
     steps:
       - name: Checkout repository
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: actions/checkout@v3
 
       - name: Set up Rust toolchain
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: dtolnay/rust-toolchain@ba37adf8f94a7d9affce79bd3baff1b9e3189c33 # https://github.com/dtolnay/rust-toolchain/commit/ba37adf8f94a7d9affce79bd3baff1b9e3189c33
         with:
           toolchain: ${{ matrix.info.rust }}
           target: ${{ matrix.info.target }}
 
       - name: Enable Rust cache
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
         with:
           key: ${{ matrix.info.target }}
 
       - name: Check
-        if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
         uses: ClementTsang/cargo-action@v0.0.3
         with:
           command: check
           args: --all-targets --verbose --target=${{ matrix.info.target }} --locked
           use-cross: ${{ matrix.info.cross }}
           cross-version: 0.2.4
+
+  completion:
+    name: "CI Pass Check"
+    needs: [supported, other_check]
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: CI Passed
+        run: |
+          echo "CI workflow completed."
