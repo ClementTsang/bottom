@@ -1,6 +1,6 @@
 ## Description
 
-_A description of the change and what it does. If relevant (such as any change that modifies the UI), **please provide screenshots** of the change:_
+_A description of the change, what it does, and why it was made. If relevant (such as any change that modifies the UI), **please provide screenshots** of the changes:_
 
 ## Issue
 
