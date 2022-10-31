@@ -108,7 +108,7 @@ fn get_from_hwmon(
             // - For whatever acpitz is, on my machine this is now `thermal_zone0`.
             // - For k10temp, this will still be k10temp, but it has to be handled special.
             let human_hwmon_name = {
-                let device = path.join("device");
+                let device = file_path.join("device");
                 // This will exist for GPUs but not others, this is how
                 // we find their kernel name
                 let drm = device.join("drm");
