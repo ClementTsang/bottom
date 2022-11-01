@@ -15,7 +15,6 @@
 
 use once_cell::sync::Lazy;
 
-use fxhash::FxHashMap;
 use itertools::Itertools;
 
 use std::{time::Instant, vec::Vec};
@@ -25,7 +24,10 @@ use crate::data_harvester::batteries;
 
 use crate::{
     data_harvester::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
-    utils::gen_util::{get_decimal_bytes, GIGA_LIMIT},
+    utils::{
+        gen_util::{get_decimal_bytes, GIGA_LIMIT},
+        rfxhash::RfxHashMap,
+    },
     Pid,
 };
 use regex::Regex;
@@ -50,10 +52,10 @@ pub struct TimedData {
 #[derive(Clone, Debug, Default)]
 pub struct ProcessData {
     /// A PID to process data map.
-    pub process_harvest: FxHashMap<Pid, ProcessHarvest>,
+    pub process_harvest: RfxHashMap<Pid, ProcessHarvest>,
 
     /// A mapping between a process PID to any children process PIDs.
-    pub process_parent_mapping: FxHashMap<Pid, Vec<Pid>>,
+    pub process_parent_mapping: RfxHashMap<Pid, Vec<Pid>>,
 
     /// PIDs corresponding to processes that have no parents.
     pub orphan_pids: Vec<Pid>,

@@ -4,6 +4,7 @@ use std::collections::hash_map::Entry;
 
 use crate::components::tui_widget::time_chart::Point;
 use crate::utils::error::{self, BottomError};
+use crate::utils::rfxhash::{RfxHashMap, RfxHashSet};
 use crate::Pid;
 
 use super::{ProcessHarvest, UserTable};
@@ -11,8 +12,6 @@ use super::{ProcessHarvest, UserTable};
 use sysinfo::ProcessStatus;
 
 use procfs::process::{Process, Stat};
-
-use fxhash::{FxHashMap, FxHashSet};
 
 /// Maximum character length of a /proc/<PID>/stat process name.
 /// If it's equal or greater, then we instead refer to the command for the name.
@@ -229,13 +228,13 @@ fn read_proc(
 
 pub fn get_process_data(
     prev_idle: &mut f64, prev_non_idle: &mut f64,
-    pid_mapping: &mut FxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
+    pid_mapping: &mut RfxHashMap<Pid, PrevProcDetails>, use_current_cpu_total: bool,
     time_difference_in_secs: u64, mem_total_kb: u64, user_table: &mut UserTable,
 ) -> crate::utils::error::Result<Vec<ProcessHarvest>> {
     // TODO: [PROC THREADS] Add threads
 
     if let Ok((cpu_usage, cpu_fraction)) = cpu_usage_calculation(prev_idle, prev_non_idle) {
-        let mut pids_to_clear: FxHashSet<Pid> = pid_mapping.keys().cloned().collect();
+        let mut pids_to_clear: RfxHashSet<Pid> = pid_mapping.keys().cloned().collect();
 
         let process_vector: Vec<ProcessHarvest> = std::fs::read_dir("/proc")?
             .filter_map(|dir| {

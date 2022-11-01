@@ -1,12 +1,10 @@
 //! Unix-specific parts of process collection.
 
-use fxhash::FxHashMap;
-
-use crate::utils::error;
+use crate::utils::{error, rfxhash::RfxHashMap};
 
 #[derive(Debug, Default)]
 pub struct UserTable {
-    pub uid_user_mapping: FxHashMap<libc::uid_t, String>,
+    pub uid_user_mapping: RfxHashMap<libc::uid_t, String>,
 }
 
 impl UserTable {

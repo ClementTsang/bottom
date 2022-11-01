@@ -44,11 +44,6 @@ use options::*;
 use utils::error;
 
 pub mod app;
-pub mod utils {
-    pub mod error;
-    pub mod gen_util;
-    pub mod logging;
-}
 pub mod canvas;
 pub mod clap;
 pub mod components;
@@ -56,6 +51,7 @@ pub mod constants;
 pub mod data_conversion;
 pub mod options;
 pub mod units;
+pub mod utils;
 
 #[cfg(target_family = "windows")]
 pub type Pid = usize;

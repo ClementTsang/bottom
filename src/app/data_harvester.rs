@@ -3,7 +3,7 @@
 use std::time::Instant;
 
 #[cfg(target_os = "linux")]
-use fxhash::FxHashMap;
+use crate::utils::rfxhash::RfxHashMap;
 
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
@@ -105,7 +105,7 @@ pub struct DataCollector {
     previous_cpu_times: Vec<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
     previous_average_cpu_time: Option<(cpu::PastCpuWork, cpu::PastCpuTotal)>,
     #[cfg(target_os = "linux")]
-    pid_mapping: FxHashMap<crate::Pid, processes::PrevProcDetails>,
+    pid_mapping: RfxHashMap<crate::Pid, processes::PrevProcDetails>,
     #[cfg(target_os = "linux")]
     prev_idle: f64,
     #[cfg(target_os = "linux")]
@@ -137,7 +137,7 @@ impl DataCollector {
             previous_cpu_times: vec![],
             previous_average_cpu_time: None,
             #[cfg(target_os = "linux")]
-            pid_mapping: FxHashMap::default(),
+            pid_mapping: RfxHashMap::default(),
             #[cfg(target_os = "linux")]
             prev_idle: 0_f64,
             #[cfg(target_os = "linux")]

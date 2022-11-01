@@ -12,10 +12,10 @@ use crate::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
         DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder,
     },
+    utils::rfxhash::{RfxHashMap, RfxHashSet},
     Pid,
 };
 
-use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
 
 pub mod proc_widget_column;
@@ -62,14 +62,14 @@ impl ProcessSearchState {
 
 #[derive(Clone, Debug)]
 pub enum ProcWidgetMode {
-    Tree { collapsed_pids: FxHashSet<Pid> },
+    Tree { collapsed_pids: RfxHashSet<Pid> },
     Grouped,
     Normal,
 }
 
 type ProcessTable = SortDataTable<ProcWidgetData, ProcColumn>;
 type SortTable = DataTable<Cow<'static, str>, SortTableColumn>;
-type StringPidMap = FxHashMap<String, Vec<Pid>>;
+type StringPidMap = RfxHashMap<String, Vec<Pid>>;
 
 pub struct ProcWidget {
     pub mode: ProcWidgetMode,
@@ -222,7 +222,7 @@ impl ProcWidget {
             show_memory_as_values,
         );
 
-        let id_pid_map = FxHashMap::default();
+        let id_pid_map = RfxHashMap::default();
 
         ProcWidget {
             proc_search: process_search_state,
@@ -275,7 +275,7 @@ impl ProcWidget {
     }
 
     fn get_tree_data(
-        &self, collapsed_pids: &FxHashSet<Pid>, data_collection: &DataCollection,
+        &self, collapsed_pids: &RfxHashSet<Pid>, data_collection: &DataCollection,
     ) -> Vec<ProcWidgetData> {
         const BRANCH_END: char = '└';
         const BRANCH_VERTICAL: char = '│';
@@ -306,13 +306,13 @@ impl ProcWidget {
                         .unwrap_or(true),
                 )
             })
-            .collect::<FxHashMap<_, _>>();
+            .collect::<RfxHashMap<_, _>>();
 
         let filtered_tree = {
-            let mut filtered_tree = FxHashMap::default();
+            let mut filtered_tree = RfxHashMap::default();
 
             // We do a simple BFS traversal to build our filtered parent-to-tree mappings.
-            let mut visited_pids = FxHashMap::default();
+            let mut visited_pids = RfxHashMap::default();
             let mut stack = orphan_pids
                 .iter()
                 .filter_map(|process| process_harvest.get(process))
@@ -484,7 +484,7 @@ impl ProcWidget {
     }
 
     fn get_normal_data(
-        &mut self, process_harvest: &FxHashMap<Pid, ProcessHarvest>,
+        &mut self, process_harvest: &RfxHashMap<Pid, ProcessHarvest>,
     ) -> Vec<ProcWidgetData> {
         let search_query = self.get_query();
         let is_using_command = self.is_using_command();
@@ -497,9 +497,9 @@ impl ProcWidget {
                 .unwrap_or(true)
         });
 
-        let mut id_pid_map: FxHashMap<String, Vec<Pid>> = FxHashMap::default();
+        let mut id_pid_map: RfxHashMap<String, Vec<Pid>> = RfxHashMap::default();
         let mut filtered_data: Vec<ProcWidgetData> = if let ProcWidgetMode::Grouped = self.mode {
-            let mut id_process_mapping: FxHashMap<String, ProcessHarvest> = FxHashMap::default();
+            let mut id_process_mapping: RfxHashMap<String, ProcessHarvest> = RfxHashMap::default();
             for process in filtered_iter {
                 let id = if is_using_command {
                     &process.command
