@@ -100,7 +100,57 @@ fn get_from_hwmon(
             let temp_label = file_path.join(name.replace("input", "label"));
             let temp_label = fs::read_to_string(temp_label).ok();
 
-            let name = match (&hwmon_name, &temp_label) {
+            // Do some messing around to get a more sensible name for sensors
+            //
+            // - For GPUs, this will use the kernel device name, ex `card0`
+            // - For nvme drives, this will also use the kernel name, ex `nvme0`.
+            //   This is found differently than for GPUs
+            // - For whatever acpitz is, on my machine this is now `thermal_zone0`.
+            // - For k10temp, this will still be k10temp, but it has to be handled special.
+            let human_hwmon_name = {
+                let device = file_path.join("device");
+                // This will exist for GPUs but not others, this is how
+                // we find their kernel name
+                let drm = device.join("drm");
+                if drm.exists() {
+                    // This should never actually be empty
+                    let mut gpu = None;
+                    for card in drm.read_dir()? {
+                        let card = card?;
+                        let name = card.file_name().to_str().unwrap_or_default().to_owned();
+                        if name.starts_with("card") {
+                            if let Some(hwmon_name) = hwmon_name.as_ref() {
+                                gpu = Some(format!("{} ({})", name, hwmon_name.trim()));
+                            } else {
+                                gpu = Some(name)
+                            }
+                            break;
+                        }
+                    }
+                    gpu
+                } else {
+                    // This little mess is to account for stuff like k10temp
+                    // This is needed because the `device` symlink
+                    // points to `nvme*` for nvme drives, but to PCI buses for anything else
+                    // If the first character is alphabetic,
+                    // its an actual name like k10temp or nvme0, not a PCI bus
+                    let link = fs::read_link(device)?
+                        .file_name()
+                        .map(|f| f.to_str().unwrap_or_default().to_owned())
+                        .unwrap();
+                    if link.as_bytes()[0].is_ascii_alphabetic() {
+                        if let Some(hwmon_name) = hwmon_name.as_ref() {
+                            Some(format!("{} ({})", link, hwmon_name.trim()))
+                        } else {
+                            Some(link)
+                        }
+                    } else {
+                        hwmon_name.clone()
+                    }
+                }
+            };
+
+            let name = match (&human_hwmon_name, &temp_label) {
                 (Some(name), Some(label)) => format!("{}: {}", name.trim(), label.trim()),
                 (None, Some(label)) => label.to_string(),
                 (Some(name), None) => name.to_string(),
