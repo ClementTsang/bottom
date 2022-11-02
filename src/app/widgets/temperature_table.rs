@@ -98,4 +98,8 @@ impl TempWidgetState {
             table: DataTable::new(COLUMNS, props, styling),
         }
     }
+
+    pub fn ingest_data(&mut self, data: &[TempWidgetData]) {
+        self.table.set_data(data.to_vec());
+    }
 }

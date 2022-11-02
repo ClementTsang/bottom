@@ -80,9 +80,6 @@ pub struct ProcWidget {
     /// The state of the main table.
     pub table: ProcessTable,
 
-    /// The stored process data for this specific table.
-    pub table_data: Vec<ProcWidgetData>,
-
     /// The state of the togglable table that controls sorting.
     pub sort_table: SortTable,
 
@@ -224,17 +221,19 @@ impl ProcWidget {
 
         let id_pid_map = FxHashMap::default();
 
-        ProcWidget {
+        let mut table = ProcWidget {
             proc_search: process_search_state,
             table,
-            table_data: vec![],
             sort_table,
             id_pid_map,
             is_sort_open: false,
             mode,
             force_rerender: true,
             force_update_data: false,
-        }
+        };
+        table.sort_table.set_data(table.column_text());
+
+        table
     }
 
     pub fn is_using_command(&self) -> bool {
@@ -264,7 +263,7 @@ impl ProcWidget {
     /// This function *only* updates the displayed process data. If there is a need to update the actual *stored* data,
     /// call it before this function.
     pub fn update_displayed_process_data(&mut self, data_collection: &DataCollection) {
-        self.table_data = match &self.mode {
+        let data = match &self.mode {
             ProcWidgetMode::Grouped | ProcWidgetMode::Normal => {
                 self.get_normal_data(&data_collection.process_data.process_harvest)
             }
@@ -272,6 +271,7 @@ impl ProcWidget {
                 self.get_tree_data(collapsed_pids, data_collection)
             }
         };
+        self.table.set_data(data);
     }
 
     fn get_tree_data(
@@ -587,6 +587,7 @@ impl ProcWidget {
                 _ => unreachable!(),
             }
 
+            self.sort_table.set_data(self.column_text());
             self.force_data_update();
         }
     }
@@ -664,6 +665,7 @@ impl ProcWidget {
                 }
                 _ => unreachable!(),
             }
+            self.sort_table.set_data(self.column_text());
             self.force_rerender_and_update();
         }
     }
@@ -702,6 +704,7 @@ impl ProcWidget {
                     _ => unreachable!(),
                 }
 
+                self.sort_table.set_data(self.column_text());
                 self.force_rerender_and_update();
             }
         }

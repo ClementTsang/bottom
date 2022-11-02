@@ -74,7 +74,7 @@ impl<DataType: DataToCell<H>, H: ColumnHeader, S: SortType, C: DataTableColumn<H
     }
 
     /// Updates the scroll position to be valid for the number of entries.
-    fn set_data(&mut self, data: Vec<DataType>) {
+    pub fn set_data(&mut self, data: Vec<DataType>) {
         self.data = data;
         let max_pos = self.data.len().saturating_sub(1);
         if self.state.current_index > max_pos {

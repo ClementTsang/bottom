@@ -59,22 +59,26 @@ pub struct ConvertedData {
     pub total_tx_display: String,
     pub network_data_rx: Vec<Point>,
     pub network_data_tx: Vec<Point>,
-    pub disk_data: Vec<DiskWidgetData>,
-    pub temp_data: Vec<TempWidgetData>,
 
     pub mem_labels: Option<(String, String)>,
     pub swap_labels: Option<(String, String)>,
-    #[cfg(feature = "zfs")]
-    pub arc_labels: Option<(String, String)>,
+
     pub mem_data: Vec<Point>, // TODO: Switch this and all data points over to a better data structure...
     pub swap_data: Vec<Point>,
+
+    #[cfg(feature = "zfs")]
+    pub arc_labels: Option<(String, String)>,
     #[cfg(feature = "zfs")]
     pub arc_data: Vec<Point>,
+
+    #[cfg(feature = "gpu")]
+    pub gpu_data: Option<Vec<ConvertedGpuData>>,
+
     pub load_avg_data: [f32; 3],
     pub cpu_data: Vec<CpuWidgetData>,
     pub battery_data: Vec<ConvertedBatteryData>,
-    #[cfg(feature = "gpu")]
-    pub gpu_data: Option<Vec<ConvertedGpuData>>,
+    pub disk_data: Vec<DiskWidgetData>,
+    pub temp_data: Vec<TempWidgetData>,
 }
 
 impl ConvertedData {

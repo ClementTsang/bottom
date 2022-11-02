@@ -52,7 +52,31 @@ impl ColumnHeader for CpuWidgetColumn {
     }
 }
 
-impl DataToCell<CpuWidgetColumn> for CpuWidgetData {
+pub enum CpuWidgetTableData {
+    All,
+    Entry {
+        data_type: CpuDataType,
+        last_entry: f64,
+    },
+}
+
+impl CpuWidgetTableData {
+    pub fn from_cpu_widget_data(data: &CpuWidgetData) -> CpuWidgetTableData {
+        match data {
+            CpuWidgetData::All => CpuWidgetTableData::All,
+            CpuWidgetData::Entry {
+                data_type,
+                data: _,
+                last_entry,
+            } => CpuWidgetTableData::Entry {
+                data_type: *data_type,
+                last_entry: *last_entry,
+            },
+        }
+    }
+}
+
+impl DataToCell<CpuWidgetColumn> for CpuWidgetTableData {
     fn to_cell<'a>(&'a self, column: &CpuWidgetColumn, calculated_width: u16) -> Option<Text<'a>> {
         const CPU_HIDE_BREAKPOINT: u16 = 5;
 
@@ -64,13 +88,12 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetData {
         // This is the same for the use percentages - we just *always* show them, and *always* hide the CPU column if
         // it is too small.
         match &self {
-            CpuWidgetData::All => match column {
+            CpuWidgetTableData::All => match column {
                 CpuWidgetColumn::CPU => Some(truncate_text("All", calculated_width)),
                 CpuWidgetColumn::Use => None,
             },
-            CpuWidgetData::Entry {
+            CpuWidgetTableData::Entry {
                 data_type,
-                data: _,
                 last_entry,
             } => match column {
                 CpuWidgetColumn::CPU => {
@@ -106,10 +129,9 @@ impl DataToCell<CpuWidgetColumn> for CpuWidgetData {
     #[inline(always)]
     fn style_row<'a>(&self, row: Row<'a>, painter: &Painter) -> Row<'a> {
         let style = match self {
-            CpuWidgetData::All => painter.colours.all_colour_style,
-            CpuWidgetData::Entry {
+            CpuWidgetTableData::All => painter.colours.all_colour_style,
+            CpuWidgetTableData::Entry {
                 data_type,
-                data: _,
                 last_entry: _,
             } => match data_type {
                 CpuDataType::Avg => painter.colours.avg_colour_style,
@@ -138,7 +160,7 @@ pub struct CpuWidgetState {
     pub is_legend_hidden: bool,
     pub show_avg: bool,
     pub autohide_timer: Option<Instant>,
-    pub table: DataTable<CpuWidgetData, CpuWidgetColumn>,
+    pub table: DataTable<CpuWidgetTableData, CpuWidgetColumn>,
     pub styling: CpuWidgetStyling,
 }
 
@@ -171,5 +193,13 @@ impl CpuWidgetState {
             table: DataTable::new(COLUMNS, props, styling),
             styling: CpuWidgetStyling::from_colours(colours),
         }
+    }
+
+    pub fn ingest_data(&mut self, data: &[CpuWidgetData]) {
+        self.table.set_data(
+            data.iter()
+                .map(CpuWidgetTableData::from_cpu_widget_data)
+                .collect(),
+        );
     }
 }

@@ -24,7 +24,6 @@ impl Painter {
             temp_widget_state.table.draw(
                 f,
                 &draw_info,
-                app_state.converted_data.temp_data.clone(),
                 app_state.widget_map.get_mut(&widget_id),
                 self,
             );

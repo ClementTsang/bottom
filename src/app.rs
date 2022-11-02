@@ -726,7 +726,7 @@ impl App {
                         KillSignal::Kill(prev_signal) => {
                             self.delete_dialog_state.selected_signal = match prev_signal - 1 {
                                 0 => KillSignal::Cancel,
-                                // 32+33 are skipped
+                                // 32 + 33 are skipped
                                 33 => KillSignal::Kill(31),
                                 signal => KillSignal::Kill(signal),
                             };

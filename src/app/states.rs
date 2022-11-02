@@ -13,20 +13,6 @@ use super::widgets::{
 };
 
 #[derive(Debug)]
-pub enum ScrollDirection {
-    // UP means scrolling up --- this usually DECREMENTS
-    Up,
-    // DOWN means scrolling down --- this usually INCREMENTS
-    Down,
-}
-
-impl Default for ScrollDirection {
-    fn default() -> Self {
-        ScrollDirection::Down
-    }
-}
-
-#[derive(Debug)]
 pub enum CursorDirection {
     Left,
     Right,
@@ -112,7 +98,7 @@ impl Default for AppSearchState {
 }
 
 impl AppSearchState {
-    /// Returns a reset but still enabled app search state
+    /// Resets the [`AppSearchState`] to its default state, albeit still enabled.
     pub fn reset(&mut self) {
         *self = AppSearchState {
             is_enabled: self.is_enabled,
@@ -120,6 +106,7 @@ impl AppSearchState {
         }
     }
 
+    /// Returns whether the [`AppSearchState`] has an invalid or blank search.
     pub fn is_invalid_or_blank_search(&self) -> bool {
         self.is_blank_search || self.is_invalid_search
     }
