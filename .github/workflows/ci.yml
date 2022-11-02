@@ -5,10 +5,14 @@
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
 # - https://www.reillywood.com/blog/rust-faster-ci/
 #
-# It should do the following:
-# - cargo fmt on supported platforms
-# - cargo test on supported platforms, cargo check on unsupported
-# - cargo clippy after (apparently faster) on supported platforms
+# It should run the following:
+# Supported platforms:
+# - cargo fmt
+# - cargo test
+# - cargo clippy after (apparently faster to do so)
+#
+# Unsupported platforms:
+# - cargo check
 
 name: ci
 
@@ -25,8 +29,8 @@ env:
   CARGO_HUSKY_DONT_INSTALL_HOOKS: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'ClementTsang/bottom' }}
 
 jobs:
   # Check if things should be skipped.
