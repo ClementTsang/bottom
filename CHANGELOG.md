@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes
 
 - [#690](https://github.com/ClementTsang/bottom/pull/690): Add some colour to `-h`/`--help` as part of updating to clap 3.0.
+- [#807](https://github.com/ClementTsang/bottom/pull/807): Add more human friendly temperature sensor names for Linux.
 
 ## Features
 
