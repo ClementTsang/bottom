@@ -42,7 +42,7 @@ fn get_freebsd_process_cpu_usage(pids: &[i32]) -> io::Result<std::collections::H
     }
 
     let output = std::process::Command::new("ps")
-        .args(&["--libxo", "json", "-o", "pid,pcpu", "-p"])
+        .args(["--libxo", "json", "-o", "pid,pcpu", "-p"])
         .args(pids.iter().map(i32::to_string))
         .output()?;
     deserialize_xo("process-information", &output.stdout).map(|process_info: ProcessInformation| {

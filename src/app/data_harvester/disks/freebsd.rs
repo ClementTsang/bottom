@@ -99,7 +99,7 @@ fn matches_ignore_list(filter_check_map: &[(&Option<Filter>, &String)]) -> bool 
 
 fn get_disk_info() -> io::Result<StorageSystemInformation> {
     let output = std::process::Command::new("df")
-        .args(&["--libxo", "json", "-k", "-t", "ufs,msdosfs,zfs"])
+        .args(["--libxo", "json", "-k", "-t", "ufs,msdosfs,zfs"])
         .output()?;
     deserialize_xo("storage-system-information", &output.stdout)
 }
