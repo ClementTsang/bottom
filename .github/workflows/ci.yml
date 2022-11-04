@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   # Check if things should be skipped.
-  pre_job:
+  pre-job:
     runs-on: ubuntu-latest
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
@@ -49,9 +49,9 @@ jobs:
 
   # Runs rustfmt + tests + clippy on the main supported platforms.
   supported:
-    needs: pre_job
+    needs: pre-job
     runs-on: ${{ matrix.info.os }}
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -121,10 +121,10 @@ jobs:
           RUST_BACKTRACE: full
 
   # Run cargo check on all other platforms
-  other_check:
-    needs: pre_job
+  other-check:
+    needs: pre-job
     runs-on: ${{ matrix.info.os }}
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -239,7 +239,7 @@ jobs:
 
   completion:
     name: "CI Pass Check"
-    needs: [supported, other_check]
+    needs: [supported, other-check]
     runs-on: "ubuntu-latest"
     steps:
       - name: CI Passed

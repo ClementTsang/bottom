@@ -137,11 +137,6 @@ jobs:
           sh rustup.sh --default-toolchain stable -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Enable Rust cache
-        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
-        with:
-          key: ${{ matrix.info.target }}
-
       - name: Build
         uses: ClementTsang/cargo-action@v0.0.3
         with:
@@ -201,12 +196,6 @@ jobs:
           name: release
           path: release
 
-      # If I add more shared cleanup stuff in the future, I should move to a separate script, perhaps.
-      - name: Delete automatically generated completion/manpage to not cache
-        shell: bash
-        run: |
-          rm -r ./target/tmp/bottom/
-
   build-msi:
     name: "Build MSI installer"
     runs-on: "windows-2019"
@@ -232,11 +221,6 @@ jobs:
         with:
           toolchain: stable
           target: x86_64-pc-windows-msvc
-
-      - name: Enable Rust cache
-        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
-        with:
-          key: x86_64-pc-windows-msvc-msi
 
       - name: Build MSI file
         shell: powershell
@@ -316,9 +300,6 @@ jobs:
           toolchain: stable
           target: ${{ matrix.info.target }}
 
-      - name: Enable Rust cache
-        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
-
       - name: Build
         uses: ClementTsang/cargo-action@v0.0.3
         with:
@@ -373,8 +354,3 @@ jobs:
           retention-days: 3
           name: release
           path: release
-
-      - name: Delete automatically generated completion/manpage to not cache
-        shell: bash
-        run: |
-          rm -r ./target/tmp/bottom/
