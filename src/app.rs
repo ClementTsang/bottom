@@ -1330,13 +1330,13 @@ impl App {
 
     pub fn kill_highlighted_process(&mut self) -> Result<()> {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            if let Some(current_selected_processes) = &self.to_delete_process_list {
+            if let Some((_, pids)) = &self.to_delete_process_list {
                 #[cfg(target_family = "unix")]
                 let signal = match self.delete_dialog_state.selected_signal {
                     KillSignal::Kill(sig) => sig,
                     KillSignal::Cancel => 15, // should never happen, so just TERM
                 };
-                for pid in &current_selected_processes.1 {
+                for pid in pids {
                     #[cfg(target_family = "unix")]
                     {
                         process_killer::kill_process_given_pid(*pid, signal)?;

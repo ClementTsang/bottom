@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::hash_map::Entry};
+use std::borrow::Cow;
 
 use crate::{
     app::{
@@ -499,7 +499,7 @@ impl ProcWidget {
 
         let mut id_pid_map: FxHashMap<String, Vec<Pid>> = FxHashMap::default();
         let mut filtered_data: Vec<ProcWidgetData> = if let ProcWidgetMode::Grouped = self.mode {
-            let mut id_process_mapping: FxHashMap<String, ProcessHarvest> = FxHashMap::default();
+            let mut id_process_mapping: FxHashMap<&String, ProcessHarvest> = FxHashMap::default();
             for process in filtered_iter {
                 let id = if is_using_command {
                     &process.command
@@ -508,19 +508,17 @@ impl ProcWidget {
                 };
                 let pid = process.pid;
 
-                match id_pid_map.entry(id.clone()) {
-                    Entry::Occupied(mut occupied) => {
-                        occupied.get_mut().push(pid);
-                    }
-                    Entry::Vacant(vacant) => {
-                        vacant.insert(vec![pid]);
-                    }
+                if let Some(entry) = id_pid_map.get_mut(id) {
+                    entry.push(pid);
+                } else {
+                    id_pid_map.insert(id.clone(), vec![pid]);
                 }
 
                 if let Some(grouped_process_harvest) = id_process_mapping.get_mut(id) {
                     grouped_process_harvest.add(process);
                 } else {
-                    id_process_mapping.insert(id.clone(), process.clone());
+                    // FIXME: [PERF] could maybe eliminate an allocation here in the grouped mode... or maybe just avoid the entire transformation step, making an alloc fine.
+                    id_process_mapping.insert(&id, process.clone());
                 }
             }
 
