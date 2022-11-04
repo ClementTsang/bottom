@@ -8,7 +8,7 @@ use std::{
 include!("src/clap.rs");
 
 fn create_dir(dir: &Path) -> Result<()> {
-    let res = fs::create_dir_all(&dir);
+    let res = fs::create_dir_all(dir);
     match &res {
         Ok(()) => {}
         Err(err) => {
