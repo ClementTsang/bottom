@@ -194,7 +194,7 @@ where
             }
 
             let show_header = inner_height > 1;
-            let header_height = if show_header { 1 } else { 0 };
+            let header_height = u16::from(show_header);
             let table_gap = if !show_header || draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {

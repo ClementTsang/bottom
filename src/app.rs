@@ -839,7 +839,7 @@ impl App {
                 &self.current_widget.top_left_corner,
                 &self.current_widget.bottom_right_corner,
             ) {
-                let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+                let border_offset = u16::from(self.is_drawing_border());
                 let header_offset = self.header_offset(&self.current_widget);
                 let height = brc_y - tlc_y - 2 * border_offset - header_offset;
                 self.change_position_count(-(height as i64));
@@ -867,7 +867,7 @@ impl App {
                 &self.current_widget.top_left_corner,
                 &self.current_widget.bottom_right_corner,
             ) {
-                let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+                let border_offset = u16::from(self.is_drawing_border());
                 let header_offset = self.header_offset(&self.current_widget);
                 let height = brc_y - tlc_y - 2 * border_offset - header_offset;
                 self.change_position_count(height as i64);
@@ -886,7 +886,7 @@ impl App {
                 &self.current_widget.top_left_corner,
                 &self.current_widget.bottom_right_corner,
             ) {
-                let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+                let border_offset = u16::from(self.is_drawing_border());
                 let header_offset = self.header_offset(&self.current_widget);
                 let height = brc_y - tlc_y - 2 * border_offset - header_offset;
                 self.change_position_count(-(height as i64) / 2);
@@ -905,7 +905,7 @@ impl App {
                 &self.current_widget.top_left_corner,
                 &self.current_widget.bottom_right_corner,
             ) {
-                let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+                let border_offset = u16::from(self.is_drawing_border());
                 let header_offset = self.header_offset(&self.current_widget);
                 let height = brc_y - tlc_y - 2 * border_offset - header_offset;
                 self.change_position_count(height as i64 / 2);
@@ -1330,13 +1330,13 @@ impl App {
 
     pub fn kill_highlighted_process(&mut self) -> Result<()> {
         if let BottomWidgetType::Proc = self.current_widget.widget_type {
-            if let Some(current_selected_processes) = &self.to_delete_process_list {
+            if let Some((_, pids)) = &self.to_delete_process_list {
                 #[cfg(target_family = "unix")]
                 let signal = match self.delete_dialog_state.selected_signal {
                     KillSignal::Kill(sig) => sig,
                     KillSignal::Cancel => 15, // should never happen, so just TERM
                 };
-                for pid in &current_selected_processes.1 {
+                for pid in pids {
                     #[cfg(target_family = "unix")]
                     {
                         process_killer::kill_process_given_pid(*pid, signal)?;
@@ -2456,7 +2456,7 @@ impl App {
             &self.current_widget.top_left_corner,
             &self.current_widget.bottom_right_corner,
         ) {
-            let border_offset = if self.is_drawing_border() { 1 } else { 0 };
+            let border_offset = u16::from(self.is_drawing_border());
 
             // This check ensures the click isn't actually just clicking on the bottom border.
             if y < (brc_y - border_offset) {
@@ -2616,11 +2616,7 @@ impl App {
                 1 + self.app_config_fields.table_gap
             } else {
                 let min_height_for_header = if self.is_drawing_border() { 3 } else { 1 };
-                if height_diff > min_height_for_header {
-                    1
-                } else {
-                    0
-                }
+                u16::from(height_diff > min_height_for_header)
             }
         } else {
             1 + self.app_config_fields.table_gap

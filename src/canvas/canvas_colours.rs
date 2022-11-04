@@ -100,19 +100,19 @@ impl CanvasColours {
         match colour_scheme {
             ColourScheme::Default => {}
             ColourScheme::DefaultLight => {
-                canvas_colours.set_colours_from_palette(&*DEFAULT_LIGHT_MODE_COLOUR_PALETTE)?;
+                canvas_colours.set_colours_from_palette(&DEFAULT_LIGHT_MODE_COLOUR_PALETTE)?;
             }
             ColourScheme::Gruvbox => {
-                canvas_colours.set_colours_from_palette(&*GRUVBOX_COLOUR_PALETTE)?;
+                canvas_colours.set_colours_from_palette(&GRUVBOX_COLOUR_PALETTE)?;
             }
             ColourScheme::GruvboxLight => {
-                canvas_colours.set_colours_from_palette(&*GRUVBOX_LIGHT_COLOUR_PALETTE)?;
+                canvas_colours.set_colours_from_palette(&GRUVBOX_LIGHT_COLOUR_PALETTE)?;
             }
             ColourScheme::Nord => {
-                canvas_colours.set_colours_from_palette(&*NORD_COLOUR_PALETTE)?;
+                canvas_colours.set_colours_from_palette(&NORD_COLOUR_PALETTE)?;
             }
             ColourScheme::NordLight => {
-                canvas_colours.set_colours_from_palette(&*NORD_LIGHT_COLOUR_PALETTE)?;
+                canvas_colours.set_colours_from_palette(&NORD_LIGHT_COLOUR_PALETTE)?;
             }
             ColourScheme::Custom => {
                 if let Some(colors) = &config.colors {

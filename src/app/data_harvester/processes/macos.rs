@@ -29,7 +29,7 @@ fn get_macos_process_cpu_usage(
 ) -> std::io::Result<std::collections::HashMap<i32, f64>> {
     use itertools::Itertools;
     let output = std::process::Command::new("ps")
-        .args(&["-o", "pid=,pcpu=", "-p"])
+        .args(["-o", "pid=,pcpu=", "-p"])
         .arg(
             // Has to look like this since otherwise, it you hit a `unstable_name_collisions` warning.
             Itertools::intersperse(pids.iter().map(i32::to_string), ",".to_string())

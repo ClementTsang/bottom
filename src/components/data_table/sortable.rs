@@ -336,7 +336,6 @@ where
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[derive(Clone, PartialEq, Eq, Debug)]

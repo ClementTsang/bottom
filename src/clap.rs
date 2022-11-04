@@ -230,7 +230,7 @@ pub fn build_app() -> Command<'static> {
         .long("color")
         .takes_value(true)
         .value_name("COLOR SCHEME")
-        .possible_values(&[
+        .possible_values([
             "default",
             "default-light",
             "gruvbox",
