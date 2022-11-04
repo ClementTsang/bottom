@@ -518,7 +518,7 @@ impl ProcWidget {
                     grouped_process_harvest.add(process);
                 } else {
                     // FIXME: [PERF] could maybe eliminate an allocation here in the grouped mode... or maybe just avoid the entire transformation step, making an alloc fine.
-                    id_process_mapping.insert(&id, process.clone());
+                    id_process_mapping.insert(id, process.clone());
                 }
             }
 
