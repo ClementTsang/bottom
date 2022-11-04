@@ -74,7 +74,7 @@ once_cell = "1.5.2"
 regex = "1.5.5"
 serde = { version = "1.0.136", features = ["derive"] }
 starship-battery = { version = "0.7.9", optional = true }
-sysinfo = "0.26.4"
+sysinfo = "0.26.7"
 thiserror = "1.0.30"
 time = { version = "0.3.9", features = ["formatting", "macros"] }
 toml = "0.5.9"
@@ -115,21 +115,9 @@ clap_mangen = "0.1.6"
 [package.metadata.deb]
 section = "utility"
 assets = [
-    [
-        "target/release/btm",
-        "usr/bin/",
-        "755",
-    ],
-    [
-        "LICENSE",
-        "usr/share/doc/btm/",
-        "644",
-    ],
-    [
-        "manpage/btm.1.gz",
-        "usr/share/man/man1/btm.1.gz",
-        "644",
-    ],
+    ["target/release/btm", "usr/bin/", "755"],
+    ["LICENSE", "usr/share/doc/btm/", "644"],
+    ["manpage/btm.1.gz", "usr/share/man/man1/btm.1.gz", "644"],
     [
         "completion/btm.bash",
         "usr/share/bash-completion/completions/btm",
@@ -140,11 +128,7 @@ assets = [
         "usr/share/fish/vendor_completions.d/btm.fish",
         "644",
     ],
-    [
-        "completion/_btm",
-        "usr/share/zsh/vendor-completions/",
-        "644",
-    ],
+    ["completion/_btm", "usr/share/zsh/vendor-completions/", "644"],
 ]
 extended-description = """\
 A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows.
