@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'ClementTsang/bottom' }}
 
 jobs:
-  pre_job:
+  pre-job:
     runs-on: ubuntu-latest
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
@@ -24,8 +24,8 @@ jobs:
 
   test-build-documentation:
     name: Test building docs
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
