@@ -1,3 +1,3 @@
-use nvml_wrapper::{error::NvmlError, NVML};
+use nvml_wrapper::{error::NvmlError, Nvml};
 use once_cell::sync::Lazy;
-pub static NVML_DATA: Lazy<Result<NVML, NvmlError>> = Lazy::new(NVML::init);
+pub static NVML_DATA: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
