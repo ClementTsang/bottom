@@ -1206,6 +1206,7 @@ impl App {
         }
     }
 
+    // FIXME: Refactor this system...
     fn handle_char(&mut self, caught_char: char) {
         match caught_char {
             '/' => {
@@ -1310,12 +1311,34 @@ impl App {
             'L' | 'D' => self.move_widget_selection(&WidgetDirection::Right),
             'K' | 'W' => self.move_widget_selection(&WidgetDirection::Up),
             'J' | 'S' => self.move_widget_selection(&WidgetDirection::Down),
-            't' => self.toggle_tree_mode(),
+            't' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    self.toggle_tree_mode()
+                } else if let Some(temp) = self
+                    .temp_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    temp.table.set_sort_index(1);
+                    temp.force_data_update();
+                    self.is_force_redraw = true;
+                }
+            }
             '+' => self.on_plus(),
             '-' => self.on_minus(),
             '=' => self.reset_zoom(),
             'e' => self.toggle_expand_widget(),
-            's' => self.toggle_sort_menu(),
+            's' => {
+                if let BottomWidgetType::Proc = self.current_widget.widget_type {
+                    self.toggle_sort_menu()
+                } else if let Some(temp) = self
+                    .temp_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    temp.table.set_sort_index(0);
+                    temp.force_data_update();
+                    self.is_force_redraw = true;
+                }
+            }
             'I' => self.invert_sort(),
             '%' => self.toggle_percentages(),
             _ => {}
