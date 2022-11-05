@@ -14,12 +14,14 @@ The temperature widget provides the sensor name as well as its current temperatu
 
 Note that key bindings are generally case-sensitive.
 
-| Binding            | Action                               |
-| ------------------ | ------------------------------------ |
-| ++up++ , ++k++     | Move up within a widget              |
-| ++down++ , ++j++   | Move down within a widget            |
-| ++g+g++ , ++home++ | Jump to the first entry in the table |
-| ++G++ , ++end++    | Jump to the last entry in the table  |
+| Binding            | Action                                                    |
+| ------------------ | --------------------------------------------------------- |
+| ++up++ , ++k++     | Move up within a widget                                   |
+| ++down++ , ++j++   | Move down within a widget                                 |
+| ++g+g++ , ++home++ | Jump to the first entry in the table                      |
+| ++G++ , ++end++    | Jump to the last entry in the table                       |
+| ++t++              | Sort by temperature, press again to reverse sorting order |
+| ++s++              | Sort by sensor name, press again to reverse sorting order |
 
 ## Mouse bindings
 
