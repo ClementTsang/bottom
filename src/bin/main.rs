@@ -196,7 +196,11 @@ fn main() -> Result<()> {
                             app.converted_data.ingest_temp_data(
                                 &app.data_collection,
                                 app.app_config_fields.temperature_type,
-                            )
+                            );
+
+                            for temp in app.temp_state.widget_states.values_mut() {
+                                temp.force_data_update();
+                            }
                         }
 
                         // Memory

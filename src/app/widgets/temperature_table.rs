@@ -8,10 +8,10 @@ use crate::{
     app::{data_harvester::temperature::TemperatureType, AppConfigFields},
     canvas::canvas_colours::CanvasColours,
     components::data_table::{
-        Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
-        DataToCell,
+        ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
+        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    utils::gen_util::truncate_text,
+    utils::gen_util::{sort_partial_fn, truncate_text},
 };
 
 #[derive(Clone)]
@@ -29,8 +29,8 @@ pub enum TempWidgetColumn {
 impl ColumnHeader for TempWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
-            TempWidgetColumn::Sensor => "Sensor".into(),
-            TempWidgetColumn::Temp => "Temp".into(),
+            TempWidgetColumn::Sensor => "Sensor(s)".into(),
+            TempWidgetColumn::Temp => "Temp(t)".into(),
         }
     }
 }
@@ -72,34 +72,67 @@ impl DataToCell<TempWidgetColumn> for TempWidgetData {
     }
 }
 
+impl SortsRow for TempWidgetColumn {
+    type DataType = TempWidgetData;
+
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
+        match self {
+            TempWidgetColumn::Sensor => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
+            }
+            TempWidgetColumn::Temp => {
+                data.sort_by(|a, b| {
+                    sort_partial_fn(descending)(a.temperature_value, b.temperature_value)
+                });
+            }
+        }
+    }
+}
+
 pub struct TempWidgetState {
-    pub table: DataTable<TempWidgetData, TempWidgetColumn>,
+    pub table: SortDataTable<TempWidgetData, TempWidgetColumn>,
+    pub force_update_data: bool,
 }
 
 impl TempWidgetState {
     pub fn new(config: &AppConfigFields, colours: &CanvasColours) -> Self {
-        const COLUMNS: [Column<TempWidgetColumn>; 2] = [
-            Column::soft(TempWidgetColumn::Sensor, Some(0.8)),
-            Column::soft(TempWidgetColumn::Temp, None),
+        let columns = [
+            SortColumn::soft(TempWidgetColumn::Sensor, Some(0.8)),
+            SortColumn::soft(TempWidgetColumn::Temp, None).default_descending(),
         ];
 
-        let props = DataTableProps {
-            title: Some(" Temperatures ".into()),
-            table_gap: config.table_gap,
-            left_to_right: false,
-            is_basic: config.use_basic_mode,
-            show_table_scroll_position: config.show_table_scroll_position,
-            show_current_entry_when_unfocused: false,
+        let props = SortDataTableProps {
+            inner: DataTableProps {
+                title: Some(" Temperatures ".into()),
+                table_gap: config.table_gap,
+                left_to_right: false,
+                is_basic: config.use_basic_mode,
+                show_table_scroll_position: config.show_table_scroll_position,
+                show_current_entry_when_unfocused: false,
+            },
+            sort_index: 0,
+            order: SortOrder::Ascending,
         };
 
         let styling = DataTableStyling::from_colours(colours);
 
         Self {
-            table: DataTable::new(COLUMNS, props, styling),
+            table: SortDataTable::new_sortable(columns, props, styling),
+            force_update_data: false,
         }
     }
 
+    /// Forces an update of the data stored.
+    #[inline]
+    pub fn force_data_update(&mut self) {
+        self.force_update_data = true;
+    }
+
     pub fn ingest_data(&mut self, data: &[TempWidgetData]) {
-        self.table.set_data(data.to_vec());
+        let mut data = data.to_vec();
+        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
+            column.sort_by(&mut data, self.table.order());
+        }
+        self.table.set_data(data);
     }
 }

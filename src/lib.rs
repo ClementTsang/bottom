@@ -330,7 +330,7 @@ pub fn update_data(app: &mut App) {
 
     for proc in app.proc_state.widget_states.values_mut() {
         if proc.force_update_data {
-            proc.update_displayed_process_data(data_source);
+            proc.ingest_data(data_source);
             proc.force_update_data = false;
         }
     }
@@ -353,7 +353,10 @@ pub fn update_data(app: &mut App) {
     {
         let data = &app.converted_data.temp_data;
         for temp in app.temp_state.widget_states.values_mut() {
-            temp.ingest_data(data);
+            if temp.force_update_data {
+                temp.ingest_data(data);
+                temp.force_update_data = false;
+            }
         }
     }
     {
