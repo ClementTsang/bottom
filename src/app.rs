@@ -2562,19 +2562,28 @@ impl App {
                             // We might have clicked on a header!  Check if we only exceeded the table + border offset, and
                             // it's implied we exceeded the gap offset.
                             if clicked_entry == border_offset {
-                                if let BottomWidgetType::Proc = &self.current_widget.widget_type {
-                                    if let Some(proc_widget_state) = self
-                                        .proc_state
-                                        .get_mut_widget_state(self.current_widget.widget_id)
-                                    {
-                                        if proc_widget_state
-                                            .table
-                                            .try_select_location(x, y)
-                                            .is_some()
+                                match &self.current_widget.widget_type {
+                                    BottomWidgetType::Proc => {
+                                        if let Some(state) = self
+                                            .proc_state
+                                            .get_mut_widget_state(self.current_widget.widget_id)
                                         {
-                                            proc_widget_state.force_data_update();
+                                            if state.table.try_select_location(x, y).is_some() {
+                                                state.force_data_update();
+                                            }
                                         }
                                     }
+                                    BottomWidgetType::Temp => {
+                                        if let Some(state) = self
+                                            .temp_state
+                                            .get_mut_widget_state(self.current_widget.widget_id)
+                                        {
+                                            if state.table.try_select_location(x, y).is_some() {
+                                                state.force_data_update();
+                                            }
+                                        }
+                                    }
+                                    _ => (),
                                 }
                             }
                         }
