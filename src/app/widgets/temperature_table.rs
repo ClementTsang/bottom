@@ -29,8 +29,8 @@ pub enum TempWidgetColumn {
 impl ColumnHeader for TempWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
-            TempWidgetColumn::Sensor => "Sensor".into(),
-            TempWidgetColumn::Temp => "Temp".into(),
+            TempWidgetColumn::Sensor => "Sensor(s)".into(),
+            TempWidgetColumn::Temp => "Temp(t)".into(),
         }
     }
 }
