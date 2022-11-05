@@ -13,14 +13,21 @@ readme = "README.md"
 default-run = "btm"
 build = "build.rs"
 exclude = [
-    ".all-contributorsrc",
+    ".cargo-husky/",
     ".github/",
-    ".markdownlint.json",
     "assets/",
-    "codecov.yml",
     "deployment/",
     "docs/",
     "sample_configs/",
+    ".all-contributorsrc",
+    ".cirrus.yml",
+    ".markdownlint.json",
+    "CHANGELOG.md",
+    "clippy.toml",
+    "codecov.yml",
+    "CONTRIBUTING.md",
+    "Cross.toml",
+    "rustfmt.toml",
 ]
 
 [[bin]]
