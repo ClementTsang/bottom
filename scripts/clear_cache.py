@@ -2,7 +2,7 @@
 
 # A simple script to clean caches matching a PR ID.
 #
-# Expects the GitHub token in the environment variables.
+# Expects a GitHub token in the environment variables as GITHUB_TOKEN.
 
 import os
 import json
