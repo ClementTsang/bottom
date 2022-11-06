@@ -153,11 +153,11 @@ impl DiskTableWidget {
         let columns = [
             SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
             SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),
-            SortColumn::hard(DiskWidgetColumn::Used, 7).default_descending(),
-            SortColumn::hard(DiskWidgetColumn::Free, 7).default_descending(),
-            SortColumn::hard(DiskWidgetColumn::Total, 8).default_descending(),
-            SortColumn::hard(DiskWidgetColumn::IoRead, 9).default_descending(),
-            SortColumn::hard(DiskWidgetColumn::IoWrite, 10).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::Used, 8).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::Free, 8).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::Total, 9).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::IoRead, 10).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::IoWrite, 11).default_descending(),
         ];
 
         let props = SortDataTableProps {
