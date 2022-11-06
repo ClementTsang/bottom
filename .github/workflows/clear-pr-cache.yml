@@ -3,6 +3,11 @@
 name: "clear PR cache"
 
 on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "Which id to clear:"
+        required: false
   pull_request:
     types:
       - closed
@@ -14,4 +19,8 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - run: |
-          python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
+          if [[ -z "${{ github.event.inputs.id }}" ]]; then
+            python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
+          else
+            python ./scripts/clear_cache.py ${{ github.event.inputs.id }}
+          fi
