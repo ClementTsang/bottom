@@ -189,6 +189,10 @@ fn main() -> Result<()> {
                         // Disk
                         if app.used_widgets.use_disk {
                             app.converted_data.ingest_disk_data(&app.data_collection);
+
+                            for disk in app.disk_state.widget_states.values_mut() {
+                                disk.force_data_update();
+                            }
                         }
 
                         // Temperatures

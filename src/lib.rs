@@ -347,7 +347,7 @@ pub fn update_data(app: &mut App) {
     {
         let data = &app.converted_data.cpu_data;
         for cpu in app.cpu_state.widget_states.values_mut() {
-            cpu.ingest_data(data)
+            cpu.update_table(data)
         }
     }
     {
@@ -362,7 +362,10 @@ pub fn update_data(app: &mut App) {
     {
         let data = &app.converted_data.disk_data;
         for disk in app.disk_state.widget_states.values_mut() {
-            disk.ingest_data(data);
+            if disk.force_update_data {
+                disk.ingest_data(data);
+                disk.force_update_data = false;
+            }
         }
     }
 

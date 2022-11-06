@@ -7,10 +7,10 @@ use crate::{
     app::AppConfigFields,
     canvas::canvas_colours::CanvasColours,
     components::data_table::{
-        Column, ColumnHeader, DataTable, DataTableColumn, DataTableProps, DataTableStyling,
-        DataToCell,
+        ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
+        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
     },
-    utils::gen_util::{get_decimal_bytes, truncate_text},
+    utils::gen_util::{get_decimal_bytes, sort_partial_fn, truncate_text},
 };
 
 #[derive(Clone)]
@@ -69,13 +69,13 @@ pub enum DiskWidgetColumn {
 impl ColumnHeader for DiskWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
-            DiskWidgetColumn::Disk => "Disk",
-            DiskWidgetColumn::Mount => "Mount",
-            DiskWidgetColumn::Used => "Used",
-            DiskWidgetColumn::Free => "Free",
-            DiskWidgetColumn::Total => "Total",
-            DiskWidgetColumn::IoRead => "R/s",
-            DiskWidgetColumn::IoWrite => "W/s",
+            DiskWidgetColumn::Disk => "Disk(d)",
+            DiskWidgetColumn::Mount => "Mount(m)",
+            DiskWidgetColumn::Used => "Used(u)",
+            DiskWidgetColumn::Free => "Free(n)",
+            DiskWidgetColumn::Total => "Total(t)",
+            DiskWidgetColumn::IoRead => "R/s(r)",
+            DiskWidgetColumn::IoWrite => "W/s(w)",
         }
         .into()
     }
@@ -114,38 +114,84 @@ impl DataToCell<DiskWidgetColumn> for DiskWidgetData {
 }
 
 pub struct DiskTableWidget {
-    pub table: DataTable<DiskWidgetData, DiskWidgetColumn>,
+    pub table: SortDataTable<DiskWidgetData, DiskWidgetColumn>,
+    pub force_update_data: bool,
+}
+
+impl SortsRow for DiskWidgetColumn {
+    type DataType = DiskWidgetData;
+
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
+        match self {
+            DiskWidgetColumn::Disk => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.name, &b.name));
+            }
+            DiskWidgetColumn::Mount => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.mount_point, &b.mount_point));
+            }
+            DiskWidgetColumn::Used => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.used_bytes, &b.used_bytes));
+            }
+            DiskWidgetColumn::Free => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.free_bytes, &b.free_bytes));
+            }
+            DiskWidgetColumn::Total => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.total_bytes, &b.total_bytes));
+            }
+            DiskWidgetColumn::IoRead => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.io_read, &b.io_read));
+            }
+            DiskWidgetColumn::IoWrite => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.io_write, &b.io_write));
+            }
+        }
+    }
 }
 
 impl DiskTableWidget {
     pub fn new(config: &AppConfigFields, colours: &CanvasColours) -> Self {
-        const COLUMNS: [Column<DiskWidgetColumn>; 7] = [
-            Column::soft(DiskWidgetColumn::Disk, Some(0.2)),
-            Column::soft(DiskWidgetColumn::Mount, Some(0.2)),
-            Column::hard(DiskWidgetColumn::Used, 4),
-            Column::hard(DiskWidgetColumn::Free, 6),
-            Column::hard(DiskWidgetColumn::Total, 6),
-            Column::hard(DiskWidgetColumn::IoRead, 7),
-            Column::hard(DiskWidgetColumn::IoWrite, 7),
+        let columns = [
+            SortColumn::soft(DiskWidgetColumn::Disk, Some(0.2)),
+            SortColumn::soft(DiskWidgetColumn::Mount, Some(0.2)),
+            SortColumn::hard(DiskWidgetColumn::Used, 7).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::Free, 7).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::Total, 8).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::IoRead, 9).default_descending(),
+            SortColumn::hard(DiskWidgetColumn::IoWrite, 10).default_descending(),
         ];
 
-        let props = DataTableProps {
-            title: Some(" Disks ".into()),
-            table_gap: config.table_gap,
-            left_to_right: true,
-            is_basic: config.use_basic_mode,
-            show_table_scroll_position: config.show_table_scroll_position,
-            show_current_entry_when_unfocused: false,
+        let props = SortDataTableProps {
+            inner: DataTableProps {
+                title: Some(" Disks ".into()),
+                table_gap: config.table_gap,
+                left_to_right: true,
+                is_basic: config.use_basic_mode,
+                show_table_scroll_position: config.show_table_scroll_position,
+                show_current_entry_when_unfocused: false,
+            },
+            sort_index: 0,
+            order: SortOrder::Ascending,
         };
 
         let styling = DataTableStyling::from_colours(colours);
 
         Self {
-            table: DataTable::new(COLUMNS, props, styling),
+            table: SortDataTable::new_sortable(columns, props, styling),
+            force_update_data: false,
         }
     }
 
+    /// Forces an update of the data stored.
+    #[inline]
+    pub fn force_data_update(&mut self) {
+        self.force_update_data = true;
+    }
+
     pub fn ingest_data(&mut self, data: &[DiskWidgetData]) {
-        self.table.set_data(data.to_vec());
+        let mut data = data.to_vec();
+        if let Some(column) = self.table.columns.get(self.table.sort_index()) {
+            column.sort_by(&mut data, self.table.order());
+        }
+        self.table.set_data(data);
     }
 }
