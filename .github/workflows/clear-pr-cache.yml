@@ -18,6 +18,11 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
       - run: |
           if [[ -z "${{ github.event.inputs.id }}" ]]; then
             python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
