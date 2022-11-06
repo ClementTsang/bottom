@@ -16,7 +16,7 @@ exclude = [
     ".cargo-husky/",
     ".github/",
     "assets/",
-    "deployment/",
+    "scripts/",
     "docs/",
     "sample_configs/",
     ".all-contributorsrc",
