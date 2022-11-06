@@ -1,0 +1,15 @@
+# Simple job to clear the cache used by a PR when it is closed/merged.
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  clear-cache:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - run: |
+          python ./scripts/clear_cache.py ${{ github.event.pull_request.number }}
