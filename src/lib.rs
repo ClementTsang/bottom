@@ -347,7 +347,7 @@ pub fn update_data(app: &mut App) {
     {
         let data = &app.converted_data.cpu_data;
         for cpu in app.cpu_state.widget_states.values_mut() {
-            cpu.update_table(data)
+            cpu.update_table(data);
         }
     }
     {

@@ -6,7 +6,7 @@
 #   - FreeBSD (x86_64)
 #   - macOS (aarch64)
 
-name: "Build Releases"
+name: "build releases"
 
 on:
   workflow_dispatch:
