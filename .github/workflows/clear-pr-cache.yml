@@ -1,5 +1,7 @@
 # Simple job to clear the cache used by a PR when it is closed/merged.
 
+name: "clear PR cache"
+
 on:
   pull_request:
     types:
