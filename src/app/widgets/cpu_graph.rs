@@ -195,7 +195,7 @@ impl CpuWidgetState {
         }
     }
 
-    pub fn ingest_data(&mut self, data: &[CpuWidgetData]) {
+    pub fn update_table(&mut self, data: &[CpuWidgetData]) {
         self.table.set_data(
             data.iter()
                 .map(CpuWidgetTableData::from_cpu_widget_data)

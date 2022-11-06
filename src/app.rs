@@ -1229,6 +1229,12 @@ impl App {
                         self.awaiting_second_char = true;
                         self.second_char = Some('d');
                     }
+                } else if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(0);
+                    disk.force_data_update();
                 }
             }
             'g' => {
@@ -1271,6 +1277,12 @@ impl App {
                     {
                         proc_widget_state.select_column(ProcWidget::MEM);
                     }
+                } else if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(1);
+                    disk.force_data_update();
                 }
             }
             'p' => {
@@ -1301,6 +1313,12 @@ impl App {
                     {
                         proc_widget_state.select_column(ProcWidget::PROC_NAME_OR_CMD);
                     }
+                } else if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(3);
+                    disk.force_data_update();
                 }
             }
             '?' => {
@@ -1320,7 +1338,12 @@ impl App {
                 {
                     temp.table.set_sort_index(1);
                     temp.force_data_update();
-                    self.is_force_redraw = true;
+                } else if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(4);
+                    disk.force_data_update();
                 }
             }
             '+' => self.on_plus(),
@@ -1337,6 +1360,33 @@ impl App {
                     temp.table.set_sort_index(0);
                     temp.force_data_update();
                     self.is_force_redraw = true;
+                }
+            }
+            'u' => {
+                if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(2);
+                    disk.force_data_update();
+                }
+            }
+            'r' => {
+                if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(5);
+                    disk.force_data_update();
+                }
+            }
+            'w' => {
+                if let Some(disk) = self
+                    .disk_state
+                    .get_mut_widget_state(self.current_widget.widget_id)
+                {
+                    disk.table.set_sort_index(6);
+                    disk.force_data_update();
                 }
             }
             'I' => self.invert_sort(),
@@ -2597,12 +2647,22 @@ impl App {
                                         }
                                     }
                                     BottomWidgetType::Temp => {
-                                        if let Some(state) = self
+                                        if let Some(temp) = self
                                             .temp_state
                                             .get_mut_widget_state(self.current_widget.widget_id)
                                         {
-                                            if state.table.try_select_location(x, y).is_some() {
-                                                state.force_data_update();
+                                            if temp.table.try_select_location(x, y).is_some() {
+                                                temp.force_data_update();
+                                            }
+                                        }
+                                    }
+                                    BottomWidgetType::Disk => {
+                                        if let Some(disk) = self
+                                            .disk_state
+                                            .get_mut_widget_state(self.current_widget.widget_id)
+                                        {
+                                            if disk.table.try_select_location(x, y).is_some() {
+                                                disk.force_data_update();
                                             }
                                         }
                                     }
