@@ -44,6 +44,7 @@ jobs:
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
 
       - name: Install cargo-llvm-cov
         run: |
