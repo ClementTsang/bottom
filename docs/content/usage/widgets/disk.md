@@ -22,12 +22,19 @@ The disk widget provides the following information:
 
 Note that key bindings are generally case-sensitive.
 
-| Binding            | Action                               |
-| ------------------ | ------------------------------------ |
-| ++up++ , ++k++     | Move up within a widget              |
-| ++down++ , ++j++   | Move down within a widget            |
-| ++g+g++ , ++home++ | Jump to the first entry in the table |
-| ++G++ , ++end++    | Jump to the last entry in the table  |
+| Binding            | Action                                                              |
+| ------------------ | ------------------------------------------------------------------- |
+| ++up++ , ++k++     | Move up within a widget                                             |
+| ++down++ , ++j++   | Move down within a widget                                           |
+| ++g+g++ , ++home++ | Jump to the first entry in the table                                |
+| ++G++ , ++end++    | Jump to the last entry in the table                                 |
+| ++d++              | Sort by disk, press again to reverse sorting order                  |
+| ++m++              | Sort by mount, press again to reverse sorting order                 |
+| ++u++              | Sort by amount used, press again to reverse sorting order           |
+| ++n++              | Sort by amount free, press again to reverse sorting order           |
+| ++t++              | Sort by total space available, press again to reverse sorting order |
+| ++r++              | Sort by read rate, press again to reverse sorting order             |
+| ++w++              | Sort by write rate, press again to reverse sorting order            |
 
 ## Mouse bindings
 
