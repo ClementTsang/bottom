@@ -4,6 +4,10 @@ title: Home
 
 # `bottom`
 
+A customizable cross-platform graphical process/system monitor for the terminal, supporting Linux, macOS, and Windows. Inspired by other tools like [gtop](https://github.com/aksakalli/gtop), [gotop](https://github.com/xxxserxxx/gotop), and [htop](https://github.com/htop-dev/htop).
+
+---
+
 This site serves as extended documentation for bottom alongside the [`README.md`](https://github.com/ClementTsang/bottom#readme).
 
 !!! Warning
