@@ -16,6 +16,8 @@ btm -h
 btm --help
 ```
 
+You can also see keybinds and basic usage details in bottom by pressing ++question++, which will open a help menu.
+
 ## Features
 
 ### Expansion
