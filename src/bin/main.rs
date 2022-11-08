@@ -14,7 +14,7 @@ use bottom::{
 
 use std::{
     boxed::Box,
-    io::{stdout, Write},
+    io::stdout,
     panic,
     sync::{
         atomic::{AtomicBool, Ordering},
