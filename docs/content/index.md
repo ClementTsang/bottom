@@ -27,6 +27,12 @@ This site serves as extended documentation for bottom alongside the [`README.md`
 To install bottom, refer to [the installation section of the `README.md`](https://github.com/ClementTsang/bottom#installation),
 which contains a list of all the installation methods.
 
+## Usage and configuration
+
+You can refer to the [usage](./usage/general-usage/) pages on how to use bottom (e.g. keybinds, some features, a general overview of what each widget does).
+
+To configure bottom, refer to the [configuration](./configuration/command-line-flags/) pages (e.g. how it behaves, how it looks).
+
 ## Contribution
 
 New contributors are always welcome! See the [contribution](./contribution/issues-and-pull-requests/) section for how to contribute to

@@ -128,6 +128,7 @@ nav:
       - "Unofficial Support": support/unofficial.md
   - "Usage":
       - "General Usage": usage/general-usage.md
+      - "Basic Mode": usage/basic-mode.md
       - "Widgets":
           - "CPU Widget": usage/widgets/cpu.md
           - "Memory Widget": usage/widgets/memory.md
@@ -136,7 +137,6 @@ nav:
           - "Disk Widget": usage/widgets/disk.md
           - "Temperature Widget": usage/widgets/temperature.md
           - "Battery Widget": usage/widgets/battery.md
-      - "Basic Mode": usage/basic-mode.md
   - "Configuration":
       - "Command-line Flags": configuration/command-line-flags.md
       - "Config File":
