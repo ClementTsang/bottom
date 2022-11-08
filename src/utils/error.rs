@@ -56,12 +56,6 @@ impl From<heim::Error> for BottomError {
     }
 }
 
-impl From<crossterm::ErrorKind> for BottomError {
-    fn from(err: crossterm::ErrorKind) -> Self {
-        BottomError::CrosstermError(err.to_string())
-    }
-}
-
 impl From<std::num::ParseIntError> for BottomError {
     fn from(err: std::num::ParseIntError) -> Self {
         BottomError::ConfigError(err.to_string())

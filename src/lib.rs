@@ -27,7 +27,10 @@ use std::{
 };
 
 use crossterm::{
-    event::{poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent},
+    event::{
+        poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
+        MouseEventKind,
+    },
     execute,
     style::Print,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
@@ -81,10 +84,11 @@ pub enum ThreadControlEvent {
 }
 
 pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
-    match event {
-        MouseEvent::ScrollUp(_x, _y, _modifiers) => app.handle_scroll_up(),
-        MouseEvent::ScrollDown(_x, _y, _modifiers) => app.handle_scroll_down(),
-        MouseEvent::Down(button, x, y, _modifiers) => {
+    match event.kind {
+        MouseEventKind::ScrollUp => app.handle_scroll_up(),
+        MouseEventKind::ScrollDown => app.handle_scroll_down(),
+        MouseEventKind::Down(button) => {
+            let (x, y) = (event.column, event.row);
             if !app.app_config_fields.disable_click {
                 match button {
                     crossterm::event::MouseButton::Left => {
@@ -419,20 +423,31 @@ pub fn create_input_thread(
             if let Ok(poll) = poll(Duration::from_millis(20)) {
                 if poll {
                     if let Ok(event) = read() {
-                        if let Event::Key(key) = event {
-                            if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                    break;
+                        // FIXME: Handle all other event cases.
+                        match event {
+                            Event::Key(key) => {
+                                if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
+                                    if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                                        break;
+                                    }
+                                    keyboard_timer = Instant::now();
                                 }
-                                keyboard_timer = Instant::now();
                             }
-                        } else if let Event::Mouse(mouse) = event {
-                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-                                if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                    break;
+                            Event::Mouse(mouse) => {
+                                if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+                                    match mouse.kind {
+                                        MouseEventKind::Moved => {}
+                                        _ => {
+                                            if sender.send(BottomEvent::MouseInput(mouse)).is_err()
+                                            {
+                                                break;
+                                            }
+                                            mouse_timer = Instant::now();
+                                        }
+                                    }
                                 }
-                                mouse_timer = Instant::now();
                             }
+                            _ => (),
                         }
                     }
                 }
