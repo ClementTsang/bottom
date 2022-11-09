@@ -2766,8 +2766,6 @@ impl App {
                 proc_widget_state.update_query();
                 proc_widget_state.proc_search.search_state.cursor_direction =
                     CursorDirection::Right;
-
-                return;
             }
         }
     }
