@@ -2718,7 +2718,8 @@ impl App {
 
     /// A quick and dirty way to handle paste events.
     pub fn handle_paste(&mut self, paste: String) {
-        // Partially copy-pasted from the single-char variant; should probably optimize this process in the future.
+        // Partially copy-pasted from the single-char variant; should probably clean up this process in the future.
+        // In particular, encapsulate this entire logic and add some tests to make it less potentially error-prone.
         let is_in_search_widget = self.is_in_search_widget();
         if let Some(proc_widget_state) = self
             .proc_state
