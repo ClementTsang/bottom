@@ -102,6 +102,8 @@ Lastly, we can refine our search even further based on the other columns, like P
     <img src="../../../assets/screenshots/process/search/cpu.webp" alt="A picture of searching for a process with a search condition that uses the CPU keyword."/>
 </figure>
 
+You can also paste search queries (e.g. ++shift+insert++, ++ctrl+shift+v++).
+
 #### Keywords
 
 Note all keywords are case-insensitive. To search for a process/command that collides with a keyword, surround the term with quotes (e.x. `"cpu"`).
