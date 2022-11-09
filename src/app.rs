@@ -4,6 +4,7 @@ use std::{
     time::Instant,
 };
 
+use concat_string::concat_string;
 use unicode_segmentation::GraphemeCursor;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
@@ -35,7 +36,7 @@ pub mod widgets;
 
 use frozen_state::FrozenState;
 
-const MAX_SEARCH_LENGTH: usize = 200;
+const MAX_SEARCH_LENGTH: usize = 200; // FIXME: Remove this limit, it's unnecessary.
 
 #[derive(Debug, Clone)]
 pub enum AxisScaling {
@@ -2712,6 +2713,62 @@ impl App {
             }
         } else {
             1 + self.app_config_fields.table_gap
+        }
+    }
+
+    /// A quick and dirty way to handle paste events.
+    pub fn handle_paste(&mut self, paste: String) {
+        // Partially copy-pasted from the single-char variant; should probably optimize this process in the future.
+        let is_in_search_widget = self.is_in_search_widget();
+        if let Some(proc_widget_state) = self
+            .proc_state
+            .widget_states
+            .get_mut(&(self.current_widget.widget_id - 1))
+        {
+            let curr_width = UnicodeWidthStr::width(
+                proc_widget_state
+                    .proc_search
+                    .search_state
+                    .current_search_query
+                    .as_str(),
+            );
+            let paste_width = UnicodeWidthStr::width(paste.as_str());
+
+            if is_in_search_widget
+                && proc_widget_state.is_search_enabled()
+                && curr_width + paste_width <= MAX_SEARCH_LENGTH
+            {
+                let left_bound = proc_widget_state.get_search_cursor_position();
+                let new_left_bound = (left_bound + paste_width).saturating_sub(1);
+                let curr_query = &mut proc_widget_state
+                    .proc_search
+                    .search_state
+                    .current_search_query;
+                let (left, right) = curr_query.split_at(left_bound);
+                *curr_query = concat_string!(left, paste, right);
+
+                proc_widget_state.proc_search.search_state.grapheme_cursor = GraphemeCursor::new(
+                    new_left_bound,
+                    proc_widget_state
+                        .proc_search
+                        .search_state
+                        .current_search_query
+                        .len(),
+                    true,
+                );
+                proc_widget_state.search_walk_forward(new_left_bound);
+
+                proc_widget_state
+                    .proc_search
+                    .search_state
+                    .char_cursor_position += paste_width;
+
+                proc_widget_state.update_query();
+                proc_widget_state.proc_search.search_state.cursor_direction =
+                    CursorDirection::Right;
+
+                return;
+            }
         }
     }
 }
