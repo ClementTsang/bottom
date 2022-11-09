@@ -102,7 +102,7 @@ Lastly, we can refine our search even further based on the other columns, like P
     <img src="../../../assets/screenshots/process/search/cpu.webp" alt="A picture of searching for a process with a search condition that uses the CPU keyword."/>
 </figure>
 
-You can also paste search queries (e.g. ++shift+insert++, ++ctrl+shift+v++), though this may not work in Windows.
+You can also paste search queries (e.g. ++shift+insert++, ++ctrl+shift+v++), though this may not work in some Windows terminals.
 
 #### Keywords
 
