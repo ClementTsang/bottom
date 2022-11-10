@@ -295,8 +295,9 @@ pub(crate) fn kinfo_process(pid: Pid) -> Result<kinfo_proc> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use std::mem;
+
+    use super::*;
 
     /// A quick test to ensure that things are sized correctly.
     #[test]

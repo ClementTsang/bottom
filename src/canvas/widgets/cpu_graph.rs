@@ -1,5 +1,12 @@
 use std::borrow::Cow;
 
+use concat_string::concat_string;
+use tui::{
+    backend::Backend,
+    layout::{Constraint, Direction, Layout, Rect},
+    terminal::Frame,
+};
+
 use crate::{
     app::{layout_manager::WidgetDirection, widgets::CpuWidgetState, App},
     canvas::{drawing_utils::should_hide_x_label, Painter},
@@ -8,14 +15,6 @@ use crate::{
         time_graph::{GraphData, TimeGraph},
     },
     data_conversion::CpuWidgetData,
-};
-
-use concat_string::concat_string;
-
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
 };
 
 const AVG_POSITION: usize = 1;

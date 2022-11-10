@@ -1,11 +1,11 @@
 //! Process data collection for FreeBSD.  Uses sysinfo.
 
-use serde::{Deserialize, Deserializer};
 use std::io;
 
-use super::ProcessHarvest;
+use serde::{Deserialize, Deserializer};
 use sysinfo::System;
 
+use super::ProcessHarvest;
 use crate::data_harvester::deserialize_xo;
 use crate::data_harvester::processes::UserTable;
 

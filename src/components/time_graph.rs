@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use concat_string::concat_string;
 use tui::{
     backend::Backend,
     layout::{Constraint, Rect},
@@ -9,8 +10,6 @@ use tui::{
     widgets::{Block, Borders, GraphType},
     Frame,
 };
-
-use concat_string::concat_string;
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::tui_widget::time_chart::{Axis, Dataset, Point, TimeChart, DEFAULT_LEGEND_CONSTRAINTS};
@@ -194,9 +193,8 @@ mod test {
         text::{Span, Spans},
     };
 
-    use crate::components::tui_widget::time_chart::Axis;
-
     use super::TimeGraph;
+    use crate::components::tui_widget::time_chart::Axis;
 
     const Y_LABELS: [Cow<'static, str>; 3] = [
         Cow::Borrowed("0%"),

@@ -1,9 +1,10 @@
-use clap_complete::{generate_to, shells::Shell};
 use std::{
     env, fs,
     io::Result,
     path::{Path, PathBuf},
 };
+
+use clap_complete::{generate_to, shells::Shell};
 
 include!("src/clap.rs");
 

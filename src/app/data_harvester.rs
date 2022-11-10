@@ -2,20 +2,16 @@
 
 use std::time::Instant;
 
+use futures::join;
 #[cfg(target_os = "linux")]
 use fxhash::FxHashMap;
-
+#[cfg(feature = "battery")]
+use starship_battery::{Battery, Manager};
 #[cfg(not(target_os = "linux"))]
 use sysinfo::{System, SystemExt};
 
-#[cfg(feature = "battery")]
-use starship_battery::{Battery, Manager};
-
-use crate::app::layout_manager::UsedWidgets;
-
-use futures::join;
-
 use super::DataFilters;
+use crate::app::layout_manager::UsedWidgets;
 
 #[cfg(feature = "nvidia")]
 pub mod nvidia;

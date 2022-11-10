@@ -1,10 +1,3 @@
-use crate::{
-    app::App,
-    canvas::{drawing_utils::get_search_start_position, Painter},
-    components::data_table::{DrawInfo, SelectionState},
-    constants::*,
-};
-
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -12,9 +5,15 @@ use tui::{
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph},
 };
-
 use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
+
+use crate::{
+    app::App,
+    canvas::{drawing_utils::get_search_start_position, Painter},
+    components::data_table::{DrawInfo, SelectionState},
+    constants::*,
+};
 
 const SORT_MENU_WIDTH: u16 = 7;
 

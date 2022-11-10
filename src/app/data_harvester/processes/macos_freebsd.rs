@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 use std::io;
 
-use super::ProcessHarvest;
 use sysinfo::{CpuExt, PidExt, ProcessExt, ProcessStatus, System, SystemExt};
 
+use super::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, utils::error::Result, Pid};
 
 pub fn get_process_data<F>(

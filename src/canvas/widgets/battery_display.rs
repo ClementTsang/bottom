@@ -1,9 +1,3 @@
-use crate::{
-    app::App,
-    canvas::{drawing_utils::calculate_basic_use_bars, Painter},
-    constants::*,
-};
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -12,6 +6,12 @@ use tui::{
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, Tabs},
 };
 use unicode_segmentation::UnicodeSegmentation;
+
+use crate::{
+    app::App,
+    canvas::{drawing_utils::calculate_basic_use_bars, Painter},
+    constants::*,
+};
 
 impl Painter {
     pub fn draw_battery_display<B: Backend>(

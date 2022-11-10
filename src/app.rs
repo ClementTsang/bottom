@@ -5,16 +5,15 @@ use std::{
 };
 
 use concat_string::concat_string;
-use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
-
-use typed_builder::*;
-
 use data_farmer::*;
 use data_harvester::temperature;
 use layout_manager::*;
 pub use states::*;
+use typed_builder::*;
+use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
+use self::widgets::{ProcWidget, ProcWidgetMode};
 use crate::{
     constants,
     data_conversion::ConvertedData,
@@ -22,8 +21,6 @@ use crate::{
     utils::error::{BottomError, Result},
     Pid,
 };
-
-use self::widgets::{ProcWidget, ProcWidgetMode};
 
 pub mod data_farmer;
 pub mod data_harvester;

@@ -1,15 +1,15 @@
 use std::borrow::Cow;
 
-use crate::{
-    app::App,
-    canvas::{drawing_utils::should_hide_x_label, Painter},
-    components::time_graph::{GraphData, TimeGraph},
-};
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Rect},
     terminal::Frame,
+};
+
+use crate::{
+    app::App,
+    canvas::{drawing_utils::should_hide_x_label, Painter},
+    components::time_graph::{GraphData, TimeGraph},
 };
 
 impl Painter {

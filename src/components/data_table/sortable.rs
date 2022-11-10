@@ -4,12 +4,11 @@ use concat_string::concat_string;
 use itertools::Itertools;
 use tui::widgets::Row;
 
-use crate::utils::gen_util::truncate_text;
-
 use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
     DataTableStyling, DataToCell,
 };
+use crate::utils::gen_util::truncate_text;
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

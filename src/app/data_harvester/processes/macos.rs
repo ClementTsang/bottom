@@ -1,8 +1,8 @@
 //! Process data collection for macOS.  Uses sysinfo and custom bindings.
 
-use super::ProcessHarvest;
 use sysinfo::System;
 
+use super::ProcessHarvest;
 use crate::{data_harvester::processes::UserTable, Pid};
 mod sysctl_bindings;
 

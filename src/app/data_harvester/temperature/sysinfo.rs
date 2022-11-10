@@ -1,11 +1,12 @@
 //! Gets temperature data via sysinfo.
 
+use anyhow::Result;
+
 use super::{
     convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, temp_vec_sort,
     TempHarvest, TemperatureType,
 };
 use crate::app::Filter;
-use anyhow::Result;
 
 pub fn get_temperature_data(
     sys: &sysinfo::System, temp_type: &TemperatureType, filter: &Option<Filter>,

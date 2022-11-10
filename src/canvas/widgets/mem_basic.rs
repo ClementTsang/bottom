@@ -1,12 +1,12 @@
-use crate::{
-    app::App, canvas::Painter, components::tui_widget::pipe_gauge::PipeGauge, constants::*,
-};
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     terminal::Frame,
     widgets::Block,
+};
+
+use crate::{
+    app::App, canvas::Painter, components::tui_widget::pipe_gauge::PipeGauge, constants::*,
 };
 
 impl Painter {

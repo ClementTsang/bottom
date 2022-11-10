@@ -1,7 +1,6 @@
 use std::{borrow::Cow, time::Instant};
 
 use concat_string::concat_string;
-
 use tui::{style::Style, text::Text, widgets::Row};
 
 use crate::{

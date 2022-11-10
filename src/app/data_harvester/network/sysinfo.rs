@@ -1,7 +1,8 @@
 //! Gets network data via sysinfo.
 
-use super::NetworkHarvest;
 use std::time::Instant;
+
+use super::NetworkHarvest;
 
 pub async fn get_network_data(
     sys: &sysinfo::System, prev_net_access_time: Instant, prev_net_rx: &mut u64,

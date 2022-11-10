@@ -2,14 +2,13 @@ use std::{collections::HashMap, time::Instant};
 
 use unicode_segmentation::GraphemeCursor;
 
-use crate::{
-    app::{layout_manager::BottomWidgetType, query::*},
-    constants,
-};
-
 use super::widgets::{
     BatteryWidgetState, CpuWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
     ProcWidget, TempWidgetState,
+};
+use crate::{
+    app::{layout_manager::BottomWidgetType, query::*},
+    constants,
 };
 
 #[derive(Debug)]

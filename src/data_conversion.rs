@@ -1,6 +1,8 @@
 //! This mainly concerns converting collected data into things that the canvas
 //! can actually handle.
 
+use kstring::KString;
+
 use crate::app::data_farmer::DataCollection;
 use crate::app::data_harvester::cpu::CpuDataType;
 use crate::app::{
@@ -10,8 +12,6 @@ use crate::app::{
 use crate::components::tui_widget::time_chart::Point;
 use crate::utils::gen_util::*;
 use crate::{app::AxisScaling, units::data_units::DataUnit};
-
-use kstring::KString;
 
 #[derive(Default, Debug)]
 pub struct ConvertedBatteryData {

@@ -1,18 +1,18 @@
 use std::cmp::min;
 
+use tui::{
+    backend::Backend,
+    layout::{Constraint, Direction, Layout, Rect},
+    terminal::Frame,
+    widgets::Block,
+};
+
 use crate::{
     app::{data_harvester::cpu::CpuDataType, App},
     canvas::Painter,
     components::tui_widget::pipe_gauge::{LabelLimit, PipeGauge},
     constants::*,
     data_conversion::CpuWidgetData,
-};
-
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
-    widgets::Block,
 };
 
 impl Painter {

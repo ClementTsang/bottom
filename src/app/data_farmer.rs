@@ -13,22 +13,20 @@
 //! memory usage and higher CPU usage - you will be trying to process more and
 //! more points as this is used!
 
-use once_cell::sync::Lazy;
+use std::{time::Instant, vec::Vec};
 
 use fxhash::FxHashMap;
 use itertools::Itertools;
-
-use std::{time::Instant, vec::Vec};
+use once_cell::sync::Lazy;
+use regex::Regex;
 
 #[cfg(feature = "battery")]
 use crate::data_harvester::batteries;
-
 use crate::{
     data_harvester::{cpu, disks, memory, network, processes::ProcessHarvest, temperature, Data},
     utils::gen_util::{get_decimal_bytes, GIGA_LIMIT},
     Pid,
 };
-use regex::Regex;
 
 pub type TimeOffset = f64;
 pub type Value = f64;

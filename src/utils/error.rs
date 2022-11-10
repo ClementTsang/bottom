@@ -1,8 +1,8 @@
 use std::{borrow::Cow, result};
-use thiserror::Error;
 
 #[cfg(target_os = "linux")]
 use procfs::ProcError;
+use thiserror::Error;
 
 /// A type alias for handling errors related to Bottom.
 pub type Result<T> = result::Result<T, BottomError>;

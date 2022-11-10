@@ -1,12 +1,14 @@
 //! Gets temperature sensor data for Linux platforms.
 
+use std::{fs, path::Path};
+
+use anyhow::{anyhow, Result};
+
 use super::{is_temp_filtered, temp_vec_sort, TempHarvest, TemperatureType};
 use crate::app::{
     data_harvester::temperature::{convert_celsius_to_fahrenheit, convert_celsius_to_kelvin},
     Filter,
 };
-use anyhow::{anyhow, Result};
-use std::{fs, path::Path};
 
 /// Get temperature sensors from the linux sysfs interface `/sys/class/hwmon`.
 /// See [here](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-hwmon) for

@@ -18,13 +18,14 @@ cfg_if::cfg_if! {
     }
 }
 
+use std::collections::VecDeque;
+
+use futures::StreamExt;
+
 use crate::{
     components::tui_widget::time_chart::Point,
     data_harvester::cpu::{CpuData, CpuDataType, CpuHarvest, PastCpuTotal, PastCpuWork},
 };
-
-use futures::StreamExt;
-use std::collections::VecDeque;
 
 pub async fn get_cpu_data_list(
     show_average_cpu: bool, previous_cpu_times: &mut Vec<(PastCpuWork, PastCpuTotal)>,

@@ -1,3 +1,11 @@
+use tui::{
+    backend::Backend,
+    layout::{Constraint, Direction, Layout, Rect},
+    terminal::Frame,
+    text::Text,
+    widgets::{Block, Borders, Row, Table},
+};
+
 use crate::{
     app::{App, AxisScaling},
     canvas::{drawing_utils::should_hide_x_label, Painter},
@@ -7,14 +15,6 @@ use crate::{
     },
     units::data_units::DataUnit,
     utils::gen_util::*,
-};
-
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    terminal::Frame,
-    text::Text,
-    widgets::{Block, Borders, Row, Table},
 };
 
 impl Painter {
