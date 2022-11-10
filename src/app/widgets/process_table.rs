@@ -26,6 +26,7 @@ pub use proc_widget_data::*;
 
 mod sort_table;
 use sort_table::SortTableColumn;
+use unicode_segmentation::GraphemeIncomplete;
 
 /// ProcessSearchState only deals with process' search's current settings and state.
 pub struct ProcessSearchState {
@@ -775,25 +776,68 @@ impl ProcWidget {
     }
 
     pub fn search_walk_forward(&mut self, start_position: usize) {
-        self.proc_search
+        // TODO: Add tests for this.
+        let chunk = &self.proc_search.search_state.current_search_query[start_position..];
+
+        match self
+            .proc_search
             .search_state
             .grapheme_cursor
-            .next_boundary(
-                &self.proc_search.search_state.current_search_query[start_position..],
-                start_position,
-            )
-            .unwrap();
+            .next_boundary(chunk, start_position)
+        {
+            Ok(_) => {}
+            Err(err) => match err {
+                GraphemeIncomplete::PreContext(ctx) => {
+                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    self.proc_search
+                        .search_state
+                        .grapheme_cursor
+                        .provide_context(
+                            &self.proc_search.search_state.current_search_query[0..ctx],
+                            0,
+                        );
+
+                    self.proc_search
+                        .search_state
+                        .grapheme_cursor
+                        .next_boundary(chunk, start_position)
+                        .unwrap();
+                }
+                _ => Err(err).unwrap(),
+            },
+        }
     }
 
     pub fn search_walk_back(&mut self, start_position: usize) {
-        self.proc_search
+        // TODO: Add tests for this.
+        let chunk = &self.proc_search.search_state.current_search_query[..start_position];
+        match self
+            .proc_search
             .search_state
             .grapheme_cursor
-            .prev_boundary(
-                &self.proc_search.search_state.current_search_query[..start_position],
-                0,
-            )
-            .unwrap();
+            .prev_boundary(chunk, 0)
+        {
+            Ok(_) => {}
+            Err(err) => match err {
+                GraphemeIncomplete::PreContext(ctx) => {
+                    // Provide the entire string as context. Not efficient but should resolve failures.
+                    self.proc_search
+                        .search_state
+                        .grapheme_cursor
+                        .provide_context(
+                            &self.proc_search.search_state.current_search_query[0..ctx],
+                            0,
+                        );
+
+                    self.proc_search
+                        .search_state
+                        .grapheme_cursor
+                        .prev_boundary(chunk, 0)
+                        .unwrap();
+                }
+                _ => Err(err).unwrap(),
+            },
+        }
     }
 
     /// Returns the number of columns *enabled*. Note this differs from *visible* - a column may be enabled but not

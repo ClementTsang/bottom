@@ -28,8 +28,8 @@ use std::{
 
 use crossterm::{
     event::{
-        poll, read, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent,
-        MouseEventKind,
+        poll, read, DisableBracketedPaste, DisableMouseCapture, Event, KeyCode, KeyEvent,
+        KeyModifiers, MouseEvent, MouseEventKind,
     },
     execute,
     style::Print,
@@ -71,6 +71,7 @@ pub type Pid = libc::pid_t;
 pub enum BottomEvent<I, J> {
     KeyInput(I),
     MouseInput(J),
+    PasteEvent(String),
     Update(Box<data_harvester::Data>),
     Clean,
 }
@@ -273,6 +274,7 @@ pub fn cleanup_terminal(
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
+        DisableBracketedPaste,
         DisableMouseCapture,
         LeaveAlternateScreen
     )?;
@@ -311,7 +313,13 @@ pub fn panic_hook(panic_info: &PanicInfo<'_>) {
     let stacktrace: String = format!("{:?}", backtrace::Backtrace::new());
 
     disable_raw_mode().unwrap();
-    execute!(stdout, DisableMouseCapture, LeaveAlternateScreen).unwrap();
+    execute!(
+        stdout,
+        DisableBracketedPaste,
+        DisableMouseCapture,
+        LeaveAlternateScreen
+    )
+    .unwrap();
 
     // Print stack trace.  Must be done after!
     execute!(
@@ -410,7 +418,6 @@ pub fn create_input_thread(
 ) -> JoinHandle<()> {
     thread::spawn(move || {
         let mut mouse_timer = Instant::now();
-        let mut keyboard_timer = Instant::now();
 
         loop {
             if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
@@ -425,12 +432,14 @@ pub fn create_input_thread(
                     if let Ok(event) = read() {
                         // FIXME: Handle all other event cases.
                         match event {
+                            Event::Paste(paste) => {
+                                if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
+                                    break;
+                                }
+                            }
                             Event::Key(key) => {
-                                if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                    if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                        break;
-                                    }
-                                    keyboard_timer = Instant::now();
+                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                                    break;
                                 }
                             }
                             Event::Mouse(mouse) => {

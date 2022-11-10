@@ -26,7 +26,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use crossterm::{
-    event::EnableMouseCapture,
+    event::{EnableBracketedPaste, EnableMouseCapture},
     execute,
     terminal::{enable_raw_mode, EnterAlternateScreen},
 };
@@ -120,7 +120,12 @@ fn main() -> Result<()> {
 
     // Set up up tui and crossterm
     let mut stdout_val = stdout();
-    execute!(stdout_val, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(
+        stdout_val,
+        EnterAlternateScreen,
+        EnableMouseCapture,
+        EnableBracketedPaste
+    )?;
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
@@ -149,6 +154,10 @@ fn main() -> Result<()> {
                 }
                 BottomEvent::MouseInput(event) => {
                     handle_mouse_event(event, &mut app);
+                    update_data(&mut app);
+                }
+                BottomEvent::PasteEvent(paste) => {
+                    app.handle_paste(paste);
                     update_data(&mut app);
                 }
                 BottomEvent::Update(data) => {
