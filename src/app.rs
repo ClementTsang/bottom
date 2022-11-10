@@ -5,7 +5,7 @@ use std::{
 };
 
 use concat_string::concat_string;
-use unicode_segmentation::GraphemeCursor;
+use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use typed_builder::*;
@@ -2734,13 +2734,15 @@ impl App {
                     .as_str(),
             );
             let paste_width = UnicodeWidthStr::width(paste.as_str());
+            let num_runes = UnicodeSegmentation::graphemes(paste.as_str(), true).count();
 
             if is_in_search_widget
                 && proc_widget_state.is_search_enabled()
                 && curr_width + paste_width <= MAX_SEARCH_LENGTH
             {
+                let paste_char_width = paste.len();
                 let left_bound = proc_widget_state.get_search_cursor_position();
-                let new_left_bound = (left_bound + paste_width).saturating_sub(1);
+
                 let curr_query = &mut proc_widget_state
                     .proc_search
                     .search_state
@@ -2748,21 +2750,18 @@ impl App {
                 let (left, right) = curr_query.split_at(left_bound);
                 *curr_query = concat_string!(left, paste, right);
 
-                proc_widget_state.proc_search.search_state.grapheme_cursor = GraphemeCursor::new(
-                    new_left_bound,
-                    proc_widget_state
-                        .proc_search
-                        .search_state
-                        .current_search_query
-                        .len(),
-                    true,
-                );
-                proc_widget_state.search_walk_forward(new_left_bound);
+                proc_widget_state.proc_search.search_state.grapheme_cursor =
+                    GraphemeCursor::new(left_bound, curr_query.len(), true);
+
+                for _ in 0..num_runes {
+                    let cursor = proc_widget_state.get_search_cursor_position();
+                    proc_widget_state.search_walk_forward(cursor);
+                }
 
                 proc_widget_state
                     .proc_search
                     .search_state
-                    .char_cursor_position += paste_width;
+                    .char_cursor_position += paste_char_width;
 
                 proc_widget_state.update_query();
                 proc_widget_state.proc_search.search_state.cursor_direction =
