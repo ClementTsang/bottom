@@ -418,7 +418,6 @@ pub fn create_input_thread(
 ) -> JoinHandle<()> {
     thread::spawn(move || {
         let mut mouse_timer = Instant::now();
-        let mut keyboard_timer = Instant::now();
 
         loop {
             if let Ok(is_terminated) = termination_ctrl_lock.try_lock() {
@@ -439,11 +438,8 @@ pub fn create_input_thread(
                                 }
                             }
                             Event::Key(key) => {
-                                if Instant::now().duration_since(keyboard_timer).as_millis() >= 20 {
-                                    if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                        break;
-                                    }
-                                    keyboard_timer = Instant::now();
+                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                                    break;
                                 }
                             }
                             Event::Mouse(mouse) => {
