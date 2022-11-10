@@ -19,9 +19,8 @@ use std::{
     io::{stderr, stdout, Write},
     panic::PanicInfo,
     path::PathBuf,
-    sync::Arc,
-    sync::Condvar,
     sync::Mutex,
+    sync::{Arc, Condvar},
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
@@ -35,6 +34,8 @@ use crossterm::{
     style::Print,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
+
+use flume::{Receiver, Sender};
 
 use app::{
     data_harvester,
@@ -106,7 +107,7 @@ pub fn handle_mouse_event(event: MouseEvent, app: &mut App) {
 }
 
 pub fn handle_key_event_or_break(
-    event: KeyEvent, app: &mut App, reset_sender: &std::sync::mpsc::Sender<ThreadControlEvent>,
+    event: KeyEvent, app: &mut App, reset_sender: &Sender<ThreadControlEvent>,
 ) -> bool {
     // debug!("KeyEvent: {:?}", event);
 
@@ -411,9 +412,7 @@ pub fn update_data(app: &mut App) {
 }
 
 pub fn create_input_thread(
-    sender: std::sync::mpsc::Sender<
-        BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
-    >,
+    sender: Sender<BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
     termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
@@ -466,13 +465,10 @@ pub fn create_input_thread(
 }
 
 pub fn create_collection_thread(
-    sender: std::sync::mpsc::Sender<
-        BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>,
-    >,
-    control_receiver: std::sync::mpsc::Receiver<ThreadControlEvent>,
-    termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
-    app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
-    used_widget_set: UsedWidgets,
+    sender: Sender<BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
+    control_receiver: Receiver<ThreadControlEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
+    termination_ctrl_cvar: Arc<Condvar>, app_config_fields: &app::AppConfigFields,
+    filters: app::DataFilters, used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;

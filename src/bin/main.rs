@@ -18,7 +18,7 @@ use std::{
     panic,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc, Arc, Condvar, Mutex,
+        Arc, Condvar, Mutex,
     },
     thread,
     time::Duration,
@@ -78,7 +78,7 @@ fn main() -> Result<()> {
     let thread_termination_cvar = Arc::new(Condvar::new());
 
     // Set up input handling
-    let (sender, receiver) = mpsc::channel();
+    let (sender, receiver) = flume::unbounded();
     let _input_thread = create_input_thread(sender.clone(), thread_termination_lock.clone());
 
     // Cleaning loop
@@ -107,7 +107,7 @@ fn main() -> Result<()> {
     };
 
     // Event loop
-    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = mpsc::channel();
+    let (collection_thread_ctrl_sender, collection_thread_ctrl_receiver) = flume::unbounded();
     let _collection_thread = create_collection_thread(
         sender,
         collection_thread_ctrl_receiver,
@@ -144,6 +144,7 @@ fn main() -> Result<()> {
     let mut first_run = true;
 
     while !is_terminated.load(Ordering::SeqCst) {
+        // TODO: Would be good to instead use a mix of is_terminated check + recv. Probably use a termination event instead.
         if let Ok(recv) = receiver.recv_timeout(Duration::from_millis(TICK_RATE_IN_MILLISECONDS)) {
             match recv {
                 BottomEvent::KeyInput(event) => {
