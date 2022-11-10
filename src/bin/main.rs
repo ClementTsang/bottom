@@ -4,14 +4,6 @@
 #[macro_use]
 extern crate log;
 
-use bottom::{
-    canvas::{self, canvas_colours::CanvasColours},
-    constants::*,
-    data_conversion::*,
-    options::*,
-    *,
-};
-
 use std::{
     boxed::Box,
     io::stdout,
@@ -25,6 +17,13 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use bottom::{
+    canvas::{self, canvas_colours::CanvasColours},
+    constants::*,
+    data_conversion::*,
+    options::*,
+    *,
+};
 use crossterm::{
     event::{EnableBracketedPaste, EnableMouseCapture},
     execute,

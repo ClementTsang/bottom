@@ -1,7 +1,8 @@
 //! Gets network data via heim.
 
-use super::NetworkHarvest;
 use std::time::Instant;
+
+use super::NetworkHarvest;
 
 // TODO: Eventually make it so that this thing also takes individual usage into account, so we can show per-interface!
 pub async fn get_network_data(

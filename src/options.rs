@@ -1,5 +1,3 @@
-use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
@@ -7,6 +5,11 @@ use std::{
     str::FromStr,
     time::Instant,
 };
+
+use layout_options::*;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use typed_builder::*;
 
 use crate::{
     app::{
@@ -22,10 +25,6 @@ use crate::{
     units::data_units::DataUnit,
     utils::error::{self, BottomError},
 };
-
-use typed_builder::*;
-
-use layout_options::*;
 
 pub mod layout_options;
 

@@ -1,5 +1,8 @@
 use std::borrow::Cow;
 
+use fxhash::{FxHashMap, FxHashSet};
+use itertools::Itertools;
+
 use crate::{
     app::{
         data_farmer::{DataCollection, ProcessData},
@@ -14,9 +17,6 @@ use crate::{
     },
     Pid,
 };
-
-use fxhash::{FxHashMap, FxHashSet};
-use itertools::Itertools;
 
 pub mod proc_widget_column;
 pub use proc_widget_column::*;

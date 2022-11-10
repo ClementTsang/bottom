@@ -6,6 +6,7 @@ use std::{
 use concat_string::concat_string;
 use tui::{text::Text, widgets::Row};
 
+use super::proc_widget_column::ProcColumn;
 use crate::{
     app::data_harvester::processes::ProcessHarvest,
     canvas::Painter,
@@ -14,8 +15,6 @@ use crate::{
     utils::gen_util::truncate_text,
     Pid,
 };
-
-use super::proc_widget_column::ProcColumn;
 
 #[derive(Clone)]
 enum IdType {

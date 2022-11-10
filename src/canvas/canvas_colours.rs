@@ -1,13 +1,13 @@
-use crate::{
-    constants::*,
-    options::{Config, ConfigColours},
-    utils::error,
-};
 use anyhow::Context;
 use colour_utils::*;
 use tui::style::{Color, Style};
 
 use super::ColourScheme;
+use crate::{
+    constants::*,
+    options::{Config, ConfigColours},
+    utils::error,
+};
 mod colour_utils;
 
 pub struct CanvasColours {

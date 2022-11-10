@@ -1,7 +1,8 @@
 //! Process data collection for Windows.  Uses sysinfo.
 
-use super::ProcessHarvest;
 use sysinfo::{CpuExt, PidExt, ProcessExt, System, SystemExt};
+
+use super::ProcessHarvest;
 
 pub fn get_process_data(
     sys: &System, use_current_cpu_total: bool, mem_total_kb: u64,

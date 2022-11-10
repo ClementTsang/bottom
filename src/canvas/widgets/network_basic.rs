@@ -1,5 +1,3 @@
-use crate::{app::App, canvas::Painter, constants::*};
-
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -7,6 +5,8 @@ use tui::{
     text::{Span, Spans},
     widgets::{Block, Paragraph},
 };
+
+use crate::{app::App, canvas::Painter, constants::*};
 
 impl Painter {
     pub fn draw_basic_network<B: Backend>(

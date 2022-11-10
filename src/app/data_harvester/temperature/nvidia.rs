@@ -1,12 +1,10 @@
-use crate::app::Filter;
+use nvml_wrapper::enum_wrappers::device::TemperatureSensor;
 
 use super::{
     convert_celsius_to_fahrenheit, convert_celsius_to_kelvin, is_temp_filtered, TempHarvest,
     TemperatureType,
 };
-
-use nvml_wrapper::enum_wrappers::device::TemperatureSensor;
-
+use crate::app::Filter;
 use crate::data_harvester::nvidia::NVML_DATA;
 
 pub fn add_nvidia_data(

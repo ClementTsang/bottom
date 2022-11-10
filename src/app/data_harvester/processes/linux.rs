@@ -2,17 +2,14 @@
 
 use std::collections::hash_map::Entry;
 
+use fxhash::{FxHashMap, FxHashSet};
+use procfs::process::{Process, Stat};
+use sysinfo::ProcessStatus;
+
+use super::{ProcessHarvest, UserTable};
 use crate::components::tui_widget::time_chart::Point;
 use crate::utils::error::{self, BottomError};
 use crate::Pid;
-
-use super::{ProcessHarvest, UserTable};
-
-use sysinfo::ProcessStatus;
-
-use procfs::process::{Process, Stat};
-
-use fxhash::{FxHashMap, FxHashSet};
 
 /// Maximum character length of a /proc/<PID>/stat process name.
 /// If it's equal or greater, then we instead refer to the command for the name.

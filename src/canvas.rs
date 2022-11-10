@@ -1,6 +1,7 @@
-use itertools::izip;
 use std::str::FromStr;
 
+use canvas_colours::*;
+use itertools::izip;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -8,8 +9,6 @@ use tui::{
     widgets::Paragraph,
     Frame, Terminal,
 };
-
-use canvas_colours::*;
 
 use crate::{
     app::{

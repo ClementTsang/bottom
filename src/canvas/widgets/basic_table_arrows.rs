@@ -1,8 +1,3 @@
-use crate::{
-    app::{layout_manager::BottomWidgetType, App},
-    canvas::Painter,
-};
-
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -10,6 +5,11 @@ use tui::{
     text::Span,
     text::Spans,
     widgets::{Block, Paragraph},
+};
+
+use crate::{
+    app::{layout_manager::BottomWidgetType, App},
+    canvas::Painter,
 };
 
 impl Painter {

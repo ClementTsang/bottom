@@ -1,5 +1,6 @@
-use crate::options::ConfigColours;
 use once_cell::sync::Lazy;
+
+use crate::options::ConfigColours;
 
 // Default widget ID
 pub const DEFAULT_WIDGET_ID: u64 = 56709;

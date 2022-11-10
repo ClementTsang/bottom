@@ -1,11 +1,10 @@
+use std::{borrow::Cow, cmp::Reverse};
+
+use super::ProcWidgetData;
 use crate::{
     components::data_table::{ColumnHeader, SortsRow},
     utils::gen_util::sort_partial_fn,
 };
-
-use std::{borrow::Cow, cmp::Reverse};
-
-use super::ProcWidgetData;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum ProcColumn {

@@ -1,7 +1,8 @@
 //! Disk stats for FreeBSD.
 
-use serde::Deserialize;
 use std::io;
+
+use serde::Deserialize;
 
 use super::{DiskHarvest, IoHarvest};
 use crate::app::Filter;

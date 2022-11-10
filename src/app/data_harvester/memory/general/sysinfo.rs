@@ -1,7 +1,8 @@
 //! Data collection for memory via sysinfo.
 
-use crate::data_harvester::memory::{MemCollect, MemHarvest};
 use sysinfo::{System, SystemExt};
+
+use crate::data_harvester::memory::{MemCollect, MemHarvest};
 
 pub async fn get_mem_data(sys: &System, actually_get: bool, _get_gpu: bool) -> MemCollect {
     if !actually_get {

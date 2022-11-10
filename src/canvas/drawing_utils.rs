@@ -1,7 +1,8 @@
+use std::{cmp::min, time::Instant};
+
 use tui::layout::Rect;
 
 use crate::app::CursorDirection;
-use std::{cmp::min, time::Instant};
 
 pub fn get_search_start_position(
     num_columns: usize, cursor_direction: &CursorDirection, cursor_bar: &mut usize,
@@ -89,9 +90,11 @@ mod test {
 
     #[test]
     fn test_should_hide_x_label() {
-        use crate::constants::*;
         use std::time::{Duration, Instant};
+
         use tui::layout::Rect;
+
+        use crate::constants::*;
 
         let rect = Rect::new(0, 0, 10, 10);
         let small_rect = Rect::new(0, 0, 10, 6);

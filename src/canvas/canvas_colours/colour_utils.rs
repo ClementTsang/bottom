@@ -1,6 +1,6 @@
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
+use once_cell::sync::Lazy;
 use tui::style::{Color, Style};
 
 use crate::utils::error;

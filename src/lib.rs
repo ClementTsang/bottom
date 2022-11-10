@@ -25,6 +25,13 @@ use std::{
     time::{Duration, Instant},
 };
 
+use app::{
+    data_harvester,
+    frozen_state::FrozenState,
+    layout_manager::{UsedWidgets, WidgetDirection},
+    App,
+};
+use constants::*;
 use crossterm::{
     event::{
         poll, read, DisableBracketedPaste, DisableMouseCapture, Event, KeyCode, KeyEvent,
@@ -34,17 +41,8 @@ use crossterm::{
     style::Print,
     terminal::{disable_raw_mode, LeaveAlternateScreen},
 };
-
-use flume::{Receiver, Sender};
-
-use app::{
-    data_harvester,
-    frozen_state::FrozenState,
-    layout_manager::{UsedWidgets, WidgetDirection},
-    App,
-};
-use constants::*;
 use data_conversion::*;
+use flume::{Receiver, Sender};
 use options::*;
 use utils::error;
 

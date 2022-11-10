@@ -1,8 +1,7 @@
 use tui::{text::Text, widgets::Row};
 
-use crate::canvas::Painter;
-
 use super::{ColumnHeader, DataTableColumn};
+use crate::canvas::Painter;
 
 pub trait DataToCell<H>
 where

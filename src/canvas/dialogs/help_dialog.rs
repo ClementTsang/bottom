@@ -1,8 +1,5 @@
 use std::cmp::{max, min};
 
-use unicode_width::UnicodeWidthStr;
-
-use crate::{app::App, canvas::Painter, constants};
 use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
@@ -11,6 +8,9 @@ use tui::{
     text::Spans,
     widgets::{Block, Borders, Paragraph, Wrap},
 };
+use unicode_width::UnicodeWidthStr;
+
+use crate::{app::App, canvas::Painter, constants};
 
 const HELP_BASE: &str = " Help ── Esc to close ";
 

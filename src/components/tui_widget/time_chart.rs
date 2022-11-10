@@ -1,4 +1,5 @@
 use std::{borrow::Cow, cmp::max};
+
 use tui::{
     buffer::Buffer,
     layout::{Constraint, Rect},

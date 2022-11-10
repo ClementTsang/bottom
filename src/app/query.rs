@@ -1,11 +1,11 @@
-use crate::utils::error::{
-    BottomError::{self, QueryError},
-    Result,
-};
 use std::fmt::Debug;
 use std::{borrow::Cow, collections::VecDeque};
 
 use super::data_harvester::processes::ProcessHarvest;
+use crate::utils::error::{
+    BottomError::{self, QueryError},
+    Result,
+};
 
 const DELIMITER_LIST: [char; 6] = ['=', '>', '<', '(', ')', '\"'];
 const COMPARISON_LIST: [&str; 3] = [">", "=", "<"];

@@ -13,15 +13,14 @@ use tui::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
+use super::{
+    CalculateColumnWidths, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataToCell,
+    SortType,
+};
 use crate::{
     app::layout_manager::BottomWidget,
     canvas::Painter,
     constants::{SIDE_BORDERS, TABLE_GAP_HEIGHT_LIMIT},
-};
-
-use super::{
-    CalculateColumnWidths, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataToCell,
-    SortType,
 };
 
 pub enum SelectionState {
