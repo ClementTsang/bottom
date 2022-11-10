@@ -8,6 +8,7 @@
 import os
 import json
 import sys
+import traceback
 from textwrap import dedent
 from time import sleep, time
 from pathlib import Path
@@ -119,7 +120,7 @@ def main():
             try_download(build_id, dl_path)
     else:
         # Try up to three times
-        MAX_ATTEMPTS = 3
+        MAX_ATTEMPTS = 5
         success = False
 
         for i in range(MAX_ATTEMPTS):
@@ -153,26 +154,31 @@ def main():
 
                 for attempt in range(TRIES):
                     print("Checking...")
-                    status = check_build_status(key, build_id)
-                    if status.startswith("COMPLETE"):
-                        print("Build complete. Downloading artifact files.")
-                        sleep(5)
-                        try_download(build_id, dl_path)
-                        success = True
-                        break
-                    else:
-                        print("Build status: {}".format(status or "unknown"))
-                        if status == "ABORTED":
-                            print("Build aborted, bailing.")
+                    try:
+                        status = check_build_status(key, build_id)
+                        if status.startswith("COMPLETE"):
+                            print("Build complete. Downloading artifact files.")
+                            sleep(5)
+                            try_download(build_id, dl_path)
+                            success = True
                             break
-                        elif status.lower().startswith("fail"):
-                            print("Build failed, bailing.")
-                            break
-                        elif attempt + 1 < TRIES:
-                            sleep(SLEEP_SEC)
+                        else:
+                            print("Build status: {}".format(status or "unknown"))
+                            if status == "ABORTED":
+                                print("Build aborted, bailing.")
+                                break
+                            elif status.lower().startswith("fail"):
+                                print("Build failed, bailing.")
+                                break
+                            elif attempt + 1 < TRIES:
+                                sleep(SLEEP_SEC)
+                    except Exception as ex:
+                        print("Unexpected error:")
+                        print(ex)
+                        print(traceback.format_exc())
+                        sleep(60)  # Sleep for a minute if something went wrong, just in case.
                 else:
                     print("Build failed to complete after {} minutes, bailing.".format(MINUTES))
-                    continue
 
         if not success:
             exit(2)
