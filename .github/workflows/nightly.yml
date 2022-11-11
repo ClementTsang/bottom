@@ -59,7 +59,7 @@ jobs:
           du -h -d 0 ./release/*
 
       - name: Delete tag and release
-        uses: ClementTsang/delete-tag-and-release@d379c0b0792c89690fd9fabd7bb4b8c620ef5aad # v0.3.0
+        uses: ClementTsang/delete-tag-and-release@v0.3.1
         if: github.event.inputs.isMock != 'mock'
         with:
           delete_release: true
