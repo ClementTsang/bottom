@@ -67,9 +67,9 @@ pub type Pid = usize;
 pub type Pid = libc::pid_t;
 
 #[derive(Debug)]
-pub enum BottomEvent<I, J> {
-    KeyInput(I),
-    MouseInput(J),
+pub enum BottomEvent {
+    KeyInput(KeyEvent),
+    MouseInput(MouseEvent),
     PasteEvent(String),
     Update(Box<data_harvester::Data>),
     Clean,
@@ -410,8 +410,7 @@ pub fn update_data(app: &mut App) {
 }
 
 pub fn create_input_thread(
-    sender: Sender<BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
-    termination_ctrl_lock: Arc<Mutex<bool>>,
+    sender: Sender<BottomEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
         let mut mouse_timer = Instant::now();
@@ -439,20 +438,23 @@ pub fn create_input_thread(
                                     break;
                                 }
                             }
-                            Event::Mouse(mouse) => {
-                                if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
-                                    match mouse.kind {
-                                        MouseEventKind::Moved => {}
-                                        _ => {
-                                            if sender.send(BottomEvent::MouseInput(mouse)).is_err()
-                                            {
-                                                break;
-                                            }
-                                            mouse_timer = Instant::now();
+                            Event::Mouse(mouse) => match mouse.kind {
+                                MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
+                                MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                                    if Instant::now().duration_since(mouse_timer).as_millis() >= 20
+                                    {
+                                        if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                            break;
                                         }
+                                        mouse_timer = Instant::now();
                                     }
                                 }
-                            }
+                                _ => {
+                                    if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                        break;
+                                    }
+                                }
+                            },
                             _ => (),
                         }
                     }
@@ -463,10 +465,10 @@ pub fn create_input_thread(
 }
 
 pub fn create_collection_thread(
-    sender: Sender<BottomEvent<crossterm::event::KeyEvent, crossterm::event::MouseEvent>>,
-    control_receiver: Receiver<ThreadControlEvent>, termination_ctrl_lock: Arc<Mutex<bool>>,
-    termination_ctrl_cvar: Arc<Condvar>, app_config_fields: &app::AppConfigFields,
-    filters: app::DataFilters, used_widget_set: UsedWidgets,
+    sender: Sender<BottomEvent>, control_receiver: Receiver<ThreadControlEvent>,
+    termination_ctrl_lock: Arc<Mutex<bool>>, termination_ctrl_cvar: Arc<Condvar>,
+    app_config_fields: &app::AppConfigFields, filters: app::DataFilters,
+    used_widget_set: UsedWidgets,
 ) -> JoinHandle<()> {
     let temp_type = app_config_fields.temperature_type;
     let use_current_cpu_total = app_config_fields.use_current_cpu_total;
