@@ -1,17 +1,17 @@
-# Main CI workflow to validate PRs.
+# Main CI workflow to validate PRs and branches.
 #
-# CI workflow based on:
+# CI workflow was based on a lot of work from other people:
 # - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
 # - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
 # - https://www.reillywood.com/blog/rust-faster-ci/
+# - https://matklad.github.io/2021/09/04/fast-rust-builds.html
 #
-# It should run the following:
-# Supported platforms:
+# Supported platforms run the following tasks:
 # - cargo fmt
 # - cargo test
 # - cargo clippy after (apparently faster to do so)
 #
-# Unsupported platforms:
+# Unsupported platforms run the following tasks:
 # - cargo check
 
 name: ci
@@ -89,6 +89,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
+          shared-key: ""
 
       - name: Check cargo fmt
         run: cargo fmt --all -- --check
@@ -232,6 +233,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
+          shared-key: ""
 
       - name: Check
         uses: ClementTsang/cargo-action@v0.0.3
