@@ -24,7 +24,7 @@ If you want to directly contribute documentation changes or code, follow this! T
 3. Make any documentation changes if necessary - if you add a new feature, it'll probably need documentation changes.
 4. Commit and create a pull request to merge into the `master` branch. **Please follow the pull request template**.
 5. Ask/wait for a maintainer to review your pull request.
-   - Check if tests pass. These consist of clippy lints, rustfmt checks, and basic tests.
+   - Check if the CI workflow passes. These consist of clippy lints, rustfmt checks, and basic tests.
    - If changes are suggested or any comments are made, they should probably be addressed.
 6. Once it looks good, it'll be merged! Note that _generally_, PRs are squashed, though feel free to ask otherwise if that isn't preferable.
 
