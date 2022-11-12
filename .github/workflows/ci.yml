@@ -8,8 +8,8 @@
 #
 # Supported platforms run the following tasks:
 # - cargo fmt
-# - cargo test
-# - cargo clippy after (apparently faster to do so)
+# - cargo test (built/test in separate steps)
+# - cargo clippy (apparently faster to do it after the build/test)
 #
 # Unsupported platforms run the following tasks:
 # - cargo check

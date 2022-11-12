@@ -1,4 +1,5 @@
-# Code coverage generation via cargo-llvm-cov, which is then uploaded to codecov.
+# Code coverage generation via cargo-llvm-cov, which is then uploaded to Codecov.
+# Codecov will report back via a comment if run on a PR.
 
 name: codecov
 
