@@ -141,7 +141,7 @@ jobs:
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
         with:
           key: ${{ matrix.info.target }}
-          shared-key: ""
+          shared-key: "build-cache"
           save-if: "false"
 
       - name: Build
@@ -233,7 +233,7 @@ jobs:
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
         with:
           key: "x86_64-pc-windows-msvc"
-          shared-key: ""
+          shared-key: "build-cache"
           save-if: "false"
 
       - name: Build MSI file
@@ -318,7 +318,7 @@ jobs:
         uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
         with:
           key: ${{ matrix.info.target }}
-          shared-key: ""
+          shared-key: "build-cache"
           save-if: "false"
 
       - name: Build

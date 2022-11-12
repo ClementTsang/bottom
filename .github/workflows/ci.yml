@@ -89,7 +89,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
-          shared-key: ""
+          shared-key: "build-cache"
 
       - name: Check cargo fmt
         run: cargo fmt --all -- --check
@@ -233,7 +233,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
         with:
           key: ${{ matrix.info.target }}
-          shared-key: ""
+          shared-key: "build-cache"
 
       - name: Check
         uses: ClementTsang/cargo-action@v0.0.3
