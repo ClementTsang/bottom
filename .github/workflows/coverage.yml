@@ -1,4 +1,5 @@
-# Code coverage generation via cargo-llvm-cov, which is then uploaded to codecov.
+# Code coverage generation via cargo-llvm-cov, which is then uploaded to Codecov.
+# Codecov will report back via a comment if run on a PR.
 
 name: codecov
 
@@ -43,8 +44,7 @@ jobs:
           toolchain: stable
 
       - name: Enable Rust cache
-        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # 2.0.1
-        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }} # If it is a PR, only if not a fork
+        uses: Swatinem/rust-cache@359a70e43a0bb8a13953b04a90f76428b4959bb6 # 2.2.0
 
       - name: Install cargo-llvm-cov
         run: |
